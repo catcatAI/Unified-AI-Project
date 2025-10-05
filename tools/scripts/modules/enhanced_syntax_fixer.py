@@ -149,7 +149,7 @@ class EnhancedSyntaxFixer:
                 # 跳过特定目录
                 if any(part in str(py_file) for part in [
                     "backup", "node_modules", "__pycache__", "venv", 
-                    ".git", "dist", "build", ".pytest_cache"
+                    ".git", "dist", "build", "data/runtime_data/.pytest_cache"
                 ]):
                     continue
                 # 跳过自动修复工具自身，避免循环修复问题

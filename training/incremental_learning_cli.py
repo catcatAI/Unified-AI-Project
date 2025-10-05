@@ -42,8 +42,8 @@ def get_status(args):
     learner = IncrementalLearningManager()
     status = learner.get_status()
     
-    print(f"监控状态: {'运行中' if status['is_monitoring'] else '已停止'}")
-    _ = print(f"待处理任务: {status['pending_tasks']} 个")
+    print(f"监控状态: {'运行中' if status['is_monitoring'] else '已停止'}"):
+ = print(f"待处理任务: {status['pending_tasks']} 个")
     _ = print(f"缓冲区数据: {status['buffered_data']} 个")
     _ = print(f"已处理文件: {status['processed_files']} 个")
     

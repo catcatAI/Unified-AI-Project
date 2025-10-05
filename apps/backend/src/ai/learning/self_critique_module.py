@@ -29,8 +29,8 @@ class SelfCritiqueModule:
     prompt += f"User Input: \"{user_input}\"\n"
     prompt += f"AI Response: \"{ai_response}\"\n\n"
 
-    prompt += "Provide your evaluation in JSON format with the following structure:\n"
-    prompt += "{\n"
+    prompt += "Provide your evaluation in JSON format with the following structure:\n":
+rompt += "{\n"
     prompt += "  \"score\": <a float between 0.0 (very bad) and 1.0 (excellent) representing overall quality>,\n"
         prompt += "  \"reason\": \"<a brief explanation for the score, highlighting strengths or weaknesses>\",\n":
     prompt += "  \"suggested_alternative\": \"<if the response could be improved, a brief suggestion, otherwise null>\"\n":
@@ -44,14 +44,13 @@ class SelfCritiqueModule:
     """
         if not self.llm_interface:
 
-    print("SelfCritiqueModule: LLMInterface not available. Cannot perform critique.")
-            return None
+    print("SelfCritiqueModule: LLMInterface not available. Cannot perform critique."):
+eturn None
 
     prompt = self._construct_critique_prompt(user_input, ai_response, context_history)
 
-        print(f"SelfCritiqueModule: Sending prompt to LLM for critique:\n---\n{prompt}\n---")
-
-    llm_critique_str = self.llm_interface.generate_response(prompt, model_name="critique_model_placeholder") # Suggests a specific model might be better
+        print(f"SelfCritiqueModule: Sending prompt to LLM for critique:\n---\n{prompt}\n---"):
+lm_critique_str = self.llm_interface.generate_response(prompt, model_name="critique_model_placeholder") # Suggests a specific model might be better
 
     print(f"SelfCritiqueModule: Received raw critique from LLM:\n---\n{llm_critique_str}\n---")
 
@@ -61,9 +60,8 @@ class SelfCritiqueModule:
             parsed_critique = json.loads(llm_critique_str)
 
             # Validate structure (basic check)
-            if not all(k in parsed_critique for k in ["score", "reason"])
-
-    print(f"SelfCritiqueModule: Error - LLM critique missing required fields 'score' or 'reason'. Response: {llm_critique_str}")
+            if not all(k in parsed_critique for k in ["score", "reason"]):
+rint(f"SelfCritiqueModule: Error - LLM critique missing required fields 'score' or 'reason'. Response: {llm_critique_str}")
                 return None
             if not isinstance(parsed_critique["score"], (float, int)):
 
@@ -75,8 +73,8 @@ class SelfCritiqueModule:
                 "reason": parsed_critique.get("reason"),
                 "suggested_alternative": parsed_critique.get("suggested_alternative")
             }
-            # Normalize score to be between 0 and 1 if it's outside for some reason
-    critique_result["score"] = max(0.0, min(1.0, critique_result["score"]))
+            # Normalize score to be between 0 and 1 if it's outside for some reason:
+ritique_result["score"] = max(0.0, min(1.0, critique_result["score"]))
 
             if critique_result["score"] < 0.5:
 
@@ -90,8 +88,8 @@ class SelfCritiqueModule:
         except json.JSONDecodeError:
 
 
-            print(f"SelfCritiqueModule: Error - Could not decode JSON response from LLM for critique: {llm_critique_str}")
-            return None
+            print(f"SelfCritiqueModule: Error - Could not decode JSON response from LLM for critique: {llm_critique_str}"):
+eturn None
         except Exception as e:
 
             print(f"SelfCritiqueModule: Error processing LLM critique response: {e}")
@@ -103,9 +101,9 @@ if __name__ == '__main__':
     print("--- SelfCritiqueModule Standalone Test ---")
 
     # We need a PatchedLLMInterface similar to the one in DailyLanguageModel's test
-    # to simulate LLM responses for critique.
-    class PatchedLLMInterfaceForCritique(LLMInterface)
-    def _get_mock_response(self, prompt: str, model_name: Optional[str]) -> str:
+    # to simulate LLM responses for critique.:
+lass PatchedLLMInterfaceForCritique(LLMInterface):
+ef _get_mock_response(self, prompt: str, model_name: Optional[str]) -> str:
             # This mock will respond to critique prompts
             if "Evaluate the AI's response based on" in prompt:
 
@@ -115,8 +113,8 @@ if __name__ == '__main__':
                         "reason": "Good, relevant, and friendly greeting.",
                         "suggested_alternative": None
                     })
-                elif "User Input: \"What is my favorite color?\"" in prompt and \
-                     "AI Response: \"I'm sorry, I don't know your favorite color.\"" in prompt and \
+                elif "User Input: \"What is my favorite color?\"" in prompt and \:
+AI Response: \"I'm sorry, I don't know your favorite color.\"" in prompt and \
                      "User: My favorite color is blue." in prompt: # Context provided
                     return json.dumps({
                         "score": 0.3,
@@ -128,19 +126,19 @@ if __name__ == '__main__':
                     return json.dumps({
                         "score": 0.5,
                         "reason": "AI responded appropriately to unclear input, but could offer to help in other ways.",
-                        "suggested_alternative": "I'm not sure how to help with that. Can I assist with something else?"
-                    })
+                        "suggested_alternative": "I'm not sure how to help with that. Can I assist with something else?":
+)
                 else: # Default critique
                     return json.dumps({
                         "score": 0.7,
                         "reason": "A generic but acceptable response.",
                         "suggested_alternative": "Could be more specific."
                     })
-            # Fallback for non-critique prompts if any were sent through this patched version
-    return super()._get_mock_response(prompt, model_name)
+            # Fallback for non-critique prompts if any were sent through this patched version:
+eturn super()._get_mock_response(prompt, model_name)
 
-    # Setup a mock LLMInterface for testing
-    mock_llm_config_for_critique: LLMInterfaceConfig = { #type ignore
+    # Setup a mock LLMInterface for testing:
+ock_llm_config_for_critique: LLMInterfaceConfig = { #type ignore
     "default_provider": "mock",
     "default_model": "critique-mock-v1",
     "providers": ,

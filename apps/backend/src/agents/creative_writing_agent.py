@@ -9,16 +9,16 @@ from core.services.multi_llm_service import MultiLLMService
 
 class CreativeWritingAgent(BaseAgent):
     """
-    A specialized agent for creative writing tasks like generating marketing copy,
-    short stories, or polishing text.
+    A specialized agent for creative writing tasks like generating marketing copy,:
+hort stories, or polishing text.
     """
     def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_generate_marketing_copy_v1.0",
                 "name": "generate_marketing_copy",
-                "description": "Generates marketing copy for a given product and target audience.",
-                "version": "1.0",
+                "description": "Generates marketing copy for a given product and target audience.",:
+version": "1.0",
                 "parameters": [
                     {"name": "product_description", "type": "string", "required": True},
                     {"name": "target_audience", "type": "string", "required": True},
@@ -29,8 +29,8 @@ class CreativeWritingAgent(BaseAgent):
             {
                 "capability_id": f"{agent_id}_polish_text_v1.0",
                 "name": "polish_text",
-                "description": "Polishes given text for grammar, style, and clarity.",
-                "version": "1.0",
+                "description": "Polishes given text for grammar, style, and clarity.",:
+version": "1.0",
                 "parameters": [
                     {"name": "text_to_polish", "type": "string", "required": True}
                 ],
@@ -40,16 +40,14 @@ class CreativeWritingAgent(BaseAgent):
         super().__init__(agent_id=agent_id, capabilities=capabilities)
         # Initialize the LLM interface
         self.llm_interface = MultiLLMService()
-        logging.info(f"[{self.agent_id}] CreativeWritingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
-
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+        logging.info(f"[{self.agent_id}] CreativeWritingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}"):
+sync def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id")
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", {})
 
-        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
-
-        try:
+        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'"):
+ry:
             if "generate_marketing_copy" in capability_id:
                 result = await self._generate_marketing_copy(params)
                 result_payload = self._create_success_payload(request_id, result)
@@ -65,9 +63,8 @@ class CreativeWritingAgent(BaseAgent):
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
             await self.hsp_connector.send_task_result(result_payload, callback_topic, request_id)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
-
-    async def _generate_marketing_copy(self, params: Dict[str, Any]) -> str:
+            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}"):
+sync def _generate_marketing_copy(self, params: Dict[str, Any]) -> str:
         """Generates marketing copy based on product description and target audience."""
         product_description = params.get('product_description', '')
         target_audience = params.get('target_audience', '')
@@ -76,8 +73,8 @@ class CreativeWritingAgent(BaseAgent):
         if not product_description or not target_audience:
             raise ValueError("Both product_description and target_audience are required")
 
-        # Create a prompt for the LLM
-        prompt = f"""
+        # Create a prompt for the LLM:
+rompt = f"""
         Generate marketing copy for the following product:
         
         Product: {product_description}
@@ -94,16 +91,16 @@ class CreativeWritingAgent(BaseAgent):
         return response.content
 
     async def _polish_text(self, params: Dict[str, Any]) -> str:
-        """Polishes text for grammar, style, and clarity."""
-        text_to_polish = params.get('text_to_polish', '')
+        """Polishes text for grammar, style, and clarity.""":
+ext_to_polish = params.get('text_to_polish', '')
 
         if not text_to_polish:
             raise ValueError("text_to_polish is required")
 
-        # Create a prompt for the LLM
-        prompt = f"""
-        Please proofread and polish the following text for grammar, style, and clarity.
-        Return only the improved text without any additional comments:
+        # Create a prompt for the LLM:
+rompt = f"""
+        Please proofread and polish the following text for grammar, style, and clarity.:
+eturn only the improved text without any additional comments:
         
         Text: {text_to_polish}
         """

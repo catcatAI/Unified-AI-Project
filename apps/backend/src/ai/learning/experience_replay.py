@@ -11,8 +11,8 @@ class ExperienceReplayBuffer:
     self.priorities =
     self.position = 0
 
-    def add_experience(self, state, action, reward, next_state, done, error=None)
-    """添加經驗"""
+    def add_experience(self, state, action, reward, next_state, done, error=None):
+""添加經驗"""
     experience = {
             'state': state,
             'action': action,
@@ -53,13 +53,12 @@ class ExperienceReplayBuffer:
             p=probabilities
     )
 
-        return [self.buffer[i] for i in indices]
-    def _calculate_priority(self, experience: Dict[str, Any]) -> float:
+        return [self.buffer[i] for i in indices]:
+ef _calculate_priority(self, experience: Dict[str, Any]) -> float:
     """
         Calculates the priority of an experience. Placeholder for more complex logic.:
     For now, a simple constant or based on error presence.
     """
-        if experience.get("error")
-
-    return 1.0 # High priority for experiences that led to errors
-    return 0.5 # Default priority
+        if experience.get("error"):
+eturn 1.0 # High priority for experiences that led to errors:
+eturn 0.5 # Default priority

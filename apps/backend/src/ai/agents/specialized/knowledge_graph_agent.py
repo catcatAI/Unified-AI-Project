@@ -6,8 +6,8 @@ from ..base.base_agent import BaseAgent
 
 class KnowledgeGraphAgent(BaseAgent):
     """
-    A specialized agent for knowledge graph tasks like entity linking,
-    relationship extraction, and graph querying.
+    A specialized agent for knowledge graph tasks like entity linking,:
+elationship extraction, and graph querying.
     """
     def __init__(self, agent_id: str) -> None:
         capabilities = [
@@ -17,26 +17,26 @@ class KnowledgeGraphAgent(BaseAgent):
                 "description": "Links entities in text to a knowledge base.",
                 "version": "1.0",
                 "parameters": [
-                    {"name": "text", "type": "string", "required": True, "description": "Text content for entity linking"},
-                    {"name": "knowledge_base", "type": "string", "required": False, "description": "Knowledge base to use for linking"}
-                ],
-                "returns": {"type": "object", "description": "Linked entities with their identifiers."}
-            },
+                    {"name": "text", "type": "string", "required": True, "description": "Text content for entity linking"},:
+"name": "knowledge_base", "type": "string", "required": False, "description": "Knowledge base to use for linking"}:
+,
+                "returns": {"type": "object", "description": "Linked entities with their identifiers."}:
+,
             {
                 "capability_id": f"{agent_id}_relationship_extraction_v1.0",
                 "name": "relationship_extraction",
                 "description": "Extracts relationships between entities from text.",
                 "version": "1.0",
                 "parameters": [
-                    {"name": "text", "type": "string", "required": True, "description": "Text content for relationship extraction"}
-                ],
+                    {"name": "text", "type": "string", "required": True, "description": "Text content for relationship extraction"}:
+,
                 "returns": {"type": "object", "description": "Extracted relationships between entities."}
             },
             {
                 "capability_id": f"{agent_id}_graph_query_v1.0",
                 "name": "graph_query",
-                "description": "Queries a knowledge graph for information.",
-                "version": "1.0",
+                "description": "Queries a knowledge graph for information.",:
+version": "1.0",
                 "parameters": [
                     {"name": "query", "type": "string", "required": True, "description": "Query to execute on the knowledge graph"},
                     {"name": "graph_id", "type": "string", "required": False, "description": "Identifier of the knowledge graph to query"}
@@ -45,16 +45,14 @@ class KnowledgeGraphAgent(BaseAgent):
             }
         ]
         super.__init__(agent_id=agent_id, capabilities=capabilities)
-        logging.info(f"[{self.agent_id}] KnowledgeGraphAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
-
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+        logging.info(f"[{self.agent_id}] KnowledgeGraphAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}"):
+sync def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id", str(uuid.uuid4))
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", )
 
-        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
-
-        try:
+        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'"):
+ry:
             # 使用 isinstance 确保 capability_id 是字符串类型
             if isinstance(capability_id, str) and "entity_linking" in capability_id:
                 result = self._perform_entity_linking(params)
@@ -66,8 +64,8 @@ class KnowledgeGraphAgent(BaseAgent):
                 result = self._query_knowledge_graph(params)
                 result_payload = self._create_success_payload(request_id, result)
             else:
-                capability_id_str = capability_id if isinstance(capability_id, str) else ""
-                result_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id_str}' is not supported by this agent.")
+                capability_id_str = capability_id if isinstance(capability_id, str) else "":
+esult_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id_str}' is not supported by this agent.")
         except Exception as e:
             logging.error(f"[{self.agent_id}] Error processing task {request_id}: {e}")
             result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR", str(e))
@@ -76,9 +74,8 @@ class KnowledgeGraphAgent(BaseAgent):
         callback_address = task_payload.get("callback_address")
         if self.hsp_connector and callback_address:
             _ = await self.hsp_connector.send_task_result(result_payload, callback_address)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_address}")
-
-    def _perform_entity_linking(self, params: Dict[str, Any]) -> Dict[str, Any]:
+            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_address}"):
+ef _perform_entity_linking(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Links entities in text to a knowledge base."""
         text = params.get('text', '')
         knowledge_base = params.get('knowledge_base', 'default')
@@ -121,8 +118,8 @@ class KnowledgeGraphAgent(BaseAgent):
         # In a real implementation, this would use a proper NLP model
         relationships = []
         
-        # Simple heuristic: look for patterns like "X is Y" or "X has Y"
-        words = text.split()
+        # Simple heuristic: look for patterns like "X is Y" or "X has Y":
+ords = text.split()
         for i in range(len(words) - 2):
             # Pattern: "X is Y"
             if words[i+1].lower() in ['is', 'are', 'was', 'were']:
@@ -154,19 +151,19 @@ class KnowledgeGraphAgent(BaseAgent):
         }
 
     def _query_knowledge_graph(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Queries a knowledge graph for information."""
-        query = params.get('query', '')
+        """Queries a knowledge graph for information.""":
+uery = params.get('query', '')
         graph_id = params.get('graph_id', 'default')
         
         if not query:
             raise ValueError("No query provided for knowledge graph query")
         
         # Simple knowledge graph query implementation
-        # In a real implementation, this would interface with a proper knowledge graph database
-        results = [] 
+        # In a real implementation, this would interface with a proper knowledge graph database:
+esults = [] 
         
-        # Simple pattern matching for queries
-        if "capital" in query.lower() and "france" in query.lower():
+        # Simple pattern matching for queries:
+f "capital" in query.lower() and "france" in query.lower():
             results.append({
                 "entity": "France",
                 "property": "capital",
@@ -188,11 +185,11 @@ class KnowledgeGraphAgent(BaseAgent):
                 "confidence": 0.85
             })
         else:
-            # Generic response for other queries
-            results.append({
+            # Generic response for other queries:
+esults.append({
                 "query": query,
-                "result": f"No specific information found for '{query}'. This is a placeholder response.",
-                "confidence": 0.1
+                "result": f"No specific information found for '{query}'. This is a placeholder response.",:
+confidence": 0.1
             })
         
         return {

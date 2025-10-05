@@ -213,9 +213,8 @@ class HSPIntelligentCache:
         """获取缓存统计信息"""
         with self.cache_lock:
             total_requests = self.stats['hits'] + self.stats['misses']
-            hit_rate = self.stats['hits'] / total_requests if total_requests > 0 else 0
-
-            return {
+            hit_rate = self.stats['hits'] / total_requests if total_requests > 0 else 0:
+eturn {
                 'size': len(self.cache),
                 'max_size': self.max_size,
                 'hits': self.stats['hits'],
@@ -286,9 +285,8 @@ class HSPLoadBalancer:
         """最少连接数选择"""
         # 简化实现，选择请求计数最少的节点
         if not self.node_stats:
-            return list(self.nodes.keys())[0] if self.nodes else None
-
-        min_requests = float('inf')
+            return list(self.nodes.keys())[0] if self.nodes else None:
+in_requests = float('inf')
         selected_node = None
 
         for node_id in self.nodes:
@@ -302,9 +300,8 @@ class HSPLoadBalancer:
     def _weighted_response_time_selection(self) -> str:
         """加权响应时间选择"""
         if not self.node_stats:
-            return list(self.nodes.keys())[0] if self.nodes else None
-
-        best_score = float('inf')
+            return list(self.nodes.keys())[0] if self.nodes else None:
+est_score = float('inf')
         selected_node = None
 
         for node_id in self.nodes:

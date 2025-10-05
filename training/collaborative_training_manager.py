@@ -82,8 +82,8 @@ class ModelTrainingTask:
     retry_count: int = 0
     max_retries: int = 3
 
-    def update_metrics(self, new_metrics: Dict[str, Any])
-    """更新模型指标"""
+    def update_metrics(self, new_metrics: Dict[str, Any]):
+""更新模型指标"""
     context = ErrorContext("ModelTrainingTask", "update_metrics", {"model_name": self.model_name})
         try:
 
@@ -97,8 +97,8 @@ class ModelTrainingTask:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 更新模型指标失败 {self.model_name}: {e}")
 
-    def add_shared_knowledge(self, knowledge: Dict[str, Any])
-    """添加共享知识"""
+    def add_shared_knowledge(self, knowledge: Dict[str, Any]):
+""添加共享知识"""
     context = ErrorContext("ModelTrainingTask", "add_shared_knowledge", {"model_name": self.model_name})
         try:
 
@@ -111,8 +111,8 @@ class ModelTrainingTask:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 添加共享知识失败 {self.model_name}: {e}")
 
-    def increment_sent_knowledge(self)
-    """增加发送知识计数"""
+    def increment_sent_knowledge(self):
+""增加发送知识计数"""
     context = ErrorContext("ModelTrainingTask", "increment_sent_knowledge", {"model_name": self.model_name})
         try:
 
@@ -165,8 +165,8 @@ class CollaborativeTrainingManager:
 
     _ = logger.info("🔄 协作式训练管理器初始化完成")
 
-    def register_model(self, model_name: str, model_instance: Any)
-    """注册模型"""
+    def register_model(self, model_name: str, model_instance: Any):
+""注册模型"""
     context = ErrorContext("CollaborativeTrainingManager", "register_model", {"model_name": model_name})
         try:
 
@@ -177,8 +177,8 @@ class CollaborativeTrainingManager:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 注册模型失败: {model_name} - {e}")
 
-    def unregister_model(self, model_name: str)
-    """注销模型"""
+    def unregister_model(self, model_name: str):
+""注销模型"""
     context = ErrorContext("CollaborativeTrainingManager", "unregister_model", {"model_name": model_name})
         try:
 
@@ -255,10 +255,8 @@ class CollaborativeTrainingManager:
 
             tasks = []
 
-            for model_name, model_instance in self.models.items()
-
-
-    data = model_data.get(model_name, [])
+            for model_name, model_instance in self.models.items():
+ata = model_data.get(model_name, [])
                 resources = model_resources.get(model_name)
 
                 if resources:
@@ -300,8 +298,8 @@ class CollaborativeTrainingManager:
             _ = logger.error(f"❌ 创建训练任务失败: {e}")
             return []
 
-    def _save_checkpoint(self, model_name: str, epoch: int, progress: Dict[str, Any])
-    """保存检查点（增强版本）"""
+    def _save_checkpoint(self, model_name: str, epoch: int, progress: Dict[str, Any]):
+""保存检查点（增强版本）"""
     context = ErrorContext("CollaborativeTrainingManager", "_save_checkpoint", {"model_name": model_name, "epoch": epoch})
         try:
             # 准备检查点状态
@@ -369,8 +367,8 @@ class CollaborativeTrainingManager:
             _ = logger.error(f"❌ 加载检查点失败: {model_name} - {e}")
             return None
 
-    def _save_training_state(self, model_name: str, epoch: int, progress: Dict[str, Any])
-    """保存训练状态（增强版本）"""
+    def _save_training_state(self, model_name: str, epoch: int, progress: Dict[str, Any]):
+""保存训练状态（增强版本）"""
     context = ErrorContext("CollaborativeTrainingManager", "_save_training_state", {"model_name": model_name, "epoch": epoch})
         try:
             # 准备训练状态
@@ -383,8 +381,8 @@ class CollaborativeTrainingManager:
                 'optimizer_state': {},  # 实际项目中会包含优化器状态
                 'learning_rate': self.training_tasks.get(model_name, ModelTrainingTask(model_name, None, [], {})).learning_rate,
                 'batch_size': self.training_tasks.get(model_name, ModelTrainingTask(model_name, None, [], {})).batch_size,
-                'progress': progress.get('progress', 0.0) if isinstance(progress, dict) else 0.0,
-                'start_time': time.time(),
+                'progress': progress.get('progress', 0.0) if isinstance(progress, dict) else 0.0,:
+start_time': time.time(),
                 'config': {}
             }
 
@@ -405,8 +403,8 @@ class CollaborativeTrainingManager:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 保存训练状态失败: {model_name} - {e}")
 
-    def _train_model_task(self, task: 'ModelTrainingTask')
-    """训练单个模型任务（增强容错版本）"""
+    def _train_model_task(self, task: 'ModelTrainingTask'):
+""训练单个模型任务（增强容错版本）"""
     context = ErrorContext("CollaborativeTrainingManager", "_train_model_task", {"model_name": task.model_name})
         try:
 
@@ -498,19 +496,17 @@ class CollaborativeTrainingManager:
             task.error = str(e)
             # 保存检查点
             current_epoch = task.current_epoch
-            if 'model_name' in locals()
-
-    _ = self._save_checkpoint(model_name, current_epoch, self.training_progress.get(model_name, {}))
+            if 'model_name' in locals():
+ = self._save_checkpoint(model_name, current_epoch, self.training_progress.get(model_name, {}))
                 # 保存训练状态
                 _ = self._save_training_state(model_name, current_epoch, self.training_progress.get(model_name, {}))
             _ = logger.error(f"❌ 模型训练失败: {e}")
             # 记录错误日志
-            if 'model_name' in locals()
+            if 'model_name' in locals():
+ = self._log_error(model_name, e)
 
-    _ = self._log_error(model_name, e)
-
-    def _train_model_simulated(self, task: 'ModelTrainingTask', start_epoch: int)
-    """模拟模型训练过程（增强容错版本）"""
+    def _train_model_simulated(self, task: 'ModelTrainingTask', start_epoch: int):
+""模拟模型训练过程（增强容错版本）"""
     context = ErrorContext("CollaborativeTrainingManager", "_train_model_simulated", {"model_name": task.model_name})
         try:
 
@@ -519,9 +515,8 @@ class CollaborativeTrainingManager:
             _ = logger.info(f"🔄 开始模拟训练模型: {model_name}")
 
             # 模拟训练过程
-            for epoch in range(start_epoch, epochs)
-
-    task.current_epoch = epoch + 1
+            for epoch in range(start_epoch, epochs):
+ask.current_epoch = epoch + 1
 
                 # 模拟训练时间
                 _ = time.sleep(0.01)
@@ -576,8 +571,8 @@ class CollaborativeTrainingManager:
             _ = logger.error(f"❌ 模拟训练过程中发生错误: {e}")
             return False
 
-    def _train_concept_models_real(self, task: 'ModelTrainingTask')
-    """真实训练概念模型"""
+    def _train_concept_models_real(self, task: 'ModelTrainingTask'):
+""真实训练概念模型"""
     model_name = task.model_name
     _ = logger.info(f"🧠 开始真实训练概念模型: {model_name}")
 
@@ -596,9 +591,8 @@ class CollaborativeTrainingManager:
             alpha_deep_model = AlphaDeepModel()
 
             # 真实训练过程
-            for epoch in range(task.current_epoch, task.epochs)
-
-    if self.stop_requested:
+            for epoch in range(task.current_epoch, task.epochs):
+f self.stop_requested:
 
 
     task.status = "cancelled"
@@ -648,8 +642,8 @@ class CollaborativeTrainingManager:
             _ = logger.error(f"❌ 真实训练概念模型过程中发生错误: {e}")
             return False
 
-    def _train_environment_simulator_real(self, task: 'ModelTrainingTask')
-    """真实训练环境模拟器"""
+    def _train_environment_simulator_real(self, task: 'ModelTrainingTask'):
+""真实训练环境模拟器"""
     model_name = task.model_name
     _ = logger.info(f"🌍 开始真实训练环境模拟器: {model_name}")
 
@@ -662,9 +656,8 @@ class CollaborativeTrainingManager:
             environment_simulator = EnvironmentSimulator()
 
             # 真实训练过程
-            for epoch in range(task.current_epoch, task.epochs)
-
-    if self.stop_requested:
+            for epoch in range(task.current_epoch, task.epochs):
+f self.stop_requested:
 
 
     task.status = "cancelled"
@@ -708,8 +701,8 @@ class CollaborativeTrainingManager:
             _ = logger.error(f"❌ 真实训练环境模拟器过程中发生错误: {e}")
             return False
 
-    def _train_causal_reasoning_real(self, task: 'ModelTrainingTask')
-    """真实训练因果推理引擎"""
+    def _train_causal_reasoning_real(self, task: 'ModelTrainingTask'):
+""真实训练因果推理引擎"""
     model_name = task.model_name
     _ = logger.info(f"🔗 开始真实训练因果推理引擎: {model_name}")
 
@@ -722,9 +715,8 @@ class CollaborativeTrainingManager:
             causal_reasoning_engine = CausalReasoningEngine()
 
             # 真实训练过程
-            for epoch in range(task.current_epoch, task.epochs)
-
-    if self.stop_requested:
+            for epoch in range(task.current_epoch, task.epochs):
+f self.stop_requested:
 
 
     task.status = "cancelled"
@@ -782,9 +774,8 @@ class CollaborativeTrainingManager:
             causal_reasoning_engine = CausalReasoningEngine()
 
             # 真实训练过程
-            for epoch in range(task.current_epoch, task.epochs)
-
-    if self.stop_requested:
+            for epoch in range(task.current_epoch, task.epochs):
+f self.stop_requested:
 
 
     task.status = "cancelled"
@@ -833,8 +824,8 @@ class CollaborativeTrainingManager:
             _ = logger.error(f"❌ 真实训练因果推理引擎过程中发生错误: {e}")
             return False
 
-    def _train_adaptive_learning_controller_real(self, task: 'ModelTrainingTask')
-    """真实训练自适应学习控制器"""
+    def _train_adaptive_learning_controller_real(self, task: 'ModelTrainingTask'):
+""真实训练自适应学习控制器"""
     model_name = task.model_name
     _ = logger.info(f"🧠 开始真实训练自适应学习控制器: {model_name}")
 
@@ -847,9 +838,8 @@ class CollaborativeTrainingManager:
             adaptive_learning_controller = AdaptiveLearningController()
 
             # 真实训练过程
-            for epoch in range(task.current_epoch, task.epochs)
-
-    if self.stop_requested:
+            for epoch in range(task.current_epoch, task.epochs):
+f self.stop_requested:
 
 
     task.status = "cancelled"
@@ -892,8 +882,8 @@ class CollaborativeTrainingManager:
 
             _ = logger.error(f"❌ 真实训练自适应学习控制器过程中发生错误: {e}")
             return False
-    def _train_collaborative_reasoning_engine_real(self, task: 'ModelTrainingTask')
-    """真实训练协作推理引擎"""
+    def _train_collaborative_reasoning_engine_real(self, task: 'ModelTrainingTask'):
+""真实训练协作推理引擎"""
     model_name = task.model_name
     _ = logger.info(f"🧠 开始真实训练协作推理引擎: {model_name}")
 
@@ -906,9 +896,8 @@ class CollaborativeTrainingManager:
             alpha_deep_model = AlphaDeepModel()
 
             # 真实训练过程
-            for epoch in range(task.current_epoch, task.epochs)
-
-    if self.stop_requested:
+            for epoch in range(task.current_epoch, task.epochs):
+f self.stop_requested:
 
 
     task.status = "cancelled"
@@ -957,8 +946,8 @@ class CollaborativeTrainingManager:
             _ = logger.error(f"❌ 真实训练Alpha深度模型过程中发生错误: {e}")
             return False
 
-    def _share_knowledge(self, model_name: str, training_stats: Dict[str, Any])
-    """在模型间共享知识"""
+    def _share_knowledge(self, model_name: str, training_stats: Dict[str, Any]):
+""在模型间共享知识"""
     _ = logger.info(f"🧠 模型 {model_name} 正在共享知识")
 
     # 将当前模型的训练统计信息添加到共享知识中
@@ -977,9 +966,8 @@ class CollaborativeTrainingManager:
     _ = self.shared_knowledge[model_name].append(knowledge_entry)
 
     # 与其他模型共享知识
-        for other_model_name in self.models.keys()
-
-    if other_model_name != model_name:
+        for other_model_name in self.models.keys():
+f other_model_name != model_name:
 
 
     _ = self._apply_shared_knowledge(other_model_name, knowledge_entry)
@@ -996,8 +984,8 @@ class CollaborativeTrainingManager:
     ]
     return knowledge_vector
 
-    def _apply_shared_knowledge(self, model_name: str, knowledge_entry: Dict[str, Any])
-    """将共享知识应用到指定模型"""
+    def _apply_shared_knowledge(self, model_name: str, knowledge_entry: Dict[str, Any]):
+""将共享知识应用到指定模型"""
     _ = logger.debug(f"🔄 将知识从 {knowledge_entry['model_name']} 应用到 {model_name}")
 
     # 获取目标任务
@@ -1012,33 +1000,31 @@ class CollaborativeTrainingManager:
             # 如果共享模型的准确率更高，则调整学习率
             if shared_stats.get('accuracy', 0.0) > current_stats.get('accuracy', 0.0)
                 # 降低学习率以提高稳定性
-                if hasattr(task, 'learning_rate')
-
-    task.learning_rate *= 0.95
+                if hasattr(task, 'learning_rate'):
+ask.learning_rate *= 0.95
                     _ = logger.info(f"   调整 {model_name} 的学习率为 {task.learning_rate:.6f}")
 
             # 如果共享模型的损失更低，则加快训练进度
             if shared_stats.get('loss', 1.0) < current_stats.get('loss', 1.0)
                 # 增加批次大小以加快训练
-                if hasattr(task, 'batch_size')
-
-    task.batch_size = min(task.batch_size * 1.1, 128)  # 限制最大批次大小
+                if hasattr(task, 'batch_size'):
+ask.batch_size = min(task.batch_size * 1.1, 128)  # 限制最大批次大小
                     _ = logger.info(f"   调整 {model_name} 的批次大小为 {int(task.batch_size)}")
 
-    def _delete_checkpoint(self, model_name: str)
-    """删除检查点"""
+    def _delete_checkpoint(self, model_name: str):
+""删除检查点"""
     _ = logger.info(f"🗑️  删除模型 {model_name} 的检查点")
     # 这里可以实现实际的检查点删除逻辑
     pass
 
-    def _enable_model_collaboration_on_completion(self, task: ModelTrainingTask)
-    """在模型训练完成时启用模型协作"""
+    def _enable_model_collaboration_on_completion(self, task: ModelTrainingTask):
+""在模型训练完成时启用模型协作"""
     _ = logger.info(f"🤝 在模型 {task.model_name} 训练完成时启用模型协作")
     # 这里可以实现实际的模型协作逻辑
     pass
 
-    def _log_error(self, model_name: str, error: Exception)
-    """记录错误日志"""
+    def _log_error(self, model_name: str, error: Exception):
+""记录错误日志"""
     _ = logger.error(f"❌ 模型 {model_name} 发生错误: {error}")
 
     # 将当前模型的训练统计信息添加到共享知识中
@@ -1057,9 +1043,8 @@ class CollaborativeTrainingManager:
     _ = self.shared_knowledge[model_name].append(knowledge_entry)
 
     # 与其他模型共享知识
-        for other_model_name in self.models.keys()
-
-    if other_model_name != model_name:
+        for other_model_name in self.models.keys():
+f other_model_name != model_name:
 
 
     _ = self._apply_shared_knowledge(other_model_name, knowledge_entry)
@@ -1076,8 +1061,8 @@ class CollaborativeTrainingManager:
     ]
     return knowledge_vector
 
-    def _apply_shared_knowledge(self, model_name: str, knowledge_entry: Dict[str, Any])
-    """将共享知识应用到指定模型"""
+    def _apply_shared_knowledge(self, model_name: str, knowledge_entry: Dict[str, Any]):
+""将共享知识应用到指定模型"""
     _ = logger.debug(f"🔄 将知识从 {knowledge_entry['model_name']} 应用到 {model_name}")
 
     # 获取目标任务
@@ -1092,21 +1077,19 @@ class CollaborativeTrainingManager:
             # 如果共享模型的准确率更高，则调整学习率
             if shared_stats.get('accuracy', 0.0) > current_stats.get('accuracy', 0.0)
                 # 降低学习率以提高稳定性
-                if hasattr(task, 'learning_rate')
-
-    task.learning_rate *= 0.95
+                if hasattr(task, 'learning_rate'):
+ask.learning_rate *= 0.95
                     _ = logger.info(f"   调整 {model_name} 的学习率为 {task.learning_rate:.6f}")
 
             # 如果共享模型的损失更低，则加快训练进度
             if shared_stats.get('loss', 1.0) < current_stats.get('loss', 1.0)
                 # 增加批次大小以加快训练
-                if hasattr(task, 'batch_size')
-
-    task.batch_size = min(task.batch_size * 1.1, 128)  # 限制最大批次大小
+                if hasattr(task, 'batch_size'):
+ask.batch_size = min(task.batch_size * 1.1, 128)  # 限制最大批次大小
                     _ = logger.info(f"   调整 {model_name} 的批次大小为 {int(task.batch_size)}")
 
-    def implement_advanced_knowledge_sharing(self)
-    """实现高级知识共享机制"""
+    def implement_advanced_knowledge_sharing(self):
+""实现高级知识共享机制"""
     _ = logger.info("🧠 实现高级知识共享机制...")
 
     # 1. 构建知识图谱
@@ -1117,12 +1100,10 @@ class CollaborativeTrainingManager:
 
     # 3. 执行知识传播
     shared_count = 0
-        for source_model, target_models in propagation_paths.items()
-
-    for target_model in target_models:
-    if self._propagate_knowledge_advanced(source_model, target_model)
-
-    shared_count += 1
+        for source_model, target_models in propagation_paths.items():
+or target_model in target_models:
+    if self._propagate_knowledge_advanced(source_model, target_model):
+hared_count += 1
 
     _ = logger.info(f"✅ 高级知识共享机制实现完成，传播了 {shared_count} 个知识")
 
@@ -1147,19 +1128,17 @@ class CollaborativeTrainingManager:
     }
 
     # 添加关系到图谱
-        for model, related_models in model_relationships.items()
-
-    if model in self.models:
+        for model, related_models in model_relationships.items():
+f model in self.models:
 
 
     knowledge_graph['relationships'][model] = [
-                    related for related in related_models if related in self.models
-                ]
+                    related for related in related_models if related in self.models:
+
 
     # 计算知识权重（基于模型性能）
-        for model_name, task in self.training_tasks.items()
-
-    if task.metrics:
+        for model_name, task in self.training_tasks.items():
+f task.metrics:
 
 
     accuracy = task.metrics.get('accuracy', 0.0)
@@ -1172,9 +1151,8 @@ class CollaborativeTrainingManager:
 
     def _identify_knowledge_propagation_paths(self, knowledge_graph: Dict[...]
     """识别知识传播路径"""
-    _ = logger.debug("识别知识传播路径...")
-
-    propagation_paths = {}
+    _ = logger.debug("识别知识传播路径..."):
+ropagation_paths = {}
 
     # 基于知识权重和关系确定传播路径
         for source_model in knowledge_graph['models']:
@@ -1221,8 +1199,8 @@ class CollaborativeTrainingManager:
 
     return False
 
-    def _adjust_training_parameters_based_on_knowledge(self, task: ModelTrainingTask, knowledge: Dict[str, Any])
-    """基于知识调整训练参数"""
+    def _adjust_training_parameters_based_on_knowledge(self, task: ModelTrainingTask, knowledge: Dict[str, Any]):
+""基于知识调整训练参数"""
     training_stats = knowledge.get('training_stats', {})
 
     # 调整学习率
@@ -1251,10 +1229,8 @@ class CollaborativeTrainingManager:
             'model_statuses': {}
     }
 
-        for model_name, task in self.training_tasks.items()
-
-
-    status['model_statuses'][model_name] = {
+        for model_name, task in self.training_tasks.items():
+tatus['model_statuses'][model_name] = {
                 'status': task.status,
                 'progress': task.progress,
                 'metrics': task.metrics
@@ -1266,8 +1242,8 @@ class CollaborativeTrainingManager:
     """获取资源使用情况"""
     return self.resource_manager.get_resource_allocation_status()
 
-    def optimize_training_process(self)
-    """优化训练过程"""
+    def optimize_training_process(self):
+""优化训练过程"""
     # 这里可以实现训练过程的优化逻辑
     # 例如：根据模型训练进度动态调整资源分配
     _ = logger.info("⚙️  优化训练过程...")
@@ -1277,20 +1253,19 @@ class CollaborativeTrainingManager:
 
     return optimization_result
 
-    def enable_periodic_knowledge_sharing(self)
-    """启用周期性知识共享"""
+    def enable_periodic_knowledge_sharing(self):
+""启用周期性知识共享"""
     _ = logger.info("🔄 启用周期性知识共享...")
 
     # 在训练过程中定期共享知识
-        for model_name, task in self.training_tasks.items()
-
-    if task.status == "running" and task.metrics:
+        for model_name, task in self.training_tasks.items():
+f task.status == "running" and task.metrics:
                 # 每隔一定进度共享一次知识
-                if int(task.progress) % 20 == 0:  # 每20%进度共享一次
-                    _ = self._share_knowledge_during_training(model_name, task)
+                if int(task.progress) % 20 == 0:  # 每20%进度共享一次:
+ = self._share_knowledge_during_training(model_name, task)
 
-    def _share_knowledge_during_training(self, model_name: str, task: ModelTrainingTask)
-    """在训练过程中共享知识"""
+    def _share_knowledge_during_training(self, model_name: str, task: ModelTrainingTask):
+""在训练过程中共享知识"""
         if task.metrics:
 
     knowledge = {
@@ -1303,9 +1278,8 @@ class CollaborativeTrainingManager:
 
             # 与其他正在训练的模型共享知识
             shared_count = 0
-            for other_model_name, other_task in self.training_tasks.items()
-
-    if other_model_name != model_name and other_task.status == "running":
+            for other_model_name, other_task in self.training_tasks.items():
+f other_model_name != model_name and other_task.status == "running":
 
 
     _ = self._propagate_knowledge_to_model(other_model_name, knowledge)
@@ -1317,15 +1291,14 @@ class CollaborativeTrainingManager:
     _ = task.increment_sent_knowledge()  # 增加发送知识计数
                 _ = logger.info(f"   模型 {model_name} 在训练过程中向 {shared_count} 个模型共享了知识")
 
-    def enable_model_collaboration(self)
-    """启用模型间的协作"""
+    def enable_model_collaboration(self):
+""启用模型间的协作"""
     _ = logger.info("🤝 启用模型间协作...")
 
     # 实现模型间的知识共享和协作机制
     shared_knowledge_count = 0
-        for model_name, task in self.training_tasks.items()
-
-    if task.status == "completed" and task.metrics:
+        for model_name, task in self.training_tasks.items():
+f task.status == "completed" and task.metrics:
                 # 将训练指标共享给其他模型
                 knowledge = {
                     "model_name": model_name,
@@ -1346,11 +1319,10 @@ class CollaborativeTrainingManager:
 
     _ = logger.info(f"✅ 模型间协作启用完成，共享了 {shared_knowledge_count} 个知识片段")
 
-    def _propagate_knowledge(self, source_model: str, knowledge: Dict[str, Any])
-    """将知识传播给其他模型"""
-        for target_model_name in self.models.keys()
-
-    if target_model_name != source_model:
+    def _propagate_knowledge(self, source_model: str, knowledge: Dict[str, Any]):
+""将知识传播给其他模型"""
+        for target_model_name in self.models.keys():
+f target_model_name != source_model:
                 # 创建模型间通信通道
                 channel_key = f"{source_model}->{target_model_name}"
                 if channel_key not in self.model_communication_channels:
@@ -1361,8 +1333,8 @@ class CollaborativeTrainingManager:
                 _ = self.model_communication_channels[channel_key].append(knowledge)
                 _ = logger.debug(f"   知识从 {source_model} 传播到 {target_model_name}")
 
-    def implement_collaborative_training_loop(self)
-    """实现协作式训练循环"""
+    def implement_collaborative_training_loop(self):
+""实现协作式训练循环"""
     _ = logger.info("🔄 实现协作式训练循环...")
 
     # 在训练过程中持续进行协作
@@ -1496,22 +1468,21 @@ class CollaborativeTrainingManager:
             self.is_training = False
             return False
 
-    def implement_model_collaboration_mechanism(self)
-    """实现完整的模型协作机制"""
+    def implement_model_collaboration_mechanism(self):
+""实现完整的模型协作机制"""
     _ = logger.info("🤝 实现完整的模型协作机制...")
 
     # 1. 收集所有已完成模型的知识
     completed_models = []
-        for model_name, task in self.training_tasks.items()
-
-    if task.status == "completed" and task.metrics:
+        for model_name, task in self.training_tasks.items():
+f task.status == "completed" and task.metrics:
 
 
     completed_models.append({
                     "model_name": model_name,
                     "metrics": task.metrics,
-                    "training_time": (task.end_time - task.start_time).total_seconds() if task.end_time and task.start_time else 0
-                })
+                    "training_time": (task.end_time - task.start_time).total_seconds() if task.end_time and task.start_time else 0:
+)
 
         if not completed_models:
 
@@ -1532,9 +1503,8 @@ class CollaborativeTrainingManager:
     }
 
     shared_count = 0
-        for model_name in self.models.keys()
-
-    if model_name != best_model['model_name']:
+        for model_name in self.models.keys():
+f model_name != best_model['model_name']:
 
 
     _ = self._apply_model_knowledge(model_name, knowledge_to_share)
@@ -1542,8 +1512,8 @@ class CollaborativeTrainingManager:
 
     _ = logger.info(f"✅ 模型协作机制实现完成，向 {shared_count} 个模型传播了知识")
 
-    def _apply_model_knowledge(self, target_model_name: str, knowledge: Dict[str, Any])
-    """将模型知识应用到目标模型"""
+    def _apply_model_knowledge(self, target_model_name: str, knowledge: Dict[str, Any]):
+""将模型知识应用到目标模型"""
     _ = logger.debug(f"🔄 将 {knowledge['source_model']} 的知识应用到 {target_model_name}")
 
     # 获取目标任务
@@ -1567,9 +1537,8 @@ class CollaborativeTrainingManager:
                     _ = logger.info(f"   调整 {target_model_name} 的学习率为 {task.learning_rate:.6f}")
 
                 # 调整批次大小
-                if hasattr(task, 'batch_size')
-
-    task.batch_size = min(task.batch_size * 1.1, 256)  # 限制最大批次大小
+                if hasattr(task, 'batch_size'):
+ask.batch_size = min(task.batch_size * 1.1, 256)  # 限制最大批次大小
                     _ = logger.info(f"   调整 {target_model_name} 的批次大小为 {int(task.batch_size)}")
 
             # 记录知识应用
@@ -1583,15 +1552,14 @@ class CollaborativeTrainingManager:
                 "target_model": target_model_name
             })
 
-    def enhance_knowledge_sharing_mechanism(self)
-    """增强知识共享机制"""
+    def enhance_knowledge_sharing_mechanism(self):
+""增强知识共享机制"""
     _ = logger.info("🧠 增强知识共享机制...")
 
     # 1. 创建知识向量表示
     knowledge_vectors = {}
-        for model_name, knowledge_list in self.shared_knowledge.items()
-
-    if knowledge_list:
+        for model_name, knowledge_list in self.shared_knowledge.items():
+f knowledge_list:
                 # 将知识转换为向量表示
                 vectors = []
                 for knowledge in knowledge_list:
@@ -1604,10 +1572,8 @@ class CollaborativeTrainingManager:
     model_similarities = {}
     model_names = list(knowledge_vectors.keys())
 
-        for i, model1 in enumerate(model_names)
-
-
-    for model2 in model_names[i+1:]:
+        for i, model1 in enumerate(model_names):
+or model2 in model_names[i+1:]:
                 if model1 in knowledge_vectors and model2 in knowledge_vectors:
 
     similarity = self._calculate_knowledge_similarity(
@@ -1618,10 +1584,9 @@ class CollaborativeTrainingManager:
                     _ = logger.debug(f"   {model1} 与 {model2} 的知识相似度: {similarity:.4f}")
 
     # 3. 基于相似度优化知识传播
-        for model_pair, similarity in model_similarities.items()
-
-    if similarity > 0.7:  # 高相似度阈值
-                model1, model2 = model_pair.split('-')
+        for model_pair, similarity in model_similarities.items():
+f similarity > 0.7:  # 高相似度阈值:
+odel1, model2 = model_pair.split('-')
                 _ = logger.info(f"🔗 发现高相似模型对: {model1} 和 {model2} (相似度: {similarity:.4f})")
                 # 可以在这里实现更紧密的协作
 
@@ -1630,8 +1595,8 @@ class CollaborativeTrainingManager:
     def _knowledge_to_vector(self, knowledge: Dict[...]
     """将知识转换为向量表示"""
     # 提取关键指标作为向量
-    metrics = knowledge.get('metrics', {})
-    vector = [
+    metrics = knowledge.get('metrics', {}):
+ector = [
             _ = metrics.get('accuracy', 0.0),
             _ = metrics.get('loss', 0.0),
             _ = knowledge.get('epoch', 0) / 100.0,  # 归一化
@@ -1665,12 +1630,12 @@ class CollaborativeTrainingManager:
     similarity = dot_product / (norm1 * norm2)
     return float(similarity)
 
-    def _get_current_time(self)
-    """获取当前时间"""
+    def _get_current_time(self):
+""获取当前时间"""
     return datetime.now()
 
-    def _save_model_with_version_control(self, model_name: str, task: 'ModelTrainingTask')
-    """保存模型并集成版本控制"""
+    def _save_model_with_version_control(self, model_name: str, task: 'ModelTrainingTask'):
+""保存模型并集成版本控制"""
     context = ErrorContext("CollaborativeTrainingManager", "_save_model_with_version_control", {"model_name": model_name})
         try:
             # 创建临时模型文件路径
@@ -1686,11 +1651,11 @@ class CollaborativeTrainingManager:
             metadata = {
                 'performance_metrics': metrics,
                 'training_data': {
-                    'data_count': len(task.data) if task.data else 0,
-                    'training_time': (task.end_time - task.start_time).total_seconds() if task.end_time and task.start_time else 0
-                },
-                'change_log': f'Training completed for {model_name} with accuracy {metrics.get("accuracy", 0).4f}',
-                'tags': ['training-completed', 'auto-generated']
+                    'data_count': len(task.data) if task.data else 0,:
+training_time': (task.end_time - task.start_time).total_seconds() if task.end_time and task.start_time else 0:
+,
+                'change_log': f'Training completed for {model_name} with accuracy {metrics.get("accuracy", 0).4f}',:
+tags': ['training-completed', 'auto-generated']
             }
 
             # 根据性能指标自动标记版本类型
@@ -1715,9 +1680,8 @@ class CollaborativeTrainingManager:
     _ = logger.info(f"✅ 模型 {model_name} 已保存并创建版本: {version_name} (类型: {version_type})")
 
                 # 清理临时文件
-                if temp_model_path.exists()
-
-    _ = temp_model_path.unlink()
+                if temp_model_path.exists():
+ = temp_model_path.unlink()
             else:
 
                 _ = logger.error(f"❌ 为模型 {model_name} 创建版本失败")
@@ -1728,8 +1692,8 @@ class CollaborativeTrainingManager:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 保存模型 {model_name} 并创建版本失败: {e}")
 
-    def _save_training_results(self, tasks: List[ModelTrainingTask], scenario: Dict[str, Any] = None)
-    """保存训练结果"""
+    def _save_training_results(self, tasks: List[ModelTrainingTask], scenario: Dict[str, Any] = None):
+""保存训练结果"""
     _ = logger.info("💾 保存训练结果...")
 
     # 创建训练历史记录
@@ -1745,9 +1709,9 @@ class CollaborativeTrainingManager:
     result = {
                 'model_name': task.model_name,
                 'status': task.status,
-                'start_time': task.start_time.isoformat() if task.start_time else None,
-                'end_time': task.end_time.isoformat() if task.end_time else None,
-                'result': task.result,
+                'start_time': task.start_time.isoformat() if task.start_time else None,:
+end_time': task.end_time.isoformat() if task.end_time else None,:
+result': task.result,
                 'error': task.error,
                 'metrics': task.metrics,
                 _ = 'collaboration_score': getattr(task, 'collaboration_score', 0.0),
@@ -1770,8 +1734,8 @@ class CollaborativeTrainingManager:
 
             _ = logger.error(f"❌ 保存训练结果失败: {e}")
 
-    def save_training_state(self, state_path: str = None)
-    """保存训练状态"""
+    def save_training_state(self, state_path: str = None):
+""保存训练状态"""
         if not state_path:
 
     state_path = TRAINING_DIR / "collaborative_training_state.json"
@@ -1784,15 +1748,14 @@ class CollaborativeTrainingManager:
     }
 
     # 保存任务状态
-        for model_name, task in self.training_tasks.items()
-
-    state_data['training_tasks'][model_name] = {
+        for model_name, task in self.training_tasks.items():
+tate_data['training_tasks'][model_name] = {
                 'status': task.status,
                 'progress': task.progress,
                 'metrics': task.metrics,
-                'start_time': task.start_time.isoformat() if task.start_time else None,
-                'end_time': task.end_time.isoformat() if task.end_time else None
-            }
+                'start_time': task.start_time.isoformat() if task.start_time else None,:
+end_time': task.end_time.isoformat() if task.end_time else None:
+
 
         try:
 
@@ -1804,16 +1767,14 @@ class CollaborativeTrainingManager:
 
             _ = logger.error(f"❌ 保存训练状态失败: {e}")
 
-    def load_training_state(self, state_path: str = None)
-    """加载训练状态"""
+    def load_training_state(self, state_path: str = None):
+""加载训练状态"""
         if not state_path:
 
     state_path = TRAINING_DIR / "collaborative_training_state.json"
 
-        if not Path(state_path).exists()
-
-
-    _ = logger.warning(f"⚠️ 训练状态文件不存在: {state_path}")
+        if not Path(state_path).exists():
+ = logger.warning(f"⚠️ 训练状态文件不存在: {state_path}")
             return False
 
         try:
@@ -1827,9 +1788,8 @@ class CollaborativeTrainingManager:
 
             # 加载任务状态
             task_states = state_data.get('training_tasks', {})
-            for model_name, task_state in task_states.items()
-
-    if model_name in self.training_tasks:
+            for model_name, task_state in task_states.items():
+f model_name in self.training_tasks:
 
 
     task = self.training_tasks[model_name]
@@ -1912,23 +1872,20 @@ def main() -> None:
 
     # 显示注册的模型
     _ = print(f"✅ 已注册 {len(manager.models)} 个模型:")
-    for model_name in manager.models.keys()
-
-    _ = print(f"   - {model_name}")
+    for model_name in manager.models.keys():
+ = print(f"   - {model_name}")
 
     # 准备训练数据
     _ = print("\n📦 准备训练数据...")
     model_data = manager.prepare_training_data()
-    for model_name, data in model_data.items()
-
-    _ = print(f"   {model_name}: {len(data)} 个训练文件")
+    for model_name, data in model_data.items():
+ = print(f"   {model_name}: {len(data)} 个训练文件")
 
     # 分配资源
     _ = print("\n🖥️  分配资源...")
     model_resources = manager.allocate_resources_for_models()
-    for model_name, resources in model_resources.items()
-
-    if resources:
+    for model_name, resources in model_resources.items():
+f resources:
 
 
     _ = print(f"   {model_name}: 资源分配成功")

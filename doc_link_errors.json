@@ -1,0 +1,2302 @@
+{
+  "root": "D:\\Projects\\Unified-AI-Project",
+  "total_links": 1073,
+  "broken_count": 459,
+  "broken": [
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "PROJECT_REFACTOR_PLAN.md",
+      "link": "PROJECT_REFACTOR_PLAN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "REFACTOR_PROGRESS_REPORT.md",
+      "link": "REFACTOR_PROGRESS_REPORT.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "REFACTOR_SUMMARY_REPORT.md",
+      "link": "REFACTOR_SUMMARY_REPORT.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "REFATOR_CHECKLIST.md",
+      "link": "REFATOR_CHECKLIST.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "PROJECT_REFACTOR_PLAN.md",
+      "link": "PROJECT_REFACTOR_PLAN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "COMPLETE_CONTEXT_SYSTEM_UPGRADE_PLAN.md",
+      "link": "COMPLETE_CONTEXT_SYSTEM_UPGRADE_PLAN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "CONTEXT_MANAGER_FRAMEWORK_DESIGN.md",
+      "link": "CONTEXT_MANAGER_FRAMEWORK_DESIGN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "CONTEXT_MANAGER_IMPLEMENTATION_PLAN.md",
+      "link": "CONTEXT_MANAGER_IMPLEMENTATION_PLAN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "EXECUTION_PLAN_AI_AGENT_SYSTEM.md",
+      "link": "EXECUTION_PLAN_AI_AGENT_SYSTEM.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "EXECUTION_PLAN_ADVANCED_TESTING_DEBUGGING.md",
+      "link": "EXECUTION_PLAN_ADVANCED_TESTING_DEBUGGING.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "EXECUTION_PLAN_SYSTEM_INTEGRATION_TEST.md",
+      "link": "EXECUTION_PLAN_SYSTEM_INTEGRATION_TEST.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "EXECUTION_PLAN_TEST_INFRASTRUCTURE.md",
+      "link": "EXECUTION_PLAN_TEST_INFRASTRUCTURE.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "SYSTEM_INTEGRATION_TEST_IMPROVEMENT_PLAN.md",
+      "link": "SYSTEM_INTEGRATION_TEST_IMPROVEMENT_PLAN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "UNIFIED_AI_IMPROVEMENT_PLAN.md",
+      "link": "UNIFIED_AI_IMPROVEMENT_PLAN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "PROJECT_REFACTOR_PLAN.md",
+      "link": "PROJECT_REFACTOR_PLAN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "link": "AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "CONTEXT_SYSTEM_IMPLEMENTATION_SUMMARY.md",
+      "link": "CONTEXT_SYSTEM_IMPLEMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "PROJECT_CONTEXT_SYSTEM_COMPLETION_REPORT.md",
+      "link": "PROJECT_CONTEXT_SYSTEM_COMPLETION_REPORT.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "SYSTEM_INTEGRATION_TEST_ENHANCEMENT_PLAN.md",
+      "link": "SYSTEM_INTEGRATION_TEST_ENHANCEMENT_PLAN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "REFACTOR_SUMMARY_REPORT.md",
+      "link": "REFACTOR_SUMMARY_REPORT.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "PROJECT_STATUS_REPORT.md",
+      "link": "PROJECT_STATUS_REPORT.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "AUDIO_SERVICE_FIX_REPORT.md",
+      "link": "AUDIO_SERVICE_FIX_REPORT.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\README.md",
+      "text": "AUTO_FIX_EVALUATION_REPORT.md",
+      "link": "AUTO_FIX_EVALUATION_REPORT.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\SYNTAX_FIX_REPORT.md",
+      "text": "apps/backend/src/ai/memory/ham_memory_manager.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/ai/memory/ham_memory_manager.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\SYNTAX_FIX_REPORT.md",
+      "text": "HAMMemoryManager",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/ai/memory/ham_memory_manager.py#L32-L635"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\SYNTAX_FIX_REPORT.md",
+      "text": "apps/backend/src/core/hsp/connector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/core/hsp/connector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\SYNTAX_FIX_REPORT.md",
+      "text": "tools/scripts/fix_syntax_issues.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/scripts/fix_syntax_issues.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\backup_directories_testing_issue.md",
+      "text": "pytest.ini",
+      "link": "file:///d:/Projects/Unified-AI-Project/pytest.ini"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\backup_directories_testing_issue.md",
+      "text": "apps/backend/pytest.ini",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/pytest.ini"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\PROJECT_CLEANUP_FINAL_REPORT.md",
+      "text": "简化后的项目指南",
+      "link": "../SIMPLE_GUIDE.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\PROJECT_IMPROVEMENTS_SUMMARY.md",
+      "text": "backup/scripts/",
+      "link": "../backup/scripts"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\PROJECT_IMPROVEMENTS_SUMMARY.md",
+      "text": "SIMPLE_GUIDE.md",
+      "link": "../SIMPLE_GUIDE.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\TEST_FIXES_PLAN.md",
+      "text": "test_data_analysis_agent.py",
+      "link": "../apps/backend/tests/agents/test_data_analysis_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\TEST_FIXES_PLAN.md",
+      "text": "apps/backend/tests/agents/test_data_analysis_agent.py",
+      "link": "../apps/backend/tests/agents/test_data_analysis_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\TEST_FIXES_PLAN.md",
+      "text": "test_project_coordinator.py",
+      "link": "../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\TEST_FIXES_PLAN.md",
+      "text": "apps/backend/tests/core_ai/dialogue/test_project_coordinator.py",
+      "link": "../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\TEST_FIXES_PLAN.md",
+      "text": "apps/backend/tests/agents/test_data_analysis_agent.py",
+      "link": "../apps/backend/tests/agents/test_data_analysis_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\TEST_FIXES_PLAN.md",
+      "text": "apps/backend/tests/core_ai/dialogue/test_project_coordinator.py",
+      "link": "../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\TEST_FIXES_PLAN.md",
+      "text": "apps/backend/tests/core_ai/dialogue/test_project_coordinator.py",
+      "link": "../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\TEST_FIXES_REPORT.md",
+      "text": "test_data_analysis_agent.py",
+      "link": "../apps/backend/tests/agents/test_data_analysis_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\TEST_FIXES_REPORT.md",
+      "text": "test_project_coordinator.py",
+      "link": "../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\TEST_FIXES_REPORT.md",
+      "text": "apps/backend/tests/core_ai/dialogue/test_project_coordinator.py",
+      "link": "../apps/backend/tests/core_ai/dialogue/test_project_coordinator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\test_workflow_controller_migration.md",
+      "text": "workflow_controller.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/scripts/workflow_controller.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\UNIFIED_DOCUMENTATION_INDEX.md",
+      "text": "PROJECT_OVERVIEW.md",
+      "link": "../PROJECT_OVERVIEW.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\UNIFIED_DOCUMENTATION_INDEX.md",
+      "text": "PROJECT_STATUS_SUMMARY_2025_09_06.md",
+      "link": "../PROJECT_STATUS_SUMMARY_2025_09_06.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\UNIFIED_DOCUMENTATION_INDEX.md",
+      "text": "SIMPLE_GUIDE.md",
+      "link": "../SIMPLE_GUIDE.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\UNIFIED_DOCUMENTATION_INDEX.md",
+      "text": "TOOL_CALL_CHAIN_TRACKING_DESIGN.md",
+      "link": "../TOOL_CALL_CHAIN_TRACKING_DESIGN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\UNIFIED_DOCUMENTATION_INDEX.md",
+      "text": "TOOL_CONTEXT_DATA_MODEL_DESIGN.md",
+      "link": "../TOOL_CONTEXT_DATA_MODEL_DESIGN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\UNIFIED_DOCUMENTATION_INDEX.md",
+      "text": "TOOL_CATEGORY_SYSTEM_DESIGN.md",
+      "link": "../TOOL_CATEGORY_SYSTEM_DESIGN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\tests\\README.md",
+      "text": "测试系统改进执行计划",
+      "link": "../EXECUTION_PLAN_TESTING_SYSTEM.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\tests\\README.md",
+      "text": "统一AI改进计划",
+      "link": "../UNIFIED_AI_IMPROVEMENT_PLAN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\training\\MODEL_VERSION_CONTROL_DESIGN.md",
+      "text": "incremental_learning_manager.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/training/incremental_learning_manager.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\training\\MODEL_VERSION_CONTROL_DESIGN.md",
+      "text": "model_versions.json",
+      "link": "file:///d:/Projects/Unified-AI-Project/training/model_versions.json"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\training\\MODEL_VERSION_CONTROL_DESIGN.md",
+      "text": "ModelManager",
+      "link": "file:///d:/Projects/Unified-AI-Project/training/incremental_learning_manager.py#L223-L316"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\training\\MODEL_VERSION_CONTROL_DESIGN.md",
+      "text": "CollaborativeTrainingManager",
+      "link": "file:///d:/Projects/Unified-AI-Project/training/collaborative_training_manager.py#L33-L180"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\training\\MODEL_VERSION_CONTROL_DESIGN.md",
+      "text": "AutoTrainingManager",
+      "link": "file:///d:/Projects/Unified-AI-Project/training/auto_training_manager.py#L36-L180"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\training\\MODEL_VERSION_CONTROL_DESIGN.md",
+      "text": "IncrementalLearningManager",
+      "link": "file:///d:/Projects/Unified-AI-Project/training/incremental_learning_manager.py#L223-L316"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\training\\PRIORITY_SCHEDULING_DESIGN.md",
+      "text": "CollaborativeTrainingManager",
+      "link": "file:///d:/Projects/Unified-AI-Project/training/collaborative_training_manager.py#L33-L180"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\training\\PRIORITY_SCHEDULING_DESIGN.md",
+      "text": "create_training_tasks",
+      "link": "file:///d:/Projects/Unified-AI-Project/training/collaborative_training_manager.py#L120-L147"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\training\\PRIORITY_SCHEDULING_DESIGN.md",
+      "text": "AutoTrainingManager",
+      "link": "file:///d:/Projects/Unified-AI-Project/training/auto_training_manager.py#L36-L180"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\apps\\backend\\FIX_SUMMARY.md",
+      "text": "search",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/src/ai/rag/rag_manager.py#L80-L125"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\apps\\backend\\HSP_CONNECTOR_FIX_SUMMARY.md",
+      "text": "test_hsp_connector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/tests/hsp/test_hsp_connector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\apps\\backend\\HSP_CONNECTOR_FIX_SUMMARY.md",
+      "text": "test_hsp_connector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/tests/hsp/test_hsp_connector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\apps\\backend\\HSP_CONNECTOR_FIX_SUMMARY.md",
+      "text": "test_hsp_connector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/tests/hsp/test_hsp_connector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\apps\\backend\\HSP_CONNECTOR_FIX_SUMMARY.md",
+      "text": "test_hsp_connector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/tests/hsp/test_hsp_connector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\apps\\frontend-dashboard\\README.md",
+      "text": "LICENSE",
+      "link": "LICENSE"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\apps\\backend\\scripts\\TEST_RESULT_PROCESSING_INTEGRATION_GUIDE.md",
+      "text": "test_result_visualizer.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/scripts/test_result_visualizer.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\apps\\backend\\scripts\\TEST_RESULT_PROCESSING_INTEGRATION_GUIDE.md",
+      "text": "templates/feedback_template.html",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/test_data/templates/feedback_template.html"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\apps\\backend\\scripts\\TEST_RESULT_PROCESSING_INTEGRATION_GUIDE.md",
+      "text": "test_result_analyzer.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/scripts/test_result_analyzer.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\apps\\backend\\scripts\\TEST_RESULT_PROCESSING_INTEGRATION_GUIDE.md",
+      "text": "test_reports",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/test_data/test_reports"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BACKUP_RECOVERY_TASK_LIST.md",
+      "text": "restore_deleted_files_v4.ps1",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\restore_deleted_files_v4.ps1"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BACKUP_RECOVERY_TASK_LIST.md",
+      "text": "recover_all_deleted_files.ps1",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\recover_all_deleted_files.ps1"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BACKUP_RECOVERY_TASK_LIST.md",
+      "text": "safe-git-cleanup.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\safe-git-cleanup.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "train-manager.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "setup_env.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\setup_env.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "health-check.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "start-dev.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "run-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "safe-git-cleanup.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\safe-git-cleanup.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "train-manager.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "setup_env.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\setup_env.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "health-check.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "start-dev.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "run-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\BATCH_SCRIPTS_TASK_LIST.md",
+      "text": "safe-git-cleanup.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\safe-git-cleanup.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\CLI_TOOLS_TASK_LIST.md",
+      "text": "main.py",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\packages\\cli\\cli\\main.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\CLI_TOOLS_TASK_LIST.md",
+      "text": "setup.py",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\packages\\cli\\setup.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\CLI_TOOLS_TASK_LIST.md",
+      "text": "package.json",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\packages\\cli\\package.json"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\DESKTOP_APP_TASK_LIST.md",
+      "text": "main.js",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\electron_app\\main.js"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\DESKTOP_APP_TASK_LIST.md",
+      "text": "preload.js",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\electron_app\\preload.js"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\DESKTOP_APP_TASK_LIST.md",
+      "text": "index.html",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\electron_app\\index.html"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\DESKTOP_APP_TASK_LIST.md",
+      "text": "package.json",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\package.json"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\DESKTOP_APP_TASK_LIST.md",
+      "text": "desktop-app-config.json",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\desktop-app-config.json"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\api\\PROJECT_OVERVIEW.md",
+      "text": "端口管理策略",
+      "link": "docs/PORT_MANAGEMENT_STRATEGY.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\architecture\\IFLOW.md",
+      "text": "README.md",
+      "link": "README.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\architecture\\IFLOW.md",
+      "text": "PROJECT_OVERVIEW.md",
+      "link": "PROJECT_OVERVIEW.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\architecture\\IFLOW.md",
+      "text": "CHANGELOG.md",
+      "link": "CHANGELOG.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\architecture\\IFLOW.md",
+      "text": "docs/",
+      "link": "docs/"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\architecture\\IFLOW.md",
+      "text": "docs/api/",
+      "link": "docs/api/"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\architecture\\IFLOW.md",
+      "text": "docs/architecture/",
+      "link": "docs/architecture/"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\architecture\\IFLOW.md",
+      "text": "docs/user-guide/",
+      "link": "docs/user-guide/"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\architecture\\IFLOW.md",
+      "text": "docs/developer-guide/",
+      "link": "docs/developer-guide/"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\architecture\\IFLOW.md",
+      "text": "docs/planning/",
+      "link": "docs/planning/"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\deployment\\BATCH_FILES_README.md",
+      "text": "tools",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BACKUP_RECOVERY_STANDARD_PROCEDURE.md",
+      "text": "BACKUP_LOG.md",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\BACKUP_LOG.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BACKUP_RECOVERY_STANDARD_PROCEDURE.md",
+      "text": "BACKUP_LOG.md",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\BACKUP_LOG.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BACKUP_RECOVERY_STANDARD_PROCEDURE.md",
+      "text": "BACKUP_LOG.md",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\BACKUP_LOG.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BACKUP_RECOVERY_STANDARD_PROCEDURE.md",
+      "text": "BACKUP_LOG.md",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\BACKUP_LOG.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BACKUP_RECOVERY_STANDARD_PROCEDURE.md",
+      "text": "BACKUP_LOG.md",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\BACKUP_LOG.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BACKUP_RECOVERY_STANDARD_PROCEDURE.md",
+      "text": "restore_deleted_files_v4.ps1",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\restore_deleted_files_v4.ps1"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BACKUP_RECOVERY_STANDARD_PROCEDURE.md",
+      "text": "recover_all_deleted_files.ps1",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\recover_all_deleted_files.ps1"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BACKUP_RECOVERY_STANDARD_PROCEDURE.md",
+      "text": "safe-git-cleanup.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\safe-git-cleanup.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BACKUP_RECOVERY_STANDARD_PROCEDURE.md",
+      "text": "health-check.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BACKUP_RECOVERY_STANDARD_PROCEDURE.md",
+      "text": "run-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "tools\\train-manager.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "ai-runner.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "health-check.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "fix-dependencies.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "start-dev.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "fix-dependencies.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "ai-runner.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "unified-ai.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "tools\\common-functions.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/common-functions.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "tools\\train-manager.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "tools\\train-manager.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\BAT_FILES_IMPLEMENTATION_SUMMARY.md",
+      "text": "tools\\health-check.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\CONTEXT_MANAGER_IMPLEMENTATION_PLAN.md",
+      "text": "CONTEXT_MANAGER_FRAMEWORK_DESIGN.md",
+      "link": "file:///D:/Projects/Unified-AI-Project/CONTEXT_MANAGER_FRAMEWORK_DESIGN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\CONTEXT_SYSTEM_IMPLEMENTATION_SUMMARY.md",
+      "text": "COMPLETE_CONTEXT_SYSTEM_UPGRADE_PLAN.md",
+      "link": "file:///D:/Projects/Unified-AI-Project/COMPLETE_CONTEXT_SYSTEM_UPGRADE_PLAN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "main.js",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\electron_app\\main.js"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "preload.js",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\electron_app\\preload.js"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "index.html",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\electron_app\\index.html"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "package.json",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\package.json"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "desktop-app-config.json",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\desktop-app-config.json"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "main.py",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\packages\\cli\\cli\\main.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "setup.py",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\packages\\cli\\setup.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "package.json",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\packages\\cli\\package.json"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "unified_cli.py",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\packages\\cli\\cli\\unified_cli.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "client.py",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\packages\\cli\\cli\\client.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "train-manager.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "setup_env.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\setup_env.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "health-check.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "start-dev.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "run-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "safe-git-cleanup.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\safe-git-cleanup.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "restore_deleted_files_v4.ps1",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\restore_deleted_files_v4.ps1"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "recover_all_deleted_files.ps1",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\recover_all_deleted_files.ps1"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\development\\PROJECT_IMPLEMENTATION_TRACKER.md",
+      "text": "safe-git-cleanup.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\safe-git-cleanup.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "EXECUTION_PLAN_AI_AGENT_SYSTEM.md",
+      "link": "file:///d:/Projects/Unified-AI-Project/EXECUTION_PLAN_AI_AGENT_SYSTEM.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "AgentCollaborationManager",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/core_ai/agent_collaboration_manager.py#L33-L180"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "collaboration_demo_agent.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/agents/collaboration_demo_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "AgentMonitoringManager",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/core_ai/agent_monitoring_manager.py#L36-L296"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "monitoring_demo_agent.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/agents/monitoring_demo_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "DynamicAgentRegistry",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/core_ai/dynamic_agent_registry.py#L28-L307"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "registry_demo_agent.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/agents/registry_demo_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "BaseAgent",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/agents/base_agent.py#L19-L560"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "enhanced_demo_agent.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/agents/enhanced_demo_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "apps/backend/src/core_ai/agent_collaboration_manager.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/core_ai/agent_collaboration_manager.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "apps/backend/src/core_ai/agent_monitoring_manager.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/core_ai/agent_monitoring_manager.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "apps/backend/src/core_ai/dynamic_agent_registry.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/core_ai/dynamic_agent_registry.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "apps/backend/src/agents/collaboration_demo_agent.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/agents/collaboration_demo_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "apps/backend/src/agents/monitoring_demo_agent.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/agents/monitoring_demo_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "apps/backend/src/agents/registry_demo_agent.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/agents/registry_demo_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "apps/backend/src/agents/enhanced_demo_agent.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/agents/enhanced_demo_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "apps/backend/src/agents/base_agent.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/agents/base_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md",
+      "text": "apps/backend/src/core_ai/agent_manager.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/core_ai/agent_manager.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "unified-ai.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "ai-runner.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "run_math_test.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\run_math_test.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "health-check.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "start-dev.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "run-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "safe-git-cleanup.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\safe-git-cleanup.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "setup-training.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\setup-training.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "train-manager.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "emergency-git-fix.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\emergency-git-fix.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "fix-dependencies.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "cli-runner.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\cli-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "fix-deps-simple.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-deps-simple.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "recreate-venv.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\recreate-venv.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "fix-git-10k.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-git-10k.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "test-cli.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\test-cli.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "verify_file_recovery.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\verify_file_recovery.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "run_backend_tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "setup_env.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\setup_env.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "run-component-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\backend\\run-component-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "run_test_fixes.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\backend\\run_test_fixes.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "start-desktop-app.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\start-desktop-app.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "run_backend_tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "run-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "run-component-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\backend\\run-component-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "fix-dependencies.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "fix-deps-simple.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-deps-simple.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "unified-ai.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_ANALYSIS.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\fix-deps-simple.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-deps-simple.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\fix-deps-simple.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-deps-simple.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\fix-deps-simple.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-deps-simple.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "tools\\fix-deps-simple.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-deps-simple.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "unified-ai.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "unified-ai.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "unified-ai.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "run_math_test.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\run_math_test.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "run_math_test.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\run_math_test.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_PLAN.md",
+      "text": "run_math_test.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\run_math_test.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_SUMMARY.md",
+      "text": "BAT_FILES_ANALYSIS.md",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\BAT_FILES_ANALYSIS.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_SUMMARY.md",
+      "text": "BAT_FILES_DUPLICATES.md",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\BAT_FILES_DUPLICATES.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_SUMMARY.md",
+      "text": "BAT_FILES_OPTIMIZATION_PLAN.md",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\BAT_FILES_OPTIMIZATION_PLAN.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_SUMMARY.md",
+      "text": "BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\BAT_FILES_OPTIMIZATION_VERIFICATION.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\BAT_FILES_OPTIMIZATION_SUMMARY.md",
+      "text": "BAT_FILES_OPTIMIZATION_SUMMARY.md",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\BAT_FILES_OPTIMIZATION_SUMMARY.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\CORE_SERVICE_MANAGER_IMPROVEMENT_SUMMARY.md",
+      "text": "CoreServiceManager",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/src/core/managers/core_service_manager.py#L72-L370"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\CORE_SERVICE_MANAGER_IMPROVEMENT_SUMMARY.md",
+      "text": "ServiceMonitor",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/src/core/managers/service_monitor.py#L186-L330"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\CORE_SERVICE_MANAGER_IMPROVEMENT_SUMMARY.md",
+      "text": "ResourceManager",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/src/core/managers/resource_manager.py#L26-L86"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\CORE_SERVICE_MANAGER_IMPROVEMENT_SUMMARY.md",
+      "text": "CoreServiceManager",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/src/core/managers/core_service_manager.py#L72-L370"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\CORE_SERVICE_MANAGER_IMPROVEMENT_SUMMARY.md",
+      "text": "ServiceMonitor",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/src/core/managers/service_monitor.py#L186-L330"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\CORE_SERVICE_MANAGER_IMPROVEMENT_SUMMARY.md",
+      "text": "ResourceManager",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/src/core/managers/resource_manager.py#L26-L86"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "main.js",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\electron_app\\main.js"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "preload.js",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\electron_app\\preload.js"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "index.html",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\desktop-app\\electron_app\\index.html"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "main.py",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\packages\\cli\\cli\\main.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "setup.py",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\packages\\cli\\setup.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "setup_env.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\setup_env.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "run_backend_tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "safe-git-cleanup.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\safe-git-cleanup.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "train-manager.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "train-manager.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "setup_env.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\setup_env.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "health-check.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "start-dev.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "run-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "safe-git-cleanup.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\safe-git-cleanup.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "restore_deleted_files_v4.ps1",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\restore_deleted_files_v4.ps1"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "recover_all_deleted_files.ps1",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\recover_all_deleted_files.ps1"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\DESKTOP_CLI_BATCH_ENHANCEMENT_PLAN.md",
+      "text": "safe-git-cleanup.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\safe-git-cleanup.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "apps\\backend\\src\\tools\\math_model\\data_generator.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/math_model/data_generator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "apps\\backend\\src\\tools\\math_model\\lightweight_math_model.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/math_model/lightweight_math_model.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "apps\\backend\\src\\tools\\logic_model\\logic_data_generator.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/logic_model/logic_data_generator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "apps\\backend\\src\\tools\\logic_model\\lightweight_logic_model.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/logic_model/lightweight_logic_model.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "test_automated_defect_detector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/test_automated_defect_detector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "apps\\backend\\src\\tools\\math_model\\data_generator.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/math_model/data_generator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "apps\\backend\\src\\tools\\math_model\\lightweight_math_model.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/math_model/lightweight_math_model.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "apps\\backend\\src\\tools\\logic_model\\logic_data_generator.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/logic_model/logic_data_generator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "apps\\backend\\src\\tools\\logic_model\\lightweight_logic_model.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/logic_model/lightweight_logic_model.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "test_automated_defect_detector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/test_automated_defect_detector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "test_automated_defect_detector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/test_automated_defect_detector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "test_automated_defect_detector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/test_automated_defect_detector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "test_automated_defect_detector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/test_automated_defect_detector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_PLAN.md",
+      "text": "intelligent_test_generator.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/intelligent_test_generator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_SUMMARY.md",
+      "text": "apps\\backend\\src\\tools\\math_model\\data_generator.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/math_model/data_generator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_SUMMARY.md",
+      "text": "apps\\backend\\src\\tools\\math_model\\lightweight_math_model.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/math_model/lightweight_math_model.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_SUMMARY.md",
+      "text": "apps\\backend\\src\\tools\\logic_model\\logic_data_generator.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/logic_model/logic_data_generator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_SUMMARY.md",
+      "text": "apps\\backend\\src\\tools\\logic_model\\lightweight_logic_model.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/tools/logic_model/lightweight_logic_model.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_SUMMARY.md",
+      "text": "test_automated_defect_detector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/test_automated_defect_detector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_SUMMARY.md",
+      "text": "automated_defect_detector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/automated_defect_detector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_SUMMARY.md",
+      "text": "test_automated_defect_detector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/test_automated_defect_detector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_SUMMARY.md",
+      "text": "intelligent_test_generator.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/intelligent_test_generator.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_SUMMARY.md",
+      "text": "configs/test_config.json",
+      "link": "file:///d:/Projects/Unified-AI-Project/configs/test_config.json"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\SECURITY_AND_CODE_QUALITY_IMPROVEMENT_SUMMARY.md",
+      "text": "apps/backend/tests/integration/test_atlassian_integration.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/tests/integration/test_atlassian_integration.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\UNIFIED_EXECUTION_GUIDE.md",
+      "text": "README.md",
+      "link": "README.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\UNIFIED_EXECUTION_GUIDE.md",
+      "text": "PROJECT_OVERVIEW.md",
+      "link": "PROJECT_OVERVIEW.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\UNIFIED_EXECUTION_GUIDE.md",
+      "text": "SIMPLE_GUIDE.md",
+      "link": "SIMPLE_GUIDE.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\UNIFIED_EXECUTION_GUIDE.md",
+      "text": "CLI_USAGE_GUIDE.md",
+      "link": "docs/CLI_USAGE_GUIDE.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\reports\\UNIFIED_EXECUTION_GUIDE.md",
+      "text": "BATCH_SCRIPTS_USAGE_GUIDE.md",
+      "link": "docs/BATCH_SCRIPTS_USAGE_GUIDE.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_DUPLICATES.md",
+      "text": "tools\\run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_DUPLICATES.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_DUPLICATES.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_DUPLICATES.md",
+      "text": "tools\\fix-deps-simple.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-deps-simple.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_DUPLICATES.md",
+      "text": "unified-ai.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_DUPLICATES.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_DUPLICATES.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_DUPLICATES.md",
+      "text": "apps\\backend\\run-component-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\apps\\backend\\run-component-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_DUPLICATES.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_DUPLICATES.md",
+      "text": "run_math_test.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\run_math_test.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_DUPLICATES.md",
+      "text": "tools\\verify_file_recovery.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\verify_file_recovery.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX.md",
+      "text": "start-dev.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX.md",
+      "text": "ai-runner.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX.md",
+      "text": "unified-ai.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX.md",
+      "text": "ai-runner.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX.md",
+      "text": "tools\\start-dev.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX.md",
+      "text": "tools\\health-check.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX.md",
+      "text": "tools\\view-error-logs.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\view-error-logs.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "unified-ai.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "tools\\train-manager.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "train-manager.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "train-manager.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "tools\\train-manager.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "unified-ai.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "unified-ai.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "tools\\train-manager.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "ai-runner.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "tools\\start-dev.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "tools\\health-check.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "BAT_FILES_FLASH_FIX.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX_SUMMARY.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "BAT_FILES_FLASH_FIX_REPAIR.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX_REPAIR.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "BAT_FILES_FLASH_FIX_FINAL.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX_FINAL.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX_COMPLETE.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "unified-ai.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "unified-ai.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "ai-runner.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "tools\\start-dev.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "tools\\health-check.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "BAT_FILES_FLASH_FIX.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX_SUMMARY.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "BAT_FILES_FLASH_FIX_REPAIR.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX_REPAIR.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "BAT_FILES_FLASH_FIX_FINAL.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX_FINAL.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "unified-ai.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "tools\\start-dev.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "ai-runner.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "unified-ai.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "ai-runner.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "tools\\start-dev.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "tools\\health-check.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "BAT_FILES_FLASH_FIX.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX_SUMMARY.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "BAT_FILES_FLASH_FIX_REPAIR.md",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\BAT_FILES_FLASH_FIX_REPAIR.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "start-dev.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "ai-runner.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "unified-ai.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "ai-runner.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "tools\\start-dev.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\start-dev.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "tools\\health-check.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\health-check.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "tools\\view-error-logs.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\view-error-logs.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "tools\\view-error-logs.bat",
+      "link": "file:///d:\\Projects\\Unified-AI-Project\\tools\\view-error-logs.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\scripts\\run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\fix-deps-simple.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-deps-simple.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\fix-deps-simple.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-deps-simple.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "unified-ai.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "unified-ai.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "unified-ai-enhanced.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai-enhanced.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "run_math_test.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\run_math_test.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "run_math_test.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\run_math_test.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\verify_file_recovery.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\verify_file_recovery.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\verify_file_recovery.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\verify_file_recovery.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\run-backend-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-backend-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\fix-dependencies.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-dependencies.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\fix-deps-simple.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\fix-deps-simple.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "unified-ai.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "tools\\run-tests.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\tools\\run-tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "unified-ai.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\unified-ai.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\BAT_FILES_OPTIMIZATION_VERIFICATION.md",
+      "text": "ai-runner.bat",
+      "link": "file://d:\\Projects\\Unified-AI-Project\\ai-runner.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COLLABORATIVE_TRAINING_FIX_REPORT.md",
+      "text": "training",
+      "link": "file:///D:/Projects/Unified-AI-Project/tools/train-manager.bat#L27-L27"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COLLABORATIVE_TRAINING_FIX_REPORT.md",
+      "text": "training",
+      "link": "file:///D:/Projects/Unified-AI-Project/tools/train-manager.bat#L27-L27"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COLLABORATIVE_TRAINING_FIX_REPORT.md",
+      "text": "training/collaborative_training_manager.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/training/collaborative_training_manager.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COLLABORATIVE_TRAINING_FIX_REPORT.md",
+      "text": "training/train_model.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/training/train_model.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COLLABORATIVE_TRAINING_FIX_REPORT.md",
+      "text": "training/test_simple_collaborative.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/training/test_simple_collaborative.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COLLABORATIVE_TRAINING_FIX_REPORT.md",
+      "text": "training/test_collaborative_training.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/training/test_collaborative_training.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COLLABORATIVE_TRAINING_FIX_REPORT.md",
+      "text": "training/simple_test.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/training/simple_test.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COLLABORATIVE_TRAINING_FIX_REPORT.md",
+      "text": "training/test_imports.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/training/test_imports.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COLLABORATIVE_TRAINING_FIX_REPORT.md",
+      "text": "test_simple_collaborative.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/training/test_simple_collaborative.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COLLABORATIVE_TRAINING_FIX_REPORT.md",
+      "text": "final_test.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/training/final_test.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COLLABORATIVE_TRAINING_FIX_REPORT.md",
+      "text": "training",
+      "link": "file:///D:/Projects/Unified-AI-Project/tools/train-manager.bat#L27-L27"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COMPREHENSIVE_FIX_SUMMARY.md",
+      "text": "BaseLLMProvider",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/services/multi_llm_service.py#L94-L117"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COMPREHENSIVE_FIX_SUMMARY.md",
+      "text": "stream_completion",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/services/multi_llm_service.py#L109-L114"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\COMPREHENSIVE_FIX_SUMMARY.md",
+      "text": "stream_completion",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/services/multi_llm_service.py#L222-L227"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\FINAL_COMPLETE_FIX_REPORT.md",
+      "text": "critical_fix.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/critical_fix.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX.md",
+      "text": "requirements.txt",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/requirements.txt"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX.md",
+      "text": "requirements.min.txt",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/requirements.min.txt"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX.md",
+      "text": "external_connector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/hsp/external/external_connector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX.md",
+      "text": "test_gmqtt_import.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/test_gmqtt_import.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX.md",
+      "text": "apps/backend/requirements.txt",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/requirements.txt"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX.md",
+      "text": "apps/backend/requirements.min.txt",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/requirements.min.txt"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX.md",
+      "text": "apps/backend/src/hsp/external/external_connector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/hsp/external/external_connector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX.md",
+      "text": "test_gmqtt_import.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/test_gmqtt_import.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX.md",
+      "text": "install_gmqtt.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/install_gmqtt.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX_COMPLETED.md",
+      "text": "external_connector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/hsp/external/external_connector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX_COMPLETED.md",
+      "text": "pyrightconfig.json",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/pyrightconfig.json"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX_COMPLETED.md",
+      "text": "gmqtt.pyi",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/stubs/gmqtt.pyi"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX_COMPLETED.md",
+      "text": "apps/backend/src/stubs/gmqtt.pyi",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/stubs/gmqtt.pyi"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX_COMPLETED.md",
+      "text": "install_gmqtt.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/install_gmqtt.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX_COMPLETED.md",
+      "text": "apps/backend/requirements.txt",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/requirements.txt"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX_COMPLETED.md",
+      "text": "apps/backend/src/hsp/external/external_connector.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/hsp/external/external_connector.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX_COMPLETED.md",
+      "text": "test_gmqtt_import.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/test_gmqtt_import.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX_COMPLETED.md",
+      "text": "install_gmqtt.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/install_gmqtt.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX_COMPLETED.md",
+      "text": "apps/backend/src/stubs/gmqtt.pyi",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/src/stubs/gmqtt.pyi"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\GMQTT_IMPORT_FIX_COMPLETED.md",
+      "text": "apps/backend/pyrightconfig.json",
+      "link": "file:///d:/Projects/Unified-AI-Project/apps/backend/pyrightconfig.json"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\PROJECT_ISSUE_FIX_MAPPING.md",
+      "text": "项目概览",
+      "link": "PROJECT_OVERVIEW.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\PROJECT_ISSUE_FIX_MAPPING.md",
+      "text": "批处理文件说明",
+      "link": "BATCH_FILES_README.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TEST_FIXES_SUMMARY.md",
+      "text": "data_analysis_agent.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/src/agents/data_analysis_agent.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TEST_FIXES_SUMMARY.md",
+      "text": "training_integration.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/scripts/training_integration.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TEST_FIXES_SUMMARY.md",
+      "text": "pytest.ini",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/pytest.ini"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TEST_RESULT_PROCESSING_PROJECT_SUMMARY.md",
+      "text": "test_result_visualizer.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/scripts/test_result_visualizer.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TEST_RESULT_PROCESSING_PROJECT_SUMMARY.md",
+      "text": "test_result_analyzer.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/scripts/test_result_analyzer.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TEST_RESULT_PROCESSING_PROJECT_SUMMARY.md",
+      "text": "test_result_feedback.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/scripts/test_result_feedback.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TEST_RESULT_PROCESSING_PROJECT_SUMMARY.md",
+      "text": "process_test_results.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/scripts/process_test_results.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TEST_RESULT_PROCESSING_PROJECT_SUMMARY.md",
+      "text": "demo_test_result_processing.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/scripts/demo_test_result_processing.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TEST_RESULT_PROCESSING_PROJECT_SUMMARY.md",
+      "text": "TEST_RESULT_PROCESSING_README.md",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/scripts/TEST_RESULT_PROCESSING_README.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TEST_RESULT_PROCESSING_PROJECT_SUMMARY.md",
+      "text": "TEST_RESULT_PROCESSING_INTEGRATION_GUIDE.md",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/scripts/TEST_RESULT_PROCESSING_INTEGRATION_GUIDE.md"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\test_suite_optimization_summary.md",
+      "text": "test_node_services.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/tests/services/test_node_services.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\test_suite_optimization_summary.md",
+      "text": "test_audio_service.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/tests/services/test_audio_service.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\test_suite_optimization_summary.md",
+      "text": "test_hsp_enhanced_integration.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/apps/backend/tests/hsp/test_hsp_enhanced_integration.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\test_suite_optimization_summary.md",
+      "text": "maintain_test_suite.py",
+      "link": "file:///D:/Projects/Unified-AI-Project/maintain_test_suite.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TRAINING_MANAGER_DUPLICATE_INFO_FIX.md",
+      "text": "train-manager.bat",
+      "link": "file:///D:/Projects/Unified-AI-Project/tools/train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TRAINING_MANAGER_DUPLICATE_INFO_FIX.md",
+      "text": "train-manager.bat",
+      "link": "file:///D:/Projects/Unified-AI-Project/tools/train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TRAINING_SCRIPTS_FIX_REPORT.md",
+      "text": "train-manager.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TRAINING_SCRIPTS_FIX_REPORT.md",
+      "text": "train-manager.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TRAINING_SCRIPTS_FIX_REPORT.md",
+      "text": "setup-training.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/setup-training.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TRAINING_SCRIPTS_FIX_REPORT.md",
+      "text": "training",
+      "link": "file:///d:/Projects/Unified-AI-Project/training/"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TRAINING_SCRIPTS_FIX_REPORT.md",
+      "text": "train-manager.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/train-manager.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TRAINING_SCRIPTS_FIX_REPORT.md",
+      "text": "scripts\\enhance_project.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/scripts/enhance_project.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TRAINING_SCRIPTS_FIX_REPORT.md",
+      "text": "scripts\\generate_mock_data.py",
+      "link": "file:///d:/Projects/Unified-AI-Project/scripts/generate_mock_data.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TRAINING_SCRIPTS_FIX_REPORT.md",
+      "text": "setup-training.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/setup-training.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\testing\\TRAINING_SCRIPTS_FIX_REPORT.md",
+      "text": "setup-training.bat",
+      "link": "file:///d:/Projects/Unified-AI-Project/tools/setup-training.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\06-project-management\\fixes\\BAT_FILES_FLASH_FIX.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "../../../scripts/run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\06-project-management\\fixes\\BAT_FILES_FLASH_FIX_COMPLETE.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "../../../scripts/run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\06-project-management\\fixes\\BAT_FILES_FLASH_FIX_FINAL.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "../../../scripts/run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\06-project-management\\fixes\\BAT_FILES_FLASH_FIX_REPAIR.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "../../../scripts/run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\06-project-management\\reports\\BAT_FILES_FLASH_FIX_SUMMARY.md",
+      "text": "scripts\\run_backend_tests.bat",
+      "link": "../../../scripts/run_backend_tests.bat"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\06-project-management\\reports\\TEST_FIXES_SUMMARY.md",
+      "text": "training_integration.py",
+      "link": "../../../scripts/training_integration.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\06-project-management\\reports\\TRAINING_SCRIPTS_FIX_REPORT.md",
+      "text": "scripts\\enhance_project.py",
+      "link": "../../../scripts/enhance_project.py"
+    },
+    {
+      "file": "d:\\Projects\\Unified-AI-Project\\docs\\06-project-management\\reports\\TRAINING_SCRIPTS_FIX_REPORT.md",
+      "text": "scripts\\generate_mock_data.py",
+      "link": "../../../scripts/generate_mock_data.py"
+    }
+  ]
+}

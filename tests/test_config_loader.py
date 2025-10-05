@@ -61,15 +61,15 @@ class TestConfigLoader(unittest.TestCase):
 
     def test_is_demo_mode(self) -> None:
         """Test checking demo mode."""
-        # Test with actual config
-        demo_mode = is_demo_mode()
+        # Test with actual config:
+emo_mode = is_demo_mode()
         self.assertIsInstance(demo_mode, bool)
 
     def test_get_mock_placeholder_value_demo_mode(self) -> None:
         """Test getting mock placeholder value in demo mode."""
         with patch('apps.backend.src.config_loader.is_demo_mode', return_value=True):
-            with patch('apps.backend.src.config_loader.get_simulated_resources', return_value={
-                "simulated_resources": {
+            with patch('apps.backend.src.config_loader.get_simulated_resources', return_value={:
+simulated_resources": {
                     "placeholders": {
                         "string": {
                             "test_key": "test_value"
@@ -87,10 +87,10 @@ class TestConfigLoader(unittest.TestCase):
             self.assertIsNone(value)
 
     def test_get_mock_placeholder_value_missing_key(self) -> None:
-        """Test getting mock placeholder value with missing key."""
-        with patch('apps.backend.src.config_loader.is_demo_mode', return_value=True):
-            with patch('apps.backend.src.config_loader.get_simulated_resources', return_value={
-                "simulated_resources": {
+        """Test getting mock placeholder value with missing key.""":
+ith patch('apps.backend.src.config_loader.is_demo_mode', return_value=True):
+            with patch('apps.backend.src.config_loader.get_simulated_resources', return_value={:
+simulated_resources": {
                     "placeholders": {
                         "string": {
                             "other_key": "other_value"

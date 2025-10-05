@@ -25,8 +25,8 @@ _ = sys.path.insert(0, str(backend_path / "src"))
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger: Any = logging.getLogger(__name__)
 
-class TextDataset(Dataset)
-    """文本数据集"""
+class TextDataset(Dataset):
+""文本数据集"""
 
     def __init__(self, data: List[Dict[str, Any]], vectorizer=None, max_features: int = 1000) -> None:
     self.data = data
@@ -37,8 +37,8 @@ class TextDataset(Dataset)
 
     _ = self._process_data()
 
-    def _process_data(self)
-    """处理文本数据"""
+    def _process_data(self):
+""处理文本数据"""
     texts = []
     # 基于文本长度创建标签
         for item in self.data:
@@ -77,8 +77,8 @@ class TextDataset(Dataset)
     label = self.labels[idx]
     return text_vector, label
 
-class SimpleTextModel(nn.Module)
-    """简单的文本模型"""
+class SimpleTextModel(nn.Module):
+""简单的文本模型"""
 
     def __init__(self, input_size: int = 1000, num_classes: int = 3) -> None:
     _ = super(SimpleTextModel, self).__init__()
@@ -116,9 +116,8 @@ class TextModelTrainer:
     _ = logger.info("正在加载处理后的文本数据...")
 
     processed_data_file = self.project_root / "data" / "processed_traditional_data" / "text_processed.json"
-        if processed_data_file.exists()
-
-    try:
+        if processed_data_file.exists():
+ry:
 
 
                 with open(processed_data_file, 'r', encoding='utf-8') as f:
@@ -134,8 +133,8 @@ class TextModelTrainer:
             _ = logger.warning(f"未找到处理后的文本数据文件: {processed_data_file}")
             return []
 
-    def train_model(self, epochs: int = 10, batch_size: int = 16, learning_rate: float = 0.001)
-    """训练文本模型"""
+    def train_model(self, epochs: int = 10, batch_size: int = 16, learning_rate: float = 0.001):
+""训练文本模型"""
     _ = logger.info("开始训练文本模型...")
 
     # 加载数据
@@ -161,16 +160,13 @@ class TextModelTrainer:
 
     # 训练循环
     _ = model.train()
-        for epoch in range(epochs)
-
-    running_loss = 0.0
+        for epoch in range(epochs):
+unning_loss = 0.0
             correct = 0
             total = 0
 
-            for batch_idx, (features, labels) in enumerate(dataloader)
-
-
-    features, labels = features.to(self.device), labels.to(self.device)
+            for batch_idx, (features, labels) in enumerate(dataloader):
+eatures, labels = features.to(self.device), labels.to(self.device)
 
                 # 前向传播
                 outputs = model(features)
@@ -204,8 +200,8 @@ class TextModelTrainer:
     _ = logger.info("文本模型训练完成!")
     return True, model
 
-    def save_model(self, model: nn.Module, num_classes: int, input_size: int)
-    """保存训练好的模型"""
+    def save_model(self, model: nn.Module, num_classes: int, input_size: int):
+""保存训练好的模型"""
     model_path = self.model_save_dir / "text_model.pth"
     metadata_path = self.model_save_dir / "text_model_metadata.json"
 
@@ -227,8 +223,8 @@ class TextModelTrainer:
     json.dump(metadata, f, ensure_ascii=False, indent=2)
     _ = logger.info(f"模型元数据已保存到: {metadata_path}")
 
-    def save_vectorizer(self)
-    """保存文本向量化器"""
+    def save_vectorizer(self):
+""保存文本向量化器"""
     import pickle
 
     vectorizer_path = self.model_save_dir / "text_vectorizer.pkl"

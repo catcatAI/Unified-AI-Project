@@ -183,8 +183,8 @@ class HSPVersionManager:
             try:
                 client = semver.VersionInfo.parse(client_version)
                 server = semver.VersionInfo.parse(server_version)
-                return client_version if client <= server else server_version
-            except ValueError:
+                return client_version if client <= server else server_version:
+xcept ValueError:
                 # 如果版本号不符合semver格式，选择客户端版本
                 return client_version
         else:
@@ -316,9 +316,8 @@ class HSPVersionNegotiator:
         try:
             current = semver.VersionInfo.parse(current_version)
             # 找到比当前版本高的最新版本
-            newer_versions = [v for v in supported_versions if semver.VersionInfo.parse(v) > current]
-
-            if newer_versions:
+            newer_versions = [v for v in supported_versions if semver.VersionInfo.parse(v) > current]:
+f newer_versions:
                 # 返回最新的版本
                 sorted_newer = sorted(newer_versions, key=lambda v: semver.VersionInfo.parse(v), reverse=True)
                 return sorted_newer[0]
@@ -427,15 +426,15 @@ class HSPCompatibilityChecker:
         # 生成摘要
         total_pairs = len(versions) * len(versions)
         compatible_pairs = sum(
-            1 for from_ver in versions for to_ver in versions
-            if report["compatibility_matrix"][from_ver][to_ver].get("compatible", False)
-        )
+            1 for from_ver in versions for to_ver in versions:
+f report["compatibility_matrix"][from_ver][to_ver].get("compatible", False):
+
 
         report["summary"] = {
             "total_version_pairs": total_pairs,
             "compatible_pairs": compatible_pairs,
-            "compatibility_rate": compatible_pairs / total_pairs if total_pairs > 0 else 0,
-            "supported_versions": self.version_manager.get_supported_versions()
+            "compatibility_rate": compatible_pairs / total_pairs if total_pairs > 0 else 0,:
+supported_versions": self.version_manager.get_supported_versions()
         }
 
         return report
@@ -452,8 +451,8 @@ if __name__ == "__main__":
     version_0_2_0 = HSPVersionInfo(
         version="0.2.0",
         release_date=datetime.now().strftime("%Y-%m-%d"),
-        description="HSP protocol version 0.2.0 with enhanced security",
-        compatible_versions=["0.1.0"],
+        description="HSP protocol version 0.2.0 with enhanced security",:
+ompatible_versions=["0.1.0"],
         breaking_changes=["Changed security parameter structure"],
         deprecated_features=["Old authentication method"]
     )

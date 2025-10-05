@@ -21,28 +21,28 @@ class TestRunner:
     """测试运行器"""
 
     def __init__(self, results_dir: str = "test_results") -> None:
-    """
-    初始化测试运行器
+        """
+        初始化测试运行器
 
-    Args:
+        Args:
             results_dir: 测试结果目录
-    """
-    self.results_dir = Path(results_dir)
-    self.results_dir.mkdir(exist_ok=True)
+        """
+        self.results_dir = Path(results_dir)
+        self.results_dir.mkdir(exist_ok=True)
 
-    def run_tests(self, test_paths: List[...]
-    """
-    运行测试套件
+    def run_tests(self, test_paths: Optional[List[str]] = None, extra_args: Optional[List[str]] = None) -> Dict[str, Any]:
+        """
+        运行测试套件
 
-    Args:
+        Args:
             test_paths: 测试路径列表
             extra_args: 额外的pytest参数
 
-    Returns:
+        Returns:
             测试结果
-    """
-    # 构建命令
-    cmd = [sys.executable, "-m", "pytest"]
+        """
+        # 构建命令
+        cmd = [sys.executable, "-m", "pytest"]
 
         if test_paths:
             cmd.extend(test_paths)
@@ -52,15 +52,15 @@ class TestRunner:
         if extra_args:
             cmd.extend(extra_args)
 
-    # 添加默认参数
-    cmd.extend([
+        # 添加默认参数
+        cmd.extend([
             "--tb=short",
             "--json-report",
             "--json-report-file=latest_test_results.json",
             "-v"
-    ])
+        ])
 
-    logger.info(f"运行测试命令: {' '.join(cmd)}")
+        logger.info(f"运行测试命令: {' '.join(cmd)}")
 
         try:
             # 运行测试
@@ -87,12 +87,12 @@ class TestRunner:
             }
 
     def _save_test_results(self, results: Dict[str, Any]) -> None:
-    """
-    保存测试结果
+        """
+        保存测试结果
 
-    Args:
+        Args:
             results: 测试结果
-    """
+        """
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"test_results_{timestamp}.json"
@@ -108,33 +108,33 @@ class TestRunner:
         except Exception as e:
             logger.error(f"保存测试结果失败: {e}")
 
-    def get_test_summary(self, results: Dict[...]
-    """
-    从测试结果中提取摘要信息
+    def get_test_summary(self, results: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        从测试结果中提取摘要信息
 
-    Args:
+        Args:
             results: 测试结果
 
-    Returns:
+        Returns:
             测试摘要
-    """
-    # 这里应该解析stdout来提取测试统计信息
-    # 简化实现，实际应该更复杂
-    stdout = results.get('stdout', '')
+        """
+        # 这里应该解析stdout来提取测试统计信息
+        # 简化实现，实际应该更复杂
+        stdout = results.get('stdout', '')
 
-    # 简单的统计提取
-    lines = stdout.split('\n')
-    summary_line = None
+        # 简单的统计提取
+        lines = stdout.split('\n')
+        summary_line = None
         for line in lines:
             if 'passed' in line and 'failed' in line:
                 summary_line = line
                 break
 
-    return {
+        return {
             "raw_summary": summary_line,
             "exit_code": results.get('exit_code', -1),
             "timestamp": results.get('timestamp')
-    }
+        }
 
 
 # 添加pytest标记，防止被误认为测试类

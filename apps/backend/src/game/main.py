@@ -39,21 +39,18 @@ class Game:
     self.angela = Angela(self)
     self.game_state_manager = GameStateManager(self)
 
-    def load_assets(self)
-    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'assets'))
+    def load_assets(self):
+ase_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'assets'))
         for asset_type in ['images', 'sprites']:
 
     asset_path = os.path.join(base_path, asset_type)
-            if not os.path.exists(asset_path)
-
-    logging.warning(f"Asset directory not found: {asset_path}")
+            if not os.path.exists(asset_path):
+ogging.warning(f"Asset directory not found: {asset_path}")
                 continue
-            for root, dirs, files in os.walk(asset_path)
-
-    for file in files:
-    if file.endswith('.png')
-
-    try:
+            for root, dirs, files in os.walk(asset_path):
+or file in files:
+    if file.endswith('.png'):
+ry:
 
 
             path = os.path.join(root, file)
@@ -71,8 +68,8 @@ class Game:
 
                             logging.error(f"Failed to load asset: {path} - {e}")
 
-    async def run(self)
-    if not self.is_running:
+    async def run(self):
+f not self.is_running:
 
     return
 
@@ -85,12 +82,12 @@ class Game:
             self.render
             self.clock.tick(60)
             frameCount += 1
-            if frameCount > 300: # 5 seconds
-                logging.info("Game loop finished")
+            if frameCount > 300: # 5 seconds:
+ogging.info("Game loop finished")
                 self.is_running = False
 
-    async def handle_events(self)
-    for event in pygame.event.get:
+    async def handle_events(self):
+or event in pygame.event.get:
 
     if event.type == pygame.QUIT:
 
@@ -98,11 +95,11 @@ class Game:
     self.is_running = False
             _ = await self.game_state_manager.handle_events(event)
 
-    async def update(self)
-    _ = await self.game_state_manager.update
+    async def update(self):
+ = await self.game_state_manager.update
 
-    def render(self)
-    self.game_state_manager.render(self.screen)
+    def render(self):
+elf.game_state_manager.render(self.screen)
     pygame.display.flip
 
 import asyncio
@@ -113,7 +110,6 @@ if __name__ == "__main__":
     async def main -> None:
     game = Game
     _ = await game.run
-        if hasattr(game, 'angela')
-
-    print(f"Angela's favorability: {game.angela.favorability}")
+        if hasattr(game, 'angela'):
+rint(f"Angela's favorability: {game.angela.favorability}")
     asyncio.run(main)

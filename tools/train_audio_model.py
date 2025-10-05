@@ -25,8 +25,8 @@ _ = sys.path.insert(0, str(backend_path / "src"))
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger: Any = logging.getLogger(__name__)
 
-class AudioDataset(Dataset)
-    """音频数据集"""
+class AudioDataset(Dataset):
+""音频数据集"""
 
     def __init__(self, data: List[Dict[str, Any]], sample_rate: int = 16000) -> None:
     self.data = data
@@ -55,9 +55,8 @@ class AudioDataset(Dataset)
     audio_path = item.get("audio_path")
 
     # 加载或创建音频数据
-        if audio_path and Path(audio_path).exists()
-
-    try:
+        if audio_path and Path(audio_path).exists():
+ry:
                 # 加载音频文件
                 audio, _ = librosa.load(audio_path, sr=self.sample_rate)
             except Exception as e:
@@ -95,8 +94,8 @@ class AudioDataset(Dataset)
     label = self.labels[idx]
     return mfccs, label
 
-class SimpleAudioModel(nn.Module)
-    """简单的音频模型"""
+class SimpleAudioModel(nn.Module):
+""简单的音频模型"""
 
     def __init__(self, num_classes: int = 2, input_size: int = 13) -> None:
     _ = super(SimpleAudioModel, self).__init__()
@@ -139,9 +138,8 @@ class AudioModelTrainer:
     _ = logger.info("正在加载处理后的音频数据...")
 
     processed_data_file = self.project_root / "data" / "processed_traditional_data" / "audio_processed.json"
-        if processed_data_file.exists()
-
-    try:
+        if processed_data_file.exists():
+ry:
 
 
                 with open(processed_data_file, 'r', encoding='utf-8') as f:
@@ -157,8 +155,8 @@ class AudioModelTrainer:
             _ = logger.warning(f"未找到处理后的音频数据文件: {processed_data_file}")
             return []
 
-    def train_model(self, epochs: int = 10, batch_size: int = 8, learning_rate: float = 0.001)
-    """训练音频模型"""
+    def train_model(self, epochs: int = 10, batch_size: int = 8, learning_rate: float = 0.001):
+""训练音频模型"""
     _ = logger.info("开始训练音频模型...")
 
     # 加载数据
@@ -182,16 +180,13 @@ class AudioModelTrainer:
 
     # 训练循环
     _ = model.train()
-        for epoch in range(epochs)
-
-    running_loss = 0.0
+        for epoch in range(epochs):
+unning_loss = 0.0
             correct = 0
             total = 0
 
-            for batch_idx, (features, labels) in enumerate(dataloader)
-
-
-    features, labels = features.to(self.device), labels.to(self.device)
+            for batch_idx, (features, labels) in enumerate(dataloader):
+eatures, labels = features.to(self.device), labels.to(self.device)
 
                 # 前向传播
                 outputs = model(features)
@@ -224,8 +219,8 @@ class AudioModelTrainer:
     _ = logger.info("音频模型训练完成!")
     return True
 
-    def save_model(self, model: nn.Module, num_classes: int)
-    """保存训练好的模型"""
+    def save_model(self, model: nn.Module, num_classes: int):
+""保存训练好的模型"""
     model_path = self.model_save_dir / "audio_model.pth"
     metadata_path = self.model_save_dir / "audio_model_metadata.json"
 

@@ -74,8 +74,8 @@ def test_resource_monitoring() -> None:
     test_task = {'model_name': 'concept_models'}
     try:
         can_execute = scheduler._can_execute_task(test_task)
-        print(f"  ✅ 任务执行检查: {'可以执行' if can_execute else '资源不足'}")
-    except Exception as e:
+        print(f"  ✅ 任务执行检查: {'可以执行' if can_execute else '资源不足'}"):
+xcept Exception as e:
         _ = print(f"  ❌ 任务执行检查失败: {e}")
         return False
     

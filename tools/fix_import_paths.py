@@ -13,8 +13,8 @@ from pathlib import Path
 project_root: str = Path(__file__).parent.parent
 _ = sys.path.insert(0, str(project_root))
 
-def fix_import_paths_in_file(file_path)
-    """修复单个文件中的导入路径"""
+def fix_import_paths_in_file(file_path):
+""修复单个文件中的导入路径"""
     try:
 
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -71,8 +71,8 @@ _ = sys.path.insert(0, str(backend_path / "src"))'''
     _ = print(f"❌ 修复文件 {file_path} 时出错: {e}")
     return False
 
-def fix_training_module_imports()
-    """修复训练模块中的导入路径"""
+def fix_training_module_imports():
+""修复训练模块中的导入路径"""
     training_dir = project_root / "training"
 
     # 需要修复的文件列表
@@ -93,9 +93,8 @@ def fix_training_module_imports()
     for file_name in files_to_fix:
 
     file_path = training_dir / file_name
-        if file_path.exists()
-
-    if fix_import_paths_in_file(file_path)
+        if file_path.exists():
+f fix_import_paths_in_file(file_path)
     fixed_count += 1
         else:
 
@@ -104,8 +103,8 @@ def fix_training_module_imports()
     _ = print(f"✅ 已修复 {fixed_count}/{len(files_to_fix)} 个训练模块文件")
     return fixed_count
 
-def fix_concept_models_imports()
-    """修复概念模型中的导入路径"""
+def fix_concept_models_imports():
+""修复概念模型中的导入路径"""
     concept_models_dir = project_root / "apps" / "backend" / "src" / "ai" / "concept_models"
 
     # 需要修复的文件列表
@@ -120,9 +119,8 @@ def fix_concept_models_imports()
     for file_name in files_to_fix:
 
     file_path = concept_models_dir / file_name
-        if file_path.exists()
-
-    if fix_import_paths_in_file(file_path)
+        if file_path.exists():
+f fix_import_paths_in_file(file_path)
     fixed_count += 1
         else:
 
@@ -131,8 +129,8 @@ def fix_concept_models_imports()
     _ = print(f"✅ 已修复 {fixed_count}/{len(files_to_fix)} 个概念模型文件")
     return fixed_count
 
-def update_technical_debt_status()
-    """更新技术债务状态"""
+def update_technical_debt_status():
+""更新技术债务状态"""
     debt_file = project_root / "technical_debt.json"
 
     try:
@@ -145,8 +143,8 @@ def update_technical_debt_status()
     # 更新导入路径问题的状态
         for debt in debt_data["debts"]:
 
-    if debt["id"] == "debt_001":  # 导入路径问题
-                debt["status"] = "resolved"
+    if debt["id"] == "debt_001":  # 导入路径问题:
+ebt["status"] = "resolved"
                 debt["resolution"] = "统一了项目中的导入路径，将相对导入改为绝对导入"
                 debt["resolved_date"] = "2025-09-06T10:00:00"
                 break
@@ -187,9 +185,8 @@ def main() -> None:
     _ = print(f"\n📊 修复总结:")
     _ = print(f"   训练模块文件修复: {training_fixed} 个")
     _ = print(f"   概念模型文件修复: {concept_models_fixed} 个")
-    print(f"   技术债务状态更新: {'成功' if debt_updated else '失败'}")
-
-    if training_fixed > 0 or concept_models_fixed > 0:
+    print(f"   技术债务状态更新: {'成功' if debt_updated else '失败'}"):
+f training_fixed > 0 or concept_models_fixed > 0:
 
 
     _ = print("\n✅ 导入路径问题修复完成！")

@@ -6,8 +6,8 @@ from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional, Dict, List
 
-# Add src directory to sys.path for dependency manager import
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Add src directory to sys.path for dependency manager import:
+CRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
@@ -37,12 +37,12 @@ Dropout = None
 pad_sequences = None
 to_categorical = None
 
-def _ensure_tensorflow_is_imported()
-    """
+def _ensure_tensorflow_is_imported():
+""
     Lazily imports TensorFlow and its Keras components using dependency manager.
     Catches a broader range of exceptions, including potential fatal errors on import.
-    Returns True if successful, False otherwise.
-    """
+    Returns True if successful, False otherwise.:
+""
     global tf, Model, Input, Embedding, LSTM, Dense, Dropout, pad_sequences, to_categorical
 
     if tf is not None:
@@ -51,14 +51,13 @@ def _ensure_tensorflow_is_imported()
     return True
 
     # Check dependency manager first without triggering import
-    if dependency_manager.is_available('tensorflow')
-
-    tf_module = dependency_manager.get_dependency('tensorflow')
+    if dependency_manager.is_available('tensorflow'):
+f_module = dependency_manager.get_dependency('tensorflow')
         if tf_module:
 
     tf = tf_module
-            # Populate globals if successful
-    Model = getattr(tf.keras.models, 'Model', None)
+            # Populate globals if successful:
+odel = getattr(tf.keras.models, 'Model', None)
             Input = getattr(tf.keras.layers, 'Input', None)
             Embedding = getattr(tf.keras.layers, 'Embedding', None)
             LSTM = getattr(tf.keras.layers, 'LSTM', None)
@@ -90,8 +89,8 @@ def _ensure_tensorflow_is_imported()
             status.module = tf
     return True
     except Exception as e:
-        # Catch any exception during import, including fatal ones if possible.
-    print(f"CRITICAL: Failed to import TensorFlow. Logic model NN functionality will be disabled. Error: {e}")
+        # Catch any exception during import, including fatal ones if possible.:
+rint(f"CRITICAL: Failed to import TensorFlow. Logic model NN functionality will be disabled. Error: {e}")
     status = dependency_manager.get_status('tensorflow')
         if status:
 
@@ -101,11 +100,11 @@ def _ensure_tensorflow_is_imported()
     tf = None
     return False
 
-def _tensorflow_is_available()
-    """Check if TensorFlow is available without triggering an import."""
+def _tensorflow_is_available():
+""Check if TensorFlow is available without triggering an import."""
     # This function now relies on the lazy-loading mechanism.
-    # It returns true only if _ensure_tensorflow_is_imported has been successfully called.
-    return tf is not None
+    # It returns true only if _ensure_tensorflow_is_imported has been successfully called.:
+eturn tf is not None
 
 # DO NOT attempt to import TensorFlow on module load. It will be loaded lazily.
 # _ensure_tensorflow_is_imported
@@ -134,8 +133,8 @@ class LogicNNModel:
     self.dna_chains =   # DNA数据链存储
     self.prediction_history =   # 预测历史记录
 
-    def _build_model(self)
-    if not _tensorflow_is_available:
+    def _build_model(self):
+f not _tensorflow_is_available:
 
     print("Cannot build model: TensorFlow not available.")
             return
@@ -152,8 +151,8 @@ class LogicNNModel:
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     self.model = model
 
-    def train(self, X_train, y_train, X_val, y_val, epochs=20, batch_size=32)
-    if not _tensorflow_is_available or self.model is None:
+    def train(self, X_train, y_train, X_val, y_val, epochs=20, batch_size=32):
+f not _tensorflow_is_available or self.model is None:
 
     print("Cannot train model: TensorFlow not available or model not built.")
             return None
@@ -166,8 +165,8 @@ class LogicNNModel:
     print("Training complete.")
     return history
 
-    def predict(self, proposition_str, char_to_token, dna_chain_id: Optional[str] = None)
-    if not _tensorflow_is_available or self.model is None:
+    def predict(self, proposition_str, char_to_token, dna_chain_id: Optional[str] = None):
+f not _tensorflow_is_available or self.model is None:
 
     print("Cannot predict: TensorFlow not available or model not built.")
             return False # Default/dummy return
@@ -199,8 +198,8 @@ class LogicNNModel:
     # Add to prediction history
     self.prediction_history.append(result)
 
-        # Add to DNA chain if provided
-    if dna_chain_id:
+        # Add to DNA chain if provided:
+f dna_chain_id:
 
     if dna_chain_id not in self.dna_chains:
     self.dna_chains[dna_chain_id] = DNADataChain(dna_chain_id)
@@ -223,8 +222,8 @@ class LogicNNModel:
     """获取DNA数据链"""
     return self.dna_chains.get(chain_id)
 
-    def save_model(self, path)
-    if not _tensorflow_is_available or self.model is None:
+    def save_model(self, path):
+f not _tensorflow_is_available or self.model is None:
 
     print("Cannot save model: TensorFlow not available or model not built.")
             return
@@ -232,8 +231,8 @@ class LogicNNModel:
     print(f"Model saved to {path}")
 
     @classmethod
-    def load_model(cls, model_path, char_maps_path)
-    if not _ensure_tensorflow_is_imported:
+    def load_model(cls, model_path, char_maps_path):
+f not _ensure_tensorflow_is_imported:
 
     print("Cannot load model: TensorFlow not available.")
             return None
@@ -252,9 +251,9 @@ class LogicNNModel:
     print(f"Model loaded from {model_path}")
     return instance
 
-# --- Helper functions for data preparation ---
-def get_logic_char_token_maps(dataset_path)
-    if not _tensorflow_is_available:
+# --- Helper functions for data preparation ---:
+ef get_logic_char_token_maps(dataset_path):
+f not _tensorflow_is_available:
 
     print("Cannot get char maps: TensorFlow not available.")
     return None, None, None, None
@@ -281,8 +280,8 @@ def get_logic_char_token_maps(dataset_path)
 
     return char_to_token, token_to_char, vocab_size, max_seq_len
 
-def preprocess_logic_data(dataset_path, char_to_token, max_len, num_classes=2)
-    """Preprocess logic data for training.""":
+def preprocess_logic_data(dataset_path, char_to_token, max_len, num_classes=2):
+""Preprocess logic data for training.""":
     if not _tensorflow_is_available:
 
     print("Cannot preprocess data: TensorFlow not available.")

@@ -23,15 +23,15 @@ _ = sys.path.insert(0, str(project_root))
 
 # 创建基本模拟类
 class ErrorContext:
-    def __init__(self, component, operation, details=None)
-    self.component = component
+    def __init__(self, component, operation, details=None):
+elf.component = component
     self.operation = operation
     self.details = details or {}
 
 class GlobalErrorHandler:
     @staticmethod
-    def handle_error(error, context, strategy=None)
-    print(f"Error in {context.component}.{context.operation}: {error}")
+    def handle_error(error, context, strategy=None):
+rint(f"Error in {context.component}.{context.operation}: {error}")
 
 global_error_handler = GlobalErrorHandler()
 
@@ -65,15 +65,13 @@ class TrainingVisualizer:
 
     _ = logger.info("📊 训练可视化器初始化完成")
 
-    def load_training_data(self)
-    """加载训练日志数据"""
+    def load_training_data(self):
+""加载训练日志数据"""
     context = ErrorContext("TrainingVisualizer", "load_training_data")
         try:
 
-            if not self.log_file.exists()
-
-
-    _ = logger.warning(f"⚠️  训练日志文件不存在: {self.log_file}")
+            if not self.log_file.exists():
+ = logger.warning(f"⚠️  训练日志文件不存在: {self.log_file}")
                 return []
 
             training_data = []
@@ -323,9 +321,8 @@ class TrainingVisualizer:
             anomaly_matrix = np.zeros((len(scenario_names), len(metrics_names)))
 
             # 计算每个场景和指标的异常数量
-            for i, scenario in enumerate(scenario_names)
-
-    data_list = scenarios[scenario]
+            for i, scenario in enumerate(scenario_names):
+ata_list = scenarios[scenario]
                 for data in data_list:
 
     metrics = data['metrics']
@@ -400,8 +397,8 @@ class TrainingVisualizer:
             # 创建综合报告
             report_data = {
                 'timestamp': datetime.now().isoformat(),
-                'total_scenarios': len(set(d['scenario'] for d in training_data)),
-                'total_epochs': len(training_data),
+                'total_scenarios': len(set(d['scenario'] for d in training_data)),:
+total_epochs': len(training_data),
                 'scenarios': {}
             }
 
@@ -451,8 +448,8 @@ class TrainingVisualizer:
     return self.create_training_report(training_data)
 
     def create_comprehensive_report(self, training_data: List[Dict[str, Any]],
-                                  output_file: str)
-    """创建综合可视化报告"""
+                                  output_file: str):
+""创建综合可视化报告"""
     context = ErrorContext("TrainingVisualizer", "create_comprehensive_report")
         try:
             # 创建大图
@@ -483,8 +480,8 @@ class TrainingVisualizer:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 创建综合报告失败: {e}")
 
-    def _plot_training_progress_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]])
-    """在指定轴上绘制训练进度"""
+    def _plot_training_progress_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]]):
+""在指定轴上绘制训练进度"""
         try:
 
             metrics_data = [entry for entry in training_data if entry.get('type') == 'training_metrics']:
@@ -517,8 +514,8 @@ class TrainingVisualizer:
 
             _ = logger.error(f"绘制训练进度图时出错: {e}")
 
-    def _plot_system_resources_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]])
-    """在指定轴上绘制系统资源"""
+    def _plot_system_resources_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]]):
+""在指定轴上绘制系统资源"""
         try:
 
             resources_data = [entry for entry in training_data if entry.get('type') == 'system_resources']:
@@ -555,8 +552,8 @@ class TrainingVisualizer:
 
             _ = logger.error(f"绘制系统资源图时出错: {e}")
 
-    def _plot_anomalies_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]])
-    """在指定轴上绘制异常检测"""
+    def _plot_anomalies_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]]):
+""在指定轴上绘制异常检测"""
         try:
 
             metrics_data = [entry for entry in training_data if entry.get('type') == 'training_metrics']:
@@ -591,8 +588,8 @@ class TrainingVisualizer:
 
             _ = logger.error(f"绘制异常检测图时出错: {e}")
 
-    def _plot_performance_stats_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]])
-    """在指定轴上绘制性能统计"""
+    def _plot_performance_stats_on_ax(self, ax: Axes, training_data: List[Dict[str, Any]]):
+""在指定轴上绘制性能统计"""
         try:
             # 计算一些基本统计信息
             metrics_data = [entry for entry in training_data if entry.get('type') == 'training_metrics']:
@@ -631,8 +628,8 @@ class TrainingVisualizer:
 
             _ = logger.error(f"绘制性能统计时出错: {e}")
 
-    def real_time_visualization(self, scenario_name: str = "default")
-    """实时可视化训练过程"""
+    def real_time_visualization(self, scenario_name: str = "default"):
+""实时可视化训练过程"""
     context = ErrorContext("TrainingVisualizer", "real_time_visualization")
         try:
 
@@ -728,8 +725,8 @@ class TrainingVisualizer:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 实时训练可视化失败: {e}")
 
-    def generate_visualization_script(self, output_path = None)
-    """生成独立的可视化脚本"""
+    def generate_visualization_script(self, output_path = None):
+""生成独立的可视化脚本"""
     context = ErrorContext("TrainingVisualizer", "generate_visualization_script")
         try:
 
@@ -751,11 +748,10 @@ import matplotlib.dates as mdates
 from datetime import datetime
 from pathlib import Path
 
-def load_training_data(log_file="logs/training_monitor.log")
-    """加载训练日志数据"""
-    if not Path(log_file).exists()
-
-    _ = print(f"日志文件不存在: {log_file}")
+def load_training_data(log_file="logs/training_monitor.log"):
+""加载训练日志数据"""
+    if not Path(log_file).exists():
+ = print(f"日志文件不存在: {log_file}")
     return []
 
     training_data = []
@@ -780,8 +776,8 @@ def load_training_data(log_file="logs/training_monitor.log")
     _ = print(f"加载日志数据失败: {e}")
     return []
 
-def create_progress_plot(training_data, output_file="progress_visualization.png")
-    """创建训练进度图"""
+def create_progress_plot(training_data, output_file="progress_visualization.png"):
+""创建训练进度图"""
     metrics_data = [entry for entry in training_data if entry.get('type') == 'training_metrics']:
     if not metrics_data:
 
@@ -847,9 +843,8 @@ def main() -> None:
 
     # 创建示例数据结构
     training_data = []
-        for i, epoch in enumerate(epochs)
-
-    training_data.append({
+        for i, epoch in enumerate(epochs):
+raining_data.append({
                 _ = 'timestamp': datetime.now().isoformat(),
                 'type': 'training_metrics',
                 'epoch': epoch,
@@ -907,16 +902,14 @@ def main() -> None:
     training_data = []
 
     # 添加训练指标数据
-    for epoch in range(1, 21)
-
-    timestamp = datetime.now().isoformat()
+    for epoch in range(1, 21):
+imestamp = datetime.now().isoformat()
     metrics = {
             'loss': max(0.01, 1.0 * np.exp(-epoch/5) + np.random.normal(0, 0.05)),
             'accuracy': min(0.99, 0.1 + 0.9 * (1 - np.exp(-epoch/4)) + np.random.normal(0, 0.02))
     }
-        anomalies = [] if np.random.random() > 0.8 else [{'type': 'loss_spike'}]
-
-    training_data.append({
+        anomalies = [] if np.random.random() > 0.8 else [{'type': 'loss_spike'}]:
+raining_data.append({
             'timestamp': timestamp,
             'type': 'training_metrics',
             'epoch': epoch,

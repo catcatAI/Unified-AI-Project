@@ -26,9 +26,8 @@ class ParameterExtractor:
 
     Returns: str The path to the downloaded file.
     """
-        if not os.path.exists(cache_dir)
-
-    os.makedirs(cache_dir)
+        if not os.path.exists(cache_dir):
+s.makedirs(cache_dir)
 
     return hf_hub_download(repo_id=self.repo_id, filename=filename, cache_dir=cache_dir)
 
@@ -51,8 +50,8 @@ class ParameterExtractor:
     mapped_params[target_key] = source_params[source_key]
     return mapped_params
 
-    def load_parameters_to_model(self, model: Any, params: Dict[str, Any])
-    """
+    def load_parameters_to_model(self, model: Any, params: Dict[str, Any]):
+""
     Loads parameters into a model.
 
     Args:
@@ -61,16 +60,12 @@ class ParameterExtractor:
     """
     # This is a simplified implementation. In a real-world scenario, you would
     # need to handle different model types and parameter loading mechanisms.
-        if hasattr(model, "load_state_dict")
-
-    model.load_state_dict(params)
+        if hasattr(model, "load_state_dict"):
+odel.load_state_dict(params)
         else:
 
             for key, value in params.items:
 
 
-    if hasattr(model, key)
-
-
-
-    setattr(model, key, value)
+    if hasattr(model, key):
+etattr(model, key, value)

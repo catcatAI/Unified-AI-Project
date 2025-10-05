@@ -58,15 +58,13 @@ class VersionControlManager:
     _ = self._load_versions()
     _ = logger.info("🔄 版本控制管理器初始化完成")
 
-    def _load_versions(self)
-    """加载版本信息"""
+    def _load_versions(self):
+""加载版本信息"""
     context = ErrorContext("VersionControlManager", "_load_versions")
         try:
 
-            if self.version_file.exists()
-
-
-    with open(self.version_file, 'r', encoding='utf-8') as f:
+            if self.version_file.exists():
+ith open(self.version_file, 'r', encoding='utf-8') as f:
     self.versions = json.load(f)
                 _ = logger.info(f"✅ 加载版本信息: {self.version_file}")
         except Exception as e:
@@ -74,8 +72,8 @@ class VersionControlManager:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 加载版本信息失败: {e}")
 
-    def _save_versions(self)
-    """保存版本信息"""
+    def _save_versions(self):
+""保存版本信息"""
     context = ErrorContext("VersionControlManager", "_save_versions")
         try:
             # 确保模型目录存在
@@ -109,9 +107,8 @@ class VersionControlManager:
                     # 解析最新版本号
                     latest_version = versions[-1]
                     version_str = latest_version['version'].split('_')[0]  # 获取 vX.Y.Z 部分
-                    if version_str.startswith('v')
-
-    version_parts = version_str[1:].split('.')
+                    if version_str.startswith('v'):
+ersion_parts = version_str[1:].split('.')
                         if len(version_parts) == 3:
 
     major, minor, patch = map(int, version_parts)
@@ -174,9 +171,8 @@ class VersionControlManager:
             model_name: 模型名称
             model_path: 模型文件路径
             metadata: 版本元数据
-            _ = version_type: 版本类型 (release, beta, alpha)
-
-    Returns:
+            _ = version_type: 版本类型 (release, beta, alpha):
+eturns:
             Optional[str]: 版本名称，如果创建失败则返回None
     """
     context = ErrorContext("VersionControlManager", "create_version", {
@@ -185,10 +181,8 @@ class VersionControlManager:
     })
         try:
 
-            if not model_path.exists()
-
-
-    _ = logger.error(f"❌ 模型文件不存在: {model_path}")
+            if not model_path.exists():
+ = logger.error(f"❌ 模型文件不存在: {model_path}")
                 return None
 
             # 生成版本名称
@@ -211,12 +205,12 @@ class VersionControlManager:
                 _ = 'created_at': datetime.now().isoformat(),
                 'model_name': model_name,
                 'version_type': version_type,
-                'performance_metrics': metadata.get('performance_metrics', {}) if metadata else {},
-                'training_data': metadata.get('training_data', {}) if metadata else {},
-                'change_log': metadata.get('change_log', '') if metadata else '',
-                'tags': metadata.get('tags', []) if metadata else [],
-                'dependencies': metadata.get('dependencies', []) if metadata else [],
-                'size_bytes': file_size,
+                'performance_metrics': metadata.get('performance_metrics', {}) if metadata else {},:
+training_data': metadata.get('training_data', {}) if metadata else {},:
+change_log': metadata.get('change_log', '') if metadata else '',:
+tags': metadata.get('tags', []) if metadata else [],:
+dependencies': metadata.get('dependencies', []) if metadata else [],:
+size_bytes': file_size,
                 'hash': file_hash
             }
 
@@ -282,9 +276,8 @@ class VersionControlManager:
                 return False
 
             target_path = Path(target_version_info['path'])
-            if not target_path.exists()
-
-    _ = logger.error(f"❌ 版本文件不存在: {target_path}")
+            if not target_path.exists():
+ = logger.error(f"❌ 版本文件不存在: {target_path}")
                 return False
 
             # 备份当前版本（如果存在）
@@ -304,9 +297,8 @@ class VersionControlManager:
 
 
     current_path = Path(current_version_info['path'])
-                    if current_path.exists()
-
-    backup_name = f"{current_version}_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pth"
+                    if current_path.exists():
+ackup_name = f"{current_version}_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pth"
                         backup_path = self.models_dir / backup_name
                         _ = shutil.copy2(current_path, backup_path)
                         _ = logger.info(f"💾 备份当前版本到: {backup_name}")
@@ -517,12 +509,8 @@ class VersionControlManager:
 
 
 
-    if tag in version_info.get('tags', [])
-
-
-
-
-    _ = matching_versions.append(version_info)
+    if tag in version_info.get('tags', []):
+ = matching_versions.append(version_info)
 
             return matching_versions
         except Exception as e:
@@ -589,14 +577,12 @@ class VersionControlManager:
             # 查找并删除版本信息
             version_found = False
             versions = self.versions[model_name]['versions']
-            for i, version_info in enumerate(versions)
-
-    if version_info['version'] == version:
+            for i, version_info in enumerate(versions):
+f version_info['version'] == version:
                     # 删除版本文件
                     version_path = Path(version_info['path'])
-                    if version_path.exists()
-
-    _ = version_path.unlink()
+                    if version_path.exists():
+ = version_path.unlink()
                         _ = logger.info(f"🗑️  删除版本文件: {version_path}")
 
                     # 从版本列表中移除
@@ -659,8 +645,8 @@ def main() -> None:
             'data_count': 1000,
             'data_types': ['text', 'json']
     },
-        'change_log': 'Initial version for testing',
-    'tags': ['test', 'initial']
+        'change_log': 'Initial version for testing',:
+tags': ['test', 'initial']
     }
 
     version1 = version_controller.create_version("test_model", test_model_path, metadata, "release")
@@ -674,9 +660,8 @@ def main() -> None:
 
     # 修改测试文件并创建第二个版本
     with open(test_model_path, 'w') as f:
-    f.write("This is an updated test model file for version control testing.")
-
-    metadata2 = {
+    f.write("This is an updated test model file for version control testing."):
+etadata2 = {
     'performance_metrics': {
             'accuracy': 0.97,
             'loss': 0.03,

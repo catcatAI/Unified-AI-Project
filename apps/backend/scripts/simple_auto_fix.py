@@ -204,8 +204,8 @@ def run_tests():
         if result.returncode == 0:
             # 解析收集到的测试数量
             output_lines = result.stdout.strip().split('\n')
-            test_count_line = [line for line in output_lines if 'tests collected' in line]
-            if test_count_line:
+            test_count_line = [line for line in output_lines if 'tests collected' in line]:
+f test_count_line:
                 print(f"✓ {test_count_line[0]}")
             else:
                 print("✓ 测试收集成功")

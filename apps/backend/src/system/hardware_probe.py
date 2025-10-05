@@ -226,8 +226,8 @@ class HardwareProbe:
     def _detect_network(self) -> NetworkInfo:
     _ = """Detect network information (basic implementation)"""
         try:
-            # Basic network info - can be enhanced with actual speed tests
-    return NetworkInfo(
+            # Basic network info - can be enhanced with actual speed tests:
+eturn NetworkInfo(
                 bandwidth_download=100.0,  # Placeholder
                 bandwidth_upload=50.0,     # Placeholder
                 latency=50.0,              # Placeholder
@@ -246,14 +246,9 @@ class HardwareProbe:
                 "wmic", "cpu", "get", "name", "/format:value"
             ], capture_output=True, text=True, timeout=10)
 
-            for line in result.stdout.split('\n')
-
-
-    if line.startswith('Name=')
-
-
-
-    return line.split('=', 1)[1].strip
+            for line in result.stdout.split('\n'):
+f line.startswith('Name='):
+eturn line.split('=', 1)[1].strip
         except Exception:
 
             pass
@@ -278,10 +273,8 @@ class HardwareProbe:
             with open('/proc/cpuinfo', 'r') as f:
     for line in f:
 
-    if line.startswith('model name')
-
-
-    return line.split(':', 1)[1].strip
+    if line.startswith('model name'):
+eturn line.split(':', 1)[1].strip
         except Exception:
 
             pass
@@ -300,11 +293,8 @@ class HardwareProbe:
             if result.returncode == 0:
 
 
-    for line in result.stdout.strip.split('\n')
-
-
-
-    if line.strip:
+    for line in result.stdout.strip.split('\n'):
+f line.strip:
 
 
 
@@ -357,9 +347,8 @@ class HardwareProbe:
                     gpu_data = json.loads(result.stdout)
 
                     # Handle both single GPU and multiple GPU cases
-                    if isinstance(gpu_data, list)
-
-    gpu_list = gpu_data
+                    if isinstance(gpu_data, list):
+pu_list = gpu_data
                     else:
 
                         gpu_list = [gpu_data]
@@ -375,15 +364,15 @@ class HardwareProbe:
                         # Convert RAM from bytes to MB
                         memory_total = int(adapter_ram / (1024 * 1024)) if adapter_ram else 1024
 
-                        # Estimate available memory (shared system memory for integrated graphics)
-    memory_available = min(memory_total, 512)  # Default estimate for integrated graphics
+                        # Estimate available memory (shared system memory for integrated graphics):
+emory_available = min(memory_total, 512)  # Default estimate for integrated graphics
 
-                        # Check if this is integrated graphics
-    is_integrated = any(keyword in name.lower or keyword in adapter_compatibility.lower
+                        # Check if this is integrated graphics:
+s_integrated = any(keyword in name.lower or keyword in adapter_compatibility.lower
                                           for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
 
-                        # For integrated graphics, memory is shared with system RAM
-    if is_integrated:
+                        # For integrated graphics, memory is shared with system RAM:
+f is_integrated:
                             # Get system memory to estimate shared GPU memory
                             try:
 
@@ -447,12 +436,11 @@ class HardwareProbe:
                     if isinstance(gpu_data, list) and len(gpu_data) > 0:
 
     gpu_info = gpu_data[0]  # Take the first matching GPU
-                    elif isinstance(gpu_data, dict)
-
-    gpu_info = gpu_data
+                    elif isinstance(gpu_data, dict):
+pu_info = gpu_data
                     else:
-                        # Fallback to general GPU query if specific query returned nothing
-    result = subprocess.run([
+                        # Fallback to general GPU query if specific query returned nothing:
+esult = subprocess.run([
                             "powershell.exe",
                             "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM, DriverVersion | ConvertTo-Json"
                         ], capture_output=True, text=True, timeout=10)
@@ -464,9 +452,8 @@ class HardwareProbe:
                             if isinstance(gpu_data, list) and len(gpu_data) > 0:
 
     gpu_info = gpu_data[0]
-                            elif isinstance(gpu_data, dict)
-
-    gpu_info = gpu_data
+                            elif isinstance(gpu_data, dict):
+pu_info = gpu_data
                             else:
 
                                 raise ValueError("No GPU data found")
@@ -515,9 +502,8 @@ class HardwareProbe:
 
             if result.returncode == 0:
                 # Parse CUDA version from output
-                for line in result.stdout.split('\n')
-
-    if 'release' in line.lower:
+                for line in result.stdout.split('\n'):
+f 'release' in line.lower:
 
 
     import re
@@ -535,8 +521,8 @@ class HardwareProbe:
     try:
 
         if self.platform_name == "linux":
-                # Check /sys/block for rotational flag
-    for device in os.listdir('/sys/block')
+                # Check /sys/block for rotational flag:
+or device in os.listdir('/sys/block')
 
     if device.startswith(('sd', 'nvme')):
 
@@ -579,8 +565,8 @@ class HardwareProbe:
                                      memory: MemoryInfo, storage: StorageInfo) -> Tuple[str, float]:
     """Calculate performance tier and AI capability score"""
 
-        # Base scores for different components
-    cpu_score = 0.0
+        # Base scores for different components:
+pu_score = 0.0
     gpu_score = 0.0
     memory_score = 0.0
     storage_score = 0.0
@@ -609,41 +595,41 @@ class HardwareProbe:
 
     best_gpu = max(gpu, key=lambda g: g.memory_total)
 
-            # Check if this is a discrete GPU or integrated graphics
-    is_discrete = not any(keyword in best_gpu.name.lower
+            # Check if this is a discrete GPU or integrated graphics:
+s_discrete = not any(keyword in best_gpu.name.lower
                                 for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
 
-            # CUDA support bonus (typically only for NVIDIA discrete GPUs)
-    if best_gpu.cuda_version:
+            # CUDA support bonus (typically only for NVIDIA discrete GPUs):
+f best_gpu.cuda_version:
 
     gpu_score += 10
 
             # Memory scoring
-            if best_gpu.memory_total >= 8192:  # 8GB+
-                gpu_score += 20 if is_discrete else 15  # Lower score for integrated graphics
-    elif best_gpu.memory_total >= 4096:  # 4GB+
-                gpu_score += 15 if is_discrete else 10:
-    elif best_gpu.memory_total >= 2048:  # 2GB+
-                gpu_score += 10 if is_discrete else 7:
-    elif best_gpu.memory_total >= 1024:  # 1GB+
-                gpu_score += 5 if is_discrete else 3
+            if best_gpu.memory_total >= 8192:  # 8GB+:
+pu_score += 20 if is_discrete else 15  # Lower score for integrated graphics:
+lif best_gpu.memory_total >= 4096:  # 4GB+:
+pu_score += 15 if is_discrete else 10:
+    elif best_gpu.memory_total >= 2048:  # 2GB+:
+pu_score += 10 if is_discrete else 7:
+    elif best_gpu.memory_total >= 1024:  # 1GB+:
+pu_score += 5 if is_discrete else 3
 
-            # Bonus for discrete GPUs
-    if is_discrete:
+            # Bonus for discrete GPUs:
+f is_discrete:
 
     gpu_score += 5
 
     # Memory scoring (0-25 points)
-        if memory.total >= 32768:  # 32GB+
-            memory_score = 25
-        elif memory.total >= 16384:  # 16GB+
-            memory_score = 20
-        elif memory.total >= 8192:   # 8GB+
-            memory_score = 15
-        elif memory.total >= 4096:   # 4GB+
-            memory_score = 10
-        elif memory.total >= 2048:   # 2GB+
-            memory_score = 5
+        if memory.total >= 32768:  # 32GB+:
+emory_score = 25
+        elif memory.total >= 16384:  # 16GB+:
+emory_score = 20
+        elif memory.total >= 8192:   # 8GB+:
+emory_score = 15
+        elif memory.total >= 4096:   # 4GB+:
+emory_score = 10
+        elif memory.total >= 2048:   # 2GB+:
+emory_score = 5
 
     # Storage scoring (0-15 points)
         if storage.disk_type == "SSD":
@@ -653,8 +639,8 @@ class HardwareProbe:
 
     storage_score += 5
 
-        if storage.available >= 100:  # 100GB+ free
-            storage_score += 5
+        if storage.available >= 100:  # 100GB+ free:
+torage_score += 5
 
     # Calculate total score (0-100)
     total_score = cpu_score + gpu_score + memory_score + storage_score

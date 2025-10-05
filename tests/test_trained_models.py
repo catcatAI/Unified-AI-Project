@@ -231,10 +231,9 @@ def main() -> None:
         _ = test_logic_model_prediction()
     
     print("\n=== 测试完成 ===")
-    print(f"数学模型加载: {'✅ 成功' if math_load_success else '❌ 失败'}")
-    print(f"逻辑模型加载: {'✅ 成功' if logic_load_success else '❌ 失败'}")
-    
-    if math_load_success and logic_load_success:
+    print(f"数学模型加载: {'✅ 成功' if math_load_success else '❌ 失败'}"):
+rint(f"逻辑模型加载: {'✅ 成功' if logic_load_success else '❌ 失败'}"):
+f math_load_success and logic_load_success:
         _ = print("🎉 所有模型测试通过！")
         return True
     else:

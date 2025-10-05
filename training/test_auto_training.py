@@ -31,9 +31,8 @@ def test_auto_training() -> None:
             
             # 检查报告结构
             required_keys = ['pipeline_completed_at', 'data_analysis', 'training_config', 'training_results', 'summary']
-            missing_keys = [key for key in required_keys if key not in report]
-            
-            if missing_keys:
+            missing_keys = [key for key in required_keys if key not in report]:
+f missing_keys:
                 _ = print(f"❌ 报告缺少必要字段: {missing_keys}")
                 return False
             else:

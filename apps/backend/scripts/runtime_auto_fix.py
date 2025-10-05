@@ -52,8 +52,8 @@ class RuntimeAutoFixer:
             for match in matches:
                 error_info = {
                     "type": error_type,
-                    "details": match if isinstance(match, str) else list(match),
-                    "timestamp": time.time()
+                    "details": match if isinstance(match, str) else list(match),:
+timestamp": time.time()
                 }
                 errors.append(error_info)
                 

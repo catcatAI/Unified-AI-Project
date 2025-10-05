@@ -54,15 +54,15 @@ class TestResultFeedbackSystem:
     suggestions = []
 
     # 分析失败模式建议
-    failure_analysis = analysis_report.get('failure_analysis', [])
-        for failure in failure_analysis:
+    failure_analysis = analysis_report.get('failure_analysis', []):
+or failure in failure_analysis:
 
     suggestions.append({
                 'type': 'failure_pattern',
                 'title': f'处理"{failure["pattern"]}"失败模式',
                 'description': f'检测到{failure["count"]}个"{failure["pattern"]}"相关的失败测试',
-                'priority': 'high' if failure['count'] > 5 else 'medium',
-                'affected_tests': failure['affected_tests']
+                'priority': 'high' if failure['count'] > 5 else 'medium',:
+affected_tests': failure['affected_tests']
             })
 
     # 性能回归建议
@@ -73,8 +73,8 @@ class TestResultFeedbackSystem:
                 'type': 'performance_regression',
                 'title': f'优化{regression["test_name"]}性能',
                 'description': f'性能下降{regression["regression_ratio"]*100:.1f}%，当前时间{regression["current_time"]:.4f}s',
-                'priority': 'high' if regression['regression_ratio'] > 0.5 else 'medium',
-                'test_name': regression['test_name']
+                'priority': 'high' if regression['regression_ratio'] > 0.5 else 'medium',:
+test_name': regression['test_name']
             })
 
     # 整体质量建议

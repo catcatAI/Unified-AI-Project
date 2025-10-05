@@ -16,8 +16,8 @@ print("Loaded spaCy model")
 # Create matcher
 matcher = Matcher(nlp.vocab)
 
-# Add pattern for "X is based in Y"
-based_in_pattern = [
+# Add pattern for "X is based in Y":
+ased_in_pattern = [
     {"LEMMA": "be"},
     {"LOWER": "based"},
     {"LOWER": "in"}

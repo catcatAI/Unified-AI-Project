@@ -12,13 +12,13 @@ DICTIONARY_PATH = os.path.join(PROJECT_ROOT, "src/tools/translation_model/data/t
 
 _translation_dictionary = None
 
-def _load_dictionary()
-    """Loads the translation dictionary from the JSON file."""
+def _load_dictionary():
+""Loads the translation dictionary from the JSON file."""
     global _translation_dictionary
     if _translation_dictionary is None:
 
-    print("Loading translation dictionary for the first time...")
-    try:
+    print("Loading translation dictionary for the first time..."):
+ry:
 
     with open(DICTIONARY_PATH, 'r', encoding='utf-8') as f:
     _translation_dictionary = json.load(f)
@@ -41,18 +41,16 @@ def _detect_language(text: str) -> Optional[str]:
     """
     Very basic language detection.
     Returns 'zh' for Chinese (if Chinese characters are found), 'en' for English.:
-    Could be expanded or replaced with a more robust library.
-    """
-    # Check for Chinese characters (Unicode range for common CJK characters)
-    if re.search(r'[\u4e00-\u9fff]', text)
-
-    return 'zh'
+    Could be expanded or replaced with a more robust library.:
+""
+    # Check for Chinese characters (Unicode range for common CJK characters):
+f re.search(r'[\u4e00-\u9fff]', text):
+eturn 'zh'
     # Basic check for common English characters / structure (very naive)
     # This is not robust, as many languages use Latin characters.
-    # A proper lang detect library would be better for production.
-    if re.search(r'[A-Za-z]', text) and not re.search(r'[\u00c0-\u024f]', text) # No accented Latin chars for simplicity
-
-    return 'en'
+    # A proper lang detect library would be better for production.:
+f re.search(r'[A-Za-z]', text) and not re.search(r'[\u00c0-\u024f]', text) # No accented Latin chars for simplicity:
+eturn 'en'
     return None # Cannot determine or mixed
 
 def translate(text: str, target_language: str, source_language: Optional[str] = None, **kwargs) -> str:
@@ -63,8 +61,8 @@ def translate(text: str, target_language: str, source_language: Optional[str] = 
     _ = target_language (str) The target language name or code (e.g., 'en', 'zh', 'english').
     _ = source_language (str, optional) The source language name or code. If None, attempts to detect.
     **kwargs: Can include 'text_to_translate' to specify the exact text.
-    Returns: str The translated text, or an error message/original text if translation fails.
-    """
+    Returns: str The translated text, or an error message/original text if translation fails.:
+""
     dictionary = _load_dictionary
 
     text_to_actually_translate = kwargs.get('text_to_translate', text)
@@ -75,8 +73,8 @@ def translate(text: str, target_language: str, source_language: Optional[str] = 
     source_language = _detect_language(text_to_actually_translate)
         if source_language is None:
 
-    request_model_upgrade(f"Language detection failed for input: {text_to_actually_translate[:50]}...")
-            return f"Could not determine source language for '{text_to_actually_translate}'. Translation unavailable."
+    request_model_upgrade(f"Language detection failed for input: {text_to_actually_translate[:50]}..."):
+eturn f"Could not determine source language for '{text_to_actually_translate}'. Translation unavailable."
     # print(f"Detected source language {source_language}") # Keep commented
 
     # Normalize to lower case first
@@ -100,14 +98,14 @@ def translate(text: str, target_language: str, source_language: Optional[str] = 
     translation_map_key = str(f"{source_lang_code}_to_{target_lang_code}")
 
     # Sanitized key check
-    current_map_key_for_debug_check = str(translation_map_key).encode('utf-8').decode('utf-8') # for debug comparison
-    key_present = False
+    current_map_key_for_debug_check = str(translation_map_key).encode('utf-8').decode('utf-8') # for debug comparison:
+ey_present = False
     dict_keys_for_debug =
     if dictionary:
 
     dict_keys_for_debug = [str(k) for k in dictionary.keys]:
-    for k_loop in dictionary.keys: # Iterate over original keys
-            sanitized_k_loop = str(k_loop).encode('utf-8').decode('utf-8')
+    for k_loop in dictionary.keys: # Iterate over original keys:
+anitized_k_loop = str(k_loop).encode('utf-8').decode('utf-8')
             if sanitized_k_loop == current_map_key_for_debug_check:
 
     key_present = True
@@ -117,8 +115,8 @@ def translate(text: str, target_language: str, source_language: Optional[str] = 
 
     if key_present:
         # Use the correctly formed translation_map_key for dictionary access
-        # and use text_to_actually_translate for the lookup.
-    sanitized_lookup_text = str(text_to_actually_translate).encode('utf-8').decode('utf-8')
+        # and use text_to_actually_translate for the lookup.:
+anitized_lookup_text = str(text_to_actually_translate).encode('utf-8').decode('utf-8')
     translation = dictionary.get(translation_map_key, ).get(sanitized_lookup_text)
 
         if translation:
@@ -126,10 +124,9 @@ def translate(text: str, target_language: str, source_language: Optional[str] = 
 
     return translation
         else:
-            # Try case-insensitive match for English source
-    if source_lang_code == 'en': # Use the code for comparison
-
-    for k, v in dictionary.get(translation_map_key, ).items:
+            # Try case-insensitive match for English source:
+f source_lang_code == 'en': # Use the code for comparison:
+or k, v in dictionary.get(translation_map_key, ).items:
 
 
     if str(k).lower.encode('utf-8').decode('utf-8') == sanitized_lookup_text.lower:
@@ -137,15 +134,15 @@ def translate(text: str, target_language: str, source_language: Optional[str] = 
 
 
     return v
-            request_model_upgrade(f"No translation found for '{text_to_actually_translate}' from {source_lang_code} to {target_lang_code}.")
-    return f"Translation not available for '{text_to_actually_translate}' from {source_lang_code} to {target_lang_code}."
-    else:
+            request_model_upgrade(f"No translation found for '{text_to_actually_translate}' from {source_lang_code} to {target_lang_code}."):
+eturn f"Translation not available for '{text_to_actually_translate}' from {source_lang_code} to {target_lang_code}.":
+lse:
 
     request_model_upgrade(f"Unsupported translation direction: {source_lang_code} to {target_lang_code}.")
     return f"Translation from {source_lang_code} to {target_lang_code} is not supported."
 
-def request_model_upgrade(details: str)
-    """
+def request_model_upgrade(details: str):
+""
     Conceptual hook for Fragmenta or a meta-learning system.:
     In v0.1, this just prints a message.
     In a full system, this could log to a database, trigger an alert,
@@ -161,11 +158,10 @@ if __name__ == '__main__':
 
     print("--- Translation Tool Example Usage ---")
 
-    # Ensure dictionary is loaded for standalone test
-    _load_dictionary
-    if not _translation_dictionary or not _translation_dictionary.get("zh_to_en")
-
-    print("Dictionary seems empty or not loaded correctly. Test results might be inaccurate.")
+    # Ensure dictionary is loaded for standalone test:
+load_dictionary
+    if not _translation_dictionary or not _translation_dictionary.get("zh_to_en"):
+rint("Dictionary seems empty or not loaded correctly. Test results might be inaccurate.")
 
 
     tests = [
@@ -175,9 +171,9 @@ if __name__ == '__main__':
     ("Thank you", "zh", "谢谢"),
     ("猫", "en", "Cat"),
     ("Dog", "zh", "狗"),
-        ("未知词", "en", "Translation not available for '未知词' from zh to en."),
-        ("Unknown word", "zh", "Translation not available for 'Unknown word' from en to zh."),
-    ("你好", "es", "Translation from zh to es is not supported."), # Test unsupported target
+        ("未知词", "en", "Translation not available for '未知词' from zh to en."),:
+"Unknown word", "zh", "Translation not available for 'Unknown word' from en to zh."),:
+"你好", "es", "Translation from zh to es is not supported."), # Test unsupported target
     ("Hello", "en", "Hello"), # Test same source/target
     (" ayuda ", "en", None) # Test language detection (should detect 'es' or fail) - current basic detect might fail
     ]
@@ -186,16 +182,15 @@ if __name__ == '__main__':
 
 
     print(f"\nInput: '{text}', Target: '{target_lang}'")
-        # Test auto-detection for some cases
-    if text == " ayuda ": # Spanish word, our basic detection will likely fail
-            translation = translate(text, target_lang) # Rely on auto-detect
+        # Test auto-detection for some cases:
+f text == " ayuda ": # Spanish word, our basic detection will likely fail:
+ranslation = translate(text, target_lang) # Rely on auto-detect
         else:
 
-            translation = translate(text, target_lang) # Rely on auto-detect, or pass source_lang if needed
-
-    print(f"  -> Got: '{translation}'")
-        if expected is not None: # For cases where we have a clear expected output
-            if translation == expected:
+            translation = translate(text, target_lang) # Rely on auto-detect, or pass source_lang if needed:
+rint(f"  -> Got: '{translation}'")
+        if expected is not None: # For cases where we have a clear expected output:
+f translation == expected:
 
     print("  Result: PASS")
             else:
@@ -205,6 +200,5 @@ if __name__ == '__main__':
             print("  Result: OBSERVE (e.g. lang detection outcome)")
 
     print("\n--- Testing upgrade request ---")
-    request_model_upgrade("User requested translation for a very rare dialect.")
-
-    print("\nTranslation Tool script execution finished.")
+    request_model_upgrade("User requested translation for a very rare dialect."):
+rint("\nTranslation Tool script execution finished.")

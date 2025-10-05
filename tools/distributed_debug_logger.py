@@ -54,8 +54,8 @@ class DistributedDebugLogger:
     """分布式调试日志收集器"""
     
     def __init__(self, log_dir: str = None, max_entries: int = 10000) -> None:
-        self.log_dir = Path(log_dir) if log_dir else Path(__file__).parent.parent / "logs" / "debug"
-        self.log_dir.mkdir(parents=True, exist_ok=True)
+        self.log_dir = Path(log_dir) if log_dir else Path(__file__).parent.parent / "logs" / "debug":
+elf.log_dir.mkdir(parents=True, exist_ok=True)
         self.max_entries = max_entries
         self.log_buffer = deque(maxlen=max_entries)
         self.buffer_lock = threading.RLock()
@@ -64,9 +64,8 @@ class DistributedDebugLogger:
         self.is_running = False
         self.collection_thread = None
         
-        logger.info(f"DistributedDebugLogger initialized with log dir: {self.log_dir}")
-        
-    def _init_database(self):
+        logger.info(f"DistributedDebugLogger initialized with log dir: {self.log_dir}"):
+ef _init_database(self):
         """初始化数据库"""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -300,9 +299,8 @@ class DistributedDebugLogger:
                 _ = filtered_entries.append(entry)
             
             # 返回最近的条目
-            return filtered_entries[-limit:] if len(filtered_entries) > limit else filtered_entries
-            
-        except Exception as e:
+            return filtered_entries[-limit:] if len(filtered_entries) > limit else filtered_entries:
+xcept Exception as e:
             _ = logger.error(f"Error getting recent debug entries: {e}")
             return []
     
@@ -360,8 +358,8 @@ class DistributedDebugLogger:
                     event_type=LogEventType(row[2]),
                     component=row[3],
                     message=row[4],
-                    details=json.loads(row[5]) if row[5] else {},
-                    trace_id=row[6],
+                    details=json.loads(row[5]) if row[5] else {},:
+race_id=row[6],
                     span_id=row[7],
                     parent_span_id=row[8],
                     severity=row[9],

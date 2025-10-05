@@ -47,9 +47,8 @@ def test_training_integration() -> None:
 
     # 获取预设配置
     preset_path = project_root / "training" / "configs" / "training_preset.json"
-        if preset_path.exists()
-
-    trainer.preset_path = preset_path
+        if preset_path.exists():
+rainer.preset_path = preset_path
             _ = trainer.load_preset()
             _ = logger.info("预设配置加载成功")
 

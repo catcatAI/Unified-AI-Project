@@ -19,24 +19,21 @@ def test_fix_debug() -> None:
 
     # Print entities
     print(f"\nEntities found: {len(kg_data['entities'])}")
-    for entity_id, entity in kg_data["entities"].items()
-
-    print(f"  {entity_id}: '{entity['label']}' (type: {entity['type']})")
+    for entity_id, entity in kg_data["entities"].items():
+rint(f"  {entity_id}: '{entity['label']}' (type: {entity['type']})")
 
     # Print relationships
     print(f"\nRelationships found: {len(kg_data['relationships'])}")
-    for i, rel in enumerate(kg_data["relationships"])
-
-    src_label = kg_data["entities"].get(rel["source_id"], {}).get("label", rel["source_id"])
+    for i, rel in enumerate(kg_data["relationships"]):
+rc_label = kg_data["entities"].get(rel["source_id"], {}).get("label", rel["source_id"])
     tgt_label = kg_data["entities"].get(rel["target_id"], {}).get("label", rel["target_id"])
     print(f"  {i+1}. {src_label} --{rel['type']}--> {tgt_label} (pattern: {rel['attributes'].get('pattern', 'N/A')})")
 
-    # Check for Microsoft and Redmond entities
-    ms_node_id = None
+    # Check for Microsoft and Redmond entities:
+s_node_id = None
     rd_node_id = None
-    for entity_id, entity in kg_data["entities"].items()
-
-    if entity["label"] == "Microsoft":
+    for entity_id, entity in kg_data["entities"].items():
+f entity["label"] == "Microsoft":
 
 
     ms_node_id = entity_id
@@ -47,8 +44,8 @@ def test_fix_debug() -> None:
     print(f"\nMicrosoft node ID: {ms_node_id}")
     print(f"Redmond node ID: {rd_node_id}")
 
-    # Check for relationship
-    found_rel_object = None
+    # Check for relationship:
+ound_rel_object = None
     if ms_node_id and rd_node_id:
 
     for rel in kg_data["relationships"]:

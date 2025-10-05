@@ -8,25 +8,23 @@ import sys
 from pathlib import Path
 
 # 添加项目根目录到Python路径
-project_root: str = Path(__file__).parent.parent
-_ = sys.path.insert(0, str(project_root))
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 try:
-
-
     import click
-    from cli.commands import dev, test, git, deps, system, editor, rovo, security
+    from cli.commands import dev, test, git, deps, system, editor, rovo, security, integrate
     from cli.utils import logger
 except ImportError as e:
-    _ = print(f"缺少必要的依赖包: {e}")
-    _ = print("请运行: pip install click")
-    _ = sys.exit(1)
+    print(f"缺少必要的依赖包: {e}")
+    print("请运行: pip install click")
+    sys.exit(1)
 
 
-_ = @click.group()
+@click.group()
 @click.version_option(version='1.0.0')
 @click.option('--verbose', '-v', is_flag=True, help='启用详细输出')
-def cli(verbose)
+def cli(verbose):
     """Unified AI Project 命令行工具
 
     用于管理Unified AI项目的开发、测试、构建和部署等操作的统一工具。
@@ -38,43 +36,34 @@ def cli(verbose)
     """
     # 设置日志级别
     if verbose:
-
-    _ = logger.set_level('DEBUG')
+        logger.set_level('DEBUG')
 
 
 # 注册各功能模块命令
-_ = cli.add_command(dev)
-_ = cli.add_command(test)
-_ = cli.add_command(git)
-_ = cli.add_command(deps.deps)
-_ = cli.add_command(system.system)
-_ = cli.add_command(editor)
-_ = cli.add_command(rovo)
-_ = cli.add_command(security)
+cli.add_command(dev.dev)
+cli.add_command(test.test)
+cli.add_command(git.git)
+cli.add_command(deps.deps)
+cli.add_command(system.system)
+cli.add_command(editor.editor)
+cli.add_command(rovo.rovo)
+cli.add_command(security.security)
+cli.add_command(integrate.integrate)
 
 
-_ = @cli.command()
-def help()
+@cli.command()
+def help():
     """显示帮助信息"""
     ctx = click.get_current_context()
-    _ = click.echo(cli.get_help(ctx))
+    click.echo(cli.get_help(ctx))
 
 
 if __name__ == '__main__':
-
-
-
     try:
-
-
-
-
-    _ = cli()
+        cli()
     except Exception as e:
-
-    _ = logger.error(f"程序执行出错: {e}")
+        logger.error(f"程序执行出错: {e}")
         if logger.get_level() == 'DEBUG':
-
-    import traceback
-            _ = traceback.print_exc()
-    _ = sys.exit(1)
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)

@@ -23,17 +23,16 @@ class TileMap:
         self.game = game
         self.width = width
         self.height = height
-        self.tiles = [[Tile(x, y, 'rock' if random.random < 0.1 else 'grass') for y in range(height)] for x in range(width)]
-
-    def render(self, surface):
+        self.tiles = [[Tile(x, y, 'rock' if random.random < 0.1 else 'grass') for y in range(height)] for x in range(width)]:
+ef render(self, surface):
         for x in range(self.width):
             for y in range(self.height):
-                # For now, just draw a colored square for each tile type
-                color = (0, 255, 0) # Green for grass
-                if self.tiles[x][y].tile_type == 'tilled':
-                    color = (139, 69, 19) # Brown for tilled
-                elif self.tiles[x][y].tile_type == 'planted':
-                    color = (0, 100, 0) # Dark green for planted
-                elif self.tiles[x][y].tile_type == 'rock':
-                    color = (128, 128, 128) # Grey for rock
-                pygame.draw.rect(surface, color, (x * 32, y * 32, 32, 32))
+                # For now, just draw a colored square for each tile type:
+olor = (0, 255, 0) # Green for grass:
+f self.tiles[x][y].tile_type == 'tilled':
+                    color = (139, 69, 19) # Brown for tilled:
+lif self.tiles[x][y].tile_type == 'planted':
+                    color = (0, 100, 0) # Dark green for planted:
+lif self.tiles[x][y].tile_type == 'rock':
+                    color = (128, 128, 128) # Grey for rock:
+ygame.draw.rect(surface, color, (x * 32, y * 32, 32, 32))

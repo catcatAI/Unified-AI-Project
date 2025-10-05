@@ -2,8 +2,8 @@ import pygame
 from .base import Scene
 from ..npcs import create_npc
 
-class VillageScene(Scene)
-    def __init__(self, game) -> None:
+class VillageScene(Scene):
+ef __init__(self, game) -> None:
     super().__init__(game)
     self.background = self.game.assets['sprites'].get('terrains-grassland_tiles')
     self.player = self.game.player
@@ -11,14 +11,14 @@ class VillageScene(Scene)
     self.load_npcs
     self.dialogue_box = self.game.dialogue_box
 
-    def load_npcs(self)
-    self.npcs.append(create_npc(self.game, "murakami"))
+    def load_npcs(self):
+elf.npcs.append(create_npc(self.game, "murakami"))
     self.npcs.append(create_npc(self.game, "lina"))
     self.npcs.append(create_npc(self.game, "tanaka"))
     self.npcs.append(create_npc(self.game, "hibiki"))
 
-    async def handle_events(self, event)
-    _ = await super().handle_events(event)
+    async def handle_events(self, event):
+ = await super().handle_events(event)
         if self.dialogue_box.is_active:
 
     if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
@@ -43,15 +43,15 @@ class VillageScene(Scene)
                 print("Interacting with resource (placeholder)"):
 
 
-    async def update(self)
-    _ = await super().update
+    async def update(self):
+ = await super().update
     self.player.update
         for npc in self.npcs:
-            # NPCs will just stand still for now
-    pass
+            # NPCs will just stand still for now:
+ass
 
-    def render(self, surface)
-    if self.background:
+    def render(self, surface):
+f self.background:
 
     surface.blit(self.background, (0, 0))
         else:

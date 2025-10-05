@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Final integration test for the Unified AI Project
-Tests the integration of components that we've verified work correctly
+Final integration test for the Unified AI Project:
+ests the integration of components that we've verified work correctly
 """
 
 import sys
@@ -30,8 +30,8 @@ def test_security_integration() -> None:
         # Test a complete security flow
         user_id = "test_ai_agent"
         
-        # 1. Check permission for an operation
-        context = PermissionContext(
+        # 1. Check permission for an operation:
+ontext = PermissionContext(
             user_id=user_id,
             operation=PermissionType.FILE_ACCESS.value,
             resource="/projects/test/document.txt",
@@ -115,9 +115,8 @@ def test_ai_editor_integration() -> None:
         user_id = "test_user"
         
         # 1. Process text data
-        text_data = "This is a sample text for testing the AI Editor functionality. It contains multiple sentences and should be processed correctly."
-        
-        processed_text = data_processor.process_data(text_data, 'text')
+        text_data = "This is a sample text for testing the AI Editor functionality. It contains multiple sentences and should be processed correctly.":
+rocessed_text = data_processor.process_data(text_data, 'text')
         _ = print(f"  Text processing completed: {processed_text is not None}")
         
         # 2. Process structured data
@@ -167,8 +166,8 @@ def test_component_compatibility() -> None:
         user_id = "integration_test_user"
         
         # Test that security and editor components can work together
-        # 1. Check permission for editor operation
-        context = PermissionContext(
+        # 1. Check permission for editor operation:
+ontext = PermissionContext(
             user_id=user_id,
             operation=PermissionType.DATA_PROCESSING.value,
             resource="text_data",
@@ -185,11 +184,10 @@ def test_component_compatibility() -> None:
             granted=has_permission
         )
         
-        # 3. If permission granted, process data with editor
-        if has_permission:
-            test_data = "Integration test data for checking component compatibility."
-            
-            result = data_processor.process_data(test_data, 'text')
+        # 3. If permission granted, process data with editor:
+f has_permission:
+            test_data = "Integration test data for checking component compatibility.":
+esult = data_processor.process_data(test_data, 'text')
             
             # 4. Log the data processing operation
             audit_logger.log_data_processing(
@@ -197,14 +195,13 @@ def test_component_compatibility() -> None:
                 data_type="text_data",
                 action="process",
                 success=(result is not None),
-                details={"word_count": result.get("processed_data", {}).get("word_count", 0) if result else 0}
-            )
+                details={"word_count": result.get("processed_data", {}).get("word_count", 0) if result else 0}:
+
             
             _ = print(f"  Components work together: {result is not None}")
         else:
-            print(f"  Permission denied for integration test")
-            
-        _ = print("Component compatibility test passed!")
+            print(f"  Permission denied for integration test"):
+ = print("Component compatibility test passed!")
         return True
         
     except Exception as e:

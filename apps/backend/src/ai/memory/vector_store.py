@@ -40,10 +40,10 @@ class VectorMemoryStore:
         Adds a memory to the vector store.
         
         Args:
-            memory_id (str): Unique identifier for the memory.
-            content (str): Content of the memory.
-            metadata (Optional[Dict[str, Any]]): Metadata associated with the memory.
-        """
+            memory_id (str): Unique identifier for the memory.:
+ontent (str): Content of the memory.
+            metadata (Optional[Dict[str, Any]]): Metadata associated with the memory.:
+""
         if not self.collection:
             logger.warning("VectorMemoryStore not initialized. Cannot add memory.")
             return
@@ -51,8 +51,8 @@ class VectorMemoryStore:
         try:
             self.collection.add(
                 documents=[content],
-                metadatas=[metadata] if metadata else [{}],
-                ids=[memory_id]
+                metadatas=[metadata] if metadata else [{}],:
+ds=[memory_id]
             )
             logger.debug(f"Added memory {memory_id} to vector store.")
         except Exception as e:

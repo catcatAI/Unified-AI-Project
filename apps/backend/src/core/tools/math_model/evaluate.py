@@ -8,8 +8,8 @@ TEST_DATASET_PATH = "data/raw_datasets/arithmetic_test_dataset.csv"
 MODEL_LOAD_PATH = "data/models/arithmetic_model.keras"
 CHAR_MAP_LOAD_PATH = "data/models/arithmetic_char_maps.json"
 
-def load_char_maps(file_path)
-    """Loads character token maps from a JSON file."""
+def load_char_maps(file_path):
+""Loads character token maps from a JSON file."""
     try:
 
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -82,8 +82,8 @@ def main -> None:
     math_model_shell.model.load_weights(MODEL_LOAD_PATH) # Load weights into the training model structure
 
     # The inference models (encoder_model, decoder_model) inside math_model_shell
-    # should now have the trained weights because they share layers with math_model_shell.model
-    print("Model loaded successfully.")
+    # should now have the trained weights because they share layers with math_model_shell.model:
+rint("Model loaded successfully.")
     except Exception as e:
 
     print(f"Error loading model: {e}")
@@ -116,26 +116,23 @@ def main -> None:
     print(f"Problem: \"{input_problem_str}\"")
             print(f"Expected: \"{expected_answer_str}\", Got: \"{predicted_answer_str}\"")
 
-        # Normalize answers for comparison (e.g. "2.0" vs "2")
-    try:
+        # Normalize answers for comparison (e.g. "2.0" vs "2"):
+ry:
 
-        if float(predicted_answer_str) == float(expected_answer_str)
+        if float(predicted_answer_str) == float(expected_answer_str):
+orrect_predictions += 1
+                if i < num_samples_to_show: print("Result: CORRECT"):
+lse:
 
+                if i < num_samples_to_show: print("Result: INCORRECT"):
+xcept ValueError: # If conversion to float fails (e.g. empty or malformed prediction)
+            if predicted_answer_str == expected_answer_str: # Handles cases like empty string if that's valid:
+orrect_predictions += 1
+                 if i < num_samples_to_show: print("Result: CORRECT (non-numeric match)"):
+lse:
 
-    correct_predictions += 1
-                if i < num_samples_to_show: print("Result: CORRECT")
-            else:
-
-                if i < num_samples_to_show: print("Result: INCORRECT")
-        except ValueError: # If conversion to float fails (e.g. empty or malformed prediction)
-            if predicted_answer_str == expected_answer_str: # Handles cases like empty string if that's valid
-
-    correct_predictions += 1
-                 if i < num_samples_to_show: print("Result: CORRECT (non-numeric match)")
-            else:
-
-                if i < num_samples_to_show: print("Result: INCORRECT (prediction not a number)")
-        if i < num_samples_to_show: print("---")
+                if i < num_samples_to_show: print("Result: INCORRECT (prediction not a number)"):
+f i < num_samples_to_show: print("---")
 
 
     accuracy = (correct_predictions / len(test_problems)) * 100
@@ -147,13 +144,12 @@ def main -> None:
 if __name__ == '__main__':
 
 
-    if not tf.io.gfile.exists(MODEL_LOAD_PATH) or not tf.io.gfile.exists(CHAR_MAP_LOAD_PATH)
-    print("Model file or character map file not found.")
+    if not tf.io.gfile.exists(MODEL_LOAD_PATH) or not tf.io.gfile.exists(CHAR_MAP_LOAD_PATH):
+rint("Model file or character map file not found.")
     print(f"Ensure '{MODEL_LOAD_PATH}' and '{CHAR_MAP_LOAD_PATH}' exist.")
     print("Please train the model first using train.py.")
-    elif not tf.io.gfile.exists(TEST_DATASET_PATH)
-
-    print(f"Test dataset not found at {TEST_DATASET_PATH}.")
+    elif not tf.io.gfile.exists(TEST_DATASET_PATH):
+rint(f"Test dataset not found at {TEST_DATASET_PATH}.")
     print("Please run `python src/tools/math_model/data_generator.py` to generate the test dataset (CSV format).")
     else:
 

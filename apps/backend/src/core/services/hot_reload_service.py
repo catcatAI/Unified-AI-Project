@@ -31,8 +31,8 @@ class HotReloadService:
 
     Notes:
     - This is intentionally conservative to avoid destabilizing running tests.
-    - Future extensions can add hot-reload for personalities, tools, and configs.
-    """
+    - Future extensions can add hot-reload for personalities, tools, and configs.:
+""
 
     def __init__(self) -> None:
     self._lock = asyncio.Lock
@@ -49,8 +49,8 @@ class HotReloadService:
             return {"draining": self._draining}
 
     async def status(self) -> Dict[str, Any]:
-        # No need for lock read
-    services = core_services.get_services
+        # No need for lock read:
+ervices = core_services.get_services
     hsp = core_services.hsp_connector_instance
     mcp = core_services.mcp_connector_instance
     # Summarize availability
@@ -58,24 +58,20 @@ class HotReloadService:
     mcp_status = None
         try:
 
-            if hsp is not None and hasattr(hsp, "get_communication_status")
-
-
-    hsp_status = hsp.get_communication_status
+            if hsp is not None and hasattr(hsp, "get_communication_status"):
+sp_status = hsp.get_communication_status
         except Exception:
 
             hsp_status = {"error": "failed to get HSP status"}
         try:
 
-            if mcp is not None and hasattr(mcp, "get_communication_status")
-
-
-    mcp_status = mcp.get_communication_status
+            if mcp is not None and hasattr(mcp, "get_communication_status"):
+cp_status = mcp.get_communication_status
         except Exception:
 
             mcp_status = {"error": "failed to get MCP status"}
-    # Build best-effort metrics (safe access with hasattr/try)
-    metrics: Dict[str, Any] = {"hsp": , "mcp": , "learning": , "memory": , "lis": }
+    # Build best-effort metrics (safe access with hasattr/try):
+etrics: Dict[str, Any] = {"hsp": , "mcp": , "learning": , "memory": , "lis": }
     # HSP metrics
         try:
 
@@ -120,9 +116,8 @@ class HotReloadService:
     successes = 0
                 latencies =
                 failures_recent = 0
-                for ev in (events or )
-
-    try:
+                for ev in (events or ):
+ry:
 
 
                         md = ev.get("metadata", ) if isinstance(ev, dict) else :
@@ -135,9 +130,8 @@ class HotReloadService:
     except Exception:
 
     rec = None
-                        if rec and isinstance(rec, dict)
-
-    if rec.get("success")
+                        if rec and isinstance(rec, dict):
+f rec.get("success")
     successes += 1
                             else:
 
@@ -170,14 +164,13 @@ class HotReloadService:
 
 
     store = getattr(ham, "memory_store", getattr(ham, "core_memory_store", None))
-                if isinstance(store, dict)
-
-    metrics["memory"]["ham_store_size"] = len(store)
+                if isinstance(store, dict):
+etrics["memory"]["ham_store_size"] = len(store)
         except Exception:
 
             pass
-        # LIS metrics (query recent counts if possible)
-    try:
+        # LIS metrics (query recent counts if possible):
+ry:
 
         if ham is not None and hasattr(ham, "query_core_memory")
                 # Local import of constants to avoid cycles
@@ -200,8 +193,8 @@ class HotReloadService:
     pass
     return {
             "draining": self._draining,
-            "services_initialized": {k: (v is not None) for k, v in services.items},
-            "hsp": hsp_status,
+            "services_initialized": {k: (v is not None) for k, v in services.items},:
+hsp": hsp_status,
             "mcp": mcp_status,
             "metrics": metrics,
     }
@@ -212,8 +205,8 @@ class HotReloadService:
     This will:
           - Gracefully close the previous LLM interface
           _ = - Instantiate a new one via core_services.get_multi_llm_service
-          - Update ToolDispatcher and DialogueManager references if available
-    """
+          - Update ToolDispatcher and DialogueManager references if available:
+""
     async with self._lock:
     old_llm = core_services.llm_interface_instance
             close_ok = True
@@ -224,8 +217,8 @@ class HotReloadService:
 
                     _ = await old_llm.close
                 except Exception:
-                    # Do not fail reload if close has issues
-    close_ok = False
+                    # Do not fail reload if close has issues:
+lose_ok = False
 
             # Create a new LLM service (use existing factory)
             try:
@@ -238,34 +231,31 @@ class HotReloadService:
             # Swap the global singleton
             core_services.llm_interface_instance = new_llm
 
-            # Rewire ToolDispatcher (if present)
-    td = core_services.tool_dispatcher_instance
+            # Rewire ToolDispatcher (if present):
+d = core_services.tool_dispatcher_instance
             if td is not None:
 
     try:
-                    # Prefer an explicit method if exists, else set attribute directly
-    if hasattr(td, "set_llm_service")
+                    # Prefer an explicit method if exists, else set attribute directly:
+f hasattr(td, "set_llm_service")
 
     td.set_llm_service(new_llm)  # type ignore[attr-defined]
                     else:
 
                         setattr(td, "llm_service", new_llm)
                 except Exception:
-                    # Keep going even if ToolDispatcher cannot be rewired
-    pass
+                    # Keep going even if ToolDispatcher cannot be rewired:
+ass
 
-            # Rewire DialogueManager's LLM (if present)
-    dm = core_services.dialogue_manager_instance
+            # Rewire DialogueManager's LLM (if present):
+m = core_services.dialogue_manager_instance
             if dm is not None:
 
     try:
 
 
-                    if hasattr(dm, "set_llm_interface")
-
-
-
-    dm.set_llm_interface(new_llm)  # type ignore[attr-defined]
+                    if hasattr(dm, "set_llm_interface"):
+m.set_llm_interface(new_llm)  # type ignore[attr-defined]
                     else:
 
                         setattr(dm, "llm_interface", new_llm)
@@ -288,15 +278,13 @@ class HotReloadService:
 
     return {"reloaded": False, "error": "PersonalityManager not initialized"}
                 ok = pm.reload_personality(profile_name)
-                # Propagate to EmotionSystem and DialogueManager if present
-    dm = core_services.dialogue_manager_instance
+                # Propagate to EmotionSystem and DialogueManager if present:
+m = core_services.dialogue_manager_instance
                 es = core_services.emotion_system_instance
-                if dm is not None and hasattr(dm, "personality_manager")
-
-    setattr(dm, "personality_manager", pm)
-                if es is not None and hasattr(es, "personality_profile") and hasattr(pm, "current_personality")
-
-    try:
+                if dm is not None and hasattr(dm, "personality_manager"):
+etattr(dm, "personality_manager", pm)
+                if es is not None and hasattr(es, "personality_profile") and hasattr(pm, "current_personality"):
+ry:
 
 
                         es.personality_profile = pm.current_personality
@@ -311,8 +299,8 @@ class HotReloadService:
     async def reload_hsp(self) -> Dict[str, Any]:
     """
     Blue/green style reload of the HSP connector:
-          - Construct a new connector with the same AI ID and broker settings
-          - Connect and subscribe required topics
+          - Construct a new connector with the same AI ID and broker settings:
+ Connect and subscribe required topics
           - Swap the global reference and disconnect the old connector
     """
     async with self._lock:
@@ -323,8 +311,8 @@ class HotReloadService:
             sdm = services.get("service_discovery")
             ai_id = getattr(core_services, "DEFAULT_AI_ID", None)
 
-            # Fall back if we cannot infer configuration
-    if old_hsp is None:
+            # Fall back if we cannot infer configuration:
+f old_hsp is None:
 
     return {"reloaded": False, "error": "No existing HSP connector to reload."}
 
@@ -352,8 +340,8 @@ class HotReloadService:
                 # Swap global reference
                 core_services.hsp_connector_instance = new_hsp
 
-                # Wire callbacks again if ServiceDiscovery is present
-    if sdm is not None:
+                # Wire callbacks again if ServiceDiscovery is present:
+f sdm is not None:
 
     new_hsp.register_on_capability_advertisement_callback(sdm.process_capability_advertisement)  # type ignore[arg-type]
 

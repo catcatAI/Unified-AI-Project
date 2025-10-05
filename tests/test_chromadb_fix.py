@@ -33,8 +33,8 @@ def start_chroma_server():
     # 註冊退出時關閉服務器
     def cleanup():
         print("關閉 ChromaDB 服務器...")
-        if server_process.poll() is None:  # 如果進程仍在運行
-            if os.name == 'nt':  # Windows
+        if server_process.poll() is None:  # 如果進程仍在運行:
+f os.name == 'nt':  # Windows
                 server_process.terminate()
             else:  # Linux/Mac
                 server_process.send_signal(signal.SIGTERM)
@@ -99,8 +99,8 @@ if __name__ == "__main__":
     finally:
         # 確保服務器被關閉
         print("清理資源...")
-        if server_process.poll() is None:  # 如果進程仍在運行
-            if os.name == 'nt':  # Windows
+        if server_process.poll() is None:  # 如果進程仍在運行:
+f os.name == 'nt':  # Windows
                 server_process.terminate()
             else:  # Linux/Mac
                 server_process.send_signal(signal.SIGTERM)

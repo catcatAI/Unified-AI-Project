@@ -21,65 +21,61 @@ logger: Any = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-class LLMServiceHealthCheck(HealthCheckFunction)
-    """LLM服务健康检查"""
+class LLMServiceHealthCheck(HealthCheckFunction):
+""LLM服务健康检查"""
 
     async def check_health(self, service_instance: Any) -> ServiceHealth:
         try:
             # 检查LLM服务是否健康
-            if hasattr(service_instance, 'is_healthy')
-
-    if asyncio.iscoroutinefunction(service_instance.is_healthy)
+            if hasattr(service_instance, 'is_healthy'):
+f asyncio.iscoroutinefunction(service_instance.is_healthy)
     is_healthy = await service_instance.is_healthy
                 else:
 
                     is_healthy = service_instance.is_healthy
-                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY
-    else:
+                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY:
+lse:
                 # 简单检查 - 尝试生成一个简单的响应
-                if hasattr(service_instance, 'generate_response')
-
-    response = await service_instance.generate_response("test")
-                    return ServiceHealth.HEALTHY if response else ServiceHealth.UNHEALTHY
-    return ServiceHealth.HEALTHY
+                if hasattr(service_instance, 'generate_response'):
+esponse = await service_instance.generate_response("test")
+                    return ServiceHealth.HEALTHY if response else ServiceHealth.UNHEALTHY:
+eturn ServiceHealth.HEALTHY
         except Exception as e:
 
     logger.error(f"LLM service health check failed: {e}")
             return ServiceHealth.UNHEALTHY
 
 
-class HSPConnectorHealthCheck(HealthCheckFunction)
-    """HSP连接器健康检查"""
+class HSPConnectorHealthCheck(HealthCheckFunction):
+""HSP连接器健康检查"""
 
     async def check_health(self, service_instance: Any) -> ServiceHealth:
         try:
             # 检查HSP连接器是否连接
-            if hasattr(service_instance, 'is_connected')
-
-    is_connected = service_instance.is_connected
-                return ServiceHealth.HEALTHY if is_connected else ServiceHealth.UNHEALTHY
-    return ServiceHealth.HEALTHY
+            if hasattr(service_instance, 'is_connected'):
+s_connected = service_instance.is_connected
+                return ServiceHealth.HEALTHY if is_connected else ServiceHealth.UNHEALTHY:
+eturn ServiceHealth.HEALTHY
         except Exception as e:
 
     logger.error(f"HSP connector health check failed: {e}")
             return ServiceHealth.UNHEALTHY
 
 
-class MemoryManagerHealthCheck(HealthCheckFunction)
-    """内存管理器健康检查"""
+class MemoryManagerHealthCheck(HealthCheckFunction):
+""内存管理器健康检查"""
 
     async def check_health(self, service_instance: Any) -> ServiceHealth:
         try:
             # 检查内存管理器是否正常工作
-            if hasattr(service_instance, 'is_healthy')
-
-    if asyncio.iscoroutinefunction(service_instance.is_healthy)
+            if hasattr(service_instance, 'is_healthy'):
+f asyncio.iscoroutinefunction(service_instance.is_healthy)
     is_healthy = await service_instance.is_healthy
                 else:
 
                     is_healthy = service_instance.is_healthy
-                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY
-    return ServiceHealth.HEALTHY
+                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY:
+eturn ServiceHealth.HEALTHY
         except Exception as e:
 
     logger.error(f"Memory manager health check failed: {e}")
@@ -165,19 +161,19 @@ async def setup_core_services -> CoreServiceManager:
     manager.register_service(learning_config)
 
     # 注册事件处理器
-    def on_service_loaded(service_name: str, data: Optional[Dict[str, Any]] = None)
-    logger.info(f"Service loaded: {service_name}")
+    def on_service_loaded(service_name: str, data: Optional[Dict[str, Any]] = None):
+ogger.info(f"Service loaded: {service_name}")
 
-    def on_service_unloaded(service_name: str, data: Optional[Dict[str, Any]] = None)
-    logger.info(f"Service unloaded: {service_name}")
+    def on_service_unloaded(service_name: str, data: Optional[Dict[str, Any]] = None):
+ogger.info(f"Service unloaded: {service_name}")
 
-    def on_service_health_changed(service_name: str, data: Optional[Dict[str, Any]] = None)
-    if data:
+    def on_service_health_changed(service_name: str, data: Optional[Dict[str, Any]] = None):
+f data:
 
     logger.info(f"Service {service_name} health changed from {data.get('old_health')} to {data.get('new_health')}")
 
-    def on_service_error(service_name: str, data: Optional[Dict[str, Any]] = None)
-    if data:
+    def on_service_error(service_name: str, data: Optional[Dict[str, Any]] = None):
+f data:
 
     logger.error(f"Service {service_name} error: {data.get('error')}")
 
@@ -189,8 +185,8 @@ async def setup_core_services -> CoreServiceManager:
     return manager
 
 
-async def demonstrate_lazy_loading(manager: CoreServiceManager)
-    """演示懒加载机制"""
+async def demonstrate_lazy_loading(manager: CoreServiceManager):
+""演示懒加载机制"""
     logger.info("=== Demonstrating Lazy Loading ===")
 
     # 初始状态 - 所有服务都应该未加载
@@ -231,8 +227,8 @@ async def demonstrate_lazy_loading(manager: CoreServiceManager)
     logger.info(f"Final service status: {status}")
 
 
-async def demonstrate_batch_loading(manager: CoreServiceManager)
-    """演示批量加载机制"""
+async def demonstrate_batch_loading(manager: CoreServiceManager):
+""演示批量加载机制"""
     logger.info("=== Demonstrating Batch Loading ===")
 
     # 卸载所有服务
@@ -250,8 +246,8 @@ async def demonstrate_batch_loading(manager: CoreServiceManager)
     logger.info(f"Service status after batch load: {status}")
 
 
-async def demonstrate_service_lifecycle(manager: CoreServiceManager)
-    """演示服务生命周期管理"""
+async def demonstrate_service_lifecycle(manager: CoreServiceManager):
+""演示服务生命周期管理"""
     logger.info("=== Demonstrating Service Lifecycle ===")
 
     # 重启服务

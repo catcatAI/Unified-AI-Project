@@ -2,10 +2,10 @@ import json
 import random
 import os
 
-def generate_simple_logic_dataset(num_samples=1000)
-    """
-    Generate a simple logic dataset with basic propositions.
-    """
+def generate_simple_logic_dataset(num_samples=1000):
+""
+    Generate a simple logic dataset with basic propositions.:
+""
     dataset =
     operators = ["AND", "OR"]
     values = ["true", "false"]
@@ -44,10 +44,8 @@ def generate_simple_logic_dataset(num_samples=1000)
             op1 = random.choice(operators)
             op2 = random.choice(operators)
 
-            if random.choice([True, False])
-
-
-    prop = f"({a} {op1} {b}) {op2} {c}"
+            if random.choice([True, False]):
+rop = f"({a} {op1} {b}) {op2} {c}"
                 # Evaluate (a op1 b) first
                 if op1 == "AND":
 
@@ -56,8 +54,8 @@ def generate_simple_logic_dataset(num_samples=1000)
 
                     intermediate = (a == "true") or (b == "true")
 
-                # Then apply op2 with c
-    if op2 == "AND":
+                # Then apply op2 with c:
+f op2 == "AND":
 
     answer = intermediate and (c == "true")
                 else:
@@ -74,8 +72,8 @@ def generate_simple_logic_dataset(num_samples=1000)
 
                     intermediate = (b == "true") or (c == "true")
 
-                # Then apply op1 with a
-    if op1 == "AND":
+                # Then apply op1 with a:
+f op1 == "AND":
 
     answer = (a == "true") and intermediate
                 else:
@@ -100,8 +98,8 @@ def main -> None:
     project_root: str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
     output_dir = os.path.join(project_root, "data", "raw_datasets")
 
-    # Create output directory if it doesn't exist
-    os.makedirs(output_dir, exist_ok=True)
+    # Create output directory if it doesn't exist:
+s.makedirs(output_dir, exist_ok=True)
 
     print(f"Output directory: {output_dir}")
 
@@ -127,9 +125,8 @@ def main -> None:
 
     # Show some examples
     print("\nExample propositions:")
-    for i in range(5)
-
-    example = train_data[i]
+    for i in range(5):
+xample = train_data[i]
     print(f"  {example['proposition']} => {example['answer']}")
 
 if __name__ == "__main__":

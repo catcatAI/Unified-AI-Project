@@ -16,8 +16,8 @@ from pathlib import Path
 project_root: str = Path(__file__).parent.parent
 _ = sys.path.insert(0, str(project_root))
 
-class FeatureStatus(Enum)
-    """功能实现状态枚举"""
+class FeatureStatus(Enum):
+""功能实现状态枚举"""
     PLANNED = "planned"           # 已计划但未开始
     IN_PROGRESS = "in_progress"   # 正在实现中
     SIMULATED = "simulated"       # 仅模拟实现
@@ -25,8 +25,8 @@ class FeatureStatus(Enum)
     COMPLETE = "complete"         # 完整实现
     DEPRECATED = "deprecated"     # 已弃用
 
-class FeatureType(Enum)
-    """功能类型枚举"""
+class FeatureType(Enum):
+""功能类型枚举"""
     CORE_MODEL = "core_model"           # 核心模型
     TRAINING_SYSTEM = "training_system" # 训练系统
     DATA_PROCESSING = "data_processing" # 数据处理
@@ -47,8 +47,8 @@ class Feature:
                  feature_type: FeatureType,
                  implementation_file: Optional[str] = None,
                  last_updated: Optional[str] = None,
-                 notes: Optional[str] = None)
-    self.id = id
+                 notes: Optional[str] = None):
+elf.id = id
     self.name = name
     self.description = description
     self.status = status
@@ -93,18 +93,16 @@ class FeatureStatusTracker:
     self.features: Dict[str, Feature] = {}
     _ = self.load_tracking_data()
 
-    def load_tracking_data(self)
-    """加载跟踪数据"""
-        if self.tracking_file.exists()
-
-    try:
+    def load_tracking_data(self):
+""加载跟踪数据"""
+        if self.tracking_file.exists():
+ry:
 
 
                 with open(self.tracking_file, 'r', encoding='utf-8') as f:
     data = json.load(f)
-                    for feature_data in data.get("features", [])
-
-    feature = Feature.from_dict(feature_data)
+                    for feature_data in data.get("features", []):
+eature = Feature.from_dict(feature_data)
                         self.features[feature.id] = feature
                 _ = print(f"✅ 已加载 {len(self.features)} 个功能的跟踪数据")
             except Exception as e:
@@ -115,8 +113,8 @@ class FeatureStatusTracker:
             _ = print("ℹ️ 跟踪文件不存在，将创建新的跟踪数据")
             _ = self.initialize_default_features()
 
-    def save_tracking_data(self)
-    """保存跟踪数据"""
+    def save_tracking_data(self):
+""保存跟踪数据"""
         try:
 
             data = {
@@ -135,8 +133,8 @@ class FeatureStatusTracker:
 
             _ = print(f"❌ 保存跟踪数据时出错: {e}")
 
-    def initialize_default_features(self)
-    """初始化默认功能"""
+    def initialize_default_features(self):
+""初始化默认功能"""
     # 核心概念模型
     self.add_feature(Feature(
             id="env_simulator",
@@ -220,14 +218,14 @@ class FeatureStatusTracker:
 
     _ = print(f"✅ 已初始化 {len(self.features)} 个默认功能")
 
-    def add_feature(self, feature: Feature)
-    """添加功能"""
+    def add_feature(self, feature: Feature):
+""添加功能"""
     self.features[feature.id] = feature
     _ = self.save_tracking_data()
     _ = print(f"✅ 已添加功能: {feature.name}")
 
-    def update_feature_status(self, feature_id: str, status: FeatureStatus, notes: Optional[str] = None)
-    """更新功能状态"""
+    def update_feature_status(self, feature_id: str, status: FeatureStatus, notes: Optional[str] = None):
+""更新功能状态"""
         if feature_id in self.features:
 
     feature = self.features[feature_id]
@@ -244,11 +242,11 @@ class FeatureStatusTracker:
 
     def get_features_by_status(self, status: FeatureStatus) -> List[Feature]:
     """根据状态获取功能"""
-        return [feature for feature in self.features.values() if feature.status == status]
-    def get_features_by_type(self, feature_type: FeatureType) -> List[Feature]:
+        return [feature for feature in self.features.values() if feature.status == status]:
+ef get_features_by_type(self, feature_type: FeatureType) -> List[Feature]:
     """根据类型获取功能"""
-        return [feature for feature in self.features.values() if feature.feature_type == feature_type]
-    def get_feature(self, feature_id: str) -> Optional[Feature]:
+        return [feature for feature in self.features.values() if feature.feature_type == feature_type]:
+ef get_feature(self, feature_id: str) -> Optional[Feature]:
     """获取功能"""
     return self.features.get(feature_id)
 
@@ -262,14 +260,12 @@ class FeatureStatusTracker:
 
     # 按状态分组统计
     status_counts = {}
-        for feature in self.features.values()
-
-    status_counts[feature.status.value] = status_counts.get(feature.status.value, 0) + 1
+        for feature in self.features.values():
+tatus_counts[feature.status.value] = status_counts.get(feature.status.value, 0) + 1
 
     _ = report.append("## 状态统计")
-        for status, count in status_counts.items()
-
-    _ = report.append(f"- {status}: {count}")
+        for status, count in status_counts.items():
+ = report.append(f"- {status}: {count}")
     _ = report.append("")
 
     # 按类型分组显示
@@ -285,10 +281,8 @@ class FeatureStatusTracker:
             FeatureType.INTEGRATION: "集成组件"
     }
 
-        for feature_type, type_name in type_names.items()
-
-
-    features = self.get_features_by_type(feature_type)
+        for feature_type, type_name in type_names.items():
+eatures = self.get_features_by_type(feature_type)
             if features:
 
     _ = report.append(f"### {type_name}")

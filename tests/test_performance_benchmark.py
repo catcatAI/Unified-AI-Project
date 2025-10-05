@@ -12,8 +12,8 @@ logging.basicConfig(level=logging.INFO)
 logger: Any = logging.getLogger(__name__)
 
 
-class TestPerformanceMetrics(unittest.TestCase)
-    """性能指标测试类"""
+class TestPerformanceMetrics(unittest.TestCase):
+""性能指标测试类"""
 
     def test_init(self) -> None:
     """测试初始化"""
@@ -31,11 +31,11 @@ class TestPerformanceMetrics(unittest.TestCase)
     _ = self.assertEqual(metrics.test_description, "")
 
 
-class TestPerformanceBenchmark(unittest.TestCase)
-    """性能基准测试器测试类"""
+class TestPerformanceBenchmark(unittest.TestCase):
+""性能基准测试器测试类"""
 
-    def setUp(self)
-    """测试初始化"""
+    def setUp(self):
+""测试初始化"""
     self.benchmark = PerformanceBenchmark()
 
     def test_init(self) -> None:
@@ -214,9 +214,8 @@ class TestPerformanceBenchmark(unittest.TestCase)
     def test_get_benchmark_trend(self) -> None:
     """测试获取性能基准测试趋势"""
     # 添加一些历史数据
-        for i in range(5)
-
-    metrics = PerformanceMetrics()
+        for i in range(5):
+etrics = PerformanceMetrics()
             metrics.response_time = 1.0 + i * 0.1  # 1.0, 1.1, 1.2, 1.3, 1.4
             metrics.timestamp = metrics.timestamp.replace(second=i)  # 确保时间戳不同
             _ = self.benchmark.benchmark_history.append(metrics)
@@ -239,7 +238,7 @@ class TestPerformanceBenchmark(unittest.TestCase)
     trend = self.benchmark.get_benchmark_trend()
     _ = self.assertEqual(len(trend), 0)
 
-    _ = @patch('performance_benchmark.psutil')
+    @patch('performance_benchmark.psutil')
     def test_run_component_benchmark(self, mock_psutil) -> None:
     """测试运行组件性能基准测试"""
     # 模拟psutil的返回值
@@ -268,7 +267,7 @@ class TestPerformanceBenchmark(unittest.TestCase)
     _ = self.assertGreater(mock_psutil.cpu_percent.call_count, 0)
     _ = self.assertGreater(mock_psutil.virtual_memory.call_count, 0)
 
-    _ = @patch('performance_benchmark.psutil')
+    @patch('performance_benchmark.psutil')
     def test_run_component_benchmark_with_errors(self, mock_psutil) -> None:
     """测试运行组件性能基准测试（包含错误）"""
     # 模拟psutil的返回值
@@ -278,8 +277,8 @@ class TestPerformanceBenchmark(unittest.TestCase)
     mock_psutil.virtual_memory.return_value = mock_memory
 
     # 定义会抛出异常的测试函数
-        def failing_function()
-    _ = raise Exception("Test error")
+        def failing_function():
+ = raise Exception("Test error")
 
     # 运行组件基准测试
     metrics = self.benchmark.run_component_benchmark("FailingComponent", failing_function, iterations=10)
@@ -327,14 +326,14 @@ class TestPerformanceBenchmark(unittest.TestCase)
                     _ = mock_file.assert_called_once_with('/test/path/benchmark_results_20230101_120000.json', 'w')
 
 
-class TestPerformanceBenchmarkIntegration(unittest.TestCase)
-    """性能基准测试器集成测试类"""
+class TestPerformanceBenchmarkIntegration(unittest.TestCase):
+""性能基准测试器集成测试类"""
 
-    def setUp(self)
-    """测试初始化"""
+    def setUp(self):
+""测试初始化"""
     self.benchmark = PerformanceBenchmark()
 
-    _ = @patch('subprocess.run')
+    @patch('subprocess.run')
     def test_run_api_benchmark_success(self, mock_subprocess_run) -> None:
     """测试成功运行API基准测试"""
     # 模拟subprocess.run的返回值
@@ -365,7 +364,7 @@ class TestPerformanceBenchmarkIntegration(unittest.TestCase)
             # 验证调用了正确的命令
             _ = mock_subprocess_run.assert_called_once()
 
-    _ = @patch('subprocess.run')
+    @patch('subprocess.run')
     def test_run_api_benchmark_failure(self, mock_subprocess_run) -> None:
     """测试运行API基准测试失败"""
     # 模拟subprocess.run返回错误

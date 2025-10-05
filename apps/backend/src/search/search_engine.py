@@ -1,13 +1,13 @@
 class SearchEngine:
     """
-    A class for searching for models and tools.
-    """
+    A class for searching for models and tools.:
+""
 
     def __init__(self) -> None:
     pass
 
-    def search(self, query)
-    """
+    def search(self, query):
+""
         Searches for models and tools that match a query.:
 
     Args:
@@ -21,8 +21,8 @@ class SearchEngine:
     results.extend(self._search_github(query))
     return results
 
-    def _search_huggingface(self, query)
-    """
+    def _search_huggingface(self, query):
+""
         Searches for models on Hugging Face.:
 
     Args:
@@ -37,14 +37,14 @@ class SearchEngine:
             api = HfApi
             models = api.list_models(search=query)
             # 使用正确的属性名
-            return [model.id for model in models]
-    except Exception as e:
+            return [model.id for model in models]:
+xcept Exception as e:
 
     print(f"Error searching Hugging Face: {e}")
             return
 
-    def _search_github(self, query)
-    """
+    def _search_github(self, query):
+""
         Searches for tools on GitHub.:
 
     Args:

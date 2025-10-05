@@ -20,8 +20,8 @@ class MappableDataObject:
     self.compressed_data: Optional[bytes] = None
     self.layers: Dict[str, Any] =
 
-    def compress(self)
-    """
+    def compress(self):
+""
     Compresses the data using zlib.
     """
         if self.data is not None:
@@ -39,14 +39,14 @@ class MappableDataObject:
             return json.loads(decompressed_data.decode('utf-8'))
     return None
 
-    def add_layer(self, layer_name: str, layer_data: Any)
-    """
+    def add_layer(self, layer_name: str, layer_data: Any):
+""
     Adds a new layer to the data object.
 
     Args:
             _ = layer_name (str) The name of the layer.
-            layer_data (Any) The data for the layer.
-    """
+            layer_data (Any) The data for the layer.:
+""
     self.layers[layer_name] = layer_data
 
     def get_layer(self, layer_name: str) -> Optional[Any]:
@@ -57,6 +57,6 @@ class MappableDataObject:
             _ = layer_name (str) The name of the layer.
 
     Returns:
-            Optional[Any]: The data for the layer, or None if the layer does not exist.
-    """
+            Optional[Any]: The data for the layer, or None if the layer does not exist.:
+""
     return self.layers.get(layer_name)

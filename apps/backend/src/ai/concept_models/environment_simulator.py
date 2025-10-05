@@ -46,8 +46,8 @@ class StatePredictor:
     self.criterion = nn.MSELoss
     self.is_trained = False  # 标记模型是否已训练
 
-    def _build_model(self)
-    """构建神经网络模型"""
+    def _build_model(self):
+""构建神经网络模型"""
     # 简单的全连接网络用于状态预测
     model = nn.Sequential(
             nn.Linear(10, 64),  # 假设有10个输入特征
@@ -60,8 +60,8 @@ class StatePredictor:
 
     async def predict(self, current_state: State, proposed_action: Action) -> State:
     """预测下一个状态"""
-        logger.debug(f"Predicting next state for action {proposed_action.name}")
-    _ = await asyncio.sleep(0.01)  # 模拟计算时间
+        logger.debug(f"Predicting next state for action {proposed_action.name}"):
+ = await asyncio.sleep(0.01)  # 模拟计算时间
 
     # 基于当前状态和动作预测下一个状态
     next_variables = current_state.variables.copy
@@ -102,8 +102,8 @@ class StatePredictor:
     """将状态和动作转换为模型输入特征"""
     # 简化实现，实际应用中需要更复杂的特征工程
     features =
-        for i in range(5)  # 假设最多5个状态变量
-            var_name = f"var_{i}"
+        for i in range(5)  # 假设最多5个状态变量:
+ar_name = f"var_{i}"
             features.append(state.variables.get(var_name, 0.0))
 
     # 添加动作特征
@@ -127,8 +127,8 @@ class StatePredictor:
     pred_values = prediction.squeeze.numpy
 
     # 更新状态变量
-        for i, value in enumerate(pred_values[:5])  # 假设预测5个状态变量
-            var_name = f"var_{i}"
+        for i, value in enumerate(pred_values[:5])  # 假设预测5个状态变量:
+ar_name = f"var_{i}"
             variables[var_name] = float(value)
 
     return variables
@@ -155,8 +155,8 @@ class StatePredictor:
     next_state.variables[key] -= 0.5
     return next_state
 
-    async def update(self, state: State, action: Action, next_state: State)
-    """更新模型"""
+    async def update(self, state: State, action: Action, next_state: State):
+""更新模型"""
     logger.debug("Updating state predictor model")
     _ = await asyncio.sleep(0.005)
 
@@ -183,13 +183,13 @@ class StatePredictor:
     def _state_to_target(self, state: State) -> torch.Tensor:
     """将状态转换为训练目标"""
     target =
-        for i in range(5)  # 假设预测5个状态变量
-            var_name = f"var_{i}"
+        for i in range(5)  # 假设预测5个状态变量:
+ar_name = f"var_{i}"
             target.append(state.variables.get(var_name, 0.0))
     return torch.FloatTensor(target).unsqueeze(0)
 
-    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100)
-    """训练模型"""
+    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100):
+""训练模型"""
     logger.info(f"Training state predictor model with {len(training_data)} samples")
 
     # 准备训练数据
@@ -228,9 +228,8 @@ class StatePredictor:
 
     # 训练模型
     self.model.train
-        for epoch in range(epochs)
-
-    total_loss = 0.0
+        for epoch in range(epochs):
+otal_loss = 0.0
             for batch_inputs, batch_targets in dataloader:
 
     self.optimizer.zero_grad
@@ -263,8 +262,8 @@ class ActionEffectModel:
     self.criterion = nn.MSELoss
     self.is_trained = False
 
-    def _build_model(self)
-    """构建动作效果预测模型"""
+    def _build_model(self):
+""构建动作效果预测模型"""
     model = nn.Sequential(
             nn.Linear(8, 32),  # 8个输入特征
             nn.ReLU,
@@ -276,8 +275,8 @@ class ActionEffectModel:
 
     async def predict_effect(self, action: Action, current_state: State) -> Dict[str, Any]:
     """预测动作效果"""
-        logger.debug(f"Predicting effect for action {action.name}")
-    _ = await asyncio.sleep(0.01)
+        logger.debug(f"Predicting effect for action {action.name}"):
+ = await asyncio.sleep(0.01)
 
     # 使用训练好的模型预测效果（如果已训练）
         if self.is_trained:
@@ -352,8 +351,8 @@ class ActionEffectModel:
     }
     return effect
 
-    async def update(self, action: Action, effect: Dict[str, Any], actual_effect: Dict[str, Any])
-    """更新动作效果模型"""
+    async def update(self, action: Action, effect: Dict[str, Any], actual_effect: Dict[str, Any]):
+""更新动作效果模型"""
     logger.debug("Updating action effect model")
     _ = await asyncio.sleep(0.005)
 
@@ -361,8 +360,8 @@ class ActionEffectModel:
     # 在实际实现中，这里会使用更复杂的机器学习算法
     pass
 
-    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100)
-    """训练动作效果模型"""
+    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100):
+""训练动作效果模型"""
     logger.info(f"Training action effect model with {len(training_data)} samples")
 
     # 准备训练数据
@@ -398,9 +397,8 @@ class ActionEffectModel:
 
     # 训练模型
     self.model.train
-        for epoch in range(epochs)
-
-    total_loss = 0.0
+        for epoch in range(epochs):
+otal_loss = 0.0
             for batch_inputs, batch_targets in dataloader:
 
     self.optimizer.zero_grad
@@ -443,8 +441,8 @@ class UncertaintyEstimator:
     self.criterion = nn.MSELoss
     self.is_trained = False
 
-    def _build_model(self)
-    """构建不确定性估计模型"""
+    def _build_model(self):
+""构建不确定性估计模型"""
     model = nn.Sequential(
             nn.Linear(12, 32),  # 12个输入特征
             nn.ReLU,
@@ -493,8 +491,8 @@ class UncertaintyEstimator:
     features =
 
     # 当前状态特征
-        for i in range(5)  # 假设最多5个状态变量
-            var_name = f"var_{i}"
+        for i in range(5)  # 假设最多5个状态变量:
+ar_name = f"var_{i}"
             features.append(state.variables.get(var_name, 0.0))
 
     # 动作特征
@@ -514,15 +512,15 @@ class UncertaintyEstimator:
     features.extend(action_features)
 
     # 预测状态特征
-        for i in range(5)  # 假设最多5个状态变量
-            var_name = f"var_{i}"
+        for i in range(5)  # 假设最多5个状态变量:
+ar_name = f"var_{i}"
             features.append(predicted_state.variables.get(var_name, 0.0))
 
     # 转换为张量
     return torch.FloatTensor(features).unsqueeze(0)
 
-    async def update(self, prediction_error: float)
-    """更新不确定性估计器"""
+    async def update(self, prediction_error: float):
+""更新不确定性估计器"""
     logger.debug("Updating uncertainty estimator")
     _ = await asyncio.sleep(0.005)
     self.uncertainty_history.append(prediction_error)
@@ -531,8 +529,8 @@ class UncertaintyEstimator:
 
     self.uncertainty_history.pop(0)
 
-    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100)
-    """训练不确定性估计模型"""
+    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100):
+""训练不确定性估计模型"""
     logger.info(f"Training uncertainty estimator with {len(training_data)} samples")
 
     # 准备训练数据
@@ -578,9 +576,8 @@ class UncertaintyEstimator:
 
     # 训练模型
     self.model.train
-        for epoch in range(epochs)
-
-    total_loss = 0.0
+        for epoch in range(epochs):
+otal_loss = 0.0
             for batch_inputs, batch_targets in dataloader:
 
     self.optimizer.zero_grad
@@ -647,8 +644,8 @@ class EnvironmentSimulator:
     # 生成多个可能的结果场景
     scenarios = await self._generate_scenarios(current_state, proposed_action, uncertainty)
 
-        self.logger.info(f"Simulated action consequences for action {proposed_action.name}")
-    return {
+        self.logger.info(f"Simulated action consequences for action {proposed_action.name}"):
+eturn {
             'predicted_state': predicted_state,
             'uncertainty': uncertainty,
             'expected_reward': expected_reward,
@@ -709,8 +706,8 @@ class EnvironmentSimulator:
 
     return scenarios
 
-    async def update_model_from_experience(self, experience: Dict[str, Any])
-    """从经验更新模型"""
+    async def update_model_from_experience(self, experience: Dict[str, Any]):
+""从经验更新模型"""
     # 更新状态预测器
     await self.state_predictor.update(
             experience.get("state"),
@@ -736,8 +733,8 @@ class EnvironmentSimulator:
     self._store_training_data(experience)
     self.logger.info("Environment model updated from experience.")
 
-    def _store_training_data(self, experience: Dict[str, Any])
-    """存储训练数据"""
+    def _store_training_data(self, experience: Dict[str, Any]):
+""存储训练数据"""
     # 存储状态转移数据
     state_transition_data = {
             "state": {
@@ -811,8 +808,8 @@ class EnvironmentSimulator:
 
     return min(error, 1.0)  # 限制误差在0-1之间
 
-    def train_models(self, training_data: Dict[str, List[Dict[str, Any]]] = None, epochs: int = 100)
-    """训练所有模型"""
+    def train_models(self, training_data: Dict[str, List[Dict[str, Any]]] = None, epochs: int = 100):
+""训练所有模型"""
     self.logger.info("Training all environment simulator models")
 
     # 使用传入的训练数据或内部存储的数据

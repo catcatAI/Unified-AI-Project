@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 User Acceptance Test Script
-Automated script to perform user acceptance testing for the Unified AI Project
-"""
+Automated script to perform user acceptance testing for the Unified AI Project:
+""
 
 import sys
 import time
@@ -28,8 +28,8 @@ class UserAcceptanceTest:
             "issues": []
     }
 
-    def log_result(self, scenario: str, status: str, details: str = "", execution_time: float = 0)
-    """Log test result"""
+    def log_result(self, scenario: str, status: str, details: str = "", execution_time: float = 0):
+""Log test result"""
     self.results["test_scenarios"].append({
             "scenario": scenario,
             "status": status,
@@ -39,8 +39,8 @@ class UserAcceptanceTest:
     })
     _ = print(f"[{status.upper()}] {scenario}: {details} (Time: {execution_time:.2f}s)")
 
-    def log_issue(self, severity: str, description: str, scenario: str = "")
-    """Log an issue found during testing"""
+    def log_issue(self, severity: str, description: str, scenario: str = ""):
+""Log an issue found during testing"""
     issue = {
             "severity": severity,
             "description": description,
@@ -70,9 +70,8 @@ class UserAcceptanceTest:
     start_time = time.time()
         try:
             # Test health check first
-            if not self.check_system_health()
-
-    _ = self.log_result("Creative Writing", "failed", "System not healthy", time.time() - start_time)
+            if not self.check_system_health():
+ = self.log_result("Creative Writing", "failed", "System not healthy", time.time() - start_time)
                 return False
 
             # Submit a creative writing task
@@ -97,8 +96,8 @@ class UserAcceptanceTest:
                 task_id = data.get("task_id")
                 if task_id:
                     # Check task status
-                    time.sleep(2)  # Wait a moment for processing
-    status_response = requests.get(
+                    time.sleep(2)  # Wait a moment for processing:
+tatus_response = requests.get(
                         f"{self.api_endpoint}/agents/creative-writing-agent/task/{task_id}",
                         timeout=30
                     )
@@ -142,15 +141,14 @@ class UserAcceptanceTest:
     start_time = time.time()
         try:
             # Test health check first
-            if not self.check_system_health()
-
-    _ = self.log_result("Image Generation", "failed", "System not healthy", time.time() - start_time)
+            if not self.check_system_health():
+ = self.log_result("Image Generation", "failed", "System not healthy", time.time() - start_time)
                 return False
 
             # Submit an image generation task
             payload = {
-                "task": "A futuristic cityscape at sunset with flying cars",
-                "parameters": {
+                "task": "A futuristic cityscape at sunset with flying cars",:
+parameters": {
                     "size": "256x256"
                 }
             }
@@ -158,8 +156,8 @@ class UserAcceptanceTest:
             response = requests.post(
                 f"{self.api_endpoint}/agents/image-generation-agent/task",
                 json=payload,
-                timeout=60  # Longer timeout for image generation
-            )
+                timeout=60  # Longer timeout for image generation:
+
 
             if response.status_code == 200:
 
@@ -168,8 +166,8 @@ class UserAcceptanceTest:
                 task_id = data.get("task_id")
                 if task_id:
                     # Check task status
-                    time.sleep(5)  # Wait longer for image generation
-    status_response = requests.get(
+                    time.sleep(5)  # Wait longer for image generation:
+tatus_response = requests.get(
                         f"{self.api_endpoint}/agents/image-generation-agent/task/{task_id}",
                         timeout=30
                     )
@@ -213,9 +211,8 @@ class UserAcceptanceTest:
     start_time = time.time()
         try:
             # Test health check first
-            if not self.check_system_health()
-
-    _ = self.log_result("Web Search", "failed", "System not healthy", time.time() - start_time)
+            if not self.check_system_health():
+ = self.log_result("Web Search", "failed", "System not healthy", time.time() - start_time)
                 return False
 
             # Submit a web search task
@@ -237,8 +234,8 @@ class UserAcceptanceTest:
                 task_id = data.get("task_id")
                 if task_id:
                     # Check task status
-                    time.sleep(3)  # Wait for search to complete
-    status_response = requests.get(
+                    time.sleep(3)  # Wait for search to complete:
+tatus_response = requests.get(
                         f"{self.api_endpoint}/agents/web-search-agent/task/{task_id}",
                         timeout=30
                     )
@@ -322,9 +319,8 @@ class UserAcceptanceTest:
     start_time = time.time()
         try:
             # Test health check first
-            if not self.check_system_health()
-
-    _ = self.log_result("System Monitoring", "failed", "System not healthy", time.time() - start_time)
+            if not self.check_system_health():
+ = self.log_result("System Monitoring", "failed", "System not healthy", time.time() - start_time)
                 return False
 
             # Get system metrics
@@ -423,8 +419,8 @@ class UserAcceptanceTest:
 
     return self.results
 
-    def save_results(self, filename: str = "uat_results.json")
-    """Save test results to file"""
+    def save_results(self, filename: str = "uat_results.json"):
+""Save test results to file"""
     results_file = Path(__file__).parent.parent / "reports" / filename
     results_file.parent.mkdir(exist_ok=True)
 
@@ -436,15 +432,13 @@ class UserAcceptanceTest:
 
     _ = print(f"\nResults saved to: {results_file}")
 
-    def _make_serializable(self, obj)
-    """Convert object to JSON-serializable format"""
-        if isinstance(obj, dict)
-
-    return {key: self._make_serializable(value) for key, value in obj.items()}
-    elif isinstance(obj, list)
-
-    return [self._make_serializable(item) for item in obj]
-    elif isinstance(obj, (int, float, str, bool)) or obj is None:
+    def _make_serializable(self, obj):
+""Convert object to JSON-serializable format"""
+        if isinstance(obj, dict):
+eturn {key: self._make_serializable(value) for key, value in obj.items()}:
+lif isinstance(obj, list):
+eturn [self._make_serializable(item) for item in obj]:
+lif isinstance(obj, (int, float, str, bool)) or obj is None:
 
     return obj
         else:
@@ -453,9 +447,9 @@ class UserAcceptanceTest:
 
 def main() -> None:
     """Main function"""
-    # Check if system is running
-    print("Checking if system is running...")
-    try:
+    # Check if system is running:
+rint("Checking if system is running..."):
+ry:
 
     response = requests.get("http://localhost:8000/api/health", timeout=5)
         if response.status_code != 200:
@@ -478,8 +472,8 @@ def main() -> None:
     results = tester.run_all_tests()
     _ = tester.save_results()
 
-    # Exit with appropriate code
-    if results["overall_status"] == "passed":
+    # Exit with appropriate code:
+f results["overall_status"] == "passed":
 
     _ = print("\n🎉 All user acceptance tests passed!")
     _ = sys.exit(0)

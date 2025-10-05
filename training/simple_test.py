@@ -124,9 +124,8 @@ def main() -> None:
     print("=" * 50)
 
     # 测试导入
-    if not test_imports()
-
-    return False
+    if not test_imports():
+eturn False
 
     # 测试各个组件
     tests = [
@@ -141,11 +140,8 @@ def main() -> None:
     for test_name, test_func in tests:
 
 
-    if test_func()
-
-
-
-    passed += 1
+    if test_func():
+assed += 1
             _ = print(f"✅ {test_name} 测试通过")
         else:
 

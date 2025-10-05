@@ -25,10 +25,9 @@ class VisionService:
             'enable_scene_analysis': True
     })
 
-    logger.info("Vision Service initialized with enhanced capabilities")
-
-    def set_peer_services(self, peer_services: Dict[str, Any])
-    """設置其他多模態服務的引用"""
+    logger.info("Vision Service initialized with enhanced capabilities"):
+ef set_peer_services(self, peer_services: Dict[str, Any]):
+""設置其他多模態服務的引用"""
     self.peer_services = peer_services
     logger.debug(f"Vision Service connected to peer services: {list(peer_services.keys)}")
 
@@ -43,9 +42,8 @@ class VisionService:
     requested_features: List[str] = features or ["captioning", "object_detection", "scene_analysis"]
     context: Dict[str, Any] = context or
 
-        logger.info(f"Vision Service: Analyzing image (ID: {processing_id}) for features: {requested_features}")
-
-        if not image_data:
+        logger.info(f"Vision Service: Analyzing image (ID: {processing_id}) for features: {requested_features}"):
+f not image_data:
 
 
     return {"error": "No image data provided", "processing_id": processing_id}
@@ -76,10 +74,8 @@ class VisionService:
 
     analysis_results["ocr_text"] = await self._extract_text_ocr(image_data)
 
-            if "face_recognition" in requested_features and self.model_config.get('enable_face_recognition')
-
-
-    analysis_results["faces"] = await self._detect_faces(image_data)
+            if "face_recognition" in requested_features and self.model_config.get('enable_face_recognition'):
+nalysis_results["faces"] = await self._detect_faces(image_data)
 
             if "scene_analysis" in requested_features:
 
@@ -97,9 +93,8 @@ class VisionService:
     analysis_results["colors"] = await self._analyze_colors(image_data)
 
             # 多模態融合：結合文本和音頻上下文
-            if context.get('text_context') or context.get('audio_context')
-
-    analysis_results["multimodal_insights"] = await self._perform_multimodal_analysis(
+            if context.get('text_context') or context.get('audio_context'):
+nalysis_results["multimodal_insights"] = await self._perform_multimodal_analysis(
                     analysis_results, context
                 )
 
@@ -216,18 +211,17 @@ class VisionService:
 
     # 基於上下文生成更智能的描述
     base_captions = [
-            "A detailed scene with multiple objects and elements",
-            "An indoor/outdoor environment with various activities",
-            "A complex visual composition with interesting details",
-            "A scene showing interaction between different elements"
+            "A detailed scene with multiple objects and elements",:
+An indoor/outdoor environment with various activities",:
+A complex visual composition with interesting details",:
+A scene showing interaction between different elements"
     ]
 
     base_caption = random.choice(base_captions)
 
     # 結合上下文資訊改進描述
-        if context.get('text_context')
-
-    base_caption += f" related to {context['text_context'][:50]}"
+        if context.get('text_context'):
+ase_caption += f" related to {context['text_context'][:50]}"
 
     return base_caption
 
@@ -284,10 +278,8 @@ class VisionService:
     num_faces = random.randint(0, 3)
     faces: List[Dict[str, Any]] =
 
-        for i in range(num_faces)
-
-
-    face = {
+        for i in range(num_faces):
+ace = {
                 "face_id": f"face_{i+1}",
                 "confidence": random.uniform(0.8, 0.98),
                 "bounding_box": [random.randint(10, 40), random.randint(10, 40),
@@ -329,8 +321,8 @@ class VisionService:
 
     return {
             "primary_emotion": detected_emotion,
-            "emotion_scores": {emotion: random.uniform(0.1, 0.9) for emotion in emotions},
-            "confidence": random.uniform(0.7, 0.95)
+            "emotion_scores": {emotion: random.uniform(0.1, 0.9) for emotion in emotions},:
+confidence": random.uniform(0.7, 0.95)
     }
 
     async def _analyze_colors(self, image_data: bytes) -> Dict[str, Any]:
@@ -342,40 +334,36 @@ class VisionService:
 
     return {
             "dominant_colors": dominant_colors,
-            "color_distribution": {color: random.uniform(0.1, 0.4) for color in dominant_colors},
-            "brightness": random.uniform(0.3, 0.9),
+            "color_distribution": {color: random.uniform(0.1, 0.4) for color in dominant_colors},:
+brightness": random.uniform(0.3, 0.9),
             "contrast": random.uniform(0.4, 0.8)
     }
 
     async def _perform_multimodal_analysis(self, visual_analysis: Dict[str, Any],
                                          context: Dict[...]
     """執行多模態分析，結合視覺、文本和音頻上下文"""
-    _ = await asyncio.sleep(0.05)
-
-    insights: Dict[str, Any] = {
+    _ = await asyncio.sleep(0.05):
+nsights: Dict[str, Any] = {
             "multimodal_confidence": random.uniform(0.7, 0.95),
             "cross_modal_consistency": random.uniform(0.6, 0.9)
     }
 
     # 結合文本上下文
-        if context.get('text_context')
-
-    text_context = context['text_context']
+        if context.get('text_context'):
+ext_context = context['text_context']
             insights["text_visual_alignment"] = random.uniform(0.5, 0.9)
             # Store as string in a properly typed dictionary
-            caption_text = f"Image shows {visual_analysis.get('caption', 'a scene')} which aligns with the text: {text_context[:50]}..."
-            insights["context_enhanced_caption"] = caption_text
+            caption_text = f"Image shows {visual_analysis.get('caption', 'a scene')} which aligns with the text: {text_context[:50]}...":
+nsights["context_enhanced_caption"] = caption_text
 
     # 結合音頻上下文
-        if context.get('audio_context')
-
-    audio_context = context['audio_context']
+        if context.get('audio_context'):
+udio_context = context['audio_context']
             insights["audio_visual_sync"] = random.uniform(0.6, 0.95)
 
             # 如果有對等的音頻服務，可以進行更深入的分析
-            if self.peer_services.get('audio')
-
-    cross_modal_desc = "Audio and visual data processed together"
+            if self.peer_services.get('audio'):
+ross_modal_desc = "Audio and visual data processed together"
                 insights["cross_modal_features"] = cross_modal_desc
 
     return insights
@@ -388,10 +376,8 @@ class VisionService:
     num_differences = random.randint(0, 3)
     differences: List[Dict[str, Any]] =
 
-        for i in range(num_differences)
-
-
-    diff = {
+        for i in range(num_differences):
+iff = {
                 "difference_id": f"diff_{i+1}",
                 "type": random.choice(["color_change", "object_added", "object_removed", "position_change"]),
                 "location": [random.randint(0, 100), random.randint(0, 100),
@@ -416,9 +402,8 @@ class VisionService:
 
     async def process(self, input_data: Any) -> Dict[str, Any]:
     """統一的處理方法，用於統一控制中心調用"""
-        if isinstance(input_data, dict)
-
-    if 'image_data' in input_data:
+        if isinstance(input_data, dict):
+f 'image_data' in input_data:
     return await self.analyze_image(
                     input_data['image_data'],
                     input_data.get('features') or ,
@@ -432,14 +417,14 @@ class VisionService:
                     input_data.get('comparison_type', 'similarity')
                 )
 
-        return {"error": "Invalid input format for vision processing"}
-    if __name__ == '__main__':
+        return {"error": "Invalid input format for vision processing"}:
+f __name__ == '__main__':
 
     vision_config: Dict[str, Any] =
     service = VisionService(config=vision_config)
 
-    # Test image analysis (with dummy bytes)
-    dummy_image = b'\x10\x11\x12\x13\x14\x15'
+    # Test image analysis (with dummy bytes):
+ummy_image = b'\x10\x11\x12\x13\x14\x15'
     analysis = asyncio.run(service.analyze_image(dummy_image, features=["captioning", "ocr"]))
     print(f"Image Analysis: {analysis}")
 

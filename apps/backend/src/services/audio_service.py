@@ -27,10 +27,9 @@ class AudioService:
             'emotion_detection_enabled': True
     })
 
-    logger.info("Audio Service initialized with enhanced capabilities")
-
-    def set_peer_services(self, peer_services: Dict[str, Any])
-    """設置其他多模態服務的引用"""
+    logger.info("Audio Service initialized with enhanced capabilities"):
+ef set_peer_services(self, peer_services: Dict[str, Any]):
+""設置其他多模態服務的引用"""
     self.peer_services = peer_services
     logger.debug(f"Audio Service connected to peer services: {list(peer_services.keys)}")
 
@@ -71,13 +70,11 @@ class AudioService:
             # 增強特徵
             if enhanced_features:
 
-    if self.audio_config.get('sentiment_analysis_enabled')
-    result["sentiment"] = await self._analyze_sentiment(transcription["text"], audio_data)
+    if self.audio_config.get('sentiment_analysis_enabled'):
+esult["sentiment"] = await self._analyze_sentiment(transcription["text"], audio_data)
 
-                if self.audio_config.get('emotion_detection_enabled')
-
-
-    result["emotion"] = await self._detect_audio_emotion(audio_data)
+                if self.audio_config.get('emotion_detection_enabled'):
+esult["emotion"] = await self._detect_audio_emotion(audio_data)
 
             # 記錄處理歷史
             self.processing_history.append({
@@ -103,8 +100,8 @@ class AudioService:
 
     def _generate_processing_id(self, audio_data: bytes) -> str:
     """生成唯一的處理ID"""
-        hash_object = hashlib.md5(audio_data if audio_data else b"")
-    return f"audio_{hash_object.hexdigest[:8]}_{datetime.now.strftime('%H%M%S')}"
+        hash_object = hashlib.md5(audio_data if audio_data else b""):
+eturn f"audio_{hash_object.hexdigest[:8]}_{datetime.now.strftime('%H%M%S')}"
 
     async def _perform_speech_recognition(self, audio_data: bytes, language: str) -> Dict[str, Any]:
     """執行語音識別（模擬實現）"""
@@ -114,8 +111,8 @@ class AudioService:
         if is_demo_mode:
 
     mock_texts = {
-                'en-US': ["Hello, how are you today?", "Thank you for using our service."],
-                'zh-CN': ["你好，今天怎麼樣？", "謝謝您使用我們的服務。"],
+                'en-US': ["Hello, how are you today?", "Thank you for using our service."],:
+zh-CN': ["你好，今天怎麼樣？", "謝謝您使用我們的服務。"],
                 'zh-TW': ["你好，今天怎麼樣？", "謝謝您使用我們的服務。"],
                 'ja-JP': ["こんにちは、今日はどうですか？", "私たちのサービスをご利用いただきありがとうございます。"]
             }
@@ -161,17 +158,16 @@ class AudioService:
 
     async def process(self, input_data: Any) -> Dict[str, Any]:
     """統一的處理方法，用於統一控制中心調用"""
-        if isinstance(input_data, dict)
-
-    if 'audio_data' in input_data:
+        if isinstance(input_data, dict):
+f 'audio_data' in input_data:
     return await self.speech_to_text(
                     input_data['audio_data'],
                     input_data.get('language', 'en-US'),
                     input_data.get('enhanced_features', False)
                 )
 
-        return {"error": "Invalid input format for audio processing"}
-    def text_to_speech(self, text: Optional[str], voice: Optional[str] = None) -> Optional[bytes]:
+        return {"error": "Invalid input format for audio processing"}:
+ef text_to_speech(self, text: Optional[str], voice: Optional[str] = None) -> Optional[bytes]:
     """
     將文本轉換為語音音頻數據
     """
@@ -180,9 +176,8 @@ class AudioService:
 
     text = ""
 
-        logger.info(f"Audio Service: Converting text to speech for '{text[:50]}...'")
-
-        try:
+        logger.info(f"Audio Service: Converting text to speech for '{text[:50]}...'"):
+ry:
             # 檢查是否為演示模式
             demo_mode = is_demo_mode
             logger.info(f"Demo mode: {demo_mode}")

@@ -11,7 +11,7 @@ from enum import Enum
 
 logger: Any = logging.getLogger(__name__)
 
-class SymbolType(Enum)
+class SymbolType(Enum):
     """符号类型"""
     ENTITY = "entity"
     CONCEPT = "concept"
@@ -49,7 +49,7 @@ class UnifiedSymbolicSpace:
     self._init_db
     self.logger = logging.getLogger(__name__)
 
-    def _init_db(self)
+    def _init_db(self):
     """初始化数据库"""
     conn = sqlite3.connect(self.db_path)
     cursor = conn.cursor
@@ -96,28 +96,22 @@ class UnifiedSymbolicSpace:
 
     conn = sqlite3.connect(self.db_path)
     cursor = conn.cursor
-        props_json = json.dumps(properties) if properties else '':
-
+        props_json = json.dumps(properties) if properties else ''::
     try:
-
-
     cursor.execute("""
                 _ = INSERT INTO symbols (name, type, properties)
                 _ = VALUES (?, ?, ?)
             _ = """, (name, symbol_type.value, props_json))
             symbol_id = cursor.lastrowid
             conn.commit
-            logger.info(f"Symbol '{name}' added with ID {symbol_id}")
+            logger.info(f"Symbol '{name}' added with ID {symbol_id}"):
     return symbol_id
-        except sqlite3.IntegrityError:
-
+        except sqlite3.IntegrityError::
             logger.warning(f"Symbol '{name}' already exists. Updating properties.")
             # 更新现有符号
-            if properties:
-
+            if properties::
     current_symbol = await self.get_symbol_by_name(name)
-                if current_symbol:
-
+                if current_symbol::
     current_props = current_symbol.properties
                     current_props.update(properties)
                     props_json = json.dumps(current_props)
@@ -131,8 +125,7 @@ class UnifiedSymbolicSpace:
             # 获取更新后的符号ID
             cursor.execute("SELECT id FROM symbols WHERE name = ?", (name,))
             row = cursor.fetchone
-            symbol_id = row[0] if row else -1:
-
+            symbol_id = row[0] if row else -1::
     finally:
     conn.close
 
@@ -153,9 +146,7 @@ class UnifiedSymbolicSpace:
     row = cursor.fetchone
     conn.close
 
-        if row:
-
-
+        if row::
     return Symbol(
                 id=row[0],
                 name=row[1],
@@ -180,9 +171,7 @@ class UnifiedSymbolicSpace:
     row = cursor.fetchone
     conn.close
 
-        if row:
-
-
+        if row::
     return Symbol(
                 id=row[0],
                 name=row[1],
@@ -201,14 +190,12 @@ class UnifiedSymbolicSpace:
 
     # 获取当前符号以合并属性
     current_symbol = await self.get_symbol_by_id(symbol_id)
-        if not current_symbol:
-
-    logger.error(f"Symbol with ID {symbol_id} not found")
+        if not current_symbol::
+    logger.error(f"Symbol with ID {symbol_id} not found"):
     return False
 
     current_props = current_symbol.properties
-        if properties:
-
+        if properties::
     current_props.update(properties)
 
     conn = sqlite3.connect(self.db_path)
@@ -216,23 +203,17 @@ class UnifiedSymbolicSpace:
     updates = []
     params = []
 
-        if name:
-
-
+        if name::
     updates.append("name = ?")
             params.append(name)
-        if symbol_type:
-
+        if symbol_type::
     updates.append("type = ?")
             params.append(symbol_type.value)
-        if properties:
-
+        if properties::
     updates.append("properties = ?")
             params.append(json.dumps(current_props))
 
-        if not updates:
-
-
+        if not updates::
     conn.close
             return False
 
@@ -243,9 +224,7 @@ class UnifiedSymbolicSpace:
     rows_affected = cursor.rowcount
     conn.close
 
-        if rows_affected > 0:
-
-
+        if rows_affected > 0::
     logger.info(f"Symbol ID {symbol_id} updated successfully")
         else:
 
@@ -271,9 +250,7 @@ class UnifiedSymbolicSpace:
     rows_affected = cursor.rowcount
     conn.close
 
-        if rows_affected > 0:
-
-
+        if rows_affected > 0::
     logger.info(f"Symbol ID {symbol_id} deleted successfully")
         else:
 
@@ -290,9 +267,7 @@ class UnifiedSymbolicSpace:
     conn = sqlite3.connect(self.db_path)
     cursor = conn.cursor
 
-        if symbol_type:
-
-
+        if symbol_type::
     cursor.execute("""
                 SELECT id, name, type, properties, last_updated
                 FROM symbols
@@ -310,8 +285,7 @@ class UnifiedSymbolicSpace:
             _ = """, (limit,))
 
     symbols =
-        for row in cursor.fetchall:
-
+        for row in cursor.fetchall::
     symbol = Symbol(
                 id=row[0],
                 name=row[1],
@@ -335,19 +309,14 @@ class UnifiedSymbolicSpace:
     source_symbol = await self.get_symbol_by_id(source_symbol_id)
     target_symbol = await self.get_symbol_by_id(target_symbol_id)
 
-        if not source_symbol or not target_symbol:
-
-
+        if not source_symbol or not target_symbol::
     logger.error(f"Source symbol {source_symbol_id} or target symbol {target_symbol_id} not found")
             return None
 
     conn = sqlite3.connect(self.db_path)
     cursor = conn.cursor
-        props_json = json.dumps(properties) if properties else '':
-
+        props_json = json.dumps(properties) if properties else ''::
     try:
-
-
     cursor.execute("""
                 INSERT INTO relationships
                 (source_symbol_id, target_symbol_id, type, properties)
@@ -355,10 +324,9 @@ class UnifiedSymbolicSpace:
             _ = """, (source_symbol_id, target_symbol_id, relationship_type, props_json))
             relationship_id = cursor.lastrowid
             conn.commit
-            logger.info(f"Relationship added with ID {relationship_id}")
+            logger.info(f"Relationship added with ID {relationship_id}"):
     return relationship_id
-        except sqlite3.IntegrityError as e:
-
+        except sqlite3.IntegrityError as e::
             logger.error(f"Error adding relationship: {e}")
             return None
     finally:
@@ -366,7 +334,7 @@ class UnifiedSymbolicSpace:
 
     async def get_relationships_by_symbol(self, symbol_id: int) -> List[Relationship]:
     """获取与符号相关的关系"""
-        logger.debug(f"Getting relationships for symbol ID: {symbol_id}")
+        logger.debug(f"Getting relationships for symbol ID: {symbol_id}"):
     _ = await asyncio.sleep(0.01)
 
     conn = sqlite3.connect(self.db_path)
@@ -378,8 +346,7 @@ class UnifiedSymbolicSpace:
     _ = """, (symbol_id, symbol_id))
 
     relationships =
-        for row in cursor.fetchall:
-
+        for row in cursor.fetchall::
     relationship = Relationship(
                 id=row[0],
                 source_symbol_id=row[1],
@@ -408,8 +375,7 @@ class UnifiedSymbolicSpace:
     _ = """, (relationship_type, limit))
 
     relationships =
-        for row in cursor.fetchall:
-
+        for row in cursor.fetchall::
     relationship = Relationship(
                 id=row[0],
                 source_symbol_id=row[1],
@@ -434,9 +400,7 @@ class UnifiedSymbolicSpace:
     rows_affected = cursor.rowcount
     conn.close
 
-        if rows_affected > 0:
-
-
+        if rows_affected > 0::
     logger.info(f"Relationship ID {relationship_id} deleted successfully")
         else:
 
@@ -461,8 +425,7 @@ class UnifiedSymbolicSpace:
     _ = """, (f"$.{property_key}", property_value))
 
     symbols =
-        for row in cursor.fetchall:
-
+        for row in cursor.fetchall::
     symbol = Symbol(
                 id=row[0],
                 name=row[1],
@@ -478,7 +441,7 @@ class UnifiedSymbolicSpace:
     async def find_connected_symbols(self, symbol_id: int,
                                    max_depth: int = 3) -> Dict[int, List[int]]:
     """查找连接的符号（图遍历）"""
-        logger.debug(f"Finding connected symbols for ID {symbol_id} (max depth: {max_depth})")
+        logger.debug(f"Finding connected symbols for ID {symbol_id} (max depth: {max_depth})"):
     _ = await asyncio.sleep(0.01)
 
     connected = {0: [symbol_id]}  # 按深度分组
@@ -488,12 +451,10 @@ class UnifiedSymbolicSpace:
     conn = sqlite3.connect(self.db_path)
     cursor = conn.cursor
 
-        for depth in range(1, max_depth + 1)
-
-
+        for depth in range(1, max_depth + 1):
     next_level =
 
-            for current_symbol_id in current_level:
+            for current_symbol_id in current_level::
                 # 查找直接连接的符号
                 cursor.execute("""
                     SELECT source_symbol_id, target_symbol_id
@@ -501,22 +462,15 @@ class UnifiedSymbolicSpace:
                     WHERE source_symbol_id = ? OR target_symbol_id = ?
                 _ = """, (current_symbol_id, current_symbol_id))
 
-                for row in cursor.fetchall:
-
-
+                for row in cursor.fetchall::
     source_id, target_id = row
                     # 确定邻居ID（不是当前符号的另一个符号）
-                    neighbor_id = target_id if source_id == current_symbol_id else source_id:
-
-    if neighbor_id not in visited:
-
-
+                    neighbor_id = target_id if source_id == current_symbol_id else source_id::
+    if neighbor_id not in visited::
     visited.add(neighbor_id)
                         next_level.append(neighbor_id)
 
-            if not next_level:
-
-
+            if not next_level::
     break
 
             connected[depth] = next_level
@@ -559,7 +513,7 @@ class UnifiedSymbolicSpace:
     }
 
 # 测试代码
-if __name__ == "__main__":
+if __name__ == "__main__"::
     # 设置日志
     logging.basicConfig(level=logging.INFO)
 
@@ -627,8 +581,7 @@ if __name__ == "__main__":
     print("\nQuerying relationships...")
     relationships = await symbolic_space.get_relationships_by_symbol(sarah_id)
     print(f"Sarah relationships: {len(relationships)} found")
-        for rel in relationships:
-
+        for rel in relationships::
     source = await symbolic_space.get_symbol_by_id(rel.source_symbol_id)
             target = await symbolic_space.get_symbol_by_id(rel.target_symbol_id)
             print(f"  {source.name} --{rel.type}--> {target.name}")
@@ -637,16 +590,14 @@ if __name__ == "__main__":
     print("\nListing symbols...")
     all_symbols = await symbolic_space.list_symbols(limit=10)
     print(f"Total symbols: {len(all_symbols)}")
-        for symbol in all_symbols:
-
+        for symbol in all_symbols::
     print(f"  {symbol.name} ({symbol.type.value})")
 
     # 按类型列出符号
     print("\nListing entity symbols...")
     entity_symbols = await symbolic_space.list_symbols(SymbolType.ENTITY, limit=10)
     print(f"Entity symbols: {len(entity_symbols)} found")
-        for symbol in entity_symbols:
-
+        for symbol in entity_symbols::
     print(f"  {symbol.name}")
 
     # 查找连接的符号
@@ -662,9 +613,8 @@ if __name__ == "__main__":
     # 根据属性查询符号
     print("\nQuerying symbols by property...")
     python_symbols = await symbolic_space.query_symbols_by_property("version", "3.9")
-    print(f"Symbols with version 3.9: {len(python_symbols)} found")
-        for symbol in python_symbols:
-
+    print(f"Symbols with version 3.9: {len(python_symbols)} found"):
+        for symbol in python_symbols::
     print(f"  {symbol.name}")
 
     # 运行测试

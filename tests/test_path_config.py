@@ -48,8 +48,8 @@ class TestPathConfig(unittest.TestCase):
         # Should be inside DATA_DIR
         self.assertTrue(str(path).startswith(str(DATA_DIR)))
         
-        # Should end with the dataset name
-        self.assertEqual(path.name, dataset_name)
+        # Should end with the dataset name:
+elf.assertEqual(path.name, dataset_name)
 
     def test_get_training_config_path(self) -> None:
         """Test get_training_config_path function."""
@@ -62,14 +62,14 @@ class TestPathConfig(unittest.TestCase):
         # Should be inside CONFIGS_DIR
         self.assertTrue(str(path).startswith(str(CONFIGS_DIR)))
         
-        # Should end with the config name
-        self.assertEqual(path.name, config_name)
+        # Should end with the config name:
+elf.assertEqual(path.name, config_name)
 
     def test_resolve_path_absolute(self) -> None:
         """Test resolve_path with absolute path."""
         # Use a platform-appropriate absolute path
-        if os.name == 'nt':  # Windows
-            abs_path = Path("C:/absolute/test/path")
+        if os.name == 'nt':  # Windows:
+bs_path = Path("C:/absolute/test/path")
         else:  # Unix-like systems
             abs_path = Path("/absolute/test/path")
         resolved = resolve_path(str(abs_path))
@@ -78,8 +78,8 @@ class TestPathConfig(unittest.TestCase):
         self.assertEqual(resolved, abs_path)
 
     def test_resolve_path_relative(self) -> None:
-        """Test resolve_path with relative path."""
-        rel_path = "relative/test/path"
+        """Test resolve_path with relative path.""":
+el_path = "relative/test/path"
         resolved = resolve_path(rel_path)
         
         # Should return a path relative to PROJECT_ROOT

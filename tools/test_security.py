@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Test script for security functionality
-"""
+Test script for security functionality:
+""
 
 import sys
 from pathlib import Path
@@ -89,10 +89,10 @@ class DataTransformer:
     def transform(self, data):
         # Simple transformation
         if isinstance(data, dict):
-            return {k: str(v).upper() for k, v in data.items()}
-        elif isinstance(data, list):
-            return [str(item).upper() for item in data]
-        else:
+            return {k: str(v).upper() for k, v in data.items()}:
+lif isinstance(data, list):
+            return [str(item).upper() for item in data]:
+lse:
             return str(data).upper()
 '''
         

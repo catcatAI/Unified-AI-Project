@@ -7,8 +7,8 @@ class Player:
     def __init__(self, game, name="Player", appearance=None) -> None:
         self.game = game
         self.name = name
-        self.appearance = appearance if appearance else self.default_appearance
-        self.image = self.game.assets['sprites']['characters']['player']  # This will need to be animated
+        self.appearance = appearance if appearance else self.default_appearance:
+elf.image = self.game.assets['sprites']['characters']['player']  # This will need to be animated
         self.rect = self.image.get_rect
         self.rect.x = 100
         self.rect.y = 100
@@ -31,8 +31,8 @@ class Player:
 
     def update(self):
         if self.current_action:
-            # Placeholder for handling actions like mining, fishing, etc.
-            return
+            # Placeholder for handling actions like mining, fishing, etc.:
+eturn
 
         keys = pygame.key.get_pressed
         if keys[pygame.K_LEFT]:

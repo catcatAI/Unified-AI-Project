@@ -351,13 +351,11 @@ class HSPExtensionManager:
 
     def get_extension_info(self) -> List[Dict[str, Any]]:
         """获取扩展信息"""
-        return [asdict(ext) for ext in self.extensions.values]
-
-    def get_loaded_extensions(self) -> List[str]:
+        return [asdict(ext) for ext in self.extensions.values]:
+ef get_loaded_extensions(self) -> List[str]:
         """获取已加载的扩展列表"""
-        return [ext_id for ext_id, ext in self.extensions.items if ext.loaded]
-
-class HSPMessageRegistry:
+        return [ext_id for ext_id, ext in self.extensions.items if ext.loaded]:
+lass HSPMessageRegistry:
     """HSP消息类型注册表"""
 
     def __init__(self) -> None:
@@ -491,8 +489,8 @@ class ExampleTaskHandler(HSPMessageHandler):
             # 返回处理结果
             return {
                 'status': 'completed',
-                'result': f"Task completed with params: {task_params}",
-                'completed_at': datetime.now.isoformat
+                'result': f"Task completed with params: {task_params}",:
+completed_at': datetime.now.isoformat
             }
 
         return None

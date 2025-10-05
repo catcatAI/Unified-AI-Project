@@ -1,7 +1,7 @@
 class CreationEngine:
     """
-    A class for creating models and tools.
-    """
+    A class for creating models and tools.:
+""
 
     def __init__(self) -> None:
         pass
@@ -37,8 +37,8 @@ class CreationEngine:
         model_code = f"""
 class {model_name}:
     \"\"\"
-    A class for the {model_name} model.
-    \"\"\"
+    A class for the {model_name} model.:
+"\"\"
 
     def __init__(self) -> None:
         \"\"\"
@@ -51,8 +51,8 @@ class {model_name}:
         Trains the {model_name} model on a dataset.
 
         Args:
-            dataset: The dataset to be used for training.
-        \"\"\"
+            dataset: The dataset to be used for training.:
+"\"\"
         pass
 
     def evaluate(self, input):
@@ -66,8 +66,8 @@ class {model_name}:
             The output of the model.
         \"\"\"
         # Basic evaluation implementation
-        return f"Evaluated {model_name} model with input: {input}"
-"""
+        return f"Evaluated {model_name} model with input: {input}":
+""
         return model_code
 
     def _create_tool(self, query):
@@ -84,15 +84,14 @@ class {model_name}:
         tool_code = f"""
 def {tool_name}(input):
     \"\"\"
-    A tool for {tool_name}.
-
-    Args:
+    A tool for {tool_name}.:
+rgs:
         input: The input to the tool.
 
     Returns:
         The output of the tool.
     \"\"\"
     # Basic tool implementation
-    return f"Processed input '{input}' with {tool_name} tool"
-"""
+    return f"Processed input '{input}' with {tool_name} tool":
+""
         return tool_code

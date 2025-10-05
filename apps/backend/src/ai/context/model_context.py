@@ -12,7 +12,7 @@ class ModelCallRecord:
     """模型调用记录"""
 
     def __init__(self, caller_model_id: str, callee_model_id: str, parameters: Dict[str, Any],
-                 result: Any, duration: float, success: bool)
+                 result: Any, duration: float, success: bool):
     self.record_id = f"call_{datetime.now.strftime('%Y%m%d%H%M%S%f')}"
     self.caller_model_id = caller_model_id
     self.callee_model_id = callee_model_id
@@ -34,16 +34,16 @@ class AgentCollaboration:
     self.end_time: Optional[datetime] = None
     self.status = "active"  # active, completed, failed
 
-    def add_step(self, step: 'CollaborationStep')
+    def add_step(self, step: 'CollaborationStep'):
     """添加协作步骤"""
     self.collaboration_steps.append(step)
 
-    def complete(self)
+    def complete(self):
     """完成协作"""
     self.end_time = datetime.now
     self.status = "completed"
 
-    def fail(self)
+    def fail(self):
     """标记协作失败"""
     self.end_time = datetime.now
     self.status = "failed"
@@ -69,14 +69,13 @@ class ModelPerformanceMetrics:
     self.average_duration = 0.0
     self.last_called: Optional[datetime] = None
 
-    def update_from_call(self, call_record: ModelCallRecord)
+    def update_from_call(self, call_record: ModelCallRecord):
     """根据调用记录更新性能指标"""
     self.total_calls += 1
     self.last_called = call_record.timestamp
 
     # 更新成功率
-        if call_record.success:
-
+        if call_record.success::
     self.success_rate = (self.success_rate * (self.total_calls - 1) + 1) / self.total_calls
         else:
 
@@ -97,16 +96,12 @@ class ModelContextManager:
                          result: Any, duration: float, success: bool) -> bool:
     """记录模型调用"""
         try:
-
             call_record = ModelCallRecord(caller_model_id, callee_model_id, parameters, result, duration, success)
             self.call_records.append(call_record)
 
             # 更新调用者和被调用者的性能指标
-            for model_id in [caller_model_id, callee_model_id]:
-
-    if model_id not in self.model_metrics:
-
-
+            for model_id in [caller_model_id, callee_model_id]::
+    if model_id not in self.model_metrics::
     self.model_metrics[model_id] = ModelPerformanceMetrics
                 self.model_metrics[model_id].update_from_call(call_record)
 
@@ -137,10 +132,9 @@ class ModelContextManager:
             }
 
             context_id = self.context_manager.create_context(ContextType.MODEL, context_content)
-            logger.info(f"Recorded model call from {caller_model_id} to {callee_model_id} with context {context_id}")
+            logger.info(f"Recorded model call from {caller_model_id} to {callee_model_id} with context {context_id}"):
     return True
-        except Exception as e:
-
+        except Exception as e::
             logger.error(f"Failed to record model call: {e}")
             return False
 
@@ -150,10 +144,8 @@ class ModelContextManager:
             # 搜索相关的上下文
             contexts = self.context_manager.search_contexts(model_id, [ContextType.MODEL])
 
-            if not contexts:
-
-
-    logger.debug(f"No context found for model {model_id}")
+            if not contexts::
+    logger.debug(f"No context found for model {model_id}"):
     return None
 
             # 返回最新的上下文
@@ -164,9 +156,8 @@ class ModelContextManager:
                 "metadata": latest_context.metadata,
                 "updated_at": latest_context.updated_at.isoformat
             }
-        except Exception as e:
-
-            logger.error(f"Failed to get context for model {model_id}: {e}")
+        except Exception as e::
+            logger.error(f"Failed to get context for model {model_id}: {e}"):
             return None
 
     def get_model_call_history(self, model_id: str, limit: int = 10) -> List[Dict[str, Any]]:
@@ -174,8 +165,8 @@ class ModelContextManager:
         try:
             # 筛选与该模型相关的调用记录
             model_calls = [
-                call for call in self.call_records :
-    if call.caller_model_id == model_id or call.callee_model_id == model_id
+                call for call in self.call_records ::
+    if call.caller_model_id == model_id or call.callee_model_id == model_id:
             ]
 
             # 按时间倒序排列
@@ -186,8 +177,7 @@ class ModelContextManager:
 
             # 转换为字典格式
             call_history =
-            for call in model_calls:
-
+            for call in model_calls::
     call_history.append({
                     "record_id": call.record_id,
                     "caller_model_id": call.caller_model_id,
@@ -198,12 +188,11 @@ class ModelContextManager:
                 })
 
             return call_history
-        except Exception as e:
-
-            logger.error(f"Failed to get call history for model {model_id}: {e}")
+        except Exception as e::
+            logger.error(f"Failed to get call history for model {model_id}: {e}"):
             return
 
-class AgentContextManager
+class AgentContextManager:
     """代理上下文管理器"""
 
     def __init__(self, context_manager: ContextManager) -> None:
@@ -213,7 +202,6 @@ class AgentContextManager
     def start_collaboration(self, task_id: str, participating_agents: List[str]) -> str:
     """开始代理协作"""
         try:
-
             collaboration = AgentCollaboration(task_id, participating_agents)
             self.collaborations[collaboration.collaboration_id] = collaboration
 
@@ -229,10 +217,9 @@ class AgentContextManager
             }
 
             context_id = self.context_manager.create_context(ContextType.MODEL, context_content)
-            logger.info(f"Started collaboration {collaboration.collaboration_id} with context {context_id}")
+            logger.info(f"Started collaboration {collaboration.collaboration_id} with context {context_id}"):
     return collaboration.collaboration_id
-        except Exception as e:
-
+        except Exception as e::
             logger.error(f"Failed to start collaboration: {e}")
             raise
 
@@ -240,10 +227,7 @@ class AgentContextManager
                                  input_data: Any, output_data: Any, duration: float) -> bool:
     """记录协作步骤"""
         try:
-
-            if collaboration_id not in self.collaborations:
-
-
+            if collaboration_id not in self.collaborations::
     logger.error(f"Collaboration {collaboration_id} not found")
                 return False
 
@@ -267,20 +251,16 @@ class AgentContextManager
             }
 
             context_id = self.context_manager.create_context(ContextType.MODEL, context_content)
-            logger.info(f"Recorded collaboration step {step.step_id} with context {context_id}")
+            logger.info(f"Recorded collaboration step {step.step_id} with context {context_id}"):
     return True
-        except Exception as e:
-
+        except Exception as e::
             logger.error(f"Failed to record collaboration step: {e}")
             return False
 
     def complete_collaboration(self, collaboration_id: str) -> bool:
     """完成协作"""
         try:
-
-            if collaboration_id not in self.collaborations:
-
-
+            if collaboration_id not in self.collaborations::
     logger.error(f"Collaboration {collaboration_id} not found")
                 return False
 
@@ -291,27 +271,23 @@ class AgentContextManager
             context_content = {
                 "collaboration_completion": {
                     "collaboration_id": collaboration_id,
-                    "end_time": collaboration.end_time.isoformat if collaboration.end_time else None,
+                    "end_time": collaboration.end_time.isoformat if collaboration.end_time else None,:
                     "status": collaboration.status,
                     "total_steps": len(collaboration.collaboration_steps)
                 }
             }
 
             context_id = self.context_manager.create_context(ContextType.MODEL, context_content)
-            logger.info(f"Completed collaboration {collaboration_id} with context {context_id}")
+            logger.info(f"Completed collaboration {collaboration_id} with context {context_id}"):
     return True
-        except Exception as e:
-
+        except Exception as e::
             logger.error(f"Failed to complete collaboration {collaboration_id}: {e}")
             return False
 
     def get_collaboration_context(self, collaboration_id: str) -> Optional[Dict[str, Any]]:
     """获取协作上下文"""
         try:
-
-            if collaboration_id not in self.collaborations:
-
-
+            if collaboration_id not in self.collaborations::
     logger.error(f"Collaboration {collaboration_id} not found")
                 return None
 
@@ -320,10 +296,8 @@ class AgentContextManager
             # 搜索相关的上下文
             contexts = self.context_manager.search_contexts(collaboration_id, [ContextType.MODEL])
 
-            if not contexts:
-
-
-    logger.debug(f"No context found for collaboration {collaboration_id}")
+            if not contexts::
+    logger.debug(f"No context found for collaboration {collaboration_id}"):
     return None
 
             # 返回最新的上下文
@@ -334,7 +308,6 @@ class AgentContextManager
                 "metadata": latest_context.metadata,
                 "updated_at": latest_context.updated_at.isoformat
             }
-        except Exception as e:
-
-            logger.error(f"Failed to get context for collaboration {collaboration_id}: {e}")
+        except Exception as e::
+            logger.error(f"Failed to get context for collaboration {collaboration_id}: {e}"):
             return None

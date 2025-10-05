@@ -8,8 +8,8 @@ class LogicParserEval:
     """
 
     def __init__(self) -> None:
-        # Define token patterns (simple regex for this version)
-    self.token_patterns = [
+        # Define token patterns (simple regex for this version):
+elf.token_patterns = [
             (r'\s+', None),  # Whitespace
             (r'\(', 'LPAREN'),
             (r'\)', 'RPAREN'),
@@ -28,9 +28,8 @@ class LogicParserEval:
     def _tokenize(self, expression_string: str) -> List[Tuple[str, str]]:
     tokens =
     position = 0
-        while position < len(expression_string)
-
-    match = None
+        while position < len(expression_string):
+atch = None
             # Try to match whitespace first to skip it
             if expression_string[position].isspace:
 
@@ -40,14 +39,11 @@ class LogicParserEval:
             for pattern, token_type in self.token_patterns:
 
 
-    if token_type is None: # Skip whitespace pattern for named matching
+    if token_type is None: # Skip whitespace pattern for named matching:
+ontinue
 
-
-
-    continue
-
-                regex = re.compile(pattern, re.IGNORECASE) # Ignore case for keywords
-    m = regex.match(expression_string, position)
+                regex = re.compile(pattern, re.IGNORECASE) # Ignore case for keywords:
+ = regex.match(expression_string, position)
                 if m:
 
     value = m.group(0)
@@ -65,25 +61,24 @@ class LogicParserEval:
     _ = Parses a list of tokens into an abstract syntax tree (AST) or directly evaluates.
         This version uses a simplified shunting-yard like approach for direct evaluation:
     with correct precedence (NOT > AND > OR) and parentheses.:
-    For simplicity, we will implement a recursive descent parser for evaluation.
-    """
-    # Update instance variables with provided tokens
-    self.tokens = tokens
+    For simplicity, we will implement a recursive descent parser for evaluation.:
+""
+    # Update instance variables with provided tokens:
+elf.tokens = tokens
     self.pos = 0
     expr_val = self._parse_or
-        if self.pos != len(self.tokens)
-
-    raise ValueError("Extra tokens found after parsing expression.")
+        if self.pos != len(self.tokens):
+aise ValueError("Extra tokens found after parsing expression.")
     return expr_val
 
-    def _current_token_type(self)
-    if self.pos < len(self.tokens)
+    def _current_token_type(self):
+f self.pos < len(self.tokens)
 
     return self.tokens[self.pos][0]
     return None
 
-    def _consume(self, expected_type: Optional[str] = None)
-    if self.pos < len(self.tokens)
+    def _consume(self, expected_type: Optional[str] = None):
+f self.pos < len(self.tokens)
 
     token_type, token_value = self.tokens[self.pos]
             if expected_type and token_type != expected_type:
@@ -93,8 +88,8 @@ class LogicParserEval:
             return token_value
     raise ValueError("Unexpected end of expression.")
 
-    def _parse_atom(self)
-    token_type = self._current_token_type
+    def _parse_atom(self):
+oken_type = self._current_token_type
         if token_type == 'TRUE':
 
     self._consume('TRUE')
@@ -119,8 +114,8 @@ class LogicParserEval:
             val = self.tokens[self.pos][1] if self.pos < len(self.tokens) else "EOF":
     raise ValueError(f"Unexpected token: {token_type} ('{val}')")
 
-    def _parse_and(self)
-    value = self._parse_atom
+    def _parse_and(self):
+alue = self._parse_atom
         while self._current_token_type == 'AND':
 
     self._consume('AND')
@@ -130,8 +125,8 @@ class LogicParserEval:
     def _parse_or(self)
     # Corrected precedence AND should be parsed before OR.
     # So, an OR expression is a sequence of AND expressions.
-        value = self._parse_and_expression # Term for AND expression
-    while self._current_token_type == 'OR':
+        value = self._parse_and_expression # Term for AND expression:
+hile self._current_token_type == 'OR':
 
     self._consume('OR')
             value = value or self._parse_and_expression
@@ -183,28 +178,24 @@ class LogicParserEval:
     def evaluate(self, expression_string: str) -> Optional[bool]:
     """
     Tokenizes, parses, and evaluates the logical expression string.
-        Returns boolean result or None if parsing/evaluation fails.
-    """
+        Returns boolean result or None if parsing/evaluation fails.:
+""
         try:
-            # Normalize input uppercase for keywords, ensure spaces for NOT
-    normalized_expression = expression_string.upper
+            # Normalize input uppercase for keywords, ensure spaces for NOT:
+ormalized_expression = expression_string.upper
             # Add space after NOT if it's followed by a non-space char (e.g. "NOT(true)")
             # This helps tokenizer, but a more robust tokenizer would handle this.
             # For now, let's assume input like "NOT true" or "NOT (true)"
 
             tokens = self._tokenize(normalized_expression)
-            if not tokens: # Handle empty or whitespace-only strings
-                raise ValueError("Empty expression or only whitespace.")
+            if not tokens: # Handle empty or whitespace-only strings:
+aise ValueError("Empty expression or only whitespace.")
 
-            self.tokens = tokens # Set tokens for parser methods
-    self.pos = 0         # Reset position for parser
-
-    result = self._parse_or_expression # Start parsing with lowest precedence (OR)
-
-    if self.pos != len(self.tokens) # Check if all tokens were consumed
-
-
-    raise ValueError(f"Extra tokens remaining after parsing: {self.tokens[self.pos:]}")
+            self.tokens = tokens # Set tokens for parser methods:
+elf.pos = 0         # Reset position for parser:
+esult = self._parse_or_expression # Start parsing with lowest precedence (OR):
+f self.pos != len(self.tokens) # Check if all tokens were consumed:
+aise ValueError(f"Extra tokens remaining after parsing: {self.tokens[self.pos:]}")
             return result
         except ValueError as e:
 
@@ -234,8 +225,8 @@ if __name__ == '__main__':
     ("true AND NOT false", True),
     ("(true OR false) AND true", True),
     ("NOT (false OR (true AND false))", True),
-    ("  true   AND   ( false OR true )  ", True), # Test with spaces
-    ]
+    ("  true   AND   ( false OR true )  ", True), # Test with spaces:
+
 
     print("Running tests...")
     for expr, expected in test_expressions:

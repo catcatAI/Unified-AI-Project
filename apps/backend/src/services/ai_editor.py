@@ -2,9 +2,9 @@
 """
 AI Editor Service
 
-This service provides data processing and transformation capabilities for the AI editor.
-It integrates with the AI Virtual Input Service and Sandbox Executor to provide a complete
-editing environment for the AI system.
+This service provides data processing and transformation capabilities for the AI editor.:
+It integrates with the AI Virtual Input Service and Sandbox Executor to provide a complete:
+editing environment for the AI system.:
 """
 
 import json
@@ -23,7 +23,6 @@ logger.setLevel(logging.INFO)
 
 class DataProcessor:
     """Handles data processing and transformation for the AI editor""":
-
     def __init__(self) -> None:
     self.processors = {
             'text': self._process_text_data,
@@ -39,8 +38,7 @@ class DataProcessor:
     Args:
             data: The raw data to process
             data_type: Type of data ('text', 'code', 'structured', 'application')
-            transformation_rules: Optional rules for data transformation:
-
+            transformation_rules: Optional rules for data transformation::
     Returns:
     Dict containing processed data and metadata
     """
@@ -48,8 +46,7 @@ class DataProcessor:
 
     # Get the appropriate processor
     processor = self.processors.get(data_type)
-        if not processor:
-
+        if not processor::
     raise ValueError(f"Unsupported data type: {data_type}")
 
     # Process the data
@@ -63,7 +60,7 @@ class DataProcessor:
             "transformation_rules_applied": transformation_rules or
     }
 
-        logger.info(f"Data processing completed for {data_type}")
+        logger.info(f"Data processing completed for {data_type}"):
     return result
 
     def _process_text_data(self, data: str, transformation_rules: Optional[Dict] = None) -> Dict[str, Any]:
@@ -76,12 +73,11 @@ class DataProcessor:
             "word_count": len(data.split),
             "char_count": len(data),
             "lines": data.count('\n') + 1,
-            "paragraphs": len([p for p in data.split('\n\n') if p.strip])
+            "paragraphs": len([p for p in data.split('\n\n') if p.strip])::
     }
 
-        # Apply transformation rules if provided
-    if transformation_rules:
-
+        # Apply transformation rules if provided:
+    if transformation_rules::
     processed = self._apply_text_transformations(processed, transformation_rules)
 
     return processed
@@ -100,9 +96,8 @@ class DataProcessor:
             "comments": self._extract_comments(data)
     }
 
-        # Apply transformation rules if provided
-    if transformation_rules:
-
+        # Apply transformation rules if provided:
+    if transformation_rules::
     processed = self._apply_code_transformations(processed, transformation_rules)
 
     return processed
@@ -111,21 +106,19 @@ class DataProcessor:
     """Process structured data (JSON, XML, etc.)"""
     logger.debug("Processing structured data")
 
-        # Convert to dict if it's a list
-    if isinstance(data, list)
-
+        # Convert to dict if it's a list:
+    if isinstance(data, list):
     data = {"items": data}
 
     processed = {
             "raw_structure": data,
-            "keys": list(data.keys) if isinstance(data, dict) else ,
-            "size": len(data) if isinstance(data, (dict, list)) else 0,
+            "keys": list(data.keys) if isinstance(data, dict) else ,:
+            "size": len(data) if isinstance(data, (dict, list)) else 0,:
             "nested_levels": self._calculate_nesting_depth(data)
     }
 
-        # Apply transformation rules if provided
-    if transformation_rules:
-
+        # Apply transformation rules if provided:
+    if transformation_rules::
     processed = self._apply_structured_transformations(processed, transformation_rules)
 
     return processed
@@ -142,9 +135,8 @@ class DataProcessor:
             "element_count": len(data.get("ui_elements", ))
     }
 
-        # Apply transformation rules if provided
-    if transformation_rules:
-
+        # Apply transformation rules if provided:
+    if transformation_rules::
     processed = self._apply_application_transformations(processed, transformation_rules)
 
     return processed
@@ -152,13 +144,10 @@ class DataProcessor:
     def _apply_text_transformations(self, data: Dict[...]
     """Apply text-specific transformations"""
     # Example transformations
-        if rules.get("summarize")
-
+        if rules.get("summarize")::
     data["summary"] = self._generate_summary(data["raw_text"])
 
-        if rules.get("extract_keywords")
-
-
+        if rules.get("extract_keywords"):
     data["keywords"] = self._extract_keywords(data["raw_text"])
 
     return data
@@ -166,13 +155,10 @@ class DataProcessor:
     def _apply_code_transformations(self, data: Dict[...]
     """Apply code-specific transformations"""
     # Example transformations
-        if rules.get("extract_docstrings")
-
+        if rules.get("extract_docstrings")::
     data["docstrings"] = self._extract_docstrings(data["raw_code"])
 
-        if rules.get("complexity_analysis")
-
-
+        if rules.get("complexity_analysis"):
     data["complexity"] = self._analyze_complexity(data["raw_code"])
 
     return data
@@ -180,8 +166,7 @@ class DataProcessor:
     def _apply_structured_transformations(self, data: Dict[...]
     """Apply structured data transformations"""
     # Example transformations
-        if rules.get("flatten")
-
+        if rules.get("flatten")::
     data["flattened"] = self._flatten_structure(data["raw_structure"])
 
     return data
@@ -189,12 +174,11 @@ class DataProcessor:
     def _apply_application_transformations(self, data: Dict[...]
     """Apply application data transformations"""
     # Example transformations
-        if rules.get("filter_elements")
-
+        if rules.get("filter_elements")::
     element_type = rules.get("element_type", "button")
             data["filtered_elements"] = [
-                el for el in data["ui_elements"] :
-    if el.get("type") == element_type
+                el for el in data["ui_elements"] ::
+    if el.get("type") == element_type:
             ]
 
     return data
@@ -203,8 +187,7 @@ class DataProcessor:
     """Generate a simple summary of the text"""
     sentences = text.split('.')
     # Return first 2 sentences as summary
-        return '.'.join(sentences[:2]) + '.' if len(sentences) > 1 else text[:100] + '...'
-
+        return '.'.join(sentences[:2]) + '.' if len(sentences) > 1 else text[:100] + '...':
     def _extract_keywords(self, text: str) -> List[str]:
     """Extract keywords from text"""
     # Simple keyword extraction (first 10 words)
@@ -231,7 +214,7 @@ class DataProcessor:
     """Extract comments from code"""
     # Simple extraction of # comments
     lines = code.split('\n')
-        comments = [line.strip for line in lines if line.strip.startswith('#')]
+        comments = [line.strip for line in lines if line.strip.startswith('#')]::
     return comments
 
     def _extract_docstrings(self, code: str) -> List[str]:
@@ -246,9 +229,9 @@ class DataProcessor:
     """Perform basic complexity analysis"""
     lines = code.split('\n')
     return {
-            "lines_of_code": len([l for l in lines if l.strip and not l.strip.startswith('#')]),
-            "comment_lines": len([l for l in lines if l.strip.startswith('#')]),
-            "empty_lines": len([l for l in lines if not l.strip]),
+            "lines_of_code": len([l for l in lines if l.strip and not l.strip.startswith('#')]),::
+            "comment_lines": len([l for l in lines if l.strip.startswith('#')]),::
+            "empty_lines": len([l for l in lines if not l.strip]),::
             "nesting_depth": self._calculate_max_nesting(code)
     }
 
@@ -257,32 +240,24 @@ class DataProcessor:
     # Simple implementation
     max_depth = 0
     current_depth = 0
-        for char in code:
-
-    if char in '{[(':
-
-
+        for char in code::
+    if char in '{[('::
     current_depth += 1
                 max_depth = max(max_depth, current_depth)
-            elif char in '}])':
-
+            elif char in '}])'::
     current_depth = max(0, current_depth - 1)
     return max_depth
 
     def _calculate_nesting_depth(self, data: Any) -> int:
     """Calculate nesting depth of structured data"""
-        if isinstance(data, dict)
-
-    if not data:
+        if isinstance(data, dict):
+    if not data::
     return 1
-            return 1 + max((self._calculate_nesting_depth(v) for v in data.values), default=0)
-    elif isinstance(data, list)
-
-    if not data:
-
-
+            return 1 + max((self._calculate_nesting_depth(v) for v in data.values), default=0):
+    elif isinstance(data, list):
+    if not data::
     return 1
-            return 1 + max((self._calculate_nesting_depth(item) for item in data), default=0)
+            return 1 + max((self._calculate_nesting_depth(item) for item in data), default=0):
     else:
 
     return 0
@@ -291,19 +266,13 @@ class DataProcessor:
     """Flatten nested structure"""
     result =
 
-        def _flatten(obj, prefix='')
-    if isinstance(obj, dict)
-
-    for key, value in obj.items:
-
-
-    new_prefix = f"{prefix}.{key}" if prefix else key:
+        def _flatten(obj, prefix=''):
+    if isinstance(obj, dict):
+    for key, value in obj.items::
+    new_prefix = f"{prefix}.{key}" if prefix else key::
     _flatten(value, new_prefix)
-            elif isinstance(obj, list)
-
-    for i, item in enumerate(obj)
-
-
+            elif isinstance(obj, list):
+    for i, item in enumerate(obj):
     new_prefix = f"{prefix}[{i}]"
                     _flatten(item, new_prefix)
             else:
@@ -328,10 +297,10 @@ class AIEditorService:
 
     logger.info("AIEditorService initialized")
 
-    def set_memory_manager(self, memory_manager)
-        """Set the memory manager for storing processed data""":
+    def set_memory_manager(self, memory_manager):
+        """Set the memory manager for storing processed data"""::
     self.memory_manager = memory_manager
-        logger.info("Memory manager set for AIEditorService")
+        logger.info("Memory manager set for AIEditorService"):
     # Temporarily disable HAMMemoryManager due to import issues
 
     def process_application_data(self, app_data: Dict[...]
@@ -344,8 +313,7 @@ class AIEditorService:
     Returns:
             Processed data in a standardized format
     """
-    logger.info("Processing application data")
-
+    logger.info("Processing application data"):
         try:
             # Process the application data
             result = self.data_processor.process_data(
@@ -354,9 +322,8 @@ class AIEditorService:
                 {"filter_elements": True, "element_type": "button"}
             )
 
-            # Store in memory if available
-    if self.memory_manager:
-
+            # Store in memory if available:
+    if self.memory_manager::
     memory_id = self.memory_manager.store_experience(
                     result,
                     "ai_editor_processed_data",
@@ -365,8 +332,7 @@ class AIEditorService:
                 result["memory_id"] = memory_id
 
             return result
-        except Exception as e:
-
+        except Exception as e::
             logger.error(f"Error processing application data: {e}")
             raise
 
@@ -376,8 +342,7 @@ class AIEditorService:
 
     Args:
             text: Text content to process
-            transformation_rules: Rules for text transformation:
-
+            transformation_rules: Rules for text transformation::
     Returns:
     Processed text data
     """
@@ -391,9 +356,8 @@ class AIEditorService:
                 transformation_rules or {"summarize": True, "extract_keywords": True}
             )
 
-            # Store in memory if available
-    if self.memory_manager:
-
+            # Store in memory if available:
+    if self.memory_manager::
     memory_id = self.memory_manager.store_experience(
                     result,
                     "ai_editor_processed_data",
@@ -402,8 +366,7 @@ class AIEditorService:
                 result["memory_id"] = memory_id
 
             return result
-        except Exception as e:
-
+        except Exception as e::
             logger.error(f"Error processing text content: {e}")
             raise
 
@@ -413,8 +376,7 @@ class AIEditorService:
 
     Args:
             code: Code content to process
-            transformation_rules: Rules for code transformation:
-
+            transformation_rules: Rules for code transformation::
     Returns:
     Processed code data
     """
@@ -428,9 +390,8 @@ class AIEditorService:
                 transformation_rules or {"extract_docstrings": True, "complexity_analysis": True}
             )
 
-            # Store in memory if available
-    if self.memory_manager:
-
+            # Store in memory if available:
+    if self.memory_manager::
     memory_id = self.memory_manager.store_experience(
                     result,
                     "ai_editor_processed_data",
@@ -439,8 +400,7 @@ class AIEditorService:
                 result["memory_id"] = memory_id
 
             return result
-        except Exception as e:
-
+        except Exception as e::
             logger.error(f"Error processing code content: {e}")
             raise
 
@@ -450,8 +410,7 @@ class AIEditorService:
 
     Args:
             data: Structured data to process (JSON, XML, etc.)
-            transformation_rules: Rules for data transformation:
-
+            transformation_rules: Rules for data transformation::
     Returns:
     Processed structured data
     """
@@ -465,9 +424,8 @@ class AIEditorService:
                 transformation_rules or {"flatten": True}
             )
 
-            # Store in memory if available
-    if self.memory_manager:
-
+            # Store in memory if available:
+    if self.memory_manager::
     memory_id = self.memory_manager.store_experience(
                     result,
                     "ai_editor_processed_data",
@@ -476,8 +434,7 @@ class AIEditorService:
                 result["memory_id"] = memory_id
 
             return result
-        except Exception as e:
-
+        except Exception as e::
             logger.error(f"Error processing structured data: {e}")
             raise
 
@@ -492,8 +449,7 @@ class AIEditorService:
     Returns:
             Result of script execution
     """
-    logger.info("Executing data transformation script in sandbox")
-
+    logger.info("Executing data transformation script in sandbox"):
         try:
             # Execute in sandbox
             result, error = self.sandbox_executor.run(
@@ -503,9 +459,7 @@ class AIEditorService:
                 params
             )
 
-            if error:
-
-
+            if error::
     logger.error(f"Sandbox execution error: {error}")
                 raise Exception(f"Sandbox execution failed: {error}")
 
@@ -516,9 +470,8 @@ class AIEditorService:
                 "script_parameters": params
             }
 
-            # Store in memory if available
-    if self.memory_manager:
-
+            # Store in memory if available:
+    if self.memory_manager::
     memory_id = self.memory_manager.store_experience(
                     processed_result,
                     "ai_editor_script_execution",
@@ -527,8 +480,7 @@ class AIEditorService:
                 processed_result["memory_id"] = memory_id
 
             return processed_result
-        except Exception as e:
-
+        except Exception as e::
             logger.error(f"Error executing data transformation script: {e}")
             raise
 
@@ -540,29 +492,24 @@ class AIEditorService:
             memory_id: ID of the memory entry to retrieve:
 
     Returns:
-    Retrieved data or None if not found
+    Retrieved data or None if not found:
     """
-        if not self.memory_manager:
-
+        if not self.memory_manager::
     logger.warning("Memory manager not available")
             return None
 
         try:
-
-
             recall_result = self.memory_manager.recall_gist(memory_id)
-            if recall_result:
-
+            if recall_result::
     return recall_result.get("rehydrated_gist")
             return None
-        except Exception as e:
-
+        except Exception as e::
             logger.error(f"Error retrieving data from memory: {e}")
             return None
 
 
 # Example usage and testing
-if __name__ == "__main__":
+if __name__ == "__main__"::
     # Configure logging
     logging.basicConfig(level=logging.INFO)
 
@@ -570,13 +517,13 @@ if __name__ == "__main__":
     editor = AIEditorService
 
     # Test text processing
-    sample_text = "This is a sample text for processing. It contains multiple sentences. This is the third sentence.":
+    sample_text = "This is a sample text for processing. It contains multiple sentences. This is the third sentence."::
     text_result = editor.process_text_content(sample_text)
     print("Text processing result:", json.dumps(text_result, indent=2, ensure_ascii=False))
 
     # Test code processing
     sample_code = """
-def hello_world()
+def hello_world():
     # This is a simple function
     print("Hello, World!")
 

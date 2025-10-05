@@ -73,9 +73,9 @@ echo [STEP 2/4] Applying test fixes... (應用測試修復)
 echo [%date% %time%] Applying test fixes >> "%LOG_FILE%" 2>nul
 
 :: Check for test fix scripts (檢查測試修復腳本)
-if exist "..\..\tools\scripts\apply_test_fixes.py" (
+if exist "..\..\tools\tools\scripts\apply_test_fixes.py" (
     echo [INFO] Running test fix script... (運行測試修復腳本)
-    python ..\..\tools\scripts\apply_test_fixes.py > test_fixes.log 2>&1
+    python ..\..\tools\tools\scripts\apply_test_fixes.py > test_fixes.log 2>&1
     if errorlevel 1 (
         echo [ERROR] Test fix script failed (測試修復腳本失敗)
         echo [INFO] Check test_fixes.log for details (檢查test_fixes.log獲取詳細信息)

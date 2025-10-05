@@ -75,8 +75,8 @@ class LRUCache:
     current_time = time.time
     expired_keys = [
             key for key, value in self.cache.items :
-    if value['expires'] < current_time
-    ]
+    if value['expires'] < current_time:
+
 
         for key in expired_keys:
 
@@ -245,20 +245,16 @@ class PerformanceOptimizer:
     thresholds = self.config['performance']['resource_monitoring']
 
     # 检查CPU使用率
-        if metrics.cpu_percent > thresholds.get('cpu_critical_threshold', 90)
-
-    logger.critical(f"CPU使用率过高: {metrics.cpu_percent:.1f}%")
-        elif metrics.cpu_percent > thresholds.get('cpu_warning_threshold', 80)
-
-    logger.warning(f"CPU使用率较高: {metrics.cpu_percent:.1f}%")
+        if metrics.cpu_percent > thresholds.get('cpu_critical_threshold', 90):
+ogger.critical(f"CPU使用率过高: {metrics.cpu_percent:.1f}%")
+        elif metrics.cpu_percent > thresholds.get('cpu_warning_threshold', 80):
+ogger.warning(f"CPU使用率较高: {metrics.cpu_percent:.1f}%")
 
     # 检查内存使用率
-        if metrics.memory_percent > thresholds.get('memory_critical_threshold', 90)
-
-    logger.critical(f"内存使用率过高: {metrics.memory_percent:.1f}%")
-        elif metrics.memory_percent > thresholds.get('memory_warning_threshold', 80)
-
-    logger.warning(f"内存使用率较高: {metrics.memory_percent:.1f}%")
+        if metrics.memory_percent > thresholds.get('memory_critical_threshold', 90):
+ogger.critical(f"内存使用率过高: {metrics.memory_percent:.1f}%")
+        elif metrics.memory_percent > thresholds.get('memory_warning_threshold', 80):
+ogger.warning(f"内存使用率较高: {metrics.memory_percent:.1f}%")
 
     def cache_result(self, func: F) -> F:
     """缓存装饰器"""
@@ -301,9 +297,8 @@ class PerformanceOptimizer:
     timeout = self.config['performance']['parallel_processing']['timeout']
 
     # 使用信号量限制并发数
-    semaphore = asyncio.Semaphore(max_workers)
-
-        async def run_with_semaphore(task: asyncio.Task[Any]) -> Any:
+    semaphore = asyncio.Semaphore(max_workers):
+sync def run_with_semaphore(task: asyncio.Task[Any]) -> Any:
             async with semaphore:
     return await asyncio.wait_for(task, timeout=timeout)
 
@@ -323,8 +318,8 @@ class PerformanceOptimizer:
 
     # 计算平均指标
     recent_metrics = self.metrics_history[-10:]  # 最近10个指标
-        avg_cpu = sum(m.cpu_percent for m in recent_metrics) / len(recent_metrics)
-    avg_memory = sum(m.memory_percent for m in recent_metrics) / len(recent_metrics)
+        avg_cpu = sum(m.cpu_percent for m in recent_metrics) / len(recent_metrics):
+vg_memory = sum(m.memory_percent for m in recent_metrics) / len(recent_metrics)
 
     # 获取最新的指标
     latest_metrics = self.metrics_history[-1]

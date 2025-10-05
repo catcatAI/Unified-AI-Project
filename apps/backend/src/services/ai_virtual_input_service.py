@@ -2,8 +2,8 @@
 """
 AI Virtual Input Service (AVIS)
 
-This service provides a simulated environment for the AI to interact with
-graphical user interfaces (GUIs) by sending virtual mouse and keyboard commands.
+This service provides a simulated environment for the AI to interact with:
+raphical user interfaces (GUIs) by sending virtual mouse and keyboard commands.
 It logs these actions and maintains a simplified virtual state.
 
 Future extensions may allow this service (under strict permissions) to
@@ -21,8 +21,8 @@ from .virtual_input_types import (
 )
 
 # Further imports will be added as the class is implemented.
-# For example, datetime for logging timestamps.
-from datetime import datetime, timezone
+# For example, datetime for logging timestamps.:
+rom datetime import datetime, timezone
 import copy # For deepcopy
 
 class AIVirtualInputService:
@@ -72,8 +72,8 @@ class AIVirtualInputService:
 
     def _find_element_by_id(self, element_id: str, search_list: Optional[List[VirtualInputElementDescription]] = None) -> Optional[VirtualInputElementDescription]:
     """
-        Recursively searches for an element by its ID within a list of elements
-    (and their children).
+        Recursively searches for an element by its ID within a list of elements:
+and their children).
 
     Args:
     element_id (str) The ID of the element to find.
@@ -96,8 +96,8 @@ class AIVirtualInputService:
 
     return element
             children = element.get("children")
-            if children: # If it's a list and not None
-                found_in_children = self._find_element_by_id(element_id, children)
+            if children: # If it's a list and not None:
+ound_in_children = self._find_element_by_id(element_id, children)
                 if found_in_children:
 
     return found_in_children
@@ -122,11 +122,10 @@ class AIVirtualInputService:
 
         if self.mode != "simulation_only":
             # In the future, actual control logic would be gated here by permissions.
-            # For now, all non-simulation modes are treated as "not implemented for real action".
-    outcome = {"status": "error", "message": f"Mode '{self.mode}' not fully supported for actual mouse actions yet. Simulating."}
-            # Fall through to simulation for now.
-
-    print(f"AVIS: Processing mouse command: {action_type}")
+            # For now, all non-simulation modes are treated as "not implemented for real action".:
+utcome = {"status": "error", "message": f"Mode '{self.mode}' not fully supported for actual mouse actions yet. Simulating."}
+            # Fall through to simulation for now.:
+rint(f"AVIS: Processing mouse command: {action_type}")
 
         if action_type == "move_relative_to_window":
             # For 'move_relative_to_window', relative_x and relative_y are new absolute ratios.
@@ -136,8 +135,8 @@ class AIVirtualInputService:
             # Clamp values to be within [0.0, 1.0]
             self.virtual_cursor_position = (
                 max(0.0, min(1.0, new_x if isinstance(new_x, (int, float)) else self.virtual_cursor_position[0])),:
-    max(0.0, min(1.0, new_y if isinstance(new_y, (int, float)) else self.virtual_cursor_position[1]))
-            )
+    max(0.0, min(1.0, new_y if isinstance(new_y, (int, float)) else self.virtual_cursor_position[1])):
+
             outcome = {
                 "status": "simulated",
                 "action": "move_relative_to_window",
@@ -150,8 +149,8 @@ class AIVirtualInputService:
 
     target_element = command.get("target_element_id")
             click_type = command.get("click_type", "left")
-            pos_x = command.get("relative_x", self.virtual_cursor_position[0]) # Click at current virtual cursor if not specified
-    pos_y = command.get("relative_y", self.virtual_cursor_position[1])
+            pos_x = command.get("relative_x", self.virtual_cursor_position[0]) # Click at current virtual cursor if not specified:
+os_y = command.get("relative_y", self.virtual_cursor_position[1])
 
             # If target_element_id is provided, ideally we'd use its center or the relative_x/y within it.
             # For now, simulation just logs.
@@ -162,8 +161,8 @@ class AIVirtualInputService:
             }
             outcome = {"status": "simulated", "action": "click", "details": click_details}
             print(f"  AVIS Sim: Click logged: {click_details}")
-            if target_element: # Assume click might change focus
-                self.virtual_focused_element_id = target_element
+            if target_element: # Assume click might change focus:
+elf.virtual_focused_element_id = target_element
                 print(f"  AVIS Sim: Focused element set to '{target_element}' due to click.")
 
         elif action_type == "hover":
@@ -177,8 +176,8 @@ class AIVirtualInputService:
             # For now, just log the intent.
             hover_details = {
                 "target_element_id": target_element,
-                "position": (pos_x, pos_y) if pos_x is not None and pos_y is not None else self.virtual_cursor_position
-            }
+                "position": (pos_x, pos_y) if pos_x is not None and pos_y is not None else self.virtual_cursor_position:
+
             outcome = {"status": "simulated", "action": "hover", "details": hover_details}
             print(f"  AVIS Sim: Hover logged: {hover_details}")
 
@@ -199,8 +198,8 @@ class AIVirtualInputService:
             outcome = {"status": "simulated", "action": "scroll", "details": scroll_details}
             print(f"  AVIS Sim: Scroll logged: {scroll_details}")
 
-        # For other mouse actions, just log as simulated_not_implemented for now
-    else:
+        # For other mouse actions, just log as simulated_not_implemented for now:
+lse:
 
     print(f"  AVIS Sim: Action '{action_type}' logged as simulated_not_implemented.")
             # Outcome already defaults to this
@@ -242,23 +241,19 @@ class AIVirtualInputService:
             }
 
             element_to_type_in = None
-            if self.virtual_focused_element_id: # Prefer typing into already focused element if no new target
+            if self.virtual_focused_element_id: # Prefer typing into already focused element if no new target:
+lement_to_type_in = self._find_element_by_id(self.virtual_focused_element_id)
 
-    element_to_type_in = self._find_element_by_id(self.virtual_focused_element_id)
-
-            if target_element: # If a specific target is given, override focus for this action
-
-
-    self.virtual_focused_element_id = target_element
+            if target_element: # If a specific target is given, override focus for this action:
+elf.virtual_focused_element_id = target_element
                 element_to_type_in = self._find_element_by_id(target_element)
-                print(f"  AVIS Sim: Focused element set to '{target_element}' for typing.")
-
-    if element_to_type_in:
+                print(f"  AVIS Sim: Focused element set to '{target_element}' for typing."):
+f element_to_type_in:
                 # Check if element can receive text, e.g. "text_field", "textarea"
-                # For now, we'll assume if it has a 'value' attribute, it can be typed into.
-    if "value" in element_to_type_in: # Check if element has 'value' attribute
-                    # Decide on append vs overwrite logic if needed in future. For now, overwrite.
-    element_to_type_in["value"] = text_to_type
+                # For now, we'll assume if it has a 'value' attribute, it can be typed into.:
+f "value" in element_to_type_in: # Check if element has 'value' attribute
+                    # Decide on append vs overwrite logic if needed in future. For now, overwrite.:
+lement_to_type_in["value"] = text_to_type
                     type_details["value_updated"] = True
                     type_details["updated_element_id"] = element_to_type_in.get("element_id")
                     print(f"  AVIS Sim: Element '{element_to_type_in.get('element_id')}' value updated to '{text_to_type}'.")
@@ -267,9 +262,8 @@ class AIVirtualInputService:
                     print(f"  AVIS Sim: Element '{element_to_type_in.get('element_id')}' not a text input type (no 'value' attribute). Typing simulated by log only.")
             else:
 
-                print(f"  AVIS Sim: No target element found or focused for typing. Typing simulated by log only.")
-
-    outcome = {"status": "simulated", "action": "type_string", "details": type_details}
+                print(f"  AVIS Sim: No target element found or focused for typing. Typing simulated by log only."):
+utcome = {"status": "simulated", "action": "type_string", "details": type_details}
             print(f"  AVIS Sim: Typing action processed. Text: '{text_to_type}', Target: '{self.virtual_focused_element_id or 'none'}', Value Updated: {type_details['value_updated']}.")
 
         elif action_type == "press_keys":
@@ -282,9 +276,8 @@ class AIVirtualInputService:
 
 
     self.virtual_focused_element_id = target_element
-                print(f"  AVIS Sim: Focused element set to '{target_element}' for key press.")
-
-    press_details = {
+                print(f"  AVIS Sim: Focused element set to '{target_element}' for key press."):
+ress_details = {
                 "keys_pressed": keys_pressed,
                 "target_element_id": self.virtual_focused_element_id
             }
@@ -302,17 +295,16 @@ class AIVirtualInputService:
 
 
     self.virtual_focused_element_id = target_element
-                print(f"  AVIS Sim: Focused element set to '{target_element}' for special key press.")
-
-    special_key_details = {
+                print(f"  AVIS Sim: Focused element set to '{target_element}' for special key press."):
+pecial_key_details = {
                 "key_name": key_name,
                 "target_element_id": self.virtual_focused_element_id
             }
             outcome = {"status": "simulated", "action": "special_key", "details": special_key_details}
             print(f"  AVIS Sim: Special key '{key_name}' press logged on focused '{self.virtual_focused_element_id or 'unknown'}'.")
 
-        # For other keyboard actions, just log as simulated_not_implemented for now
-    else:
+        # For other keyboard actions, just log as simulated_not_implemented for now:
+lse:
 
     print(f"  AVIS Sim: Action '{action_type}' logged as simulated_not_implemented.")
 

@@ -1,6 +1,6 @@
 """Dependency Manager for Unified AI Project:
-    This module provides a centralized system for managing optional dependencies
-and fallback mechanisms. It allows the project to run even when some
+    This module provides a centralized system for managing optional dependencies:
+nd fallback mechanisms. It allows the project to run even when some
 dependencies are not available in the current environment.
 """
 
@@ -29,9 +29,8 @@ class DependencyStatus:
 
 
 class DependencyManager:
-    """Centralized dependency management system with lazy loading."""
-
-    def __init__(self, config_path: Optional[str] = None) -> None:
+    """Centralized dependency management system with lazy loading.""":
+ef __init__(self, config_path: Optional[str] = None) -> None:
         self._dependencies: Dict[str, DependencyStatus] = {}
         self._config: Dict[str, Any] = {}
         self._environment = os.getenv('UNIFIED_AI_ENV', 'development')
@@ -69,10 +68,10 @@ class DependencyManager:
         logger.info(f"Initialized {len(self._dependencies)} dependencies")
 
     def check_dependency(self, name: str) -> DependencyStatus:
-        """Check if a dependency is available and load it if needed."""
-        if name not in self._dependencies:
-            # Create a new dependency status if it doesn't exist
-            self._dependencies[name] = DependencyStatus(name=name)
+        """Check if a dependency is available and load it if needed.""":
+f name not in self._dependencies:
+            # Create a new dependency status if it doesn't exist:
+elf._dependencies[name] = DependencyStatus(name=name)
         
         dep_status = self._dependencies[name]
         
@@ -90,25 +89,25 @@ class DependencyManager:
             dep_status.error = str(e)
             logger.warning(f"Failed to load dependency {name}: {e}")
             
-            # Check for fallback
-            config = self._config.get('dependencies', {}).get(name, {})
+            # Check for fallback:
+onfig = self._config.get('dependencies', {}).get(name, {})
             fallback_name = config.get('fallback')
             if fallback_name:
                 try:
                     dep_status.fallback_module = importlib.import_module(fallback_name)
                     dep_status.fallback_available = True
                     dep_status.fallback_name = fallback_name
-                    logger.info(f"Using fallback {fallback_name} for {name}")
-                except ImportError as fallback_error:
-                    logger.error(f"Failed to load fallback {fallback_name} for {name}: {fallback_error}")
-                    dep_status.fallback_available = False
+                    logger.info(f"Using fallback {fallback_name} for {name}"):
+xcept ImportError as fallback_error:
+                    logger.error(f"Failed to load fallback {fallback_name} for {name}: {fallback_error}"):
+ep_status.fallback_available = False
                     dep_status.fallback_name = None
         
         return dep_status
 
     def get_dependency(self, name: str) -> Optional[Any]:
-        """Get a dependency module, using fallback if necessary."""
-        dep_status = self.check_dependency(name)
+        """Get a dependency module, using fallback if necessary.""":
+ep_status = self.check_dependency(name)
         
         if dep_status.is_available:
             return dep_status.module
@@ -118,8 +117,8 @@ class DependencyManager:
             return None
 
     def is_available(self, name: str) -> bool:
-        """Check if a dependency is available."""
-        dep_status = self.check_dependency(name)
+        """Check if a dependency is available.""":
+ep_status = self.check_dependency(name)
         return dep_status.is_available or dep_status.fallback_available
 
     def get_all_statuses(self) -> Dict[str, DependencyStatus]:

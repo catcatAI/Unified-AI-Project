@@ -71,7 +71,7 @@ def test_error_handling_framework() -> None:
     _ = print("  ✅ 恢复策略功能正常")
 
     # 测试弹性操作装饰器
-    _ = @resilient_operation(handler, "TestComponent", "test_operation")
+    @resilient_operation(handler, "TestComponent", "test_operation")
         def test_function() -> None:
             return "success"
 
@@ -123,10 +123,8 @@ def test_data_manager_comprehensive() -> None:
                 "binary.bin": b"fake binary data"
             }
 
-            for filename, content in test_files.items()
-
-
-    with open(temp_path / filename, "wb") as f:
+            for filename, content in test_files.items():
+ith open(temp_path / filename, "wb") as f:
     _ = f.write(content)
 
             # 更新测试文件列表
@@ -306,8 +304,8 @@ def test_auto_training_manager_comprehensive() -> None:
     _ = print("  ✅ 训练监控器重置正常")
 
     # 测试自动识别训练数据（模拟）
-    with patch.object(atm.data_manager, 'scan_data', return_value={})
-    with patch.object(atm.data_manager, 'assess_data_quality')
+    with patch.object(atm.data_manager, 'scan_data', return_value={}):
+ith patch.object(atm.data_manager, 'assess_data_quality')
     result = atm.auto_identify_training_data()
                 _ = assert isinstance(result, dict)
     _ = print("  ✅ 自动识别训练数据正常")
@@ -480,12 +478,8 @@ def main() -> None:
 
 
 
-            if test()
-
-
-
-
-    passed += 1
+            if test():
+assed += 1
             _ = print()  # 空行分隔
         except Exception as e:
 

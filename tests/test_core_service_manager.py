@@ -17,15 +17,15 @@ from apps.backend.src.core.managers.core_service_manager import (
 )
 
 
-class TestCoreServiceManager(unittest.TestCase)
-    """核心服务管理器测试"""
+class TestCoreServiceManager(unittest.TestCase):
+""核心服务管理器测试"""
 
-    def setUp(self)
-    """测试设置"""
+    def setUp(self):
+""测试设置"""
     self.manager = CoreServiceManager()
 
-    def tearDown(self)
-    """测试清理"""
+    def tearDown(self):
+""测试清理"""
     # 清理所有服务
         for service_name in list(self.manager._services.keys()):
 
@@ -54,9 +54,9 @@ class TestCoreServiceManager(unittest.TestCase)
     def test_register_health_check(self) -> None:
     """测试健康检查注册"""
     # 创建模拟健康检查函数
-        class MockHealthCheck(HealthCheckFunction)
-            async def check_health(self, service_instance)
-    return ServiceHealth.HEALTHY
+        class MockHealthCheck(HealthCheckFunction):
+sync def check_health(self, service_instance):
+eturn ServiceHealth.HEALTHY
 
     health_check = MockHealthCheck()
 
@@ -298,8 +298,8 @@ class TestCoreServiceManager(unittest.TestCase)
     self.assertEqual(status["service2"]["status"], ServiceStatus.UNLOADED.value)
 
 
-class TestServiceConfig(unittest.TestCase)
-    """服务配置测试"""
+class TestServiceConfig(unittest.TestCase):
+""服务配置测试"""
 
     def test_service_config_creation(self) -> None:
     """测试服务配置创建"""
@@ -324,8 +324,8 @@ class TestServiceConfig(unittest.TestCase)
     self.assertEqual(config.config, {"key": "value"})
 
 
-class TestServiceInfo(unittest.TestCase)
-    """服务信息测试"""
+class TestServiceInfo(unittest.TestCase):
+""服务信息测试"""
 
     def test_service_info_creation(self) -> None:
     """测试服务信息创建"""

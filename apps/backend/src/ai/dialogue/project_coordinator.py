@@ -31,9 +31,8 @@ class ProjectCoordinator:
                  memory_manager: HAMMemoryManager,
                  learning_manager: LearningManager,
                  personality_manager: PersonalityManager,
-                 dialogue_manager_config: Dict[str, Any])
-
-    self.llm_interface = llm_interface
+                 dialogue_manager_config: Dict[str, Any]):
+elf.llm_interface = llm_interface
     self.service_discovery = service_discovery
     self.hsp_connector = hsp_connector
     self.agent_manager = agent_manager
@@ -50,17 +49,16 @@ class ProjectCoordinator:
     self._load_prompts
     logging.info("ProjectCoordinator initialized.")
 
-    def _load_prompts(self)
-    """Loads prompts from the YAML file."""
+    def _load_prompts(self):
+""Loads prompts from the YAML file."""
     prompts_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'configs', 'prompts.yaml')
     with open(prompts_path, 'r') as f:
     self.prompts = yaml.safe_load(f)
 
-    def handle_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope)
-    correlation_id = envelope.get('correlation_id')
-        if not correlation_id: return
-
-    status = result_payload.get("status")
+    def handle_task_result(self, result_payload: HSPTaskResultPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+orrelation_id = envelope.get('correlation_id')
+        if not correlation_id: return:
+tatus = result_payload.get("status")
         if status == "success":
 
     self.task_results[correlation_id] = result_payload.get("payload")
@@ -115,29 +113,23 @@ class ProjectCoordinator:
 
     async def _execute_task_graph(self, subtasks: List[...]
     task_graph = nx.DiGraph
-        for i, subtask in enumerate(subtasks)
-
-    task_graph.add_node(i, data=subtask)
+        for i, subtask in enumerate(subtasks):
+ask_graph.add_node(i, data=subtask)
             if isinstance(subtask.get("task_parameters"), dict):
 
     for param_value in subtask["task_parameters"].values:
 
 
-    if isinstance(param_value, str)
-
-
-
-    dependencies = re.findall(r"<output_of_task_(\d+)>", param_value)
+    if isinstance(param_value, str):
+ependencies = re.findall(r"<output_of_task_(\d+)>", param_value)
                         for dep_index_str in dependencies:
 
     dep_index = int(dep_index_str)
-                            if dep_index < i: task_graph.add_edge(dep_index, i)
-                            else: raise ValueError(f"Task {i} has an invalid dependency on a future task {dep_index}.")
+                            if dep_index < i: task_graph.add_edge(dep_index, i):
+lse: raise ValueError(f"Task {i} has an invalid dependency on a future task {dep_index}.")
 
-        if not nx.is_directed_acyclic_graph(task_graph)
-
-
-    raise ValueError("Circular dependency detected.")
+        if not nx.is_directed_acyclic_graph(task_graph):
+aise ValueError("Circular dependency detected.")
 
     execution_order = list(nx.topological_sort(task_graph))
     task_results =
@@ -158,10 +150,8 @@ class ProjectCoordinator:
     substituted_params = params.copy
         for key, value in substituted_params.items:
 
-    if isinstance(value, str)
-
-
-    def replace_func(match)
+    if isinstance(value, str):
+ef replace_func(match)
     dep_idx = int(match.group(1))
                     try:
 
@@ -176,14 +166,14 @@ class ProjectCoordinator:
     capability_name = subtask.get("capability_needed")
     params = subtask.get("task_parameters", )
 
-        # Check if capability_name is None
-    if not capability_name:
+        # Check if capability_name is None:
+f not capability_name:
 
     return {"error": "No capability name specified for subtask."}
 
     # First try to find the capability directly
-    logging.info(f"[ProjectCoordinator] Looking for capability: {capability_name}")
-    found_caps = await self.service_discovery.find_capabilities(capability_name_filter=capability_name)
+    logging.info(f"[ProjectCoordinator] Looking for capability: {capability_name}"):
+ound_caps = await self.service_discovery.find_capabilities(capability_name_filter=capability_name)
         logging.info(f"[ProjectCoordinator] Found {len(found_caps)} capabilities for '{capability_name}'"):
 
     if not found_caps and self.agent_manager:
@@ -192,40 +182,39 @@ class ProjectCoordinator:
             logging.info(f"[ProjectCoordinator] Capability not found, attempting to launch agent: {agent_to_launch}")
             launched_pid = self.agent_manager.launch_agent(agent_to_launch)
             if launched_pid:
-                # Wait for the agent to be ready using AgentManager's wait method
-    try:
+                # Wait for the agent to be ready using AgentManager's wait method:
+ry:
 
-        logging.info(f"[ProjectCoordinator] Waiting for agent '{agent_to_launch}' to become ready...")
-    await self.agent_manager.wait_for_agent_ready(agent_to_launch, timeout=10, service_discovery=self.service_discovery)
+        logging.info(f"[ProjectCoordinator] Waiting for agent '{agent_to_launch}' to become ready..."):
+wait self.agent_manager.wait_for_agent_ready(agent_to_launch, timeout=10, service_discovery=self.service_discovery)
                     # After agent is ready, re-check capabilities.
                     logging.info(f"[ProjectCoordinator] Re-checking capabilities after agent launch...")
                     found_caps = await self.service_discovery.find_capabilities(capability_name_filter=capability_name)
                     logging.info(f"[ProjectCoordinator] Found {len(found_caps)} capabilities after waiting")
                 except Exception as e:
 
-                    logging.warning(f"[ProjectCoordinator] Warning: Error waiting for agent '{agent_to_launch}' to become ready: {e}")
-
-        if not found_caps:
-            # Log all available capabilities for debugging
-    all_caps = await self.service_discovery.get_all_capabilities_async
+                    logging.warning(f"[ProjectCoordinator] Warning: Error waiting for agent '{agent_to_launch}' to become ready: {e}"):
+f not found_caps:
+            # Log all available capabilities for debugging:
+ll_caps = await self.service_discovery.get_all_capabilities_async
             logging.info(f"[ProjectCoordinator] No capabilities found. All known capabilities: {len(all_caps)}")
             for cap in all_caps:
 
     logging.info(f"[ProjectCoordinator] Available capability: {cap.get('capability_id')} - {cap.get('name')} from AI: {cap.get('ai_id')}")
-            return {"error": f"Could not find or launch an agent with capability '{capability_name}'."}
-    selected_cap = found_caps[0]
+            return {"error": f"Could not find or launch an agent with capability '{capability_name}'."}:
+elected_cap = found_caps[0]
     logging.info(f"[ProjectCoordinator] Selected capability: {selected_cap.get('capability_id')} from AI: {selected_cap.get('ai_id')}")
     _user_msg, correlation_id = await self._send_hsp_request(selected_cap, params, subtask.get("task_description", ""))
 
         if not correlation_id:
 
 
-    return {"error": f"Failed to dispatch task for capability '{capability_name}'."}
-    return await self._wait_for_task_result(correlation_id, capability_name)
+    return {"error": f"Failed to dispatch task for capability '{capability_name}'."}:
+eturn await self._wait_for_task_result(correlation_id, capability_name)
 
     async def _send_hsp_request(self, capability: HSPCapabilityAdvertisementPayload, parameters: Dict[...]
-    target_ai_id = capability.get("ai_id")
-    capability_id = capability.get("capability_id")
+    target_ai_id = capability.get("ai_id"):
+apability_id = capability.get("capability_id")
         if not target_ai_id or not capability_id or not self.hsp_connector:
 
     return None, None
@@ -261,8 +250,8 @@ class ProjectCoordinator:
             return self.task_results.pop(correlation_id, {"error": "Result not found after event."})
         except asyncio.TimeoutError:
 
-            return {"error": f"Task for '{capability_name}' timed out."}
-    finally:
+            return {"error": f"Task for '{capability_name}' timed out."}:
+inally:
     self.task_completion_events.pop(correlation_id, None)
 
     async def _decompose_user_intent_into_subtasks(self, user_query: str, available_capabilities: List[...]
@@ -271,22 +260,22 @@ class ProjectCoordinator:
             user_query=user_query
     )
     raw_llm_output = await self.llm_interface.generate_response(prompt=prompt)
-        logging.info(f"[ProjectCoordinator] LLM response for decomposition: {raw_llm_output}")
-    logging.info(f"[ProjectCoordinator] LLM response type: {type(raw_llm_output)}")
+        logging.info(f"[ProjectCoordinator] LLM response for decomposition: {raw_llm_output}"):
+ogging.info(f"[ProjectCoordinator] LLM response type: {type(raw_llm_output)}")
 
-        # Check if this is a mock response
-    if raw_llm_output == "Mock response (no API key)":
+        # Check if this is a mock response:
+f raw_llm_output == "Mock response (no API key)":
 
     logging.warning("[ProjectCoordinator] Using mock LLM response. Returning mock subtasks for testing.")
             # Return a more comprehensive mock decomposition for testing purposes
-            # This should be sufficient for the agent collaboration tests
-    return [
+            # This should be sufficient for the agent collaboration tests:
+eturn [
                 {
                     "capability_needed": "data_analysis_v1",
                     "task_parameters": {
                         "action": "summarize",
-                        "data": "test data for analysis"
-                    },
+                        "data": "test data for analysis":
+,
                     "task_description": "Analyze test data",
                     "dependencies":
                 },
@@ -301,19 +290,17 @@ class ProjectCoordinator:
                 }
             ]
 
-        # Add more robust handling for different types of responses
-    if not raw_llm_output or not isinstance(raw_llm_output, str)
-
-    logging.error(f"[ProjectCoordinator] Invalid LLM response: {raw_llm_output}")
-            # Return a default decomposition for simple cases
-    if "sum" in user_query.lower() or "calculate" in user_query.lower()
-
-    return [
+        # Add more robust handling for different types of responses:
+f not raw_llm_output or not isinstance(raw_llm_output, str):
+ogging.error(f"[ProjectCoordinator] Invalid LLM response: {raw_llm_output}")
+            # Return a default decomposition for simple cases:
+f "sum" in user_query.lower() or "calculate" in user_query.lower():
+eturn [
                     {
                         "capability_needed": "data_analysis_v1",
                         "task_parameters": {
-                            "data": [1, 2, 3, 4, 5]  # Default data for testing
-                        },
+                            "data": [1, 2, 3, 4, 5]  # Default data for testing:
+,
                         "task_description": "Perform calculation",
                         "dependencies":
                     }
@@ -344,8 +331,8 @@ class ProjectCoordinator:
         except json.JSONDecodeError as e
             logging.error(f"[ProjectCoordinator] Failed to parse LLM response as JSON: {e}")
             logging.error(f"[ProjectCoordinator] Raw LLM output: {raw_llm_output}")
-            # Try to extract JSON from the response if it contains extra text
-    import re
+            # Try to extract JSON from the response if it contains extra text:
+mport re
             json_match = re.search(r'\{.*\}|\[.*\]', raw_llm_output, re.DOTALL)
             if json_match:
 
@@ -371,27 +358,25 @@ class ProjectCoordinator:
 
             # If all else fails, try to create a simple decomposition based on keywords
     logging.warning("[ProjectCoordinator] Falling back to keyword-based decomposition")
-            if "sum" in user_query.lower() or "calculate" in user_query.lower() or "add" in user_query.lower()
-
-    return [
+            if "sum" in user_query.lower() or "calculate" in user_query.lower() or "add" in user_query.lower():
+eturn [
                     {
                         "capability_needed": "data_analysis_v1",
                         "task_parameters": {
-                            "data": [1, 2, 3, 4, 5]  # Default data for testing
-                        },
+                            "data": [1, 2, 3, 4, 5]  # Default data for testing:
+,
                         "task_description": "Perform calculation",
                         "dependencies":
                     }
                 ]
-            elif "analyze" in user_query.lower() or "data" in user_query.lower()
-
-    return [
+            elif "analyze" in user_query.lower() or "data" in user_query.lower():
+eturn [
                     {
                         "capability_needed": "data_analysis_v1",
                         "task_parameters": {
                             "action": "summarize",
-                            "data": "test data for analysis"
-                        },
+                            "data": "test data for analysis":
+,
                         "task_description": "Analyze test data",
                         "dependencies":
                     }

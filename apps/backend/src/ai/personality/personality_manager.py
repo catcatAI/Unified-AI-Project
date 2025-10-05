@@ -1,7 +1,7 @@
 """
 Personality Manager
-Handles loading and managing different personality profiles for the AI.
-"""
+Handles loading and managing different personality profiles for the AI.:
+""
 
 import json
 from pathlib import Path
@@ -31,10 +31,8 @@ class PersonalityManager:
 
     return profiles
 
-        for file_path in self.profiles_dir.glob("*.json")
-
-
-    try:
+        for file_path in self.profiles_dir.glob("*.json"):
+ry:
 
 
 
@@ -97,15 +95,15 @@ class PersonalityManager:
     def get_initial_prompt(self) -> str:
         """Returns the initial prompt for the current personality.""":
     result = self.get_current_personality_trait("initial_prompt", "Hello!")
-        return result if result is not None else "Hello!"
-    def list_available_profiles(self) -> List[Dict[str, str]]:
+        return result if result is not None else "Hello!":
+ef list_available_profiles(self) -> List[Dict[str, str]]:
     return [
             {"name": name, "display_name": info.get("display_name", name)}
-            for name, info in self.available_profiles.items
-    ]
+            for name, info in self.available_profiles.items:
 
-    def apply_personality_adjustment(self, adjustment: Dict[str, Any])
-    """
+
+    def apply_personality_adjustment(self, adjustment: Dict[str, Any]):
+""
     Applies a personality adjustment to the current personality.
 
     Args:
@@ -115,8 +113,8 @@ class PersonalityManager:
 
     return
 
-        for key, value in adjustment.items
-    keys = key.split('.')
+        for key, value in adjustment.items:
+eys = key.split('.')
             target = self.current_personality
             for k in keys[:-1]:
 
@@ -156,10 +154,10 @@ if __name__ == '__main__':
 
     print(f"Current profile after trying to load non-existent: {pm.current_personality.get('profile_name')}")
 
-    # Ensure it falls back to default if current was None or failed to load
-    if not pm.current_personality and pm.default_profile_name in pm.available_profiles:
+    # Ensure it falls back to default if current was None or failed to load:
+f not pm.current_personality and pm.default_profile_name in pm.available_profiles:
 
-    pm.load_personality(pm.default_profile_name) # Explicitly reload default if needed
-    if pm.current_personality:
+    pm.load_personality(pm.default_profile_name) # Explicitly reload default if needed:
+f pm.current_personality:
 
     print(f"Reverted to default profile: {pm.current_personality.get('profile_name')}")

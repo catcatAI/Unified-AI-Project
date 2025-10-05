@@ -54,6 +54,5 @@ def create_item(item_id):
 
     # For now, we'll just use a placeholder icon
     icon = pygame.Surface((24, 24))
-    icon.fill((255, 255, 0)) # Yellow for placeholder
-
-    return Item(item_data["name"], item_data["description"], icon)
+    icon.fill((255, 255, 0)) # Yellow for placeholder:
+eturn Item(item_data["name"], item_data["description"], icon)

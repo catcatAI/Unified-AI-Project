@@ -36,12 +36,12 @@ def test_entity_extraction() -> None:
         tgt_label = kg_data2["entities"][rel["target_id"]]["label"]
         print(f"Relationship: {src_label} --{rel['type']}--> {tgt_label}")
     
-    # Test works_for relationship
-    text3 = "John Doe works for Acme Corp."
-    kg_data3, nx_graph3 = analyzer.analyze_content(text3)
+    # Test works_for relationship:
+ext3 = "John Doe works for Acme Corp.":
+g_data3, nx_graph3 = analyzer.analyze_content(text3)
     
-    print(f"\nWorks_for test:")
-    print(f"Entities extracted: {len(kg_data3['entities'])}")
+    print(f"\nWorks_for test:"):
+rint(f"Entities extracted: {len(kg_data3['entities'])}")
     print(f"Nodes in graph: {nx_graph3.number_of_nodes()}")
     print(f"Relationships: {len(kg_data3['relationships'])}")
     

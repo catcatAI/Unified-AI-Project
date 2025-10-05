@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Script to maintain and update the test suite to ensure it stays synchronized with the actual implementation.
-This script will:
-1. Check for outdated test patterns
-2. Identify tests that may need updating due to code changes
+Script to maintain and update the test suite to ensure it stays synchronized with the actual implementation.:
+his script will:
+1. Check for outdated test patterns:
+. Identify tests that may need updating due to code changes
 3. Suggest improvements to test coverage
 4. Generate a report of test health
 """
@@ -24,23 +24,19 @@ class TestSuiteMaintainer:
     def find_test_files(self) -> List[Path]:
     """Find all test files in the project."""
     test_files = []
-        for root, dirs, files in os.walk(self.backend_tests_dir)
-
-    for file in files:
-    if file.startswith('test_') and file.endswith('.py')
-
-    _ = test_files.append(Path(root) / file)
+        for root, dirs, files in os.walk(self.backend_tests_dir):
+or file in files:
+    if file.startswith('test_') and file.endswith('.py'):
+ = test_files.append(Path(root) / file)
     return test_files
 
     def find_source_files(self) -> List[Path]:
     """Find all source files in the project."""
     source_files = []
-        for root, dirs, files in os.walk(self.src_dir)
-
-    for file in files:
-    if file.endswith('.py') and not file.startswith('test_')
-
-    _ = source_files.append(Path(root) / file)
+        for root, dirs, files in os.walk(self.src_dir):
+or file in files:
+    if file.endswith('.py') and not file.startswith('test_'):
+ = source_files.append(Path(root) / file)
     return source_files
 
     def analyze_test_file(self, file_path: Path) -> Dict:
@@ -49,27 +45,25 @@ class TestSuiteMaintainer:
     with open(file_path, 'r', encoding='utf-8') as f:
     content = f.read()
 
-        # Check for placeholder tests - more specific check
-    if ('placeholder' in content.lower() or 'not implemented' in content.lower()) and \:
+        # Check for placeholder tests - more specific check:
+f ('placeholder' in content.lower() or 'not implemented' in content.lower()) and \:
 
     not any(skip_indicator in content.lower() for skip_indicator in ['test_', 'def ', 'async def']):
     _ = issues.append("Contains placeholder or unimplemented tests")
 
-        # Check for commented out tests
-    if '# def test_' in content or '# async def test_' in content
+        # Check for commented out tests:
+f '# def test_' in content or '# async def test_' in content:
+ = issues.append("Contains commented out tests")
 
-    _ = issues.append("Contains commented out tests")
-
-        # Check for TODO or FIXME comments
-    if 'TODO' in content or 'FIXME' in content:
+        # Check for TODO or FIXME comments:
+f 'TODO' in content or 'FIXME' in content:
 
     _ = issues.append("Contains TODO/FIXME comments")
 
-        # Check for duplicate flaky decorators
-    flaky_matches = re.findall(r'@pytest\.mark\.flaky', content)
-        if len(flaky_matches) > 5:  # Arbitrary threshold for too many flaky decorators
-
-    _ = issues.append(f"Contains {len(flaky_matches)} flaky decorators (potential duplication)")
+        # Check for duplicate flaky decorators:
+laky_matches = re.findall(r'@pytest\.mark\.flaky', content)
+        if len(flaky_matches) > 5:  # Arbitrary threshold for too many flaky decorators:
+ = issues.append(f"Contains {len(flaky_matches)} flaky decorators (potential duplication)")
 
     # Count test methods
         test_count = len(re.findall(r'def test_|async def test_', content))
@@ -92,18 +86,14 @@ class TestSuiteMaintainer:
             tree = ast.parse(content)
 
             # Check imports
-            for node in ast.walk(tree)
-
-    if isinstance(node, ast.ImportFrom)
-
-
-    if node.module and node.module.startswith('src.')
-                        # Check if the module exists
-    module_path = node.module.replace('.', os.sep)
+            for node in ast.walk(tree):
+f isinstance(node, ast.ImportFrom):
+f node.module and node.module.startswith('src.')
+                        # Check if the module exists:
+odule_path = node.module.replace('.', os.sep)
                         full_path = self.src_dir / (module_path + '.py')
-                        if not full_path.exists()
-
-    _ = issues.append(f"Invalid import: {node.module}")
+                        if not full_path.exists():
+ = issues.append(f"Invalid import: {node.module}")
         except Exception as e:
 
             _ = issues.append(f"Parse error: {str(e)}")
@@ -136,10 +126,9 @@ class TestSuiteMaintainer:
             relative_path = source_file.relative_to(self.src_dir)
             module_name = str(relative_path).replace(os.sep, '.').replace('.py', '')
 
-            # Check if this module is tested
-    if not any(module_name in tested for tested in tested_modules)
-
-    _ = untested.append(str(relative_path))
+            # Check if this module is tested:
+f not any(module_name in tested for tested in tested_modules):
+ = untested.append(str(relative_path))
 
     return untested
 
@@ -159,13 +148,12 @@ class TestSuiteMaintainer:
             import_problems = self.check_imports(test_file)
             if import_problems:
 
-    import_issues.extend([f"{test_file}: {issue}" for issue in import_problems])
-
-    untested_files = self.find_untested_source_files()
+    import_issues.extend([f"{test_file}: {issue}" for issue in import_problems]):
+ntested_files = self.find_untested_source_files()
 
     # Calculate statistics
-        total_tests = sum(result['test_count'] for result in analysis_results)
-    files_with_issues = [result for result in analysis_results if result['issues']]:
+        total_tests = sum(result['test_count'] for result in analysis_results):
+iles_with_issues = [result for result in analysis_results if result['issues']]:
 
     return {
             "total_test_files": len(test_files),
@@ -183,9 +171,8 @@ class TestSuiteMaintainer:
         if report["files_with_issues"] > 0:
 
 
-    suggestions.append(f"Review {report['files_with_issues']} test files with issues")
-
-    if report["import_issues"]:
+    suggestions.append(f"Review {report['files_with_issues']} test files with issues"):
+f report["import_issues"]:
 
 
     _ = suggestions.append(f"Fix {len(report['import_issues'])} import issues")
@@ -195,20 +182,20 @@ class TestSuiteMaintainer:
 
     suggestions.append(f"Consider adding tests for {len(report['untested_source_files'])} potentially untested modules")
 
-        # Suggest adding more tests if coverage is low
-    if report["total_tests"] < 500:  # Arbitrary threshold
+        # Suggest adding more tests if coverage is low:
+f report["total_tests"] < 500:  # Arbitrary threshold
             _ = suggestions.append("Consider expanding test coverage")
 
-        # Check for placeholder tests specifically
-    placeholder_files = [result for result in report["detailed_analysis"] if "Contains placeholder or unimplemented tests" in result["issues"]]:
+        # Check for placeholder tests specifically:
+laceholder_files = [result for result in report["detailed_analysis"] if "Contains placeholder or unimplemented tests" in result["issues"]]:
     if placeholder_files:
 
     _ = suggestions.append(f"Complete implementation of {len(placeholder_files)} placeholder tests")
 
     return suggestions
 
-    def run_maintenance(self)
-    """Run the full maintenance process."""
+    def run_maintenance(self):
+""Run the full maintenance process."""
     _ = print("Running test suite maintenance...")
 
     # Generate health report
@@ -218,8 +205,8 @@ class TestSuiteMaintainer:
     _ = print(f"\nTest Suite Health Report:")
     _ = print(f"  Total test files: {report['total_test_files']}")
     _ = print(f"  Total tests: {report['total_tests']}")
-    print(f"  Files with issues: {report['files_with_issues']}")
-    _ = print(f"  Import issues: {len(report['import_issues'])}")
+    print(f"  Files with issues: {report['files_with_issues']}"):
+ = print(f"  Import issues: {len(report['import_issues'])}")
     _ = print(f"  Untested source files: {len(report['untested_source_files'])}")
 
     # Print suggestions
@@ -247,8 +234,8 @@ def main() -> None:
     maintainer = TestSuiteMaintainer(project_root)
     report = maintainer.run_maintenance()
 
-    # Exit with error code if there are critical issues
-    if report["files_with_issues"] > 10 or len(report["import_issues"]) > 5:
+    # Exit with error code if there are critical issues:
+f report["files_with_issues"] > 10 or len(report["import_issues"]) > 5:
 
     _ = print("\n⚠️  Critical issues detected in test suite")
     return 1

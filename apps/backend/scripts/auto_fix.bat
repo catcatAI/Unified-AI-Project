@@ -69,7 +69,7 @@ if errorlevel 1 goto simple
 
 :simple
 echo 运行简化版自动修复...
-python tools\scripts\simple_auto_fix.py
+python tools\tools\scripts\simple_auto_fix.py
 if errorlevel 1 (
     echo 修复过程中出现错误
 ) else (
@@ -79,7 +79,7 @@ goto menu
 
 :complete
 echo 运行完整版自动修复...
-python tools\scripts\auto_fix_complete.py
+python tools\tools\scripts\auto_fix_complete.py
 if errorlevel 1 (
     echo 修复过程中出现错误
 ) else (
@@ -89,7 +89,7 @@ goto menu
 
 :advanced
 echo 运行增强版自动修复...
-python tools\scripts\advanced_auto_fix.py
+python tools\tools\scripts\advanced_auto_fix.py
 if errorlevel 1 (
     echo 修复过程中出现错误
 ) else (
@@ -99,7 +99,7 @@ goto menu
 
 :advanced_test
 echo 运行增强版自动修复 + 测试...
-python tools\scripts\advanced_auto_fix.py --test
+python tools\tools\scripts\advanced_auto_fix.py --test
 if errorlevel 1 (
     echo 修复或测试过程中出现错误
 ) else (
@@ -109,7 +109,7 @@ goto menu
 
 :validate
 echo 运行最终验证...
-python tools\scripts\final_validation.py
+python tools\tools\scripts\final_validation.py
 if errorlevel 1 (
     echo 验证过程中发现错误
 ) else (
@@ -119,14 +119,14 @@ goto menu
 
 :fix_and_validate
 echo 运行自动修复 + 验证...
-python tools\scripts\advanced_auto_fix.py --test
+python tools\tools\scripts\advanced_auto_fix.py --test
 if errorlevel 1 (
     echo 修复过程中出现错误
 ) else (
     echo 自动修复完成
     echo.
     echo 运行最终验证...
-    python tools\scripts\final_validation.py
+    python tools\tools\scripts\final_validation.py
     if errorlevel 1 (
         echo 验证过程中发现错误
     ) else (

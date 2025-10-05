@@ -288,8 +288,8 @@ class TrainingStateManager:
                         # 并行同步所有状态
                         tasks = [
                             self._sync_state_to_persistent_storage(task_id) 
-                            for task_id in self.local_cache.keys()
-                        ]
+                            for task_id in self.local_cache.keys():
+
                         if tasks:
                             await asyncio.gather(*tasks, return_exceptions=True)
                         

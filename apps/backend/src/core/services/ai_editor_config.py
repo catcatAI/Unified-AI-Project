@@ -1,7 +1,7 @@
 # src/services/ai_editor_config.py
 """
-Configuration for the AI Editor Service
-"""
+Configuration for the AI Editor Service:
+""
 
 from typing import Dict, Any, List
 from dataclasses import dataclass, field
@@ -33,8 +33,8 @@ class DataProcessingConfig:
 
 @dataclass
 class SandboxConfig:
-    """Configuration for sandbox execution"""
-    timeout_seconds: int = 60
+    """Configuration for sandbox execution""":
+imeout_seconds: int = 60
     use_execution_monitoring: bool = True
     max_memory_mb: int = 512
     max_cpu_percent: int = 80
@@ -76,8 +76,8 @@ class AIEditorConfig:
 # Default configuration
 DEFAULT_CONFIG = AIEditorConfig
 
-# Configuration presets for different use cases
-CONFIG_PRESETS = {
+# Configuration presets for different use cases:
+ONFIG_PRESETS = {
     "development": AIEditorConfig(
         log_level="DEBUG",
         data_processing=DataProcessingConfig(
@@ -95,8 +95,8 @@ CONFIG_PRESETS = {
         log_level="INFO",
         data_processing=DataProcessingConfig(
             text_summarization_enabled=True,
-            code_complexity_analysis_enabled=False  # Disable for performance
-        ),
+            code_complexity_analysis_enabled=False  # Disable for performance:
+,
         sandbox=SandboxConfig(
             timeout_seconds=30,
             max_memory_mb=256
@@ -106,8 +106,8 @@ CONFIG_PRESETS = {
     "high_performance": AIEditorConfig(
         log_level="WARNING",
         data_processing=DataProcessingConfig(
-            text_summarization_enabled=False,  # Disable for performance
-            code_complexity_analysis_enabled=False
+            text_summarization_enabled=False,  # Disable for performance:
+ode_complexity_analysis_enabled=False
         ),
         sandbox=SandboxConfig(
             timeout_seconds=15,
@@ -121,9 +121,8 @@ CONFIG_PRESETS = {
 
 def get_config(preset: str = "development") -> AIEditorConfig:
     """
-    Get configuration for the AI Editor Service.
-    
-    Args:
+    Get configuration for the AI Editor Service.:
+rgs:
         preset: Configuration preset to use ('development', 'production', 'high_performance')
         
     Returns:
@@ -136,9 +135,8 @@ def get_config(preset: str = "development") -> AIEditorConfig:
 
 def update_config(config: AIEditorConfig, updates: Dict[str, Any]) -> AIEditorConfig:
     """
-    Update configuration with new values.
-    
-    Args:
+    Update configuration with new values.:
+rgs:
         config: Current configuration
         updates: Dictionary of updates to apply
         

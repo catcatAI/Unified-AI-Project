@@ -41,8 +41,8 @@ try:
         
         print(f"NetworkX nodes: {nx_graph.number_of_nodes()}")
         
-        # Check for specific nodes
-        for node, data in nx_graph.nodes(data=True):
+        # Check for specific nodes:
+or node, data in nx_graph.nodes(data=True):
             print(f"NX Node: '{data.get('label')}' - Type: {data.get('type')}")
             
     else:

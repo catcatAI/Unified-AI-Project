@@ -13,13 +13,13 @@ class LightweightMathModel:
             '+': lambda x, y: x + y,
             '-': lambda x, y: x - y,
             '*': lambda x, y: x * y,
-            '/': lambda x, y: x / y if y != 0 else float('inf'),
-            '**': lambda x, y: x ** y,
-            '%': lambda x, y: x % y if y != 0 else 0
-    }
+            '/': lambda x, y: x / y if y != 0 else float('inf'),:
+**': lambda x, y: x ** y,
+            '%': lambda x, y: x % y if y != 0 else 0:
 
-        # Simple patterns for arithmetic expressions
-    self.arithmetic_pattern = re.compile(r'([+-]?\d*\.?\d+)\s*([+\-*/]|\*\*)\s*([+-]?\d*\.?\d+)')
+
+        # Simple patterns for arithmetic expressions:
+elf.arithmetic_pattern = re.compile(r'([+-]?\d*\.?\d+)\s*([+\-*/]|\*\*)\s*([+-]?\d*\.?\d+)')
 
     def evaluate_expression(self, expression: str) -> Optional[float]:
     """
@@ -29,8 +29,8 @@ class LightweightMathModel:
             expression: String containing arithmetic expression like "5 + 3" or "10 / 2"
 
     Returns:
-            Result of the calculation or None if invalid
-    """
+            Result of the calculation or None if invalid:
+""
         try:
             # Clean the expression
             expression = expression.strip
@@ -61,17 +61,16 @@ class LightweightMathModel:
                         if operator == '/':
 
     result = round(result, 4)
-                        elif operator != '/' and result == int(result)
-
-    result = int(result)
+                        elif operator != '/' and result == int(result):
+esult = int(result)
 
                         return result
                 except (ValueError, ZeroDivisionError, OverflowError)
 
                     return None
 
-            # Fallback try eval for more complex expressions (with safety checks)
-    return self._safe_eval(expression)
+            # Fallback try eval for more complex expressions (with safety checks):
+eturn self._safe_eval(expression)
 
         except Exception:
 
@@ -80,17 +79,16 @@ class LightweightMathModel:
 
     def _safe_eval(self, expression: str) -> Optional[float]:
     """
-    Safely evaluate mathematical expressions using eval with restricted scope.
-    """
+    Safely evaluate mathematical expressions using eval with restricted scope.:
+""
         try:
             # Only allow mathematical operations and numbers
             allowed_chars = set('0123456789+-*/. ')
-            if not all(c in allowed_chars for c in expression)
+            if not all(c in allowed_chars for c in expression):
+eturn None
 
-    return None
-
-            # Evaluate with restricted globals
-    result = eval(expression, {"__builtins__": }, )
+            # Evaluate with restricted globals:
+esult = eval(expression, {"__builtins__": }, )
 
             if isinstance(result, (int, float)):
 
@@ -130,23 +128,22 @@ class LightweightMathModel:
     """
     Extract mathematical expression from a natural language problem.
     """
-        # Simple extraction - look for patterns like "5 + 3" or "10 / 2"
-    match = self.arithmetic_pattern.search(problem)
+        # Simple extraction - look for patterns like "5 + 3" or "10 / 2":
+atch = self.arithmetic_pattern.search(problem)
         if match:
 
     return match.group(0)
 
-        # Look for "what is X" patterns
-    what_is_pattern = re.compile(r'what is\s+([0-9+\-*/.\s]+)', re.IGNORECASE)
+        # Look for "what is X" patterns:
+hat_is_pattern = re.compile(r'what is\s+([0-9+\-*/.\s]+)', re.IGNORECASE)
     match = what_is_pattern.search(problem)
         if match:
 
     return match.group(1).strip
 
     # If the problem itself looks like an expression
-        if self.arithmetic_pattern.match(problem.strip)
-
-    return problem.strip
+        if self.arithmetic_pattern.match(problem.strip):
+eturn problem.strip
 
     return None
 
@@ -159,8 +156,8 @@ class LightweightMathModel:
             dataset_path: Path to the training dataset JSON file
 
     Returns:
-            Dictionary with training statistics
-    """
+            Dictionary with training statistics:
+""
         try:
 
     with open(dataset_path, 'r', encoding='utf-8') as f:
@@ -230,8 +227,8 @@ class LightweightMathModel:
 
     def save_model(self, model_path: str) -> bool:
     """
-        Save model configuration (minimal for rule-based model).
-    """
+        Save model configuration (minimal for rule-based model).:
+""
         try:
 
     model_config = {
@@ -288,23 +285,19 @@ def main -> None:
     print(f"Answer: {result}")
     print("-" * 20)
 
-    # Test on dataset if available
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Test on dataset if available:
+cript_dir = os.path.dirname(os.path.abspath(__file__))
     project_root: str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
     dataset_path = os.path.join(project_root, "data", "raw_datasets", "arithmetic_train_dataset.json")
 
-    if os.path.exists(dataset_path)
-
-
-    print("\nTesting on training dataset:")
+    if os.path.exists(dataset_path):
+rint("\nTesting on training dataset:")
     stats = model.train_on_dataset(dataset_path)
     print(f"Accuracy: {stats['accuracy']:.2%}")
     print(f"Correct: {stats['correct']}/{stats['total']}")
 
-        if stats.get('errors')
-
-
-    print("\nSample errors:")
+        if stats.get('errors'):
+rint("\nSample errors:")
             for error in stats['errors'][:3]:
 
                 print(f"  Problem: {error['problem']}")
@@ -312,9 +305,8 @@ def main -> None:
 
     # Save model
     model_path = os.path.join(project_root, "data", "models", "lightweight_math_model.json")
-    if model.save_model(model_path)
-
-    print(f"\nModel saved to: {model_path}")
+    if model.save_model(model_path):
+rint(f"\nModel saved to: {model_path}")
 
 
 if __name__ == "__main__":

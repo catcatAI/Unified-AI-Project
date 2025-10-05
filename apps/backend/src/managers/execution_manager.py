@@ -114,9 +114,8 @@ class ExecutionManager:
     self._monitoring_active = False
     self._health_check_thread: Optional[threading.Thread] = None
 
-    self.logger.info("ExecutionManager initialized with adaptive monitoring")
-
-    def _load_config_from_system(self) -> ExecutionManagerConfig:
+    self.logger.info("ExecutionManager initialized with adaptive monitoring"):
+ef _load_config_from_system(self) -> ExecutionManagerConfig:
     """從系統配置文件加載配置"""
         try:
 
@@ -193,8 +192,8 @@ class ExecutionManager:
     logger.setLevel(getattr(logging, self.config.log_level.upper, logging.INFO))
     return logger
 
-    def start_health_monitoring(self)
-    """啟動健康監控"""
+    def start_health_monitoring(self):
+""啟動健康監控"""
         if not self.config.enabled or self._monitoring_active:
 
     return
@@ -207,16 +206,16 @@ class ExecutionManager:
     self._health_check_thread.start
     self.logger.info("Health monitoring started")
 
-    def stop_health_monitoring(self)
-    """停止健康監控"""
+    def stop_health_monitoring(self):
+""停止健康監控"""
     self._monitoring_active = False
         if self._health_check_thread:
 
     self._health_check_thread.join(timeout=5.0)
     self.logger.info("Health monitoring stopped")
 
-    def _health_monitoring_loop(self)
-    """健康監控循環"""
+    def _health_monitoring_loop(self):
+""健康監控循環"""
         while self._monitoring_active:
 
     try:
@@ -240,8 +239,8 @@ class ExecutionManager:
                 self.logger.error(f"Health monitoring error: {e}")
                 time.sleep(10)
 
-    def _check_resource_thresholds(self, health: Dict[str, Any])
-    """檢查資源閾值"""
+    def _check_resource_thresholds(self, health: Dict[str, Any]):
+""檢查資源閾值"""
     cpu_percent = health.get('cpu_percent', 0)
     memory_percent = health.get('memory_percent', 0)
     disk_percent = health.get('disk_percent', 0)
@@ -270,8 +269,8 @@ class ExecutionManager:
 
     self._handle_resource_issue('disk', 'warning', disk_percent)
 
-    def _handle_resource_issue(self, resource_type: str, severity: str, value: float)
-    """處理資源問題"""
+    def _handle_resource_issue(self, resource_type: str, severity: str, value: float):
+""處理資源問題"""
     issue = {
             'timestamp': time.time,
             'type': 'resource_threshold',
@@ -294,8 +293,8 @@ class ExecutionManager:
 
             self.logger.warning(f"High {resource_type} usage: {value}%")
 
-    def _attempt_resource_recovery(self, resource_type: str)
-    """嘗試資源恢復"""
+    def _attempt_resource_recovery(self, resource_type: str):
+""嘗試資源恢復"""
     recovery_action = {
             'timestamp': time.time,
             'type': 'resource_recovery',
@@ -321,16 +320,14 @@ class ExecutionManager:
                 recovery_action['details'] = 'temp_cleanup_suggested'
 
             recovery_action['status'] = 'completed'
-            self.logger.info(f"Recovery action completed for {resource_type}")
-
-    except Exception as e:
+            self.logger.info(f"Recovery action completed for {resource_type}"):
+xcept Exception as e:
 
 
     recovery_action['status'] = 'failed'
             recovery_action['error'] = str(e)
-            self.logger.error(f"Recovery action failed for {resource_type}: {e}")
-
-    self.recovery_actions.append(recovery_action)
+            self.logger.error(f"Recovery action failed for {resource_type}: {e}"):
+elf.recovery_actions.append(recovery_action)
 
     def execute_command(
     self,
@@ -388,9 +385,8 @@ class ExecutionManager:
                     self.execution_stats['failed_executions'] += 1
 
                 # 檢查是否需要重試
-                if retry_count < max_retries and self._should_retry(result)
-
-    retry_count += 1
+                if retry_count < max_retries and self._should_retry(result):
+etry_count += 1
                     self.logger.warning(f"Retrying command (attempt {retry_count}/{max_retries})")
                     time.sleep(self.config.retry_delay)
                     continue
@@ -499,12 +495,10 @@ class ExecutionManager:
 
     # 添加問題和恢復記錄
         recent_issues = [issue for issue in self.issues_log :
-    if time.time - issue['timestamp'] < 3600]  # 最近1小時
-
-    recent_recoveries = [action for action in self.recovery_actions :
-    if time.time - action['timestamp'] < 3600]  # 最近1小時
-
-    return {
+    if time.time - issue['timestamp'] < 3600]  # 最近1小時:
+ecent_recoveries = [action for action in self.recovery_actions :
+    if time.time - action['timestamp'] < 3600]  # 最近1小時:
+eturn {
             'system_health': health,
             'execution_stats': self.get_execution_statistics,
             'recent_issues': recent_issues,
@@ -512,8 +506,8 @@ class ExecutionManager:
             'config': asdict(self.config)
     }
 
-    def reset_statistics(self)
-    """重置統計信息"""
+    def reset_statistics(self):
+""重置統計信息"""
     self.execution_stats = {
             'total_executions': 0,
             'successful_executions': 0,
@@ -526,13 +520,13 @@ class ExecutionManager:
     self.recovery_actions.clear
     self.logger.info("Execution statistics reset")
 
-    def __enter__(self)
-    """上下文管理器進入"""
+    def __enter__(self):
+""上下文管理器進入"""
     self.start_health_monitoring
     return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb)
-    """上下文管理器退出"""
+    def __exit__(self, exc_type, exc_val, exc_tb):
+""上下文管理器退出"""
     self.stop_health_monitoring
 
 

@@ -57,8 +57,8 @@ class TestCoreServices(unittest.TestCase):
     def test_get_services(self) -> None:
         """Test getting services."""
         services = get_services()
-        # Should return a dictionary, even if services aren't initialized
-        self.assertIsInstance(services, dict)
+        # Should return a dictionary, even if services aren't initialized:
+elf.assertIsInstance(services, dict)
         # Check that all expected keys are present
         expected_keys = [
             "llm_interface", "ham_manager", "personality_manager", "trust_manager",

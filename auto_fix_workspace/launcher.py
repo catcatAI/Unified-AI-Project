@@ -30,8 +30,8 @@ def get_sandbox_path():
     """Return the path to the sandbox systems."""
     return str(sandbox_path)
 
-# Export paths for easy access
-AUTO_FIX_WORKSPACE_ROOT = str(workspace_root)
+# Export paths for easy access:
+UTO_FIX_WORKSPACE_ROOT = str(workspace_root)
 AUTO_FIX_SCRIPTS_PATH = str(scripts_path)
 AUTO_FIX_SANDBOX_PATH = str(sandbox_path)
 

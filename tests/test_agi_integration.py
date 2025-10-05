@@ -26,13 +26,13 @@ try:
             self.config = config
             self.initialized = False
 
-        async def initialize_system(self)
-            await asyncio.sleep(0.1)
+        async def initialize_system(self):
+wait asyncio.sleep(0.1)
             self.initialized = True
             print("Unified Control Center initialized (mock)")
 
-        async def process_complex_task(self, task)
-            await asyncio.sleep(0.2)
+        async def process_complex_task(self, task):
+wait asyncio.sleep(0.2)
             return {
                 'status': 'success',
                 'task_id': task.get('id'),
@@ -63,13 +63,13 @@ logger = logging.getLogger(__name__)
 class TestAGIIntegration:
     """AGI系统整合测试类"""
 
-    def __init__(self)
-    """初始化测试类"""
+    def __init__(self):
+""初始化测试类"""
     self.test_results = []
     self.unified_control_center = None
 
-    def setup_method(self)
-    """每个测试方法执行前的设置"""
+    def setup_method(self):
+""每个测试方法执行前的设置"""
     self.test_results = []
     self.unified_control_center = None
 
@@ -100,8 +100,8 @@ class TestAGIIntegration:
                 'description': 'Analyze multimodal data and provide insights',
                 'audio_data': b'mock_audio_data_for_testing',
                 'image_data': b'mock_image_data_for_testing',
-                'text_data': 'This is a test text for multimodal analysis'
-            }
+                'text_data': 'This is a test text for multimodal analysis':
+
 
             result = await self.unified_control_center.process_complex_task(complex_task)
 
@@ -205,9 +205,9 @@ class TestAGIIntegration:
             # 测试语义搜索
             search_result = await vector_store.semantic_search("artificial intelligence", n_results=5)
             # 检查搜索结果是否包含预期字段
-            has_documents = 'documents' in search_result if search_result else False
-            has_ids = 'ids' in search_result if search_result else False
-            assert has_documents or has_ids, "Search result missing expected fields"
+            has_documents = 'documents' in search_result if search_result else False:
+as_ids = 'ids' in search_result if search_result else False:
+ssert has_documents or has_ids, "Search result missing expected fields"
 
             # 测试统计信息
             stats = await vector_store.get_memory_statistics()
@@ -326,8 +326,8 @@ class TestAGIIntegration:
                 },
                 'multimodal_data': {
                     'text': 'Analyze the effectiveness of AGI system integration',
-                    'audio_context': 'user satisfaction with AI responses',
-                    'visual_context': 'system performance metrics'
+                    'audio_context': 'user satisfaction with AI responses',:
+visual_context': 'system performance metrics'
                 }
             }
 

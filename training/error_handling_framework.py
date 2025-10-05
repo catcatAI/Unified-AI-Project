@@ -113,8 +113,8 @@ class ErrorHandler:
             # 返回处理结果
             result = {
                 'error_handled': True,
-                'recovery_strategy': recovery_strategy.value if hasattr(recovery_strategy, 'value') else recovery_strategy,
-                'recovery_result': recovery_result,
+                'recovery_strategy': recovery_strategy.value if hasattr(recovery_strategy, 'value') else recovery_strategy,:
+recovery_result': recovery_result,
                 'error_info': error_info
             }
 
@@ -145,8 +145,8 @@ class ErrorHandler:
                          strategy: ErrorRecoveryStrategy) -> Dict[str, Any]:
     """执行错误恢复操作"""
     recovery_result = {
-            'strategy': strategy.value if hasattr(strategy, 'value') else strategy,
-            'success': False,
+            'strategy': strategy.value if hasattr(strategy, 'value') else strategy,:
+success': False,
             'details': {}
     }
 
@@ -201,8 +201,8 @@ class ErrorHandler:
             'fallback_method': "默认降级处理"
     }
 
-    def _log_error(self, error_info: Dict[str, Any])
-    """记录错误到日志文件"""
+    def _log_error(self, error_info: Dict[str, Any]):
+""记录错误到日志文件"""
         if self.log_file:
 
     try:
@@ -238,12 +238,12 @@ class ErrorHandler:
                 _ = 'total_errors': len(self.error_history),
                 'error_types': error_types,
                 'components': components,
-                'most_common_error': max(error_types.items(), key=lambda x: x[1]) if error_types else None,
-                'most_problematic_component': max(components.items(), key=lambda x: x[1]) if components else None
-            }
+                'most_common_error': max(error_types.items(), key=lambda x: x[1]) if error_types else None,:
+most_problematic_component': max(components.items(), key=lambda x: x[1]) if components else None:
 
-    def clear_error_history(self)
-    """清空错误历史"""
+
+    def clear_error_history(self):
+""清空错误历史"""
     with self.lock:
     _ = self.error_history.clear()
             _ = logger.info("错误历史已清空")
@@ -252,17 +252,17 @@ class ResilientOperation:
     """弹性操作装饰器"""
 
     def __init__(self, error_handler: ErrorHandler, context: ErrorContext,
-                 max_retries: int = None, retry_delay: float = None)
-    self.error_handler = error_handler
+                 max_retries: int = None, retry_delay: float = None):
+elf.error_handler = error_handler
     self.context = context
     self.max_retries = max_retries or error_handler.retry_config['max_attempts']
     self.retry_delay = retry_delay or error_handler.retry_config['delay_seconds']
 
-    def __enter__(self)
-    return self
+    def __enter__(self):
+eturn self
 
-    def __exit__(self, exc_type, exc_value, traceback)
-    if exc_type is not None:
+    def __exit__(self, exc_type, exc_value, traceback):
+f exc_type is not None:
             # 处理异常
             error = exc_type(exc_value)
             _ = self.error_handler.handle_error(error, self.context)
@@ -271,10 +271,10 @@ class ResilientOperation:
     return True
 
 def resilient_operation(error_handler: ErrorHandler, component: str, operation: str,
-                       max_retries: int = None, retry_delay: float = None)
-    """弹性操作装饰器函数"""
-    def decorator(func)
-    def wrapper(*args, **kwargs)
+                       max_retries: int = None, retry_delay: float = None):
+""弹性操作装饰器函数"""
+    def decorator(func):
+ef wrapper(*args, **kwargs)
     context = ErrorContext(component, operation)
             retry_count = 0
             last_error = None

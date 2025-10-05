@@ -59,26 +59,22 @@ class GPUOptimizer:
                     "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
                 ], capture_output=True, text=True, timeout=10)
 
-                if result.returncode == 0 and result.stdout.strip()
-
-
-    gpu_data = json.loads(result.stdout)
+                if result.returncode == 0 and result.stdout.strip():
+pu_data = json.loads(result.stdout)
 
                     # Handle both single GPU and multiple GPU cases
-                    if isinstance(gpu_data, list)
-
-    gpu_list = gpu_data
+                    if isinstance(gpu_data, list):
+pu_list = gpu_data
                     else:
 
                         gpu_list = [gpu_data]
 
-                    # Check if any GPU is integrated graphics
-    for gpu_info in gpu_list:
+                    # Check if any GPU is integrated graphics:
+or gpu_info in gpu_list:
 
     name = gpu_info.get('Name', '').lower()
-                        if any(keyword in name for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics'])
-
-    return True
+                        if any(keyword in name for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics']):
+eturn True
         except Exception as e:
 
             _ = logger.debug(f"检查集成显卡时出错: {e}")
@@ -91,9 +87,8 @@ class GPUOptimizer:
 
             import tensorflow as tf
             # 检查TensorFlow版本兼容性
-            if hasattr(tf.config, 'list_physical_devices')
-
-    gpus = tf.config.list_physical_devices('GPU')
+            if hasattr(tf.config, 'list_physical_devices'):
+pus = tf.config.list_physical_devices('GPU')
             else:
                 # 兼容旧版本TensorFlow
                 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -120,19 +115,16 @@ class GPUOptimizer:
                             "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
                         ], capture_output=True, text=True, timeout=10)
 
-                        if result.returncode == 0 and result.stdout.strip()
-
-
-    gpu_data = json.loads(result.stdout)
+                        if result.returncode == 0 and result.stdout.strip():
+pu_data = json.loads(result.stdout)
 
                             # 检查是否有GPU设备
                             if isinstance(gpu_data, list) and len(gpu_data) > 0:
                                 # 有GPU设备，即使TensorFlow没有检测到，也认为可以尝试优化
                                 _ = logger.info("ℹ️  检测到系统GPU设备，但TensorFlow未识别，将使用CPU优化策略")
                                 return False  # TensorFlow无法使用GPU，但系统有GPU
-                            elif isinstance(gpu_data, dict)
-
-    _ = logger.info("ℹ️  检测到系统GPU设备，但TensorFlow未识别，将使用CPU优化策略")
+                            elif isinstance(gpu_data, dict):
+ = logger.info("ℹ️  检测到系统GPU设备，但TensorFlow未识别，将使用CPU优化策略")
                                 return False  # TensorFlow无法使用GPU，但系统有GPU
 
                     # 如果无法确定或没有检测到GPU设备
@@ -151,8 +143,8 @@ class GPUOptimizer:
             _ = logger.warning(f"检查GPU可用性时出错: {e}")
             return False
 
-    def optimize_gpu_memory(self)
-    """优化GPU内存使用"""
+    def optimize_gpu_memory(self):
+""优化GPU内存使用"""
         if not self.gpu_available:
 
     _ = logger.warning("GPU不可用，跳过GPU内存优化")
@@ -163,9 +155,8 @@ class GPUOptimizer:
 
             import tensorflow as tf
             # 兼容不同版本的TensorFlow
-            if hasattr(tf.config, 'list_physical_devices')
-
-    gpus = tf.config.list_physical_devices('GPU')
+            if hasattr(tf.config, 'list_physical_devices'):
+pus = tf.config.list_physical_devices('GPU')
             else:
 
                 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -179,12 +170,10 @@ class GPUOptimizer:
             # 为每个GPU设置内存增长
             for gpu in gpus:
                 # 兼容不同版本的TensorFlow
-                if hasattr(tf.config, 'experimental') and hasattr(tf.config.experimental, 'set_memory_growth')
-
-    _ = tf.config.experimental.set_memory_growth(gpu, True)
-                elif hasattr(tf.config, 'set_memory_growth')
-
-    _ = tf.config.set_memory_growth(gpu, True)
+                if hasattr(tf.config, 'experimental') and hasattr(tf.config.experimental, 'set_memory_growth'):
+ = tf.config.experimental.set_memory_growth(gpu, True)
+                elif hasattr(tf.config, 'set_memory_growth'):
+ = tf.config.set_memory_growth(gpu, True)
                 else:
                     # 兼容旧版本
                     _ = tf.config.experimental.set_memory_growth(gpu, True)
@@ -196,8 +185,8 @@ class GPUOptimizer:
             _ = logger.error(f"GPU内存优化失败: {e}")
             return False
 
-    def enable_mixed_precision(self)
-    """启用混合精度训练"""
+    def enable_mixed_precision(self):
+""启用混合精度训练"""
         if not self.gpu_available:
 
     _ = logger.warning("GPU不可用，跳过混合精度训练")
@@ -247,14 +236,13 @@ class GPUOptimizer:
             _ = logger.error(f"启用混合精度训练失败: {e}")
             return False
 
-    def enable_gradient_checkpointing(self, model)
-    """启用梯度检查点以节省内存"""
+    def enable_gradient_checkpointing(self, model):
+""启用梯度检查点以节省内存"""
         try:
             # 对于TensorFlow模型，可以通过设置checkpoint来实现
             # 这里提供一个通用的接口
-            if hasattr(model, 'enable_gradient_checkpointing')
-
-    _ = model.enable_gradient_checkpointing()
+            if hasattr(model, 'enable_gradient_checkpointing'):
+ = model.enable_gradient_checkpointing()
                 _ = logger.info("梯度检查点已启用")
                 return True
             else:
@@ -266,8 +254,8 @@ class GPUOptimizer:
             _ = logger.error(f"启用梯度检查点失败: {e}")
             return False
 
-    def optimize_model_for_inference(self, model)
-    """优化模型用于推理"""
+    def optimize_model_for_inference(self, model):
+""优化模型用于推理"""
         try:
 
             if TENSORFLOW_AVAILABLE:
@@ -276,9 +264,8 @@ class GPUOptimizer:
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
             else:
 
-                raise ImportError("TensorFlow not available for TFLite conversion")
-
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+                raise ImportError("TensorFlow not available for TFLite conversion"):
+onverter.optimizations = [tf.lite.Optimize.DEFAULT]
 
             # 启用混合量化
             converter.representative_dataset = self._get_representative_dataset
@@ -295,19 +282,17 @@ class GPUOptimizer:
             _ = logger.error(f"模型推理优化失败: {e}")
             return None
 
-    def _get_representative_dataset(self)
-    """获取代表性数据集用于量化"""
+    def _get_representative_dataset(self):
+""获取代表性数据集用于量化"""
     # 这里应该返回一个小型数据集用于量化校准
     # 为了示例，我们返回一个简单的生成器
     import numpy as np
 
-        for _ in range(100)
+        for _ in range(100):
+ield [np.random.random((1, 224, 224, 3)).astype(np.float32)]
 
-
-    yield [np.random.random((1, 224, 224, 3)).astype(np.float32)]
-
-    def clear_gpu_memory(self)
-    """清理GPU内存"""
+    def clear_gpu_memory(self):
+""清理GPU内存"""
         try:
 
             import tensorflow as tf
@@ -340,10 +325,8 @@ class GPUOptimizer:
             device_count = pynvml.nvmlDeviceGetCount()
             gpu_info = []
 
-            for i in range(device_count)
-
-
-    handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+            for i in range(device_count):
+andle = pynvml.nvmlDeviceGetHandleByIndex(i)
                 name = pynvml.nvmlDeviceGetName(handle)
                 memory_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 utilization = pynvml.nvmlDeviceGetUtilizationRates(handle)
@@ -372,8 +355,8 @@ class GPUOptimizer:
     from datetime import datetime
     return datetime.now().isoformat()
 
-    def apply_optimization_strategies(self)
-    """应用所有优化策略"""
+    def apply_optimization_strategies(self):
+""应用所有优化策略"""
     results = {}
 
         for strategy in self.optimization_strategies:
@@ -401,8 +384,8 @@ class GPUOptimizer:
     _ = logger.info(f"应用优化策略结果: {results}")
     return results
 
-    def enable_layer_fusion(self)
-    """启用层融合优化"""
+    def enable_layer_fusion(self):
+""启用层融合优化"""
         try:
 
             import tensorflow as tf

@@ -19,8 +19,8 @@ from ai.language_models.daily_language_model import DailyLanguageModel
 from apps.backend.src.core.services.multi_llm_service import MultiLLMService
 from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse # Import new response type
 
-# Global flag for RAG availability
-if '_RAG_AVAILABLE_FLAG' not in globals:
+# Global flag for RAG availability:
+f '_RAG_AVAILABLE_FLAG' not in globals:
     _RAG_AVAILABLE_FLAG = False
     try:
 
@@ -32,8 +32,8 @@ if '_RAG_AVAILABLE_FLAG' not in globals:
     RAGManager = None
 
 class ToolDispatcher:
-    def _get_ham(self)
-    try:
+    def _get_ham(self):
+ry:
 
     from ...core_services import ham_manager_instance
             return ham_manager_instance
@@ -64,22 +64,21 @@ class ToolDispatcher:
                 "ham_meta_success": record.get("success"),
                 "ham_meta_timestamp": record.get("timestamp"),
             }
-            # Use a distinct data_type for action policy events
-    if hasattr(ham, 'store_experience')
-
-    ham.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[attr-defined]
+            # Use a distinct data_type for action policy events:
+f hasattr(ham, 'store_experience'):
+am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[attr-defined]
         except Exception as e:
 
             logging.debug(f"ToolDispatcher: failed to log action policy: {e}")
 
-    def set_llm_service(self, llm_service: Optional[MultiLLMService])
-    """Inject or replace the LLM service at runtime (used by hot reload)."""
+    def set_llm_service(self, llm_service: Optional[MultiLLMService]):
+""Inject or replace the LLM service at runtime (used by hot reload)."""
         if hasattr(self, 'dlm') and hasattr(self.dlm, 'set_llm_service') and llm_service is not None:
 
     self.dlm.set_llm_service(llm_service)
         else:
-            # Fallback re-instantiate the wrapper with the new LLM service
-    try:
+            # Fallback re-instantiate the wrapper with the new LLM service:
+ry:
 
     from ai.language_models.daily_language_model import DailyLanguageModel
                 self.dlm = DailyLanguageModel(llm_service=llm_service)
@@ -103,8 +102,8 @@ class ToolDispatcher:
             "create_image": self._execute_image_creation,
     }
 
-        # Add RAG query tool if available
-    if _RAG_AVAILABLE_FLAG and self.rag_manager:
+        # Add RAG query tool if available:
+f _RAG_AVAILABLE_FLAG and self.rag_manager:
 
     self.tools["rag_query"] = self._execute_rag_query
     self.tool_descriptions = {
@@ -112,12 +111,12 @@ class ToolDispatcher:
             "evaluate_logic": "Evaluates simple logical expressions (AND, OR, NOT, true, false, parentheses). Example: 'evaluate true AND (false OR NOT true)'",
             "translate_text": "Translates text between Chinese and English. Example: 'translate 你好 to English'",
             "inspect_code": "Describes the structure of available tools. Query examples: 'list_tools', or 'describe_tool math_tool'",
-            "analyze_csv": "Analyzes CSV data. Requires 'csv_content' and 'query' in parameters. Example: 'analyze_csv with query \"summarize\" and csv_content \"a,b\\n1,2\"'",
-            "create_image": "Creates an image from a text prompt. Requires 'prompt' and optional 'style'. Example: 'create_image with prompt \"a cat wearing a hat\" and style \"cartoon\"'",
-    }
+            "analyze_csv": "Analyzes CSV data. Requires 'csv_content' and 'query' in parameters. Example: 'analyze_csv with query \"summarize\" and csv_content \"a,b\\n1,2\"'",:
+create_image": "Creates an image from a text prompt. Requires 'prompt' and optional 'style'. Example: 'create_image with prompt \"a cat wearing a hat\" and style \"cartoon\"'",:
 
-        # Add RAG query description if available
-    if _RAG_AVAILABLE_FLAG and self.rag_manager:
+
+        # Add RAG query description if available:
+f _RAG_AVAILABLE_FLAG and self.rag_manager:
 
     self.tool_descriptions["rag_query"] = "Performs a retrieval-augmented generation query. Example: 'rag_query what is the main purpose of HAM?'"
     self.models: List[Any] =
@@ -126,8 +125,8 @@ class ToolDispatcher:
 
     async def dispatch_tool_request(self, tool_name: str, parameters: Dict[...]
     """
-    Dispatch a tool request with the given tool name and parameters
-    """
+    Dispatch a tool request with the given tool name and parameters:
+""
     start_ts = time.perf_counter
         try:
 
@@ -139,8 +138,8 @@ class ToolDispatcher:
                     "error_message": f"Tool '{tool_name}' not found. Available tools: {list(self.tools.keys)}"
                 }
 
-            # Call the tool function with proper parameter handling
-    tool_function = self.tools[tool_name]
+            # Call the tool function with proper parameter handling:
+ool_function = self.tools[tool_name]
 
             # Handle different tool signatures
             if tool_name == "inspect_code":
@@ -170,9 +169,8 @@ class ToolDispatcher:
                 result = tool_function(query, **{k: v for k, v in parameters.items if k not in ["query", "code"]})
 
             # Handle both sync and async results
-            if hasattr(result, '__await__')
-
-    result = await result
+            if hasattr(result, '__await__'):
+esult = await result
 
             # Build action-policy record
             try:
@@ -242,8 +240,8 @@ class ToolDispatcher:
                 payload=None,
                 tool_name_attempted="analyze_csv",
                 original_query_for_tool=query,
-                error_message="Missing 'csv_content' parameter for analyze_csv tool."
-            )
+                error_message="Missing 'csv_content' parameter for analyze_csv tool.":
+
 
         try:
             # Create an instance of the tool
@@ -284,8 +282,8 @@ class ToolDispatcher:
                 payload=None,
                 tool_name_attempted="create_image",
                 original_query_for_tool=query,
-                error_message="Missing 'prompt' parameter for create_image tool."
-            )
+                error_message="Missing 'prompt' parameter for create_image tool.":
+
 
         try:
             # Create an instance of the tool
@@ -335,8 +333,8 @@ class ToolDispatcher:
                 payload=None,
                 tool_name_attempted="inspect_code",
                 original_query_for_tool=query,
-                error_message="No action specified for code inspection. Use 'list_tools' or 'describe_tool <tool_name>'."
-            )
+                error_message="No action specified for code inspection. Use 'list_tools' or 'describe_tool <tool_name>'.":
+
 
         try:
             # Create an instance of the tool
@@ -362,8 +360,8 @@ class ToolDispatcher:
 
     def _execute_rag_query(self, query: str, **kwargs) -> ToolDispatcherResponse:
     """
-        Wrapper for the RAGManager.search function.
-    """
+        Wrapper for the RAGManager.search function.:
+""
         try:
             # Assuming the query is the text to search for.
             # The RAGManager might evolve to take more complex parameters.
@@ -399,8 +397,8 @@ class ToolDispatcher:
 
     def _execute_math_calculation(self, query: str, **kwargs) -> ToolDispatcherResponse:
     """
-        Wrapper for the math_tool.calculate function.
-    'query' is expected to be the direct arithmetic expression.
+        Wrapper for the math_tool.calculate function.:
+query' is expected to be the direct arithmetic expression.
     kwargs might include 'original_query'.
     """
     # The `query` parameter here is what DLM extracted as the math expression.
@@ -452,9 +450,8 @@ class ToolDispatcher:
             result = logic_evaluate(expression_to_evaluate, expression_string=expression_to_evaluate)
 
             # The logic_evaluate tool returns a boolean, or a string error message.
-            if isinstance(result, bool)
-
-    return ToolDispatcherResponse(
+            if isinstance(result, bool):
+eturn ToolDispatcherResponse(
                     status="success",
                     payload=result,
                     tool_name_attempted="evaluate_logic",
@@ -485,11 +482,11 @@ class ToolDispatcher:
         Wrapper for the translation_tool.translate function.:
     Extracts text and target language from query.
     Example query: "translate 'Hello world' to Chinese"
-    Can also be called with explicit text and target_language in kwargs.
-    """
+    Can also be called with explicit text and target_language in kwargs.:
+""
         try:
-            # print(f"Debug TRANSLATE _execute_translation called with query='{query}', kwargs={kwargs}") # REMOVED DEBUG
-    text_to_translate = query # Default query is the text
+            # print(f"Debug TRANSLATE _execute_translation called with query='{query}', kwargs={kwargs}") # REMOVED DEBUG:
+ext_to_translate = query # Default query is the text
             target_lang_from_kwarg = kwargs.get("target_language")
             source_lang_from_kwarg = kwargs.get("source_language")
             # print(f"Debug TRANSLATE target_lang_from_kwarg='{target_lang_from_kwarg}', source_lang_from_kwarg='{source_lang_from_kwarg}'") # REMOVED DEBUG
@@ -514,9 +511,9 @@ class ToolDispatcher:
     text_to_translate = pattern1_match.group(1) or pattern1_match.group(2)
                     text_to_translate = text_to_translate.strip
                     lang_name_or_code = pattern1_match.group(3).lower()
-                    if lang_name_or_code in ["chinese", "zh"]: resolved_target_lang = "zh"
-                    elif lang_name_or_code in ["english", "en"]: resolved_target_lang = "en"
-                    else: resolved_target_lang = lang_name_or_code
+                    if lang_name_or_code in ["chinese", "zh"]: resolved_target_lang = "zh":
+lif lang_name_or_code in ["english", "en"]: resolved_target_lang = "en":
+lse: resolved_target_lang = lang_name_or_code
                 else:
                     # Pattern 2 "'TEXT' in LANGUAGE" or "TEXT in LANGUAGE"
                     pattern2_match = re.search(r"(?:['\"](.+?)['\"]|(.+?))\s+in\s+([a-zA-Z\-]+)", query, re.IGNORECASE)
@@ -525,33 +522,33 @@ class ToolDispatcher:
     text_to_translate = pattern2_match.group(1) or pattern2_match.group(2)
                         text_to_translate = text_to_translate.strip
                         lang_name_or_code = pattern2_match.group(3).lower()
-                        if lang_name_or_code in ["chinese", "zh"]: resolved_target_lang = "zh"
-                        elif lang_name_or_code in ["english", "en"]: resolved_target_lang = "en"
-                        else: resolved_target_lang = lang_name_or_code
+                        if lang_name_or_code in ["chinese", "zh"]: resolved_target_lang = "zh":
+lif lang_name_or_code in ["english", "en"]: resolved_target_lang = "en":
+lse: resolved_target_lang = lang_name_or_code
                     else:
                         # Pattern 3 Fallback "translate TEXT"
                         # Here, `to_lang_match` was an attempt to find "to LANG" anywhere in the query.
-                        # Let's use that if available, otherwise default.
-    to_lang_match_general = re.search(r"to\s+([a-zA-Z\-]+)", query, re.IGNORECASE)
+                        # Let's use that if available, otherwise default.:
+o_lang_match_general = re.search(r"to\s+([a-zA-Z\-]+)", query, re.IGNORECASE)
                         if to_lang_match_general:
 
     lang_name_or_code = to_lang_match_general.group(1).lower()
-                            if lang_name_or_code in ["chinese", "zh"]: resolved_target_lang = "zh"
-                            elif lang_name_or_code in ["english", "en"]: resolved_target_lang = "en"
-                            else: resolved_target_lang = lang_name_or_code
+                            if lang_name_or_code in ["chinese", "zh"]: resolved_target_lang = "zh":
+lif lang_name_or_code in ["english", "en"]: resolved_target_lang = "en":
+lse: resolved_target_lang = lang_name_or_code
                         # else resolved_target_lang remains its default ("en")
 
                         text_simple_match = re.match(r"translate\s+(.+)", query, re.IGNORECASE)
                         if text_simple_match:
 
     text_to_translate = text_simple_match.group(1).strip
-                            # Remove "to lang" part if it was part of this simple match
-    if to_lang_match_general and text_to_translate.lower.endswith(f" to {to_lang_match_general.group(1).lower}"):
+                            # Remove "to lang" part if it was part of this simple match:
+f to_lang_match_general and text_to_translate.lower.endswith(f" to {to_lang_match_general.group(1).lower}"):
 
     text_to_translate = text_to_translate[:-(len(f" to {to_lang_match_general.group(1).lower()}"))].strip()
 
-                        else: # Cannot determine text to translate from query string if not using kwargs
-    return ToolDispatcherResponse(
+                        else: # Cannot determine text to translate from query string if not using kwargs:
+eturn ToolDispatcherResponse(
                                 status="error_dispatcher_issue",
                                 payload=None,
                                 tool_name_attempted="translate_text",
@@ -559,8 +556,8 @@ class ToolDispatcher:
                                 error_message="Sorry, I couldn't understand what text to translate from the query."
                             )
 
-            if not text_to_translate: # Ensure text is not empty
-                return ToolDispatcherResponse(
+            if not text_to_translate: # Ensure text is not empty:
+eturn ToolDispatcherResponse(
                     status="error_dispatcher_issue",
                     payload=None,
                     tool_name_attempted="translate_text",
@@ -568,14 +565,14 @@ class ToolDispatcher:
                     error_message="Sorry, no text to translate was found."
                 )
 
-            # Use source_lang_from_kwarg if provided, otherwise it's None (for auto-detect)
-    result_payload = translate_text(text_to_translate, resolved_target_lang, source_language=source_lang_from_kwarg)
+            # Use source_lang_from_kwarg if provided, otherwise it's None (for auto-detect):
+esult_payload = translate_text(text_to_translate, resolved_target_lang, source_language=source_lang_from_kwarg)
             # translate_text already returns a string like "Translation ..." or error message
-            # We need to check if it's an error message from the tool itself.
-    if "Translation not available" in result_payload or "error" in result_payload.lower() or "not supported" in result_payload.lower() # Simple check
+            # We need to check if it's an error message from the tool itself.:
+f "Translation not available" in result_payload or "error" in result_payload.lower() or "not supported" in result_payload.lower() # Simple check
                  return ToolDispatcherResponse(
-                    status="failure_tool_error", # Or a more specific status if tool provides it
-    payload=None,
+                    status="failure_tool_error", # Or a more specific status if tool provides it:
+ayload=None,
                     tool_name_attempted="translate_text",
                     original_query_for_tool=query,
                     error_message=result_payload
@@ -603,8 +600,8 @@ class ToolDispatcher:
     Dispatches a query to the appropriate tool.
     If explicit_tool_name is provided, it uses that tool.
     Otherwise, it tries to infer the tool from the query.
-        Returns a ToolDispatcherResponse or None if no tool is inferred.
-    """
+        Returns a ToolDispatcherResponse or None if no tool is inferred.:
+""
         if explicit_tool_name:
 
     if explicit_tool_name in self.tools:
@@ -625,8 +622,8 @@ class ToolDispatcher:
                     error_message=f"Tool '{explicit_tool_name}' not found."
                 )
 
-        # Use DLM for intent recognition
-    intent = await self.dlm.recognize_intent(query, available_tools=self.get_available_tools)
+        # Use DLM for intent recognition:
+ntent = await self.dlm.recognize_intent(query, available_tools=self.get_available_tools)
 
         if intent and intent.get("tool_name") in self.tools:
 
@@ -637,30 +634,29 @@ class ToolDispatcher:
             # The top-level 'query' is the user's original full query
             tool_specific_query = tool_params.get("query", query)
 
-            logging.info(f"Dispatching to '{tool_name_from_dlm}' tool based on DLM intent. Effective query for tool: '{tool_specific_query}'")
-
-            if "original_query" not in tool_params:
+            logging.info(f"Dispatching to '{tool_name_from_dlm}' tool based on DLM intent. Effective query for tool: '{tool_specific_query}'"):
+f "original_query" not in tool_params:
 
 
     tool_params["original_query"] = query
 
-            # Special parameter mapping for translation
-    if tool_name_from_dlm == 'translate_text':
+            # Special parameter mapping for translation:
+f tool_name_from_dlm == 'translate_text':
                 # The _execute_translation method expects the text to translate as the first argument,
                 # and other details in kwargs. The DLM provides these in tool_params.
                 text_to_translate = tool_params.get('text_to_translate', tool_specific_query)
                 return self._execute_translation(text_to_translate, **tool_params)
 
             # Standard tool execution for others
-            # We need to remove the 'query' and 'original_query' from tool_params if it exists to avoid sending it twice
-    tool_params.pop('query', None)
+            # We need to remove the 'query' and 'original_query' from tool_params if it exists to avoid sending it twice:
+ool_params.pop('query', None)
             tool_params.pop('original_query', None)
             return self.tools[tool_name_from_dlm](tool_specific_query, **tool_params)
     # If no tool was dispatched by explicit name or DLM intent
         else:
             # This is the case where DLM returns "NO_TOOL" or tool not found
-            logging.info(f"No specific local tool inferred by DLM for query: '{query}'")
-            return ToolDispatcherResponse(
+            logging.info(f"No specific local tool inferred by DLM for query: '{query}'"):
+eturn ToolDispatcherResponse(
                 status="no_tool_inferred",
                 payload=None,
                 tool_name_attempted=None,
@@ -672,8 +668,8 @@ class ToolDispatcher:
     """
     Hot-reload tool implementations by re-importing known modules and updating bindings.
     _ = If 'only' is provided, reload only that tool key (e.g., 'calculate').
-    Returns a summary dict with reloaded/updated/failed keys.
-    """
+    Returns a summary dict with reloaded/updated/failed keys.:
+""
     summary = {"reloaded": , "updated": , "failed": }
     # Map dispatcher keys to module import paths and callables to bind
     mapping = {
@@ -685,8 +681,8 @@ class ToolDispatcher:
             "analyze_csv": (".csv_tool", "CsvTool", None),
             "create_image": (".image_generation_tool", "ImageGenerationTool", None),
     }
-        targets = [only] if only else list(mapping.keys)
-    for key in targets:
+        targets = [only] if only else list(mapping.keys):
+or key in targets:
 
     if key not in mapping:
 
@@ -722,34 +718,33 @@ class ToolDispatcher:
                 _ = summary["failed"].append({key: str(e)})
     return summary
 
-    def get_available_tools(self)
-    """Returns a dictionary of available tools and their descriptions."""
+    def get_available_tools(self):
+""Returns a dictionary of available tools and their descriptions."""
     return self.tool_descriptions
 
-    def add_model(self, model_code)
-    """Adds a new model to the dispatcher."""
+    def add_model(self, model_code):
+""Adds a new model to the dispatcher."""
     exec(model_code, globals)
         model_name = re.search(r"class (\w+)", model_code).group(1)
     self.models.append(globals[model_name])
 
-    def replace_model(self, old_model, new_model)
-    """Replaces an existing model with a new one.""":
-    for i, model in enumerate(self.models)
-
-    if model.name == old_model.name:
+    def replace_model(self, old_model, new_model):
+""Replaces an existing model with a new one.""":
+    for i, model in enumerate(self.models):
+f model.name == old_model.name:
 
 
     self.models[i] = new_model
                 break
 
-    def add_tool(self, tool_code)
-    """Adds a new tool to the dispatcher."""
+    def add_tool(self, tool_code):
+""Adds a new tool to the dispatcher."""
     exec(tool_code, globals)
         tool_name = re.search(r"def (\w+)\(input\):", tool_code).group(1)
     self.tools[tool_name] = globals[tool_name]
 
-    def replace_tool(self, old_tool, new_tool)
-    """Replaces an existing tool with a new one.""":
+    def replace_tool(self, old_tool, new_tool):
+""Replaces an existing tool with a new one.""":
     for tool_name, tool in self.tools.items:
 
     if tool == old_tool:
@@ -763,8 +758,8 @@ if __name__ == "__main__":
     import asyncio
     asyncio.run(main_test)
 
-async def main_test()
-    logging.basicConfig(level=logging.INFO)
+async def main_test():
+ogging.basicConfig(level=logging.INFO)
     logging.info("--- ToolDispatcher Test ---")
     # Initialize MultiLLMService (it will use its default config or load from file)
     llm_service_instance = MultiLLMService

@@ -8,17 +8,20 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Dict, Any
 # 添加项目根目录到Python路径
-project_root: str = Path(__file__).parent.parent
+project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # 使用相对导入
+# 修复导入路径，ErrorType在error_analyzer.py文件中
+from apps.backend.scripts.error_analyzer import ErrorType
 
 
 class FixExecutor:
     def __init__(self, error_report_file: str = "error_report.json") -> None:
         self.error_report_file = error_report_file
-        self.project_root = Path(__file__).parent.parent
+        self.project_root = Path(__file__).parent.parent.parent.parent
         self.fix_log = []
     
     def _normalize_file_path(self, file_path: str) -> Path:
@@ -49,9 +52,8 @@ class FixExecutor:
         
         # 构建完整的文件路径
         full_path = self.project_root / file_path
-        return full_path if full_path.exists() else None
-    
-    def load_error_report(self) -> Dict[str, Any]:
+        return full_path if full_path.exists() else None:
+ef load_error_report(self) -> Dict[str, Any]:
         """加载错误分析报告"""
         try:
             with open(self.error_report_file, 'r', encoding='utf-8') as f:

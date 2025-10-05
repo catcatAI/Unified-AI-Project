@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 class DataAnalysisAgent(BaseAgent):
     """
-    A specialized agent for data analysis tasks like statistical analysis,
-    data visualization, and data processing.
+    A specialized agent for data analysis tasks like statistical analysis,:
+ata visualization, and data processing.
     """
     def __init__(self, agent_id: str) -> None:
         capabilities = [
@@ -40,16 +40,14 @@ class DataAnalysisAgent(BaseAgent):
             }
         ]
         super().__init__(agent_id=agent_id, capabilities=capabilities)
-        logger.info(f"[{self.agent_id}] DataAnalysisAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
-
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+        logger.info(f"[{self.agent_id}] DataAnalysisAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}"):
+sync def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id")
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", {})
 
-        logger.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
-
-        try:
+        logger.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'"):
+ry:
             if "statistical_analysis" in capability_id:
                 result = self._perform_statistical_analysis(params)
                 result_payload = self._create_success_payload(request_id, result)
@@ -65,9 +63,8 @@ class DataAnalysisAgent(BaseAgent):
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
             await self.hsp_connector.send_task_result(result_payload, callback_topic, request_id)
-            logger.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
-
-    def _perform_statistical_analysis(self, params: Dict[str, Any]) -> Dict[str, Any]:
+            logger.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}"):
+ef _perform_statistical_analysis(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Performs statistical analysis on provided data."""
         data = params.get('data', {})
         analysis_type = params.get('analysis_type', 'descriptive')
@@ -99,9 +96,8 @@ class DataAnalysisAgent(BaseAgent):
                 results["correlation_matrix"] = numeric_df.corr().to_dict()
             else:
                 results["correlation_matrix"] = {}
-                results["warning"] = "No numeric columns found for correlation analysis"
-        
-        return results
+                results["warning"] = "No numeric columns found for correlation analysis":
+eturn results
 
     def _perform_data_processing(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Processes and transforms data according to specified operations."""
@@ -109,9 +105,8 @@ class DataAnalysisAgent(BaseAgent):
         operations = params.get('operations', [])
         
         if not data:
-            raise ValueError("No data provided for processing")
-        
-        if not operations:
+            raise ValueError("No data provided for processing"):
+f not operations:
             raise ValueError("No operations specified for processing")
         
         # Convert data to DataFrame
@@ -126,8 +121,8 @@ class DataAnalysisAgent(BaseAgent):
         # Apply operations
         for operation in operations:
             if operation == "clean":
-                # Remove rows with missing values
-                df = df.dropna()
+                # Remove rows with missing values:
+f = df.dropna()
                 results["operations_performed"].append("clean")
                 
             elif operation == "normalize":
@@ -136,8 +131,8 @@ class DataAnalysisAgent(BaseAgent):
                 for col in numeric_columns:
                     min_val = df[col].min()
                     max_val = df[col].max()
-                    if max_val != min_val:  # Avoid division by zero
-                        df[col] = (df[col] - min_val) / (max_val - min_val)
+                    if max_val != min_val:  # Avoid division by zero:
+f[col] = (df[col] - min_val) / (max_val - min_val)
                 results["operations_performed"].append("normalize")
                 
             elif operation == "aggregate":

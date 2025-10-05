@@ -49,8 +49,8 @@ class TaskMigrator:
 
     _ = logger.info("任务迁移器初始化完成")
 
-    async def _handle_node_failure(self, failure_info: Dict[str, Any])
-    """处理节点故障"""
+    async def _handle_node_failure(self, failure_info: Dict[str, Any]):
+""处理节点故障"""
     context = ErrorContext("TaskMigrator", "_handle_node_failure", failure_info)
         try:
 
@@ -181,9 +181,8 @@ class TaskMigrator:
         try:
             # 获取所有健康节点
             healthy_nodes = []
-            for node_id, node_status in global_fault_detector.nodes_status.items()
-
-    if node_status.status in ['healthy', 'warning'] and node_id != failed_node_id:
+            for node_id, node_status in global_fault_detector.nodes_status.items():
+f node_status.status in ['healthy', 'warning'] and node_id != failed_node_id:
 
 
     _ = healthy_nodes.append(node_id)
@@ -214,14 +213,12 @@ class TaskMigrator:
 
     async def _select_least_loaded_node(self, healthy_nodes: List[...]
     """选择负载最低的节点"""
-    context = ErrorContext("TaskMigrator", "_select_least_loaded_node", {"task_id": task_id})
-        try:
+    context = ErrorContext("TaskMigrator", "_select_least_loaded_node", {"task_id": task_id}):
+ry:
 
-            if not hasattr(self.distributed_optimizer, 'nodes')
-
-
-    return healthy_nodes[0] if healthy_nodes else None
-    min_load = float('inf')
+            if not hasattr(self.distributed_optimizer, 'nodes'):
+eturn healthy_nodes[0] if healthy_nodes else None:
+in_load = float('inf')
             selected_node = None
 
             for node_id in healthy_nodes:
@@ -246,18 +243,17 @@ class TaskMigrator:
     min_load = load
                         selected_node = node_id
 
-            return selected_node or (healthy_nodes[0] if healthy_nodes else None)
-    except Exception as e:
+            return selected_node or (healthy_nodes[0] if healthy_nodes else None):
+xcept Exception as e:
 
     _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"选择负载最低节点失败: {e}")
-            return healthy_nodes[0] if healthy_nodes else None
-    async def _select_round_robin_node(self, healthy_nodes: List[...]
+            return healthy_nodes[0] if healthy_nodes else None:
+sync def _select_round_robin_node(self, healthy_nodes: List[...]
     """轮询选择节点"""
     # 简化实现，实际项目中可能需要更复杂的轮询机制
-        if not hasattr(self, '_last_selected_node_index')
-
-    self._last_selected_node_index = 0
+        if not hasattr(self, '_last_selected_node_index'):
+elf._last_selected_node_index = 0
 
         if healthy_nodes:
 
@@ -393,12 +389,12 @@ class TaskMigrator:
             # 返回所有迁移任务的状态
             status = {
                 _ = 'total_migrations': len(self.migration_tasks),
-                'pending_migrations': len([t for t in self.migration_tasks.values() if t.status == 'pending']),
-                'migrating_tasks': len([t for t in self.migration_tasks.values() if t.status == 'migrating']),
-                'completed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'completed']),
-                'failed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'failed']),
-                'migration_tasks': [asdict(task_info) for task_info in self.migration_tasks.values()]
-            }
+                'pending_migrations': len([t for t in self.migration_tasks.values() if t.status == 'pending']),:
+migrating_tasks': len([t for t in self.migration_tasks.values() if t.status == 'migrating']),:
+completed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'completed']),:
+failed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'failed']),:
+migration_tasks': [asdict(task_info) for task_info in self.migration_tasks.values()]:
+
 
             return status
 
@@ -412,8 +408,8 @@ class TaskMigrator:
 # 全局任务迁移器实例（需要在实际使用时初始化）
 global_task_migrator = None
 
-def initialize_task_migrator(distributed_optimizer: Any, config: Optional[Dict[str, Any]] = None)
-    """初始化全局任务迁移器"""
+def initialize_task_migrator(distributed_optimizer: Any, config: Optional[Dict[str, Any]] = None):
+""初始化全局任务迁移器"""
     global global_task_migrator
     global_task_migrator = TaskMigrator(distributed_optimizer, config)
     return global_task_migrator

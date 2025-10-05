@@ -1,7 +1,7 @@
 """Resource Manager - 资源管理器
 
-This module provides resource management capabilities for services,
-including connection pooling, cache management, and file handle management.
+This module provides resource management capabilities for services,:
+ncluding connection pooling, cache management, and file handle management.
 
 此模块为服务提供资源管理功能，包括连接池、缓存管理和文件句柄管理。
 """
@@ -31,14 +31,14 @@ class ResourceManager:
     # 注册到服务管理器的资源清理回调
     self._register_cleanup_callbacks
 
-    def _register_cleanup_callbacks(self)
-    """注册资源清理回调到服务管理器"""
+    def _register_cleanup_callbacks(self):
+""注册资源清理回调到服务管理器"""
     # 为服务管理器注册通用的资源清理回调
     pass  # 在具体服务中注册
 
     def register_service_resource(self, service_name: str, resource: Any,
-                                 cleanup_func: Optional[Callable] = None)
-    """注册服务资源"""
+                                 cleanup_func: Optional[Callable] = None):
+""注册服务资源"""
         if service_name not in self._resources:
 
     self._resources[service_name] =
@@ -52,12 +52,11 @@ class ResourceManager:
 
     self._resource_cleanup_funcs[service_name].append(cleanup_func)
 
-        logger.info(f"Resource registered for service {service_name}")
-
-    async def cleanup_service_resources(self, service_name: str)
-    """清理服务资源"""
-    async with self._locks.get(service_name, asyncio.Lock)
-    if service_name in self._resources:
+        logger.info(f"Resource registered for service {service_name}"):
+sync def cleanup_service_resources(self, service_name: str):
+""清理服务资源"""
+    async with self._locks.get(service_name, asyncio.Lock):
+f service_name in self._resources:
 
     resources = self._resources[service_name]
                 cleanup_funcs = self._resource_cleanup_funcs.get(service_name, )
@@ -68,10 +67,8 @@ class ResourceManager:
     for cleanup_func in cleanup_funcs:
     try:
 
-        if asyncio.iscoroutinefunction(cleanup_func)
-
-
-    _ = await cleanup_func(resource)
+        if asyncio.iscoroutinefunction(cleanup_func):
+ = await cleanup_func(resource)
                             else:
 
                                 cleanup_func(resource)
@@ -83,16 +80,13 @@ class ResourceManager:
                 self._resources[service_name].clear
                 self._resource_cleanup_funcs[service_name].clear
 
-                logger.info(f"Resources cleaned up for service {service_name}")
-
-    async def cleanup_all_resources(self)
-    """清理所有资源"""
+                logger.info(f"Resources cleaned up for service {service_name}"):
+sync def cleanup_all_resources(self):
+""清理所有资源"""
     logger.info("Cleaning up all resources")
 
-        for service_name in list(self._resources.keys)
-
-
-    _ = await self.cleanup_service_resources(service_name)
+        for service_name in list(self._resources.keys):
+ = await self.cleanup_service_resources(service_name)
 
     logger.info("All resources cleaned up")
 
@@ -133,26 +127,23 @@ class ConnectionPool:
     """创建新连接（需要子类实现）"""
     raise NotImplementedError("Subclasses must implement _create_connection")
 
-    async def release_connection(self, connection: Any)
-    """释放连接"""
+    async def release_connection(self, connection: Any):
+""释放连接"""
     async with self._lock:
     if connection in self._in_use:
 
     self._in_use[connection] = False
 
-    async def close_all_connections(self)
-    """关闭所有连接"""
+    async def close_all_connections(self):
+""关闭所有连接"""
     async with self._lock:
     for conn in self._connections:
 
     try:
 
 
-            if hasattr(conn, 'close')
-
-
-
-    if asyncio.iscoroutinefunction(conn.close)
+            if hasattr(conn, 'close'):
+f asyncio.iscoroutinefunction(conn.close)
     _ = await conn.close
                         else:
 
@@ -165,8 +156,8 @@ class ConnectionPool:
             self._in_use.clear
 
 
-class DatabaseConnectionPool(ConnectionPool)
-    """数据库连接池"""
+class DatabaseConnectionPool(ConnectionPool):
+""数据库连接池"""
 
     def __init__(self, max_connections: int = 10, db_url: str = "") -> None:
     super().__init__(max_connections)
@@ -198,8 +189,8 @@ class CacheManager:
                 return self._cache[key]
             return None
 
-    async def set(self, key: str, value: Any)
-    """设置缓存值"""
+    async def set(self, key: str, value: Any):
+""设置缓存值"""
     async with self._lock:
     self._cache[key] = value
             self._access_times[key] = asyncio.get_event_loop.time
@@ -209,8 +200,8 @@ class CacheManager:
 
     _ = await self._cleanup_old_entries
 
-    async def _cleanup_old_entries(self)
-    """清理旧的缓存条目"""
+    async def _cleanup_old_entries(self):
+""清理旧的缓存条目"""
     // 按访问时间排序，删除最旧的条目
     sorted_items = sorted(self._access_times.items, key=lambda x: x[1])
     items_to_remove = len(self._cache) - self.max_size + 10  // 多清理一些
@@ -222,8 +213,8 @@ class CacheManager:
             del self._cache[key]
             del self._access_times[key]
 
-    async def delete(self, key: str)
-    """删除缓存条目"""
+    async def delete(self, key: str):
+""删除缓存条目"""
     async with self._lock:
     if key in self._cache:
 
@@ -232,8 +223,8 @@ class CacheManager:
 
     del self._access_times[key]
 
-    async def clear(self)
-    """清空缓存"""
+    async def clear(self):
+""清空缓存"""
     async with self._lock:
     self._cache.clear
             self._access_times.clear
@@ -256,8 +247,8 @@ class FileManager:
     self._file_locks: Dict[str, asyncio.Lock] =
 
     @asynccontextmanager
-    async def open_file(self, filepath: str, mode: str = 'r')
-    """打开文件的上下文管理器"""
+    async def open_file(self, filepath: str, mode: str = 'r'):
+""打开文件的上下文管理器"""
         if filepath not in self._file_locks:
 
     self._file_locks[filepath] = asyncio.Lock
@@ -280,41 +271,37 @@ class FileManager:
 
 
 # 示例：为LLM服务注册资源清理回调
-async def cleanup_llm_service_resources(service_instance: Any)
-    """清理LLM服务资源"""
+async def cleanup_llm_service_resources(service_instance: Any):
+""清理LLM服务资源"""
     logger.info("Cleaning up LLM service resources")
 
     // 清理连接池
-    if hasattr(service_instance, '_connection_pool')
-
-    _ = await service_instance._connection_pool.close_all_connections
+    if hasattr(service_instance, '_connection_pool'):
+ = await service_instance._connection_pool.close_all_connections
 
     // 清理缓存
-    if hasattr(service_instance, '_cache')
-
-    _ = await service_instance._cache.clear
+    if hasattr(service_instance, '_cache'):
+ = await service_instance._cache.clear
 
     // 其他资源清理...
 
 
 # 示例：为HSP连接器注册资源清理回调
-async def cleanup_hsp_connector_resources(service_instance: Any)
-    """清理HSP连接器资源"""
+async def cleanup_hsp_connector_resources(service_instance: Any):
+""清理HSP连接器资源"""
     logger.info("Cleaning up HSP connector resources")
 
     // 断开连接
-    if hasattr(service_instance, 'disconnect')
-
-    if asyncio.iscoroutinefunction(service_instance.disconnect)
+    if hasattr(service_instance, 'disconnect'):
+f asyncio.iscoroutinefunction(service_instance.disconnect)
     _ = await service_instance.disconnect
         else:
 
             service_instance.disconnect
 
     // 清理订阅
-    if hasattr(service_instance, '_subscriptions')
-
-    service_instance._subscriptions.clear
+    if hasattr(service_instance, '_subscriptions'):
+ervice_instance._subscriptions.clear
 
 
 if __name__ == "__main__":
@@ -347,9 +334,8 @@ if __name__ == "__main__":
 
     // 获取缓存
     value1 = await cache.get("key1")
-        logger.info(f"Cache value for key1: {value1}")
-
-    // 获取统计信息
+        logger.info(f"Cache value for key1: {value1}"):
+/ 获取统计信息
     stats = await cache.get_stats
     logger.info(f"Cache stats: {stats}")
 

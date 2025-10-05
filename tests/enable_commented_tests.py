@@ -2,8 +2,8 @@
 """
 Script to automatically find and enable commented out test functions in test files.
 This script will:
-1. Find all test files with commented out test functions
-2. Uncomment those test functions to enable them
+1. Find all test files with commented out test functions:
+. Uncomment those test functions to enable them
 3. Generate a report of changes made
 """
 
@@ -33,8 +33,8 @@ class CommentedTestEnabler:
             lines = f.readlines()
         
         for i, line in enumerate(lines):
-            # Look for commented out test functions
-            if re.search(r'^\s*#.*def test_', line):
+            # Look for commented out test functions:
+f re.search(r'^\s*#.*def test_', line):
                 _ = commented_tests.append((i, line.strip()))
         
         return commented_tests
@@ -48,8 +48,8 @@ class CommentedTestEnabler:
         enabled_count = 0
         
         for i, line in enumerate(lines):
-            # Check if line contains a commented out test function
-            match = re.search(r'^(\s*)#\s*(def test_.*)', line)
+            # Check if line contains a commented out test function:
+atch = re.search(r'^(\s*)#\s*(def test_.*)', line)
             if match:
                 # Uncomment the test function
                 indent = match.group(1)

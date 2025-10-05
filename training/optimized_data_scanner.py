@@ -20,18 +20,17 @@ class OptimizedDataScanner:
 
     def __init__(self, data_dir: str, tracking_file: str = None, config_file: str = None) -> None:
     self.data_dir = Path(data_dir)
-        self.tracking_file = Path(tracking_file) if tracking_file else Path("data_tracking.json")
-    self.config_file = Path(config_file) if config_file else Path("performance_config.json")
-    self.processed_files = {}
+        self.tracking_file = Path(tracking_file) if tracking_file else Path("data_tracking.json"):
+elf.config_file = Path(config_file) if config_file else Path("performance_config.json"):
+elf.processed_files = {}
     self.scan_interval = 300  # 默认扫描间隔（秒）
     _ = self._load_performance_config()
     _ = self._load_tracking_data()
 
-    def _load_performance_config(self)
-    """加载性能配置"""
-        if self.config_file.exists()
-
-    try:
+    def _load_performance_config(self):
+""加载性能配置"""
+        if self.config_file.exists():
+ry:
 
 
                 with open(self.config_file, 'r', encoding='utf-8') as f:
@@ -43,11 +42,10 @@ class OptimizedDataScanner:
 
                 _ = logger.error(f"❌ 加载性能配置失败: {e}")
 
-    def _load_tracking_data(self)
-    """加载数据跟踪信息"""
-        if self.tracking_file.exists()
-
-    try:
+    def _load_tracking_data(self):
+""加载数据跟踪信息"""
+        if self.tracking_file.exists():
+ry:
 
 
                 with open(self.tracking_file, 'r', encoding='utf-8') as f:
@@ -58,8 +56,8 @@ class OptimizedDataScanner:
 
                 _ = logger.error(f"❌ 加载数据跟踪信息失败: {e}")
 
-    def _save_tracking_data(self)
-    """保存数据跟踪信息"""
+    def _save_tracking_data(self):
+""保存数据跟踪信息"""
         try:
 
             data = {
@@ -152,9 +150,8 @@ class OptimizedDataScanner:
     Returns:
             文件信息列表
     """
-    _ = logger.info(f"🔍 开始扫描最近修改的文件，最多 {max_files} 个...")
-
-    files_info = []
+    _ = logger.info(f"🔍 开始扫描最近修改的文件，最多 {max_files} 个..."):
+iles_info = []
     file_count = 0
 
         try:
@@ -219,17 +216,15 @@ class OptimizedDataScanner:
             新增或修改的文件列表
     """
     # 扫描最近修改的文件
-    files_info = self.scan_recent_files(max_files, file_types)
-
-    new_files = []
+    files_info = self.scan_recent_files(max_files, file_types):
+ew_files = []
     processed_count = 0
     hash_calculated_count = 0  # 记录实际计算哈希的文件数量
 
     # 创建已处理文件的快速查找索引（基于修改时间和大小）
     processed_file_lookup = {}
-        for file_hash, processed_time in self.processed_files.items()
-
-    processed_file_lookup[file_hash] = processed_time.isoformat() if isinstance(processed_time, datetime) else processed_time:
+        for file_hash, processed_time in self.processed_files.items():
+rocessed_file_lookup[file_hash] = processed_time.isoformat() if isinstance(processed_time, datetime) else processed_time:
 
     for file_info in files_info:
 
@@ -317,8 +312,8 @@ class OptimizedDataScanner:
     _ = logger.info(f"✅ 检查完成，发现 {len(new_files)} 个新增/修改文件 (计算哈希: {hash_calculated_count} 个)")
     return new_files
 
-    def mark_as_processed(self, file_hash: str)
-    """标记文件为已处理"""
+    def mark_as_processed(self, file_hash: str):
+""标记文件为已处理"""
     self.processed_files[file_hash] = datetime.now()
     _ = self._save_tracking_data()
     _ = logger.debug(f"✅ 标记文件为已处理: {file_hash}")

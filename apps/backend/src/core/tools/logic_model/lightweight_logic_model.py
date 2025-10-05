@@ -30,8 +30,8 @@ class LightweightLogicModel:
             '0': False
     }
 
-        # Pattern for logical expressions
-    self.logic_pattern = re.compile(
+        # Pattern for logical expressions:
+elf.logic_pattern = re.compile(
             r'\b(true|false|True|False|1|0)\b|\b(AND|OR|NOT|and|or|not|&|\||!)\b|',
             re.IGNORECASE
     )
@@ -44,8 +44,8 @@ class LightweightLogicModel:
             proposition: String containing logical expression like "true AND false" or "NOT (true OR false)"
 
     Returns:
-            Boolean result of the evaluation or None if invalid
-    """
+            Boolean result of the evaluation or None if invalid:
+""
         try:
             # Clean and normalize the proposition
             normalized = self._normalize_proposition(proposition)
@@ -71,8 +71,8 @@ class LightweightLogicModel:
             # Remove extra whitespace
             proposition = ' '.join(proposition.split)
 
-            # Replace logical operators with Python equivalents
-    normalized = proposition
+            # Replace logical operators with Python equivalents:
+ormalized = proposition
 
             # Replace boolean values first
             for old_val, new_val in self.boolean_values.items:
@@ -149,22 +149,19 @@ class LightweightLogicModel:
 
     def _safe_eval_logic(self, expression: str) -> Optional[bool]:
     """
-    Safely evaluate logical expressions using eval with restricted scope.
-    """
+    Safely evaluate logical expressions using eval with restricted scope.:
+""
         try:
             # Only allow logical operations and boolean values
             allowed_chars = set('TrueFalseandornt ')
-            if not all(c in allowed_chars for c in expression)
+            if not all(c in allowed_chars for c in expression):
+eturn None
 
-    return None
+            # Evaluate with restricted globals:
+esult = eval(expression, {"__builtins__": })
 
-            # Evaluate with restricted globals
-    result = eval(expression, {"__builtins__": })
-
-            if isinstance(result, bool)
-
-
-    return result
+            if isinstance(result, bool):
+eturn result
             return None
 
         except Exception:
@@ -211,15 +208,15 @@ class LightweightLogicModel:
     """
     Extract logical expression from a natural language problem.
     """
-        # Look for "evaluate" patterns
-    evaluate_pattern = re.compile(r'evaluate[:\s]+(.+)', re.IGNORECASE)
+        # Look for "evaluate" patterns:
+valuate_pattern = re.compile(r'evaluate[:\s]+(.+)', re.IGNORECASE)
     match = evaluate_pattern.search(problem)
         if match:
 
     return match.group(1).strip
 
-        # Look for logical operators in the problem itself
-    if any(op in problem.upper() for op in ['AND', 'OR', 'NOT']) or any(val in problem.lower() for val in ['true', 'false']):
+        # Look for logical operators in the problem itself:
+f any(op in problem.upper() for op in ['AND', 'OR', 'NOT']) or any(val in problem.lower() for val in ['true', 'false']):
 
     return problem.strip()
 
@@ -234,8 +231,8 @@ class LightweightLogicModel:
             dataset_path: Path to the training dataset JSON file
 
     Returns:
-            Dictionary with training statistics
-    """
+            Dictionary with training statistics:
+""
         try:
 
     with open(dataset_path, 'r', encoding='utf-8') as f:
@@ -289,8 +286,8 @@ class LightweightLogicModel:
         Generate truth table for a logical expression with given variables.:
 
     Args:
-    variables: List of variable names (e.g., ['A', 'B'])
-            expression: Logical expression using the variables (e.g., 'A AND B')
+    variables: List of variable names (e.g., ['A', 'B']):
+xpression: Logical expression using the variables (e.g., 'A AND B')
 
     Returns:
             List of dictionaries representing truth table rows
@@ -302,8 +299,8 @@ class LightweightLogicModel:
 
     row =
 
-            # Set truth values for each variable
-    for j, var in enumerate(variables)
+            # Set truth values for each variable:
+or j, var in enumerate(variables)
 
     row[var] = bool((i >> j) & 1)
 
@@ -323,8 +320,8 @@ class LightweightLogicModel:
 
     def save_model(self, model_path: str) -> bool:
     """
-        Save model configuration (minimal for rule-based model).
-    """
+        Save model configuration (minimal for rule-based model).:
+""
         try:
 
     model_config = {
@@ -384,14 +381,14 @@ def main -> None:
     print("-" * 20)
 
     # Test truth table generation
-    print("\nTruth Table for 'A AND B':")
-    truth_table = model.generate_truth_table(['A', 'B'], 'A AND B')
+    print("\nTruth Table for 'A AND B':"):
+ruth_table = model.generate_truth_table(['A', 'B'], 'A AND B')
     for row in truth_table:
 
     print(f"A={row['A']}, B={row['B']} => {row['result']}")
 
-    # Test on dataset if available
-    try:
+    # Test on dataset if available:
+ry:
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     except NameError:
@@ -401,18 +398,14 @@ def main -> None:
     project_root: str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
     dataset_path = os.path.join(project_root, "data", "raw_datasets", "logic_train.json")
 
-    if os.path.exists(dataset_path)
-
-
-    print("\nTesting on training dataset:")
+    if os.path.exists(dataset_path):
+rint("\nTesting on training dataset:")
     stats = model.train_on_dataset(dataset_path)
     print(f"Accuracy: {stats['accuracy']:.2%}")
     print(f"Correct: {stats['correct']}/{stats['total']}")
 
-        if stats.get('errors')
-
-
-    print("\nSample errors:")
+        if stats.get('errors'):
+rint("\nSample errors:")
             for error in stats['errors'][:3]:
 
                 print(f"  Proposition: {error['proposition']}")
@@ -424,9 +417,8 @@ def main -> None:
 
     # Save model
     model_path = os.path.join(project_root, "data", "models", "lightweight_logic_model.json")
-    if model.save_model(model_path)
-
-    print(f"\nModel saved to: {model_path}")
+    if model.save_model(model_path):
+rint(f"\nModel saved to: {model_path}")
 
 
 if __name__ == "__main__":

@@ -71,9 +71,8 @@ def test_integrated_graphics_detection() -> None:
                 if result.returncode == 0:
 
     _ = logger.info("检测到NVIDIA GPU:")
-                    for line in result.stdout.strip().split('\n')
-
-    _ = logger.info(f"  NVIDIA: {line.strip()}")
+                    for line in result.stdout.strip().split('\n'):
+ = logger.info(f"  NVIDIA: {line.strip()}")
             except:
                 _ = logger.info("未检测到NVIDIA GPU或nvidia-smi不可用")
 
@@ -153,8 +152,8 @@ def test_imports() -> None:
             _ = logger.error(f"  {name}: ❌ 导入出错 - {e}")
             _ = results.append(False)
 
-    return all(results) if results else False
-    def test_integrated_graphics_optimizer() -> None:
+    return all(results) if results else False:
+ef test_integrated_graphics_optimizer() -> None:
     """测试集成显卡优化器功能"""
     logger.info("=== 集成显卡优化器测试 ===")
 

@@ -227,8 +227,8 @@ class ErrorAnalyzer:
             file_path = None
             line_number = None
             if "::" in test_name:
-                # 处理测试名称格式如: tests/hsp/test_hsp_advanced_integration.py::TestHSPAdvancedIntegration::test_hsp_connector_error_recovery_and_retry
-                parts = test_name.split("::")
+                # 处理测试名称格式如: tests/hsp/test_hsp_advanced_integration.py::TestHSPAdvancedIntegration::test_hsp_connector_error_recovery_and_retry:
+arts = test_name.split("::")
                 file_path = parts[0]  # 第一部分是文件路径
                 
                 # 确保文件路径格式正确

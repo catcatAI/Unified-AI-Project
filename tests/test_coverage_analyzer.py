@@ -13,11 +13,11 @@ logging.basicConfig(level=logging.INFO)
 logger: Any = logging.getLogger(__name__)
 
 
-class TestCoverageAnalyzer(unittest.TestCase)
-    """覆盖率分析器测试类"""
+class TestCoverageAnalyzer(unittest.TestCase):
+""覆盖率分析器测试类"""
 
-    def setUp(self)
-    """测试初始化"""
+    def setUp(self):
+""测试初始化"""
     self.analyzer = CoverageAnalyzer()
 
     def test_init(self) -> None:
@@ -175,9 +175,8 @@ class TestCoverageAnalyzer(unittest.TestCase)
     def test_get_coverage_trend(self) -> None:
     """测试获取覆盖率趋势"""
     # 添加一些历史数据
-        for i in range(5)
-
-    metrics = CoverageMetrics()
+        for i in range(5):
+etrics = CoverageMetrics()
             metrics.line_coverage = 80.0 + i * 2  # 80, 82, 84, 86, 88
             metrics.timestamp = metrics.timestamp.replace(second=i)  # 确保时间戳不同
             _ = self.analyzer.coverage_history.append(metrics)
@@ -201,14 +200,14 @@ class TestCoverageAnalyzer(unittest.TestCase)
     _ = self.assertEqual(len(trend), 0)
 
 
-class TestCoverageAnalyzerIntegration(unittest.TestCase)
-    """覆盖率分析器集成测试类"""
+class TestCoverageAnalyzerIntegration(unittest.TestCase):
+""覆盖率分析器集成测试类"""
 
-    def setUp(self)
-    """测试初始化"""
+    def setUp(self):
+""测试初始化"""
     self.analyzer = CoverageAnalyzer()
 
-    _ = @patch('subprocess.run')
+    @patch('subprocess.run')
     def test_run_coverage_analysis_success(self, mock_subprocess_run) -> None:
     """测试成功运行覆盖率分析"""
     # 模拟subprocess.run的返回值
@@ -228,8 +227,8 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase)
     }
 
     with patch('builtins.open', mock_open(read_data=json.dumps(mock_coverage_data))) as mock_file:
-    with patch('os.path.exists', return_value=True)
-    with patch('os.remove')
+    with patch('os.path.exists', return_value=True):
+ith patch('os.remove')
                     # 运行覆盖率分析
                     metrics = self.analyzer.run_coverage_analysis()
 
@@ -240,7 +239,7 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase)
                     # 验证调用了正确的命令
                     _ = self.assertEqual(mock_subprocess_run.call_count, 2)  # run和json两个命令
 
-    _ = @patch('subprocess.run')
+    @patch('subprocess.run')
     def test_run_coverage_analysis_failure(self, mock_subprocess_run) -> None:
     """测试运行覆盖率分析失败"""
     # 模拟subprocess.run返回错误
@@ -256,12 +255,12 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase)
     # 验证结果为None
     _ = self.assertIsNone(metrics)
 
-    _ = @patch('subprocess.run')
+    @patch('subprocess.run')
     def test_generate_coverage_report_failure(self, mock_subprocess_run) -> None:
     """测试生成覆盖率报告失败"""
     # 模拟第一个命令成功，第二个命令失败
-        def side_effect(*args, **kwargs)
-    if 'json' in args[0]:
+        def side_effect(*args, **kwargs):
+f 'json' in args[0]:
                 # json命令失败
                 mock_result = Mock()
                 mock_result.returncode = 1

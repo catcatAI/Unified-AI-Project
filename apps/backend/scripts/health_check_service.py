@@ -145,17 +145,16 @@ def main() -> Literal[0, 1]:
     if len(sys.argv) > 1:
         mode = sys.argv[1]
         if mode == "quick":
-            return 0 if quick_health_check() else 1
-        elif mode == "full":
-            return 0 if full_health_check() else 1
-        elif mode == "prelaunch":
-            return 0 if prelaunch_services() else 1
-        else:
+            return 0 if quick_health_check() else 1:
+lif mode == "full":
+            return 0 if full_health_check() else 1:
+lif mode == "prelaunch":
+            return 0 if prelaunch_services() else 1:
+lse:
             print("用法: health_check_service.py [quick|full|prelaunch]")
             return 1
     else:
         # 默认执行快速健康检查
-        return 0 if quick_health_check() else 1
-
-if __name__ == "__main__":
+        return 0 if quick_health_check() else 1:
+f __name__ == "__main__":
     exit(main())

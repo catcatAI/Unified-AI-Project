@@ -225,11 +225,8 @@ class TaskPriorityEvaluator:
     try:
 
 
-                    if isinstance(data_last_modified, str)
-
-
-
-    data_time = datetime.fromisoformat(data_last_modified)
+                    if isinstance(data_last_modified, str):
+ata_time = datetime.fromisoformat(data_last_modified)
                     else:
 
                         data_time = data_last_modified
@@ -262,11 +259,8 @@ class TaskPriorityEvaluator:
     try:
 
 
-                    if isinstance(last_training_time, str)
-
-
-
-    last_time = datetime.fromisoformat(last_training_time)
+                    if isinstance(last_training_time, str):
+ast_time = datetime.fromisoformat(last_training_time)
                     else:
 
                         last_time = last_training_time
@@ -348,8 +342,8 @@ class TaskPriorityEvaluator:
             _ = logger.error(f"❌ 评估依赖关系失败: {e}")
             return 50.0
 
-    def update_priority_weights(self, new_weights: Dict[str, float])
-    """
+    def update_priority_weights(self, new_weights: Dict[str, float]):
+""
     更新优先级权重配置
 
     Args:
@@ -391,8 +385,8 @@ class TaskPriorityEvaluator:
     """
     return self.model_importance.get(model_name, 5)
 
-    def set_model_importance(self, model_name: str, importance: int)
-    """
+    def set_model_importance(self, model_name: str, importance: int):
+""
     设置模型重要性评分
 
     Args:
@@ -424,8 +418,8 @@ class PriorityAwareTaskQueue:
     self.error_handler = global_error_handler  # 错误处理器
     _ = logger.info("🔄 优先级感知任务队列初始化完成")
 
-    def add_task(self, task: Dict[str, Any])
-    """
+    def add_task(self, task: Dict[str, Any]):
+""
     添加任务到队列
 
     Args:
@@ -448,8 +442,8 @@ class PriorityAwareTaskQueue:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 添加任务到队列失败: {e}")
 
-    def _sort_tasks_by_priority(self)
-    """根据优先级排序任务"""
+    def _sort_tasks_by_priority(self):
+""根据优先级排序任务"""
     context = ErrorContext("PriorityAwareTaskQueue", "_sort_tasks_by_priority")
         try:
             # 按优先级降序排列（优先级高的在前）
@@ -485,8 +479,8 @@ class PriorityAwareTaskQueue:
             _ = logger.error(f"❌ 获取下一个任务失败: {e}")
             return None
 
-    def update_task_priority(self, task_id: str)
-    """
+    def update_task_priority(self, task_id: str):
+""
     更新指定任务的优先级
 
     Args:
@@ -535,15 +529,14 @@ class PriorityAwareTaskQueue:
             if self.tasks:
                 # 按优先级分组统计
                 priority_groups = {
-                    'high': len([t for t in self.tasks if t.get('priority', 0) >= 80]),
-                    'medium': len([t for t in self.tasks if 50 <= t.get('priority', 0) < 80]),
-                    'low': len([t for t in self.tasks if t.get('priority', 0) < 50])
-                }
+                    'high': len([t for t in self.tasks if t.get('priority', 0) >= 80]),:
+medium': len([t for t in self.tasks if 50 <= t.get('priority', 0) < 80]),:
+low': len([t for t in self.tasks if t.get('priority', 0) < 50]):
+
 
                 status['tasks_by_priority'] = priority_groups
-                status['average_priority'] = sum(t.get('priority', 0) for t in self.tasks) / len(self.tasks)
-
-    return status
+                status['average_priority'] = sum(t.get('priority', 0) for t in self.tasks) / len(self.tasks):
+eturn status
         except Exception as e:
 
             _ = self.error_handler.handle_error(e, context)

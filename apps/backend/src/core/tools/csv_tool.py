@@ -3,8 +3,8 @@ from typing import Dict, Any, Optional
 
 class CsvTool:
     """
-    A tool for performing basic analysis on CSV data.
-    """
+    A tool for performing basic analysis on CSV data.:
+""
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
     """
     Initializes the CsvTool.

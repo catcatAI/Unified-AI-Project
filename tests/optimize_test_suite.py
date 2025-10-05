@@ -4,8 +4,8 @@ Script to optimize the test suite structure by eliminating duplicates and redund
 This script will:
 1. Identify duplicate test functions across files
 2. Identify redundant test cases
-3. Suggest optimizations for test structure
-4. Generate a report of improvements
+3. Suggest optimizations for test structure:
+. Generate a report of improvements
 """
 
 import os
@@ -31,8 +31,8 @@ class TestSuiteOptimizer:
         return test_files
     
     def extract_test_functions(self, file_path: Path) -> List[Dict]:
-        """Extract test functions from a test file with their details."""
-        try:
+        """Extract test functions from a test file with their details.""":
+ry:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
@@ -118,8 +118,8 @@ class TestSuiteOptimizer:
                 test1 = all_tests[i]
                 test2 = all_tests[j]
                 
-                # Check if they have similar code (simplified)
-                if self._are_tests_similar(test1, test2):
+                # Check if they have similar code (simplified):
+f self._are_tests_similar(test1, test2):
                     similar_tests.append({
                         "test1": test1,
                         "test2": test2
@@ -139,23 +139,22 @@ class TestSuiteOptimizer:
         code1_clean = re.sub(r'\s+', '', code1)
         code2_clean = re.sub(r'\s+', '', code2)
         
-        # Check if one is a substring of the other or they share significant content
-        if code1_clean in code2_clean or code2_clean in code1_clean:
+        # Check if one is a substring of the other or they share significant content:
+f code1_clean in code2_clean or code2_clean in code1_clean:
             return True
         
-        # Check if they have similar structure (count of certain keywords)
-        keywords = ['assert', 'mock', 'patch', 'async']
-        count1 = sum(1 for kw in keywords if kw in code1.lower())
-        count2 = sum(1 for kw in keywords if kw in code2.lower())
-        
-        if abs(count1 - count2) <= 1 and count1 > 0 and count2 > 0:
+        # Check if they have similar structure (count of certain keywords):
+eywords = ['assert', 'mock', 'patch', 'async']
+        count1 = sum(1 for kw in keywords if kw in code1.lower()):
+ount2 = sum(1 for kw in keywords if kw in code2.lower()):
+f abs(count1 - count2) <= 1 and count1 > 0 and count2 > 0:
             return True
         
         return False
     
     def analyze_test_structure(self) -> Dict:
-        """Analyze the overall test structure for optimization opportunities."""
-        test_files = self.find_test_files()
+        """Analyze the overall test structure for optimization opportunities.""":
+est_files = self.find_test_files()
         
         # Count tests per file
         tests_per_file = {}
@@ -167,19 +166,18 @@ class TestSuiteOptimizer:
             tests_per_file[relative_path] = len(tests)
             total_tests += len(tests)
         
-        # Find files with too many or too few tests
-        avg_tests = total_tests / len(test_files) if test_files else 0
-        high_density_files = {f: c for f, c in tests_per_file.items() if c > avg_tests * 2}
-        low_density_files = {f: c for f, c in tests_per_file.items() if c < avg_tests / 2 and c > 0}
-        
-        return {
+        # Find files with too many or too few tests:
+vg_tests = total_tests / len(test_files) if test_files else 0:
+igh_density_files = {f: c for f, c in tests_per_file.items() if c > avg_tests * 2}:
+ow_density_files = {f: c for f, c in tests_per_file.items() if c < avg_tests / 2 and c > 0}:
+eturn {
             "total_test_files": len(test_files),
             "total_tests": total_tests,
             "average_tests_per_file": avg_tests,
             "high_density_files": high_density_files,
             "low_density_files": low_density_files,
-            "files_with_no_tests": [f for f, c in tests_per_file.items() if c == 0]
-        }
+            "files_with_no_tests": [f for f, c in tests_per_file.items() if c == 0]:
+
     
     def suggest_optimizations(self, duplicates: Dict, similar_tests: List[Dict], structure: Dict) -> List[str]:
         """Suggest optimizations based on analysis."""
@@ -201,15 +199,14 @@ class TestSuiteOptimizer:
         if structure["low_density_files"]:
             suggestions.append(f"Found {len(structure['low_density_files'])} files with low test density. Consider merging with other files.")
         
-        # Files with no tests
-        if structure["files_with_no_tests"]:
+        # Files with no tests:
+f structure["files_with_no_tests"]:
             suggestions.append(f"Found {len(structure['files_with_no_tests'])} files with no tests. Consider adding tests or removing if obsolete.")
         
         # General suggestions
         if structure["total_tests"] < 1000:
-            suggestions.append("Consider expanding test coverage to reach 1000+ tests for better reliability.")
-        
-        return suggestions
+            suggestions.append("Consider expanding test coverage to reach 1000+ tests for better reliability."):
+eturn suggestions
     
     def run_optimizer(self):
         """Run the test suite optimizer."""

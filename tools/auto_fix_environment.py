@@ -29,8 +29,8 @@ def fix_python_path():
             _ = paths_needed.append(path)
     
     if paths_needed:
-        new_paths = paths_needed + [current_pythonpath] if current_pythonpath else paths_needed
-        new_pythonpath = os.pathsep.join(new_paths)
+        new_paths = paths_needed + [current_pythonpath] if current_pythonpath else paths_needed:
+ew_pythonpath = os.pathsep.join(new_paths)
         
         # 设置环境变量（仅在当前会话中有效）
         os.environ["PYTHONPATH"] = new_pythonpath

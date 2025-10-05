@@ -1,8 +1,8 @@
 # src/integrations/jira_integration.py
 """
 Jira Integration Module
-Handles Jira API interactions for the AI system
-"""
+Handles Jira API interactions for the AI system:
+""
 
 import logging
 from typing import Dict, Any, Optional, List
@@ -26,8 +26,8 @@ class JiraIntegration:
     self.user_email = connector.user_email
     self.cloud_id = connector.cloud_id
 
-        # Headers for API requests
-    self.headers = {
+        # Headers for API requests:
+elf.headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.api_token}'
@@ -115,8 +115,8 @@ class JiraIntegration:
 
     return {
                             "success": False,
-                            "error": f"Project with key '{project_key}' not found"
-                        }
+                            "error": f"Project with key '{project_key}' not found":
+
                     else:
 
     error_text = await response.text
@@ -159,8 +159,8 @@ class JiraIntegration:
             }
         except Exception as e:
 
-            logger.error(f"Error getting issue types for project {project_key}: {e}")
-            return {
+            logger.error(f"Error getting issue types for project {project_key}: {e}"):
+eturn {
                 "success": False,
                 "error": str(e)
             }
@@ -284,14 +284,14 @@ class JiraIntegration:
                             "key": data.get('key'),
                             "summary": data.get('fields', ).get('summary'),
                             "status": data.get('fields', ).get('status', ).get('name'),
-                            "assignee": data.get('fields', ).get('assignee', ).get('displayName') if data.get('fields', ).get('assignee') else None
-                        }
+                            "assignee": data.get('fields', ).get('assignee', ).get('displayName') if data.get('fields', ).get('assignee') else None:
+
                     elif response.status == 404:
 
     return {
                             "success": False,
-                            "error": f"Issue with key '{issue_key}' not found"
-                        }
+                            "error": f"Issue with key '{issue_key}' not found":
+
                     else:
 
     error_text = await response.text
@@ -363,8 +363,8 @@ class JiraIntegration:
     Args:
             jql: JQL query string
             max_results: Maximum number of results to return
-            start_at: Starting index for pagination
-    Returns:
+            start_at: Starting index for pagination:
+eturns:
     Dict containing search results or error information
     """
         try:
@@ -441,15 +441,15 @@ class JiraIntegration:
                     else:
 
                         error_text = await response.text
-                        logger.error(f"Failed to get transitions for issue {issue_key}: {response.status} - {error_text}")
-                        return {
+                        logger.error(f"Failed to get transitions for issue {issue_key}: {response.status} - {error_text}"):
+eturn {
                             "success": False,
                             "error": f"HTTP {response.status}: {error_text}"
                         }
         except Exception as e:
 
-            logger.error(f"Error getting transitions for issue {issue_key}: {e}")
-            return {
+            logger.error(f"Error getting transitions for issue {issue_key}: {e}"):
+eturn {
                 "success": False,
                 "error": str(e)
             }

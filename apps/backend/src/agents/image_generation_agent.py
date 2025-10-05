@@ -5,8 +5,8 @@ from ..tools.tool_dispatcher import ToolDispatcher
 
 class ImageGenerationAgent(BaseAgent):
     """
-    A specialized agent for generating images from textual prompts.
-    """
+    A specialized agent for generating images from textual prompts.:
+""
     def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
@@ -40,10 +40,10 @@ class ImageGenerationAgent(BaseAgent):
         if tool_response:
             result_payload = HSPTaskResultPayload(
                 request_id=request_id,
-                status="success" if tool_response["status"] == "success" else "failure",
-                payload=tool_response["payload"],
-                error_details={"error_message": tool_response["error_message"]} if tool_response["error_message"] else None
-            )
+                status="success" if tool_response["status"] == "success" else "failure",:
+ayload=tool_response["payload"],
+                error_details={"error_message": tool_response["error_message"]} if tool_response["error_message"] else None:
+
         else:
             result_payload = HSPTaskResultPayload(
                 request_id=request_id,
@@ -54,9 +54,8 @@ class ImageGenerationAgent(BaseAgent):
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
             await self.hsp_connector.send_task_result(result_payload, callback_topic, request_id)
-            print(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
-
-if __name__ == '__main__':
+            print(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}"):
+f __name__ == '__main__':
     async def main() -> None:
         agent_id = f"did:hsp:image_generation_agent_{uuid.uuid4().hex[:6]}"
         agent = ImageGenerationAgent(agent_id=agent_id)

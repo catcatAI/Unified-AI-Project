@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Test script for AI Editor functionality
-"""
+Test script for AI Editor functionality:
+""
 
 import sys
 import json

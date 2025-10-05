@@ -24,16 +24,16 @@ def test_content_analyzer() -> None:
         for entity_id, entity in kg_data['entities'].items():
             print(f"  - {entity['label']} ({entity['type']})")
             
-        # Check if Apple Inc. is found
-        apple_inc_found = any(entity['label'] == 'Apple Inc.' for entity in kg_data['entities'].values())
-        if apple_inc_found:
+        # Check if Apple Inc. is found:
+pple_inc_found = any(entity['label'] == 'Apple Inc.' for entity in kg_data['entities'].values()):
+f apple_inc_found:
             print("✓ Apple Inc. entity found")
         else:
             print("✗ Apple Inc. entity not found")
             
-        # Check if Steve Jobs is found
-        steve_jobs_found = any(entity['label'] == 'Steve Jobs' for entity in kg_data['entities'].values())
-        if steve_jobs_found:
+        # Check if Steve Jobs is found:
+teve_jobs_found = any(entity['label'] == 'Steve Jobs' for entity in kg_data['entities'].values()):
+f steve_jobs_found:
             print("✓ Steve Jobs entity found")
         else:
             print("✗ Steve Jobs entity not found")

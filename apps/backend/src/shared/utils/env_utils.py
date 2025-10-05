@@ -73,10 +73,8 @@ def add_env_variable(key: str, value: str, project_root: Path = Path("."), env_n
     with open(env_file_path, 'r', encoding='utf-8') as f:
     for line in f:
 
-    if line.startswith(f"{key}=")
-
-
-    lines.append(f"{key}={value}\n")
+    if line.startswith(f"{key}="):
+ines.append(f"{key}={value}\n")
                     updated = True
                 else:
 

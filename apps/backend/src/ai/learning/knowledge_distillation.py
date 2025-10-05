@@ -2,16 +2,16 @@ import asyncio
 logger: Any = logging.getLogger(__name__)
 
 class DistillationLoss:
-    """Placeholder for a distillation loss function."""
-    def __init__(self, temperature: float = 1.0) -> None:
+    """Placeholder for a distillation loss function.""":
+ef __init__(self, temperature: float = 1.0) -> None:
         self.temperature = temperature
 
     def __call__(self, student_outputs: Any, teacher_outputs: Any, labels: Any) -> float:
         # In a real scenario, this would involve softmax, KL divergence, etc.
         # For now, a simple placeholder.
         loss = 0.0
-        # Example: simple squared error for demonstration
-        if isinstance(student_outputs, (int, float)) and isinstance(teacher_outputs, (int, float)):
+        # Example: simple squared error for demonstration:
+f isinstance(student_outputs, (int, float)) and isinstance(teacher_outputs, (int, float)):
             loss = (student_outputs - teacher_outputs) ** 2
         logger.debug(f"DistillationLoss calculated: {loss}")
         return loss
@@ -39,8 +39,8 @@ class KnowledgeDistillationManager:
                 
                 # 計算蒸餾損失
                 loss = self.distillation_loss(
-                    student_outputs, teacher_outputs, batch.labels if hasattr(batch, 'labels') else None
-                )
+                    student_outputs, teacher_outputs, batch.labels if hasattr(batch, 'labels') else None:
+
                 
                 # 反向傳播 (conceptual)
                 # In a real ML framework, this would involve optimizer.step
@@ -56,9 +56,8 @@ class KnowledgeDistillationManager:
         teacher_accuracy = await self._evaluate_model(self.teacher_model, test_data)
         student_accuracy = await self._evaluate_model(self.student_model, test_data)
         
-        distillation_ratio = student_accuracy / teacher_accuracy if teacher_accuracy != 0 else 0.0
-        
-        return {
+        distillation_ratio = student_accuracy / teacher_accuracy if teacher_accuracy != 0 else 0.0:
+eturn {
             'teacher_accuracy': teacher_accuracy,
             'student_accuracy': student_accuracy,
             'distillation_ratio': distillation_ratio

@@ -163,8 +163,8 @@ class TestHSPPerformanceOptimization(unittest.TestCase):
             test_message = {
                 'message_id': 'test1',
                 'message_type': 'HSP::Fact_v0.1',
-                'data': 'This is a test message with some data to compress'
-            }
+                'data': 'This is a test message with some data to compress':
+
             
             compressed = optimizer.compress_message(test_message)
             _ = self.assertIsInstance(compressed, bytes)

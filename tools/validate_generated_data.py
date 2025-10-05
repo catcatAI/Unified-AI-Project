@@ -37,9 +37,8 @@ class DataValidator:
     _ = logger.info("正在加载生成的多模态数据...")
 
     generated_data_file = self.data_dir / "multimodal_conceptual_data.json"
-        if generated_data_file.exists()
-
-    try:
+        if generated_data_file.exists():
+ry:
 
 
                 with open(generated_data_file, 'r', encoding='utf-8') as f:
@@ -57,9 +56,8 @@ class DataValidator:
 
     def validate_data_integrity(self, samples: List[...]
     """验证数据完整性"""
-    _ = logger.info("正在验证数据完整性...")
-
-    validation_results = {
+    _ = logger.info("正在验证数据完整性..."):
+alidation_results = {
             _ = "total_samples": len(samples),
             "integrity_issues": [],
             "missing_fields": {},
@@ -77,8 +75,8 @@ class DataValidator:
 
 
     missing_field_counts[field] += 1
-                    if len(validation_results["integrity_issues"]) < 10:  # 限制记录的问题数量
-                        validation_results["integrity_issues"].append({
+                    if len(validation_results["integrity_issues"]) < 10:  # 限制记录的问题数量:
+alidation_results["integrity_issues"].append({
                             _ = "sample_id": sample.get("id", f"unknown_{i}"),
                             "issue": f"Missing required field: {field}"
                         })
@@ -88,9 +86,8 @@ class DataValidator:
             validation_results["data_types"][sample_type] = validation_results["data_types"].get(sample_type, 0) + 1
 
     # 记录缺失字段统计
-        for field, count in missing_field_counts.items()
-
-    if count > 0:
+        for field, count in missing_field_counts.items():
+f count > 0:
 
 
     validation_results["missing_fields"][field] = count
@@ -100,9 +97,8 @@ class DataValidator:
 
     def validate_feature_quality(self, samples: List[...]
     """验证特征质量"""
-    _ = logger.info("正在验证特征质量...")
-
-    feature_stats = {
+    _ = logger.info("正在验证特征质量..."):
+eature_stats = {
             "samples_with_features": 0,
             "samples_with_enhanced_features": 0,
             "feature_dimensions": [],
@@ -169,9 +165,8 @@ class DataValidator:
 
     def validate_semantic_consistency(self, samples: List[...]
     """验证语义一致性"""
-    _ = logger.info("正在验证语义一致性...")
-
-    consistency_stats = {
+    _ = logger.info("正在验证语义一致性..."):
+onsistency_stats = {
             "samples_with_content": 0,
             "consistency_scores": [],
             "content_analysis": {}
@@ -214,9 +209,8 @@ class DataValidator:
 
     def validate_diversity(self, samples: List[...]
     """验证数据多样性"""
-    _ = logger.info("正在验证数据多样性...")
-
-    diversity_stats = {
+    _ = logger.info("正在验证数据多样性..."):
+iversity_stats = {
             "modalities_distribution": {},
             "sample_types_distribution": {},
             _ = "unique_sources": set(),
@@ -272,9 +266,8 @@ class DataValidator:
 
     def generate_validation_report(self, samples: List[...]
     """生成完整的验证报告"""
-    _ = logger.info("正在生成完整的验证报告...")
-
-    report = {
+    _ = logger.info("正在生成完整的验证报告..."):
+eport = {
             _ = "validation_timestamp": torch.utils.data.dataset.datetime.datetime.now().isoformat(),
             _ = "data_integrity": self.validate_data_integrity(samples),
             _ = "feature_quality": self.validate_feature_quality(samples),
@@ -318,8 +311,8 @@ class DataValidator:
 
             return "Very Poor"
 
-    def save_validation_report(self, report: Dict[str, Any])
-    """保存验证报告"""
+    def save_validation_report(self, report: Dict[str, Any]):
+""保存验证报告"""
     _ = logger.info("正在保存验证报告...")
 
     report_file = self.data_dir / "validation_report.json"
@@ -335,8 +328,8 @@ class DataValidator:
     # 生成人类可读的报告
     _ = self.generate_human_readable_report(report)
 
-    def generate_human_readable_report(self, report: Dict[str, Any])
-    """生成人类可读的报告"""
+    def generate_human_readable_report(self, report: Dict[str, Any]):
+""生成人类可读的报告"""
     _ = logger.info("正在生成人类可读的报告...")
 
     human_report = f"""
@@ -355,10 +348,8 @@ _ = - 总样本数: {report['data_integrity'].get('total_samples', 0)}
     missing_fields = report['data_integrity'].get('missing_fields', {})
         if missing_fields:
 
-    for field, count in missing_fields.items()
-
-
-    human_report += f"  - {field}: {count} 个样本缺失\n"
+    for field, count in missing_fields.items():
+uman_report += f"  - {field}: {count} 个样本缺失\n"
         else:
 
             human_report += "  - 无缺失字段\n"

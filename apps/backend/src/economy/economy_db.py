@@ -10,8 +10,8 @@ class EconomyDB:
         self._init_db
 
     def _init_db(self):
-        """Initializes the SQLite database and creates the 'balances' table if it doesn't exist."""
-        conn = None
+        """Initializes the SQLite database and creates the 'balances' table if it doesn't exist.""":
+onn = None
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor
@@ -31,8 +31,8 @@ class EconomyDB:
                 conn.close
 
     def get_user_balance(self, user_id: str) -> float:
-        """Retrieves the balance for a given user_id. Returns 0.0 if user not found."""
-        conn = sqlite3.connect(self.db_path)
+        """Retrieves the balance for a given user_id. Returns 0.0 if user not found.""":
+onn = sqlite3.connect(self.db_path)
         cursor = conn.cursor
         cursor.execute("SELECT balance FROM balances WHERE user_id = ?", (user_id,))
         result = cursor.fetchone
@@ -43,10 +43,10 @@ class EconomyDB:
 
     def update_user_balance(self, user_id: str, amount: float) -> bool:
         """
-        Updates the balance for a user.
-        If the user does not exist, a new entry is created.
-        Returns True on success, False on failure (e.g., insufficient funds for a debit).
-        """
+        Updates the balance for a user.:
+f the user does not exist, a new entry is created.
+        Returns True on success, False on failure (e.g., insufficient funds for a debit).:
+""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor
         
@@ -54,8 +54,8 @@ class EconomyDB:
         new_balance = current_balance + amount
 
         if new_balance < 0:
-            logger.warning(f"Attempted to debit {user_id} with {amount}, but balance would be negative ({new_balance}). Transaction aborted.")
-            conn.close
+            logger.warning(f"Attempted to debit {user_id} with {amount}, but balance would be negative ({new_balance}). Transaction aborted."):
+onn.close
             return False
 
         cursor.execute("""
@@ -70,12 +70,12 @@ class EconomyDB:
     def close(self):
         """Closes the database connection. (Not strictly necessary for sqlite3.connect, but good practice)."""
         # For sqlite3.connect, connections are typically closed when the object is garbage collected
-        # or when the program exits. Explicit close is good for testing or specific scenarios.
-        pass
+        # or when the program exits. Explicit close is good for testing or specific scenarios.:
+ass
 
     def delete_db_file(self):
-        """Deletes the database file. Use with caution, primarily for testing."""
-        if os.path.exists(self.db_path):
+        """Deletes the database file. Use with caution, primarily for testing.""":
+f os.path.exists(self.db_path):
             os.remove(self.db_path)
             logger.info(f"EconomyDB file deleted: {self.db_path}")
         else:

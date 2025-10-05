@@ -5,14 +5,14 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 from enum import Enum
 
-class ContextType(Enum)
+class ContextType(Enum):
     TOOL = "tool"
     MODEL = "model"
     DIALOGUE = "dialogue"
     MEMORY = "memory"
     CUSTOM = "custom"
 
-class ContextStatus(Enum)
+class ContextStatus(Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     ARCHIVED = "archived"
@@ -29,21 +29,19 @@ class Context:
     self.version = "1.0"
     self.tags: List[str] =
 
-    def update_content(self, new_content: Dict[str, Any])
+    def update_content(self, new_content: Dict[str, Any]):
     self.content.update(new_content)
     self.updated_at = datetime.now
 
-    def add_tag(self, tag: str)
-    if tag not in self.tags:
-
+    def add_tag(self, tag: str):
+    if tag not in self.tags::
     self.tags.append(tag)
 
-    def remove_tag(self, tag: str)
-    if tag in self.tags:
-
+    def remove_tag(self, tag: str):
+    if tag in self.tags::
     self.tags.remove(tag)
 
-class Storage(ABC)
+class Storage(ABC):
     @abstractmethod
     def save_context(self, context: Context) -> bool:
     """保存上下文"""

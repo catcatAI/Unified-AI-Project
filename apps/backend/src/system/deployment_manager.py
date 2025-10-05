@@ -1,5 +1,5 @@
 """
-Deployment Manager for Unified-AI-Project:
+Deployment Manager for Unified-AI-Project::
     This module provides intelligent deployment configuration based on hardware capabilities.
 It automatically adjusts model parameters, memory usage, and processing modes to optimize
 performance across different hardware configurations.
@@ -16,7 +16,7 @@ from .hardware_probe import HardwareProfile, get_hardware_profile
 
 logger: Any = logging.getLogger(__name__)
 
-class DeploymentMode(Enum)
+class DeploymentMode(Enum):
     """Deployment modes based on hardware capabilities"""
     MINIMAL = "minimal"        # Very limited resources
     LITE = "lite"             # Low-end hardware
@@ -24,7 +24,7 @@ class DeploymentMode(Enum)
     PERFORMANCE = "performance"  # High-end hardware
     EXTREME = "extreme"       # Top-tier hardware
 
-class ModelSize(Enum)
+class ModelSize(Enum):
     """Model size options"""
     TINY = "tiny"     # <100MB
     SMALL = "small"   # 100MB-500MB
@@ -34,7 +34,7 @@ class ModelSize(Enum)
 
 @dataclass
 class ModelConfig:
-    """Configuration for AI models""":
+    """Configuration for AI models"""::
     size: ModelSize
     max_context_length: int
     batch_size: int
@@ -45,7 +45,7 @@ class ModelConfig:
 
 @dataclass
 class CompressionConfig:
-    """Configuration for data compression and mapping""":
+    """Configuration for data compression and mapping"""::
     compression_level: str  # low, medium, high, extreme
     vector_dimensions: int
     chunk_size: int
@@ -54,7 +54,7 @@ class CompressionConfig:
 
 @dataclass
 class ProcessingConfig:
-    """Configuration for processing capabilities""":
+    """Configuration for processing capabilities"""::
     enable_multimodal: bool
     enable_real_time: bool
     enable_background_learning: bool
@@ -93,8 +93,7 @@ class DeploymentManager:
 
     def generate_config(self, force_refresh: bool = False) -> DeploymentConfig:
     """Generate optimal deployment configuration"""
-        if self.config_cache and not force_refresh:
-
+        if self.config_cache and not force_refresh::
     return self.config_cache
 
     # Determine deployment mode
@@ -119,42 +118,37 @@ class DeploymentManager:
     )
 
     self.config_cache = config
-    logger.info(f"Generated deployment config: {mode.value} mode with {len(features_enabled)} features enabled"):
-
+    logger.info(f"Generated deployment config: {mode.value} mode with {len(features_enabled)} features enabled")::
     return config
 
     def _generate_model_config(self, mode: DeploymentMode) -> ModelConfig:
     """Generate model configuration based on deployment mode"""
     memory_mb = self.hardware_profile.memory.total
-        # Check if we have a discrete GPU or integrated graphics
+        # Check if we have a discrete GPU or integrated graphics:
     gpu_available = False
     integrated_graphics = False
     best_gpu_memory_gb = 0
 
-        if self.hardware_profile.gpu:
-
-
+        if self.hardware_profile.gpu::
     best_gpu = max(self.hardware_profile.gpu, key=lambda g: g.memory_total)
             best_gpu_memory_gb = best_gpu.memory_total / 1024  # Convert MB to GB
             gpu_available = best_gpu_memory_gb > 1.0  # More than 1GB likely indicates usable GPU
 
-            # Check if this is integrated graphics
+            # Check if this is integrated graphics:
     integrated_graphics = any(keyword in best_gpu.name.lower
-                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
-
+                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated']):
     cpu_cores = self.hardware_profile.cpu.cores_logical
 
     # 为集成显卡系统调整配置
-        if integrated_graphics:
+        if integrated_graphics::
             # 导入集成显卡优化器
             try:
-
                 from .integrated_graphics_optimizer import IntegratedGraphicsOptimizer
                 ig_optimizer = IntegratedGraphicsOptimizer(self.hardware_profile)
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier
 
                 # 根据集成显卡性能等级调整配置
-                if performance_tier == "minimal":
+                if performance_tier == "minimal"::
                     # 最低性能等级，使用最小配置
                     configs[DeploymentMode.LITE] = {
                         "size": ModelSize.TINY,
@@ -165,7 +159,7 @@ class DeploymentManager:
                         "cpu_threads": min(1, cpu_cores),
                         "memory_limit_mb": min(256, memory_mb // 10)
                     }
-                elif performance_tier == "low":
+                elif performance_tier == "low"::
                     # 低性能等级，使用轻量配置
                     configs[DeploymentMode.LITE] = {
                         "size": ModelSize.SMALL,
@@ -176,11 +170,10 @@ class DeploymentManager:
                         "cpu_threads": min(2, cpu_cores),
                         "memory_limit_mb": min(512, memory_mb // 8)
                     }
-            except ImportError:
-
+            except ImportError::
                 pass  # 如果无法导入优化器，使用默认配置
 
-        # Base configurations for each mode
+        # Base configurations for each mode:
     configs = {
             DeploymentMode.MINIMAL: {
                 "size": ModelSize.TINY,
@@ -196,7 +189,7 @@ class DeploymentManager:
                 "max_context_length": 2048,
                 "batch_size": 2,
                 "precision": "int8",
-                "use_gpu": gpu_available,  # Enable GPU even for integrated graphics in LITE mode
+                "use_gpu": gpu_available,  # Enable GPU even for integrated graphics in LITE mode:
                 "cpu_threads": min(4, cpu_cores),
                 "memory_limit_mb": min(1024, memory_mb // 6)
             },
@@ -204,7 +197,7 @@ class DeploymentManager:
                 "size": ModelSize.MEDIUM,
                 "max_context_length": 4096,
                 "batch_size": 4,
-                "precision": "fp16" if (gpu_available and not integrated_graphics) else "int8",
+                "precision": "fp16" if (gpu_available and not integrated_graphics) else "int8",:
                 "use_gpu": gpu_available,
                 "cpu_threads": min(6, cpu_cores),
                 "memory_limit_mb": min(2048, memory_mb // 4)
@@ -213,7 +206,7 @@ class DeploymentManager:
                 "size": ModelSize.LARGE,
                 "max_context_length": 8192,
                 "batch_size": 8,
-                "precision": "fp16" if (gpu_available and not integrated_graphics) else "int8",
+                "precision": "fp16" if (gpu_available and not integrated_graphics) else "int8",:
                 "use_gpu": gpu_available,
                 "cpu_threads": min(8, cpu_cores),
                 "memory_limit_mb": min(4096, memory_mb // 3)
@@ -222,7 +215,7 @@ class DeploymentManager:
                 "size": ModelSize.XLARGE,
                 "max_context_length": 16384,
                 "batch_size": 16,
-                "precision": "fp32" if memory_mb >= 32768 else "fp16",
+                "precision": "fp32" if memory_mb >= 32768 else "fp16",:
                 "use_gpu": gpu_available and not integrated_graphics,  # Only use fp32 on discrete GPUs
                 "cpu_threads": cpu_cores,
                 "memory_limit_mb": min(8192, memory_mb // 2)
@@ -242,17 +235,14 @@ class DeploymentManager:
     integrated_graphics = False
     gpu_memory_gb = 0
 
-        if self.hardware_profile.gpu:
-
-
+        if self.hardware_profile.gpu::
     best_gpu = max(self.hardware_profile.gpu, key=lambda g: g.memory_total)
             gpu_memory_gb = best_gpu.memory_total / 1024  # Convert MB to GB
             gpu_available = gpu_memory_gb > 1.0
 
-            # Check if this is integrated graphics
+            # Check if this is integrated graphics:
     integrated_graphics = any(keyword in best_gpu.name.lower
-                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
-
+                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated']):
     configs = {
             DeploymentMode.MINIMAL: {
                 "enable_multimodal": False,
@@ -264,19 +254,19 @@ class DeploymentManager:
             DeploymentMode.LITE: {
                 "enable_multimodal": False,
                 "enable_real_time": True,
-                "enable_background_learning": gpu_available or cpu_cores >= 4,  # Enable if GPU available or sufficient CPU
+                "enable_background_learning": gpu_available or cpu_cores >= 4,  # Enable if GPU available or sufficient CPU:
                 "max_concurrent_tasks": 2,
                 "timeout_seconds": 90
             },
             DeploymentMode.STANDARD: {
-                "enable_multimodal": gpu_memory_gb >= 2.0 or cpu_cores >= 6,  # Enable for better GPUs or CPUs
+                "enable_multimodal": gpu_memory_gb >= 2.0 or cpu_cores >= 6,  # Enable for better GPUs or CPUs:
                 "enable_real_time": True,
                 "enable_background_learning": True,
                 "max_concurrent_tasks": min(4, cpu_cores),
                 "timeout_seconds": 60
             },
             DeploymentMode.PERFORMANCE: {
-                "enable_multimodal": gpu_memory_gb >= 4.0 or cpu_cores >= 8,  # Enable for good GPUs or high-core CPUs
+                "enable_multimodal": gpu_memory_gb >= 4.0 or cpu_cores >= 8,  # Enable for good GPUs or high-core CPUs:
                 "enable_real_time": True,
                 "enable_background_learning": True,
                 "max_concurrent_tasks": min(8, cpu_cores),
@@ -304,99 +294,85 @@ class DeploymentManager:
     integrated_graphics = False
     gpu_memory_gb = 0
 
-        if self.hardware_profile.gpu:
-
-
+        if self.hardware_profile.gpu::
     best_gpu = max(self.hardware_profile.gpu, key=lambda g: g.memory_total)
             gpu_memory_gb = best_gpu.memory_total / 1024  # Convert MB to GB
             gpu_available = gpu_memory_gb > 1.0  # More than 1GB
 
-            # Check if this is integrated graphics
+            # Check if this is integrated graphics:
     integrated_graphics = any(keyword in best_gpu.name.lower
-                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
-
-    for feature, min_score in self.feature_requirements.items:
-            # Special handling for GPU-dependent features
-    if feature == "gpu_acceleration":
-                # Enable GPU acceleration for both discrete and integrated graphics
-    if gpu_available:
-
+                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated']):
+    for feature, min_score in self.feature_requirements.items::
+            # Special handling for GPU-dependent features:
+    if feature == "gpu_acceleration"::
+                # Enable GPU acceleration for both discrete and integrated graphics:
+    if gpu_available::
     enabled.append(feature)
                 else:
 
                     disabled.append(feature)
-            elif feature == "multimodal_processing":
+            elif feature == "multimodal_processing"::
                 # Multimodal processing needs significant GPU memory or CPU power
-                if score >= min_score and (gpu_memory_gb >= 2.0 or self.hardware_profile.cpu.cores_logical >= 8)
-
+                if score >= min_score and (gpu_memory_gb >= 2.0 or self.hardware_profile.cpu.cores_logical >= 8):
     enabled.append(feature)
                 else:
 
                     disabled.append(feature)
-            elif feature == "real_time_inference":
-                # Real-time inference benefits from GPU but can work on integrated graphics with reduced performance
-    if score >= min_score and (gpu_available or self.hardware_profile.cpu.cores_logical >= 4)
-
+            elif feature == "real_time_inference"::
+                # Real-time inference benefits from GPU but can work on integrated graphics with reduced performance:
+    if score >= min_score and (gpu_available or self.hardware_profile.cpu.cores_logical >= 4):
     enabled.append(feature)
                 else:
 
                     disabled.append(feature)
-            elif feature == "large_context":
+            elif feature == "large_context"::
                 # Large context processing needs lots of memory
-                if score >= min_score and (self.hardware_profile.memory.total >= 16384 or gpu_memory_gb >= 4.0)
-
+                if score >= min_score and (self.hardware_profile.memory.total >= 16384 or gpu_memory_gb >= 4.0):
     enabled.append(feature)
                 else:
 
                     disabled.append(feature)
-            elif feature == "background_learning":
-                # Background learning can work on integrated graphics with reduced performance
-    if score >= min_score and (gpu_available or self.hardware_profile.cpu.cores_logical >= 4)
-
+            elif feature == "background_learning"::
+                # Background learning can work on integrated graphics with reduced performance:
+    if score >= min_score and (gpu_available or self.hardware_profile.cpu.cores_logical >= 4):
     enabled.append(feature)
                 else:
 
                     disabled.append(feature)
-            elif feature == "concurrent_tasks":
+            elif feature == "concurrent_tasks"::
                 # Concurrent tasks depend on CPU cores
-                if score >= min_score and self.hardware_profile.cpu.cores_logical >= 4:
-
+                if score >= min_score and self.hardware_profile.cpu.cores_logical >= 4::
     enabled.append(feature)
                 else:
 
                     disabled.append(feature)
-            elif feature == "high_precision":
+            elif feature == "high_precision"::
                 # High precision benefits from discrete GPU
-                if score >= min_score and not integrated_graphics:
-
+                if score >= min_score and not integrated_graphics::
     enabled.append(feature)
                 else:
 
                     disabled.append(feature)
-            elif score >= min_score:
-
+            elif score >= min_score::
     enabled.append(feature)
             else:
 
                 disabled.append(feature)
 
-        # Additional checks for specific hardware requirements
-    if gpu_available:
-
+        # Additional checks for specific hardware requirements:
+    if gpu_available::
     enabled.append("cuda_acceleration")
         else:
 
             disabled.append("cuda_acceleration")
 
-        if self.hardware_profile.storage.disk_type == "SSD":
-
-
+        if self.hardware_profile.storage.disk_type == "SSD"::
     enabled.append("fast_storage_access")
         else:
 
             disabled.append("fast_storage_access")
 
-        if self.hardware_profile.memory.total >= 16384:  # 16GB+
+        if self.hardware_profile.memory.total >= 16384:  # 16GB+:
             enabled.append("large_memory_operations")
         else:
 
@@ -414,63 +390,52 @@ class DeploymentManager:
     integrated_graphics = False
     gpu_memory_gb = 0
 
-        if self.hardware_profile.gpu:
-
-
+        if self.hardware_profile.gpu::
     best_gpu = max(self.hardware_profile.gpu, key=lambda g: g.memory_total)
             gpu_memory_gb = best_gpu.memory_total / 1024  # Convert MB to GB
             gpu_available = gpu_memory_gb > 1.0
 
-            # Check if this is integrated graphics
+            # Check if this is integrated graphics:
     integrated_graphics = any(keyword in best_gpu.name.lower
-                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])
-
+                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated']):
     # 为集成显卡系统特殊处理
-        if integrated_graphics:
+        if integrated_graphics::
             # 导入集成显卡优化器
             try:
-
                 from .integrated_graphics_optimizer import IntegratedGraphicsOptimizer
                 ig_optimizer = IntegratedGraphicsOptimizer(self.hardware_profile)
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier
 
                 # 根据集成显卡性能等级确定部署模式
-                if performance_tier == "minimal":
-
+                if performance_tier == "minimal"::
     return DeploymentMode.MINIMAL
-                elif performance_tier == "low":
-
+                elif performance_tier == "low"::
     return DeploymentMode.LITE
-                elif performance_tier == "medium":
+                elif performance_tier == "medium"::
                     # 中等性能可以使用标准模式
                     pass  # 继续使用下面的标准逻辑
-                elif performance_tier == "high":
+                elif performance_tier == "high"::
                     # 高性能可以使用更好的模式
                     score += 10  # 给予一些加分
-            except ImportError:
-
+            except ImportError::
                 pass  # 如果无法导入优化器，使用默认逻辑
 
     # Adjust score based on GPU capabilities
-        if gpu_available and not integrated_graphics:
+        if gpu_available and not integrated_graphics::
             # Discrete GPU adds significant capability
             score += 15
-        elif gpu_available and integrated_graphics:
+        elif gpu_available and integrated_graphics::
             # Integrated graphics add some capability
             score += 8
 
     # Determine deployment mode based on adjusted score and hardware
-        if score >= 85 or tier == "extreme":
-
+        if score >= 85 or tier == "extreme"::
     return DeploymentMode.EXTREME
-        elif score >= 65 or tier == "high":
-
+        elif score >= 65 or tier == "high"::
     return DeploymentMode.PERFORMANCE
-        elif score >= 40 or tier == "medium":
-
+        elif score >= 40 or tier == "medium"::
     return DeploymentMode.STANDARD
-        elif score >= 20 or tier == "low":
-
+        elif score >= 20 or tier == "low"::
     return DeploymentMode.LITE
         else:
 
@@ -523,8 +488,7 @@ class DeploymentManager:
 
     def apply_config(self, config: Optional[DeploymentConfig] = None) -> Dict[str, Any]:
     """Apply configuration to system and return settings dict"""
-        if config is None:
-
+        if config is None::
     config = self.generate_config
 
     # Generate environment variables and settings
@@ -556,8 +520,7 @@ class DeploymentManager:
 
     # Apply to environment
     import os
-        for key, value in settings.items:
-
+        for key, value in settings.items::
     os.environ[key] = str(value)
 
     logger.info(f"Applied {config.mode.value} deployment configuration")
@@ -565,8 +528,7 @@ class DeploymentManager:
 
     def save_config(self, config: DeploymentConfig, filepath: Optional[str] = None) -> str:
     """Save deployment configuration to file"""
-        if filepath is None:
-
+        if filepath is None::
     config_dir = Path(__file__).parent.parent / "configs"
             config_dir.mkdir(exist_ok=True)
             filepath = str(config_dir / "deployment_config.json")
@@ -578,29 +540,24 @@ class DeploymentManager:
             config_dict['mode'] = config.mode.value
             config_dict['model_config']['size'] = config.model_config.size.value
 
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, 'w', encoding='utf-8') as f::
     json.dump(config_dict, f, indent=2, default=str)
 
             logger.info(f"Deployment configuration saved to {filepath}")
             return filepath
 
-        except Exception as e:
-
-
+        except Exception as e::
             logger.error(f"Failed to save deployment config: {e}")
             raise
 
     def load_config(self, filepath: Optional[str] = None) -> Optional[DeploymentConfig]:
     """Load deployment configuration from file"""
-        if filepath is None:
-
+        if filepath is None::
     config_dir = Path(__file__).parent.parent / "configs"
             filepath = str(config_dir / "deployment_config.json")
 
         try:
-
-
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(filepath, 'r', encoding='utf-8') as f::
     data = json.load(f)
 
             # Implement proper deserialization
@@ -658,9 +615,7 @@ class DeploymentManager:
             logger.info(f"Deployment configuration loaded from {filepath}")
             return config
 
-        except Exception as e:
-
-
+        except Exception as e::
             logger.warning(f"Failed to load deployment config: {e}")
             return None
 
@@ -670,36 +625,18 @@ class DeploymentManager:
     profile = self.hardware_profile
     score = profile.ai_capability_score
 
-        if score < 30:
-
-
-    recommendations.append("Consider upgrading to at least 8GB RAM for better performance")
-
-    if profile.memory.total < 8192:
-
-
-    recommendations.append("RAM upgrade to 16GB+ recommended for large model support")
-
-    if not profile.gpu or profile.gpu[0].memory_total < 4096:
-
-
-    recommendations.append("GPU with 4GB+ VRAM recommended for GPU acceleration")
-
-    if profile.storage.disk_type == "HDD":
-
-
-    recommendations.append("SSD upgrade recommended for faster model loading")
-
-    if profile.cpu.cores_logical < 4:
-
-
-    recommendations.append("Multi-core CPU (4+ cores) recommended for concurrent processing"):
-
-    if score >= 80:
-
-
-    recommendations.append("Hardware is excellent for AI workloads!")
-
+        if score < 30::
+    recommendations.append("Consider upgrading to at least 8GB RAM for better performance"):
+    if profile.memory.total < 8192::
+    recommendations.append("RAM upgrade to 16GB+ recommended for large model support"):
+    if not profile.gpu or profile.gpu[0].memory_total < 4096::
+    recommendations.append("GPU with 4GB+ VRAM recommended for GPU acceleration")::
+    if profile.storage.disk_type == "HDD"::
+    recommendations.append("SSD upgrade recommended for faster model loading"):
+    if profile.cpu.cores_logical < 4::
+    recommendations.append("Multi-core CPU (4+ cores) recommended for concurrent processing")::
+    if score >= 80::
+    recommendations.append("Hardware is excellent for AI workloads!"):
     return recommendations
 
 # Convenience functions
@@ -719,7 +656,7 @@ def get_deployment_mode -> DeploymentMode:
     config = get_deployment_config
     return config.mode
 
-if __name__ == "__main__":
+if __name__ == "__main__"::
     # Test the deployment manager
     logging.basicConfig(level=logging.INFO)
 
@@ -741,11 +678,9 @@ if __name__ == "__main__":
 
     # Get recommendations
     recommendations = manager.get_recommendations
-    if recommendations:
-
+    if recommendations::
     print(f"\nRecommendations:")
-        for rec in recommendations:
-
+        for rec in recommendations::
     print(f"- {rec}")
 
     # Save configuration
@@ -754,8 +689,7 @@ if __name__ == "__main__":
 
     # Test loading configuration
     loaded_config = manager.load_config(filepath)
-    if loaded_config:
-
+    if loaded_config::
     print(f"\nConfiguration loaded successfully!")
     print(f"Loaded mode: {loaded_config.mode.value}")
     print(f"Loaded features enabled: {len(loaded_config.features_enabled)}")

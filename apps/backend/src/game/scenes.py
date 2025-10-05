@@ -6,17 +6,17 @@ class Scene:
     def __init__(self, game) -> None:
     self.game = game
 
-    async def handle_events(self, event)
-    pass
+    async def handle_events(self, event):
+ass
 
-    async def update(self)
-    pass
+    async def update(self):
+ass
 
-    def render(self, surface)
-    pass
+    def render(self, surface):
+ass
 
-class VillageScene(Scene)
-    def __init__(self, game) -> None:
+class VillageScene(Scene):
+ef __init__(self, game) -> None:
     super().__init__(game)
     self.background = self.game.assets['sprites'].get('terrains-grassland_tiles')
     self.player = self.game.player
@@ -24,14 +24,14 @@ class VillageScene(Scene)
     self.load_npcs
     self.dialogue_box = DialogueBox(self.game)
 
-    def load_npcs(self)
-    self.npcs.append(create_npc(self.game, "murakami"))
+    def load_npcs(self):
+elf.npcs.append(create_npc(self.game, "murakami"))
     self.npcs.append(create_npc(self.game, "lina"))
     self.npcs.append(create_npc(self.game, "tanaka"))
     self.npcs.append(create_npc(self.game, "hibiki"))
 
-    async def handle_events(self, event)
-    _ = await super().handle_events(event)
+    async def handle_events(self, event):
+ = await super().handle_events(event)
         if self.dialogue_box.is_active:
 
     if event.type == pygame.KEYDOWN and event.key == pygame.K_e:
@@ -55,15 +55,15 @@ class VillageScene(Scene)
     self.dialogue_box.show(dialogue_text, npc.name, npc.portrait)
                         break
 
-    async def update(self)
-    _ = await super().update
+    async def update(self):
+ = await super().update
     self.player.update
         for npc in self.npcs:
-            # NPCs will just stand still for now
-    pass
+            # NPCs will just stand still for now:
+ass
 
-    def render(self, surface)
-    if self.background:
+    def render(self, surface):
+f self.background:
 
     surface.blit(self.background, (0, 0))
         else:
@@ -87,11 +87,11 @@ class GameStateManager:
     }
     self.current_state = 'village'
 
-    async def handle_events(self, event)
-    _ = await self.states[self.current_state].handle_events(event)
+    async def handle_events(self, event):
+ = await self.states[self.current_state].handle_events(event)
 
-    async def update(self)
-    _ = await self.states[self.current_state].update
+    async def update(self):
+ = await self.states[self.current_state].update
 
-    def render(self, surface)
-    self.states[self.current_state].render(surface)
+    def render(self, surface):
+elf.states[self.current_state].render(surface)

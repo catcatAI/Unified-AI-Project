@@ -1,18 +1,16 @@
 """
 Unified Symbolic Space Module
-This module provides a unified symbolic space implementation for the AI system.
-"""
+This module provides a unified symbolic space implementation for the AI system.:
+""
 
 class UnifiedSymbolicSpace:
-    """Unified Symbolic Space for AI reasoning and knowledge representation"""
-    
-    def __init__(self, db_path: str = "unified_symbolic_space.db") -> None:
+    """Unified Symbolic Space for AI reasoning and knowledge representation""":
+ef __init__(self, db_path: str = "unified_symbolic_space.db") -> None:
         self.db_path = db_path
         self.symbols = {}
         self.relationships = {}
-        print(f"UnifiedSymbolicSpace initialized with db_path: {db_path}")
-    
-    def add_symbol(self, symbol_id: str, symbol_data: dict):
+        print(f"UnifiedSymbolicSpace initialized with db_path: {db_path}"):
+ef add_symbol(self, symbol_id: str, symbol_data: dict):
         """Add a symbol to the symbolic space"""
         self.symbols[symbol_id] = symbol_data
         _ = print(f"Added symbol: {symbol_id}")
@@ -31,8 +29,8 @@ class UnifiedSymbolicSpace:
         _ = print(f"Added relationship: {rel_id} ({source_symbol} -> {target_symbol})")
     
     def get_relationships(self, symbol_id: str):
-        """Get all relationships for a symbol"""
-        result = []
+        """Get all relationships for a symbol""":
+esult = []
         for rel_id, rel_data in self.relationships.items():
             if rel_data["source"] == symbol_id or rel_data["target"] == symbol_id:
                 _ = result.append(rel_data)
@@ -55,14 +53,14 @@ if __name__ == "__main__":
     space.add_symbol("concept_001", {
         "name": "Artificial Intelligence",
         "type": SymbolType.CONCEPT,
-        "description": "A branch of computer science dealing with creating intelligent machines"
-    })
+        "description": "A branch of computer science dealing with creating intelligent machines":
+)
     
     space.add_symbol("entity_001", {
         "name": "AI Assistant",
         "type": SymbolType.ENTITY,
-        "description": "A software agent that assists users with tasks"
-    })
+        "description": "A software agent that assists users with tasks":
+)
     
     # Add a relationship
     _ = space.add_relationship("rel_001", "entity_001", "concept_001", "instance_of")

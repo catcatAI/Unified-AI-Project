@@ -70,13 +70,13 @@ class AtlassianBridge:
     # 添加缺失的属性
     self.health_monitoring_task = None
 
-    async def start(self)
-    if self.fallback_enabled:
+    async def start(self):
+f self.fallback_enabled:
 
     self.health_monitoring_task = asyncio.create_task(self._start_health_monitoring)
 
-    async def close(self)
-    """關閉橋接層，清理資源"""
+    async def close(self):
+""關閉橋接層，清理資源"""
     # 停止健康監控任務（如果有的話）
         if self.health_monitoring_task and not self.health_monitoring_task.done:
 
@@ -89,12 +89,12 @@ class AtlassianBridge:
                 pass
     # 注意：這裡不需要關閉 self.connector.session，因為它由 connector 自己管理
 
-    async def __aenter__(self)
-    _ = await self.start
+    async def __aenter__(self):
+ = await self.start
     return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb)
-    _ = await self.close
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+ = await self.close
 
     def _load_endpoint_configs(self) -> Dict[str, EndpointConfig]:
     """加載端點配置"""
@@ -150,10 +150,8 @@ class AtlassianBridge:
     urls_to_try = [config.primary_url] + config.backup_urls:
     last_exception = None
 
-        for attempt, base_url in enumerate(urls_to_try)
-
-
-    if attempt > 0:
+        for attempt, base_url in enumerate(urls_to_try):
+f attempt > 0:
 
 
 
@@ -162,9 +160,8 @@ class AtlassianBridge:
 
             try:
                 # 構建完整 URL
-                if endpoint.startswith('http')
-
-    full_url = endpoint
+                if endpoint.startswith('http'):
+ull_url = endpoint
                 else:
 
                     full_url = f"{base_url.rstrip('/')}/{endpoint.lstrip('/')}"
@@ -257,16 +254,16 @@ class AtlassianBridge:
     entry = pickle.load(f)
     if allow_expired or (datetime.now - entry.timestamp).seconds < entry.ttl:
                     # 更新內存緩存
-                    self.cache[cache_key] = entry
-                    return entry.data
+                    self.cache[cache_key] = entry:
+eturn entry.data
     except Exception as e:
 
     logger.warning(f"讀取緩存文件失敗: {e}")
 
     return None
 
-    async def _save_to_cache(self, key: str, data: Dict[str, Any], ttl: int = 300)
-    """保存數據到緩存"""
+    async def _save_to_cache(self, key: str, data: Dict[str, Any], ttl: int = 300):
+""保存數據到緩存"""
     cache_key = hashlib.md5(key.encode).hexdigest
     entry = CacheEntry(data=data, timestamp=datetime.now, ttl=ttl)
 
@@ -283,8 +280,8 @@ class AtlassianBridge:
 
             logger.warning(f"保存緩存文件失敗: {e}")
 
-    async def _add_to_offline_queue(self, service: str, method: str, endpoint: str, kwargs: Dict[str, Any])
-    """添加到離線隊列"""
+    async def _add_to_offline_queue(self, service: str, method: str, endpoint: str, kwargs: Dict[str, Any]):
+""添加到離線隊列"""
     queue_item = {
             'service': service,
             'method': method,
@@ -296,8 +293,8 @@ class AtlassianBridge:
     self.offline_queue.append(queue_item)
     logger.info(f"添加到離線隊列: {method} {endpoint}")
 
-    async def _start_health_monitoring(self)
-    """啟動健康監控"""
+    async def _start_health_monitoring(self):
+""啟動健康監控"""
         while True:
 
     try:
@@ -310,8 +307,8 @@ class AtlassianBridge:
                 logger.error(f"健康檢查錯誤: {e}")
                 _ = await asyncio.sleep(60)
 
-    async def _check_endpoints_health(self)
-    """檢查端點健康狀態"""
+    async def _check_endpoints_health(self):
+""檢查端點健康狀態"""
         for service, config in self.endpoints.items:
             # 檢查主端點
             _ = await self._check_endpoint_health(service, config.primary_url)
@@ -321,8 +318,8 @@ class AtlassianBridge:
 
     _ = await self._check_endpoint_health(service, backup_url)
 
-    async def _check_endpoint_health(self, service: str, url: str)
-    """檢查單個端點健康狀態"""
+    async def _check_endpoint_health(self, service: str, url: str):
+""檢查單個端點健康狀態"""
         try:
 
             start_time = time.time
@@ -359,8 +356,8 @@ class AtlassianBridge:
                 'error': str(e)
             }
 
-    async def process_offline_queue(self)
-    """處理離線隊列"""
+    async def process_offline_queue(self):
+""處理離線隊列"""
         if not self.offline_queue:
 
     return
@@ -397,8 +394,8 @@ class AtlassianBridge:
 
     self.offline_queue.remove(item)
 
-    def force_endpoint_switch(self, service: str)
-    """強制切換端點"""
+    def force_endpoint_switch(self, service: str):
+""強制切換端點"""
     config = self.endpoints.get(service)
         if not config or not config.backup_urls:
 

@@ -50,9 +50,8 @@ def test_file_chunking() -> None:
 
     # 验证块大小
     expected_sizes = [100*1024*1024, 100*1024*1024, 50*1024*1024]
-        for i, chunk in enumerate(chunks)
-
-    if chunk['size'] != expected_sizes[i]:
+        for i, chunk in enumerate(chunks):
+f chunk['size'] != expected_sizes[i]:
 
 
     _ = logger.error(f"块 {i} 大小不正确，期望: {expected_sizes[i]}，实际: {chunk['size']}")
@@ -281,8 +280,8 @@ def test_dynamic_loader() -> None:
 
     # 获取缓存统计信息
     stats = loader.get_cache_stats()
-        if stats['current_size'] != 2:  # 应该缓存了2个块
-            _ = logger.error(f"缓存大小不正确，期望: 2，实际: {stats['current_size']}")
+        if stats['current_size'] != 2:  # 应该缓存了2个块:
+ = logger.error(f"缓存大小不正确，期望: 2，实际: {stats['current_size']}")
             return False
 
     _ = logger.info("动态载入器主功能测试通过")

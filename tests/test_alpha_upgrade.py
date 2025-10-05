@@ -47,8 +47,8 @@ def test_alpha_deep_model_upgrade() -> None:
         
         print("✓ Model and data classes imported successfully")
         
-        # Test compression with different algorithms
-        print("\n--- Testing Compression Algorithms ---")
+        # Test compression with different algorithms:
+rint("\n--- Testing Compression Algorithms ---")
         algorithms = [CompressionAlgorithm.ZLIB, CompressionAlgorithm.BZ2, CompressionAlgorithm.LZMA, CompressionAlgorithm.MSGPACK_ONLY]
         
         for algorithm in algorithms:
@@ -56,8 +56,8 @@ def test_alpha_deep_model_upgrade() -> None:
             decompressed = model.decompress(compressed, algorithm)
             original_dict = test_data.to_dict()
             
-            assert original_dict == decompressed, f"Compression/decompression failed for {algorithm.value}"
-            print(f"✓ {algorithm.value}: {len(compressed)} bytes")
+            assert original_dict == decompressed, f"Compression/decompression failed for {algorithm.value}":
+rint(f"✓ {algorithm.value}: {len(compressed)} bytes")
         
         # Test DNA data chain functionality
         print("\n--- Testing DNA Data Chain ---")
@@ -98,8 +98,8 @@ def test_alpha_deep_model_upgrade() -> None:
         return True
         
     except Exception as e:
-        print(f"❌ Test failed with error: {e}")
-        import traceback
+        print(f"❌ Test failed with error: {e}"):
+mport traceback
         traceback.print_exc()
         return False
 

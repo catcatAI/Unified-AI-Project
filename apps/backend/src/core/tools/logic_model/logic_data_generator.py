@@ -17,20 +17,20 @@ OPERATORS = ["AND", "OR"]
 UNARY_OPERATORS = ["NOT"]
 VALUES = ["true", "false"]
 
-def generate_simple_proposition(max_nesting=1, current_nesting=0)
-    """
+def generate_simple_proposition(max_nesting=1, current_nesting=0):
+""
     Generates a simple logical proposition.
     Example: "true AND false", "NOT true", "(true OR false) AND true"
     """
-    if current_nesting >= max_nesting or random.random < 0.4: # Base case simple value or unary op
-        if random.random < 0.3 and current_nesting < max_nesting: # Add NOT
+    if current_nesting >= max_nesting or random.random < 0.4: # Base case simple value or unary op:
+f random.random < 0.3 and current_nesting < max_nesting: # Add NOT
             return f"NOT {generate_simple_proposition(max_nesting, current_nesting + 1)}"
         else:
 
             return random.choice(VALUES)
     else:
-    # Recursive case binary operation with optional parentheses
-    op = random.choice(OPERATORS)
+    # Recursive case binary operation with optional parentheses:
+p = random.choice(OPERATORS)
     left = generate_simple_proposition(max_nesting, current_nesting + 1)
     right = generate_simple_proposition(max_nesting, current_nesting + 1)
 
@@ -47,11 +47,11 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
     Evaluates a simple logical proposition string.
     Uses Python's eval after replacing 'true'/'false' and 'AND'/'OR'/'NOT'.
     This is a simplified and potentially unsafe evaluator for controlled inputs.:
-    A proper parser would be more robust for complex or untrusted inputs.
-    """
+    A proper parser would be more robust for complex or untrusted inputs.:
+""
     try:
-    # Replace keywords with Python equivalents
-    py_prop_str = prop_str.lower() # Python bools are capitalized, but let's be flexible
+    # Replace keywords with Python equivalents:
+y_prop_str = prop_str.lower() # Python bools are capitalized, but let's be flexible
     py_prop_str = py_prop_str.replace("true", "True")
     py_prop_str = py_prop_str.replace("false", "False")
     py_prop_str = py_prop_str.replace("and", "and") # Python 'and' is lowercase
@@ -71,8 +71,8 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
     # print(f"Could not evaluate: {prop_str} (Python form {py_prop_str}) - Error {e}")
     return None # Indicates an error in evaluation or invalid expression
 
-def generate_dataset(num_samples: int, max_nesting: int = 2)
-    """Generates a dataset of logical propositions and their answers."""
+def generate_dataset(num_samples: int, max_nesting: int = 2):
+""Generates a dataset of logical propositions and their answers."""
     dataset =
     generated_propositions = set # To avoid duplicates
 
@@ -86,10 +86,8 @@ def generate_dataset(num_samples: int, max_nesting: int = 2)
 
     answer = evaluate_proposition(prop)
 
-        if answer is not None: # Only add if evaluation was successful
-
-
-    dataset.append({"proposition": prop, "answer": bool(answer)}) # Store as actual boolean
+        if answer is not None: # Only add if evaluation was successful:
+ataset.append({"proposition": prop, "answer": bool(answer)}) # Store as actual boolean
             generated_propositions.add(prop)
             if len(dataset) % (num_samples // 10 if num_samples >=10 else 1) == 0:
 
@@ -97,8 +95,8 @@ def generate_dataset(num_samples: int, max_nesting: int = 2)
 
     return dataset
 
-def save_dataset(dataset, file_path)
-    """Saves the dataset to a JSON file."""
+def save_dataset(dataset, file_path):
+""Saves the dataset to a JSON file."""
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, 'w', encoding='utf-8') as f:
     json.dump(dataset, f, indent=2)

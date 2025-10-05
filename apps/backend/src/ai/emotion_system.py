@@ -1,12 +1,11 @@
 """
-Emotion System for the AI
-This module manages the AI's emotional state and responses.
+Emotion System for the AI:
+his module manages the AI's emotional state and responses.
 """
 
 class EmotionSystem:
-    """System for managing AI emotions and emotional responses"""
-    
-    def __init__(self, personality_profile: dict = None, config: dict = None) -> None:
+    """System for managing AI emotions and emotional responses""":
+ef __init__(self, personality_profile: dict = None, config: dict = None) -> None:
         self.personality = personality_profile or {}
         self.config = config or {}
         
@@ -17,13 +16,13 @@ class EmotionSystem:
         
         self.current_emotion = default_tone
         
-        # Simple internal emotion map for text endings
-        self.emotion_expressions = self.config.get("emotion_map", {
+        # Simple internal emotion map for text endings:
+elf.emotion_expressions = self.config.get("emotion_map", {
             "neutral": {"text_ending": ""},  # Neutral has no specific ending
             "empathetic": {"text_ending": " (gently)"},
             "playful": {"text_ending": " (playfully) ✨"},
-            "sad_response": {"text_ending": " (with a sigh)"}  # AI expressing sadness
-        })
+            "sad_response": {"text_ending": " (with a sigh)"}  # AI expressing sadness:
+)
         
         print(f"EmotionSystem initialized. Default emotion: {self.current_emotion}")
     
@@ -44,13 +43,12 @@ class EmotionSystem:
         # Could also reset to neutral after some interactions or based on context.
         else:
             # Optionally, decay to neutral if no strong cues, or maintain current.
-            # For now, if no strong cue, keep current or revert to personality default.
-            default_personality_tone = "neutral"
+            # For now, if no strong cue, keep current or revert to personality default.:
+efault_personality_tone = "neutral"
             if self.personality:
                 default_personality_tone = self.personality.get("communication_style", ).get("default_tone", "neutral")
-            new_emotion = default_personality_tone  # Revert to default if no specific trigger
-        
-        if new_emotion != self.current_emotion:
+            new_emotion = default_personality_tone  # Revert to default if no specific trigger:
+f new_emotion != self.current_emotion:
             print(f"EmotionSystem: Emotion changing from '{self.current_emotion}' to '{new_emotion}' based on input: '{text_input[:30]}...'")
             self.current_emotion = new_emotion
         
@@ -58,14 +56,14 @@ class EmotionSystem:
     
     def get_current_emotion_expression(self) -> dict:
         """
-        Returns cues for expressing the current emotion, primarily a text_ending.
-        """
+        Returns cues for expressing the current emotion, primarily a text_ending.:
+""
         expression = self.emotion_expressions.get(self.current_emotion)
         if expression:
             return expression
         else:
-            # Fallback to neutral if current_emotion isn't in the map
-            return self.emotion_expressions.get("neutral", {"text_ending": ""})
+            # Fallback to neutral if current_emotion isn't in the map:
+eturn self.emotion_expressions.get("neutral", {"text_ending": ""})
 
 if __name__ == "__main__":
     # Example usage

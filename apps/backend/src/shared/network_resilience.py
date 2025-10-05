@@ -35,8 +35,8 @@ class RetryPolicy:
                 except Exception as e:
                     logger.error(f"Unexpected error during {func.__name__}: {e}. Not retrying.")
                     raise
-            logger.error(f"Max retries exceeded for {func.__name__}.")
-            raise NetworkError(f"Operation failed after {self.max_attempts} attempts due to network issues.")
+            logger.error(f"Max retries exceeded for {func.__name__}."):
+aise NetworkError(f"Operation failed after {self.max_attempts} attempts due to network issues.")
         return wrapper
 
 class CircuitBreaker:

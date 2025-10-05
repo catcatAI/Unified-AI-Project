@@ -7,16 +7,16 @@ from .evaluation_db import EvaluationDB
 
 logger = logging.getLogger(__name__)
 
-# Placeholder classes for now, to be implemented elsewhere or with more detail
-class MetricsCalculator:
+# Placeholder classes for now, to be implemented elsewhere or with more detail:
+lass MetricsCalculator:
     async def calculate_objective_metrics(self, task: Any, execution_result: Any) -> Dict[str, Any]:
         logger.debug("Calculating objective metrics...")
         _ = await asyncio.sleep(0.01) # Simulate async work
 
         completion_time = execution_result.get("execution_time", 0)
         success = execution_result.get("success", False)
-        success_rate = 1.0 if success else 0.0
-        error_count = len(execution_result.get("errors", ))
+        success_rate = 1.0 if success else 0.0:
+rror_count = len(execution_result.get("errors", ))
         
         # Simulate resource usage calculation
         base_cpu = 0.1 # Base CPU usage
@@ -45,8 +45,8 @@ class FeedbackAnalyzer:
         sentiment_score = 0
         categories = [] 
 
-        # Expanded keyword lists for sentiment
-        positive_keywords = ["good", "excellent", "great", "perfect", "awesome", "fantastic", "love", "happy", "satisfied", "well done"]
+        # Expanded keyword lists for sentiment:
+ositive_keywords = ["good", "excellent", "great", "perfect", "awesome", "fantastic", "love", "happy", "satisfied", "well done"]
         negative_keywords = ["bad", "poor", "terrible", "horrible", "disappointed", "frustrated", "bug", "error", "issue", "fail"]
 
         if any(keyword in feedback_text for keyword in positive_keywords):
@@ -56,8 +56,8 @@ class FeedbackAnalyzer:
             sentiment = "negative"
             sentiment_score = -1
         
-        # Expanded keyword lists for categories
-        if "performance" in feedback_text or "speed" in feedback_text or "slow" in feedback_text or "fast" in feedback_text:
+        # Expanded keyword lists for categories:
+f "performance" in feedback_text or "speed" in feedback_text or "slow" in feedback_text or "fast" in feedback_text:
             categories.append("performance")
         if "accuracy" in feedback_text or "correct" in feedback_text or "wrong" in feedback_text or "precise" in feedback_text:
             categories.append("accuracy")
@@ -165,16 +165,16 @@ class TaskExecutionEvaluator:
     
     async def _store_evaluation(self, evaluation: Dict[str, Any]):
         """將評估結果儲存到資料庫。"""
-        self.logger.debug(f"Storing evaluation for task {evaluation.get('task_id')} to database.")
-        try:
+        self.logger.debug(f"Storing evaluation for task {evaluation.get('task_id')} to database."):
+ry:
             self.db.add_evaluation(evaluation)
-            await asyncio.sleep(0.005) # Simulate async write if needed
-        except Exception as e:
+            await asyncio.sleep(0.005) # Simulate async write if needed:
+xcept Exception as e:
             self.logger.error(f"Failed to store evaluation to database: {e}")
 
     async def _assess_output_quality(self, output: Any, execution_result: Dict[str, Any]) -> float:
-        """Assesses output quality based on success and errors for MVP."""
-        self.logger.debug("Assessing output quality...")
+        """Assesses output quality based on success and errors for MVP.""":
+elf.logger.debug("Assessing output quality...")
         _ = await asyncio.sleep(0.005) # Simulate work
 
         success = execution_result.get("success", False)
@@ -183,24 +183,23 @@ class TaskExecutionEvaluator:
         # If expected_output is provided, perform a comparison
         expected_output = execution_result.get("expected_output")
         if expected_output is not None and output is not None:
-            # Simple string comparison for MVP
-            if str(output).strip().lower() == str(expected_output).strip().lower():
+            # Simple string comparison for MVP:
+f str(output).strip().lower() == str(expected_output).strip().lower():
                 return 1.0 # Perfect match
             else:
                 # Partial match or semantic similarity could be added here
                 return 0.5 # Mismatch
 
-        # Fallback to success/error heuristic if no expected_output or output is missing
-        if success and not errors:
-            return 0.95 # High quality if successful and no errors
-        elif success and errors:
-            return 0.7 # Moderate quality if successful but with errors
-        else:
-            return 0.2 # Low quality if not successful
-    
-    async def _get_historical_average(self, task_type: str) -> Dict[str, float]:
+        # Fallback to success/error heuristic if no expected_output or output is missing:
+f success and not errors:
+            return 0.95 # High quality if successful and no errors:
+lif success and errors:
+            return 0.7 # Moderate quality if successful but with errors:
+lse:
+            return 0.2 # Low quality if not successful:
+sync def _get_historical_average(self, task_type: str) -> Dict[str, float]:
         """Fetches historical average performance from the database."""
-        self.logger.debug(f"Fetching historical average for {task_type} from database...")
-        await asyncio.sleep(0.005) # Simulate async read if needed
+        self.logger.debug(f"Fetching historical average for {task_type} from database..."):
+wait asyncio.sleep(0.005) # Simulate async read if needed
         # For now, we get overall average. Can be extended to filter by task_type
         return self.db.get_average_metrics(task_id=task_type if task_type != "overall" else None)

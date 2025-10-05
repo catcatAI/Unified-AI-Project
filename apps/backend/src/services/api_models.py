@@ -66,7 +66,7 @@ class HealthResponse(BaseModel):
     status: str
     timestamp: str
     services_initialized: Dict[str, bool]
-    components: Dict[str, Any] = 
+    components: Dict[str, Any] = {} 
 
 # --- Readiness Models ---
 class ReadinessResponse(BaseModel):

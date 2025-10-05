@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Test script for system integration
-"""
+Test script for system integration:
+""
 
 import sys
 from pathlib import Path
@@ -89,8 +89,8 @@ def test_request_processing() -> None:
     editor_request = {
             "type": "ai_editor_operation",
             "operation": "process_data",
-            "params": {"data": {"text": "Sample text for processing"}}
-    }
+            "params": {"data": {"text": "Sample text for processing"}}:
+
 
     result = unified_ai.process_request("test_user", editor_request)
     _ = print(f"Editor request result: {result}")

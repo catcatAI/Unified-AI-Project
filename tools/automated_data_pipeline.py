@@ -41,9 +41,8 @@ class AutomatedDataPipeline:
     _ = logger.info("步骤 1: 运行传统数据处理...")
 
     script_path = self.tools_dir / "process_traditional_data.py"
-        if not script_path.exists()
-
-    _ = logger.error(f"未找到数据处理脚本: {script_path}")
+        if not script_path.exists():
+ = logger.error(f"未找到数据处理脚本: {script_path}")
             return False
 
         try:
@@ -83,9 +82,8 @@ class AutomatedDataPipeline:
     _ = logger.info("步骤 2: 运行视觉模型训练...")
 
     script_path = self.tools_dir / "train_vision_model.py"
-        if not script_path.exists()
-
-    _ = logger.error(f"未找到视觉模型训练脚本: {script_path}")
+        if not script_path.exists():
+ = logger.error(f"未找到视觉模型训练脚本: {script_path}")
             return False
 
         try:
@@ -125,9 +123,8 @@ class AutomatedDataPipeline:
     _ = logger.info("步骤 3: 运行音频模型训练...")
 
     script_path = self.tools_dir / "train_audio_model.py"
-        if not script_path.exists()
-
-    _ = logger.error(f"未找到音频模型训练脚本: {script_path}")
+        if not script_path.exists():
+ = logger.error(f"未找到音频模型训练脚本: {script_path}")
             return False
 
         try:
@@ -167,9 +164,8 @@ class AutomatedDataPipeline:
     _ = logger.info("步骤 4: 运行文本模型训练...")
 
     script_path = self.tools_dir / "train_text_model.py"
-        if not script_path.exists()
-
-    _ = logger.error(f"未找到文本模型训练脚本: {script_path}")
+        if not script_path.exists():
+ = logger.error(f"未找到文本模型训练脚本: {script_path}")
             return False
 
         try:
@@ -209,9 +205,8 @@ class AutomatedDataPipeline:
     _ = logger.info("步骤 5: 运行特征提取...")
 
     script_path = self.tools_dir / "extract_features.py"
-        if not script_path.exists()
-
-    _ = logger.error(f"未找到特征提取脚本: {script_path}")
+        if not script_path.exists():
+ = logger.error(f"未找到特征提取脚本: {script_path}")
             return False
 
         try:
@@ -251,9 +246,8 @@ class AutomatedDataPipeline:
     _ = logger.info("步骤 6: 运行多模态数据生成...")
 
     script_path = self.tools_dir / "generate_multimodal_data.py"
-        if not script_path.exists()
-
-    _ = logger.error(f"未找到多模态数据生成脚本: {script_path}")
+        if not script_path.exists():
+ = logger.error(f"未找到多模态数据生成脚本: {script_path}")
             return False
 
         try:
@@ -293,9 +287,8 @@ class AutomatedDataPipeline:
     _ = logger.info("步骤 7: 运行数据验证...")
 
     script_path = self.tools_dir / "validate_generated_data.py"
-        if not script_path.exists()
-
-    _ = logger.error(f"未找到数据验证脚本: {script_path}")
+        if not script_path.exists():
+ = logger.error(f"未找到数据验证脚本: {script_path}")
             return False
 
         try:
@@ -357,9 +350,8 @@ class AutomatedDataPipeline:
     _ = logger.info("步骤 9: 准备概念模型训练数据...")
 
     script_path = self.tools_dir / "prepare_concept_models_training_data.py"
-        if not script_path.exists()
-
-    _ = logger.error(f"未找到概念模型训练数据准备脚本: {script_path}")
+        if not script_path.exists():
+ = logger.error(f"未找到概念模型训练数据准备脚本: {script_path}")
             return False
 
         try:
@@ -399,9 +391,8 @@ class AutomatedDataPipeline:
     _ = logger.info("步骤 10: 运行概念模型训练...")
 
     # 检查概念模型训练数据是否存在
-        if not self.concept_models_data_dir.exists()
-
-    _ = logger.error("概念模型训练数据目录不存在")
+        if not self.concept_models_data_dir.exists():
+ = logger.error("概念模型训练数据目录不存在")
             return False
 
     # 检查必要的数据文件
@@ -417,9 +408,8 @@ class AutomatedDataPipeline:
         for file_name in required_files:
 
     file_path = self.concept_models_data_dir / file_name
-            if not file_path.exists()
-
-    _ = missing_files.append(file_name)
+            if not file_path.exists():
+ = missing_files.append(file_name)
 
         if missing_files:
 
@@ -429,9 +419,8 @@ class AutomatedDataPipeline:
 
     # 运行概念模型训练脚本
     train_script_path = self.training_dir / "train_model.py"
-        if not train_script_path.exists()
-
-    _ = logger.error(f"未找到模型训练脚本: {train_script_path}")
+        if not train_script_path.exists():
+ = logger.error(f"未找到模型训练脚本: {train_script_path}")
             return False
 
         try:
@@ -521,8 +510,8 @@ class AutomatedDataPipeline:
 
     return True
 
-    def generate_execution_report(self, total_duration: float, steps: List[Tuple[str, Any]])
-    """生成执行报告"""
+    def generate_execution_report(self, total_duration: float, steps: List[Tuple[str, Any]]):
+""生成执行报告"""
     _ = logger.info("正在生成执行报告...")
 
     report = {
@@ -555,8 +544,8 @@ class AutomatedDataPipeline:
 
             _ = logger.error(f"保存执行报告时出错: {e}")
 
-    def schedule_regular_pipeline(self, interval_hours: int = 24)
-    """调度定期执行流水线"""
+    def schedule_regular_pipeline(self, interval_hours: int = 24):
+""调度定期执行流水线"""
     _ = logger.info(f"设置定期执行流水线，间隔: {interval_hours} 小时")
 
         while True:

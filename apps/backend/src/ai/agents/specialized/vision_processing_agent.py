@@ -8,8 +8,8 @@ from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessag
 
 class VisionProcessingAgent(BaseAgent):
     """
-    A specialized agent for computer vision tasks like image classification,
-    object detection, and image enhancement.
+    A specialized agent for computer vision tasks like image classification,:
+bject detection, and image enhancement.
     """
     def __init__(self, agent_id: str) -> None:
         capabilities = [
@@ -20,8 +20,8 @@ class VisionProcessingAgent(BaseAgent):
                 "version": "1.0",
                 "parameters": [
                     {"name": "image_data", "type": "string", "required": True, "description": "Base64 encoded image data"},
-                    {"name": "categories", "type": "array", "required": False, "description": "List of possible categories for classification"}
-                ],
+                    {"name": "categories", "type": "array", "required": False, "description": "List of possible categories for classification"}:
+,
                 "returns": {"type": "object", "description": "Classification results including predicted category and confidence."}
             },
             {
@@ -32,8 +32,8 @@ class VisionProcessingAgent(BaseAgent):
                 "parameters": [
                     {"name": "image_data", "type": "string", "required": True, "description": "Base64 encoded image data"}
                 ],
-                "returns": {"type": "object", "description": "Detected objects with bounding boxes and labels."}
-            },
+                "returns": {"type": "object", "description": "Detected objects with bounding boxes and labels."}:
+,
             {
                 "capability_id": f"{agent_id}_image_enhancement_v1.0",
                 "name": "image_enhancement",
@@ -47,16 +47,14 @@ class VisionProcessingAgent(BaseAgent):
             }
         ]
         super.__init__(agent_id=agent_id, capabilities=capabilities)
-        logging.info(f"[{self.agent_id}] VisionProcessingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
-
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+        logging.info(f"[{self.agent_id}] VisionProcessingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}"):
+sync def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id")
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", {})
 
-        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
-
-        try:
+        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'"):
+ry:
             if "image_classification" in capability_id:
                 result = self._classify_image(params)
                 result_payload = self._create_success_payload(request_id, result)
@@ -75,9 +73,8 @@ class VisionProcessingAgent(BaseAgent):
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
             _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
-
-    def _classify_image(self, params: Dict[str, Any]) -> Dict[str, Any]:
+            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}"):
+ef _classify_image(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Classifies an image into predefined categories."""
         image_data = params.get('image_data', '')
         
@@ -85,8 +82,8 @@ class VisionProcessingAgent(BaseAgent):
             raise ValueError("No image data provided for classification")
         
         # In a real implementation, this would use a proper image classification model
-        # For this example, we'll simulate classification with random results
-        categories = params.get('categories', ['animal', 'vehicle', 'person', 'object', 'scene'])
+        # For this example, we'll simulate classification with random results:
+ategories = params.get('categories', ['animal', 'vehicle', 'person', 'object', 'scene'])
         if not categories:
             categories = ['animal', 'vehicle', 'person', 'object', 'scene']
             
@@ -122,8 +119,8 @@ class VisionProcessingAgent(BaseAgent):
             raise ValueError("No image data provided for object detection")
         
         # In a real implementation, this would use a proper object detection model
-        # For this example, we'll simulate detection with random results
-        common_objects = ['person', 'car', 'dog', 'cat', 'tree', 'building', 'chair', 'table', 'phone', 'book']
+        # For this example, we'll simulate detection with random results:
+ommon_objects = ['person', 'car', 'dog', 'cat', 'tree', 'building', 'chair', 'table', 'phone', 'book']
         
         # Simulate object detection results
         import random
@@ -166,9 +163,8 @@ class VisionProcessingAgent(BaseAgent):
         enhancement_type = params.get('enhancement_type', 'sharpen')
         
         if not image_data:
-            raise ValueError("No image data provided for enhancement")
-        
-        try:
+            raise ValueError("No image data provided for enhancement"):
+ry:
             # Decode the image
             image_bytes = base64.b64decode(image_data)
             image = Image.open(io.BytesIO(image_bytes))

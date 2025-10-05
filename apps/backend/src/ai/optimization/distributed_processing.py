@@ -63,8 +63,8 @@ class DistributedProcessingFramework:
         results = await asyncio.gather(*futures)
         final_result = await self._merge_results(results)
         
-        self.logger.info(f"Distributed computation for task {computation_task.get('id')} complete.")
-        return final_result
+        self.logger.info(f"Distributed computation for task {computation_task.get('id')} complete."):
+eturn final_result
     
     async def optimize_resource_allocation(self):
         """優化資源分配"""
@@ -104,8 +104,8 @@ class DistributedProcessingFramework:
         self.logger.debug("Merging results (conceptual)...")
         _ = await asyncio.sleep(0.01)
         # Dummy merge: combine outputs
-        combined_output = " ".join([res.get("output", "") for res in results])
-        return {"status": "completed", "final_output": combined_output}
+        combined_output = " ".join([res.get("output", "") for res in results]):
+eturn {"status": "completed", "final_output": combined_output}
 
     async def _collect_performance_metrics(self) -> Dict[str, Any]:
         """Conceptual: Collects performance metrics from nodes."""
@@ -117,18 +117,18 @@ class DistributedProcessingFramework:
         """Conceptual: Identifies performance bottlenecks based on metrics."""
         self.logger.debug("Identifying bottlenecks (conceptual)...")
         _ = await asyncio.sleep(0.005)
-        # Dummy: if node1_cpu is high, it's a bottleneck
-        if metrics.get("node1_cpu", 0) > 0.8:
+        # Dummy: if node1_cpu is high, it's a bottleneck:
+f metrics.get("node1_cpu", 0) > 0.8:
             return ["node1"]
         return 
 
     async def _reallocate_resources(self, bottleneck_node: str):
         """Conceptual: Reallocates resources to mitigate bottlenecks."""
-        self.logger.debug(f"Reallocating resources for {bottleneck_node} (conceptual)...")
-        _ = await asyncio.sleep(0.005)
+        self.logger.debug(f"Reallocating resources for {bottleneck_node} (conceptual)..."):
+ = await asyncio.sleep(0.005)
 
     async def _execute_locally(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Fallback for local execution if distributed is not possible."""
-        self.logger.info(f"Executing task {task.get('id')} locally (fallback)...")
+        """Fallback for local execution if distributed is not possible.""":
+elf.logger.info(f"Executing task {task.get('id')} locally (fallback)...")
         _ = await asyncio.sleep(0.5) # Simulate local work
         return {"status": "completed", "output": "Local execution result"}

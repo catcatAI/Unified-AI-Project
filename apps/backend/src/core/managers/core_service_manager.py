@@ -1,7 +1,7 @@
 """Core Service Manager - 核心服务管理器
 
-This module provides a centralized system for managing core services with
-dynamic loading, dependency management, health monitoring, and hot reload capabilities.:
+This module provides a centralized system for managing core services with:
+ynamic loading, dependency management, health monitoring, and hot reload capabilities.:
     此模块提供了一个集中式的核心服务管理系统，支持动态加载、依赖管理、健康监控和热重载功能。
 """
 
@@ -21,8 +21,8 @@ logger: Any = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-class ServiceStatus(Enum)
-    """服务状态枚举"""
+class ServiceStatus(Enum):
+""服务状态枚举"""
     UNLOADED = "unloaded"
     LOADING = "loading"
     LOADED = "loaded"
@@ -31,8 +31,8 @@ class ServiceStatus(Enum)
     DEGRADED = "degraded"
 
 
-class ServiceHealth(Enum)
-    """服务健康状态枚举"""
+class ServiceHealth(Enum):
+""服务健康状态枚举"""
     HEALTHY = "healthy"
     UNHEALTHY = "unhealthy"
     DEGRADED = "degraded"
@@ -66,8 +66,8 @@ class ServiceInfo:
     health_check_task: Optional[asyncio.Task] = None
 
 
-class HealthCheckFunction(ABC)
-    """健康检查函数抽象基类"""
+class HealthCheckFunction(ABC):
+""健康检查函数抽象基类"""
 
     @abstractmethod
     async def check_health(self, service_instance: Any) -> ServiceHealth:
@@ -100,34 +100,33 @@ class CoreServiceManager:
 
     logger.info("CoreServiceManager initialized")
 
-    def _register_default_health_checks(self)
-    """注册默认的健康检查函数"""
+    def _register_default_health_checks(self):
+""注册默认的健康检查函数"""
     # 为常见的服务类型注册默认健康检查
     pass
 
-    def register_service(self, config: ServiceConfig)
-    """注册服务配置"""
+    def register_service(self, config: ServiceConfig):
+""注册服务配置"""
     self._service_configs[config.name] = config
     self._services[config.name] = ServiceInfo(config=config)
     logger.info(f"Service registered: {config.name}")
 
-    def register_health_check(self, service_name: str, health_check: HealthCheckFunction)
-    """注册服务的健康检查函数"""
+    def register_health_check(self, service_name: str, health_check: HealthCheckFunction):
+""注册服务的健康检查函数"""
     self._health_check_functions[service_name] = health_check
-        logger.info(f"Health check registered for service: {service_name}")
-
-    def register_event_handler(self, event_type: str, handler: Callable)
-    """注册事件处理器"""
+        logger.info(f"Health check registered for service: {service_name}"):
+ef register_event_handler(self, event_type: str, handler: Callable):
+""注册事件处理器"""
         if event_type in self._event_handlers:
 
     self._event_handlers[event_type].append(handler)
-            logger.info(f"Event handler registered for {event_type}")
-    else:
+            logger.info(f"Event handler registered for {event_type}"):
+lse:
 
     logger.warning(f"Unknown event type: {event_type}")
 
-    async def _emit_event(self, event_type: str, service_name: str, data: Optional[Dict[str, Any]] = None)
-    """触发事件"""
+    async def _emit_event(self, event_type: str, service_name: str, data: Optional[Dict[str, Any]] = None):
+""触发事件"""
         if event_type in self._event_handlers:
 
     for handler in self._event_handlers[event_type]:
@@ -137,20 +136,15 @@ class CoreServiceManager:
 
 
 
-                    if asyncio.iscoroutinefunction(handler)
-
-
-
-
-    await handler(service_name, data)
+                    if asyncio.iscoroutinefunction(handler):
+wait handler(service_name, data)
                     else:
 
                         handler(service_name, data)
                 except Exception as e:
 
-                    logger.error(f"Error in event handler for {event_type}: {e}")
-
-    async def _resolve_dependencies(self, service_name: str) -> bool:
+                    logger.error(f"Error in event handler for {event_type}: {e}"):
+sync def _resolve_dependencies(self, service_name: str) -> bool:
     """解析服务依赖"""
     service_info = self._services.get(service_name)
         if not service_info:
@@ -165,8 +159,8 @@ class CoreServiceManager:
     dep_info = self._services.get(dep_name)
             if not dep_info or dep_info.status != ServiceStatus.LOADED:
 
-    logger.warning(f"Dependency {dep_name} not loaded for service {service_name}")
-    return False
+    logger.warning(f"Dependency {dep_name} not loaded for service {service_name}"):
+eturn False
 
     service_info.dependencies_resolved = True
     return True
@@ -187,9 +181,8 @@ class CoreServiceManager:
             await self._emit_event('service_loading', service_name)
 
             # 解析依赖
-            if not await self._resolve_dependencies(service_name)
-
-    if config.dependencies:  # 只有当确实有依赖时才报错
+            if not await self._resolve_dependencies(service_name):
+f config.dependencies:  # 只有当确实有依赖时才报错
                     service_info.status = ServiceStatus.ERROR
                     service_info.error_message = "Dependencies not resolved"
                     await self._emit_event('service_error', service_name, {'error': service_info.error_message})
@@ -257,8 +250,8 @@ class CoreServiceManager:
     """批量加载服务"""
     results =
     # 收集所有需要加载的服务及其依赖
-    all_services = set(service_names)
-        for name in service_names:
+    all_services = set(service_names):
+or name in service_names:
 
     service_info = self._services.get(name)
             if service_info:
@@ -282,8 +275,8 @@ class CoreServiceManager:
     visited = set
     temp_visited = set
 
-        def visit(name: str)
-    if name in temp_visited:
+        def visit(name: str):
+f name in temp_visited:
 
     raise ValueError(f"Circular dependency detected involving {name}")
             if name not in visited:
@@ -374,12 +367,8 @@ class CoreServiceManager:
 
 
 
-                            if asyncio.iscoroutinefunction(callback)
-
-
-
-
-    await callback(service_info.instance)
+                            if asyncio.iscoroutinefunction(callback):
+wait callback(service_info.instance)
                             else:
 
                                 callback(service_info.instance)
@@ -388,16 +377,14 @@ class CoreServiceManager:
                             logger.error(f"Error in resource cleanup callback for {service_name}: {e}")
 
                 # 调用服务的关闭方法（如果存在）
-                if service_info.instance and hasattr(service_info.instance, 'shutdown')
-
-    if asyncio.iscoroutinefunction(service_info.instance.shutdown)
+                if service_info.instance and hasattr(service_info.instance, 'shutdown'):
+f asyncio.iscoroutinefunction(service_info.instance.shutdown)
     await service_info.instance.shutdown
                     else:
 
                         service_info.instance.shutdown
-                elif service_info.instance and hasattr(service_info.instance, 'close')
-
-    if asyncio.iscoroutinefunction(service_info.instance.close)
+                elif service_info.instance and hasattr(service_info.instance, 'close'):
+f asyncio.iscoroutinefunction(service_info.instance.close)
 
 
     await service_info.instance.close
@@ -436,15 +423,15 @@ class CoreServiceManager:
     dependent_services.append(name)
     return dependent_services
 
-    async def _check_service_health(self, service_name: str)
-    """检查服务健康状态"""
+    async def _check_service_health(self, service_name: str):
+""检查服务健康状态"""
     service_info = self._services.get(service_name)
         if not service_info or service_info.status != ServiceStatus.LOADED:
 
     return
 
-    try
-            health = ServiceHealth.UNHEALTHY
+    try:
+ealth = ServiceHealth.UNHEALTHY
 
             # 使用自定义健康检查函数
             if service_name in self._health_check_functions:
@@ -484,12 +471,12 @@ class CoreServiceManager:
         except Exception as e:
 
 
-            logger.error(f"Error checking health for service {service_name}: {e}")
-            service_info.health = ServiceHealth.UNHEALTHY
+            logger.error(f"Error checking health for service {service_name}: {e}"):
+ervice_info.health = ServiceHealth.UNHEALTHY
             service_info.error_message = str(e)
 
-    async def _health_monitoring_loop(self)
-    """健康监控循环"""
+    async def _health_monitoring_loop(self):
+""健康监控循环"""
         while self._is_running:
 
     try:
@@ -512,16 +499,16 @@ class CoreServiceManager:
                 logger.error(f"Error in health monitoring loop: {e}")
                 await asyncio.sleep(5.0)
 
-    async def start_health_monitoring(self)
-    """启动健康监控"""
+    async def start_health_monitoring(self):
+""启动健康监控"""
         if not self._is_running:
 
     self._is_running = True
             self._monitoring_task = asyncio.create_task(self._health_monitoring_loop)
             logger.info("Health monitoring started")
 
-    async def stop_health_monitoring(self)
-    """停止健康监控"""
+    async def stop_health_monitoring(self):
+""停止健康监控"""
     self._is_running = False
         if self._monitoring_task:
 
@@ -539,9 +526,8 @@ class CoreServiceManager:
     """重启服务"""
     logger.info(f"Restarting service {service_name}")
     # 先卸载服务
-        if not await self.unload_service(service_name, force=True)
-
-    return False
+        if not await self.unload_service(service_name, force=True):
+eturn False
     # 再加载服务
     return await self.load_service(service_name, force=True)
 
@@ -549,9 +535,8 @@ class CoreServiceManager:
     """重新加载服务（卸载后重新加载）"""
     logger.info(f"Reloading service {service_name}")
     # 先卸载服务
-        if not await self.unload_service(service_name, force=True)
-
-    return False
+        if not await self.unload_service(service_name, force=True):
+eturn False
     # 再加载服务
     return await self.load_service(service_name, force=True)
 
@@ -566,12 +551,12 @@ class CoreServiceManager:
     def get_service_status(self, service_name: str) -> Optional[ServiceStatus]:
     """获取服务状态"""
     service_info = self._services.get(service_name)
-        return service_info.status if service_info else None
-    def get_service_health(self, service_name: str) -> Optional[ServiceHealth]:
+        return service_info.status if service_info else None:
+ef get_service_health(self, service_name: str) -> Optional[ServiceHealth]:
     """获取服务健康状态"""
     service_info = self._services.get(service_name)
-        return service_info.health if service_info else None
-    def get_all_services_status(self) -> Dict[str, Dict[str, Any]]:
+        return service_info.health if service_info else None:
+ef get_all_services_status(self) -> Dict[str, Dict[str, Any]]:
     """获取所有服务的状态信息"""
     status_info =
         for name, service_info in self._services.items:
@@ -585,18 +570,17 @@ class CoreServiceManager:
             }
     return status_info
 
-    async def __aenter__(self)
-    """异步上下文管理器入口"""
+    async def __aenter__(self):
+""异步上下文管理器入口"""
     await self.start_health_monitoring
     return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb)
-    """异步上下文管理器出口"""
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+""异步上下文管理器出口"""
     await self.stop_health_monitoring
     # 卸载所有服务
-        for service_name in list(self._services.keys)
-
-    await self.unload_service(service_name, force=True)
+        for service_name in list(self._services.keys):
+wait self.unload_service(service_name, force=True)
 
 
 # 全局核心服务管理器实例
@@ -613,8 +597,8 @@ def get_core_service_manager -> CoreServiceManager:
 
 
 # 示例健康检查函数
-class ExampleHealthCheck(HealthCheckFunction)
-    """示例健康检查函数"""
+class ExampleHealthCheck(HealthCheckFunction):
+""示例健康检查函数"""
 
     async def check_health(self, service_instance: Any) -> ServiceHealth:
     """检查服务健康状态"""
@@ -622,16 +606,15 @@ class ExampleHealthCheck(HealthCheckFunction)
     # 例如检查数据库连接、网络连接等
         try:
             # 如果服务有is_healthy方法，调用它
-            if hasattr(service_instance, 'is_healthy')
-
-    if asyncio.iscoroutinefunction(service_instance.is_healthy)
+            if hasattr(service_instance, 'is_healthy'):
+f asyncio.iscoroutinefunction(service_instance.is_healthy)
     is_healthy = await service_instance.is_healthy
                 else:
 
                     is_healthy = service_instance.is_healthy
 
-                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY
-    else:
+                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY:
+lse:
                 # 默认认为服务健康
                 return ServiceHealth.HEALTHY
         except Exception as e:

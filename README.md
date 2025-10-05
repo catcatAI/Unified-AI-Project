@@ -353,7 +353,7 @@ pnpm clean
 
 项目已完成所有计划任务，达到发布标准。系统具备完整的AI代理框架、上下文管理系统、HSP协议实现、核心服务和训练系统。项目文档齐全，测试覆盖率高，具备良好的可维护性和扩展性。
 
-> **注意**: 项目正在进行重构以改善文件结构和代码质量。详细信息请参考[重构计划](PROJECT_REFACTOR_PLAN.md)。
+> **注意**: 项目中仍存在部分语法错误需要修复，详细信息请参考[PROJECT_FINAL_COMPLETION_REPORT.md](PROJECT_FINAL_COMPLETION_REPORT.md)。
 
 ## 许可证
 

@@ -1,7 +1,7 @@
 # tests/test_security.py
 """
-Unit tests for the security module
-"""
+Unit tests for the security module:
+""
 
 import unittest
 import sys
@@ -30,11 +30,11 @@ SandboxConfig,
 ResourceLimits
 )
 
-class TestPermissionControl(unittest.TestCase)
-    """Test cases for the PermissionControlSystem class""":
+class TestPermissionControl(unittest.TestCase):
+""Test cases for the PermissionControlSystem class""":
 
-    def setUp(self)
-    """Set up test fixtures"""
+    def setUp(self):
+""Set up test fixtures"""
 self.permission_system = PermissionControlSystem()
 
     def test_permission_system_initialization(self) -> None:
@@ -43,8 +43,8 @@ self.assertIsInstance(self.permission_system, PermissionControlSystem)
 self.assertTrue(len(self.permission_system.default_rules) > 0)
 
     def test_permission_check_allowed(self) -> None:
-        """Test permission check for allowed operation"""
-context = PermissionContext(
+        """Test permission check for allowed operation""":
+ontext = PermissionContext(
 user_id="ai_agent_1",
 operation=PermissionType.FILE_ACCESS.value,
 resource="/projects/test/file.txt",
@@ -90,8 +90,8 @@ self.assertEqual(len(self.permission_system.rules["test_user"]), 1)
 
     def test_permission_check_with_resource_pattern(self) -> None:
     """Test permission check with resource pattern matching"""
-    # Add a rule with specific resource pattern
-rule = PermissionRule(
+    # Add a rule with specific resource pattern:
+ule = PermissionRule(
 permission_type=PermissionType.FILE_ACCESS,
 level: str=PermissionLevel.FULL_ACCESS,
 resource_pattern="/projects/specific/*",
@@ -123,8 +123,8 @@ self.assertTrue(result2)
 
     def test_permission_check_with_action_restrictions(self) -> None:
     """Test permission check with action restrictions"""
-    # Add a rule with allowed actions
-rule = PermissionRule(
+    # Add a rule with allowed actions:
+ule = PermissionRule(
 permission_type=PermissionType.SYSTEM_COMMAND,
 level: str=PermissionLevel.READ_ONLY,
 resource_pattern="*",
@@ -153,18 +153,18 @@ action="rm"
 result2 = self.permission_system.check_permission(context2)
 self.assertFalse(result2)
 
-class TestAuditLogger(unittest.TestCase)
-    """Test cases for the AuditLogger class""":
+class TestAuditLogger(unittest.TestCase):
+""Test cases for the AuditLogger class""":
 
-    def setUp(self)
-    """Set up test fixtures"""
-        # Create a temporary file for audit log
-self.temp_file = tempfile.NamedTemporaryFile(delete=False)
+    def setUp(self):
+""Set up test fixtures"""
+        # Create a temporary file for audit log:
+elf.temp_file = tempfile.NamedTemporaryFile(delete=False)
 self.temp_file.close()
 self.audit_logger = AuditLogger(log_file_path=self.temp_file.name)
 
-    def tearDown(self)
-    """Clean up test fixtures"""
+    def tearDown(self):
+""Clean up test fixtures"""
     # Remove the temporary file
 os.unlink(self.temp_file.name)
 
@@ -206,9 +206,8 @@ self.assertEqual(event.user_id, "test_user")
     def test_flush_buffer(self) -> None:
     """Test flushing the buffer to file"""
     # Add multiple events to buffer
-        for i in range(5)
-
-    self.audit_logger.log_operation(
+        for i in range(5):
+elf.audit_logger.log_operation(
 user_id="test_user",
 operation=f"operation_{i}",
 resource="test_resource",
@@ -223,9 +222,8 @@ self.audit_logger._flush_buffer()
 self.assertEqual(len(self.audit_logger.log_buffer), 0)
 
     # Check that events were written to file
-        if os.path.exists(self.temp_file.name)
-
-    with open(self.temp_file.name, 'r') as f:
+        if os.path.exists(self.temp_file.name):
+ith open(self.temp_file.name, 'r') as f:
 lines = f.readlines()
 self.assertEqual(len(lines), 5)
         else:
@@ -235,9 +233,8 @@ self.fail("Audit log file was not created")
     def test_get_recent_events(self) -> None:
     """Test getting recent events"""
     # Add multiple events
-        for i in range(10)
-
-    self.audit_logger.log_operation(
+        for i in range(10):
+elf.audit_logger.log_operation(
 user_id="test_user",
 operation=f"operation_{i}",
 resource="test_resource",
@@ -256,11 +253,11 @@ self.assertEqual(len(recent_events), 5)
 self.assertEqual(recent_events[0].operation, "operation_9")
 self.assertEqual(recent_events[4].operation, "operation_5")
 
-class TestEnhancedSandbox(unittest.TestCase)
-    """Test cases for the EnhancedSandboxExecutor class""":
+class TestEnhancedSandbox(unittest.TestCase):
+""Test cases for the EnhancedSandboxExecutor class""":
 
-    def setUp(self)
-    """Set up test fixtures"""
+    def setUp(self):
+""Set up test fixtures"""
 self.sandbox_config = SandboxConfig()
 self.sandbox = EnhancedSandboxExecutor(self.sandbox_config)
 
@@ -280,8 +277,8 @@ class TestClass:
 result = self.sandbox._validate_code(valid_code)
 self.assertTrue(result[0])
 
-    # Invalid code with restricted module
-invalid_code = '''
+    # Invalid code with restricted module:
+nvalid_code = '''
 import os
 class TestClass:
     def test_method(self, data) -> None:
@@ -299,8 +296,8 @@ class DataProcessor:
     def __init__(self, config=None) -> None:
     pass
 
-    def process(self, data)
-    if isinstance(data, dict)
+    def process(self, data):
+f isinstance(data, dict)
 
     return {"processed": True, "keys": list(data.keys())}
         else:
@@ -322,12 +319,12 @@ self.assertIsNotNone(result or error)
 
     def test_dangerous_code_blocking(self) -> None:
     """Test blocking of dangerous code"""
-    # Code with dangerous operations
-dangerous_code = '''
+    # Code with dangerous operations:
+angerous_code = '''
 import os
 class DangerousClass:
-    def dangerous_method(self, data)
-os.system("rm -rf /")
+    def dangerous_method(self, data):
+s.system("rm -rf /")
     return "deleted everything"
 '''
 

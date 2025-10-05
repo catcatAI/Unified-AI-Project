@@ -171,11 +171,10 @@ def test_model_training_system() -> None:
         logger.info(f"磁盘空间检查: {'充足' if has_space else '不足'}")
 
     # 测试检查点功能（如果方法存在）
-        if hasattr(trainer, 'save_checkpoint')
-
-    checkpoint_saved = trainer.save_checkpoint(1, {'test': 'data'})
-            logger.info(f"检查点保存: {'成功' if checkpoint_saved else '失败'}")
-    else:
+        if hasattr(trainer, 'save_checkpoint'):
+heckpoint_saved = trainer.save_checkpoint(1, {'test': 'data'})
+            logger.info(f"检查点保存: {'成功' if checkpoint_saved else '失败'}"):
+lse:
 
     _ = logger.info("检查点功能不可用")
 
@@ -211,10 +210,8 @@ def main() -> None:
     _ = print(f"\n🔍 测试 {test_name}...")
         try:
 
-            if test_func()
-
-
-    passed += 1
+            if test_func():
+assed += 1
                 _ = print(f"✅ {test_name} 测试通过")
             else:
 

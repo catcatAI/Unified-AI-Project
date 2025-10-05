@@ -54,8 +54,8 @@ class ServiceDiscoveryModule:
             self.staleness_threshold_seconds
     )
 
-    def start_cleanup_task(self, cleanup_interval_seconds: int = 60)
-    """Starts the periodic cleanup task in a background thread."""
+    def start_cleanup_task(self, cleanup_interval_seconds: int = 60):
+""Starts the periodic cleanup task in a background thread."""
         if self._cleanup_thread is None:
 
     self._stop_event.clear
@@ -65,10 +65,9 @@ class ServiceDiscoveryModule:
                 daemon=True
             )
             self._cleanup_thread.start
-            logger.info(f"ServiceDiscoveryModule cleanup task started with interval {cleanup_interval_seconds}s.")
-
-    def stop_cleanup_task(self)
-    """Stops the periodic cleanup task."""
+            logger.info(f"ServiceDiscoveryModule cleanup task started with interval {cleanup_interval_seconds}s."):
+ef stop_cleanup_task(self):
+""Stops the periodic cleanup task."""
         if self._cleanup_thread is not None:
 
     self._stop_event.set
@@ -76,22 +75,22 @@ class ServiceDiscoveryModule:
             self._cleanup_thread = None
             logger.info("ServiceDiscoveryModule cleanup task stopped.")
 
-    def _periodic_cleanup(self, cleanup_interval_seconds: int)
-        """The target function for the cleanup thread.""":
+    def _periodic_cleanup(self, cleanup_interval_seconds: int):
+""The target function for the cleanup thread.""":
     while not self._stop_event.is_set:
 
     self.remove_stale_capabilities
             # Use wait instead of sleep to allow earlier exit on stop event
             self._stop_event.wait(cleanup_interval_seconds)
 
-    def remove_stale_capabilities(self)
-    """Removes capabilities that have exceeded the staleness threshold."""
+    def remove_stale_capabilities(self):
+""Removes capabilities that have exceeded the staleness threshold."""
     with self.lock:
     current_time = datetime.now(timezone.utc)
             stale_keys = [
                 key for key, (_, last_seen) in self.known_capabilities.items:
-    if (current_time - last_seen).total_seconds > self.staleness_threshold_seconds
-            ]
+    if (current_time - last_seen).total_seconds > self.staleness_threshold_seconds:
+
             for key in stale_keys:
 
     del self.known_capabilities[key]
@@ -101,8 +100,8 @@ class ServiceDiscoveryModule:
     self,
     payload: HSPCapabilityAdvertisementPayload,
     sender_ai_id: str,  # The direct sender from the HSP envelope
-        envelope: HSPMessageEnvelope # Full envelope for context if needed
-    ) -> None:
+        envelope: HSPMessageEnvelope # Full envelope for context if needed:
+ -> None:
     """
     Processes an incoming HSPCapabilityAdvertisementPayload.
     Stores or updates the capability in the registry with a 'last_seen' timestamp.:
@@ -121,28 +120,27 @@ class ServiceDiscoveryModule:
         if not capability_id:
 
 
-    logger.error("Received capability advertisement with no capability_id. Discarding. Payload: %s", payload)
-            return
+    logger.error("Received capability advertisement with no capability_id. Discarding. Payload: %s", payload):
+eturn
 
-        if not advertiser_ai_id
-    logger.error("Received capability advertisement (ID: %s) with no 'ai_id' (advertiser AI ID) in payload. Discarding. Payload: %s", capability_id, payload)
-            return
+        if not advertiser_ai_id:
+ogger.error("Received capability advertisement (ID: %s) with no 'ai_id' (advertiser AI ID) in payload. Discarding. Payload: %s", capability_id, payload):
+eturn
 
     logger.debug("Processing capability advertisement: ID=%s, AI=%s, Sender=%s", capability_id, advertiser_ai_id, sender_ai_id)
 
         # Optional Could use sender_ai_id for additional trust checks or logging if different from advertiser_ai_id
-        # For now, the primary identifier for trust is the advertiser_ai_id from the payload.
-
-    with self.lock:
+        # For now, the primary identifier for trust is the advertiser_ai_id from the payload.:
+ith self.lock:
     current_time = datetime.now(timezone.utc)
             self.known_capabilities[capability_id] = (payload, current_time)
             logger.info(
-                "Processed capability advertisement for ID: %s from AI: %s (Sender: %s). Last seen updated to: %s.",
-                _ = capability_id, advertiser_ai_id, sender_ai_id, current_time.isoformat
+                "Processed capability advertisement for ID: %s from AI: %s (Sender: %s). Last seen updated to: %s.",:
+ = capability_id, advertiser_ai_id, sender_ai_id, current_time.isoformat
             )
             logger.debug("Stored capability: %s, Last seen: %s", capability_id, current_time.isoformat)
-            # Log the current state of known_capabilities for debugging
-    logger.debug("Current known_capabilities state after update: %s",
+            # Log the current state of known_capabilities for debugging:
+ogger.debug("Current known_capabilities state after update: %s",
                         {cap_id: cap_data[0].get('name') for cap_id, cap_data in self.known_capabilities.items}):
 
     async def find_capabilities(
@@ -168,21 +166,21 @@ class ServiceDiscoveryModule:
     Returns:
             A list of HSPCapabilityAdvertisementPayload objects matching the criteria.
     """
-        # Tuples of (payload, trust_score) for potential sorting
-    pre_results: List[Tuple[HSPCapabilityAdvertisementPayload, float]] =
+        # Tuples of (payload, trust_score) for potential sorting:
+re_results: List[Tuple[HSPCapabilityAdvertisementPayload, float]] =
 
     current_time = datetime.now(timezone.utc)
 
-    logger.debug("Finding capabilities with filters: ID=%s, Name=%s, Tags=%s, MinTrust=%s, SortByTrust=%s",
-                     capability_id_filter, capability_name_filter, tags_filter, min_trust_score, sort_by_trust)
+    logger.debug("Finding capabilities with filters: ID=%s, Name=%s, Tags=%s, MinTrust=%s, SortByTrust=%s",:
+apability_id_filter, capability_name_filter, tags_filter, min_trust_score, sort_by_trust)
     logger.debug("Current known_capabilities before filtering: %s", self.known_capabilities)
 
     with self.lock:
             # Iterate over a copy of values in case of concurrent modification (though less likely here)
             # No, iterate items to get capability_id for logging if needed.
             # capabilities_to_check = list(self.known_capabilities.values)
-            # Iterate items to get capability_id for logging if needed.
-    capabilities_to_iterate = list(self.known_capabilities.items)
+            # Iterate items to get capability_id for logging if needed.:
+apabilities_to_iterate = list(self.known_capabilities.items)
 
 
             for capability_id, (payload, last_seen) in capabilities_to_iterate:
@@ -204,12 +202,12 @@ class ServiceDiscoveryModule:
     logger.debug("Skipping capability %s: ID filter mismatch (expected %s)", capability_id, capability_id_filter)
                     continue
 
-                # Apply capability_name_filter with exact matching for test compatibility
-    if capability_name_filter:
+                # Apply capability_name_filter with exact matching for test compatibility:
+f capability_name_filter:
 
     payload_name = payload.get('name', '')
-                    # Exact match only for test compatibility
-    if payload_name != capability_name_filter:
+                    # Exact match only for test compatibility:
+f payload_name != capability_name_filter:
 
     logger.debug("Skipping capability %s: Name filter mismatch (expected %s, got %s)", capability_id, capability_name_filter, payload_name)
                         continue
@@ -218,16 +216,15 @@ class ServiceDiscoveryModule:
                 if tags_filter:
 
     capability_tags = payload.get('tags', )
-                    if not capability_tags or not all(tag in capability_tags for tag in tags_filter)
-
-    logger.debug("Skipping capability %s: Tags filter mismatch (expected all of %s, got %s)", capability_id, tags_filter, capability_tags)
+                    if not capability_tags or not all(tag in capability_tags for tag in tags_filter):
+ogger.debug("Skipping capability %s: Tags filter mismatch (expected all of %s, got %s)", capability_id, tags_filter, capability_tags)
                         continue
 
                 advertiser_ai_id = payload.get('ai_id')
                 if not advertiser_ai_id:
 
-    logger.warning("Found capability with no advertiser_ai_id during find: %s. Skipping.", payload.get('capability_id'))
-                    continue
+    logger.warning("Found capability with no advertiser_ai_id during find: %s. Skipping.", payload.get('capability_id')):
+ontinue
 
                 trust_score = self.trust_manager.get_trust_score(advertiser_ai_id)
                 logger.debug("Capability %s trust score: %.2f (min_trust_score: %s)", capability_id, trust_score, min_trust_score)
@@ -240,13 +237,13 @@ class ServiceDiscoveryModule:
 
                 pre_results.append((payload, trust_score))
 
-        # Sort if requested
-    if sort_by_trust:
+        # Sort if requested:
+f sort_by_trust:
 
     pre_results.sort(key=lambda item: item[1], reverse=True) # Sort by trust_score descending
 
-        # Extract just the payloads for the final list
-    final_results = [payload for payload, _ in pre_results]:
+        # Extract just the payloads for the final list:
+inal_results = [payload for payload, _ in pre_results]:
 
     logger.info("Found %d capabilities matching criteria. ID_filter: %s, Name_filter: %s, Tags_filter: %s, Min_trust: %s",
                     len(final_results), capability_id_filter, capability_name_filter, tags_filter, min_trust_score)
@@ -276,21 +273,21 @@ class ServiceDiscoveryModule:
     Returns:
             A list of HSPCapabilityAdvertisementPayload objects matching the criteria.
     """
-        # Tuples of (payload, trust_score) for potential sorting
-    pre_results: List[Tuple[HSPCapabilityAdvertisementPayload, float]] =
+        # Tuples of (payload, trust_score) for potential sorting:
+re_results: List[Tuple[HSPCapabilityAdvertisementPayload, float]] =
 
     current_time = datetime.now(timezone.utc)
 
-    logger.debug("Finding capabilities with filters: ID=%s, Name=%s, Tags=%s, MinTrust=%s, SortByTrust=%s",
-                     capability_id_filter, capability_name_filter, tags_filter, min_trust_score, sort_by_trust)
+    logger.debug("Finding capabilities with filters: ID=%s, Name=%s, Tags=%s, MinTrust=%s, SortByTrust=%s",:
+apability_id_filter, capability_name_filter, tags_filter, min_trust_score, sort_by_trust)
     logger.debug("Current known_capabilities before filtering: %s", self.known_capabilities)
 
     with self.lock:
             # Iterate over a copy of values in case of concurrent modification (though less likely here)
             # No, iterate items to get capability_id for logging if needed.
             # capabilities_to_check = list(self.known_capabilities.values)
-            # Iterate items to get capability_id for logging if needed.
-    capabilities_to_iterate = list(self.known_capabilities.items)
+            # Iterate items to get capability_id for logging if needed.:
+apabilities_to_iterate = list(self.known_capabilities.items)
 
 
             for capability_id, (payload, last_seen) in capabilities_to_iterate:
@@ -312,12 +309,12 @@ class ServiceDiscoveryModule:
     logger.debug("Skipping capability %s: ID filter mismatch (expected %s)", capability_id, capability_id_filter)
                     continue
 
-                # Apply capability_name_filter with exact matching for test compatibility
-    if capability_name_filter:
+                # Apply capability_name_filter with exact matching for test compatibility:
+f capability_name_filter:
 
     payload_name = payload.get('name', '')
-                    # Exact match only for test compatibility
-    if payload_name != capability_name_filter:
+                    # Exact match only for test compatibility:
+f payload_name != capability_name_filter:
 
     logger.debug("Skipping capability %s: Name filter mismatch (expected %s, got %s)", capability_id, capability_name_filter, payload_name)
                         continue
@@ -326,16 +323,15 @@ class ServiceDiscoveryModule:
                 if tags_filter:
 
     capability_tags = payload.get('tags', )
-                    if not capability_tags or not all(tag in capability_tags for tag in tags_filter)
-
-    logger.debug("Skipping capability %s: Tags filter mismatch (expected all of %s, got %s)", capability_id, tags_filter, capability_tags)
+                    if not capability_tags or not all(tag in capability_tags for tag in tags_filter):
+ogger.debug("Skipping capability %s: Tags filter mismatch (expected all of %s, got %s)", capability_id, tags_filter, capability_tags)
                         continue
 
                 advertiser_ai_id = payload.get('ai_id')
                 if not advertiser_ai_id:
 
-    logger.warning("Found capability with no advertiser_ai_id during find: %s. Skipping.", payload.get('capability_id'))
-                    continue
+    logger.warning("Found capability with no advertiser_ai_id during find: %s. Skipping.", payload.get('capability_id')):
+ontinue
 
                 trust_score = self.trust_manager.get_trust_score(advertiser_ai_id)
                 logger.debug("Capability %s trust score: %.2f (min_trust_score: %s)", capability_id, trust_score, min_trust_score)
@@ -348,13 +344,13 @@ class ServiceDiscoveryModule:
 
                 pre_results.append((payload, trust_score))
 
-        # Sort if requested
-    if sort_by_trust:
+        # Sort if requested:
+f sort_by_trust:
 
     pre_results.sort(key=lambda item: item[1], reverse=True) # Sort by trust_score descending
 
-        # Extract just the payloads for the final list
-    final_results = [payload for payload, _ in pre_results]:
+        # Extract just the payloads for the final list:
+inal_results = [payload for payload, _ in pre_results]:
 
     logger.info("Found %d capabilities matching criteria. ID_filter: %s, Name_filter: %s, Tags_filter: %s, Min_trust: %s",
                     len(final_results), capability_id_filter, capability_name_filter, tags_filter, min_trust_score)
@@ -363,8 +359,8 @@ class ServiceDiscoveryModule:
     def get_capability_by_id(self, capability_id: str) -> Optional[HSPCapabilityAdvertisementPayload]:
     """
     Retrieves a specific capability by its ID.
-        Returns None if the capability is not found or if it is considered stale
-    (i.e., its 'last_seen' timestamp is older than 'staleness_threshold_seconds').
+        Returns None if the capability is not found or if it is considered stale:
+i.e., its 'last_seen' timestamp is older than 'staleness_threshold_seconds').
 
     Args:
     _ = capability_id (str) The unique ID of the capability to retrieve.
@@ -377,8 +373,8 @@ class ServiceDiscoveryModule:
     capability_entry = self.known_capabilities.get(capability_id)
     if capability_entry:
 
-    payload, last_seen = capability_entry
-                current_time = datetime.now(timezone.utc)
+    payload, last_seen = capability_entry:
+urrent_time = datetime.now(timezone.utc)
     age_seconds = (current_time - last_seen).total_seconds
 
                 if age_seconds > self.staleness_threshold_seconds:
@@ -412,18 +408,18 @@ class ServiceDiscoveryModule:
     Args:
     _ = capability_id (str) The unique ID of the capability to check.
 
-    Returns: bool True if the capability is available and not stale, False otherwise.
-    """
+    Returns: bool True if the capability is available and not stale, False otherwise.:
+""
     capability = self.get_capability_by_id(capability_id)
     return capability is not None
 
 if __name__ == '__main__':
     # Basic test/example of instantiation (requires a mock TrustManager)
-    class MockTrustManager(TrustManager)
-        def __init__(self) -> None:
-            super().__init__ # Call parent __init__ if it has one and it's needed
-    logger.info("MockTrustManager initialized for SDM example.")
-    def get_trust_score(self, ai_id: str, capability_name: Optional[str] = None) -> float:
+    class MockTrustManager(TrustManager):
+ef __init__(self) -> None:
+            super().__init__ # Call parent __init__ if it has one and it's needed:
+ogger.info("MockTrustManager initialized for SDM example."):
+ef get_trust_score(self, ai_id: str, capability_name: Optional[str] = None) -> float:
             return 0.5 # Default mock score
         def update_trust_score(self, ai_id: str, adjustment: Optional[float] = None, new_absolute_score: Optional[float] = None, capability_name: Optional[str] = None) -> float:
             return 0.5 # Default mock score

@@ -1,6 +1,6 @@
 """Dependency Manager for Unified AI Project:
-    This module provides a centralized system for managing optional dependencies
-and fallback mechanisms. It allows the project to run even when some
+    This module provides a centralized system for managing optional dependencies:
+nd fallback mechanisms. It allows the project to run even when some
 dependencies are not available in the current environment.
 """
 
@@ -15,8 +15,8 @@ logging.basicConfig(level=logging.INFO)
 class DependencyStatus:
     """Tracks the status of a dependency."""
     def __init__(self, name: str, is_available: bool = False, error: Optional[str] = None,
-                 fallback_available: bool = False, fallback_name: Optional[str] = None)
-    self.name = name
+                 fallback_available: bool = False, fallback_name: Optional[str] = None):
+elf.name = name
     self.is_available = is_available
     self.error = error
     self.fallback_available = fallback_available
@@ -43,8 +43,8 @@ class DependencyManager:
     self._load_config(config_path)
     self._setup_dependency_statuses
 
-    def _load_config(self, config_path: Union[str, Path])
-    """Load dependency configuration from YAML file."""
+    def _load_config(self, config_path: Union[str, Path]):
+""Load dependency configuration from YAML file."""
         try:
 
             with open(config_path, 'r', encoding='utf-8') as f:
@@ -75,34 +75,31 @@ class DependencyManager:
             }
     }
 
-    def _setup_dependency_statuses(self)
-    """Set up dependency status objects without loading them."""
+    def _setup_dependency_statuses(self):
+""Set up dependency status objects without loading them."""
     all_deps = self._config.get('dependencies', ).get('core', ) + \
                    self._config.get('dependencies', ).get('optional', )
 
         for dep_config in all_deps:
 
 
-    if isinstance(dep_config, dict)
-
-
-
-    dep_name = dep_config.get('name')
+    if isinstance(dep_config, dict):
+ep_name = dep_config.get('name')
                 if dep_name:
 
     self._dependencies[dep_name] = DependencyStatus(dep_name)
 
-    def _check_dependency_availability(self, dep_name: str, config: Dict[str, Any])
-        """Check if a dependency and its fallbacks are available (on-demand).""":
+    def _check_dependency_availability(self, dep_name: str, config: Dict[str, Any]):
+""Check if a dependency and its fallbacks are available (on-demand).""":
     status = self._dependencies[dep_name]
 
-        # Do not re-check if already checked
-    if status.is_available or status.fallback_available or status.error:
+        # Do not re-check if already checked:
+f status.is_available or status.fallback_available or status.error:
 
     return
 
-        # OS-specific check for tensorflow
-    if dep_name == 'tensorflow' and os.name == 'nt':
+        # OS-specific check for tensorflow:
+f dep_name == 'tensorflow' and os.name == 'nt':
 
     logger.warning("Skipping direct import of 'tensorflow' on Windows.")
             status.error = "Direct import skipped on Windows."
@@ -116,8 +113,8 @@ class DependencyManager:
                 }
                 module_to_import = import_name_map.get(dep_name, dep_name.replace('-', '_'))
 
-                logger.debug(f"Lazily importing: {module_to_import} for dependency: {dep_name}")
-                module = importlib.import_module(module_to_import)
+                logger.debug(f"Lazily importing: {module_to_import} for dependency: {dep_name}"):
+odule = importlib.import_module(module_to_import)
                 status.is_available = True
                 status.module = module
                 logger.info(f"Dependency '{dep_name}' is available.")
@@ -132,19 +129,18 @@ class DependencyManager:
 
     # Fallback logic
     env_config = self._config.get('environments', ).get(self._environment, )
-        if not env_config.get('allow_fallbacks', True)
+        if not env_config.get('allow_fallbacks', True):
+eturn
 
-    return
-
-        for fallback in config.get('fallbacks', )
-    try:
+        for fallback in config.get('fallbacks', ):
+ry:
 
     fallback_module = importlib.import_module(fallback.replace('-', '_'))
                 status.fallback_available = True
                 status.fallback_name = fallback
                 status.fallback_module = fallback_module
-                logger.info(f"Fallback '{fallback}' available for '{dep_name}'")
-    break
+                logger.info(f"Fallback '{fallback}' available for '{dep_name}'"):
+reak
             except ImportError:
 
                 continue
@@ -178,8 +174,8 @@ class DependencyManager:
     self._check_dependency_availability(name, dep_config)
             else:
 
-                logger.error(f"Configuration for dependency '{name}' not found.")
-    status.error = "Configuration not found"
+                logger.error(f"Configuration for dependency '{name}' not found."):
+tatus.error = "Configuration not found"
 
         if status.is_available:
 
@@ -187,8 +183,8 @@ class DependencyManager:
     return status.module
         elif status.fallback_available:
 
-    logger.info(f"Using fallback '{status.fallback_name}' for '{name}'")
-    return status.fallback_module
+    logger.info(f"Using fallback '{status.fallback_name}' for '{name}'"):
+eturn status.fallback_module
         else:
 
             if status.error:
@@ -244,24 +240,23 @@ class DependencyManager:
 
 
     report.append(f"\n✓ Available ({len(available)}):")
-            report.extend([f"  - {dep}" for dep in available])
-    if fallback:
+            report.extend([f"  - {dep}" for dep in available]):
+f fallback:
 
     report.append(f"\n⚠ Using Fallbacks ({len(fallback)}):")
-            report.extend([f"  - {dep}" for dep in fallback])
-    if unavailable:
+            report.extend([f"  - {dep}" for dep in fallback]):
+f unavailable:
 
     report.append(f"\n✗ Unavailable ({len(unavailable)}):")
-            report.extend([f"  - {dep}" for dep in unavailable])
-
-    report.append("\n" + "="*35)
+            report.extend([f"  - {dep}" for dep in unavailable]):
+eport.append("\n" + "="*35)
     return "\n".join(report)
 
 # Global dependency manager instance
 dependency_manager = DependencyManager
 
-def print_dependency_report()
-    """Print the dependency status report."""
+def print_dependency_report():
+""Print the dependency status report."""
     print(dependency_manager.get_dependency_report)
 
 if __name__ == "__main__":

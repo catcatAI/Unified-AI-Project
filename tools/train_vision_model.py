@@ -26,8 +26,8 @@ _ = sys.path.insert(0, str(backend_path / "src"))
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger: Any = logging.getLogger(__name__)
 
-class VisionDataset(Dataset)
-    """视觉数据集"""
+class VisionDataset(Dataset):
+""视觉数据集"""
 
     def __init__(self, data: List[Dict[str, Any]], transform=None) -> None:
     self.data = data
@@ -56,9 +56,8 @@ class VisionDataset(Dataset)
     image_path = item.get("image_path")
 
     # 创建一个简单的模拟图像（实际项目中应该加载真实图像）
-        if image_path and Path(image_path).exists()
-
-    try:
+        if image_path and Path(image_path).exists():
+ry:
 
 
                 image = Image.open(image_path).convert('RGB')
@@ -83,8 +82,8 @@ class VisionDataset(Dataset)
     label = self.labels[idx]
     return image, label
 
-class SimpleVisionModel(nn.Module)
-    """简单的视觉模型"""
+class SimpleVisionModel(nn.Module):
+""简单的视觉模型"""
 
     def __init__(self, num_classes: int = 4) -> None:
     _ = super(SimpleVisionModel, self).__init__()
@@ -137,9 +136,8 @@ class VisionModelTrainer:
     _ = logger.info("正在加载处理后的视觉数据...")
 
     processed_data_file = self.project_root / "data" / "processed_traditional_data" / "vision_processed.json"
-        if processed_data_file.exists()
-
-    try:
+        if processed_data_file.exists():
+ry:
 
 
                 with open(processed_data_file, 'r', encoding='utf-8') as f:
@@ -155,8 +153,8 @@ class VisionModelTrainer:
             _ = logger.warning(f"未找到处理后的视觉数据文件: {processed_data_file}")
             return []
 
-    def train_model(self, epochs: int = 10, batch_size: int = 8, learning_rate: float = 0.001)
-    """训练视觉模型"""
+    def train_model(self, epochs: int = 10, batch_size: int = 8, learning_rate: float = 0.001):
+""训练视觉模型"""
     _ = logger.info("开始训练视觉模型...")
 
     # 加载数据
@@ -180,16 +178,13 @@ class VisionModelTrainer:
 
     # 训练循环
     _ = model.train()
-        for epoch in range(epochs)
-
-    running_loss = 0.0
+        for epoch in range(epochs):
+unning_loss = 0.0
             correct = 0
             total = 0
 
-            for batch_idx, (images, labels) in enumerate(dataloader)
-
-
-    images, labels = images.to(self.device), labels.to(self.device)
+            for batch_idx, (images, labels) in enumerate(dataloader):
+mages, labels = images.to(self.device), labels.to(self.device)
 
                 # 前向传播
                 outputs = model(images)
@@ -222,8 +217,8 @@ class VisionModelTrainer:
     _ = logger.info("视觉模型训练完成!")
     return True
 
-    def save_model(self, model: nn.Module, num_classes: int)
-    """保存训练好的模型"""
+    def save_model(self, model: nn.Module, num_classes: int):
+""保存训练好的模型"""
     model_path = self.model_save_dir / "vision_model.pth"
     metadata_path = self.model_save_dir / "vision_model_metadata.json"
 

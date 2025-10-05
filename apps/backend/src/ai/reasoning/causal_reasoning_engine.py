@@ -10,13 +10,13 @@ class CausalGraph:
     def __init__(self) -> None:
     self.edges =
 
-    async def add_edge(self, cause: str, effect: str, strength: float)
-    logger.debug(f"Adding causal edge: {cause} -> {effect} (strength: {strength})")
+    async def add_edge(self, cause: str, effect: str, strength: float):
+ogger.debug(f"Adding causal edge: {cause} -> {effect} (strength: {strength})")
     self.edges.setdefault(cause, )[effect] = strength
     _ = await asyncio.sleep(0.005)
 
-    async def update(self, relationships: List[Dict[str, Any]])
-    logger.debug("Updating causal graph (conceptual)...")
+    async def update(self, relationships: List[Dict[str, Any]]):
+ogger.debug("Updating causal graph (conceptual)...")
         for rel in relationships:
 
     _ = await self.add_edge(rel["cause"], rel["effect"], rel.get("strength", 1.0))
@@ -26,9 +26,8 @@ class CausalGraph:
     logger.debug(f"Getting causal paths from {start_node} to {end_node} (conceptual)...")
     _ = await asyncio.sleep(0.01)
     # Dummy path
-        if start_node in self.edges and end_node in self.edges.get(start_node, )
-
-    return [[start_node, end_node]]
+        if start_node in self.edges and end_node in self.edges.get(start_node, ):
+eturn [[start_node, end_node]]
     return
 
     async def get_causes(self, effect_node: str) -> List[str]
@@ -53,8 +52,8 @@ class InterventionPlanner:
     return {"variable": actionable_variables[0], "value": "optimized_value"}
     return
 
-class CounterfactualReasoner
-    async def compute(self, scenario: Dict[str, Any], intervention: Dict[str, Any], causal_paths: List[List[str]]) -> Any:
+class CounterfactualReasoner:
+sync def compute(self, scenario: Dict[str, Any], intervention: Dict[str, Any], causal_paths: List[List[str]]) -> Any:
     logger.debug("Computing counterfactual outcome (conceptual)...")
     _ = await asyncio.sleep(0.01)
     # Dummy counterfactual simple modification based on intervention
@@ -152,8 +151,8 @@ class CausalReasoningEngine:
 
     return optimal_intervention
 
-    async def _update_causal_graph(self, observation: Dict[str, Any])
-    """更新因果圖"""
+    async def _update_causal_graph(self, observation: Dict[str, Any]):
+""更新因果圖"""
     # 提取變量和關係
     variables = observation.get("variables", )
     relationships = observation.get("relationships", )
@@ -168,10 +167,8 @@ class CausalReasoningEngine:
                         _ = var1, var2, observation.get("data", )
                     )
 
-                    if causal_strength > self.config.get("causality_threshold", 0.5)
-
-
-    await self.causal_graph.add_edge(
+                    if causal_strength > self.config.get("causality_threshold", 0.5):
+wait self.causal_graph.add_edge(
                             var1, var2, strength=causal_strength
                         )
     self.logger.debug(f"Updated causal graph with observation {observation.get('id')}"):
@@ -201,8 +198,8 @@ class CausalReasoningEngine:
     # Dummy causality strength
         if "temperature" in var1.lower and "mood" in var2.lower:
 
-    return 0.9 # High causality for this example
-    return 0.1 # Low causality
+    return 0.9 # High causality for this example:
+eturn 0.1 # Low causality
 
     async def _analyze_observation_causality(self, observation: Dict[...]
     """分析觀察數據中的因果關係"""
@@ -246,17 +243,14 @@ class CausalReasoningEngine:
 
     async def _compute_correlations(self, observation: Dict[...]
     """計算變量間相關性（模擬實現）"""
-    _ = await asyncio.sleep(0.03)
-
-    variables = observation.get('variables', )
+    _ = await asyncio.sleep(0.03):
+ariables = observation.get('variables', )
     correlations =
 
-        for i, var1 in enumerate(variables)
-
-
-    for j, var2 in enumerate(variables)
-    if i < j:  # 避免重複
-                    correlation_key = f"{var1}_{var2}"
+        for i, var1 in enumerate(variables):
+or j, var2 in enumerate(variables)
+    if i < j:  # 避免重複:
+orrelation_key = f"{var1}_{var2}"
                     # 模擬相關性計算
                     correlation_value = random.uniform(-1, 1)
                     correlations[correlation_key] = correlation_value
@@ -265,21 +259,18 @@ class CausalReasoningEngine:
 
     async def _identify_causal_candidates(self, observation: Dict[...]
     """識別因果候選關係（模擬實現）"""
-    _ = await asyncio.sleep(0.04)
-
-    variables = observation.get('variables', )
+    _ = await asyncio.sleep(0.04):
+ariables = observation.get('variables', )
     candidates =
 
-        for i, cause in enumerate(variables)
-
-
-    for j, effect in enumerate(variables)
+        for i, cause in enumerate(variables):
+or j, effect in enumerate(variables)
     if i != j:  # 不能自己影響自己
                     # 模擬因果強度計算
                     causal_strength = await self._test_causality(cause, effect, observation.get('data', ))
 
-                    if causal_strength > 0.3:  # 閾值過濾
-                        candidates.append({
+                    if causal_strength > 0.3:  # 閾值過濾:
+andidates.append({
                             'cause': cause,
                             'effect': effect,
                             'strength': causal_strength,
@@ -291,9 +282,8 @@ class CausalReasoningEngine:
 
     async def _detect_confounding_factors(self, observation: Dict[...]
     """檢測混淆因子（模擬實現）"""
-    _ = await asyncio.sleep(0.02)
-
-    variables = observation.get('variables', )
+    _ = await asyncio.sleep(0.02):
+ariables = observation.get('variables', )
 
     # 模擬混淆因子檢測
     potential_confounders = ['external_factors', 'hidden_variables', 'measurement_bias']
@@ -302,13 +292,13 @@ class CausalReasoningEngine:
         for confounder in potential_confounders:
 
 
-    if random.random > 0.7:  # 30%概率檢測到混淆因子
-                detected_confounders.append(confounder)
+    if random.random > 0.7:  # 30%概率檢測到混淆因子:
+etected_confounders.append(confounder)
 
     return detected_confounders
 
-    async def _update_causal_graph_enhanced(self, observation: Dict[str, Any], causal_insights: Dict[str, Any])
-    """增強的因果圖更新"""
+    async def _update_causal_graph_enhanced(self, observation: Dict[str, Any], causal_insights: Dict[str, Any]):
+""增強的因果圖更新"""
         try:
 
             causal_candidates = causal_insights.get('causal_candidates', )
@@ -332,17 +322,16 @@ class CausalReasoningEngine:
     async def _validate_causal_relationships_enhanced(self, observation: Dict[str, Any],
                                                    causal_insights: Dict[...]
     """增強的因果關係驗證"""
-    _ = await asyncio.sleep(0.05)
-
-    validated =
+    _ = await asyncio.sleep(0.05):
+alidated =
     causal_candidates = causal_insights.get('causal_candidates', )
 
         for candidate in causal_candidates:
             # 多重驗證標準
             validation_score = await self._compute_validation_score(candidate, causal_insights)
 
-            if validation_score > 0.6:  # 驗證閾值
-                validated_relationship = {
+            if validation_score > 0.6:  # 驗證閾值:
+alidated_relationship = {
                     **candidate,
                     'validation_score': validation_score,
                     'validation_timestamp': datetime.now.isoformat,
@@ -380,9 +369,8 @@ class CausalReasoningEngine:
 
     async def _generate_learning_insights(self, validated_relationships: List[...]
     """生成學習洞察"""
-    _ = await asyncio.sleep(0.03)
-
-    insights =
+    _ = await asyncio.sleep(0.03):
+nsights =
 
         if not validated_relationships:
 
@@ -397,8 +385,8 @@ class CausalReasoningEngine:
     insights.append(f"Detected {len(strong_relationships)} strong causal relationships")
 
     # 分析因果鏈
-        causes = set(r['cause'] for r in validated_relationships)
-    effects = set(r['effect'] for r in validated_relationships)
+        causes = set(r['cause'] for r in validated_relationships):
+ffects = set(r['effect'] for r in validated_relationships)
 
     # 檢測中介變量
     mediators = causes.intersection(effects)
@@ -417,9 +405,8 @@ class CausalReasoningEngine:
     async def apply_causal_reasoning(self, scenario: Dict[str, Any],
                                    reasoning_type: str = "intervention") -> Dict[str, Any]:
     """應用因果推理解決實際問題"""
-        self.logger.info(f"Applying causal reasoning for {reasoning_type} analysis")
-
-    try:
+        self.logger.info(f"Applying causal reasoning for {reasoning_type} analysis"):
+ry:
 
 
         if reasoning_type == "intervention":
@@ -448,8 +435,8 @@ class CausalReasoningEngine:
 
     async def _plan_intervention_enhanced(self, scenario: Dict[...]
     """增強的干預規劃"""
-    desired_outcome = scenario.get('desired_outcome', )
-    current_state = scenario.get('current_state', )
+    desired_outcome = scenario.get('desired_outcome', ):
+urrent_state = scenario.get('current_state', )
 
     # 找到影響目標的因果路徑
     outcome_variable = desired_outcome.get('variable')
@@ -505,8 +492,8 @@ class CausalReasoningEngine:
 
     async def _counterfactual_analysis_enhanced(self, scenario: Dict[...]
     """增強的反事實分析"""
-    logger.info("Performing enhanced counterfactual analysis")
-    _ = await asyncio.sleep(0.03)
+    logger.info("Performing enhanced counterfactual analysis"):
+ = await asyncio.sleep(0.03)
 
     outcome_variable = scenario.get('outcome_variable', 'unknown')
     current_outcome = scenario.get('current_outcome', 'unknown')
@@ -527,8 +514,8 @@ class CausalReasoningEngine:
 
     async def _causal_prediction(self, scenario: Dict[...]
     """因果預測分析"""
-    logger.info("Performing causal prediction analysis")
-    _ = await asyncio.sleep(0.04)
+    logger.info("Performing causal prediction analysis"):
+ = await asyncio.sleep(0.04)
 
     target_variable = scenario.get('target_variable', 'unknown')
     time_horizon = scenario.get('time_horizon', '1_hour')
@@ -550,8 +537,8 @@ class CausalReasoningEngine:
 
     async def _causal_explanation(self, scenario: Dict[...]
     """因果解釋分析"""
-    logger.info("Performing causal explanation analysis")
-    _ = await asyncio.sleep(0.05)
+    logger.info("Performing causal explanation analysis"):
+ = await asyncio.sleep(0.05)
 
     observed_outcome = scenario.get('observed_outcome', 'unknown')
     context = scenario.get('context', )

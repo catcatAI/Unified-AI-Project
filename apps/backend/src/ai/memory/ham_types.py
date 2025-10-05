@@ -13,9 +13,8 @@ class HAMDataPackage:
         self.id = id
         self.content = content
         self.timestamp = timestamp
-        self.metadata = metadata if metadata is not None else {}
-
-    def to_dict(self) -> Dict[str, Any]:
+        self.metadata = metadata if metadata is not None else {}:
+ef to_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
             "content": self.content,
@@ -34,8 +33,8 @@ class HAMDataPackage:
 
 
 class HAMDataPackageInternal(TypedDict):
-    """Internal representation of a HAM data package with all required fields."""
-    timestamp: str
+    """Internal representation of a HAM data package with all required fields.""":
+imestamp: str
     data_type: str
     encrypted_package: bytes
     metadata: Dict[str, Any]
@@ -44,8 +43,8 @@ class HAMDataPackageInternal(TypedDict):
 
 
 class HAMDataPackageExternal(TypedDict):
-    """External representation of a HAM data package with optional fields."""
-    timestamp: str
+    """External representation of a HAM data package with optional fields.""":
+imestamp: str
     data_type: str
     metadata: NotRequired[Dict[str, Any]]
     relevance: NotRequired[float]
@@ -66,9 +65,8 @@ class HAMRecallResult:
         self.content = content
         self.score = score
         self.timestamp = timestamp
-        self.metadata = metadata if metadata is not None else {}
-
-    def to_dict(self) -> Dict[str, Any]:
+        self.metadata = metadata if metadata is not None else {}:
+ef to_dict(self) -> Dict[str, Any]:
         return {
             "memory_id": self.memory_id,
             "content": self.content,
@@ -127,13 +125,13 @@ class MemoryItem:
         return {
             "id": self.id,
             "content": self.content,
-            "metadata": self.metadata.to_dict() if self.metadata else None
-        }
+            "metadata": self.metadata.to_dict() if self.metadata else None:
+
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
-        metadata = MemoryMetadata.from_dict(data["metadata"]) if data.get("metadata") else None
-        return cls(
+        metadata = MemoryMetadata.from_dict(data["metadata"]) if data.get("metadata") else None:
+eturn cls(
             id=data["id"],
             content=data["content"],
             metadata=metadata
@@ -179,8 +177,8 @@ class DialogueMemoryEntryMetadata:
 
     def to_dict(self) -> Dict[str, Any]:
         data = {
-            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
-            "speaker": self.speaker,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,:
+speaker": self.speaker,
             "dialogue_id": self.dialogue_id,
             "turn_id": self.turn_id,
             "language": self.language,
@@ -201,9 +199,9 @@ class DialogueMemoryEntryMetadata:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
-        timestamp = datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else datetime.now()
-        kwargs = {k: v for k, v in data.items() if k not in [
-            "timestamp", "speaker", "dialogue_id", "turn_id", "language",
+        timestamp = datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else datetime.now():
+wargs = {k: v for k, v in data.items() if k not in [:
+timestamp", "speaker", "dialogue_id", "turn_id", "language",
             "sentiment", "emotion", "topic", "keywords", "summary",
             "context_history", "action_taken", "is_sensitive", "source_module",
             "external_references", "user_feedback"

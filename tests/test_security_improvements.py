@@ -8,8 +8,8 @@ from apps.backend.src.tools.math_model.lightweight_math_model import Lightweight
 from apps.backend.src.tools.logic_model.logic_data_generator import evaluate_proposition as logic_safe_eval
 from apps.backend.src.tools.logic_model.lightweight_logic_model import LightweightLogicModel
 
-class TestSecurityImprovements(unittest.TestCase)
-    """安全改进测试类"""
+class TestSecurityImprovements(unittest.TestCase):
+""安全改进测试类"""
 
     def test_math_safe_eval(self) -> None:
     """测试数学表达式的安全计算"""
@@ -71,10 +71,9 @@ class TestSecurityImprovements(unittest.TestCase)
     with open("apps/backend/src/tools/math_model/data_generator.py", "r") as f:
     content = f.read()
             # 检查是否直接调用了eval函数（排除安全函数和注释）
-            code_lines = [line for line in content.split('\n')
-    if not line.strip().startswith('#')
-
-    and 'eval(' in line
+            code_lines = [line for line in content.split('\n'):
+f not line.strip().startswith('#'):
+nd 'eval(' in line
                          and 'def _safe_eval' not in line
                          _ = and '安全地计算数学表达式，避免使用eval()' not in line]
             # 确保没有在代码中直接调用eval()
@@ -86,10 +85,9 @@ class TestSecurityImprovements(unittest.TestCase)
     with open("apps/backend/src/tools/math_model/lightweight_math_model.py", "r") as f:
     content = f.read()
             # 检查是否直接调用了eval函数（排除安全函数）
-            code_lines = [line for line in content.split('\n')
-    if not line.strip().startswith('#')
-
-    and 'eval(' in line
+            code_lines = [line for line in content.split('\n'):
+f not line.strip().startswith('#'):
+nd 'eval(' in line
                          and 'def _safe_eval' not in line]
             # 确保没有在代码中直接调用eval()
             direct_eval_calls = [line for line in code_lines if line.strip().startswith('eval(') or :
@@ -101,10 +99,9 @@ class TestSecurityImprovements(unittest.TestCase)
     with open("apps/backend/src/tools/logic_model/logic_data_generator.py", "r") as f:
     content = f.read()
             # 检查是否直接调用了eval函数（排除安全函数和注释）
-            code_lines = [line for line in content.split('\n')
-    if not line.strip().startswith('#')
-
-    and 'eval(' in line
+            code_lines = [line for line in content.split('\n'):
+f not line.strip().startswith('#'):
+nd 'eval(' in line
                          and 'def evaluate_proposition' not in line
                          and 'def safe_eval' not in line
                          and '避免使用eval' not in line]
@@ -117,10 +114,9 @@ class TestSecurityImprovements(unittest.TestCase)
     with open("apps/backend/src/tools/logic_model/lightweight_logic_model.py", "r") as f:
     content = f.read()
             # 检查是否直接调用了eval函数（排除安全函数）
-            code_lines = [line for line in content.split('\n')
-    if not line.strip().startswith('#')
-
-    and 'eval(' in line
+            code_lines = [line for line in content.split('\n'):
+f not line.strip().startswith('#'):
+nd 'eval(' in line
                          and 'def _safe_eval_logic' not in line]
             # 确保没有在代码中直接调用eval()
             direct_eval_calls = [line for line in code_lines if line.strip().startswith('eval(') or :

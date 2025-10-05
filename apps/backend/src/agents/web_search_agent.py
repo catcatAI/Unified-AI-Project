@@ -10,8 +10,8 @@ class WebSearchAgent(BaseAgent):
     def get_capabilities(self):
         return {
             "search_web": {
-                "description": "Searches the web for a given query.",
-                "parameters": {
+                "description": "Searches the web for a given query.",:
+parameters": {
                     "query": "The search query."
                 }
             }

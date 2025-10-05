@@ -11,8 +11,8 @@ class LearningLogDB:
     self.db_path = db_path
     self._init_db
 
-    def _init_db(self)
-        """Initializes the SQLite database and creates the 'strategy_logs' table if it doesn't exist.""":
+    def _init_db(self):
+""Initializes the SQLite database and creates the 'strategy_logs' table if it doesn't exist.""":
     conn = None
         try:
 
@@ -55,8 +55,8 @@ class LearningLogDB:
     record_id = cursor.lastrowid
     conn.commit
     conn.close
-        logger.debug(f"Added log entry for strategy {strategy_id} with ID: {record_id}")
-    return record_id
+        logger.debug(f"Added log entry for strategy {strategy_id} with ID: {record_id}"):
+eturn record_id
 
     def get_all_log_entries(self, strategy_id: Optional[str] = None) -> List[Dict[str, Any]]:
     """Retrieves all log entries, optionally filtered by strategy_id."""
@@ -87,15 +87,14 @@ class LearningLogDB:
             })
     return log_entries
 
-    def close(self)
-        """Closes the database connection. (Not strictly necessary for sqlite3.connect, but good practice).""":
+    def close(self):
+""Closes the database connection. (Not strictly necessary for sqlite3.connect, but good practice).""":
     pass
 
-    def delete_db_file(self)
-        """Deletes the database file. Use with caution, primarily for testing.""":
-    if os.path.exists(self.db_path)
-
-    os.remove(self.db_path)
+    def delete_db_file(self):
+""Deletes the database file. Use with caution, primarily for testing.""":
+    if os.path.exists(self.db_path):
+s.remove(self.db_path)
             logger.info(f"LearningLogDB file deleted: {self.db_path}")
         else:
 

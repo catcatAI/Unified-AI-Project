@@ -4,8 +4,8 @@ class SimultaneousTranslation:
     """
     A lightweight, mock simultaneous translation module.
 
-    In production, this would interface with a real streaming translation engine
-    (e.g., via WebSocket or gRPC), handle partial hypotheses, timestamps, and
+    In production, this would interface with a real streaming translation engine:
+e.g., via WebSocket or gRPC), handle partial hypotheses, timestamps, and
     diarization. Here we provide a minimal, dependency-free placeholder that can
     be swapped out later.
     """
@@ -18,8 +18,8 @@ class SimultaneousTranslation:
     """
     Synchronously "translates" text. In this mock, we simply echo the text.
 
-        Returns a structured payload for forward compatibility.
-    """
+        Returns a structured payload for forward compatibility.:
+""
         if text is None:
 
     text = ""
@@ -33,16 +33,15 @@ class SimultaneousTranslation:
             "latency_ms": self.latency_ms,
     }
 
-    def stream_translate(self, chunks: Union[List[str], Tuple[str, ...]], source_lang: str = "auto", target_lang: Optional[str] = None)
-    """
+    def stream_translate(self, chunks: Union[List[str], Tuple[str, ...]], source_lang: str = "auto", target_lang: Optional[str] = None):
+""
     Generator that yields partial translation results per chunk.
     This mock yields the chunk as "translated" text without modification.
     """
     import time
     tgt = target_lang or self.default_target_lang
-        for idx, chunk in enumerate(chunks or )
-
-    time.sleep(self.latency_ms / 1000.0)
+        for idx, chunk in enumerate(chunks or ):
+ime.sleep(self.latency_ms / 1000.0)
             yield {
                 "index": idx,
                 "source_lang": source_lang,
@@ -50,5 +49,4 @@ class SimultaneousTranslation:
                 "original_text": chunk or "",
                 "translated_text": (chunk or ""),  # mock
                 "is_final": idx == len(chunks) - 1,
-                "confidence": 0.85 if idx < (len(chunks) - 1) else 0.9,
-            }
+                "confidence": 0.85 if idx < (len(chunks) - 1) else 0.9,:

@@ -11,8 +11,8 @@ class UnifiedSymbolicSpace:
     self.db_path = db_path
     self._init_db  # 修复：添加括号调用方法
 
-    def _init_db(self)
-    conn = sqlite3.connect(self.db_path)
+    def _init_db(self):
+onn = sqlite3.connect(self.db_path)
     cursor = conn.cursor()  # 修复：添加括号调用方法
     cursor.execute("""
             CREATE TABLE IF NOT EXISTS symbols (
@@ -87,8 +87,8 @@ class UnifiedSymbolicSpace:
                 'id': row[0],
                 'symbol_name': row[1],
                 'type': row[2],
-                'properties': json.loads(row[3]) if row[3] else {}
-            }
+                'properties': json.loads(row[3]) if row[3] else {}:
+
     return None
 
     def update_symbol(self, symbol_name: str, new_symbol_name: Optional[str] = None,
@@ -174,14 +174,14 @@ class UnifiedSymbolicSpace:
     """, (symbol_name, symbol_name))
 
     relationships = []
-        for row in cursor.fetchall()  # 修复：添加括号调用方法
-            relationships.append({
+        for row in cursor.fetchall()  # 修复：添加括号调用方法:
+elationships.append({
                 'id': row[0],
                 'source': row[1],
                 'target': row[2],
                 'type': row[3],
-                'properties': json.loads(row[4]) if row[4] else {}
-            })
+                'properties': json.loads(row[4]) if row[4] else {}:
+)
     conn.close()  # 修复：添加括号调用方法
     return relationships
 
@@ -253,7 +253,6 @@ if __name__ == '__main__':
 
     # Clean up test database
     import os
-    if os.path.exists('test_symbolic_space.db')
-
-    os.remove('test_symbolic_space.db')
+    if os.path.exists('test_symbolic_space.db'):
+s.remove('test_symbolic_space.db')
     print("Cleaned up test_symbolic_space.db")

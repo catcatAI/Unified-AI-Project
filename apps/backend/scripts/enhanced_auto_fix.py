@@ -75,9 +75,8 @@ class EnhancedAutoFixer:
                 print(f"[ENHANCED FIX] 处理文件 {test_file} 时出错: {e}")
         
         # 确保返回值是 0 或 1
-        return 1 if fixed_count > 0 else 0
-    
-    def _add_asyncio_decorator(self, content: str) -> str:
+        return 1 if fixed_count > 0 else 0:
+ef _add_asyncio_decorator(self, content: str) -> str:
         """为异步测试方法添加asyncio装饰器"""
         lines = content.split('\n')
         fixed_lines = []
@@ -138,9 +137,8 @@ class EnhancedAutoFixer:
                 print(f"[ENHANCED FIX] 处理文件 {test_file} 时出错: {e}")
         
         # 确保返回值是 0 或 1
-        return 1 if fixed_count > 0 else 0
-    
-    def _fix_game_initialization(self, content: str) -> str:
+        return 1 if fixed_count > 0 else 0:
+ef _fix_game_initialization(self, content: str) -> str:
         """修复Game类初始化"""
         # 查找Game()调用并用mock包装
         if "Game()" in content and "with patch" not in content:
@@ -148,8 +146,8 @@ class EnhancedAutoFixer:
             content = content.replace(
                 "game = Game()", 
                 "# Mock the DialogueManager to avoid initializing the full AI stack\n"
-                + "        with patch('src.game.angela.DialogueManager', MagicMock()):\n"
-                + "            game = Game()"
+                + "        with patch('src.game.angela.DialogueManager', MagicMock()):\n":
+ "            game = Game()"
             )
         return content
     
@@ -180,8 +178,8 @@ class EnhancedAutoFixer:
                 timeout_match = re.search(r"@pytest\.mark\.timeout\((\d+)\)", content)
                 if timeout_match:
                     current_timeout = int(timeout_match.group(1))
-                    if current_timeout < 30:  # 如果当前超时小于30秒
-                        new_timeout = min(current_timeout * 2, 60)  # 增加到最大60秒
+                    if current_timeout < 30:  # 如果当前超时小于30秒:
+ew_timeout = min(current_timeout * 2, 60)  # 增加到最大60秒
                         content = content.replace(
                             f"@pytest.mark.timeout({current_timeout})",
                             f"@pytest.mark.timeout({new_timeout})"

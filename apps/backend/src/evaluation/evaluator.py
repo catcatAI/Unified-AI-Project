@@ -1,7 +1,7 @@
 class Evaluator:
     """
-    A class for evaluating models and tools.
-    """
+    A class for evaluating models and tools.:
+""
 
     def __init__(self) -> None:
         pass
@@ -12,9 +12,8 @@ class Evaluator:
 
         Args:
             model_or_tool: The model or tool to be evaluated.
-            dataset: The dataset to be used for evaluation.
-
-        Returns:
+            dataset: The dataset to be used for evaluation.:
+eturns:
             A dictionary of evaluation metrics.
         """
         accuracy = self._calculate_accuracy(model_or_tool, dataset)
@@ -33,9 +32,8 @@ class Evaluator:
 
         Args:
             model_or_tool: The model or tool to be evaluated.
-            dataset: The dataset to be used for evaluation.
-
-        Returns:
+            dataset: The dataset to be used for evaluation.:
+eturns:
             The accuracy of the model or tool.
         """
         correct = 0
@@ -54,9 +52,8 @@ class Evaluator:
 
         Args:
             model_or_tool: The model or tool to be evaluated.
-            dataset: The dataset to be used for evaluation.
-
-        Returns:
+            dataset: The dataset to be used for evaluation.:
+eturns:
             The performance of the model or tool.
         """
         import time
@@ -72,9 +69,8 @@ class Evaluator:
 
         Args:
             model_or_tool: The model or tool to be evaluated.
-            dataset: The dataset to be used for evaluation.
-
-        Returns:
+            dataset: The dataset to be used for evaluation.:
+eturns:
             The robustness of the model or tool.
         """
         no_exception = 0

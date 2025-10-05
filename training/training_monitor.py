@@ -46,15 +46,13 @@ class TrainingAnomalyDetector:
     }
     self.error_handler = global_error_handler
 
-    def update_baseline(self, metrics: Dict[str, float])
-    """更新基线指标"""
+    def update_baseline(self, metrics: Dict[str, float]):
+""更新基线指标"""
     context = ErrorContext("TrainingAnomalyDetector", "update_baseline")
         try:
 
-            for metric_name, value in metrics.items()
-
-
-    if metric_name not in self.baseline_metrics:
+            for metric_name, value in metrics.items():
+f metric_name not in self.baseline_metrics:
 
 
 
@@ -72,8 +70,8 @@ class TrainingAnomalyDetector:
 
     def detect_anomalies(self, current_metrics: Dict[...]
     """检测异常"""
-    context = ErrorContext("TrainingAnomalyDetector", "detect_anomalies")
-    anomalies = []
+    context = ErrorContext("TrainingAnomalyDetector", "detect_anomalies"):
+nomalies = []
 
         try:
 
@@ -146,9 +144,8 @@ class TrainingAnomalyDetector:
                             })
 
             # 检测基线偏离
-            for metric_name, baseline_history in self.baseline_metrics.items()
-
-    if metric_name in current_metrics and len(baseline_history) >= 10:
+            for metric_name, baseline_history in self.baseline_metrics.items():
+f metric_name in current_metrics and len(baseline_history) >= 10:
 
 
     current_value = current_metrics[metric_name]
@@ -357,8 +354,8 @@ class TrainingPerformanceAnalyzer:
     self.epoch_times = deque(maxlen=50)  # 保存最近50个epoch的时间
     self.error_handler = global_error_handler
 
-    def record_epoch_time(self, epoch: int, duration: float)
-    """记录epoch训练时间"""
+    def record_epoch_time(self, epoch: int, duration: float):
+""记录epoch训练时间"""
     context = ErrorContext("TrainingPerformanceAnalyzer", "record_epoch_time")
         try:
 
@@ -457,15 +454,13 @@ class TrainingMonitor:
 
     _ = logger.info("🔄 训练监控器初始化完成")
 
-    def start_monitoring(self)
-    """开始监控"""
+    def start_monitoring(self):
+""开始监控"""
     context = ErrorContext("TrainingMonitor", "start_monitoring")
         try:
 
-            if self.monitoring_thread is None or not self.monitoring_thread.is_alive()
-
-
-    self.stop_monitoring_flag = False  # 修改变量名
+            if self.monitoring_thread is None or not self.monitoring_thread.is_alive():
+elf.stop_monitoring_flag = False  # 修改变量名
                 self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
                 _ = self.monitoring_thread.start()
                 _ = logger.info("✅ 训练监控已启动")
@@ -477,23 +472,22 @@ class TrainingMonitor:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 启动监控失败: {e}")
 
-    def stop_monitoring(self)
-    """停止监控"""
+    def stop_monitoring(self):
+""停止监控"""
     context = ErrorContext("TrainingMonitor", "stop_monitoring")
         try:
 
             self.stop_monitoring_flag = True  # 修改变量名
-            if self.monitoring_thread and self.monitoring_thread.is_alive()
-
-    self.monitoring_thread.join(timeout=5)
+            if self.monitoring_thread and self.monitoring_thread.is_alive():
+elf.monitoring_thread.join(timeout=5)
             _ = logger.info("⏹️  训练监控已停止")
         except Exception as e:
 
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 停止监控失败: {e}")
 
-    def _monitoring_loop(self)
-    """监控循环"""
+    def _monitoring_loop(self):
+""监控循环"""
     context = ErrorContext("TrainingMonitor", "_monitoring_loop")
         try:
 
@@ -522,18 +516,17 @@ class TrainingMonitor:
                         _ = logger.error(f"❌ 写入日志文件失败: {e}")
 
                 # 每5秒检查一次
-                for _ in range(5)
-
-    if self.stop_monitoring_flag:  # 修改变量名
-                        break
+                for _ in range(5):
+f self.stop_monitoring_flag:  # 修改变量名:
+reak
                     _ = time.sleep(1)
         except Exception as e:
 
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 监控循环出错: {e}")
 
-    def update_training_metrics(self, scenario_name: str, epoch: int, metrics: Dict[str, float])
-    """更新训练指标"""
+    def update_training_metrics(self, scenario_name: str, epoch: int, metrics: Dict[str, float]):
+""更新训练指标"""
     context = ErrorContext("TrainingMonitor", "update_training_metrics", {"scenario_name": scenario_name})
         try:
             # 更新异常检测器的基线
@@ -581,8 +574,8 @@ class TrainingMonitor:
             _ = logger.error(f"❌ 更新训练指标失败: {e}")
             return []
 
-    def record_epoch_completion(self, epoch: int, duration: float)
-    """记录epoch完成"""
+    def record_epoch_completion(self, epoch: int, duration: float):
+""记录epoch完成"""
     context = ErrorContext("TrainingMonitor", "record_epoch_completion")
         try:
 
@@ -650,10 +643,8 @@ def main() -> None:
     {'loss': 0.35, 'accuracy': 0.82}
     ]
 
-    for epoch, metrics in enumerate(normal_metrics, 1)
-
-
-    _ = print(f"Epoch {epoch}: {metrics}")
+    for epoch, metrics in enumerate(normal_metrics, 1):
+ = print(f"Epoch {epoch}: {metrics}")
     anomalies = monitor.update_training_metrics("test_scenario", epoch, metrics)
     _ = monitor.record_epoch_completion(epoch, 2.5)  # 假设每个epoch耗时2.5秒
     _ = time.sleep(1)  # 模拟训练间隔

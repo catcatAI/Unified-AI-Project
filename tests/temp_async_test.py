@@ -9,8 +9,8 @@ def mock_trust_manager():
     mock_tm.get_trust_score.return_value = 0.5
     return mock_tm
 
-# --- Fixture for populated_sdm ---
-@pytest.fixture
+# --- Fixture for populated_sdm ---:
+pytest.fixture
 def populated_sdm(mock_trust_manager: MagicMock):
     sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
 

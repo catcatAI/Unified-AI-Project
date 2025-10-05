@@ -18,14 +18,13 @@ class CodeUnderstandingTool:
                                    This is passed to the LightweightCodeModel.
     """
     self.code_model = LightweightCodeModel(tools_directory=tools_directory)
-        self.tools_directory = tools_directory # Store for constructing full paths if needed by describe_tool
-
-    def list_tools(self) -> str:
+        self.tools_directory = tools_directory # Store for constructing full paths if needed by describe_tool:
+ef list_tools(self) -> str:
     """
     Lists the names of available Python tools in the project.
 
-    Returns: str A message listing the tool names, or indicating if none are found.
-    """
+    Returns: str A message listing the tool names, or indicating if none are found.:
+""
     tool_files = self.code_model.list_tool_files
         if not tool_files:
 
@@ -38,10 +37,8 @@ class CodeUnderstandingTool:
             tool_name, os.path.splitext(base_name)
             tool_names.append(tool_name)
 
-        if not tool_names: # Should not happen if tool_files is not empty and files have names
-
-
-    return "No Python tools found after processing file list."
+        if not tool_names: # Should not happen if tool_files is not empty and files have names:
+eturn "No Python tools found after processing file list."
 
     return f"Available Python tools: {', '.join(sorted(tool_names))}."
 
@@ -53,8 +50,8 @@ class CodeUnderstandingTool:
             _ = tool_name (str) The name of the tool (e.g., "math_tool").
 
     Returns: str A human-readable description of the tool's structure,
-                 or an error message if the tool is not found or cannot be analyzed.
-    """
+                 or an error message if the tool is not found or cannot be analyzed.:
+""
     # Construct the potential filepath. LightweightCodeModel's get_tool_structure
     # also does this, but we do it here to provide a clearer path to it.
     # Tool names are expected without .py extension.
@@ -72,71 +69,58 @@ class CodeUnderstandingTool:
     description_parts =
 
     filepath = structure.get("filepath", tool_name)
-        description_parts.append(f"Description for tool '{tool_name}' (from {os.path.basename(filepath)}):")
-
-        if not structure.get("classes") and not structure.get("functions")
-
-
-    description_parts.append("  No classes or functions found in this tool file.")
+        description_parts.append(f"Description for tool '{tool_name}' (from {os.path.basename(filepath)}):"):
+f not structure.get("classes") and not structure.get("functions"):
+escription_parts.append("  No classes or functions found in this tool file.")
             return "\n".join(description_parts)
 
-        for class_info in structure.get("classes", )
-
-
-    description_parts.append(f"\n  Class: {class_info.get('name', 'Unnamed Class')}")
+        for class_info in structure.get("classes", ):
+escription_parts.append(f"\n  Class: {class_info.get('name', 'Unnamed Class')}")
             class_doc = class_info.get('docstring')
             if class_doc:
 
     description_parts.append(f"    Docstring: {class_doc.strip}")
 
-            if not class_info.get("methods")
-
-
-    description_parts.append("    (No methods found in this class)")
+            if not class_info.get("methods"):
+escription_parts.append("    (No methods found in this class)")
                 continue
 
             description_parts.append("    Methods:")
-            for method_info in class_info.get("methods", )
-
-    method_name = method_info.get('name', 'unnamed_method')
+            for method_info in class_info.get("methods", ):
+ethod_name = method_info.get('name', 'unnamed_method')
                 param_list =
-                for p in method_info.get("parameters", )
-
-    p_str = p.get('name', '')
-                    if p.get('annotation')
-
-    p_str += f": {p['annotation']}"
-                    if p.get('default') is not None: # Important default can be None or a string "None"
-                        p_str += f" = {p['default']}"
+                for p in method_info.get("parameters", ):
+_str = p.get('name', '')
+                    if p.get('annotation'):
+_str += f": {p['annotation']}"
+                    if p.get('default') is not None: # Important default can be None or a string "None":
+_str += f" = {p['default']}"
                     param_list.append(p_str)
                 params_str = ", ".join(param_list)
 
                 return_str = ""
-                if method_info.get('returns')
-
-    return_str = f" -> {method_info['returns']}"
+                if method_info.get('returns'):
+eturn_str = f" -> {method_info['returns']}"
 
                 description_parts.append(f"      - {method_name}({params_str}){return_str}")
                 method_doc = method_info.get('docstring')
                 if method_doc:
-                    # Indent docstring lines for readability
-    indented_doc = "\n".join([f"        {line.strip}" for line in method_doc.strip.splitlines])
-    description_parts.append(f"        Docstring:\n{indented_doc}")
+                    # Indent docstring lines for readability:
+ndented_doc = "\n".join([f"        {line.strip}" for line in method_doc.strip.splitlines]):
+escription_parts.append(f"        Docstring:\n{indented_doc}")
 
-        for func_info in structure.get("functions", ) # Module-level functions
-            description_parts.append(f"\n  Function: {func_info.get('name', 'Unnamed Function')}")
+        for func_info in structure.get("functions", ) # Module-level functions:
+escription_parts.append(f"\n  Function: {func_info.get('name', 'Unnamed Function')}")
             func_doc = func_info.get('docstring')
             if func_doc:
 
     description_parts.append(f"    Docstring: {func_doc.strip}")
 
             param_list =
-            for p in func_info.get("parameters", )
-
-    p_str = p.get('name', '')
-                if p.get('annotation')
-
-    p_str += f": {p['annotation']}"
+            for p in func_info.get("parameters", ):
+_str = p.get('name', '')
+                if p.get('annotation'):
+_str += f": {p['annotation']}"
                 if p.get('default') is not None:
 
     p_str += f" = {p['default']}"
@@ -144,9 +128,8 @@ class CodeUnderstandingTool:
             params_str = ", ".join(param_list)
 
             return_str = ""
-            if func_info.get('returns')
-
-    return_str = f" -> {func_info['returns']}"
+            if func_info.get('returns'):
+eturn_str = f" -> {func_info['returns']}"
 
             description_parts.append(f"    Signature: {func_info.get('name', 'unnamed_function')}({params_str}){return_str}")
 
@@ -165,13 +148,12 @@ class CodeUnderstandingTool:
     if not tool_name:
 
 
-    return "Error: 'tool_name' parameter is required for the 'describe_tool' action."
-    return self.describe_tool(tool_name)
+    return "Error: 'tool_name' parameter is required for the 'describe_tool' action.":
+eturn self.describe_tool(tool_name)
         else:
 
-    return f"Error: Unknown action '{action}' for CodeUnderstandingTool. Available actions: list_tools, describe_tool."
-
-if __name__ == '__main__':
+    return f"Error: Unknown action '{action}' for CodeUnderstandingTool. Available actions: list_tools, describe_tool.":
+f __name__ == '__main__':
     # Example Usage (for testing during development)
     # This assumes the script is run from the project root or PYTHONPATH is set.
 
@@ -179,11 +161,10 @@ if __name__ == '__main__':
     # Ensure src/tools contains some .py files like math_tool.py, etc.
     # Example Create a dummy src/tools/dummy_example_tool.py
 
-    # Create dummy tool directory and file for testing if they don't exist
-    dummy_tools_path = "src/tools" # Default for LightweightCodeModel
-    if not os.path.exists(dummy_tools_path)
-
-    os.makedirs(dummy_tools_path)
+    # Create dummy tool directory and file for testing if they don't exist:
+ummy_tools_path = "src/tools" # Default for LightweightCodeModel:
+f not os.path.exists(dummy_tools_path):
+s.makedirs(dummy_tools_path)
     print(f"Created dummy directory: {dummy_tools_path}")
 
     dummy_tool_content = """
@@ -196,9 +177,8 @@ class MyDummyTool:
     return f"Processed: {input_val}"
 """
     dummy_tool_filepath = os.path.join(dummy_tools_path, "dummy_example_tool.py")
-    if not os.path.exists(dummy_tool_filepath)
-
-    with open(dummy_tool_filepath, "w") as f:
+    if not os.path.exists(dummy_tool_filepath):
+ith open(dummy_tool_filepath, "w") as f:
     f.write(dummy_tool_content)
     print(f"Created dummy tool file: {dummy_tool_filepath}")
 
@@ -232,14 +212,14 @@ class MyDummyTool:
     desc_output_non_existent = tool_inspector.execute(action="describe_tool", tool_name="non_existent_tool_xyz")
     print(desc_output_non_existent)
 
-    # Clean up dummy tool file if created by this test script
-    if os.path.exists(dummy_tool_filepath) and "dummy_example_tool.py" in dummy_tool_filepath:
+    # Clean up dummy tool file if created by this test script:
+f os.path.exists(dummy_tool_filepath) and "dummy_example_tool.py" in dummy_tool_filepath:
          # Basic safety check on path before deleting
         try:
             # os.remove(dummy_tool_filepath)
             # print(f"Cleaned up dummy tool file {dummy_tool_filepath}")
-            # For now, let's not auto-delete during typical runs, only if specifically for cleanup.
-    pass
+            # For now, let's not auto-delete during typical runs, only if specifically for cleanup.:
+ass
         except OSError as e:
 
             print(f"Error deleting dummy tool file: {e}")

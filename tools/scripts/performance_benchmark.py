@@ -1,291 +1,365 @@
-#!/usr/bin/env python3
 """
-性能基准测试脚本
-用于比较优化前后的性能差异
+性能基准测试实现
+基于SYSTEM_INTEGRATION_TEST_ENHANCEMENT_PLAN.md设计文档
 """
 
-import asyncio
+import logging
 import time
-import subprocess
 import psutil
+import subprocess
+from datetime import datetime
+from typing import Dict, List, Optional, Any, Callable
 import json
-from pathlib import Path
+import os
 
-import sys
-_ = sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend" / "src"))
+logger = logging.getLogger(__name__)
 
-from optimization import get_performance_optimizer
+
+class PerformanceMetrics:
+    """性能指标"""
+
+    def __init__(self) -> None:
+    self.timestamp: datetime = datetime.now()  # 时间戳
+    self.response_time: float = 0.0  # 响应时间(秒)
+    self.throughput: float = 0.0  # 吞吐量(请求/秒)
+    self.concurrency: int = 0  # 并发用户数
+    self.cpu_usage: float = 0.0  # CPU使用率(%)
+    self.memory_usage: float = 0.0  # 内存使用率(MB)
+    self.error_rate: float = 0.0  # 错误率(%)
+    self.test_name: str = ""  # 测试名称
+    self.test_description: str = ""  # 测试描述
+
 
 class PerformanceBenchmark:
     """性能基准测试器"""
 
-    def __init__(self) -> None:
-    self.results = {}
-    self.performance_optimizer = get_performance_optimizer()
-
-    def measure_execution_time(self, func, *args, **kwargs) -> float:
-    """测量函数执行时间"""
-    start_time = time.time()
-    result = func(*args, **kwargs)
-    end_time = time.time()
-    return end_time - start_time, result
-
-    async def measure_async_execution_time(self, coro) -> float:
-    """测量异步函数执行时间"""
-    start_time = time.time()
-    result = await coro
-    end_time = time.time()
-    return end_time - start_time, result
-
-    def measure_resource_usage(self, func, *args, **kwargs) -> Dict[str, Any]:
-    """测量资源使用情况"""
-    # 获取初始资源使用情况
-    initial_cpu = psutil.cpu_percent(interval=None)
-    initial_memory = psutil.virtual_memory().percent
-
-    # 执行函数
-    start_time = time.time()
-    result = func(*args, **kwargs)
-    end_time = time.time()
-
-    # 获取最终资源使用情况
-    final_cpu = psutil.cpu_percent(interval=None)
-    final_memory = psutil.virtual_memory().percent
-
-    return {
-            'execution_time': end_time - start_time,
-            'cpu_increase': final_cpu - initial_cpu,
-            'memory_increase': final_memory - initial_memory,
-            'result': result
+    def __init__(self, project_root: str = ".") -> None:
+    self.project_root = project_root
+    self.benchmark_history: List[PerformanceMetrics] = []
+    self.thresholds: Dict[str, float] = {
+            "response_time": 5.0,  # 响应时间阈值(秒)
+            "throughput": 10.0,  # 吞吐量阈值(请求/秒)
+            "error_rate": 1.0  # 错误率阈值(%)
     }
 
-    def test_cache_performance(self) -> Dict[str, Any]:
-    """测试缓存性能"""
-    _ = print("测试缓存性能...")
+    def run_api_benchmark(self, api_endpoint: str, num_requests: int = 100, concurrency: int = 10) -> Optional[PerformanceMetrics]:
+    """运行API性能基准测试"""
+        try:
 
-    # 创建一个模拟的耗时函数
-    @self.performance_optimizer.cache_result
-        def expensive_function(n: int) -> int:
-            # 模拟耗时计算
-            _ = time.sleep(0.1)
-            return n * n
+            logger.info(f"Running API benchmark for {api_endpoint} with {num_requests} requests and {concurrency} concurrency")
 
-    # 第一次调用（无缓存）
-    first_call_time, first_result = self.measure_execution_time(expensive_function, 5)
+            # 使用locust进行API基准测试
+            cmd = [
+                "locust",
+                "--headless",
+                "--users", str(concurrency),
+                "--spawn-rate", str(concurrency),
+                "--run-time", "1m",
+                "--host", api_endpoint,
+                "--only-summary"
+            ]
 
-    # 第二次调用（有缓存）
-    second_call_time, second_result = self.measure_execution_time(expensive_function, 5)
+            # 运行测试
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_root)
 
-    # 第三次调用不同参数（无缓存）
-    third_call_time, third_result = self.measure_execution_time(expensive_function, 6)
+            if result.returncode != 0:
 
-    return {
-            'first_call_time': first_call_time,
-            'second_call_time': second_call_time,
-            'third_call_time': third_call_time,
-            _ = 'cache_hit_ratio': (first_call_time - second_call_time) / first_call_time * 100,
-            _ = 'cache_size': len(self.performance_optimizer.cache.cache)
-    }
 
-    async def test_parallel_processing_performance(self) -> Dict[str, Any]:
-    """测试并行处理性能"""
-    _ = print("测试并行处理性能...")
+    _ = logger.error(f"API benchmark failed: {result.stderr}")
+                return None
 
-    # 创建模拟任务
-        async def mock_task(n: int) -> int:
-            _ = await asyncio.sleep(0.1)  # 模拟I/O操作
-            return n * 2
+            # 解析测试结果
+            metrics = self._parse_api_benchmark_results(result.stdout, api_endpoint, concurrency)
 
-    # 串行执行
-    start_time = time.time()
-    serial_results = []
-        for i in range(10)
+            if metrics:
 
-    result = await mock_task(i)
-            _ = serial_results.append(result)
-    serial_time = time.time() - start_time
 
-    # 并行执行
-    start_time = time.time()
-        tasks = [mock_task(i) for i in range(10)]:
-    parallel_results = await self.performance_optimizer.run_parallel_tasks(tasks)
-    parallel_time = time.time() - start_time
+    _ = self.benchmark_history.append(metrics)
+                logger.info(f"API benchmark completed: response_time={metrics.response_time:.3f}s, "
+                           f"throughput={metrics.throughput:.2f} req/s, error_rate={metrics.error_rate:.2f}%")
 
-    return {
-            'serial_execution_time': serial_time,
-            'parallel_execution_time': parallel_time,
-            'speedup_ratio': serial_time / parallel_time if parallel_time > 0 else 0,
-            'parallel_efficiency': (serial_time / parallel_time / 10) * 100 if parallel_time > 0 else 0
-    }
+            return metrics
+        except Exception as e:
 
-    def test_script_execution_performance(self) -> Dict[str, Any]:
-    """测试脚本执行性能"""
-    _ = print("测试脚本执行性能...")
+            _ = logger.error(f"Failed to run API benchmark: {e}")
+            return None
 
-    # 测试健康检查脚本
-    script_path = Path(__file__).parent / "health_check.py"
-        if script_path.exists()
-            # 测量执行时间
+    def run_component_benchmark(self, component_name: str, test_function: Callable, iterations: int = 1000) -> Optional[PerformanceMetrics]:
+    """运行组件性能基准测试"""
+        try:
+
+            logger.info(f"Running component benchmark for {component_name} with {iterations} iterations")
+
+            # 记录初始系统资源
+            initial_cpu = psutil.cpu_percent(interval=1)
+            initial_memory = psutil.virtual_memory().used / (1024 * 1024)  # MB
+
+            # 运行测试函数
             start_time = time.time()
-            try:
+            errors = 0
 
-                result = subprocess.run(
-                    _ = [sys.executable, str(script_path)],
-                    capture_output=True,
-                    text=True,
-                    timeout=30
-                )
-                execution_time = time.time() - start_time
-                success = result.returncode == 0
-            except subprocess.TimeoutExpired:
+            for i in range(iterations)
 
-                execution_time = 30
-                success = False
-        else:
-
-            execution_time = 0
-            success = False
-
-    # 测试优化的健康检查脚本
-    optimized_script_path = Path(__file__).parent / "optimized_health_check.py"
-        if optimized_script_path.exists()
-
-    start_time = time.time()
-            try:
-
-                result = subprocess.run(
-                    _ = [sys.executable, str(optimized_script_path)],
-                    capture_output=True,
-                    text=True,
-                    timeout=30
-                )
-                optimized_execution_time = time.time() - start_time
-                optimized_success = result.returncode == 0
-            except subprocess.TimeoutExpired:
-
-                optimized_execution_time = 30
-                optimized_success = False
-        else:
-
-            optimized_execution_time = 0
-            optimized_success = False
-
-    return {
-            'original_script_time': execution_time,
-            'original_script_success': success,
-            'optimized_script_time': optimized_execution_time,
-            'optimized_script_success': optimized_success,
-            'improvement_ratio': (execution_time - optimized_execution_time) / execution_time * 100 if execution_time > 0 else 0
-    }
-
-    async def run_all_benchmarks(self) -> Dict[str, Any]:
-    """运行所有基准测试"""
-    _ = print("开始性能基准测试...")
-
-    results = {}
-
-    # 测试缓存性能
-    results['cache_performance'] = self.test_cache_performance()
-
-    # 测试并行处理性能
-    results['parallel_processing_performance'] = await self.test_parallel_processing_performance()
-
-    # 测试脚本执行性能
-    results['script_execution_performance'] = self.test_script_execution_performance()
-
-    # 收集系统资源信息
-    metrics = self.performance_optimizer.collect_metrics()
-    results['system_metrics'] = {
-            'cpu_percent': metrics.cpu_percent,
-            'memory_percent': metrics.memory_percent
-    }
-
-    _ = print("性能基准测试完成!")
-    return results
-
-    def save_results(self, results: Dict[str, Any], filename: str = "performance_benchmark_results.json") -> None:
-    """保存测试结果"""
-    output_path = Path(__file__).parent.parent / "reports" / filename
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # 转换不可序列化的对象
-    serializable_results = self._make_serializable(results)
-
-    with open(output_path, 'w', encoding='utf-8') as f:
-    json.dump(serializable_results, f, indent=2, ensure_ascii=False)
-
-    _ = print(f"测试结果已保存到: {output_path}")
-
-    def _make_serializable(self, obj)
-    """将对象转换为可序列化的格式"""
-        if isinstance(obj, dict)
-
-    return {key: self._make_serializable(value) for key, value in obj.items()}
-    elif isinstance(obj, list)
-
-    return [self._make_serializable(item) for item in obj]
-    elif isinstance(obj, (int, float, str, bool)) or obj is None:
-
-    return obj
-        else:
-
-            return str(obj)
-
-async def main() -> None:
-    """主函数"""
-    benchmark = PerformanceBenchmark()
-
-    # 启动性能监控
-    _ = await benchmark.performance_optimizer.start_monitoring()
 
     try:
-    # 运行所有基准测试
-    results = await benchmark.run_all_benchmarks()
-
-    # 打印结果摘要
-    print("\n" + "="*60)
-    _ = print("性能基准测试结果摘要")
-    print("="*60)
-
-    # 缓存性能
-    cache_perf = results['cache_performance']
-    _ = print(f"\n缓存性能:")
-    _ = print(f"  首次调用时间: {cache_perf['first_call_time']:.3f}s")
-    _ = print(f"  缓存命中时间: {cache_perf['second_call_time']:.3f}s")
-    _ = print(f"  缓存命中率提升: {cache_perf['cache_hit_ratio']:.1f}%")
-    _ = print(f"  当前缓存大小: {cache_perf['cache_size']}")
-
-    # 并行处理性能
-    parallel_perf = results['parallel_processing_performance']
-    _ = print(f"\n并行处理性能:")
-    _ = print(f"  串行执行时间: {parallel_perf['serial_execution_time']:.3f}s")
-    _ = print(f"  并行执行时间: {parallel_perf['parallel_execution_time']:.3f}s")
-    _ = print(f"  加速比: {parallel_perf['speedup_ratio']:.2f}x")
-    _ = print(f"  并行效率: {parallel_perf['parallel_efficiency']:.1f}%")
-
-    # 脚本执行性能
-    script_perf = results['script_execution_performance']
-    _ = print(f"\n脚本执行性能:")
-    _ = print(f"  原始脚本执行时间: {script_perf['original_script_time']:.3f}s")
-    _ = print(f"  优化脚本执行时间: {script_perf['optimized_script_time']:.3f}s")
-    _ = print(f"  性能提升: {script_perf['improvement_ratio']:.1f}%")
-
-    # 系统资源
-    system_metrics = results['system_metrics']
-    _ = print(f"\n系统资源使用:")
-    _ = print(f"  CPU使用率: {system_metrics['cpu_percent']:.1f}%")
-    _ = print(f"  内存使用率: {system_metrics['memory_percent']:.1f}%")
-
-    print("="*60)
-
-    # 保存结果
-    _ = benchmark.save_results(results)
-
-    finally:
-    # 停止性能监控
-    _ = await benchmark.performance_optimizer.stop_monitoring()
-
-if __name__ == "__main__":
 
 
-    _ = asyncio.run(main())
+
+                    _ = test_function()
+                except Exception as e:
+
+                    _ = logger.warning(f"Error in iteration {i}: {e}")
+                    errors += 1
+
+            end_time = time.time()
+
+            # 记录最终系统资源
+            final_cpu = psutil.cpu_percent(interval=1)
+            final_memory = psutil.virtual_memory().used / (1024 * 1024)  # MB
+
+            # 计算性能指标
+            total_time = end_time - start_time
+            avg_response_time = total_time / iterations
+            throughput = iterations / total_time
+            error_rate = (errors / iterations) * 100
+
+            # 创建性能指标对象
+            metrics = PerformanceMetrics()
+            metrics.timestamp = datetime.now()
+            metrics.response_time = avg_response_time
+            metrics.throughput = throughput
+            metrics.concurrency = 1  # 单线程测试
+            metrics.cpu_usage = (final_cpu + initial_cpu) / 2
+            metrics.memory_usage = final_memory - initial_memory
+            metrics.error_rate = error_rate
+            metrics.test_name = f"Component Benchmark: {component_name}"
+            metrics.test_description = f"Component benchmark for {component_name} with {iterations} iterations":
+
+    _ = self.benchmark_history.append(metrics)
+
+            logger.info(f"Component benchmark completed: response_time={metrics.response_time:.6f}s, "
+                       f"throughput={metrics.throughput:.2f} ops/s, error_rate={metrics.error_rate:.2f}%")
+
+            return metrics
+        except Exception as e:
+
+            _ = logger.error(f"Failed to run component benchmark: {e}")
+            return None
+
+    def _parse_api_benchmark_results(self, output: str, api_endpoint: str, concurrency: int) -> Optional[PerformanceMetrics]:
+    """解析API基准测试结果"""
+        try:
+
+            metrics = PerformanceMetrics()
+            metrics.timestamp = datetime.now()
+            metrics.concurrency = concurrency
+            metrics.test_name = f"API Benchmark: {api_endpoint}"
+            metrics.test_description = f"API benchmark for {api_endpoint} with {concurrency} concurrent users"
+
+            # 简化的解析逻辑（实际应用中需要根据locust输出格式进行解析）
+            lines = output.split('\n')
+            for line in lines:
+
+    if 'Response time' in line:
+                    # 提取响应时间
+                    parts = line.split()
+                    for i, part in enumerate(parts)
+
+    if 'ms' in part:
+
+
+    metrics.response_time = float(part.replace('ms', '')) / 1000  # 转换为秒
+                            break
+                elif 'Requests' in line and '/s' in line:
+                    # 提取吞吐量
+                    parts = line.split()
+                    for i, part in enumerate(parts)
+
+    if '/s' in part:
+
+
+    metrics.throughput = float(part.replace('/s', ''))
+                            break
+                elif 'Failures' in line:
+                    # 提取错误率
+                    parts = line.split()
+                    for i, part in enumerate(parts)
+
+    if '%' in part:
+
+
+    metrics.error_rate = float(part.replace('%', ''))
+                            break
+
+            # 获取系统资源使用情况
+            metrics.cpu_usage = psutil.cpu_percent(interval=1)
+            metrics.memory_usage = psutil.virtual_memory().used / (1024 * 1024)  # MB
+
+            return metrics
+        except Exception as e:
+
+            _ = logger.error(f"Failed to parse API benchmark results: {e}")
+            return None
+
+    def run_regression_detection(self, current_metrics: PerformanceMetrics, baseline_metrics: PerformanceMetrics,
+                               threshold: float = 5.0) -> Dict[str, Any]:
+    """运行性能回归检测"""
+        try:
+
+            regression_results = {
+                "has_regression": False,
+                "regressions": [],
+                "improvements": []
+            }
+
+            # 检查响应时间回归
+            response_time_change = ((current_metrics.response_time - baseline_metrics.response_time) /
+                                  baseline_metrics.response_time) * 100
+            if response_time_change > threshold:
+
+    regression_results["has_regression"] = True
+                regression_results["regressions"].append({
+                    "metric": "response_time",
+                    "change": response_time_change,
+                    "current": current_metrics.response_time,
+                    "baseline": baseline_metrics.response_time
+                })
+            elif response_time_change < -threshold:
+
+    regression_results["improvements"].append({
+                    "metric": "response_time",
+                    "change": response_time_change,
+                    "current": current_metrics.response_time,
+                    "baseline": baseline_metrics.response_time
+                })
+
+            # 检查吞吐量回归
+            throughput_change = ((baseline_metrics.throughput - current_metrics.throughput) /
+                               baseline_metrics.throughput) * 100
+            if throughput_change > threshold:
+
+    regression_results["has_regression"] = True
+                regression_results["regressions"].append({
+                    "metric": "throughput",
+                    "change": throughput_change,
+                    "current": current_metrics.throughput,
+                    "baseline": baseline_metrics.throughput
+                })
+            elif throughput_change < -threshold:
+
+    regression_results["improvements"].append({
+                    "metric": "throughput",
+                    "change": throughput_change,
+                    "current": current_metrics.throughput,
+                    "baseline": baseline_metrics.throughput
+                })
+
+            # 检查错误率回归
+            error_rate_change = ((current_metrics.error_rate - baseline_metrics.error_rate) /
+                               max(baseline_metrics.error_rate, 0.01)) * 100
+            if error_rate_change > threshold:
+
+    regression_results["has_regression"] = True
+                regression_results["regressions"].append({
+                    "metric": "error_rate",
+                    "change": error_rate_change,
+                    "current": current_metrics.error_rate,
+                    "baseline": baseline_metrics.error_rate
+                })
+            elif error_rate_change < -threshold:
+
+    regression_results["improvements"].append({
+                    "metric": "error_rate",
+                    "change": error_rate_change,
+                    "current": current_metrics.error_rate,
+                    "baseline": baseline_metrics.error_rate
+                })
+
+            logger.info(f"Regression detection completed: has_regression={regression_results['has_regression']}")
+            return regression_results
+        except Exception as e:
+
+            _ = logger.error(f"Failed to run regression detection: {e}")
+            return {"has_regression": False, "regressions": [], "improvements": []}
+
+    def get_benchmark_trend(self, limit: int = 10) -> List[PerformanceMetrics]:
+    """获取性能基准测试趋势"""
+        return self.benchmark_history[-limit:] if len(self.benchmark_history) > limit else self.benchmark_history
+    def check_performance_thresholds(self, metrics: PerformanceMetrics) -> Dict[str, bool]:
+    """检查性能阈值"""
+    results = {}
+    results["response_time_ok"] = metrics.response_time <= self.thresholds["response_time"]
+    results["throughput_ok"] = metrics.throughput >= self.thresholds["throughput"]
+    results["error_rate_ok"] = metrics.error_rate <= self.thresholds["error_rate"]
+    return results
+
+    def generate_benchmark_report(self, metrics: PerformanceMetrics) -> str:
+    """生成性能基准测试报告文本"""
+    report = f"""
+性能基准测试报告
+================
+_ = 生成时间: {metrics.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
+测试名称: {metrics.test_name}
+
+性能指标:
+  响应时间: {metrics.response_time:.6f} 秒
+  吞吐量: {metrics.throughput:.2f} 请求/秒
+  并发用户数: {metrics.concurrency}
+  CPU使用率: {metrics.cpu_usage:.2f}%
+  内存使用: {metrics.memory_usage:.2f} MB
+  错误率: {metrics.error_rate:.2f}%
+
+阈值检查:
+  响应时间阈值 ({self.thresholds['response_time']}s) {'通过' if metrics.response_time <= self.thresholds['response_time'] else '未通过'}:
+    吞吐量阈值 ({self.thresholds['throughput']} req/s) {'通过' if metrics.throughput >= self.thresholds['throughput'] else '未通过'}:
+    错误率阈值 ({self.thresholds['error_rate']}%) {'通过' if metrics.error_rate <= self.thresholds['error_rate'] else '未通过'}
+"""
+    return report.strip()
+
+    def save_benchmark_results(self, metrics: PerformanceMetrics, filename: str = None) -> bool:
+    """保存基准测试结果"""
+        try:
+
+            if filename is None:
+
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"benchmark_results_{timestamp}.json"
+
+            # 转换为可序列化的格式
+            result_data = {
+                "timestamp": metrics.timestamp.isoformat(),
+                "response_time": metrics.response_time,
+                "throughput": metrics.throughput,
+                "concurrency": metrics.concurrency,
+                "cpu_usage": metrics.cpu_usage,
+                "memory_usage": metrics.memory_usage,
+                "error_rate": metrics.error_rate,
+                "test_name": metrics.test_name,
+                "test_description": metrics.test_description
+            }
+
+            filepath = os.path.join(self.project_root, filename)
+            with open(filepath, 'w') as f:
+    json.dump(result_data, f, indent=2)
+
+            _ = logger.info(f"Saved benchmark results to {filepath}")
+            return True
+        except Exception as e:
+
+            _ = logger.error(f"Failed to save benchmark results: {e}")
+            return False
+
+    def set_performance_thresholds(self, response_time_threshold: float = None,
+                                 throughput_threshold: float = None, error_rate_threshold: float = None):
+    """设置性能阈值"""
+        if response_time_threshold is not None:
+
+    self.thresholds["response_time"] = response_time_threshold
+        if throughput_threshold is not None:
+
+    self.thresholds["throughput"] = throughput_threshold
+        if error_rate_threshold is not None:
+
+    self.thresholds["error_rate"] = error_rate_threshold
+    _ = logger.info(f"Updated performance thresholds: {self.thresholds}")

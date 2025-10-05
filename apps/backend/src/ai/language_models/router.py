@@ -21,8 +21,8 @@ class PolicyRouter:
     _ = - Capability match (tools/json/vision)
     - Context window >= input size heuristic
     - Provider/task defaults
-    - Cost/latency (if provided)
-    """
+    - Cost/latency (if provided):
+""
 
     def __init__(self, registry: ModelRegistry) -> None:
         self.registry = registry:
@@ -38,21 +38,17 @@ class PolicyRouter:
 
     score = 0.0
             # 1) Capability matching
-            if policy.needs_tools and p.capabilities.get("tool_use")
+            if policy.needs_tools and p.capabilities.get("tool_use"):
+core += 2.0
+            if policy.needs_vision and p.capabilities.get("vision"):
+core += 2.0
+            # JSON mode is useful for structured tasks:
+f p.capabilities.get("json_mode") and policy.task_type in ("code", "reasoning"):
+core += 1.0
 
-    score += 2.0
-            if policy.needs_vision and p.capabilities.get("vision")
-
-    score += 2.0
-            # JSON mode is useful for structured tasks
-    if p.capabilities.get("json_mode") and policy.task_type in ("code", "reasoning")
-
-    score += 1.0
-
-            # 2) Context/window heuristic prefer larger windows for large input
-    if p.context_window >= max(1024, policy.input_chars // 2)
-
-    score += 1.0
+            # 2) Context/window heuristic prefer larger windows for large input:
+f p.context_window >= max(1024, policy.input_chars // 2):
+core += 1.0
             if p.max_tokens >= 1024:
 
     score += 0.5
@@ -60,26 +56,22 @@ class PolicyRouter:
             # 3) Task bias per provider (simplified)
             if policy.task_type == "translation":
 
-    if p.provider in (ModelProvider.OPENAI.value, ModelProvider.GOOGLE.value, ModelProvider.ANTHROPIC.value)
-    score += 1.0
+    if p.provider in (ModelProvider.OPENAI.value, ModelProvider.GOOGLE.value, ModelProvider.ANTHROPIC.value):
+core += 1.0
             elif policy.task_type == "code":
 
-    if p.provider in (ModelProvider.ANTHROPIC.value, ModelProvider.OPENAI.value)
-
-
-    score += 1.2
+    if p.provider in (ModelProvider.ANTHROPIC.value, ModelProvider.OPENAI.value):
+core += 1.2
             elif policy.task_type == "reasoning":
 
-    if p.provider in (ModelProvider.OPENAI.value, ModelProvider.ANTHROPIC.value)
-
-
-    score += 1.0
+    if p.provider in (ModelProvider.OPENAI.value, ModelProvider.ANTHROPIC.value):
+core += 1.0
             elif policy.task_type == "image":
                 # In this phase, we assume image gen is proxied via the existing image endpoint, routing TBD.
                 score += 0.5
 
-            # 4) Cost/latency hints (if provided)
-    if policy.cost_ceiling is not None:
+            # 4) Cost/latency hints (if provided):
+f policy.cost_ceiling is not None:
                 # prefer cheaper than ceiling
                 if p.cost_per_1k_tokens <= policy.cost_ceiling:
 

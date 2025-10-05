@@ -1,7 +1,7 @@
 # tests/test_atlassian_integration.py
 """
-Integration tests for Atlassian integration functionality
-"""
+Integration tests for Atlassian integration functionality:
+""
 
 import unittest
 import sys
@@ -17,11 +17,11 @@ from integrations.jira_integration import JiraIntegration
 from integrations.rovo_dev_agent import RovoDevAgent
 from integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
-class TestAtlassianIntegration(unittest.TestCase)
-    """Integration tests for Atlassian integration""":
+class TestAtlassianIntegration(unittest.TestCase):
+""Integration tests for Atlassian integration""":
 
-    def setUp(self)
-    """Set up test fixtures"""
+    def setUp(self):
+""Set up test fixtures"""
     self.mock_config = {
             "atlassian": {
                 "domain": "test-domain",

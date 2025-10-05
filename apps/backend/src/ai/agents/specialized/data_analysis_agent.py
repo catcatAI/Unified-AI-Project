@@ -9,8 +9,8 @@ from ....core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPM
 
 class DataAnalysisAgent(BaseAgent):
     """
-    A specialized agent for data analysis tasks like statistical analysis,
-    data visualization, and pattern recognition.
+    A specialized agent for data analysis tasks like statistical analysis,:
+ata visualization, and pattern recognition.
     """
     def __init__(self, agent_id: str) -> None:
         capabilities = [
@@ -48,16 +48,14 @@ class DataAnalysisAgent(BaseAgent):
             }
         ]
         super().__init__(agent_id=agent_id, capabilities=capabilities)
-        logging.info(f"[{self.agent_id}] DataAnalysisAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
-
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+        logging.info(f"[{self.agent_id}] DataAnalysisAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}"):
+sync def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id", "")
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", {})
 
-        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
-
-        try:
+        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'"):
+ry:
             if "statistical_analysis" in capability_id:
                 result = self._perform_statistical_analysis(params)
                 result_payload = self._create_success_payload(request_id, result)
@@ -76,9 +74,8 @@ class DataAnalysisAgent(BaseAgent):
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
             _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
-
-    def _perform_statistical_analysis(self, params: Dict[str, Any]) -> Dict[str, Any]:
+            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}"):
+ef _perform_statistical_analysis(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Performs statistical analysis on numerical data."""
         data = params.get('data', [])
         analysis_type = params.get('analysis_type', 'basic')
@@ -86,8 +83,8 @@ class DataAnalysisAgent(BaseAgent):
         if not data:
             raise ValueError("No data provided for analysis")
         
-        # Convert to numpy array for easier manipulation
-        try:
+        # Convert to numpy array for easier manipulation:
+ry:
             np_data = np.array(data, dtype=float)
         except ValueError:
             raise ValueError("Data must be numerical")
@@ -118,9 +115,8 @@ class DataAnalysisAgent(BaseAgent):
                 correlation = np.corrcoef(x, y)[0, 1]
                 results["correlation"] = float(correlation)
             else:
-                results["correlation"] = "Insufficient data for correlation analysis"
-        
-        return results
+                results["correlation"] = "Insufficient data for correlation analysis":
+eturn results
 
     def _generate_data_summary(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Generates a summary of the provided dataset."""
@@ -129,8 +125,8 @@ class DataAnalysisAgent(BaseAgent):
         if not data:
             raise ValueError("No data provided for summary")
         
-        # Convert to pandas DataFrame for easier manipulation
-        try:
+        # Convert to pandas DataFrame for easier manipulation:
+ry:
             df = pd.DataFrame(data)
         except Exception as e:
             raise ValueError(f"Invalid data format: {e}")
@@ -139,11 +135,11 @@ class DataAnalysisAgent(BaseAgent):
             "row_count": len(df),
             "column_count": len(df.columns),
             "columns": list(df.columns),
-            "data_types": {col: str(df[col].dtype) for col in df.columns}
-        }
+            "data_types": {col: str(df[col].dtype) for col in df.columns}:
+
         
-        # Add basic statistics for numerical columns
-        numerical_cols = df.select_dtypes(include=[np.number]).columns
+        # Add basic statistics for numerical columns:
+umerical_cols = df.select_dtypes(include=[np.number]).columns
         if len(numerical_cols) > 0:
             summary["numerical_summary"] = {}
             for col in numerical_cols:
@@ -155,8 +151,8 @@ class DataAnalysisAgent(BaseAgent):
                     "max": float(df[col].max())
                 }
         
-        # Add value counts for categorical columns
-        categorical_cols = df.select_dtypes(include=['object']).columns
+        # Add value counts for categorical columns:
+ategorical_cols = df.select_dtypes(include=['object']).columns
         if len(categorical_cols) > 0:
             summary["categorical_summary"] = {}
             for col in categorical_cols:
@@ -204,8 +200,8 @@ class DataAnalysisAgent(BaseAgent):
         if pattern_type == "seasonality" or pattern_type == "basic":
             # Simple seasonality detection using autocorrelation
             if len(np_data) > 10:  # Need sufficient data points
-                # Calculate autocorrelation for lags 1 to 10
-                autocorr = []
+                # Calculate autocorrelation for lags 1 to 10:
+utocorr = []
                 for lag in range(1, min(11, len(np_data)//2)):
                     corr = np.corrcoef(np_data[:-lag], np_data[lag:])[0, 1]
                     autocorr.append(float(corr))
@@ -217,8 +213,8 @@ class DataAnalysisAgent(BaseAgent):
             std = np.std(np_data)
             if std > 0:
                 z_scores = np.abs((np_data - mean) / std)
-                # Find points with z-score > 2 (2 standard deviations)
-                anomalies = np.where(z_scores > 2)[0].tolist()
+                # Find points with z-score > 2 (2 standard deviations):
+nomalies = np.where(z_scores > 2)[0].tolist()
                 results["anomalies"] = anomalies
                 results["anomaly_threshold"] = 2.0
         

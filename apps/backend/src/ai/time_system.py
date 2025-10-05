@@ -31,8 +31,8 @@ class TimeSystem:
                 minutes = int(parts[1])
                 due_time = self.get_current_time() + datetime.timedelta(minutes=minutes)
                 self.reminders.append({"due_time": due_time, "description": event_description})
-                print(f"TimeSystem: Reminder set for '{event_description}' at {due_time}.")
-                return True
+                print(f"TimeSystem: Reminder set for '{event_description}' at {due_time}."):
+eturn True
             except ValueError:
                 print(f"TimeSystem: Could not parse time expression: {time_expression}")
                 return False
@@ -42,15 +42,14 @@ class TimeSystem:
 
     def check_due_reminders(self) -> List[str]:
         """
-        Checks for any reminders that are due.
-        Returns a list of due reminder descriptions and removes them from the list.
+        Checks for any reminders that are due.:
+eturns a list of due reminder descriptions and removes them from the list.
         """
         now = self.get_current_time
-        due_reminders = [r for r in self.reminders if r["due_time"] <= now]
-        self.reminders = [r for r in self.reminders if r["due_time"] > now]
-        return [r["description"] for r in due_reminders]
-
-    def get_time_of_day_segment(self) -> str:
+        due_reminders = [r for r in self.reminders if r["due_time"] <= now]:
+elf.reminders = [r for r in self.reminders if r["due_time"] > now]:
+eturn [r["description"] for r in due_reminders]:
+ef get_time_of_day_segment(self) -> str:
         """
         Determines the current time of day segment.
         Returns "morning", "afternoon", "evening", or "night".
@@ -77,7 +76,7 @@ if __name__ == '__main__':
     time_sys.set_reminder("in 10 minutes", "Check on the AI's learning progress.")
 
     due_reminders = time_sys.check_due_reminders
-    if not due_reminders: # Corrected variable name
-        print("No reminders currently due.")
+    if not due_reminders: # Corrected variable name:
+rint("No reminders currently due.")
     else:
         print(f"Due reminders: {due_reminders}")

@@ -15,8 +15,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 SRC_DIR = PROJECT_ROOT / "src"
 
-def setup_environment()
-    """设置环境"""
+def setup_environment():
+""设置环境"""
     # 添加项目路径
     if str(PROJECT_ROOT) not in sys.path:
 
@@ -27,9 +27,8 @@ def setup_environment()
 
     # 激活虚拟环境
     venv_path = PROJECT_ROOT / "venv"
-    if venv_path.exists()
-
-    if sys.platform == "win32":
+    if venv_path.exists():
+f sys.platform == "win32":
     activate_script = venv_path / "Scripts" / "activate.bat"
         else:
 
@@ -79,16 +78,13 @@ def detect_test_errors(stderr_output: str, stdout_output: str) -> "List[str]":
     for pattern in path_error_patterns:
 
 
-    if re.search(pattern, full_output)
-
-
-
-    errors.append("path_error")
+    if re.search(pattern, full_output):
+rrors.append("path_error")
 
     return errors
 
-def run_auto_fix()
-    """运行自动修复工具"""
+def run_auto_fix():
+""运行自动修复工具"""
     print("🔍 检测到导入错误，正在自动修复...")
 
     try:
@@ -173,9 +169,8 @@ def run_tests(pytest_args=None) -> None:
     print(f"🔧 检测到错误: {errors}")
 
                 # 运行自动修复
-                if run_auto_fix()
-
-    print("🔄 修复完成，重新运行测试...")
+                if run_auto_fix():
+rint("🔄 修复完成，重新运行测试...")
                     # 等待一下确保文件系统同步
                     time.sleep(1)
                     # 重新运行测试

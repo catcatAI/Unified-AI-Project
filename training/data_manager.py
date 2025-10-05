@@ -35,8 +35,8 @@ ErrorContext = type('ErrorContext', (), {
 
 class GlobalErrorHandler:
     @staticmethod
-    def handle_error(error, context, strategy=None)
-    print(f"Error in {context.component}.{context.operation}: {error}")
+    def handle_error(error, context, strategy=None):
+rint(f"Error in {context.component}.{context.operation}: {error}")
 
 global_error_handler = GlobalErrorHandler()
 
@@ -112,9 +112,8 @@ class DataManager:
 
     for file in files:
                     # 跳过隐藏文件
-                    if file.startswith('.')
-
-    continue
+                    if file.startswith('.'):
+ontinue
 
                     file_path = Path(root) / file
                     relative_path = file_path.relative_to(self.data_dir)
@@ -153,10 +152,8 @@ class DataManager:
 
             extension = file_path.suffix.lower()
 
-            for data_type, extensions in self.supported_formats.items()
-
-
-    if extension in extensions:
+            for data_type, extensions in self.supported_formats.items():
+f extension in extensions:
 
 
 
@@ -166,29 +163,24 @@ class DataManager:
             mime_type, _ = mimetypes.guess_type(str(file_path))
             if mime_type:
 
-    if mime_type.startswith('image/')
-    return 'image'
-                elif mime_type.startswith('audio/')
-
-    return 'audio'
-                elif mime_type.startswith('video/')
-
-    return 'video'
-                elif mime_type.startswith('text/')
-
-    return 'text'
+    if mime_type.startswith('image/'):
+eturn 'image'
+                elif mime_type.startswith('audio/'):
+eturn 'audio'
+                elif mime_type.startswith('video/'):
+eturn 'video'
+                elif mime_type.startswith('text/'):
+eturn 'text'
                 elif mime_type == 'application/pdf':
 
     return 'document'
                 elif mime_type.startswith('application/')
                     # 检查是否为模型文件
-                    if any(model_ext in mime_type for model_ext in ['model', 'tensorflow', 'pytorch', 'onnx'])
-
-    return 'model'
+                    if any(model_ext in mime_type for model_ext in ['model', 'tensorflow', 'pytorch', 'onnx']):
+eturn 'model'
                     # 检查是否为压缩文件
-                    elif any(arch_ext in mime_type for arch_ext in ['zip', 'rar', '7z', 'tar', 'gzip'])
-
-    return 'archive'
+                    elif any(arch_ext in mime_type for arch_ext in ['zip', 'rar', '7z', 'tar', 'gzip']):
+eturn 'archive'
                     # 其他应用程序文件
                     else:
 
@@ -196,15 +188,12 @@ class DataManager:
 
             # 根据文件名模式进一步分类
             filename = file_path.name.lower()
-            if any(pattern in filename for pattern in ['model', 'checkpoint', 'weights'])
-
-    return 'model'
-            elif any(pattern in filename for pattern in ['train', 'test', 'valid', 'dataset'])
-
-    return 'data'
-            elif any(pattern in filename for pattern in ['config', 'setting'])
-
-    return 'text'
+            if any(pattern in filename for pattern in ['model', 'checkpoint', 'weights']):
+eturn 'model'
+            elif any(pattern in filename for pattern in ['train', 'test', 'valid', 'dataset']):
+eturn 'data'
+            elif any(pattern in filename for pattern in ['config', 'setting']):
+eturn 'text'
 
             # 默认分类为文本
             return 'text'
@@ -218,9 +207,8 @@ class DataManager:
     """评估单个文件的数据质量"""
     context = ErrorContext("DataManager", "assess_data_quality", {"file_path": file_path})
     path = Path(file_path)
-        if not path.exists()
-
-    return {'quality_score': 0, 'issues': ['文件不存在']}
+        if not path.exists():
+eturn {'quality_score': 0, 'issues': ['文件不存在']}
 
     quality_info = {
             'quality_score': 0,
@@ -231,11 +219,11 @@ class DataManager:
 
         try:
             # 文件大小评估
-            if quality_info['file_size'] < 10:  # 小于10字节
-                _ = quality_info['issues'].append('文件过小')
+            if quality_info['file_size'] < 10:  # 小于10字节:
+ = quality_info['issues'].append('文件过小')
                 quality_info['quality_score'] -= 20
-            elif quality_info['file_size'] > 100 * 1024 * 1024:  # 大于100MB
-                _ = quality_info['issues'].append('文件过大')
+            elif quality_info['file_size'] > 100 * 1024 * 1024:  # 大于100MB:
+ = quality_info['issues'].append('文件过大')
                 quality_info['quality_score'] -= 10
             else:
 
@@ -266,9 +254,8 @@ class DataManager:
     quality_info = self._assess_archive_quality(path, quality_info)
 
             # 文件完整性检查
-            if self._is_file_corrupted(path)
-
-    _ = quality_info['issues'].append('文件可能已损坏')
+            if self._is_file_corrupted(path):
+ = quality_info['issues'].append('文件可能已损坏')
                 quality_info['quality_score'] -= 30
             else:
 
@@ -277,10 +264,10 @@ class DataManager:
             # 文件修改时间检查（最近修改的文件质量更高）
             import time
             days_since_modified = (time.time() - quality_info['modified_time']) / (24 * 3600)
-            if days_since_modified < 7:  # 一周内修改的文件
-                quality_info['quality_score'] += 5
-            elif days_since_modified > 365:  # 一年以上未修改的文件
-                _ = quality_info['issues'].append('文件长期未更新')
+            if days_since_modified < 7:  # 一周内修改的文件:
+uality_info['quality_score'] += 5
+            elif days_since_modified > 365:  # 一年以上未修改的文件:
+ = quality_info['issues'].append('文件长期未更新')
                 quality_info['quality_score'] -= 10
 
         except Exception as e:
@@ -331,10 +318,10 @@ class DataManager:
                     import numpy as np
                     img_array = np.array(img.convert('L'))  # 转换为灰度图
                     contrast = img_array.std()
-                    if contrast > 30:  # 高对比度图像
-                        quality_info['quality_score'] += 10
-                    elif contrast < 10:  # 低对比度图像
-                        _ = quality_info['issues'].append('图像对比度较低')
+                    if contrast > 30:  # 高对比度图像:
+uality_info['quality_score'] += 10
+                    elif contrast < 10:  # 低对比度图像:
+ = quality_info['issues'].append('图像对比度较低')
                         quality_info['quality_score'] -= 5
 
                 # 记录图像信息
@@ -424,9 +411,9 @@ class DataManager:
                 # 评估文本复杂度
                 if len(words) > 0:
 
-    avg_word_length = sum(len(word) for word in words) / len(words)
-    if 3 <= avg_word_length <= 10:  # 合理的平均词长
-                        quality_info['quality_score'] += 5
+    avg_word_length = sum(len(word) for word in words) / len(words):
+f 3 <= avg_word_length <= 10:  # 合理的平均词长:
+uality_info['quality_score'] += 5
 
                 # 评估行长度一致性
                 if len(lines) > 1:
@@ -436,8 +423,8 @@ class DataManager:
                     if avg_line_length > 0:
                         # 计算行长度变化系数
                         length_variation = sum(abs(length - avg_line_length) for length in line_lengths) / (len(line_lengths) * avg_line_length):
-    if length_variation < 0.5:  # 行长度相对一致
-                            quality_info['quality_score'] += 5
+    if length_variation < 0.5:  # 行长度相对一致:
+uality_info['quality_score'] += 5
 
         except UnicodeDecodeError:
 
@@ -478,18 +465,18 @@ class DataManager:
                 quality_info['code_info'] = {
                     _ = 'line_count': len(lines),
                     _ = 'character_count': len(content),
-                    'empty_lines': sum(1 for line in lines if not line.strip()),
-                    'comment_lines': sum(1 for line in lines if line.strip().startswith('#') or line.strip().startswith('//') or line.strip().startswith('/*') or line.strip().startswith('*'))
-                }
+                    'empty_lines': sum(1 for line in lines if not line.strip()),:
+comment_lines': sum(1 for line in lines if line.strip().startswith('#') or line.strip().startswith('//') or line.strip().startswith('/*') or line.strip().startswith('*')):
+
 
                 # 评估代码复杂度
                 if quality_info['code_info']['line_count'] > 0:
 
     comment_ratio = quality_info['code_info']['comment_lines'] / quality_info['code_info']['line_count']
-                    if 0.1 <= comment_ratio <= 0.5:  # 合理的注释比例
-                        quality_info['quality_score'] += 10
-                    elif comment_ratio > 0.5:  # 注释过多
-                        _ = quality_info['issues'].append('注释比例过高')
+                    if 0.1 <= comment_ratio <= 0.5:  # 合理的注释比例:
+uality_info['quality_score'] += 10
+                    elif comment_ratio > 0.5:  # 注释过多:
+ = quality_info['issues'].append('注释比例过高')
                         quality_info['quality_score'] -= 5
 
                 # 检查代码行长度
@@ -497,8 +484,8 @@ class DataManager:
     if long_lines == 0:
 
     quality_info['quality_score'] += 5
-                elif long_lines / len(lines) > 0.3:  # 过多长行
-                    _ = quality_info['issues'].append('代码行过长过多')
+                elif long_lines / len(lines) > 0.3:  # 过多长行:
+ = quality_info['issues'].append('代码行过长过多')
                     quality_info['quality_score'] -= 10
 
         except UnicodeDecodeError:
@@ -542,11 +529,11 @@ class DataManager:
                 quality_info['quality_score'] -= 10
 
             # 模型文件大小评估
-            if quality_info['file_size'] < 1024:  # 小于1KB
-                _ = quality_info['issues'].append('模型文件过小')
+            if quality_info['file_size'] < 1024:  # 小于1KB:
+ = quality_info['issues'].append('模型文件过小')
                 quality_info['quality_score'] -= 20
-            elif quality_info['file_size'] > 1024 * 1024 * 1024:  # 大于1GB
-                _ = quality_info['issues'].append('模型文件过大')
+            elif quality_info['file_size'] > 1024 * 1024 * 1024:  # 大于1GB:
+ = quality_info['issues'].append('模型文件过大')
                 quality_info['quality_score'] -= 10
             else:
 
@@ -587,17 +574,15 @@ class DataManager:
     data = json.load(f)
 
                 # 检查数据结构
-                if isinstance(data, dict)
-
-    quality_info['data_info'] = {
+                if isinstance(data, dict):
+uality_info['data_info'] = {
                         'type': 'dict',
-                        'keys': list(data.keys()) if isinstance(data, dict) else [],
-                        'size': len(data) if hasattr(data, '__len__') else 0
-                    }
-                    quality_info['quality_score'] += 10
-                elif isinstance(data, list)
+                        'keys': list(data.keys()) if isinstance(data, dict) else [],:
+size': len(data) if hasattr(data, '__len__') else 0:
 
-    quality_info['data_info'] = {
+                    quality_info['quality_score'] += 10
+                elif isinstance(data, list):
+uality_info['data_info'] = {
                         'type': 'list',
                         _ = 'size': len(data)
                     }
@@ -624,8 +609,8 @@ class DataManager:
                 quality_info['data_info'] = {
                     'type': 'csv',
                     _ = 'rows': len(rows),
-                    'columns': len(rows[0]) if rows else 0
-                }
+                    'columns': len(rows[0]) if rows else 0:
+
 
                 if len(rows) > 0:
 
@@ -697,11 +682,11 @@ class DataManager:
                 quality_info['quality_score'] -= 10
 
             # 压缩文件大小评估
-            if quality_info['file_size'] < 1024:  # 小于1KB
-                _ = quality_info['issues'].append('压缩文件过小')
+            if quality_info['file_size'] < 1024:  # 小于1KB:
+ = quality_info['issues'].append('压缩文件过小')
                 quality_info['quality_score'] -= 15
-            elif quality_info['file_size'] > 500 * 1024 * 1024:  # 大于500MB
-                _ = quality_info['issues'].append('压缩文件过大')
+            elif quality_info['file_size'] > 500 * 1024 * 1024:  # 大于500MB:
+ = quality_info['issues'].append('压缩文件过大')
                 quality_info['quality_score'] -= 5
             else:
 
@@ -754,9 +739,8 @@ class DataManager:
         try:
 
             result = []
-            for file_info in self.data_catalog.values()
-
-    if file_info['type'] == data_type:
+            for file_info in self.data_catalog.values():
+f file_info['type'] == data_type:
 
 
     _ = result.append(file_info)
@@ -775,14 +759,12 @@ class DataManager:
             high_quality_data = {}
 
             # 先评估所有数据的质量
-            for file_path in self.data_catalog.keys()
-
-    _ = self.assess_data_quality(file_path)
+            for file_path in self.data_catalog.keys():
+ = self.assess_data_quality(file_path)
 
             # 按类型分组高质量数据
-            for file_path, quality_info in self.data_quality_scores.items()
-
-    if quality_info['quality_score'] >= min_quality_score:
+            for file_path, quality_info in self.data_quality_scores.items():
+f quality_info['quality_score'] >= min_quality_score:
 
 
     file_info = self.data_catalog.get(file_path)
@@ -822,17 +804,15 @@ class DataManager:
                 _ = training_data.extend(data_files)
 
             # 对于概念模型，直接添加概念模型训练数据
-            if model_type in ['concept_models', 'environment_simulator', 'causal_reasoning_engine',
-                             'adaptive_learning_controller', 'alpha_deep_model']:
+            if model_type in ['concept_models', 'environment_simulator', 'causal_reasoning_engine',:
+adaptive_learning_controller', 'alpha_deep_model']:
                 # 添加概念模型专用训练数据
                 concept_data_dir = self.data_dir / "concept_models_training_data"
-                if concept_data_dir.exists()
-
-    for json_file in concept_data_dir.glob("*.json")
+                if concept_data_dir.exists():
+or json_file in concept_data_dir.glob("*.json")
                         # 根据模型类型过滤数据
-                        if self._is_data_relevant_for_model(json_file.name, model_type)
-
-    file_info = {
+                        if self._is_data_relevant_for_model(json_file.name, model_type):
+ile_info = {
                                 _ = 'path': str(json_file),
                                 _ = 'relative_path': str(json_file.relative_to(self.data_dir)),
                                 _ = 'size': json_file.stat().st_size,
@@ -885,8 +865,8 @@ class DataManager:
     return True
             elif model_type == 'concept_models':
                 # 概念模型可以使用所有概念数据
-                return any(keyword in filename for keyword in ['environment', 'causal', 'adaptive', 'alpha'])
-    return False
+                return any(keyword in filename for keyword in ['environment', 'causal', 'adaptive', 'alpha']):
+eturn False
         except Exception as e:
 
     _ = self.error_handler.handle_error(e, context)
@@ -911,9 +891,8 @@ class DataManager:
             }
 
             # 统计各类文件数量和大小
-            for file_info in self.data_catalog.values()
-
-    file_type = file_info['type']
+            for file_info in self.data_catalog.values():
+ile_type = file_info['type']
                 if file_type not in stats['file_types']:
 
     stats['file_types'][file_type] = {'count': 0, 'size': 0}
@@ -929,8 +908,8 @@ class DataManager:
             _ = logger.error(f"❌ 获取数据统计信息失败: {e}")
             return {}
 
-    def save_data_catalog(self, catalog_path: str = None)
-    """保存数据目录到文件"""
+    def save_data_catalog(self, catalog_path: str = None):
+""保存数据目录到文件"""
     context = ErrorContext("DataManager", "save_data_catalog")
         try:
 
@@ -960,8 +939,8 @@ class DataManager:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 保存数据目录失败: {e}")
 
-    def load_data_catalog(self, catalog_path: str = None)
-    """从文件加载数据目录"""
+    def load_data_catalog(self, catalog_path: str = None):
+""从文件加载数据目录"""
     context = ErrorContext("DataManager", "load_data_catalog")
         try:
 
@@ -970,10 +949,8 @@ class DataManager:
 
     catalog_path = TRAINING_DIR / "data_catalog.json"
 
-            if not Path(catalog_path).exists()
-
-
-    _ = logger.warning(f"⚠️ 数据目录文件不存在: {catalog_path}")
+            if not Path(catalog_path).exists():
+ = logger.warning(f"⚠️ 数据目录文件不存在: {catalog_path}")
                 return False
 
             try:
@@ -1014,9 +991,8 @@ def main() -> None:
     _ = print(f"  总文件数: {stats['total_files']}")
     _ = print(f"  总大小: {stats['total_size'] / (1024*1024).2f} MB")
     _ = print(f"  文件类型分布:")
-    for file_type, info in stats['file_types'].items()
-
-    _ = print(f"    {file_type}: {info['count']} 个文件, {info['size'] / (1024*1024).2f} MB")
+    for file_type, info in stats['file_types'].items():
+ = print(f"    {file_type}: {info['count']} 个文件, {info['size'] / (1024*1024).2f} MB")
 
     # 评估几个文件的质量
     _ = print(f"\n🔍 数据质量评估:")

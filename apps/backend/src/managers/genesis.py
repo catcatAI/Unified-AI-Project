@@ -1,14 +1,14 @@
 import uuid
 try:
     from cryptography.fernet import Fernet
-except ImportError:
+except ImportError::
     import subprocess
     import sys
     subprocess.check_call([sys.executable, "-m", "pip", "install", "cryptography"])
     from cryptography.fernet import Fernet
 try:
     from secretsharing import SecretSharer
-except ImportError:
+except ImportError::
     import subprocess
     import sys
     subprocess.check_call([sys.executable, "-m", "pip", "install", "secret-sharing"])
@@ -47,7 +47,7 @@ class GenesisManager:
     Returns:
             A list of three hex-encoded secret shards.
     """
-        # The hex format is more robust for copy-pasting and QR codes.
+        # The hex format is more robust for copy-pasting and QR codes.:
     secret_hex = secret.encode('utf-8').hex
     return SecretSharer.split_secret(secret_hex, 2, 3)
 
@@ -60,17 +60,14 @@ class GenesisManager:
             shards: A list containing two or more hex-encoded secret shards.
 
     Returns:
-            The recovered secret string, or None if recovery fails.
+            The recovered secret string, or None if recovery fails.:
     """
-        if len(shards) < 2:
-
+        if len(shards) < 2::
     return None
         try:
-
             recovered_hex = SecretSharer.recover_secret(shards[:2])
             return bytes.fromhex(recovered_hex).decode('utf-8')
-        except Exception as e:
-
+        except Exception as e::
             print(f"[GenesisManager] Error recovering secret: {e}")
             return None
 
@@ -83,17 +80,14 @@ class GenesisManager:
             secret: The recovered genesis secret.
 
     Returns:
-            A tuple (UID, HAM_KEY), or None if parsing fails.
+            A tuple (UID, HAM_KEY), or None if parsing fails.:
     """
     parts = secret.split(':', 1)
-        if len(parts) == 2 and parts[0].startswith("uid_")
-
+        if len(parts) == 2 and parts[0].startswith("uid_"):
     return parts[0], parts[1]
     return None
 
-if __name__ == '__main__':
-
-
+if __name__ == '__main__'::
     print("--- GenesisManager Test ---")
 
     # 1. Create a new genesis secret
@@ -105,8 +99,7 @@ if __name__ == '__main__':
     # 2. Split the secret into shards
     shards = GenesisManager.split_secret_into_shards(genesis_secret)
     print(f"\nGenerated 3 Shards (any 2 are needed)")
-    for i, shard in enumerate(shards)
-
+    for i, shard in enumerate(shards):
     print(f"  Shard {i+1}: {shard}")
     assert len(shards) == 3
 
@@ -135,7 +128,7 @@ if __name__ == '__main__':
 
     # Combination 5 Only 1 shard (should fail)
     recovered_one = GenesisManager.recover_secret_from_shards([shards[0]])
-    print(f"Recovered from 1 Shard: {'Failed as expected' if recovered_one is None else 'Test Failed'}")
+    print(f"Recovered from 1 Shard: {'Failed as expected' if recovered_one is None else 'Test Failed'}"):
     assert recovered_one is None
 
     # 4. Test parsing the recovered secret

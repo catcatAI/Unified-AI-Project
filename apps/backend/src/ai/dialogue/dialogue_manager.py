@@ -63,8 +63,8 @@ class DialogueManager:
     self.hsp_connector = hsp_connector # Store hsp_connector
     self.config = config or {}
 
-    # Load command triggers from config with defaults
-    self.triggers = self.config.get("command_triggers", {
+    # Load command triggers from config with defaults:
+elf.triggers = self.config.get("command_triggers", {
             "complex_project": "project:",
             "manual_delegation": "!delegate_to",
             "context_analysis": "!analyze:"
@@ -106,9 +106,8 @@ class DialogueManager:
 
     # --- Intent Classification ---
     # Use triggers from config to activate special handlers
-        if self.project_coordinator and user_input.lower().startswith(self.triggers["complex_project"])
-
-    project_query = user_input[len(self.triggers["complex_project"])].strip()
+        if self.project_coordinator and user_input.lower().startswith(self.triggers["complex_project"]):
+roject_query = user_input[len(self.triggers["complex_project"])].strip()
             logging.info(f"[{self.ai_id}] Complex project detected. Delegating to ProjectCoordinator...")
             return await self.project_coordinator.handle_project(project_query, session_id, user_id)
 
@@ -143,8 +142,8 @@ class DialogueManager:
     self.active_sessions[session_id].append(DialogueTurn(speaker="user", text=user_input, timestamp=datetime.now(timezone.utc).isoformat))
             self.active_sessions[session_id].append(DialogueTurn(speaker="ai", text=response_text, timestamp=datetime.now(timezone.utc).isoformat))
 
-        # Always store in memory if memory manager is available, regardless of session
-    if self.memory_manager:
+        # Always store in memory if memory manager is available, regardless of session:
+f self.memory_manager:
 
     user_metadata: DialogueMemoryEntryMetadata = {"speaker": "user", "timestamp": datetime.now(timezone.utc).isoformat, "user_id": user_id, "session_id": session_id} # type ignore
             user_mem_id = self.memory_manager.store_experience(user_input, "user_dialogue_text", user_metadata)
@@ -152,8 +151,8 @@ class DialogueManager:
             ai_metadata: DialogueMemoryEntryMetadata = {"speaker": "ai", "timestamp": datetime.now(timezone.utc).isoformat, "user_id": user_id, "session_id": session_id, "user_input_ref": user_mem_id} # type ignore
             self.memory_manager.store_experience(response_text, "ai_dialogue_text", ai_metadata)
 
-        # Analyze for personality adjustment
-    if self.learning_manager:
+        # Analyze for personality adjustment:
+f self.learning_manager:
 
     adjustment = await self.learning_manager.analyze_for_personality_adjustment(user_input)
             if adjustment and self.personality_manager:
@@ -166,15 +165,15 @@ class DialogueManager:
         if not session_id:
 
     session_id = str(uuid.uuid4)
-        logging.info(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}.")
-    self.active_sessions[session_id] = []
+        logging.info(f"DialogueManager: New session started for user '{user_id or 'anonymous'}', session_id: {session_id}."):
+elf.active_sessions[session_id] = []
     base_prompt = self.personality_manager.get_initial_prompt or ""
     time_segment = self.time_system.get_time_of_day_segment
     greetings = {"morning": "Good morning!", "afternoon": "Good afternoon!", "evening": "Good evening!", "night": "Hello,"}
     return f"{greetings.get(time_segment, '')} {base_prompt}".strip
 
-    async def _dispatch_hsp_task_request(self, capability_advertisement, request_parameters, original_user_query, user_id, session_id, request_type="api_initiated_hsp_task")
-    """
+    async def _dispatch_hsp_task_request(self, capability_advertisement, request_parameters, original_user_query, user_id, session_id, request_type="api_initiated_hsp_task"):
+""
     _ = Dispatch an HSP task request and return (user_message, correlation_id)
     """
         try:
@@ -211,8 +210,8 @@ class DialogueManager:
 
     return (f"Task request sent successfully to {capability_advertisement.get('ai_id')}", correlation_id)
             else:
-                # Remove from pending if send failed
-    self.pending_hsp_task_requests.pop(correlation_id, None)
+                # Remove from pending if send failed:
+elf.pending_hsp_task_requests.pop(correlation_id, None)
                 return ("Failed to send task request via HSP", None)
 
         except Exception as e:

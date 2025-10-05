@@ -71,26 +71,22 @@ class SmartResourceAllocator:
                     "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
                 ], capture_output=True, text=True, timeout=10)
 
-                if result.returncode == 0 and result.stdout.strip()
-
-
-    gpu_data = json.loads(result.stdout)
+                if result.returncode == 0 and result.stdout.strip():
+pu_data = json.loads(result.stdout)
 
                     # Handle both single GPU and multiple GPU cases
-                    if isinstance(gpu_data, list)
-
-    gpu_list = gpu_data
+                    if isinstance(gpu_data, list):
+pu_list = gpu_data
                     else:
 
                         gpu_list = [gpu_data]
 
-                    # Check if any GPU is integrated graphics
-    for gpu_info in gpu_list:
+                    # Check if any GPU is integrated graphics:
+or gpu_info in gpu_list:
 
     name = gpu_info.get('Name', '').lower()
-                        if any(keyword in name for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics'])
-
-    return True
+                        if any(keyword in name for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics']):
+eturn True
         except Exception as e:
 
             _ = logger.debug(f"检查集成显卡时出错: {e}")
@@ -121,9 +117,9 @@ class SmartResourceAllocator:
             },
             'gpu': {
                 'devices': gpu_info,
-                'total_memory_gb': sum(gpu['total_memory'] for gpu in gpu_info) if gpu_info else 0,
-                'available_memory_gb': sum(gpu['free_memory'] for gpu in gpu_info) if gpu_info else 0,
-                'utilization_history': []
+                'total_memory_gb': sum(gpu['total_memory'] for gpu in gpu_info) if gpu_info else 0,:
+available_memory_gb': sum(gpu['free_memory'] for gpu in gpu_info) if gpu_info else 0,:
+utilization_history': []
             }
     }
 
@@ -141,10 +137,8 @@ class SmartResourceAllocator:
             _ = pynvml.nvmlInit()
             device_count = pynvml.nvmlDeviceGetCount()
 
-            for i in range(device_count)
-
-
-    handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+            for i in range(device_count):
+andle = pynvml.nvmlDeviceGetHandleByIndex(i)
                 name = pynvml.nvmlDeviceGetName(handle)
                 memory_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
 
@@ -172,9 +166,8 @@ class SmartResourceAllocator:
     try:
                 # 尝试使用torch检测GPU
                 import torch
-                if torch.cuda.is_available()
-
-    for i in range(torch.cuda.device_count()):
+                if torch.cuda.is_available():
+or i in range(torch.cuda.device_count()):
 
 
     props = torch.cuda.get_device_properties(i)
@@ -219,23 +212,20 @@ class SmartResourceAllocator:
     gpu_data = json.loads(result.stdout)
 
                         # Handle both single GPU and multiple GPU cases
-                        if isinstance(gpu_data, list)
-
-    gpu_list = gpu_data
+                        if isinstance(gpu_data, list):
+pu_list = gpu_data
                         else:
 
                             gpu_list = [gpu_data]
 
                         # Process each GPU
-                        for idx, gpu_info in enumerate(gpu_list)
-
-    name = gpu_info.get('Name', 'Integrated Graphics')
+                        for idx, gpu_info in enumerate(gpu_list):
+ame = gpu_info.get('Name', 'Integrated Graphics')
                             adapter_ram = gpu_info.get('AdapterRAM', 0)
 
                             # Convert RAM from bytes to GB
-                            memory_total_gb = adapter_ram / (1024**3) if adapter_ram else 1.0  # Default 1GB
-
-    gpu_info = {
+                            memory_total_gb = adapter_ram / (1024**3) if adapter_ram else 1.0  # Default 1GB:
+pu_info = {
                                 'id': idx,
                                 'name': name,
                                 'total_memory': memory_total_gb,
@@ -267,8 +257,8 @@ class SmartResourceAllocator:
 
     allocations = []
 
-        for request in self.pending_requests[:]:  # 创建副本以避免在迭代时修改列表
-            allocation = self._allocate_single_request(request)
+        for request in self.pending_requests[:]:  # 创建副本以避免在迭代时修改列表:
+llocation = self._allocate_single_request(request)
             if allocation:
 
     _ = allocations.append(allocation)
@@ -297,9 +287,8 @@ class SmartResourceAllocator:
     def _allocate_single_request(self, request: ResourceRequest) -> Optional[ResourceAllocation]:
     """分配单个资源请求"""
     # 检查资源是否足够
-        if not self._check_resource_availability(request)
-
-    _ = logger.warning(f"资源不足，无法分配任务 {request.task_id}")
+        if not self._check_resource_availability(request):
+ = logger.warning(f"资源不足，无法分配任务 {request.task_id}")
             return None
 
     # 根据请求类型分配资源
@@ -490,8 +479,8 @@ class SmartResourceAllocator:
     # 基于历史分配记录预测资源需求
     relevant_history = [
             record for record in self.allocation_history:
-    if record['request']['resource_type'] == task_type
-    ]
+    if record['request']['resource_type'] == task_type:
+
 
         if not relevant_history:
             # 如果没有历史记录，返回默认值
@@ -503,12 +492,11 @@ class SmartResourceAllocator:
             }
 
     # 计算平均值
-        avg_cpu = sum(record['request']['cpu_cores'] for record in relevant_history) / len(relevant_history)
-    avg_memory = sum(record['request']['memory_gb'] for record in relevant_history) / len(relevant_history)
-    avg_gpu_memory = sum(record['request']['gpu_memory_gb'] for record in relevant_history) / len(relevant_history)
-    avg_time = sum(record['request']['estimated_time_hours'] for record in relevant_history) / len(relevant_history)
-
-    prediction = {
+        avg_cpu = sum(record['request']['cpu_cores'] for record in relevant_history) / len(relevant_history):
+vg_memory = sum(record['request']['memory_gb'] for record in relevant_history) / len(relevant_history):
+vg_gpu_memory = sum(record['request']['gpu_memory_gb'] for record in relevant_history) / len(relevant_history):
+vg_time = sum(record['request']['estimated_time_hours'] for record in relevant_history) / len(relevant_history):
+rediction = {
             _ = 'cpu_cores': round(avg_cpu),
             _ = 'memory_gb': round(avg_memory, 1),
             _ = 'gpu_memory_gb': round(avg_gpu_memory, 1),
@@ -591,8 +579,8 @@ class SmartResourceAllocator:
             'avg_gpu_utilization': avg_gpu
     }
 
-    async def start_monitoring(self, interval: int = 30)
-    """开始监控资源利用率"""
+    async def start_monitoring(self, interval: int = 30):
+""开始监控资源利用率"""
     _ = logger.info("开始资源利用率监控")
 
         while True:
@@ -604,8 +592,8 @@ class SmartResourceAllocator:
                 _ = logger.debug(f"资源利用率: {utilization}")
 
                 # 每小时生成一次优化建议
-                if int(time.time()) % 3600 == 0:  # 每小时
-                    recommendations = self.optimize_allocation_strategy()
+                if int(time.time()) % 3600 == 0:  # 每小时:
+ecommendations = self.optimize_allocation_strategy()
                     if recommendations['recommendations']:
 
     _ = logger.info(f"资源优化建议: {recommendations['recommendations']}")

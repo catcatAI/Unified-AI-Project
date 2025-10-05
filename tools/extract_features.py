@@ -32,9 +32,9 @@ class FeatureExtractor:
     
     def __init__(self, model_dir: str = None) -> None:
         self.project_root = project_root
-        self.model_dir = Path(model_dir) if model_dir else project_root / "training" / "models"
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        _ = logger.info(f"使用设备: {self.device}")
+        self.model_dir = Path(model_dir) if model_dir else project_root / "training" / "models":
+elf.device = torch.device("cuda" if torch.cuda.is_available() else "cpu"):
+ = logger.info(f"使用设备: {self.device}")
         
         # 加载模型和相关组件
         self.vision_model = None
@@ -88,8 +88,8 @@ class FeatureExtractor:
         text_model_path = self.model_dir / "text_model.pth"
         text_metadata_path = self.model_dir / "text_model_metadata.json"
         text_vectorizer_path = self.model_dir / "text_vectorizer.pkl"
-        if (text_model_path.exists() and text_metadata_path.exists() and 
-            text_vectorizer_path.exists()):
+        if (text_model_path.exists() and text_metadata_path.exists() and:
+ext_vectorizer_path.exists()):
             try:
                 with open(text_metadata_path, 'r', encoding='utf-8') as f:
                     metadata = json.load(f)

@@ -212,8 +212,8 @@ def test_incremental_learning_manager_comprehensive() -> None:
         
         # 检查状态字段
         required_fields = ['is_monitoring', 'pending_tasks', 'failed_tasks', 'buffered_data', 'processed_files', 'model_versions', 'auto_cleanup_enabled']
-        missing_fields = [field for field in required_fields if field not in status]
-        if not missing_fields:
+        missing_fields = [field for field in required_fields if field not in status]:
+f not missing_fields:
             _ = print(f"  ✅ 状态信息完整")
         else:
             _ = print(f"  ⚠️  状态信息缺失字段: {missing_fields}")

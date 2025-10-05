@@ -11,8 +11,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-def create_problematic_file()
-    """创建一个有问题的文件来演示修复"""
+def create_problematic_file():
+""创建一个有问题的文件来演示修复"""
     test_file = PROJECT_ROOT / "scripts" / "test_problematic_import.py"
 
     problematic_content = '''
@@ -79,8 +79,8 @@ def demonstrate_original_problems(test_file) -> None:
     print(f"✗ 演示原始问题时出错: {e}")
     return False
 
-def run_auto_fix()
-    """运行自动修复"""
+def run_auto_fix():
+""运行自动修复"""
     print("\n=== 运行自动修复 ===")
 
     try:
@@ -99,8 +99,8 @@ def run_auto_fix()
     print(f"✗ 自动修复时出错: {e}")
     return False
 
-def verify_fix()
-    """验证修复结果"""
+def verify_fix():
+""验证修复结果"""
     print("\n=== 验证修复结果 ===")
 
     try:
@@ -123,10 +123,8 @@ def cleanup_test_file(test_file) -> None:
     """清理测试文件"""
     try:
 
-        if test_file.exists()
-
-
-    test_file.unlink()
+        if test_file.exists():
+est_file.unlink()
             print(f"✓ 清理了测试文件: {test_file}")
     return True
     except Exception as e:

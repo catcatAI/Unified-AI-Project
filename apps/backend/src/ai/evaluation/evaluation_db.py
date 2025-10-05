@@ -12,8 +12,8 @@ class EvaluationDB:
     self.db_path = db_path
     self._init_db
 
-    def _init_db(self)
-        """Initializes the SQLite database and creates the 'evaluations' table if it doesn't exist.""":
+    def _init_db(self):
+""Initializes the SQLite database and creates the 'evaluations' table if it doesn't exist.""":
     conn = None
         try:
 
@@ -42,8 +42,8 @@ class EvaluationDB:
 
     def add_evaluation(self, evaluation_data: Dict[...]
     """Adds a new evaluation record to the database. Returns the ID of the new record."""
-    conn = sqlite3.connect(self.db_path)
-    cursor = conn.cursor
+    conn = sqlite3.connect(self.db_path):
+ursor = conn.cursor
 
     task_id = evaluation_data.get("task_id", "unknown")
     timestamp = evaluation_data.get("timestamp", datetime.now.isoformat)
@@ -58,8 +58,8 @@ class EvaluationDB:
     record_id = cursor.lastrowid
     conn.commit
     conn.close
-        logger.debug(f"Added evaluation for task {task_id} with ID: {record_id}")
-    return record_id
+        logger.debug(f"Added evaluation for task {task_id} with ID: {record_id}"):
+eturn record_id
 
     def get_evaluations_by_task_id(self, task_id: str) -> List[Dict[str, Any]]:
         """Retrieves all evaluations for a given task_id.""":
@@ -123,15 +123,14 @@ class EvaluationDB:
             "quality_score": total_quality_score / count
     }
 
-    def close(self)
-        """Closes the database connection. (Not strictly necessary for sqlite3.connect, but good practice).""":
+    def close(self):
+""Closes the database connection. (Not strictly necessary for sqlite3.connect, but good practice).""":
     pass
 
-    def delete_db_file(self)
-        """Deletes the database file. Use with caution, primarily for testing.""":
-    if os.path.exists(self.db_path)
-
-    os.remove(self.db_path)
+    def delete_db_file(self):
+""Deletes the database file. Use with caution, primarily for testing.""":
+    if os.path.exists(self.db_path):
+s.remove(self.db_path)
             logger.info(f"EvaluationDB file deleted: {self.db_path}")
         else:
 

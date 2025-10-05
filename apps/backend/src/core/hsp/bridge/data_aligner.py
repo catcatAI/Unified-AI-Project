@@ -45,9 +45,8 @@ class DataAligner:
         elif message_type.startswith("HSP::CapabilityAdvertisement"):
             return self._align_capability_advertisement_payload(payload)
         else:
-            return payload, None # No validation for unknown types for now
-
-    def _align_fact_payload(self, payload: Dict[str, Any]) -> (Optional[HSPFactPayload], Optional[HSPErrorDetails]):
+            return payload, None # No validation for unknown types for now:
+ef _align_fact_payload(self, payload: Dict[str, Any]) -> (Optional[HSPFactPayload], Optional[HSPErrorDetails]):
         if "id" not in payload:
             return None, self._create_error_details("Missing 'id' in Fact payload", "payload.id")
         return payload, None

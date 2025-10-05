@@ -21,8 +21,8 @@ _ = sys.path.insert(0, str(backend_path / "src"))
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger: Any = logging.getLogger(__name__)
 
-def extract_text_from_markdown(file_path)
-    """从Markdown文件中提取纯文本"""
+def extract_text_from_markdown(file_path):
+""从Markdown文件中提取纯文本"""
     try:
 
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -57,8 +57,8 @@ def extract_text_from_markdown(file_path)
     _ = logger.error(f"处理文件 {file_path} 时出错: {e}")
     return ""
 
-def create_training_samples_from_docs(docs_dir, output_dir)
-    """从文档创建训练样本"""
+def create_training_samples_from_docs(docs_dir, output_dir):
+""从文档创建训练样本"""
     # 确保输出目录存在
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -120,9 +120,8 @@ def create_training_samples_from_docs(docs_dir, output_dir)
                 current_sample += sentence + "."
 
     # 保存最后一个样本（如果有的话）
-        if current_sample.strip()
-
-    sample_data = {
+        if current_sample.strip():
+ample_data = {
                 "id": f"{doc_file.stem}_{sample_id}",
                 _ = "source": str(doc_file.relative_to(project_root)),
                 _ = "content": current_sample.strip(),
@@ -141,16 +140,15 @@ def create_training_samples_from_docs(docs_dir, output_dir)
 
     return training_samples
 
-def create_specialized_training_data(output_dir)
-    """创建专门的概念模型训练数据"""
+def create_specialized_training_data(output_dir):
+""创建专门的概念模型训练数据"""
     # 确保输出目录存在
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # 环境模拟器训练数据
     environment_data = []
-    for i in range(100)
-
-    sample = {
+    for i in range(100):
+ample = {
             "id": f"env_{i:03d}",
             "type": "environment_transition",
             "state_before": {
@@ -183,9 +181,8 @@ def create_specialized_training_data(output_dir)
     # 创建更复杂的因果关系数据
     variables = ["temperature", "humidity", "comfort_level", "energy_consumption", "air_quality", "light_level", "noise_level"]
     cause = np.random.choice(variables)
-        effect = np.random.choice([v for v in variables if v != cause])
-
-    sample = {
+        effect = np.random.choice([v for v in variables if v != cause]):
+ample = {
             "id": f"causal_{i:03d}",
             "type": "causal_relationship",
             "variables": [cause, effect],
@@ -213,8 +210,8 @@ def create_specialized_training_data(output_dir)
             "context": {
                 _ = "task_complexity": np.random.choice(task_complexities),
                 "domain": "general",
-                "previous_performance": [round(0.5 + np.random.random() * 0.5, 3) for _ in range(5)]  # 最近5次性能
-            },
+                "previous_performance": [round(0.5 + np.random.random() * 0.5, 3) for _ in range(5)]  # 最近5次性能:
+,
             _ = "strategy": np.random.choice(strategies),
             _ = "performance": round(0.6 + np.random.random() * 0.4, 3),  # 0.6-1.0之间
             _ = "confidence": round(0.7 + np.random.random() * 0.3, 3)   # 0.7-1.0之间
@@ -310,8 +307,8 @@ def main() -> None:
             "adaptive_learning_data": 50,
             "alpha_deep_model_data": 50
     },
-        "usage": "Training data for Unified-AI-Project concept models"
-    }
+        "usage": "Training data for Unified-AI-Project concept models":
+
 
     config_file = concept_models_data_dir / "data_config.json"
     with open(config_file, 'w', encoding='utf-8') as f:

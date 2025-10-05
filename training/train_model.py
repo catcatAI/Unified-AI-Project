@@ -48,8 +48,8 @@ ErrorRecoveryStrategy = type('ErrorRecoveryStrategy', (), {
 
 class GlobalErrorHandler:
     @staticmethod
-    def handle_error(error, context, strategy=None)
-    print(f"Error in {context.component}.{context.operation}: {error}")
+    def handle_error(error, context, strategy=None):
+rint(f"Error in {context.component}.{context.operation}: {error}")
 
 global_error_handler = GlobalErrorHandler()
 
@@ -123,8 +123,8 @@ class ModelTrainer:
     _ = self.load_config()
     _ = self.load_preset()
 
-    def _check_tensorflow_availability(self)
-    """检查TensorFlow是否可用"""
+    def _check_tensorflow_availability(self):
+""检查TensorFlow是否可用"""
     context = ErrorContext("ModelTrainer", "_check_tensorflow_availability")
         try:
 
@@ -141,8 +141,8 @@ class ModelTrainer:
             _ = logger.warning(f"⚠️ 检查TensorFlow可用性时出错: {e}")
             return False
 
-    def _check_gpu_availability(self)
-    """检查GPU是否可用"""
+    def _check_gpu_availability(self):
+""检查GPU是否可用"""
     context = ErrorContext("ModelTrainer", "_check_gpu_availability")
         try:
 
@@ -150,13 +150,11 @@ class ModelTrainer:
 
             # 兼容不同版本的TensorFlow
             gpus = []
-            if hasattr(tf, 'config')
-
-    if hasattr(tf.config, 'list_physical_devices')
+            if hasattr(tf, 'config'):
+f hasattr(tf.config, 'list_physical_devices')
     gpus = tf.config.list_physical_devices('GPU')
-                elif hasattr(tf.config, 'experimental') and hasattr(tf.config.experimental, 'list_physical_devices')
-
-    gpus = tf.config.experimental.list_physical_devices('GPU')
+                elif hasattr(tf.config, 'experimental') and hasattr(tf.config.experimental, 'list_physical_devices'):
+pus = tf.config.experimental.list_physical_devices('GPU')
             elif hasattr(tf, 'test') and hasattr(tf.test, 'is_gpu_available')
                 # 更老版本的TensorFlow
                 return tf.test.is_gpu_available()
@@ -184,19 +182,16 @@ class ModelTrainer:
                             "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
                         ], capture_output=True, text=True, timeout=10)
 
-                        if result.returncode == 0 and result.stdout.strip()
-
-
-    gpu_data = json.loads(result.stdout)
+                        if result.returncode == 0 and result.stdout.strip():
+pu_data = json.loads(result.stdout)
 
                             # 检查是否有GPU设备
                             if isinstance(gpu_data, list) and len(gpu_data) > 0:
                                 # 有GPU设备，即使TensorFlow没有检测到，也认为GPU"可用"（可以尝试使用）
                                 _ = logger.info("ℹ️  检测到系统GPU设备，但TensorFlow未识别，将尝试使用CPU训练")
                                 return False  # TensorFlow无法使用GPU
-                            elif isinstance(gpu_data, dict)
-
-    _ = logger.info("ℹ️  检测到系统GPU设备，但TensorFlow未识别，将尝试使用CPU训练")
+                            elif isinstance(gpu_data, dict):
+ = logger.info("ℹ️  检测到系统GPU设备，但TensorFlow未识别，将尝试使用CPU训练")
                                 return False  # TensorFlow无法使用GPU
 
                     # 如果无法确定或没有检测到GPU设备
@@ -215,8 +210,8 @@ class ModelTrainer:
             _ = logger.warning(f"⚠️ 检测GPU时出错: {e}")
             return False
 
-    def _setup_distributed_training(self)
-    """设置分布式训练环境"""
+    def _setup_distributed_training(self):
+""设置分布式训练环境"""
         try:
 
             import tensorflow as tf
@@ -256,8 +251,8 @@ class ModelTrainer:
             self.distributed_training_enabled = False
             return None
 
-    def _configure_gpu_memory(self)
-    """配置GPU内存使用"""
+    def _configure_gpu_memory(self):
+""配置GPU内存使用"""
         try:
 
             import tensorflow as tf
@@ -284,12 +279,11 @@ class ModelTrainer:
             _ = logger.error(f"❌ 配置GPU内存时出错: {e}")
             return False
 
-    def load_config(self)
-    """加载训练配置"""
+    def load_config(self):
+""加载训练配置"""
     context = ErrorContext("ModelTrainer", "load_config")
-        if self.config_path.exists()
-
-    try:
+        if self.config_path.exists():
+ry:
 
 
                 with open(self.config_path, 'r', encoding='utf-8') as f:
@@ -303,12 +297,11 @@ class ModelTrainer:
 
             _ = logger.warning(f"⚠️ 训练配置文件不存在: {self.config_path}")
 
-    def load_preset(self)
-    """加载预设配置"""
+    def load_preset(self):
+""加载预设配置"""
     context = ErrorContext("ModelTrainer", "load_preset")
-        if self.preset_path.exists()
-
-    try:
+        if self.preset_path.exists():
+ry:
 
 
                 with open(self.preset_path, 'r', encoding='utf-8') as f:
@@ -322,15 +315,14 @@ class ModelTrainer:
 
             _ = logger.warning(f"⚠️ 预设配置文件不存在: {self.preset_path}")
 
-    def resolve_data_path(self, path_str)
-    """解析数据路径，支持相对路径和绝对路径"""
+    def resolve_data_path(self, path_str):
+""解析数据路径，支持相对路径和绝对路径"""
     context = ErrorContext("ModelTrainer", "resolve_data_path")
         try:
             # 简单实现路径解析
             path = Path(path_str)
-            if path.is_absolute()
-
-    return path
+            if path.is_absolute():
+eturn path
             else:
 
                 return self.project_root / path
@@ -340,8 +332,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 解析数据路径失败: {path_str} - {e}")
             return None
 
-    def get_preset_scenario(self, scenario_name)
-    """获取预设场景配置"""
+    def get_preset_scenario(self, scenario_name):
+""获取预设场景配置"""
     context = ErrorContext("ModelTrainer", "get_preset_scenario", {"scenario_name": scenario_name})
         try:
 
@@ -369,8 +361,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 获取预设场景失败: {scenario_name} - {e}")
             return None
 
-    def check_disk_space(self, min_space_gb=5)
-    """检查磁盘空间是否充足"""
+    def check_disk_space(self, min_space_gb=5):
+""检查磁盘空间是否充足"""
     context = ErrorContext("ModelTrainer", "check_disk_space")
         try:
 
@@ -392,16 +384,16 @@ class ModelTrainer:
             _ = logger.error(f"❌ 检查磁盘空间失败: {e}")
             return True  # 出错时假设空间充足
 
-    def save_checkpoint(self, epoch, model_state=None)
-    """保存训练检查点（增强版本）"""
+    def save_checkpoint(self, epoch, model_state=None):
+""保存训练检查点（增强版本）"""
     context = ErrorContext("ModelTrainer", "save_checkpoint", {"epoch": epoch})
         try:
             # 准备检查点状态
             checkpoint_state = {
                 "epoch": epoch,
                 "timestamp": datetime.now().isoformat(),
-                "model_state": model_state if model_state else {},
-                "metrics": {},  # 如果有的话，可以添加当前的训练指标
+                "model_state": model_state if model_state else {},:
+metrics": {},  # 如果有的话，可以添加当前的训练指标
                 "config": {
                     "batch_size": 16,  # 默认值，实际应该从配置中获取
                     "learning_rate": 0.001  # 默认值，实际应该从配置中获取
@@ -422,8 +414,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 保存检查点失败: {e}")
             return False
 
-    def load_checkpoint(self, checkpoint_path=None)
-    """加载训练检查点（增强版本）"""
+    def load_checkpoint(self, checkpoint_path=None):
+""加载训练检查点（增强版本）"""
     context = ErrorContext("ModelTrainer", "load_checkpoint")
         try:
             # 使用增强的检查点管理器加载检查点
@@ -439,10 +431,8 @@ class ModelTrainer:
                     return None
                 checkpoint_path = max(checkpoint_files, key=os.path.getctime)
 
-            if not checkpoint_path or not Path(checkpoint_path).exists()
-
-
-    _ = logger.info("🔍 未找到检查点文件")
+            if not checkpoint_path or not Path(checkpoint_path).exists():
+ = logger.info("🔍 未找到检查点文件")
                 return None
 
             # 使用增强的检查点管理器加载检查点
@@ -465,8 +455,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 加载检查点失败: {e}")
             return None
 
-    def simulate_training_step(self, epoch, batch_size=16, scenario_name="default")
-    """模拟一个训练步骤（实际项目中这里会是真正的训练代码）"""
+    def simulate_training_step(self, epoch, batch_size=16, scenario_name="default"):
+""模拟一个训练步骤（实际项目中这里会是真正的训练代码）"""
     # 模拟更真实的训练时间
     # 对于早期epoch，训练时间较短；对于后期epoch，训练时间较长
     base_time = 0.05  # 基础时间
@@ -501,8 +491,8 @@ class ModelTrainer:
 
     return metrics
 
-    def _train_math_model(self, scenario)
-    """训练数学模型"""
+    def _train_math_model(self, scenario):
+""训练数学模型"""
         if not self.tensorflow_available:
 
     _ = logger.error("❌ TensorFlow不可用，无法训练数学模型")
@@ -514,16 +504,14 @@ class ModelTrainer:
             _ = logger.info("🚀 开始训练数学模型...")
             # 使用子进程调用真实的训练脚本
             math_model_script = self.project_root / "apps" / "backend" / "src" / "tools" / "math_model" / "train.py"
-            if not math_model_script.exists()
-
-    _ = logger.error(f"❌ 数学模型训练脚本不存在: {math_model_script}")
+            if not math_model_script.exists():
+ = logger.error(f"❌ 数学模型训练脚本不存在: {math_model_script}")
                 return False
 
             # 激活虚拟环境并运行训练脚本
             venv_python = self.project_root / "apps" / "backend" / "venv" / "Scripts" / "python.exe"
-            if venv_python.exists()
-
-    cmd = [str(venv_python), str(math_model_script)]
+            if venv_python.exists():
+md = [str(venv_python), str(math_model_script)]
             else:
 
                 cmd = [sys.executable, str(math_model_script)]
@@ -543,8 +531,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 数学模型训练过程中发生错误: {e}")
             return False
 
-    def _train_logic_model(self, scenario)
-    """训练逻辑模型"""
+    def _train_logic_model(self, scenario):
+""训练逻辑模型"""
         if not self.tensorflow_available:
 
     _ = logger.error("❌ TensorFlow不可用，无法训练逻辑模型")
@@ -556,16 +544,14 @@ class ModelTrainer:
             _ = logger.info("🚀 开始训练逻辑模型...")
             # 使用子进程调用真实的训练脚本
             logic_model_script = self.project_root / "apps" / "backend" / "src" / "tools" / "logic_model" / "train_logic_model.py"
-            if not logic_model_script.exists()
-
-    _ = logger.error(f"❌ 逻辑模型训练脚本不存在: {logic_model_script}")
+            if not logic_model_script.exists():
+ = logger.error(f"❌ 逻辑模型训练脚本不存在: {logic_model_script}")
                 return False
 
             # 激活虚拟环境并运行训练脚本
             venv_python = self.project_root / "apps" / "backend" / "venv" / "Scripts" / "python.exe"
-            if venv_python.exists()
-
-    cmd = [str(venv_python), str(logic_model_script)]
+            if venv_python.exists():
+md = [str(venv_python), str(logic_model_script)]
             else:
 
                 cmd = [sys.executable, str(logic_model_script)]
@@ -585,8 +571,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 逻辑模型训练过程中发生错误: {e}")
             return False
 
-    def _train_concept_models(self, scenario)
-    """训练概念模型"""
+    def _train_concept_models(self, scenario):
+""训练概念模型"""
     _ = logger.info("🚀 开始训练概念模型...")
 
     # 导入概念模型
@@ -648,36 +634,36 @@ class ModelTrainer:
             _ = logger.error(f"❌ 概念模型训练过程中发生错误: {e}")
             return False
 
-    def _train_environment_simulator(self, scenario)
-    """训练环境模拟器"""
+    def _train_environment_simulator(self, scenario):
+""训练环境模拟器"""
     _ = logger.info("🚀 开始训练环境模拟器...")
     # 这里应该是环境模拟器的实际训练代码
     # 为示例起见，我们使用模拟训练
     return self._simulate_training(scenario)
 
-    def _train_causal_reasoning(self, scenario)
-    """训练因果推理引擎"""
+    def _train_causal_reasoning(self, scenario):
+""训练因果推理引擎"""
     _ = logger.info("🚀 开始训练因果推理引擎...")
     # 这里应该是因果推理引擎的实际训练代码
     # 为示例起见，我们使用模拟训练
     return self._simulate_training(scenario)
 
-    def _train_adaptive_learning(self, scenario)
-    """训练自适应学习控制器"""
+    def _train_adaptive_learning(self, scenario):
+""训练自适应学习控制器"""
     _ = logger.info("🚀 开始训练自适应学习控制器...")
     # 这里应该是自适应学习控制器的实际训练代码
     # 为示例起见，我们使用模拟训练
     return self._simulate_training(scenario)
 
-    def _train_alpha_deep_model(self, scenario)
-    """训练Alpha深度模型"""
+    def _train_alpha_deep_model(self, scenario):
+""训练Alpha深度模型"""
     _ = logger.info("🚀 开始训练Alpha深度模型...")
     # 这里应该是Alpha深度模型的实际训练代码
     # 为示例起见，我们使用模拟训练
     return self._simulate_training(scenario)
 
-    def _train_code_model(self, scenario)
-    """训练代码模型"""
+    def _train_code_model(self, scenario):
+""训练代码模型"""
     _ = logger.info("🚀 开始训练代码模型...")
 
     # 获取训练参数
@@ -724,8 +710,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 代码模型训练过程中发生错误: {e}")
             return False
 
-    def _train_data_analysis_model(self, scenario)
-    """训练数据分析模型"""
+    def _train_data_analysis_model(self, scenario):
+""训练数据分析模型"""
     _ = logger.info("🚀 开始训练数据分析模型...")
 
     # 获取训练参数
@@ -772,8 +758,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 数据分析模型训练过程中发生错误: {e}")
             return False
 
-    def _train_collaboratively(self, scenario)
-    """执行协作式训练"""
+    def _train_collaboratively(self, scenario):
+""执行协作式训练"""
     _ = logger.info("🔄 开始协作式训练...")
 
         try:
@@ -816,8 +802,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 协作式训练过程中发生错误: {e}")
             return False
 
-    def _register_all_models(self, manager)
-    """注册所有可用模型"""
+    def _register_all_models(self, manager):
+""注册所有可用模型"""
     # 注册概念模型
         try:
 
@@ -858,8 +844,8 @@ class ModelTrainer:
     # 这里可以根据需要添加更多模型的注册
     _ = logger.info("✅ 模型注册完成")
 
-    def _simulate_training(self, scenario)
-    """模拟训练过程"""
+    def _simulate_training(self, scenario):
+""模拟训练过程"""
     # 获取训练参数
     epochs = scenario.get('epochs', 10)
     batch_size = scenario.get('batch_size', 16)
@@ -887,8 +873,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 模拟训练过程中发生错误: {e}")
             return False
 
-    def _train_with_gpu(self, scenario)
-    """使用GPU进行训练（增强容错版本）"""
+    def _train_with_gpu(self, scenario):
+""使用GPU进行训练（增强容错版本）"""
     _ = logger.info("🚀 开始使用GPU训练...")
 
         try:
@@ -958,8 +944,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ GPU训练过程中发生错误: {e}")
             return False
 
-    def _simulate_training_with_gpu(self, scenario)
-    """模拟GPU训练过程"""
+    def _simulate_training_with_gpu(self, scenario):
+""模拟GPU训练过程"""
     # 获取训练参数
     epochs = scenario.get('epochs', 10)
     batch_size = scenario.get('batch_size', 16)
@@ -994,8 +980,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ GPU模拟训练过程中发生错误: {e}")
             return False
 
-    def _train_distributed(self, scenario)
-    """执行分布式训练"""
+    def _train_distributed(self, scenario):
+""执行分布式训练"""
     _ = logger.info("🔄 开始分布式训练...")
 
         try:
@@ -1013,8 +999,8 @@ class ModelTrainer:
                 return self._train_with_gpu(scenario)
 
             # 在分布式策略范围内执行训练
-            with strategy.scope()
-    _ = logger.info("🔄 在分布式策略范围内执行训练")
+            with strategy.scope():
+ = logger.info("🔄 在分布式策略范围内执行训练")
                 # 这里会是实际的分布式训练代码
                 # 为示例起见，我们使用模拟训练
                 success = self._simulate_distributed_training(scenario)
@@ -1025,8 +1011,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 分布式训练过程中发生错误: {e}")
             return False
 
-    def _simulate_distributed_training(self, scenario)
-    """模拟分布式训练过程（增强容错版本）"""
+    def _simulate_distributed_training(self, scenario):
+""模拟分布式训练过程（增强容错版本）"""
     # 获取训练参数
     epochs = scenario.get('epochs', 10)
     batch_size = scenario.get('batch_size', 16)
@@ -1135,9 +1121,8 @@ class ModelTrainer:
         try:
 
             from training.integrated_graphics_optimizer import integrated_graphics_optimizer
-            if integrated_graphics_optimizer and integrated_graphics_optimizer.is_integrated_graphics_system()
-
-    _ = logger.info("🔧 应用集成显卡优化")
+            if integrated_graphics_optimizer and integrated_graphics_optimizer.is_integrated_graphics_system():
+ = logger.info("🔧 应用集成显卡优化")
                 optimization_results = integrated_graphics_optimizer.apply_all_optimizations()
                 _ = logger.info(f"集成显卡优化结果: {optimization_results}")
 
@@ -1186,9 +1171,8 @@ class ModelTrainer:
     return self._train_data_analysis_model(scenario)
 
     # 检查是否启用协作式训练
-        if scenario.get('enable_collaborative_training', False)
-
-    return self._train_collaboratively(scenario)
+        if scenario.get('enable_collaborative_training', False):
+eturn self._train_collaboratively(scenario)
 
     # 显示训练参数
     _ = logger.info("📊 训练参数:")
@@ -1226,9 +1210,8 @@ class ModelTrainer:
 
             for epoch in range(start_epoch, epochs + 1)
                 # 检查磁盘空间
-                if auto_pause_on_low_disk and not self.check_disk_space(min_disk_space_gb)
-
-    _ = logger.warning("⏸️ 磁盘空间不足，自动暂停训练")
+                if auto_pause_on_low_disk and not self.check_disk_space(min_disk_space_gb):
+ = logger.warning("⏸️ 磁盘空间不足，自动暂停训练")
                     _ = self.save_checkpoint(epoch)
                     self.is_paused = True
                     return False
@@ -1289,8 +1272,8 @@ class ModelTrainer:
             _ = self.save_checkpoint(epoch, epoch_metrics)
             return False
 
-    def train_with_default_config(self)
-    """使用默认配置进行训练"""
+    def train_with_default_config(self):
+""使用默认配置进行训练"""
     _ = logger.info("🚀 开始使用默认配置训练")
 
         if not self.config:
@@ -1331,8 +1314,8 @@ class ModelTrainer:
     checkpoint_path = CHECKPOINTS_DIR / f"epoch_{epoch}.ckpt"
                     # 创建一个检查点文件
                     with open(checkpoint_path, 'w') as f:
-    f.write(f"Checkpoint for epoch {epoch}\nLoss: {epoch_metrics['loss']}\nAccuracy: {epoch_metrics['accuracy']}\n")
-                    _ = logger.info(f"  💾 保存检查点: {checkpoint_path.name}")
+    f.write(f"Checkpoint for epoch {epoch}\nLoss: {epoch_metrics['loss']}\nAccuracy: {epoch_metrics['accuracy']}\n"):
+ = logger.info(f"  💾 保存检查点: {checkpoint_path.name}")
 
             # 保存最终模型
             model_filename = f"default_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pth"
@@ -1340,8 +1323,8 @@ class ModelTrainer:
 
             # 创建模型文件
             with open(model_path, 'w') as f:
-    f.write("Default model trained with default config\n")
-    _ = f.write(f"Epochs: {epochs}\n")
+    f.write("Default model trained with default config\n"):
+ = f.write(f"Epochs: {epochs}\n")
                 _ = f.write(f"Batch size: {batch_size}\n")
             _ = logger.info(f"✅ 训练完成，模型保存至: {model_path}")
 
@@ -1351,8 +1334,8 @@ class ModelTrainer:
             _ = logger.error(f"❌ 训练过程中发生错误: {e}")
             return False
 
-    def generate_training_report(self, scenario_name, scenario, model_info=None)
-    """生成训练报告"""
+    def generate_training_report(self, scenario_name, scenario, model_info=None):
+""生成训练报告"""
     report = f"""# 训练报告
 
 ## 训练信息
@@ -1371,17 +1354,15 @@ _ = - 目标模型: {', '.join(scenario.get('target_models', []))}
 
     # 添加数据集信息
     data_config_path = DATA_DIR / "data_config.json"
-        if data_config_path.exists()
-
-    try:
+        if data_config_path.exists():
+ry:
 
 
                 with open(data_config_path, 'r', encoding='utf-8') as f:
     data_config = json.load(f)
                 total_samples = data_config.get('total_samples', {})
-                for data_type, count in total_samples.items()
-
-    report += f"- {data_type}: {count} 个样本\n"
+                for data_type, count in total_samples.items():
+eport += f"- {data_type}: {count} 个样本\n"
             except Exception as e:
 
                 _ = logger.error(f"❌ 读取数据配置失败: {e}")
@@ -1427,13 +1408,13 @@ _ = - 最终准确率: {model_info.get('final_metrics', {}).get('accuracy', 'N/A
 
     _ = logger.info(f"📄 训练报告已生成: {report_path}")
 
-    def pause_training(self)
-    """暂停训练"""
+    def pause_training(self):
+""暂停训练"""
     self.is_paused = True
     _ = logger.info("⏸️ 训练暂停请求已发送")
 
-    def resume_training(self, scenario_name)
-    """继续训练"""
+    def resume_training(self, scenario_name):
+""继续训练"""
     self.is_paused = False
     _ = logger.info("▶️ 继续训练")
     return self.train_with_preset(scenario_name)
@@ -1442,10 +1423,8 @@ _ = - 最终准确率: {model_info.get('final_metrics', {}).get('accuracy', 'N/A
     """评估训练好的模型"""
     _ = logger.info(f"🔍 开始评估模型: {model_path}")
 
-        if not model_path.exists()
-
-
-    _ = logger.error(f"❌ 模型文件不存在: {model_path}")
+        if not model_path.exists():
+ = logger.error(f"❌ 模型文件不存在: {model_path}")
             return {"error": "Model file not found"}
 
         try:
@@ -1466,8 +1445,8 @@ _ = - 最终准确率: {model_info.get('final_metrics', {}).get('accuracy', 'N/A
             evaluation_results = {
                 "model_name": model_info.get("model_name", "Unknown"),
                 "evaluation_date": datetime.now().isoformat(),
-                "test_samples": len(test_data) if test_data else random.randint(100, 1000),
-                "accuracy": random.uniform(0.7, 0.98),
+                "test_samples": len(test_data) if test_data else random.randint(100, 1000),:
+accuracy": random.uniform(0.7, 0.98),
                 "precision": random.uniform(0.65, 0.95),
                 "recall": random.uniform(0.7, 0.9),
                 "f1_score": random.uniform(0.68, 0.92),
@@ -1510,8 +1489,8 @@ _ = - 最终准确率: {model_info.get('final_metrics', {}).get('accuracy', 'N/A
     performance_analysis = {
             "model_name": evaluation_results["model_name"],
             "analysis_date": datetime.now().isoformat(),
-            "overall_performance": "优秀" if evaluation_results["accuracy"] > 0.9 else "良好" if evaluation_results["accuracy"] > 0.8 else "一般",
-            "strengths": [],
+            "overall_performance": "优秀" if evaluation_results["accuracy"] > 0.9 else "良好" if evaluation_results["accuracy"] > 0.8 else "一般",:
+strengths": [],
             "weaknesses": [],
             "recommendations": [],
             "metrics": evaluation_results
@@ -1561,10 +1540,8 @@ _ = - 最终准确率: {model_info.get('final_metrics', {}).get('accuracy', 'N/A
     """部署训练好的模型"""
     _ = logger.info(f"🚀 开始部署模型: {model_path} 到 {deployment_target}")
 
-        if not model_path.exists()
-
-
-    _ = logger.error(f"❌ 模型文件不存在: {model_path}")
+        if not model_path.exists():
+ = logger.error(f"❌ 模型文件不存在: {model_path}")
             return False
 
         try:
@@ -1642,8 +1619,8 @@ _ = - 最终准确率: {model_info.get('final_metrics', {}).get('accuracy', 'N/A
 
             return False
 
-    def _check_system_gpu_memory(self)
-    """检查系统GPU内存"""
+    def _check_system_gpu_memory(self):
+""检查系统GPU内存"""
         try:
 
             import platform
@@ -1659,18 +1636,15 @@ _ = - 最终准确率: {model_info.get('final_metrics', {}).get('accuracy', 'N/A
                     "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
                 ], capture_output=True, text=True, timeout=10)
 
-                if result.returncode == 0 and result.stdout.strip()
-
-
-    gpu_data = json.loads(result.stdout)
+                if result.returncode == 0 and result.stdout.strip():
+pu_data = json.loads(result.stdout)
 
                     # 计算总GPU内存（以GB为单位）
                     total_memory_gb = 0
 
                     # Handle both single GPU and multiple GPU cases
-                    if isinstance(gpu_data, list)
-
-    gpu_list = gpu_data
+                    if isinstance(gpu_data, list):
+pu_list = gpu_data
                     else:
 
                         gpu_list = [gpu_data]
@@ -1685,8 +1659,8 @@ _ = - 最终准确率: {model_info.get('final_metrics', {}).get('accuracy', 'N/A
 
                     return total_memory_gb
 
-            # For other platforms or if WMI detection failed, return 0
-    return 0
+            # For other platforms or if WMI detection failed, return 0:
+eturn 0
         except Exception as e:
 
     _ = logger.warning(f"检查系统GPU内存时出错: {e}")

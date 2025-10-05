@@ -53,8 +53,8 @@ class GenesisManager:
 
     raise RuntimeError("SecretSharer not available. Please install secret-sharing package.")
 
-        # The hex format is more robust for copy-pasting and QR codes.
-    secret_hex = secret.encode('utf-8').hex
+        # The hex format is more robust for copy-pasting and QR codes.:
+ecret_hex = secret.encode('utf-8').hex
     return SecretSharer.split_secret(secret_hex, 2, 3)
 
     @staticmethod
@@ -66,12 +66,12 @@ class GenesisManager:
             shards: A list containing two or more hex-encoded secret shards.
 
     Returns:
-            The recovered secret string, or None if recovery fails.
-    """
+            The recovered secret string, or None if recovery fails.:
+""
         if SecretSharer is None:
 
-    print("Warning: SecretSharer not available.")
-            return None
+    print("Warning: SecretSharer not available."):
+eturn None
 
         if len(shards) < 2:
 
@@ -95,17 +95,16 @@ class GenesisManager:
             secret: The recovered genesis secret.
 
     Returns:
-            A tuple (UID, HAM_KEY), or None if parsing fails.
-    """
+            A tuple (UID, HAM_KEY), or None if parsing fails.:
+""
     parts = secret.split(':', 1)
-        if len(parts) == 2 and parts[0].startswith("uid_")
-
-    return parts[0], parts[1]
+        if len(parts) == 2 and parts[0].startswith("uid_"):
+eturn parts[0], parts[1]
     return None
 
 if __name__ == '__main__':
-    # Check if required modules are available
-    if SecretSharer is None:
+    # Check if required modules are available:
+f SecretSharer is None:
 
     print("Error: secretsharing module not available. Please install it with: pip install secret-sharing")
     exit(1)
@@ -121,9 +120,8 @@ if __name__ == '__main__':
     # 2. Split the secret into shards
     shards = GenesisManager.split_secret_into_shards(genesis_secret)
     print(f"\nGenerated 3 Shards (any 2 are needed)")
-    for i, shard in enumerate(shards)
-
-    print(f"  Shard {i+1}: {shard}")
+    for i, shard in enumerate(shards):
+rint(f"  Shard {i+1}: {shard}")
     assert len(shards) == 3
 
     # 3. Test recovery from different combinations of shards
@@ -151,8 +149,8 @@ if __name__ == '__main__':
 
     # Combination 5 Only 1 shard (should fail)
     recovered_one = GenesisManager.recover_secret_from_shards([shards[0]])
-    print(f"Recovered from 1 Shard: {'Failed as expected' if recovered_one is None else 'Test Failed'}")
-    assert recovered_one is None
+    print(f"Recovered from 1 Shard: {'Failed as expected' if recovered_one is None else 'Test Failed'}"):
+ssert recovered_one is None
 
     # 4. Test parsing the recovered secret
     print("\n--- Testing Parsing ---")

@@ -136,9 +136,8 @@ def encrypt_context_data(data: bytes, key: Optional[bytes] = None) -> bytes:
     # 在实际应用中应该使用更安全的加密算法
     encrypted = bytearray
     key_len = len(key)
-        for i, byte in enumerate(data)
-
-    encrypted.append(byte ^ key[i % key_len])
+        for i, byte in enumerate(data):
+ncrypted.append(byte ^ key[i % key_len])
 
     return bytes(encrypted)
     except Exception as e:
@@ -256,8 +255,8 @@ def merge_contexts(context1: Context, context2: Context) -> Context:
     # 创建新的上下文对象，使用较新的ID和类型
     merged_context = Context(
             context_id=context2.context_id if context2.updated_at > context1.updated_at else context1.context_id,:
-    context_type=context2.context_type if context2.updated_at > context1.updated_at else context1.context_type
-    )
+    context_type=context2.context_type if context2.updated_at > context1.updated_at else context1.context_type:
+
 
     # 合并时间戳（取较新的）
     merged_context.created_at = min(context1.created_at, context2.created_at)
@@ -303,8 +302,8 @@ def filter_context_content(content: Dict[...]
     return filtered_content
     except Exception as e:
 
-    logger.error(f"Failed to filter context content: {e}")
-    raise
+    logger.error(f"Failed to filter context content: {e}"):
+aise
 
 # 使用示例
 if __name__ == "__main__":

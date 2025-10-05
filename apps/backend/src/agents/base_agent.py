@@ -7,11 +7,11 @@ from enum import Enum
 
 # 修复导入路径 - 使用正确的模块路径
 try:
-    # Try absolute imports first (for when running with uvicorn)
-    from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+    # Try absolute imports first (for when running with uvicorn):
+rom apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 except ImportError:
-    # Fall back to relative imports (for when running as a script)
-    try:
+    # Fall back to relative imports (for when running as a script):
+ry:
         from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
     except ImportError:
         from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
@@ -37,9 +37,9 @@ class QueuedTask:
 
 class BaseAgent:
     """
-    The base class for all specialized agents.
-    Provides common functionality for HSP connectivity, task handling, and lifecycle management.
-    """
+    The base class for all specialized agents.:
+rovides common functionality for HSP connectivity, task handling, and lifecycle management.:
+""
 
     def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]], agent_name: str = "BaseAgent") -> None:
         self.agent_id = agent_id
@@ -64,14 +64,14 @@ class BaseAgent:
     async def _ainit(self):
         # 延迟导入以避免循环导入
         try:
-            # Try relative imports first (for when running with uvicorn)
-            from ..core_services import initialize_services, get_services, shutdown_services
+            # Try relative imports first (for when running with uvicorn):
+rom ..core_services import initialize_services, get_services, shutdown_services
             from apps.backend.src.ai.agent_collaboration_manager import AgentCollaborationManager
             from apps.backend.src.ai.agent_monitoring_manager import AgentMonitoringManager
-            from apps.backend.src.ai.dynamic_agent_registry import DynamicAgentRegistry
-        except ImportError:
-            # Fall back to absolute imports (for when running as a script)
-            from apps.backend.src.core_services import initialize_services, get_services, shutdown_services
+            from apps.backend.src.ai.dynamic_agent_registry import DynamicAgentRegistry:
+xcept ImportError:
+            # Fall back to absolute imports (for when running as a script):
+rom apps.backend.src.core_services import initialize_services, get_services, shutdown_services
             from apps.backend.src.ai.agent_collaboration_manager import AgentCollaborationManager
             from apps.backend.src.ai.agent_monitoring_manager import AgentMonitoringManager
             from apps.backend.src.ai.dynamic_agent_registry import DynamicAgentRegistry
@@ -102,15 +102,15 @@ class BaseAgent:
         # Set hsp_connector from services
         self.hsp_connector = self.services.get("hsp_connector")
         
-        # Initialize the collaboration manager if HSP connector is available
-        if self.hsp_connector:
+        # Initialize the collaboration manager if HSP connector is available:
+f self.hsp_connector:
             self.collaboration_manager = AgentCollaborationManager(self.hsp_connector)
             
             # Initialize the monitoring manager
             self.monitoring_manager = AgentMonitoringManager(self.hsp_connector)
             
-            # Initialize the dynamic agent registry
-            self.agent_registry = DynamicAgentRegistry(self.hsp_connector)
+            # Initialize the dynamic agent registry:
+elf.agent_registry = DynamicAgentRegistry(self.hsp_connector)
 
     async def start(self):
         """
@@ -138,16 +138,16 @@ class BaseAgent:
             for cap in self.capabilities:
                 await self.hsp_connector.advertise_capability(cap)
                 
-                # Register capability with collaboration manager if available
-                if self.collaboration_manager:
+                # Register capability with collaboration manager if available:
+f self.collaboration_manager:
                     await self.collaboration_manager.register_agent_capability(
                         self.agent_id, cap.get("capability_id", "")
                     )
             
-            # Register agent with monitoring manager if available
-            if self.monitoring_manager:
-                capability_ids = [cap.get("capability_id", "") for cap in self.capabilities]
-                await self.monitoring_manager.register_agent(
+            # Register agent with monitoring manager if available:
+f self.monitoring_manager:
+                capability_ids = [cap.get("capability_id", "") for cap in self.capabilities]:
+wait self.monitoring_manager.register_agent(
                     agent_id=self.agent_id,
                     agent_name=self.agent_name,
                     capabilities=capability_ids
@@ -156,40 +156,39 @@ class BaseAgent:
                 # Start monitoring
                 await self.monitoring_manager.start_monitoring()
             
-            # Start dynamic agent registry if available
-            if self.agent_registry:
+            # Start dynamic agent registry if available:
+f self.agent_registry:
                 await self.agent_registry.start_registry()
 
         logger.info(f"[{self.agent_id}] is running and listening for tasks.")
 
         # Agent is now running, return control to the caller
-        # The main loop (if any) should be managed externally or by a dedicated task
-
-    async def stop(self):
+        # The main loop (if any) should be managed externally or by a dedicated task:
+sync def stop(self):
         """
         Stops the agent and shuts down its services.
         """
         # 延迟导入以避免循环导入
         try:
-            # Try relative imports first (for when running with uvicorn)
-            from ..core_services import shutdown_services
+            # Try relative imports first (for when running with uvicorn):
+rom ..core_services import shutdown_services
         except ImportError:
-            # Fall back to absolute imports (for when running as a script)
-            from apps.backend.src.core_services import shutdown_services
+            # Fall back to absolute imports (for when running as a script):
+rom apps.backend.src.core_services import shutdown_services
         
         logger.info(f"[{self.agent_id}] Stopping...")
         self.is_running = False
         
-        # Shutdown collaboration manager if available
-        if self.collaboration_manager:
+        # Shutdown collaboration manager if available:
+f self.collaboration_manager:
             await self.collaboration_manager.shutdown()
             
-        # Shutdown monitoring manager if available
-        if self.monitoring_manager:
+        # Shutdown monitoring manager if available:
+f self.monitoring_manager:
             await self.monitoring_manager.shutdown()
             
-        # Shutdown agent registry if available
-        if self.agent_registry:
+        # Shutdown agent registry if available:
+f self.agent_registry:
             await self.agent_registry.shutdown()
         
         await shutdown_services()
@@ -197,16 +196,16 @@ class BaseAgent:
 
     def is_healthy(self) -> bool:
         """
-        A basic health check for the agent.
-        Subclasses can override this for more specific health checks.
-        """
+        A basic health check for the agent.:
+ubclasses can override this for more specific health checks.:
+""
         return self.is_running and self.hsp_connector and self.hsp_connector.is_connected
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         """
-        The primary handler for incoming HSP task requests.
-        This method adds tasks to the queue for processing.
-        """
+        The primary handler for incoming HSP task requests.:
+his method adds tasks to the queue for processing.:
+""
         logger.info(f"[{self.agent_id}] Received task request: {task_payload.get('request_id')} for capability '{task_payload.get('capability_id_filter')}' from '{sender_ai_id}'.")
 
         # Report heartbeat
@@ -273,13 +272,13 @@ class BaseAgent:
         """
         logger.info(f"[{self.agent_id}] Processing task {task.task_id} with priority {task.priority.name}")
         
-        # Record task start time for performance monitoring
-        task_start_time = asyncio.get_event_loop().time()
+        # Record task start time for performance monitoring:
+ask_start_time = asyncio.get_event_loop().time()
         self._task_counter += 1
 
         try:
-            # Check if we have a specific handler for this capability
-            capability_id = task.payload.get("capability_id_filter", "")
+            # Check if we have a specific handler for this capability:
+apability_id = task.payload.get("capability_id_filter", "")
             if capability_id in self.task_handlers:
                 # Use specific handler
                 handler = self.task_handlers[capability_id]
@@ -318,11 +317,11 @@ class BaseAgent:
                 logger.info(f"[{self.agent_id}] Retrying task {task.task_id} ({task.retry_count + 1}/{self.max_retries})")
                 await asyncio.sleep(self.retry_delay * (2 ** task.retry_count))  # Exponential backoff
                 
-                # Re-queue the task with incremented retry count
-                async with self.task_queue_lock:
+                # Re-queue the task with incremented retry count:
+sync with self.task_queue_lock:
                     task.retry_count += 1
-                    # Re-insert at the beginning of the queue for immediate retry
-                    self.task_queue.insert(0, task)
+                    # Re-insert at the beginning of the queue for immediate retry:
+elf.task_queue.insert(0, task)
             else:
                 # Send failure response after max retries
                 logger.error(f"[{self.agent_id}] Task {task.task_id} failed after {self.max_retries} retries")
@@ -344,8 +343,8 @@ class BaseAgent:
 
     async def _default_task_handler(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope) -> Dict[str, Any]:
         """
-        Default task handler for unimplemented capabilities.
-        """
+        Default task handler for unimplemented capabilities.:
+""
         logger.warning(f"[{self.agent_id}] No specific handler for capability '{task_payload.get('capability_id_filter', '')}'")
         
         # Default behavior Acknowledge and report not implemented
@@ -353,14 +352,14 @@ class BaseAgent:
             "status": "failure",
             "error_details": {
                 "error_code": "NOT_IMPLEMENTED",
-                "error_message": f"The '{self.__class__.__name__}' has not implemented a handler for capability '{task_payload.get('capability_id_filter', '')}'."
-            }
+                "error_message": f"The '{self.__class__.__name__}' has not implemented a handler for capability '{task_payload.get('capability_id_filter', '')}'.":
+
         }
 
     async def _send_task_rejection(self, task: QueuedTask):
         """
-        Send a rejection response for a task that couldn't be queued.
-        """
+        Send a rejection response for a task that couldn't be queued.:
+""
         if self.hsp_connector and task.payload.get("callback_address"):
             result_payload = HSPTaskResultPayload(
                 request_id=task.payload.get("request_id", ""),
@@ -401,9 +400,8 @@ class BaseAgent:
     # 新增：注册特定任务处理器的方法
     def register_task_handler(self, capability_id: str, handler: Callable):
         """
-        Register a specific handler for a capability.
-        
-        Args:
+        Register a specific handler for a capability.:
+rgs:
             capability_id: The capability ID to handle
             handler: The handler function (should accept payload, sender_id, envelope)
         """
@@ -418,10 +416,9 @@ class BaseAgent:
         Args:
             target_agent_id: ID of the agent to handle the task
             capability_id: The capability needed to handle the task
-            parameters: Parameters for the task
-            
-        Returns: str Task ID for tracking the collaboration
-        """
+            parameters: Parameters for the task:
+eturns: str Task ID for tracking the collaboration:
+""
         if not self.collaboration_manager:
             raise RuntimeError("Collaboration manager not initialized")
             
@@ -437,9 +434,8 @@ class BaseAgent:
         Orchestrate a sequence of tasks across multiple agents.
         
         Args:
-            task_sequence: List of task definitions with capability_id and parameters
-            
-        Returns: Dict[…] Final result of the orchestrated task sequence
+            task_sequence: List of task definitions with capability_id and parameters:
+eturns: Dict[…] Final result of the orchestrated task sequence
         """
         if not self.collaboration_manager:
             raise RuntimeError("Collaboration manager not initialized")
@@ -452,9 +448,8 @@ class BaseAgent:
     # 健康检查和监控方法
     async def get_health_report(self) -> Dict[str, Any]:
         """
-        Get the health report for this agent.
-        
-        Returns: Dict[…] Health report data
+        Get the health report for this agent.:
+eturns: Dict[…] Health report data
         """
         if not self.monitoring_manager:
             return {"error": "Monitoring manager not initialized"}
@@ -474,8 +469,8 @@ class BaseAgent:
                 "response_time_ms": report.response_time_ms,
                 "task_count": report.task_count,
                 "success_rate": report.success_rate,
-                "uptime_seconds": asyncio.get_event_loop().time() - self._start_time if self._start_time else 0,
-                "queue_length": len(self.task_queue)
+                "uptime_seconds": asyncio.get_event_loop().time() - self._start_time if self._start_time else 0,:
+queue_length": len(self.task_queue)
             }
         else:
             return {"error": "No health report available"}
@@ -494,33 +489,30 @@ class BaseAgent:
         
         Args:
             capability_id: The capability to search for
-            
-        Returns:
-            List[Dict[str, Any]]: List of agents with the specified capability
-        """
+            :
+eturns:
+            List[Dict[str, Any]]: List of agents with the specified capability:
+""
         if not self.agent_registry:
             return []
         
         agents = await self.agent_registry.find_agents_by_capability(capability_id)
-        return [asdict(agent) for agent in agents]
-    
-    async def find_agents_by_name(self, agent_name: str) -> List[Dict[str, Any]]:
+        return [asdict(agent) for agent in agents]:
+sync def find_agents_by_name(self, agent_name: str) -> List[Dict[str, Any]]:
         """
         Find agents by name (partial match).
         
         Args:
-            agent_name: The agent name to search for (case-insensitive partial match)
-            
-        Returns:
-            List[Dict[str, Any]]: List of agents with matching names
-        """
+            agent_name: The agent name to search for (case-insensitive partial match):
+eturns:
+            List[Dict[str, Any]]: List of agents with matching names:
+""
         if not self.agent_registry:
             return []
         
         agents = await self.agent_registry.find_agents_by_name(agent_name)
-        return [asdict(agent) for agent in agents]
-    
-    async def get_all_active_agents(self) -> List[Dict[str, Any]]:
+        return [asdict(agent) for agent in agents]:
+sync def get_all_active_agents(self) -> List[Dict[str, Any]]:
         """
         Get all currently active agents.
         
@@ -531,9 +523,8 @@ class BaseAgent:
             return []
         
         agents = await self.agent_registry.get_all_active_agents()
-        return [asdict(agent) for agent in agents]
-    
-    async def get_agent_registry_stats(self) -> Dict[str, Any]:
+        return [asdict(agent) for agent in agents]:
+sync def get_agent_registry_stats(self) -> Dict[str, Any]:
         """
         Get statistics about the agent registry.
         
@@ -571,6 +562,6 @@ class BaseAgent:
                 "priority_counts": priority_counts,
                 "oldest_task_age_seconds": (
                     asyncio.get_event_loop().time() - self.task_queue[0].received_time 
-                    if self.task_queue else 0
-                )
+                    if self.task_queue else 0:
+
             }

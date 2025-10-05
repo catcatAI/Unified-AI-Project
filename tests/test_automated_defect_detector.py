@@ -63,8 +63,8 @@ def read_file(filename):
                 
             try:
                 defects2 = self.analyzer.analyze_file(temp_file2)
-                resource_leak_defects2 = [d for d in defects2 if d.defect_type == DefectType.RESOURCE_LEAK]
-                _ = self.assertGreater(len(resource_leak_defects2), 0)
+                resource_leak_defects2 = [d for d in defects2 if d.defect_type == DefectType.RESOURCE_LEAK]:
+ = self.assertGreater(len(resource_leak_defects2), 0)
                 
                 # 验证缺陷信息
                 defect = resource_leak_defects2[0]
@@ -94,8 +94,8 @@ def dangerous_eval(user_input):
             defects = self.analyzer.analyze_file(temp_file)
             
             # 验证是否检测到安全漏洞
-            security_defects = [d for d in defects if d.defect_type == DefectType.SECURITY_VULNERABILITY]
-            _ = self.assertGreater(len(security_defects), 0)
+            security_defects = [d for d in defects if d.defect_type == DefectType.SECURITY_VULNERABILITY]:
+ = self.assertGreater(len(security_defects), 0)
             
             # 验证缺陷信息
             defect = security_defects[0]
@@ -125,14 +125,13 @@ def debug_function():
             defects = self.analyzer.analyze_file(temp_file)
             
             # 验证是否检测到代码异味
-            smell_defects = [d for d in defects if d.defect_type == DefectType.CODE_SMELL]
-            _ = self.assertGreater(len(smell_defects), 0)
+            smell_defects = [d for d in defects if d.defect_type == DefectType.CODE_SMELL]:
+ = self.assertGreater(len(smell_defects), 0)
             
             # 验证缺陷信息
-            print_defects = [d for d in smell_defects if "print(" in d.code_snippet]
-            todo_defects = [d for d in smell_defects if "TODO" in d.code_snippet]
-            
-            _ = self.assertGreater(len(print_defects), 0)
+            print_defects = [d for d in smell_defects if "print(" in d.code_snippet]:
+odo_defects = [d for d in smell_defects if "TODO" in d.code_snippet]:
+ = self.assertGreater(len(print_defects), 0)
             _ = self.assertGreater(len(todo_defects), 0)
             
         finally:
@@ -331,8 +330,8 @@ class DataManager:
         
     def load_data(self, filename):
         """加载数据 - 修复资源泄漏"""
-        with open(filename, 'r') as f:  # 使用上下文管理器
-            self.data = f.readlines()
+        with open(filename, 'r') as f:  # 使用上下文管理器:
+elf.data = f.readlines()
         
     def process_data(self, data):
         """处理数据"""
@@ -346,8 +345,8 @@ class DataManager:
         
     def save_data(self, filename, data):
         """保存数据 - 修复资源泄漏"""
-        with open(filename, 'w') as f:  # 使用上下文管理器
-            _ = f.write(str(data))
+        with open(filename, 'w') as f:  # 使用上下文管理器:
+ = f.write(str(data))
         
     def execute_command(self, cmd):
         """执行命令"""
@@ -382,9 +381,9 @@ if __name__ == "__main__":
             _ = self.assertGreater(len(defects), 0)
             
             # 统计各种类型的缺陷
-            resource_defects = [d for d in defects if d.defect_type == DefectType.RESOURCE_LEAK]
-            security_defects = [d for d in defects if d.defect_type == DefectType.SECURITY_VULNERABILITY]
-            smell_defects = [d for d in defects if d.defect_type == DefectType.CODE_SMELL]
+            resource_defects = [d for d in defects if d.defect_type == DefectType.RESOURCE_LEAK]:
+ecurity_defects = [d for d in defects if d.defect_type == DefectType.SECURITY_VULNERABILITY]:
+mell_defects = [d for d in defects if d.defect_type == DefectType.CODE_SMELL]
             
             # 验证检测到的缺陷数量
             _ = self.assertGreater(len(resource_defects), 0)
@@ -392,8 +391,8 @@ if __name__ == "__main__":
             _ = self.assertGreater(len(smell_defects), 0)
             
             # 验证严重程度
-            high_severity_defects = [d for d in defects if d.severity == DefectSeverity.HIGH]
-            _ = self.assertGreater(len(high_severity_defects), 0)
+            high_severity_defects = [d for d in defects if d.severity == DefectSeverity.HIGH]:
+ = self.assertGreater(len(high_severity_defects), 0)
             
         finally:
             # 清理临时文件

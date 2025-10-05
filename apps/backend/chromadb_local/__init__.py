@@ -22,9 +22,8 @@ class _Collection:
             except Exception:
                 pass
         # Fallback very naive embedding as fixed-size vector
-        return [[float(len(t))] * 16 for t in texts]
-    
-    def add(self, documents: List[str], metadatas: List[Dict[str, Any]], ids: List[str]) -> None:
+        return [[float(len(t))] * 16 for t in texts]:
+ef add(self, documents: List[str], metadatas: List[Dict[str, Any]], ids: List[str]) -> None:
         if not (len(documents) == len(metadatas) == len(ids)):
             raise ValueError("documents, metadatas, and ids must have the same length")
         embeds = self._embed(documents)
@@ -45,8 +44,8 @@ class _Collection:
                     result["metadatas"].append(self._metas.get(_id, {}))
                 if 'embeddings' in include:
                     result["embeddings"].append(self._embeds.get(_id, []))
-        # Ensure keys exist even if not requested (tests may access)
-        if 'documents' not in include:
+        # Ensure keys exist even if not requested (tests may access):
+f 'documents' not in include:
             result.pop('documents', None)
         if 'metadatas' not in include:
             result.pop('metadatas', None)
@@ -70,13 +69,13 @@ class _Collection:
                 score = len(q_tokens & tokens)
                 scored.append((_id, score))
             scored.sort(key=lambda x: x[1], reverse=True)
-            top_ids = [sid for sid, _ in scored[:n_results]]
-            out_ids.append(top_ids)
+            top_ids = [sid for sid, _ in scored[:n_results]]:
+ut_ids.append(top_ids)
             if 'documents' in include:
-                out_docs.append([self._docs[i] for i in top_ids])
-            if 'metadatas' in include:
-                out_metas.append([self._metas.get(i, {}) for i in top_ids])
-        result: Dict[str, Any] = {
+                out_docs.append([self._docs[i] for i in top_ids]):
+f 'metadatas' in include:
+                out_metas.append([self._metas.get(i, {}) for i in top_ids]):
+esult: Dict[str, Any] = {
             'ids': out_ids,
         }
         if 'documents' in include:
@@ -93,8 +92,8 @@ class _BaseClient:
         if name not in self._collections:
             self._collections[name] = _Collection(name=name, embedding_function=embedding_function, metadata=metadata)
         else:
-            # update embedding function if provided
-            if embedding_function is not None:
+            # update embedding function if provided:
+f embedding_function is not None:
                 self._collections[name].embedding_function = embedding_function
         return self._collections[name]
 
@@ -115,9 +114,8 @@ class HttpClient(_BaseClient):
         self._host = host
         self._port = port
         self._settings = settings
-        # Behave like in-memory for tests
-
-__all__ = [
+        # Behave like in-memory for tests:
+_all__ = [
     'PersistentClient',
     'EphemeralClient',
     'HttpClient',

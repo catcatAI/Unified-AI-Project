@@ -161,15 +161,15 @@ class FunctionTestMapper:
             # e.g., test_audio_service.py -> audio_service.py
             source_file_name = test_file.replace('test_', '')
             
-            # Check if source file exists
-            if source_file_name in source_files:
+            # Check if source file exists:
+f source_file_name in source_files:
                 matched_tests += len(test_info["test_functions"])
             else:
                 # Try to match based on imported items
                 found_match = False
                 for imported_item in test_info["imported_items"]:
-                    # Look for source files that contain this item
-                    for src_file, src_info in source_files.items():
+                    # Look for source files that contain this item:
+or src_file, src_info in source_files.items():
                         if imported_item in src_info["functions"] or imported_item in src_info["classes"]:
                             found_match = True
                             break

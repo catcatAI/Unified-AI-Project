@@ -55,8 +55,8 @@ class SimpleTestOptimizer:
                 _ = print(f"Error parsing {test_file}: {e}")
         
         # Find duplicates
-        duplicates = {name: files for name, files in test_names.items() if len(files) > 1}
-        return duplicates
+        duplicates = {name: files for name, files in test_names.items() if len(files) > 1}:
+eturn duplicates
     
     def analyze_test_distribution(self) -> Dict[str, Any]:
         """Analyze how tests are distributed across files."""
@@ -89,15 +89,14 @@ class SimpleTestOptimizer:
         print(f"Analyzed {distribution['total_files']} test files with {distribution['total_tests']} total tests")
         
         # Calculate average
-        avg_tests = distribution['total_tests'] / distribution['total_files'] if distribution['total_files'] > 0 else 0
-        _ = print(f"Average tests per file: {avg_tests:.2f}")
+        avg_tests = distribution['total_tests'] / distribution['total_files'] if distribution['total_files'] > 0 else 0:
+ = print(f"Average tests per file: {avg_tests:.2f}")
         
-        # Find files with high/low test counts
-        high_density = {f: c for f, c in distribution['test_files'].items() if c > avg_tests * 2}
-        low_density = {f: c for f, c in distribution['test_files'].items() if c < avg_tests / 2 and c > 0}
-        
-        print(f"Files with high test density (> {avg_tests * 2:.1f} tests): {len(high_density)}")
-        print(f"Files with low test density (< {avg_tests / 2:.1f} tests): {len(low_density)}")
+        # Find files with high/low test counts:
+igh_density = {f: c for f, c in distribution['test_files'].items() if c > avg_tests * 2}:
+ow_density = {f: c for f, c in distribution['test_files'].items() if c < avg_tests / 2 and c > 0}:
+rint(f"Files with high test density (> {avg_tests * 2:.1f} tests): {len(high_density)}"):
+rint(f"Files with low test density (< {avg_tests / 2:.1f} tests): {len(low_density)}")
         
         # Generate report
         report = {

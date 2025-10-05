@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Full integration test for Atlassian functionality
-"""
+Full integration test for Atlassian functionality:
+""
 
 import sys
 from pathlib import Path

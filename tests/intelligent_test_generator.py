@@ -83,8 +83,8 @@ class CodeAnalyzer:
                     "return_type": self._extract_return_type(node),
                     "docstring": ast.get_docstring(node),
                     "line_number": node.lineno,
-                    "decorators": [self._extract_decorator(d) for d in node.decorator_list]
-                }
+                    "decorators": [self._extract_decorator(d) for d in node.decorator_list]:
+
                 functions[node.name] = func_info
                 
         return functions
@@ -100,8 +100,8 @@ class CodeAnalyzer:
                     "methods": self._extract_functions(node),
                     "docstring": ast.get_docstring(node),
                     "line_number": node.lineno,
-                    "bases": [self._extract_base(b) for b in node.bases]
-                }
+                    "bases": [self._extract_base(b) for b in node.bases]:
+
                 classes[node.name] = class_info
                 
         return classes
@@ -119,8 +119,8 @@ class CodeAnalyzer:
         for i, arg in enumerate(args.args):
             param_info = {
                 "name": arg.arg,
-                "type_annotation": self._extract_type_annotation(arg.annotation) if arg.annotation else None
-            }
+                "type_annotation": self._extract_type_annotation(arg.annotation) if arg.annotation else None:
+
             
             # 处理默认值
             if i >= num_args - num_defaults:
@@ -135,16 +135,16 @@ class CodeAnalyzer:
         if args.vararg:
             parameters.append({
                 "name": "*" + args.vararg.arg,
-                "type_annotation": self._extract_type_annotation(args.vararg.annotation) if args.vararg.annotation else None,
-                "default": None
+                "type_annotation": self._extract_type_annotation(args.vararg.annotation) if args.vararg.annotation else None,:
+default": None
             })
             
         # 处理**kwargs
         if args.kwarg:
             parameters.append({
                 "name": "**" + args.kwarg.arg,
-                "type_annotation": self._extract_type_annotation(args.kwarg.annotation) if args.kwarg.annotation else None,
-                "default": None
+                "type_annotation": self._extract_type_annotation(args.kwarg.annotation) if args.kwarg.annotation else None,:
+default": None
             })
             
         return parameters
@@ -214,16 +214,16 @@ class CodeAnalyzer:
             return getattr(decorator_node, 'id', 'unknown')
         elif isinstance(decorator_node, ast.Attribute):
             # 修复: 确保ast.Attribute节点的value有id属性
-            value_id = getattr(decorator_node.value, 'id', 'unknown') if hasattr(decorator_node.value, 'id') else 'unknown'
-            return f"{value_id}.{decorator_node.attr}"
+            value_id = getattr(decorator_node.value, 'id', 'unknown') if hasattr(decorator_node.value, 'id') else 'unknown':
+eturn f"{value_id}.{decorator_node.attr}"
         elif isinstance(decorator_node, ast.Call):
             if isinstance(decorator_node.func, ast.Name):
                 # 修复: 确保ast.Name节点有id属性
                 return getattr(decorator_node.func, 'id', 'unknown')
             elif isinstance(decorator_node.func, ast.Attribute):
                 # 修复: 确保ast.Attribute节点的value有id属性
-                value_id = getattr(decorator_node.func.value, 'id', 'unknown') if hasattr(decorator_node.func.value, 'id') else 'unknown'
-                return f"{value_id}.{decorator_node.func.attr}"
+                value_id = getattr(decorator_node.func.value, 'id', 'unknown') if hasattr(decorator_node.func.value, 'id') else 'unknown':
+eturn f"{value_id}.{decorator_node.func.attr}"
         return "unknown"
         
     def _extract_base(self, base_node: ast.AST) -> str:
@@ -233,8 +233,8 @@ class CodeAnalyzer:
             return getattr(base_node, 'id', 'object')
         elif isinstance(base_node, ast.Attribute):
             # 修复: 确保ast.Attribute节点的value有id属性
-            value_id = getattr(base_node.value, 'id', 'unknown') if hasattr(base_node.value, 'id') else 'unknown'
-            return f"{value_id}.{base_node.attr}"
+            value_id = getattr(base_node.value, 'id', 'unknown') if hasattr(base_node.value, 'id') else 'unknown':
+eturn f"{value_id}.{base_node.attr}"
         return "object"
 
 
@@ -266,9 +266,8 @@ class TestPatternAnalyzer:
                 
         # 根据参数识别模式
         params = function_info.get("parameters", [])
-        param_names = [p["name"].lower() for p in params]
-        
-        if "password" in param_names or "token" in param_names:
+        param_names = [p["name"].lower() for p in params]:
+f "password" in param_names or "token" in param_names:
             _ = patterns.append("authentication")
             
         if "file" in param_names or "path" in param_names:
@@ -311,11 +310,11 @@ class IntelligentTestGenerator:
             # 保存生成的测试用例
             _ = self.generated_tests.extend(test_cases)
             
-            logger.info(f"Generated {len(test_cases)} test cases for {file_path}")
-            return test_cases
+            logger.info(f"Generated {len(test_cases)} test cases for {file_path}"):
+eturn test_cases
         except Exception as e:
-            logger.error(f"Failed to generate tests for {file_path}: {e}")
-            return []
+            logger.error(f"Failed to generate tests for {file_path}: {e}"):
+eturn []
             
     def _generate_function_tests(self, func_info: Dict[str, Any], analysis_result: Dict[str, Any]) -> List[TestCase]:
         """为函数生成测试用例"""
@@ -357,15 +356,15 @@ class IntelligentTestGenerator:
                 name=param["name"],
                 type_hint=param.get("type_annotation", "Any"),
                 default_value=param.get("default"),
-                description=f"Parameter for {func_name}"
-            )
+                description=f"Parameter for {func_name}":
+
             _ = test_params.append(test_param)
             
         # 创建测试用例
         test_case = TestCase(
             name=f"test_{func_name}_basic",
-            description=f"Basic test for {func_name}",
-            test_type=TestType.UNIT_TEST,
+            description=f"Basic test for {func_name}",:
+est_type=TestType.UNIT_TEST,
             function_name=func_name,
             parameters=test_params,
             expected_behavior=f"Function {func_name} executes without errors",
@@ -383,12 +382,12 @@ class IntelligentTestGenerator:
             # 验证函数测试
             invalid_test = TestCase(
                 name=f"test_{func_name}_invalid_input",
-                description=f"Test {func_name} with invalid input",
-                test_type=TestType.UNIT_TEST,
+                description=f"Test {func_name} with invalid input",:
+est_type=TestType.UNIT_TEST,
                 function_name=func_name,
                 parameters=[],
-                expected_behavior=f"Function {func_name} raises appropriate exception for invalid input",
-                priority=4
+                expected_behavior=f"Function {func_name} raises appropriate exception for invalid input",:
+riority=4
             )
             _ = test_cases.append(invalid_test)
             
@@ -396,8 +395,8 @@ class IntelligentTestGenerator:
             # 计算函数测试
             edge_case_test = TestCase(
                 name=f"test_{func_name}_edge_cases",
-                description=f"Test {func_name} with edge cases",
-                test_type=TestType.UNIT_TEST,
+                description=f"Test {func_name} with edge cases",:
+est_type=TestType.UNIT_TEST,
                 function_name=func_name,
                 parameters=[],
                 expected_behavior=f"Function {func_name} handles edge cases correctly",
@@ -430,8 +429,8 @@ class IntelligentTestGenerator:
         if parameters:
             empty_params_test = TestCase(
                 name=f"test_{func_name}_empty_parameters",
-                description=f"Test {func_name} with empty parameters",
-                test_type=TestType.UNIT_TEST,
+                description=f"Test {func_name} with empty parameters",:
+est_type=TestType.UNIT_TEST,
                 function_name=func_name,
                 parameters=[],
                 expected_behavior=f"Function {func_name} handles empty parameters gracefully",
@@ -494,14 +493,13 @@ def {test_case.name}() -> None:
     
     # Assert
     # Verify the expected behavior
-    assert True  # Replace with actual assertions
-"""
+    assert True  # Replace with actual assertions:
+""
             return test_code.strip()
         except Exception as e:
-            logger.error(f"Failed to generate test code for {test_case.name}: {e}")
-            return f"# Failed to generate test code for {test_case.name}"
-            
-    def get_generated_tests(self, limit: Optional[int] = None) -> List[TestCase]:
+            logger.error(f"Failed to generate test code for {test_case.name}: {e}"):
+eturn f"# Failed to generate test code for {test_case.name}":
+ef get_generated_tests(self, limit: Optional[int] = None) -> List[TestCase]:
         """获取生成的测试用例"""
         if limit:
             return self.generated_tests[-limit:]

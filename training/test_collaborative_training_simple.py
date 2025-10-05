@@ -113,10 +113,8 @@ def main() -> None:
     _ = print(f"\n📋 运行 {test_name} 测试...")
         try:
 
-            if test_func()
-
-
-    passed += 1
+            if test_func():
+assed += 1
                 _ = print(f"✅ {test_name} 测试通过")
             else:
 

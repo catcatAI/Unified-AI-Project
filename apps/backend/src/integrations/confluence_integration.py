@@ -1,8 +1,8 @@
 # src/integrations/confluence_integration.py
 """
 Confluence Integration Module
-Handles Confluence API interactions for the AI system
-"""
+Handles Confluence API interactions for the AI system:
+""
 
 import logging
 from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
@@ -25,8 +25,8 @@ class ConfluenceIntegration:
     self.user_email = connector.user_email
     self.cloud_id = connector.cloud_id
 
-        # Headers for API requests
-    self.headers = {
+        # Headers for API requests:
+elf.headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.api_token}'
@@ -113,8 +113,8 @@ class ConfluenceIntegration:
 
     return {
                             "success": False,
-                            "error": f"Space with key '{space_key}' not found"
-                        }
+                            "error": f"Space with key '{space_key}' not found":
+
                     else:
 
     error_text = await response.text
@@ -168,8 +168,8 @@ class ConfluenceIntegration:
                 }
             }
 
-            # Add parent page if specified
-    if parent_page_id:
+            # Add parent page if specified:
+f parent_page_id:
 
     page_data["ancestors"] = [{"id": parent_page_id}]
 
@@ -302,8 +302,8 @@ class ConfluenceIntegration:
 
     return {
                             "success": False,
-                            "error": f"Page with ID '{page_id}' not found"
-                        }
+                            "error": f"Page with ID '{page_id}' not found":
+
                     else:
 
     error_text = await response.text
@@ -406,15 +406,15 @@ class ConfluenceIntegration:
                     else:
 
                         error_text = await response.text
-                        logger.error(f"Failed to get page children for {page_id}: {response.status} - {error_text}")
-                        return {
+                        logger.error(f"Failed to get page children for {page_id}: {response.status} - {error_text}"):
+eturn {
                             "success": False,
                             "error": f"HTTP {response.status}: {error_text}"
                         }
         except Exception as e:
 
-            logger.error(f"Error getting page children for {page_id}: {e}")
-            return {
+            logger.error(f"Error getting page children for {page_id}: {e}"):
+eturn {
                 "success": False,
                 "error": str(e)
             }

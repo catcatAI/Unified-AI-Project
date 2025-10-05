@@ -31,12 +31,12 @@ class Conversation:
     self.end_time: Optional[datetime] = None
     self.context_summary: Optional['ContextSummary'] = None
 
-    def add_message(self, message: Message)
-    """添加消息"""
+    def add_message(self, message: Message):
+""添加消息"""
     self.messages.append(message)
 
-    def complete(self)
-    """完成对话"""
+    def complete(self):
+""完成对话"""
     self.end_time = datetime.now
 
 class ContextSummary:
@@ -74,8 +74,8 @@ class DialogueContextManager:
             }
 
             context_id = self.context_manager.create_context(ContextType.DIALOGUE, context_content)
-            logger.info(f"Started conversation {conversation_id} with context {context_id}")
-    return True
+            logger.info(f"Started conversation {conversation_id} with context {context_id}"):
+eturn True
         except Exception as e:
 
             logger.error(f"Failed to start conversation {conversation_id}: {e}")
@@ -108,8 +108,8 @@ class DialogueContextManager:
             }
 
             context_id = self.context_manager.create_context(ContextType.DIALOGUE, context_content)
-            logger.info(f"Added message to conversation {conversation_id} with context {context_id}")
-    return True
+            logger.info(f"Added message to conversation {conversation_id} with context {context_id}"):
+eturn True
         except Exception as e:
 
             logger.error(f"Failed to add message to conversation {conversation_id}: {e}")
@@ -129,8 +129,8 @@ class DialogueContextManager:
             if len(sentence) > 10:  # 过滤太短的句子
                 # 简单的关键词提取
                 words = sentence.split
-                if len(words) > 3:  # 过滤太短的句子
-                    key_points.append(sentence)
+                if len(words) > 3:  # 过滤太短的句子:
+ey_points.append(sentence)
 
     return key_points[:5]  # 限制返回5个关键点
 
@@ -163,10 +163,9 @@ class DialogueContextManager:
     negative_words = ['bad', 'terrible', 'awful', 'horrible', 'disgusting', 'pathetic']
 
     text_lower = text.lower()
-        positive_count = sum(1 for word in positive_words if word in text_lower)
-    negative_count = sum(1 for word in negative_words if word in text_lower)
-
-    if positive_count > negative_count:
+        positive_count = sum(1 for word in positive_words if word in text_lower):
+egative_count = sum(1 for word in negative_words if word in text_lower):
+f positive_count > negative_count:
 
 
     return "positive"
@@ -224,12 +223,12 @@ class DialogueContextManager:
             }
 
             context_id = self.context_manager.create_context(ContextType.DIALOGUE, context_content)
-            logger.info(f"Generated context summary for conversation {conversation_id} with context {context_id}")
-    return summary
+            logger.info(f"Generated context summary for conversation {conversation_id} with context {context_id}"):
+eturn summary
         except Exception as e:
 
-            logger.error(f"Failed to generate context summary for conversation {conversation_id}: {e}")
-            return None
+            logger.error(f"Failed to generate context summary for conversation {conversation_id}: {e}"):
+eturn None
 
     def get_conversation_context(self, conversation_id: str) -> Optional[Dict[str, Any]]:
     """获取对话上下文"""
@@ -249,8 +248,8 @@ class DialogueContextManager:
             if not contexts:
 
 
-    logger.debug(f"No context found for conversation {conversation_id}")
-    return None
+    logger.debug(f"No context found for conversation {conversation_id}"):
+eturn None
 
             # 返回最新的上下文
             latest_context = max(contexts, key=lambda c: c.updated_at)
@@ -262,8 +261,8 @@ class DialogueContextManager:
             }
         except Exception as e:
 
-            logger.error(f"Failed to get context for conversation {conversation_id}: {e}")
-            return None
+            logger.error(f"Failed to get context for conversation {conversation_id}: {e}"):
+eturn None
 
     def get_recent_conversations(self, limit: int = 5) -> List[Dict[str, Any]]:
     """获取最近的对话"""
@@ -346,8 +345,8 @@ class DialogueContextManager:
                 }
 
                 context_id = self.context_manager.create_context(ContextType.DIALOGUE, context_content)
-                logger.info(f"Transferred context from {source_conversation_id} to {target_conversation_id} with context {context_id}")
-    return True
+                logger.info(f"Transferred context from {source_conversation_id} to {target_conversation_id} with context {context_id}"):
+eturn True
 
             logger.debug(f"No context summary to transfer from {source_conversation_id}")
             return False

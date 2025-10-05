@@ -82,20 +82,20 @@ def main() -> None:
     # 定義路徑映射
     path_mappings = {
         # 備份目錄歸檔
-        'backup_before_optimization': 'docs/09-archive/backup_before_optimization',
+        'docs/09-archive/backup_before_optimization': 'docs/09-archive/docs/09-archive/backup_before_optimization',
         
         # 數據目錄重組
-        'model_cache/': 'data/model_cache/',
-        'test_data/': 'data/runtime_data/test_data/',
+        'data/model_cache/': 'data/data/model_cache/',
+        'data/runtime_data/test_data/': 'data/runtime_data/data/runtime_data/test_data/',
         
         # 測試相關路徑
-        'tests/test_output_data': 'data/runtime_data/tests/test_output_data',
+        'data/runtime_data/tests/test_output_data': 'data/runtime_data/data/runtime_data/tests/test_output_data',
         
         # 緩存目錄
-        '.pytest_cache': 'data/runtime_data/.pytest_cache',
+        'data/runtime_data/.pytest_cache': 'data/runtime_data/data/runtime_data/.pytest_cache',
         
         # 配置路徑更新
-        'scripts/dependency_config.yaml': 'configs/dependency_config.yaml',
+        'configs/dependency_config.yaml': 'configs/dependency_config.yaml',
     }
     
     _ = print("📋 路徑映射:")

@@ -1,6 +1,6 @@
 """
-Context7 MCP (Model Context Protocol) Connector for Unified AI Project:
-    This module provides integration with Context7's MCP for enhanced AI model
+Context7 MCP (Model Context Protocol) Connector for Unified AI Project::
+    This module provides integration with Context7's MCP for enhanced AI model::
 communication and context management within the unified AI ecosystem.
 """
 
@@ -27,9 +27,8 @@ class Context7Config:
 
 class Context7MCPConnector:
     """
-    Context7 MCP Connector for the Unified AI Project.:
-
-    Provides seamless integration with Context7's Model Context Protocol,:
+    Context7 MCP Connector for the Unified AI Project.::
+    Provides seamless integration with Context7's Model Context Protocol,::
     enabling enhanced context management, model communication, and
     collaborative AI capabilities within the unified ecosystem.
     """
@@ -48,8 +47,8 @@ class Context7MCPConnector:
     self._connected = False
 
     # Allow awaiting the connector instance in tests/fixtures that mistakenly await it
-    def __await__(self)
-    async def _return_self()
+    def __await__(self):
+    async def _return_self():
     return self
     return _return_self.__await__
 
@@ -57,10 +56,9 @@ class Context7MCPConnector:
     """
     Establish connection to Context7 MCP service.
 
-    Returns: bool True if connection successful, False otherwise
+    Returns: bool True if connection successful, False otherwise:
     """
         try:
-
     logger.info(f"Connecting to Context7 MCP at {self.config.endpoint}")
 
             # Initialize session
@@ -74,16 +72,13 @@ class Context7MCPConnector:
             print("Context7MCPConnector: Connected successfully.")
             return True
 
-        except Exception as e:
-
-
+        except Exception as e::
             logger.error(f"Failed to connect to Context7 MCP: {e}")
             return False
 
     async def disconnect(self) -> None:
     """Disconnect from Context7 MCP service."""
-        if self._connected:
-
+        if self._connected::
     logger.info("Disconnecting from Context7 MCP")
             self.session_id = None
             self.context_cache.clear
@@ -106,8 +101,7 @@ class Context7MCPConnector:
     Returns:
             MCPResponse: Response from Context7 MCP
     """
-        if not self._connected:
-
+        if not self._connected::
     raise RuntimeError("Not connected to Context7 MCP")
 
     message: MCPMessage = {
@@ -134,14 +128,13 @@ class Context7MCPConnector:
     Request relevant context from Context7 MCP.
 
     Args:
-            context_query: Query for context retrieval:
+            context_query: Query for context retrieval::
     max_results: Maximum number of context items to return
 
     Returns
             List of relevant context items
     """
-        if not self._connected:
-
+        if not self._connected::
     raise RuntimeError("Not connected to Context7 MCP")
 
     message: MCPMessage = {
@@ -166,18 +159,15 @@ class Context7MCPConnector:
     shared_context: Dict[str, Any]
     ) -> MCPResponse:
     """
-    Initiate collaboration with another AI model through Context7 MCP.:
-
+    Initiate collaboration with another AI model through Context7 MCP.::
     Args:
     model_id: Identifier of the target AI model
             task_description: Description of the collaborative task
-            shared_context: Context to share with the collaborating model:
-
+            shared_context: Context to share with the collaborating model::
     Returns:
     MCPResponse: Collaboration response
     """
-        if not self._connected:
-
+        if not self._connected::
     raise RuntimeError("Not connected to Context7 MCP")
 
     message: MCPMessage = {
@@ -209,8 +199,7 @@ class Context7MCPConnector:
     Returns:
             Compressed context data
     """
-        if len(str(context_data)) < self.config.compression_threshold:
-
+        if len(str(context_data)) < self.config.compression_threshold::
     return context_data
 
     message: MCPMessage = {
@@ -238,7 +227,7 @@ class Context7MCPConnector:
     capabilities_data = response['data'].get("capabilities", )
 
     self.capabilities = [
-            MCPCapability(**cap) for cap in capabilities_data
+            MCPCapability(**cap) for cap in capabilities_data:
     ]
 
     logger.info(f"Discovered {len(self.capabilities)} MCP capabilities")
@@ -253,7 +242,7 @@ class Context7MCPConnector:
     Returns:
             MCPResponse: Response from the service
     """
-        # Simulate MCP communication for now
+        # Simulate MCP communication for now:
     # In real implementation, this would use HTTP/WebSocket/gRPC
 
     logger.debug(f"Sending MCP message: {message['type']}")
@@ -262,8 +251,7 @@ class Context7MCPConnector:
     _ = await asyncio.sleep(0.1)
 
     # Mock response based on message type
-        if message['type'] == "context_update":
-
+        if message['type'] == "context_update"::
     return MCPResponse(
                 success=True,
                 message_id=message['session_id'] or "",
@@ -271,8 +259,7 @@ class Context7MCPConnector:
                 error=None,
                 timestamp=None
             )
-        elif message['type'] == "context_query":
-
+        elif message['type'] == "context_query"::
     return MCPResponse(
                 success=True,
                 message_id=message['session_id'] or "",
@@ -285,8 +272,7 @@ class Context7MCPConnector:
                 error=None,
                 timestamp=None
             )
-        elif message['type'] == "capability_discovery":
-
+        elif message['type'] == "capability_discovery"::
     return MCPResponse(
                 success=True,
                 message_id=message['session_id'] or "",
@@ -300,8 +286,7 @@ class Context7MCPConnector:
                 error=None,
                 timestamp=None
             )
-        elif message['type'] in ["model_collaboration", "context_compression"]:
-
+        elif message['type'] in ["model_collaboration", "context_compression"]::
     return MCPResponse(
                 success=True,
                 message_id=message['session_id'] or "",
@@ -321,7 +306,7 @@ class Context7MCPConnector:
             )
 
     def is_connected(self) -> bool:
-        """Check if connector is connected to Context7 MCP.""":
+        """Check if connector is connected to Context7 MCP."""::
     return self._connected
 
     def get_capabilities(self) -> List[MCPCapability]:
@@ -329,13 +314,13 @@ class Context7MCPConnector:
     return self.capabilities.copy
 
 
-# Integration with existing Unified AI components
+# Integration with existing Unified AI components:
 class UnifiedAIMCPIntegration:
     """
     Integration layer between Unified AI Project and Context7 MCP.
 
     This class provides seamless integration of Context7 MCP capabilities
-    with existing Unified AI components like DialogueManager, HAM, etc.
+    with existing Unified AI components like DialogueManager, HAM, etc.:
     """
 
     def __init__(self, mcp_connector: Context7MCPConnector) -> None:
@@ -349,8 +334,8 @@ class UnifiedAIMCPIntegration:
     self.context_mappings: Dict[str, str] =
 
     # Allow awaiting the integration instance in tests that mistakenly await it
-    def __await__(self)
-    async def _return_self()
+    def __await__(self):
+    async def _return_self():
     return self
     return _return_self.__await__
 
@@ -359,13 +344,12 @@ class UnifiedAIMCPIntegration:
     dialogue_context: Dict[str, Any]
     ) -> Dict[str, Any]:
     """
-        Integrate MCP with DialogueManager for enhanced context awareness.:
-
+        Integrate MCP with DialogueManager for enhanced context awareness.:::
     Args:
     dialogue_context: Current dialogue context
 
     Returns:
-            Enhanced context with MCP insights
+            Enhanced context with MCP insights:
     """
     # Send current context to MCP
     await self.mcp.send_context(
@@ -390,18 +374,17 @@ class UnifiedAIMCPIntegration:
     memory_data: Dict[str, Any]
     ) -> Dict[str, Any]:
     """
-        Integrate MCP with HAM Memory for distributed memory management.:
-
+        Integrate MCP with HAM Memory for distributed memory management.:::
     Args:
     memory_data: Memory data from HAM
 
     Returns:
-            Enhanced memory data with MCP context
+            Enhanced memory data with MCP context:
     """
-        # Compress memory data if needed
+        # Compress memory data if needed:
     compressed_memory = await self.mcp.compress_context(memory_data)
 
-        # Send to MCP for distributed storage
+        # Send to MCP for distributed storage:
     await self.mcp.send_context(
             context_data=compressed_memory,
             context_type="memory",

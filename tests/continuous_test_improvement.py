@@ -143,8 +143,8 @@ class ContinuousTestImprovement:
                 "timestamp": datetime.now().isoformat()
             }
 
-            logger.info(f"Test execution {'succeeded' if execution_result['success'] else 'failed'}")
-    return execution_result
+            logger.info(f"Test execution {'succeeded' if execution_result['success'] else 'failed'}"):
+eturn execution_result
 
         except subprocess.TimeoutExpired:
 
@@ -176,9 +176,8 @@ class ContinuousTestImprovement:
         try:
             # 调用测试质量评估器
             quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
-            if not quality_assessor_script.exists()
-
-    logger.warning("Test quality assessor script not found")
+            if not quality_assessor_script.exists():
+ogger.warning("Test quality assessor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
             cmd = [
@@ -272,9 +271,8 @@ class ContinuousTestImprovement:
         try:
             # 调用覆盖率监控器
             coverage_monitor_script = self.scripts_dir / "coverage_monitor.py"
-            if not coverage_monitor_script.exists()
-
-    logger.warning("Coverage monitor script not found")
+            if not coverage_monitor_script.exists():
+ogger.warning("Coverage monitor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
             # 生成趋势报告
@@ -332,9 +330,8 @@ class ContinuousTestImprovement:
         try:
             # 调用测试质量评估器获取建议
             quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
-            if not quality_assessor_script.exists()
-
-    logger.warning("Test quality assessor script not found")
+            if not quality_assessor_script.exists():
+ogger.warning("Test quality assessor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
             cmd = [
@@ -396,8 +393,8 @@ class ContinuousTestImprovement:
             "Improve test pass rate by fixing failed tests",
             "Increase line coverage to 85% by adding missing tests",
             "Optimize slow tests to reduce execution time",
-            "Improve naming of poorly named tests for better readability"
-    ]
+            "Improve naming of poorly named tests for better readability":
+
     return recommendations
 
     def _implement_automatic_improvements(self, recommendations_result: Dict[...]
@@ -410,9 +407,8 @@ class ContinuousTestImprovement:
     Returns:
             Dict: 自动改进结果
     """
-    logger.info("Implementing automatic improvements...")
-
-        if not self.improvement_config["improvement"]["auto_generate_recommendations"]:
+    logger.info("Implementing automatic improvements..."):
+f not self.improvement_config["improvement"]["auto_generate_recommendations"]:
 
 
     logger.info("Automatic improvements disabled in configuration")
@@ -470,33 +466,29 @@ class ContinuousTestImprovement:
     logger.info(f"Implementing improvement: {recommendation}")
 
     # 模拟实施过程
-        if "fixing failed tests" in recommendation.lower()
-
-    return {
+        if "fixing failed tests" in recommendation.lower():
+eturn {
                 "type": "test_fix",
                 "description": "Created issue to fix failed tests",
                 "status": "pending",
                 "timestamp": datetime.now().isoformat()
             }
-        elif "increase line coverage" in recommendation.lower()
-
-    return {
+        elif "increase line coverage" in recommendation.lower():
+eturn {
                 "type": "coverage_improvement",
-                "description": "Generated template for missing tests",
-                "status": "pending",
+                "description": "Generated template for missing tests",:
+status": "pending",
                 "timestamp": datetime.now().isoformat()
             }
-        elif "optimize slow tests" in recommendation.lower()
-
-    return {
+        elif "optimize slow tests" in recommendation.lower():
+eturn {
                 "type": "performance_optimization",
-                "description": "Identified candidates for optimization",
-                "status": "pending",
+                "description": "Identified candidates for optimization",:
+status": "pending",
                 "timestamp": datetime.now().isoformat()
             }
-        elif "improve naming" in recommendation.lower()
-
-    return {
+        elif "improve naming" in recommendation.lower():
+eturn {
                 "type": "code_quality",
                 "description": "Generated refactoring suggestions",
                 "status": "pending",
@@ -505,8 +497,8 @@ class ContinuousTestImprovement:
 
     return None
 
-    def _save_cycle_results(self, cycle_results: Dict[str, Any])
-    """
+    def _save_cycle_results(self, cycle_results: Dict[str, Any]):
+""
     保存周期结果
 
     Args:
@@ -528,8 +520,8 @@ class ContinuousTestImprovement:
 
             logger.error(f"Error saving cycle results: {e}")
 
-    def setup_continuous_monitoring(self)
-    """
+    def setup_continuous_monitoring(self):
+""
     设置持续监控
     """
     logger.info("Setting up continuous monitoring...")
@@ -729,8 +721,8 @@ def main() -> None:
     )
     parser.add_argument(
     "--output",
-        help="Output file for dashboard"
-    )
+        help="Output file for dashboard":
+
 
     args = parser.parse_args()
 
@@ -779,9 +771,8 @@ def main() -> None:
             if recommendations.get("status") == "completed":
 
     print("Improvement Recommendations:")
-                for rec in recommendations.get("recommendations", [])
-
-    print(f"  - {rec}")
+                for rec in recommendations.get("recommendations", []):
+rint(f"  - {rec}")
             else:
 
                 print("Failed to generate recommendations")

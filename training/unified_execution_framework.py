@@ -23,14 +23,14 @@ sys.path.insert(0, str(backend_path))
 import sys
 
 class _PathConfig:
-    def __init__(self)
-    self.DATA_DIR = None
+    def __init__(self):
+elf.DATA_DIR = None
     self.TRAINING_DIR = None
     self.MODELS_DIR = None
     self._initialize_paths()
 
-    def _initialize_paths(self)
-    try:
+    def _initialize_paths(self):
+ry:
 
     from apps.backend.src.path_config import (
                 DATA_DIR as CONFIG_DATA_DIR,
@@ -66,8 +66,8 @@ try:
     from apps.backend.src.shared.error import ProjectError, project_error_handler
     # 创建别名以避免重复定义
     class ErrorHandlerImplReal:
-        def handle_error(self, error, context, strategy=None)
-    project_error_handler(ProjectError(str(error), code=500))
+        def handle_error(self, error, context, strategy=None):
+roject_error_handler(ProjectError(str(error), code=500))
 
     class ErrorContextImplReal:
         def __init__(self, component, operation, details=None) -> None:
@@ -85,8 +85,8 @@ try:
 except ImportError:
     # 如果无法导入，创建模拟类
     class ErrorHandlerImplMock:
-        def handle_error(self, error, context, strategy=None)
-    print(f"Error handled: {error} in {context.component}.{context.operation}")
+        def handle_error(self, error, context, strategy=None):
+rint(f"Error handled: {error} in {context.component}.{context.operation}")
 
     class ErrorContextImplMock:
         def __init__(self, component, operation, details=None) -> None:
@@ -144,8 +144,8 @@ class ExecutionConfig:
                  use_gpu: bool = True,
                  distributed_training: bool = False,
                  checkpoint_interval: int = 5,
-                 validation_split: float = 0.2)
-    self.batch_size = batch_size
+                 validation_split: float = 0.2):
+elf.batch_size = batch_size
     self.epochs = epochs
     self.learning_rate = learning_rate
     self.use_gpu = use_gpu
@@ -160,8 +160,8 @@ class ExecutionContext:
                  task_id: str,
                  config: ExecutionConfig,
                  model_name: str,
-                 data_sources: List[str])
-    self.task_id = task_id
+                 data_sources: List[str]):
+elf.task_id = task_id
     self.config = config
     self.model_name = model_name
     self.data_sources = data_sources
@@ -181,8 +181,8 @@ class ExecutionResult:
                  success: bool,
                  metrics: Optional[Dict[str, Any]] = None,
                  error: Optional[str] = None,
-                 execution_time: Optional[float] = None)
-    self.task_id = task_id
+                 execution_time: Optional[float] = None):
+elf.task_id = task_id
     self.success = success
     self.metrics = metrics or {}
     self.error = error
@@ -552,8 +552,8 @@ class UnifiedExecutor:
                 "status": context.status,
                 "progress": context.progress,
                 "metrics": context.metrics,
-                "start_time": context.start_time.isoformat() if context.start_time else None,
-                "current_epoch": context.current_epoch
+                "start_time": context.start_time.isoformat() if context.start_time else None,:
+current_epoch": context.current_epoch
             }
         else:
 
@@ -562,15 +562,14 @@ class UnifiedExecutor:
     def get_all_tasks_status(self) -> Dict[str, Dict[str, Any]]:
     """获取所有任务状态"""
     status_dict = {}
-        for task_id, context in self.tasks.items()
-
-    status_dict[task_id] = {
+        for task_id, context in self.tasks.items():
+tatus_dict[task_id] = {
                 "task_id": context.task_id,
                 "status": context.status,
                 "progress": context.progress,
                 "metrics": context.metrics,
-                "start_time": context.start_time.isoformat() if context.start_time else None,
-                "current_epoch": context.current_epoch
+                "start_time": context.start_time.isoformat() if context.start_time else None,:
+current_epoch": context.current_epoch
             }
     return status_dict
 
@@ -822,9 +821,8 @@ async def example_training_function(context: ExecutionContext) -> Dict[str, Any]
     _ = logger.info(f"正在训练模型: {context.model_name}")
 
     # 模拟训练过程
-    for epoch in range(context.config.epochs)
-
-    context.current_epoch = epoch + 1
+    for epoch in range(context.config.epochs):
+ontext.current_epoch = epoch + 1
     context.progress = (epoch + 1) / context.config.epochs * 100
 
     # 模拟训练指标
@@ -857,9 +855,8 @@ async def example_data_processing_function(context: ExecutionContext) -> Dict[st
     _ = logger.info(f"正在处理数据源: {context.data_sources}")
 
     # 模拟数据处理过程
-    for i in range(10)
-
-    context.progress = (i + 1) / 10 * 100
+    for i in range(10):
+ontext.progress = (i + 1) / 10 * 100
 
     _ = logger.info(f"数据处理进度: {context.progress:.1f}%")
 
@@ -880,9 +877,8 @@ async def example_inference_function(context: ExecutionContext) -> Dict[str, Any
     _ = logger.info(f"正在使用模型 {context.model_name} 进行推理")
 
     # 模拟推理过程
-    for i in range(5)
-
-    context.progress = (i + 1) / 5 * 100
+    for i in range(5):
+ontext.progress = (i + 1) / 5 * 100
 
     _ = logger.info(f"推理进度: {context.progress:.1f}%")
 
@@ -903,9 +899,8 @@ async def example_concept_model_training_function(context: ExecutionContext) -> 
     _ = logger.info(f"正在训练概念模型: {context.model_name}")
 
     # 模拟训练过程
-    for epoch in range(context.config.epochs)
-
-    context.current_epoch = epoch + 1
+    for epoch in range(context.config.epochs):
+ontext.current_epoch = epoch + 1
     context.progress = (epoch + 1) / context.config.epochs * 100
 
     # 模拟训练指标
@@ -938,9 +933,8 @@ async def example_collaborative_training_function(context: ExecutionContext) -> 
     _ = logger.info(f"正在进行协作式训练: {context.model_name}")
 
     # 模拟训练过程
-    for epoch in range(context.config.epochs)
-
-    context.current_epoch = epoch + 1
+    for epoch in range(context.config.epochs):
+ontext.current_epoch = epoch + 1
     context.progress = (epoch + 1) / context.config.epochs * 100
 
     # 模拟训练指标
@@ -1003,8 +997,8 @@ def main() -> None:
     executor.execute_training_task(training_context, example_training_function)
     )
 
-    logger.info(f"训练结果: {'成功' if training_result.success else '失败'}")
-    if training_result.success:
+    logger.info(f"训练结果: {'成功' if training_result.success else '失败'}"):
+f training_result.success:
 
     logger.info(f"最终指标: {training_result.metrics}")
     else:
@@ -1030,8 +1024,8 @@ def main() -> None:
     executor.execute_data_processing_task(processing_context, example_data_processing_function)
     )
 
-    logger.info(f"处理结果: {'成功' if processing_result.success else '失败'}")
-    if processing_result.success:
+    logger.info(f"处理结果: {'成功' if processing_result.success else '失败'}"):
+f processing_result.success:
 
     logger.info(f"处理指标: {processing_result.metrics}")
     else:
@@ -1058,8 +1052,8 @@ def main() -> None:
     executor.execute_model_inference_task(inference_context, example_inference_function)
     )
 
-    logger.info(f"推理结果: {'成功' if inference_result.success else '失败'}")
-    if inference_result.success:
+    logger.info(f"推理结果: {'成功' if inference_result.success else '失败'}"):
+f inference_result.success:
 
     logger.info(f"推理指标: {inference_result.metrics}")
     else:
@@ -1095,8 +1089,8 @@ def main() -> None:
     executor.execute_concept_model_training_task(concept_training_context, example_concept_model_training_function)
     )
 
-    logger.info(f"概念模型训练结果: {'成功' if concept_training_result.success else '失败'}")
-    if concept_training_result.success:
+    logger.info(f"概念模型训练结果: {'成功' if concept_training_result.success else '失败'}"):
+f concept_training_result.success:
 
     logger.info(f"最终指标: {concept_training_result.metrics}")
     else:
@@ -1132,8 +1126,8 @@ def main() -> None:
     executor.execute_collaborative_training_task(collaborative_training_context, example_collaborative_training_function)
     )
 
-    logger.info(f"协作式训练结果: {'成功' if collaborative_training_result.success else '失败'}")
-    if collaborative_training_result.success:
+    logger.info(f"协作式训练结果: {'成功' if collaborative_training_result.success else '失败'}"):
+f collaborative_training_result.success:
 
     logger.info(f"最终指标: {collaborative_training_result.metrics}")
     else:

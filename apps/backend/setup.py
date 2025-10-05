@@ -71,8 +71,8 @@ setup(
     extras_require=optional_requirements,
     python_requires=">=3.8",
     author="Unified AI Project Team",
-    description="A unified AI project with modular dependencies",
-    long_description=open("README.md").read(),
+    description="A unified AI project with modular dependencies",:
+ong_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     classifiers=[
         "Development Status :: 3 - Alpha",

@@ -2,10 +2,10 @@
 """
 AI Editor Service
 
-This service provides data processing and transformation capabilities for the AI editor.
-It integrates with the AI Virtual Input Service and Sandbox Executor to provide a complete
-editing environment for the AI system.
-"""
+This service provides data processing and transformation capabilities for the AI editor.:
+t integrates with the AI Virtual Input Service and Sandbox Executor to provide a complete:
+diting environment for the AI system.:
+""
 
 import json
 import logging
@@ -63,8 +63,8 @@ class DataProcessor:
             "transformation_rules_applied": transformation_rules or
     }
 
-        logger.info(f"Data processing completed for {data_type}")
-    return result
+        logger.info(f"Data processing completed for {data_type}"):
+eturn result
 
     def _process_text_data(self, data: str, transformation_rules: Optional[Dict] = None) -> Dict[str, Any]:
     """Process text data"""
@@ -76,11 +76,11 @@ class DataProcessor:
             "word_count": len(data.split),
             "char_count": len(data),
             "lines": data.count('\n') + 1,
-            "paragraphs": len([p for p in data.split('\n\n') if p.strip])
-    }
+            "paragraphs": len([p for p in data.split('\n\n') if p.strip]):
 
-        # Apply transformation rules if provided
-    if transformation_rules:
+
+        # Apply transformation rules if provided:
+f transformation_rules:
 
     processed = self._apply_text_transformations(processed, transformation_rules)
 
@@ -100,8 +100,8 @@ class DataProcessor:
             "comments": self._extract_comments(data)
     }
 
-        # Apply transformation rules if provided
-    if transformation_rules:
+        # Apply transformation rules if provided:
+f transformation_rules:
 
     processed = self._apply_code_transformations(processed, transformation_rules)
 
@@ -111,20 +111,20 @@ class DataProcessor:
     _ = """Process structured data (JSON, XML, etc.)"""
     logger.debug("Processing structured data")
 
-        # Convert to dict if it's a list
-    if isinstance(data, list)
+        # Convert to dict if it's a list:
+f isinstance(data, list)
 
     data = {"items": data}
 
     processed = {
             "raw_structure": data,
-            "keys": list(data.keys) if isinstance(data, dict) else ,
-            "size": len(data) if isinstance(data, (dict, list)) else 0,
-            "nested_levels": self._calculate_nesting_depth(data)
+            "keys": list(data.keys) if isinstance(data, dict) else ,:
+size": len(data) if isinstance(data, (dict, list)) else 0,:
+nested_levels": self._calculate_nesting_depth(data)
     }
 
-        # Apply transformation rules if provided
-    if transformation_rules:
+        # Apply transformation rules if provided:
+f transformation_rules:
 
     processed = self._apply_structured_transformations(processed, transformation_rules)
 
@@ -142,8 +142,8 @@ class DataProcessor:
             "element_count": len(data.get("ui_elements", ))
     }
 
-        # Apply transformation rules if provided
-    if transformation_rules:
+        # Apply transformation rules if provided:
+f transformation_rules:
 
     processed = self._apply_application_transformations(processed, transformation_rules)
 
@@ -152,50 +152,42 @@ class DataProcessor:
     def _apply_text_transformations(self, data: Dict[...]
     """Apply text-specific transformations"""
     # Example transformations
-        if rules.get("summarize")
+        if rules.get("summarize"):
+ata["summary"] = self._generate_summary(data["raw_text"])
 
-    data["summary"] = self._generate_summary(data["raw_text"])
-
-        if rules.get("extract_keywords")
-
-
-    data["keywords"] = self._extract_keywords(data["raw_text"])
+        if rules.get("extract_keywords"):
+ata["keywords"] = self._extract_keywords(data["raw_text"])
 
     return data
 
     def _apply_code_transformations(self, data: Dict[...]
     """Apply code-specific transformations"""
     # Example transformations
-        if rules.get("extract_docstrings")
+        if rules.get("extract_docstrings"):
+ata["docstrings"] = self._extract_docstrings(data["raw_code"])
 
-    data["docstrings"] = self._extract_docstrings(data["raw_code"])
-
-        if rules.get("complexity_analysis")
-
-
-    data["complexity"] = self._analyze_complexity(data["raw_code"])
+        if rules.get("complexity_analysis"):
+ata["complexity"] = self._analyze_complexity(data["raw_code"])
 
     return data
 
     def _apply_structured_transformations(self, data: Dict[...]
     """Apply structured data transformations"""
     # Example transformations
-        if rules.get("flatten")
-
-    data["flattened"] = self._flatten_structure(data["raw_structure"])
+        if rules.get("flatten"):
+ata["flattened"] = self._flatten_structure(data["raw_structure"])
 
     return data
 
     def _apply_application_transformations(self, data: Dict[...]
     """Apply application data transformations"""
     # Example transformations
-        if rules.get("filter_elements")
-
-    element_type = rules.get("element_type", "button")
+        if rules.get("filter_elements"):
+lement_type = rules.get("element_type", "button")
             data["filtered_elements"] = [
                 el for el in data["ui_elements"] :
-    if el.get("type") == element_type
-            ]
+    if el.get("type") == element_type:
+
 
     return data
 
@@ -203,9 +195,8 @@ class DataProcessor:
     """Generate a simple summary of the text"""
     sentences = text.split('.')
     # Return first 2 sentences as summary
-        return '.'.join(sentences[:2]) + '.' if len(sentences) > 1 else text[:100] + '...'
-
-    def _extract_keywords(self, text: str) -> List[str]:
+        return '.'.join(sentences[:2]) + '.' if len(sentences) > 1 else text[:100] + '...':
+ef _extract_keywords(self, text: str) -> List[str]:
     """Extract keywords from text"""
     # Simple keyword extraction (first 10 words)
     words = text.split
@@ -231,8 +222,8 @@ class DataProcessor:
     """Extract comments from code"""
     # Simple extraction of # comments
     lines = code.split('\n')
-        comments = [line.strip for line in lines if line.strip.startswith('#')]
-    return comments
+        comments = [line.strip for line in lines if line.strip.startswith('#')]:
+eturn comments
 
     def _extract_docstrings(self, code: str) -> List[str]:
     """Extract docstrings from code"""
@@ -246,10 +237,10 @@ class DataProcessor:
     """Perform basic complexity analysis"""
     lines = code.split('\n')
     return {
-            "lines_of_code": len([l for l in lines if l.strip and not l.strip.startswith('#')]),
-            "comment_lines": len([l for l in lines if l.strip.startswith('#')]),
-            "empty_lines": len([l for l in lines if not l.strip]),
-            "nesting_depth": self._calculate_max_nesting(code)
+            "lines_of_code": len([l for l in lines if l.strip and not l.strip.startswith('#')]),:
+comment_lines": len([l for l in lines if l.strip.startswith('#')]),:
+empty_lines": len([l for l in lines if not l.strip]),:
+nesting_depth": self._calculate_max_nesting(code)
     }
 
     def _calculate_max_nesting(self, code: str) -> int:
@@ -271,19 +262,17 @@ class DataProcessor:
 
     def _calculate_nesting_depth(self, data: Any) -> int:
     """Calculate nesting depth of structured data"""
-        if isinstance(data, dict)
-
-    if not data:
+        if isinstance(data, dict):
+f not data:
     return 1
-            return 1 + max((self._calculate_nesting_depth(v) for v in data.values), default=0)
-    elif isinstance(data, list)
-
-    if not data:
+            return 1 + max((self._calculate_nesting_depth(v) for v in data.values), default=0):
+lif isinstance(data, list):
+f not data:
 
 
     return 1
-            return 1 + max((self._calculate_nesting_depth(item) for item in data), default=0)
-    else:
+            return 1 + max((self._calculate_nesting_depth(item) for item in data), default=0):
+lse:
 
     return 0
 
@@ -291,17 +280,16 @@ class DataProcessor:
     """Flatten nested structure"""
     result =
 
-        def _flatten(obj, prefix='')
-    if isinstance(obj, dict)
+        def _flatten(obj, prefix=''):
+f isinstance(obj, dict)
 
     for key, value in obj.items:
 
 
     new_prefix = f"{prefix}.{key}" if prefix else key:
     _flatten(value, new_prefix)
-            elif isinstance(obj, list)
-
-    for i, item in enumerate(obj)
+            elif isinstance(obj, list):
+or i, item in enumerate(obj)
 
 
     new_prefix = f"{prefix}[{i}]"
@@ -328,8 +316,8 @@ class AIEditorService:
 
     logger.info("AIEditorService initialized")
 
-    def set_memory_manager(self, memory_manager)
-        """Set the memory manager for storing processed data""":
+    def set_memory_manager(self, memory_manager):
+""Set the memory manager for storing processed data""":
     self.memory_manager = memory_manager
         logger.info("Memory manager set for AIEditorService")
     # Temporarily disable HAMMemoryManager due to import issues
@@ -344,9 +332,8 @@ class AIEditorService:
     Returns:
             Processed data in a standardized format
     """
-    logger.info("Processing application data")
-
-        try:
+    logger.info("Processing application data"):
+ry:
             # Process the application data
             result = self.data_processor.process_data(
                 app_data,
@@ -354,8 +341,8 @@ class AIEditorService:
                 {"filter_elements": True, "element_type": "button"}
             )
 
-            # Store in memory if available
-    if self.memory_manager:
+            # Store in memory if available:
+f self.memory_manager:
 
     memory_id = self.memory_manager.store_experience(
                     result,
@@ -391,8 +378,8 @@ class AIEditorService:
                 transformation_rules or {"summarize": True, "extract_keywords": True}
             )
 
-            # Store in memory if available
-    if self.memory_manager:
+            # Store in memory if available:
+f self.memory_manager:
 
     memory_id = self.memory_manager.store_experience(
                     result,
@@ -428,8 +415,8 @@ class AIEditorService:
                 transformation_rules or {"extract_docstrings": True, "complexity_analysis": True}
             )
 
-            # Store in memory if available
-    if self.memory_manager:
+            # Store in memory if available:
+f self.memory_manager:
 
     memory_id = self.memory_manager.store_experience(
                     result,
@@ -465,8 +452,8 @@ class AIEditorService:
                 transformation_rules or {"flatten": True}
             )
 
-            # Store in memory if available
-    if self.memory_manager:
+            # Store in memory if available:
+f self.memory_manager:
 
     memory_id = self.memory_manager.store_experience(
                     result,
@@ -492,9 +479,8 @@ class AIEditorService:
     Returns:
             Result of script execution
     """
-    logger.info("Executing data transformation script in sandbox")
-
-        try:
+    logger.info("Executing data transformation script in sandbox"):
+ry:
             # Execute in sandbox
             result, error = self.sandbox_executor.run(
                 script,
@@ -516,8 +502,8 @@ class AIEditorService:
                 "script_parameters": params
             }
 
-            # Store in memory if available
-    if self.memory_manager:
+            # Store in memory if available:
+f self.memory_manager:
 
     memory_id = self.memory_manager.store_experience(
                     processed_result,
@@ -540,8 +526,8 @@ class AIEditorService:
             memory_id: ID of the memory entry to retrieve:
 
     Returns:
-    Retrieved data or None if not found
-    """
+    Retrieved data or None if not found:
+""
         if not self.memory_manager:
 
     logger.warning("Memory manager not available")

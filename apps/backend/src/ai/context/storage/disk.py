@@ -9,8 +9,8 @@ from .base import Storage, Context, ContextType
 
 logger: Any = logging.getLogger(__name__)
 
-class DiskStorage(Storage)
-    """磁盘存储实现"""
+class DiskStorage(Storage):
+""磁盘存储实现"""
 
     def __init__(self, storage_dir: str = "./context_storage") -> None:
     self.storage_dir = storage_dir
@@ -75,10 +75,8 @@ class DiskStorage(Storage)
 
             file_path = self._get_context_file_path(context_id)
 
-            if not os.path.exists(file_path)
-
-
-    logger.debug(f"Context {context_id} not found in disk storage")
+            if not os.path.exists(file_path):
+ogger.debug(f"Context {context_id} not found in disk storage")
                 return None
 
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -98,16 +96,14 @@ class DiskStorage(Storage)
 
             file_path = self._get_context_file_path(context_id)
 
-            if os.path.exists(file_path)
-
-
-    os.remove(file_path)
+            if os.path.exists(file_path):
+s.remove(file_path)
                 logger.debug(f"Context {context_id} deleted from disk storage")
                 return True
             else:
 
-                logger.debug(f"Context {context_id} not found in disk storage for deletion")
-    return False
+                logger.debug(f"Context {context_id} not found in disk storage for deletion"):
+eturn False
         except Exception as e:
 
             logger.error(f"Failed to delete context {context_id} from disk storage: {e}")
@@ -119,14 +115,9 @@ class DiskStorage(Storage)
 
             context_ids =
 
-            for filename in os.listdir(self.storage_dir)
-
-
-    if filename.endswith(".json")
-
-
-
-    context_id = filename[:-5]  # 移除.json后缀
+            for filename in os.listdir(self.storage_dir):
+f filename.endswith(".json"):
+ontext_id = filename[:-5]  # 移除.json后缀
 
                     # 如果指定了上下文类型，需要加载上下文来检查类型
                     if context_type is not None:
@@ -158,8 +149,8 @@ class DiskStorage(Storage)
                 return self.save_context(context)
             else:
 
-                logger.debug(f"Context {context_id} not found in disk storage for metadata update")
-    return False
+                logger.debug(f"Context {context_id} not found in disk storage for metadata update"):
+eturn False
         except Exception as e:
 
             logger.error(f"Failed to update context {context_id} metadata in disk storage: {e}")
@@ -172,14 +163,9 @@ class DiskStorage(Storage)
             total_size = 0
             file_count = 0
 
-            for filename in os.listdir(self.storage_dir)
-
-
-    if filename.endswith(".json")
-
-
-
-    file_path = os.path.join(self.storage_dir, filename)
+            for filename in os.listdir(self.storage_dir):
+f filename.endswith(".json"):
+ile_path = os.path.join(self.storage_dir, filename)
                     total_size += os.path.getsize(file_path)
                     file_count += 1
 

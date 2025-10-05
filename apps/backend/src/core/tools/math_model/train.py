@@ -34,24 +34,24 @@ CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT, "data", "models", "arithmetic_ch
 
 # Training Hyperparameters
 BATCH_SIZE = 64
-EPOCHS = 50 # Increased epochs, with early stopping
-LATENT_DIM = 256
+EPOCHS = 50 # Increased epochs, with early stopping:
+ATENT_DIM = 256
 EMBEDDING_DIM = 128
 VALIDATION_SPLIT = 0.2
 
-def load_dataset(file_path)
-    """Loads dataset from a JSON file."""
+def load_dataset(file_path):
+""Loads dataset from a JSON file."""
     try:
 
     with open(file_path, 'r', encoding='utf-8') as f:
     dataset = json.load(f)
-    # Ensure dataset is a list of dicts with "problem" and "answer" keys
-    if not isinstance(dataset, list) or not all(isinstance(item, dict) and "problem" in item and "answer" in item for item in dataset):
+    # Ensure dataset is a list of dicts with "problem" and "answer" keys:
+f not isinstance(dataset, list) or not all(isinstance(item, dict) and "problem" in item and "answer" in item for item in dataset):
 
     raise ValueError("Dataset format is incorrect. Expected a list of {'problem': str, 'answer': str} dicts.")
         problems = [{'problem': item['problem']} for item in dataset]:
-    answers = [{'answer': item['answer']} for item in dataset] # Ensure 'answer' key matches expected structure
-    return problems, answers
+    answers = [{'answer': item['answer']} for item in dataset] # Ensure 'answer' key matches expected structure:
+eturn problems, answers
     except FileNotFoundError:
 
     print(f"Error: Dataset file not found at {file_path}")
@@ -84,8 +84,8 @@ def main -> None:
     char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length = \
     get_char_token_maps(problems, answers)
 
-    # Save character maps for inference later
-    char_map_data = {
+    # Save character maps for inference later:
+har_map_data = {
     'char_to_token': char_to_token,
     'token_to_char': token_to_char,
     'n_token': n_token,
@@ -99,9 +99,9 @@ def main -> None:
     print(f"Max problem length: {max_encoder_seq_length}")
     print(f"Max answer length: {max_decoder_seq_length}")
 
-    # 3. Prepare data for the model
-    print("Preparing data for the model...")
-    encoder_input_data, decoder_input_data, decoder_target_data = \
+    # 3. Prepare data for the model:
+rint("Preparing data for the model..."):
+ncoder_input_data, decoder_input_data, decoder_target_data = \
     prepare_data(problems, answers, char_to_token, max_encoder_seq_length, max_decoder_seq_length, n_token)
 
     print(f"Encoder input data shape: {encoder_input_data.shape}")
@@ -122,8 +122,8 @@ def main -> None:
     math_model.build_model
 
     # Compile the model
-    # Using RMSprop as it's often good for RNNs, can also try Adam
-    math_model.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+    # Using RMSprop as it's often good for RNNs, can also try Adam:
+ath_model.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
     print("Model compiled.")
 
     # 5. Train the model
@@ -160,8 +160,8 @@ def main -> None:
     # print("Training loss plot saved to training_loss_plot.png")
 
 if __name__ == '__main__':
-    # Ensure data exists, if not, guide user to generate it.
-    if not tf.io.gfile.exists(DATASET_PATH)
+    # Ensure data exists, if not, guide user to generate it.:
+f not tf.io.gfile.exists(DATASET_PATH)
 
     print(f"Dataset not found at {DATASET_PATH}.")
     print("Please run `python src/tools/math_model/data_generator.py` to generate the dataset first.")

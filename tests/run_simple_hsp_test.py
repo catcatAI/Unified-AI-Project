@@ -21,5 +21,5 @@ if __name__ == "__main__":
         'apps/backend/tests/hsp/test_hsp_connector.py::test_hsp_connector_init'
     ])
     
-    print(f"\nTest result for test_hsp_connector_init: {result}")
-    _ = sys.exit(result)
+    print(f"\nTest result for test_hsp_connector_init: {result}"):
+ = sys.exit(result)

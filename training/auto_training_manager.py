@@ -64,8 +64,8 @@ class TrainingMonitor:
     self.lock = threading.Lock()
     self.error_handler = global_error_handler  # 错误处理器
 
-    def update_progress(self, scenario_name: str, epoch: int, progress: float, metrics: Dict[str, Any])
-    """更新训练进度"""
+    def update_progress(self, scenario_name: str, epoch: int, progress: float, metrics: Dict[str, Any]):
+""更新训练进度"""
     context = ErrorContext("TrainingMonitor", "update_progress", {"scenario_name": scenario_name})
         try:
 
@@ -87,8 +87,8 @@ class TrainingMonitor:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"❌ 更新训练进度失败: {scenario_name} - {e}")
 
-    def log_event(self, scenario_name: str, event_type: str, message: str, details: Dict[str, Any] = None)
-    """记录训练事件"""
+    def log_event(self, scenario_name: str, event_type: str, message: str, details: Dict[str, Any] = None):
+""记录训练事件"""
     context = ErrorContext("TrainingMonitor", "log_event", {"scenario_name": scenario_name, "event_type": event_type})
         try:
 
@@ -149,8 +149,8 @@ class TrainingMonitor:
             _ = logger.error(f"❌ 获取训练日志失败: {e}")
             return {}
 
-    def reset(self)
-    """重置监控器"""
+    def reset(self):
+""重置监控器"""
     context = ErrorContext("TrainingMonitor", "reset")
         try:
 
@@ -188,8 +188,8 @@ class AutoTrainingManager:
 
     _ = logger.info("🔄 自动训练管理器初始化完成")
 
-    def _ensure_directories(self)
-    """确保必要的目录存在"""
+    def _ensure_directories(self):
+""确保必要的目录存在"""
     context = ErrorContext("AutoTrainingManager", "_ensure_directories")
         try:
 
@@ -224,9 +224,8 @@ class AutoTrainingManager:
 
             # 分析数据类型分布
             data_stats = {}
-            for file_info in data_catalog.values()
-
-    data_type = file_info['type']
+            for file_info in data_catalog.values():
+ata_type = file_info['type']
                 if data_type not in data_stats:
 
     data_stats[data_type] = {
@@ -240,9 +239,8 @@ class AutoTrainingManager:
 
             # 评估数据质量
             _ = logger.info("📊 评估数据质量...")
-            for file_path in data_catalog.keys()
-
-    _ = self.data_manager.assess_data_quality(file_path)
+            for file_path in data_catalog.keys():
+ = self.data_manager.assess_data_quality(file_path)
 
             # 获取高质量数据
             high_quality_data = self.data_manager.get_high_quality_data()
@@ -267,8 +265,8 @@ class AutoTrainingManager:
     """
     根据识别的数据自动创建训练配置
     """
-    context = ErrorContext("AutoTrainingManager", "auto_create_training_config")
-    _ = logger.info("⚙️  开始自动创建训练配置...")
+    context = ErrorContext("AutoTrainingManager", "auto_create_training_config"):
+ = logger.info("⚙️  开始自动创建训练配置...")
 
         try:
             # 分析可用的数据类型和质量
@@ -444,8 +442,8 @@ class AutoTrainingManager:
                 'data_quality_info': {
                     'total_files': total_files,
                     'high_quality_files': high_quality_file_count,
-                    'quality_ratio': high_quality_file_count / total_files if total_files > 0 else 0
-                },
+                    'quality_ratio': high_quality_file_count / total_files if total_files > 0 else 0:
+,
                 _ = 'created_at': datetime.now().isoformat()
             }
 
@@ -459,8 +457,8 @@ class AutoTrainingManager:
 
     def _map_data_to_models(self, data_types: List[...]
     """将数据类型映射到模型"""
-    context = ErrorContext("AutoTrainingManager", "_map_data_to_models")
-        try:
+    context = ErrorContext("AutoTrainingManager", "_map_data_to_models"):
+ry:
 
             model_mapping = {}
 
@@ -513,8 +511,8 @@ class AutoTrainingManager:
 
     def _estimate_resource_requirements(self, data_analysis: Dict[...]
     """估算资源需求"""
-    context = ErrorContext("AutoTrainingManager", "_estimate_resource_requirements")
-        try:
+    context = ErrorContext("AutoTrainingManager", "_estimate_resource_requirements"):
+ry:
 
             total_files = data_analysis['total_files']
             total_size = sum(stat['total_size'] for stat in data_analysis['data_stats'].values())
@@ -522,24 +520,24 @@ class AutoTrainingManager:
             # 获取高质量数据信息
             high_quality_data = data_analysis.get('high_quality_data', {})
             high_quality_size = sum(
-                sum(file_info['size'] for file_info in files)
-    for files in high_quality_data.values()
+                sum(file_info['size'] for file_info in files):
+or files in high_quality_data.values()
             )
 
             # 基于数据量和质量估算资源需求
             effective_files = len([file for files in high_quality_data.values() for file in files]):
     effective_size = high_quality_size if high_quality_size > 0 else total_size:
 
-    if effective_files > 5000 or effective_size > 5 * 1024 * 1024 * 1024:  # 5GB高质量数据
-                cpu_cores = 8
+    if effective_files > 5000 or effective_size > 5 * 1024 * 1024 * 1024:  # 5GB高质量数据:
+pu_cores = 8
                 memory_gb = 16
                 gpu_memory_gb = 8
-            elif effective_files > 1000 or effective_size > 1 * 1024 * 1024 * 1024:  # 1GB高质量数据
-                cpu_cores = 4
+            elif effective_files > 1000 or effective_size > 1 * 1024 * 1024 * 1024:  # 1GB高质量数据:
+pu_cores = 4
                 memory_gb = 8
                 gpu_memory_gb = 4
-            elif effective_files > 100 or effective_size > 100 * 1024 * 1024:  # 100MB高质量数据
-                cpu_cores = 2
+            elif effective_files > 100 or effective_size > 100 * 1024 * 1024:  # 100MB高质量数据:
+pu_cores = 2
                 memory_gb = 4
                 gpu_memory_gb = 2
             else:
@@ -568,8 +566,8 @@ class AutoTrainingManager:
 
     def _estimate_training_time(self, data_analysis: Dict[...]
     """估算训练时间"""
-    context = ErrorContext("AutoTrainingManager", "_estimate_training_time")
-        try:
+    context = ErrorContext("AutoTrainingManager", "_estimate_training_time"):
+ry:
 
             total_files = data_analysis['total_files']
 
@@ -628,8 +626,8 @@ class AutoTrainingManager:
                 'data_quality_info': {
                     'total_files': total_files,
                     'high_quality_files': high_quality_files,
-                    'quality_ratio': high_quality_files / total_files if total_files > 0 else 0
-                }
+                    'quality_ratio': high_quality_files / total_files if total_files > 0 else 0:
+
             }
         except Exception as e:
 
@@ -641,8 +639,8 @@ class AutoTrainingManager:
     """
     根据数据特征优化训练参数
     """
-    context = ErrorContext("AutoTrainingManager", "_optimize_training_parameters")
-        try:
+    context = ErrorContext("AutoTrainingManager", "_optimize_training_parameters"):
+ry:
             # 获取高质量数据信息
             high_quality_data = data_analysis.get('high_quality_data', {})
             high_quality_files = sum(len(files) for files in high_quality_data.values())
@@ -721,8 +719,8 @@ class AutoTrainingManager:
     """
     根据训练配置自动执行训练（支持优先级调度）
     """
-    context = ErrorContext("AutoTrainingManager", "auto_train")
-    _ = logger.info("🚀 开始自动训练（支持优先级调度）...")
+    context = ErrorContext("AutoTrainingManager", "auto_train"):
+ = logger.info("🚀 开始自动训练（支持优先级调度）...")
 
         try:
             # 重置训练监控器
@@ -764,8 +762,8 @@ class AutoTrainingManager:
                     if scenario_name in ['code_model_training', 'data_analysis_model_training']:
                         # 对于代码模型和数据分析模型，使用真实训练
                         success = self._train_real_model(scenario_name, data_mapping)
-                    elif scenario_name in ['environment_simulator_training', 'causal_reasoning_training',
-                                         'adaptive_learning_training', 'alpha_deep_model_training']:
+                    elif scenario_name in ['environment_simulator_training', 'causal_reasoning_training',:
+adaptive_learning_training', 'alpha_deep_model_training']:
                         # 对于概念模型的特定训练，使用专门的训练方法
                         success = self._train_concept_model(scenario_name)
                     elif scenario_name in ['math_model_training', 'logic_model_training']:
@@ -821,8 +819,8 @@ class AutoTrainingManager:
                         # 根据模型类型和数据质量计算优先级
                         model_priority = self._calculate_model_priority(model_name, training_config)
                         task_priorities[model_name] = {
-                            'business_urgency': 8 if model_name in ['concept_models', 'causal_reasoning_engine'] else 5,
-                            'manual_urgency': 7,
+                            'business_urgency': 8 if model_name in ['concept_models', 'causal_reasoning_engine'] else 5,:
+manual_urgency': 7,
                             'performance_drop': 0.1
                         }
 
@@ -1083,8 +1081,8 @@ class AutoTrainingManager:
                 'result_analysis': result_analysis,
                 'summary': {
                     _ = 'total_scenarios': len(training_config.get('selected_scenarios', [])),
-                    'successful_scenarios': len([r for r in training_results.values() if r.get('success', False)]),
-                    'failed_scenarios': len([r for r in training_results.values() if not r.get('success', True)]),:
+                    'successful_scenarios': len([r for r in training_results.values() if r.get('success', False)]),:
+failed_scenarios': len([r for r in training_results.values() if not r.get('success', True)]),:
     _ = 'overall_success_rate': result_analysis.get('overall_success_rate', 0)
                 }
             }
@@ -1113,8 +1111,8 @@ class AutoTrainingManager:
     """
     分析训练结果
     """
-    context = ErrorContext("AutoTrainingManager", "_analyze_training_results")
-    _ = logger.info("🔍 开始分析训练结果...")
+    context = ErrorContext("AutoTrainingManager", "_analyze_training_results"):
+ = logger.info("🔍 开始分析训练结果...")
 
         try:
 
@@ -1130,12 +1128,9 @@ class AutoTrainingManager:
             }
 
             # 分析每个场景的结果
-            for scenario_name, result in training_results.items()
-
-    if result.get('success', False)
-
-
-    analysis['successful_scenarios'] += 1
+            for scenario_name, result in training_results.items():
+f result.get('success', False):
+nalysis['successful_scenarios'] += 1
                 else:
 
                     analysis['failed_scenarios'] += 1
@@ -1171,9 +1166,8 @@ class AutoTrainingManager:
     analysis['overall_success_rate'] = analysis['successful_scenarios'] / analysis['total_scenarios']
 
             # 分析性能指标（如果有的话）
-            for scenario_name, result in training_results.items()
-
-    if 'training_progress' in result:
+            for scenario_name, result in training_results.items():
+f 'training_progress' in result:
 
 
     progress = result['training_progress']
@@ -1185,9 +1179,8 @@ class AutoTrainingManager:
             # 分析最佳模型
             best_model = None
             best_accuracy = -1
-            for model_name, performance in analysis['model_performance'].items()
-
-    if performance['final_accuracy'] > best_accuracy:
+            for model_name, performance in analysis['model_performance'].items():
+f performance['final_accuracy'] > best_accuracy:
 
 
     best_accuracy = performance['final_accuracy']
@@ -1210,8 +1203,8 @@ class AutoTrainingManager:
     """
     生成详细的训练报告
     """
-    context = ErrorContext("AutoTrainingManager", "_generate_detailed_report")
-        try:
+    context = ErrorContext("AutoTrainingManager", "_generate_detailed_report"):
+ry:
             # 创建详细的Markdown报告
             detailed_report = "# Unified AI Project 自动训练详细报告\n\n"
 
@@ -1230,9 +1223,8 @@ class AutoTrainingManager:
 
             data_stats = data_analysis.get('data_stats', {})
             detailed_report += f"- 数据类型分布:\n"
-            for data_type, stats in data_stats.items()
-
-    detailed_report += f"  - {data_type}: {stats.get('count', 0)} 个文件\n"
+            for data_type, stats in data_stats.items():
+etailed_report += f"  - {data_type}: {stats.get('count', 0)} 个文件\n"
 
             # 训练配置
             training_config = report.get('training_config', {})
@@ -1255,27 +1247,24 @@ class AutoTrainingManager:
             if model_performance:
 
     detailed_report += f"\n## 模型性能分析\n"
-                for model_name, performance in model_performance.items()
-
-    detailed_report += f"- {model_name}:\n"
+                for model_name, performance in model_performance.items():
+etailed_report += f"- {model_name}:\n"
                     detailed_report += f"  - 最终损失: {performance.get('final_loss', 'N/A').4f}\n"
                     detailed_report += f"  - 最终准确率: {performance.get('final_accuracy', 0).2%}\n"
                     detailed_report += f"  - 训练完成: {'是' if performance.get('training_completed', False) else '否'}\n"
 
             # 最佳模型
             best_model = result_analysis.get('best_model', {})
-            if best_model.get('model_name')
-
-    detailed_report += f"\n## 最佳模型\n"
+            if best_model.get('model_name'):
+etailed_report += f"\n## 最佳模型\n"
                 detailed_report += f"- 模型名称: {best_model.get('model_name', 'N/A')}\n"
                 detailed_report += f"- 准确率: {best_model.get('accuracy', 0).2%}\n"
 
             # 训练结果
             training_results = report.get('training_results', {})
             detailed_report += f"\n## 训练结果\n"
-            for scenario_name, result in training_results.items()
-
-    success = result.get('success', False)
+            for scenario_name, result in training_results.items():
+uccess = result.get('success', False)
                 status = "✅ 成功" if success else "❌ 失败":
     detailed_report += f"- {scenario_name}: {status}\n"
                 if 'error' in result:
@@ -1287,9 +1276,8 @@ class AutoTrainingManager:
             if error_analysis:
 
     detailed_report += f"\n## 错误分析\n"
-                for error_type, errors in error_analysis.items()
-
-    detailed_report += f"- {error_type}:\n"
+                for error_type, errors in error_analysis.items():
+etailed_report += f"- {error_type}:\n"
                     for error in errors:
 
     detailed_report += f"  - 场景: {error['scenario']}, 错误: {error['error']}\n"

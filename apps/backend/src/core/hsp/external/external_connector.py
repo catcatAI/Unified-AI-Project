@@ -13,7 +13,7 @@ class ExternalConnector:
         self.broker_port = broker_port
         self.mqtt_client_id = f"{self.ai_id}-{client_id_suffix}"
         self.is_connected = False
-        self.subscribed_topics = set
+        self.subscribed_topics = set()
         self.on_message_callback: Optional[Callable[[str, str], Awaitable[None]]] = None
 
         self.mqtt_client = gmqtt.Client(self.mqtt_client_id)
@@ -44,8 +44,8 @@ class ExternalConnector:
             return
             
         try:
-            # Check if the mqtt_client and its transport are still valid
-            if (hasattr(self.mqtt_client, '_transport') and 
+            # Check if the mqtt_client and its transport are still valid:
+f (hasattr(self.mqtt_client, '_transport') and 
                 self.mqtt_client._transport is not None):
                 await self.mqtt_client.disconnect
             else:
@@ -82,4 +82,4 @@ class ExternalConnector:
 
     async def on_message(self, client, topic, payload, qos, properties):
         if self.on_message_callback:
-            await self.on_message_callback(topic.decode, payload.decode)
+            await self.on_message_callback(topic.decode(), payload.decode())

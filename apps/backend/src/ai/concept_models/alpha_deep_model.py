@@ -29,8 +29,8 @@ import torch.optim as optim
 
 logger: Any = logging.getLogger(__name__)
 
-class CompressionAlgorithm(Enum)
-    """支持的壓縮算法"""
+class CompressionAlgorithm(Enum):
+""支持的壓縮算法"""
     ZLIB = "zlib"
     BZ2 = "bz2"
     LZMA = "lzma"
@@ -80,8 +80,8 @@ class DNADataChain:
     self.branches: Dict[str, 'DNADataChain'] = {}  # 分支
     self.metadata: Dict[str, Any] = {}
 
-    def add_node(self, memory_id: str)
-    """添加內存節點到鏈中"""
+    def add_node(self, memory_id: str):
+""添加內存節點到鏈中"""
         if memory_id not in self.nodes:
 
     self.nodes.append(memory_id)
@@ -136,8 +136,8 @@ class AlphaDeepModel:
     self.optimizer = optim.Adam(self.deep_model.parameters(), lr=0.001)
     self.criterion = nn.MSELoss()
 
-    def _build_deep_model(self)
-    """構建深度學習模型"""
+    def _build_deep_model(self):
+""構建深度學習模型"""
     # 簡單的深度網絡用於處理符號空間數據
     model = nn.Sequential(
             nn.Linear(128, 256),  # 假設有128維輸入
@@ -282,12 +282,12 @@ class AlphaDeepModel:
             feedback_symbol_name = f"feedback_{deep_parameter.source_memory_id}"
             return await self.symbolic_space.get_symbol_by_name(feedback_symbol_name)
 
-        self.logger.info(f"Symbolic space updated for {deep_parameter.source_memory_id}")
-    return None
+        self.logger.info(f"Symbolic space updated for {deep_parameter.source_memory_id}"):
+eturn None
 
     def _adjust_model_parameters(self, deep_parameter: DeepParameter,
-                                feedback: Dict[str, Any])
-    """根據反饋調整模型參數"""
+                                feedback: Dict[str, Any]):
+""根據反饋調整模型參數"""
     # 這是一個占位符，用於更複雜的參數調整邏輯
     # 在實際實現中，這將調整壓縮或學習策略
 
@@ -330,8 +330,8 @@ class AlphaDeepModel:
     modality_features = [
             deep_parameter.modalities.text_confidence,
             deep_parameter.modalities.audio_features['pitch'] if deep_parameter.modalities.audio_features else 0.0,:
-    deep_parameter.modalities.audio_features['volume'] if deep_parameter.modalities.audio_features else 0.0
-    ]
+    deep_parameter.modalities.audio_features['volume'] if deep_parameter.modalities.audio_features else 0.0:
+
     features.extend(modality_features)
 
     # 填充到固定長度（128個特徵）
@@ -359,12 +359,10 @@ class AlphaDeepModel:
     def compress(self, deep_parameter: Any,
                  algorithm: CompressionAlgorithm = CompressionAlgorithm.ZLIB) -> bytes:
     """將深度參數對象壓縮為高度壓縮的二進制格式"""
-        if hasattr(deep_parameter, 'to_dict')
-
-    param_dict = deep_parameter.to_dict()
-        elif isinstance(deep_parameter, dict)
-
-    param_dict = deep_parameter
+        if hasattr(deep_parameter, 'to_dict'):
+aram_dict = deep_parameter.to_dict()
+        elif isinstance(deep_parameter, dict):
+aram_dict = deep_parameter
         else:
             # 使用msgpack作為備用序列化方法
             try:
@@ -466,8 +464,8 @@ class AlphaDeepModel:
     """獲取壓縮統計信息"""
     return self.compression_stats
 
-    def get_symbolic_space(self)
-    """獲取符號空間"""
+    def get_symbolic_space(self):
+""獲取符號空間"""
     return self.symbolic_space
 
 # 測試代碼
@@ -530,8 +528,8 @@ if __name__ == "__main__":
                 # 驗證數據完整性
                 original_dict = deep_param.to_dict()
                 assert original_dict == decompressed, f"Data mismatch for {algorithm.value}":
-    print(f"Compression/decompression with {algorithm.value} successful!")
-    except Exception as e:
+    print(f"Compression/decompression with {algorithm.value} successful!"):
+xcept Exception as e:
 
     print(f"Error with {algorithm.value}: {e}")
 
@@ -552,9 +550,8 @@ if __name__ == "__main__":
     # 顯示壓縮統計
     print("\nCompression stats:")
     stats = model.get_compression_stats()
-        for algo, stat in stats.items()
-
-    avg_ratio = stat['total_original_size'] / stat['total_compressed_size'] if stat['total_compressed_size'] > 0 else 0:
+        for algo, stat in stats.items():
+vg_ratio = stat['total_original_size'] / stat['total_compressed_size'] if stat['total_compressed_size'] > 0 else 0:
     print(f"  {algo}: {stat['total_compressions']} compressions, avg ratio={avg_ratio:.2f}")
 
     # 測試符號空間（僅在符號空間可用時）

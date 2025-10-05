@@ -35,8 +35,8 @@ class MockDistributedOptimizer:
     def __init__(self) -> None:
     self.nodes = {}
 
-    async def register_node(self, node_id, node_info)
-    self.nodes[node_id] = {
+    async def register_node(self, node_id, node_info):
+elf.nodes[node_id] = {
             _ = 'assigned_tasks': node_info.get('assigned_tasks', []),
             'performance_metrics': {}
     }

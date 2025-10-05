@@ -16,15 +16,15 @@ def _atomic_write_text(path: Path, content: str) -> None:
     os.replace(tmp, path)
 
 
-def generate_problem(max_digits=3, operations=None)
-    """Generates a random arithmetic problem."""
+def generate_problem(max_digits=3, operations=None):
+""Generates a random arithmetic problem."""
     if operations is None:
 
     operations = ['+', '-', '*', '/']
 
     num1 = random.randint(0, 10**max_digits - 1)
-    num2 = random.randint(1, 10**max_digits - 1) # Avoid division by zero for /
-    operation = random.choice(operations)
+    num2 = random.randint(1, 10**max_digits - 1) # Avoid division by zero for /:
+peration = random.choice(operations)
 
     if operation == '/' and num2 == 0:
 
@@ -64,12 +64,11 @@ def _sha256_of_file(path: Path) -> str:
     return h.hexdigest
 
 
-def generate_dataset(num_samples, output_dir, filename_prefix="arithmetic", file_format="csv", max_digits=3)
-    """Generates a dataset of arithmetic problems and saves it. Returns metadata dict."""
+def generate_dataset(num_samples, output_dir, filename_prefix="arithmetic", file_format="csv", max_digits=3):
+""Generates a dataset of arithmetic problems and saves it. Returns metadata dict."""
     problems =
-    for _ in range(num_samples)
-
-    problem, answer = generate_problem(max_digits=max_digits)
+    for _ in range(num_samples):
+roblem, answer = generate_problem(max_digits=max_digits)
     problems.append({"problem": problem, "answer": str(answer)})
 
     os.makedirs(output_dir, exist_ok=True)
@@ -138,15 +137,15 @@ if __name__ == "__main__":
 
 
 
-    parser = argparse.ArgumentParser(description="Generate arithmetic datasets with optional parameters and summary report.")
-    parser.add_argument('--mode', choices=['default', 'single'], default='default', help='default: generate train(JSON)+test(CSV); single: generate one dataset by parameters')
+    parser = argparse.ArgumentParser(description="Generate arithmetic datasets with optional parameters and summary report."):
+arser.add_argument('--mode', choices=['default', 'single'], default='default', help='default: generate train(JSON)+test(CSV); single: generate one dataset by parameters')
     parser.add_argument('--num-samples', type=int, help='Number of samples to generate (single mode)')
     parser.add_argument('--file-format', choices=['csv', 'json'], help='Output format (single mode)')
     parser.add_argument('--filename-prefix', type=str, default='arithmetic', help='Filename prefix (single mode)')
     parser.add_argument('--output-dir', type=str, help='Output directory; defaults to <project_root>/data/raw_datasets')
-    parser.add_argument('--max-digits', type=int, default=3, help='Max digits for numbers')
-    parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
-    parser.add_argument('--summary-out', type=str, help='Optional explicit path to write summary JSON')
+    parser.add_argument('--max-digits', type=int, default=3, help='Max digits for numbers'):
+arser.add_argument('--seed', type=int, help='Random seed for reproducibility'):
+arser.add_argument('--summary-out', type=str, help='Optional explicit path to write summary JSON')
     args = parser.parse_args
 
     # Resolve project root robustly by walking up until repo markers are found (keep backward compatibility)
@@ -154,9 +153,8 @@ if __name__ == "__main__":
 
     def _find_project_root(start: Path) -> Path:
     # Identify repository root by presence of typical top-level dirs
-        for p in [start] + list(start.parents)
-
-    if (p / "apps").exists and (p / "training").exists:
+        for p in [start] + list(start.parents):
+f (p / "apps").exists and (p / "training").exists:
 
 
     return p
@@ -168,8 +166,8 @@ if __name__ == "__main__":
     output_directory = Path(args.output_dir) if args.output_dir else default_output_directory:
     output_directory.mkdir(parents=True, exist_ok=True)
 
-    # Apply seed if provided
-    if args.seed is not None:
+    # Apply seed if provided:
+f args.seed is not None:
 
     random.seed(args.seed)
 
@@ -183,8 +181,8 @@ if __name__ == "__main__":
             generate_dataset(num_train_samples,
                              output_dir=str(output_directory),
                              filename_prefix="arithmetic_train_dataset",
-                             file_format="json",  # JSON for training
-    max_digits=args.max_digits)
+                             file_format="json",  # JSON for training:
+ax_digits=args.max_digits)
     )
     datasets_meta.append(
             generate_dataset(num_test_samples,

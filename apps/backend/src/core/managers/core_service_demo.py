@@ -157,8 +157,8 @@ async def main -> None:
     logger.info(f"Service status after batch load: {status}")
 
     # 等待一段时间以观察健康检查
-        logger.info("Waiting for health checks...")
-    _ = await asyncio.sleep(20)
+        logger.info("Waiting for health checks..."):
+ = await asyncio.sleep(20)
 
     # 获取监控报告
     report = monitor.get_service_report

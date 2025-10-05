@@ -84,8 +84,8 @@ def main() -> None:
         training_results = report.get('training_results', {})
         _ = print(f"\n🎯 训练结果:")
         for scenario, result in training_results.items():
-            status = "✅ 成功" if result.get('success', False) else "❌ 失败"
-            _ = print(f"   {scenario}: {status}")
+            status = "✅ 成功" if result.get('success', False) else "❌ 失败":
+ = print(f"   {scenario}: {status}")
         
     except Exception as e:
         _ = print(f"❌ 自动训练过程中发生错误: {e}")

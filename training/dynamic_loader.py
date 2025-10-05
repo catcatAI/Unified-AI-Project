@@ -63,9 +63,8 @@ class FileChunker:
             num_chunks = (file_size + self.chunk_size - 1) // self.chunk_size
 
             # 创建块信息
-            for i in range(num_chunks)
-
-    start = i * self.chunk_size
+            for i in range(num_chunks):
+tart = i * self.chunk_size
                 end = min((i + 1) * self.chunk_size, file_size)
                 chunk_info = {
                     'file_path': file_path,
@@ -105,17 +104,17 @@ class MemoryMappedFile:
     self.mmap_obj = None
     _ = logger.debug(f"内存映射文件管理器初始化: {file_path}")
 
-    def __enter__(self)
-    """上下文管理器入口"""
+    def __enter__(self):
+""上下文管理器入口"""
     _ = self.open()
     return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb)
-    """上下文管理器出口"""
+    def __exit__(self, exc_type, exc_val, exc_tb):
+""上下文管理器出口"""
     _ = self.close()
 
-    def open(self)
-    """打开并映射文件"""
+    def open(self):
+""打开并映射文件"""
         try:
             # 打开文件
             self.file_handle = open(self.file_path, 'rb')
@@ -143,8 +142,8 @@ class MemoryMappedFile:
             _ = logger.error(f"文件映射失败: {e}")
             raise
 
-    def close(self)
-    """关闭映射和文件"""
+    def close(self):
+""关闭映射和文件"""
         try:
 
             if self.mmap_obj:
@@ -176,8 +175,8 @@ class MemoryMappedFile:
     return self.mmap_obj.read(size)
     return b''
 
-    def seek(self, pos: int)
-    """
+    def seek(self, pos: int):
+""
     定位到指定位置
 
     Args:
@@ -237,8 +236,8 @@ class LRUCache:
     _ = logger.debug(f"缓存未命中: {key}")
     return None
 
-    def put(self, key: str, value: Any)
-    """
+    def put(self, key: str, value: Any):
+""
     添加缓存项
 
     Args:
@@ -269,8 +268,8 @@ class LRUCache:
     # 更新访问时间
     self.access_times[key] = time.time()
 
-    def remove(self, key: str)
-    """
+    def remove(self, key: str):
+""
     删除缓存项
 
     Args:
@@ -284,8 +283,8 @@ class LRUCache:
 
     del self.access_times[key]
 
-    def clear(self)
-    """清空缓存"""
+    def clear(self):
+""清空缓存"""
     _ = self.cache.clear()
     _ = self.access_times.clear()
     _ = logger.info("缓存已清空")
@@ -349,9 +348,8 @@ class DynamicLoader:
             chunks = self.chunker.chunk_file(file_path)
 
             # 检查块索引是否有效
-            if chunk_index >= len(chunks)
-
-    _ = raise IndexError(f"块索引 {chunk_index} 超出范围，文件共有 {len(chunks)} 个块")
+            if chunk_index >= len(chunks):
+ = raise IndexError(f"块索引 {chunk_index} 超出范围，文件共有 {len(chunks)} 个块")
 
             # 获取块信息
             chunk_info = chunks[chunk_index]
@@ -402,8 +400,8 @@ class DynamicLoader:
     """
     return self.chunker.chunk_file(file_path)
 
-    def clear_cache(self)
-    """清空缓存"""
+    def clear_cache(self):
+""清空缓存"""
     _ = self.cache.clear()
 
     def get_cache_stats(self) -> Dict[str, Any]:

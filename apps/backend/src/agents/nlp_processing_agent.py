@@ -10,8 +10,8 @@ from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResult
 
 class NLPProcessingAgent(BaseAgent):
     """
-    A specialized agent for natural language processing tasks like text summarization,
-    sentiment analysis, entity extraction, and language translation.
+    A specialized agent for natural language processing tasks like text summarization,:
+entiment analysis, entity extraction, and language translation.
     """
     def __init__(self, agent_id: str) -> None:
         capabilities = [
@@ -32,8 +32,8 @@ class NLPProcessingAgent(BaseAgent):
                 "description": "Performs sentiment analysis on text content.",
                 "version": "1.0",
                 "parameters": [
-                    {"name": "text", "type": "string", "required": True, "description": "Text content for sentiment analysis"}
-                ],
+                    {"name": "text", "type": "string", "required": True, "description": "Text content for sentiment analysis"}:
+,
                 "returns": {"type": "object", "description": "Sentiment analysis results including polarity and emotions."}
             },
             {
@@ -42,8 +42,8 @@ class NLPProcessingAgent(BaseAgent):
                 "description": "Extracts named entities (people, organizations, locations, etc.) from text.",
                 "version": "1.0",
                 "parameters": [
-                    {"name": "text", "type": "string", "required": True, "description": "Text content for entity extraction"}
-                ],
+                    {"name": "text", "type": "string", "required": True, "description": "Text content for entity extraction"}:
+,
                 "returns": {"type": "object", "description": "Extracted entities categorized by type."}
             },
             {
@@ -52,22 +52,20 @@ class NLPProcessingAgent(BaseAgent):
                 "description": "Detects the language of provided text content.",
                 "version": "1.0",
                 "parameters": [
-                    {"name": "text", "type": "string", "required": True, "description": "Text content for language detection"}
-                ],
+                    {"name": "text", "type": "string", "required": True, "description": "Text content for language detection"}:
+,
                 "returns": {"type": "object", "description": "Detected language and confidence score."}
             }
         ]
         super().__init__(agent_id=agent_id, capabilities=capabilities)
-        logging.info(f"[{self.agent_id}] NLPProcessingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
-
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope) -> None:
+        logging.info(f"[{self.agent_id}] NLPProcessingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}"):
+sync def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope) -> None:
         request_id = task_payload.get("request_id")
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", {})
 
-        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
-
-        try:
+        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'"):
+ry:
             if "text_summarization" in capability_id:
                 result = self._generate_text_summary(params)
                 result_payload = self._create_success_payload(request_id, result)
@@ -89,9 +87,8 @@ class NLPProcessingAgent(BaseAgent):
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
             await self.hsp_connector.send_task_result(result_payload, callback_topic, request_id)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
-
-    def _generate_text_summary(self, params: Dict[str, Any]) -> Dict[str, Any]:
+            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}"):
+ef _generate_text_summary(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Generates a summary of the provided text."""
         text = params.get('text', '')
         summary_length = params.get('summary_length', 'medium')
@@ -101,9 +98,8 @@ class NLPProcessingAgent(BaseAgent):
 
         # Simple extractive summarization based on sentence scoring
         sentences = re.split(r'[.!?]+', text)
-        sentences = [s.strip() for s in sentences if s.strip()]
-
-        if not sentences:
+        sentences = [s.strip() for s in sentences if s.strip()]:
+f not sentences:
             return {"summary": "", "original_length": len(text), "summary_length": 0}
 
         # Calculate word frequencies
@@ -114,14 +110,14 @@ class NLPProcessingAgent(BaseAgent):
         sentence_scores = []
         for sentence in sentences:
             sentence_words = re.findall(r'\b\w+\b', sentence.lower())
-            score = sum(word_freq[word] for word in sentence_words)
-            sentence_scores.append((sentence, score))
+            score = sum(word_freq[word] for word in sentence_words):
+entence_scores.append((sentence, score))
 
         # Sort sentences by score
         sentence_scores.sort(key=lambda x: x[1], reverse=True)
 
-        # Determine number of sentences for summary
-        if summary_length == 'short':
+        # Determine number of sentences for summary:
+f summary_length == 'short':
             num_sentences = max(1, len(sentences) // 4)
         elif summary_length == 'long':
             num_sentences = max(1, len(sentences) // 2)
@@ -132,9 +128,8 @@ class NLPProcessingAgent(BaseAgent):
         top_sentences = sentence_scores[:num_sentences]
         # Sort by original order
         top_sentences.sort(key=lambda x: sentences.index(x[0]))
-        summary = '. '.join([s[0] for s in top_sentences]) + '.'
-
-        return {
+        summary = '. '.join([s[0] for s in top_sentences]) + '.':
+eturn {
             "summary": summary,
             "original_length": len(text),
             "summary_length": len(summary),
@@ -178,9 +173,9 @@ class NLPProcessingAgent(BaseAgent):
         words = re.findall(r'\b\w+\b', text.lower())
 
         # Count sentiment words
-        positive_count = sum(1 for word in words if word in positive_words)
-        negative_count = sum(1 for word in words if word in negative_words)
-        neutral_count = sum(1 for word in words if word in neutral_words)
+        positive_count = sum(1 for word in words if word in positive_words):
+egative_count = sum(1 for word in words if word in negative_words):
+eutral_count = sum(1 for word in words if word in neutral_words)
 
         # Calculate sentiment scores
         total_sentiment_words = positive_count + negative_count + neutral_count
@@ -208,8 +203,8 @@ class NLPProcessingAgent(BaseAgent):
             "negative_words_count": negative_count,
             "neutral_words_count": neutral_count,
             "total_words": len(words),
-            "sentiment_words_ratio": round(total_sentiment_words / len(words), 3) if len(words) > 0 else 0
-        }
+            "sentiment_words_ratio": round(total_sentiment_words / len(words), 3) if len(words) > 0 else 0:
+
 
     def _extract_entities(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Extracts named entities from text."""
@@ -284,22 +279,22 @@ class NLPProcessingAgent(BaseAgent):
 
         # Language detection based on character sets
         char_scores = {
-            "English": latin_chars / total_chars if latin_chars > 0 else 0,
-            "Chinese": chinese_chars / total_chars if chinese_chars > 0 else 0,
-            "Arabic": arabic_chars / total_chars if arabic_chars > 0 else 0,
-            "Russian": cyrillic_chars / total_chars if cyrillic_chars > 0 else 0
-        }
+            "English": latin_chars / total_chars if latin_chars > 0 else 0,:
+Chinese": chinese_chars / total_chars if chinese_chars > 0 else 0,:
+Arabic": arabic_chars / total_chars if arabic_chars > 0 else 0,:
+Russian": cyrillic_chars / total_chars if cyrillic_chars > 0 else 0:
 
-        # Find the language with the highest score
-        detected_language = max(char_scores, key=char_scores.get)
+
+        # Find the language with the highest score:
+etected_language = max(char_scores, key=char_scores.get)
         confidence = char_scores[detected_language]
 
-        # If confidence is low, check for common English words
-        if confidence < 0.3:
+        # If confidence is low, check for common English words:
+f confidence < 0.3:
             common_english_words = {'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at'}
             words = re.findall(r'\b\w+\b', text.lower())
-            english_word_count = sum(1 for word in words if word in common_english_words)
-            if len(words) > 0 and english_word_count / len(words) > 0.2:
+            english_word_count = sum(1 for word in words if word in common_english_words):
+f len(words) > 0 and english_word_count / len(words) > 0.2:
                 detected_language = "English"
                 confidence = english_word_count / len(words)
 

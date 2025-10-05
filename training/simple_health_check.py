@@ -11,8 +11,8 @@ from pathlib import Path
 project_root: str = Path(__file__).parent.parent
 _ = sys.path.insert(0, str(project_root))
 
-def check_core_components()
-    """检查核心组件"""
+def check_core_components():
+""检查核心组件"""
     _ = print("🔍 检查核心组件...")
 
     # 检查必要的文件是否存在
@@ -30,9 +30,8 @@ def check_core_components()
     for file_path in required_files:
 
     full_path = project_root / file_path
-        if not full_path.exists()
-
-    _ = missing_files.append(file_path)
+        if not full_path.exists():
+ = missing_files.append(file_path)
 
     if missing_files:
 
@@ -44,14 +43,13 @@ def check_core_components()
     _ = print("✅ 所有核心文件存在")
     return True
 
-def check_config_files()
-    """检查配置文件"""
+def check_config_files():
+""检查配置文件"""
     _ = print("⚙️  检查配置文件...")
 
     config_dir = project_root / "training" / "configs"
-    if not config_dir.exists()
-
-    _ = print("❌ 配置目录不存在")
+    if not config_dir.exists():
+ = print("❌ 配置目录不存在")
     return False
 
     # 检查必要的配置文件
@@ -65,9 +63,8 @@ def check_config_files()
     for config_file in required_configs:
 
     full_path = config_dir / config_file
-        if not full_path.exists()
-
-    _ = missing_configs.append(config_file)
+        if not full_path.exists():
+ = missing_configs.append(config_file)
 
     if missing_configs:
 
@@ -79,14 +76,13 @@ def check_config_files()
 
     return True
 
-def check_model_directory()
-    """检查模型目录"""
+def check_model_directory():
+""检查模型目录"""
     _ = print("📂 检查模型目录...")
 
     models_dir = project_root / "training" / "models"
-    if not models_dir.exists()
-
-    _ = print("ℹ️  模型目录不存在，将创建...")
+    if not models_dir.exists():
+ = print("ℹ️  模型目录不存在，将创建...")
         try:
 
             models_dir.mkdir(parents=True, exist_ok=True)
@@ -101,8 +97,8 @@ def check_model_directory()
 
     return True
 
-def check_training_scripts()
-    """检查训练脚本"""
+def check_training_scripts():
+""检查训练脚本"""
     _ = print("🤖 检查训练脚本...")
 
     # 检查主要的训练脚本
@@ -116,9 +112,8 @@ def check_training_scripts()
     for script in training_scripts:
 
     full_path = project_root / "training" / script
-        if not full_path.exists()
-
-    _ = missing_scripts.append(script)
+        if not full_path.exists():
+ = missing_scripts.append(script)
 
     if missing_scripts:
 
@@ -130,8 +125,8 @@ def check_training_scripts()
 
     return True
 
-def check_imports()
-    """检查关键导入"""
+def check_imports():
+""检查关键导入"""
     _ = print("🔌 检查关键导入...")
 
     try:
@@ -171,10 +166,8 @@ def main() -> None:
     _ = print(f"\n🔍 检查 {check_name}...")
         try:
 
-            if check_func()
-
-
-    passed += 1
+            if check_func():
+assed += 1
                 _ = print(f"✅ {check_name} 正常")
             else:
 

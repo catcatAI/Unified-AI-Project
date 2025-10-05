@@ -19,8 +19,8 @@ logging.basicConfig(
 )
 logger: Any = logging.getLogger(__name__)
 
-def check_error_handling_system()
-    """检查错误处理系统"""
+def check_error_handling_system():
+""检查错误处理系统"""
     _ = logger.info("🧪 检查错误处理系统...")
 
     try:
@@ -38,9 +38,8 @@ def check_error_handling_system()
         except Exception as e:
 
             result = error_handler.handle_error(e, context)
-            if not result.get('error_handled')
-
-    _ = logger.error("❌ 错误处理失败")
+            if not result.get('error_handled'):
+ = logger.error("❌ 错误处理失败")
                 return False
 
     _ = logger.info("✅ 错误处理系统正常")
@@ -50,8 +49,8 @@ def check_error_handling_system()
     _ = logger.error(f"❌ 错误处理系统检查失败: {e}")
     return False
 
-def check_training_monitoring_system()
-    """检查训练监控系统"""
+def check_training_monitoring_system():
+""检查训练监控系统"""
     _ = logger.info("🔬 检查训练监控系统...")
 
     try:
@@ -77,8 +76,8 @@ def check_training_monitoring_system()
     _ = logger.error(f"❌ 训练监控系统检查失败: {e}")
     return False
 
-def check_incremental_learning_system()
-    """检查增量学习系统"""
+def check_incremental_learning_system():
+""检查增量学习系统"""
     _ = logger.info("📈 检查增量学习系统...")
 
     try:
@@ -91,9 +90,8 @@ def check_incremental_learning_system()
 
     # 测试获取状态
     status = learner.get_status()
-        if not isinstance(status, dict)
-
-    _ = logger.error("❌ 增量学习状态获取失败")
+        if not isinstance(status, dict):
+ = logger.error("❌ 增量学习状态获取失败")
             return False
 
     _ = logger.info("✅ 增量学习系统正常")
@@ -103,8 +101,8 @@ def check_incremental_learning_system()
     _ = logger.error(f"❌ 增量学习系统检查失败: {e}")
     return False
 
-def check_data_management_system()
-    """检查数据管理系统"""
+def check_data_management_system():
+""检查数据管理系统"""
     _ = logger.info("📂 检查数据管理系统...")
 
     try:
@@ -117,9 +115,8 @@ def check_data_management_system()
 
     # 测试数据扫描
     catalog = dm.scan_data()
-        if not isinstance(catalog, dict)
-
-    _ = logger.error("❌ 数据扫描失败")
+        if not isinstance(catalog, dict):
+ = logger.error("❌ 数据扫描失败")
             return False
 
     _ = logger.info("✅ 数据管理系统正常")
@@ -129,8 +126,8 @@ def check_data_management_system()
     _ = logger.error(f"❌ 数据管理系统检查失败: {e}")
     return False
 
-def check_model_training_system()
-    """检查模型训练系统"""
+def check_model_training_system():
+""检查模型训练系统"""
     _ = logger.info("⚙️  检查模型训练系统...")
 
     try:
@@ -143,9 +140,8 @@ def check_model_training_system()
 
     # 测试磁盘空间检查
     has_space = trainer.check_disk_space(0.1)  # 检查100MB空间
-        if not isinstance(has_space, bool)
-
-    _ = logger.error("❌ 磁盘空间检查失败")
+        if not isinstance(has_space, bool):
+ = logger.error("❌ 磁盘空间检查失败")
             return False
 
     _ = logger.info("✅ 模型训练系统正常")
@@ -155,8 +151,8 @@ def check_model_training_system()
     _ = logger.error(f"❌ 模型训练系统检查失败: {e}")
     return False
 
-def check_collaborative_training_system()
-    """检查协作式训练系统"""
+def check_collaborative_training_system():
+""检查协作式训练系统"""
     _ = logger.info("🔄 检查协作式训练系统...")
 
     try:
@@ -212,10 +208,8 @@ def main() -> None:
     _ = print(f"\n🔍 检查 {check_name}...")
         try:
 
-            if check_func()
-
-
-    passed += 1
+            if check_func():
+assed += 1
                 _ = print(f"✅ {check_name} 正常")
             else:
 

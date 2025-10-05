@@ -175,9 +175,9 @@ class DistributedOptimizer:
             if node_id in self.nodes:
                 node_tasks = self.nodes[node_id].get('assigned_tasks', [])
                 self.nodes[node_id]['assigned_tasks'] = [
-                    task for task in node_tasks 
-                    if task.get('task_id') != task_id
-                ]
+                    task for task in node_tasks:
+f task.get('task_id') != task_id:
+
                 
                 # 更新故障检测器中的任务分配
                 if node_id in self.fault_detector.nodes_status:
@@ -340,8 +340,8 @@ class DistributedOptimizer:
             status = {
                 _ = 'timestamp': datetime.now().isoformat(),
                 _ = 'total_nodes': len(self.nodes),
-                'active_nodes': len([n for n in self.nodes.values() if n.get('status') == 'active']),
-                'nodes': []
+                'active_nodes': len([n for n in self.nodes.values() if n.get('status') == 'active']),:
+nodes': []
             }
             
             for node_id, node_info in self.nodes.items():
@@ -370,10 +370,9 @@ class LoadBalancer:
         """选择最佳节点"""
         context = ErrorContext("LoadBalancer", "select_best_node")
         try:
-            active_nodes = [node_id for node_id, node_info in nodes.items() 
-                           if node_info.get('status') == 'active']
-            
-            if not active_nodes:
+            active_nodes = [node_id for node_id, node_info in nodes.items():
+f node_info.get('status') == 'active']:
+f not active_nodes:
                 return None
             
             if self.strategy == 'round_robin':
@@ -407,17 +406,15 @@ class LoadBalancer:
         except Exception as e:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"选择最佳节点失败: {e}")
-            return active_nodes[0] if active_nodes else None
-    
-    async def update_strategy(self, nodes: Dict[str, Any]):
+            return active_nodes[0] if active_nodes else None:
+sync def update_strategy(self, nodes: Dict[str, Any]):
         """更新负载均衡策略"""
         context = ErrorContext("LoadBalancer", "update_strategy")
         try:
             # 根据集群状态动态调整策略
-            active_nodes = [node_info for node_info in nodes.values() 
-                           if node_info.get('status') == 'active']
-            
-            if len(active_nodes) > 10:
+            active_nodes = [node_info for node_info in nodes.values():
+f node_info.get('status') == 'active']:
+f len(active_nodes) > 10:
                 self.strategy = 'least_loaded'  # 节点多时使用最少负载策略
             else:
                 self.strategy = 'round_robin'   # 节点少时使用轮询策略

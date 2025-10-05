@@ -23,8 +23,8 @@ class KnowledgeRepresentation:
     self.timestamp = datetime.now()
     self.id = f"{source_model}_{knowledge_type}_{int(self.timestamp.timestamp())}"
 
-    def to_dict(self)
-    """转换为字典"""
+    def to_dict(self):
+""转换为字典"""
     return {
             "id": self.id,
             "source_model": self.source_model,
@@ -34,8 +34,8 @@ class KnowledgeRepresentation:
     }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any])
-    """从字典创建"""
+    def from_dict(cls, data: Dict[str, Any]):
+""从字典创建"""
     knowledge = cls(data["source_model"], data["knowledge_type"], data["content"])
     knowledge.timestamp = datetime.fromisoformat(data["timestamp"])
     knowledge.id = data["id"]
@@ -70,9 +70,8 @@ class KnowledgeFusionEngine:
 
     # 融合每种类型的知识
     fused_content = {}
-        for knowledge_type, knowledge_group in knowledge_by_type.items()
-
-    if knowledge_type in self.fusion_strategies:
+        for knowledge_type, knowledge_group in knowledge_by_type.items():
+f knowledge_type in self.fusion_strategies:
 
 
     fused_content[knowledge_type] = await self.fusion_strategies[knowledge_type](knowledge_group)
@@ -98,10 +97,8 @@ class KnowledgeFusionEngine:
     fused_metrics = {}
         if metrics_data:
 
-    for key in metrics_data[0].keys()
-
-
-    values = [data.get(key, 0) for data in metrics_data]:
+    for key in metrics_data[0].keys():
+alues = [data.get(key, 0) for data in metrics_data]:
     fused_metrics[key] = np.mean(values)
 
     return fused_metrics
@@ -117,10 +114,8 @@ class KnowledgeFusionEngine:
     fused_params = {}
         if param_data:
 
-    for key in param_data[0].keys()
-
-
-    values = [data.get(key, 0) for data in param_data]:
+    for key in param_data[0].keys():
+alues = [data.get(key, 0) for data in param_data]:
     fused_params[key] = np.mean(values)
 
     return fused_params
@@ -156,10 +151,9 @@ class KnowledgeFusionEngine:
 
     # 选择高频模式
     fused_patterns = []
-        for pattern_key, freq in pattern_freq.items()
-
-    if freq > len(knowledge_list) * 0.5:  # 超过一半模型认同的模式
-                try:
+        for pattern_key, freq in pattern_freq.items():
+f freq > len(knowledge_list) * 0.5:  # 超过一半模型认同的模式:
+ry:
 
                     pattern = eval(pattern_key)  # 注意：实际应用中应使用更安全的方法
                     _ = fused_patterns.append(pattern)
@@ -286,9 +280,8 @@ class ModelKnowledgeSharing:
 
 
 
-    _ = requested_knowledge.append(knowledge)
-
-    _ = logger.info(f"📥 {requesting_model} 请求了 {len(requested_knowledge)} 个知识")
+    _ = requested_knowledge.append(knowledge):
+ = logger.info(f"📥 {requesting_model} 请求了 {len(requested_knowledge)} 个知识")
     return requested_knowledge
 
     async def fuse_knowledge_from_models(self, model_names: List[str],
@@ -328,8 +321,8 @@ class ModelKnowledgeSharing:
             _ = logger.warning("没有找到可融合的知识")
             return None
 
-    def _store_knowledge(self, knowledge: KnowledgeRepresentation)
-    """存储知识"""
+    def _store_knowledge(self, knowledge: KnowledgeRepresentation):
+""存储知识"""
         if knowledge.source_model not in self.knowledge_base:
 
     self.knowledge_base[knowledge.source_model] = []
@@ -345,8 +338,8 @@ class ModelKnowledgeSharing:
 
             _ = logger.error(f"保存知识到文件失败: {e}")
 
-    def _update_knowledge_graph(self, source_model: str, target_models: List[str], knowledge_type: str)
-    """更新知识图"""
+    def _update_knowledge_graph(self, source_model: str, target_models: List[str], knowledge_type: str):
+""更新知识图"""
         if source_model not in self.knowledge_graph:
 
     self.knowledge_graph[source_model] = {}
@@ -364,14 +357,12 @@ class ModelKnowledgeSharing:
                 _ = "timestamp": datetime.now().isoformat()
             })
 
-    def _load_knowledge(self)
-    """加载已有的知识"""
+    def _load_knowledge(self):
+""加载已有的知识"""
         try:
 
-            for knowledge_file in self.storage_path.glob("knowledge_*.json")
-
-
-    try:
+            for knowledge_file in self.storage_path.glob("knowledge_*.json"):
+ry:
 
 
 
@@ -399,9 +390,8 @@ class ModelKnowledgeSharing:
     }
 
     # 统计知识数量
-        for model_name, knowledge_list in self.knowledge_base.items()
-
-    stats["total_knowledge"] += len(knowledge_list)
+        for model_name, knowledge_list in self.knowledge_base.items():
+tats["total_knowledge"] += len(knowledge_list)
             if knowledge_list:
 
     stats["models_with_knowledge"] += 1
@@ -413,9 +403,8 @@ class ModelKnowledgeSharing:
                 stats["knowledge_by_type"][knowledge_type] = stats["knowledge_by_type"].get(knowledge_type, 0) + 1
 
     # 统计知识图边数
-        for source_model, targets in self.knowledge_graph.items()
-
-    stats["knowledge_graph_edges"] += len(targets)
+        for source_model, targets in self.knowledge_graph.items():
+tats["knowledge_graph_edges"] += len(targets)
 
     return stats
 

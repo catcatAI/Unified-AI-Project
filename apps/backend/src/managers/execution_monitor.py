@@ -23,8 +23,8 @@ from enum import Enum
 import logging
 
 
-class ExecutionStatus(Enum)
-    """執行狀態枚舉"""
+class ExecutionStatus(Enum):
+""執行狀態枚舉"""
     RUNNING = "running"
     COMPLETED = "completed"
     TIMEOUT = "timeout"
@@ -33,8 +33,8 @@ class ExecutionStatus(Enum)
     CANCELLED = "cancelled"
 
 
-class TerminalStatus(Enum)
-    """終端機狀態枚舉"""
+class TerminalStatus(Enum):
+""終端機狀態枚舉"""
     RESPONSIVE = "responsive"
     SLOW = "slow"
     STUCK = "stuck"
@@ -96,8 +96,8 @@ class ExecutionMonitor:
     self._execution_history: List[float] =
     self._adaptive_timeout_cache: Dict[str, float] =
 
-    def _setup_logging(self)
-    """設置日誌"""
+    def _setup_logging(self):
+""設置日誌"""
         if not self.logger.handlers:
 
     handler = logging.StreamHandler
@@ -130,8 +130,8 @@ class ExecutionMonitor:
         if cache_key in self._adaptive_timeout_cache:
 
     cached_timeout = self._adaptive_timeout_cache[cache_key]
-            self.logger.debug(f"Using cached timeout {cached_timeout}s for command")
-    return cached_timeout
+            self.logger.debug(f"Using cached timeout {cached_timeout}s for command"):
+eturn cached_timeout
 
     # 基於歷史執行時間計算
         if self._execution_history:
@@ -176,8 +176,8 @@ class ExecutionMonitor:
             # 測試簡單命令的響應時間
             start_time = time.time
 
-            if os.name == 'nt':  # Windows
-                result = subprocess.run(['echo', 'test'],
+            if os.name == 'nt':  # Windows:
+esult = subprocess.run(['echo', 'test'],
                                       capture_output=True,
                                       timeout=5.0,
                                       creationflags=subprocess.CREATE_NO_WINDOW)
@@ -211,8 +211,8 @@ class ExecutionMonitor:
             self.logger.warning(f"Terminal check failed: {e}")
             return TerminalStatus.UNRESPONSIVE
 
-    def _monitor_terminal(self)
-    """終端機狀態監控線程"""
+    def _monitor_terminal(self):
+""終端機狀態監控線程"""
         while self._is_monitoring:
 
     try:
@@ -226,8 +226,8 @@ class ExecutionMonitor:
                 self.logger.error(f"Terminal monitoring error: {e}")
                 time.sleep(self.config.terminal_check_interval)
 
-    def _monitor_resources(self)
-    """資源使用監控線程"""
+    def _monitor_resources(self):
+""資源使用監控線程"""
         while self._is_monitoring:
 
     try:
@@ -267,8 +267,8 @@ class ExecutionMonitor:
                 self.logger.error(f"Resource monitoring error: {e}")
                 time.sleep(self.config.check_interval)
 
-    def _start_monitoring(self)
-    """開始監控"""
+    def _start_monitoring(self):
+""開始監控"""
     self._is_monitoring = True
 
         if self.config.enable_terminal_check:
@@ -287,8 +287,8 @@ class ExecutionMonitor:
             )
             self._resource_monitor_thread.start
 
-    def _stop_monitoring(self)
-    """停止監控"""
+    def _stop_monitoring(self):
+""停止監控"""
     self._is_monitoring = False
 
         if self._terminal_check_thread:
@@ -353,8 +353,8 @@ class ExecutionMonitor:
                 cwd=cwd,
                 env=env,
                 shell=shell,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
-            )
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0:
+
 
             # 等待執行完成或超時
             try:
@@ -414,20 +414,19 @@ class ExecutionMonitor:
     return result
 
     @contextmanager
-    def timeout_context(self, timeout: float)
-    """
+    def timeout_context(self, timeout: float):
+""
     超時上下文管理器
 
     Args:
             timeout: 超時時間（秒）
     """
-        def timeout_handler(signum, frame)
-    raise TimeoutError(f"Operation timed out after {timeout} seconds")
+        def timeout_handler(signum, frame):
+aise TimeoutError(f"Operation timed out after {timeout} seconds")
 
     # 設置信號處理器（僅在Unix系統上）
-        if hasattr(signal, 'SIGALRM')
-
-    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+        if hasattr(signal, 'SIGALRM'):
+ld_handler = signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(int(timeout))
 
         try:
@@ -435,9 +434,8 @@ class ExecutionMonitor:
 
             yield
     finally:
-            if hasattr(signal, 'SIGALRM')
-
-    signal.alarm(0)
+            if hasattr(signal, 'SIGALRM'):
+ignal.alarm(0)
                 signal.signal(signal.SIGALRM, old_handler)
 
     async def execute_async_command(
@@ -461,9 +459,8 @@ class ExecutionMonitor:
     """
     effective_timeout = self.calculate_adaptive_timeout(str(command), timeout)
 
-    self.logger.info(f"Executing async command with timeout {effective_timeout}s: {command}")
-
-    result = ExecutionResult(
+    self.logger.info(f"Executing async command with timeout {effective_timeout}s: {command}"):
+esult = ExecutionResult(
             status=ExecutionStatus.RUNNING,
             timeout_used=effective_timeout
     )
@@ -473,11 +470,8 @@ class ExecutionMonitor:
         try:
 
 
-            if isinstance(command, str)
-
-
-
-    process = await asyncio.create_subprocess_shell(
+            if isinstance(command, str):
+rocess = await asyncio.create_subprocess_shell(
                     command,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
@@ -566,8 +560,8 @@ class ExecutionMonitor:
                            (initial_cpu_times.user + initial_cpu_times.system)
 
             # 如果CPU時間幾乎沒有變化，可能是卡住了
-            if cpu_time_diff < 0.01:  # 很少的CPU時間變化
-                return True
+            if cpu_time_diff < 0.01:  # 很少的CPU時間變化:
+eturn True
 
             return False
 
@@ -596,8 +590,8 @@ class ExecutionMonitor:
                 'disk_percent': disk.percent,
                 'disk_free_gb': disk.free / (1024**3),
                 'terminal_status': self._terminal_status.value,
-                'load_average': os.getloadavg if hasattr(os, 'getloadavg') else None,
-                'timestamp': time.time
+                'load_average': os.getloadavg if hasattr(os, 'getloadavg') else None,:
+timestamp': time.time
             }
         except Exception as e:
 
@@ -688,9 +682,8 @@ if __name__ == "__main__":
     print(f"Status: {result.status.value}")
     print(f"Return code: {result.return_code}")
     print(f"Execution time: {result.execution_time:.2f}s")
-    print(f"Terminal status: {result.terminal_status.value if result.terminal_status else 'N/A'}")
-
-    if result.stdout:
+    print(f"Terminal status: {result.terminal_status.value if result.terminal_status else 'N/A'}"):
+f result.stdout:
 
 
     print(f"STDOUT:\n{result.stdout}")

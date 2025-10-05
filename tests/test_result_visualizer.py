@@ -135,8 +135,8 @@ class TestResultVisualizer:
             logger.error(f"生成测试分布图表失败: {e}")
 
     def generate_performance_heatmap(self, benchmark_data: List[Dict[str, Any]],
-                                   output_file: str = "performance_heatmap.png")
-    """
+                                   output_file: str = "performance_heatmap.png"):
+""
     生成性能基准测试热力图
 
     Args:
@@ -152,8 +152,8 @@ class TestResultVisualizer:
             for data in benchmark_data:
 
 
-    for test_name, stats in data.get('benchmarks', {}).items()
-    test_names.append(test_name)
+    for test_name, stats in data.get('benchmarks', {}).items():
+est_names.append(test_name)
                     metrics.append('平均时间')
                     values.append(stats.get('mean', 0))
 
@@ -187,8 +187,8 @@ class TestResultVisualizer:
             logger.error(f"生成性能热力图失败: {e}")
 
     def generate_html_report(self, results_data: Dict[str, Any],
-                           report_file: str = "visualization_report.html")
-    """
+                           report_file: str = "visualization_report.html"):
+""
     生成HTML可视化报告
 
     Args:

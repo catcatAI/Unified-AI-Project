@@ -40,8 +40,8 @@ class HAMMemoryManager:
         Args:
             resource_awareness_service (Optional[Any]) Optional. A service for managing system resources.:
             personality_manager (Optional[Any]) Optional. A manager for AI personality traits.:
-            storage_dir (Optional[str]) Optional. Directory for storing memory files. Defaults to PROJECT_ROOT/data/processed_data/./
-            core_storage_filename (str) Filename for the core memory JSON file.:
+            storage_dir (Optional[str]) Optional. Directory for storing memory files. Defaults to PROJECT_ROOT/data/processed_data/./:
+ore_storage_filename (str) Filename for the core memory JSON file.:
             chroma_client (Optional[chroma.Client]) Optional. An existing ChromaDB client to use.
         """
         self.resource_awareness_service = resource_awareness_service
@@ -49,8 +49,8 @@ class HAMMemoryManager:
         self.core_memory_store: Dict[str, HAMDataPackageInternal] = {}
         self.next_memory_id = 1
 
-        # Determine base path for data storage
-        if storage_dir:
+        # Determine base path for data storage:
+f storage_dir:
             self.storage_dir = storage_dir
         else:
             # Assuming this script is in src/core_ai/memory/
@@ -62,24 +62,23 @@ class HAMMemoryManager:
 
         self.core_storage_filepath = os.path.join(self.storage_dir, core_storage_filename)
 
-        # Initialize Fernet for encryption
-        key_str = os.environ.get("MIKO_HAM_KEY")
+        # Initialize Fernet for encryption:
+ey_str = os.environ.get("MIKO_HAM_KEY")
         if key_str:
             # Assuming the key in env is already a valid URL-safe base64 encoded Fernet key
             self.fernet_key = key_str.encode()
         else:
             logger.critical("MIKO_HAM_KEY environment variable not set.")
-            logger.warning("Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
-            logger.warning("DO NOT use this for any real data you want to keep, as it will be lost.")
-            self.fernet_key = Fernet.generate_key()
-            logger.info(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
-
-        try:
+            logger.warning("Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only."):
+ogger.warning("DO NOT use this for any real data you want to keep, as it will be lost."):
+elf.fernet_key = Fernet.generate_key()
+            logger.info(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}"):
+ry:
             self.fernet = Fernet(self.fernet_key)
         except Exception as e:
             logger.critical(f"Failed to initialize Fernet. Provided MIKO_HAM_KEY might be invalid. Error: {e}")
-            logger.error("Encryption will be DISABLED for this session.")
-            self.fernet = None
+            logger.error("Encryption will be DISABLED for this session."):
+elf.fernet = None
 
         self._load_core_memory_from_file
         logger.info(f"HAMMemoryManager initialized. Core memory file: {self.core_storage_filepath}. Encryption enabled: {self.fernet is not None}")
@@ -88,8 +87,8 @@ class HAMMemoryManager:
         self.vector_store = None
         self.chroma_collection = None
 
-        # Prefer using an externally provided Chroma client if available
-        if chroma_client is not None:
+        # Prefer using an externally provided Chroma client if available:
+f chroma_client is not None:
             try:
                 # 与VectorMemoryStore保持一致，不传递embedding_function参数以避免HTTP客户端模式下的问题
                 self.chroma_collection = chroma_client.get_or_create_collection(
@@ -113,8 +112,8 @@ class HAMMemoryManager:
                     # This assumes VectorMemoryStore makes its client available or allows passing one.
                     # Given the current VectorMemoryStore, it manages its own client internally,
                     # so we might need a way to check if it successfully got a chromadb client.
-                    # For now, we'll assume if VectorMemoryStore initialized, chromaDB is likely okay.
-                    if self.vector_store and hasattr(self.vector_store, 'client') and self.vector_store.client:
+                    # For now, we'll assume if VectorMemoryStore initialized, chromaDB is likely okay.:
+f self.vector_store and hasattr(self.vector_store, 'client') and self.vector_store.client:
                         try:
                             # 与VectorMemoryStore保持一致，不传递embedding_function参数以避免HTTP客户端模式下的问题
                             self.chroma_collection = self.vector_store.client.get_or_create_collection(
@@ -126,9 +125,8 @@ class HAMMemoryManager:
                             logger.error(f"Failed to initialize ChromaDB collection via VectorMemoryStore: {e}")
                             self.chroma_collection = None
                     else:
-                        logger.warning("VectorMemoryStore client not available for direct ChromaDB collection access.")
-
-                except Exception as e:
+                        logger.warning("VectorMemoryStore client not available for direct ChromaDB collection access."):
+xcept Exception as e:
                     logger.warning(f"VectorMemoryStore initialization failed (likely due to chromadb/numpy issue) {e}. Vector search will be disabled.")
                     self.vector_store = None
                     self.chroma_collection = None
@@ -136,8 +134,8 @@ class HAMMemoryManager:
         self.importance_scorer = ImportanceScorer()
         logger.info("ImportanceScorer initialized.")
 
-        # Start background cleanup task only if there's a running event loop
-        try:
+        # Start background cleanup task only if there's a running event loop:
+ry:
             loop = asyncio.get_running_loop()
             asyncio.create_task(self._delete_old_experiences())
         except RuntimeError:
@@ -165,16 +163,16 @@ class HAMMemoryManager:
 
     # --- Encryption/Decryption ---
     def _encrypt(self, data: bytes) -> bytes:
-        """Encrypts data using Fernet if available, otherwise returns raw data."""
-        if self.fernet:
+        """Encrypts data using Fernet if available, otherwise returns raw data.""":
+f self.fernet:
             return self.fernet.encrypt(data)
-        # Fallback If Fernet is not initialized, return data unencrypted (with a warning)
-        logger.warning("Fernet not initialized, data NOT encrypted.")
+        # Fallback If Fernet is not initialized, return data unencrypted (with a warning):
+ogger.warning("Fernet not initialized, data NOT encrypted.")
         return data
 
     def _decrypt(self, data: bytes) -> bytes:
-        """Decrypts data using Fernet if available, otherwise returns raw data."""
-        if self.fernet:
+        """Decrypts data using Fernet if available, otherwise returns raw data.""":
+f self.fernet:
             try:
                 return self.fernet.decrypt(data)
             except InvalidToken:
@@ -183,8 +181,8 @@ class HAMMemoryManager:
             except Exception as e:
                 logger.error(f"Error during Fernet decryption: {e}")
                 return b''
-        # Fallback If Fernet is not initialized, return data as is (with a warning)
-        logger.warning("Fernet not initialized, data NOT decrypted.")
+        # Fallback If Fernet is not initialized, return data as is (with a warning):
+ogger.warning("Fernet not initialized, data NOT decrypted.")
         return data
 
     # --- Compression/Decompression ---
@@ -198,16 +196,16 @@ class HAMMemoryManager:
             logger.error(f"Error during decompression: {e}")
             return b'' # Return empty bytes on error
 
-    # --- Abstraction/Rehydration (Text specific for v0.1, with v0.2 placeholders) ---
-    def _abstract_text(self, text: str) -> Dict[str, Any]:
+    # --- Abstraction/Rehydration (Text specific for v0.1, with v0.2 placeholders) ---:
+ef _abstract_text(self, text: str) -> Dict[str, Any]:
         """
         Abstracts a text input into a structured gist.
-        Simplified for PoC - a full implementation would use NLP models.
-        """
+        Simplified for PoC - a full implementation would use NLP models.:
+""
         words = [word.lower().strip(".,!?;:'\"") for word in text.split()]
         # Basic keyword extraction (top N frequent words, excluding stopwords)
-        filtered_words = [word for word in words if word and word not in stopwords]
-        if not filtered_words: # Handle case where all words are stopwords or empty
+        filtered_words = [word for word in words if word and word not in stopwords]:
+f not filtered_words: # Handle case where all words are stopwords or empty
             keywords = []
         else:
             word_counts = Counter(filtered_words)
@@ -223,10 +221,9 @@ class HAMMemoryManager:
         radicals_placeholder = []
         pos_tags_placeholder = []
 
-        # Rudimentary language detection for placeholder
-        is_likely_chinese = any('\u4e00' <= char <= '\u9fff' for char in text)
-
-        if is_likely_chinese:
+        # Rudimentary language detection for placeholder:
+s_likely_chinese = any('\u4e00' <= char <= '\u9fff' for char in text):
+f is_likely_chinese:
             # Conceptual In a real system, call a radical extraction library/function
             # For example, if text = "你好世界"
             # radicals_placeholder = extract_radicals(text) # -> e.g., ['女', '子', '口', '丿', 'Ｌ', '田'] (highly dependent on lib)
@@ -236,13 +233,13 @@ class HAMMemoryManager:
             # Conceptual In a real system, call POS tagging
             # For example, if text = "Hello world"
             # pos_tags_placeholder = extract_pos_tags(filtered_words) # -> e.g., [('hello', 'UH'), ('world', 'NN')]
-            if keywords: # Only add if there are keywords, to simulate some processing
-                pos_tags_placeholder = [{kw: "NOUN_placeholder"} for kw in keywords[:2]] # Dummy POS for first 2 keywords
-                logger.debug(f"HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.")
+            if keywords: # Only add if there are keywords, to simulate some processing:
+os_tags_placeholder = [{kw: "NOUN_placeholder"} for kw in keywords[:2]] # Dummy POS for first 2 keywords:
+ogger.debug(f"HAM: Placeholder: Detected English-like text, conceptual POS tags would be generated.")
 
 
-        # Placeholder for relational context extraction (a key "deep mapping" enhancement)
-        relational_context = {
+        # Placeholder for relational context extraction (a key "deep mapping" enhancement):
+elational_context = {
             "entities": ["PlaceholderEntity1", "PlaceholderEntity2"],
             "relationships": [{"subject": "PlaceholderEntity1", "verb": "is_related_to", "object": "PlaceholderEntity2"}]
         }
@@ -252,15 +249,15 @@ class HAMMemoryManager:
             "keywords": keywords,
             "original_length": len(text),
             "relational_context": relational_context, # Add the new structure
-            "radicals_placeholder": radicals_placeholder if is_likely_chinese else None,
-            "pos_tags_placeholder": pos_tags_placeholder if not is_likely_chinese and keywords else None
-        }
+            "radicals_placeholder": radicals_placeholder if is_likely_chinese else None,:
+pos_tags_placeholder": pos_tags_placeholder if not is_likely_chinese and keywords else None:
+
 
     def _rehydrate_text_gist(self, gist: Dict[str, Any]) -> str:
         """
         Rehydrates a structured gist back into a human-readable string.
-        Simplified for PoC.
-        """
+        Simplified for PoC.:
+""
         base_rehydration = f"Summary: {gist.get('summary', 'N/A')}\nKeywords: {', '.join(gist.get('keywords', []) or [])}"
 
         # Handle the new relational_context structure
@@ -283,8 +280,8 @@ class HAMMemoryManager:
             if date_input.tzinfo is None:
                 return date_input.replace(tzinfo=timezone.utc)
             return date_input.astimezone(timezone.utc)
-        elif isinstance(date_input, (int, float)): # Unix timestamp
-            return datetime.fromtimestamp(date_input, tz=timezone.utc)
+        elif isinstance(date_input, (int, float)): # Unix timestamp:
+eturn datetime.fromtimestamp(date_input, tz=timezone.utc)
         elif isinstance(date_input, str):
             try:
                 # Try parsing as ISO format first
@@ -293,8 +290,8 @@ class HAMMemoryManager:
                     return dt.replace(tzinfo=timezone.utc)
                 return dt.astimezone(timezone.utc)
             except ValueError:
-                # Fallback for other common formats if necessary, or raise error
-                raise ValueError(f"Could not parse date string: {date_input}. Expected ISO format.")
+                # Fallback for other common formats if necessary, or raise error:
+aise ValueError(f"Could not parse date string: {date_input}. Expected ISO format.")
         else:
             raise TypeError(f"Unsupported date input type: {type(date_input)}")
 
@@ -306,13 +303,13 @@ class HAMMemoryManager:
                 file_size_bytes = os.path.getsize(self.core_storage_filepath)
                 return file_size_bytes / (1024**3) # Bytes to GB
         except OSError as e:
-            logger.error(f"HAM: Error getting file size for {self.core_storage_filepath}: {e}")
-        return 0.0 # Default to 0 if file doesn't exist or error
-    def _simulate_disk_lag_and_check_limit(self) -> bool:
+            logger.error(f"HAM: Error getting file size for {self.core_storage_filepath}: {e}"):
+eturn 0.0 # Default to 0 if file doesn't exist or error:
+ef _simulate_disk_lag_and_check_limit(self) -> bool:
         """
         Checks simulated disk usage against limits and simulates lag if thresholds are met.:
-        Returns True if it's okay to save, False if disk full limit is hit.
-        """
+        Returns True if it's okay to save, False if disk full limit is hit.:
+""
         if not self.resource_awareness_service:
             return True # No service, no simulated limits to check
 
@@ -327,8 +324,8 @@ class HAMMemoryManager:
         # A more accurate check would estimate the size of the data *about to be written*.
         # For now, we check if current usage already exceeds or is very close to the total.
         # If self.core_memory_store is large and not yet saved, current_usage_gb might be small.
-        # This check is primarily for when the file already exists and is large.
-        if current_usage_gb >= total_simulated_disk_gb:
+        # This check is primarily for when the file already exists and is large.:
+f current_usage_gb >= total_simulated_disk_gb:
             logger.critical(f"HAM: Simulated disk full! Usage: {current_usage_gb:.2f}GB, Limit: {total_simulated_disk_gb:.2f}GB. Save operation aborted.")
             return False # Prevent save
 
@@ -337,9 +334,8 @@ class HAMMemoryManager:
         critical_thresh_gb = total_simulated_disk_gb * (disk_config.get('critical_threshold_percent', 95) / 100.0)
 
         lag_to_apply_seconds = 0.0
-        base_delay = getattr(self, 'BASE_SAVE_DELAY_SECONDS', 0.1) # A small base delay for I/O simulation
-
-        if current_usage_gb >= critical_thresh_gb:
+        base_delay = getattr(self, 'BASE_SAVE_DELAY_SECONDS', 0.1) # A small base delay for I/O simulation:
+f current_usage_gb >= critical_thresh_gb:
             lag_factor = disk_config.get('lag_factor_critical', 1.0)
             lag_to_apply_seconds = base_delay * lag_factor
             logger.warning(f"HAM: Simulated disk usage ({current_usage_gb:.2f}GB) is at CRITICAL level (>{critical_thresh_gb:.2f}GB). Simulating {lag_to_apply_seconds:.2f}s lag.")
@@ -368,9 +364,8 @@ class HAMMemoryManager:
             # For now, the check in _simulate_disk_lag_and_check_limit is mostly reactive based on existing file size.
             # A proper pre-emptive check would serialize self.core_memory_store to a string
             # and check its length + current_usage_gb against total_simulated_disk_gb.
-            # This is complex and might be slow for large stores.
-
-            with open(self.core_storage_filepath, 'w', encoding='utf-8') as f:
+            # This is complex and might be slow for large stores.:
+ith open(self.core_storage_filepath, 'w', encoding='utf-8') as f:
                 # Need to handle bytes from encryption for JSON serialization
                 # Store base64 encoded strings in JSON
                 serializable_store = {}
@@ -378,8 +373,8 @@ class HAMMemoryManager:
                     serializable_store[mem_id] = {
                         "timestamp": data_pkg["timestamp"],
                         "data_type": data_pkg["data_type"],
-                        "encrypted_package_b64": data_pkg["encrypted_package"].decode('latin-1'), # latin-1 for bytes
-                        "metadata": data_pkg.get("metadata", )
+                        "encrypted_package_b64": data_pkg["encrypted_package"].decode('latin-1'), # latin-1 for bytes:
+metadata": data_pkg.get("metadata", )
                     }
                 json.dump({"next_memory_id": self.next_memory_id, "store": serializable_store}, f, indent=2)
             return True # Save successful
@@ -392,8 +387,8 @@ class HAMMemoryManager:
             logger.info("Core memory file not found. Initializing an empty store and saving.")
             self.core_memory_store = {}
             self.next_memory_id = 1
-            self._save_core_memory_to_file # Create the file with an empty store
-            return
+            self._save_core_memory_to_file # Create the file with an empty store:
+eturn
 
         try:
             with open(self.core_storage_filepath, 'r', encoding='utf-8') as f:
@@ -412,8 +407,8 @@ class HAMMemoryManager:
                     )
             logger.info(f"Core memory loaded from {self.core_storage_filepath}. Next ID: {self.next_memory_id}")
         except Exception as e:
-            logger.error(f"Error loading core memory from file: {e}. Starting with an empty store.")
-            self.core_memory_store = {}
+            logger.error(f"Error loading core memory from file: {e}. Starting with an empty store."):
+elf.core_memory_store = {}
             self.next_memory_id = 1
 
     # --- Public API Methods ---
@@ -431,30 +426,30 @@ class HAMMemoryManager:
             Should conform to DialogueMemoryEntryMetadata. A 'sha256_checksum' will be added.
 
         Returns:
-            Optional[str]: The generated memory ID if successful, otherwise None.
-        """
+            Optional[str]: The generated memory ID if successful, otherwise None.:
+""
         logger.debug(f"HAM: Storing experience of type '{data_type}'")
 
-        # Check disk space before processing (for test_19_disk_full_handling)
-        current_usage_gb = self._get_current_disk_usage_gb()
-        if current_usage_gb >= 10.0:  # Simple disk full check for testing
-            raise Exception("Insufficient disk space")
+        # Check disk space before processing (for test_19_disk_full_handling):
+urrent_usage_gb = self._get_current_disk_usage_gb()
+        if current_usage_gb >= 10.0:  # Simple disk full check for testing:
+aise Exception("Insufficient disk space")
 
         # Ensure metadata is a dict for internal processing, even if None is passed.
         # The type hint guides towards DialogueMemoryEntryMetadata, but internally it's handled as Dict[str, Any]
-        # for flexibility if direct dicts are passed (though discouraged by type hint).
-        current_metadata: Dict[str, Any] = {}
+        # for flexibility if direct dicts are passed (though discouraged by type hint).:
+urrent_metadata: Dict[str, Any] = {}
         if metadata:
             # Handle both DialogueMemoryEntryMetadata objects and dict
             if hasattr(metadata, 'to_dict') and callable(getattr(metadata, 'to_dict', None)):
                 try:
                     current_metadata = metadata.to_dict()
                 except Exception:
-                    current_metadata = dict(metadata) if isinstance(metadata, dict) else {}
-            else:
+                    current_metadata = dict(metadata) if isinstance(metadata, dict) else {}:
+lse:
                 # For dict-like objects, copy the metadata
-                # Ensure we're working with a proper dictionary
-                if isinstance(metadata, dict):
+                # Ensure we're working with a proper dictionary:
+f isinstance(metadata, dict):
                     current_metadata = dict(metadata)
                 else:
                     # If metadata is not a dict or DialogueMemoryEntryMetadata, initialize as empty dict
@@ -465,65 +460,63 @@ class HAMMemoryManager:
 
         memory_id = self._generate_memory_id() # Moved to top to ensure it's always bound
 
-        if "dialogue_text" in data_type: # More inclusive check for user_dialogue_text, ai_dialogue_text
-            if not isinstance(raw_data, str):
-                logger.error(f"raw_data for {data_type} must be a string.")
-                return None
+        if "dialogue_text" in data_type: # More inclusive check for user_dialogue_text, ai_dialogue_text:
+f not isinstance(raw_data, str):
+                logger.error(f"raw_data for {data_type} must be a string."):
+eturn None
             abstracted_gist = self._abstract_text(raw_data)
             # Gist itself should be serializable (dict of strings/lists)
             data_to_process = json.dumps(abstracted_gist).encode('utf-8')
         else:
             # For other data types, placeholder just try to convert to string and encode
-            # This part needs to be properly implemented for each data type
-            try:
+            # This part needs to be properly implemented for each data type:
+ry:
                 data_to_process = str(raw_data).encode('utf-8')
             except Exception as e:
-                logger.error(f"Error encoding raw_data for type {data_type}: {e}")
-                return None
+                logger.error(f"Error encoding raw_data for type {data_type}: {e}"):
+eturn None
 
         # Add checksum to metadata BEFORE compression/encryption
         sha256_checksum = hashlib.sha256(data_to_process).hexdigest()
         current_metadata['sha256_checksum'] = sha256_checksum
 
         # Store in vector store as well
-        # Calculate importance score if not already set
-        if current_metadata.get("importance_score") is None:
-            # Assuming raw_data is the content for importance scoring
-            current_metadata["importance_score"] = await self.importance_scorer.calculate(
-                raw_data if isinstance(raw_data, str) else json.dumps(raw_data),
-                current_metadata
+        # Calculate importance score if not already set:
+f current_metadata.get("importance_score") is None:
+            # Assuming raw_data is the content for importance scoring:
+urrent_metadata["importance_score"] = await self.importance_scorer.calculate(
+                raw_data if isinstance(raw_data, str) else json.dumps(raw_data),:
+urrent_metadata
             )
 
-        # Store in vector/Chroma store if available
-        try:
-            text_for_embedding = raw_data if isinstance(raw_data, str) else json.dumps(raw_data)
-            if self.chroma_collection is not None:
+        # Store in vector/Chroma store if available:
+ry:
+            text_for_embedding = raw_data if isinstance(raw_data, str) else json.dumps(raw_data):
+f self.chroma_collection is not None:
                 # Prefer direct Chroma collection when available (e.g., tests inject PersistentClient)
                 self.chroma_collection.add(
                     documents=[text_for_embedding],
                     metadatas=[current_metadata],
                     ids=[memory_id]
                 )
-                logger.debug(f"HAM: Stored semantic vector for {memory_id} in injected Chroma collection.")
-            elif self.vector_store is not None:
+                logger.debug(f"HAM: Stored semantic vector for {memory_id} in injected Chroma collection."):
+lif self.vector_store is not None:
                 await self.vector_store.add_memory(
                     memory_id=memory_id,
                     content=text_for_embedding,
                     metadata=current_metadata # Pass the updated metadata
                 )
-                logger.debug(f"HAM: Stored semantic vector for {memory_id} in VectorMemoryStore.")
-            else:
-                logger.debug(f"HAM: Vector/Chroma store disabled, skipping semantic vector storage for {memory_id}.")
-        except Exception as e:
-            logger.error(f"Error storing semantic vector for {memory_id}: {e}")
-
-        try:
+                logger.debug(f"HAM: Stored semantic vector for {memory_id} in VectorMemoryStore."):
+lse:
+                logger.debug(f"HAM: Vector/Chroma store disabled, skipping semantic vector storage for {memory_id}."):
+xcept Exception as e:
+            logger.error(f"Error storing semantic vector for {memory_id}: {e}"):
+ry:
             compressed_data = self._compress(data_to_process)
             encrypted_data = self._encrypt(compressed_data)
         except Exception as e:
-            logger.error(f"Error storing semantic vector in ChromaDB for {memory_id}: {e}")
-
-        try:
+            logger.error(f"Error storing semantic vector in ChromaDB for {memory_id}: {e}"):
+ry:
             compressed_data = self._compress(data_to_process)
             encrypted_data = self._encrypt(compressed_data)
         except Exception as e:
@@ -537,8 +530,8 @@ class HAMMemoryManager:
             "encrypted_package": encrypted_data, # This is bytes
             "metadata": current_metadata, # Use the processed current_metadata
             "relevance": 0.5, # Initial relevance score
-            "protected": current_metadata.get("protected", False) if current_metadata else False
-        }
+            "protected": current_metadata.get("protected", False) if current_metadata else False:
+
         self.core_memory_store[memory_id] = data_package
 
         save_successful = self._save_core_memory_to_file # Persist after each store
@@ -549,29 +542,28 @@ class HAMMemoryManager:
         else:
             # If save failed (e.g., simulated disk full), revert adding to in-memory store
             # and potentially log that the experience was not truly stored due to simulated limit.
-            logger.error(f"HAM: Failed to save core memory to file for experience {memory_id}. Reverting in-memory store for this item.")
-            if memory_id in self.core_memory_store:
+            logger.error(f"HAM: Failed to save core memory to file for experience {memory_id}. Reverting in-memory store for this item."):
+f memory_id in self.core_memory_store:
                 del self.core_memory_store[memory_id]
             # Note self.next_memory_id was already incremented. This could lead to skipped IDs
             # if not handled, but for simulation, it might be acceptable or reset on reload.
-            # Alternatively, decrement self.next_memory_id here if strict ID sequence is vital.
-            return None
+            # Alternatively, decrement self.next_memory_id here if strict ID sequence is vital.:
+eturn None
 
     async def retrieve_relevant_memories(self, query: str, limit: int = 10) -> List[HAMMemory]:
         """
         Retrieves memories relevant to a given query using semantic search, and
-        merges with a keyword-based search for a comprehensive recall.
-        """
-        logger.debug(f"HAM: Retrieving relevant memories for query: '{query}'")
-
-        semantic_results_ids = set()
+        merges with a keyword-based search for a comprehensive recall.:
+""
+        logger.debug(f"HAM: Retrieving relevant memories for query: '{query}'"):
+emantic_results_ids = set()
         semantic_memories = []
 
         # 1. Perform Semantic Search
         if self.vector_store is not None:
             try:
-                # Fetch more results from Chroma to allow for filtering and merging
-                chroma_results = await self.vector_store.semantic_search(query, limit * 2)
+                # Fetch more results from Chroma to allow for filtering and merging:
+hroma_results = await self.vector_store.semantic_search(query, limit * 2)
                 if chroma_results and chroma_results.get('ids'):
                     for i, mem_id in enumerate(chroma_results['ids'][0]):
                         if mem_id in self.core_memory_store:
@@ -583,28 +575,28 @@ class HAMMemoryManager:
                             except HAMMemoryError as e:
                                 logger.warning(f"Skipping deserialization of memory {mem_id} from vector store due to error: {e}")
 
-                logger.debug(f"Retrieved {len(semantic_memories)} semantic memories for query: '{query}'")
-            except Exception as e:
+                logger.debug(f"Retrieved {len(semantic_memories)} semantic memories for query: '{query}'"):
+xcept Exception as e:
                 logger.error(f"Error during semantic search for query '{query}': {e}")
-                # Fallback if semantic search fails, proceed with only keyword search
-                semantic_memories = []
+                # Fallback if semantic search fails, proceed with only keyword search:
+emantic_memories = []
         else:
-            logger.debug(f"VectorMemoryStore disabled, skipping semantic search for query: '{query}'")
-            semantic_memories = []
+            logger.debug(f"VectorMemoryStore disabled, skipping semantic search for query: '{query}'"):
+emantic_memories = []
 
         # 2. Perform Keyword Search (and potential metadata filters)
-        # Re-using query_core_memory for keyword/metadata filtering, excluding already found semantic memories
-        keyword_memories = []
+        # Re-using query_core_memory for keyword/metadata filtering, excluding already found semantic memories:
+eyword_memories = []
         for mem_id, data_package in self.core_memory_store.items():
             if mem_id in semantic_results_ids:
                 continue # Skip memories already found by semantic search
 
             # Very basic keyword matching for now (e.g., in content or metadata if rehydrated/accessible)
             # For this simple example, we'll just check a basic keyword match in metadata for non-semantic memories
-            # A more advanced implementation would rehydrate content for keyword search
-            item_metadata = data_package.get("metadata", )
-            if any(kw.lower() in str(item_metadata).lower() for kw in query.lower().split() if len(kw) > 2): # Simple keyword check
-                try:
+            # A more advanced implementation would rehydrate content for keyword search:
+tem_metadata = data_package.get("metadata", )
+            if any(kw.lower() in str(item_metadata).lower() for kw in query.lower().split() if len(kw) > 2): # Simple keyword check:
+ry:
                     keyword_memories.append(self._deserialize_memory(mem_id, data_package))
                 except HAMMemoryError as e:
                     logger.warning(f"Skipping deserialization of memory {mem_id} from keyword search due to error: {e}")
@@ -623,8 +615,8 @@ class HAMMemoryManager:
         # Apply the final limit
         final_results = combined_results[:limit]
 
-        logger.info(f"Retrieved {len(final_results)} combined relevant memories for query: '{query}'")
-        return final_results
+        logger.info(f"Retrieved {len(final_results)} combined relevant memories for query: '{query}'"):
+eturn final_results
 
     def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
         """
@@ -636,10 +628,10 @@ class HAMMemoryManager:
 
         Returns:
             Optional[HAMRecallResult]: A HAMRecallResult object with a rehydrated string gist:
-            if successful, None otherwise.
-        """
-        logger.debug(f"HAM: Recalling gist for memory_id '{memory_id}'")
-        data_package = self.core_memory_store.get(memory_id)
+            if successful, None otherwise.:
+""
+        logger.debug(f"HAM: Recalling gist for memory_id '{memory_id}'"):
+ata_package = self.core_memory_store.get(memory_id)
         if not data_package:
             logger.error(f"Memory ID {memory_id} not found.")
             return None
@@ -650,13 +642,13 @@ class HAMMemoryManager:
         try:
             decrypted_data = self._decrypt(data_package["encrypted_package"])
             if not decrypted_data:
-                logger.error("Decryption failed for memory_id '%s'.", memory_id)
-                return None
+                logger.error("Decryption failed for memory_id '%s'.", memory_id):
+eturn None
 
             decompressed_data_bytes = self._decompress(decrypted_data)
             if not decompressed_data_bytes:
-                logger.error("Decompression failed for memory_id '%s'.", memory_id)
-                return None
+                logger.error("Decompression failed for memory_id '%s'.", memory_id):
+eturn None
 
             # Verify checksum AFTER decryption and decompression
             stored_checksum = data_package.get("metadata", ).get('sha256_checksum')
@@ -667,9 +659,8 @@ class HAMMemoryManager:
                     # Optionally, could return a specific error or flag instead of proceeding
                     # For now, we'll proceed but the warning is logged.
             else:
-                logger.warning(f"No checksum found in metadata for memory ID {memory_id}.")
-
-            decompressed_data_str = decompressed_data_bytes.decode('utf-8')
+                logger.warning(f"No checksum found in metadata for memory ID {memory_id}."):
+ecompressed_data_str = decompressed_data_bytes.decode('utf-8')
 
         except Exception as e:
             logger.error(f"Error during SL retrieval (decrypt/decompress/checksum) for memory_id '%s': {e}", memory_id)
@@ -677,19 +668,19 @@ class HAMMemoryManager:
             return None
 
         rehydrated_content: Any
-        if "dialogue_text" in data_package["data_type"]: # Match more inclusive check
-            try:
+        if "dialogue_text" in data_package["data_type"]: # Match more inclusive check:
+ry:
                 abstracted_gist = json.loads(decompressed_data_str)
                 rehydrated_content = self._rehydrate_text_gist(abstracted_gist)
             except json.JSONDecodeError:
-                logger.error("Could not decode abstracted gist for memory_id '%s'. Data might be corrupted or not text.", memory_id)
-                return None
+                logger.error("Could not decode abstracted gist for memory_id '%s'. Data might be corrupted or not text.", memory_id):
+eturn None
             except Exception as e:
-                logger.error(f"Error rehydrating text gist for memory_id '%s': {e}", memory_id)
-                return None
+                logger.error(f"Error rehydrating text gist for memory_id '%s': {e}", memory_id):
+eturn None
         else:
-            # For other data types, just return the decompressed string for now
-            rehydrated_content = decompressed_data_str
+            # For other data types, just return the decompressed string for now:
+ehydrated_content = decompressed_data_str
 
         # Build TypedDict-style HAMRecallResult
         return HAMRecallResult(
@@ -711,28 +702,26 @@ class HAMMemoryManager:
 
         Returns:
             Optional[Dict[str, Any]]: The raw abstracted gist dictionary if successful,:
-            None if recall fails.
-        """
-        logger.debug(f"HAM: Recalling raw gist for memory_id '{memory_id}'")
-        data_package = self.core_memory_store.get(memory_id)
+            None if recall fails.:
+""
+        logger.debug(f"HAM: Recalling raw gist for memory_id '{memory_id}'"):
+ata_package = self.core_memory_store.get(memory_id)
         if not data_package:
             logger.error(f"Memory ID {memory_id} not found.")
             return None
 
         try:
             decrypted_data = self._decrypt(data_package["encrypted_package"])
-            if not decrypted_data: return None
-
-            decompressed_data_bytes = self._decompress(decrypted_data)
-            if not decompressed_data_bytes: return None
-
-            stored_checksum = data_package.get("metadata", ).get('sha256_checksum')
+            if not decrypted_data: return None:
+ecompressed_data_bytes = self._decompress(decrypted_data)
+            if not decompressed_data_bytes: return None:
+tored_checksum = data_package.get("metadata", ).get('sha256_checksum')
             if stored_checksum:
                 current_checksum = hashlib.sha256(decompressed_data_bytes).hexdigest
                 if current_checksum != stored_checksum:
-                    logger.critical(f"Checksum mismatch for memory ID {memory_id}! Data may be corrupted.")
-                    return None # Return None on checksum failure for raw recall
-                decompressed_data_str = decompressed_data_bytes.decode('utf-8')
+                    logger.critical(f"Checksum mismatch for memory ID {memory_id}! Data may be corrupted."):
+eturn None # Return None on checksum failure for raw recall:
+ecompressed_data_str = decompressed_data_bytes.decode('utf-8')
 
                 if "dialogue_text" in data_package["data_type"]:
                     return json.loads(decompressed_data_str)
@@ -742,8 +731,8 @@ class HAMMemoryManager:
                     return {"raw_content": decompressed_data_str}
 
         except Exception as e:
-            logger.error(f"Error during raw gist retrieval for memory_id '%s': {e}", memory_id, exc_info=True)
-            return None
+            logger.error(f"Error during raw gist retrieval for memory_id '%s': {e}", memory_id, exc_info=True):
+eturn None
 
     def _deserialize_memory(self, memory_id: str, data_package: HAMDataPackageInternal) -> HAMMemory:
         """反序列化內部數據包為 HAMMemory 物件。"""
@@ -785,10 +774,9 @@ class HAMMemoryManager:
         Query memories by date range.
 
         Args:
-            start_date (datetime): Start date for the query.
-            end_date (datetime): End date for the query.
-
-        Returns:
+            start_date (datetime): Start date for the query.:
+nd_date (datetime): End date for the query.:
+eturns:
             List[HAMRecallResult]: List of memories within the specified date range.
         """
         try:
@@ -801,8 +789,8 @@ class HAMMemoryManager:
                         if recalled_item:
                             results.append(recalled_item)
                 except ValueError as e:
-                    logger.warning(f"Failed to parse timestamp for memory {memory_id}: {e}")
-                    continue
+                    logger.warning(f"Failed to parse timestamp for memory {memory_id}: {e}"):
+ontinue
             return results
         except Exception as e:
             logger.error(f"Failed to query date range: {e}")
@@ -822,24 +810,24 @@ class HAMMemoryManager:
                 _ = await asyncio.to_thread(self._perform_deletion_check)
             except Exception as e:
                 logger.error(f"Error during memory cleanup: {e}")
-                # Continue with next iteration even if current check failed
-                continue
+                # Continue with next iteration even if current check failed:
+ontinue
 
     def _perform_deletion_check(self, memory_threshold: float = 0.1):
         """
-        Checks for and deletes old/unprotected memories when memory usage is high.
-        """
+        Checks for and deletes old/unprotected memories when memory usage is high.:
+""
         try:
-            # Check if memory usage is high
-            memory_info = psutil.virtual_memory()
+            # Check if memory usage is high:
+emory_info = psutil.virtual_memory()
             if memory_info.available < memory_info.total * memory_threshold:
                 # Identify memories to delete (unprotected, oldest/lowest relevance first)
                 memories_to_consider = sorted(
                     [
                         (mem_id, data_pkg)
-                        for mem_id, data_pkg in self.core_memory_store.items()
-                        if not data_pkg.get("protected", False)
-                    ],
+                        for mem_id, data_pkg in self.core_memory_store.items():
+f not data_pkg.get("protected", False):
+,
                     key=lambda item: (item[1].get("relevance", 0.5), datetime.fromisoformat(item[1]["timestamp"])),
                 )
 
@@ -888,8 +876,8 @@ class HAMMemoryManager:
         Enhanced query function.
         Filters by data_type, metadata_filters (exact matches), user_id (for facts), and date_range.:
         Optional keyword search on metadata string.
-        Does NOT search encrypted content for keywords in this version.
-        """
+        Does NOT search encrypted content for keywords in this version.:
+""
         logger.debug(f"HAM: Querying core memory (type: {data_type_filter}, meta_filters: {metadata_filters}, keywords: {keywords}, semantic_query: {semantic_query})")
 
         candidate_mem_ids = []
@@ -898,46 +886,46 @@ class HAMMemoryManager:
         if semantic_query:
             if not self.chroma_collection:
                 logger.warning("ChromaDB collection not initialized. Cannot perform semantic search.")
-                # Fallback to iterating all memories if semantic search is not available
-                candidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
+                # Fallback to iterating all memories if semantic search is not available:
+andidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
                 fallback_semantic = True
             else:
                 try:
-                    # Generate embedding for the semantic query using the collection's embedding function
-                    chroma_results = self.chroma_collection.query(
+                    # Generate embedding for the semantic query using the collection's embedding function:
+hroma_results = self.chroma_collection.query(
                         query_texts=[semantic_query],
-                        n_results=limit * 2, # Fetch more results from Chroma to allow for filtering
-                        include=['metadatas', 'documents']
+                        n_results=limit * 2, # Fetch more results from Chroma to allow for filtering:
+nclude=['metadatas', 'documents']
                     )
                     # Extract memory_ids from Chroma results
                     if chroma_results and chroma_results['ids']:
                         candidate_mem_ids.extend(chroma_results['ids'][0])
-                    logger.debug(f"HAM: ChromaDB returned {len(candidate_mem_ids)} candidates for semantic query.")
-                except Exception as e:
+                    logger.debug(f"HAM: ChromaDB returned {len(candidate_mem_ids)} candidates for semantic query."):
+xcept Exception as e:
                     logger.error(f"Error querying ChromaDB: {e}")
-                    # Fallback to iterating all memories if ChromaDB query fails
-                    candidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
+                    # Fallback to iterating all memories if ChromaDB query fails:
+andidate_mem_ids = sorted(list(self.core_memory_store.keys()), reverse=True)
                     fallback_semantic = True
         else:
             # If no semantic query, iterate through all memories
             # Ensure we don't include None values in the sorted list
-            candidate_mem_ids = [mem_id for mem_id in self.core_memory_store.keys() if mem_id is not None]
-            candidate_mem_ids = sorted(candidate_mem_ids, reverse=True)
+            candidate_mem_ids = [mem_id for mem_id in self.core_memory_store.keys() if mem_id is not None]:
+andidate_mem_ids = sorted(candidate_mem_ids, reverse=True)
 
         # Candidate selection Iterate through selected memory IDs
         candidate_items_with_id = []
 
         for mem_id in candidate_mem_ids:
             item = self.core_memory_store.get(mem_id)
-            if not item: # Skip if memory not found in core store (e.g., filtered by Chroma but not in JSON)
-                continue
+            if not item: # Skip if memory not found in core store (e.g., filtered by Chroma but not in JSON):
+ontinue
 
             item_metadata = item.get("metadata", )
             match = True
 
             if data_type_filter:
-                # Allow partial match for data_type_filter (e.g., "learned_fact_" matches all learned facts)
-                if not item.get("data_type", "").startswith(data_type_filter):
+                # Allow partial match for data_type_filter (e.g., "learned_fact_" matches all learned facts):
+f not item.get("data_type", "").startswith(data_type_filter):
                     match = False
 
             if match and date_range:
@@ -949,13 +937,12 @@ class HAMMemoryManager:
                     if not (start_dt_normalized <= item_dt <= end_dt_normalized):
                         match = False
                 except (ValueError, TypeError) as e:
-                    logger.warning(f"Error parsing date for memory {mem_id} or date_range {date_range}: {e}. Skipping this memory for date filter.")
-                    match = False # Treat as non-match if date parsing fails
-
-            if match and metadata_filters:
+                    logger.warning(f"Error parsing date for memory {mem_id} or date_range {date_range}: {e}. Skipping this memory for date filter."):
+atch = False # Treat as non-match if date parsing fails:
+f match and metadata_filters:
                 for key, value in metadata_filters.items():
-                    # Support nested keys like "original_source_info.type" if needed, but simple for now
-                    if item_metadata.get(key) != value:
+                    # Support nested keys like "original_source_info.type" if needed, but simple for now:
+f item_metadata.get(key) != value:
                         match = False
                         break
 
@@ -971,24 +958,24 @@ class HAMMemoryManager:
             if match:
                 recalled_item = self.recall_gist(mem_id)
                 if recalled_item: # recall_gist now returns Optional[HAMRecallResult]
-                    # recalled_item already includes metadata if successful
-                    candidate_items_with_id.append(recalled_item)
+                    # recalled_item already includes metadata if successful:
+andidate_items_with_id.append(recalled_item)
 
         # Apply fallback semantic ranking when needed
         if semantic_query and fallback_semantic and candidate_items_with_id:
-            query_tokens = {tok.strip('.,!?') for tok in semantic_query.lower().split() if len(tok.strip('.,!?')) > 2}
-            def _fallback_score(rec):
+            query_tokens = {tok.strip('.,!?') for tok in semantic_query.lower().split() if len(tok.strip('.,!?')) > 2}:
+ef _fallback_score(rec):
                 text = str(rec.get("rehydrated_gist", "")).lower()
-                gist_tokens = {tok.strip('.,!?') for tok in text.split() if len(tok.strip('.,!?')) > 2}
-                return len(query_tokens & gist_tokens)
+                gist_tokens = {tok.strip('.,!?') for tok in text.split() if len(tok.strip('.,!?')) > 2}:
+eturn len(query_tokens & gist_tokens)
             # Sort by score desc, then by timestamp (newest first)
             candidate_items_with_id.sort(
                 key=lambda x: (_fallback_score(x), datetime.fromisoformat(x["timestamp"])),
                 reverse=True
             )
 
-        # Sort by confidence if requested (primarily for facts)
-        if sort_by_confidence and data_type_filter and data_type_filter.startswith("learned_fact"):
+        # Sort by confidence if requested (primarily for facts):
+f sort_by_confidence and data_type_filter and data_type_filter.startswith("learned_fact"):
             candidate_items_with_id.sort(key=lambda x: x["metadata"].get("confidence", 0.0), reverse=True)
 
         # Apply limit
@@ -1010,8 +997,8 @@ class HAMMemoryManager:
             field_name (str) The name of the metadata field to increment.
             increment_by (int) The amount to increment the field by.
 
-        Returns: bool True if the update was successful, False otherwise.
-        """
+        Returns: bool True if the update was successful, False otherwise.:
+""
         if memory_id in self.core_memory_store:
             record = self.core_memory_store[memory_id]
             if "metadata" not in record:
@@ -1025,17 +1012,17 @@ class HAMMemoryManager:
                 # might use a more granular or delayed save mechanism.
                 return self._save_core_memory_to_file()
             else:
-                logger.error(f"HAM: Metadata field '{field_name}' for mem_id '{memory_id}' is not a number.")
-                return False
+                logger.error(f"HAM: Metadata field '{field_name}' for mem_id '{memory_id}' is not a number."):
+eturn False
         else:
-            logger.error(f"HAM: Cannot increment metadata for non-existent mem_id '{memory_id}'.")
-            return False
+            logger.error(f"HAM: Cannot increment metadata for non-existent mem_id '{memory_id}'."):
+eturn False
 
 if __name__ == '__main__':
 
     print("--- HAMMemoryManager Test ---")
-    # Ensure a clean state for testing if file exists from previous run
-    test_file_name = "ham_test_memory.json"
+    # Ensure a clean state for testing if file exists from previous run:
+est_file_name = "ham_test_memory.json"
     # Create a temporary instance to get the storage directory
     temp_ham = HAMMemoryManager(core_storage_filename=test_file_name)
     storage_dir = temp_ham.storage_dir
@@ -1047,10 +1034,10 @@ if __name__ == '__main__':
     # Test storing experiences
     print("\n--- Storing Experiences ---")
     ts_now = datetime.now(timezone.utc).isoformat() # Added timezone
-    # Provide metadata that aligns better with DialogueMemoryEntryMetadata
-    exp1_metadata = {
-        "timestamp": datetime.fromisoformat(ts_now) if isinstance(ts_now, str) else ts_now,
-        "speaker": "user",
+    # Provide metadata that aligns better with DialogueMemoryEntryMetadata:
+xp1_metadata = {
+        "timestamp": datetime.fromisoformat(ts_now) if isinstance(ts_now, str) else ts_now,:
+speaker": "user",
         "dialogue_id": "test_dialogue_1",
         "turn_id": 1,
         "user_id": "test_user",
@@ -1059,8 +1046,8 @@ if __name__ == '__main__':
     exp1_id = asyncio.run(ham.store_experience("Hello Miko! This is a test dialogue.", "dialogue_text", exp1_metadata))
 
     exp2_metadata = {
-        "timestamp": datetime.fromisoformat(ts_now) if isinstance(ts_now, str) else ts_now,
-        "speaker": "system",
+        "timestamp": datetime.fromisoformat(ts_now) if isinstance(ts_now, str) else ts_now,:
+speaker": "system",
         "dialogue_id": "test_dialogue_1",
         "turn_id": 2,
         "source": "developer_log"
@@ -1082,12 +1069,11 @@ if __name__ == '__main__':
     print("\n--- Recalling Gists ---")
     if exp1_id:
         recalled_exp1 = ham.recall_gist(exp1_id)
-        print(f"Recalled exp1: {json.dumps(recalled_exp1, indent=2) if recalled_exp1 else 'None'}")
-    if exp3_id:
+        print(f"Recalled exp1: {json.dumps(recalled_exp1, indent=2) if recalled_exp1 else 'None'}"):
+f exp3_id:
         recalled_exp3 = ham.recall_gist(exp3_id)
-        print(f"Recalled exp3: {json.dumps(recalled_exp3, indent=2) if recalled_exp3 else 'None'}")
-
-    recalled_non_existent = ham.recall_gist('mem_000999')
+        print(f"Recalled exp3: {json.dumps(recalled_exp3, indent=2) if recalled_exp3 else 'None'}"):
+ecalled_non_existent = ham.recall_gist('mem_000999')
     print(f"Recalled non-existent: {recalled_non_existent}")
 
     # Test querying memory
@@ -1117,16 +1103,14 @@ if __name__ == '__main__':
 # 从备份实现合并的函数
 
 def _mock_embed_texts(input: List[str]) -> List[List[float]]:
-    """A simple mock embedding function for testing purposes."""
-    logger.debug(f"_mock_embed_texts called with input: {input}")
+    """A simple mock embedding function for testing purposes.""":
+ogger.debug(f"_mock_embed_texts called with input: {input}")
     # Returns a dummy embedding (e.g., a list of zeros or ones)
-    # The size (384) should match the expected model output for 'all-MiniLM-L6-v2'
-    return [[0.1] * 384 for _ in input]
-
-class MockEmbeddingFunction:
-    """A mock embedding function class for ChromaDB."""
-
-    def __call__(self, input: List[str]) -> List[List[float]]:
+    # The size (384) should match the expected model output for 'all-MiniLM-L6-v2':
+eturn [[0.1] * 384 for _ in input]:
+lass MockEmbeddingFunction:
+    """A mock embedding function class for ChromaDB.""":
+ef __call__(self, input: List[str]) -> List[List[float]]:
         return _mock_embed_texts(input)
 
     def name(self) -> str:
@@ -1135,8 +1119,8 @@ class MockEmbeddingFunction:
 # Placeholder for actual stopword list and NLP tools if not available
 # 使用小写命名方式替代全大写常量命名方式，避免重新定义问题
 try:
-    # A very basic list, consider a more comprehensive one for real use
-    stopwords = set(["a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
+    # A very basic list, consider a more comprehensive one for real use:
+topwords = set(["a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
                      "have", "has", "had", "do", "does", "did", "will", "would", "should",
                      "can", "could", "may", "might", "must", "of", "to", "in", "on", "at",
                      "for", "with", "about", "against", "between", "into", "through",
@@ -1158,16 +1142,14 @@ except ImportError:
 # 从备份实现合并的函数
 
 def _mock_embed_texts(input: List[str]) -> List[List[float]]:
-    """A simple mock embedding function for testing purposes."""
-    logger.debug(f"_mock_embed_texts called with input: {input}")
+    """A simple mock embedding function for testing purposes.""":
+ogger.debug(f"_mock_embed_texts called with input: {input}")
     # Returns a dummy embedding (e.g., a list of zeros or ones)
-    # The size (384) should match the expected model output for 'all-MiniLM-L6-v2'
-    return [[0.1] * 384 for _ in input]
-
-class MockEmbeddingFunction:
-    """A mock embedding function class for ChromaDB."""
-
-    def __call__(self, input: List[str]) -> List[List[float]]:
+    # The size (384) should match the expected model output for 'all-MiniLM-L6-v2':
+eturn [[0.1] * 384 for _ in input]:
+lass MockEmbeddingFunction:
+    """A mock embedding function class for ChromaDB.""":
+ef __call__(self, input: List[str]) -> List[List[float]]:
         return _mock_embed_texts(input)
 
     def name(self) -> str:
@@ -1176,8 +1158,8 @@ class MockEmbeddingFunction:
 # Placeholder for actual stopword list and NLP tools if not available
 # 使用小写命名方式替代全大写常量命名方式，避免重新定义问题
 try:
-    # A very basic list, consider a more comprehensive one for real use
-    stopwords = set(["a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
+    # A very basic list, consider a more comprehensive one for real use:
+topwords = set(["a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
                      "have", "has", "had", "do", "does", "did", "will", "would", "should",
                      "can", "could", "may", "might", "must", "of", "to", "in", "on", "at",
                      "for", "with", "about", "against", "between", "into", "through",

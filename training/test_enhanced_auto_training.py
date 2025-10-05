@@ -46,8 +46,8 @@ def test_enhanced_data_manager() -> None:
         # 测试高质量数据获取
         _ = print("🔍 测试高质量数据获取...")
         high_quality_data = data_manager.get_high_quality_data()
-        total_high_quality = sum(len(files) for files in high_quality_data.values())
-        _ = print(f"✅ 获取到 {total_high_quality} 个高质量文件")
+        total_high_quality = sum(len(files) for files in high_quality_data.values()):
+ = print(f"✅ 获取到 {total_high_quality} 个高质量文件")
         
         # 测试为不同模型准备数据
         _ = print("📦 测试为不同模型准备数据...")

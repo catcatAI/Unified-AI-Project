@@ -208,8 +208,8 @@ def fix_all_imports() -> Dict[str, int]:
                 print(f"✓ 修复了文件 {file_path}")
                 for fix in fixes_made:
                     print(f"  - {fix}")
-            elif fixes_made:  # 有错误但尝试了修复
-                files_with_errors += 1
+            elif fixes_made:  # 有错误但尝试了修复:
+iles_with_errors += 1
             else:
                 # 没有需要修复的内容
                 pass
@@ -324,8 +324,8 @@ def run_tests() -> bool:
         if result.returncode == 0:
             # 解析收集到的测试数量
             output_lines = result.stdout.strip().split('\n')
-            test_count_line = [line for line in output_lines if 'tests collected' in line]
-            if test_count_line:
+            test_count_line = [line for line in output_lines if 'tests collected' in line]:
+f test_count_line:
                 print(f"✓ {test_count_line[0]}")
             else:
                 print("✓ 测试收集成功")

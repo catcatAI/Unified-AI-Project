@@ -28,13 +28,13 @@ class StatePredictor:
     next_state["pessimistic_flag"] = True
     return next_state
 
-    async def update(self, state: Dict[str, Any], action: Dict[str, Any], next_state: Dict[str, Any])
-    logger.debug("Updating state predictor model (conceptual)...")
+    async def update(self, state: Dict[str, Any], action: Dict[str, Any], next_state: Dict[str, Any]):
+ogger.debug("Updating state predictor model (conceptual)...")
     _ = await asyncio.sleep(0.005)
 
 class ActionEffectModel:
-    async def update(self, action: Dict[str, Any], effect: Any)
-    logger.debug("Updating action effect model (conceptual)...")
+    async def update(self, action: Dict[str, Any], effect: Any):
+ogger.debug("Updating action effect model (conceptual)...")
     _ = await asyncio.sleep(0.005)
 
 class UncertaintyEstimator:
@@ -43,8 +43,8 @@ class UncertaintyEstimator:
     _ = await asyncio.sleep(0.01)
     return 0.1 # Dummy uncertainty
 
-    async def update(self, prediction_error: float)
-    logger.debug("Updating uncertainty estimator (conceptual)...")
+    async def update(self, prediction_error: float):
+ogger.debug("Updating uncertainty estimator (conceptual)...")
     _ = await asyncio.sleep(0.005)
 
 class EnvironmentSimulator:
@@ -79,8 +79,8 @@ class EnvironmentSimulator:
             current_state, proposed_action, uncertainty
     )
 
-        self.logger.info(f"Simulated action consequences for action {proposed_action.get('name')}. Predicted state: {predicted_state.get('time_step')}")
-    return {
+        self.logger.info(f"Simulated action consequences for action {proposed_action.get('name')}. Predicted state: {predicted_state.get('time_step')}"):
+eturn {
             'predicted_state': predicted_state,
             'uncertainty': uncertainty,
             'expected_reward': expected_reward,
@@ -99,8 +99,8 @@ class EnvironmentSimulator:
     scenarios =
 
     # 最可能場景
-    most_likely = await self.state_predictor.predict(state, action)
-    scenarios.append({
+    most_likely = await self.state_predictor.predict(state, action):
+cenarios.append({
             'type': 'most_likely',
             'probability': 0.6,
             'state': most_likely
@@ -124,8 +124,8 @@ class EnvironmentSimulator:
 
     return scenarios
 
-    async def update_model_from_experience(self, experience: Dict[str, Any])
-    """從經驗更新模型"""
+    async def update_model_from_experience(self, experience: Dict[str, Any]):
+""從經驗更新模型"""
     # 更新狀態預測器
     await self.state_predictor.update(
             experience.get("state", ), experience.get("action", ), experience.get("next_state", )
@@ -148,7 +148,6 @@ class EnvironmentSimulator:
     self.logger.debug("Calculating prediction error (conceptual)...")
     # Simple dummy error calculation
     error = 0.0
-        if predicted_state.get("time_step") != actual_state.get("time_step")
-
-    error += 0.1
+        if predicted_state.get("time_step") != actual_state.get("time_step"):
+rror += 0.1
     return error

@@ -8,17 +8,18 @@ import shutil
 from pathlib import Path
 import logging
 from datetime import datetime
+from typing import Any, List
 
 # 配置日志
 logging.basicConfig(
-    level: str=logging.INFO, 
-    format: str='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('backup_management.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
-logger: Any = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class BackupManager:
     def __init__(self, project_root=None) -> None:
@@ -140,7 +141,7 @@ class BackupManager:
             except Exception as e:
                 logger.error(f"移动后端备份到归档失败: {e}")
     
-    def verify_no_backup_in_test_paths(self) -> None:
+    def verify_no_backup_in_test_paths(self) -> List[Path]:
         """验证测试路径中没有备份目录"""
         test_paths = [
             self.backend_dir / "tests",

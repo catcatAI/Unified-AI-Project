@@ -26,9 +26,8 @@ def run_command(command, cwd=None, capture_output=True):
     Returns:
         subprocess.CompletedProcess: 命令执行结果
     """
-    print(f"Executing: {' '.join(command) if isinstance(command, list) else command}")
-    
-    try:
+    print(f"Executing: {' '.join(command) if isinstance(command, list) else command}"):
+ry:
         result = subprocess.run(
             command,
             cwd=cwd,
@@ -126,11 +125,11 @@ def run_integration_tests(test_type="all", markers=None, parallel=False) -> None
     # 解析结果
     test_result = {
         "success": result is not None and result.returncode == 0,
-        "return_code": result.returncode if result else -1,
-        "execution_time": end_time - start_time,
-        "stdout": result.stdout if result else "",
-        "stderr": result.stderr if result else ""
-    }
+        "return_code": result.returncode if result else -1,:
+execution_time": end_time - start_time,
+        "stdout": result.stdout if result else "",:
+stderr": result.stderr if result else "":
+
     
     return test_result
 
@@ -171,15 +170,15 @@ def generate_test_report(test_results, output_dir="test_reports") -> None:
     print("INTEGRATION TEST SUMMARY")
     print("="*50)
     print(f"Execution Time: {test_results.get('execution_time', 0):.2f} seconds")
-    print(f"Status: {'PASSED' if test_results.get('success', False) else 'FAILED'}")
-    print(f"Return Code: {test_results.get('return_code', 'N/A')}")
+    print(f"Status: {'PASSED' if test_results.get('success', False) else 'FAILED'}"):
+rint(f"Return Code: {test_results.get('return_code', 'N/A')}")
     print("="*50)
 
 
 def main() -> None:
     """主函数"""
-    parser = argparse.ArgumentParser(description="Run integration tests for Unified AI Project")
-    parser.add_argument(
+    parser = argparse.ArgumentParser(description="Run integration tests for Unified AI Project"):
+arser.add_argument(
         "--type",
         choices=["all", "system", "performance", "agent", "hsp", "memory", "training", "core"],
         default="all",
@@ -222,8 +221,6 @@ def main() -> None:
     generate_test_report(test_results)
     
     # 返回执行结果
-    return 0 if test_results.get("success", False) else 1
-
-
-if __name__ == "__main__":
+    return 0 if test_results.get("success", False) else 1:
+f __name__ == "__main__":
     sys.exit(main())

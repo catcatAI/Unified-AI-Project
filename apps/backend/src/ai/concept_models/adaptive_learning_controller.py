@@ -52,8 +52,8 @@ class PerformanceTracker:
     self.db_path = db_path
     self._init_db
 
-    def _init_db(self)
-    """初始化数据库"""
+    def _init_db(self):
+""初始化数据库"""
     conn = sqlite3.connect(self.db_path)
     cursor = conn.cursor
     cursor.execute("""
@@ -70,10 +70,10 @@ class PerformanceTracker:
     conn.commit
     conn.close
 
-    async def record_performance(self, record: PerformanceRecord)
-    """记录性能数据"""
-        logger.debug(f"Recording performance for task {record.task_id}")
-    _ = await asyncio.sleep(0.005)
+    async def record_performance(self, record: PerformanceRecord):
+""记录性能数据"""
+        logger.debug(f"Recording performance for task {record.task_id}"):
+ = await asyncio.sleep(0.005)
 
     conn = sqlite3.connect(self.db_path)
     cursor = conn.cursor
@@ -94,8 +94,8 @@ class PerformanceTracker:
 
     async def get_performance_history(self, task_id: str, limit: int = 50) -> List[PerformanceRecord]:
     """获取任务的性能历史"""
-        logger.debug(f"Getting performance history for task {task_id}")
-    _ = await asyncio.sleep(0.01)
+        logger.debug(f"Getting performance history for task {task_id}"):
+ = await asyncio.sleep(0.01)
 
     conn = sqlite3.connect(self.db_path)
     cursor = conn.cursor
@@ -125,8 +125,8 @@ class PerformanceTracker:
 
     async def analyze_trend(self, performance_history: List[...]
     """分析性能趋势"""
-    logger.debug("Analyzing performance trend")
-    _ = await asyncio.sleep(0.01)
+    logger.debug("Analyzing performance trend"):
+ = await asyncio.sleep(0.01)
 
         if len(performance_history) < 2:
 
@@ -178,8 +178,8 @@ class StrategySelector:
     self.policy_network = self._build_policy_network
     self.is_trained = False  # 标记模型是否已训练
 
-    def _build_policy_network(self)
-    """构建策略网络"""
+    def _build_policy_network(self):
+""构建策略网络"""
     # 简单的策略选择网络
     model = nn.Sequential(
             nn.Linear(10, 64),  # 假设有10个输入特征
@@ -194,8 +194,8 @@ class StrategySelector:
     async def select(self, task_context: TaskContext,
                     performance_trend: Dict[str, Any]) -> str:
     """选择最优学习策略"""
-        logger.debug(f"Selecting optimal strategy for task {task_context.task_id}")
-    _ = await asyncio.sleep(0.01)
+        logger.debug(f"Selecting optimal strategy for task {task_context.task_id}"):
+ = await asyncio.sleep(0.01)
 
     # 使用训练好的模型选择策略（如果已训练）
         if self.is_trained:
@@ -256,8 +256,8 @@ class StrategySelector:
     # 添加历史性能特征（如果有）
         if task_context.previous_performance:
 
-    recent_success_rates = [p.success_rate for p in task_context.previous_performance[:5]]
-            avg_success_rate = np.mean(recent_success_rates) if recent_success_rates else 0.5:
+    recent_success_rates = [p.success_rate for p in task_context.previous_performance[:5]]:
+vg_success_rate = np.mean(recent_success_rates) if recent_success_rates else 0.5:
     features.append(avg_success_rate)
 
             success_rate_std = np.std(recent_success_rates) if len(recent_success_rates) > 1 else 0.0:
@@ -276,10 +276,10 @@ class StrategySelector:
 
     return torch.FloatTensor(features).unsqueeze(0)
 
-    async def update_confidence(self, strategy_id: str, performance_result: Dict[str, Any])
-    """更新策略选择置信度"""
-        logger.debug(f"Updating confidence for strategy {strategy_id}")
-    _ = await asyncio.sleep(0.005)
+    async def update_confidence(self, strategy_id: str, performance_result: Dict[str, Any]):
+""更新策略选择置信度"""
+        logger.debug(f"Updating confidence for strategy {strategy_id}"):
+ = await asyncio.sleep(0.005)
 
     success_rate = performance_result.get("success_rate", 0)
         if success_rate > 0.8:
@@ -298,8 +298,8 @@ class StrategySelector:
             "success_rate": success_rate
     })
 
-    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100)
-    """训练策略选择模型"""
+    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100):
+""训练策略选择模型"""
     logger.info(f"Training strategy selection model with {len(training_data)} samples")
 
     # 准备训练数据
@@ -347,10 +347,8 @@ class StrategySelector:
     optimizer = optim.Adam(self.policy_network.parameters, lr=0.01)
     criterion = nn.CrossEntropyLoss
 
-        for epoch in range(epochs)
-
-
-    total_loss = 0.0
+        for epoch in range(epochs):
+otal_loss = 0.0
             for batch_inputs, batch_targets in dataloader:
 
     optimizer.zero_grad
@@ -382,8 +380,8 @@ class LearningStrategyOptimizer:
     self.parameter_optimizer = self._build_parameter_optimizer
     self.is_trained = False  # 标记模型是否已训练
 
-    def _build_parameter_optimizer(self)
-    """构建参数优化模型"""
+    def _build_parameter_optimizer(self):
+""构建参数优化模型"""
     model = nn.Sequential(
             nn.Linear(8, 32),  # 8个输入特征
             nn.ReLU,
@@ -441,8 +439,8 @@ class LearningStrategyOptimizer:
     async def optimize_parameters(self, strategy: LearningStrategy,
                                 context: TaskContext) -> Dict[str, Any]:
     """优化学习参数"""
-        logger.debug(f"Optimizing parameters for strategy {strategy.id}")
-    _ = await asyncio.sleep(0.01)
+        logger.debug(f"Optimizing parameters for strategy {strategy.id}"):
+ = await asyncio.sleep(0.01)
 
     base_params = strategy.parameters.copy
 
@@ -464,10 +462,9 @@ class LearningStrategyOptimizer:
             if context.previous_performance:
 
     recent_performance = context.previous_performance[:10]  # 最近10条记录
-                avg_success_rate = np.mean([p.success_rate for p in recent_performance])
-
-    if avg_success_rate < 0.7:  # 表现不佳
-                    if "exploration_rate" in base_params:
+                avg_success_rate = np.mean([p.success_rate for p in recent_performance]):
+f avg_success_rate < 0.7:  # 表现不佳:
+f "exploration_rate" in base_params:
 
     base_params['exploration_rate'] = min(0.5, base_params['exploration_rate'] * 1.5)
                 else:
@@ -489,14 +486,14 @@ class LearningStrategyOptimizer:
     # 添加上下文特征
     features.extend([
             context.complexity_level,
-            float(len(context.previous_performance)) if context.previous_performance else 0.0
-    ])
+            float(len(context.previous_performance)) if context.previous_performance else 0.0:
+)
 
     # 添加策略特征
     features.extend([
             strategy.effectiveness,
-            float(strategy.last_used) if strategy.last_used else 0.0
-    ])
+            float(strategy.last_used) if strategy.last_used else 0.0:
+)
 
     # 添加参数特征
     param_features = [
@@ -520,9 +517,8 @@ class LearningStrategyOptimizer:
     param_names = ["learning_rate", "exploration_rate", "batch_size"]
 
     params = base_params.copy
-        for i, name in enumerate(param_names)
-
-    if name in params:
+        for i, name in enumerate(param_names):
+f name in params:
                 # 确保参数在合理范围内
                 if name == "learning_rate":
 
@@ -537,10 +533,10 @@ class LearningStrategyOptimizer:
     return params
 
     async def update_strategy_effectiveness(self, strategy_id: str,
-                                          performance_result: Dict[str, Any])
-    """更新策略有效性"""
-        logger.debug(f"Updating strategy effectiveness for {strategy_id}")
-    _ = await asyncio.sleep(0.005)
+                                          performance_result: Dict[str, Any]):
+""更新策略有效性"""
+        logger.debug(f"Updating strategy effectiveness for {strategy_id}"):
+ = await asyncio.sleep(0.005)
 
         if strategy_id in self.strategies:
 
@@ -571,8 +567,8 @@ class LearningStrategyOptimizer:
     )
     return sorted_strategies[:limit]
 
-    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100)
-    """训练参数优化模型"""
+    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100):
+""训练参数优化模型"""
     logger.info(f"Training parameter optimization model with {len(training_data)} samples")
 
     # 准备训练数据
@@ -622,10 +618,8 @@ class LearningStrategyOptimizer:
     optimizer = optim.Adam(self.parameter_optimizer.parameters, lr=0.01)
     criterion = nn.MSELoss
 
-        for epoch in range(epochs)
-
-
-    total_loss = 0.0
+        for epoch in range(epochs):
+otal_loss = 0.0
             for batch_inputs, batch_targets in dataloader:
 
     optimizer.zero_grad
@@ -662,8 +656,8 @@ class AdaptiveLearningController:
     """自适应学习控制器"""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None,
-                 storage_path: str = "adaptive_learning_controller")
-    self.config = config or
+                 storage_path: str = "adaptive_learning_controller"):
+elf.config = config or
     self.storage_path = storage_path
     os.makedirs(self.storage_path, exist_ok=True)
 
@@ -702,19 +696,19 @@ class AdaptiveLearningController:
 
     return {
             'strategy_id': optimal_strategy_id,
-            'strategy_name': optimal_strategy.name if optimal_strategy else "Unknown",
-            'parameters': learning_params,
+            'strategy_name': optimal_strategy.name if optimal_strategy else "Unknown",:
+parameters': learning_params,
             'confidence': self.strategy_selector.confidence_score,
             'trend': performance_trend
     }
 
-    async def record_performance(self, record: PerformanceRecord)
-    """记录性能数据"""
+    async def record_performance(self, record: PerformanceRecord):
+""记录性能数据"""
     _ = await self.performance_tracker.record_performance(record)
 
     async def update_strategy_effectiveness(self, strategy_id: str,
-                                          performance_result: Dict[str, Any])
-    """更新策略有效性"""
+                                          performance_result: Dict[str, Any]):
+""更新策略有效性"""
     _ = await self.strategy_optimizer.update_strategy_effectiveness(strategy_id, performance_result)
     _ = await self.strategy_selector.update_confidence(strategy_id, performance_result)
 
@@ -726,8 +720,8 @@ class AdaptiveLearningController:
     """获取性能历史"""
     return await self.performance_tracker.get_performance_history(task_id, limit)
 
-    def train_models(self, training_data: Dict[str, List[Dict[str, Any]]], epochs: int = 100)
-    """训练所有模型"""
+    def train_models(self, training_data: Dict[str, List[Dict[str, Any]]], epochs: int = 100):
+""训练所有模型"""
     self.logger.info("Training all adaptive learning models")
 
     # 训练策略选择模型
@@ -761,9 +755,8 @@ if __name__ == "__main__":
     )
 
     # 记录一些性能数据
-        for i in range(10)
-
-    record = PerformanceRecord(
+        for i in range(10):
+ecord = PerformanceRecord(
                 timestamp=datetime.now.timestamp - (10-i) * 60,  # 10分钟前到现在的数据
                 task_id="math_learning_task",
                 success_rate=0.7 + i * 0.03,  # 逐渐提高的成功率

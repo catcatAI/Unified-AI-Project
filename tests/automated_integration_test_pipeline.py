@@ -75,15 +75,13 @@ class AutomatedIntegrationTestPipeline:
 
         try:
             # 1. 设置测试环境
-            if not self._setup_environment()
-
-    logger.error("Failed to setup test environment")
+            if not self._setup_environment():
+ogger.error("Failed to setup test environment")
                 return False
 
             # 2. 生成测试数据
-            if not self._generate_test_data()
-
-    logger.error("Failed to generate test data")
+            if not self._generate_test_data():
+ogger.error("Failed to generate test data")
                 return False
 
             # 3. 执行集成测试
@@ -94,15 +92,13 @@ class AutomatedIntegrationTestPipeline:
                 return False
 
             # 4. 生成测试报告
-            if not self._generate_test_reports(test_results)
-
-    logger.error("Failed to generate test reports")
+            if not self._generate_test_reports(test_results):
+ogger.error("Failed to generate test reports")
                 return False
 
             # 5. 清理测试环境
-            if not self._cleanup_environment()
-
-    logger.warning("Failed to cleanup test environment")
+            if not self._cleanup_environment():
+ogger.warning("Failed to cleanup test environment")
                 # 不返回False，因为测试本身可能已经成功
 
             pipeline_end_time = time.time()
@@ -129,9 +125,8 @@ class AutomatedIntegrationTestPipeline:
         try:
             # 运行环境管理脚本
             env_manager_script = self.scripts_dir / "test_environment_manager.py"
-            if not env_manager_script.exists()
-
-    logger.warning("Environment manager script not found, skipping environment setup")
+            if not env_manager_script.exists():
+ogger.warning("Environment manager script not found, skipping environment setup")
                 return True
 
             cmd = [
@@ -181,9 +176,8 @@ class AutomatedIntegrationTestPipeline:
         try:
             # 运行数据管理脚本
             data_manager_script = self.scripts_dir / "test_data_manager.py"
-            if not data_manager_script.exists()
-
-    logger.warning("Data manager script not found, skipping data generation")
+            if not data_manager_script.exists():
+ogger.warning("Data manager script not found, skipping data generation")
                 return True
 
             cmd = [
@@ -318,9 +312,8 @@ class AutomatedIntegrationTestPipeline:
             if self.pipeline_config["reporting"]["generate_html"]:
 
     report_generator_script = self.scripts_dir / "generate_test_report.py"
-                if report_generator_script.exists()
-
-    cmd = [
+                if report_generator_script.exists():
+md = [
                         sys.executable,
                         str(report_generator_script),
                         "html",
@@ -349,12 +342,10 @@ class AutomatedIntegrationTestPipeline:
 
             # 解析JUnit XML并生成详细报告
             junit_xml = self.project_root / "test_results.xml"
-            if junit_xml.exists()
-
-    report_generator_script = self.scripts_dir / "generate_test_report.py"
-                if report_generator_script.exists()
-
-    cmd = [
+            if junit_xml.exists():
+eport_generator_script = self.scripts_dir / "generate_test_report.py"
+                if report_generator_script.exists():
+md = [
                         sys.executable,
                         str(report_generator_script),
                         "parse-xml",
@@ -402,9 +393,8 @@ class AutomatedIntegrationTestPipeline:
         try:
             # 运行环境管理脚本
             env_manager_script = self.scripts_dir / "test_environment_manager.py"
-            if not env_manager_script.exists()
-
-    logger.warning("Environment manager script not found, skipping environment cleanup")
+            if not env_manager_script.exists():
+ogger.warning("Environment manager script not found, skipping environment cleanup")
                 return True
 
             cmd = [
@@ -519,9 +509,8 @@ def main() -> None:
     pipeline = AutomatedIntegrationTestPipeline()
     success = pipeline.run_pipeline(pipeline_config)
 
-    sys.exit(0 if success else 1)
-
-    if __name__ == "__main__":
+    sys.exit(0 if success else 1):
+f __name__ == "__main__":
 
 
     main()

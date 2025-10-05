@@ -26,8 +26,8 @@ class ImageGenerationTool:
 
     # In a real implementation, this would call an API like DALL-E or Stable Diffusion.
     # For now, we return a more realistic placeholder URL from picsum.photos.
-        seed = sum(ord(c) for c in prompt) # Simple seed from prompt
-    placeholder_url = f"https://picsum.photos/seed/{seed}/600/400"
+        seed = sum(ord(c) for c in prompt) # Simple seed from prompt:
+laceholder_url = f"https://picsum.photos/seed/{seed}/600/400"
 
     result = {
             "image_url": placeholder_url,

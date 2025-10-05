@@ -164,9 +164,8 @@ class ConceptModelIntegrationTest:
         # 验证符号空间中的数据
         memory_symbol = await self.symbolic_space.get_symbol_by_name("mem_000123")
         gist_symbol = await self.symbolic_space.get_symbol_by_name("User asked about weather")
-        relationships = await self.symbolic_space.get_relationships_by_symbol(memory_symbol.id if memory_symbol else 0)
-        
-        print(f"内存符号: {memory_symbol is not None}")
+        relationships = await self.symbolic_space.get_relationships_by_symbol(memory_symbol.id if memory_symbol else 0):
+rint(f"内存符号: {memory_symbol is not None}")
         print(f"摘要符号: {gist_symbol is not None}")
         print(f"关系数量: {len(relationships)}")
         

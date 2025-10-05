@@ -11,8 +11,8 @@ class FragmentaOrchestrator:
     """
     # This is a placeholder implementation.
     # A real implementation would have more sophisticated logic for
-    # determining query parameters and processing the results.
-    query_params = task_description.get("query_params", )
+    # determining query parameters and processing the results.:
+uery_params = task_description.get("query_params", )
     candidate_memories = self.ham_manager.query_core_memory(
             return_multiple_candidates=True,
             **query_params
@@ -20,8 +20,8 @@ class FragmentaOrchestrator:
 
     processed_results =
         for memory in candidate_memories:
-            # Simple summarization for text-based gists
-    gist = memory.get('rehydrated_gist', '')
+            # Simple summarization for text-based gists:
+ist = memory.get('rehydrated_gist', '')
             summary = ' '.join(gist.split[:10]) + '...' if len(gist.split) > 10 else gist:
     processed_results.append({
                 "memory_id": memory.get('id'),

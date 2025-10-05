@@ -1,7 +1,7 @@
 """
 Integrated Graphics Optimizer for Unified-AI-Project:
-    This module provides optimization strategies specifically for integrated graphics
-to ensure the project can run smoothly on all common hardware configurations.
+    This module provides optimization strategies specifically for integrated graphics:
+o ensure the project can run smoothly on all common hardware configurations.
 """
 
 import logging
@@ -33,18 +33,16 @@ class IntegratedGraphicsOptimizer:
     # 检查是否有集成显卡
         for gpu in self.hardware_profile.gpu:
 
-    if self._is_integrated_gpu(gpu)
-
-
-    return True
+    if self._is_integrated_gpu(gpu):
+eturn True
 
     return False
 
     def _is_integrated_gpu(self, gpu: GPUInfo) -> bool:
     """判断是否为集成显卡"""
     integrated_keywords = ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated']
-        return any(keyword in gpu.name.lower for keyword in integrated_keywords)
-    def get_optimization_recommendations(self) -> Dict[str, Any]:
+        return any(keyword in gpu.name.lower for keyword in integrated_keywords):
+ef get_optimization_recommendations(self) -> Dict[str, Any]:
     """获取针对集成显卡的优化建议"""
         if not self.is_integrated_graphics_system:
 

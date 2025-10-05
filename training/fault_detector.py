@@ -56,8 +56,8 @@ class FaultDetector:
 
     _ = logger.info("增强的故障检测器初始化完成")
 
-    def register_node(self, node_id: str, initial_info: Dict[str, Any] = None)
-    """注册节点"""
+    def register_node(self, node_id: str, initial_info: Dict[str, Any] = None):
+""注册节点"""
     context = ErrorContext("FaultDetector", "register_node", {"node_id": node_id})
         try:
 
@@ -74,8 +74,8 @@ class FaultDetector:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"注册节点失败: {node_id} - {e}")
 
-    def unregister_node(self, node_id: str)
-    """注销节点"""
+    def unregister_node(self, node_id: str):
+""注销节点"""
     context = ErrorContext("FaultDetector", "unregister_node", {"node_id": node_id})
         try:
 
@@ -89,8 +89,8 @@ class FaultDetector:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"注销节点失败: {node_id} - {e}")
 
-    def update_node_heartbeat(self, node_id: str, metrics: Dict[str, Any] = None)
-    """更新节点心跳"""
+    def update_node_heartbeat(self, node_id: str, metrics: Dict[str, Any] = None):
+""更新节点心跳"""
     context = ErrorContext("FaultDetector", "update_node_heartbeat", {"node_id": node_id})
         try:
 
@@ -118,8 +118,8 @@ class FaultDetector:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"更新节点心跳失败: {node_id} - {e}")
 
-    def _update_node_health_status(self, node_status: NodeHealthStatus)
-    """更新节点健康状态"""
+    def _update_node_health_status(self, node_status: NodeHealthStatus):
+""更新节点健康状态"""
     # 检查CPU使用率
         if node_status.cpu_usage > self.cpu_threshold_critical:
 
@@ -139,12 +139,12 @@ class FaultDetector:
 
                 node_status.status = "healthy"
 
-    def register_failure_callback(self, callback: Callable)
-    """注册故障回调函数"""
+    def register_failure_callback(self, callback: Callable):
+""注册故障回调函数"""
     _ = self.failure_callbacks.append(callback)
 
-    async def start_monitoring(self)
-    """启动监控"""
+    async def start_monitoring(self):
+""启动监控"""
         if self.monitoring_enabled:
 
     _ = logger.warning("监控已启动")
@@ -154,16 +154,16 @@ class FaultDetector:
     self.monitoring_task = asyncio.create_task(self._monitoring_loop())
     _ = logger.info("启动故障监控")
 
-    def stop_monitoring(self)
-    """停止监控"""
+    def stop_monitoring(self):
+""停止监控"""
     self.monitoring_enabled = False
         if self.monitoring_task:
 
     _ = self.monitoring_task.cancel()
     _ = logger.info("停止故障监控")
 
-    async def _monitoring_loop(self)
-    """监控循环"""
+    async def _monitoring_loop(self):
+""监控循环"""
     context = ErrorContext("FaultDetector", "_monitoring_loop")
         try:
 
@@ -190,8 +190,8 @@ class FaultDetector:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"监控循环异常: {e}")
 
-    async def _detect_node_failures(self)
-    """检测节点故障"""
+    async def _detect_node_failures(self):
+""检测节点故障"""
     context = ErrorContext("FaultDetector", "_detect_node_failures")
         try:
 
@@ -225,8 +225,8 @@ class FaultDetector:
             _ = self.error_handler.handle_error(e, context)
             _ = logger.error(f"检测节点故障失败: {e}")
 
-    async def _trigger_failure_callbacks(self, node_id: str)
-    """触发故障回调函数"""
+    async def _trigger_failure_callbacks(self, node_id: str):
+""触发故障回调函数"""
     context = ErrorContext("FaultDetector", "_trigger_failure_callbacks", {"node_id": node_id})
         try:
 
@@ -279,12 +279,12 @@ class FaultDetector:
             status = {
                 _ = 'timestamp': datetime.now().isoformat(),
                 _ = 'total_nodes': len(self.nodes_status),
-                'healthy_nodes': len([n for n in self.nodes_status.values() if n.status == 'healthy']),
-                'warning_nodes': len([n for n in self.nodes_status.values() if n.status == 'warning']),
-                'critical_nodes': len([n for n in self.nodes_status.values() if n.status == 'critical']),
-                'failed_nodes': len([n for n in self.nodes_status.values() if n.status == 'failed']),
-                'nodes': [asdict(node_status) for node_status in self.nodes_status.values()]
-            }
+                'healthy_nodes': len([n for n in self.nodes_status.values() if n.status == 'healthy']),:
+warning_nodes': len([n for n in self.nodes_status.values() if n.status == 'warning']),:
+critical_nodes': len([n for n in self.nodes_status.values() if n.status == 'critical']),:
+failed_nodes': len([n for n in self.nodes_status.values() if n.status == 'failed']),:
+nodes': [asdict(node_status) for node_status in self.nodes_status.values()]:
+
             return status
         except Exception as e:
 

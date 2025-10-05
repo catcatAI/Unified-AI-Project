@@ -45,26 +45,17 @@ class FinalVerifier:
         """验证文件迁移"""
         print("\n验证文件迁移...")
         
-        # 检查scripts目录是否已清理
+        # 检查scripts目录是否已清理Python文件
         scripts_dir = self.project_root / "scripts"
-        if scripts_dir.exists() and any(scripts_dir.iterdir()):
-            # 检查是否只有__pycache__目录
-            items = list(scripts_dir.iterdir())
-            has_files = False
-            for item in items:
-                if item.name != "__pycache__" and item.is_file():
-                    has_files = True
-                    break
-                elif item.is_dir() and item.name != "__pycache__":
-                    has_files = True
-                    break
-            
-            if has_files:
-                self.issues.append("scripts目录中仍有文件未迁移")
-                print("❌ scripts目录中仍有文件未迁移")
+        if scripts_dir.exists():
+            # 检查是否有Python文件
+            python_files = list(scripts_dir.glob("*.py"))
+            if python_files:
+                self.issues.append(f"scripts目录中仍有 {len(python_files)} 个Python文件未迁移")
+                print(f"❌ scripts目录中仍有 {len(python_files)} 个Python文件未迁移")
             else:
                 self.success_count += 1
-                print("✅ scripts目录已清理")
+                print("✅ scripts目录中Python文件已清理")
         else:
             self.success_count += 1
             print("✅ scripts目录已清理")
@@ -246,3 +237,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

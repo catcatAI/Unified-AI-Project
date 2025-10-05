@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Test script for Rovo Dev integration functionality
-"""
+Test script for Rovo Dev integration functionality:
+""
 
 import sys
 from pathlib import Path
@@ -101,8 +101,8 @@ def test_capability_loading() -> None:
     """Test capability loading"""
     _ = print("Testing capability loading...")
 
-    # Create a mock configuration with capabilities
-    config = {
+    # Create a mock configuration with capabilities:
+onfig = {
     "atlassian": {
             "domain": "test-domain",
             "user_email": "test@example.com",

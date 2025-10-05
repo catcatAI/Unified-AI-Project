@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-End-to-End (E2E) Test for the Unified AI Project
-Tests the complete workflow from user request to system response
+End-to-End (E2E) Test for the Unified AI Project:
+ests the complete workflow from user request to system response
 """
 
 import sys
@@ -40,8 +40,8 @@ def test_end_to_end_workflow() -> None:
     # 1. User requests to process a document
         document_content = "This is a test document for end-to-end testing. It contains multiple sentences that need to be analyzed and processed by the AI system."
 
-        # 2. Check permissions for data processing
-    context = PermissionContext(
+        # 2. Check permissions for data processing:
+ontext = PermissionContext(
             user_id=user_id,
             operation=PermissionType.DATA_PROCESSING.value,
             resource="document_processing",
@@ -70,14 +70,14 @@ def test_end_to_end_workflow() -> None:
             _ = print(f"    Document processed successfully. Word count: {processed_data.get('processed_data', {}).get('word_count', 0)}")
         else:
 
-            print("    Permission denied for document processing")
-    return False
+            print("    Permission denied for document processing"):
+eturn False
 
-    # Test Case 2 User wants to interact with a virtual UI
-    _ = print("  Test Case 2: Virtual UI interaction workflow")
+    # Test Case 2 User wants to interact with a virtual UI:
+ = print("  Test Case 2: Virtual UI interaction workflow")
 
-        # 1. Check permissions for application control
-    context = PermissionContext(
+        # 1. Check permissions for application control:
+ontext = PermissionContext(
             user_id=user_id,
             operation=PermissionType.APPLICATION_CONTROL.value,
             resource="virtual_ui",
@@ -116,14 +116,14 @@ def test_end_to_end_workflow() -> None:
             _ = print("    Virtual UI interaction completed successfully")
         else:
 
-            print("    Permission denied for UI interaction")
-    return False
+            print("    Permission denied for UI interaction"):
+eturn False
 
     # Test Case 3 User wants to execute a safe tool
     _ = print("  Test Case 3: Safe tool execution workflow")
 
-        # 1. Check permissions for sandbox execution
-    context = PermissionContext(
+        # 1. Check permissions for sandbox execution:
+ontext = PermissionContext(
             user_id=user_id,
             operation=PermissionType.SANDBOX_EXECUTION.value,
             resource="tool_execution",
@@ -145,11 +145,11 @@ class Calculator:
     def __init__(self, config=None) -> None:
     pass
 
-    def add(self, a, b)
-    return a + b
+    def add(self, a, b):
+eturn a + b
 
-    def multiply(self, a, b)
-    return a * b
+    def multiply(self, a, b):
+eturn a * b
 '''
 
             result, error = sandbox.execute(
@@ -178,8 +178,8 @@ class Calculator:
                 _ = print("    Note: Sandbox execution failure is expected in this test environment")
         else:
 
-            print("    Permission denied for tool execution")
-    return False
+            print("    Permission denied for tool execution"):
+eturn False
 
     # Check audit logs
     recent_events = audit_logger.get_recent_events(10)
@@ -246,8 +246,8 @@ def test_security_workflow() -> None:
     _ = print(f"  Denied operation check: {result}")
 
     # Check audit logs
-        permission_events = [event for event in audit_logger.get_recent_events(10)
-    if event.event_type.name == "PERMISSION_CHECK"]:
+        permission_events = [event for event in audit_logger.get_recent_events(10):
+f event.event_type.name == "PERMISSION_CHECK"]:
 
     _ = print(f"  Permission check events recorded: {len(permission_events)}")
 
@@ -308,8 +308,8 @@ def test_data_processing_workflow() -> None:
     _ = print(f"  Structured data processing completed. Employees: {len(structured_data['employees'])}")
 
     # Check audit logs
-        data_events = [event for event in audit_logger.get_recent_events(10)
-    if event.event_type.name == "DATA_PROCESSING"]:
+        data_events = [event for event in audit_logger.get_recent_events(10):
+f event.event_type.name == "DATA_PROCESSING"]:
 
     _ = print(f"  Data processing events recorded: {len(data_events)}")
 
@@ -338,8 +338,8 @@ def main() -> None:
     test3 = test_data_processing_workflow()
 
         # Even if the sandbox test fails (which is expected), we still consider it a pass
-        # if the other tests pass
-    if test2 and test3:
+        # if the other tests pass:
+f test2 and test3:
 
     _ = print("\nCore end-to-end tests completed successfully!")
             _ = print("The Unified AI Project core functionality is working correctly!")

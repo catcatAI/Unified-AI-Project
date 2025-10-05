@@ -12,13 +12,13 @@ class CrisisSystem:
     self.crisis_level = 0 # 0 = No crisis, higher numbers indicate severity
     self.log_file = log_file
 
-        # Load configuration from file if not provided
-    if not self.config:
+        # Load configuration from file if not provided:
+f not self.config:
 
     self._load_config_from_file
 
-        # Default crisis keywords if not provided in config
-    self.crisis_keywords = self.config.get("crisis_keywords", )
+        # Default crisis keywords if not provided in config:
+elf.crisis_keywords = self.config.get("crisis_keywords", )
     self.negative_words = self.config.get("negative_words", )
     self.default_crisis_level = self.config.get("default_crisis_level_on_keyword", 1)
     self.crisis_protocols = self.config.get("crisis_protocols", )
@@ -64,9 +64,8 @@ class CrisisSystem:
                  # More sophisticated logic could allow assess_input to also de-escalate.
                  return self.crisis_level # Return current higher level
             else: # detected_level == self.crisis_level and self.crisis_level > 0
-                print(f"CrisisSystem: Input is consistent with ongoing crisis level {self.crisis_level}.")
-
-    self.crisis_level = detected_level # Set or maintain the detected crisis level
+                print(f"CrisisSystem: Input is consistent with ongoing crisis level {self.crisis_level}."):
+elf.crisis_level = detected_level # Set or maintain the detected crisis level
             self._trigger_protocol(self.crisis_level, {"input_text": text_input, "context": context})
         else: # No crisis keywords detected in this input
             if self.crisis_level > 0:
@@ -76,11 +75,11 @@ class CrisisSystem:
 
     return self.crisis_level
 
-    def _trigger_protocol(self, level: int, details: dict)
-    """
+    def _trigger_protocol(self, level: int, details: dict):
+""
     Triggers a protocol based on the crisis level.
-        Simulates basic actions for now.
-    """
+        Simulates basic actions for now.:
+""
     protocol_key = str(level)
     action_details = self.crisis_protocols.get(protocol_key, self.crisis_protocols.get("default", "log_only"))
 
@@ -99,14 +98,14 @@ class CrisisSystem:
             except Exception as e:
 
                 logging.error(f"Failed to write to crisis log file: {e}")
-        elif action_details == "notify_human_moderator": # Example from previous version
-            logging.critical(f"CRITICAL_ALERT: Human moderator notification required for crisis level {level}. Details: {details}")
-        elif action_details == "log_only":
+        elif action_details == "notify_human_moderator": # Example from previous version:
+ogging.critical(f"CRITICAL_ALERT: Human moderator notification required for crisis level {level}. Details: {details}"):
+lif action_details == "log_only":
 
     logging.info(f"CRISIS_INFO: Level {level} event logged. Details: {details}")
         else:
-            # For any other protocol, also log to file if crisis level > 0
-    if level > 0:
+            # For any other protocol, also log to file if crisis level > 0:
+f level > 0:
 
     try:
 
@@ -117,18 +116,17 @@ class CrisisSystem:
                 except Exception as e:
 
                     logging.error(f"Failed to write to crisis log file: {e}")
-            logging.info(f"CRISIS_INFO: Protocol '{action_details}' executed for level {level}.")
-
-    def get_current_crisis_level(self) -> int:
+            logging.info(f"CRISIS_INFO: Protocol '{action_details}' executed for level {level}."):
+ef get_current_crisis_level(self) -> int:
     return self.crisis_level
 
-    def resolve_crisis(self, resolution_details: str)
-    """Manually or automatically resolves/de-escalates a crisis."""
+    def resolve_crisis(self, resolution_details: str):
+""Manually or automatically resolves/de-escalates a crisis."""
     logging.info(f"CrisisSystem: Crisis level {self.crisis_level} resolved. Details: {resolution_details}")
     self.crisis_level = 0
 
-    def _load_config_from_file(self)
-    """Loads configuration from a JSON file."""
+    def _load_config_from_file(self):
+""Loads configuration from a JSON file."""
     import json
     import os
         try:

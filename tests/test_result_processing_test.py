@@ -111,8 +111,8 @@ class ExtendedTestResultAnalyzer:
                     "count": pattern.count,
                     "affected_tests": pattern.affected_tests
                 }
-                for pattern in failure_patterns
-            ]
+                for pattern in failure_patterns:
+
         }
         
         return analysis_report
@@ -137,8 +137,8 @@ class ExtendedTestResultFeedbackSystem:
                 'type': 'failure_pattern',
                 'title': f'处理"{failure["pattern"]}"失败模式',
                 'description': f'检测到{failure["count"]}个"{failure["pattern"]}"相关的失败测试',
-                'priority': 'high' if failure['count'] > 5 else 'medium',
-                'affected_tests': failure['affected_tests']
+                'priority': 'high' if failure['count'] > 5 else 'medium',:
+affected_tests': failure['affected_tests']
             })
         
         # 性能回归建议
@@ -148,8 +148,8 @@ class ExtendedTestResultFeedbackSystem:
                 'type': 'performance_regression',
                 'title': f'优化{regression["test_name"]}性能',
                 'description': f'性能下降{regression["regression_ratio"]*100:.1f}%，当前时间{regression["current_time"]:.4f}s',
-                'priority': 'high' if regression["regression_ratio"] > 0.5 else 'medium',
-                'test_name': regression["test_name"]
+                'priority': 'high' if regression["regression_ratio"] > 0.5 else 'medium',:
+test_name': regression["test_name"]
             })
         
         # 整体质量建议
@@ -331,8 +331,8 @@ class TestResultAnalyzerTest(unittest.TestCase):
         self.assertGreater(len(failure_patterns), 0)
         
         # 检查特定模式
-        patterns = [pattern.pattern for pattern in failure_patterns]
-        self.assertIn("断言失败", patterns)
+        patterns = [pattern.pattern for pattern in failure_patterns]:
+elf.assertIn("断言失败", patterns)
         self.assertIn("超时错误", patterns)
     
     def test_detect_performance_regressions(self) -> None:
@@ -438,8 +438,8 @@ class TestResultFeedbackSystemTest(unittest.TestCase):
         self.assertGreater(len(suggestions), 0)
         
         # 检查建议类型
-        suggestion_types = [s['type'] for s in suggestions]
-        self.assertIn('failure_pattern', suggestion_types)
+        suggestion_types = [s['type'] for s in suggestions]:
+elf.assertIn('failure_pattern', suggestion_types)
         self.assertIn('performance_regression', suggestion_types)
         self.assertIn('overall_quality', suggestion_types)
     

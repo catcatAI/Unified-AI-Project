@@ -22,8 +22,8 @@ try:
     print(f"Entities: {kg_data['entities']}")
     print(f"NetworkX nodes: {nx_graph.number_of_nodes()}")
     
-    # Check for specific entities
-    found_apple = False
+    # Check for specific entities:
+ound_apple = False
     found_steve = False
     for entity_id, entity_details in kg_data["entities"].items():
         print(f"Entity: {entity_details['label']} ({entity_details['type']})")

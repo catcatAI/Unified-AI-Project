@@ -338,14 +338,14 @@ class EnhancedDistributedTrainingFaultTolerance:
                 'auto_recovery_enabled': self.auto_recovery_enabled,
                 'components': {
                     'checkpoint_manager': {
-                        'total_checkpoints': len(self.checkpoint_manager.checkpoints) if self.checkpoint_manager else 0
-                    },
+                        'total_checkpoints': len(self.checkpoint_manager.checkpoints) if self.checkpoint_manager else 0:
+,
                     'state_manager': {
-                        'total_states': len(self.state_manager.local_cache) if self.state_manager else 0
-                    },
-                    'fault_detector': self.fault_detector.get_cluster_status() if self.fault_detector else {},
-                    'distributed_optimizer': self.distributed_optimizer.get_cluster_status() if self.distributed_optimizer else {}
-                }
+                        'total_states': len(self.state_manager.local_cache) if self.state_manager else 0:
+,
+                    'fault_detector': self.fault_detector.get_cluster_status() if self.fault_detector else {},:
+distributed_optimizer': self.distributed_optimizer.get_cluster_status() if self.distributed_optimizer else {}:
+
             }
             
             return status

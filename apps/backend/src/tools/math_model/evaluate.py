@@ -101,8 +101,8 @@ def main -> None:  # 修复函数定义，添加缺失的括号
     math_model_shell.model.load_weights(MODEL_LOAD_PATH) # Load weights into the training model structure
 
     # The inference models (encoder_model, decoder_model) inside math_model_shell
-    # should now have the trained weights because they share layers with math_model_shell.model
-    print("Model loaded successfully.")
+    # should now have the trained weights because they share layers with math_model_shell.model:
+rint("Model loaded successfully.")
     except Exception as e:
 
     print(f"Error loading model: {e}")
@@ -133,26 +133,23 @@ def main -> None:  # 修复函数定义，添加缺失的括号
     print(f"Problem: \"{input_problem_str}\"")
             print(f"Expected: \"{expected_answer_str}\", Got: \"{predicted_answer_str}\"")
 
-        # Normalize answers for comparison (e.g. "2.0" vs "2")
-    try:
+        # Normalize answers for comparison (e.g. "2.0" vs "2"):
+ry:
 
-        if float(predicted_answer_str) == float(expected_answer_str)
+        if float(predicted_answer_str) == float(expected_answer_str):
+orrect_predictions += 1
+                if i < num_samples_to_show: print("Result: CORRECT"):
+lse:
 
+                if i < num_samples_to_show: print("Result: INCORRECT"):
+xcept ValueError: # If conversion to float fails (e.g. empty or malformed prediction)
+            if predicted_answer_str == expected_answer_str: # Handles cases like empty string if that's valid:
+orrect_predictions += 1
+                 if i < num_samples_to_show: print("Result: CORRECT (non-numeric match)"):
+lse:
 
-    correct_predictions += 1
-                if i < num_samples_to_show: print("Result: CORRECT")
-            else:
-
-                if i < num_samples_to_show: print("Result: INCORRECT")
-        except ValueError: # If conversion to float fails (e.g. empty or malformed prediction)
-            if predicted_answer_str == expected_answer_str: # Handles cases like empty string if that's valid
-
-    correct_predictions += 1
-                 if i < num_samples_to_show: print("Result: CORRECT (non-numeric match)")
-            else:
-
-                if i < num_samples_to_show: print("Result: INCORRECT (prediction not a number)")
-        if i < num_samples_to_show: print("---")
+                if i < num_samples_to_show: print("Result: INCORRECT (prediction not a number)"):
+f i < num_samples_to_show: print("---")
 
 
     accuracy = (correct_predictions / len(test_problems)) * 100
@@ -163,14 +160,12 @@ def main -> None:  # 修复函数定义，添加缺失的括号
 
 if __name__ == '__main__':
     # 修复文件检查方式
-    if not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH)
-
-    print("Model file or character map file not found.")
+    if not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH):
+rint("Model file or character map file not found.")
     print(f"Ensure '{MODEL_LOAD_PATH}' and '{CHAR_MAP_LOAD_PATH}' exist.")
     print("Please train the model first using train.py.")
-    elif not os.path.exists(TEST_DATASET_PATH)
-
-    print(f"Test dataset not found at {TEST_DATASET_PATH}.")
+    elif not os.path.exists(TEST_DATASET_PATH):
+rint(f"Test dataset not found at {TEST_DATASET_PATH}.")
     print("Please run `python src/tools/math_model/data_generator.py` to generate the test dataset (CSV format).")
     else:
 

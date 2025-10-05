@@ -17,13 +17,13 @@ class LightweightMathModel:
             '+': lambda x, y: x + y,
             '-': lambda x, y: x - y,
             '*': lambda x, y: x * y,
-            '/': lambda x, y: x / y if y != 0 else float('inf'),
-            '**': lambda x, y: x ** y,
-            '%': lambda x, y: x % y if y != 0 else 0
-        }
+            '/': lambda x, y: x / y if y != 0 else float('inf'),:
+**': lambda x, y: x ** y,
+            '%': lambda x, y: x % y if y != 0 else 0:
+
         
-        # Simple patterns for arithmetic expressions
-        self.arithmetic_pattern = re.compile(r'([+-]?\d*\.?\d+)\s*([+\-*/]|\*\*)\s*([+-]?\d*\.?\d+)')
+        # Simple patterns for arithmetic expressions:
+elf.arithmetic_pattern = re.compile(r'([+-]?\d*\.?\d+)\s*([+\-*/]|\*\*)\s*([+-]?\d*\.?\d+)')
         
     def evaluate_expression(self, expression: str) -> Optional[float]:
         """
@@ -33,8 +33,8 @@ class LightweightMathModel:
             expression: String containing arithmetic expression like "5 + 3" or "10 / 2"
             
         Returns:
-            Result of the calculation or None if invalid
-        """
+            Result of the calculation or None if invalid:
+""
         try:
             # Clean the expression
             expression = expression.strip()
@@ -65,8 +65,8 @@ class LightweightMathModel:
                 except (ValueError, ZeroDivisionError, OverflowError):
                     return None
             
-            # Fallback: try eval for more complex expressions (with safety checks)
-            return self._safe_eval(expression)
+            # Fallback: try eval for more complex expressions (with safety checks):
+eturn self._safe_eval(expression)
             
         except Exception:
             return None
@@ -89,8 +89,8 @@ class LightweightMathModel:
             }  # type: Dict[type, Callable[..., Any]]
             
             def eval_node(node):
-                if isinstance(node, ast.Constant):  # Python 3.8+
-                    value = node.value
+                if isinstance(node, ast.Constant):  # Python 3.8+:
+alue = node.value
                     # 处理复数类型，取实部
                     if isinstance(value, complex):
                         return float(value.real)
@@ -98,8 +98,8 @@ class LightweightMathModel:
                     if isinstance(value, (int, float)):
                         return float(value)
                     raise ValueError(f"Unsupported constant value type: {type(value)}")
-                elif isinstance(node, ast.Num):  # Python < 3.8
-                    n_value = node.n
+                elif isinstance(node, ast.Num):  # Python < 3.8:
+_value = node.n
                     # 处理复数类型，取实部
                     if isinstance(n_value, complex):
                         return float(n_value.real)
@@ -173,13 +173,13 @@ class LightweightMathModel:
         """
         Extract mathematical expression from a natural language problem.
         """
-        # Simple extraction - look for patterns like "5 + 3" or "10 / 2"
-        match = self.arithmetic_pattern.search(problem)
+        # Simple extraction - look for patterns like "5 + 3" or "10 / 2":
+atch = self.arithmetic_pattern.search(problem)
         if match:
             return match.group(0)
         
-        # Look for "what is X" patterns
-        what_is_pattern = re.compile(r'what is\s+([0-9+\-*/.\s]+)', re.IGNORECASE)
+        # Look for "what is X" patterns:
+hat_is_pattern = re.compile(r'what is\s+([0-9+\-*/.\s]+)', re.IGNORECASE)
         match = what_is_pattern.search(problem)
         if match:
             return match.group(1).strip()
@@ -199,8 +199,8 @@ class LightweightMathModel:
             dataset_path: Path to the training dataset JSON file
             
         Returns:
-            Dictionary with training statistics
-        """
+            Dictionary with training statistics:
+""
         try:
             with open(dataset_path, 'r', encoding='utf-8') as f:
                 dataset = json.load(f)
@@ -238,9 +238,8 @@ class LightweightMathModel:
                             'predicted': predicted
                         })
             
-            accuracy = correct / total if total > 0 else 0
-            
-            return {
+            accuracy = correct / total if total > 0 else 0:
+eturn {
                 'accuracy': accuracy,
                 'correct': correct,
                 'total': total,
@@ -257,8 +256,8 @@ class LightweightMathModel:
     
     def save_model(self, model_path: str) -> bool:
         """
-        Save model configuration (minimal for rule-based model).
-        """
+        Save model configuration (minimal for rule-based model).:
+""
         try:
             model_config = {
                 'model_type': 'lightweight_math_model',
@@ -310,8 +309,8 @@ def main() -> None:  # 修复函数定义，添加缺失的括号
         print(f"Answer: {result}")
         print("-" * 20)
     
-    # Test on dataset if available
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Test on dataset if available:
+cript_dir = os.path.dirname(os.path.abspath(__file__))
     project_root: str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
     dataset_path = os.path.join(project_root, "data", "raw_datasets", "arithmetic_train_dataset.json")
     

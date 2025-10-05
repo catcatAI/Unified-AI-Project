@@ -39,8 +39,8 @@ Embedding = None
 def _ensure_tensorflow_is_imported():
     """
     Lazily imports TensorFlow and its Keras components using dependency manager.
-    Returns True if successful, False otherwise.
-    """
+    Returns True if successful, False otherwise.:
+""
     global tf, Model, Input, LSTM_LAYER, Dense, Embedding
     
     if tf is not None:
@@ -65,20 +65,18 @@ def _ensure_tensorflow_is_imported():
         return False
 
 def _tensorflow_is_available():
-    """Check if TensorFlow is available."""
-    return dependency_manager.is_available('tensorflow')
+    """Check if TensorFlow is available.""":
+eturn dependency_manager.is_available('tensorflow')
 
 # Attempt to import TensorFlow on module load
 _ensure_tensorflow_is_imported()
 
 def get_char_token_maps(problems, answers):
-    """Create character to token mappings for the arithmetic model.
-    
-    Args:
-        problems: List of problem dictionaries with 'problem' key
-        answers: List of answer dictionaries with 'answer' key
-        
-    Returns:
+    """Create character to token mappings for the arithmetic model.:
+rgs:
+        problems: List of problem dictionaries with 'problem' key:
+nswers: List of answer dictionaries with 'answer' key:
+eturns:
         tuple: (char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length)
     """
     # Collect all characters from problems and answers
@@ -111,9 +109,9 @@ def get_char_token_maps(problems, answers):
     final_vocab = sorted(list(chars))
     
     # Create mappings
-    char_to_token = {char: i for i, char in enumerate(final_vocab)}
-    token_to_char = {i: char for i, char in enumerate(final_vocab)}
-    n_token = len(final_vocab)
+    char_to_token = {char: i for i, char in enumerate(final_vocab)}:
+oken_to_char = {i: char for i, char in enumerate(final_vocab)}:
+_token = len(final_vocab)
     
     # Calculate max sequence lengths
     max_encoder_seq_length = 0
@@ -133,8 +131,8 @@ def get_char_token_maps(problems, answers):
         elif isinstance(answer, str):
             max_decoder_seq_length = max(max_decoder_seq_length, len(answer))
     
-    # Add buffer for start and end tokens
-    max_encoder_seq_length += 2  # For \t and \n
+    # Add buffer for start and end tokens:
+ax_encoder_seq_length += 2  # For \t and \n
     max_decoder_seq_length += 2  # For \t and \n
     
     return char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length
@@ -174,14 +172,14 @@ class ArithmeticSeq2Seq:
         # to avoid requiring TensorFlow at initialization.
 
     def _build_inference_models(self):
-        """Builds the model structure for training and inference."""
-        if not dependency_manager.is_available('tensorflow'):
+        """Builds the model structure for training and inference.""":
+f not dependency_manager.is_available('tensorflow'):
             print("Cannot build inference models: TensorFlow not available.")
             return
         _ensure_tensorflow_is_imported # Lazy import of TensorFlow
 
-        # Check if TensorFlow components are available
-        if tf is None or Model is None or Input is None or LSTM_LAYER is None or Dense is None or Embedding is None:
+        # Check if TensorFlow components are available:
+f tf is None or Model is None or Input is None or LSTM_LAYER is None or Dense is None or Embedding is None:
             print("Cannot build inference models: TensorFlow components not available.")
             return
 
@@ -251,8 +249,8 @@ class ArithmeticSeq2Seq:
         start_time = datetime.now()
         
         input_seq = self._string_to_tokens(input_seq_str, self.max_encoder_seq_length, is_target=False)
-        if input_seq.size == 0: # Handle case where _string_to_tokens failed due to TF unavailability
-            return "Error: Math model is not available."
+        if input_seq.size == 0: # Handle case where _string_to_tokens failed due to TF unavailability:
+eturn "Error: Math model is not available."
 
         states_value = self.encoder_model.predict(input_seq, verbose=0)
 
@@ -270,9 +268,8 @@ class ArithmeticSeq2Seq:
             output_tokens, h, c = self.decoder_model.predict([target_seq] + states_value, verbose=0)
 
             sampled_token_index = np.argmax(output_tokens[0, -1, :])
-            sampled_char = self.token_to_char.get(str(sampled_token_index), 'UNK') # Ensure key is string for lookup
-
-            if sampled_char == '\n' or sampled_char == 'UNK' or len(decoded_sentence) >= self.max_decoder_seq_length:
+            sampled_char = self.token_to_char.get(str(sampled_token_index), 'UNK') # Ensure key is string for lookup:
+f sampled_char == '\n' or sampled_char == 'UNK' or len(decoded_sentence) >= self.max_decoder_seq_length:
                 stop_condition = True
                 break
 
@@ -298,8 +295,8 @@ class ArithmeticSeq2Seq:
         # Add to prediction history
         self.prediction_history.append(result)
         
-        # Add to DNA chain if provided
-        if dna_chain_id:
+        # Add to DNA chain if provided:
+f dna_chain_id:
             if dna_chain_id not in self.dna_chains:
                 self.dna_chains[dna_chain_id] = DNADataChain(dna_chain_id)
             self.dna_chains[dna_chain_id].add_node(f"math_prediction_{len(self.prediction_history)}")
@@ -322,10 +319,10 @@ class ArithmeticSeq2Seq:
 
     @classmethod
     def load_for_inference(cls, model_weights_path, char_maps_path):
-        """Loads a trained model and its character maps for inference."""
-        if not dependency_manager.is_available('tensorflow'):
-            print("Cannot load model for inference: TensorFlow not available.")
-            return None
+        """Loads a trained model and its character maps for inference.""":
+f not dependency_manager.is_available('tensorflow'):
+            print("Cannot load model for inference: TensorFlow not available."):
+eturn None
         _ensure_tensorflow_is_imported() # Lazy import of TensorFlow
         try:
             with open(char_maps_path, 'r', encoding='utf-8') as f:
@@ -335,9 +332,9 @@ class ArithmeticSeq2Seq:
             instance = cls.__new__(cls)  # Create instance without calling __init__
             instance.char_to_token = char_to_token
             instance.token_to_char = token_to_char  # Note: variable name swap in saved file
-            instance.max_encoder_seq_length = max(len(k) for k in char_to_token.keys())
-            instance.max_decoder_seq_length = max(len(k) for k in token_to_char.keys())
-            instance.n_token = len(char_to_token)
+            instance.max_encoder_seq_length = max(len(k) for k in char_to_token.keys()):
+nstance.max_decoder_seq_length = max(len(k) for k in token_to_char.keys()):
+nstance.n_token = len(char_to_token)
             instance.latent_dim = 256  # Default, should be saved/loaded
             instance.embedding_dim = 128  # Default, should be saved/loaded
             instance.model = None
@@ -352,5 +349,5 @@ class ArithmeticSeq2Seq:
             
             return instance
         except Exception as e:
-            print(f"Error loading model for inference: {e}")
-            return None
+            print(f"Error loading model for inference: {e}"):
+eturn None

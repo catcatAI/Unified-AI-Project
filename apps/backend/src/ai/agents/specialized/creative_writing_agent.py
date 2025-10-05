@@ -11,16 +11,16 @@ from ....core.services.multi_llm_service import MultiLLMService, ChatMessage
 
 class CreativeWritingAgent(BaseAgent):
     """
-    A specialized agent for creative writing tasks like generating marketing copy,
-    short stories, or polishing text.
+    A specialized agent for creative writing tasks like generating marketing copy,:
+hort stories, or polishing text.
     """
     def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_generate_marketing_copy_v1.0",
                 "name": "generate_marketing_copy",
-                "description": "Generates marketing copy for a given product and target audience.",
-                "version": "1.0",
+                "description": "Generates marketing copy for a given product and target audience.",:
+version": "1.0",
                 "parameters": [
                     {"name": "product_description", "type": "string", "required": True},
                     {"name": "target_audience", "type": "string", "required": True},
@@ -44,8 +44,8 @@ class CreativeWritingAgent(BaseAgent):
         # This agent directly uses the LLMInterface initialized in its services.
         # Be defensive in case tests patch initialize_services to return None.
         services = getattr(self, "services", None)
-        self.llm_interface: MultiLLMService = services.get("llm_interface") if isinstance(services, dict) else None
-        self._load_prompts()
+        self.llm_interface: MultiLLMService = services.get("llm_interface") if isinstance(services, dict) else None:
+elf._load_prompts()
 
     def _load_prompts(self) -> None:
         """Loads prompts from the YAML file."""
@@ -68,9 +68,8 @@ class CreativeWritingAgent(BaseAgent):
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", )
 
-        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
-
-        if not self.llm_interface:
+        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'"):
+f not self.llm_interface:
             result_payload = self._create_failure_payload(request_id, "INTERNAL_ERROR", "MultiLLMService is not available.")
         else:
             try:
@@ -91,11 +90,10 @@ class CreativeWritingAgent(BaseAgent):
 
         callback_address = task_payload.get("callback_address")
         if self.hsp_connector and callback_address:
-            callback_topic = str(callback_address) if callback_address is not None else ""
-            _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
-
-if __name__ == '__main__':
+            callback_topic = str(callback_address) if callback_address is not None else "":
+ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}"):
+f __name__ == '__main__':
     async def main() -> None:
         agent_id = f"did:hsp:creative_writing_agent_{uuid.uuid4().hex[:6]}"
         agent = CreativeWritingAgent(agent_id=agent_id)

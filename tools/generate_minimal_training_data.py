@@ -17,8 +17,8 @@ _ = sys.path.insert(0, str(project_root))
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger: Any = logging.getLogger(__name__)
 
-def create_minimal_training_data()
-    """创建最小化的训练数据"""
+def create_minimal_training_data():
+""创建最小化的训练数据"""
     # 创建数据目录
     data_dir = project_root / "data" / "concept_models_training_data"
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -27,8 +27,8 @@ def create_minimal_training_data()
 
     # 1. 创建概念模型文档训练数据 (少量样本)
     docs_data = []
-    for i in range(10)  # 只创建10个样本而不是全部
-    sample = {
+    for i in range(10)  # 只创建10个样本而不是全部:
+ample = {
             "id": f"doc_{i:03d}",
             "source": "minimal_test_data.md",
             "content": f"这是用于测试的概念模型训练数据样本 {i}。包含一些关于AI模型训练和优化的基本概念。",
@@ -45,8 +45,8 @@ def create_minimal_training_data()
 
     # 2. 创建环境模拟器训练数据
     env_data = []
-    for i in range(20)  # 创建20个样本
-    sample = {
+    for i in range(20)  # 创建20个样本:
+ample = {
             "id": f"env_{i:03d}",
             "type": "environment_transition",
             "state_before": {
@@ -77,9 +77,8 @@ def create_minimal_training_data()
 
     # 3. 创建因果推理训练数据
     causal_data = []
-    for i in range(10)
-
-    sample = {
+    for i in range(10):
+ample = {
             "id": f"causal_{i:03d}",
             "type": "causal_relationship",
             "variables": ["A", "B"],
@@ -98,9 +97,8 @@ def create_minimal_training_data()
 
     # 4. 创建自适应学习训练数据
     adaptive_data = []
-    for i in range(10)
-
-    sample = {
+    for i in range(10):
+ample = {
             "id": f"adaptive_{i:03d}",
             "type": "learning_strategy",
             "context": {
@@ -122,9 +120,8 @@ def create_minimal_training_data()
 
     # 5. 创建Alpha深度模型训练数据
     alpha_data = []
-    for i in range(10)
-
-    sample = {
+    for i in range(10):
+ample = {
             "id": f"alpha_{i:03d}",
             "type": "deep_parameter",
             "source_memory_id": f"mem_{i:06d}",
@@ -169,8 +166,8 @@ def create_minimal_training_data()
             _ = "adaptive_learning_data": len(adaptive_data),
             _ = "alpha_deep_model_data": len(alpha_data)
     },
-        "usage": "Minimal training data for Unified-AI-Project concept models testing"
-    }
+        "usage": "Minimal training data for Unified-AI-Project concept models testing":
+
 
     config_file = data_dir / "data_config.json"
     with open(config_file, 'w', encoding='utf-8') as f:

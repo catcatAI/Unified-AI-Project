@@ -22,8 +22,8 @@ class Angela:
             if self.rect.y < 400:
                 self.is_appearing = False
 
-        # Placeholder for proactive interaction logic
-        self.check_for_proactive_interaction
+        # Placeholder for proactive interaction logic:
+elf.check_for_proactive_interaction
 
     def render(self, surface):
         if self.is_appearing:

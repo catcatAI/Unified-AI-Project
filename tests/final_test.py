@@ -15,8 +15,8 @@ def final_test():
     test_cases = [
         ("Microsoft is based in Redmond.", "BASED_IN"),
         ("Innovate Corp is located in Silicon Valley.", "LOCATED_IN"),
-        ("John Doe works for Acme Corp.", "WORKS_FOR"),
-        ("Steve Jobs was a founder of Apple.", "PERSON_IS_TITLE_OF_ORG"),
+        ("John Doe works for Acme Corp.", "WORKS_FOR"),:
+"Steve Jobs was a founder of Apple.", "PERSON_IS_TITLE_OF_ORG"),
         ("Sundar Pichai is the CEO of Google.", "PERSON_IS_TITLE_OF_ORG")
     ]
     
@@ -38,10 +38,10 @@ def final_test():
                 tgt_label = kg_data["entities"].get(rel["target_id"], {}).get("label", rel["target_id"])
                 print(f"    {j+1}. {src_label} --{rel['type']}--> {tgt_label} (pattern: {rel['attributes'].get('pattern', 'N/A')})")
             
-            # Check if any relationship was found
-            if len(kg_data['relationships']) > 0:
-                pattern_found = any(rel['attributes'].get('pattern') == expected_pattern for rel in kg_data['relationships'])
-                if pattern_found:
+            # Check if any relationship was found:
+f len(kg_data['relationships']) > 0:
+                pattern_found = any(rel['attributes'].get('pattern') == expected_pattern for rel in kg_data['relationships']):
+f pattern_found:
                     print(f"  ✓ PASS: Found expected {expected_pattern} pattern")
                 else:
                     print(f"  ✓ PASS: Found a relationship (pattern may differ from expected {expected_pattern})")
@@ -53,8 +53,8 @@ def final_test():
             print(f"  ✗ ERROR: {e}")
             all_passed = False
     
-    print(f"\nOverall result: {'✓ ALL TESTS PASSED' if all_passed else '✗ SOME TESTS FAILED'}")
-    return all_passed
+    print(f"\nOverall result: {'✓ ALL TESTS PASSED' if all_passed else '✗ SOME TESTS FAILED'}"):
+eturn all_passed
 
 if __name__ == "__main__":
     final_test()

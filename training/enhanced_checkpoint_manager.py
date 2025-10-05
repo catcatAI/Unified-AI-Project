@@ -29,8 +29,8 @@ ErrorContext = type('ErrorContext', (), {
 
 class GlobalErrorHandler:
     @staticmethod
-    def handle_error(error, context, strategy=None)
-    print(f"Error in {context.component}.{context.operation}: {error}")
+    def handle_error(error, context, strategy=None):
+rint(f"Error in {context.component}.{context.operation}: {error}")
 
 global_error_handler = GlobalErrorHandler()
 
@@ -75,8 +75,8 @@ class EnhancedCheckpointManager:
 
     def should_save_checkpoint(self, epoch: int, metrics: Dict[...]
     """判断是否应该保存检查点"""
-    context = ErrorContext("EnhancedCheckpointManager", "should_save_checkpoint", {"epoch": epoch, "task_id": task_id})
-        try:
+    context = ErrorContext("EnhancedCheckpointManager", "should_save_checkpoint", {"epoch": epoch, "task_id": task_id}):
+ry:
 
             should_save = False
             checkpoint_type = "regular"
@@ -131,9 +131,8 @@ class EnhancedCheckpointManager:
             # 特殊事件触发检查点（例如验证损失改善）
             if metrics and 'val_loss' in metrics:
                 # 检查是否有显著改善
-                if self._should_save_for_improvement(metrics, task_id)
-
-    should_save = True
+                if self._should_save_for_improvement(metrics, task_id):
+hould_save = True
                     checkpoint_type = "event_triggered"
                     _ = reasons.append("验证损失显著改善")
 
@@ -180,8 +179,8 @@ class EnhancedCheckpointManager:
 
     def save_checkpoint(self, state: Dict[...]
     """保存检查点"""
-    context = ErrorContext("EnhancedCheckpointManager", "save_checkpoint", {"task_id": task_id, "checkpoint_type": checkpoint_type})
-        try:
+    context = ErrorContext("EnhancedCheckpointManager", "save_checkpoint", {"task_id": task_id, "checkpoint_type": checkpoint_type}):
+ry:
             # 生成检查点ID
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             checkpoint_id = f"ckpt_{task_id or 'default'}_{timestamp}_{int(time.time())}"
@@ -283,18 +282,16 @@ class EnhancedCheckpointManager:
 
             # 读取检查点文件
             checkpoint_path = Path(target_checkpoint.file_path)
-            if not checkpoint_path.exists()
-
-    _ = logger.error(f"检查点文件不存在: {checkpoint_path}")
+            if not checkpoint_path.exists():
+ = logger.error(f"检查点文件不存在: {checkpoint_path}")
                 return None
 
             with open(checkpoint_path, 'r', encoding='utf-8') as f:
     checkpoint_data = json.load(f)
 
             # 解压缩数据（如果需要）
-            if checkpoint_data.get('_compressed')
-
-    checkpoint_data = self._decompress_checkpoint_data(checkpoint_data)
+            if checkpoint_data.get('_compressed'):
+heckpoint_data = self._decompress_checkpoint_data(checkpoint_data)
 
             _ = logger.info(f"加载检查点: {target_checkpoint.checkpoint_id}")
             return checkpoint_data
@@ -310,11 +307,11 @@ class EnhancedCheckpointManager:
     """解压缩检查点数据"""
     # 这里应该实现实际的数据解压缩逻辑
     # 为了示例，我们只是移除压缩标记
-    _ = checkpoint_data.pop('_compressed', None)
-    return checkpoint_data
+    _ = checkpoint_data.pop('_compressed', None):
+eturn checkpoint_data
 
-    def _cleanup_old_checkpoints(self, task_id: str = None)
-    """清理旧检查点"""
+    def _cleanup_old_checkpoints(self, task_id: str = None):
+""清理旧检查点"""
     context = ErrorContext("EnhancedCheckpointManager", "_cleanup_old_checkpoints", {"task_id": task_id})
         try:
             # 获取特定任务的检查点或所有检查点
@@ -338,9 +335,8 @@ class EnhancedCheckpointManager:
     try:
                         # 删除文件
                         checkpoint_path = Path(checkpoint_info.file_path)
-                        if checkpoint_path.exists()
-
-    _ = checkpoint_path.unlink()
+                        if checkpoint_path.exists():
+ = checkpoint_path.unlink()
                             _ = logger.info(f"删除旧检查点文件: {checkpoint_path}")
 
                         # 从记录中移除
@@ -385,14 +381,14 @@ class EnhancedCheckpointManager:
     return {
                     'task_id': task_id,
                     _ = 'total_checkpoints': len(task_checkpoints),
-                    'checkpoints': [asdict(cp) for cp in task_checkpoints]
-                }
+                    'checkpoints': [asdict(cp) for cp in task_checkpoints]:
+
             else:
 
     return {
                     _ = 'total_checkpoints': len(self.checkpoints),
-                    'checkpoints': [asdict(cp) for cp in self.checkpoint_history]
-                }
+                    'checkpoints': [asdict(cp) for cp in self.checkpoint_history]:
+
 
         except Exception as e:
 

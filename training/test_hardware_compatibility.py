@@ -53,11 +53,8 @@ def test_hardware_detection() -> None:
         if profile.gpu:
 
 
-    for i, gpu in enumerate(profile.gpu)
-
-
-
-    _ = logger.info(f"  GPU {i}: {gpu.name} ({gpu.memory_total} MB)")
+    for i, gpu in enumerate(profile.gpu):
+ = logger.info(f"  GPU {i}: {gpu.name} ({gpu.memory_total} MB)")
                 # 检查是否为集成显卡
                 integrated_keywords = ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated']
                 is_integrated = any(keyword in gpu.name.lower() for keyword in integrated_keywords):
@@ -153,27 +150,23 @@ def test_simple_integrated_graphics_check() -> None:
                 "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
             ], capture_output=True, text=True, timeout=10)
 
-            if result.returncode == 0 and result.stdout.strip()
-
-
-    gpu_data = json.loads(result.stdout)
+            if result.returncode == 0 and result.stdout.strip():
+pu_data = json.loads(result.stdout)
 
                 # Handle both single GPU and multiple GPU cases
-                if isinstance(gpu_data, list)
-
-    gpu_list = gpu_data
+                if isinstance(gpu_data, list):
+pu_list = gpu_data
                 else:
 
                     gpu_list = [gpu_data]
 
-                # Check if any GPU is integrated graphics
-    integrated_graphics_found = False
+                # Check if any GPU is integrated graphics:
+ntegrated_graphics_found = False
                 for gpu_info in gpu_list:
 
     name = gpu_info.get('Name', '').lower()
-                    if any(keyword in name for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics'])
-
-    _ = logger.info(f"检测到集成显卡: {gpu_info.get('Name')}")
+                    if any(keyword in name for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics']):
+ = logger.info(f"检测到集成显卡: {gpu_info.get('Name')}")
                         integrated_graphics_found = True
 
                 if integrated_graphics_found:

@@ -291,9 +291,8 @@ class TestReportGenerator:
             # 解析测试套件
             for testsuite in root.findall(".//testsuite")
                 # 解析测试用例
-                for testcase in testsuite.findall("testcase")
-
-    test_case_data = {
+                for testcase in testsuite.findall("testcase"):
+est_case_data = {
                         "name": testcase.get("name", ""),
                         "module": testcase.get("classname", ""),
                         "duration": float(testcase.get("time", 0)),
@@ -496,8 +495,8 @@ def main() -> None:
     )
     parser.add_argument(
     "--input",
-        help="Input file (XML for parse-xml, JSON for performance)"
-    )
+        help="Input file (XML for parse-xml, JSON for performance)":
+
     parser.add_argument(
     "--output",
     help="Output HTML file path"
@@ -536,8 +535,8 @@ def main() -> None:
     # 生成性能报告
         if not args.input:
 
-    print("Error: --input is required for performance action")
-    sys.exit(1)
+    print("Error: --input is required for performance action"):
+ys.exit(1)
 
         try:
 
@@ -554,8 +553,8 @@ def main() -> None:
     # 解析JUnit XML文件
         if not args.input:
 
-    print("Error: --input is required for parse-xml action")
-    sys.exit(1)
+    print("Error: --input is required for parse-xml action"):
+ys.exit(1)
 
     test_results = report_generator.parse_junit_xml(args.input)
         if test_results:

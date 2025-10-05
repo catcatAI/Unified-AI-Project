@@ -7,8 +7,8 @@ from .base import Storage, Context, ContextType
 
 logger: Any = logging.getLogger(__name__)
 
-class DatabaseStorage(Storage)
-    """数据库存储实现"""
+class DatabaseStorage(Storage):
+""数据库存储实现"""
 
     def __init__(self, db_connection=None) -> None:
     # 这里应该初始化数据库连接
@@ -103,8 +103,8 @@ class DatabaseStorage(Storage)
                     return True
                 else:
 
-                    logger.debug(f"Context {context_id} not found in mock database storage for deletion")
-    return False
+                    logger.debug(f"Context {context_id} not found in mock database storage for deletion"):
+eturn False
             else:
                 # 实际的数据库删除逻辑
                 # 这里应该使用数据库连接执行DELETE操作
@@ -130,8 +130,8 @@ class DatabaseStorage(Storage)
 
                     context_ids = [
                         context_id for context_id, context_data in self._db.items:
-    if context_data["context_type"] == context_type.value
-                    ]
+    if context_data["context_type"] == context_type.value:
+
 
                 logger.debug(f"Listed {len(context_ids)} contexts from mock database storage")
                 return context_ids
@@ -161,8 +161,8 @@ class DatabaseStorage(Storage)
                     return True
                 else:
 
-                    logger.debug(f"Context {context_id} not found in mock database storage for metadata update")
-    return False
+                    logger.debug(f"Context {context_id} not found in mock database storage for metadata update"):
+eturn False
             else:
                 # 实际的数据库更新逻辑
                 # 这里应该使用数据库连接执行UPDATE操作

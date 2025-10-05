@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Deadlock Detection and Loop Detection for Tests
-測試中的死鎖檢測和循環檢測
+Deadlock Detection and Loop Detection for Tests:
+試中的死鎖檢測和循環檢測
 
 This module provides utilities to detect deadlocks, infinite loops,
 and other blocking conditions in tests.
@@ -23,8 +23,8 @@ from enum import Enum
 logger: Any = logging.getLogger(__name__)
 
 
-class DetectionType(Enum)
-    """檢測類型"""
+class DetectionType(Enum):
+""檢測類型"""
     DEADLOCK = "deadlock"
     INFINITE_LOOP = "infinite_loop"
     RESOURCE_LEAK = "resource_leak"
@@ -54,8 +54,8 @@ class DeadlockDetector:
     self.detection_active = False
     self._detection_thread: Optional[threading.Thread] = None
 
-    def start_detection(self)
-    """開始檢測"""
+    def start_detection(self):
+""開始檢測"""
         if self.detection_active:
 
     return
@@ -68,16 +68,16 @@ class DeadlockDetector:
     self._detection_thread.start
     logger.debug("Deadlock detection started")
 
-    def stop_detection(self)
-    """停止檢測"""
+    def stop_detection(self):
+""停止檢測"""
     self.detection_active = False
         if self._detection_thread and self._detection_thread.is_alive:
 
     self._detection_thread.join(timeout=1.0)
     logger.debug("Deadlock detection stopped")
 
-    def _detection_loop(self)
-    """檢測循環"""
+    def _detection_loop(self):
+""檢測循環"""
     start_time = time.time
 
         while self.detection_active and (time.time - start_time) < self.max_detection_time:
@@ -94,8 +94,8 @@ class DeadlockDetector:
                 logger.error(f"Error in deadlock detection: {e}")
                 break
 
-    def _check_for_deadlocks(self)
-    """檢查死鎖"""
+    def _check_for_deadlocks(self):
+""檢查死鎖"""
     current_threads = threading.enumerate
 
         for thread in current_threads:
@@ -143,8 +143,8 @@ class DeadlockDetector:
     logger.warning(f"Potential deadlock detected in thread {thread_id}")
                     self._report_potential_deadlock(thread, frame)
 
-    def _report_potential_deadlock(self, thread: threading.Thread, frame)
-    """報告潛在死鎖"""
+    def _report_potential_deadlock(self, thread: threading.Thread, frame):
+""報告潛在死鎖"""
     stack_trace = ''.join(traceback.format_stack(frame))
     logger.error(f"Deadlock detected in thread {thread.name}:\n{stack_trace}")
 
@@ -178,8 +178,8 @@ class LoopDetector:
 
     return False
 
-    def reset(self)
-    """重置計數器"""
+    def reset(self):
+""重置計數器"""
     self.iteration_counts.clear
 
 
@@ -191,8 +191,8 @@ class ResourceLeakDetector:
     self.initial_file_descriptors = 0
     self.initial_memory_usage = 0
 
-    def start_monitoring(self)
-    """開始監控"""
+    def start_monitoring(self):
+""開始監控"""
     self.initial_thread_count = threading.active_count
         try:
 
@@ -210,8 +210,8 @@ class ResourceLeakDetector:
 
     # 檢查線程洩漏
     current_thread_count = threading.active_count
-        if current_thread_count > self.initial_thread_count + 2:  # 允許一些容差
-            results.append(DetectionResult(
+        if current_thread_count > self.initial_thread_count + 2:  # 允許一些容差:
+esults.append(DetectionResult(
                 detection_type=DetectionType.THREAD_LEAK,
                 detected=True,
                 details=f"Thread leak detected: {current_thread_count} vs {self.initial_thread_count}",
@@ -224,8 +224,8 @@ class ResourceLeakDetector:
             import psutil
             process = psutil.Process
             current_fds = process.num_fds if hasattr(process, 'num_fds') else 0:
-    if current_fds > self.initial_file_descriptors + 10:  # 允許一些容差
-                results.append(DetectionResult(
+    if current_fds > self.initial_file_descriptors + 10:  # 允許一些容差:
+esults.append(DetectionResult(
                     detection_type=DetectionType.RESOURCE_LEAK,
                     detected=True,
                     details=f"File descriptor leak detected: {current_fds} vs {self.initial_file_descriptors}",
@@ -245,8 +245,8 @@ class AsyncLoopDetector:
     self.max_pending_tasks = max_pending_tasks
     self.initial_task_count = 0
 
-    def start_monitoring(self)
-    """開始監控"""
+    def start_monitoring(self):
+""開始監控"""
         try:
 
             loop = asyncio.get_running_loop
@@ -284,8 +284,8 @@ class AsyncLoopDetector:
 
 
 @contextmanager
-def deadlock_detection(timeout: float = 30.0, check_interval: float = 1.0)
-    """死鎖檢測上下文管理器"""
+def deadlock_detection(timeout: float = 30.0, check_interval: float = 1.0):
+""死鎖檢測上下文管理器"""
     detector = DeadlockDetector(check_interval=check_interval, max_detection_time=timeout)
     resource_detector = ResourceLeakDetector
     async_detector = AsyncLoopDetector
@@ -314,18 +314,17 @@ def deadlock_detection(timeout: float = 30.0, check_interval: float = 1.0)
     logger.warning(f"Resource leak detected: {leak.details}")
 
 
-def loop_detection(max_iterations: int = 10000)
-    """循環檢測裝飾器"""
-    def decorator(func)
-    @functools.wraps(func)
-        def wrapper(*args, **kwargs)
-    detector = LoopDetector(max_iterations=max_iterations)
+def loop_detection(max_iterations: int = 10000):
+""循環檢測裝飾器"""
+    def decorator(func):
+functools.wraps(func)
+        def wrapper(*args, **kwargs):
+etector = LoopDetector(max_iterations=max_iterations)
 
             # 如果是異步函數
-            if inspect.iscoroutinefunction(func)
-
-    async def async_wrapper()
-    try:
+            if inspect.iscoroutinefunction(func):
+sync def async_wrapper():
+ry:
 
     return await func(*args, **kwargs)
                     finally:
@@ -344,32 +343,32 @@ def loop_detection(max_iterations: int = 10000)
     return decorator
 
 
-def timeout_with_detection(timeout: float = 30.0, enable_deadlock_detection: bool = True)
-    """帶檢測的超時裝飾器"""
-    def decorator(func)
-    @functools.wraps(func)
-        def wrapper(*args, **kwargs)
-    if inspect.iscoroutinefunction(func)
+def timeout_with_detection(timeout: float = 30.0, enable_deadlock_detection: bool = True):
+""帶檢測的超時裝飾器"""
+    def decorator(func):
+functools.wraps(func)
+        def wrapper(*args, **kwargs):
+f inspect.iscoroutinefunction(func)
 
-    async def async_wrapper()
-    if enable_deadlock_detection:
+    async def async_wrapper():
+f enable_deadlock_detection:
 
-    with deadlock_detection(timeout=timeout)
-    return await asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
+    with deadlock_detection(timeout=timeout):
+eturn await asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
                     else:
 
                         return await asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
                 return async_wrapper
             else:
 
-                def timeout_handler(signum, frame)
-    raise TimeoutError(f"Function timed out after {timeout} seconds")
+                def timeout_handler(signum, frame):
+aise TimeoutError(f"Function timed out after {timeout} seconds")
 
                 if enable_deadlock_detection:
 
 
-    with deadlock_detection(timeout=timeout)
-    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+    with deadlock_detection(timeout=timeout):
+ld_handler = signal.signal(signal.SIGALRM, timeout_handler)
                         signal.alarm(int(timeout))
                         try:
 
@@ -395,9 +394,8 @@ def timeout_with_detection(timeout: float = 30.0, enable_deadlock_detection: boo
 # 便捷函數
 def check_for_infinite_loop(location: str, max_iterations: int = 10000) -> bool:
     """檢查無限循環的便捷函數"""
-    if not hasattr(check_for_infinite_loop, '_detector')
-
-    check_for_infinite_loop._detector = LoopDetector(max_iterations)
+    if not hasattr(check_for_infinite_loop, '_detector'):
+heck_for_infinite_loop._detector = LoopDetector(max_iterations)
 
     return check_for_infinite_loop._detector.check_iteration(location)
 
@@ -426,8 +424,8 @@ if __name__ == "__main__":
     print(f"Sync test timeout: {e}")
 
     # 測試異步函數
-    async def run_async_test()
-    try:
+    async def run_async_test():
+ry:
 
     result = await test_async_function
             print(f"Async test result: {result}")

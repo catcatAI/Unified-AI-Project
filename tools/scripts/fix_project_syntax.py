@@ -1,0 +1,202 @@
+#!/usr/bin/env python3
+"""
+Focused script to fix syntax errors in the main project files.
+"""
+
+import os
+import re
+
+def fix_syntax_errors_in_file(file_path):
+    """Fix various syntax errors in a Python file."""
+    try:
+
+    with open(file_path, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+    original_content = content
+    changes_made = False
+
+    # Fix _ = "key" value syntax errors (dictionary syntax)
+    pattern = r'_ = "([^"]+)":\s*([^,\n}]+)(,?)'
+    replacement = r'"\1": \2\3'
+    content = re.sub(pattern, replacement, content)
+
+    # Fix _ = raise Exception syntax errors
+    content = re.sub(r'_ = raise\s+', 'raise ', content)
+
+    # Fix _ = @decorator syntax errors
+    content = re.sub(r'_ = (@\w+)', r'\1', content)
+
+    # Fix _ = assert syntax errors
+    content = re.sub(r'_ = assert\s+', 'assert ', content)
+
+    # Fix _ = **kwargs syntax errors
+    content = re.sub(r'_ = \*\*(\w+)', r'**\1', content)
+
+    # Fix dictionary syntax errors with variables as keys
+    content = re.sub(r'_ = ([\w]+)\s*([^,\n}]+)(,?)', r'\1: \2\3', content)
+
+    # Fix incomplete imports
+    content = re.sub(r'from\s+[\w\.]+\s+import\s*\n', '', content)
+
+    # Fix keyword argument repeated errors
+    content = re.sub(r'_ = (\w+\.[\w\(\)\.\'\"_ ,\[\]]+)', r'\1', content)
+
+    # Fix os.path.exists syntax errors
+    content = re.sub(r'_ = (os\.path\.exists\([^)]+\))\s+and\s+', r'\1 and ', content)
+
+    # Fix regex pattern syntax errors
+    content = re.sub(r'_ = (r\'[^\']*\')', r'\1', content)
+
+    # Fix assignment errors
+    content = re.sub(r'_ = (\w+\([^)]*\))', r'\1', content)
+
+    # Fix tuple syntax errors
+    content = re.sub(r'_ = (\([^)]+\))', r'\1', content)
+
+    # If changes were made, write back to file
+        if content != original_content:
+
+    with open(file_path, 'w', encoding='utf-8') as f:
+    f.write(content)
+            print(f"Fixed syntax errors in: {file_path}")
+            return True
+
+    return False
+    except Exception as e:
+
+    print(f"Error processing {file_path}: {e}")
+    return False
+
+def fix_indentation_errors(file_path):
+    """Fix indentation errors in Python files."""
+    try:
+
+    with open(file_path, 'r', encoding='utf-8') as f:
+    lines = f.readlines()
+
+    original_lines = lines.copy()
+    modified = False
+
+    # Fix indentation errors
+        for i, line in enumerate(lines)
+            # Remove leading spaces that cause unexpected indent for non-keyword lines
+    stripped_line = line.lstrip()
+            if (line.startswith('    ') and :
+
+    stripped_line and
+                not any(stripped_line.startswith(keyword) for keyword in [
+                    'from', 'import', 'class', 'def', 'if', 'elif', 'else', 'try', 'except',
+                    'finally', 'with', 'for', 'while', 'async', 'await', 'return', 'yield',
+                    'pass', 'break', 'continue', 'raise', 'assert', '@', '#', '"""', "'''"
+                ])):
+    lines[i] = stripped_line
+                modified = True
+
+        # Write back if modified
+    if modified:
+
+    with open(file_path, 'w', encoding='utf-8') as f:
+    f.writelines(lines)
+            print(f"Fixed indentation errors in: {file_path}")
+            return True
+
+    return False
+    except Exception as e:
+
+    print(f"Error fixing indentation in {file_path}: {e}")
+    return False
+
+def get_project_python_files(root_dir):
+    """Get Python files in the main project directories only."""
+    python_files = []
+    for root, dirs, files in os.walk(root_dir)
+    # Skip backup, venv, and other non-project directories
+        dirs[:] = [d for d in dirs if d not in [
+            '__pycache__', 'venv', 'backup', 'node_modules', '.git'
+    ] and not d.startswith('.')]
+
+        for file in files:
+
+
+    if file.endswith('.py') and not file.startswith('.')
+
+
+
+    full_path = os.path.join(root, file)
+                # Only include files in the main project structure
+                if 'apps\\backend' in full_path or 'apps/backend' in full_path:
+
+    python_files.append(full_path)
+
+    return python_files
+
+def main():
+    """Main function to fix syntax errors in the project."""
+    print("Starting focused syntax error fix for main project files...")
+
+    # Get Python files in the main project directories only
+    python_files = get_project_python_files(".")
+
+    print(f"Found {len(python_files)} Python files to check.")
+
+    fixed_files = 0
+
+    for file_path in python_files:
+
+
+    try:
+            # Fix syntax errors
+            if fix_syntax_errors_in_file(file_path)
+
+    fixed_files += 1
+
+            # Fix indentation errors for specific files
+    if any(name in file_path for name in [
+                '__init__.py',
+                'test_ai_virtual_input_service.py',
+                'test_resource_awareness_service.py',
+                'test_security.py',
+                'resource_awareness_service.py',
+                'sandbox_executor.py'
+            ])
+    if fix_indentation_errors(file_path)
+
+    fixed_files += 1
+
+        except Exception as e:
+
+
+            print(f"Error processing {file_path}: {str(e)}")
+
+    print(f"\nFixed syntax errors in {fixed_files} files.")
+
+    # Run syntax check on main project files only
+    print("\nRunning syntax check on main project files...")
+    try:
+
+    import subprocess
+    # Only check the main project directory
+    result = subprocess.run(['python', '-m', 'compileall', '-q', 'apps/backend'],
+                              capture_output=True, text=True)
+        if result.returncode == 0:
+
+    print("All syntax errors in main project files have been fixed!")
+        else:
+
+            print("Some syntax errors remain in main project files:")
+            # Filter out only relevant errors (not from backup/venv)
+            for line in result.stdout.split('\n') + result.stderr.split('\n')
+
+    if line and ('apps\\backend' in line or 'apps/backend' in line) and 'backup' not in line:
+
+
+    print(line)
+    except Exception as e:
+
+    print(f"Error running syntax check: {str(e)}")
+
+if __name__ == "__main__":
+
+
+    main()

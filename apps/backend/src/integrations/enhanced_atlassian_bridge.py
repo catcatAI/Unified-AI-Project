@@ -19,17 +19,17 @@ class DemoLearningManager:
     # 简单实现，总是返回 False
     return False
 
-    async def activate_demo_mode(self, credentials)
-    pass
+    async def activate_demo_mode(self, credentials):
+ass
 
-    async def record_user_interaction(self, action, context, result)
-    pass
+    async def record_user_interaction(self, action, context, result):
+ass
 
-    async def record_error_pattern(self, error_type, error_message, context, resolution)
-    pass
+    async def record_error_pattern(self, error_type, error_message, context, resolution):
+ass
 
-class EnhancedAtlassianBridge(AtlassianBridge)
-    """增強版 Atlassian Bridge，支持演示學習功能"""
+class EnhancedAtlassianBridge(AtlassianBridge):
+""增強版 Atlassian Bridge，支持演示學習功能"""
 
     def __init__(self, connector: RovoDevConnector, demo_learning_manager: Optional[DemoLearningManager] = None) -> None:
     """初始化增強版 Atlassian 橋接器
@@ -54,8 +54,8 @@ class EnhancedAtlassianBridge(AtlassianBridge)
             # 這通常發生在對象初始化時沒有活動的事件循環的情況下
             pass
 
-    async def _check_demo_mode(self)
-    """檢查並激活演示模式"""
+    async def _check_demo_mode(self):
+""檢查並激活演示模式"""
         try:
             # 獲取認證信息
             credentials = {
@@ -66,9 +66,8 @@ class EnhancedAtlassianBridge(AtlassianBridge)
             }
 
             # 檢測演示金鑰
-            if self.demo_manager.detect_demo_credentials(credentials)
-
-    logger.info("檢測到演示金鑰，激活演示模式")
+            if self.demo_manager.detect_demo_credentials(credentials):
+ogger.info("檢測到演示金鑰，激活演示模式")
                 _ = await self.demo_manager.activate_demo_mode(credentials)
                 self.demo_mode_active = True
 
@@ -80,17 +79,15 @@ class EnhancedAtlassianBridge(AtlassianBridge)
 
             logger.error(f"檢查演示模式失敗: {e}")
 
-    async def _initialize_demo_data(self)
-    """初始化演示數據"""
+    async def _initialize_demo_data(self):
+""初始化演示數據"""
         try:
 
             demo_config = self.demo_manager.config.get('demo_credentials', )
             auto_init = demo_config.get('auto_initialization', )
 
-            if auto_init.get('enabled', False)
-
-
-    steps = auto_init.get('steps', )
+            if auto_init.get('enabled', False):
+teps = auto_init.get('steps', )
 
                 for step in steps:
 
@@ -120,14 +117,14 @@ class EnhancedAtlassianBridge(AtlassianBridge)
 
             logger.error(f"初始化演示數據失敗: {e}")
 
-    async def _create_demo_spaces(self)
-    """創建演示 Confluence 空間"""
+    async def _create_demo_spaces(self):
+""創建演示 Confluence 空間"""
         if not self.demo_mode_active:
 
     return
 
-    try
-            demo_config = self.demo_manager.config.get('demo_credentials', )
+    try:
+emo_config = self.demo_manager.config.get('demo_credentials', )
     spaces_config = demo_config.get('auto_initialization', ).get('demo_data', ).get('confluence_spaces', )
 
             for space_config in spaces_config:
@@ -158,8 +155,8 @@ class EnhancedAtlassianBridge(AtlassianBridge)
 
     return
 
-    try
-            demo_config = self.demo_manager.config.get('demo_credentials', )
+    try:
+emo_config = self.demo_manager.config.get('demo_credentials', )
     projects_config = demo_config.get('auto_initialization', ).get('demo_data', ).get('jira_projects', )
 
             for project_config in projects_config:
@@ -185,18 +182,18 @@ class EnhancedAtlassianBridge(AtlassianBridge)
                 resolution="logged_for_analysis"
             )
 
-    async def _initialize_agents(self)
-    """初始化代理"""
+    async def _initialize_agents(self):
+""初始化代理"""
     logger.info("初始化演示代理")
     # 這裡可以初始化演示用的代理配置
 
-    async def _configure_fallbacks(self)
-    """配置備用機制"""
+    async def _configure_fallbacks(self):
+""配置備用機制"""
     logger.info("配置演示備用機制")
     # 確保備用機制在演示模式下正常工作
 
-    async def _setup_monitoring(self)
-    """設置監控"""
+    async def _setup_monitoring(self):
+""設置監控"""
     logger.info("設置演示監控")
     # 設置演示模式下的監控
 
@@ -265,10 +262,8 @@ class EnhancedAtlassianBridge(AtlassianBridge)
             end_time = asyncio.get_event_loop.time
             duration = end_time - start_time
 
-            if self.demo_mode_active and hasattr(self.demo_manager, 'learning_data')
-
-
-    performance_metric = {
+            if self.demo_mode_active and hasattr(self.demo_manager, 'learning_data'):
+erformance_metric = {
                     'operation': 'create_confluence_page',
                     'duration': duration,
                     'success': True,
@@ -341,10 +336,8 @@ class EnhancedAtlassianBridge(AtlassianBridge)
             end_time = asyncio.get_event_loop.time
             duration = end_time - start_time
 
-            if self.demo_mode_active and hasattr(self.demo_manager, 'learning_data')
-
-
-    performance_metric = {
+            if self.demo_mode_active and hasattr(self.demo_manager, 'learning_data'):
+erformance_metric = {
                     'operation': 'create_jira_issue',
                     'duration': duration,
                     'success': True,
@@ -369,13 +362,12 @@ class EnhancedAtlassianBridge(AtlassianBridge)
             "config_loaded": bool(self.demo_manager.config)
     }
 
-    async def shutdown(self)
-    """關閉增強版橋接層"""
+    async def shutdown(self):
+""關閉增強版橋接層"""
         if self.demo_mode_active:
 
     _ = await self.demo_manager.shutdown
 
     # 調用父類的關閉方法（如果有的話）
-        if hasattr(super, 'shutdown')
-
-    _ = await super().shutdown
+        if hasattr(super, 'shutdown'):
+ = await super().shutdown

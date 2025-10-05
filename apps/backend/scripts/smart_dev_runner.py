@@ -54,16 +54,16 @@ def check_environment():
         
         # 验证必要的环境变量
         required_vars: List[str] = []
-        missing_vars: List[str] = [var for var in required_vars if var not in os.environ]
-        if missing_vars:
+        missing_vars: List[str] = [var for var in required_vars if var not in os.environ]:
+f missing_vars:
             print(f"⚠️ 缺少环境变量: {missing_vars}")
         else:
             print("✅ 环境变量检查通过")
         
         # 检查配置文件完整性
         config_files = ["configs/config.yaml"]
-        missing_configs = [f for f in config_files if not (PROJECT_ROOT / f).exists()]
-        if missing_configs:
+        missing_configs = [f for f in config_files if not (PROJECT_ROOT / f).exists()]:
+f missing_configs:
             print(f"⚠️ 缺少配置文件: {missing_configs}")
         else:
             print("✅ 配置文件检查通过")

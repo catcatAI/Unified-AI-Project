@@ -3,10 +3,8 @@ from typing import List, Optional, Dict, Any
 from pathlib import Path
 
 # Consistent import assuming 'src' is in PYTHONPATH, making 'shared' a top-level package.
-from .types import FormulaConfigEntry
-
-
-class FormulaEngine:
+from .types import FormulaConfigEntry:
+lass FormulaEngine:
     """
 Manages loading and matching of predefined formulas based on user input or context.
     """
@@ -28,9 +26,8 @@ Defaults to "configs/formula_configs/default_formulas.json" relative to project 
         else:
             # If an absolute path is given, use it. Otherwise, assume it's relative to project root.
             candidate_path = Path(formulas_filepath)
-            if candidate_path.is_absolute()
-
-    self.formulas_file_path = candidate_path
+            if candidate_path.is_absolute():
+elf.formulas_file_path = candidate_path
             else:
 
                 self.formulas_file_path = self._project_root / formulas_filepath
@@ -51,34 +48,29 @@ Loads formula definitions from the JSON file specified by self.formulas_file_pat
     """
         try:
 
-            if not self.formulas_file_path.exists()
-
-
-    print(f"FormulaEngine: Error - Formulas file not found at {self.formulas_file_path}")
+            if not self.formulas_file_path.exists():
+rint(f"FormulaEngine: Error - Formulas file not found at {self.formulas_file_path}")
                 self.formulas = []
                 return
 
-            with open(self.formulas_file_path, 'r', encoding='utf-8') as f
-    loaded_data = json.load(f)
+            with open(self.formulas_file_path, 'r', encoding='utf-8') as f:
+oaded_data = json.load(f)
 
-                if not isinstance(loaded_data, list)
-
-
-    print(f"FormulaEngine: Error - Formulas file {self.formulas_file_path} does not contain a list.")
+                if not isinstance(loaded_data, list):
+rint(f"FormulaEngine: Error - Formulas file {self.formulas_file_path} does not contain a list.")
                     self.formulas = []
                     return
 
                 active_formulas = []
                 for entry in loaded_data:
                     # Basic structural check
-                    if isinstance(entry, dict) and \
-                       'name' in entry and \
+                    if isinstance(entry, dict) and \:
+name' in entry and \
                        'conditions' in entry and \
                        'action' in entry:
-                        # Only add if enabled (defaults to True if 'enabled' key is missing)
-    if entry.get("enabled", True) # Default to enabled if key missing
-
-    active_formulas.append(entry) # type ignore
+                        # Only add if enabled (defaults to True if 'enabled' key is missing):
+f entry.get("enabled", True) # Default to enabled if key missing:
+ctive_formulas.append(entry) # type ignore
                         else:
 
                             print(f"FormulaEngine: Skipping disabled formula entry: {entry.get('name')}")
@@ -88,8 +80,8 @@ Loads formula definitions from the JSON file specified by self.formulas_file_pat
 
                 self.formulas = active_formulas
                 # Sort by priority (lower number means higher priority).
-                # Defaults to a high number (e.g. 999) if 'priority' is missing, to make them lowest priority.
-    self.formulas.sort(key=lambda f: f.get("priority", 999))
+                # Defaults to a high number (e.g. 999) if 'priority' is missing, to make them lowest priority.:
+elf.formulas.sort(key=lambda f: f.get("priority", 999))
 
         except json.JSONDecodeError as e:
 
@@ -98,8 +90,8 @@ Loads formula definitions from the JSON file specified by self.formulas_file_pat
             self.formulas = []
         except Exception as e:
 
-            print(f"FormulaEngine: An unexpected error occurred while loading formulas from {self.formulas_file_path}: {e}")
-            self.formulas = []
+            print(f"FormulaEngine: An unexpected error occurred while loading formulas from {self.formulas_file_path}: {e}"):
+elf.formulas = []
 
     def match_input(self, text_input: str) -> Optional[FormulaConfigEntry]:
     """
@@ -121,25 +113,18 @@ Optional[FormulaConfigEntry]: The first matched formula or None.
         for formula in self.formulas:
 
 
-    if not formula.get("enabled", False)
-
-
-
-    continue
+    if not formula.get("enabled", False):
+ontinue
 
             conditions = formula.get("conditions", [])
-            if not isinstance(conditions, list)
-
-    continue
+            if not isinstance(conditions, list):
+ontinue
 
             for condition in conditions:
 
 
-    if not isinstance(condition, str)
-
-
-
-    continue
+    if not isinstance(condition, str):
+ontinue
 
 cond_lower = str(condition.lower())
 current_normalized_input = str(normalized_input)
@@ -167,8 +152,8 @@ print(f"FormulaEngine: Executing formula '{formula.get('name')}'")
     # For now, just returning the static parameters from the formula
     return {
 "action_name": formula.get("action"),
-"action_params": formula.get("parameters", {}) # Default to empty dict if no params
-}
+"action_params": formula.get("parameters", {}) # Default to empty dict if no params:
+
 
 if __name__ == '__main__':
 
@@ -186,8 +171,8 @@ dummy_formulas_data = [
 "name": "test_greeting_high_priority",
 "conditions": ["hello there", "hi"],
 "action": "respond_greeting",
-"description": "Greets the user with high priority.",
-"parameters": {"tone": "very_friendly"},
+"description": "Greets the user with high priority.",:
+parameters": {"tone": "very_friendly"},
 "priority": 20, # Higher priority
 "enabled": True,
 "version": "1.1"
@@ -244,10 +229,8 @@ test_inputs = {
 "never match this input please": None                # Should not match "test_disabled"
 }
 
-    for text_in, expected_formula_name in test_inputs.items()
-
-
-    print(f"\nInput: '{text_in}'")
+    for text_in, expected_formula_name in test_inputs.items():
+rint(f"\nInput: '{text_in}'")
     matched_formula = engine.match_input(text_in)
         if matched_formula:
 
@@ -267,8 +250,8 @@ test_inputs = {
 
     default_engine = FormulaEngine()
 print(f"Default engine loaded {len(default_engine.formulas)} formulas.")
-        if default_engine.formulas: # Proceed only if formulas were loaded
-matched_default = default_engine.match_input("What is the weather like?")
+        if default_engine.formulas: # Proceed only if formulas were loaded:
+atched_default = default_engine.match_input("What is the weather like?")
             if matched_default:
 
     print(f"  Matched Default Formula: {matched_default.get('name')}")
@@ -276,8 +259,8 @@ exec_res_default = default_engine.execute_formula(matched_default)
 print(f"  Execution Result: {exec_res_default}")
             else:
 
-                print("  No default formula matched for 'weather'.")
-    else:
+                print("  No default formula matched for 'weather'."):
+lse:
 
     print("  No formulas loaded from default path, skipping default test.")
     except Exception as e:
@@ -286,11 +269,10 @@ print(f"  Execution Result: {exec_res_default}")
 
 
     # Clean up dummy file and directory
-    if dummy_formulas_file.exists()
-
-    dummy_formulas_file.unlink()
-    # Attempt to remove the directory if it's empty
-    try:
+    if dummy_formulas_file.exists():
+ummy_formulas_file.unlink()
+    # Attempt to remove the directory if it's empty:
+ry:
 
         if dummy_config_dir.exists() and not any(dummy_config_dir.iterdir()):
 

@@ -12,9 +12,8 @@ class AudioService:
     def __init__(self) -> None:
         self.is_initialized = False
         self.demo_mode = is_demo_mode
-        logger.info(f"AudioService initialized in {'demo' if self.demo_mode else 'normal'} mode")
-    
-    async def initialize(self):
+        logger.info(f"AudioService initialized in {'demo' if self.demo_mode else 'normal'} mode"):
+sync def initialize(self):
         """初始化音频服务"""
         if self.is_initialized:
             logger.warning("AudioService is already initialized")

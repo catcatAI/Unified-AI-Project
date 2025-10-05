@@ -37,10 +37,10 @@ class HSPSecurityManager:
         # 对称加密密钥（用于消息加密）
         self.encryption_key = os.environ.get('HSP_ENCRYPTION_KEY')
         if not self.encryption_key:
-            self.encryption_key = Fernet.generate_key
+            self.encryption_key = Fernet.generate_key()
             logger.warning("未找到环境变量HSP_ENCRYPTION_KEY，生成新的密钥")
         else:
-            self.encryption_key = self.encryption_key.encode
+            self.encryption_key = self.encryption_key.encode()
         
         self.cipher_suite = Fernet(self.encryption_key)
         
@@ -49,7 +49,7 @@ class HSPSecurityManager:
             public_exponent=65537,
             key_size=2048,
         )
-        self.public_key = self.private_key.public_key
+        self.public_key = self.private_key.public_key()
         
         logger.debug("密钥设置完成")
     
@@ -60,7 +60,7 @@ class HSPSecurityManager:
         
         try:
             # 创建消息摘要
-            message_copy = message.copy
+            message_copy = message.copy()
             # 移除可能已存在的签名字段以避免循环签名
             message_copy.pop('signature', None)
             message_copy['sender_id'] = sender_id
@@ -72,10 +72,10 @@ class HSPSecurityManager:
             signature = self.private_key.sign(
                 message_bytes,
                 padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256),
+                    mgf=padding.MGF1(hashes.SHA256()),
                     salt_length=padding.PSS.MAX_LENGTH
                 ),
-                hashes.SHA256
+                hashes.SHA256()
             )
             
             # 将签名编码为base64字符串
@@ -103,7 +103,7 @@ class HSPSecurityManager:
             signature_bytes = base64.b64decode(signature.encode('utf-8'))
             
             # 创建消息摘要
-            message_copy = message.copy
+            message_copy = message.copy()
             # 移除签名字段以验证原始消息
             message_copy.pop('signature', None)
             message_copy['sender_id'] = sender_id
@@ -116,10 +116,10 @@ class HSPSecurityManager:
                 signature_bytes,
                 message_bytes,
                 padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256),
+                    mgf=padding.MGF1(hashes.SHA256()),
                     salt_length=padding.PSS.MAX_LENGTH
                 ),
-                hashes.SHA256
+                hashes.SHA256()
             )
             
             logger.debug(f"消息签名验证成功: {message.get('message_id', 'unknown')}")
@@ -169,7 +169,7 @@ class HSPSecurityManager:
         # 目前简化实现，假设所有已知发送者都是合法的
         if auth_token:
             # 验证令牌（示例实现）
-            expected_token = hashlib.sha256(sender_id.encode).hexdigest
+            expected_token = hashlib.sha256(sender_id.encode()).hexdigest()
             return hmac.compare_digest(auth_token, expected_token)
         
         # 如果没有提供认证令牌，但在测试环境中，我们可以放宽验证
@@ -186,7 +186,7 @@ class HSPSecurityManager:
         if not self.auth_enabled:
             return ""
         
-        token = hashlib.sha256(sender_id.encode).hexdigest
+        token = hashlib.sha256(sender_id.encode()).hexdigest()
         logger.debug(f"为发送者生成认证令牌: {sender_id}")
         return token
     
@@ -233,7 +233,7 @@ class HSPSecurityContext:
                 return False, {"error": "Signature verification failed"}
             
             # 3. 解密消息（如果已加密）
-            payload = message.get('payload', )
+            payload = message.get('payload', {})
             if isinstance(payload, str) and payload.startswith('encrypted:'):
                 try:
                     encrypted_data = base64.b64decode(payload[10:])  # 移除'encrypted:'前缀
@@ -269,7 +269,7 @@ class HSPSecurityContext:
             
             # 4. 加密消息载荷
             if self.security_manager.encryption_enabled:
-                payload = message.get('payload', )
+                payload = message.get('payload', {})
                 encrypted_payload = self.security_manager.encrypt_message(payload)
                 message['payload'] = 'encrypted:' + base64.b64encode(encrypted_payload).decode('utf-8')
             
@@ -286,7 +286,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
     # 创建安全管理器
-    security_manager = HSPSecurityManager
+    security_manager = HSPSecurityManager()
     security_context = HSPSecurityContext(security_manager)
     
     # 测试消息
@@ -297,7 +297,7 @@ if __name__ == "__main__":
         "message_type": "HSP::TestMessage_v0.1",
         "payload": {
             "content": "This is a test message",
-            "timestamp": datetime.now.isoformat
+            "timestamp": datetime.now().isoformat()
         }
     }
     

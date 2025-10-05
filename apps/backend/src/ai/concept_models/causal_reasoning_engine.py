@@ -55,8 +55,8 @@ class CausalGraph:
     self.causal_discovery_model = self._build_causal_discovery_model
     self.is_trained = False  # 标记模型是否已训练
 
-    def _build_causal_discovery_model(self)
-    """构建因果发现模型"""
+    def _build_causal_discovery_model(self):
+""构建因果发现模型"""
     # 简单的因果发现网络
     model = nn.Sequential(
             nn.Linear(20, 64),  # 假设有20个输入变量
@@ -68,8 +68,8 @@ class CausalGraph:
     )
     return model
 
-    async def add_node(self, node_name: str, node_type: str = "unknown", properties: Optional[Dict[str, Any]] = None)
-    """添加节点"""
+    async def add_node(self, node_name: str, node_type: str = "unknown", properties: Optional[Dict[str, Any]] = None):
+""添加节点"""
     logger.debug(f"Adding node: {node_name}")
     _ = await asyncio.sleep(0.005)
 
@@ -82,8 +82,8 @@ class CausalGraph:
 
     self.edges[node_name] =
 
-    async def add_edge(self, cause: str, effect: str, strength: float = 0.5, confidence: float = 0.8)
-    """添加边（因果关系）"""
+    async def add_edge(self, cause: str, effect: str, strength: float = 0.5, confidence: float = 0.8):
+""添加边（因果关系）"""
     logger.debug(f"Adding causal edge: {cause} -> {effect}")
     _ = await asyncio.sleep(0.005)
 
@@ -129,9 +129,8 @@ class CausalGraph:
         if self.is_trained:
             # 使用训练好的模型进行因果发现
             variable_names = list(variables_data.keys)
-            for i, cause_var in enumerate(variable_names)
-
-    for j, effect_var in enumerate(variable_names)
+            for i, cause_var in enumerate(variable_names):
+or j, effect_var in enumerate(variable_names)
     if i != j:  # 不同变量之间
                         # 准备输入数据
                         cause_data = np.array(variables_data[cause_var])
@@ -144,8 +143,8 @@ class CausalGraph:
     strength_pred = self.causal_discovery_model(input_features)
                         strength = float(strength_pred.item)
 
-                        if strength > 0.3:  # 设定阈值
-                            relationship = CausalRelationship(
+                        if strength > 0.3:  # 设定阈值:
+elationship = CausalRelationship(
                                 cause=cause_var,
                                 effect=effect_var,
                                 strength=min(1.0, max(0.0, strength)),
@@ -158,9 +157,8 @@ class CausalGraph:
         else:
             # 如果模型未训练，使用简单的相关性分析
             variable_names = list(variables_data.keys)
-            for i, cause_var in enumerate(variable_names)
-
-    for j, effect_var in enumerate(variable_names)
+            for i, cause_var in enumerate(variable_names):
+or j, effect_var in enumerate(variable_names)
     if i != j:  # 不同变量之间
                         # 准备输入数据
                         cause_data = np.array(variables_data[cause_var])
@@ -170,8 +168,8 @@ class CausalGraph:
                         correlation = np.corrcoef(cause_data, effect_data)[0, 1]
                         strength = abs(correlation)
 
-                        if strength > 0.3:  # 设定阈值
-                            relationship = CausalRelationship(
+                        if strength > 0.3:  # 设定阈值:
+elationship = CausalRelationship(
                                 cause=cause_var,
                                 effect=effect_var,
                                 strength=min(1.0, max(0.0, strength)),
@@ -196,8 +194,8 @@ class CausalGraph:
             np.std(cause_data),
             np.mean(effect_data),
             np.std(effect_data),
-            np.corrcoef(cause_data, effect_data)[0, 1] if len(cause_data) > 1 else 0.0
-    ])
+            np.corrcoef(cause_data, effect_data)[0, 1] if len(cause_data) > 1 else 0.0:
+)
 
     # 添加更多特征以达到20维
         while len(features) < 20:
@@ -207,8 +205,8 @@ class CausalGraph:
     return torch.FloatTensor(features).unsqueeze(0)
 
     async def update_edge(self, cause: str, effect: str, strength: Optional[float] = None,
-                         confidence: Optional[float] = None)
-    """更新边的属性"""
+                         confidence: Optional[float] = None):
+""更新边的属性"""
     logger.debug(f"Updating causal edge: {cause} -> {effect}")
     _ = await asyncio.sleep(0.005)
 
@@ -223,8 +221,8 @@ class CausalGraph:
 
     relationship.confidence = min(1.0, max(0.0, confidence))
 
-    async def remove_edge(self, cause: str, effect: str)
-    """移除边"""
+    async def remove_edge(self, cause: str, effect: str):
+""移除边"""
     logger.debug(f"Removing causal edge: {cause} -> {effect}")
     _ = await asyncio.sleep(0.005)
 
@@ -235,8 +233,8 @@ class CausalGraph:
 
     async def get_causes(self, effect_node: str) -> List[str]:
     """获取导致某个效果的所有原因"""
-        logger.debug(f"Getting causes for {effect_node}")
-    _ = await asyncio.sleep(0.01)
+        logger.debug(f"Getting causes for {effect_node}"):
+ = await asyncio.sleep(0.01)
 
     causes =
         for cause, effects in self.edges.items:
@@ -249,8 +247,8 @@ class CausalGraph:
 
     async def get_effects(self, cause_node: str) -> List[str]:
     """获取由某个原因导致的所有效果"""
-        logger.debug(f"Getting effects for {cause_node}")
-    _ = await asyncio.sleep(0.01)
+        logger.debug(f"Getting effects for {cause_node}"):
+ = await asyncio.sleep(0.01)
 
         if cause_node in self.edges:
 
@@ -266,14 +264,14 @@ class CausalGraph:
     paths =
     visited = set
 
-        async def dfs(current_node: str, path: List[str])
-    if current_node == end_node:
+        async def dfs(current_node: str, path: List[str]):
+f current_node == end_node:
 
     paths.append(path.copy)
                 return
 
-            if current_node in visited
-    return
+            if current_node in visited:
+eturn
 
             visited.add(current_node)
 
@@ -299,8 +297,8 @@ class CausalGraph:
     return self.edges[cause][effect]
     return None
 
-    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100)
-    """训练因果发现模型"""
+    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100):
+""训练因果发现模型"""
     logger.info(f"Training causal discovery model with {len(training_data)} samples")
 
     # 准备训练数据
@@ -338,10 +336,8 @@ class CausalGraph:
     optimizer = optim.Adam(self.causal_discovery_model.parameters, lr=0.01)
     criterion = nn.MSELoss
 
-        for epoch in range(epochs)
-
-
-    total_loss = 0.0
+        for epoch in range(epochs):
+otal_loss = 0.0
             for batch_inputs, batch_targets in dataloader:
 
     optimizer.zero_grad
@@ -373,8 +369,8 @@ class InterventionPlanner:
     self.intervention_model = self._build_intervention_model
     self.is_trained = False  # 标记模型是否已训练
 
-    def _build_intervention_model(self)
-    """构建干预效果预测模型"""
+    def _build_intervention_model(self):
+""构建干预效果预测模型"""
     model = nn.Sequential(
             nn.Linear(10, 32),  # 10个输入特征
             nn.ReLU,
@@ -388,8 +384,8 @@ class InterventionPlanner:
                       current_state: Dict[str, Any],
                       constraints: Optional[Dict[str, Any]] = None) -> List[Intervention]:
     """优化干预措施以达到目标值"""
-        logger.debug(f"Optimizing intervention for {target_variable} -> {desired_value}")
-    _ = await asyncio.sleep(0.01)
+        logger.debug(f"Optimizing intervention for {target_variable} -> {desired_value}"):
+ = await asyncio.sleep(0.01)
 
     interventions =
     constraints = constraints or
@@ -444,8 +440,8 @@ class InterventionPlanner:
             hash(cause) % 1000 / 1000,  # 简单的哈希特征
             hash(target) % 1000 / 1000,
             float(isinstance(desired_value, (int, float))),
-            float(desired_value) if isinstance(desired_value, (int, float)) else 0.0
-    ])
+            float(desired_value) if isinstance(desired_value, (int, float)) else 0.0:
+)
 
     # 添加当前状态信息
     current_value = current_state.get(cause, 0)
@@ -461,8 +457,8 @@ class InterventionPlanner:
     async def evaluate_intervention_effect(self, intervention: Intervention,
                                          current_state: Dict[...]
     """评估干预措施的效果"""
-        logger.debug(f"Evaluating intervention effect for {intervention.variable}")
-    _ = await asyncio.sleep(0.01)
+        logger.debug(f"Evaluating intervention effect for {intervention.variable}"):
+ = await asyncio.sleep(0.01)
 
     effect = {
             "direct_effects": ,
@@ -484,8 +480,8 @@ class InterventionPlanner:
 
     return effect
 
-    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100)
-    """训练干预效果预测模型"""
+    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100):
+""训练干预效果预测模型"""
     logger.info(f"Training intervention effect model with {len(training_data)} samples")
 
     # 准备训练数据
@@ -525,10 +521,8 @@ class InterventionPlanner:
     optimizer = optim.Adam(self.intervention_model.parameters, lr=0.01)
     criterion = nn.MSELoss
 
-        for epoch in range(epochs)
-
-
-    total_loss = 0.0
+        for epoch in range(epochs):
+otal_loss = 0.0
             for batch_inputs, batch_targets in dataloader:
 
     optimizer.zero_grad
@@ -560,8 +554,8 @@ class CounterfactualReasoner:
     self.counterfactual_model = self._build_counterfactual_model
     self.is_trained = False  # 标记模型是否已训练
 
-    def _build_counterfactual_model(self)
-    """构建反事实推理模型"""
+    def _build_counterfactual_model(self):
+""构建反事实推理模型"""
     model = nn.Sequential(
             nn.Linear(15, 32),  # 15个输入特征
             nn.ReLU,
@@ -573,8 +567,8 @@ class CounterfactualReasoner:
 
     async def compute(self, scenario: Dict[str, Any], intervention: Intervention) -> Any:
     """计算反事实结果"""
-        logger.debug(f"Computing counterfactual outcome for {intervention.variable}")
-    _ = await asyncio.sleep(0.01)
+        logger.debug(f"Computing counterfactual outcome for {intervention.variable}"):
+ = await asyncio.sleep(0.01)
 
     # 获取当前结果
     original_outcome = scenario.get("outcome")
@@ -630,8 +624,8 @@ class CounterfactualReasoner:
     features.extend([
             hash(intervention.variable) % 1000 / 1000,
             float(isinstance(intervention.value, (int, float))),
-            float(intervention.value) if isinstance(intervention.value, (int, float)) else 0.0
-    ])
+            float(intervention.value) if isinstance(intervention.value, (int, float)) else 0.0:
+)
 
     # 添加更多特征以达到15维
         while len(features) < 15:
@@ -660,8 +654,8 @@ class CounterfactualReasoner:
 
     return min(1.0, confidence)  # 限制在0-1之间
 
-    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100)
-    """训练反事实推理模型"""
+    def train_model(self, training_data: List[Dict[str, Any]], epochs: int = 100):
+""训练反事实推理模型"""
     logger.info(f"Training counterfactual reasoning model with {len(training_data)} samples")
 
     # 准备训练数据
@@ -703,10 +697,8 @@ class CounterfactualReasoner:
     optimizer = optim.Adam(self.counterfactual_model.parameters, lr=0.01)
     criterion = nn.MSELoss
 
-        for epoch in range(epochs)
-
-
-    total_loss = 0.0
+        for epoch in range(epochs):
+otal_loss = 0.0
             for batch_inputs, batch_targets in dataloader:
 
     optimizer.zero_grad
@@ -818,8 +810,8 @@ class CausalReasoningEngine:
 
     return effect
 
-    async def update_causal_model(self, new_observations: List[Observation])
-    """更新因果模型"""
+    async def update_causal_model(self, new_observations: List[Observation]):
+""更新因果模型"""
     self.logger.info("Updating causal model")
 
     # 学习新的因果关系
@@ -828,8 +820,8 @@ class CausalReasoningEngine:
     # 可以添加更多模型更新逻辑
     self.logger.info("Causal model updated")
 
-    def train_models(self, training_data: Dict[str, List[Dict[str, Any]]], epochs: int = 100)
-    """训练所有模型"""
+    def train_models(self, training_data: Dict[str, List[Dict[str, Any]]], epochs: int = 100):
+""训练所有模型"""
     self.logger.info("Training all causal reasoning models")
 
     # 训练因果发现模型
@@ -917,8 +909,8 @@ if __name__ == "__main__":
     intervention = Intervention(
             variable="temperature",
             value=22.0,
-            description="Decrease temperature for better comfort"
-    )
+            description="Decrease temperature for better comfort":
+
 
     counterfactual = await engine.perform_counterfactual_reasoning(scenario, intervention)
     print(f"Counterfactual result: {counterfactual.counterfactual_outcome}")

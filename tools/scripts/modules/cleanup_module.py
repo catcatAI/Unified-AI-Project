@@ -20,7 +20,7 @@ class CleanupModule:
     self.cleanup_patterns = {
             "cache_dirs": [
                 "__pycache__",
-                ".pytest_cache",
+                "data/runtime_data/.pytest_cache",
                 ".cache",
                 "node_modules/.cache",
                 ".next/cache",

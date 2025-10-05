@@ -299,8 +299,8 @@ class TestToolContextManager(unittest.TestCase):
         
         # 验证结果
         _ = self.assertEqual(len(tools), 3)
-        tool_ids_found = [tool.tool_id for tool in tools]
-        for tool_id in tool_ids:
+        tool_ids_found = [tool.tool_id for tool in tools]:
+or tool_id in tool_ids:
             _ = self.assertIn(tool_id, tool_ids_found)
             
     def test_search_tools_by_name(self) -> None:
@@ -317,8 +317,8 @@ class TestToolContextManager(unittest.TestCase):
         
         # 验证结果
         _ = self.assertEqual(len(tools), 3)
-        tool_ids_found = [tool.tool_id for tool in tools]
-        for tool_id in tool_ids:
+        tool_ids_found = [tool.tool_id for tool in tools]:
+or tool_id in tool_ids:
             _ = self.assertIn(tool_id, tool_ids_found)
             
         # 按名称搜索（包含"math"的工具）

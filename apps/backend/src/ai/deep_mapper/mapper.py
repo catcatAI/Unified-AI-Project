@@ -16,8 +16,8 @@ class DeepMapper:
     """
     self.mapping_rules = mapping_rules or
 
-    def load_mapping_rules(self, filepath: str)
-    """
+    def load_mapping_rules(self, filepath: str):
+""
     Loads mapping rules from a file.
 
     Args:
@@ -54,24 +54,20 @@ class DeepMapper:
     return MappableDataObject(data=reverse_mapped_data, metadata=mdo.metadata)
 
     def _recursive_map(self, data: Any, rules: Dict[str, Any]) -> Any:
-        if isinstance(data, dict)
-
-    new_dict =
+        if isinstance(data, dict):
+ew_dict =
             for key, value in data.items:
 
-    if key in rules and isinstance(rules[key], dict)
-
-
-    new_dict[key] = self._recursive_map(value, rules[key])
+    if key in rules and isinstance(rules[key], dict):
+ew_dict[key] = self._recursive_map(value, rules[key])
                 else:
 
                     new_key = rules.get(key, key)
                     new_dict[new_key] = self._recursive_map(value, rules)
             return new_dict
-        elif isinstance(data, list)
-
-    return [self._recursive_map(item, rules) for item in data]
-    else:
+        elif isinstance(data, list):
+eturn [self._recursive_map(item, rules) for item in data]:
+lse:
 
     if isinstance(rules, dict) and data in rules:
 
@@ -83,10 +79,8 @@ class DeepMapper:
     inverted_rules =
         for key, value in rules.items:
 
-    if isinstance(value, dict)
-
-
-    inverted_rules[key] = self._invert_mapping_rules(value)
+    if isinstance(value, dict):
+nverted_rules[key] = self._invert_mapping_rules(value)
             else:
 
                 inverted_rules[value] = key

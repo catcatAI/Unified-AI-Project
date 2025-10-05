@@ -8,57 +8,55 @@ from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessag
 
 class PlanningAgent(BaseAgent):
     """
-    A specialized agent for task planning, scheduling, and project management.
-    """
+    A specialized agent for task planning, scheduling, and project management.:
+""
     def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_task_planning_v1.0",
                 "name": "task_planning",
-                "description": "Creates detailed plans for complex tasks or projects.",
-                "version": "1.0",
+                "description": "Creates detailed plans for complex tasks or projects.",:
+version": "1.0",
                 "parameters": [
                     {"name": "goal", "type": "string", "required": True, "description": "The main goal or objective to plan for"},
                     {"name": "constraints", "type": "object", "required": False, "description": "Time, resource, or other constraints"},
                     {"name": "dependencies", "type": "array", "required": False, "description": "List of task dependencies"}
                 ],
-                "returns": {"type": "object", "description": "Detailed plan with tasks, timeline, and resources."}
-            },
+                "returns": {"type": "object", "description": "Detailed plan with tasks, timeline, and resources."}:
+,
             {
                 "capability_id": f"{agent_id}_schedule_optimization_v1.0",
                 "name": "schedule_optimization",
                 "description": "Optimizes task schedules based on priorities and constraints.",
                 "version": "1.0",
                 "parameters": [
-                    {"name": "tasks", "type": "array", "required": True, "description": "List of tasks with durations and priorities"},
-                    {"name": "resources", "type": "array", "required": False, "description": "Available resources with capacities"},
-                    {"name": "deadline", "type": "string", "required": False, "description": "Project deadline in ISO format"}
+                    {"name": "tasks", "type": "array", "required": True, "description": "List of tasks with durations and priorities"},:
+"name": "resources", "type": "array", "required": False, "description": "Available resources with capacities"},:
+"name": "deadline", "type": "string", "required": False, "description": "Project deadline in ISO format"}
                 ],
-                "returns": {"type": "object", "description": "Optimized schedule with task assignments and timeline."}
-            },
+                "returns": {"type": "object", "description": "Optimized schedule with task assignments and timeline."}:
+,
             {
                 "capability_id": f"{agent_id}_progress_tracking_v1.0",
                 "name": "progress_tracking",
                 "description": "Tracks and reports on project progress and identifies delays.",
                 "version": "1.0",
                 "parameters": [
-                    {"name": "plan", "type": "object", "required": True, "description": "Original plan with tasks and timeline"},
-                    {"name": "current_status", "type": "object", "required": True, "description": "Current status of tasks with completion percentages"}
-                ],
-                "returns": {"type": "object", "description": "Progress report with completion status and delay analysis."}
-            }
+                    {"name": "plan", "type": "object", "required": True, "description": "Original plan with tasks and timeline"},:
+"name": "current_status", "type": "object", "required": True, "description": "Current status of tasks with completion percentages"}:
+,
+                "returns": {"type": "object", "description": "Progress report with completion status and delay analysis."}:
+
         ]
         super.__init__(agent_id=agent_id, capabilities=capabilities)
-        logging.info(f"[{self.agent_id}] PlanningAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
-
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+        logging.info(f"[{self.agent_id}] PlanningAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}"):
+sync def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id")
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", )
 
-        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
-
-        try:
+        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'"):
+ry:
             if "task_planning" in capability_id:
                 result = self._create_task_plan(params)
                 result_payload = self._create_success_payload(request_id, result)
@@ -77,9 +75,8 @@ class PlanningAgent(BaseAgent):
         if self.hsp_connector and task_payload.get("callback_address"):
             callback_topic = task_payload["callback_address"]
             _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
-
-    def _create_task_plan(self, params: Dict[str, Any]) -> Dict[str, Any]:
+            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}"):
+ef _create_task_plan(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Creates a detailed task plan."""
         goal = params.get('goal', '')
         constraints = params.get('constraints', )
@@ -91,8 +88,8 @@ class PlanningAgent(BaseAgent):
         # In a real implementation, this would use advanced planning algorithms
         # For this example, we'll create a simple plan generator
         
-        # Define common task types for different goals
-        task_templates = {
+        # Define common task types for different goals:
+ask_templates = {
             "software development": [
                 {"name": "Requirements Analysis", "duration": 5, "resources": ["analyst"]},
                 {"name": "System Design", "duration": 7, "resources": ["architect"]},
@@ -178,9 +175,9 @@ class PlanningAgent(BaseAgent):
             "estimated_end_date": current_date.isoformat,
             "deadline": deadline,
             "tasks": timeline,
-            "total_duration_days": sum(task['duration'] for task in tasks),
-            "critical_path_length_days": sum(task['duration'] for task in tasks)  # Simplified
-        }
+            "total_duration_days": sum(task['duration'] for task in tasks),:
+critical_path_length_days": sum(task['duration'] for task in tasks)  # Simplified:
+
 
     def _optimize_schedule(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Optimizes a task schedule."""
@@ -240,8 +237,8 @@ class PlanningAgent(BaseAgent):
             
             current_time = task_end
         
-        # Check if schedule meets deadline
-        meets_deadline = True
+        # Check if schedule meets deadline:
+eets_deadline = True
         if deadline:
             try:
                 deadline_dt = datetime.fromisoformat(deadline.replace('Z', '+00:00'))
@@ -252,12 +249,12 @@ class PlanningAgent(BaseAgent):
         
         return {
             "optimized_schedule": timeline,
-            "total_duration_days": sum(t['duration_days'] for t in timeline),
-            "meets_deadline": meets_deadline,
+            "total_duration_days": sum(t['duration_days'] for t in timeline),:
+meets_deadline": meets_deadline,
             "deadline": deadline,
             "resource_utilization": resource_assignments,
-            "critical_path_length_days": sum(t['duration_days'] for t in timeline)  # Simplified
-        }
+            "critical_path_length_days": sum(t['duration_days'] for t in timeline)  # Simplified:
+
 
     def _track_progress(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Tracks project progress."""
@@ -286,8 +283,8 @@ class PlanningAgent(BaseAgent):
             task_status = status_tasks.get(task_name, ).get('status', 'not_started')
             completion_percentage = status_tasks.get(task_name, ).get('completion', 0)
             
-            # Determine if task is delayed
-            delayed = False
+            # Determine if task is delayed:
+elayed = False
             if task_status == 'in_progress':
                 try:
                     end_date = datetime.fromisoformat(task.get('end_date', '').replace('Z', '+00:00'))
@@ -318,8 +315,8 @@ class PlanningAgent(BaseAgent):
         overall_completion = 0
         if total_tasks > 0:
             # Weighted completion based on task durations
-            total_duration = sum(task.get('duration_days', 1) for task in plan_tasks)
-            weighted_completion = 0
+            total_duration = sum(task.get('duration_days', 1) for task in plan_tasks):
+eighted_completion = 0
             
             for task in plan_tasks:
                 task_name = task.get('name')
@@ -366,8 +363,8 @@ class PlanningAgent(BaseAgent):
             # If we're behind schedule, add some buffer
             current_progress = current_status.get('overall_completion_percentage', 50)
             if current_progress < 50:
-                # Add 20% more time if less than halfway
-                buffer_days = (plan_end_dt - datetime.now).days * 0.2
+                # Add 20% more time if less than halfway:
+uffer_days = (plan_end_dt - datetime.now).days * 0.2
                 plan_end_dt += timedelta(days=buffer_days)
             return plan_end_dt.isoformat
         except:

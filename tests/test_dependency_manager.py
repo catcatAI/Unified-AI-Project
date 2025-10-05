@@ -45,8 +45,8 @@ class TestDependencyManager:
     def test_config_file_not_found(self) -> None:
     """测试配置文件未找到"""
     # 使用patch来模拟文件不存在的情况
-    with patch('pathlib.Path.exists', return_value=False)
-            dm = DependencyManager("nonexistent_config.yaml")
+    with patch('pathlib.Path.exists', return_value=False):
+m = DependencyManager("nonexistent_config.yaml")
 
             # 应该使用默认配置
             assert isinstance(dm._config, dict)

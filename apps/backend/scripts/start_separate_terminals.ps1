@@ -19,7 +19,7 @@ Write-Host "[TERMINAL 1] 启动测试执行终端..." -ForegroundColor Green
 Start-Process powershell -ArgumentList @(
     "-NoExit",
     "-Command",
-    "Set-Location '$backendPath'; Write-Host '[TEST TERMINAL] 测试执行终端' -ForegroundColor Green; python tools/scripts/test_runner.py $PytestArgs"
+    "Set-Location '$backendPath'; Write-Host '[TEST TERMINAL] 测试执行终端' -ForegroundColor Green; python tools/tools/scripts/test_runner.py $PytestArgs"
 )
 
 # 等待测试终端启动
@@ -30,7 +30,7 @@ Write-Host "[TERMINAL 2] 启动错误分析和修复终端..." -ForegroundColor 
 Start-Process powershell -ArgumentList @(
     "-NoExit",
     "-Command",
-    "Set-Location '$backendPath'; Write-Host '[FIX TERMINAL] 错误分析和修复终端' -ForegroundColor Cyan; Write-Host '等待测试结果...' -ForegroundColor Gray; while(`$true) { if(Test-Path 'test_results.json') { Write-Host '[FIX TERMINAL] 检测到测试结果，开始分析...' -ForegroundColor Cyan; python tools/scripts/error_analyzer.py; `$report = Get-Content 'error_report.json' | ConvertFrom-Json; if(`$report.total_errors -gt 0) { Write-Host '[FIX TERMINAL] 发现错误，开始自动修复...' -ForegroundColor Cyan; python tools/scripts/fix_executor.py } else { Write-Host '[FIX TERMINAL] 所有测试通过，无需修复' -ForegroundColor Green } }; Start-Sleep -Seconds 5 }"
+    "Set-Location '$backendPath'; Write-Host '[FIX TERMINAL] 错误分析和修复终端' -ForegroundColor Cyan; Write-Host '等待测试结果...' -ForegroundColor Gray; while(`$true) { if(Test-Path 'test_results.json') { Write-Host '[FIX TERMINAL] 检测到测试结果，开始分析...' -ForegroundColor Cyan; python tools/tools/scripts/error_analyzer.py; `$report = Get-Content 'error_report.json' | ConvertFrom-Json; if(`$report.total_errors -gt 0) { Write-Host '[FIX TERMINAL] 发现错误，开始自动修复...' -ForegroundColor Cyan; python tools/tools/scripts/fix_executor.py } else { Write-Host '[FIX TERMINAL] 所有测试通过，无需修复' -ForegroundColor Green } }; Start-Sleep -Seconds 5 }"
 )
 
 Write-Host ""

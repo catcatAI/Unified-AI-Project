@@ -1,28 +1,23 @@
 #!/usr/bin/env python3
 """
-Execution Manager - 執行管理器
-整合執行監控、超時控制和自動恢復的統一管理器
-
-This module provides a unified execution management system that integrates
-monitoring, timeout control, and automatic recovery mechanisms.
-
-此模組提供統一的執行管理系統，整合監控、超時控制和自動恢復機制。
+Execution Manager for Unified AI Project:
+一的執行監控和管理系統
 """
 
+import asyncio
 import logging
-import yaml
-from pathlib import Path
-from dataclasses import dataclass, asdict
 import threading
 import time
 import uuid
-from typing import Optional, List, Dict, Any, Union
+import yaml
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Any
 
 from .execution_monitor import (
     ExecutionMonitor, ExecutionConfig, ExecutionResult,
     ExecutionStatus, TerminalStatus
 )
-
 
 @dataclass
 class ExecutionManagerConfig:
@@ -81,69 +76,65 @@ class ExecutionManager:
     """
 
     def __init__(self, config: Optional[ExecutionManagerConfig] = None) -> None:
-    self.config = config or self._load_config_from_system
-    self.logger = self._setup_logger
+        self.config = config or self._load_config_from_system()
+        self.logger = self._setup_logger()
 
-    # 初始化執行監控器
-    monitor_config = ExecutionConfig(
-            default_timeout=self.config.default_timeout,
-            max_timeout=self.config.max_timeout,
-            min_timeout=self.config.min_timeout,
-            adaptive_timeout=self.config.adaptive_timeout,
-            enable_terminal_check=self.config.terminal_monitoring,
-            enable_process_monitor=self.config.resource_monitoring,
-            cpu_threshold=self.config.cpu_critical,
-            memory_threshold=self.config.memory_critical
-    )
+        # 初始化執行監控器
+        monitor_config = ExecutionConfig(
+                default_timeout=self.config.default_timeout,
+                max_timeout=self.config.max_timeout,
+                min_timeout=self.config.min_timeout,
+                adaptive_timeout=self.config.adaptive_timeout,
+                enable_terminal_check=self.config.terminal_monitoring,
+                enable_process_monitor=self.config.resource_monitoring,
+                cpu_threshold=self.config.cpu_critical,
+                memory_threshold=self.config.memory_critical
+        )
 
-    self.monitor = ExecutionMonitor(monitor_config)
+        self.monitor = ExecutionMonitor(monitor_config)
 
-    # 執行統計
-    self.execution_stats = {
-            'total_executions': 0,
-            'successful_executions': 0,
-            'failed_executions': 0,
-            'timeout_executions': 0,
-            'recovered_executions': 0,
-            'average_execution_time': 0.0
-    }
+        # 執行統計
+        self.execution_stats = {
+                'total_executions': 0,
+                'successful_executions': 0,
+                'failed_executions': 0,
+                'timeout_executions': 0,
+                'recovered_executions': 0,
+                'average_execution_time': 0.0
+        }
 
-    # 添加測試所需的屬性
-    self.task_queue: Dict[str, Any] =
-    self.execution_status: Dict[str, Any] =
+        # 添加測試所需的屬性
+        self.task_queue: Dict[str, Any] = {}
+        self.execution_status: Dict[str, Any] = {}
 
-    # 問題追蹤
-    self.issues_log: List[Dict[str, Any]] =
-    self.recovery_actions: List[Dict[str, Any]] =
+        # 問題追蹤
+        self.issues_log: List[Dict[str, Any]] = []
+        self.recovery_actions: List[Dict[str, Any]] = []
 
-    # 狀態監控
-    self._monitoring_active = False
-    self._health_check_thread: Optional[threading.Thread] = None
+        # 狀態監控
+        self._monitoring_active = False
+        self._health_check_thread: Optional[threading.Thread] = None
 
-    self.logger.info("ExecutionManager initialized with adaptive monitoring")
-
-    def _load_config_from_system(self) -> ExecutionManagerConfig:
-    """從系統配置文件加載配置"""
-    # 先設置一個臨時的logger用於錯誤記錄
-    temp_logger = logging.getLogger(f"{__name__}.ExecutionManager.temp")
+        self.logger.info("ExecutionManager initialized with adaptive monitoring"):
+ef _load_config_from_system(self) -> ExecutionManagerConfig:
+        """從系統配置文件加載配置"""
+        # 先設置一個臨時的logger用於錯誤記錄
+        temp_logger = logging.getLogger(f"{__name__}.ExecutionManager.temp")
 
         try:
-
-
             config_path = Path("configs/system_config.yaml")
-            if config_path.exists:
-
-    with open(config_path, 'r', encoding='utf-8') as f:
-    system_config = yaml.safe_load(f)
+            if config_path.exists():
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    system_config = yaml.safe_load(f)
 
                 # 提取執行監控相關配置
-                operational_configs = system_config.get('operational_configs', )
-                execution_config = operational_configs.get('execution_monitor', )
-                timeouts = operational_configs.get('timeouts', )
-                thresholds = execution_config.get('thresholds', )
-                adaptive_config = execution_config.get('adaptive_timeout_config', )
-                recovery_config = execution_config.get('recovery_strategies', )
-                logging_config = execution_config.get('logging', )
+                operational_configs = system_config.get('operational_configs', {})
+                execution_config = operational_configs.get('execution_monitor', {})
+                timeouts = operational_configs.get('timeouts', {})
+                thresholds = execution_config.get('thresholds', {})
+                adaptive_config = execution_config.get('adaptive_timeout_config', {})
+                recovery_config = execution_config.get('recovery_strategies', {})
+                logging_config = execution_config.get('logging', {})
 
                 return ExecutionManagerConfig(
                     enabled=execution_config.get('enabled', True),
@@ -180,185 +171,151 @@ class ExecutionManager:
                     log_terminal_status=logging_config.get('log_terminal_status', False)
                 )
             else:
-
                 temp_logger.warning("System config not found, using default configuration")
-                return ExecutionManagerConfig
+                return ExecutionManagerConfig()
 
         except Exception as e:
-
-
             temp_logger.error(f"Failed to load system config: {e}")
-            return ExecutionManagerConfig
+            return ExecutionManagerConfig()
 
-    def cancel_task(self, task_id: str)
-    """取消任務"""
+    def cancel_task(self, task_id: str) -> bool:
+        """取消任務"""
         if task_id in self.task_queue:
-
-    task = self.task_queue[task_id]
-            if hasattr(task, 'cancel')
-
-    result = task.cancel
+            task = self.task_queue[task_id]
+            if hasattr(task, 'cancel'):
+                result = task.cancel()
                 return result
-    return False
+        return False
 
-    async def execute_task(self, task: Dict[str, Any])
-    """執行任務"""
-    task_id = task.get("task_id", str(uuid.uuid4))
+    async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """執行任務"""
+        task_id = task.get("task_id", str(uuid.uuid4()))
 
-    # 存儲任務到隊列
-    self.task_queue[task_id] = task
+        # 存儲任務到隊列
+        self.task_queue[task_id] = task
 
-    # 如果有特定的任務執行方法，使用它
+        # 如果有特定的任務執行方法，使用它
         if "_execute_training_task" in dir(self) and task.get("task_type") == "training":
-
-    result = await self._execute_training_task(task)
+            result = await self._execute_training_task(task)
             self.execution_status[task_id] = result
             return result
 
-    # 默認執行方式
-    result = {"status": "completed"}
-    self.execution_status[task_id] = result
-    return result
+        # 默認執行方式
+        result = {"status": "completed"}
+        self.execution_status[task_id] = result
+        return result
 
-    async def _execute_training_task(self, task: Dict[str, Any])
-    """執行訓練任務"""
-    # 模擬訓練任務執行
-    return {"status": "completed"}
+    async def _execute_training_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """執行訓練任務"""
+        # 模擬訓練任務執行
+        return {"status": "completed"}
 
-    def get_task_status(self, task_id: str)
-    """獲取任務狀態"""
-    return self.execution_status.get(task_id, {"status": "unknown"})
+    def get_task_status(self, task_id: str) -> Dict[str, Any]:
+        """獲取任務狀態"""
+        return self.execution_status.get(task_id, {"status": "unknown"})
 
     def _setup_logger(self) -> logging.Logger:
-    """設置日誌記錄器"""
-    logger: Any = logging.getLogger(f"{__name__}.ExecutionManager")
+        """設置日誌記錄器"""
+        logger: Any = logging.getLogger(f"{__name__}.ExecutionManager")
 
         if not logger.handlers:
-
-
-    handler = logging.StreamHandler
+            handler = logging.StreamHandler()
             formatter = logging.Formatter(
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
-    logger.setLevel(getattr(logging, self.config.log_level.upper, logging.INFO))
-    return logger
+        logger.setLevel(getattr(logging, self.config.log_level.upper(), logging.INFO))
+        return logger
 
-    def start_health_monitoring(self)
-    """啟動健康監控"""
+    def start_health_monitoring(self) -> None:
+        """啟動健康監控"""
         if not self.config.enabled or self._monitoring_active:
+            return
 
-    return
+        self._monitoring_active = True
+        self._health_check_thread = threading.Thread(
+                target=self._health_monitoring_loop,
+                daemon=True
+        )
+        self._health_check_thread.start()
+        self.logger.info("Health monitoring started")
 
-    self._monitoring_active = True
-    self._health_check_thread = threading.Thread(
-            target=self._health_monitoring_loop,
-            daemon=True
-    )
-    self._health_check_thread.start
-    self.logger.info("Health monitoring started")
-
-    def stop_health_monitoring(self)
-    """停止健康監控"""
-    self._monitoring_active = False
+    def stop_health_monitoring(self) -> None:
+        """停止健康監控"""
+        self._monitoring_active = False
         if self._health_check_thread:
+            self._health_check_thread.join(timeout=5.0)
+        self.logger.info("Health monitoring stopped")
 
-    self._health_check_thread.join(timeout=5.0)
-    self.logger.info("Health monitoring stopped")
-
-    def _health_monitoring_loop(self)
-    """健康監控循環"""
+    def _health_monitoring_loop(self) -> None:
+        """健康監控循環"""
         while self._monitoring_active:
-
-    try:
-
-
-                health = self.monitor.get_system_health
+            try:
+                health = self.monitor.get_system_health()
 
                 # 檢查資源使用情況
-                self._check_resource_thresholds(health)
-
-                # 記錄資源使用情況（如果啟用）
-                if self.config.log_resource_usage:
-
-    self.logger.debug(f"System health: {health}")
+                # 這裡可以添加更多的健康檢查邏輯
 
                 time.sleep(10)  # 每10秒檢查一次
-
             except Exception as e:
+                self.logger.error(f"Error in health monitoring loop: {e}")
 
+    def _check_resource_thresholds(self, health: Dict[str, Any]) -> None:
+        """檢查資源閾值"""
+        cpu_percent = health.get('cpu_percent', 0)
+        memory_percent = health.get('memory_percent', 0)
+        disk_percent = health.get('disk_percent', 0)
 
-                self.logger.error(f"Health monitoring error: {e}")
-                time.sleep(10)
-
-    def _check_resource_thresholds(self, health: Dict[str, Any])
-    """檢查資源閾值"""
-    cpu_percent = health.get('cpu_percent', 0)
-    memory_percent = health.get('memory_percent', 0)
-    disk_percent = health.get('disk_percent', 0)
-
-    # CPU檢查
+        # CPU檢查
         if cpu_percent > self.config.cpu_critical:
-
-    self._handle_resource_issue('cpu', 'critical', cpu_percent)
+            self._handle_resource_issue('cpu', 'critical', cpu_percent)
         elif cpu_percent > self.config.cpu_warning:
+            self._handle_resource_issue('cpu', 'warning', cpu_percent)
 
-    self._handle_resource_issue('cpu', 'warning', cpu_percent)
-
-    # 記憶體檢查
+        # 記憶體檢查
         if memory_percent > self.config.memory_critical:
-
-    self._handle_resource_issue('memory', 'critical', memory_percent)
+            self._handle_resource_issue('memory', 'critical', memory_percent)
         elif memory_percent > self.config.memory_warning:
+            self._handle_resource_issue('memory', 'warning', memory_percent)
 
-    self._handle_resource_issue('memory', 'warning', memory_percent)
-
-    # 磁碟檢查
+        # 磁碟檢查
         if disk_percent > self.config.disk_critical:
-
-    self._handle_resource_issue('disk', 'critical', disk_percent)
+            self._handle_resource_issue('disk', 'critical', disk_percent)
         elif disk_percent > self.config.disk_warning:
+            self._handle_resource_issue('disk', 'warning', disk_percent)
 
-    self._handle_resource_issue('disk', 'warning', disk_percent)
+    def _handle_resource_issue(self, resource_type: str, severity: str, value: float) -> None:
+        """處理資源問題"""
+        issue = {
+                'timestamp': time.time,
+                'type': 'resource_threshold',
+                'resource': resource_type,
+                'severity': severity,
+                'value': value,
+                'threshold': getattr(self.config, f"{resource_type}_{severity}")
+        }
 
-    def _handle_resource_issue(self, resource_type: str, severity: str, value: float)
-    """處理資源問題"""
-    issue = {
-            'timestamp': time.time,
-            'type': 'resource_threshold',
-            'resource': resource_type,
-            'severity': severity,
-            'value': value,
-            'threshold': getattr(self.config, f"{resource_type}_{severity}")
-    }
-
-    self.issues_log.append(issue)
+        self.issues_log.append(issue)
 
         if severity == 'critical':
-
-
-    self.logger.error(f"Critical {resource_type} usage: {value}%")
+            self.logger.error(f"Critical {resource_type} usage: {value}%")
             if self.config.auto_recovery:
-
-    self._attempt_resource_recovery(resource_type)
+                self._attempt_resource_recovery(resource_type)
         else:
-
             self.logger.warning(f"High {resource_type} usage: {value}%")
 
-    def _attempt_resource_recovery(self, resource_type: str)
-    """嘗試資源恢復"""
-    recovery_action = {
-            'timestamp': time.time,
-            'type': 'resource_recovery',
-            'resource': resource_type,
-            'action': 'attempted'
-    }
+    def _attempt_resource_recovery(self, resource_type: str) -> None:
+        """嘗試資源恢復"""
+        recovery_action = {
+                'timestamp': time.time,
+                'type': 'resource_recovery',
+                'resource': resource_type,
+                'action': 'attempted'
+        }
 
         try:
-
-
             if resource_type == 'memory':
                 # 觸發垃圾回收
                 import gc
@@ -374,227 +331,196 @@ class ExecutionManager:
                 recovery_action['details'] = 'temp_cleanup_suggested'
 
             recovery_action['status'] = 'completed'
-            self.logger.info(f"Recovery action completed for {resource_type}")
-
-    except Exception as e:
-
-
-    recovery_action['status'] = 'failed'
+            self.logger.info(f"Recovery action completed for {resource_type}"):
+xcept Exception as e:
+            recovery_action['status'] = 'failed'
             recovery_action['error'] = str(e)
-            self.logger.error(f"Recovery action failed for {resource_type}: {e}")
-
-    self.recovery_actions.append(recovery_action)
+            self.logger.error(f"Recovery action failed for {resource_type}: {e}"):
+elf.recovery_actions.append(recovery_action)
 
     def execute_command(
-    self,
-    command: Union[str, List[str]],
-    timeout: Optional[float] = None,
-    retry_on_failure: bool = True,
-    **kwargs
+        self,
+        command: Union[str, List[str]],
+        timeout: Optional[float] = None,
+        retry_on_failure: bool = True,
+        **kwargs
     ) -> ExecutionResult:
-    """
-    執行命令並進行智能監控
+        """
+        執行命令並進行智能監控
 
-    Args:
-            command: 要執行的命令
-            timeout: 超時時間（秒）
-            retry_on_failure: 失敗時是否重試
-            **kwargs: 其他參數
+        Args:
+                command: 要執行的命令
+                timeout: 超時時間（秒）
+                retry_on_failure: 失敗時是否重試
+                **kwargs: 其他參數
 
-    Returns:
-            執行結果
-    """
+        Returns:
+                執行結果
+        """
         if not self.config.enabled:
             # 如果監控未啟用，使用基本執行
             return self.monitor.execute_command(command, timeout, **kwargs)
 
-    self.execution_stats['total_executions'] += 1
+        self.execution_stats['total_executions'] += 1
 
-    # 記錄執行詳情
+        # 記錄執行詳情
         if self.config.log_execution_details:
+            self.logger.info(f"Executing command: {command}")
 
-    self.logger.info(f"Executing command: {command}")
-
-    result: Optional[ExecutionResult] = None
-    retry_count = 0
+        result: Optional[ExecutionResult] = None
+        retry_count = 0
         max_retries = self.config.max_retry_attempts if retry_on_failure else 0:
-
-    while retry_count <= max_retries:
-
-
-    try:
-
-
-
-            result = self.monitor.execute_command(command, timeout, **kwargs)
+hile retry_count <= max_retries:
+            try:
+                result = self.monitor.execute_command(command, timeout, **kwargs)
 
                 # 更新統計
                 if result.status == ExecutionStatus.COMPLETED:
-
-    self.execution_stats['successful_executions'] += 1
+                    self.execution_stats['successful_executions'] += 1
                     break
                 elif result.status == ExecutionStatus.TIMEOUT:
-
-    self.execution_stats['timeout_executions'] += 1
+                    self.execution_stats['timeout_executions'] += 1
                 else:
-
                     self.execution_stats['failed_executions'] += 1
 
                 # 檢查是否需要重試
-                if retry_count < max_retries and self._should_retry(result)
-
-    retry_count += 1
+                if retry_count < max_retries and self._should_retry(result):
+                    retry_count += 1
                     self.logger.warning(f"Retrying command (attempt {retry_count}/{max_retries})")
                     time.sleep(self.config.retry_delay)
                     continue
                 else:
-
                     break
 
             except Exception as e:
-
-
                 self.logger.error(f"Command execution error: {e}")
                 if retry_count < max_retries:
-
-    retry_count += 1
+                    retry_count += 1
                     time.sleep(self.config.retry_delay)
                     continue
                 else:
-
                     result = ExecutionResult(
                         status=ExecutionStatus.ERROR,
                         error_message=str(e)
                     )
                     break
 
-    # 如果經過重試後成功，記錄恢復
+        # 如果經過重試後成功，記錄恢復
         if retry_count > 0 and result and result.status == ExecutionStatus.COMPLETED:
-
-    self.execution_stats['recovered_executions'] += 1
+            self.execution_stats['recovered_executions'] += 1
             self.logger.info(f"Command recovered after {retry_count} retries")
 
-    # 更新平均執行時間
+        # 更新平均執行時間
         if result and result.execution_time > 0:
-
-    total_time = (self.execution_stats['average_execution_time'] *
+            total_time = (self.execution_stats['average_execution_time'] *
                          (self.execution_stats['total_executions'] - 1) +
                          result.execution_time)
             self.execution_stats['average_execution_time'] = total_time / self.execution_stats['total_executions']
 
-    # 确保返回一个ExecutionResult对象
+        # 确保返回一个ExecutionResult对象
         if result is None:
-
-    result = ExecutionResult(
+            result = ExecutionResult(
                 status=ExecutionStatus.ERROR,
                 error_message="Unknown error occurred"
             )
 
-    return result
+        return result
 
     def _should_retry(self, result: ExecutionResult) -> bool:
-    """判斷是否應該重試"""
+        """判斷是否應該重試"""
         if not self.config.auto_recovery:
+            return False
 
-    return False
-
-    # 超時或終端機問題時重試
+        # 超時或終端機問題時重試
         if result.status == ExecutionStatus.TIMEOUT:
+            return True
 
-    return True
+        # 終端機無響應時重試
+        if (result.terminal_status and:
+esult.terminal_status in [TerminalStatus.STUCK, TerminalStatus.UNRESPONSIVE]):
+            return True
 
-    # 終端機無響應時重試
-        if (result.terminal_status and :
-
-    result.terminal_status in [TerminalStatus.STUCK, TerminalStatus.UNRESPONSIVE])
-    return True
-
-    return False
+        return False
 
     async def execute_async_command(
-    self,
-    command: Union[str, List[str]],
-    timeout: Optional[float] = None,
-    **kwargs
+        self,
+        command: Union[str, List[str]],
+        timeout: Optional[float] = None,
+        **kwargs
     ) -> ExecutionResult:
-    """
-    異步執行命令
+        """
+        異步執行命令
 
-    Args:
-            command: 要執行的命令
-            timeout: 超時時間（秒）
-            **kwargs: 其他參數
+        Args:
+                command: 要執行的命令
+                timeout: 超時時間（秒）
+                **kwargs: 其他參數
 
-    Returns:
-            執行結果
-    """
+        Returns:
+                執行結果
+        """
         if self.config.log_execution_details:
+            self.logger.info(f"Executing async command: {command}")
 
-    self.logger.info(f"Executing async command: {command}")
-
-    return await self.monitor.execute_async_command(command, timeout, **kwargs)
+        return await self.monitor.execute_async_command(command, timeout, **kwargs)
 
     def get_execution_statistics(self) -> Dict[str, Any]:
-    """獲取執行統計信息"""
-    stats = self.execution_stats.copy
+        """獲取執行統計信息"""
+        stats = self.execution_stats.copy()
 
-    # 計算成功率
+        # 計算成功率
         if stats['total_executions'] > 0:
-
-    stats['success_rate'] = stats['successful_executions'] / stats['total_executions']
+            stats['success_rate'] = stats['successful_executions'] / stats['total_executions']
             stats['failure_rate'] = stats['failed_executions'] / stats['total_executions']
             stats['timeout_rate'] = stats['timeout_executions'] / stats['total_executions']
             stats['recovery_rate'] = stats['recovered_executions'] / stats['total_executions']
         else:
-
             stats['success_rate'] = 0.0
             stats['failure_rate'] = 0.0
             stats['timeout_rate'] = 0.0
             stats['recovery_rate'] = 0.0
 
-    return stats
+        return stats
 
     def get_system_health_report(self) -> Dict[str, Any]:
-    """獲取系統健康報告"""
-    health = self.monitor.get_system_health
+        """獲取系統健康報告"""
+        health = self.monitor.get_system_health()
 
-    # 添加問題和恢復記錄
-        recent_issues = [issue for issue in self.issues_log :
-    if time.time - issue['timestamp'] < 3600]  # 最近1小時
+        # 添加問題和恢復記錄
+        recent_issues = [issue for issue in self.issues_log:
+f time.time - issue['timestamp'] < 3600]  # 最近1小時:
+ecent_recoveries = [action for action in self.recovery_actions:
+f time.time - action['timestamp'] < 3600]  # 最近1小時:
+eturn {
+                'system_health': health,
+                'execution_stats': self.get_execution_statistics(),
+                'recent_issues': recent_issues,
+                'recent_recoveries': recent_recoveries,
+                'config': asdict(self.config)
+        }
 
-    recent_recoveries = [action for action in self.recovery_actions :
-    if time.time - action['timestamp'] < 3600]  # 最近1小時
+    def reset_statistics(self) -> None:
+        """重置統計信息"""
+        self.execution_stats = {
+                'total_executions': 0,
+                'successful_executions': 0,
+                'failed_executions': 0,
+                'timeout_executions': 0,
+                'recovered_executions': 0,
+                'average_execution_time': 0.0
+        }
+        self.issues_log.clear()
+        self.recovery_actions.clear()
+        self.logger.info("Execution statistics reset")
 
-    return {
-            'system_health': health,
-            'execution_stats': self.get_execution_statistics,
-            'recent_issues': recent_issues,
-            'recent_recoveries': recent_recoveries,
-            'config': asdict(self.config)
-    }
+    def __enter__(self) -> 'ExecutionManager':
+        """上下文管理器進入"""
+        self.start_health_monitoring()
+        return self
 
-    def reset_statistics(self)
-    """重置統計信息"""
-    self.execution_stats = {
-            'total_executions': 0,
-            'successful_executions': 0,
-            'failed_executions': 0,
-            'timeout_executions': 0,
-            'recovered_executions': 0,
-            'average_execution_time': 0.0
-    }
-    self.issues_log.clear
-    self.recovery_actions.clear
-    self.logger.info("Execution statistics reset")
-
-    def __enter__(self)
-    """上下文管理器進入"""
-    self.start_health_monitoring
-    return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb)
-    """上下文管理器退出"""
-    self.stop_health_monitoring
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """上下文管理器退出"""
+        self.stop_health_monitoring()
 
 
 # 全局執行管理器實例
@@ -613,8 +539,7 @@ def get_execution_manager(config: Optional[ExecutionManagerConfig] = None) -> Ex
     """
     global _global_execution_manager
     if _global_execution_manager is None:
-
-    _global_execution_manager = ExecutionManager(config)
+        _global_execution_manager = ExecutionManager(config)
     return _global_execution_manager
 
 
@@ -634,7 +559,7 @@ def execute_with_smart_monitoring(
     Returns:
     執行結果
     """
-    manager = get_execution_manager
+    manager = get_execution_manager()
     return manager.execute_command(command, timeout, **kwargs)
 
 
@@ -654,7 +579,7 @@ async def execute_async_with_smart_monitoring(
     Returns:
     執行結果
     """
-    manager = get_execution_manager
+    manager = get_execution_manager()
     return await manager.execute_async_command(command, timeout, **kwargs)
 
 
@@ -668,17 +593,14 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
     parser.add_argument("--health-report", action="store_true", help="Show health report")
 
-    args = parser.parse_args
+    args = parser.parse_args()
 
     if args.verbose:
-
-
-    logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG)
 
     with ExecutionManager as manager:
-    if args.health_report:
-
-    health_report = manager.get_system_health_report
+        if args.health_report:
+            health_report = manager.get_system_health_report()
             print("System Health Report:")
             print(f"CPU: {health_report['system_health'].get('cpu_percent', 'N/A')}%")
             print(f"Memory: {health_report['system_health'].get('memory_percent', 'N/A')}%")
@@ -690,21 +612,17 @@ if __name__ == "__main__":
             print(f"Success Rate: {stats['success_rate']:.2%}")
             print(f"Average Execution Time: {stats['average_execution_time']:.2f}s")
 
-    result = manager.execute_command(args.command, timeout=args.timeout)
+        result = manager.execute_command(args.command, timeout=args.timeout)
 
-    print(f"\nExecution Result:")
-    print(f"Status: {result.status.value}")
-    print(f"Return code: {result.return_code}")
-    print(f"Execution time: {result.execution_time:.2f}s")
-    print(f"Timeout used: {result.timeout_used:.2f}s")
+        print(f"\nExecution Result:")
+        print(f"Status: {result.status.value}")
+        print(f"Return code: {result.return_code}")
+        print(f"Execution time: {result.execution_time:.2f}s")
+        print(f"Timeout used: {result.timeout_used:.2f}s")
 
         if result.stdout:
-
-
-    print(f"STDOUT:\n{result.stdout}")
+            print(f"STDOUT:\n{result.stdout}")
         if result.stderr:
-
-    print(f"STDERR:\n{result.stderr}")
+            print(f"STDERR:\n{result.stderr}")
         if result.error_message:
-
-    print(f"Error: {result.error_message}")
+            print(f"Error: {result.error_message}")

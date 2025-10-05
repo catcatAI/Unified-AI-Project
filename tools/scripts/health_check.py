@@ -1,125 +1,139 @@
-import requests
-import time
-import logging
-import yaml
-import paho.mqtt.client as mqtt
+#!/usr/bin/env python3
+"""
+健康检查脚本 - 检查Unified AI Project的依赖和环境配置
+"""
+
 import os
+import sys
+import subprocess
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-# Determine the project root directory, which is the parent of the directory containing this script.
-# This makes the script portable and independent of the current working directory.
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-BASE_PATH = PROJECT_ROOT
-CONFIG_PATH = BASE_PATH / "apps" / "backend" / "configs" / "system_config.yaml"
-
-with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
-    config = yaml.safe_load(f)
-
-API_HOST = config['operational_configs']['api_server']['host']
-API_PORT = config['operational_configs']['api_server']['port']
-API_ENDPOINT = f"http://{API_HOST}:{API_PORT}/api/health"
-
-def check_api_health():
-    """Checks the health of the main API server."""
-    try:
-        start_time = time.time()
-        response = requests.get(API_ENDPOINT, timeout=5)
-        end_time = time.time()
-
-        response_time = (end_time - start_time) * 1000  # in milliseconds
-
-        if response.status_code == 200:
-            _ = logging.info(f"API is HEALTHY. Status: {response.status_code}. Response time: {response_time:.2f}ms")
-            # Optionally, check response content
-            # data = response.json()
-            # if data.get("status") == "ok":
-            #     logging.info("API status is 'ok'.")
-            # else:
-            #     logging.warning(f"API status is not 'ok'. Response: {data}")
-        else:
-            _ = logging.error(f"API is UNHEALTHY. Status: {response.status_code}. Response time: {response_time:.2f}ms")
-            _ = logging.error(f"Response content: {response.text}")
-
-    except requests.exceptions.RequestException as e:
-        _ = logging.error(f"API is UNREACHABLE. Error: {e}")
-
-def check_firebase_credentials():
-    """Checks if Firebase credentials path is set and the file exists."""
-    firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
-    if not firebase_credentials_path:
-        _ = logging.warning("FIREBASE_CREDENTIALS_PATH environment variable is not set.")
+def check_python():
+    """检查Python版本"""
+    _ = print("检查Python版本...")
+    _ = print(f"  Python版本: {sys.version}")
+    if sys.version_info < (3, 8):
+        _ = print("  ❌ Python版本过低，需要3.8或更高版本")
         return False
-
-    credentials_file = Path(firebase_credentials_path)
-    if credentials_file.is_file():
-        _ = logging.info(f"Firebase credentials file found at: {firebase_credentials_path}")
-        return True
     else:
-        _ = logging.error(f"Firebase credentials file NOT FOUND at: {firebase_credentials_path}")
-        return False
-
-def check_mqtt_broker():
-    """Checks the health of the MQTT broker."""
-    _ = logging.info("Checking MQTT broker health...")
-    try:
-        hsp_config_path = BASE_PATH / "apps" / "backend" / "configs" / "hsp_fallback_config.yaml"
-        with open(hsp_config_path, 'r', encoding='utf-8') as f:
-            hsp_config = yaml.safe_load(f)
-        
-        broker_address = hsp_config['hsp_primary']['mqtt']['broker_address']
-        broker_port = hsp_config['hsp_primary']['mqtt']['broker_port']
-
-        mqtt_client = mqtt.Client()
-        _ = mqtt_client.connect(broker_address, broker_port, 60)
-        _ = mqtt_client.disconnect()
-        _ = logging.info(f"MQTT broker is HEALTHY. Connected to {broker_address}:{broker_port}")
+        _ = print("  ✅ Python版本符合要求")
         return True
-    except Exception as e:
-        _ = logging.error(f"MQTT broker is UNHEALTHY. Error: {e}")
-        return False
 
-
-def check_database():
-    """Checks the health of the Firestore database."""
-    _ = logging.info("Checking Firestore database health...")
+def check_pnpm():
+    """检查pnpm是否安装"""
+    _ = print("\n检查pnpm...")
     try:
-        import firebase_admin
-        from firebase_admin import credentials, firestore
-
-        if not firebase_admin._apps:
-            firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
-            if not firebase_credentials_path:
-                _ = logging.warning("FIREBASE_CREDENTIALS_PATH environment variable is not set. Cannot check Firestore health.")
-                return False
-
-            cred = credentials.Certificate(firebase_credentials_path)
-            _ = firebase_admin.initialize_app(cred)
-
-        db = firestore.client()
-        # Perform a simple read operation to check the connection
-        doc_ref = db.collection('health_check').document('ping')
-        _ = doc_ref.set({'timestamp': firestore.SERVER_TIMESTAMP})
-        doc = doc_ref.get()
-        if doc.exists:
-            _ = logging.info("Firestore database is HEALTHY. Connection successful.")
+        # 检查pnpm是否在PATH中
+        result = subprocess.run(["pnpm", "--version"], capture_output=True, text=True, shell=True)
+        if result.returncode == 0:
+            _ = print(f"  pnpm版本: {result.stdout.strip()}")
+            _ = print("  ✅ pnpm已安装")
             return True
         else:
-            _ = logging.error("Firestore database is UNHEALTHY. Could not read from a test document.")
+            # 如果直接调用失败，尝试通过where命令检查
+            where_result = subprocess.run(["where", "pnpm"], capture_output=True, text=True, shell=True)
+            if where_result.returncode == 0:
+                # 如果找到了pnpm，尝试获取版本
+                version_result = subprocess.run(["pnpm", "--version"], capture_output=True, text=True, shell=True)
+                if version_result.returncode == 0:
+                    _ = print(f"  pnpm版本: {version_result.stdout.strip()}")
+                    _ = print("  ✅ pnpm已安装")
+                    return True
+            _ = print("  ❌ 未找到pnpm，请先安装pnpm")
             return False
     except Exception as e:
-        _ = logging.error(f"Firestore database is UNHEALTHY. Error: {e}")
+        _ = print(f"  ❌ 检查pnpm时出错: {e}")
+        return False
+
+def check_pip():
+    """检查pip是否可用"""
+    _ = print("\n检查pip...")
+    try:
+        result = subprocess.run(["pip", "--version"], capture_output=True, text=True)
+        _ = print(f"  pip版本: {result.stdout.strip()}")
+        _ = print("  ✅ pip可用")
+        return True
+    except FileNotFoundError:
+        _ = print("  ❌ 未找到pip")
+        return False
+
+def check_backend_deps():
+    """检查后端依赖"""
+    _ = print("\n检查后端依赖...")
+    backend_dir = Path("apps/backend")
+    if not backend_dir.exists():
+        _ = print("  ❌ 未找到后端目录")
+        return False
+    
+    requirements_files = ["requirements.txt", "requirements-dev.txt"]
+    for req_file in requirements_files:
+        req_path = backend_dir / req_file
+        if req_path.exists():
+            _ = print(f"  ✅ 找到 {req_file}")
+        else:
+            _ = print(f"  ⚠️  未找到 {req_file}")
+    
+    return True
+
+def check_fastapi():
+    """检查FastAPI是否安装"""
+    _ = print("\n检查FastAPI...")
+    try:
+        import fastapi
+        _ = print(f"  FastAPI版本: {fastapi.__version__}")
+        _ = print("  ✅ FastAPI已安装")
+        return True
+    except ImportError:
+        _ = print("  ❌ 未安装FastAPI")
+        return False
+
+def check_uvicorn():
+    """检查Uvicorn是否安装"""
+    _ = print("\n检查Uvicorn...")
+    try:
+        import uvicorn
+        _ = print(f"  Uvicorn版本: {uvicorn.__version__}")
+        _ = print("  ✅ Uvicorn已安装")
+        return True
+    except ImportError:
+        _ = print("  ❌ 未安装Uvicorn")
         return False
 
 def main() -> None:
-    """Main function to run health checks."""
-    _ = logging.info("--- Starting Health Checks ---")
-    _ = check_api_health()
-    _ = check_firebase_credentials()
-    _ = check_mqtt_broker()
-    _ = check_database()
-    _ = logging.info("--- Health Checks Complete ---")
+    """主函数"""
+    _ = print("Unified AI Project 健康检查")
+    print("=" * 40)
+    
+    checks = [
+        check_python,
+        check_pnpm,
+        check_pip,
+        check_backend_deps,
+        check_fastapi,
+        check_uvicorn
+    ]
+    
+    results = []
+    for check in checks:
+        try:
+            result = check()
+            _ = results.append(result)
+        except Exception as e:
+            _ = print(f"  ❌ 检查过程中出错: {e}")
+            _ = results.append(False)
+    
+    print("\n" + "=" * 40)
+    if all(results):
+        _ = print("✅ 所有检查通过！项目环境配置正确。")
+        _ = print("\n现在可以启动服务：")
+        _ = print("  pnpm dev")
+    else:
+        _ = print("❌ 部分检查未通过，请根据上面的提示修复问题。")
+        failed_count = len([r for r in results if not r])
+        _ = print(f"  失败项: {failed_count}/{len(results)}")
 
 if __name__ == "__main__":
+    # 切换到项目根目录
+    project_root: str = Path(__file__).parent
+    _ = os.chdir(project_root)
     _ = main()

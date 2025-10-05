@@ -65,7 +65,7 @@ class FileUtils:
     # 需要排除的目录和文件
     self.exclude_patterns = [
             "__pycache__",
-            ".pytest_cache",
+            "data/runtime_data/.pytest_cache",
             ".git",
             ".vscode",
             ".idea",

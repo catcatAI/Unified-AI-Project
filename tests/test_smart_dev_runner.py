@@ -7,9 +7,8 @@ from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 class TestSmartDevRunner(unittest.TestCase):
-    """Test cases for smart_dev_runner.py"""
-
-    def setUp(self):
+    """Test cases for smart_dev_runner.py""":
+ef setUp(self):
         """Set up test fixtures before each test method."""
         pass
 
@@ -91,7 +90,7 @@ class TestSmartDevRunner(unittest.TestCase):
             # Just check that the function exists and is callable
             self.assertTrue(callable(smart_dev_runner.main))
         except ImportError:
-            # This is expected if the module structure is different
-            self.assertTrue(True)
+            # This is expected if the module structure is different:
+elf.assertTrue(True)
         except Exception as e:
             self.fail(f"main function check raised {type(e).__name__} unexpectedly: {e}")

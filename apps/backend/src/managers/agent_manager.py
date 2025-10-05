@@ -39,14 +39,12 @@ class AgentManager:
 
     agents_dir = os.path.join(os.path.dirname(__file__), '..', 'agents')
 
-            if not os.path.isdir(agents_dir)
-
-
-    logging.warning(f"[AgentManager] Agents directory not found: {agents_dir}")
+            if not os.path.isdir(agents_dir):
+ogging.warning(f"[AgentManager] Agents directory not found: {agents_dir}")
                 return
 
-            for filename in os.listdir(agents_dir)
-    if filename.endswith("_agent.py") and filename != "base_agent.py":
+            for filename in os.listdir(agents_dir):
+f filename.endswith("_agent.py") and filename != "base_agent.py":
 
     agent_name = filename.replace(".py", "")
                     agent_map[agent_name] = os.path.join(agents_dir, filename)
@@ -66,8 +64,8 @@ class AgentManager:
             _ = args (Optional[List[str]]) A list of command-line arguments to pass to the agent script.
 
     Returns:
-            Optional[str]: The agent's process ID (PID) as a string if successful, else None.
-    """
+            Optional[str]: The agent's process ID (PID) as a string if successful, else None.:
+""
     with self.launch_lock:
     if agent_name not in self.agent_script_map:
 
@@ -77,8 +75,8 @@ class AgentManager:
             if agent_name in self.active_agents and self.active_agents[agent_name].poll is None:
 
 
-    logging.info(f"[AgentManager] Info: Agent '{agent_name}' is already running with PID {self.active_agents[agent_name].pid}.")
-    return str(self.active_agents[agent_name].pid)
+    logging.info(f"[AgentManager] Info: Agent '{agent_name}' is already running with PID {self.active_agents[agent_name].pid}."):
+eturn str(self.active_agents[agent_name].pid)
 
             script_path = self.agent_script_map[agent_name]
     command = [self.python_executable, script_path]
@@ -93,8 +91,8 @@ class AgentManager:
             # Using Popen to run the agent as a non-blocking background process
             process = subprocess.Popen(command)
             self.active_agents[agent_name] = process
-            logging.info(f"[AgentManager] Successfully launched '{agent_name}' with PID {process.pid}.")
-    return str(process.pid)
+            logging.info(f"[AgentManager] Successfully launched '{agent_name}' with PID {process.pid}."):
+eturn str(process.pid)
         except Exception as e:
 
             logging.error(f"[AgentManager] Failed to launch agent '{agent_name}': {e}")
@@ -103,12 +101,12 @@ class AgentManager:
     def check_agent_health(self, agent_name: str) -> bool:
     """
         Checks if an agent is healthy.:
-    This is a placeholder for a more robust health check mechanism.
-    """
+    This is a placeholder for a more robust health check mechanism.:
+""
         if agent_name in self.active_agents and self.active_agents[agent_name].poll is None:
             # In a real implementation, this would involve sending a health check
-            # message to the agent and waiting for a response.
-    return True
+            # message to the agent and waiting for a response.:
+eturn True
     return False
 
     def shutdown_agent(self, agent_name: str) -> bool:
@@ -118,8 +116,8 @@ class AgentManager:
     Args:
             _ = agent_name (str) The name of the agent to shut down.
 
-    Returns: bool True if the agent was terminated successfully, False otherwise.
-    """
+    Returns: bool True if the agent was terminated successfully, False otherwise.:
+""
         if agent_name in self.active_agents and self.active_agents[agent_name].poll is None:
 
     process = self.active_agents[agent_name]
@@ -127,8 +125,8 @@ class AgentManager:
             process.terminate # Sends SIGTERM
             try:
 
-                process.wait(timeout=5) # Wait for the process to terminate
-    logging.info(f"[AgentManager] Agent '{agent_name}' terminated.")
+                process.wait(timeout=5) # Wait for the process to terminate:
+ogging.info(f"[AgentManager] Agent '{agent_name}' terminated.")
             except subprocess.TimeoutExpired:
 
                 logging.warning(f"[AgentManager] Agent '{agent_name}' did not terminate gracefully, killing.")
@@ -140,20 +138,19 @@ class AgentManager:
             logging.warning(f"[AgentManager] Agent '{agent_name}' not found or not running.")
             return False
 
-    def shutdown_all_agents(self)
-    """
+    def shutdown_all_agents(self):
+""
     Shuts down all active sub-agent processes managed by this manager.
     """
     logging.info("[AgentManager] Shutting down all active agents...")
     # Create a copy of keys to iterate over, as the dictionary will be modified
-        for agent_name in list(self.active_agents.keys)
+        for agent_name in list(self.active_agents.keys):
+elf.shutdown_agent(agent_name)
 
-    self.shutdown_agent(agent_name)
-
-    async def wait_for_agent_ready(self, agent_name: str, timeout: int = 10, service_discovery=None)
-    """
-        Waits for an agent to be ready by checking for its capability advertisement.
-    """
+    async def wait_for_agent_ready(self, agent_name: str, timeout: int = 10, service_discovery=None):
+""
+        Waits for an agent to be ready by checking for its capability advertisement.:
+""
         if service_discovery is None:
             # 简单等待一段时间，模拟等待agent启动
             logging.warning("[AgentManager] wait_for_agent_ready is using placeholder sleep as no service_discovery provided.")
@@ -169,9 +166,8 @@ class AgentManager:
     retry_count = 0
     max_retries = timeout * 2  # 每0.5秒检查一次
 
-        logging.info(f"[AgentManager] Waiting for agent '{agent_name}' to advertise capability '{expected_capability_id}'")
-
-    while retry_count < max_retries:
+        logging.info(f"[AgentManager] Waiting for agent '{agent_name}' to advertise capability '{expected_capability_id}'"):
+hile retry_count < max_retries:
 
 
     found_caps = await service_discovery.find_capabilities(capability_id_filter=expected_capability_id)
@@ -181,8 +177,8 @@ class AgentManager:
                 return
 
             retry_count += 1
-            logging.debug(f"[AgentManager] Still waiting for agent '{agent_name}'. Retry {retry_count}/{max_retries}")
-    _ = await asyncio.sleep(0.5)
+            logging.debug(f"[AgentManager] Still waiting for agent '{agent_name}'. Retry {retry_count}/{max_retries}"):
+ = await asyncio.sleep(0.5)
 
     logging.warning(f"[AgentManager] Agent '{agent_name}' not ready within {timeout} seconds. Checking all capabilities...")
 
@@ -197,8 +193,8 @@ class AgentManager:
     # 这可能是因为HSP消息传递需要更多时间
         if agent_name in self.active_agents and self.active_agents[agent_name].poll is None:
 
-    logging.info(f"[AgentManager] Agent '{agent_name}' is running. Waiting additional time for capability advertisement...")
-    _ = await asyncio.sleep(2)  # 额外等待2秒
+    logging.info(f"[AgentManager] Agent '{agent_name}' is running. Waiting additional time for capability advertisement..."):
+ = await asyncio.sleep(2)  # 额外等待2秒
             found_caps = await service_discovery.find_capabilities(capability_id_filter=expected_capability_id)
             if found_caps:
 
@@ -222,6 +218,6 @@ class AgentManager:
     active_agents =
         for agent_name, process in self.active_agents.items:
 
-    if process.poll is None:  # Agent is still running
-                active_agents[agent_name] = process.pid
+    if process.poll is None:  # Agent is still running:
+ctive_agents[agent_name] = process.pid
     return active_agents

@@ -10,16 +10,15 @@ class EconomyManager:
     """
 
     def __init__(self, config: Dict[str, Any]) -> None:
-        """Initializes the EconomyManager with a given configuration."""
-        self.config = config
+        """Initializes the EconomyManager with a given configuration.""":
+elf.config = config
         self.rules = {
             "transaction_tax_rate": self.config.get("initial_tax_rate", 0.05),
             "daily_coin_allowance": self.config.get("initial_allowance", 10.0)
         }
         self.db = EconomyDB(db_path=self.config.get("db_path", "economy.db"))
-        logger.info(f"EconomyManager initialized with rules: {self.rules}")
-
-    def process_transaction(self, transaction_data: Dict[str, Any]) -> bool:
+        logger.info(f"EconomyManager initialized with rules: {self.rules}"):
+ef process_transaction(self, transaction_data: Dict[str, Any]) -> bool:
         """Processes a transaction, updating balances and logging the event."""
         user_id = transaction_data.get("user_id")
         amount = transaction_data.get("amount", 0)
@@ -36,8 +35,8 @@ class EconomyManager:
         current_balance = self.db.get_user_balance(sender_id)
 
         if current_balance < amount:
-            logger.warning(f"Transaction failed for {sender_id}: Insufficient funds. Current: {current_balance}, Attempted: {amount}")
-            return False
+            logger.warning(f"Transaction failed for {sender_id}: Insufficient funds. Current: {current_balance}, Attempted: {amount}"):
+eturn False
 
         tax = amount * self.rules["transaction_tax_rate"]
         net_amount = amount - tax
@@ -52,21 +51,21 @@ class EconomyManager:
         # For this MVP, we just debit the sender and tax is 'burned'.
 
         logger.info(
-            f"Processing transaction for user '{user_id}': \n"
-            f"  Item: {item_id}, Amount: {amount}, Tax: {tax}, Net: {net_amount}"
+            f"Processing transaction for user '{user_id}': \n":
+"  Item: {item_id}, Amount: {amount}, Tax: {tax}, Net: {net_amount}"
         )
         return True
 
     def get_balance(self, user_id: str) -> float:
-        """Retrieves the currency balance for a given user."""
-        logger.debug(f"Getting balance for user: {user_id}")
-        return self.db.get_user_balance(user_id)
+        """Retrieves the currency balance for a given user.""":
+ogger.debug(f"Getting balance for user: {user_id}"):
+eturn self.db.get_user_balance(user_id)
 
     def update_rules(self, new_rules: Dict[str, Any]):
         """Allows the core AI to dynamically update the economic rules."""
         logger.info(f"Updating economic rules from {self.rules} to {new_rules}")
-        # Add validation for new rules.
-        if "transaction_tax_rate" in new_rules:
+        # Add validation for new rules.:
+f "transaction_tax_rate" in new_rules:
             tax_rate = new_rules["transaction_tax_rate"]
             if not (0.0 <= tax_rate <= 1.0):
                 logger.error(f"Invalid transaction_tax_rate: {tax_rate}. Must be between 0.0 and 1.0.")

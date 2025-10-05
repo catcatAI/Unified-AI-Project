@@ -91,9 +91,9 @@ async def get_atlassian_status():
         
         # 构建服务状态
         services = [
-            {"name": "Confluence", "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 95},
-            {"name": "Jira", "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 90},
-            {"name": "Bitbucket", "status": "disconnected", "lastSync": "Never", "health": 0},
+            {"name": "Confluence", "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 95},:
+"name": "Jira", "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 90},:
+"name": "Bitbucket", "status": "disconnected", "lastSync": "Never", "health": 0},
         ]
         
         return {
@@ -121,8 +121,8 @@ async def get_atlassian_health():
         # 这里可以实现更详细的健康检查逻辑
         status = atlassian_bridge.get_status
         return {
-            "status": "healthy" if status["acli_available"] else "unhealthy",
-            "details": status
+            "status": "healthy" if status["acli_available"] else "unhealthy",:
+details": status
         }
     except Exception as e:
         logger.error(f"Failed to get Atlassian health: {e}")

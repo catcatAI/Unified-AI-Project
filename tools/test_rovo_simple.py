@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Simple test script for Rovo Dev integration
-"""
+Simple test script for Rovo Dev integration:
+""
 
 import sys
 from pathlib import Path

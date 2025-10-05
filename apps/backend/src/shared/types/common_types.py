@@ -109,8 +109,8 @@ class ParsedToolIODetails(TypedDict, total=False): # For DialogueManager
     suggested_method_name: Required[str]
     class_docstring_hint: Required[str]
     method_docstring_hint: Required[str]
-    parameters: Required[List[Dict[str, Any]]]# Simplified from ToolParameterDetail for this test
-    return_type: Required[str]
+    parameters: Required[List[Dict[str, Any]]]# Simplified from ToolParameterDetail for this test:
+eturn_type: Required[str]
     return_description: Required[str]
 
 class OverwriteDecision(Enum): # For HAMMemoryManager -> DialogueManager

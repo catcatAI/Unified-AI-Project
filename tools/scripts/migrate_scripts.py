@@ -1,121 +1,86 @@
 #!/usr/bin/env python3
 """
-脚本文件迁移脚本
-此脚本用于将scripts目录下的文件迁移到tools/scripts目录
+迁移scripts目录中的脚本到tools/scripts目录
 """
 
 import os
 import shutil
 from pathlib import Path
 
-class ScriptMigrator:
-    def __init__(self, project_root: str):
-        self.project_root = Path(project_root)
-        self.source_dir = self.project_root / "scripts"
-        self.target_dir = self.project_root / "tools" / "scripts"
-        self.backup_dir = self.project_root / "backup_before_script_migration"
+def migrate_scripts():
+    """迁移scripts目录中的脚本到tools/scripts目录"""
+    project_root = Path(__file__).parent.parent.parent
+    scripts_dir = project_root / "scripts"
+    tools_scripts_dir = project_root / "tools" / "scripts"
+    archive_dir = project_root / "fixed_scripts_archive"
     
-    def backup_scripts(self):
-        """备份scripts目录"""
-        print("创建scripts目录备份...")
-        if self.source_dir.exists():
-            # 创建备份目录
-            self.backup_dir.mkdir(exist_ok=True)
-            
-            # 复制整个scripts目录到备份目录
-            backup_scripts_dir = self.backup_dir / "scripts"
-            if backup_scripts_dir.exists():
-                shutil.rmtree(backup_scripts_dir)
-            
-            shutil.copytree(self.source_dir, backup_scripts_dir)
-            print(f"已备份scripts目录到 {backup_scripts_dir}")
+    # 创建归档目录（如果不存在）
+    archive_dir.mkdir(exist_ok=True)
     
-    def migrate_scripts(self):
-        """迁移脚本文件"""
-        print("开始迁移脚本文件...")
-        
-        # 检查源目录是否存在
-        if not self.source_dir.exists():
-            print(f"源目录不存在: {self.source_dir}")
-            return False
-        
-        # 检查目标目录是否存在
-        if not self.target_dir.exists():
-            print(f"目标目录不存在: {self.target_dir}")
-            return False
-        
-        # 迁移文件
-        migrated_count = 0
-        for item in self.source_dir.iterdir():
-            # 跳过__pycache__目录
-            if item.name == "__pycache__":
-                continue
-                
-            # 跳过子目录（除了core, data_migration, data_processing, modules, prototypes, utils）
-            if item.is_dir() and item.name not in ["core", "data_migration", "data_processing", "modules", "prototypes", "utils"]:
-                print(f"跳过目录: {item.name}")
-                continue
-            
-            # 构造目标路径
-            target_path = self.target_dir / item.name
-            
-            # 如果目标路径已存在，先备份
-            if target_path.exists():
-                backup_path = self.backup_dir / "tools_scripts" / item.name
-                backup_path.parent.mkdir(exist_ok=True, parents=True)
-                if target_path.is_dir():
-                    if backup_path.exists():
-                        shutil.rmtree(backup_path)
-                    shutil.copytree(target_path, backup_path)
-                else:
-                    shutil.copy2(target_path, backup_path)
-                print(f"已备份现有文件: {target_path} -> {backup_path}")
-            
-            # 移动文件或目录
-            if target_path.exists():
-                if target_path.is_dir():
-                    shutil.rmtree(target_path)
-                else:
-                    target_path.unlink()
-            
-            shutil.move(str(item), str(target_path))
-            print(f"已迁移: {item.name}")
-            migrated_count += 1
-        
-        print(f"共迁移 {migrated_count} 个文件/目录")
-        return True
+    if not scripts_dir.exists():
+        print(f"scripts目录不存在: {scripts_dir}")
+        return
     
-    def update_imports(self):
-        """更新导入路径"""
-        print("更新导入路径...")
-        # 这里可以添加具体的导入路径更新逻辑
-        # 由于这是一个复杂的任务，我们只打印提示信息
-        print("请手动更新项目中对迁移脚本的引用路径")
-        print("将 'from scripts.xxx import yyy' 更新为 'from tools.scripts.xxx import yyy'")
+    if not tools_scripts_dir.exists():
+        print(f"tools/scripts目录不存在: {tools_scripts_dir}")
+        return
     
-    def run(self):
-        """运行脚本迁移器"""
-        print("开始迁移脚本文件...")
-        
-        # 创建备份
-        self.backup_scripts()
-        
-        # 迁移脚本
-        if self.migrate_scripts():
-            # 更新导入路径提示
-            self.update_imports()
-            print("脚本文件迁移完成")
-        else:
-            print("脚本文件迁移失败")
-
-def main():
-    """主函数"""
-    # 获取项目根目录
-    project_root = os.getcwd()
+    # 获取两个目录中的Python文件
+    scripts_files = set(f.name for f in scripts_dir.glob("*.py"))
+    tools_scripts_files = set(f.name for f in tools_scripts_dir.glob("*.py"))
     
-    # 创建并运行脚本迁移器
-    migrator = ScriptMigrator(project_root)
-    migrator.run()
+    # 找出在两个目录中都存在的文件
+    common_files = scripts_files & tools_scripts_files
+    print(f"在两个目录中都存在的文件: {common_files}")
+    
+    # 找出只在scripts目录中存在的文件
+    only_in_scripts = scripts_files - tools_scripts_files
+    print(f"只在scripts目录中存在的文件: {only_in_scripts}")
+    
+    # 处理只在scripts目录中存在的文件
+    for filename in only_in_scripts:
+        src_path = scripts_dir / filename
+        dst_path = tools_scripts_dir / filename
+        
+        try:
+            # 复制文件到tools/scripts目录
+            shutil.copy2(src_path, dst_path)
+            print(f"已复制文件: {filename}")
+        except Exception as e:
+            print(f"复制文件 {filename} 时出错: {e}")
+    
+    # 处理在两个目录中都存在的文件
+    for filename in common_files:
+        scripts_path = scripts_dir / filename
+        tools_scripts_path = tools_scripts_dir / filename
+        
+        try:
+            # 检查哪个文件更新
+            scripts_mtime = scripts_path.stat().st_mtime
+            tools_scripts_mtime = tools_scripts_path.stat().st_mtime
+            
+            if scripts_mtime > tools_scripts_mtime:
+                # scripts目录中的文件更新，复制到tools/scripts目录
+                shutil.copy2(scripts_path, tools_scripts_path)
+                print(f"已更新文件: {filename} (从scripts目录)")
+            else:
+                # tools/scripts目录中的文件更新或相同，归档scripts目录中的文件
+                archive_path = archive_dir / f"{filename}.bak"
+                shutil.copy2(scripts_path, archive_path)
+                print(f"已归档文件: {filename} (到 {archive_path})")
+        except Exception as e:
+            print(f"处理文件 {filename} 时出错: {e}")
+    
+    # 删除scripts目录中的所有Python文件
+    for filename in scripts_files:
+        file_path = scripts_dir / filename
+        try:
+            file_path.unlink()
+            print(f"已删除文件: {filename}")
+        except Exception as e:
+            print(f"删除文件 {filename} 时出错: {e}")
+    
+    print("脚本迁移完成!")
 
 if __name__ == "__main__":
-    main()
+    migrate_scripts()

@@ -76,8 +76,8 @@ class AtlassianCLIBridge:
                 return {
                     "success": True,
                     "projects": projects,
-                    "count": len(projects) if isinstance(projects, list) else 0
-                }
+                    "count": len(projects) if isinstance(projects, list) else 0:
+
             except json.JSONDecodeError:
 
     return {
@@ -117,8 +117,8 @@ class AtlassianCLIBridge:
                 return {
                     "success": True,
                     "issues": issues,
-                    "count": len(issues) if isinstance(issues, list) else 0
-                }
+                    "count": len(issues) if isinstance(issues, list) else 0:
+
             except json.JSONDecodeError:
 
     return {
@@ -172,8 +172,8 @@ class AtlassianCLIBridge:
                 return {
                     "success": True,
                     "issue": issue,
-                    "key": issue.get("key") if isinstance(issue, dict) else None
-                }
+                    "key": issue.get("key") if isinstance(issue, dict) else None:
+
             except json.JSONDecodeError:
 
     return {
@@ -204,8 +204,8 @@ class AtlassianCLIBridge:
                 return {
                     "success": True,
                     "spaces": spaces,
-                    "count": len(spaces) if isinstance(spaces, list) else 0
-                }
+                    "count": len(spaces) if isinstance(spaces, list) else 0:
+
             except json.JSONDecodeError:
 
     return {
@@ -243,8 +243,8 @@ class AtlassianCLIBridge:
                 return {
                     "success": True,
                     "content": content,
-                    "count": len(content) if isinstance(content, list) else 0
-                }
+                    "count": len(content) if isinstance(content, list) else 0:
+
             except json.JSONDecodeError:
 
     return {
@@ -266,6 +266,6 @@ class AtlassianCLIBridge:
 
     return {
             "acli_available": self._check_acli_available,
-            "version": version_result["stdout"].strip if version_result["success"] else "Unknown",
-            "path": self.acli_path
+            "version": version_result["stdout"].strip if version_result["success"] else "Unknown",:
+path": self.acli_path
     }

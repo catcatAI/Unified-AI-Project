@@ -6,9 +6,8 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 class TestCoreServices(unittest.TestCase):
-    """Test cases for core_services.py"""
-
-    def setUp(self):
+    """Test cases for core_services.py""":
+ef setUp(self):
         """Set up test fixtures before each test method."""
         pass
 
@@ -41,15 +40,15 @@ class TestCoreServices(unittest.TestCase):
                 os.path.join(os.path.dirname(__file__), "..", "src", "core_services.py")
             )
             core_services = importlib.util.module_from_spec(spec)
-            # Check for some expected attributes
-            self.assertTrue(True)
+            # Check for some expected attributes:
+elf.assertTrue(True)
         except Exception as e:
             self.fail(f"core_services constants check raised {type(e).__name__} unexpectedly: {e}")
 
     @patch('os.path.exists')
     def test_ham_initialization_with_mock_ham(self, mock_exists) -> None:
-        """Test HAM initialization with mock HAM."""
-        mock_exists.return_value = True
+        """Test HAM initialization with mock HAM.""":
+ock_exists.return_value = True
         try:
             # Directly import the module from its file path
             spec = importlib.util.spec_from_file_location(

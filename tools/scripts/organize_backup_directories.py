@@ -116,7 +116,7 @@ def update_pytest_config() -> None:
             "build",
             "*.egg",
             "__pycache__",
-            ".pytest_cache",
+            "data/runtime_data/.pytest_cache",
             "node_modules"
         ]
         

@@ -30,8 +30,8 @@ class DebugVisualizer:
     _ = plt.style.use('seaborn-v0_8')
     _ = sns.set_palette("husl")
 
-    print(f"DebugVisualizer initialized with log DB: {self.log_db_path}")
-    _ = print(f"Visualization output directory: {self.output_dir}")
+    print(f"DebugVisualizer initialized with log DB: {self.log_db_path}"):
+ = print(f"Visualization output directory: {self.output_dir}")
 
     def load_log_data(self, start_time: str = None, end_time: str = None,
                      component: str = None, event_type: str = None) -> pd.DataFrame:
@@ -111,10 +111,8 @@ class DebugVisualizer:
             event_types = df['event_type'].unique()
             colors = plt.cm.Set3(np.linspace(0, 1, len(event_types)))
 
-            for i, event_type in enumerate(event_types)
-
-
-    type_data = df[df['event_type'] == event_type]
+            for i, event_type in enumerate(event_types):
+ype_data = df[df['event_type'] == event_type]
                 if not type_data.empty:
 
     _ = ax.scatter(type_data['timestamp'], [i] * len(type_data),
@@ -180,9 +178,8 @@ class DebugVisualizer:
             ax.set_xticklabels(component_counts.index, rotation=45, ha='right')
 
             # 添加数值标签
-            for bar, count in zip(bars, component_counts.values)
-
-    _ = ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
+            for bar, count in zip(bars, component_counts.values):
+ = ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
                        str(count), ha='center', va='bottom')
 
             # 保存图形
@@ -280,22 +277,18 @@ class DebugVisualizer:
 
             # 解析性能指标详情
             perf_data = []
-            for _, row in perf_df.iterrows()
-
-    details = row['details']
-                if isinstance(details, str)
-
-    try:
+            for _, row in perf_df.iterrows():
+etails = row['details']
+                if isinstance(details, str):
+ry:
 
 
                         details = json.loads(details)
                     except:
                         continue
 
-                if isinstance(details, dict)
-
-
-    perf_data.append({
+                if isinstance(details, dict):
+erf_data.append({
                         'timestamp': row['timestamp'],
                         'component': row['component'],
                         _ = 'metric': details.get('metric', 'unknown'),
@@ -320,18 +313,15 @@ class DebugVisualizer:
 
     axes = [axes]
 
-            for i, metric in enumerate(metrics)
-
-
-    metric_data = perf_df[perf_df['metric'] == metric]
+            for i, metric in enumerate(metrics):
+etric_data = perf_df[perf_df['metric'] == metric]
                 if metric_data.empty:
 
     continue
 
                 # 按组件分组绘制时间序列
-                for component in metric_data['component'].unique()
-
-    comp_data = metric_data[metric_data['component'] == component]
+                for component in metric_data['component'].unique():
+omp_data = metric_data[metric_data['component'] == component]
                     axes[i].plot(comp_data['timestamp'], comp_data['value'],
                                marker='o', label=component, linewidth=2, markersize=4)
 
@@ -400,9 +390,8 @@ class DebugVisualizer:
             _ = ax2.set_title('严重性分布')
 
             # 添加数值标签
-            for i, count in enumerate(severity_counts)
-
-    ax2.text(i, count + 0.5, str(count), ha='center', va='bottom')
+            for i, count in enumerate(severity_counts):
+x2.text(i, count + 0.5, str(count), ha='center', va='bottom')
 
             # 保存图形
             if not output_file:
@@ -475,22 +464,18 @@ class DebugVisualizer:
             if not perf_df.empty:
 
     perf_summary = {}
-                for _, row in perf_df.iterrows()
-
-    details = row['details']
-                    if isinstance(details, str)
-
-    try:
+                for _, row in perf_df.iterrows():
+etails = row['details']
+                    if isinstance(details, str):
+ry:
 
 
                             details = json.loads(details)
                         except:
                             continue
 
-                    if isinstance(details, dict)
-
-
-    metric = details.get('metric', 'unknown')
+                    if isinstance(details, dict):
+etric = details.get('metric', 'unknown')
                         if metric not in perf_summary:
 
     perf_summary[metric] = {
@@ -543,8 +528,8 @@ class DebugVisualizer:
             if df.empty:
 
 
-    print("No data available for dashboard creation")
-    return []
+    print("No data available for dashboard creation"):
+eturn []
 
             # 生成所有可视化图表
             output_files = []
@@ -615,8 +600,8 @@ def main() -> None:
     if dashboard_files:
 
 
-    print(f"Dashboard created with {len(dashboard_files)} files:")
-        for file in dashboard_files:
+    print(f"Dashboard created with {len(dashboard_files)} files:"):
+or file in dashboard_files:
 
     _ = print(f"  - {file}")
     else:

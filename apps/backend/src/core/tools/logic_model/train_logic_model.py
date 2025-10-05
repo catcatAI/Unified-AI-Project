@@ -25,8 +25,8 @@ import json
 import os
 import sys
 
-# Add src directory to sys.path for dependency manager import
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Add src directory to sys.path for dependency manager import:
+CRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
@@ -49,11 +49,11 @@ CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_ma
 # Training Hyperparameters
 BATCH_SIZE = 32
 EPOCHS = 50 # Can be adjusted, EarlyStopping will help
-EMBEDDING_DIM = 32 # Should match model definition if not loaded from char_map
-LSTM_UNITS = 64    # Should match model definition if not loaded from char_map
-VALIDATION_SPLIT = 0.1 # Using a portion of the training data for validation during training
-    def load_logic_dataset(file_path)
-    """Loads the logic dataset from a JSON file."""
+EMBEDDING_DIM = 32 # Should match model definition if not loaded from char_map:
+STM_UNITS = 64    # Should match model definition if not loaded from char_map:
+ALIDATION_SPLIT = 0.1 # Using a portion of the training data for validation during training:
+ef load_logic_dataset(file_path):
+""Loads the logic dataset from a JSON file."""
     try:
 
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -96,8 +96,8 @@ def main -> None:
     print(f"Max Sequence Length: {max_seq_len}")
 
     # 3. Preprocess data
-    print("Preprocessing data for the model...")
-    X, y_categorical = preprocess_logic_data(TRAIN_DATA_PATH, char_to_token, max_seq_len, num_classes=2)
+    print("Preprocessing data for the model..."):
+, y_categorical = preprocess_logic_data(TRAIN_DATA_PATH, char_to_token, max_seq_len, num_classes=2)
 
     print(f"X (input data) shape: {X.shape}")
     print(f"y (target data) shape: {y_categorical.shape}")
@@ -128,11 +128,11 @@ def main -> None:
     ]
 
     history = logic_nn_model.model.fit(
-    X, y_categorical, # Using all data, with validation_split in fit
-    epochs=EPOCHS,
+    X, y_categorical, # Using all data, with validation_split in fit:
+pochs=EPOCHS,
     batch_size=BATCH_SIZE,
-        validation_split=VALIDATION_SPLIT, # Uses last 10% of data for validation
-    callbacks=callbacks,
+        validation_split=VALIDATION_SPLIT, # Uses last 10% of data for validation:
+allbacks=callbacks,
     shuffle=True
     )
 
@@ -156,9 +156,8 @@ def main -> None:
 
 if __name__ == '__main__':
     # Ensure training data exists
-    if not os.path.exists(TRAIN_DATA_PATH)
-
-    print(f"Training data JSON file not found at {TRAIN_DATA_PATH}.")
+    if not os.path.exists(TRAIN_DATA_PATH):
+rint(f"Training data JSON file not found at {TRAIN_DATA_PATH}.")
     print("Please run `logic_data_generator.py` first to create 'logic_train.json'.")
     else:
 

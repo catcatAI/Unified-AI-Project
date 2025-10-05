@@ -28,8 +28,8 @@ class RAGManager:
     self.documents: Dict[int, str] =
     self.next_doc_id = 0
 
-    def add_document(self, text: str, doc_id: str = None)
-    """Adds a document to the RAG manager and generates its vector embedding."""
+    def add_document(self, text: str, doc_id: str = None):
+""Adds a document to the RAG manager and generates its vector embedding."""
     vector = self.model.encode([text])
     faiss.normalize_L2(vector)
     self.index.add(vector)

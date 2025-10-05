@@ -57,9 +57,8 @@ class TestResultAnalyzer:
     failure_patterns = {}
 
     # 分析失败测试用例
-        for test in test_results.get('tests', [])
-
-    if test.get('outcome') == 'failed' and 'call' in test:
+        for test in test_results.get('tests', []):
+f test.get('outcome') == 'failed' and 'call' in test:
 
 
     longrepr = test['call'].get('longrepr', '')
@@ -68,9 +67,8 @@ class TestResultAnalyzer:
                 if 'AssertionError' in longrepr:
 
     pattern = "断言失败"
-                elif 'TimeoutError' in longrepr or 'timeout' in longrepr.lower()
-
-    pattern = "超时错误"
+                elif 'TimeoutError' in longrepr or 'timeout' in longrepr.lower():
+attern = "超时错误"
                 elif 'ConnectionError' in longrepr or 'Connection refused' in longrepr:
 
     pattern = "连接错误"
@@ -97,9 +95,8 @@ class TestResultAnalyzer:
 
     # 转换为FailurePattern对象
     result = []
-        for pattern, data in failure_patterns.items()
-
-    result.append(FailurePattern(pattern, data['count'], data['affected_tests']))
+        for pattern, data in failure_patterns.items():
+esult.append(FailurePattern(pattern, data['count'], data['affected_tests']))
 
     return result
 
@@ -123,9 +120,8 @@ class TestResultAnalyzer:
     baseline_benchmarks = baseline_results.get('benchmarks', {})
 
     # 比较基准测试结果
-        for test_name, current_stats in current_benchmarks.items()
-
-    if test_name in baseline_benchmarks:
+        for test_name, current_stats in current_benchmarks.items():
+f test_name in baseline_benchmarks:
 
 
     baseline_stats = baseline_benchmarks[test_name]
@@ -177,8 +173,8 @@ class TestResultAnalyzer:
                     "count": pattern.count,
                     "affected_tests": pattern.affected_tests
                 }
-                for pattern in failure_patterns
-            ]
+                for pattern in failure_patterns:
+
     }
 
     # 保存报告

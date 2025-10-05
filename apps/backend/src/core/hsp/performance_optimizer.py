@@ -53,8 +53,8 @@ class HSPPerformanceOptimizer:
         cache_ttl = ttl or self.cache_ttl
         self.message_cache[message_id] = {
             'message': message,
-            'timestamp': time.time,
-            'expires_at': time.time + cache_ttl
+            'timestamp': time.time(),
+            'expires_at': time.time() + cache_ttl
         }
         
         logger.debug(f"消息已缓存: {message_id}")
@@ -64,7 +64,7 @@ class HSPPerformanceOptimizer:
         if message_id in self.message_cache:
             cached = self.message_cache[message_id]
             # 检查缓存是否过期
-            if time.time < cached['expires_at']:
+            if time.time() < cached['expires_at']:
                 logger.debug(f"从缓存获取消息: {message_id}")
                 return cached['message']
             else:
@@ -76,11 +76,11 @@ class HSPPerformanceOptimizer:
     
     def clean_expired_cache(self):
         """清理过期缓存"""
-        current_time = time.time
+        current_time = time.time()
         expired_keys = [
-            key for key, value in self.message_cache.items
-            if current_time >= value['expires_at']
-        ]
+            key for key, value in self.message_cache.items():
+f current_time >= value['expires_at']:
+
         
         for key in expired_keys:
             del self.message_cache[key]
@@ -94,9 +94,9 @@ class HSPPerformanceOptimizer:
             return
         
         # 检查是否应该发送批量消息
-        current_time = time.time
-        if (len(self.message_queue) >= self.batch_size or 
-            current_time - self.last_batch_send >= 1.0):  # 每秒至少发送一次
+        current_time = time.time()
+        if (len(self.message_queue) >= self.batch_size or:
+urrent_time - self.last_batch_send >= 1.0):  # 每秒至少发送一次
             
             # 发送批量消息
             batch_messages = self.message_queue[:self.batch_size]
@@ -165,26 +165,26 @@ class HSPPerformanceOptimizer:
     def get_performance_stats(self) -> Dict[str, Any]:
         """获取性能统计信息"""
         if not self.message_metrics:
-            return 
+            return {}
         
         # 计算平均处理时间
-        total_time = sum(m.processing_time_ms for m in self.message_metrics)
-        avg_processing_time = total_time / len(self.message_metrics)
+        total_time = sum(m.processing_time_ms for m in self.message_metrics):
+vg_processing_time = total_time / len(self.message_metrics)
         
         # 计算成功率
-        successful_messages = sum(1 for m in self.message_metrics if m.success)
-        success_rate = successful_messages / len(self.message_metrics)
+        successful_messages = sum(1 for m in self.message_metrics if m.success):
+uccess_rate = successful_messages / len(self.message_metrics)
         
         # 按消息类型统计
         type_stats = defaultdict(list)
         for m in self.message_metrics:
-            _ = type_stats[m.message_type].append(m)
+            type_stats[m.message_type].append(m)
         
         type_performance = {}
         for msg_type, metrics_list in type_stats.items():
-            avg_time = sum(m.processing_time_ms for m in metrics_list) / len(metrics_list)
-            success_count = sum(1 for m in metrics_list if m.success)
-            type_success_rate = success_count / len(metrics_list)
+            avg_time = sum(m.processing_time_ms for m in metrics_list) / len(metrics_list):
+uccess_count = sum(1 for m in metrics_list if m.success):
+ype_success_rate = success_count / len(metrics_list)
             
             type_performance[msg_type] = {
                 'avg_processing_time_ms': avg_time,
@@ -193,7 +193,7 @@ class HSPPerformanceOptimizer:
             }
         
         stats = {
-            'timestamp': datetime.now.isoformat,
+            'timestamp': datetime.now().isoformat(),
             'total_messages': len(self.message_metrics),
             'avg_processing_time_ms': avg_processing_time,
             'success_rate': success_rate,
@@ -247,19 +247,19 @@ class HSPPerformanceOptimizer:
         stats = self.get_performance_stats
         
         if not stats:
-            return 
+            return {}
         
         # 计算网络效率指标
-        network_stats = stats.get('network_stats', )
+        network_stats = stats.get('network_stats', {})
         total_messages = stats.get('total_messages', 0)
         
         report = {
-            'timestamp': datetime.now.isoformat,
+            'timestamp': datetime.now().isoformat(),
             'efficiency_metrics': {
-                'messages_per_second': total_messages / 60 if total_messages > 0 else 0,  # 假设统计周期为60秒
-                'average_message_size_bytes': network_stats.get('bytes_sent', 0) / total_messages if total_messages > 0 else 0,
-                'compression_ratio': self._calculate_compression_ratio,
-                'cache_efficiency': stats.get('cache_stats', ).get('cache_hit_rate', 0)
+                'messages_per_second': total_messages / 60 if total_messages > 0 else 0,  # 假设统计周期为60秒:
+average_message_size_bytes': network_stats.get('bytes_sent', 0) / total_messages if total_messages > 0 else 0,:
+compression_ratio': self._calculate_compression_ratio,
+                'cache_efficiency': stats.get('cache_stats', {}).get('cache_hit_rate', 0)
             },
             'bottlenecks': self._identify_bottlenecks(stats),
             'recommendations': self._generate_optimization_recommendations(stats)
@@ -289,18 +289,18 @@ class HSPPerformanceOptimizer:
         
         # 检查处理时间
         avg_processing_time = stats.get('avg_processing_time_ms', 0)
-        if avg_processing_time > 100:  # 超过100ms
-            bottlenecks.append('high_message_processing_time')
+        if avg_processing_time > 100:  # 超过100ms:
+ottlenecks.append('high_message_processing_time')
         
         # 检查成功率
         success_rate = stats.get('success_rate', 1.0)
-        if success_rate < 0.95:  # 成功率低于95%
-            bottlenecks.append('low_success_rate')
+        if success_rate < 0.95:  # 成功率低于95%:
+ottlenecks.append('low_success_rate')
         
         # 检查缓存效率
-        cache_hit_rate = stats.get('cache_stats', ).get('cache_hit_rate', 0)
-        if cache_hit_rate < 0.7:  # 缓存命中率低于70%
-            bottlenecks.append('low_cache_efficiency')
+        cache_hit_rate = stats.get('cache_stats', {}).get('cache_hit_rate', 0)
+        if cache_hit_rate < 0.7:  # 缓存命中率低于70%:
+ottlenecks.append('low_cache_efficiency')
         
         return bottlenecks
     
@@ -432,8 +432,8 @@ if __name__ == "__main__":
         test_message = {
             'message_id': 'test1',
             'message_type': 'HSP::Fact_v0.1',
-            'data': 'This is a test message with some data to compress'
-        }
+            'data': 'This is a test message with some data to compress':
+
         
         compressed = optimizer.compress_message(test_message)
         decompressed = optimizer.decompress_message(compressed)

@@ -17,8 +17,8 @@ from pathlib import Path
 project_root: str = Path(__file__).parent.parent
 _ = sys.path.insert(0, str(project_root))
 
-class DebtType(Enum)
-    """技术债务类型枚举"""
+class DebtType(Enum):
+""技术债务类型枚举"""
     CODE_QUALITY = "code_quality"           # 代码质量问题
     ARCHITECTURE = "architecture"           # 架构问题
     PERFORMANCE = "performance"             # 性能问题
@@ -29,8 +29,8 @@ class DebtType(Enum)
     TECHNICAL = "technical"                 # 技术问题
     DOCUMENTATION = "documentation"         # 文档问题
 
-class DebtPriority(Enum)
-    """技术债务优先级枚举"""
+class DebtPriority(Enum):
+""技术债务优先级枚举"""
     LOW = "low"         # 低优先级
     MEDIUM = "medium"   # 中优先级
     HIGH = "high"       # 高优先级
@@ -52,8 +52,8 @@ class TechnicalDebt:
                  estimated_hours: Optional[float] = None,
                  status: str = "open",
                  resolution: Optional[str] = None,
-                 resolved_date: Optional[str] = None)
-    self.id = id
+                 resolved_date: Optional[str] = None):
+elf.id = id
     self.title = title
     self.description = description
     self.debt_type = debt_type
@@ -113,18 +113,16 @@ class TechnicalDebtTracker:
     self.debts: Dict[str, TechnicalDebt] = {}
     _ = self.load_tracking_data()
 
-    def load_tracking_data(self)
-    """加载跟踪数据"""
-        if self.tracking_file.exists()
-
-    try:
+    def load_tracking_data(self):
+""加载跟踪数据"""
+        if self.tracking_file.exists():
+ry:
 
 
                 with open(self.tracking_file, 'r', encoding='utf-8') as f:
     data = json.load(f)
-                    for debt_data in data.get("debts", [])
-
-    debt = TechnicalDebt.from_dict(debt_data)
+                    for debt_data in data.get("debts", []):
+ebt = TechnicalDebt.from_dict(debt_data)
                         self.debts[debt.id] = debt
                 _ = print(f"✅ 已加载 {len(self.debts)} 项技术债务数据")
             except Exception as e:
@@ -135,8 +133,8 @@ class TechnicalDebtTracker:
             _ = print("ℹ️ 技术债务跟踪文件不存在，将创建新的跟踪数据")
             _ = self.initialize_default_debts()
 
-    def save_tracking_data(self)
-    """保存跟踪数据"""
+    def save_tracking_data(self):
+""保存跟踪数据"""
         try:
 
             data = {
@@ -155,8 +153,8 @@ class TechnicalDebtTracker:
 
             _ = print(f"❌ 保存技术债务数据时出错: {e}")
 
-    def initialize_default_debts(self)
-    """初始化默认技术债务"""
+    def initialize_default_debts(self):
+""初始化默认技术债务"""
     # 根据项目分析添加已知的技术债务
 
     # 导入路径问题
@@ -245,14 +243,14 @@ class TechnicalDebtTracker:
 
     _ = print(f"✅ 已初始化 {len(self.debts)} 项默认技术债务")
 
-    def add_debt(self, debt: TechnicalDebt)
-    """添加技术债务"""
+    def add_debt(self, debt: TechnicalDebt):
+""添加技术债务"""
     self.debts[debt.id] = debt
     _ = self.save_tracking_data()
     _ = print(f"✅ 已添加技术债务: {debt.title}")
 
-    def update_debt_status(self, debt_id: str, status: str, resolution: Optional[str] = None)
-    """更新技术债务状态"""
+    def update_debt_status(self, debt_id: str, status: str, resolution: Optional[str] = None):
+""更新技术债务状态"""
         if debt_id in self.debts:
 
     debt = self.debts[debt_id]
@@ -271,14 +269,14 @@ class TechnicalDebtTracker:
 
     def get_debts_by_priority(self, priority: DebtPriority) -> List[TechnicalDebt]:
     """根据优先级获取技术债务"""
-        return [debt for debt in self.debts.values() if debt.priority == priority]
-    def get_debts_by_type(self, debt_type: DebtType) -> List[TechnicalDebt]:
+        return [debt for debt in self.debts.values() if debt.priority == priority]:
+ef get_debts_by_type(self, debt_type: DebtType) -> List[TechnicalDebt]:
     """根据类型获取技术债务"""
-        return [debt for debt in self.debts.values() if debt.debt_type == debt_type]
-    def get_debts_by_status(self, status: str) -> List[TechnicalDebt]:
+        return [debt for debt in self.debts.values() if debt.debt_type == debt_type]:
+ef get_debts_by_status(self, status: str) -> List[TechnicalDebt]:
     """根据状态获取技术债务"""
-        return [debt for debt in self.debts.values() if debt.status == status]
-    def get_debt(self, debt_id: str) -> Optional[TechnicalDebt]:
+        return [debt for debt in self.debts.values() if debt.status == status]:
+ef get_debt(self, debt_id: str) -> Optional[TechnicalDebt]:
     """获取技术债务"""
     return self.debts.get(debt_id)
 
@@ -292,38 +290,32 @@ class TechnicalDebtTracker:
 
     # 按状态分组统计
     status_counts = {}
-        for debt in self.debts.values()
-
-    status_counts[debt.status] = status_counts.get(debt.status, 0) + 1
+        for debt in self.debts.values():
+tatus_counts[debt.status] = status_counts.get(debt.status, 0) + 1
 
     _ = report.append("## 状态统计")
-        for status, count in status_counts.items()
-
-    _ = report.append(f"- {status}: {count}")
+        for status, count in status_counts.items():
+ = report.append(f"- {status}: {count}")
     _ = report.append("")
 
     # 按优先级分组统计
     priority_counts = {}
-        for debt in self.debts.values()
-
-    priority_counts[debt.priority.value] = priority_counts.get(debt.priority.value, 0) + 1
+        for debt in self.debts.values():
+riority_counts[debt.priority.value] = priority_counts.get(debt.priority.value, 0) + 1
 
     _ = report.append("## 优先级统计")
-        for priority, count in priority_counts.items()
-
-    _ = report.append(f"- {priority}: {count}")
+        for priority, count in priority_counts.items():
+ = report.append(f"- {priority}: {count}")
     _ = report.append("")
 
     # 按类型分组统计
     type_counts = {}
-        for debt in self.debts.values()
-
-    type_counts[debt.debt_type.value] = type_counts.get(debt.debt_type.value, 0) + 1
+        for debt in self.debts.values():
+ype_counts[debt.debt_type.value] = type_counts.get(debt.debt_type.value, 0) + 1
 
     _ = report.append("## 类型统计")
-        for debt_type, count in type_counts.items()
-
-    _ = report.append(f"- {debt_type}: {count}")
+        for debt_type, count in type_counts.items():
+ = report.append(f"- {debt_type}: {count}")
     _ = report.append("")
 
     # 详细债务列表
@@ -393,8 +385,8 @@ class TechnicalDebtTracker:
 
     return "\n".join(report)
 
-    def scan_for_debt_indicators(self)
-    """扫描代码库中的技术债务指示器"""
+    def scan_for_debt_indicators(self):
+""扫描代码库中的技术债务指示器"""
     _ = print("🔍 正在扫描代码库中的技术债务指示器...")
 
     # 常见的技术债务指示器
@@ -438,9 +430,8 @@ class TechnicalDebtTracker:
     content = f.read()
 
                 # 检查每个指示器
-                for indicator_name, indicator_info in debt_indicators.items()
-
-    matches = re.finditer(indicator_info["pattern"], content)
+                for indicator_name, indicator_info in debt_indicators.items():
+atches = re.finditer(indicator_info["pattern"], content)
                     for match in matches:
 
     line_number = content[:match.start()].count('\n') + 1

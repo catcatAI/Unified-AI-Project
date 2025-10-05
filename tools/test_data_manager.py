@@ -116,8 +116,8 @@ class TestDataManager:
             "config": {
                 _ = "max_concurrent_tasks": random.randint(1, 10),
                 _ = "priority": random.choice(["low", "medium", "high"]),
-                "capabilities": [f"capability_{i}" for i in range(random.randint(1, 5))]
-            }
+                "capabilities": [f"capability_{i}" for i in range(random.randint(1, 5))]:
+
     }
 
     def generate_test_hsp_message(self,
@@ -254,9 +254,8 @@ class TestDataManager:
     with open(file_path, 'w', newline='', encoding='utf-8') as f:
     writer = csv.writer(f)
                         # 写入表头
-                        if isinstance(data[0], dict)
-
-    _ = writer.writerow(data[0].keys())
+                        if isinstance(data[0], dict):
+ = writer.writerow(data[0].keys())
                             # 写入数据
                             for row in data:
 
@@ -291,10 +290,8 @@ class TestDataManager:
     """
     file_path = self.data_dir / category / f"{filename}.{format}"
 
-        if not file_path.exists()
-
-
-    _ = print(f"❌ 测试数据文件不存在: {file_path}")
+        if not file_path.exists():
+ = print(f"❌ 测试数据文件不存在: {file_path}")
             return None
 
         try:
@@ -319,8 +316,8 @@ class TestDataManager:
                     if len(data) > 1:
 
     headers = data[0]
-                        return [dict(zip(headers, row)) for row in data[1:]]
-                    else:
+                        return [dict(zip(headers, row)) for row in data[1:]]:
+lse:
 
                         return data
 
@@ -347,10 +344,8 @@ class TestDataManager:
     """
     dataset = []
 
-        for i in range(count)
-
-
-    if dataset_type == "memory":
+        for i in range(count):
+f dataset_type == "memory":
 
 
 
@@ -387,38 +382,24 @@ class TestDataManager:
         if category:
 
     category_dir = self.data_dir / category
-            if category_dir.exists()
-
-    for file_path in category_dir.iterdir()
-
-
-    if file_path.is_file()
+            if category_dir.exists():
+or file_path in category_dir.iterdir()
 
 
-
-    _ = file_path.unlink()
+    if file_path.is_file():
+ = file_path.unlink()
                 _ = print(f"✅ 已清理 {category} 类别的测试数据")
         else:
 
-            for category_dir in self.data_dir.iterdir()
-
-
-    if category_dir.is_dir()
-
-
-
-    for file_path in category_dir.iterdir()
+            for category_dir in self.data_dir.iterdir():
+f category_dir.is_dir():
+or file_path in category_dir.iterdir()
 
 
 
 
-    if file_path.is_file()
-
-
-
-
-
-    _ = file_path.unlink()
+    if file_path.is_file():
+ = file_path.unlink()
             _ = print("✅ 已清理所有测试数据")
 
 def main() -> None:

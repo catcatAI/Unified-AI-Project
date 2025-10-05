@@ -85,10 +85,10 @@ def handle_context_exception(exception: Exception, context_id: str = None) -> st
         str: 友好的错误信息
     """
     error_messages = {
-        ContextNotFoundError: f"未找到指定的上下文{' ' + context_id if context_id else ''}",
-        ContextCreationError: "创建上下文失败",
-        ContextUpdateError: f"更新上下文{' ' + context_id if context_id else ''}失败",
-        ContextStorageError: "上下文存储操作失败",
+        ContextNotFoundError: f"未找到指定的上下文{' ' + context_id if context_id else ''}",:
+ontextCreationError: "创建上下文失败",
+        ContextUpdateError: f"更新上下文{' ' + context_id if context_id else ''}失败",:
+ontextStorageError: "上下文存储操作失败",
         ContextRetrievalError: "上下文检索失败",
         ContextTransferError: "上下文传递失败",
         ContextSerializationError: "上下文序列化失败",

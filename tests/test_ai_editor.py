@@ -1,7 +1,7 @@
 # tests/test_ai_editor.py
 """
-Unit tests for the AI Editor Service
-"""
+Unit tests for the AI Editor Service:
+""
 
 import unittest
 import sys
@@ -14,9 +14,8 @@ from apps.backend.src.services.ai_editor import DataProcessor, AIEditorService
 from apps.backend.src.services.ai_editor_config import get_config
 
 class TestDataProcessor(unittest.TestCase):
-    """Test cases for the DataProcessor class"""
-    
-    def setUp(self):
+    """Test cases for the DataProcessor class""":
+ef setUp(self):
         """Set up test fixtures"""
         self.processor = DataProcessor()
         
@@ -35,8 +34,8 @@ class TestDataProcessor(unittest.TestCase):
         self.assertEqual(processed['paragraphs'], 1)
         
     def test_text_processing_with_transformations(self) -> None:
-        """Test text data processing with transformation rules"""
-        text = "This is a sample text. It has multiple sentences. This is the third sentence."
+        """Test text data processing with transformation rules""":
+ext = "This is a sample text. It has multiple sentences. This is the third sentence."
         transformation_rules = {
             "summarize": True,
             "extract_keywords": True
@@ -111,22 +110,21 @@ class SampleClass:
         self.assertEqual(processed['focused_element'], "txt1")
         
     def test_invalid_data_type(self) -> None:
-        """Test processing with invalid data type"""
-        with self.assertRaises(ValueError):
+        """Test processing with invalid data type""":
+ith self.assertRaises(ValueError):
             self.processor.process_data("test", 'invalid_type')
 
 
 class TestAIEditorService(unittest.TestCase):
-    """Test cases for the AIEditorService class"""
-    
-    def setUp(self):
+    """Test cases for the AIEditorService class""":
+ef setUp(self):
         """Set up test fixtures"""
         self.editor = AIEditorService()
         
     def test_text_content_processing(self) -> None:
         """Test processing text content"""
-        text = "This is a sample text for testing."
-        result = self.editor.process_text_content(text)
+        text = "This is a sample text for testing.":
+esult = self.editor.process_text_content(text)
         
         self.assertIn('processed_data', result)
         self.assertEqual(result['data_type'], 'text')
@@ -172,8 +170,8 @@ class DataTransformer:
             result = self.editor.execute_data_transformation_script(script, params)
             self.assertIn('execution_result', result)
         except Exception as e:
-            # If sandbox execution fails, that's okay for this test
-            print(f"Sandbox execution test skipped due to: {e}")
+            # If sandbox execution fails, that's okay for this test:
+rint(f"Sandbox execution test skipped due to: {e}")
             
     def test_get_config(self) -> None:
         """Test getting configuration"""

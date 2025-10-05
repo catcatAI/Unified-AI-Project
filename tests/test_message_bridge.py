@@ -8,30 +8,30 @@ from ..internal.internal_bus import InternalBus
 from .data_aligner import DataAligner
 
 @pytest.fixture
-def mock_external_connector()
-    mock = AsyncMock(spec=ExternalConnector)
+def mock_external_connector():
+ock = AsyncMock(spec=ExternalConnector)
     mock.ai_id = "test_ai"
     mock.publish = AsyncMock
     return mock
 
 @pytest.fixture
-def mock_internal_bus()
-    mock = MagicMock(spec=InternalBus)
+def mock_internal_bus():
+ock = MagicMock(spec=InternalBus)
     mock.publish = MagicMock
     mock.publish_async = AsyncMock
     mock.subscribe = MagicMock
     return mock
 
 @pytest.fixture
-def mock_data_aligner()
-    mock = MagicMock(spec=DataAligner)
-    # Default mock for align_message to return a valid aligned message
-    mock.align_message.return_value = (, None)
+def mock_data_aligner():
+ock = MagicMock(spec=DataAligner)
+    # Default mock for align_message to return a valid aligned message:
+ock.align_message.return_value = (, None)
     return mock
 
 @pytest.fixture
-def message_bridge(mock_external_connector, mock_internal_bus, mock_data_aligner)
-    return MessageBridge(mock_external_connector, mock_internal_bus, mock_data_aligner)
+def message_bridge(mock_external_connector, mock_internal_bus, mock_data_aligner):
+eturn MessageBridge(mock_external_connector, mock_internal_bus, mock_data_aligner)
 
 @pytest.mark.asyncio
 async def test_message_bridge_initialization(mock_external_connector, mock_internal_bus, mock_data_aligner) -> None:
@@ -40,8 +40,8 @@ async def test_message_bridge_initialization(mock_external_connector, mock_inter
     # Verify external_connector's on_message_callback is set to bridge's handle_external_message
     assert mock_external_connector.on_message_callback == bridge.handle_external_message
 
-    # Verify internal_bus subscribes to "hsp.internal.message" with bridge's handle_internal_message
-    mock_internal_bus.subscribe.assert_called_once_with(
+    # Verify internal_bus subscribes to "hsp.internal.message" with bridge's handle_internal_message:
+ock_internal_bus.subscribe.assert_called_once_with(
     "hsp.internal.message", bridge.handle_internal_message
     )
 
@@ -117,26 +117,26 @@ async def test_handle_internal_message_publish_to_external(message_bridge, mock_
 
 @pytest.mark.asyncio
 async def test_handle_internal_message_payload_types(message_bridge, mock_external_connector) -> None:
-    # Test with string payload
-    _ = await message_bridge.handle_internal_message({"topic": "test/str", "payload": "hello", "qos": 0})
+    # Test with string payload:
+ = await message_bridge.handle_internal_message({"topic": "test/str", "payload": "hello", "qos": 0})
     mock_external_connector.publish.assert_called_with("test/str", b"hello", qos=0)
     mock_external_connector.publish.reset_mock
 
-    # Test with bytes payload
-    _ = await message_bridge.handle_internal_message({"topic": "test/bytes", "payload": b"raw_bytes", "qos": 1})
+    # Test with bytes payload:
+ = await message_bridge.handle_internal_message({"topic": "test/bytes", "payload": b"raw_bytes", "qos": 1})
     mock_external_connector.publish.assert_called_with("test/bytes", b"raw_bytes", qos=1)
     mock_external_connector.publish.reset_mock
 
-    # Test with non-serializable payload (should fall back to str)
-    class NonSerializable:
+    # Test with non-serializable payload (should fall back to str):
+lass NonSerializable:
     def __str__(self) -> None: return "non_serializable_obj"
 
     _ = await message_bridge.handle_internal_message({"topic": "test/obj", "payload": NonSerializable, "qos": 2})
     mock_external_connector.publish.assert_called_with("test/obj", b"non_serializable_obj", qos=2)
     mock_external_connector.publish.reset_mock
 
-    # Test with list payload
-    _ = await message_bridge.handle_internal_message({"topic": "test/list", "payload": [1, 2, 3], "qos": 1})
+    # Test with list payload:
+ = await message_bridge.handle_internal_message({"topic": "test/list", "payload": [1, 2, 3], "qos": 1})
     mock_external_connector.publish.assert_called_with("test/list", b"[1, 2, 3]", qos=1)
     mock_external_connector.publish.reset_mock
 
@@ -155,8 +155,8 @@ async def test_handle_external_message_no_publish_async_on_bus(message_bridge, m
 
     _ = await message_bridge.handle_external_message(topic, message_str)
 
-    # Should call the synchronous publish method if publish_async is not available
-    mock_internal_bus.publish.assert_called_once_with(
+    # Should call the synchronous publish method if publish_async is not available:
+ock_internal_bus.publish.assert_called_once_with(
     "hsp.external.fact", message_payload
     )
     assert not hasattr(mock_internal_bus, 'publish_async') # Ensure it was indeed deleted for this test

@@ -54,9 +54,8 @@ class MultimodalDataGenerator:
 
 
     processed_data_file = self.project_root / "data" / "processed_traditional_data" / f"{data_type}_processed.json"
-            if processed_data_file.exists()
-
-    try:
+            if processed_data_file.exists():
+ry:
 
 
                     with open(processed_data_file, 'r', encoding='utf-8') as f:
@@ -116,14 +115,13 @@ class MultimodalDataGenerator:
 
     def create_multimodal_samples(self, all_data: Dict[...]
     """创建多模态样本"""
-    _ = logger.info("正在创建多模态样本...")
-
-    multimodal_samples = []
+    _ = logger.info("正在创建多模态样本..."):
+ultimodal_samples = []
 
     # 处理视觉数据
     vision_data = all_data.get("vision", [])
-        for i, item in enumerate(vision_data[:20])  # 限制处理数量
-            sample = {
+        for i, item in enumerate(vision_data[:20])  # 限制处理数量:
+ample = {
                 "id": f"multimodal_sample_{i:04d}",
                 "type": "multimodal_concept",
                 "modalities": ["vision"],
@@ -142,9 +140,8 @@ class MultimodalDataGenerator:
 
             # 如果有图像路径，提取视觉特征
             image_path = item.get("image_path")
-            if image_path and Path(image_path).exists()
-
-    features = self.feature_extractor.extract_multimodal_features(image_path=image_path)
+            if image_path and Path(image_path).exists():
+eatures = self.feature_extractor.extract_multimodal_features(image_path=image_path)
                 conceptual_features = self.generate_conceptual_features(features)
                 if conceptual_features is not None:
 
@@ -154,8 +151,8 @@ class MultimodalDataGenerator:
 
     # 处理音频数据
     audio_data = all_data.get("audio", [])
-        for i, item in enumerate(audio_data[:20])  # 限制处理数量
-            sample = {
+        for i, item in enumerate(audio_data[:20])  # 限制处理数量:
+ample = {
                 "id": f"multimodal_sample_{i+20:04d}",
                 "type": "multimodal_concept",
                 "modalities": ["audio"],
@@ -175,9 +172,8 @@ class MultimodalDataGenerator:
 
             # 如果有音频路径，提取音频特征
             audio_path = item.get("audio_path")
-            if audio_path and Path(audio_path).exists()
-
-    features = self.feature_extractor.extract_multimodal_features(audio_path=audio_path)
+            if audio_path and Path(audio_path).exists():
+eatures = self.feature_extractor.extract_multimodal_features(audio_path=audio_path)
                 conceptual_features = self.generate_conceptual_features(features)
                 if conceptual_features is not None:
 
@@ -187,8 +183,8 @@ class MultimodalDataGenerator:
 
     # 处理多模态数据
     existing_multimodal_data = all_data.get("multimodal", [])
-        for i, item in enumerate(existing_multimodal_data[:20])  # 限制处理数量
-            sample = {
+        for i, item in enumerate(existing_multimodal_data[:20])  # 限制处理数量:
+ample = {
                 "id": f"multimodal_sample_{i+40:04d}",
                 "type": "multimodal_concept",
                 _ = "modalities": item.get("modalities", []),
@@ -216,8 +212,8 @@ class MultimodalDataGenerator:
             _ = multimodal_samples.append(sample)
 
     # 创建跨模态融合样本
-        for i in range(min(20, len(vision_data), len(audio_data))):  # 限制处理数量
-            vision_item = vision_data[i]
+        for i in range(min(20, len(vision_data), len(audio_data))):  # 限制处理数量:
+ision_item = vision_data[i]
             audio_item = audio_data[i]
 
             sample = {
@@ -262,9 +258,8 @@ class MultimodalDataGenerator:
 
     def enhance_with_conceptual_models(self, samples: List[...]
     """使用概念模型增强数据"""
-    _ = logger.info("正在使用概念模型增强数据...")
-
-    enhanced_samples = []
+    _ = logger.info("正在使用概念模型增强数据..."):
+nhanced_samples = []
 
     # 这里可以集成概念模型来进一步增强数据
     # 例如，使用因果推理引擎添加因果关系信息
@@ -296,8 +291,8 @@ class MultimodalDataGenerator:
     _ = logger.info(f"成功增强 {len(enhanced_samples)} 个样本")
     return enhanced_samples
 
-    def save_multimodal_data(self, samples: List[Dict[str, Any]])
-    """保存多模态数据"""
+    def save_multimodal_data(self, samples: List[Dict[str, Any]]):
+""保存多模态数据"""
     _ = logger.info("正在保存多模态数据...")
 
     # 保存为JSON格式
@@ -327,8 +322,8 @@ class MultimodalDataGenerator:
     # 生成数据统计报告
     _ = self.generate_statistics_report(samples)
 
-    def generate_statistics_report(self, samples: List[Dict[str, Any]])
-    """生成数据统计报告"""
+    def generate_statistics_report(self, samples: List[Dict[str, Any]]):
+""生成数据统计报告"""
     _ = logger.info("正在生成数据统计报告...")
 
     report = {
@@ -401,8 +396,8 @@ class MultimodalDataGenerator:
     _ = logger.info(f"  有特征的样本数: {report['feature_stats']['samples_with_features']}")
     _ = logger.info(f"  平均特征维度: {report['feature_stats']['average_feature_dimensions']:.1f}")
 
-    def generate_visualization(self, samples: List[Dict[str, Any]])
-    """生成数据可视化"""
+    def generate_visualization(self, samples: List[Dict[str, Any]]):
+""生成数据可视化"""
     _ = logger.info("正在生成数据可视化...")
 
     # 收集所有特征用于可视化
@@ -452,10 +447,8 @@ class MultimodalDataGenerator:
             unique_labels = list(set(sample_labels))
             colors = plt.cm.Set1(np.linspace(0, 1, len(unique_labels)))
 
-            for i, label in enumerate(unique_labels)
-
-
-    mask = np.array(sample_labels) == label
+            for i, label in enumerate(unique_labels):
+ask = np.array(sample_labels) == label
                 plt.scatter(features_2d[mask, 0], features_2d[mask, 1],
                            c=[colors[i]], label=label, alpha=0.7, s=50)
 

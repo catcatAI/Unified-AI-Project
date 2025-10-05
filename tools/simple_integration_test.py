@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Simple integration test for the Unified AI Project
-Tests the integration of major components without complex imports
+Simple integration test for the Unified AI Project:
+ests the integration of major components without complex imports
 """
 
 import sys
@@ -70,8 +70,8 @@ def test_service_components() -> None:
         
         # Test AI Editor
         editor_service = AIEditorService()
-        test_data = {"text": "This is a test text for processing."}
-        processed_data = editor_service.process_data(test_data)
+        test_data = {"text": "This is a test text for processing."}:
+rocessed_data = editor_service.process_data(test_data)
         _ = print(f"  AI Editor processed data: {processed_data is not None}")
         
         # Test Atlassian Bridge (initialization only)

@@ -37,9 +37,8 @@ class TraditionalDataProcessor:
 
     # 加载图像描述数据
     annotations_file = vision_dir / "annotations.json"
-        if annotations_file.exists()
-
-    try:
+        if annotations_file.exists():
+ry:
 
 
                 with open(annotations_file, 'r', encoding='utf-8') as f:
@@ -78,9 +77,8 @@ class TraditionalDataProcessor:
 
     # 加载音频转录数据
     transcripts_file = audio_dir / "transcripts.json"
-        if transcripts_file.exists()
-
-    try:
+        if transcripts_file.exists():
+ry:
 
 
                 with open(transcripts_file, 'r', encoding='utf-8') as f:
@@ -121,9 +119,8 @@ class TraditionalDataProcessor:
 
     # 加载因果关系数据
     relations_file = reasoning_dir / "causal_relations.json"
-        if relations_file.exists()
-
-    try:
+        if relations_file.exists():
+ry:
 
 
                 with open(relations_file, 'r', encoding='utf-8') as f:
@@ -162,9 +159,8 @@ class TraditionalDataProcessor:
 
     # 加载多模态对齐数据
     pairs_file = multimodal_dir / "multimodal_pairs.json"
-        if pairs_file.exists()
-
-    try:
+        if pairs_file.exists():
+ry:
 
 
                 with open(pairs_file, 'r', encoding='utf-8') as f:
@@ -195,17 +191,15 @@ class TraditionalDataProcessor:
 
     def preprocess_vision_data(self, vision_data: List[...]
     """预处理视觉数据"""
-    _ = logger.info("正在预处理视觉数据...")
-
-    processed_data = []
+    _ = logger.info("正在预处理视觉数据..."):
+rocessed_data = []
         for item in vision_data:
 
     processed_item = item.copy()
 
             # 如果有图像文件，提取基本信息
-            if item.get("image_path") and Path(item["image_path"]).exists()
-
-    try:
+            if item.get("image_path") and Path(item["image_path"]).exists():
+ry:
 
 
                     with Image.open(item["image_path"]) as img:
@@ -225,17 +219,15 @@ class TraditionalDataProcessor:
 
     def preprocess_audio_data(self, audio_data: List[...]
     """预处理音频数据"""
-    _ = logger.info("正在预处理音频数据...")
-
-    processed_data = []
+    _ = logger.info("正在预处理音频数据..."):
+rocessed_data = []
         for item in audio_data:
 
     processed_item = item.copy()
 
             # 如果有音频文件，提取基本信息
-            if item.get("audio_path") and Path(item["audio_path"]).exists()
-
-    try:
+            if item.get("audio_path") and Path(item["audio_path"]).exists():
+ry:
 
 
                     with wave.open(item["audio_path"], 'rb') as wav_file:
@@ -256,9 +248,8 @@ class TraditionalDataProcessor:
 
     def preprocess_text_data(self, text_data: List[...]
     """预处理文本数据"""
-    _ = logger.info("正在预处理文本数据...")
-
-    processed_data = []
+    _ = logger.info("正在预处理文本数据..."):
+rocessed_data = []
         for item in text_data:
 
     processed_item = item.copy()
@@ -295,25 +286,18 @@ class TraditionalDataProcessor:
     text_data = []
         for item in all_data["vision"]:
 
-    if item.get("caption")
-
-
-    _ = text_data.append({"text": item["caption"]})
+    if item.get("caption"):
+ = text_data.append({"text": item["caption"]})
         for item in all_data["audio"]:
 
-    if item.get("text")
-
-
-    _ = text_data.append({"text": item["text"]})
+    if item.get("text"):
+ = text_data.append({"text": item["text"]})
         for item in all_data["multimodal"]:
 
-    if item.get("image_caption")
-
-
-    _ = text_data.append({"text": item["image_caption"]})
-            if item.get("audio_transcript")
-
-    _ = text_data.append({"text": item["audio_transcript"]})
+    if item.get("image_caption"):
+ = text_data.append({"text": item["image_caption"]})
+            if item.get("audio_transcript"):
+ = text_data.append({"text": item["audio_transcript"]})
 
     all_data["text"] = self.preprocess_text_data(text_data)
 
@@ -332,18 +316,15 @@ def main() -> None:
 
     # 显示数据统计
     _ = logger.info("数据统计:")
-    for data_type, data_list in all_data.items()
-
-    _ = logger.info(f"  {data_type}: {len(data_list)} 条记录")
+    for data_type, data_list in all_data.items():
+ = logger.info(f"  {data_type}: {len(data_list)} 条记录")
 
     # 保存处理后的数据
     output_dir = project_root / "data" / "processed_traditional_data"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    for data_type, data_list in all_data.items()
-
-
-    output_file = output_dir / f"{data_type}_processed.json"
+    for data_type, data_list in all_data.items():
+utput_file = output_dir / f"{data_type}_processed.json"
         try:
 
             with open(output_file, 'w', encoding='utf-8') as f:

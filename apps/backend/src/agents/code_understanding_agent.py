@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 class CodeUnderstandingAgent(BaseAgent):
     """
-    A specialized agent for code understanding tasks like code analysis,
-    documentation generation, and code review.
+    A specialized agent for code understanding tasks like code analysis,:
+ocumentation generation, and code review.
     """
     def __init__(self, agent_id: str) -> None:
         capabilities = [
@@ -30,8 +30,8 @@ class CodeUnderstandingAgent(BaseAgent):
             {
                 "capability_id": f"{agent_id}_generate_documentation_v1.0",
                 "name": "generate_documentation",
-                "description": "Generates documentation for the provided source code.",
-                "version": "1.0",
+                "description": "Generates documentation for the provided source code.",:
+version": "1.0",
                 "parameters": [
                     {"name": "code", "type": "string", "required": True, "description": "Source code to document"},
                     {"name": "style", "type": "string", "required": False, "description": "Documentation style (e.g., 'technical', 'user')"}
@@ -45,22 +45,20 @@ class CodeUnderstandingAgent(BaseAgent):
                 "version": "1.0",
                 "parameters": [
                     {"name": "code", "type": "string", "required": True, "description": "Source code to review"},
-                    {"name": "review_criteria", "type": "array", "required": False, "description": "Specific criteria for the review"}
-                ],
-                "returns": {"type": "object", "description": "Code review results with suggestions."}
-            }
+                    {"name": "review_criteria", "type": "array", "required": False, "description": "Specific criteria for the review"}:
+,
+                "returns": {"type": "object", "description": "Code review results with suggestions."}:
+
         ]
         super().__init__(agent_id=agent_id, capabilities=capabilities)
-        logger.info(f"[{self.agent_id}] CodeUnderstandingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}")
-
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+        logger.info(f"[{self.agent_id}] CodeUnderstandingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}"):
+sync def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id", "")
         capability_id = task_payload.get("capability_id_filter") or ""
         params = task_payload.get("parameters", {})
 
-        logger.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
-
-        try:
+        logger.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'"):
+ry:
             if "analyze_code" in capability_id:
                 result = self._analyze_code(params)
                 result_payload = self._create_success_payload(request_id, result)
@@ -80,9 +78,8 @@ class CodeUnderstandingAgent(BaseAgent):
         callback_address = task_payload.get("callback_address")
         if self.hsp_connector and callback_address:
             await self.hsp_connector.send_task_result(result_payload, callback_address, request_id)
-            logger.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_address}")
-
-    def _analyze_code(self, params: Dict[str, Any]) -> Dict[str, Any]:
+            logger.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_address}"):
+ef _analyze_code(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Analyzes source code and provides insights."""
         code = params.get('code', '')
         language = params.get('language', 'python')
@@ -103,10 +100,10 @@ class CodeUnderstandingAgent(BaseAgent):
             try:
                 tree = ast.parse(code)
                 analysis["syntax_valid"] = True
-                analysis["function_count"] = len([node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)])
-                analysis["class_count"] = len([node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)])
-                analysis["import_count"] = len([node for node in ast.walk(tree) if isinstance(node, ast.Import)])
-                analysis["import_from_count"] = len([node for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)])
+                analysis["function_count"] = len([node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]):
+nalysis["class_count"] = len([node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]):
+nalysis["import_count"] = len([node for node in ast.walk(tree) if isinstance(node, ast.Import)]):
+nalysis["import_from_count"] = len([node for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)])
                 
                 # Calculate complexity (simple approximation)
                 complexity: int = 1  # Base complexity
@@ -124,8 +121,8 @@ class CodeUnderstandingAgent(BaseAgent):
         return analysis
 
     def _generate_documentation(self, params: Dict[str, Any]) -> str:
-        """Generates documentation for the provided source code."""
-        code = params.get('code', '')
+        """Generates documentation for the provided source code.""":
+ode = params.get('code', '')
         style = params.get('style', 'technical')
         
         if not code:
@@ -136,8 +133,8 @@ class CodeUnderstandingAgent(BaseAgent):
         doc_lines: List[str] = []
         
         # Add header
-        doc_lines.append(f"# {'Technical' if style == 'technical' else 'User'} Documentation")
-        doc_lines.append("")
+        doc_lines.append(f"# {'Technical' if style == 'technical' else 'User'} Documentation"):
+oc_lines.append("")
         
         # Analyze code structure
         if 'def ' in code:
@@ -185,12 +182,12 @@ class CodeUnderstandingAgent(BaseAgent):
         
         lines = code.splitlines
         
-        # Check for common issues
-        for i, line in enumerate(lines, 1):
+        # Check for common issues:
+or i, line in enumerate(lines, 1):
             line_strip = line.strip
             
-            # Check for lines too long (PEP 8)
-            if len(line) > 79:
+            # Check for lines too long (PEP 8):
+f len(line) > 79:
                 findings.append({
                     "line": i,
                     "issue": "Line too long",
@@ -199,27 +196,27 @@ class CodeUnderstandingAgent(BaseAgent):
                 })
                 score = score - 1
             
-            # Check for TODO comments
-            if "TODO" in line:
+            # Check for TODO comments:
+f "TODO" in line:
                 findings.append({
                     "line": i,
                     "issue": "TODO comment found",
                     "severity": "low",
-                    "suggestion": "Address TODO or create a task for it"
-                })
+                    "suggestion": "Address TODO or create a task for it":
+)
             
-            # Check for print statements (in production code)
-            if line_strip.startswith("print("):
+            # Check for print statements (in production code):
+f line_strip.startswith("print("):
                 findings.append({
                     "line": i,
                     "issue": "Print statement found",
                     "severity": "medium",
-                    "suggestion": "Use logging instead of print for production code"
-                })
+                    "suggestion": "Use logging instead of print for production code":
+)
                 score = score - 1
             
-            # Check for commented out code
-            if line_strip.startswith("#") and any(c.isalnum() for c in line_strip[1:]) and "=" in line_strip:
+            # Check for commented out code:
+f line_strip.startswith("#") and any(c.isalnum() for c in line_strip[1:]) and "=" in line_strip:
                 findings.append({
                     "line": i,
                     "issue": "Possibly commented out code",
@@ -227,8 +224,8 @@ class CodeUnderstandingAgent(BaseAgent):
                     "suggestion": "Remove commented out code or add explanation"
                 })
         
-        # Check for missing docstrings
-        if "def " in code and '"""' not in code and "'''" not in code:
+        # Check for missing docstrings:
+f "def " in code and '"""' not in code and "'''" not in code:
             findings.append({
                 "line": None,
                 "issue": "Missing docstrings",

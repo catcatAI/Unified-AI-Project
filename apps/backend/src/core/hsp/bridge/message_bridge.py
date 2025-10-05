@@ -44,8 +44,8 @@ class MessageBridge:
             if internal_topic_suffix:
                 internal_channel = f"hsp.external.{internal_topic_suffix}"
                 print(f"DEBUG: MessageBridge.handle_external_message - Publishing to internal bus channel: {internal_channel} with aligned_message: {aligned_message}")
-                # Await the async publish to ensure downstream async handlers complete (important for tests like ACK sending)
-                if hasattr(self.internal_bus, 'publish_async'):
+                # Await the async publish to ensure downstream async handlers complete (important for tests like ACK sending):
+f hasattr(self.internal_bus, 'publish_async'):
                     _ = await self.internal_bus.publish_async(internal_channel, aligned_message)
                 else:
                     self.internal_bus.publish(internal_channel, aligned_message)
@@ -53,8 +53,8 @@ class MessageBridge:
                 print(f"Warning: MessageBridge.handle_external_message - Unknown message_type '{message_type}'. Not publishing to internal bus.")
 
     async def handle_internal_message(self, message):
-        # Normalize payload to bytes for MQTT publish compatibility
-        topic = message.get("topic")
+        # Normalize payload to bytes for MQTT publish compatibility:
+opic = message.get("topic")
         payload = message.get("payload")
         qos = message.get("qos", 1)
 

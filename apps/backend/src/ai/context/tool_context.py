@@ -20,12 +20,12 @@ class ToolCategory:
     self.tools: List['Tool'] =
     self.created_at = datetime.now
 
-    def add_sub_category(self, sub_category: 'ToolCategory')
-    """添加子分类"""
+    def add_sub_category(self, sub_category: 'ToolCategory'):
+""添加子分类"""
     self.sub_categories.append(sub_category)
 
-    def add_tool(self, tool: 'Tool')
-    """添加工具"""
+    def add_tool(self, tool: 'Tool'):
+""添加工具"""
     self.tools.append(tool)
 
 class Tool:
@@ -40,8 +40,8 @@ class Tool:
     self.performance_metrics: 'ToolPerformanceMetrics' = ToolPerformanceMetrics
     self.created_at = datetime.now
 
-    def record_usage(self, usage_record: 'ToolUsageRecord')
-    """记录工具使用"""
+    def record_usage(self, usage_record: 'ToolUsageRecord'):
+""记录工具使用"""
     self.usage_history.append(usage_record)
     # 更新性能指标
     self.performance_metrics.update_from_usage(usage_record)
@@ -65,8 +65,8 @@ class ToolPerformanceMetrics:
     self.average_duration = 0.0
     self.last_used: Optional[datetime] = None
 
-    def update_from_usage(self, usage_record: ToolUsageRecord)
-    """根据使用记录更新性能指标"""
+    def update_from_usage(self, usage_record: ToolUsageRecord):
+""根据使用记录更新性能指标"""
     self.total_calls += 1
     self.last_used = usage_record.timestamp
 
@@ -111,8 +111,8 @@ class ToolContextManager:
             }
 
             context_id = self.context_manager.create_context(ContextType.TOOL, context_content)
-            logger.info(f"Created tool category {category_id} with context {context_id}")
-    return True
+            logger.info(f"Created tool category {category_id} with context {context_id}"):
+eturn True
         except Exception as e:
 
             logger.error(f"Failed to create tool category {category_id}: {e}")
@@ -140,8 +140,8 @@ class ToolContextManager:
             }
 
             context_id = self.context_manager.create_context(ContextType.TOOL, context_content)
-            logger.info(f"Registered tool {tool_id} with context {context_id}")
-    return True
+            logger.info(f"Registered tool {tool_id} with context {context_id}"):
+eturn True
         except Exception as e:
 
             logger.error(f"Failed to register tool {tool_id}: {e}")
@@ -154,8 +154,8 @@ class ToolContextManager:
             if tool_id not in self.tools:
 
 
-    logger.error(f"Tool {tool_id} not found for usage recording")
-    return False
+    logger.error(f"Tool {tool_id} not found for usage recording"):
+eturn False
 
             tool = self.tools[tool_id]
             usage_record = ToolUsageRecord(parameters, result, duration, success)
@@ -174,18 +174,18 @@ class ToolContextManager:
                     "total_calls": tool.performance_metrics.total_calls,
                     "success_rate": tool.performance_metrics.success_rate,
                     "average_duration": tool.performance_metrics.average_duration,
-                    "last_used": tool.performance_metrics.last_used.isoformat if tool.performance_metrics.last_used else None
-                }
+                    "last_used": tool.performance_metrics.last_used.isoformat if tool.performance_metrics.last_used else None:
+
             }
 
             # 创建新的上下文来记录使用情况
             context_id = self.context_manager.create_context(ContextType.TOOL, context_content)
-            logger.info(f"Recorded usage for tool {tool_id} with context {context_id}")
-    return True
+            logger.info(f"Recorded usage for tool {tool_id} with context {context_id}"):
+eturn True
         except Exception as e:
 
-            logger.error(f"Failed to record usage for tool {tool_id}: {e}")
-            return False
+            logger.error(f"Failed to record usage for tool {tool_id}: {e}"):
+eturn False
 
     def get_tool_context(self, tool_id: str) -> Optional[Dict[str, Any]]:
     """获取工具上下文"""
@@ -203,8 +203,8 @@ class ToolContextManager:
             if not contexts:
 
 
-    logger.debug(f"No context found for tool {tool_id}")
-    return None
+    logger.debug(f"No context found for tool {tool_id}"):
+eturn None
 
             # 返回最新的上下文
             latest_context = max(contexts, key=lambda c: c.updated_at)
@@ -216,8 +216,8 @@ class ToolContextManager:
             }
         except Exception as e:
 
-            logger.error(f"Failed to get context for tool {tool_id}: {e}")
-            return None
+            logger.error(f"Failed to get context for tool {tool_id}: {e}"):
+eturn None
 
     def get_category_tools(self, category_id: str) -> List[Dict[str, Any]]:
     """获取分类下的工具列表"""
@@ -249,5 +249,5 @@ class ToolContextManager:
             return tools_info
         except Exception as e:
 
-            logger.error(f"Failed to get tools for category {category_id}: {e}")
-            return
+            logger.error(f"Failed to get tools for category {category_id}: {e}"):
+eturn

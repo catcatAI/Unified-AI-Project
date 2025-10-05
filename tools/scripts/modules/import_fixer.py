@@ -12,9 +12,9 @@ class ImportFixer:
     """导入修复器"""
 
     def __init__(self, project_root: Path) -> None:
-    self.project_root = project_root
-    self.backend_root = project_root / "apps" / "backend"
-    self.src_dir = self.backend_root / "src"
+        self.project_root = project_root
+        self.backend_root = project_root / "apps" / "backend"
+        self.src_dir = self.backend_root / "src"
 
     # 导入映射表 - 从enhanced_auto_fix.py迁移
     self.import_mappings = {
@@ -96,36 +96,36 @@ class ImportFixer:
     ]
 
     def find_python_files(self, target: str = None) -> List[Path]:
-    """查找Python文件"""
-    python_files = []
+        """查找Python文件"""
+        python_files = []
 
         if target:
             # 处理特定目标
             target_path = Path(target)
-            if target_path.is_absolute()
+            if target_path.is_absolute():
                 search_path = target_path
             else:
                 search_path = self.project_root / target
 
             if search_path.is_file() and search_path.suffix == '.py':
                 _ = python_files.append(search_path)
-            elif search_path.is_dir()
+            elif search_path.is_dir():
                 _ = python_files.extend(search_path.rglob("*.py"))
         else:
             # 搜索整个项目
-            for py_file in self.project_root.rglob("*.py")
+            for py_file in self.project_root.rglob("*.py"):
                 # 跳过特定目录
                 if any(part in str(py_file) for part in [
                     "backup", "node_modules", "__pycache__", "venv",
-                    ".git", "dist", "build", ".pytest_cache"
+                    ".git", "dist", "build", "data/runtime_data/.pytest_cache"
                 ]):
                     continue
                 _ = python_files.append(py_file)
 
-    return python_files
+        return python_files
 
     def fix_imports_in_file(self, file_path: Path) -> Tuple[bool, str, Dict]:
-    """修复文件中的导入"""
+        """修复文件中的导入"""
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -134,7 +134,7 @@ class ImportFixer:
             fixes_made = []
 
             # 应用导入映射
-            for old_import, new_import in self.import_mappings.items()
+            for old_import, new_import in self.import_mappings.items():
                 if old_import in content and new_import not in content:
                     content = content.replace(old_import, new_import)
                     _ = fixes_made.append(f"映射替换: {old_import} -> {new_import}")
@@ -171,10 +171,10 @@ class ImportFixer:
             return False, f"修复文件时出错: {str(e)}", error_details
 
     def fix(self, target: str = None, **kwargs) -> Tuple[bool, str, Dict]:
-    """执行导入修复"""
-    _ = print("开始执行导入修复...")
+        """执行导入修复"""
+        _ = print("开始执行导入修复...")
 
-    python_files = self.find_python_files(target)
+        python_files = self.find_python_files(target)
 
         if not python_files:
             return True, "未找到需要修复的Python文件", {"files_processed": 0}
@@ -213,13 +213,13 @@ class ImportFixer:
                 })
                 _ = print(f"✗ 处理文件异常: {file_path} - {error_msg}")
 
-    # 生成结果摘要
-    result_details = {
+        # 生成结果摘要
+        result_details = {
             "files_processed": len(python_files),
             "files_fixed": files_fixed,
             "total_fixes": total_fixes,
             "errors": errors
-    }
+        }
 
         if files_fixed > 0:
             message = f"导入修复完成: 修复了 {files_fixed} 个文件中的 {total_fixes} 处导入"

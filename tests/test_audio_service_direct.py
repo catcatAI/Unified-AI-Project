@@ -14,8 +14,8 @@ def test_audio_service() -> None:
     # Test is_demo_mode function directly
     _ = print(f"is_demo_mode() returns: {is_demo_mode()}")
     
-    # Test with demo mode enabled
-    with patch('apps.backend.src.config_loader.is_demo_mode', return_value=True):
+    # Test with demo mode enabled:
+ith patch('apps.backend.src.config_loader.is_demo_mode', return_value=True):
         _ = print(f"After patch, is_demo_mode() returns: {is_demo_mode()}")
         
         service = AudioService()

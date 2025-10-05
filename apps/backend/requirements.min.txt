@@ -1,8 +1,0 @@
-pytest
-pytest-asyncio
-pytest-timeout
-cryptography
-PyYAML
-networkx
-paho-mqtt
-gmqtt

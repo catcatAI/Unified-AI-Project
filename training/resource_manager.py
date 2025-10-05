@@ -41,8 +41,8 @@ from training.smart_resource_allocator import SmartResourceAllocator
 try:
     from apps.backend.src.system import IntegratedGraphicsOptimizer, get_hardware_profile
     hardware_profile = get_hardware_profile()
-    integrated_graphics_optimizer = IntegratedGraphicsOptimizer(hardware_profile) if hardware_profile else None
-except ImportError:
+    integrated_graphics_optimizer = IntegratedGraphicsOptimizer(hardware_profile) if hardware_profile else None:
+xcept ImportError:
     hardware_profile = None
     integrated_graphics_optimizer = None
 
@@ -82,17 +82,15 @@ class ResourceManager:
             _ = pynvml.nvmlInit()
             device_count = pynvml.nvmlDeviceGetCount()
 
-            for i in range(device_count)
-
-
-    handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+            for i in range(device_count):
+andle = pynvml.nvmlDeviceGetHandleByIndex(i)
                 name = pynvml.nvmlDeviceGetName(handle)
                 memory_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
 
                 gpu_info = {
                     'id': i,
-                    'name': name.decode('utf-8') if isinstance(name, bytes) else name,
-                    'total_memory': memory_info.total,
+                    'name': name.decode('utf-8') if isinstance(name, bytes) else name,:
+total_memory': memory_info.total,
                     'free_memory': memory_info.free,
                     'used_memory': memory_info.used
                 }
@@ -112,9 +110,8 @@ class ResourceManager:
     try:
                 # 尝试使用torch检测GPU
                 import torch
-                if torch.cuda.is_available()
-
-    for i in range(torch.cuda.device_count()):
+                if torch.cuda.is_available():
+or i in range(torch.cuda.device_count()):
 
 
     props = torch.cuda.get_device_properties(i)
@@ -158,23 +155,20 @@ class ResourceManager:
     gpu_data = json.loads(result.stdout)
 
                         # Handle both single GPU and multiple GPU cases
-                        if isinstance(gpu_data, list)
-
-    gpu_list = gpu_data
+                        if isinstance(gpu_data, list):
+pu_list = gpu_data
                         else:
 
                             gpu_list = [gpu_data]
 
                         # Process each GPU
-                        for idx, gpu_info in enumerate(gpu_list)
-
-    name = gpu_info.get('Name', 'Integrated Graphics')
+                        for idx, gpu_info in enumerate(gpu_list):
+ame = gpu_info.get('Name', 'Integrated Graphics')
                             adapter_ram = gpu_info.get('AdapterRAM', 0)
 
-                            # Convert RAM from bytes to bytes (keep as is for compatibility with existing code)
-    memory_total = adapter_ram if adapter_ram else 1073741824  # Default 1GB
-
-    gpu_info = {
+                            # Convert RAM from bytes to bytes (keep as is for compatibility with existing code):
+emory_total = adapter_ram if adapter_ram else 1073741824  # Default 1GB:
+pu_info = {
                                 'id': idx,
                                 'name': name,
                                 'total_memory': memory_total,
@@ -221,8 +215,8 @@ class ResourceManager:
 
             # 记录资源使用历史
             _ = self.resource_usage_history.append(resources)
-            if len(self.resource_usage_history) > 100:  # 限制历史记录数量
-                _ = self.resource_usage_history.pop(0)
+            if len(self.resource_usage_history) > 100:  # 限制历史记录数量:
+ = self.resource_usage_history.pop(0)
 
             return resources
         except Exception as e:
@@ -353,8 +347,8 @@ class ResourceManager:
             'estimated_time_hours': 1
     })
 
-    def add_task_to_queue(self, task_info: Dict[str, Any])
-    """将任务添加到队列中"""
+    def add_task_to_queue(self, task_info: Dict[str, Any]):
+""将任务添加到队列中"""
     # 使用优先级和预计时间作为排序依据
     priority = task_info.get('requirements', {}).get('priority', 1)
     estimated_time = task_info.get('requirements', {}).get('estimated_time_hours', 1)
@@ -385,9 +379,8 @@ class ResourceManager:
     is_integrated_graphics = False
         if integrated_graphics_optimizer:
 
-    is_integrated_graphics = integrated_graphics_optimizer.is_integrated_graphics_system()
-
-        if is_integrated_graphics:
+    is_integrated_graphics = integrated_graphics_optimizer.is_integrated_graphics_system():
+f is_integrated_graphics:
 
 
     _ = logger.info(f"为集成显卡系统调整资源需求: {model_name}")
@@ -431,8 +424,8 @@ class ResourceManager:
             gpu_memory_gb=requirements.get('gpu_memory_gb', 0),
             priority=requirements.get('priority', 1),
             estimated_time_hours=requirements.get('estimated_time_hours', 1),
-            resource_type="gpu" if requirements.get('gpu_memory_gb', 0) > 0 else "cpu"
-    )
+            resource_type="gpu" if requirements.get('gpu_memory_gb', 0) > 0 else "cpu":
+
 
     # 请求资源
     _ = self.smart_allocator.request_resources(resource_request)
@@ -465,8 +458,8 @@ class ResourceManager:
     _ = logger.info(f"✅ 资源分配成功: CPU {allocation_result.allocated_cpu_cores} 核心, 内存 {allocation_result.allocated_memory_gb} GB, GPU {allocation_result.allocated_gpu_memory_gb} GB")
     return allocation
 
-    def release_resources(self, model_name: str)
-    """释放模型占用的资源"""
+    def release_resources(self, model_name: str):
+""释放模型占用的资源"""
         if model_name in self.resource_allocation:
 
     del self.resource_allocation[model_name]
@@ -581,8 +574,8 @@ class ResourceManager:
             _ = logger.info(f"   增加内存: {memory_gb:.2f}GB -> {current_allocation['memory_gb']:.2f}GB")
 
     # 如果处理时间过长，增加资源
-        elif processing_time > 10.0:  # 超过10秒
-            if cpu_cores < self.cpu_count:
+        elif processing_time > 10.0:  # 超过10秒:
+f cpu_cores < self.cpu_count:
 
     current_allocation['cpu_cores'] = min(cpu_cores + 1, self.cpu_count)
                 _ = logger.info(f"   增加CPU核心: {cpu_cores} -> {current_allocation['cpu_cores']}")
