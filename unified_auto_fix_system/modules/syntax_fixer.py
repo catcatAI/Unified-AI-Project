@@ -6,6 +6,7 @@
 import ast
 import re
 import traceback
+import time
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
@@ -38,7 +39,7 @@ class EnhancedSyntaxFixer(BaseFixer):
         self.error_patterns = {
             "missing_colon": {
                 "pattern": r'^\s*(class|def|if|elif|else|for|while|try|except|finally|with)\s+[^:]*$',
-                "fix": self._fix_missing_colon,
+                "fix": self._fix_missing_colons,
                 "description": "缺少冒号"
             },
             "invalid_indentation": {
@@ -112,8 +113,7 @@ class EnhancedSyntaxFixer(BaseFixer):
                     line_number=e.lineno or 0,
                     column=e.offset or 0,
                     error_type="syntax_error",
-                    error_message=str(e),
-                    severity="error"
+                    error_message=str(e)
                 ))
             
             # 额外的语法检查
@@ -138,8 +138,7 @@ class EnhancedSyntaxFixer(BaseFixer):
                     column=len(line),
                     error_type="missing_colon",
                     error_message="语句末尾缺少冒号",
-                    suggested_fix=self._suggest_colon_fix(line),
-                    severity="error"
+                    suggested_fix=self._suggest_colon_fix(line)
                 ))
             
             # 检查括号匹配
@@ -190,8 +189,7 @@ class EnhancedSyntaxFixer(BaseFixer):
                 line_number=line_num,
                 column=0,
                 error_type="unmatched_parentheses",
-                error_message=f"圆括号不平衡: {parentheses['(']} 开, {parentheses[')']} 闭",
-                severity="error"
+                error_message=f"圆括号不平衡: {parentheses['(']} 开, {parentheses[')']} 闭"
             ))
         
         if parentheses['['] != parentheses[']']:
@@ -199,8 +197,7 @@ class EnhancedSyntaxFixer(BaseFixer):
                 line_number=line_num,
                 column=0,
                 error_type="unmatched_brackets",
-                error_message=f"方括号不平衡: {parentheses['[']} 开, {parentheses[']']} 闭",
-                severity="error"
+                error_message=f"方括号不平衡: {parentheses['[']} 开, {parentheses[']']} 闭"
             ))
         
         if parentheses['{'] != parentheses['}']:
@@ -208,8 +205,7 @@ class EnhancedSyntaxFixer(BaseFixer):
                 line_number=line_num,
                 column=0,
                 error_type="unmatched_braces",
-                error_message=f"花括号不平衡: {parentheses['{']} 开, {parentheses['}']} 闭",
-                severity="error"
+                error_message=f"花括号不平衡: {parentheses['{']} 开, {parentheses['}']} 闭"
             ))
         
         return issues
@@ -263,7 +259,7 @@ class EnhancedSyntaxFixer(BaseFixer):
             
             for file_path in target_files:
                 try:
-                    fixed_count = self._fix_file(file_path)
+                    fixed_count = self._fix_file(file_path, context)
                     issues_fixed += fixed_count
                     
                 except Exception as e:
@@ -306,7 +302,7 @@ class EnhancedSyntaxFixer(BaseFixer):
                 duration_seconds=time.time() - start_time
             )
     
-    def _fix_file(self, file_path: Path) -> int:
+    def _fix_file(self, file_path: Path, context: FixContext) -> int:
         """修复单个文件"""
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -322,8 +318,9 @@ class EnhancedSyntaxFixer(BaseFixer):
             
             # 如果内容有变化，写回文件
             if content != original_content:
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(content)
+                if not context.dry_run:
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(content)
                 
                 self.logger.info(f"已修复文件: {file_path}")
                 return 1  # 认为修复了一个问题

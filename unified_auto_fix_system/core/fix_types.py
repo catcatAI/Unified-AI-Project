@@ -21,6 +21,11 @@ class FixType(Enum):
     PERFORMANCE_FIX = "performance_fix"          # 性能优化修复
     COMPATIBILITY_FIX = "compatibility_fix"      # 兼容性修复
     TYPE_HINT_FIX = "type_hint_fix"              # 类型提示修复
+    DECORATOR_FIX = "decorator_fix"              # 装饰器修复
+    CLASS_FIX = "class_fix"                      # 类定义修复
+    PARAMETER_FIX = "parameter_fix"              # 参数修复
+    UNDEFINED_FIX = "undefined_fix"              # 未定义变量修复
+    DATA_PROCESSING_FIX = "data_processing_fix"  # 数据处理修复
 
 
 class FixStatus(Enum):
