@@ -47,7 +47,7 @@ jobs:
         python -m pytest tests/e2e/ -v
     
     - name: 上传覆盖率报告
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         file: ./apps/backend/coverage.xml
         flags: unittests
