@@ -34,12 +34,14 @@ CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT, "data", "models", "arithmetic_ch
 
 # Training Hyperparameters
 BATCH_SIZE = 64
-EPOCHS = 50 # Increased epochs, with early stopping:
+EPOCHS = 50  # Increased epochs, with early stopping:
 ATENT_DIM = 256
 EMBEDDING_DIM = 128
 VALIDATION_SPLIT = 0.2
 
+
 def load_dataset(file_path):
+
 ""Loads dataset from a JSON file."""
     try:
 

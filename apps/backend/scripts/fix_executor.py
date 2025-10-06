@@ -52,8 +52,9 @@ class FixExecutor:
         
         # 构建完整的文件路径
         full_path = self.project_root / file_path
-        return full_path if full_path.exists() else None:
-ef load_error_report(self) -> Dict[str, Any]:
+        return full_path if full_path.exists() else None
+
+    def load_error_report(self) -> Dict[str, Any]:
         """加载错误分析报告"""
         try:
             with open(self.error_report_file, 'r', encoding='utf-8') as f:

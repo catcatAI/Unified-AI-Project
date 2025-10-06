@@ -15,6 +15,7 @@ import importlib
 
 logger: Any = logging.getLogger(__name__)
 
+
 @dataclass
 class HSPExtensionInfo:
     """HSP扩展信息"""
@@ -26,6 +27,7 @@ class HSPExtensionInfo:
     enabled: bool = True
     loaded: bool = False
     load_time: Optional[str] = None
+
 
 class HSPMessageHandler(ABC):
     """HSP消息处理器抽象基类"""
@@ -56,6 +58,7 @@ class HSPMessageHandler(ABC):
             是否能处理该类型的消息
         """
         pass
+
 
 class HSPProtocolMiddleware(ABC):
     """HSP协议中间件抽象基类"""
@@ -88,6 +91,7 @@ class HSPProtocolMiddleware(ABC):
         """
         pass
 
+
 class HSPLoadBalancerMiddleware(HSPProtocolMiddleware):
     """负载均衡中间件"""
 
@@ -113,6 +117,7 @@ class HSPLoadBalancerMiddleware(HSPProtocolMiddleware):
 
         # 调用下一个中间件
         return await next_middleware(response)
+
 
 class HSPSecurityMiddleware(HSPProtocolMiddleware):
     """安全中间件"""
@@ -172,6 +177,7 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
         # 调用下一个中间件
         return await next_middleware(response)
 
+
 class HSPPerformanceMiddleware(HSPProtocolMiddleware):
     """性能中间件"""
 
@@ -215,6 +221,7 @@ class HSPPerformanceMiddleware(HSPProtocolMiddleware):
 
         key_str = json.dumps(key_data, sort_keys=True)
         return hashlib.md5(key_str.encode()).hexdigest()
+
 
 class HSPExtensionManager:
     """HSP扩展管理器"""
@@ -328,7 +335,8 @@ class HSPExtensionManager:
         logger.debug(f"没有找到能处理消息类型的处理器: {message_type}")
         return None
 
-    async def process_with_middlewares(self, message: Dict[str, Any], is_request: bool = True) -> Optional[Dict[str, Any]]:
+    async def process_with_middlewares(
+        self, message: Dict[str, Any], is_request: bool = True) -> Optional[Dict[str, Any]]:
         """通过中间件链处理消息"""
         if not self.middlewares:
             return message
@@ -352,6 +360,8 @@ class HSPExtensionManager:
     def get_extension_info(self) -> List[Dict[str, Any]]:
         """获取扩展信息"""
         return [asdict(ext) for ext in self.extensions.values]:
+
+
 ef get_loaded_extensions(self) -> List[str]:
         """获取已加载的扩展列表"""
         return [ext_id for ext_id, ext in self.extensions.items if ext.loaded]:
@@ -386,6 +396,7 @@ lass HSPMessageRegistry:
     def get_registered_types(self) -> List[str]:
         """获取所有已注册的消息类型"""
         return list(self.message_types.keys)
+
 
 class HSPPluginLoader:
     """HSP插件加载器"""
@@ -453,6 +464,8 @@ class HSPPluginLoader:
         return list(self.loaded_plugins.keys)
 
 # 示例消息处理器实现
+
+
 class ExampleFactHandler(HSPMessageHandler):
     """示例事实消息处理器"""
 
@@ -474,6 +487,7 @@ class ExampleFactHandler(HSPMessageHandler):
     def can_handle(self, message_type: str) -> bool:
         return message_type == 'HSP::Fact_v0.1'
 
+
 class ExampleTaskHandler(HSPMessageHandler):
     """示例任务消息处理器"""
 
@@ -489,7 +503,7 @@ class ExampleTaskHandler(HSPMessageHandler):
             # 返回处理结果
             return {
                 'status': 'completed',
-                'result': f"Task completed with params: {task_params}",:
+                'result': f"Task completed with params: {task_params}", :
 completed_at': datetime.now.isoformat
             }
 

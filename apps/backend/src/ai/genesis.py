@@ -10,6 +10,7 @@ except ImportError:
 # 移除secretsharing导入，使用简单的替代方案
 from typing import List, Tuple, Optional
 
+
 class GenesisManager:
     """
     Manages the creation and recovery of the AI's core identity components
@@ -85,7 +86,9 @@ ecret_hex = shard[2:]  # 移除索引部分
                 secret: The recovered genesis secret.
 
         Returns:
-                A tuple (UID, HAM_KEY), or None if parsing fails.:
+                A tuple(UID, HAM_KEY), or None if parsing fails.:
+
+
 ""
         parts = secret.split(':', 1)
         if len(parts) == 2 and parts[0].startswith("uid_"):
@@ -105,7 +108,7 @@ if __name__ == '__main__':
     shards = GenesisManager.split_secret_into_shards(genesis_secret)
     print(f"\nGenerated 3 Shards (any 2 are needed)")
     for i, shard in enumerate(shards):
-        print(f"  Shard {i+1}: {shard}")
+        print(f"  Shard {i + 1}: {shard}")
     assert len(shards) == 3
 
     # 3. Test recovery from different combinations of shards

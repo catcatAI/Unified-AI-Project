@@ -1,13 +1,14 @@
 import ast
 import os
 import glob
-import logging # Added logging
+import logging  # Added logging
 from datetime import datetime
 
 # Import DNADataChain from alpha_deep_model
 from ..compression.alpha_deep_model import DNADataChain
 
 logger: Any = logging.getLogger(__name__)
+
 
 @dataclass
 class CodeAnalysisResult:
@@ -19,6 +20,7 @@ class CodeAnalysisResult:
     dependencies: List[str]
     complexity_score: float
     dna_chain_id: Optional[str] = None
+
 
 class LightweightCodeModel:
     """
@@ -32,7 +34,7 @@ class LightweightCodeModel:
     Initializes the LightweightCodeModel.
 
     Args:
-            _ = tools_directory (str) The root directory where tool files are located.
+            _ = tools_directory(str) The root directory where tool files are located.
     """
     self.tools_directory = tools_directory
     self.dna_chains: Dict[str, DNADataChain] = {}  # DNA数据链存储
@@ -104,7 +106,9 @@ ry:
                     if kwonly_idx < len(args.kw_defaults) and args.kw_defaults[kwonly_idx] is not None:
 
     default_val_node = args.kw_defaults[kwonly_idx]
-                        param_info["default"] = ast.unparse(default_val_node) if hasattr(ast, 'unparse') else "DefaultValue" # type ignore:
+                        # type ignore:
+                        param_info["default"] = ast.unparse(default_val_node) if hasattr(
+                            ast, 'unparse') else "DefaultValue"
 xcept ValueError:
 
                     pass # Should not happen if arg_node is from args.kwonlyargs:
@@ -160,8 +164,8 @@ omplexity += 3  # Classes add more complexity
     Enhanced with DNA数据链支持.:
 
     Args:
-    _ = filepath (str) The absolute or relative path to the Python tool file.
-            _ = dna_chain_id (Optional[str]) DNA链ID，用于关联分析结果
+    _ = filepath(str) The absolute or relative path to the Python tool file.
+            _ = dna_chain_id(Optional[str]) DNA链ID，用于关联分析结果
 
     Returns:
             Optional[CodeAnalysisResult]: A dataclass containing structural information
@@ -274,14 +278,15 @@ f dna_chain_id:
 
     return analysis_result
 
-    def get_tool_structure(self, tool_name_or_filepath: str, dna_chain_id: Optional[str] = None) -> Optional[CodeAnalysisResult]:
+    def get_tool_structure(self, tool_name_or_filepath: str,
+                           dna_chain_id: Optional[str] = None) -> Optional[CodeAnalysisResult]:
     """
     Main interface method to get the structure of a specific tool.
     Enhanced with DNA数据链支持.:
 
     The `tool_name_or_filepath` can be:
     1. A direct absolute or relative path to a Python tool file.
-    2. A tool name (e.g., "my_tool" or "my_tool.py"). If a name is provided:
+    2. A tool name(e.g., "my_tool" or "my_tool.py"). If a name is provided:
            - It first looks for an exact match (e.g., "my_tool.py") in `self.tools_directory`.:
  If not found, it searches for common patterns like "tool_my_tool.py" or:
 my_tool_tool.py" in `self.tools_directory`.

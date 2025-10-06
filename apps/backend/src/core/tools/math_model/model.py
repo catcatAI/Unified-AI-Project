@@ -1,3 +1,5 @@
+from ai.compression.alpha_deep_model import DNADataChain
+from ai.dependency_manager import dependency_manager
 import os
 import sys
 from datetime import datetime
@@ -11,8 +13,6 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from ai.dependency_manager import dependency_manager
-from ai.compression.alpha_deep_model import DNADataChain
 
 @dataclass
 class MathModelResult:
@@ -24,6 +24,7 @@ class MathModelResult:
     timestamp: datetime
     dna_chain_id: Optional[str] = None
 
+
 # Global variables to hold TensorFlow components, loaded on demand.
 tf = None
 Model = None
@@ -32,7 +33,10 @@ LSTM = None
 Dense = None
 Embedding = None
 
+
 def _ensure_tensorflow_is_imported():
+
+
 ""
     Lazily imports TensorFlow and its Keras components using dependency manager.
     Returns True if successful, False otherwise.:
@@ -41,7 +45,6 @@ def _ensure_tensorflow_is_imported():
 
     if tf is not None:
 
-
     return True
 
     # Use dependency manager to get TensorFlow
@@ -49,7 +52,6 @@ def _ensure_tensorflow_is_imported():
     if tf_module is not None:
 
     try:
-
 
             tf = tf_module
             Model = tf.keras.models.Model

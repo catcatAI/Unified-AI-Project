@@ -16,6 +16,7 @@ from .types import RegisteredAgent
 
 logger = logging.getLogger(__name__)
 
+
 class DynamicAgentRegistry:
     """
     Manages dynamic registration and discovery of AI agents in the Unified AI Project.
@@ -31,6 +32,7 @@ class DynamicAgentRegistry:
         self.cleanup_interval = 30  # seconds between cleanup checks
         self.is_running = False
         self.registry_task: Optional[asyncio.Task] = None
+
 
         # Register callbacks for capability advertisements:
 f self.hsp_connector:

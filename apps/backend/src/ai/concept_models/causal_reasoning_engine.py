@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 logger: Any = logging.getLogger(__name__)
 
+
 @dataclass
 class CausalRelationship:
     """因果关系"""
@@ -20,6 +21,7 @@ class CausalRelationship:
     effect: str
     strength: float  # 因果关系强度 (0-1)
     confidence: float  # 置信度 (0-1)
+
 
 @dataclass
 class Observation:
@@ -29,12 +31,14 @@ class Observation:
     relationships: List[CausalRelationship]
     timestamp: float
 
+
 @dataclass
 class Intervention:
     """干预措施"""
     variable: str
     value: Any
     description: str
+
 
 @dataclass
 class CounterfactualScenario:
@@ -43,6 +47,7 @@ class CounterfactualScenario:
     counterfactual_outcome: Any
     intervention: Intervention
     confidence: float
+
 
 class CausalGraph:
     """因果图"""
@@ -56,6 +61,7 @@ class CausalGraph:
     self.is_trained = False  # 标记模型是否已训练
 
     def _build_causal_discovery_model(self):
+
 ""构建因果发现模型"""
     # 简单的因果发现网络
     model = nn.Sequential(
@@ -212,7 +218,6 @@ elationship = CausalRelationship(
 
         if cause in self.edges and effect in self.edges[cause]:
 
-
     relationship = self.edges[cause][effect]
             if strength is not None:
 
@@ -306,7 +311,6 @@ eturn
     targets =
 
         for data in training_data:
-
 
     cause_data = np.array(data["cause_data"])
             effect_data = np.array(data["effect_data"])

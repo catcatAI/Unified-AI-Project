@@ -290,12 +290,12 @@ class MathUtils:
             _ = self.assertGreater(len(test_cases), 0)
             
             # 检查是否生成了函数测试
-            func_test_names = [tc.name for tc in test_cases if tc.function_name == "calculate_sum"]:
- = self.assertGreater(len(func_test_names), 0)
+            func_test_names = [tc.name for tc in test_cases if tc.function_name == "calculate_sum"]
+            _ = self.assertGreater(len(func_test_names), 0)
             
             # 检查是否生成了类方法测试
-            method_test_names = [tc.name for tc in test_cases if "multiply" in tc.function_name]:
- = self.assertGreater(len(method_test_names), 0)
+            method_test_names = [tc.name for tc in test_cases if "multiply" in tc.function_name]
+            _ = self.assertGreater(len(method_test_names), 0)
             
         finally:
             # 清理临时文件
@@ -306,8 +306,8 @@ class MathUtils:
         # 创建测试用例
         test_case = TestCase(
             name="test_save_example",
-            description="Test for saving",:
-est_type=TestType.UNIT_TEST,
+            description="Test for saving",
+            test_type=TestType.UNIT_TEST,
             function_name="save_function",
             parameters=[],
             expected_behavior="Function saves data",
@@ -327,8 +327,9 @@ est_type=TestType.UNIT_TEST,
             with open(temp_file, 'r') as f:
                 content = f.read()
                 _ = self.assertIn("test_save_example", content)
-                self.assertIn("Test for saving", content):
-inally:
+                _ = self.assertIn("Test for saving", content)
+        
+        finally:
             # 清理临时文件
             if os.path.exists(temp_file):
                 _ = os.unlink(temp_file)

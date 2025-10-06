@@ -22,6 +22,8 @@ logging.basicConfig(level=logging.INFO)
 
 
 class ServiceStatus(Enum):
+
+
 ""服务状态枚举"""
     UNLOADED = "unloaded"
     LOADING = "loading"
@@ -67,6 +69,8 @@ class ServiceInfo:
 
 
 class HealthCheckFunction(ABC):
+
+
 ""健康检查函数抽象基类"""
 
     @abstractmethod

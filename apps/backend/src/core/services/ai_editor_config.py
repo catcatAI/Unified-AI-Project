@@ -14,18 +14,18 @@ class DataProcessingConfig:
     text_keyword_extraction_enabled: bool = True
     max_summary_length: int = 200
     max_keywords: int = 10
-    
+
     # Code processing settings
     code_function_extraction_enabled: bool = True
     code_class_extraction_enabled: bool = True
     code_comment_extraction_enabled: bool = True
     code_docstring_extraction_enabled: bool = True
     code_complexity_analysis_enabled: bool = True
-    
+
     # Structured data processing settings
     structured_data_flattening_enabled: bool = True
     max_nesting_depth: int = 10
-    
+
     # Application data processing settings
     app_element_filtering_enabled: bool = True
     max_ui_elements: int = 1000
@@ -52,22 +52,22 @@ class AIEditorConfig:
     # General settings
     enabled: bool = True
     log_level: str = "INFO"
-    
+
     # Data processing configuration
     data_processing: DataProcessingConfig = field(default_factory=DataProcessingConfig)
-    
+
     # Sandbox configuration
     sandbox: SandboxConfig = field(default_factory=SandboxConfig)
-    
+
     # Memory settings
     memory_storage_enabled: bool = True
     max_memory_entries: int = 10000
-    
+
     # Performance settings
     max_concurrent_processes: int = 5
     cache_enabled: bool = True
     cache_ttl_seconds: int = 300  # 5 minutes
-    
+
     # Security settings
     input_validation_enabled: bool = True
     output_sanitization_enabled: bool = True
@@ -90,7 +90,7 @@ ONFIG_PRESETS = {
             max_memory_mb=1024
         )
     ),
-    
+
     "production": AIEditorConfig(
         log_level="INFO",
         data_processing=DataProcessingConfig(
@@ -102,7 +102,7 @@ ONFIG_PRESETS = {
             max_memory_mb=256
         )
     ),
-    
+
     "high_performance": AIEditorConfig(
         log_level="WARNING",
         data_processing=DataProcessingConfig(
@@ -123,8 +123,8 @@ def get_config(preset: str = "development") -> AIEditorConfig:
     """
     Get configuration for the AI Editor Service.:
 rgs:
-        preset: Configuration preset to use ('development', 'production', 'high_performance')
-        
+        preset: Configuration preset to use('development', 'production', 'high_performance')
+
     Returns:
         AIEditorConfig instance
     """

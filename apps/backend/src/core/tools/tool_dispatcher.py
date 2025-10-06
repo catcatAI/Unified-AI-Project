@@ -17,7 +17,7 @@ from .csv_tool import CsvTool
 from .image_generation_tool import ImageGenerationTool
 from ai.language_models.daily_language_model import DailyLanguageModel
 from apps.backend.src.core.services.multi_llm_service import MultiLLMService
-from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse # Import new response type
+from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse  # Import new response type
 
 # Global flag for RAG availability:
 f '_RAG_AVAILABLE_FLAG' not in globals:
@@ -31,8 +31,11 @@ f '_RAG_AVAILABLE_FLAG' not in globals:
     print(f"RAG Manager not available: {e}")
     RAGManager = None
 
+
 class ToolDispatcher:
     def _get_ham(self):
+
+
 ry:
 
     from ...core_services import ham_manager_instance

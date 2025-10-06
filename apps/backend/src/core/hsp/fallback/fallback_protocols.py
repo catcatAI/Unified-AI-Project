@@ -11,6 +11,7 @@ import os
 
 logger = logging.getLogger(__name__)
 
+
 class ProtocolStatus(Enum):
     """协议状态枚举"""
     ACTIVE = "active"
@@ -18,12 +19,14 @@ class ProtocolStatus(Enum):
     FAILED = "failed"
     DISABLED = "disabled"
 
+
 class MessagePriority(Enum):
     """消息优先级"""
     LOW = 1
     NORMAL = 2
     HIGH = 3
     CRITICAL = 4
+
 
 @dataclass
 class FallbackMessage:
@@ -58,6 +61,7 @@ class FallbackMessage:
         if self.ttl is None:
             return False
         return time.time() - self.timestamp > self.ttl
+
 
 class BaseFallbackProtocol(ABC):
     """备用协议基类"""
@@ -172,6 +176,7 @@ class BaseFallbackProtocol(ABC):
             self.status = ProtocolStatus.ACTIVE
             logger.info(f"协议 {self.protocol_name} 状态恢复为 ACTIVE")
 
+
 class InMemoryProtocol(BaseFallbackProtocol):
     """内存协议 - 最基础的备用协议"""
 
@@ -254,6 +259,7 @@ class InMemoryProtocol(BaseFallbackProtocol):
     async def health_check(self) -> bool:
         """健康检查"""
         return self.status == ProtocolStatus.ACTIVE and self.running
+
 
 class FileBasedProtocol(BaseFallbackProtocol):
     """基于文件的协议 - 用于跨进程通讯"""
@@ -388,6 +394,7 @@ class FileBasedProtocol(BaseFallbackProtocol):
         except:
             return False
 
+
 class HTTPProtocol(BaseFallbackProtocol):
     """基于 HTTP 的协议"""
 
@@ -502,6 +509,7 @@ class HTTPProtocol(BaseFallbackProtocol):
     def add_endpoint(self, node_id: str, endpoint: str):
         """添加其他节点的端点"""
         self.endpoints[node_id] = endpoint
+
 
 class FallbackProtocolManager:
     """备用协议管理器"""
@@ -671,7 +679,7 @@ class FallbackProtocolManager:
     def get_status(self) -> Dict[str, Any]:
         """获取状态信息"""
         status = {
-            "active_protocol": self.active_protocol.protocol_name if self.active_protocol else None,:
+            "active_protocol": self.active_protocol.protocol_name if self.active_protocol else None, :
 protocols": [],
             "protocol_switch_count": self.protocol_switch_count
         }

@@ -13,7 +13,10 @@ from dataclasses import dataclass
 
 logger: Any = logging.getLogger(__name__)
 
+
 class ServiceStatus(Enum):
+
+
 ""服务状态枚举"""
     ACTIVE = "active"
     INACTIVE = "inactive"

@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional
 import zlib
 import json
 
+
 class MappableDataObject:
     """
     A generic data object that can be mapped, compressed, and layered.
@@ -21,9 +22,11 @@ class MappableDataObject:
     self.layers: Dict[str, Any] =
 
     def compress(self):
+
+
 ""
-    Compresses the data using zlib.
-    """
+Compresses the data using zlib.
+"""
         if self.data is not None:
 
     serialized_data = json.dumps(self.data).encode('utf-8')
@@ -31,8 +34,8 @@ class MappableDataObject:
 
     def decompress(self) -> Any:
     """
-    Decompresses the data.
-    """
+Decompresses the data.
+ """
         if self.compressed_data is not None:
 
     decompressed_data = zlib.decompress(self.compressed_data)
@@ -51,12 +54,12 @@ class MappableDataObject:
 
     def get_layer(self, layer_name: str) -> Optional[Any]:
     """
-    Gets a layer from the data object.
+  Gets a layer from the data object.
 
-    Args:
-            _ = layer_name (str) The name of the layer.
+   Args:
+        _ = layer_name(str) The name of the layer.
 
     Returns:
-            Optional[Any]: The data for the layer, or None if the layer does not exist.:
+        Optional[Any]: The data for the layer, or None if the layer does not exist.:
 ""
-    return self.layers.get(layer_name)
+return self.layers.get(layer_name)

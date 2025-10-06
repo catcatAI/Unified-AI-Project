@@ -12,11 +12,12 @@ import re
 from pathlib import Path
 from typing import List, Tuple, Dict
 
+
 class CommentedTestEnabler:
     def __init__(self, project_root: str) -> None:
         self.project_root = Path(project_root)
         self.backend_tests_dir = self.project_root / "apps" / "backend" / "tests"
-        
+
     def find_test_files(self) -> List[Path]:
         """Find all test files in the project."""
         test_files = []
@@ -25,18 +26,19 @@ class CommentedTestEnabler:
                 if file.startswith('test_') and file.endswith('.py'):
                     _ = test_files.append(Path(root) / file)
         return test_files
-    
+
     def find_commented_tests(self, file_path: Path) -> List[Tuple[int, str]]:
         """Find commented out test functions in a file."""
         commented_tests = []
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
-        
+
         for i, line in enumerate(lines):
+
             # Look for commented out test functions:
 f re.search(r'^\s*#.*def test_', line):
                 _ = commented_tests.append((i, line.strip()))
-        
+
         return commented_tests
     
     def enable_commented_tests(self, file_path: Path) -> Tuple[int, List[str]]:

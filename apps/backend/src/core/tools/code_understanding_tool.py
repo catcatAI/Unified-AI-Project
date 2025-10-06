@@ -3,6 +3,7 @@ import os
 from typing import Optional
 from apps.backend.src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
 
+
 class CodeUnderstandingTool:
     """
     A tool to inspect and understand the structure of other Python tools
@@ -18,7 +19,9 @@ class CodeUnderstandingTool:
                                    This is passed to the LightweightCodeModel.
     """
     self.code_model = LightweightCodeModel(tools_directory=tools_directory)
-        self.tools_directory = tools_directory # Store for constructing full paths if needed by describe_tool:
+        self.tools_directory = tools_directory  # Store for constructing full paths if needed by describe_tool:
+
+
 ef list_tools(self) -> str:
     """
     Lists the names of available Python tools in the project.
@@ -47,9 +50,9 @@ eturn "No Python tools found after processing file list."
     Describes the structure of a specified Python tool.
 
     Args:
-            _ = tool_name (str) The name of the tool (e.g., "math_tool").
+            _ = tool_name(str) The name of the tool(e.g., "math_tool").
 
-    Returns: str A human-readable description of the tool's structure,
+    Returns: str A human - readable description of the tool's structure,
                  or an error message if the tool is not found or cannot be analyzed.:
 ""
     # Construct the potential filepath. LightweightCodeModel's get_tool_structure

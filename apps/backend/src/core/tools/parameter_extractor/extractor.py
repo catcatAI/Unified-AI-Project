@@ -2,6 +2,7 @@ import os
 from typing import Dict, Any
 from huggingface_hub import hf_hub_download
 
+
 class ParameterExtractor:
     """
     Extracts, maps, and loads parameters from external models.
@@ -27,6 +28,8 @@ class ParameterExtractor:
     Returns: str The path to the downloaded file.
     """
         if not os.path.exists(cache_dir):
+
+
 s.makedirs(cache_dir)
 
     return hf_hub_download(repo_id=self.repo_id, filename=filename, cache_dir=cache_dir)
@@ -55,8 +58,8 @@ s.makedirs(cache_dir)
     Loads parameters into a model.
 
     Args:
-            _ = model (Any) The model to load the parameters into.
-            _ = params (Dict[str, Any]) The parameters to load.
+            _ = model(Any) The model to load the parameters into.
+            _ = params(Dict[str, Any]) The parameters to load.
     """
     # This is a simplified implementation. In a real-world scenario, you would
     # need to handle different model types and parameter loading mechanisms.

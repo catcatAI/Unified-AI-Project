@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 from typing import List, Dict
 
+
 class TestSuiteMaintainer:
     def __init__(self, project_root: str) -> None:
     self.project_root = Path(project_root)
@@ -25,6 +26,8 @@ class TestSuiteMaintainer:
     """Find all test files in the project."""
     test_files = []
         for root, dirs, files in os.walk(self.backend_tests_dir):
+
+
 or file in files:
     if file.startswith('test_') and file.endswith('.py'):
  = test_files.append(Path(root) / file)

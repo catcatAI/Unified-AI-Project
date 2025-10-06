@@ -15,6 +15,7 @@ from dataclasses import dataclass
 
 logger: Any = logging.getLogger(__name__)
 
+
 @dataclass
 class MessageMetrics:
     """消息指标"""
@@ -25,9 +26,10 @@ class MessageMetrics:
     timestamp: float
     success: bool
 
+
 class HSPPerformanceOptimizer:
     """HSP协议性能优化器"""
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = config or {}
         self.message_cache = {}  # 消息缓存
@@ -45,9 +47,9 @@ class HSPPerformanceOptimizer:
             'bytes_received': 0,
             'compression_savings': 0
         }
-        
+
         logger.info("HSP协议性能优化器初始化完成")
-    
+
     def cache_message(self, message_id: str, message: Any, ttl: Optional[int] = None):
         """缓存消息"""
         cache_ttl = ttl or self.cache_ttl
@@ -56,9 +58,9 @@ class HSPPerformanceOptimizer:
             'timestamp': time.time(),
             'expires_at': time.time() + cache_ttl
         }
-        
+
         logger.debug(f"消息已缓存: {message_id}")
-    
+
     def get_cached_message(self, message_id: str) -> Optional[Any]:
         """获取缓存的消息"""
         if message_id in self.message_cache:
@@ -71,9 +73,9 @@ class HSPPerformanceOptimizer:
                 # 移除过期缓存
                 del self.message_cache[message_id]
                 logger.debug(f"缓存消息已过期并移除: {message_id}")
-        
+
         return None
-    
+
     def clean_expired_cache(self):
         """清理过期缓存"""
         current_time = time.time()
@@ -81,37 +83,37 @@ class HSPPerformanceOptimizer:
             key for key, value in self.message_cache.items():
 f current_time >= value['expires_at']:
 
-        
+
         for key in expired_keys:
             del self.message_cache[key]
-        
+
         if expired_keys:
             logger.debug(f"清理了 {len(expired_keys)} 个过期缓存")
-    
+
     async def batch_send_messages(self, send_callback):
         """批量发送消息"""
         if not self.batch_send_enabled or not self.message_queue:
             return
-        
+
         # 检查是否应该发送批量消息
-        current_time = time.time()
-        if (len(self.message_queue) >= self.batch_size or:
+        current_time= time.time()
+        if (len(self.message_queue) >= self.batch_size or :
 urrent_time - self.last_batch_send >= 1.0):  # 每秒至少发送一次
-            
+
             # 发送批量消息
-            batch_messages = self.message_queue[:self.batch_size]
-            self.message_queue = self.message_queue[self.batch_size:]
-            
+            batch_messages= self.message_queue[:self.batch_size]
+            self.message_queue= self.message_queue[self.batch_size:]
+
             try:
-                _ = await send_callback(batch_messages)
+                _= await send_callback(batch_messages)
                 self.network_stats['messages_sent'] += len(batch_messages)
-                self.last_batch_send = current_time
+                self.last_batch_send= current_time
                 logger.debug(f"批量发送 {len(batch_messages)} 条消息")
             except Exception as e:
                 logger.error(f"批量发送消息失败: {e}")
                 # 将消息重新加入队列
-                self.message_queue = batch_messages + self.message_queue
-    
+                self.message_queue= batch_messages + self.message_queue
+
     def add_message_to_batch(self, message_data: Dict[str, Any]):
         """将消息添加到批处理队列"""
         if self.batch_send_enabled:
@@ -119,35 +121,35 @@ urrent_time - self.last_batch_send >= 1.0):  # 每秒至少发送一次
             logger.debug(f"消息已添加到批处理队列，当前队列大小: {len(self.message_queue)}")
         else:
             logger.warning("批处理已禁用，消息未添加到队列")
-    
+
     def compress_message(self, message: Dict[str, Any]) -> bytes:
         """压缩消息"""
         if not self.compression_enabled:
             return json.dumps(message).encode('utf-8')
-        
+
         try:
             import zlib
-            json_str = json.dumps(message, ensure_ascii=False)
-            compressed = zlib.compress(json_str.encode('utf-8'))
-            
+            json_str= json.dumps(message, ensure_ascii=False)
+            compressed= zlib.compress(json_str.encode('utf-8'))
+
             # 计算压缩节省的字节数
-            original_size = len(json_str.encode('utf-8'))
-            compressed_size = len(compressed)
-            savings = original_size - compressed_size
+            original_size= len(json_str.encode('utf-8'))
+            compressed_size= len(compressed)
+            savings= original_size - compressed_size
             self.network_stats['compression_savings'] += savings
-            
+
             logger.debug(f"消息压缩完成: {original_size} -> {compressed_size} 字节 (节省 {savings} 字节)")
             return compressed
         except Exception as e:
             logger.error(f"消息压缩失败: {e}")
             return json.dumps(message).encode('utf-8')
-    
+
     def decompress_message(self, compressed_data: bytes) -> Dict[str, Any]:
         """解压缩消息"""
         try:
             import zlib
-            decompressed = zlib.decompress(compressed_data)
-            message = json.loads(decompressed.decode('utf-8'))
+            decompressed= zlib.decompress(compressed_data)
+            message= json.loads(decompressed.decode('utf-8'))
             return message
         except Exception as e:
             logger.error(f"消息解压缩失败: {e}")
@@ -156,43 +158,43 @@ urrent_time - self.last_batch_send >= 1.0):  # 每秒至少发送一次
                 return json.loads(compressed_data.decode('utf-8'))
             except:
                 raise ValueError("无法解码消息数据")
-    
+
     def record_message_metrics(self, metrics: MessageMetrics):
         """记录消息指标"""
         self.message_metrics.append(metrics)
         logger.debug(f"记录消息指标: {metrics.message_id}")
-    
+
     def get_performance_stats(self) -> Dict[str, Any]:
         """获取性能统计信息"""
         if not self.message_metrics:
             return {}
-        
+
         # 计算平均处理时间
-        total_time = sum(m.processing_time_ms for m in self.message_metrics):
-vg_processing_time = total_time / len(self.message_metrics)
-        
+        total_time= sum(m.processing_time_ms for m in self.message_metrics):
+vg_processing_time= total_time / len(self.message_metrics)
+
         # 计算成功率
-        successful_messages = sum(1 for m in self.message_metrics if m.success):
-uccess_rate = successful_messages / len(self.message_metrics)
-        
+        successful_messages= sum(1 for m in self.message_metrics if m.success):
+uccess_rate= successful_messages / len(self.message_metrics)
+
         # 按消息类型统计
-        type_stats = defaultdict(list)
+        type_stats= defaultdict(list)
         for m in self.message_metrics:
             type_stats[m.message_type].append(m)
-        
-        type_performance = {}
+
+        type_performance= {}
         for msg_type, metrics_list in type_stats.items():
-            avg_time = sum(m.processing_time_ms for m in metrics_list) / len(metrics_list):
-uccess_count = sum(1 for m in metrics_list if m.success):
-ype_success_rate = success_count / len(metrics_list)
-            
-            type_performance[msg_type] = {
+            avg_time= sum(m.processing_time_ms for m in metrics_list) / len(metrics_list):
+uccess_count= sum(1 for m in metrics_list if m.success):
+ype_success_rate= success_count / len(metrics_list)
+
+            type_performance[msg_type]= {
                 'avg_processing_time_ms': avg_time,
                 'success_rate': type_success_rate,
                 'message_count': len(metrics_list)
             }
-        
-        stats = {
+
+        stats= {
             'timestamp': datetime.now().isoformat(),
             'total_messages': len(self.message_metrics),
             'avg_processing_time_ms': avg_processing_time,
@@ -204,56 +206,56 @@ ype_success_rate = success_count / len(metrics_list)
                 'cache_hit_rate': self._calculate_cache_hit_rate
             }
         }
-        
+
         return stats
-    
+
     def _calculate_cache_hit_rate(self) -> float:
         """计算缓存命中率"""
         # 这里需要实现实际的缓存命中率计算逻辑
         # 为了示例，我们返回一个模拟值
         return 0.85
-    
+
     async def optimize_message_routing(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """优化消息路由"""
         # 分析消息内容，优化路由路径
-        message_type = message.get('message_type', 'unknown')
-        
+        message_type= message.get('message_type', 'unknown')
+
         # 根据消息类型优化处理
         if message_type in ['HSP::Fact_v0.1', 'HSP::CapabilityAdvertisement_v0.1']:
             # 对于事实和能力广告消息，可以缓存
-            message_id = message.get('message_id')
+            message_id= message.get('message_id')
             if message_id:
                 self.cache_message(message_id, message)
-        
+
         # 压缩消息
-        compressed_message = self.compress_message(message)
-        
+        compressed_message= self.compress_message(message)
+
         # 如果启用了批处理，将消息添加到队列
         if self.batch_send_enabled:
             self.add_message_to_batch({
                 'original_message': message,
                 'compressed_data': compressed_message
             })
-        
+
         logger.debug(f"消息路由优化完成: {message_type}")
         return {
             'compressed_data': compressed_message,
             'should_batch': self.batch_send_enabled,
             'message_type': message_type
         }
-    
+
     def get_network_efficiency_report(self) -> Dict[str, Any]:
         """获取网络效率报告"""
-        stats = self.get_performance_stats
-        
+        stats= self.get_performance_stats
+
         if not stats:
             return {}
-        
+
         # 计算网络效率指标
-        network_stats = stats.get('network_stats', {})
-        total_messages = stats.get('total_messages', 0)
-        
-        report = {
+        network_stats= stats.get('network_stats', {})
+        total_messages= stats.get('total_messages', 0)
+
+        report= {
             'timestamp': datetime.now().isoformat(),
             'efficiency_metrics': {
                 'messages_per_second': total_messages / 60 if total_messages > 0 else 0,  # 假设统计周期为60秒:

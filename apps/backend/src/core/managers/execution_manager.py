@@ -116,6 +116,8 @@ class ExecutionManager:
     self._health_check_thread: Optional[threading.Thread] = None
 
     self.logger.info("ExecutionManager initialized with adaptive monitoring"):
+
+
 ef _load_config_from_system(self) -> ExecutionManagerConfig:
     """從系統配置文件加載配置"""
         try:
@@ -151,11 +153,17 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig:
 
                     history_size=execution_config.get('adaptive_timeout_config', ).get('history_size', 50),
                     timeout_multiplier=execution_config.get('adaptive_timeout_config', ).get('timeout_multiplier', 2.5),
-                    slow_terminal_multiplier=execution_config.get('adaptive_timeout_config', ).get('slow_terminal_multiplier', 1.5),
-                    stuck_terminal_multiplier=execution_config.get('adaptive_timeout_config', ).get('stuck_terminal_multiplier', 2.0),
+                    slow_terminal_multiplier=execution_config.get(
+    'adaptive_timeout_config', ).get(
+        'slow_terminal_multiplier', 1.5),
+                    stuck_terminal_multiplier=execution_config.get(
+    'adaptive_timeout_config', ).get(
+        'stuck_terminal_multiplier', 2.0),
                     cache_size=execution_config.get('adaptive_timeout_config', ).get('cache_size', 100),
 
-                    stuck_process_timeout=execution_config.get('recovery_strategies', ).get('stuck_process_timeout', 30.0),
+                    stuck_process_timeout=execution_config.get(
+    'recovery_strategies', ).get(
+        'stuck_process_timeout', 30.0),
                     max_retry_attempts=execution_config.get('recovery_strategies', ).get('max_retry_attempts', 3),
                     retry_delay=execution_config.get('recovery_strategies', ).get('retry_delay', 5.0),
                     escalation_enabled=execution_config.get('recovery_strategies', ).get('escalation_enabled', True),

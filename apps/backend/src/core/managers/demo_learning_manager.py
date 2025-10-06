@@ -15,6 +15,7 @@ from ...core.shared.utils.cleanup_utils import cleanup_temp_files, cleanup_cache
 
 logger: Any = logging.getLogger(__name__)
 
+
 class DemoLearningManager:
     """演示學習管理器"""
 
@@ -28,10 +29,10 @@ class DemoLearningManager:
     self.config = self._load_config
     self.demo_mode = False
     self.learning_data: Dict[str, Any] = {
-            'user_interactions': ,
-            'error_patterns': ,
-            'performance_metrics': ,
-            'system_events': ,
+            'user_interactions':,
+            'error_patterns':,
+            'performance_metrics':,
+            'system_events':,
             'initialized_at': ''
     }
     self.initialized = False
@@ -48,7 +49,6 @@ class DemoLearningManager:
         try:
 
             if self.config_path.exists:
-
 
     with open(self.config_path, 'r', encoding='utf-8') as f:
     return yaml.safe_load(f) or

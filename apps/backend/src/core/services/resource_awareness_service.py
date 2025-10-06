@@ -17,10 +17,12 @@ SimulatedResourcesRoot,
 
 DEFAULT_CONFIG_PATH = "configs/simulated_resources.yaml"
 
+
 class ResourceAwarenessService:
     """
 Manages and provides access to the AI's simulated hardware resource profile.
     """
+
     def __init__(self, config_filepath: Optional[str] = None) -> None:
     """
 Initializes the ResourceAwarenessService.
@@ -29,11 +31,14 @@ Args:
 config_filepath (Optional[str]) Path to the simulated resources YAML file.
 Defaults to "configs/simulated_resources.yaml" relative to project root.
     """
+
+
 self.profile: Optional[SimulatedHardwareProfile] = None
 self._config_path: str
 
     # Determine project root to correctly locate the config file
-    # File is in src/core/services/ -> project root expected by tests is apps/backend (three levels up from src/core/services)
+    # File is in src/core/services/ -> project root expected by tests is
+    # apps/backend (three levels up from src/core/services)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root: str = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
 

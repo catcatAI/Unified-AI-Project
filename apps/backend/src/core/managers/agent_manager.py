@@ -5,11 +5,13 @@ import threading
 from typing import Dict, Optional, List
 import asyncio
 
+
 class AgentManager:
     """
     Manages the lifecycle of specialized sub-agents.
     It can launch and terminate sub-agent processes.
     """
+
     def __init__(self, python_executable: str, agents_dir: Optional[str] = None) -> None:
     """
     Initializes the AgentManager.
@@ -36,10 +38,11 @@ class AgentManager:
 
             if not agents_dir:
 
-
     agents_dir = os.path.join(os.path.dirname(__file__), '..', 'agents')
 
             if not os.path.isdir(agents_dir):
+
+
 ogging.warning(f"[AgentManager] Agents directory not found: {agents_dir}")
                 return
 

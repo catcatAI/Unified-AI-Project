@@ -18,6 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 logger: Any = logging.getLogger(__name__)
 
+
 @dataclass
 class ConnectionPoolStats:
     """连接池统计信息"""
@@ -27,6 +28,7 @@ class ConnectionPoolStats:
     max_connections: int
     connection_reuse_count: int
 
+
 @dataclass
 class MessageRoutingStats:
     """消息路由统计信息"""
@@ -34,6 +36,7 @@ class MessageRoutingStats:
     avg_routing_time_ms: float
     cache_hits: int
     cache_misses: int
+
 
 class HSPConnectionPool:
     """HSP连接池"""
@@ -121,6 +124,7 @@ class HSPConnectionPool:
             self.stats.idle_connections = len(self.idle_connections)
             self.stats.active_connections = len(self.active_connections)
             return self.stats.copy()
+
 
 class HSPIntelligentCache:
     """HSP智能缓存"""
@@ -214,6 +218,8 @@ class HSPIntelligentCache:
         with self.cache_lock:
             total_requests = self.stats['hits'] + self.stats['misses']
             hit_rate = self.stats['hits'] / total_requests if total_requests > 0 else 0:
+
+
 eturn {
                 'size': len(self.cache),
                 'max_size': self.max_size,
@@ -222,6 +228,7 @@ eturn {
                 'evictions': self.stats['evictions'],
                 'hit_rate': hit_rate
             }
+
 
 class HSPLoadBalancer:
     """HSP负载均衡器"""
@@ -286,6 +293,8 @@ class HSPLoadBalancer:
         # 简化实现，选择请求计数最少的节点
         if not self.node_stats:
             return list(self.nodes.keys())[0] if self.nodes else None:
+
+
 in_requests = float('inf')
         selected_node = None
 

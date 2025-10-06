@@ -8,6 +8,7 @@ import asyncio
 
 logger: Any = logging.getLogger(__name__)
 
+
 class VisionService:
     """查看服務：提供圖像理解、物體檢測、OCR等多模態處理能力"""
 
@@ -26,6 +27,8 @@ class VisionService:
     })
 
     logger.info("Vision Service initialized with enhanced capabilities"):
+
+
 ef set_peer_services(self, peer_services: Dict[str, Any]):
 ""設置其他多模態服務的引用"""
     self.peer_services = peer_services
@@ -138,7 +141,10 @@ nalysis_results["multimodal_insights"] = await self._perform_multimodal_analysis
 
     return {"error": "One or both images are missing", "similarity_score": None}
 
-    logger.info(f"Vision Service: Comparing images (sizes: {len(image_data1)}, {len(image_data2)}) using {comparison_type}")
+    logger.info(
+    f"Vision Service: Comparing images (sizes: {
+        len(image_data1)}, {
+            len(image_data2)}) using {comparison_type}")
 
         try:
 

@@ -68,8 +68,8 @@ class WorkflowController:
         """运行测试"""
         print("[WORKFLOW] 步骤 1: 运行测试")
         # 将字符串参数转换为列表
-        test_paths: List[str] = [pytest_args] if pytest_args else []:
-est_results = self.test_runner.run_tests(test_paths if test_paths else [])
+        test_paths: List[str] = [pytest_args] if pytest_args else []
+        test_results = self.test_runner.run_tests(test_paths if test_paths else [])
         
         # 如果测试通过，直接返回
         if test_results.get("exit_code", -1) == 0:
@@ -163,16 +163,17 @@ def main() -> None:
     if len(sys.argv) > 1:
         if sys.argv[1] == "--separate-terminals":
             # 在不同终端中运行
-            pytest_args = " ".join(sys.argv[2:]) if len(sys.argv) > 2 else None:
-ontroller.run_in_separate_terminals(pytest_args)
+            pytest_args = " ".join(sys.argv[2:]) if len(sys.argv) > 2 else None
+            controller.run_in_separate_terminals(pytest_args)
         else:
             # 正常运行工作流程
-            pytest_args = " ".join(sys.argv[1:]) if sys.argv[1:] else None:
-uccess = controller.run_workflow(pytest_args)
-            sys.exit(0 if success else 1):
-lse:
+            pytest_args = " ".join(sys.argv[1:]) if sys.argv[1:] else None
+            success = controller.run_workflow(pytest_args)
+            sys.exit(0 if success else 1)
+    else:
         # 默认运行工作流程
         success = controller.run_workflow()
-        sys.exit(0 if success else 1):
-f __name__ == "__main__":
+        sys.exit(0 if success else 1)
+
+if __name__ == "__main__":
     main()

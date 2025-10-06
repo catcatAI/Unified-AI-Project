@@ -2,15 +2,16 @@
 from typing import Dict, Any, Optional
 from ..types import HSPMessageEnvelope, HSPErrorDetails, HSPFactPayload, HSPTaskRequestPayload, HSPTaskResultPayload, HSPCapabilityAdvertisementPayload, HSPAcknowledgementPayload
 
+
 class DataAligner:
     def __init__(self, schema_registry: Optional[Dict[str, Any]] = None) -> None:
-        self.schema_registry = schema_registry or {} 
+        self.schema_registry = schema_registry or {}
 
     def align_message(self, message: Dict[str, Any]) -> (Optional[HSPMessageEnvelope], Optional[HSPErrorDetails]):
         # Basic validation
         if not isinstance(message, dict):
             return None, self._create_error_details("Invalid message format", "root", "Message must be a dictionary")
-        
+
         # Align and validate the envelope
         aligned_message, error = self._align_envelope(message)
         if error:
@@ -33,7 +34,8 @@ class DataAligner:
         # For now, we'll just assume the message is mostly correct
         return message, None
 
-    def _align_payload(self, payload: Dict[str, Any], message_type: str) -> (Optional[Dict[str, Any]], Optional[HSPErrorDetails]):
+    def _align_payload(self, payload: Dict[str, Any],
+                       message_type: str) -> (Optional[Dict[str, Any]], Optional[HSPErrorDetails]):
         # In a real implementation, this would use a schema registry to validate the payload
         # For now, we'll just do some basic checks
         if message_type.startswith("HSP::Fact"):
@@ -45,7 +47,9 @@ class DataAligner:
         elif message_type.startswith("HSP::CapabilityAdvertisement"):
             return self._align_capability_advertisement_payload(payload)
         else:
-            return payload, None # No validation for unknown types for now:
+            return payload, None  # No validation for unknown types for now:
+
+
 ef _align_fact_payload(self, payload: Dict[str, Any]) -> (Optional[HSPFactPayload], Optional[HSPErrorDetails]):
         if "id" not in payload:
             return None, self._create_error_details("Missing 'id' in Fact payload", "payload.id")

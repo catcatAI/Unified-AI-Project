@@ -10,6 +10,7 @@ from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResult
 
 logger: Any = logging.getLogger(__name__)
 
+
 class AgentCollaborationManager:
     """
     Manages collaboration between different AI agents, coordinating task distribution
@@ -100,14 +101,14 @@ elf.task_results[subtask_id] = result
 
     Returns: Dict[...] Result from the agent
     """
-    capability_needed = subtask.get("capability_needed")
-    task_parameters = subtask.get("task_parameters", )
-    task_description = subtask.get("task_description", "")
+    capability_needed=subtask.get("capability_needed")
+    task_parameters=subtask.get("task_parameters", )
+    task_description=subtask.get("task_description", "")
 
     logger.info(f"[Collaboration] Executing subtask {subtask_id}: {task_description}")
 
     # Create task request
-    task_request = HSPTaskRequestPayload(
+    task_request=HSPTaskRequestPayload(
             request_id=subtask_id,
             capability_id_filter=capability_needed,
             parameters=task_parameters,
@@ -122,11 +123,11 @@ elf.task_results[subtask_id] = result
             await asyncio.sleep(0.1)
 
             # Simulate successful task completion
-            result = {
+            result={
                 "status": "success",
                 "subtask_id": subtask_id,
                 "capability": capability_needed,
-                "result": f"Result for {task_description}",:
+                "result": f"Result for {task_description}", :
 execution_time": f"{datetime.now}"
             }
 

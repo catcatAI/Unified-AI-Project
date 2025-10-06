@@ -6,8 +6,10 @@ import gmqtt  # type: ignore
 
 logger = logging.getLogger(__name__)
 
+
 class ExternalConnector:
-    def __init__(self, ai_id: str, broker_address: str, broker_port: int, client_id_suffix: str = "hsp_connector", tls_ca_certs: Optional[str] = None, tls_certfile: Optional[str] = None, tls_keyfile: Optional[str] = None, tls_insecure: bool = False, username: Optional[str] = None, password: Optional[str] = None):
+    def __init__(self, ai_id: str, broker_address: str, broker_port: int, client_id_suffix: str = "hsp_connector",
+                 tls_ca_certs: Optional[str] = None, tls_certfile: Optional[str] = None, tls_keyfile: Optional[str] = None, tls_insecure: bool = False, username: Optional[str] = None, password: Optional[str] = None):
         self.ai_id = ai_id
         self.broker_address = broker_address
         self.broker_port = broker_port
@@ -42,10 +44,11 @@ class ExternalConnector:
         if not self.is_connected:
             logger.debug("ExternalConnector already disconnected, skipping")
             return
-            
+
         try:
+
             # Check if the mqtt_client and its transport are still valid:
-f (hasattr(self.mqtt_client, '_transport') and 
+f(hasattr(self.mqtt_client, '_transport') and
                 self.mqtt_client._transport is not None):
                 await self.mqtt_client.disconnect
             else:

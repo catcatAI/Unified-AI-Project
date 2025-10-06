@@ -8,6 +8,7 @@ from .storage.base import ContextType
 
 logger: Any = logging.getLogger(__name__)
 
+
 class ModelCallRecord:
     """模型调用记录"""
 
@@ -21,6 +22,7 @@ class ModelCallRecord:
     self.result = result
     self.duration = duration
     self.success = success
+
 
 class AgentCollaboration:
     """代理协作"""
@@ -48,6 +50,7 @@ class AgentCollaboration:
     self.end_time = datetime.now
     self.status = "failed"
 
+
 class CollaborationStep:
     """协作步骤"""
 
@@ -59,6 +62,7 @@ class CollaborationStep:
     self.output_data = output_data
     self.timestamp = datetime.now
     self.duration: Optional[float] = None
+
 
 class ModelPerformanceMetrics:
     """模型性能指标"""
@@ -75,7 +79,7 @@ class ModelPerformanceMetrics:
     self.last_called = call_record.timestamp
 
     # 更新成功率
-        if call_record.success::
+        if call_record.success: :
     self.success_rate = (self.success_rate * (self.total_calls - 1) + 1) / self.total_calls
         else:
 
@@ -83,6 +87,7 @@ class ModelPerformanceMetrics:
 
     # 更新平均执行时间
     self.average_duration = (self.average_duration * (self.total_calls - 1) + call_record.duration) / self.total_calls
+
 
 class ModelContextManager:
     """模型上下文管理器"""
@@ -100,8 +105,8 @@ class ModelContextManager:
             self.call_records.append(call_record)
 
             # 更新调用者和被调用者的性能指标
-            for model_id in [caller_model_id, callee_model_id]::
-    if model_id not in self.model_metrics::
+            for model_id in [caller_model_id, callee_model_id]: :
+    if model_id not in self.model_metrics: :
     self.model_metrics[model_id] = ModelPerformanceMetrics
                 self.model_metrics[model_id].update_from_call(call_record)
 

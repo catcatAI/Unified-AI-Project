@@ -16,6 +16,7 @@ if SRC_DIR not in sys.path:
 # from ai.dependency_manager import dependency_manager
 # from ai.compression.alpha_deep_model import DNADataChain
 
+
 @dataclass
 class LogicModelResult:
     """逻辑模型结果数据类"""
@@ -25,6 +26,7 @@ class LogicModelResult:
     processing_time: float
     timestamp: datetime
     dna_chain_id: Optional[str] = None
+
 
 # Global variables to hold TensorFlow components, loaded on demand.
 tf = None
@@ -37,16 +39,17 @@ Dropout = None
 pad_sequences = None
 to_categorical = None
 
+
 def _ensure_tensorflow_is_imported():
+
 ""
     Lazily imports TensorFlow and its Keras components using dependency manager.
-    Catches a broader range of exceptions, including potential fatal errors on import.
+    Catches a broader range of exceptions, including potential fatal errors on import .
     Returns True if successful, False otherwise.:
 ""
     global tf, Model, Input, Embedding, LSTM, Dense, Dropout, pad_sequences, to_categorical
 
     if tf is not None:
-
 
     return True
 

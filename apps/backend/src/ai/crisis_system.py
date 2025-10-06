@@ -5,13 +5,16 @@ import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
 
+
 class CrisisSystem:
-    def __init__(self, config: Optional[Dict[str, Any]] = None, emotion_system_ref=None, memory_system_ref=None, log_file: str = "crisis_log.txt") -> None:
+    def __init__(self, config: Optional[Dict[str, Any]] = None, emotion_system_ref=None,
+                 memory_system_ref=None, log_file: str = "crisis_log.txt") -> None:
         self.config = config or {}
-        self.emotion_system = emotion_system_ref # Reference to an EmotionSystem instance
+        self.emotion_system = emotion_system_ref  # Reference to an EmotionSystem instance
         self.memory_system = memory_system_ref   # Reference to a MemoryManager instance
-        self.crisis_level = 0 # 0 = No crisis, higher numbers indicate severity
+        self.crisis_level = 0  # 0 = No crisis, higher numbers indicate severity
         self.log_file = log_file
+
 
         # Load configuration from file if not provided:
 f not self.config:

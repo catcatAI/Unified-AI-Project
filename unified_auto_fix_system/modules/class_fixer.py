@@ -301,8 +301,8 @@ class ClassFixer(BaseFixer):
             original_content = content
             
             # 应用各种修复
-            content = self._fix_undefined_base_classeses(content)
-            content = self._fix_class_redefinitionss(content)
+            content = self._fix_undefined_base_classes(content)
+            content = self._fix_class_redefinitions(content)
             content = self._fix_inheritance_issues(content)
             
             # 如果内容有变化，写回文件

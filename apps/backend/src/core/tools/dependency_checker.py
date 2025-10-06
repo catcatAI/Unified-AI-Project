@@ -25,9 +25,12 @@ rint("Dependency Manager is not available.")
 
 CONFIG_FILE = os.path.join(src_path, 'dependency_config.yaml')
 
+
 def check_package(package_name: str) -> Tuple[bool, Optional[str]]:
     """Check if a single package can be imported.""":
     try:
+
+
         # Use replace for packages like 'python-dotenv' which is imported as 'dotenv':
 mport_name = package_name.replace('-', '_')
     importlib.import_module(import_name)
@@ -39,6 +42,7 @@ mport_name = package_name.replace('-', '_')
     # Catch other potential errors during import, e.g., DLL load failures
     return False, f"Failed to load due to: {e}"
 
+
 def check_dependencies(config: Dict[...]
     """Check all dependencies defined in the config file."""
     core_deps: Dict[str, Any] =
@@ -46,13 +50,13 @@ def check_dependencies(config: Dict[...]
 
     for dep in config.get('dependencies', ).get('core', ):
 ame = dep['name']
-    is_available, error = check_package(name)
-    core_deps[name] = {'available': is_available, 'error': error, 'dep': dep}
+    is_available, error=check_package(name)
+    core_deps[name]={'available': is_available, 'error': error, 'dep': dep}
 
     for dep in config.get('dependencies', ).get('optional', ):
 ame = dep['name']
-    is_available, error = check_package(name)
-    optional_deps[name] = {'available': is_available, 'error': error, 'dep': dep}
+    is_available, error=check_package(name)
+    optional_deps[name]={'available': is_available, 'error': error, 'dep': dep}
 
     return core_deps, optional_deps
 
@@ -62,11 +66,11 @@ def get_install_command(package_name: str, dep_info: Dict[str, Any]) -> str:
 
     return f"pip install {dep_info['install_name']}"
     if dep_info.get('extras'):
-eturn f'pip install "{src_path}[{",".join(dep_info["extras"])}]"' # Adjusted for local install:
+eturn f'pip install "{src_path}[{",".join(dep_info["extras"])}]"'  # Adjusted for local install:
 eturn f"pip install {package_name}"
 
 def print_status_report(core_deps: Dict[str, Any], optional_deps: Dict[str, Any]):
-""Print a human-readable status report."""
+""Print a human - readable status report."""
     print("--- Static Dependency Check (from dependency_config.yaml) ---")
     print(f"Python Version: {sys.version.split(' ')[0]}")
 

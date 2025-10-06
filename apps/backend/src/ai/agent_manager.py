@@ -12,6 +12,7 @@ class AgentManager:
     Manages the lifecycle of specialized sub-agents.
     It can launch and terminate sub-agent processes.
     """
+
     def __init__(self, python_executable=None, *args, **kwargs) -> None:
         """
         Initializes the AgentManager.
@@ -19,6 +20,7 @@ class AgentManager:
         Args:
                 python_executable: Python executable path
         """
+
         # For compatibility with tests, we don't require python_executable parameter:
 elf.python_executable = python_executable or sys.executable
         self.agents = {}

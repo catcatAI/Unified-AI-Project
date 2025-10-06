@@ -63,8 +63,8 @@ except ImportError:
 
 @pytest.fixture(scope="session")
 def event_loop():
-    """Create an instance of the default event loop for each test session.""":
-oop = asyncio.get_event_loop_policy().new_event_loop()
+    """Create an instance of the default event loop for each test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
@@ -79,8 +79,9 @@ def setup_test_environment() -> None:
 
     # 設置其他測試環境變量
     os.environ['TESTING'] = 'true'
-    os.environ['OPENAI_API_KEY'] = 'dummy_key' # Re-add dummy key for module-level imports:
-ield
+    os.environ['OPENAI_API_KEY'] = 'dummy_key' # Re-add dummy key for module-level imports
+
+    yield
 
     # 清理（如果需要）
     pass
@@ -168,13 +169,13 @@ def timeout_protection():
 
     # 檢查測試是否運行過長時間
     execution_time = time.time() - start_time
-    if execution_time > 60:  # 60秒警告閾值:
-ytest.fail(f"Test took too long: {execution_time:.2f}s")
+    if execution_time > 60:  # 60秒警告閾值
+        pytest.fail(f"Test took too long: {execution_time:.2f}s")
 
     # 檢查線程洩漏
     final_thread_count = threading.active_count()
-    if final_thread_count > initial_thread_count + 2:  # 允許一些容差:
-ytest.fail(f"Thread leak detected: {final_thread_count} vs {initial_thread_count}")
+    if final_thread_count > initial_thread_count + 2:  # 允許一些容差
+        pytest.fail(f"Thread leak detected: {final_thread_count} vs {initial_thread_count}")
 
 @pytest.fixture(scope="function", autouse=True)
 def test_timeout_and_monitoring(request) -> None:
@@ -220,8 +221,8 @@ def mock_core_services():
                     if 'availability_status' not in payload:
                         raise ValueError(f"Missing required field: availability_status")
                     processed_payload = HSPCapabilityAdvertisementPayload(**payload)
-                elif hasattr(payload, '__getitem__'):  # TypedDict-like:
-rocessed_payload = payload
+                elif hasattr(payload, '__getitem__'):  # TypedDict-like
+                    processed_payload = payload
                 else:
                     logging.error(f"Invalid payload type: {type(payload)}")
                     return
@@ -265,8 +266,8 @@ rocessed_payload = payload
     # Create an AsyncMock that delegates to the behavior instance
     mock_service_discovery = AsyncMock()
 
-    # Provide a sync wrapper for process_capability_advertisement so tests that don't await it still work:
-rom unittest.mock import MagicMock
+    # Provide a sync wrapper for process_capability_advertisement so tests that don't await it still work
+    from unittest.mock import MagicMock
     def _process_capability_advertisement_sync(payload, sender_ai_id, envelope):
         try:
             from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload
@@ -276,8 +277,8 @@ rom unittest.mock import MagicMock
                 if 'availability_status' not in payload:
                     raise ValueError(f"Missing required field: availability_status")
                 processed_payload = HSPCapabilityAdvertisementPayload(**payload)
-            elif hasattr(payload, '__getitem__'):  # TypedDict-like or dict-like:
-rocessed_payload = payload
+            elif hasattr(payload, '__getitem__'):  # TypedDict-like or dict-like
+                processed_payload = payload
             else:
                 logging.error(f"Invalid payload type: {type(payload)}")
                 return
@@ -296,8 +297,8 @@ rocessed_payload = payload
     mock_service_discovery.get_all_capabilities = MagicMock(side_effect=mock_behavior.get_all_capabilities)
     mock_service_discovery.get_all_capabilities_async = AsyncMock(side_effect=mock_behavior.get_all_capabilities_async)
 
-    # Store a reference to the behavior for access if needed:
-ock_service_discovery._mock_behavior = mock_behavior
+    # Store a reference to the behavior for access if needed
+    mock_service_discovery._mock_behavior = mock_behavior
 
     # Create mock HAM manager that matches MockHAMMemoryManager behavior
     class MockHAMManager:
@@ -345,8 +346,8 @@ ock_service_discovery._mock_behavior = mock_behavior
             """Mock implementation of recall_gist"""
             if memory_id in self.memory_store:
                 record = self.memory_store[memory_id]
-                # Ensure metadata is properly returned with required fields:
-etadata = record["metadata"].copy() if record["metadata"] else {}
+                # Ensure metadata is properly returned with required fields
+                metadata = record["metadata"].copy() if record["metadata"] else {}
                 # Ensure speaker field is present in metadata
                 if 'speaker' not in metadata:
                     metadata['speaker'] = 'unknown'
@@ -362,11 +363,11 @@ etadata = record["metadata"].copy() if record["metadata"] else {}
         def query_core_memory(self, **kwargs):
             """Mock implementation of query_core_memory"""
             # Simplified implementation for testing:
-esults = []
+            results = []
             for mem_id, record in self.memory_store.items():
                 # Ensure metadata is properly returned
-                metadata = record["metadata"].copy() if record["metadata"] else {}:
-esults.append({
+                metadata = record["metadata"].copy() if record["metadata"] else {}
+                results.append({
                     "id": mem_id,
                     "timestamp": record["timestamp"],
                     "data_type": record["data_type"],
@@ -387,8 +388,8 @@ esults.append({
     mock_personality_manager = MagicMock(spec=PersonalityManager)
     mock_personality_manager.get_initial_prompt = MagicMock(return_value="Welcome!")
     mock_personality_manager.get_current_personality_trait = MagicMock(return_value="TestAI") # Explicitly mock and set return_value
-    mock_personality_manager.apply_personality_adjustment = MagicMock() # Mock this method as well if it's called:
-ock_emotion_system = MagicMock(spec='src.ai.emotion_system.EmotionSystem')
+    mock_personality_manager.apply_personality_adjustment = MagicMock() # Mock this method as well if it's called
+    mock_emotion_system = MagicMock(spec='src.ai.emotion_system.EmotionSystem')
     mock_crisis_system = MagicMock(spec='src.ai.crisis.CrisisSystem')
     mock_time_system = MagicMock(spec='src.ai.time_system.TimeSystem')
     mock_time_system.get_time_of_day_segment = MagicMock(return_value="morning")
@@ -398,8 +399,8 @@ ock_emotion_system = MagicMock(spec='src.ai.emotion_system.EmotionSystem')
     mock_learning_manager = MagicMock(spec='src.ai.learning.learning_manager.LearningManager')
     mock_learning_manager.analyze_for_personality_adjustment = AsyncMock(return_value=None)
 
-    # Create a proper mock for HSPConnector with all required methods and attributes:
-ock_hsp_connector = MagicMock()
+    # Create a proper mock for HSPConnector with all required methods and attributes
+    mock_hsp_connector = MagicMock()
     mock_hsp_connector.ai_id = "mock_ai_id"
     mock_hsp_connector.is_connected = True
 
@@ -448,20 +449,20 @@ ock_hsp_connector = MagicMock()
     mock_project_coordinator.personality_manager = mock_personality_manager
     mock_project_coordinator.dialogue_manager_config = {} # Pass an empty dict or a mock config
 
-    # Configure mocks as needed for common scenarios:
-ock_llm_interface.generate_response = AsyncMock(return_value='[{"capability_needed": "test_capability_v1", "task_parameters": {"param": "value"}, "task_description": "Test task"}]')
+    # Configure mocks as needed for common scenarios
+    mock_llm_interface.generate_response = AsyncMock(return_value='[{"capability_needed": "test_capability_v1", "task_parameters": {"param": "value"}, "task_description": "Test task"}]')
     # Keep store_experience as sync if defined on mock_ham_manager
     # (Do not override with AsyncMock)
-    # mock_ham_manager.store_experience = AsyncMock() if not hasattr(mock_ham_manager, 'store_experience') else mock_ham_manager.store_experience:
-ock_project_coordinator.handle_project = AsyncMock(return_value="Mocked project response.")
+    # mock_ham_manager.store_experience = AsyncMock() if not hasattr(mock_ham_manager, 'store_experience') else mock_ham_manager.store_experience
+    mock_project_coordinator.handle_project = AsyncMock(return_value="Mocked project response.")
     mock_project_coordinator.handle_task_result = AsyncMock()
     mock_project_coordinator._execute_task_graph = AsyncMock() # Added mock for _execute_task_graph:
-ock_project_coordinator._decompose_user_intent_into_subtasks = AsyncMock(return_value=[]) # Added mock for _decompose_user_intent_into_subtasks
+    mock_project_coordinator._decompose_user_intent_into_subtasks = AsyncMock(return_value=[]) # Added mock for _decompose_user_intent_into_subtasks
 
     # Create a wrapper for DialogueManager's get_simple_response to avoid side effects
     # from previous tests (e.g., personality manager state changes).
-    # This also allows us to customize behavior per test if needed.:
-rom apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
+    # This also allows us to customize behavior per test if needed.
+    from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
     from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
 
     # 创建一个继承自HAMMemoryManager的Mock类
@@ -521,8 +522,8 @@ rom apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
             """Mock implementation of recall_gist"""
             if memory_id in self.memory_store:
                 record = self.memory_store[memory_id]
-                # Ensure metadata is properly returned with required fields:
-etadata = record["metadata"].copy() if record["metadata"] else {}
+                # Ensure metadata is properly returned with required fields
+                metadata = record["metadata"].copy() if record["metadata"] else {}
                 # Ensure speaker field is present in metadata
                 if 'speaker' not in metadata:
                     metadata['speaker'] = 'unknown'
@@ -549,7 +550,7 @@ etadata = record["metadata"].copy() if record["metadata"] else {}
                           semantic_query = None) -> List[HAMRecallResult]:
             """Mock implementation of query_core_memory"""
             # Simplified implementation for testing:
-esults: List[HAMRecallResult] = []
+            results: List[HAMRecallResult] = []
             for mem_id, record in self.memory_store.items():
                 # Ensure metadata is properly returned
                 metadata = record["metadata"].copy() if record["metadata"] else {}
@@ -568,7 +569,7 @@ esults: List[HAMRecallResult] = []
     mock_ham_manager = MockHAMMemoryManager()
 
     # Create the DialogueManager instance with mocked dependencies:
-ock_dialogue_manager = DialogueManager(
+    mock_dialogue_manager = DialogueManager(
         ai_id="test_dialogue_manager",
         personality_manager=mock_personality_manager,
         memory_manager=mock_ham_manager,
@@ -610,9 +611,9 @@ ock_dialogue_manager = DialogueManager(
 @pytest.fixture(scope="function")
 def client_with_overrides(mock_core_services):
     """
-    Provides a FastAPI TestClient with core services mocked out.:
-his allows for isolated testing of API endpoints.:
-""
+    Provides a FastAPI TestClient with core services mocked out.
+    This allows for isolated testing of API endpoints.
+    """
     from fastapi.testclient import TestClient
     from apps.backend.src.services.main_api_server import app
     from apps.backend.src.core_services import get_services
@@ -655,10 +656,10 @@ warnings.filterwarnings(
 )
 
 def pytest_configure(config) -> None:
-    config.addinivalue_line("markers", "flaky(reruns, reason=None) mark test as flaky with given reruns"):
-onfig.addinivalue_line("markers", "timeout(seconds) mark test with a timeout in seconds"):
-onfig.addinivalue_line("markers", "slow: mark tests as slow and optionally skipped via -m not slow")
+    config.addinivalue_line("markers", "flaky(reruns, reason=None) mark test as flaky with given reruns")
+    config.addinivalue_line("markers", "timeout(seconds) mark test with a timeout in seconds")
+    config.addinivalue_line("markers", "slow: mark tests as slow and optionally skipped via -m not slow")
     config.addinivalue_line("markers", "mcp: mark tests that depend on MCP/external services")
     config.addinivalue_line("markers", "context7: mark tests related to Context7 connector/external env")
-    config.addinivalue_line("markers", "performance: mark tests for performance benchmarking"):
-onfig.addinivalue_line("markers", "benchmark: mark tests for benchmarking")
+    config.addinivalue_line("markers", "performance: mark tests for performance benchmarking")
+    config.addinivalue_line("markers", "benchmark: mark tests for benchmarking")

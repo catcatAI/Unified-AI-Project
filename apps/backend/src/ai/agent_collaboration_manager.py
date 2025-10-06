@@ -5,32 +5,40 @@ from dataclasses import dataclass
 from enum import Enum
 
 # 创建占位符类型和类
+
+
 class HSPTaskRequestPayload(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
 
 class HSPTaskResultPayload(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+
 class HSPMessageEnvelope(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+
 class HSPConnector:
     def register_on_task_result_callback(self, callback):
         pass
-    
+
     async def send_task_request(self, payload, target_ai_id_or_topic):
         return True
 
+
 logger: Any = logging.getLogger(__name__)
+
 
 class CollaborationStatus(Enum):
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     FAILED = "failed"
+
 
 @dataclass
 class CollaborationTask:
@@ -42,6 +50,7 @@ class CollaborationTask:
     status: CollaborationStatus = CollaborationStatus.PENDING
     result: Optional[Dict[str, Any]] = None
     error_message: Optional[str] = None
+
 
 class AgentCollaborationManager:
     """

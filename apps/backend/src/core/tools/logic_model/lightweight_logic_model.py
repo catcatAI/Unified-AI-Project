@@ -2,6 +2,7 @@ import re
 import json
 import os
 
+
 class LightweightLogicModel:
     """
     A lightweight logic model that can evaluate simple logical propositions
@@ -65,7 +66,7 @@ elf.logic_pattern = re.compile(
 
     def _normalize_proposition(self, proposition: str) -> Optional[str]:
     """
-    Normalize logical proposition to Python-evaluable format.
+    Normalize logical proposition to Python - evaluable format.
     """
         try:
             # Remove extra whitespace
@@ -87,7 +88,11 @@ ormalized = proposition
                     normalized = normalized.replace(old_op, f' {new_op} ')
                 else:
                     # Handle word operators
-                    normalized = re.sub(r'\b' + re.escape(old_op) + r'\b', f' {new_op} ', normalized, flags=re.IGNORECASE)
+                    normalized = re.sub(
+    r'\b' + re.escape(old_op) + r'\b',
+    f' {new_op} ',
+    normalized,
+     flags=re.IGNORECASE)
 
             # Clean up extra spaces and preserve parentheses
             tokens =

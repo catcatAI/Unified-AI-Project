@@ -25,6 +25,8 @@ import logging
 
 
 class ExecutionStatus(Enum):
+
+
 ""執行狀態枚舉"""
     RUNNING = "running"
     COMPLETED = "completed"
@@ -98,6 +100,8 @@ class ExecutionMonitor:
     self._adaptive_timeout_cache: Dict[str, float] =
 
     def _setup_logging(self):
+
+
 ""設置日誌"""
         if not self.logger.handlers:
 
@@ -217,7 +221,6 @@ esult = subprocess.run(['echo', 'test'],
         while self._is_monitoring:
 
     try:
-
 
                 self._terminal_status = self.check_terminal_responsiveness
                 self.logger.debug(f"Terminal status: {self._terminal_status.value}")

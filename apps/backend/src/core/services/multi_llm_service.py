@@ -27,6 +27,7 @@ from aiolimiter import AsyncLimiter
 
 logger: Any = logging.getLogger(__name__)
 
+
 class ModelProvider(Enum):
     """模型提供商枚举"""
     OPENAI = "openai"
@@ -36,6 +37,7 @@ class ModelProvider(Enum):
     AZURE_OPENAI = "azure_openai"
     COHERE = "cohere"
     HUGGINGFACE = "huggingface"
+
 
 @dataclass
 class ModelConfig:
@@ -54,6 +56,7 @@ class ModelConfig:
     cost_per_1k_tokens: float = 0.0
     context_window: int = 4096
 
+
 @dataclass
 class ChatMessage:
     """聊天消息"""
@@ -61,6 +64,7 @@ class ChatMessage:
     content: str
     name: Optional[str] = None
     timestamp: Optional[datetime] = None
+
 
 @dataclass
 class LLMResponse:
@@ -74,43 +78,45 @@ class LLMResponse:
     timestamp: datetime
     metadata: Dict[str, Any]
 
+
 class BaseLLMProvider(ABC):
     """LLM 提供商基类"""
-    
+
     def __init__(self, config: ModelConfig) -> None:
         self.config = config
         self.session: Optional[aiohttp.ClientSession] = None
-    
+
     @abstractmethod
     async def chat_completion(
-        self, 
-        messages: List[ChatMessage], 
+        self,
+        messages: List[ChatMessage],
         **kwargs
     ) -> LLMResponse:
         """聊天完成"""
         pass
-    
+
     @abstractmethod
     async def stream_completion(
-        self, 
-        messages: List[ChatMessage], 
+        self,
+        messages: List[ChatMessage],
         **kwargs
     ) -> AsyncGenerator[str, None]:
         """流式聊天完成"""
         pass
-    
+
     async def __aenter__(self):
         if not self.session:
             self.session = aiohttp.ClientSession
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.session:
             _ = await self.session.close
 
+
 class OpenAIProvider(BaseLLMProvider):
     """OpenAI GPT 提供商"""
-    
+
     def __init__(self, config: ModelConfig) -> None:
         super.__init__(config)
         # 修复：使用正确的 OpenAI 客户端初始化方式
@@ -118,17 +124,18 @@ class OpenAIProvider(BaseLLMProvider):
             api_key=config.api_key,
             base_url=config.base_url
         )
-    
+
     async def chat_completion(
-        self, 
-        messages: List[ChatMessage], 
+        self,
+        messages: List[ChatMessage],
         **kwargs
     ) -> LLMResponse:
         start_time = datetime.now
-        
+
         try:
             openai_messages = []
             for msg in messages:
+
                 # Check if msg is a dictionary or ChatMessage object:
 f isinstance(msg, dict):
                     openai_messages.append({"role": msg["role"], "content": msg["content"]})

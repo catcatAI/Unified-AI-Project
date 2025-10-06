@@ -22,8 +22,8 @@ def get_files_with_syntax_errors() -> List[Tuple[str, str]]:
     # 遍历当前目录下的所有Python文件
     for root, dirs, files in os.walk('.'):
         # 跳过某些目录以提高效率
-        dirs[:] = [d for d in dirs if d not in ['node_modules', '__pycache__', '.git', 'venv']]:
-or file in files:
+        dirs[:] = [d for d in dirs if d not in ['node_modules', '__pycache__', '.git', 'venv']]
+        for file in files:
             if file.endswith('.py'):
                 file_path = os.path.join(root, file).replace('\\', '/')
                 # 跳过自动修复系统自己的文件
@@ -37,6 +37,6 @@ or file in files:
 
 # 测试函数
 files_with_errors = get_files_with_syntax_errors()
-print(f"Found {len(files_with_errors)} Python files with syntax errors."):
-or file_path, error_msg in files_with_errors:
+print(f"Found {len(files_with_errors)} Python files with syntax errors.")
+for file_path, error_msg in files_with_errors:
     print(f"  {file_path}: {error_msg}")

@@ -32,6 +32,7 @@ class ResourceManager:
     self._register_cleanup_callbacks
 
     def _register_cleanup_callbacks(self):
+
 ""注册资源清理回调到服务管理器"""
     # 为服务管理器注册通用的资源清理回调
     pass  # 在具体服务中注册

@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 logger: Any = logging.getLogger(__name__)
 
+
 @dataclass
 class PerformanceRecord:
     """性能记录"""
@@ -25,6 +26,7 @@ class PerformanceRecord:
     response_time: float
     accuracy: float
     learning_progress: float
+
 
 @dataclass
 class LearningStrategy:
@@ -36,6 +38,7 @@ class LearningStrategy:
     effectiveness: float  # 策略有效性 (0-1)
     last_used: Optional[float] = None
 
+
 @dataclass
 class TaskContext:
     """任务上下文"""
@@ -45,6 +48,7 @@ class TaskContext:
     description: str
     previous_performance: Optional[List[PerformanceRecord]] = None
 
+
 class PerformanceTracker:
     """性能跟踪器"""
 
@@ -53,11 +57,12 @@ class PerformanceTracker:
     self._init_db
 
     def _init_db(self):
+
 ""初始化数据库"""
     conn = sqlite3.connect(self.db_path)
     cursor = conn.cursor
     cursor.execute("""
-            CREATE TABLE IF NOT EXISTS performance_records (
+            CREATE TABLE IF NOT EXISTS performance_records(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp REAL NOT NULL,
                 task_id TEXT NOT NULL,

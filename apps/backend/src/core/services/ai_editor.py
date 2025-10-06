@@ -38,7 +38,7 @@ class DataProcessor:
 
     Args:
             data: The raw data to process
-            data_type: Type of data ('text', 'code', 'structured', 'application')
+            data_type: Type of data('text', 'code', 'structured', 'application')
             transformation_rules: Optional rules for data transformation:
 
     Returns:
@@ -107,8 +107,9 @@ f transformation_rules:
 
     return processed
 
-    def _process_structured_data(self, data: Union[Dict, List], transformation_rules: Optional[Dict] = None) -> Dict[str, Any]:
-    _ = """Process structured data (JSON, XML, etc.)"""
+    def _process_structured_data(self, data: Union[Dict, List],
+                                 transformation_rules: Optional[Dict] = None) -> Dict[str, Any]:
+    _ = """Process structured data(JSON, XML, etc.)"""
     logger.debug("Processing structured data")
 
         # Convert to dict if it's a list:
@@ -131,7 +132,7 @@ f transformation_rules:
     return processed
 
     def _process_application_data(self, data: Dict[...]
-    _ = """Process application data (UI elements, etc.)"""
+    _ = """Process application data(UI elements, etc.)"""
     logger.debug("Processing application data")
 
     processed = {
@@ -150,7 +151,7 @@ f transformation_rules:
     return processed
 
     def _apply_text_transformations(self, data: Dict[...]
-    """Apply text-specific transformations"""
+    """Apply text - specific transformations"""
     # Example transformations
         if rules.get("summarize"):
 ata["summary"] = self._generate_summary(data["raw_text"])
@@ -161,7 +162,7 @@ ata["keywords"] = self._extract_keywords(data["raw_text"])
     return data
 
     def _apply_code_transformations(self, data: Dict[...]
-    """Apply code-specific transformations"""
+    """Apply code - specific transformations"""
     # Example transformations
         if rules.get("extract_docstrings"):
 ata["docstrings"] = self._extract_docstrings(data["raw_code"])
@@ -206,7 +207,7 @@ ef _extract_keywords(self, text: str) -> List[str]:
     """Extract function names from code"""
     # Simple regex-based extraction
     import re
-    function_pattern = r'def\s+(\w+)\s*\('
+    function_pattern = r'def\\s+(\\w+)\\s*\\('
     matches = re.findall(function_pattern, code)
     return matches
 
@@ -214,7 +215,7 @@ ef _extract_keywords(self, text: str) -> List[str]:
         """Extract class names from code"""
     # Simple regex-based extraction
     import re
-    class_pattern = r'class\s+(\w+)'
+    class_pattern = r'class\\s+(\\w+)'
     matches = re.findall(class_pattern, code)
     return matches
 
@@ -357,7 +358,7 @@ f self.memory_manager:
             logger.error(f"Error processing application data: {e}")
             raise
 
-    def process_text_content(self, text: str, transformation_rules: Optional[Dict] = None) -> Dict[str, Any]:
+    def process_text_content(self, text: str, transformation_rules: Optional[Dict]=None) -> Dict[str, Any]:
     """
     Process text content from applications.
 
@@ -394,7 +395,7 @@ f self.memory_manager:
             logger.error(f"Error processing text content: {e}")
             raise
 
-    def process_code_content(self, code: str, transformation_rules: Optional[Dict] = None) -> Dict[str, Any]:
+    def process_code_content(self, code: str, transformation_rules: Optional[Dict]=None) -> Dict[str, Any]:
     """
     Process code content from applications.
 
@@ -431,7 +432,8 @@ f self.memory_manager:
             logger.error(f"Error processing code content: {e}")
             raise
 
-    def process_structured_data(self, data: Union[Dict, List], transformation_rules: Optional[Dict] = None) -> Dict[str, Any]:
+    def process_structured_data(self, data: Union[Dict, List],
+                                transformation_rules: Optional[Dict]=None) -> Dict[str, Any]:
     """
     Process structured data from applications.
 
@@ -482,7 +484,7 @@ f self.memory_manager:
     logger.info("Executing data transformation script in sandbox"):
 ry:
             # Execute in sandbox
-            result, error = self.sandbox_executor.run(
+            result, error=self.sandbox_executor.run(
                 script,
                 "DataTransformer",
                 "transform",
@@ -496,7 +498,7 @@ ry:
                 raise Exception(f"Sandbox execution failed: {error}")
 
             # Process the result
-            processed_result = {
+            processed_result={
                 "execution_result": result,
                 "execution_timestamp": datetime.now.isoformat,
                 "script_parameters": params
@@ -505,12 +507,12 @@ ry:
             # Store in memory if available:
 f self.memory_manager:
 
-    memory_id = self.memory_manager.store_experience(
+    memory_id=self.memory_manager.store_experience(
                     processed_result,
                     "ai_editor_script_execution",
                     {"source": "sandbox", "processing_type": "script_execution"}
                 )
-                processed_result["memory_id"] = memory_id
+                processed_result["memory_id"]=memory_id
 
             return processed_result
         except Exception as e:
@@ -568,7 +570,7 @@ def hello_world()
 
 class SampleClass:
     def __init__(self) -> None:
-    self.value = 42
+    self.value=42
 """
     code_result = editor.process_code_content(sample_code)
     print("Code processing result:", json.dumps(code_result, indent=2, ensure_ascii=False))

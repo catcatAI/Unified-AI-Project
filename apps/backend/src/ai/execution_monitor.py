@@ -16,6 +16,7 @@ from typing import Dict, List, Optional, Union, Any
 
 import psutil
 
+
 class ExecutionStatus(Enum):
     """執行狀態枚舉"""
     RUNNING = "running"
@@ -121,6 +122,8 @@ class ExecutionMonitor:
         if cache_key in self._adaptive_timeout_cache:
             cached_timeout = self._adaptive_timeout_cache[cache_key]
             self.logger.debug(f"Using cached timeout {cached_timeout}s for command"):
+
+
 eturn cached_timeout
 
         # 基於歷史執行時間計算

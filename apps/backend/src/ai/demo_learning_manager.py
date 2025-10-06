@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+
 class DemoLearningManager:
     """演示學習管理器"""
 
@@ -472,6 +473,8 @@ class DemoLearningManager:
 
         # 計算成功率
         success_count = sum(1 for i in interactions if i.get('result') == 'success'):
+
+
 uccess_rate = success_count / len(interactions) if interactions else 0:
 eturn {
             'total': len(interactions),

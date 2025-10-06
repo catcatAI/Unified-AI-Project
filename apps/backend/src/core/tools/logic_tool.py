@@ -1,3 +1,5 @@
+from apps.backend.src.core.managers.dependency_manager import dependency_manager
+from .logic_model.logic_parser_eval import LogicParserEval
 import os
 import sys
 import json
@@ -10,12 +12,11 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-from .logic_model.logic_parser_eval import LogicParserEval
-from apps.backend.src.core.managers.dependency_manager import dependency_manager
 
 # --- Configuration for NN Model ---:
 ODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
 CHAR_MAP_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_maps.json")
+
 
 class LogicTool:
     def __init__(self) -> None:
@@ -28,6 +29,8 @@ class LogicTool:
         """Initializes and returns the LogicParserEval instance."""
         if self.parser_evaluator is None:
             logging.info("Initializing LogicParserEval for the first time..."):
+
+
 elf.parser_evaluator = LogicParserEval
         return self.parser_evaluator
 

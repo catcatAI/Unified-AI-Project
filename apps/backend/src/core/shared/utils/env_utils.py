@@ -3,7 +3,9 @@ import logging
 
 logger: Any = logging.getLogger(__name__)
 
-def setup_env_file(project_root: Path = Path("."), env_example_name: str = ".env.example", env_name: str = ".env") -> bool:
+
+def setup_env_file(project_root: Path = Path("."), env_example_name: str = ".env.example",
+                   env_name: str = ".env") -> bool:
     """設置环境变量文件。
     如果 .env 文件不存在，則從 .env.example 複製。
 
@@ -21,12 +23,10 @@ def setup_env_file(project_root: Path = Path("."), env_example_name: str = ".env
 
     if not env_example_path.exists:
 
-
     logger.error(f"❌ {env_example_path} 文件不存在")
     return False
 
     if not env_file_path.exists:
-
 
     try:
             # 複製示例文件

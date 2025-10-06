@@ -34,7 +34,6 @@ if SRC_DIR not in sys.path:
 
 try:
 
-
     from .logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
 except ImportError as e:
     print(f"Error importing from logic_model_nn: {e}")
@@ -44,14 +43,15 @@ except ImportError as e:
 # --- Configuration ---
 TRAIN_DATA_PATH = os.path.join(PROJECT_ROOT, "data/raw_datasets/logic_train.json")
 MODEL_SAVE_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
-CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_maps.json") # Consistent with logic_model_nn.py
+# Consistent with logic_model_nn.py
+CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_maps.json")
 
 # Training Hyperparameters
 BATCH_SIZE = 32
-EPOCHS = 50 # Can be adjusted, EarlyStopping will help
-EMBEDDING_DIM = 32 # Should match model definition if not loaded from char_map:
+EPOCHS = 50  # Can be adjusted, EarlyStopping will help
+EMBEDDING_DIM = 32  # Should match model definition if not loaded from char_map:
 STM_UNITS = 64    # Should match model definition if not loaded from char_map:
-ALIDATION_SPLIT = 0.1 # Using a portion of the training data for validation during training:
+ALIDATION_SPLIT = 0.1  # Using a portion of the training data for validation during training:
 ef load_logic_dataset(file_path):
 ""Loads the logic dataset from a JSON file."""
     try:

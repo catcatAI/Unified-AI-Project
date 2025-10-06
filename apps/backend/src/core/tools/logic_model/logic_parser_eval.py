@@ -1,6 +1,7 @@
 import re
 from typing import List, Tuple, Any, Optional
 
+
 class LogicParserEval:
     """
     A simple parser and evaluator for basic logical expressions.:
@@ -8,6 +9,7 @@ class LogicParserEval:
     """
 
     def __init__(self) -> None:
+
         # Define token patterns (simple regex for this version):
 elf.token_patterns = [
             (r'\s+', None),  # Whitespace
@@ -20,7 +22,7 @@ elf.token_patterns = [
             (r'\bNOT\b', 'NOT')
     ]
         self.token_regex = re.compile('|'.join(f'(?P<{name}>{pattern})' if name else pattern:
-    for pattern, name in self.token_patterns if name)) # ignore whitespace for regex
+    for pattern, name in self.token_patterns if name))  # ignore whitespace for regex
     # Initialize instance variables to fix basedpyright warnings
     self.tokens: List[Tuple[str, str]] =
     self.pos: int = 0

@@ -17,7 +17,9 @@ OPERATORS = ["AND", "OR"]
 UNARY_OPERATORS = ["NOT"]
 VALUES = ["true", "false"]
 
+
 def generate_simple_proposition(max_nesting=1, current_nesting=0):
+
 ""
     Generates a simple logical proposition.
     Example: "true AND false", "NOT true", "(true OR false) AND true"

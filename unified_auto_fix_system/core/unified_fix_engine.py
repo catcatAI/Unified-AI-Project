@@ -39,6 +39,7 @@ class FixContext:
     dry_run: bool = False
     ai_assisted: bool = False
     custom_rules: Dict[str, Any] = field(default_factory=dict)
+    excluded_paths: List[str] = field(default_factory=list)
 
 
 class UnifiedFixEngine:

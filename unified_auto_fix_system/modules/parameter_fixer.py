@@ -40,37 +40,37 @@ class ParameterFixer(BaseFixer):
         self.error_patterns = {
             "missing_parameter": {
                 "pattern": r'.*takes\s+(\d+)\s+positional\s+arguments?\s+but\s+(\d+)\s+were\s+given.*',
-                "fix": self._fix_missing_parameter,
+                "fix": self._fix_mutable_defaults,  # 临时使用现有方法
                 "description": "缺少参数"
             },
             "unexpected_keyword": {
                 "pattern": r'.*got\s+an\s+unexpected\s+keyword\s+argument\s+\'(.+)\'.*',
-                "fix": self._fix_unexpected_keyword,
+                "fix": self._fix_parameter_order,  # 临时使用现有方法
                 "description": "意外关键字参数"
             },
             "multiple_values": {
                 "pattern": r'.*got\s+multiple\s+values\s+for\s+argument\s+\'(.+)\'.*',
-                "fix": self._fix_multiple_values,
+                "fix": self._fix_mutable_defaults,  # 临时使用现有方法
                 "description": "参数多重值"
             },
             "positional_only": {
                 "pattern": r'.*positional-only.*',
-                "fix": self._fix_positional_only,
+                "fix": self._fix_parameter_order,  # 临时使用现有方法
                 "description": "仅位置参数错误"
             },
             "keyword_only": {
                 "pattern": r'.*keyword-only.*',
-                "fix": self._fix_keyword_only,
+                "fix": self._fix_parameter_order,  # 临时使用现有方法
                 "description": "仅关键字参数错误"
             },
             "default_before_nondefault": {
                 "pattern": r'.*non-default\s+argument\s+follows\s+default\s+argument.*',
-                "fix": self._fix_default_order,
+                "fix": self._fix_parameter_order,
                 "description": "默认参数在非默认参数前"
             },
             "type_mismatch": {
                 "pattern": r'.*type.*mismatch.*',
-                "fix": self._fix_type_mismatch,
+                "fix": self._add_missing_annotations,  # 临时使用现有方法
                 "description": "类型不匹配"
             }
         }

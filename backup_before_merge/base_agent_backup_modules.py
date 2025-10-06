@@ -1,3 +1,4 @@
+from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 import asyncio
 import logging
 import uuid
@@ -8,9 +9,9 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # 使用绝对导入路径
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger: Any = logging.getLogger(__name__)
+
 
 class BaseAgent:
     """
@@ -18,6 +19,7 @@ class BaseAgent:
     Handles the boilerplate of service initialization, HSP connection,
     and listening for tasks.
     """
+
     def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]], agent_name: str = "BaseAgent") -> None:
         """
         Initializes the BaseAgent.
@@ -38,7 +40,7 @@ class BaseAgent:
     async def _ainit(self):
         # 延迟导入以避免循环导入
         from apps.backend.src.core_services import initialize_services
-        
+
         # Initialize core services required by the agent
         # Construct a minimal config for initialize_services
         # This is needed because initialize_services now requires a config dict
@@ -49,18 +51,18 @@ class BaseAgent:
                 "mqtt_broker_address": "localhost",
                 "mqtt_broker_port": 1883,
                 "enable_fallback": True,
-                "fallback_config": 
+                "fallback_config":
             }
         }
 
         await initialize_services(
-            config=minimal_config, # Pass the constructed config
+            config=minimal_config,  # Pass the constructed config
             ai_id=self.agent_id,
-            use_mock_ham=True, # Sub-agents typically don't need their own large memory
-            llm_config=None, # Sub-agents use specific tools, may not need a full LLM
+            use_mock_ham=True,  # Sub-agents typically don't need their own large memory
+            llm_config=None,  # Sub-agents use specific tools, may not need a full LLM
             operational_configs=None
         )
-        
+
         # 延迟导入以避免循环导入
         from apps.backend.src.core_services import get_services
         self.services = get_services
@@ -102,7 +104,7 @@ class BaseAgent:
         """
         logger.info(f"[{self.agent_id}] Stopping...")
         self.is_running = False
-        
+
         # 延迟导入以避免循环导入
         from apps.backend.src.core_services import shutdown_services
         _ = await shutdown_services
@@ -119,7 +121,8 @@ class BaseAgent:
             return False
         return bool(self.hsp_connector.is_connected)
 
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+    async def handle_task_request(self, task_payload: HSPTaskRequestPayload,
+                                  sender_ai_id: str, envelope: HSPMessageEnvelope):
         """
         The primary handler for incoming HSP task requests.
         This method should be overridden by subclasses to implement specific logic.
@@ -163,6 +166,7 @@ class BaseAgent:
         )
         if self.hsp_connector:
             _ = await self.hsp_connector.send_task_result(result_payload, callback_address, request_id)
+
 
 if __name__ == '__main__':
     # Example of how a BaseAgent could be run.

@@ -17,16 +17,18 @@ from pathlib import Path
 def run_command(command, cwd=None, capture_output=True):
     """
     运行命令并返回结果
-    
+
     Args:
         command: 要执行的命令
         cwd: 工作目录
         capture_output: 是否捕获输出
-        
+
     Returns:
         subprocess.CompletedProcess: 命令执行结果
     """
     print(f"Executing: {' '.join(command) if isinstance(command, list) else command}"):
+
+
 ry:
         result = subprocess.run(
             command,
@@ -35,12 +37,12 @@ ry:
             text=True,
             check=False
         )
-        
+
         if result.stdout:
             print(f"STDOUT:\n{result.stdout}")
         if result.stderr:
             print(f"STDERR:\n{result.stderr}")
-            
+
         return result
     except Exception as e:
         print(f"Error executing command: {e}")

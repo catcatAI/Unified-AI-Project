@@ -6,6 +6,7 @@ AI辅助智能修复器
 import json
 import traceback
 import ast
+import hashlib
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
@@ -425,8 +426,8 @@ class AIAssistedFixer(BaseFixer):
                 "type": "missing_type_hints",
                 "severity": "medium",
                 "confidence": 0.85,
-                "original_code": self._ai_analyze_code_issues(content),
-                "suggested_code": self._ai_analyze_code_issues(content),
+                "original_code": "函数定义缺少类型注解",
+                "suggested_code": "添加 -> ReturnType 类型注解",
                 "explanation": "添加类型注解可以提高代码可读性和IDE支持"
             })
         
@@ -437,7 +438,7 @@ class AIAssistedFixer(BaseFixer):
                 "severity": "high",
                 "confidence": 0.9,
                 "original_code": self._extract_incomplete_try_block(content),
-                "suggested_code": self._ai_analyze_code_issues(content),
+                "suggested_code": "添加适当的except或finally块",
                 "explanation": "try块需要对应的except或finally块"
             })
         
@@ -447,8 +448,8 @@ class AIAssistedFixer(BaseFixer):
                 "type": "function_organization",
                 "severity": "low",
                 "confidence": 0.7,
-                "original_code": content,
-                "suggested_code": self._ai_analyze_code_issues(content),
+                "original_code": "文件包含过多函数",
+                "suggested_code": "考虑拆分到多个模块",
                 "explanation": "文件包含过多函数，考虑拆分到多个模块"
             })
         

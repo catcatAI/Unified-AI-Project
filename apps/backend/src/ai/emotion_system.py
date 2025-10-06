@@ -3,19 +3,22 @@ Emotion System for the AI:
 his module manages the AI's emotional state and responses.
 """
 
+
 class EmotionSystem:
     """System for managing AI emotions and emotional responses""":
-ef __init__(self, personality_profile: dict = None, config: dict = None) -> None:
+
+
+ef __init__(self, personality_profile: dict=None, config: dict=None) -> None:
         self.personality = personality_profile or {}
         self.config = config or {}
-        
+
         # Default emotion from personality, or overall default
         default_tone = "neutral"
         if self.personality:
             default_tone = self.personality.get("communication_style", {}).get("default_tone", "neutral")
-        
+
         self.current_emotion = default_tone
-        
+
         # Simple internal emotion map for text endings:
 elf.emotion_expressions = self.config.get("emotion_map", {
             "neutral": {"text_ending": ""},  # Neutral has no specific ending
@@ -23,17 +26,17 @@ elf.emotion_expressions = self.config.get("emotion_map", {
             "playful": {"text_ending": " (playfully) ✨"},
             "sad_response": {"text_ending": " (with a sigh)"}  # AI expressing sadness:
 )
-        
+
         print(f"EmotionSystem initialized. Default emotion: {self.current_emotion}")
-    
-    def update_emotion_based_on_input(self, input_data: dict, context: dict = None) -> str:
+
+    def update_emotion_based_on_input(self, input_data: dict, context: dict=None) -> str:
         """
         Analyzes input and context to update the AI's emotional state.
         Returns the new emotion.
         """
         text_input = input_data.get("text", "").lower()
         new_emotion = self.current_emotion  # Default to current if no change
-        
+
         # Simple keyword-based emotion detection
         if any(keyword in text_input for keyword in ["sad", "unhappy", "depressed", "crying"]):
             new_emotion = "empathetic"
@@ -49,11 +52,12 @@ efault_personality_tone = "neutral"
                 default_personality_tone = self.personality.get("communication_style", ).get("default_tone", "neutral")
             new_emotion = default_personality_tone  # Revert to default if no specific trigger:
 f new_emotion != self.current_emotion:
-            print(f"EmotionSystem: Emotion changing from '{self.current_emotion}' to '{new_emotion}' based on input: '{text_input[:30]}...'")
+            print(
+                f"EmotionSystem: Emotion changing from '{self.current_emotion}' to '{new_emotion}' based on input: '{text_input[:30]}...'")
             self.current_emotion = new_emotion
-        
+
         return self.current_emotion
-    
+
     def get_current_emotion_expression(self) -> dict:
         """
         Returns cues for expressing the current emotion, primarily a text_ending.:

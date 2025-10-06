@@ -111,7 +111,11 @@ etrics: Dict[str, Any] = {"hsp": , "mcp": , "learning": , "memory": , "lis": }
             ham = services.get("ham_manager")
             if ham is not None and hasattr(ham, "query_core_memory")
                 # Query recent action policy events
-                events = ham.query_core_memory(metadata_filters={"ham_meta_action_policy": True}, data_type_filter="action_policy_v0.1", limit=200)  # type ignore
+                events = ham.query_core_memory(
+    metadata_filters={
+        "ham_meta_action_policy": True},
+        data_type_filter="action_policy_v0.1",
+         limit=200)  # type ignore
                 total = len(events) if isinstance(events, list) else 0:
     successes = 0
                 latencies =
@@ -184,8 +188,10 @@ ry:
                 except Exception:
 
                     pass  # Use defaults
-                inc = ham.query_core_memory(metadata_filters=, data_type_filter=lis_incident_data_type_prefix, limit=50)  # type ignore
-                ab = ham.query_core_memory(metadata_filters=, data_type_filter=lis_antibody_data_type_prefix, limit=50)  # type ignore
+                # type ignore
+                inc = ham.query_core_memory(metadata_filters=, data_type_filter=lis_incident_data_type_prefix, limit=50)
+                # type ignore
+                ab = ham.query_core_memory(metadata_filters=, data_type_filter=lis_antibody_data_type_prefix, limit=50)
                 metrics["lis"]["incidents_recent"] = len(inc) if isinstance(inc, list) else None:
     metrics["lis"]["antibodies_recent"] = len(ab) if isinstance(ab, list) else None:
     except Exception:
@@ -206,6 +212,8 @@ hsp": hsp_status,
           - Gracefully close the previous LLM interface
           _ = - Instantiate a new one via core_services.get_multi_llm_service
           - Update ToolDispatcher and DialogueManager references if available:
+
+
 ""
     async with self._lock:
     old_llm = core_services.llm_interface_instance
@@ -213,7 +221,6 @@ hsp": hsp_status,
             if old_llm:
 
     try:
-
 
                     _ = await old_llm.close
                 except Exception:

@@ -6,25 +6,28 @@ from apps.backend.src.config_loader import is_demo_mode, get_mock_placeholder_va
 
 logger: Any = logging.getLogger(__name__)
 
+
 class AudioService:
     """音频服务，处理语音识别、语音合成和音频处理任务"""
-    
+
     def __init__(self) -> None:
         self.is_initialized = False
         self.demo_mode = is_demo_mode
         logger.info(f"AudioService initialized in {'demo' if self.demo_mode else 'normal'} mode"):
+
+
 sync def initialize(self):
         """初始化音频服务"""
         if self.is_initialized:
             logger.warning("AudioService is already initialized")
             return
-            
+
         logger.info("Initializing AudioService...")
         # 在这里可以添加实际的音频服务初始化代码
         # 例如：加载语音识别模型、初始化音频设备等
         self.is_initialized = True
         logger.info("✅ AudioService initialized successfully")
-    
+
     async def speech_to_text(self, audio_data: bytes, language: str = "en-US", enhanced_features: bool = False) -> Dict[str, Any]:
         """将音频数据转换为文本"""
         logger.info(f"Converting speech to text (language: {language})")

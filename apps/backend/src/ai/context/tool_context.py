@@ -8,6 +8,7 @@ from .storage.base import ContextType
 
 logger: Any = logging.getLogger(__name__)
 
+
 class ToolCategory:
     """工具分类"""
 
@@ -21,12 +22,15 @@ class ToolCategory:
     self.created_at = datetime.now
 
     def add_sub_category(self, sub_category: 'ToolCategory'):
+
+
 ""添加子分类"""
     self.sub_categories.append(sub_category)
 
     def add_tool(self, tool: 'Tool'):
 ""添加工具"""
     self.tools.append(tool)
+
 
 class Tool:
     """工具定义"""
@@ -41,6 +45,8 @@ class Tool:
     self.created_at = datetime.now
 
     def record_usage(self, usage_record: 'ToolUsageRecord'):
+
+
 ""记录工具使用"""
     self.usage_history.append(usage_record)
     # 更新性能指标
@@ -81,6 +87,7 @@ class ToolPerformanceMetrics:
     # 更新平均执行时间
     self.average_duration = (self.average_duration * (self.total_calls - 1) + usage_record.duration) / self.total_calls
 
+
 class ToolContextManager:
     """工具上下文管理器"""
 
@@ -89,7 +96,8 @@ class ToolContextManager:
     self.categories: Dict[str, ToolCategory] =
     self.tools: Dict[str, Tool] =
 
-    def create_tool_category(self, category_id: str, name: str, description: str = "", parent_id: Optional[str] = None) -> bool:
+    def create_tool_category(self, category_id: str, name: str, description: str = "",
+                             parent_id: Optional[str] = None) -> bool:
     """创建工具分类"""
         try:
 
@@ -112,6 +120,8 @@ class ToolContextManager:
 
             context_id = self.context_manager.create_context(ContextType.TOOL, context_content)
             logger.info(f"Created tool category {category_id} with context {context_id}"):
+
+
 eturn True
         except Exception as e:
 

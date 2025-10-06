@@ -9,6 +9,7 @@ from .storage.base import ContextType
 
 logger: Any = logging.getLogger(__name__)
 
+
 class Message:
     """消息"""
 
@@ -19,6 +20,7 @@ class Message:
     self.timestamp = datetime.now
     self.message_type = message_type
     self.metadata: Dict[str, Any] = {}
+
 
 class Conversation:
     """对话"""
@@ -32,12 +34,15 @@ class Conversation:
     self.context_summary: Optional['ContextSummary'] = None
 
     def add_message(self, message: Message):
+
+
 ""添加消息"""
     self.messages.append(message)
 
     def complete(self):
 ""完成对话"""
     self.end_time = datetime.now
+
 
 class ContextSummary:
     """上下文摘要"""
@@ -48,6 +53,7 @@ class ContextSummary:
     self.intents: List[str] =
     self.sentiment: str = "neutral"
     self.relevance_score: float = 0.0
+
 
 class DialogueContextManager:
     """对话上下文管理器"""
@@ -75,6 +81,8 @@ class DialogueContextManager:
 
             context_id = self.context_manager.create_context(ContextType.DIALOGUE, context_content)
             logger.info(f"Started conversation {conversation_id} with context {context_id}"):
+
+
 eturn True
         except Exception as e:
 

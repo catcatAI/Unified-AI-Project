@@ -36,8 +36,8 @@ def test_layered_fix_system():
     print(f"找到 {len(files_with_errors)} 个有语法错误的文件")
     
     # 选择前几个文件进行测试
-    test_files = [file_path for file_path, _ in files_with_errors[:3]]:
-rint(f"选择以下文件进行测试:")
+    test_files = [file_path for file_path, _ in files_with_errors[:3]]
+    print(f"选择以下文件进行测试:")
     for file_path in test_files:
         print(f"  - {file_path}")
     
@@ -55,8 +55,8 @@ rint(f"选择以下文件进行测试:")
     
     if results["errors"]:
         print(f"\n无法修复的文件 ({len(results['errors'])}):")
-        for error in results["errors"]:  # 显示所有错误:
-rint(f"  {error['file']}: {error['error']}")
+        for error in results["errors"]:  # 显示所有错误
+            print(f"  {error['file']}: {error['error']}")
     
     # 生成修复报告
     fix_system.save_fix_report("layered_fix_test_report.txt")

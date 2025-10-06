@@ -1,7 +1,7 @@
 import random
 import csv
 import json
-import os # Added os module
+import os  # Added os module
 from pathlib import Path
 import argparse
 import hashlib
@@ -17,6 +17,8 @@ def _atomic_write_text(path: Path, content: str) -> None:
 
 
 def generate_problem(max_digits=3, operations=None):
+
+
 ""Generates a random arithmetic problem."""
     if operations is None:
 
@@ -66,29 +68,28 @@ def _sha256_of_file(path: Path) -> str:
 
 def generate_dataset(num_samples, output_dir, filename_prefix="arithmetic", file_format="csv", max_digits=3):
 ""Generates a dataset of arithmetic problems and saves it. Returns metadata dict."""
-    problems =
-    for _ in range(num_samples):
+problems =
+for _ in range(num_samples):
 roblem, answer = generate_problem(max_digits=max_digits)
-    problems.append({"problem": problem, "answer": str(answer)})
+problems.append({"problem": problem, "answer": str(answer)})
 
-    os.makedirs(output_dir, exist_ok=True)
+os.makedirs(output_dir, exist_ok=True)
 
-    metadata = {
+metadata = {
     "filename_prefix": filename_prefix,
     "file_format": file_format,
     "num_samples": num_samples,
     "max_digits": max_digits,
-    }
+}
 
-    if file_format == "csv":
-
+if file_format == "csv":
 
     filepath = Path(output_dir) / f"{filename_prefix}.csv"
     tmp = filepath.with_suffix(filepath.suffix + ".tmp")
     with open(tmp, 'w', newline='', encoding='utf-8') as f:
     writer = csv.DictWriter(f, fieldnames=["problem", "answer"])
-            writer.writeheader
-            writer.writerows(problems)
+    writer.writeheader
+    writer.writerows(problems)
     os.replace(tmp, filepath)
     print(f"Generated {num_samples} samples in {filepath}")
     elif file_format == "json":
@@ -104,22 +105,23 @@ roblem, answer = generate_problem(max_digits=max_digits)
 
     # enrich metadata
     metadata.update({
-    "output_path": str(filepath),
-    "file_size_bytes": filepath.stat.st_size,
-    "sha256": _sha256_of_file(filepath),
-    "created_at": datetime.utcnow.isoformat + "Z",
+        "output_path": str(filepath),
+        "file_size_bytes": filepath.stat.st_size,
+        "sha256": _sha256_of_file(filepath),
+        "created_at": datetime.utcnow.isoformat + "Z",
     })
     return metadata
 
 
-def _write_summary_report(project_root: Path, output_dir: Path, datasets_meta, summary_out: Optional[str] = None) -> Path:
+def _write_summary_report(project_root: Path, output_dir: Path, datasets_meta,
+                          summary_out: Optional[str] = None) -> Path:
     report = {
-    "title": "Arithmetic dataset generation summary",
-    "generated_at": datetime.now(timezone.utc).isoformat.replace("+00:00", "Z"),
-    "project_root": str(project_root),
-    "output_dir": str(output_dir),
-    "total_datasets": len(datasets_meta),
-    "datasets": datasets_meta,
+        "title": "Arithmetic dataset generation summary",
+        "generated_at": datetime.now(timezone.utc).isoformat.replace("+00:00", "Z"),
+        "project_root": str(project_root),
+        "output_dir": str(output_dir),
+        "total_datasets": len(datasets_meta),
+        "datasets": datasets_meta,
     }
     if summary_out:
 
@@ -135,27 +137,33 @@ def _write_summary_report(project_root: Path, output_dir: Path, datasets_meta, s
 
 if __name__ == "__main__":
 
-
-
     parser = argparse.ArgumentParser(description="Generate arithmetic datasets with optional parameters and summary report."):
-arser.add_argument('--mode', choices=['default', 'single'], default='default', help='default: generate train(JSON)+test(CSV); single: generate one dataset by parameters')
-    parser.add_argument('--num-samples', type=int, help='Number of samples to generate (single mode)')
-    parser.add_argument('--file-format', choices=['csv', 'json'], help='Output format (single mode)')
-    parser.add_argument('--filename-prefix', type=str, default='arithmetic', help='Filename prefix (single mode)')
-    parser.add_argument('--output-dir', type=str, help='Output directory; defaults to <project_root>/data/raw_datasets')
-    parser.add_argument('--max-digits', type=int, default=3, help='Max digits for numbers'):
+arser.add_argument(
+    '--mode',
+    choices=[
+        'default',
+        'single'],
+    default='default',
+    help='default: generate train(JSON)+test(CSV); single: generate one dataset by parameters')
+parser.add_argument('--num-samples', type=int, help='Number of samples to generate (single mode)')
+parser.add_argument('--file-format', choices=['csv', 'json'], help='Output format (single mode)')
+parser.add_argument('--filename-prefix', type=str, default='arithmetic', help='Filename prefix (single mode)')
+parser.add_argument('--output-dir', type=str, help='Output directory; defaults to <project_root>/data/raw_datasets')
+parser.add_argument('--max-digits', type=int, default=3, help='Max digits for numbers'):
 arser.add_argument('--seed', type=int, help='Random seed for reproducibility'):
 arser.add_argument('--summary-out', type=str, help='Optional explicit path to write summary JSON')
-    args = parser.parse_args
+args = parser.parse_args
 
-    # Resolve project root robustly by walking up until repo markers are found (keep backward compatibility)
-    script_dir = Path(__file__).resolve.parent
+# Resolve project root robustly by walking up until repo markers are found (keep backward compatibility)
+script_dir = Path(__file__).resolve.parent
 
-    def _find_project_root(start: Path) -> Path:
+
+def _find_project_root(start: Path) -> Path:
     # Identify repository root by presence of typical top-level dirs
-        for p in [start] + list(start.parents):
-f (p / "apps").exists and (p / "training").exists:
+    for p in [start] + list(start.parents):
 
+
+f(p / "apps").exists and (p / "training").exists:
 
     return p
     # Fallback to highest parent
@@ -174,34 +182,34 @@ f args.seed is not None:
     datasets_meta =
 
     if args.mode == 'default':
-    # Backward compatible behavior
+        # Backward compatible behavior
     num_train_samples = 10000
     num_test_samples = 2000
     datasets_meta.append(
-            generate_dataset(num_train_samples,
-                             output_dir=str(output_directory),
-                             filename_prefix="arithmetic_train_dataset",
-                             file_format="json",  # JSON for training:
-ax_digits=args.max_digits)
+        generate_dataset(num_train_samples,
+                         output_dir=str(output_directory),
+                         filename_prefix="arithmetic_train_dataset",
+                         file_format="json",  # JSON for training:
+                         ax_digits=args.max_digits)
     )
     datasets_meta.append(
-            generate_dataset(num_test_samples,
-                             output_dir=str(output_directory),
-                             filename_prefix="arithmetic_test_dataset",
-                             file_format="csv",
-                             max_digits=args.max_digits)
+        generate_dataset(num_test_samples,
+                         output_dir=str(output_directory),
+                         filename_prefix="arithmetic_test_dataset",
+                         file_format="csv",
+                         max_digits=args.max_digits)
     )
     else:
-    # single mode
+        # single mode
         num = args.num_samples if args.num_samples is not None else 1000:
     fmt = args.file_format if args.file_format is not None else 'json':
     prefix = args.filename_prefix
     datasets_meta.append(
-            generate_dataset(num_samples=num,
-                             output_dir=str(output_directory),
-                             filename_prefix=prefix,
-                             file_format=fmt,
-                             max_digits=args.max_digits)
+        generate_dataset(num_samples=num,
+                         output_dir=str(output_directory),
+                         filename_prefix=prefix,
+                         file_format=fmt,
+                         max_digits=args.max_digits)
     )
 
     # Filter out any Nones in case of unsupported format

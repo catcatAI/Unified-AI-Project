@@ -64,7 +64,8 @@ class TestRunner:
 
         try:
             # 运行测试
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd=".")
+            project_root = Path(__file__).parent.parent
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=project_root)
 
             # 解析结果
             test_results = {

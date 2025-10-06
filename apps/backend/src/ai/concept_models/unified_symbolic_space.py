@@ -11,6 +11,7 @@ from enum import Enum
 
 logger: Any = logging.getLogger(__name__)
 
+
 class SymbolType(Enum):
     """符号类型"""
     ENTITY = "entity"
@@ -23,6 +24,7 @@ class SymbolType(Enum):
     FEEDBACK = "feedback"
     UNKNOWN = "unknown"
 
+
 @dataclass
 class Symbol:
     """符号"""
@@ -32,6 +34,7 @@ class Symbol:
     properties: Dict[str, Any]
     last_updated: float
 
+
 @dataclass
 class Relationship:
     """关系"""
@@ -40,6 +43,7 @@ class Relationship:
     target_symbol_id: int
     type: str
     properties: Dict[str, Any]
+
 
 class UnifiedSymbolicSpace:
     """统一符号空间"""
@@ -96,7 +100,7 @@ class UnifiedSymbolicSpace:
 
     conn = sqlite3.connect(self.db_path)
     cursor = conn.cursor
-        props_json = json.dumps(properties) if properties else ''::
+        props_json = json.dumps(properties) if properties else '': :
     try:
     cursor.execute("""
                 _ = INSERT INTO symbols (name, type, properties)
@@ -106,12 +110,12 @@ class UnifiedSymbolicSpace:
             conn.commit
             logger.info(f"Symbol '{name}' added with ID {symbol_id}"):
     return symbol_id
-        except sqlite3.IntegrityError::
+        except sqlite3.IntegrityError: :
             logger.warning(f"Symbol '{name}' already exists. Updating properties.")
             # 更新现有符号
-            if properties::
+            if properties: :
     current_symbol = await self.get_symbol_by_name(name)
-                if current_symbol::
+                if current_symbol: :
     current_props = current_symbol.properties
                     current_props.update(properties)
                     props_json = json.dumps(current_props)

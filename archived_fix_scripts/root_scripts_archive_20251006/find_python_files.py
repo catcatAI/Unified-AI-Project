@@ -7,8 +7,8 @@ def find_python_files(root_path):
     
     for root, dirs, files in os.walk(root_path):
         # 跳过一些不需要检查的目录
-        dirs[:] = [d for d in dirs if d not in ['__pycache__', '.git', 'node_modules', 'venv']]:
-or file in files:
+        dirs[:] = [d for d in dirs if d not in ['__pycache__', '.git', 'node_modules', 'venv']]
+        for file in files:
             if file.endswith('.py'):
                 python_files.append(os.path.join(root, file))
     
@@ -19,8 +19,8 @@ if __name__ == "__main__":
     python_files = find_python_files(root_path)
     
     print(f"找到 {len(python_files)} 个Python文件:")
-    for file in python_files[:30]:  # 只显示前30个:
-rint(file)
+    for file in python_files[:30]:  # 只显示前30个
+        print(file)
     
     if len(python_files) > 30:
         print(f"... 还有 {len(python_files) - 30} 个文件")

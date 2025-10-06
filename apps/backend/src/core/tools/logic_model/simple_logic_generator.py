@@ -2,7 +2,9 @@ import json
 import random
 import os
 
+
 def generate_simple_logic_dataset(num_samples=1000):
+
 ""
     Generate a simple logic dataset with basic propositions.:
 ""
@@ -26,7 +28,6 @@ def generate_simple_logic_dataset(num_samples=1000):
             prop = f"{left} {op} {right}"
 
             if op == "AND":
-
 
     answer = (left == "true") and (right == "true")
             else:  # OR

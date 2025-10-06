@@ -1,6 +1,7 @@
 import pandas as pd
 from typing import Dict, Any, Optional
 
+
 class CsvTool:
     """
     A tool for performing basic analysis on CSV data.:
@@ -17,8 +18,8 @@ class CsvTool:
     Analyzes CSV data based on a natural language query.
 
     Args:
-            _ = csv_content (str) The content of the CSV file as a string.
-            _ = query (str) The analysis query (e.g., "summarize", "show columns").
+            _ = csv_content(str) The content of the CSV file as a string.
+            _ = query(str) The analysis query(e.g., "summarize", "show columns").
 
     Returns: Dict[...] A dictionary containing the analysis result.
     """

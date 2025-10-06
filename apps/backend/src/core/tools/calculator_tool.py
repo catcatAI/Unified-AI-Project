@@ -12,21 +12,26 @@ operators = {
     ast.USub: op.neg
 }
 
+
 def eval_expr(expr):
     """
     Safely evaluates a mathematical expression.
     """
     return eval_(ast.parse(expr, mode='eval').body)
 
+
 def eval_(node):
-    if isinstance(node, ast.Num): # <number>:
+    if isinstance(node, ast.Num):  # <number>:
+
+
 eturn node.n
-    elif isinstance(node, ast.BinOp): # <left> <operator> <right>:
+elif isinstance(node, ast.BinOp):  # <left> <operator> <right>:
 eturn operators[type(node.op)](eval_(node.left), eval_(node.right))
-    elif isinstance(node, ast.UnaryOp): # <operator> <operand> e.g., -1:
+elif isinstance(node, ast.UnaryOp):  # <operator> <operand> e.g., -1:
 eturn operators[type(node.op)](eval_(node.operand))
-    else:
-        raise TypeError(node)
+else:
+    raise TypeError(node)
+
 
 def calculate(expression):
     """

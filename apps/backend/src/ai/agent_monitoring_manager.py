@@ -16,6 +16,7 @@ from apps.backend.src.core.hsp.connector import HSPConnector
 
 logger: Any = logging.getLogger(__name__)
 
+
 class AgentStatus(Enum):
     UNKNOWN = "unknown"
     STARTING = "starting"
@@ -24,6 +25,7 @@ class AgentStatus(Enum):
     STOPPING = "stopping"
     STOPPED = "stopped"
     ERROR = "error"
+
 
 @dataclass
 class AgentHealthReport:
@@ -39,6 +41,7 @@ class AgentHealthReport:
     response_time_ms: Optional[float] = None
     task_count: int = 0
     success_rate: float = 1.0  # Percentage of successful tasks
+
 
 class AgentMonitoringManager:
     """

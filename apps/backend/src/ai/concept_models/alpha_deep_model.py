@@ -29,7 +29,10 @@ import torch.optim as optim
 
 logger: Any = logging.getLogger(__name__)
 
+
 class CompressionAlgorithm(Enum):
+
+
 ""支持的壓縮算法"""
     ZLIB = "zlib"
     BZ2 = "bz2"

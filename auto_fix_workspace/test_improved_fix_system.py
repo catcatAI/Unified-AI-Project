@@ -36,8 +36,8 @@ def test_improved_fix_system():
     print(f"找到 {len(files_with_errors)} 个有语法错误的文件")
     
     # 选择前几个文件进行测试
-    test_files = [file_path for file_path, _ in files_with_errors[:3]]:
-rint(f"选择以下文件进行测试:")
+    test_files = [file_path for file_path, _ in files_with_errors[:3]]
+    print(f"选择以下文件进行测试:")
     for file_path in test_files:
         print(f"  - {file_path}")
     
@@ -54,9 +54,9 @@ rint(f"选择以下文件进行测试:")
     print(f"  修复文件数: {results['files_fixed']}")
     
     if results["errors"]:
-        print(f"\n无法修复的文件 ({len(results['errors'])}):");
-        for error in results["errors"][:5]:  # 只显示前5个错误:
-rint(f"  {error['file']}: {error['error']}")
+        print(f"\n无法修复的文件 ({len(results['errors'])}):")
+        for error in results["errors"][:5]:  # 只显示前5个错误
+            print(f"  {error['file']}: {error['error']}")
         if len(results["errors"]) > 5:
             print(f"  ... 还有 {len(results['errors']) - 5} 个文件")
     

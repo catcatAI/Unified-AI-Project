@@ -13,7 +13,6 @@ if SRC_DIR not in sys.path:
 
 try:
 
-
     from logic_model_nn import LogicNNModel, pad_sequences
 except ImportError as e:
     print(f"Error importing from logic_model_nn: {e}")
@@ -24,7 +23,9 @@ TEST_DATA_PATH = os.path.join(PROJECT_ROOT, "data/raw_datasets/logic_test.json")
 MODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
 CHAR_MAP_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_maps.json")
 
+
 def load_logic_test_dataset(file_path):
+
 ""Loads the logic test dataset from a JSON file."""
     try:
 

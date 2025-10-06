@@ -22,6 +22,7 @@ try:
     # 尝试创建统一控制中心的模拟实现
     class UnifiedControlCenter:
     """统一控制中心模拟实现"""
+
         def __init__(self, config) -> None:
             self.config = config
             self.initialized = False

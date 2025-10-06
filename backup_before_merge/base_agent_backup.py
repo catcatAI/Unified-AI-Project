@@ -1,3 +1,4 @@
+from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 import asyncio
 import logging
 import uuid
@@ -10,9 +11,9 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # 使用绝对导入路径
-from apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
+
 
 class BaseAgent:
     """
@@ -20,6 +21,7 @@ class BaseAgent:
     Handles the boilerplate of service initialization, HSP connection,
     and listening for tasks.
     """
+
     def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]], agent_name: str = "BaseAgent") -> None:
     """
     Initializes the BaseAgent.
@@ -42,11 +44,11 @@ class BaseAgent:
     from apps.backend.src.core_services import initialize_services
 
     # Initialize core services required by the agent
-        # Construct a minimal config for initialize_services
+       # Construct a minimal config for initialize_services
     # This is needed because initialize_services now requires a config dict
     # and BaseAgent might not have a full one.
     minimal_config = {
-            "is_multiprocess": False,
+        "is_multiprocess": False,
             "mcp": {
                 "mqtt_broker_address": "localhost",
                 "mqtt_broker_port": 1883,
@@ -56,11 +58,11 @@ class BaseAgent:
     }
 
     await initialize_services(
-            config=minimal_config, # Pass the constructed config
-            ai_id=self.agent_id,
-            use_mock_ham=True, # Sub-agents typically don't need their own large memory
-            llm_config=None, # Sub-agents use specific tools, may not need a full LLM
-            operational_configs=None
+        config=minimal_config,  # Pass the constructed config
+        ai_id=self.agent_id,
+        use_mock_ham=True,  # Sub-agents typically don't need their own large memory
+        llm_config=None,  # Sub-agents use specific tools, may not need a full LLM
+        operational_configs=None
     )
 
     # 延迟导入以避免循环导入
@@ -78,14 +80,14 @@ class BaseAgent:
     # Perform async initialization
     await self._ainit()
 
-        if not self.hsp_connector:
+       if not self.hsp_connector:
             logger.error(f"[{self.agent_id}] Error: HSPConnector not available.")
             return
 
     logger.info(f"[{self.agent_id}] Starting...")
 
     # Register the task request handler
-        if self.hsp_connector:
+       if self.hsp_connector:
             self.hsp_connector.register_on_task_request_callback(self.handle_task_request)
 
     # Advertise capabilities
@@ -115,7 +117,7 @@ class BaseAgent:
         A basic health check for the agent.
         Subclasses can override this for more specific health checks.
     """
-        if not self.is_running:
+       if not self.is_running:
             return False
         if not self.hsp_connector:
             return False
@@ -126,46 +128,47 @@ class BaseAgent:
         The primary handler for incoming HSP task requests.
     This method should be overridden by subclasses to implement specific logic.
     """
-        logger.info(f"[{self.agent_id}] Received task request: {task_payload.get('request_id')} for capability '{task_payload.get('capability_id_filter')}' from '{sender_ai_id}'.")
+       logger.info(f"[{self.agent_id}] Received task request: {task_payload.get('request_id')} for capability '{task_payload.get('capability_id_filter')}' from '{sender_ai_id}'.")
 
     # Default behavior Acknowledge and report not implemented
     result_payload = HSPTaskResultPayload(
-            request_id=task_payload.get("request_id", ""),
-            executing_ai_id=self.agent_id,
-            status="failure",
-            error_details={
+        request_id=task_payload.get("request_id", ""),
+        executing_ai_id=self.agent_id,
+        status="failure",
+        error_details={
                 "error_code": "NOT_IMPLEMENTED",
                 "error_message": f"The '{self.__class__.__name__}' has not implemented the 'handle_task_request' method."
             }
     )
 
     callback_address = task_payload.get("callback_address")
-        if self.hsp_connector and callback_address:
+       if self.hsp_connector and callback_address:
             await self.hsp_connector.send_task_result(result_payload, callback_address, task_payload.get("request_id"))
             logger.warning(f"[{self.agent_id}] Sent NOT_IMPLEMENTED failure response to {callback_address}")
 
     async def send_task_success(self, request_id: str, sender_ai_id: str, callback_address: str, payload: Any)
     result_payload = HSPTaskResultPayload(
-            request_id=request_id,
-            executing_ai_id=self.agent_id,
-            status="success",
-            payload=payload
+        request_id=request_id,
+        executing_ai_id=self.agent_id,
+        status="success",
+        payload=payload
     )
-        if self.hsp_connector:
+       if self.hsp_connector:
             await self.hsp_connector.send_task_result(result_payload, callback_address, request_id)
 
     async def send_task_failure(self, request_id: str, sender_ai_id: str, callback_address: str, error_message: str)
     result_payload = HSPTaskResultPayload(
-            request_id=request_id,
-            executing_ai_id=self.agent_id,
-            status="failure",
-            error_details={
+        request_id=request_id,
+        executing_ai_id=self.agent_id,
+        status="failure",
+        error_details={
                 "error_code": "TASK_EXECUTION_FAILED",
                 "error_message": error_message
             }
     )
-        if self.hsp_connector:
+       if self.hsp_connector:
             await self.hsp_connector.send_task_result(result_payload, callback_address, request_id)
+
 
 if __name__ == '__main__':
     # Example of how a BaseAgent could be run.
@@ -175,7 +178,7 @@ if __name__ == '__main__':
 
     # Example capability
     test_capability = {
-            "capability_id": f"{agent_id}_echo_v1.0",
+        "capability_id": f"{agent_id}_echo_v1.0",
             "name": "Base Echo Service",
             "description": "A test echo service from a base agent.",
             "version": "1.0",

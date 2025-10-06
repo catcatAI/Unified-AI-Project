@@ -15,8 +15,10 @@ import yaml
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+
 class DependencyStatus:
     """Tracks the status of a dependency."""
+
     def __init__(self, name: str, is_available: bool = False, error: Optional[str] = None,
                  fallback_available: bool = False, fallback_name: Optional[str] = None):
         self.name = name
@@ -30,7 +32,9 @@ class DependencyStatus:
 
 class DependencyManager:
     """Centralized dependency management system with lazy loading.""":
-ef __init__(self, config_path: Optional[str] = None) -> None:
+
+
+ef __init__(self, config_path: Optional[str]=None) -> None:
         self._dependencies: Dict[str, DependencyStatus] = {}
         self._config: Dict[str, Any] = {}
         self._environment = os.getenv('UNIFIED_AI_ENV', 'development')

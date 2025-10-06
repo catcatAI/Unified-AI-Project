@@ -8,6 +8,7 @@ from .storage.base import ContextType
 
 logger: Any = logging.getLogger(__name__)
 
+
 class Memory:
     """记忆"""
 
@@ -22,6 +23,7 @@ class Memory:
     self.metadata: Dict[str, Any] = {}
 
     def access(self):
+
 ""访问记忆"""
     self.last_accessed = datetime.now
     self.access_count += 1

@@ -20,8 +20,8 @@ def check_project_syntax(root_path, max_checks=50):
     
     for root, dirs, files in os.walk(root_path):
         # 跳过一些不需要检查的目录
-        dirs[:] = [d for d in dirs if d not in ['__pycache__', '.git', 'node_modules', 'venv', 'backup_modules']]:
-or file in files:
+        dirs[:] = [d for d in dirs if d not in ['__pycache__', '.git', 'node_modules', 'venv', 'backup_modules']]
+        for file in files:
             if file.endswith('.py'):
                 file_path = os.path.join(root, file)
                 is_valid, error = check_syntax(file_path)

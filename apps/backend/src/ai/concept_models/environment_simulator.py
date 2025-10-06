@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 logger: Any = logging.getLogger(__name__)
 
+
 @dataclass
 class State:
     """环境状态"""
@@ -21,11 +22,13 @@ class State:
     variables: Dict[str, Any]
     last_action: Optional[str] = None
 
+
 @dataclass
 class Action:
     """动作"""
     name: str
     parameters: Dict[str, Any]
+
 
 @dataclass
 class Scenario:
@@ -33,6 +36,7 @@ class Scenario:
     type: str  # 'most_likely', 'optimistic', 'pessimistic'
     probability: float
     state: State
+
 
 class StatePredictor:
     """状态预测器"""
@@ -47,6 +51,7 @@ class StatePredictor:
     self.is_trained = False  # 标记模型是否已训练
 
     def _build_model(self):
+
 ""构建神经网络模型"""
     # 简单的全连接网络用于状态预测
     model = nn.Sequential(

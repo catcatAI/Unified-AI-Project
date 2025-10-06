@@ -24,6 +24,8 @@ logger: Any = logging.getLogger(__name__)
 
 
 class DetectionType(Enum):
+
+
 ""檢測類型"""
     DEADLOCK = "deadlock"
     INFINITE_LOOP = "infinite_loop"

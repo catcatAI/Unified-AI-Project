@@ -17,6 +17,7 @@ except ImportError:
 
 from typing import List, Tuple, Optional
 
+
 class GenesisManager:
     """
     Manages the creation and recovery of the AI's core identity components
@@ -95,7 +96,7 @@ eturn None
             secret: The recovered genesis secret.
 
     Returns:
-            A tuple (UID, HAM_KEY), or None if parsing fails.:
+            A tuple(UID, HAM_KEY), or None if parsing fails.:
 ""
     parts = secret.split(':', 1)
         if len(parts) == 2 and parts[0].startswith("uid_"):
@@ -112,16 +113,16 @@ f SecretSharer is None:
     print("--- GenesisManager Test ---")
 
     # 1. Create a new genesis secret
-    genesis_secret, uid = GenesisManager.create_genesis_secret
+    genesis_secret, uid=GenesisManager.create_genesis_secret
     print(f"Generated UID: {uid}")
     print(f"Generated Genesis Secret: {genesis_secret}")
     assert genesis_secret.startswith(uid)
 
     # 2. Split the secret into shards
-    shards = GenesisManager.split_secret_into_shards(genesis_secret)
+    shards=GenesisManager.split_secret_into_shards(genesis_secret)
     print(f"\nGenerated 3 Shards (any 2 are needed)")
     for i, shard in enumerate(shards):
-rint(f"  Shard {i+1}: {shard}")
+rint(f"  Shard {i + 1}: {shard}")
     assert len(shards) == 3
 
     # 3. Test recovery from different combinations of shards
@@ -159,7 +160,7 @@ ssert recovered_one is None
     parsed_result = GenesisManager.parse_genesis_secret(recovered12)
         if parsed_result is not None:
 
-    parsed_uid, parsed_key = parsed_result
+    parsed_uid, parsed_key=parsed_result
             print(f"Parsed UID: {parsed_uid}")
             print(f"Parsed Key: {parsed_key}")
             assert parsed_uid == uid

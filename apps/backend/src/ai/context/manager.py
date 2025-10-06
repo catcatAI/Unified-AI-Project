@@ -10,6 +10,7 @@ from .storage.disk import DiskStorage
 
 logger: Any = logging.getLogger(__name__)
 
+
 class ContextManager:
     """上下文管理器核心类"""
 
@@ -30,7 +31,7 @@ class ContextManager:
             context = Context(context_id, context_type)
 
             # 如果提供了初始内容，更新上下文
-            if initial_content::
+            if initial_content: :
     context.update_content(initial_content)
 
             # 保存到内存存储

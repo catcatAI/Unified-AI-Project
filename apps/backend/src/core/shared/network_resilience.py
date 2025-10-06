@@ -4,13 +4,16 @@ import logging
 
 logger: Any = logging.getLogger(__name__)
 
+
 class NetworkError(Exception):
     """Indicates a network-related failure that might be transient."""
     pass
 
+
 class ProtocolError(Exception):
     """Indicates a protocol-level error that is likely not transient."""
     pass
+
 
 class RetryPolicy:
     """實現帶有指數退避和最大嘗試次數的重試策略。"""
@@ -27,17 +30,25 @@ class RetryPolicy:
                     return await func(*args, **kwargs)
                 except NetworkError as e:
                     delay = min(self.max_delay, self.backoff_factor ** attempt)
-                    logger.warning(f"Attempt {attempt + 1}/{self.max_attempts}: Network error during {func.__name__}. Retrying in {delay:.2f}s... Error: {e}")
+                    logger.warning(
+                        f"Attempt {
+                            attempt + 1}/{
+                            self.max_attempts}: Network error during {
+                            func.__name__}. Retrying in {
+                            delay:.2f}s... Error: {e}")
                     _ = await asyncio.sleep(delay)
                 except ProtocolError:
                     logger.error(f"Protocol error during {func.__name__}. Not retrying.")
-                    raise # Re-raise non-retryable errors immediately
+                    raise  # Re-raise non-retryable errors immediately
                 except Exception as e:
                     logger.error(f"Unexpected error during {func.__name__}: {e}. Not retrying.")
                     raise
             logger.error(f"Max retries exceeded for {func.__name__}."):
+
+
 aise NetworkError(f"Operation failed after {self.max_attempts} attempts due to network issues.")
-        return wrapper
+return wrapper
+
 
 class CircuitBreaker:
     """實現熔斷模式以防止重複訪問失敗的服務。"""
@@ -47,7 +58,7 @@ class CircuitBreaker:
         self.recovery_timeout = recovery_timeout
         self.failures = 0
         self.last_failure_time = 0
-        self.state = "CLOSED" # CLOSED, OPEN, HALF_OPEN
+        self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def __call__(self, func: Callable) -> Callable:
@@ -65,7 +76,7 @@ class CircuitBreaker:
                 return result
             except Exception as e:
                 self._fail
-                raise # Re-raise original exception
+                raise  # Re-raise original exception
 
         return wrapper
 
@@ -80,7 +91,10 @@ class CircuitBreaker:
         self.last_failure_time = time.time
         if self.failures >= self.failure_threshold:
             self.state = "OPEN"
-            self.logger.warning(f"Circuit Breaker: Failure threshold reached ({self.failures} failures). State changed to OPEN.")
+            self.logger.warning(
+                f"Circuit Breaker: Failure threshold reached ({
+                    self.failures} failures). State changed to OPEN.")
+
 
 class CircuitBreakerOpenError(Exception):
     """Exception raised when the circuit breaker is open."""

@@ -3,11 +3,14 @@ from bs4 import BeautifulSoup
 import yaml
 import os
 
+
 class WebSearchTool:
     def __init__(self) -> None:
     self._load_config
 
     def _load_config(self):
+
+
 onfig_path = os.path.join(os.path.dirname(__file__), '..', 'configs', 'system_config.yaml')
         try:
 

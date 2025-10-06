@@ -16,11 +16,12 @@ from pathlib import Path
 from typing import List, Dict
 from collections import defaultdict
 
+
 class TestSuiteOptimizer:
     def __init__(self, project_root: str) -> None:
         self.project_root = Path(project_root)
         self.tests_dir = self.project_root / "apps" / "backend" / "tests"
-        
+
     def find_test_files(self) -> List[Path]:
         """Find all test files in the project."""
         test_files = []
@@ -29,26 +30,28 @@ class TestSuiteOptimizer:
                 if file.startswith('test_') and file.endswith('.py'):
                     _ = test_files.append(Path(root) / file)
         return test_files
-    
+
     def extract_test_functions(self, file_path: Path) -> List[Dict]:
         """Extract test functions from a test file with their details.""":
+
+
 ry:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
+
             tree = ast.parse(content)
             test_functions = []
-            
+
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
                     # Get function line number
                     line_no = node.lineno
-                    
+
                     # Get function code
                     lines = content.split('\n')
                     func_lines = []
                     indent_level = None
-                    
+
                     for i in range(line_no - 1, len(lines)):
                         line = lines[i]
                         if line.strip() == '':
@@ -63,16 +66,16 @@ ry:
                         else:
                             # End of function
                             break
-                    
+
                     func_code = '\n'.join(func_lines)
-                    
+
                     test_functions.append({
                         "name": node.name,
                         "line_no": line_no,
                         "code": func_code,
                         "file": str(file_path.relative_to(self.tests_dir))
                     })
-            
+
             return test_functions
         except Exception as e:
             _ = print(f"Error parsing {file_path}: {e}")

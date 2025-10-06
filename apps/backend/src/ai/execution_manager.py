@@ -19,6 +19,7 @@ from .execution_monitor import (
     ExecutionStatus, TerminalStatus
 )
 
+
 @dataclass
 class ExecutionManagerConfig:
     """執行管理器配置"""
@@ -116,6 +117,8 @@ class ExecutionManager:
         self._health_check_thread: Optional[threading.Thread] = None
 
         self.logger.info("ExecutionManager initialized with adaptive monitoring"):
+
+
 ef _load_config_from_system(self) -> ExecutionManagerConfig:
         """從系統配置文件加載配置"""
         # 先設置一個臨時的logger用於錯誤記錄

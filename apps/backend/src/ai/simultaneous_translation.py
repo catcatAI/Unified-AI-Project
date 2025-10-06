@@ -18,7 +18,8 @@ his can be swapped out later.
         self.default_target_lang = default_target_lang
         self.latency_ms = max(0, latency_ms)
 
-    def translate(self, text: str, source_lang: str = "auto", target_lang: Optional[str] = None) -> Dict[str, Union[str, float, int]]:
+    def translate(self, text: str, source_lang: str = "auto",
+                  target_lang: Optional[str] = None) -> Dict[str, Union[str, float, int]]:
         """
         Synchronously "translates" text. In this mock, we simply echo the text.
 
@@ -36,7 +37,8 @@ his can be swapped out later.
             "latency_ms": self.latency_ms,
         }
 
-    def stream_translate(self, chunks: Union[List[str], Tuple[str, ...]], source_lang: str = "auto", target_lang: Optional[str] = None) -> Iterator[Dict[str, Union[str, float, int, bool]]]:
+    def stream_translate(self, chunks: Union[List[str], Tuple[str, ...]], source_lang: str = "auto",
+                         target_lang: Optional[str] = None) -> Iterator[Dict[str, Union[str, float, int, bool]]]:
         """
         Generator that yields partial translation results per chunk.
         This mock yields the chunk as "translated" text without modification.

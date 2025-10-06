@@ -10,12 +10,14 @@ from typing import List, Dict, Any, Optional
 # 修复导入路径 - 使用绝对导入而不是相对导入
 from apps.backend.src.ai.symbolic_space.unified_symbolic_space import UnifiedSymbolicSpace
 
+
 class CompressionAlgorithm(Enum):
     """Compression algorithms supported by the model."""
     ZLIB = "zlib"
     BZ2 = "bz2"
     LZMA = "lzma"
     MSGPACK_ONLY = "msgpack_only"
+
 
 @dataclass
 class HAMGist:
@@ -24,33 +26,37 @@ class HAMGist:
     keywords: List[str]
     original_length: int
 
+
 @dataclass
 class RelationalContext:
     """Represents the structured relationships between entities."""
     entities: List[str]
-    relationships: List[Dict[str, Any]] # e.g., {"subject": "A", "verb" "likes", "object" "B"}
+    relationships: List[Dict[str, Any]]  # e.g., {"subject": "A", "verb" "likes", "object" "B"}
+
 
 @dataclass
 class Modalities:
-    """Represents data from different modalities, designed for extensibility."""::
+    """Represents data from different modalities, designed for extensibility.""": :
     text_confidence: float
     audio_features: Optional[Dict[str, Any]] = None
     image_features: Optional[Dict[str, Any]] = None
 
+
 @dataclass
 class DeepParameter:
-    """The main input structure for the AlphaDeepModel, combining various contexts."""::
+    """The main input structure for the AlphaDeepModel, combining various contexts.""": :
     source_memory_id: str
     timestamp: str
     base_gist: HAMGist
     relational_context: RelationalContext
     modalities: Modalities
-    action_feedback: Optional[Dict[str, Any]] = None # New field for feedback loop:
+    action_feedback: Optional[Dict[str, Any]] = None  # New field for feedback loop:
     dna_chain_id: Optional[str] = None  # DNA衍生数据链ID
 
     def to_dict(self) -> Dict[str, Any]:
-        """Converts the dataclass instance to a dictionary for serialization."""::
+        """Converts the dataclass instance to a dictionary for serialization.""": :
     return asdict(self)
+
 
 class DNADataChain:
     """DNA衍生数据链结构，用于组织相关记忆"""
@@ -63,12 +69,12 @@ class DNADataChain:
 
     def add_node(self, memory_id: str):
     """Add a memory node to the chain."""
-        if memory_id not in self.nodes::
+        if memory_id not in self.nodes: :
     self.nodes.append(memory_id)
 
     def create_branch(self, branch_id: str, from_node: str) -> 'DNADataChain':
     """Create a branch from a specific node."""
-        if from_node not in self.nodes::
+        if from_node not in self.nodes: :
     raise ValueError(f"Node {from_node} not found in chain")
 
     branch = DNADataChain(branch_id)
@@ -79,17 +85,18 @@ class DNADataChain:
 
     def merge_chain(self, other_chain: 'DNADataChain', at_node: str) -> bool:
     """Merge another chain at a specific node."""
-        if at_node not in self.nodes::
+        if at_node not in self.nodes: :
     return False
 
     # Add nodes from other chain
-        for node in other_chain.nodes::
-    if node not in self.nodes::
+        for node in other_chain.nodes: :
+    if node not in self.nodes: :
     self.nodes.append(node)
 
     # Merge branches
     self.branches.update(other_chain.branches)
     return True
+
 
 class AlphaDeepModel:
     """
@@ -111,37 +118,44 @@ class AlphaDeepModel:
     based on new DeepParameters and optional feedback.
     """
     print(f"Learning from deep parameter: {deep_parameter.source_memory_id}")
-        if feedback::
+        if feedback: :
     print(f"Received feedback: {feedback}")
 
     # 1. Update symbolic space based on deep_parameter
     # Ensure the main memory symbol exists or create it
     memory_symbol = self.symbolic_space.get_symbol(deep_parameter.source_memory_id)
-        if not memory_symbol::
+        if not memory_symbol: :
     self.symbolic_space.add_symbol(deep_parameter.source_memory_id, 'Memory', {'timestamp': deep_parameter.timestamp})
         else:
 
-            self.symbolic_space.update_symbol(deep_parameter.source_memory_id, properties={'timestamp': deep_parameter.timestamp})
+            self.symbolic_space.update_symbol(
+    deep_parameter.source_memory_id, properties={
+        'timestamp': deep_parameter.timestamp})
 
     # Add or update gist as a symbol and relate it to the memory
     gist_symbol_name = deep_parameter.base_gist.summary
-    self.symbolic_space.add_symbol(gist_symbol_name, 'Gist', {'keywords': deep_parameter.base_gist.keywords, 'original_length': deep_parameter.base_gist.original_length})
+    self.symbolic_space.add_symbol(
+    gist_symbol_name, 'Gist', {
+        'keywords': deep_parameter.base_gist.keywords, 'original_length': deep_parameter.base_gist.original_length})
     self.symbolic_space.add_relationship(deep_parameter.source_memory_id, gist_symbol_name, 'contains_gist')
 
     # Process relational context
-        for entity in deep_parameter.relational_context.entities::
-    self.symbolic_space.add_symbol(entity, 'Entity') # Ensure entity exists
-        for rel in deep_parameter.relational_context.relationships::
+        for entity in deep_parameter.relational_context.entities: :
+    self.symbolic_space.add_symbol(entity, 'Entity')  # Ensure entity exists
+        for rel in deep_parameter.relational_context.relationships: :
             # Ensure subject and object symbols exist before adding relationship
-            self.symbolic_space.add_symbol(rel['subject'], 'Unknown') # Type can be refined later
-            self.symbolic_space.add_symbol(rel['object'], 'Unknown') # Type can be refined later
+            self.symbolic_space.add_symbol(rel['subject'], 'Unknown')  # Type can be refined later
+            self.symbolic_space.add_symbol(rel['object'], 'Unknown')  # Type can be refined later
             self.symbolic_space.add_relationship(rel['subject'], rel['object'], rel['verb'], rel)
 
     # Process modalities (e.g., add as properties to the memory symbol or create new symbols)
-    self.symbolic_space.update_symbol(deep_parameter.source_memory_id, properties={'modalities': asdict(deep_parameter.modalities)})
+    self.symbolic_space.update_symbol(
+    deep_parameter.source_memory_id, properties={
+        'modalities': asdict(
+            deep_parameter.modalities)})
 
     # 2. Incorporate action feedback into the symbolic space
-        if deep_parameter.action_feedback::
+        if deep_parameter.action_feedback: :
     feedback_id = f"feedback_{deep_parameter.source_memory_id}"
             self.symbolic_space.add_symbol(feedback_id, 'ActionFeedback', deep_parameter.action_feedback)
             self.symbolic_space.add_relationship(deep_parameter.source_memory_id, feedback_id, 'has_feedback')

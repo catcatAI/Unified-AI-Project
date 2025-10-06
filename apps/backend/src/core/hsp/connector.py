@@ -1,32 +1,32 @@
-import json # Added for JSON serialization:
-mport logging # 添加logging模块导入
-import time # 添加time模块导入
-import uuid # 添加uuid模块导入
-from datetime import datetime, timezone # 添加datetime模块导入
-import asyncio # 添加asyncio模块导入
-from typing import Callable, Dict, Any, Optional, List # Added Optional, List
-from typing_extensions import Literal # 添加Literal类型导入
-from .external.external_connector import ExternalConnector
-from .internal.internal_bus import InternalBus
-from .bridge.data_aligner import DataAligner
-from .bridge.message_bridge import MessageBridge
-from unittest.mock import MagicMock, AsyncMock # Added for mock_mode
-# 修复导入路径 - 使用正确的模块路径
-from ..shared.error import HSPConnectionError # 修复相对导入问题
-from ..shared.network_resilience import RetryPolicy, CircuitBreaker, CircuitBreakerOpenError # 添加网络弹性组件
-from .utils.fallback_config_loader import get_config_loader
-from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
-from .security import HSPSecurityManager, HSPSecurityContext # 修复安全模块导入
-from .advanced_performance_optimizer import HSPAdvancedPerformanceOptimizer, HSPAdvancedPerformanceEnhancer # 添加高级性能优化器导入
-from .extensibility import HSPExtensionManager, HSPMessageRegistry # 修复扩展管理器导入
-from .versioning import HSPVersionManager, HSPVersionConverter # 修复版本管理器导入
+import os  # Added this import
+from pathlib import Path
 from ...hsp.types import (  # 从正确的模块导入HSP类型
     HSPMessageEnvelope, HSPFactPayload, HSPTaskRequestPayload,
     HSPTaskResultPayload, HSPCapabilityAdvertisementPayload,
     HSPAcknowledgementPayload, HSPQoSParameters, HSPOpinionPayload
 )
-from pathlib import Path
-import os # Added this import
+from .versioning import HSPVersionManager, HSPVersionConverter  # 修复版本管理器导入
+from .extensibility import HSPExtensionManager, HSPMessageRegistry  # 修复扩展管理器导入
+from .advanced_performance_optimizer import HSPAdvancedPerformanceOptimizer, HSPAdvancedPerformanceEnhancer  # 添加高级性能优化器导入
+from .security import HSPSecurityManager, HSPSecurityContext  # 修复安全模块导入
+from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
+from .utils.fallback_config_loader import get_config_loader
+from ..shared.network_resilience import RetryPolicy, CircuitBreaker, CircuitBreakerOpenError  # 添加网络弹性组件
+from ..shared.error import HSPConnectionError  # 修复相对导入问题
+from unittest.mock import MagicMock, AsyncMock  # Added for mock_mode
+from .bridge.message_bridge import MessageBridge
+from .bridge.data_aligner import DataAligner
+from .internal.internal_bus import InternalBus
+from .external.external_connector import ExternalConnector
+from typing_extensions import Literal  # 添加Literal类型导入
+from typing import Callable, Dict, Any, Optional, List  # Added Optional, List
+import asyncio  # 添加asyncio模块导入
+from datetime import datetime, timezone  # 添加datetime模块导入
+import uuid  # 添加uuid模块导入
+import time  # 添加time模块导入
+import json  # Added for JSON serialization:
+import logging  # 添加logging模块导入
+# 修复导入路径 - 使用正确的模块路径
 
 # 定义logger
 logger: Any = logging.getLogger(__name__)
@@ -34,9 +34,11 @@ logger: Any = logging.getLogger(__name__)
 # Define the base path for schemas, ensuring cross-platform compatibility:
 CHEMA_BASE_PATH = Path(__file__).resolve().parent.parent.parent / "schemas"
 
+
 def get_schema_uri(schema_name: str) -> str:
-    """Constructs a file URI for a given schema name.""":
-chema_path = SCHEMA_BASE_PATH / schema_name
+    """Constructs a file URI for a given schema name."""
+    
+    schema_path = SCHEMA_BASE_PATH / schema_name
     if not schema_path.is_file():
         # Fallback for when running in a different environment (like tests)
         # This makes the path relative to the current working directory
@@ -51,8 +53,10 @@ chema_path = SCHEMA_BASE_PATH / schema_name
             return f"file:///{schema_name}_not_found"
     return schema_path.as_uri()
 
+
 class HSPConnector:
-    def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False, mock_mqtt_client: Optional[MagicMock] = None, internal_bus: Optional[InternalBus] = None, message_bridge: Optional[MessageBridge] = None, enable_fallback: bool = True, **kwargs) -> None:
+    def __init__(self, ai_id: str, broker_address: str, broker_port: int, mock_mode: bool = False,
+                 mock_mqtt_client: Optional[MagicMock] = None, internal_bus: Optional[InternalBus] = None, message_bridge: Optional[MessageBridge] = None, enable_fallback: bool = True, **kwargs) -> None:
         self.ai_id = ai_id
         self.mock_mode = mock_mode
         self.broker_address = broker_address
@@ -96,12 +100,12 @@ class HSPConnector:
             self.logger.info("HSPConnector: Initializing in mock mode.")
             self.logger.debug(f"HSPConnector.__init__ - ai_id: {ai_id}, mock_mode: {mock_mode}")
             self.external_connector = MagicMock(spec=ExternalConnector)
-            self.external_connector.ai_id = ai_id # Ensure mock has ai_id
+            self.external_connector.ai_id = ai_id  # Ensure mock has ai_id
             self.external_connector.connect.return_value = True
             self.external_connector.disconnect.return_value = True
             self.external_connector.subscribe.return_value = True
             self.external_connector.unsubscribe.return_value = True
-            self.external_connector.publish = AsyncMock(return_value=True) # Explicitly set return value for publish
+            self.external_connector.publish = AsyncMock(return_value=True)  # Explicitly set return value for publish
             # Explicitly mock mqtt_client and its publish method
             if mock_mqtt_client:
                 self.external_connector.mqtt_client = mock_mqtt_client
@@ -110,7 +114,7 @@ class HSPConnector:
                 mock_mqtt_client_instance.publish = AsyncMock(return_value=True)
                 self.external_connector.mqtt_client = mock_mqtt_client_instance
 
-            self.is_connected = True # Considered connected in mock mode
+            self.is_connected = True  # Considered connected in mock mode
             self.hsp_available = True  # Mock mode considers HSP available
         else:
             self.external_connector = ExternalConnector(
@@ -118,7 +122,7 @@ class HSPConnector:
                 broker_address=broker_address,
                 broker_port=broker_port,
             )
-            self.is_connected = False # Actual connection status
+            self.is_connected = False  # Actual connection status
             self.hsp_available = False
 
         if internal_bus is None:
@@ -126,7 +130,7 @@ class HSPConnector:
         else:
             self.internal_bus = internal_bus
 
-        self.data_aligner = DataAligner() # DataAligner can be unique per connector
+        self.data_aligner = DataAligner()  # DataAligner can be unique per connector
 
         if message_bridge is None:
             self.message_bridge = MessageBridge(
@@ -138,21 +142,25 @@ class HSPConnector:
             self.message_bridge = message_bridge
 
         # Callbacks for different message types:
-elf._fact_callbacks = []
+        self._fact_callbacks = []
         self._capability_advertisement_callbacks = []
         self._task_request_callbacks = []
         self._task_result_callbacks = []
         self._acknowledgement_callbacks = []  # New for incoming ACKs:
-elf._connect_callbacks = []
+        self._connect_callbacks = []
         self._disconnect_callbacks = []
 
         self._pending_acks: Dict[str, asyncio.Future[Any]] = {}  # New To track messages awaiting ACK
-        self._message_retry_counts: Dict[str, int] = {}  # New To track retry counts for messages:
-elf.ack_timeout_sec = 10 # New Default timeout for ACK:
-elf.max_ack_retries = 3 # New Max retries for messages requiring ACK:
-elf.retry_policy = RetryPolicy(max_attempts=self.max_ack_retries, backoff_factor=2, max_delay=60) # Initialize retry policy
-        self.circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=300) # Initialize circuit breaker
-        self._capability_provider_callback: Optional[Callable[[], List[HSPCapabilityAdvertisementPayload]]] = None # New Callback to get capabilities
+        self._message_retry_counts: Dict[str, int] = {}  # New To track retry counts for messages
+        self.ack_timeout_sec = 10  # New Default timeout for ACK
+        self.max_ack_retries = 3  # New Max retries for messages requiring ACK
+        self.retry_policy = RetryPolicy(
+            max_attempts=self.max_ack_retries,
+            backoff_factor=2,
+            max_delay=60)  # Initialize retry policy
+        self.circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=300)  # Initialize circuit breaker
+        # New Callback to get capabilities
+        self._capability_provider_callback: Optional[Callable[[], List[HSPCapabilityAdvertisementPayload]]] = None
 
         # Initialize fallback protocols if enabled
         # Moved to connect method to ensure event loop is running
@@ -172,10 +180,13 @@ elf.retry_policy = RetryPolicy(max_attempts=self.max_ack_retries, backoff_factor
 
         # Subscribe to internal bus messages that are results from external
         self.internal_bus.subscribe("hsp.external.fact", self._dispatch_fact_to_callbacks_sync)
-        self.internal_bus.subscribe("hsp.external.capability_advertisement", self._dispatch_capability_advertisement_to_callbacks_sync)
+        self.internal_bus.subscribe(
+    "hsp.external.capability_advertisement",
+     self._dispatch_capability_advertisement_to_callbacks_sync)
         self.internal_bus.subscribe("hsp.external.task_request", self._dispatch_task_request_to_callbacks_sync)
         self.internal_bus.subscribe("hsp.external.task_result", self._dispatch_task_result_to_callbacks_sync)
-        self.internal_bus.subscribe("hsp.external.acknowledgement", self._dispatch_acknowledgement_to_callbacks_sync) # New subscription
+        self.internal_bus.subscribe("hsp.external.acknowledgement",
+     self._dispatch_acknowledgement_to_callbacks_sync)  # New subscription
 
     def _handle_internal_message(self, message: Any) -> None:
         """处理内部消息的同步包装器"""
@@ -259,13 +270,13 @@ elf.retry_policy = RetryPolicy(max_attempts=self.max_ack_retries, backoff_factor
     # --- Test compatibility properties ---
     @property
     def default_qos(self):
-        """Default QoS level for test compatibility.""":
-eturn 1
+        """Default QoS level for test compatibility."""
+        return 1
 
     @property
     def mqtt_client(self):
-        """Provides access to the underlying MQTT client for test compatibility.""":
-eturn self.external_connector.mqtt_client
+        """Provides access to the underlying MQTT client for test compatibility."""
+        return self.external_connector.mqtt_client
 
     @mqtt_client.setter
     def mqtt_client(self, value):
@@ -274,8 +285,8 @@ eturn self.external_connector.mqtt_client
 
     @property
     def subscribed_topics(self):
-        """Provides access to subscribed topics for test compatibility.""":
-eturn getattr(self.external_connector, 'subscribed_topics', set())
+        """Provides access to subscribed topics for test compatibility."""
+        return getattr(self.external_connector, 'subscribed_topics', set())
 
     @property
     def on_message(self):
@@ -283,8 +294,8 @@ eturn getattr(self.external_connector, 'subscribed_topics', set())
         # Tests expect signature on_message(client, topic, payload, qos, properties)
         # MessageBridge.handle_external_message expects handle_external_message(topic, message)
         async def test_compatible_on_message(client, topic, payload, qos, properties) -> None:
-            topic_str = topic.decode() if isinstance(topic, (bytes, bytearray)) else topic:
-ayload_str = payload.decode() if isinstance(payload, (bytes, bytearray)) else payload
+            topic_str = topic.decode() if isinstance(topic, (bytes, bytearray)) else topic
+            payload_str = payload.decode() if isinstance(payload, (bytes, bytearray)) else payload
             # 直接调用回调函数而不是创建任务
             if self.external_connector.on_message_callback:
                 _ = await self.external_connector.on_message_callback(topic_str, payload_str)
@@ -329,24 +340,53 @@ ayload_str = payload.decode() if isinstance(payload, (bytes, bytearray)) else pa
 
     # --- Backward compatibility methods ---
     def on_fact_received(self, callback):
-        """Backward compatibility method for registering fact callbacks.""":
-elf.register_on_fact_callback(callback)
+        """Backward compatibility method for registering fact callbacks."""
+        self.register_on_fact_callback(callback)
 
     def on_command_received(self, callback):
-        """Backward compatibility method for registering command callbacks (maps to task_request).""":
-elf.register_on_task_request_callback(callback)
+        """Backward compatibility method for registering command callbacks (maps to task_request)."""
+        self.register_on_task_request_callback(callback)
 
     def on_connect_callback(self, callback):
-        """Backward compatibility method for registering connect callbacks.""":
-elf.register_on_connect_callback(callback)
+        """Backward compatibility method for registering connect callbacks."""
+        self.register_on_connect_callback(callback)
 
     def on_disconnect_callback(self, callback):
-        """Backward compatibility method for registering disconnect callbacks.""":
-elf.register_on_disconnect_callback(callback)
+        """Backward compatibility method for registering disconnect callbacks."""
+        self.register_on_disconnect_callback(callback)
 
     async def mqtt_subscribe(self, topic: str, qos: int = 1):
-        """Direct MQTT subscription for test compatibility.""":
-f self.mock_mode:
+        """Direct MQTT subscription for test compatibility."""
+        if self.mock_mode:
+            # In mock mode, just add to subscribed topics
+            if not hasattr(self.external_connector, 'subscribed_topics'):
+                self.external_connector.subscribed_topics = set()
+            self.external_connector.subscribed_topics.add(topic)
+        else:
+            # In real mode, use the external connector
+            return await self.external_connector.mqtt_subscribe(topic, qos)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        """Direct MQTT subscription for test compatibility."""
+        if self.mock_mode:
             # In mock mode, just add to subscribed topics
             if not hasattr(self.external_connector, 'subscribed_topics'):
                 self.external_connector.subscribed_topics = set()
@@ -443,8 +483,8 @@ f self.mock_mode:
             if http_config.get("enabled", True) and self.fallback_manager:
                 host = http_config.get("host", "127.0.0.1")
                 # Check TESTING env var here as well
-                port = 0 if os.environ.get('TESTING') == 'true' else http_config.get("port", 8765):
-ttp_protocol = HTTPProtocol(host=host, port=port)
+                port = 0 if os.environ.get('TESTING') == 'true' else http_config.get("port", 8765)
+                http_protocol = HTTPProtocol(host=host, port=port)
                 priority = http_config.get("priority", 3)
                 self.fallback_manager.add_protocol(http_protocol, priority=priority)
                 self.logger.debug(f"Added HTTP protocol with priority {priority}")
@@ -452,8 +492,31 @@ ttp_protocol = HTTPProtocol(host=host, port=port)
             # Initialize and start the fallback manager
             if self.fallback_manager:
                 # 修复：确保正确调用initialize和start方法（不是异步方法）
-                if (hasattr(self.fallback_manager, 'initialize') and callable(self.fallback_manager.initialize) and:
-asattr(self.fallback_manager, 'start') and callable(self.fallback_manager.start)):
+                if (hasattr(self.fallback_manager, 'initialize') and 
+                    callable(self.fallback_manager.initialize) and
+                    hasattr(self.fallback_manager, 'start') and 
+                    callable(self.fallback_manager.start)):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    # Continue with the rest of the logic
                     init_result = self.fallback_manager.initialize()
                     if init_result:
                         self.fallback_manager.start()
@@ -466,8 +529,8 @@ asattr(self.fallback_manager, 'start') and callable(self.fallback_manager.start)
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error initializing protocols with config: {e}"):
-eturn False
+            self.logger.error(f"Error initializing protocols with config: {e}")
+            return False
 
     def get_communication_status(self) -> Dict[str, Any]:
         """
@@ -586,40 +649,24 @@ f topic is None:
             return False
 
     async def subscribe_to_facts(self, callback: Callable[..., Any]):
-        """
-        Subscribe to fact messages.
-
-        Args:
-            callback: The callback function to call when a fact message is received.
-        """
-        # Register the callback for fact messages:
-elf.register_on_fact_callback(callback)
+        # Subscribe to fact messages
+        self.register_on_fact_callback(callback)
 
         # Subscribe to the fact topic
         topic = f"hsp/knowledge/facts/#"
         _ = await self.subscribe(topic)
 
     async def subscribe_to_opinions(self, callback: Callable[..., Any]):
-        """
-        Subscribe to opinion messages.
-
-        Args:
-            callback: The callback function to call when an opinion message is received.
-        """
         # Register the callback for opinion messages
-        # Note We'll treat opinions as a special type of fact for now:
-elf.register_on_fact_callback(callback)
+        # Note: We'll treat opinions as a special type of fact for now
+        self.register_on_fact_callback(callback)
 
         # Subscribe to the opinion topic
         topic = f"hsp/knowledge/opinions/#"
         _ = await self.subscribe(topic)
 
     def get_connector_status(self) -> Dict[str, Any]:
-        """
-        Get the connector status.
-
-        Returns: Dict[...] The connector status.
-        """
+        # Get the connector status
         return self.get_communication_status()
 
     async def _dispatch_task_result_to_callbacks(self, message: Dict[str, Any]):
@@ -980,7 +1027,7 @@ sync def send_task_result(self, payload: HSPTaskResultPayload, target_ai_id_or_t
             "payload": dict(payload)
         }
         mqtt_topic = target_ai_id_or_topic if "/" in target_ai_id_or_topic else f"hsp/results/{target_ai_id_or_topic}":
-eturn await self.publish_message(mqtt_topic, envelope, qos)
+return await self.publish_message(mqtt_topic, envelope, qos)
 
     async def publish_capability_advertisement(self, cap_payload: HSPCapabilityAdvertisementPayload, qos: int = 1):
         topic = f"hsp/capabilities/advertisements/{self.ai_id}" # Specific topic for this AI's capabilities:

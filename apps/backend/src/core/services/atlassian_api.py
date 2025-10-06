@@ -17,16 +17,19 @@ logger: Any = logging.getLogger(__name__)
 # 创建路由器
 atlassian_router = APIRouter(prefix="/api/v1/atlassian", tags=["Atlassian"])
 
+
 class AtlassianConfig(BaseModel):
     domain: str
     user_email: str
     api_token: str
     cloud_id: str
 
+
 class ConfluencePageCreate(BaseModel):
     space_key: str
     title: str
     content: str
+
 
 class JiraIssueCreate(BaseModel):
     project_key: str
@@ -34,28 +37,31 @@ class JiraIssueCreate(BaseModel):
     description: Optional[str] = None
     issue_type: str = "Task"
 
+
 class TaskAssignment(BaseModel):
     task_id: str
     agent_id: str
+
 
 # 全局变量存储配置和桥接器实例
 atlassian_config: Optional[AtlassianConfig] = None
 atlassian_bridge: Optional[AtlassianCLIBridge] = None
 enhanced_bridge: Optional[EnhancedAtlassianBridge] = None
 
+
 @atlassian_router.post("/configure")
 async def configure_atlassian(config: AtlassianConfig):
     """配置Atlassian集成"""
     global atlassian_config, atlassian_bridge, enhanced_bridge
-    
+
     try:
         # 保存配置
         atlassian_config = config
-        
+
         # 初始化Atlassian CLI桥接器
         acli_path = os.getenv("ACLIPATH", "acli.exe")
         atlassian_bridge = AtlassianCLIBridge(acli_path=acli_path)
-        
+
         # 初始化增强版桥接器
         # 注意：在实际实现中，这里需要传入一个有效的RovoDevConnector实例
         # 为了简化，我们创建一个基本的连接器
@@ -68,11 +74,12 @@ async def configure_atlassian(config: AtlassianConfig):
             }
         })
         enhanced_bridge = EnhancedAtlassianBridge(rovo_connector)
-        
+
         return {"success": True, "message": "Atlassian integration configured successfully"}
     except Exception as e:
         logger.error(f"Failed to configure Atlassian integration: {e}")
         return {"success": False, "error": str(e)}
+
 
 @atlassian_router.get("/status")
 async def get_atlassian_status():
@@ -86,18 +93,18 @@ async def get_atlassian_status():
                 {"name": "Bitbucket", "status": "disconnected", "lastSync": "Never", "health": 0},
             ]
         }
-    
+
     try:
         # 获取Atlassian CLI状态
         status = atlassian_bridge.get_status
-        
+
         # 构建服务状态
         services = [
-            {"name": "Confluence", "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 95},:
-"name": "Jira", "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 90},:
+            {"name": "Confluence", "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 95}, :
+"name": "Jira", "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 90}, :
 "name": "Bitbucket", "status": "disconnected", "lastSync": "Never", "health": 0},
         ]
-        
+
         return {
             "connected": status["acli_available"],
             "services": services

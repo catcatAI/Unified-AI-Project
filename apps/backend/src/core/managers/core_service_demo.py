@@ -34,40 +34,40 @@ async def main -> None:
     # 注册服务配置
     # 1. 模拟LLM服务
     llm_config = ServiceConfig(
-            name="llm_service",
-            module_path="core_services",
-            class_name="MultiLLMService",
-            dependencies=,
-            lazy_load=True,
-            auto_restart=True,
-            health_check_interval=30.0,
-            config=
+            name = "llm_service",
+            module_path = "core_services",
+            class_name = "MultiLLMService",
+            dependencies = ,
+            lazy_load = True,
+            auto_restart = True,
+            health_check_interval = 30.0,
+            config =
     )
     manager.register_service(llm_config)
 
     # 2. 模拟HAM内存管理器
     ham_config = ServiceConfig(
-            name="ham_manager",
-            module_path="core_services",
-            class_name="HAMMemoryManager",
-            dependencies=,
-            lazy_load=True,
-            auto_restart=True,
-            health_check_interval=60.0,
-            config=
+            name = "ham_manager",
+            module_path = "core_services",
+            class_name = "HAMMemoryManager",
+            dependencies = ,
+            lazy_load = True,
+            auto_restart = True,
+            health_check_interval = 60.0,
+            config =
     )
     manager.register_service(ham_config)
 
     # 3. 模拟HSP连接器
     hsp_config = ServiceConfig(
-            name="hsp_connector",
-            module_path="core_services",
-            class_name="HSPConnector",
-            dependencies=,
-            lazy_load=True,
-            auto_restart=True,
-            health_check_interval=15.0,
-            config={
+            name = "hsp_connector",
+            module_path = "core_services",
+            class_name = "HSPConnector",
+            dependencies = ,
+            lazy_load = True,
+            auto_restart = True,
+            health_check_interval = 15.0,
+            config = {
                 "ai_id": "did:hsp:test_ai_001",
                 "broker_address": "localhost",
                 "broker_port": 1883
@@ -77,27 +77,27 @@ async def main -> None:
 
     # 4. 模拟对话管理器（依赖LLM服务和HSP连接器）
     dialogue_config = ServiceConfig(
-            name="dialogue_manager",
-            module_path="core_services",
-            class_name="DialogueManager",
-            dependencies=["llm_service", "hsp_connector"],
-            lazy_load=True,
-            auto_restart=True,
-            health_check_interval=30.0,
-            config=
+            name = "dialogue_manager",
+            module_path = "core_services",
+            class_name = "DialogueManager",
+            dependencies = ["llm_service", "hsp_connector"],
+            lazy_load = True,
+            auto_restart = True,
+            health_check_interval = 30.0,
+            config =
     )
     manager.register_service(dialogue_config)
 
     # 5. 模拟学习管理器（依赖多个服务）
     learning_config = ServiceConfig(
-            name="learning_manager",
-            module_path="core_services",
-            class_name="LearningManager",
-            dependencies=["llm_service", "ham_manager", "hsp_connector"],
-            lazy_load=True,
-            auto_restart=True,
-            health_check_interval=60.0,
-            config=
+            name = "learning_manager",
+            module_path = "core_services",
+            class_name = "LearningManager",
+            dependencies = ["llm_service", "ham_manager", "hsp_connector"],
+            lazy_load = True,
+            auto_restart = True,
+            health_check_interval = 60.0,
+            config =
     )
     manager.register_service(learning_config)
 

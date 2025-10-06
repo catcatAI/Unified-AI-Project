@@ -16,10 +16,10 @@ _ = os.chdir(project_root)
 if __name__ == "__main__":
     # 运行test_hsp_connector.py中的简单测试
     result = pytest.main([
-        '-v', 
+        '-v',
         '--tb=short',
         'apps/backend/tests/hsp/test_hsp_connector.py::test_hsp_connector_init'
     ])
-    
+
     print(f"\nTest result for test_hsp_connector_init: {result}"):
  = sys.exit(result)

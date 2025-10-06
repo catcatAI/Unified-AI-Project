@@ -22,7 +22,7 @@ from typing import List, Optional, Dict, Any, Tuple
 # Further imports will be added as the class is implemented.
 # For example, datetime for logging timestamps.:
 rom datetime import datetime, timezone
-import copy # For deepcopy
+import copy  # For deepcopy
 
 class AIVirtualInputService:
     """
@@ -30,7 +30,7 @@ class AIVirtualInputService:
     Operates primarily in a simulation mode, with future potential for actual control:
     under strict permissions.
     """
-    def __init__(self, initial_mode: VirtualInputPermissionLevel = "simulation_only") -> None:
+    def __init__(self, initial_mode: VirtualInputPermissionLevel="simulation_only") -> None:
     """
     Initializes the AI Virtual Input Service.
 
@@ -42,7 +42,7 @@ class AIVirtualInputService:
 
     # Virtual cursor position (x_ratio, y_ratio) relative to a 1.0x1.0 abstract window/screen.
     # (0.0, 0.0) is top-left, (1.0, 1.0) is bottom-right.
-    self.virtual_cursor_position: Tuple[float, float] = (0.5, 0.5) # Start at center
+    self.virtual_cursor_position: Tuple[float, float] = (0.5, 0.5)  # Start at center
 
     self.virtual_focused_element_id: Optional[str] = None
     self.action_log: List[Dict[str, Any]] =  # Stores a log of commands processed
@@ -59,7 +59,7 @@ class AIVirtualInputService:
     Args:
     elements: A list of VirtualInputElementDescription representing the new UI state.
     """
-    self.virtual_ui_elements = copy.deepcopy(elements) # Store a copy
+    self.virtual_ui_elements = copy.deepcopy(elements)  # Store a copy
     print(f"AVIS: Virtual UI loaded with {len(self.virtual_ui_elements)} top-level elements."):
 
     def get_current_virtual_ui(self) -> List[VirtualInputElementDescription]:
@@ -69,7 +69,8 @@ class AIVirtualInputService:
     """
     return copy.deepcopy(self.virtual_ui_elements)
 
-    def _find_element_by_id(self, element_id: str, search_list: Optional[List[VirtualInputElementDescription]] = None) -> Optional[VirtualInputElementDescription]:
+    def _find_element_by_id(
+        self, element_id: str, search_list: Optional[List[VirtualInputElementDescription]] = None) -> Optional[VirtualInputElementDescription]:
     """
         Recursively searches for an element by its ID within a list of elements:
 and their children).
@@ -95,7 +96,7 @@ and their children).
 
     return element
             children = element.get("children")
-            if children: # If it's a list and not None:
+            if children:  # If it's a list and not None:
 ound_in_children = self._find_element_by_id(element_id, children)
                 if found_in_children:
 

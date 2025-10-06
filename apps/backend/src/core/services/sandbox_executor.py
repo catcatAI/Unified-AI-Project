@@ -2,9 +2,9 @@ import json
 import os
 import subprocess
 import tempfile
-import traceback # For the runner script's exception formatting
+import traceback  # For the runner script's exception formatting
 from typing import Tuple, Optional, Dict, Any
-import sys # For sys.executable
+import sys  # For sys.executable
 
 # 整合執行監控系統
 try:
@@ -36,7 +36,12 @@ utput = {"result": None, "error": None, "traceback": None}
 
         if len(sys.argv) != 5:
             # Use proper f-string formatting here
-            raise ValueError(f"Runner script expects 4 arguments: tool_module_path, class_name, method_name, params_json_string. Got: {len(sys.argv)-1} args: {sys.argv}")
+            raise ValueError(
+    f"Runner script expects 4 arguments: tool_module_path, class_name, method_name, params_json_string. Got: {
+        len(
+            sys.argv)-
+            1} args: {
+                sys.argv}")
 
 tool_module_path = sys.argv[1]
     class_name_to_run = sys.argv[2]
@@ -123,6 +128,8 @@ using a separate subprocess.
     """
 
     def __init__(self, timeout_seconds: int = DEFAULT_SANDBOX_TIMEOUT, use_execution_monitoring: bool = True) -> None:
+
+
 self.timeout_seconds = timeout_seconds
 self.use_execution_monitoring = use_execution_monitoring and EXECUTION_MONITORING_AVAILABLE
 

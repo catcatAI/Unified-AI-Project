@@ -54,7 +54,6 @@ class TestReportGenerator:
 
         try:
 
-
             with open(output_file, "w", encoding="utf-8") as f:
     f.write(html_content)
             logger.info(f"HTML report generated: {output_file}")

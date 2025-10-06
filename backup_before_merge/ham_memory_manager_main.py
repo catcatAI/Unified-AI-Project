@@ -21,6 +21,7 @@ from .types import MemoryType
 
 logger = logging.getLogger(__name__)
 
+
 class HAMMemoryManager:
     """
     Manages the AI's Hierarchical Associative Memory system.
@@ -70,7 +71,8 @@ class HAMMemoryManager:
         else:
 
             logger.critical("MIKO_HAM_KEY environment variable not set.")
-            logger.warning("Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
+            logger.warning(
+                "Encryption/Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
     logger.warning("DO NOT use this for any real data you want to keep, as it will be lost.")
     self.fernet_key = Fernet.generate_key
             logger.info(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode}")

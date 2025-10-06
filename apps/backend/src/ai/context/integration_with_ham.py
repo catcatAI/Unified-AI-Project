@@ -14,13 +14,14 @@ from .memory_context import MemoryContextManager
 
 logger: Any = logging.getLogger(__name__)
 
+
 class ContextHAMIntegration:
     """上下文系统与HAM内存管理系统的集成类"""
-    
+
     def __init__(self, context_manager: ContextManager, ham_manager=None) -> None:
         """
         初始化集成类
-        
+
         Args:
             context_manager: 上下文管理器实例
             ham_manager: HAM内存管理器实例（可选）
@@ -28,14 +29,14 @@ class ContextHAMIntegration:
         self.context_manager = context_manager
         self.ham_manager = ham_manager
         self.memory_context_manager = MemoryContextManager(context_manager)
-        
+
     def sync_context_to_ham(self, context_id: str) -> bool:
         """
         将上下文同步到HAM内存系统
-        
+
         Args:
             context_id: 上下文ID
-            
+
         Returns:
             bool: 同步是否成功
         """
@@ -43,13 +44,13 @@ class ContextHAMIntegration:
             if not self.ham_manager:
                 logger.warning("HAM manager not available, skipping sync")
                 return False
-            
+
             # 获取上下文
             context = self.context_manager.get_context(context_id)
             if not context:
                 logger.error(f"Context {context_id} not found")
                 return False
-            
+
             # 将上下文内容转换为HAM格式
             ham_content = {
                 "context_id": context.context_id,
@@ -59,7 +60,7 @@ class ContextHAMIntegration:
                 "created_at": context.created_at.isoformat,
                 "updated_at": context.updated_at.isoformat
             }
-            
+
             # 存储到HAM系统
             # 注意：这里需要根据HAM系统的实际API进行调整
             # ham_memory_id = self.ham_manager.store_experience(
@@ -71,20 +72,20 @@ class ContextHAMIntegration:
             #         "timestamp": datetime.now.isoformat
             #     }
             # )
-            
+
             logger.info(f"Synced context {context_id} to HAM memory")
             return True
         except Exception as e:
             logger.error(f"Failed to sync context {context_id} to HAM: {e}")
             return False
-    
+
     def sync_ham_to_context(self, ham_memory_id: str) -> Optional[str]:
         """
         将HAM内存同步到上下文系统
-        
+
         Args:
             ham_memory_id: HAM内存ID
-            
+
         Returns:
             Optional[str]: 创建的上下文ID，如果失败则返回None
         """
@@ -92,14 +93,14 @@ class ContextHAMIntegration:
             if not self.ham_manager:
                 logger.warning("HAM manager not available, skipping sync")
                 return None
-            
+
             # 从HAM系统获取记忆
             # 注意：这里需要根据HAM系统的实际API进行调整
             # ham_memory = self.ham_manager.recall_gist(ham_memory_id)
             # if not ham_memory:
             #     logger.error(f"HAM memory {ham_memory_id} not found")
             #     return None
-            
+
             # 解析HAM记忆内容
             # ham_content = ham_memory.get("rehydrated_gist", )
             # if isinstance(ham_content, str):
@@ -108,27 +109,27 @@ class ContextHAMIntegration:
             #         ham_content = json.loads(ham_content)
             #     except:
             #         ham_content = {"content": ham_content}
-            
+
             # 创建上下文
             # context_id = self.context_manager.create_context(
             #     ContextType.MEMORY,  # 或根据HAM记忆类型确定
             #     ham_content
             # )
-            
+
             # logger.info(f"Synced HAM memory {ham_memory_id} to context {context_id}")
             # return context_id
             return None
         except Exception as e:
             logger.error(f"Failed to sync HAM memory {ham_memory_id} to context: {e}")
             return None
-    
+
     def create_memory_context_from_ham(self, ham_memory_data: Dict[str, Any]) -> str:
         """
         基于HAM记忆数据创建记忆上下文
-        
+
         Args:
             ham_memory_data: HAM记忆数据
-            
+
         Returns:
             str: 创建的记忆上下文ID
         """
@@ -139,7 +140,7 @@ class ContextHAMIntegration:
                 memory_type=ham_memory_data.get("type", "short_term"),
                 metadata=ham_memory_data.get("metadata", )
             )
-            
+
             # 创建对应的上下文系统记录
             context_content = {
                 "ham_memory_id": ham_memory_data.get("id"),
@@ -147,18 +148,20 @@ class ContextHAMIntegration:
                 "sync_direction": "ham_to_context",
                 "sync_time": datetime.now.isoformat
             }
-            
+
             context_id = self.context_manager.create_context(
-                ContextType.MEMORY, 
+                ContextType.MEMORY,
                 context_content
             )
-            
+
             logger.info(f"Created memory context {memory_id} from HAM data with context {context_id}"):
+
+
 eturn memory_id
         except Exception as e:
             logger.error(f"Failed to create memory context from HAM data: {e}")
             raise
-    
+
     def update_ham_from_memory_context(self, memory_id: str, updates: Dict[str, Any]) -> bool:
         """
         基于记忆上下文更新HAM记忆

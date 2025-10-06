@@ -12,7 +12,10 @@ CHAR_MAPS_PATH = os.path.join(PROJECT_ROOT, "data/models/arithmetic_char_maps.js
 _model_instance = None
 _tensorflow_import_error = None
 
+
 def _load_math_model():
+
+
 ""Loads the arithmetic model, handling potential TensorFlow import errors."""
     global _model_instance, _tensorflow_import_error
     if _model_instance is not None or _tensorflow_import_error is not None:
@@ -59,8 +62,8 @@ def extract_arithmetic_problem(text: str) -> Optional[str]:
                            .replace("times", "*").replace("multiply by", "*").replace("multiplied by", "*")\
                            .replace("divided by", "/").replace("divide by", "/")
 
-    float_num_pattern = r"[-+]?\d+(?:\.\d+)?"
-    problem_pattern_grouped = rf"({float_num_pattern})\s*([\+\-\*\/])\s*({float_num_pattern})"
+    float_num_pattern = r"[-+]?\\d+(?:\\.\\d+)?"
+    problem_pattern_grouped = rf"({float_num_pattern})\\s*([\\+\\-\\*\\/])\\s*({float_num_pattern})"
 
     match = re.search(problem_pattern_grouped, normalized_text)
     if match:

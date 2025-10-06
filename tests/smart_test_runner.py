@@ -15,7 +15,10 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 SRC_DIR = PROJECT_ROOT / "src"
 
+
 def setup_environment():
+
+
 ""设置环境"""
     # 添加项目路径
     if str(PROJECT_ROOT) not in sys.path:
@@ -72,7 +75,7 @@ def detect_test_errors(stderr_output: str, stdout_output: str) -> "List[str]":
     path_error_patterns = [
     r"No module named 'core_ai",
     r"No module named 'hsp",
-    r"from \.\.core_ai",
+    r"from \\.\\.core_ai",
     ]
 
     for pattern in path_error_patterns:
@@ -101,7 +104,6 @@ def run_auto_fix():
     }
 
         if results["fixed"] > 0:
-
 
     print(f"✅ 自动修复完成，修复了 {results['fixed']} 个文件")
             return True

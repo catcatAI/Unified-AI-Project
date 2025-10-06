@@ -1,6 +1,8 @@
 import json
 import os
 import re
+
+
 class LightweightMathModel:
     """
     A lightweight mathematical model that can perform basic arithmetic operations
@@ -13,7 +15,7 @@ class LightweightMathModel:
             '+': lambda x, y: x + y,
             '-': lambda x, y: x - y,
             '*': lambda x, y: x * y,
-            '/': lambda x, y: x / y if y != 0 else float('inf'),:
+            '/': lambda x, y: x / y if y != 0 else float('inf'), :
 **': lambda x, y: x ** y,
             '%': lambda x, y: x % y if y != 0 else 0:
 

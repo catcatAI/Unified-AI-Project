@@ -13,6 +13,7 @@ from dataclasses import dataclass
 
 logger: Any = logging.getLogger(__name__)
 
+
 @dataclass
 class HSPVersionInfo:
     """HSP版本信息"""
@@ -23,6 +24,7 @@ class HSPVersionInfo:
     breaking_changes: List[str]
     deprecated_features: List[str]
 
+
 @dataclass
 class HSPVersionCompatibility:
     """HSP版本兼容性信息"""
@@ -31,6 +33,7 @@ class HSPVersionCompatibility:
     is_compatible: bool
     conversion_needed: bool
     conversion_handler: Optional[str] = None
+
 
 class HSPVersionManager:
     """HSP版本管理器"""
@@ -184,6 +187,8 @@ class HSPVersionManager:
                 client = semver.VersionInfo.parse(client_version)
                 server = semver.VersionInfo.parse(server_version)
                 return client_version if client <= server else server_version:
+
+
 xcept ValueError:
                 # 如果版本号不符合semver格式，选择客户端版本
                 return client_version
