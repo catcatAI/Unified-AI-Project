@@ -69,8 +69,9 @@ async def configure_atlassian(config: AtlassianConfig):
         
         return {"success": True, "message": "Atlassian integration configured successfully"}
     except Exception as e:
-        logger.error(f"Failed to configure Atlassian integration: {e}")
-        return {"success": False, "error": str(e)}
+        import traceback
+        logger.error(f"Failed to configure Atlassian integration: {e}\n{traceback.format_exc()}")
+        return {"success": False, "error": "An internal error occurred while configuring the integration."}
 
 @atlassian_router.get("/status")
 async def get_atlassian_status():

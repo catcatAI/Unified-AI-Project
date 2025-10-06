@@ -1,5 +1,7 @@
 # GitHub Actions workflow for integration tests
 name: Integration Tests
+permissions:
+  contents: read
 
 on:
   push:
@@ -44,7 +46,7 @@ jobs:
       if: matrix.python-version == '3.10'
     
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-python-${{ matrix.python-version }}
@@ -61,7 +63,7 @@ jobs:
         files: apps/backend/test-results.xml
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       if: matrix.python-version == '3.10'
       with:
         file: apps/backend/coverage.xml
@@ -94,7 +96,7 @@ jobs:
         python -m pytest tests/integration/test_system_level_integration.py -v --tb=short --cov=src --cov-report=xml --junitxml=system-test-results.xml -m "system_integration"
     
     - name: Upload system test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: system-test-results
@@ -109,7 +111,7 @@ jobs:
     
     steps:
     - name: Send failure notification
-      uses: dawidd6/action-send-mail@v3
+      uses: dawidd6/action-send-mail@v6
       with:
         server_address: smtp.gmail.com
         server_port: 465
