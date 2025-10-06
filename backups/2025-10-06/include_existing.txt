@@ -1,0 +1,9 @@
+requirements.txt
+pnpm-workspace.yaml
+package.json
+pnpm-lock.yaml
+PROJECT_OVERVIEW.md
+PROJECT_STATUS_SUMMARY_2025_09_06.md
+apps
+scripts
+.github/workflows
