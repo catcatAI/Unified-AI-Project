@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 运行测试脚本（兼容性版本）
+
+
 通过设置环境变量来解决依赖库兼容性问题
 """
 
@@ -15,15 +17,15 @@ def run_tests_with_compat():
     os.environ['TF_USE_LEGACY_KERAS'] = '1'
     
     # 添加项目路径
-    project_root: str = os.path.dirname(os.path.abspath(__file__))
+#     project_root: str = os.path.dirname(os.path.abspath(__file__))
     _ = sys.path.insert(0, project_root)
-    
+#     
     _ = print("正在设置兼容性环境...")
     print(f"TF_USE_LEGACY_KERAS = {os.environ.get('TF_USE_LEGACY_KERAS', '未设置')}")
     
     # 尝试导入关键模块
     try:
-        import tensorflow as tf
+#         import tensorflow as tf
         _ = print(f"✓ TensorFlow 版本: {tf.__version__}")
     except ImportError as e:
         _ = print(f"✗ TensorFlow 导入失败: {e}")
@@ -32,6 +34,7 @@ def run_tests_with_compat():
     _ = print("\n正在运行测试...")
     try:
         # 使用pytest运行测试，但排除有问题的测试文件
+
         cmd = [
             sys.executable, "-m", "pytest",
             "apps/backend/tests/",
@@ -42,12 +45,14 @@ def run_tests_with_compat():
             "--ignore-glob=apps/backend/tests/agents/test_knowledge_graph_agent.py",
             "--ignore-glob=apps/backend/tests/core_ai/dialogue/*",
             "--ignore-glob=apps/backend/simple_hsp_test.py",
-            "--ignore-glob=apps/backend/test_hsp_fixture.py"
+
+ "--ignore-glob=apps/backend/test_hsp_fixture.py"
+
         ]
         
         result = subprocess.run(cmd, cwd=project_root)
-        return result.returncode == 0
-        
+#         return result.returncode == 0
+#         
     except Exception as e:
         _ = print(f"运行测试时出错: {e}")
         return False

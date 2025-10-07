@@ -1,3 +1,9 @@
+"""
+测试模块 - test_hsp_advanced_integration
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 import pytest_asyncio
 import asyncio
@@ -37,7 +43,17 @@ class TestHSPAdvancedIntegration:
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(30)
-    async def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, mock_broker) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector handling concurrent task requests."""
     connector = hsp_connector_fixture
 

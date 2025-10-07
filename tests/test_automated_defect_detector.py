@@ -27,7 +27,17 @@ class TestStaticAnalyzer(unittest.TestCase):
         _ = super().__init__(*args, **kwargs)
         self.analyzer = StaticAnalyzer()
         
-    def test_analyze_resource_leak(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_analyze_resource_leak(self) -> None:
         """测试分析资源泄漏"""
         # 创建包含资源泄漏的代码
         test_code = '''

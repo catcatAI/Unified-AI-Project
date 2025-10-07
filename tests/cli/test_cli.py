@@ -1,3 +1,9 @@
+"""
+测试模块 - test_cli
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 import pytest
 import os
@@ -11,7 +17,17 @@ from cli.main import *
 class TestCLI:
 
     @pytest.mark.timeout(5)
-    async def test_01_cli_no_args(self):
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_01_cli_no_args(self):
         """Test CLI response when no arguments are provided."""
         with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
             with patch('sys.argv', ['main.py']): # Simulate calling script with no arguments

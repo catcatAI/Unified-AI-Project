@@ -6,6 +6,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 def test_imports() -> None:
     """Test that we can import all agent classes."""
+
+
     try:
         print("✓ BaseAgent imported successfully")
         
@@ -27,4 +29,5 @@ def test_imports() -> None:
 
 if __name__ == "__main__":
     success = test_imports()
+
     exit(0 if success else 1)

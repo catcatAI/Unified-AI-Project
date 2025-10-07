@@ -19,7 +19,17 @@ class TestCoreServicesIntegration(SystemIntegrationTest):
     
     @pytest.mark.system_integration
     @pytest.mark.asyncio
-    async def test_service_initialization_integration(self) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_service_initialization_integration(self) -> None:
         """测试服务初始化集成"""
         # 获取mock服务
         agent_manager = self.get_mock_service("agent_manager")

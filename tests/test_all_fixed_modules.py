@@ -1,3 +1,11 @@
+"""
+测试模块 - test_all_fixed_modules
+
+ 自动生成的测试模块，用于验证系统功能。
+
+
+"""
+
 # 测试所有已修复的模块
 import sys
 import traceback
@@ -11,6 +19,7 @@ modules_to_test = [
     "apps.backend.src.core.managers.dependency_manager",
     "apps.backend.src.core.shared.types.common_types",
     "apps.backend.src.tools.math_model.model"
+
 ]
 
 failed_modules = []

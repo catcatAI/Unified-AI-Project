@@ -7,15 +7,23 @@ import yaml
 from unittest.mock import patch, mock_open
 
 test_config = {
-    'dependencies': {
+'dependencies': {
+
+
         'core': [
-            {'name': 'normal_lib', 'fallbacks': ['normal_fallback'], 'essential': False},
+        {'name': 'normal_lib', 'fallbacks': ['normal_fallback'], 'essential': False},
+
         ]
-    },
-    'environments': {
-        'development': {
-            'allow_fallbacks': True,
-            'warn_on_fallback': True,
+        },
+
+ 'environments': {
+
+    'development': {
+
+ 'allow_fallbacks': True,
+
+ 'warn_on_fallback': True,
+
         }
     }
 }
@@ -29,8 +37,10 @@ with patch('builtins.open', mock_yaml_read):
     manager = DependencyManager()
     print("\nManager created successfully!")
     print(f"Manager dependencies keys: {sorted(list(manager._dependencies.keys()))}")
+
     print(f"Normal_lib status: {manager.get_status('normal_lib')}")
     print(f"Is normal_lib available? {manager.is_available('normal_lib')}")
+
     
 print("Testing imports and path...")
 print(f"DependencyManager class location: {DependencyManager.__module__}")

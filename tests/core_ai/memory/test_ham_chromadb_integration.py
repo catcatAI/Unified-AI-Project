@@ -1,3 +1,9 @@
+"""
+测试模块 - test_ham_chromadb_integration
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 import os
 from datetime import datetime, timezone
@@ -136,7 +142,17 @@ def ham_chroma_manager_fixture():
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_01_store_experience_and_verify_chromadb_entry(ham_chroma_manager_fixture) -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_01_store_experience_and_verify_chromadb_entry(ham_chroma_manager_fixture) -> None:
     print("\n--- Test 01: Store Experience and Verify ChromaDB Entry ---")
     ham = ham_chroma_manager_fixture
     raw_text = "The quick brown fox jumps over the lazy dog."

@@ -1,3 +1,9 @@
+"""
+测试模块 - test_content_analyzer_module
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 import pytest
 from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule

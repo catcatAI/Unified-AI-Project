@@ -17,6 +17,8 @@ from .base_fixer import BaseFixer
 @dataclass
 class DecoratorIssue:
     """装饰器问题"""
+
+
     file_path: Path
     line_number: int
     issue_type: str  # undefined, incorrect_usage, missing_parameters, etc.
@@ -34,7 +36,8 @@ class DecoratorFixer(BaseFixer):
         self.fix_type = FixType.CODE_STYLE_FIX  # 使用CODE_STYLE_FIX作为基础类型
         self.name = "DecoratorFixer"
         
-        # 常见的装饰器模式
+         # 常见的装饰器模式
+
         self.common_decorators = {
             # Python内置装饰器
             "staticmethod": {"min_params": 0, "max_params": 0, "target": "method"},
@@ -53,8 +56,11 @@ class DecoratorFixer(BaseFixer):
             
             # 测试框架装饰器
             "pytest.fixture": {"min_params": 0, "max_params": 10, "target": "function"},
-            "unittest.skip": {"min_params": 0, "max_params": 1, "target": "function"},
-        }
+
+ "unittest.skip": {"min_params": 0, "max_params": 1, "target": "function"},
+
+            }
+
     
     def analyze(self, context: FixContext) -> List[DecoratorIssue]:
         """分析装饰器问题"""
@@ -87,9 +93,11 @@ class DecoratorFixer(BaseFixer):
             defined_names = self._collect_definitions(tree)
             imported_names = self._collect_imports(tree)
             
-            # 分析装饰器
+             # 分析装饰器
+
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.decorator_list:
+
                     for decorator in node.decorator_list:
                         decorator_issues = self._analyze_decorator(
                             decorator, node.name, file_path, defined_names, imported_names
@@ -100,6 +108,7 @@ class DecoratorFixer(BaseFixer):
             self.logger.warning(f"文件 {file_path} 有语法错误: {e}")
         except Exception as e:
             self.logger.error(f"无法分析文件 {file_path}: {e}")
+
         
         return issues
     
@@ -109,36 +118,46 @@ class DecoratorFixer(BaseFixer):
         
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
+
                 defined.add(node.name)
             elif isinstance(node, ast.ClassDef):
                 defined.add(node.name)
+
             elif isinstance(node, ast.Import):
                 for alias in node.names:
                     name = alias.asname if alias.asname else alias.name
                     if '.' in name:
+
                         name = name.split('.')[0]
                     defined.add(name)
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
+
                     defined.add(node.module)
+
                 for alias in node.names:
                     name = alias.asname if alias.asname else alias.name
                     defined.add(name)
+
         
         return defined
     
     def _collect_imports(self, tree: ast.AST) -> Set[str]:
         """收集导入的名称"""
+
         imported = set()
         
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     name = alias.asname if alias.asname else alias.name
+
                     imported.add(name)
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
                     imported.add(node.module)
+
+
                 for alias in node.names:
                     name = alias.asname if alias.asname else alias.name
                     imported.add(name)
@@ -154,25 +173,34 @@ class DecoratorFixer(BaseFixer):
         decorator_info = self._get_decorator_info(decorator)
         if not decorator_info:
             return issues
+
         
         decorator_name = decorator_info["name"]
         is_call = decorator_info["is_call"]
         args = decorator_info["args"]
-        
-        # 检查装饰器是否定义
+#         
+         # 检查装饰器是否定义
+
         if decorator_name not in defined_names and decorator_name not in imported_names:
             issues.append(DecoratorIssue(
-                file_path=file_path,
-                line_number=decorator.lineno,
+#             file_path=file_path,
+
+ line_number=decorator.lineno,
+
                 issue_type="undefined_decorator",
                 decorator_name=decorator_name,
                 target_name=target_name,
-                description=f"未定义的装饰器: {decorator_name}",
+
+
+ description=f"未定义的装饰器: {decorator_name}",
+
                 severity="error"
             ))
         
-        # 检查装饰器参数
+         # 检查装饰器参数
+
         if is_call:
+
             param_issues = self._check_decorator_parameters(
                 decorator_name, args, decorator.lineno, target_name, file_path
             )
@@ -189,23 +217,33 @@ class DecoratorFixer(BaseFixer):
     def _get_decorator_info(self, decorator: ast.AST) -> Optional[Dict[str, Any]]:
         """获取装饰器信息"""
         if isinstance(decorator, ast.Name):
+
             return {
-                "name": decorator.id,
+
+ "name": decorator.id,
+
                 "is_call": False,
                 "args": []
-            }
+
+ }
+
         elif isinstance(decorator, ast.Call):
             func_name = self._get_function_name(decorator.func)
             if func_name:
+
+
                 return {
                     "name": func_name,
                     "is_call": True,
+
                     "args": [self._arg_to_string(arg) for arg in decorator.args]
                 }
         elif isinstance(decorator, ast.Attribute):
             attr_name = self._get_attribute_name(decorator)
+
             if attr_name:
                 return {
+
                     "name": attr_name,
                     "is_call": False,
                     "args": []
@@ -223,22 +261,27 @@ class DecoratorFixer(BaseFixer):
     
     def _get_attribute_name(self, node: ast.Attribute) -> Optional[str]:
         """获取属性名称"""
+
         parts = []
         current = node
         
         while isinstance(current, ast.Attribute):
             parts.append(current.attr)
+
             current = current.value
+
         
         if isinstance(current, ast.Name):
             parts.append(current.id)
             return '.'.join(reversed(parts))
+
         
         return None
     
     def _arg_to_string(self, arg: ast.AST) -> str:
         """将参数转换为字符串"""
         if isinstance(arg, ast.Constant):
+
             return str(arg.value)
         elif isinstance(arg, ast.Name):
             return arg.id
@@ -253,37 +296,42 @@ class DecoratorFixer(BaseFixer):
                                    line_number: int, target_name: str, 
                                    file_path: Path) -> List[DecoratorIssue]:
         """检查装饰器参数"""
-        issues = []
+#         issues = []
         
         # 获取装饰器定义信息
         decorator_info = self.common_decorators.get(decorator_name)
+
         if not decorator_info:
             return issues  # 未知装饰器，跳过参数检查
         
         min_params = decorator_info.get("min_params", 0)
-        max_params = decorator_info.get("max_params", 10)
+#         max_params = decorator_info.get("max_params", 10)
         
-        actual_params = len(args)
+#         actual_params = len(args)
         
         if actual_params < min_params:
             issues.append(DecoratorIssue(
-                file_path=file_path,
-                line_number=line_number,
+            file_path=file_path,
+
+ line_number=line_number,
+
                 issue_type="insufficient_parameters",
                 decorator_name=decorator_name,
                 target_name=target_name,
                 description=f"装饰器 {decorator_name} 参数不足: 期望至少 {min_params}, 实际 {actual_params}",
                 severity="error"
             ))
-        elif actual_params > max_params:
+#         elif actual_params > max_params:
             issues.append(DecoratorIssue(
-                file_path=file_path,
+#                 file_path=file_path,
                 line_number=line_number,
                 issue_type="excessive_parameters",
                 decorator_name=decorator_name,
                 target_name=target_name,
                 description=f"装饰器 {decorator_name} 参数过多: 期望最多 {max_params}, 实际 {actual_params}",
-                severity="warning"
+
+ severity="warning"
+
             ))
         
         return issues
@@ -293,9 +341,11 @@ class DecoratorFixer(BaseFixer):
         """检查装饰器用法"""
         issues = []
         
-        # 获取装饰器定义信息
+         # 获取装饰器定义信息
+
         decorator_info = self.common_decorators.get(decorator_name)
         if not decorator_info:
+
             return issues
         
         expected_target = decorator_info.get("target", "function")
@@ -321,7 +371,7 @@ class DecoratorFixer(BaseFixer):
                                 file_path: Path) -> bool:
         """检查是否有多个装饰器"""
         # 简化版本，实际需要更复杂的分析
-        return False
+#         return False
     
     def fix(self, context: FixContext) -> FixResult:
         """修复装饰器问题"""
@@ -361,27 +411,35 @@ class DecoratorFixer(BaseFixer):
                         fixed_count = self._fix_undefined_decorators(type_issues, context)
                     elif issue_type == "insufficient_parameters":
                         fixed_count = self._fix_parameter_issues(type_issues, context)
-                    elif issue_type == "excessive_parameters":
+
+#                     elif issue_type == "excessive_parameters":
                         fixed_count = self._fix_parameter_issues(type_issues, context)
                     elif issue_type == "multiple_decorators":
                         fixed_count = self._fix_multiple_decorators(type_issues, context)
-                    else:
+
+# 
+#                     else:
                         fixed_count = 0
-                    
-                    issues_fixed += fixed_count
+# 
+#                     
+#                     issues_fixed += fixed_count
                     
                 except Exception as e:
                     error_msg = f"修复 {issue_type} 类型装饰器问题失败: {e}"
+
                     self.logger.error(error_msg)
-                    error_messages.append(error_msg)
-            
+# 
+#                     error_messages.append(error_msg)
+#             
+# 
             # 确定修复状态
             if issues_fixed == issues_found:
                 status = FixStatus.SUCCESS
-            elif issues_fixed > 0:
-                status = FixStatus.PARTIAL_SUCCESS
+#             elif issues_fixed > 0:
+#                 status = FixStatus.PARTIAL_SUCCESS
             else:
                 status = FixStatus.FAILED
+
             
             duration = time.time() - start_time
             
@@ -403,6 +461,7 @@ class DecoratorFixer(BaseFixer):
             return FixResult(
                 fix_type=self.fix_type,
                 status=FixStatus.FAILED,
+
                 issues_found=issues_found,
                 issues_fixed=issues_fixed,
                 error_message=str(e),
@@ -433,6 +492,7 @@ class DecoratorFixer(BaseFixer):
         """在文件中修复未定义的装饰器"""
         try:
             with open(issue.file_path, 'r', encoding='utf-8') as f:
+
                 content = f.read()
             
             # 检查是否可以自动添加导入
@@ -457,16 +517,19 @@ class DecoratorFixer(BaseFixer):
         """添加装饰器导入"""
         # 根据装饰器名称确定需要导入的模块
         import_map = {
+
             "lru_cache": "from functools import lru_cache",
             "dataclass": "from dataclasses import dataclass",
             "total_ordering": "from functools import total_ordering",
             "pytest.fixture": "import pytest",
+
             "unittest.skip": "import unittest",
         }
         
         import_statement = import_map.get(decorator_name)
         if not import_statement:
             return content
+
         
         # 检查是否已经存在导入
         if import_statement in content:
@@ -474,11 +537,13 @@ class DecoratorFixer(BaseFixer):
         
         # 在文件开头添加导入
         lines = content.split('\n')
+
         
         # 找到合适的位置插入导入（通常在文件开头，但在shebang和编码声明之后）
         insert_index = 0
         for i, line in enumerate(lines):
             if line.startswith('#!') or line.startswith('# -*-'):
+
                 insert_index = i + 1
             elif line.strip() and not line.startswith('#'):
                 break
@@ -492,12 +557,16 @@ class DecoratorFixer(BaseFixer):
         
         for issue in issues:
             try:
+
                 if context.dry_run:
                     self.logger.info(f"干运行 - 建议修复装饰器参数: {issue.decorator_name}")
                     fixed_count += 1
+
+
                 else:
                     # 参数问题的修复通常需要手动处理或更复杂的逻辑
                     self.logger.warning(f"装饰器参数问题需要手动处理: {issue.description}")
+
                     fixed_count += 1  # 标记为已处理（因为我们已经识别了问题）
             
             except Exception as e:

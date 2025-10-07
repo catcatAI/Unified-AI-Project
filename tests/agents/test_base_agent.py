@@ -1,3 +1,9 @@
+"""
+测试模块 - test_base_agent
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock
@@ -24,7 +30,17 @@ def base_agent():
     return BaseAgent(agent_id=agent_id, capabilities=capabilities, agent_name="TestAgent")
 
 @pytest.mark.asyncio
-async def test_base_agent_initialization(base_agent) -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_base_agent_initialization(base_agent) -> None:
     """Test BaseAgent initialization."""
     assert base_agent.agent_id == "test_agent_123"
     assert base_agent.agent_name == "TestAgent"

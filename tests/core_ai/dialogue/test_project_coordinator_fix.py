@@ -1,3 +1,9 @@
+"""
+测试模块 - test_project_coordinator_fix
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import asyncio
 import pytest
 
@@ -7,7 +13,17 @@ from dialogue.project_coordinator import ProjectCoordinator
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_project_coordinator_decomposition() -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_project_coordinator_decomposition() -> None:
     """Test the project coordinator's decomposition functionality"""
     print("Testing ProjectCoordinator decomposition...")
     

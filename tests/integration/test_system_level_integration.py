@@ -34,7 +34,17 @@ class TestSystemLevelIntegration(SystemIntegrationTest):
     @pytest.mark.system_integration
     @pytest.mark.slow
     @pytest.mark.asyncio
-    async def test_end_to_end_user_interaction_integration(self) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_end_to_end_user_interaction_integration(self) -> None:
         """测试端到端用户交互集成"""
         # 创建测试数据
         user_id = "test_user_123"

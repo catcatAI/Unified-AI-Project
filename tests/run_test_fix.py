@@ -13,17 +13,22 @@ import tests.conftest as conftest
 
 async def test_mock_core_services() -> None:
     """Test that the mock_core_services fixture works correctly"""
+
+
     print("Testing mock_core_services fixture...")
     
     # Create the mock services
     mock_services = conftest.mock_core_services()
     
-    # Test that all required services are present
+     # Test that all required services are present
+
     required_services = [
         "ham_manager", "llm_interface", "service_discovery", "trust_manager",
         "personality_manager", "emotion_system", "crisis_system", "time_system",
         "formula_engine", "tool_dispatcher", "learning_manager", "hsp_connector",
-        "agent_manager", "project_coordinator", "dialogue_manager"
+
+ "agent_manager", "project_coordinator", "dialogue_manager"
+
     ]
     
     for service in required_services:

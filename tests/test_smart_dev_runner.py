@@ -1,3 +1,9 @@
+"""
+测试模块 - test_smart_dev_runner
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 import sys
 import os

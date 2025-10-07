@@ -1,3 +1,9 @@
+"""
+测试模块 - test_hsp_ack_retry
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 import asyncio
 import logging
@@ -98,7 +104,17 @@ async def simulate_incoming_ack(connector: HSPConnector, target_message_id: str,
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_scenario_1_successful_ack(hsp_connector_instance, mock_mqtt_client) -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_scenario_1_successful_ack(hsp_connector_instance, mock_mqtt_client) -> None:
     logger.info("\n--- Test Scenario 1: Successful ACK (Happy Path) ---")
     connector = hsp_connector_instance
     msg_id = "msg1"

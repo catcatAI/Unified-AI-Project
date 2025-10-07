@@ -1,5 +1,7 @@
 class ProjectError(Exception):
     """自定義項目錯誤類"""
+
+
     def __init__(self, message: str, code: int = 500) -> None:
         self.message = message
         self.code = code

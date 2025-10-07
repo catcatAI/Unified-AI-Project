@@ -1,3 +1,9 @@
+"""
+测试模块 - test_service_discovery_module
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 from datetime import datetime, timezone, timedelta # Ensure timedelta is imported
 import logging # For caplog if needed, or to check logs from module
@@ -19,7 +25,17 @@ def mock_trust_manager():
 # --- Test ServiceDiscoveryModule ---
 class TestServiceDiscoveryModule:
     @pytest.mark.timeout(10)
-    def test_init(self, mock_trust_manager: MagicMock, caplog) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_init(self, mock_trust_manager: MagicMock, caplog) -> None:
         caplog.set_level(logging.INFO)
         # Test with default staleness threshold
         sdm_default = ServiceDiscoveryModule(trust_manager=mock_trust_manager)

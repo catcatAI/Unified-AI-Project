@@ -1,3 +1,9 @@
+"""
+测试模块 - test_ham_lis_cache
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 # tests/core_ai/lis/test_ham_lis_cache.py
 import unittest
 import pytest

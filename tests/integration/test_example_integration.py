@@ -10,7 +10,17 @@ class TestExampleIntegration:
     """示例集成测试"""
 
     @pytest.mark.asyncio
-    async def test_agent_hsp_integration(self) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_agent_hsp_integration(self) -> None:
     """测试代理与HSP集成"""
     with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager, \:
     patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector:

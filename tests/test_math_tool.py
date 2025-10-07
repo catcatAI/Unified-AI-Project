@@ -1,3 +1,9 @@
+"""
+测试模块 - test_math_tool
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 try:
     from apps.backend.src.tools.math_tool import calculate
     print("math_tool imported successfully")

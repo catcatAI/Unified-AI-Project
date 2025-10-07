@@ -1,3 +1,9 @@
+"""
+测试模块 - test_key_manager
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import os
 import pytest
 from apps.backend.src.core.shared.key_manager import UnifiedKeyManager
@@ -5,7 +11,17 @@ from apps.backend.src.core.shared.key_manager import UnifiedKeyManager
 class TestUnifiedKeyManager:
     """统一密钥管理器测试"""
     
-    def test_not_in_demo_mode(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_not_in_demo_mode(self) -> None:
         """测试非演示模式"""
         # 确保不在演示模式
         if 'DEMO_FLAG' in os.environ:

@@ -1,3 +1,9 @@
+"""
+测试模块 - test_hsp_security
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 import os
 
@@ -37,7 +43,17 @@ class TestHSPSecurity:
         connector.security_context = security_context
         return connector
     
-    def test_security_manager_initialization(self, security_manager) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_security_manager_initialization(self, security_manager) -> None:
         """测试安全管理器初始化"""
         assert security_manager is not None
         assert security_manager.encryption_enabled is True

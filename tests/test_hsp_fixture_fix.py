@@ -1,3 +1,9 @@
+"""
+测试模块 - test_hsp_fixture_fix
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 from apps.backend.src.hsp.connector import HSPConnector
 
@@ -27,7 +33,17 @@ async def hsp_connector_fixture():
     return connector
 
 @pytest.mark.asyncio
-async def test_hsp_connector_fixture_fix(hsp_connector_fixture) -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_hsp_connector_fixture_fix(hsp_connector_fixture) -> None:
     """测试异步fixture修复是否有效"""
     # 获取connector实例
     connector = await hsp_connector_fixture

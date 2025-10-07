@@ -1,3 +1,9 @@
+"""
+测试模块 - test_dialogue_manager
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 from unittest.mock import AsyncMock
 
@@ -7,7 +13,17 @@ from unittest.mock import AsyncMock
 @pytest.mark.timeout(10)
 # 添加重试装饰器以处理不稳定的测试
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_get_simple_response_project_trigger(mock_core_services) -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_get_simple_response_project_trigger(mock_core_services) -> None:
     """
     Tests that a user input starting with the project trigger
     correctly calls the ProjectCoordinator.

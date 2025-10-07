@@ -6,17 +6,25 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 def test_different_patch_approaches() -> None:
     """測試不同的patch方法來確定哪種有效。"""
+
+
     
     test_config = {
-        'dependencies': {
+    'dependencies': {
+
             'core': [
-                {'name': 'normal_lib', 'fallbacks': ['normal_fallback'], 'essential': False},
+            {'name': 'normal_lib', 'fallbacks': ['normal_fallback'], 'essential': False},
+
             ]
-        },
+            },
+
         'environments': {
-            'development': {
-                'allow_fallbacks': True,
-                'warn_on_fallback': True,
+        'development': {
+
+ 'allow_fallbacks': True,
+
+ 'warn_on_fallback': True,
+
             }
         }
     }

@@ -1,3 +1,9 @@
+"""
+测试模块 - test_logic_parser
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 try:
     from apps.backend.src.tools.logic_model.logic_parser_eval import LogicParserEval
     print("logic_parser_eval imported successfully")

@@ -99,7 +99,17 @@ class TestRovoDevAgentRecovery:
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    async def test_state_persistence(self, agent, tmp_path) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_state_persistence(self, agent, tmp_path) -> None:
     """測試狀態持久化"""
     # 設置臨時存儲路徑
     agent.storage_path = tmp_path

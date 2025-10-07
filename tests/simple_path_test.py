@@ -6,6 +6,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 def test_path_config() -> None:
     """Test that we can import and use path_config."""
+
+
     try:
         print("✓ Path config imported successfully")
         
@@ -27,4 +29,5 @@ def test_path_config() -> None:
 
 if __name__ == "__main__":
     success = test_path_config()
+
     exit(0 if success else 1)

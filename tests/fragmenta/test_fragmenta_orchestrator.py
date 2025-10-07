@@ -1,3 +1,9 @@
+"""
+测试模块 - test_fragmenta_orchestrator
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 import pytest
 from unittest.mock import MagicMock
@@ -6,7 +12,17 @@ from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
 
 class TestFragmentaOrchestrator(unittest.TestCase):
     @pytest.mark.timeout(5)
-    def test_process_complex_task(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_process_complex_task(self) -> None:
         ham_manager = MagicMock(spec=HAMMemoryManager)
         orchestrator = FragmentaOrchestrator(ham_manager)
 

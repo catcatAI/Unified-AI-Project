@@ -1,3 +1,9 @@
+"""
+测试模块 - test_npcs
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 from apps.backend.src.game.main import Game
 from unittest.mock import MagicMock
@@ -9,6 +15,16 @@ def game():
         yield Game()
 
 @pytest.mark.timeout(5)
+
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
 def test_npc_creation(game) -> None:
     from apps.backend.src.game import npcs
     npcs.load_npc_data() # Ensure data is loaded

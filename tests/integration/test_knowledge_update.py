@@ -1,3 +1,9 @@
+"""
+测试模块 - test_knowledge_update
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 import aiounittest
 import pytest
@@ -13,7 +19,17 @@ class TestKnowledgeUpdate(aiounittest.AsyncTestCase):
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    async def test_knowledge_update(self) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_knowledge_update(self) -> None:
         """
         Tests the knowledge update capabilities of the system.
         """

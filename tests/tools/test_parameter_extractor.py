@@ -1,3 +1,9 @@
+"""
+测试模块 - test_parameter_extractor
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -7,7 +13,17 @@ from apps.backend.src.tools.parameter_extractor.extractor import ParameterExtrac
 class TestParameterExtractor(unittest.TestCase):
 
     @patch('apps.backend.src.tools.parameter_extractor.extractor.hf_hub_download')
-    def test_download_model_parameters(self, mock_hf_hub_download) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_download_model_parameters(self, mock_hf_hub_download) -> None:
         # Arrange
         mock_hf_hub_download.return_value = "/fake/path/pytorch_model.bin"
         extractor = ParameterExtractor(repo_id="bert-base-uncased")

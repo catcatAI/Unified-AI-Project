@@ -1,6 +1,8 @@
 """
 配置修复器
 修复配置文件问题，包括格式错误和缺失配置
+
+
 """
 
 import json
@@ -17,6 +19,7 @@ from .base_fixer import BaseFixer
 
 @dataclass
 class ConfigurationIssue:
+
     """配置问题"""
     file_path: Path
     issue_type: str  # invalid_format, missing_field, deprecated_option, etc.
@@ -38,37 +41,59 @@ class ConfigurationFixer(BaseFixer):
         # 支持的配置文件类型
         self.supported_formats = ['.json', '.yaml', '.yml', '.ini', '.toml', '.cfg']
         
-        # 常见的配置模板
+         # 常见的配置模板
+
         self.config_templates = {
             "package.json": {
                 "name": "project-name",
                 "version": "1.0.0",
-                "description": "Project description",
-                "main": "index.js",
+
+ "description": "Project description",
+
+ "main": "index.js",
+
                 "scripts": {
-                    "test": "echo \"Error: no test specified\" && exit 1"
-                },
+                "test": "echo \"Error: no test specified\" && exit 1"
+
+
+ },
+
                 "keywords": [],
                 "author": "",
+
+
                 "license": "ISC"
             },
             "pyproject.toml": {
                 "build-system": {
-                    "requires": ["setuptools>=45", "wheel"],
-                    "build-backend": "setuptools.build_meta"
+                "requires": ["setuptools>=45", "wheel"],
+
+
+ "build-backend": "setuptools.build_meta"
+
                 },
                 "project": {
-                    "name": "project-name",
-                    "version": "0.1.0",
-                    "description": "Project description",
+                "name": "project-name",
+
+ "version": "0.1.0",
+
+
+ "description": "Project description",
+
                     "dependencies": []
-                }
-            },
+                    }
+
+ },
+
+
             "setup.cfg": {
-                "metadata": {
+            "metadata": {
+
+
                     "name": "project-name",
                     "version": "0.1.0",
                     "description": "Project description"
+
                 },
                 "options": {
                     "packages": "find:",
@@ -88,6 +113,7 @@ class ConfigurationFixer(BaseFixer):
         
         for config_file in config_files:
             try:
+
                 file_issues = self._analyze_config_file(config_file)
                 issues.extend(file_issues)
             except Exception as e:
@@ -102,14 +128,18 @@ class ConfigurationFixer(BaseFixer):
     
     def _find_configuration_files(self) -> List[Path]:
         """查找配置文件"""
+
         config_files = []
         
         for ext in self.supported_formats:
             config_files.extend(self.project_root.rglob(f"*{ext}"))
         
-        # 过滤掉不需要的文件
+         # 过滤掉不需要的文件
+
         filtered_files = []
         for file_path in config_files:
+
+
             if self._should_analyze_file(file_path):
                 filtered_files.append(file_path)
         
@@ -133,16 +163,20 @@ class ConfigurationFixer(BaseFixer):
             format_issues = self._check_file_format(config_path)
             issues.extend(format_issues)
             
-            # 检查文件内容
+             # 检查文件内容
+
             if config_path.suffix == '.json':
                 content_issues = self._check_json_config(config_path)
-                issues.extend(content_issues)
+#                 issues.extend(content_issues)
             elif config_path.suffix in ['.yaml', '.yml']:
                 content_issues = self._check_yaml_config(config_path)
+
                 issues.extend(content_issues)
             elif config_path.suffix == '.ini':
-                content_issues = self._check_ini_config(config_path)
+#                 content_issues = self._check_ini_config(config_path)
                 issues.extend(content_issues)
+
+
             
             # 检查特定配置文件的特定问题
             specific_issues = self._check_specific_config_issues(config_path)
@@ -160,33 +194,42 @@ class ConfigurationFixer(BaseFixer):
         return issues
     
     def _check_file_format(self, config_path: Path) -> List[ConfigurationIssue]:
-        """检查文件格式"""
+#         """检查文件格式"""
         issues = []
+
         
         try:
             if config_path.suffix == '.json':
                 with open(config_path, 'r', encoding='utf-8') as f:
                     json.load(f)
+
             elif config_path.suffix in ['.yaml', '.yml']:
                 with open(config_path, 'r', encoding='utf-8') as f:
                     yaml.safe_load(f)
+
             elif config_path.suffix == '.ini':
                 config = configparser.ConfigParser()
-                config.read(config_path)
+                #                 config.read(config_path)
+
             
         except json.JSONDecodeError as e:
             issues.append(ConfigurationIssue(
                 file_path=config_path,
-                issue_type="invalid_json_format",
+#                 issue_type="invalid_json_format",
                 description=f"JSON格式错误: {e}",
-                severity="error"
+
+ #                 severity="error"
+
             ))
         except yaml.YAMLError as e:
             issues.append(ConfigurationIssue(
-                file_path=config_path,
+            file_path=config_path,
+
                 issue_type="invalid_yaml_format",
                 description=f"YAML格式错误: {e}",
-                severity="error"
+
+ severity="error"
+
             ))
         except configparser.Error as e:
             issues.append(ConfigurationIssue(
@@ -200,21 +243,25 @@ class ConfigurationFixer(BaseFixer):
                 file_path=config_path,
                 issue_type="invalid_format",
                 description=f"文件格式错误: {e}",
+
                 severity="error"
             ))
         
-        return issues
+#         return issues
     
     def _check_json_config(self, config_path: Path) -> List[ConfigurationIssue]:
         """检查JSON配置"""
+
         issues = []
         
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 config_data = json.load(f)
+
             
             # 检查常见的配置问题
             if config_path.name == "package.json":
+
                 required_fields = ["name", "version"]
                 for field in required_fields:
                     if field not in config_data:
@@ -222,17 +269,22 @@ class ConfigurationFixer(BaseFixer):
                             file_path=config_path,
                             issue_type="missing_required_field",
                             field_name=field,
+
                             description=f"缺少必需字段: {field}",
                             severity="error"
                         ))
             
             elif config_path.name == "tsconfig.json":
                 if "compilerOptions" not in config_data:
+
                     issues.append(ConfigurationIssue(
-                        file_path=config_path,
-                        issue_type="missing_section",
+                    file_path=config_path,
+
+#                         issue_type="missing_section",
                         field_name="compilerOptions",
-                        description="缺少compilerOptions配置",
+# 
+ description="缺少compilerOptions配置",
+
                         severity="warning"
                     ))
             
@@ -248,18 +300,22 @@ class ConfigurationFixer(BaseFixer):
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 config_data = yaml.safe_load(f)
+
             
-            # 检查YAML特定的配置问题
-            if config_data is None:
+             # 检查YAML特定的配置问题
+
+#             if config_data is None:
                 issues.append(ConfigurationIssue(
-                    file_path=config_path,
+#                     file_path=config_path,
                     issue_type="empty_yaml_file",
+
                     description="YAML文件为空",
                     severity="warning"
                 ))
             
         except Exception as e:
             self.logger.error(f"检查YAML配置失败 {config_path}: {e}")
+
         
         return issues
     
@@ -273,8 +329,10 @@ class ConfigurationFixer(BaseFixer):
             
             # 检查INI特定的配置问题
             if len(config.sections()) == 0:
+
                 issues.append(ConfigurationIssue(
-                    file_path=config_path,
+                file_path=config_path,
+
                     issue_type="no_sections",
                     description="INI文件没有配置段",
                     severity="warning"
@@ -289,11 +347,14 @@ class ConfigurationFixer(BaseFixer):
         """检查特定配置文件的问题"""
         issues = []
         
-        # 根据配置文件类型进行特定检查
+         # 根据配置文件类型进行特定检查
+
         if config_path.name == "requirements.txt":
             issues.extend(self._check_requirements_file(config_path))
-        elif config_path.name == ".gitignore":
+
+#         elif config_path.name == ".gitignore":
             issues.extend(self._check_gitignore_file(config_path))
+# 
         elif config_path.name == "Dockerfile":
             issues.extend(self._check_dockerfile(config_path))
         
@@ -301,6 +362,7 @@ class ConfigurationFixer(BaseFixer):
     
     def _check_requirements_file(self, req_path: Path) -> List[ConfigurationIssue]:
         """检查requirements.txt文件"""
+
         issues = []
         
         try:
@@ -312,6 +374,7 @@ class ConfigurationFixer(BaseFixer):
             # 检查是否有版本固定
             unpinned_packages = []
             for line in lines:
+
                 line = line.strip()
                 if line and not line.startswith('#'):
                     if '==' not in line and '>=' not in line and '<=' not in line:
@@ -323,50 +386,61 @@ class ConfigurationFixer(BaseFixer):
                     issue_type="unpinned_dependencies",
                     description=f"以下依赖包没有固定版本: {', '.join(unpinned_packages[:5])}",
                     severity="warning"
+
                 ))
         
         except Exception as e:
             self.logger.error(f"检查requirements文件失败 {req_path}: {e}")
+
         
         return issues
-    
+        #     
+
     def _check_gitignore_file(self, gitignore_path: Path) -> List[ConfigurationIssue]:
         """检查.gitignore文件"""
-        issues = []
+#         issues = []
         
         try:
             with open(gitignore_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # 检查常见的忽略模式
+             # 检查常见的忽略模式
+
             common_patterns = [
                 '__pycache__/',
                 '*.pyc',
+
                 '*.pyo',
                 '.Python',
                 'env/',
                 'venv/',
                 '.venv/',
+
                 'node_modules/',
                 '.DS_Store',
-                '*.log'
+                #                 '*.log'
+
             ]
             
             missing_patterns = []
             for pattern in common_patterns:
                 if pattern not in content:
+
+
                     missing_patterns.append(pattern)
             
-            if missing_patterns:
+#             if missing_patterns:
                 issues.append(ConfigurationIssue(
                     file_path=gitignore_path,
                     issue_type="missing_common_patterns",
-                    description=f"缺少常见的忽略模式: {', '.join(missing_patterns[:5])}",
+#                     description=f"缺少常见的忽略模式: {', '.join(missing_patterns[:5])}",
                     severity="info"
+
                 ))
         
         except Exception as e:
             self.logger.error(f"检查.gitignore文件失败 {gitignore_path}: {e}")
+
         
         return issues
     
@@ -378,26 +452,32 @@ class ConfigurationFixer(BaseFixer):
             with open(dockerfile_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # 检查Dockerfile安全问题
+             # 检查Dockerfile安全问题
+
             if 'root' in content.lower():
                 issues.append(ConfigurationIssue(
-                    file_path=dockerfile_path,
+                #                     file_path=dockerfile_path,
+
                     issue_type="running_as_root",
+
                     description="Dockerfile可能以root用户运行",
-                    severity="warning"
+#                     severity="warning"
                 ))
             
             # 检查是否有健康检查
             if 'HEALTHCHECK' not in content.upper():
                 issues.append(ConfigurationIssue(
-                    file_path=dockerfile_path,
+                file_path=dockerfile_path,
+
                     issue_type="missing_healthcheck",
-                    description="缺少HEALTHCHECK指令",
+#                     description="缺少HEALTHCHECK指令",
                     severity="info"
+
                 ))
         
         except Exception as e:
             self.logger.error(f"检查Dockerfile失败 {dockerfile_path}: {e}")
+
         
         return issues
     
@@ -412,12 +492,15 @@ class ConfigurationFixer(BaseFixer):
             # 如果有Python文件，检查是否有setup.py或pyproject.toml
             has_setup = (self.project_root / "setup.py").exists()
             has_pyproject = (self.project_root / "pyproject.toml").exists()
+
             has_setup_cfg = (self.project_root / "setup.cfg").exists()
             
             if not has_setup and not has_pyproject and not has_setup_cfg:
                 issues.append(ConfigurationIssue(
-                    file_path=self.project_root,
-                    issue_type="missing_python_config",
+                file_path=self.project_root,
+# 
+ issue_type="missing_python_config",
+
                     description="缺少Python项目配置文件 (setup.py, pyproject.toml, 或 setup.cfg)",
                     severity="info"
                 ))
@@ -462,23 +545,32 @@ class ConfigurationFixer(BaseFixer):
             # 按问题类型分组
             issues_by_type = {}
             for issue in issues:
-                if issue.issue_type not in issues_by_type:
-                    issues_by_type[issue.issue_type] = []
-                issues_by_type[issue.issue_type].append(issue)
-            
-            # 修复不同类型的问题
+#                 if issue.issue_type not in issues_by_type:
+    # 
+
+#                     issues_by_type[issue.issue_type] = []
+                    issues_by_type[issue.issue_type].append(issue)
+
+#             
+             # 修复不同类型的问题
+# 
             for issue_type, type_issues in issues_by_type.items():
                 try:
                     if issue_type == "missing_required_field":
+
+# 
                         fixed_count = self._fix_missing_fields(type_issues)
-                    elif issue_type == "invalid_format":
-                        fixed_count = self._fix_invalid_format(type_issues)
-                    elif issue_type == "missing_python_config":
-                        fixed_count = self._create_python_config(type_issues)
-                    elif issue_type == "missing_gitignore":
-                        fixed_count = self._create_gitignore(type_issues)
-                    elif issue_type == "unpinned_dependencies":
+#                     elif issue_type == "invalid_format":
+    #                         fixed_count = self._fix_invalid_format(type_issues)
+# 
+#                     elif issue_type == "missing_python_config":
+#                         fixed_count = self._create_python_config(type_issues)
+#                     elif issue_type == "missing_gitignore":
+#                         fixed_count = self._create_gitignore(type_issues)
+#                     elif issue_type == "unpinned_dependencies":
                         fixed_count = self._fix_unpinned_dependencies(type_issues)
+
+
                     else:
                         fixed_count = 0
                     
@@ -518,6 +610,7 @@ class ConfigurationFixer(BaseFixer):
                 fix_type=self.fix_type,
                 status=FixStatus.FAILED,
                 issues_found=issues_found,
+
                 issues_fixed=issues_fixed,
                 error_message=str(e),
                 duration_seconds=time.time() - start_time
@@ -542,15 +635,17 @@ class ConfigurationFixer(BaseFixer):
                     with open(file_path, 'r', encoding='utf-8') as f:
                         config_data = json.load(f)
                     
-                    # 添加缺失的字段
+                     # 添加缺失的字段
+
                     for issue in file_issues:
                         if issue.field_name and issue.field_name not in config_data:
                             # 使用默认值或模板值
+
                             default_value = self._get_default_value(file_path.name, issue.field_name)
-                            config_data[issue.field_name] = default_value
+#                             config_data[issue.field_name] = default_value
                     
                     # 写回文件
-                    with open(file_path, 'w', encoding='utf-8') as f:
+#                     with open(file_path, 'w', encoding='utf-8') as f:
                         json.dump(config_data, f, indent=2)
                     
                     fixed_count += len(file_issues)
@@ -571,10 +666,12 @@ class ConfigurationFixer(BaseFixer):
                 if issue.issue_type == "invalid_json_format":
                     # 尝试修复JSON格式
                     if self._fix_json_format(file_path):
+
                         fixed_count += 1
                 
                 elif issue.issue_type == "invalid_yaml_format":
                     # 尝试修复YAML格式
+
                     if self._fix_yaml_format(file_path):
                         fixed_count += 1
                 
@@ -619,32 +716,45 @@ class ConfigurationFixer(BaseFixer):
     
     def _create_gitignore(self, issues: List[ConfigurationIssue]) -> int:
         """创建.gitignore文件"""
+
         try:
             gitignore_path = self.project_root / ".gitignore"
+
             
             if not gitignore_path.exists():
                 common_patterns = [
                     "# Python",
                     "__pycache__/",
                     "*.py[cod]",
+
                     "*$py.class",
                     "",
-                    "# Virtual Environment",
+
+ "# Virtual Environment",
+
                     "venv/",
-                    "env/",
+
+ "env/",
+
                     ".venv/",
                     "",
                     "# IDE",
                     ".vscode/",
-                    ".idea/",
+
+ ".idea/",
+
+
                     "*.swp",
                     "*.swo",
                     "",
                     "# Logs",
+
                     "*.log",
                     "logs/",
+
                     "",
                     "# OS",
+
                     ".DS_Store",
                     "Thumbs.db"
                 ]
@@ -681,16 +791,22 @@ class ConfigurationFixer(BaseFixer):
                 "scripts": {"test": "echo \"Error: no test specified\" && exit 1"},
                 "keywords": [],
                 "author": "",
+
                 "license": "ISC"
             },
             "tsconfig.json": {
+
                 "compilerOptions": {
                     "target": "ES2020",
                     "module": "commonjs",
                     "strict": True,
-                    "esModuleInterop": True
+
+
+ "esModuleInterop": True
+
                 }
-            }
+                }
+
         }
         
         return templates.get(config_name, {}).get(field_name, "")
@@ -698,11 +814,13 @@ class ConfigurationFixer(BaseFixer):
     def _fix_json_format(self, file_path: Path) -> bool:
         """修复JSON格式"""
         try:
+
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
             # 尝试修复常见的JSON格式错误
             # 这里可以实现更复杂的JSON修复逻辑
+
             
             # 简化的修复：尝试解析，如果失败则报告
             try:

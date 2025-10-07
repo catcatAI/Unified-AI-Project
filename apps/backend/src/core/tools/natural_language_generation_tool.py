@@ -13,11 +13,11 @@ try:
     except ImportError as e:
         print(f"Warning: Could not import transformers_compat: {e}")
         pipeline = None
-        TRANSFORMERS_AVAILABLE = False
+#         TRANSFORMERS_AVAILABLE = False
 except Exception as e:
     print(f"Warning: Error during transformers import: {e}")
     pipeline = None
-    TRANSFORMERS_AVAILABLE = False
+#     TRANSFORMERS_AVAILABLE = False
 
 def generate_text(prompt):
     """

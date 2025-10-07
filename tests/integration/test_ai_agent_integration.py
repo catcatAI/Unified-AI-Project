@@ -19,7 +19,17 @@ class TestAIAgentIntegration(SystemIntegrationTest):
     
     @pytest.mark.system_integration
     @pytest.mark.asyncio
-    async def test_agent_lifecycle_integration(self) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_agent_lifecycle_integration(self) -> None:
         """测试代理生命周期管理集成"""
         # 创建测试数据
         agent_config = self.data_factory.create_agent_config(

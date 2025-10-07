@@ -1,6 +1,8 @@
 """
 增强语法修复器
 修复Python语法错误，包括缩进、缺少冒号、括号不匹配等
+
+
 """
 
 import ast
@@ -18,6 +20,7 @@ from .base_fixer import BaseFixer
 
 @dataclass
 class SyntaxIssue:
+
     """语法问题"""
     line_number: int
     column: int
@@ -35,40 +38,62 @@ class EnhancedSyntaxFixer(BaseFixer):
         self.fix_type = FixType.SYNTAX_FIX
         self.name = "EnhancedSyntaxFixer"
         
-        # 常见语法错误模式
+         # 常见语法错误模式
+
         self.error_patterns = {
             "missing_colon": {
-                "pattern": r'^\s*(class|def|if|elif|else|for|while|try|except|finally|with)\s+[^:]*$',
+            "pattern": r'^\s*(class|def|if|elif|else|for|while|try|except|finally|with)\s+[^:]*$',
+
                 "fix": self._fix_missing_colons,
                 "description": "缺少冒号"
+
             },
             "invalid_indentation": {
+
                 "pattern": r'.*indentation.*',
                 "fix": self._fix_indentation,
-                "description": "缩进错误"
-            },
+
+ "description": "缩进错误"
+
+                },
+
             "unmatched_parentheses": {
-                "pattern": r'.*parenthes.*|.*bracket.*',
+            "pattern": r'.*parenthes.*|.*bracket.*',
+
                 "fix": self._fix_unmatched_parentheses,
                 "description": "括号不匹配"
+
             },
             "invalid_syntax": {
+
                 "pattern": r'.*invalid syntax.*',
                 "fix": self._fix_invalid_syntax,
+
                 "description": "无效语法"
             },
             "unexpected_indent": {
-                "pattern": r'.*unexpected indent.*',
-                "fix": self._fix_unexpected_indent,
-                "description": "意外缩进"
-            },
+
+ "pattern": r'.*unexpected indent.*',
+
+
+ "fix": self._fix_unexpected_indent,
+
+ "description": "意外缩进"
+
+ },
+
+
             "unindent_does_not_match": {
-                "pattern": r'.*unindent does not match.*',
+            "pattern": r'.*unindent does not match.*',
+
                 "fix": self._fix_unindent_mismatch,
                 "description": "缩进不匹配"
-            },
+
+ },
+
             "eof_while_scanning": {
-                "pattern": r'.*EOF while scanning.*',
+            "pattern": r'.*EOF while scanning.*',
+
                 "fix": self._fix_eof_while_scanning,
                 "description": "扫描时遇到文件结尾"
             },
@@ -85,6 +110,7 @@ class EnhancedSyntaxFixer(BaseFixer):
         
         issues = []
         target_files = self._get_target_files(context)
+
         
         for file_path in target_files:
             try:
@@ -96,13 +122,15 @@ class EnhancedSyntaxFixer(BaseFixer):
         self.logger.info(f"发现 {len(issues)} 个语法问题")
         return issues
     
-    def _analyze_file(self, file_path: Path) -> List[SyntaxIssue]:
-        """分析单个文件"""
-        issues = []
-        
+#     def _analyze_file(self, file_path: Path) -> List[SyntaxIssue]:
+    #         """分析单个文件"""
+# 
+#         issues = []
+#         
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
+
             
             # 尝试解析AST
             try:
@@ -113,17 +141,21 @@ class EnhancedSyntaxFixer(BaseFixer):
                     line_number=e.lineno or 0,
                     column=e.offset or 0,
                     error_type="syntax_error",
-                    error_message=str(e)
+
+ error_message=str(e)
+
                 ))
             
             # 额外的语法检查
             additional_issues = self._check_additional_syntax_issues(content)
             issues.extend(additional_issues)
-            
+            # 
+# 
+#             
         except Exception as e:
             self.logger.error(f"无法读取文件 {file_path}: {e}")
-        
-        return issues
+#         
+#         return issues
     
     def _check_additional_syntax_issues(self, content: str) -> List[SyntaxIssue]:
         """检查额外的语法问题"""
@@ -138,11 +170,14 @@ class EnhancedSyntaxFixer(BaseFixer):
                     column=len(line),
                     error_type="missing_colon",
                     error_message="语句末尾缺少冒号",
-                    suggested_fix=self._suggest_colon_fix(line)
+
+ suggested_fix=self._suggest_colon_fix(line)
+
                 ))
             
             # 检查括号匹配
             paren_issues = self._check_parentheses_balance(line, i)
+
             issues.extend(paren_issues)
             
             # 检查缩进一致性
@@ -154,8 +189,10 @@ class EnhancedSyntaxFixer(BaseFixer):
     
     def _needs_colon(self, line: str) -> bool:
         """检查是否需要冒号"""
+
         stripped = line.strip()
         if not stripped or stripped.startswith('#'):
+
             return False
         
         # 需要冒号的关键字
@@ -167,26 +204,33 @@ class EnhancedSyntaxFixer(BaseFixer):
                 return not stripped.endswith(':')
         
         return False
-    
-    def _suggest_colon_fix(self, line: str) -> str:
-        """建议冒号修复"""
-        return line.rstrip() + ':'
+#     
+#     def _suggest_colon_fix(self, line: str) -> str:
+    """建议冒号修复"""
+# 
+#         return line.rstrip() + ':'
     
     def _check_parentheses_balance(self, line: str, line_num: int) -> List[SyntaxIssue]:
         """检查括号平衡"""
+
         issues = []
-        
+        # 
+# 
+#         
         # 统计各种括号
-        parentheses = {'(': 0, ')': 0, '[': 0, ']': 0, '{': 0, '}': 0}
+#         parentheses = {'(': 0, ')': 0, '[': 0, ']': 0, '{': 0, '}': 0}
         
         for char in line:
             if char in parentheses:
                 parentheses[char] += 1
-        
+# 
+# 
+#         
         # 检查不平衡
-        if parentheses['('] != parentheses[')']:
+#         if parentheses['('] != parentheses[')']:
             issues.append(SyntaxIssue(
-                line_number=line_num,
+            line_number=line_num,
+
                 column=0,
                 error_type="unmatched_parentheses",
                 error_message=f"圆括号不平衡: {parentheses['(']} 开, {parentheses[')']} 闭"
@@ -200,11 +244,15 @@ class EnhancedSyntaxFixer(BaseFixer):
                 error_message=f"方括号不平衡: {parentheses['[']} 开, {parentheses[']']} 闭"
             ))
         
-        if parentheses['{'] != parentheses['}']:
+#         if parentheses['{'] != parentheses['}']:
             issues.append(SyntaxIssue(
                 line_number=line_num,
-                column=0,
-                error_type="unmatched_braces",
+#                 column=0,
+# 
+# 
+ error_type="unmatched_braces",
+
+
                 error_message=f"花括号不平衡: {parentheses['{']} 开, {parentheses['}']} 闭"
             ))
         
@@ -223,11 +271,13 @@ class EnhancedSyntaxFixer(BaseFixer):
             issues.append(SyntaxIssue(
                 line_number=line_num,
                 column=0,
+
                 error_type="indentation_inconsistency",
+
                 error_message=f"缩进不一致: 前一行 {prev_indent} 空格，当前行 {current_indent} 空格",
-                severity="warning"
+#                 severity="warning"
             ))
-        
+#         
         return issues
     
     def fix(self, context: FixContext) -> FixResult:
@@ -255,25 +305,30 @@ class EnhancedSyntaxFixer(BaseFixer):
                 )
             
             # 获取目标文件
-            target_files = self._get_target_files(context)
+#             target_files = self._get_target_files(context)
             
             for file_path in target_files:
                 try:
-                    fixed_count = self._fix_file(file_path, context)
+# 
+ # 
+
+#                     fixed_count = self._fix_file(file_path, context)
                     issues_fixed += fixed_count
                     
                 except Exception as e:
                     error_msg = f"修复文件 {file_path} 失败: {e}"
+
                     self.logger.error(error_msg)
-                    error_messages.append(error_msg)
-            
+#                     error_messages.append(error_msg)
+#             
             # 确定修复状态
-            if issues_fixed == issues_found:
-                status = FixStatus.SUCCESS
-            elif issues_fixed > 0:
-                status = FixStatus.PARTIAL_SUCCESS
-            else:
-                status = FixStatus.FAILED
+#             if issues_fixed == issues_found:
+#                 status = FixStatus.SUCCESS
+#             elif issues_fixed > 0:
+#                 status = FixStatus.PARTIAL_SUCCESS
+#             else:
+
+#                 status = FixStatus.FAILED
             
             duration = time.time() - start_time
             
@@ -305,8 +360,10 @@ class EnhancedSyntaxFixer(BaseFixer):
     def _fix_file(self, file_path: Path, context: FixContext) -> int:
         """修复单个文件"""
         try:
+
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
+
             
             original_content = content
             
@@ -329,6 +386,7 @@ class EnhancedSyntaxFixer(BaseFixer):
             
         except Exception as e:
             self.logger.error(f"修复文件 {file_path} 失败: {e}")
+
             return 0
     
     def _fix_missing_colons(self, content: str) -> str:
@@ -343,8 +401,10 @@ class EnhancedSyntaxFixer(BaseFixer):
             if not stripped or stripped.startswith('#'):
                 fixed_lines.append(line)
                 continue
+
             
-            # 检查是否需要冒号
+             # 检查是否需要冒号
+
             if self._needs_colon(line):
                 # 在行尾添加冒号
                 indent = line[:len(line) - len(line.lstrip())]
@@ -361,10 +421,13 @@ class EnhancedSyntaxFixer(BaseFixer):
         # 这里可以实现更复杂的缩进修复逻辑
         # 目前只是简单的标准化
         lines = content.split('\n')
+
         fixed_lines = []
         
         for line in lines:
             # 将Tab转换为空格
+
+
             fixed_line = line.replace('\t', '    ')
             fixed_lines.append(fixed_line)
         
@@ -374,6 +437,7 @@ class EnhancedSyntaxFixer(BaseFixer):
         """修复不匹配的括号"""
         # 这是一个复杂的任务，这里实现简化版本
         # 在实际应用中，可能需要更智能的分析
+
         
         lines = content.split('\n')
         fixed_lines = []
@@ -381,8 +445,10 @@ class EnhancedSyntaxFixer(BaseFixer):
         for line in lines:
             # 简单的括号平衡检查
             if self._has_unmatched_parentheses(line):
+
                 # 尝试修复（简化版本）
                 fixed_line = self._try_fix_parentheses(line)
+
                 fixed_lines.append(fixed_line)
             else:
                 fixed_lines.append(line)
@@ -391,6 +457,7 @@ class EnhancedSyntaxFixer(BaseFixer):
     
     def _has_unmatched_parentheses(self, line: str) -> bool:
         """检查是否有不匹配的括号"""
+
         # 简化的检查
         return (line.count('(') != line.count(')') or 
                 line.count('[') != line.count(']') or 
@@ -398,10 +465,13 @@ class EnhancedSyntaxFixer(BaseFixer):
     
     def _try_fix_parentheses(self, line: str) -> str:
         """尝试修复括号"""
-        # 简化的修复逻辑
+
+ # 简化的修复逻辑
+
         # 在实际应用中，这里需要更智能的分析
         
-        # 如果行尾有不匹配的左括号，尝试添加右括号
+         # 如果行尾有不匹配的左括号，尝试添加右括号
+
         if line.count('(') > line.count(')'):
             line += ')' * (line.count('(') - line.count(')'))
         

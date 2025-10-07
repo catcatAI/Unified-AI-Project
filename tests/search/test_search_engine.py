@@ -1,3 +1,9 @@
+"""
+测试模块 - test_search_engine
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 import pytest
 from apps.backend.src.search.search_engine import SearchEngine
@@ -8,7 +14,17 @@ class TestSearchEngine(unittest.TestCase)
     """
 
     @pytest.mark.timeout(5)
-    def test_search(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_search(self) -> None:
     """
     Tests the search method.
     """

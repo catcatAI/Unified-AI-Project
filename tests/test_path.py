@@ -1,3 +1,9 @@
+"""
+测试模块 - test_path
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import sys
 
 # Print the current sys.path

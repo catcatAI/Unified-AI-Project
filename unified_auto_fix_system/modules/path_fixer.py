@@ -1,6 +1,8 @@
 """
 路径修复器
 修复文件路径问题，包括路径不存在和权限问题
+
+
 """
 
 import os
@@ -16,6 +18,7 @@ from .base_fixer import BaseFixer
 
 @dataclass
 class PathIssue:
+
     """路径问题"""
     path: Path
     issue_type: str  # missing, permission, invalid, etc.
@@ -61,54 +64,70 @@ class PathFixer(BaseFixer):
         """分析文件路径"""
         issues = []
         
-        # 检查文件是否存在
+         # 检查文件是否存在
+
         if not file_path.exists():
             issues.append(PathIssue(
-                path=file_path,
-                issue_type="missing",
-                expected_type="file" if file_path.suffix else "directory",
-                description=f"路径不存在: {file_path}",
+#                 path=file_path,
+#                 issue_type="missing",
+
+#                 expected_type="file" if file_path.suffix else "directory",
+# 
+ description=f"路径不存在: {file_path}",
+
                 severity="error"
             ))
             return issues
+
         
         # 检查权限
-        if not os.access(file_path, os.R_OK):
+#         if not os.access(file_path, os.R_OK):
             issues.append(PathIssue(
-                path=file_path,
-                issue_type="permission",
+#             path=file_path,
+
+#                 issue_type="permission",
                 current_state="no_read_permission",
+
                 description=f"没有读取权限: {file_path}",
-                severity="error"
+#                 severity="error"
             ))
-        
+#         
         if file_path.is_file() and not os.access(file_path, os.W_OK):
             issues.append(PathIssue(
-                path=file_path,
-                issue_type="permission",
-                current_state="no_write_permission",
+#                 path=file_path,
+#                 issue_type="permission",
+
+ current_state="no_write_permission",
+
                 description=f"没有写入权限: {file_path}",
-                severity="warning"
+                #                 severity="warning"
+
             ))
         
         # 检查路径长度
-        if len(str(file_path)) > 260:  # Windows路径长度限制
+#         if len(str(file_path)) > 260:  # Windows路径长度限制
             issues.append(PathIssue(
-                path=file_path,
+            path=file_path,
+
                 issue_type="too_long",
                 description=f"路径过长: {len(str(file_path))} 字符",
                 severity="warning"
+
             ))
-        
+            #         
+
         # 检查特殊字符
         special_chars = ['<', '>', ':', '"', '|', '?', '*']
-        path_str = str(file_path)
+#         path_str = str(file_path)
         for char in special_chars:
             if char in path_str:
+
                 issues.append(PathIssue(
                     path=file_path,
                     issue_type="invalid_chars",
-                    description=f"路径包含特殊字符: {char}",
+
+ description=f"路径包含特殊字符: {char}",
+
                     severity="warning"
                 ))
                 break
@@ -118,6 +137,7 @@ class PathFixer(BaseFixer):
     def _analyze_config_paths(self) -> List[PathIssue]:
         """分析配置文件中的路径"""
         issues = []
+
         
         # 常见的配置文件
         config_files = [
@@ -152,10 +172,13 @@ class PathFixer(BaseFixer):
                 for field in path_fields:
                     if field in config_data:
                         paths = config_data[field]
+
                         if isinstance(paths, str):
                             paths = [paths]
-                        elif isinstance(paths, list):
+                            #                         elif isinstance(paths, list):
+
                             pass
+# 
                         else:
                             continue
                         
@@ -166,20 +189,23 @@ class PathFixer(BaseFixer):
                                     path=full_path,
                                     issue_type="missing",
                                     description=f"配置文件中引用的路径不存在: {path_str} (在 {config_path})",
-                                    severity="warning"
+
+ severity="warning"
+
                                 ))
             
             elif config_path.suffix == '.py':
                 # 对于Python文件，使用正则表达式提取路径
                 with open(config_path, 'r', encoding='utf-8') as f:
                     content = f.read()
+
                 
                 # 匹配常见的路径模式
                 path_patterns = [
-                    r'["\']([^"\']*\.py)["\']',  # Python文件
+                    r'["\']([^"\']*\.py)["\']',  # Python文件"
                     r'["\']([^"\']*\/[^"\']*)["\']',  # 包含路径分隔符的字符串
                 ]
-                
+#                 
                 for pattern in path_patterns:
                     matches = re.findall(pattern, content)
                     for match in matches:
@@ -189,6 +215,7 @@ class PathFixer(BaseFixer):
                                 issues.append(PathIssue(
                                     path=full_path,
                                     issue_type="missing",
+
                                     description=f"Python文件中引用的路径不存在: {match} (在 {config_path})",
                                     severity="info"
                                 ))
@@ -212,13 +239,16 @@ class PathFixer(BaseFixer):
             try:
                 with open(py_file, 'r', encoding='utf-8') as f:
                     content = f.read()
+
                 
-                # 查找导入语句
+                 # 查找导入语句
+
                 import_pattern = r'from\s+([\w.]+)\s+import|import\s+([\w.]+)'
                 matches = re.findall(import_pattern, content)
                 
                 for match in matches:
                     module_name = match[0] or match[1]
+
                     
                     # 检查是否是相对导入
                     if module_name.startswith('.'):
@@ -227,23 +257,29 @@ class PathFixer(BaseFixer):
                     # 尝试将模块名转换为文件路径
                     module_path = module_name.replace('.', '/')
                     possible_paths = [
-                        self.project_root / f"{module_path}.py",
+#                         self.project_root / f"{module_path}.py",
                         self.project_root / module_path / "__init__.py"
+
                     ]
                     
                     # 检查是否存在对应的文件
                     found = False
                     for possible_path in possible_paths:
                         if possible_path.exists():
+
                             found = True
+
                             break
                     
                     if not found:
                         # 这可能是外部模块，但我们也报告一下
                         issues.append(PathIssue(
-                            path=self.project_root / f"{module_path}.py",
+                        path=self.project_root / f"{module_path}.py",
+
                             issue_type="potential_missing",
                             description=f"导入的模块可能不存在: {module_name} (在 {py_file})",
+
+
                             severity="info"
                         ))
             
@@ -264,10 +300,11 @@ class PathFixer(BaseFixer):
     def fix(self, context: FixContext) -> FixResult:
         """修复路径问题"""
         self.logger.info("开始修复路径问题...")
-        
+
+#         
         import time
         start_time = time.time()
-        
+#         
         issues_fixed = 0
         issues_found = 0
         error_messages = []
@@ -309,29 +346,37 @@ class PathFixer(BaseFixer):
                         fixed_count = self._fix_potential_missing_paths(type_issues)
                     else:
                         fixed_count = 0
-                    
+#                     
                     issues_fixed += fixed_count
                     
                 except Exception as e:
-                    error_msg = f"修复 {issue_type} 类型路径问题失败: {e}"
-                    self.logger.error(error_msg)
+#                     error_msg = f"修复 {issue_type} 类型路径问题失败: {e}"
+#                     self.logger.error(error_msg)
+
                     error_messages.append(error_msg)
             
-            # 确定修复状态
+             # 确定修复状态
+# 
+# 
             if issues_fixed == issues_found:
                 status = FixStatus.SUCCESS
             elif issues_fixed > 0:
                 status = FixStatus.PARTIAL_SUCCESS
-            else:
-                status = FixStatus.FAILED
-            
-            duration = time.time() - start_time
-            
+
+#             else:
+#                 status = FixStatus.FAILED
+#             
+# 
+#             duration = time.time() - start_time
+#             
             return FixResult(
-                fix_type=self.fix_type,
-                status=status,
+#                 fix_type=self.fix_type,
+#                 status=status,
                 issues_found=issues_found,
-                issues_fixed=issues_fixed,
+
+
+ issues_fixed=issues_fixed,
+
                 error_message="; ".join(error_messages) if error_messages else None,
                 duration_seconds=duration,
                 details={
@@ -387,26 +432,37 @@ class PathFixer(BaseFixer):
                 if issue.current_state == "no_read_permission":
                     # 添加读取权限
                     os.chmod(path, path.stat().st_mode | 0o444)
+
                     self.logger.info(f"修复读取权限: {path}")
                     fixed_count += 1
+
                 
                 elif issue.current_state == "no_write_permission":
                     # 添加写入权限
+
                     os.chmod(path, path.stat().st_mode | 0o222)
                     self.logger.info(f"修复写入权限: {path}")
+
+
                     fixed_count += 1
             
             except Exception as e:
                 self.logger.error(f"修复权限失败 {path}: {e}")
+
         
         return fixed_count
     
     def _fix_long_paths(self, issues: List[PathIssue]) -> int:
         """修复过长的路径"""
         # 路径过长问题通常需要手动处理
-        # 这里提供建议信息
+
+ # 这里提供建议信息
+
+
         for issue in issues:
             self.logger.warning(f"路径过长需要手动处理: {issue.path}")
+
+
             self.logger.info(f"建议: 缩短路径或使用符号链接")
         
         return len(issues)  # 标记为已处理（提供建议）
@@ -414,6 +470,7 @@ class PathFixer(BaseFixer):
     def _fix_invalid_chars(self, issues: List[PathIssue]) -> int:
         """修复包含特殊字符的路径"""
         # 特殊字符问题通常需要重命名，这里提供建议
+
         for issue in issues:
             self.logger.warning(f"路径包含特殊字符需要重命名: {issue.path}")
             self.logger.info(f"建议: 移除特殊字符后重命名")

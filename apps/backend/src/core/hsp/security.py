@@ -2,6 +2,8 @@
 """
 HSP协议安全模块
 负责实现HSP协议的安全机制，包括消息签名、加密和身份认证
+
+
 """
 
 import hashlib
@@ -38,15 +40,18 @@ class HSPSecurityManager:
         self.encryption_key = os.environ.get('HSP_ENCRYPTION_KEY')
         if not self.encryption_key:
             self.encryption_key = Fernet.generate_key()
+
             logger.warning("未找到环境变量HSP_ENCRYPTION_KEY，生成新的密钥")
         else:
             self.encryption_key = self.encryption_key.encode()
         
         self.cipher_suite = Fernet(self.encryption_key)
         
-        # 非对称密钥对（用于签名和身份认证）
+         # 非对称密钥对（用于签名和身份认证）
+# 
         self.private_key = rsa.generate_private_key(
-            public_exponent=65537,
+#         public_exponent=65537,
+
             key_size=2048,
         )
         self.public_key = self.private_key.public_key()
@@ -67,13 +72,17 @@ class HSPSecurityManager:
             
             message_str = json.dumps(message_copy, sort_keys=True, ensure_ascii=False)
             message_bytes = message_str.encode('utf-8')
+
             
             # 生成签名
             signature = self.private_key.sign(
-                message_bytes,
+            message_bytes,
+# 
+# 
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
                     salt_length=padding.PSS.MAX_LENGTH
+
                 ),
                 hashes.SHA256()
             )
@@ -85,12 +94,14 @@ class HSPSecurityManager:
             
         except Exception as e:
             logger.error(f"消息签名生成失败: {e}")
+
             return ""
     
     def verify_signature(self, message: Dict[str, Any], signature: str, sender_id: str) -> bool:
         """验证消息签名"""
         if not self.signature_enabled:
             return True
+
         
         # 如果在测试模式下，直接返回True
         # 注意：这仅用于测试目的，在生产环境中应该严格要求签名验证
@@ -107,14 +118,18 @@ class HSPSecurityManager:
             # 移除签名字段以验证原始消息
             message_copy.pop('signature', None)
             message_copy['sender_id'] = sender_id
+
             
             message_str = json.dumps(message_copy, sort_keys=True, ensure_ascii=False)
-            message_bytes = message_str.encode('utf-8')
-            
-            # 验证签名
+#             message_bytes = message_str.encode('utf-8')
+#             
+# 验证签名
+# 
+# 
             self.public_key.verify(
                 signature_bytes,
                 message_bytes,
+
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
                     salt_length=padding.PSS.MAX_LENGTH
@@ -124,6 +139,7 @@ class HSPSecurityManager:
             
             logger.debug(f"消息签名验证成功: {message.get('message_id', 'unknown')}")
             return True
+
             
         except Exception as e:
             logger.warning(f"消息签名验证失败: {message.get('message_id', 'unknown')}: {e}")
@@ -138,6 +154,7 @@ class HSPSecurityManager:
             message_str = json.dumps(message, ensure_ascii=False)
             encrypted_message = self.cipher_suite.encrypt(message_str.encode('utf-8'))
             logger.debug(f"消息加密成功: {message.get('message_id', 'unknown')}")
+
             return encrypted_message
             
         except Exception as e:
@@ -152,6 +169,7 @@ class HSPSecurityManager:
         try:
             decrypted_message = self.cipher_suite.decrypt(encrypted_message)
             message = json.loads(decrypted_message.decode('utf-8'))
+
             logger.debug("消息解密成功")
             return message
             
@@ -166,8 +184,10 @@ class HSPSecurityManager:
         
         # 这里应该实现实际的身份验证逻辑
         # 例如检查认证令牌、证书等
+
         # 目前简化实现，假设所有已知发送者都是合法的
         if auth_token:
+
             # 验证令牌（示例实现）
             expected_token = hashlib.sha256(sender_id.encode()).hexdigest()
             return hmac.compare_digest(auth_token, expected_token)
@@ -182,18 +202,22 @@ class HSPSecurityManager:
         return False
     
     def generate_auth_token(self, sender_id: str) -> str:
-        """为发送者生成认证令牌"""
+#         """为发送者生成认证令牌"""
         if not self.auth_enabled:
             return ""
-        
+
+# 
+#         
         token = hashlib.sha256(sender_id.encode()).hexdigest()
         logger.debug(f"为发送者生成认证令牌: {sender_id}")
+
         return token
     
     def get_public_key_pem(self) -> str:
         """获取PEM格式的公钥"""
         pem = self.public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
+        encoding=serialization.Encoding.PEM,
+
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
         return pem.decode('utf-8')
@@ -201,6 +225,7 @@ class HSPSecurityManager:
     def load_public_key_from_pem(self, pem_data: str):
         """从PEM数据加载公钥"""
         self.public_key = serialization.load_pem_public_key(pem_data.encode('utf-8'))
+
 
 class HSPSecurityContext:
     """HSP安全上下文"""
@@ -239,6 +264,7 @@ class HSPSecurityContext:
                     encrypted_data = base64.b64decode(payload[10:])  # 移除'encrypted:'前缀
                     decrypted_payload = self.security_manager.decrypt_message(encrypted_data)
                     message['payload'] = decrypted_payload
+
                 except Exception as e:
                     logger.error(f"消息解密失败: {e}")
                     return False, {"error": "Message decryption failed"}
@@ -280,12 +306,17 @@ class HSPSecurityContext:
             logger.error(f"消息安全处理过程中发生错误: {e}")
             raise
 
-# 测试代码
+ # 测试代码
+
 if __name__ == "__main__":
+
     # 配置日志
     logging.basicConfig(level=logging.INFO)
+
+
     
-    # 创建安全管理器
+     # 创建安全管理器
+
     security_manager = HSPSecurityManager()
     security_context = HSPSecurityContext(security_manager)
     

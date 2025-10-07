@@ -1,3 +1,9 @@
+"""
+测试模块 - test_code_understanding_tool
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 import os
 from unittest.mock import patch, MagicMock

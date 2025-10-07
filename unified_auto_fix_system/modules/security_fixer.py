@@ -1,6 +1,8 @@
 """
 安全修复器
 修复安全漏洞，包括不安全的代码模式和配置
+
+
 """
 
 import re
@@ -16,6 +18,7 @@ from .base_fixer import BaseFixer
 
 @dataclass
 class SecurityIssue:
+
     """安全问题"""
     file_path: Path
     line_number: int
@@ -34,33 +37,52 @@ class SecurityFixer(BaseFixer):
         self.fix_type = FixType.SECURITY_FIX
         self.name = "SecurityFixer"
         
-        # 安全漏洞模式
+         # 安全漏洞模式
+
         self.security_patterns = {
             "hardcoded_secret": {
                 "pattern": r'(password|secret|key|token)\s*=\s*["\'][^"\']+["\']',
                 "description": "硬编码的密钥或密码",
-                "severity": "critical"
+
+ "severity": "critical"
+
             },
             "sql_injection": {
+
+
                 "pattern": r'execute\s*\(\s*[^)]*%[^)]*\)|f["\'][^"\']*%[^"\']*["\']',
                 "description": "潜在的SQL注入漏洞",
                 "severity": "high"
-            },
+
+                },
+
             "weak_crypto": {
                 "pattern": r'md5\(|sha1\(',
                 "description": "使用弱加密算法",
                 "severity": "medium"
-            },
+
+
+ },
+
             "path_traversal": {
-                "pattern": r'\.\.\/|\.\.\\\\',
-                "description": "路径遍历漏洞",
+            "pattern": r'\.\.\/|\.\.\\\\',
+
+
+ "description": "路径遍历漏洞",
+
+
                 "severity": "high"
-            },
+                },
+
+
             "xss_vulnerability": {
                 "pattern": r'render\s*\([^)]*request\.[^)]*\)|innerHTML\s*=',
                 "description": "潜在的XSS漏洞",
+
+
                 "severity": "medium"
-            },
+                },
+
             "command_injection": {
                 "pattern": r'os\.system\s*\(|subprocess\.call\s*\([^)]*shell\s*=\s*True',
                 "description": "命令注入漏洞",
@@ -84,9 +106,11 @@ class SecurityFixer(BaseFixer):
             except Exception as e:
                 self.logger.error(f"分析文件 {file_path} 安全失败: {e}")
         
-        # 分析配置文件
+         # 分析配置文件
+
         config_issues = self._analyze_configuration_files()
         issues.extend(config_issues)
+
         
         # 分析依赖安全
         dependency_issues = self._analyze_dependency_security()
@@ -111,18 +135,24 @@ class SecurityFixer(BaseFixer):
                 # 跳过注释和空行
                 if not line_stripped or line_stripped.startswith('#'):
                     continue
+
                 
                 # 检查各种安全模式
                 for issue_type, pattern_info in self.security_patterns.items():
                     if re.search(pattern_info["pattern"], line_stripped, re.IGNORECASE):
+
                         issues.append(SecurityIssue(
                             file_path=file_path,
                             line_number=i,
+
                             issue_type=issue_type,
                             severity=pattern_info["severity"],
                             description=pattern_info["description"],
+
+
                             code_snippet=line.strip(),
                             suggested_fix=self._suggest_security_fix(issue_type, line_stripped)
+
                         ))
         
         except Exception as e:
@@ -136,9 +166,11 @@ class SecurityFixer(BaseFixer):
         
         # 检查常见的配置文件
         config_files = [
-            "config.json",
+        "config.json",
+
             "settings.json", 
             ".env",
+
             "docker-compose.yml",
             "Dockerfile"
         ]
@@ -153,6 +185,7 @@ class SecurityFixer(BaseFixer):
     
     def _check_config_security(self, config_path: Path) -> List[SecurityIssue]:
         """检查配置文件安全"""
+
         issues = []
         
         try:
@@ -174,6 +207,7 @@ class SecurityFixer(BaseFixer):
                                     line_number=0,  # JSON文件不具体到行
                                     issue_type="hardcoded_secret_config",
                                     severity="critical",
+
                                     description=f"配置文件中发现硬编码的敏感信息: {current_path}",
                                     code_snippet=f"{key}: {value[:20]}...",
                                     suggested_fix=f"将 {key} 移至环境变量或密钥管理服务"
@@ -181,11 +215,13 @@ class SecurityFixer(BaseFixer):
                         
                         if isinstance(value, dict):
                             check_dict(value, current_path)
+
                 
                 check_dict(config_data)
             
             elif config_path.name == ".env":
                 with open(config_path, 'r', encoding='utf-8') as f:
+
                     lines = f.readlines()
                 
                 for i, line in enumerate(lines, 1):
@@ -194,26 +230,32 @@ class SecurityFixer(BaseFixer):
                         issues.append(SecurityIssue(
                             file_path=config_path,
                             line_number=i,
+
                             issue_type="hardcoded_secret_env",
                             severity="warning",
                             description=".env文件中包含敏感信息",
                             code_snippet=line.split('=')[0] + "=***",
                             suggested_fix="确保.env文件不在版本控制中"
+
                         ))
         
         except Exception as e:
             self.logger.error(f"检查配置文件安全失败 {config_path}: {e}")
+
         
         return issues
     
     def _analyze_dependency_security(self) -> List[SecurityIssue]:
         """分析依赖安全"""
         issues = []
+
         
         # 检查requirements.txt
         req_file = self.project_root / "requirements.txt"
         if req_file.exists():
+
             try:
+
                 with open(req_file, 'r', encoding='utf-8') as f:
                     requirements = f.read()
                 
@@ -221,19 +263,26 @@ class SecurityFixer(BaseFixer):
                 vulnerable_packages = {
                     "django": "<3.2.18",
                     "flask": "<2.2.5", 
+
+
                     "requests": "<2.31.0",
                     "urllib3": "<1.26.18"
                 }
                 
                 for package, vulnerable_version in vulnerable_packages.items():
                     if package in requirements:
+
+
                         issues.append(SecurityIssue(
                             file_path=req_file,
                             line_number=0,
+
                             issue_type="vulnerable_dependency",
                             severity="high",
+
                             description=f"依赖包 {package} 可能存在安全漏洞",
                             code_snippet=f"{package}",
+
                             suggested_fix=f"升级 {package} 到安全版本"
                         ))
             
@@ -250,69 +299,89 @@ class SecurityFixer(BaseFixer):
             "weak_crypto": "使用更强的加密算法如SHA-256或bcrypt",
             "path_traversal": "验证和清理用户输入的路径",
             "xss_vulnerability": "对用户输入进行HTML转义",
+
             "command_injection": "避免使用shell=True，使用参数列表",
             "hardcoded_secret_config": "将敏感配置移至环境变量",
             "hardcoded_secret_env": "确保.env文件不在版本控制中",
-            "vulnerable_dependency": "升级依赖包到最新安全版本"
-        }
+#             "vulnerable_dependency": "升级依赖包到最新安全版本"
+            }
+
         
         return suggestions.get(issue_type, "请查阅安全最佳实践")
     
     def fix(self, context: FixContext) -> FixResult:
         """修复安全问题"""
-        self.logger.info("开始修复安全问题...")
+
+#         self.logger.info("开始修复安全问题...")
         
         import time
         start_time = time.time()
         
         issues_fixed = 0
         issues_found = 0
+
         error_messages = []
         
         try:
             # 分析问题
             issues = self.analyze(context)
+
             issues_found = len(issues)
             
             if issues_found == 0:
                 self.logger.info("未发现安全问题")
+
                 return FixResult(
                     fix_type=self.fix_type,
                     status=FixStatus.SUCCESS,
                     issues_found=0,
-                    issues_fixed=0,
+
+#                     issues_fixed=0,
                     duration_seconds=time.time() - start_time
                 )
-            
+#             
             # 按严重程度分组处理
-            critical_issues = [issue for issue in issues if issue.severity == "critical"]
+#             critical_issues = [issue for issue in issues if issue.severity == "critical"]
+
             high_issues = [issue for issue in issues if issue.severity == "high"]
             medium_issues = [issue for issue in issues if issue.severity == "medium"]
             low_issues = [issue for issue in issues if issue.severity == "low"]
             
-            # 优先修复严重问题
+             # 优先修复严重问题
+
+# 
             for severity, severity_issues in [("critical", critical_issues), 
-                                              ("high", high_issues),
-                                              ("medium", medium_issues), 
+            ("high", high_issues),
+# 
+#  ("medium", medium_issues), 
+# 
                                               ("low", low_issues)]:
                 if severity_issues:
                     fixed_count = self._fix_security_issues(severity_issues)
                     issues_fixed += fixed_count
-            
-            # 确定修复状态
+                    # 
+
+ #             
+
+ # 确定修复状态
+
             if issues_fixed == issues_found:
                 status = FixStatus.SUCCESS
-            elif issues_fixed > 0:
+
+#             elif issues_fixed > 0:
                 status = FixStatus.PARTIAL_SUCCESS
-            else:
-                status = FixStatus.FAILED
-            
-            duration = time.time() - start_time
-            
+
+#             else:
+#                 status = FixStatus.FAILED
+# 
+#             
+#             duration = time.time() - start_time
+#             
             return FixResult(
                 fix_type=self.fix_type,
                 status=status,
                 issues_found=issues_found,
+
                 issues_fixed=issues_fixed,
                 error_message="; ".join(error_messages) if error_messages else None,
                 duration_seconds=duration,
@@ -336,6 +405,7 @@ class SecurityFixer(BaseFixer):
                 fix_type=self.fix_type,
                 status=FixStatus.FAILED,
                 issues_found=issues_found,
+
                 issues_fixed=issues_fixed,
                 error_message=str(e),
                 duration_seconds=time.time() - start_time
@@ -378,17 +448,19 @@ class SecurityFixer(BaseFixer):
             if 0 <= line_index < len(lines):
                 # 替换为环境变量引用
                 original_line = lines[line_index]
+
                 
                 # 尝试提取变量名
                 var_match = re.search(r'(\w+)\s*=\s*["\'][^"\']+["\']', original_line)
                 if var_match:
-                    var_name = var_match.group(1)
-                    new_line = f"{var_name} = os.environ.get('{var_name.upper()}', '')"
-                    
-                    # 检查是否需要添加import
+#                     var_name = var_match.group(1)
+#                     new_line = f"{var_name} = os.environ.get('{var_name.upper()}', '')"
+#                     
+                     # 检查是否需要添加import
+
                     if 'import os' not in content:
                         # 在文件开头添加import
-                        lines.insert(0, 'import os')
+#                         lines.insert(0, 'import os')
                         line_index += 1
                     
                     lines[line_index] = new_line
@@ -405,6 +477,7 @@ class SecurityFixer(BaseFixer):
         
         except Exception as e:
             self.logger.error(f"修复硬编码密钥失败: {e}")
+
             return False
     
     def _fix_vulnerable_dependency(self, issue: SecurityIssue) -> bool:

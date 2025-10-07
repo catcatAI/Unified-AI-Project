@@ -64,12 +64,15 @@ except ImportError:
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an instance of the default event loop for each test session."""
+
+
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_environment() -> None:
+
     """設置測試環境變量"""
     # 設置測試用的 MIKO_HAM_KEY
     if not os.environ.get('MIKO_HAM_KEY'):
@@ -77,7 +80,8 @@ def setup_test_environment() -> None:
         test_key = Fernet.generate_key().decode()
         os.environ['MIKO_HAM_KEY'] = test_key
 
-    # 設置其他測試環境變量
+ # 設置其他測試環境變量
+
     os.environ['TESTING'] = 'true'
     os.environ['OPENAI_API_KEY'] = 'dummy_key' # Re-add dummy key for module-level imports
 
@@ -95,6 +99,7 @@ def mqtt_broker_available():
 
 @pytest.fixture(scope="function")
 def clean_test_files() -> None:
+
     """清理測試文件"""
     import glob
     from pathlib import Path
@@ -144,10 +149,12 @@ def deadlock_detector():
 
     # 開始監控
     resource_detector.start_monitoring()
+
     async_detector.start_monitoring()
 
     yield {
-        'resource_detector': resource_detector,
+    'resource_detector': resource_detector,
+
         'async_detector': async_detector
     }
 
@@ -158,6 +165,7 @@ def deadlock_detector():
     for leak in leaks + async_leaks:
         if leak.detected:
             pytest.fail(f"Resource leak detected: {leak.details}")
+
 
 @pytest.fixture(scope="function")
 def timeout_protection():
@@ -170,10 +178,13 @@ def timeout_protection():
     # 檢查測試是否運行過長時間
     execution_time = time.time() - start_time
     if execution_time > 60:  # 60秒警告閾值
+
         pytest.fail(f"Test took too long: {execution_time:.2f}s")
 
-    # 檢查線程洩漏
+ # 檢查線程洩漏
+
     final_thread_count = threading.active_count()
+
     if final_thread_count > initial_thread_count + 2:  # 允許一些容差
         pytest.fail(f"Thread leak detected: {final_thread_count} vs {initial_thread_count}")
 
@@ -181,6 +192,7 @@ def timeout_protection():
 def test_timeout_and_monitoring(request) -> None:
     """自動應用的測試超時和監控"""
     # 檢查測試是否標記為需要特殊處理
+
     timeout_marker = request.node.get_closest_marker("timeout")
     deadlock_marker = request.node.get_closest_marker("deadlock_detection")
 
@@ -214,6 +226,7 @@ def mock_core_services():
 
         async def process_capability_advertisement(self, payload, sender_ai_id, envelope):
             try:
+
                 from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload
                 from datetime import datetime, timezone
 
@@ -242,17 +255,21 @@ def mock_core_services():
                     continue
                 payload_name = payload.get('name')
                 if capability_name_filter and payload_name != capability_name_filter:
+
                     continue
                 payload_tags = payload.get('tags', [])
                 if tags_filter and not all(tag in payload_tags for tag in tags_filter):
                     continue
                 results.append(payload)
-            return results
+                return results
+
+
 
         def get_all_capabilities(self):
             """同步版本的get_all_capabilities"""
             results = []
             for cap_id, (payload, _) in self._mock_sdm_capabilities_store.items():
+
                 results.append(payload)
             return results
 
@@ -266,12 +283,13 @@ def mock_core_services():
     # Create an AsyncMock that delegates to the behavior instance
     mock_service_discovery = AsyncMock()
 
-    # Provide a sync wrapper for process_capability_advertisement so tests that don't await it still work
+    # Provide a sync wrapper for process_capability_advertisement so tests that don't await it still work'
     from unittest.mock import MagicMock
     def _process_capability_advertisement_sync(payload, sender_ai_id, envelope):
         try:
             from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload
             from datetime import datetime, timezone
+
 
             if isinstance(payload, dict):
                 if 'availability_status' not in payload:
@@ -308,15 +326,19 @@ def mock_core_services():
 
         def store_experience(self, raw_data: str, data_type: str, metadata=None):
             from datetime import datetime, timezone
+
             mem_id = f"mem_{self._next_id:06d}"
             self._next_id += 1
             # 确保metadata包含speaker字段
             if metadata is None:
                 metadata = {}
+
+
             if "speaker" not in metadata:
                 metadata["speaker"] = "unknown"
             # 确保metadata包含source字段（为ChromaDB集成测试）
             if "source" not in metadata:
+
                 metadata["source"] = "test_source"
             record_pkg = {
                 "raw_data": raw_data,
@@ -331,12 +353,16 @@ def mock_core_services():
 
         def query_memory(self, query_params):
             results = []
+
             for mem_id, record_pkg in self.memory_store.items():
                 match = True
                 for key, value in query_params.items():
+
                     if key == "hsp_correlation_id":
                         if record_pkg.get("metadata", {}).get("hsp_correlation_id") != value:
+
                             match = False
+
                             break
                 if match:
                     results.append(record_pkg)
@@ -344,24 +370,31 @@ def mock_core_services():
 
         def recall_gist(self, memory_id: str):
             """Mock implementation of recall_gist"""
+
             if memory_id in self.memory_store:
                 record = self.memory_store[memory_id]
+
                 # Ensure metadata is properly returned with required fields
                 metadata = record["metadata"].copy() if record["metadata"] else {}
                 # Ensure speaker field is present in metadata
+
                 if 'speaker' not in metadata:
+
                     metadata['speaker'] = 'unknown'
                 return {
                     "id": memory_id,
                     "timestamp": record["timestamp"],
                     "data_type": record["data_type"],
                     "rehydrated_gist": str(record["raw_data"]),
+
+
                     "metadata": metadata
                 }
             return None
 
         def query_core_memory(self, **kwargs):
             """Mock implementation of query_core_memory"""
+
             # Simplified implementation for testing:
             results = []
             for mem_id, record in self.memory_store.items():
@@ -370,11 +403,13 @@ def mock_core_services():
                 results.append({
                     "id": mem_id,
                     "timestamp": record["timestamp"],
+
                     "data_type": record["data_type"],
                     "rehydrated_gist": str(record["raw_data"]),
                     "metadata": metadata
                 })
-            return results
+                return results
+
 
     # Remove stray reassignment that overrides our AsyncMock and causes NameError
     # mock_service_discovery = MockServiceDiscovery()
@@ -443,6 +478,7 @@ def mock_core_services():
     mock_project_coordinator.llm_interface = mock_llm_interface
     mock_project_coordinator.service_discovery = mock_service_discovery
     mock_project_coordinator.hsp_connector = mock_hsp_connector
+
     mock_project_coordinator.agent_manager = mock_agent_manager
     mock_project_coordinator.memory_manager = mock_ham_manager
     mock_project_coordinator.learning_manager = mock_learning_manager
@@ -480,7 +516,9 @@ def mock_core_services():
             self._next_id += 1
             # 确保metadata包含speaker字段
             metadata_dict = {}
+
             if metadata is not None:
+
                 # 将metadata转换为字典以确保可以进行字典操作
                 if hasattr(metadata, 'to_dict'):
                     metadata_dict = metadata.to_dict()
@@ -499,9 +537,11 @@ def mock_core_services():
                 "data_type": data_type,
                 "metadata": metadata_dict,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
+
                 "mem_id": mem_id
             }
             self.memory_store[mem_id] = record_pkg
+
             # 确保始终返回memory_id而不是None
             return mem_id
 
@@ -512,29 +552,36 @@ def mock_core_services():
                 for key, value in query_params.items():
                     if key == "hsp_correlation_id":
                         if record_pkg.get("metadata", {}).get("hsp_correlation_id") != value:
+
                             match = False
                             break
                 if match:
                     results.append(record_pkg)
-            return results
-
-        def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
-            """Mock implementation of recall_gist"""
+#             return results
+# 
+#         def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
+#             """Mock implementation of recall_gist"""
             if memory_id in self.memory_store:
                 record = self.memory_store[memory_id]
                 # Ensure metadata is properly returned with required fields
-                metadata = record["metadata"].copy() if record["metadata"] else {}
-                # Ensure speaker field is present in metadata
+#                 metadata = record["metadata"].copy() if record["metadata"] else {}
+
+ # Ensure speaker field is present in metadata
+# 
                 if 'speaker' not in metadata:
                     metadata['speaker'] = 'unknown'
                 # Build result dict that matches HAMRecallResult structure
                 result: HAMRecallResult = {
-                    "id": memory_id,
+
+ "id": memory_id,
+
                     "timestamp": str(record["timestamp"]),
-                    "data_type": str(record["data_type"]),
+#                     "data_type": str(record["data_type"]),
+
                     "rehydrated_gist": str(record["raw_data"]),
                     "metadata": dict(metadata)
-                }
+                    }
+
                 return result
             return None
 
@@ -542,9 +589,11 @@ def mock_core_services():
                           keywords = None,
                           date_range = None,
                           data_type_filter = None,
+# 
                           metadata_filters = None,
-                          user_id_for_facts = None,
-                          limit: int = 5,
+#                           user_id_for_facts = None,
+limit: int = 5,
+
                           sort_by_confidence: bool = False,
                           return_multiple_candidates: bool = False,
                           semantic_query = None) -> List[HAMRecallResult]:
@@ -552,35 +601,42 @@ def mock_core_services():
             # Simplified implementation for testing:
             results: List[HAMRecallResult] = []
             for mem_id, record in self.memory_store.items():
+# 
                 # Ensure metadata is properly returned
-                metadata = record["metadata"].copy() if record["metadata"] else {}
+#                 metadata = record["metadata"].copy() if record["metadata"] else {}
                 # Build result dict that matches HAMRecallResult structure
                 result: HAMRecallResult = {
+
                     "id": mem_id,
                     "timestamp": str(record["timestamp"]),
                     "data_type": str(record["data_type"]),
                     "rehydrated_gist": str(record["raw_data"]),
                     "metadata": dict(metadata)
+# 
                 }
                 results.append(result)
             return results
 
-    # 创建MockHAMMemoryManager实例
+ # 创建MockHAMMemoryManager实例
+
     mock_ham_manager = MockHAMMemoryManager()
 
     # Create the DialogueManager instance with mocked dependencies:
     mock_dialogue_manager = DialogueManager(
-        ai_id="test_dialogue_manager",
+    ai_id="test_dialogue_manager",
+
         personality_manager=mock_personality_manager,
         memory_manager=mock_ham_manager,
         llm_interface=mock_llm_interface,
         emotion_system=mock_emotion_system,
         crisis_system=mock_crisis_system,
+
         time_system=mock_time_system,
         formula_engine=mock_formula_engine,
         tool_dispatcher=mock_tool_dispatcher,
         learning_manager=mock_learning_manager,
         service_discovery_module=mock_service_discovery,
+
         hsp_connector=mock_hsp_connector,
         agent_manager=mock_agent_manager,
         config={}
@@ -591,32 +647,38 @@ def mock_core_services():
 
     # Return a dictionary mimicking the structure of get_services()
     return {
-        "ham_manager": mock_ham_manager,
+    "ham_manager": mock_ham_manager,
+
         "llm_interface": mock_llm_interface,
         "service_discovery": mock_service_discovery,
+
         "trust_manager": mock_trust_manager,
         "personality_manager": mock_personality_manager,
         "emotion_system": mock_emotion_system,
         "crisis_system": mock_crisis_system,
         "time_system": mock_time_system,
+
         "formula_engine": mock_formula_engine,
         "tool_dispatcher": mock_tool_dispatcher,
         "learning_manager": mock_learning_manager,
         "hsp_connector": mock_hsp_connector,
         "agent_manager": mock_agent_manager,
         "project_coordinator": mock_project_coordinator,
+
         "dialogue_manager": mock_dialogue_manager,
     }
 
 @pytest.fixture(scope="function")
 def client_with_overrides(mock_core_services):
+
     """
     Provides a FastAPI TestClient with core services mocked out.
     This allows for isolated testing of API endpoints.
     """
     from fastapi.testclient import TestClient
-    from apps.backend.src.services.main_api_server import app
-    from apps.backend.src.core_services import get_services
+# 
+#     from apps.backend.src.services.main_api_server import app
+#     from apps.backend.src.core_services import get_services
 
     # Backup original dependencies and overrides
     original_get_services = app.dependency_overrides.get(get_services)
@@ -626,8 +688,10 @@ def client_with_overrides(mock_core_services):
 
     client = TestClient(app)
     try:
+# 
         yield (
-            client,
+        client,
+
             mock_core_services["service_discovery"],
             mock_core_services["dialogue_manager"],
             mock_core_services["ham_manager"],
@@ -635,6 +699,7 @@ def client_with_overrides(mock_core_services):
         )
     finally:
         # Ensure the client is explicitly closed after the test completes
+
         try:
             client.close()
         except Exception:

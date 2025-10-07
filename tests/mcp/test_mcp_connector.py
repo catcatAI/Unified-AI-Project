@@ -1,3 +1,9 @@
+"""
+测试模块 - test_mcp_connector
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import asyncio
 import pytest
 from unittest.mock import MagicMock, patch
@@ -16,7 +22,17 @@ def mock_mqtt_client():
 @pytest.mark.timeout(5)
 # 添加重试装饰器以处理不稳定的测试
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_mcp_connector_initialization(mock_mqtt_client) -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_mcp_connector_initialization(mock_mqtt_client) -> None:
     """Test that MCPConnector initializes correctly."""
     connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_running_loop())
     assert connector.ai_id == 'test_ai'

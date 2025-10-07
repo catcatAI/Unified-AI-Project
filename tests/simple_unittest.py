@@ -9,6 +9,8 @@ class TestSimple(unittest.TestCase):
     
     def test_import(self) -> None:
         """Test that we can import config_loader."""
+
+
         try:
             print("config_loader imported successfully")
             self.assertTrue(True)

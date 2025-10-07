@@ -1,3 +1,9 @@
+"""
+测试模块 - test_cli_publish_fact
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import sys
 import asyncio
 import importlib.util
@@ -5,7 +11,17 @@ from pathlib import Path
 import pytest
 
 @pytest.mark.asyncio
-async def test_publish_fact_echo(capsys):
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_publish_fact_echo(capsys):
     # 動態載入 CLI main 模組
     cli_main_path = Path(__file__).resolve().parent.parent / "cli" / "main.py"
     assert cli_main_path.exists(), f"CLI main.py not found at {cli_main_path}"

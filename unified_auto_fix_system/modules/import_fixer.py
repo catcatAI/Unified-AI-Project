@@ -1,6 +1,8 @@
 """
 导入路径修复器
 修复Python导入路径问题，包括相对导入和绝对导入
+
+
 """
 
 import ast
@@ -17,6 +19,7 @@ from .base_fixer import BaseFixer
 
 @dataclass
 class ImportIssue:
+
     """导入问题"""
     file_path: Path
     line_number: int
@@ -30,6 +33,7 @@ class ImportIssue:
 
 @dataclass
 class ModuleInfo:
+
     """模块信息"""
     name: str
     path: Path
@@ -56,11 +60,13 @@ class ImportFixer(BaseFixer):
             "absolute_import_issue": r"from\s+([\w.]+)\s+import",
             "relative_import_issue": r"from\s+(\.+[\w.]*)\s+import",
             "import_error": r"ImportError.*No module named ['\"]([\w.]+)['\"]",
+
             "module_not_found": r"ModuleNotFoundError.*No module named ['\"]([\w.]+)['\"]"
         }
         
         # 导入映射规则
         self.import_mappings = self._load_import_mappings()
+
     
     def _analyze_project_structure(self):
         """分析项目结构"""
@@ -76,23 +82,29 @@ class ImportFixer(BaseFixer):
             
             # 检查是否是包
             is_package = py_file.name == "__init__.py"
+
             
             self.module_map[module_name] = ModuleInfo(
-                name=module_name,
+#                 name=module_name,
                 path=py_file,
-                is_package=is_package,
+# 
+ is_package=is_package,
+
                 imports=[],
                 imported_by=[]
             )
             
             if is_package:
                 package_name = module_name.rstrip('.')
+
                 self.package_map[package_name] = py_file.parent
     
     def _should_skip_file(self, file_path: Path) -> bool:
         """检查是否应该跳过文件"""
+
         skip_patterns = [
-            "__pycache__", ".git", "node_modules", "venv", ".venv",
+        "__pycache__", ".git", "node_modules", "venv", ".venv",
+
             "backup", "unified_fix_backups", "dist", "build", ".pytest_cache"
         ]
         
@@ -115,6 +127,7 @@ class ImportFixer(BaseFixer):
         else:
             # 包的情况
             if module_parts:
+
                 return '.'.join(module_parts)
             else:
                 return ""  # 根包
@@ -125,15 +138,19 @@ class ImportFixer(BaseFixer):
         mappings = {
             # 常见的错误导入映射
             "apps.backend.src": "..",
+
             "apps.frontend_dashboard": "../../frontend-dashboard",
             "apps.desktop_app": "../../desktop-app",
             "core": "..core",
             "services": "..services",
-            "utils": "..utils",
+
+ "utils": "..utils",
+
             "ai": "..ai",
             "memory": "..memory",
             "concept_models": "..concept_models"
-        }
+            }
+
         
         return mappings
     
@@ -154,6 +171,7 @@ class ImportFixer(BaseFixer):
         # 分析循环导入
         circular_issues = self._analyze_circular_imports()
         issues.extend(circular_issues)
+
         
         self.logger.info(f"发现 {len(issues)} 个导入问题")
         return issues
@@ -166,21 +184,27 @@ class ImportFixer(BaseFixer):
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # 解析AST
+             # 解析AST
+
             try:
                 tree = ast.parse(content, filename=str(file_path))
             except SyntaxError:
                 # 如果文件有语法错误，使用正则表达式提取导入
                 return self._analyze_imports_with_regex(content, file_path)
+
             
-            # 分析导入语句
+             # 分析导入语句
+
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
+
                     for alias in node.names:
                         import_issues = self._check_import_validity(
-                            file_path, node.lineno, f"import {alias.name}", alias.name
+                        file_path, node.lineno, f"import {alias.name}", alias.name
+
                         )
                         issues.extend(import_issues)
+
                 
                 elif isinstance(node, ast.ImportFrom):
                     module_name = node.module or ""
@@ -190,7 +214,8 @@ class ImportFixer(BaseFixer):
                     import_statement += ", ".join(alias.name for alias in node.names)
                     
                     import_issues = self._check_import_from_validity(
-                        file_path, node.lineno, import_statement, module_name, level
+                    file_path, node.lineno, import_statement, module_name, level
+
                     )
                     issues.extend(import_issues)
         
@@ -201,21 +226,26 @@ class ImportFixer(BaseFixer):
     
     def _analyze_imports_with_regex(self, content: str, file_path: Path) -> List[ImportIssue]:
         """使用正则表达式分析导入"""
+
         issues = []
         
         # 匹配导入语句
         import_pattern = r'^(?:from\s+(\.+[\w.]*)|import\s+([\w.]+))'
+
         
         for i, line in enumerate(content.split('\n'), 1):
             match = re.match(import_pattern, line.strip())
             if match:
                 from_module = match.group(1)
+
                 import_module = match.group(2)
                 
                 if from_module:
                     # from导入
+
                     import_issues = self._check_import_from_validity(
-                        file_path, i, line.strip(), from_module, from_module.count('.')
+                    file_path, i, line.strip(), from_module, from_module.count('.')
+
                     )
                 else:
                     # import导入
@@ -230,7 +260,7 @@ class ImportFixer(BaseFixer):
     def _check_import_validity(self, file_path: Path, line_number: int, 
                              import_statement: str, module_name: str) -> List[ImportIssue]:
         """检查导入的有效性"""
-        issues = []
+#         issues = []
         
         current_module = self._calculate_module_name(file_path)
         
@@ -238,24 +268,31 @@ class ImportFixer(BaseFixer):
         if not self._module_exists(module_name):
             # 尝试查找可能的正确路径
             suggested_fix = self._suggest_import_fix(module_name, current_module)
+
+
             
             issues.append(ImportIssue(
                 file_path=file_path,
                 line_number=line_number,
                 import_statement=import_statement,
+
                 issue_type="missing_module",
-                target_module=module_name,
+#                 target_module=module_name,
                 current_module=current_module,
+
                 suggested_fix=suggested_fix,
                 severity="error"
             ))
         
-        # 检查是否应该使用相对导入
+         # 检查是否应该使用相对导入
+
         if self._should_use_relative_import(module_name, current_module):
             suggested_fix = self._convert_to_relative_import(module_name, current_module)
+
             
             issues.append(ImportIssue(
-                file_path=file_path,
+            file_path=file_path,
+
                 line_number=line_number,
                 import_statement=import_statement,
                 issue_type="absolute_import",
@@ -268,7 +305,8 @@ class ImportFixer(BaseFixer):
         return issues
     
     def _check_import_from_validity(self, file_path: Path, line_number: int,
-                                  import_statement: str, module_name: str, 
+    import_statement: str, module_name: str, 
+
                                   level: int) -> List[ImportIssue]:
         """检查from导入的有效性"""
         issues = []
@@ -277,26 +315,33 @@ class ImportFixer(BaseFixer):
         
         # 解析完整的模块名（考虑相对导入）
         if level > 0:
+
             # 相对导入
             full_module_name = self._resolve_relative_import(current_module, module_name, level)
         else:
             # 绝对导入
             full_module_name = module_name
+# 
         
-        # 检查模块是否存在
+         # 检查模块是否存在
+
         if full_module_name and not self._module_exists(full_module_name):
             # 尝试查找可能的正确路径
             suggested_fix = self._suggest_import_fix(full_module_name, current_module)
             
             issues.append(ImportIssue(
-                file_path=file_path,
+            file_path=file_path,
+
                 line_number=line_number,
                 import_statement=import_statement,
                 issue_type="missing_module",
                 target_module=module_name,
-                current_module=current_module,
+
+#                 current_module=current_module,
                 suggested_fix=suggested_fix,
+
                 severity="error"
+
             ))
         
         # 检查是否应该使用绝对导入
@@ -319,6 +364,7 @@ class ImportFixer(BaseFixer):
     def _module_exists(self, module_name: str) -> bool:
         """检查模块是否存在"""
         return module_name in self.module_map
+
     
     def _resolve_relative_import(self, current_module: str, target_module: str, level: int) -> str:
         """解析相对导入"""
@@ -327,6 +373,7 @@ class ImportFixer(BaseFixer):
         
         # 分解当前模块
         current_parts = current_module.split('.')
+
         
         # 根据级别向上移动
         if level > len(current_parts):
@@ -340,6 +387,7 @@ class ImportFixer(BaseFixer):
             full_parts = base_parts + target_parts
         else:
             full_parts = base_parts
+
         
         return '.'.join(full_parts)
     
@@ -352,6 +400,7 @@ class ImportFixer(BaseFixer):
         
         current_parts = current_module.split('.')
         target_parts = target_module.split('.')
+
         
         # 检查是否是子模块
         if len(target_parts) > len(current_parts):
@@ -377,11 +426,13 @@ class ImportFixer(BaseFixer):
         
         # 找到共同的前缀
         common_length = 0
+
         for i in range(min(len(current_parts), len(target_parts))):
             if current_parts[i] == target_parts[i]:
                 common_length += 1
             else:
                 break
+
         
         # 计算相对级别
         level = len(current_parts) - common_length
@@ -398,19 +449,22 @@ class ImportFixer(BaseFixer):
     
     def _convert_to_absolute_import(self, target_module: str, current_module: str) -> str:
         """转换为绝对导入"""
+
         # 已经是绝对导入，返回原样
         return f"from {target_module} import"
     
     def _suggest_import_fix(self, missing_module: str, current_module: str) -> str:
         """建议导入修复"""
         # 在模块映射中查找相似的模块
+
         similar_modules = self._find_similar_modules(missing_module)
         
         if similar_modules:
             # 返回最相似的模块
             best_match = similar_modules[0]
             
-            # 检查是否应该使用相对导入
+             # 检查是否应该使用相对导入
+
             if self._should_use_relative_import(best_match, current_module):
                 return self._convert_to_relative_import(best_match, current_module)
             else:
@@ -418,6 +472,7 @@ class ImportFixer(BaseFixer):
         
         # 尝试使用导入映射
         for wrong_import, correct_import in self.import_mappings.items():
+
             if wrong_import in missing_module:
                 corrected = missing_module.replace(wrong_import, correct_import)
                 return f"from {corrected} import"
@@ -427,20 +482,23 @@ class ImportFixer(BaseFixer):
     def _find_similar_modules(self, target_module: str) -> List[str]:
         """查找相似的模块"""
         similar_modules = []
+
         
         for module_name in self.module_map.keys():
             # 简单的相似度计算
-            if target_module in module_name or module_name in target_module:
+#             if target_module in module_name or module_name in target_module:
                 similar_modules.append(module_name)
         
         # 按相似度排序
         similar_modules.sort(key=lambda x: len(x))
+
         
-        return similar_modules[:3]  # 返回前3个最相似的
-    
+#         return similar_modules[:3]  # 返回前3个最相似的
+#     
     def _analyze_circular_imports(self) -> List[ImportIssue]:
-        """分析循环导入"""
+#         """分析循环导入"""
         issues = []
+
         
         # 构建依赖图
         dependency_graph = self._build_dependency_graph()
@@ -460,6 +518,7 @@ class ImportFixer(BaseFixer):
                         file_path=module_info.path,
                         line_number=0,  # 循环导入不具体到行
                         import_statement=f"import {next_module}",
+
                         issue_type="circular_import",
                         target_module=next_module,
                         current_module=module,
@@ -477,6 +536,7 @@ class ImportFixer(BaseFixer):
             try:
                 imports = self._extract_imports_from_file(module_info.path)
                 graph[module_name] = imports
+
             except Exception as e:
                 self.logger.error(f"提取导入失败 {module_info.path}: {e}")
                 graph[module_name] = []
@@ -511,6 +571,7 @@ class ImportFixer(BaseFixer):
         """检测循环"""
         cycles = []
         visited = set()
+
         rec_stack = set()
         path = []
         
@@ -518,6 +579,7 @@ class ImportFixer(BaseFixer):
             if node in rec_stack:
                 # 找到循环
                 cycle_start = path.index(node)
+
                 cycle = path[cycle_start:] + [node]
                 cycles.append(cycle)
                 return
@@ -527,10 +589,11 @@ class ImportFixer(BaseFixer):
             
             visited.add(node)
             rec_stack.add(node)
+
             path.append(node)
             
             for neighbor in graph.get(node, []):
-                if neighbor in graph:  # 只考虑在项目内的模块
+#                 if neighbor in graph:  # 只考虑在项目内的模块
                     dfs(neighbor)
             
             rec_stack.remove(node)
@@ -563,35 +626,45 @@ class ImportFixer(BaseFixer):
                 return FixResult(
                     fix_type=self.fix_type,
                     status=FixStatus.SUCCESS,
-                    issues_found=0,
+
+#                     issues_found=0,
                     issues_fixed=0,
                     duration_seconds=time.time() - start_time
                 )
-            
-            # 按文件分组问题
+#             
+             # 按文件分组问题
+
             issues_by_file = {}
             for issue in issues:
+
                 file_path = issue.file_path
                 if file_path not in issues_by_file:
-                    issues_by_file[file_path] = []
-                issues_by_file[file_path].append(issue)
-            
-            # 修复每个文件
-            for file_path, file_issues in issues_by_file.items():
+#                     issues_by_file[file_path] = []
+                    issues_by_file[file_path].append(issue)
+# 
+#             
+# 
+ # 修复每个文件
+
+#             for file_path, file_issues in issues_by_file.items():
                 try:
-                    fixed_count = self._fix_file_imports(file_path, file_issues)
+                    #                     fixed_count = self._fix_file_imports(file_path, file_issues)
+
                     issues_fixed += fixed_count
+
                     
                 except Exception as e:
-                    error_msg = f"修复文件 {file_path} 导入失败: {e}"
-                    self.logger.error(error_msg)
+#                     error_msg = f"修复文件 {file_path} 导入失败: {e}"
+#                     self.logger.error(error_msg)
                     error_messages.append(error_msg)
-            
+#             
             # 确定修复状态
             if issues_fixed == issues_found:
                 status = FixStatus.SUCCESS
+
             elif issues_fixed > 0:
                 status = FixStatus.PARTIAL_SUCCESS
+
             else:
                 status = FixStatus.FAILED
             
@@ -619,6 +692,7 @@ class ImportFixer(BaseFixer):
                 issues_fixed=issues_fixed,
                 error_message=str(e),
                 duration_seconds=time.time() - start_time
+
             )
     
     def _fix_file_imports(self, file_path: Path, issues: List[ImportIssue]) -> int:
@@ -626,6 +700,7 @@ class ImportFixer(BaseFixer):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
+
             
             original_content = content
             lines = content.split('\n')

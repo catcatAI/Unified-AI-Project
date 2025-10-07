@@ -19,7 +19,17 @@ class TestContext7Config:
     """Test Context7 configuration."""
 
     @pytest.mark.timeout(5)
-    def test_config_creation(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_config_creation(self) -> None:
     """Test basic config creation."""
     config = Context7Config(
             endpoint="https://api.context7.com/mcp",

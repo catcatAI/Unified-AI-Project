@@ -9,7 +9,17 @@ from apps.backend.src.integrations.enhanced_atlassian_bridge import EnhancedAtla
 class TestAtlassianAPI:
     """Atlassian API 测试类"""
     
-    def test_atlassian_config_model(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_atlassian_config_model(self) -> None:
         """测试 Atlassian 配置模型"""
         config = AtlassianConfig(
             domain="test.atlassian.net",

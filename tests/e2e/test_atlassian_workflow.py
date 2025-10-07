@@ -19,7 +19,17 @@ class TestAtlassianEndToEndWorkflow:
         except requests.exceptions.ConnectionError:
             _ = pytest.skip("后端服务未运行，跳过端到端测试")
     
-    def test_atlassian_full_workflow(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_atlassian_full_workflow(self) -> None:
         """测试完整的 Atlassian 工作流程"""
         # 1. 配置 Atlassian 集成
         config_data = {

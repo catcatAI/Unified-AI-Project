@@ -16,6 +16,8 @@ sys.path.insert(0, str(project_root))
 
 def demo_test_result_processing() -> None:
     """演示测试结果处理流程"""
+
+
     print("=== 测试结果处理演示 ===")
     
     # 动态导入模块
@@ -66,7 +68,8 @@ def demo_test_result_processing() -> None:
     os.chdir(test_data_dir)
     failure_patterns = analyzer.analyze_failure_patterns(results_data)
     
-    # 生成分析报告
+     # 生成分析报告
+
     analysis_report = analyzer.generate_analysis_report(
         results_data, failure_patterns)
     print(f"   分析报告已生成: {test_reports_dir / 'analysis_report.json'}")
@@ -83,6 +86,7 @@ def demo_test_result_processing() -> None:
     # 5. 生成反馈报告
     print("5. 生成反馈报告...")
     # 切换到test_data目录以正确生成报告
+
     os.chdir(test_data_dir)
     feedback_report_path = feedback_system.generate_feedback_report(
         analysis_report, suggestions)

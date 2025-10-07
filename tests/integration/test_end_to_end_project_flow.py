@@ -1,3 +1,9 @@
+"""
+测试模块 - test_end_to_end_project_flow
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 import pytest_asyncio
 import asyncio
@@ -231,7 +237,17 @@ async def project_coordinator(hsp_connector, service_discovery, agent_manager):
 @pytest.mark.timeout(30)
 # 添加重试装饰器以处理不稳定的测试
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_full_project_flow_with_real_agent(project_coordinator, tmp_path) -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_full_project_flow_with_real_agent(project_coordinator, tmp_path) -> None:
     """
     Tests the full end-to-end flow:
     1. ProjectCoordinator receives a project.

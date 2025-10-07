@@ -1,3 +1,9 @@
+"""
+测试模块 - test_sandbox_executor
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 import pytest
 from unittest.mock import patch, MagicMock, mock_open, call
