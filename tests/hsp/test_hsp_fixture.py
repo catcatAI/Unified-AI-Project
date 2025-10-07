@@ -1,3 +1,9 @@
+"""
+测试模块 - test_hsp_fixture
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import sys
 import os
 import pytest
@@ -24,7 +30,17 @@ async def mock_broker():
         _ = await broker.shutdown()
 
 @pytest.mark.asyncio
-async def test_fixture() -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_fixture() -> None:
     # Create the fixtures manually
     mock_broker = MockMqttBroker()
     _ = await mock_broker.start()

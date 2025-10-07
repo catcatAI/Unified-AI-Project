@@ -1,3 +1,9 @@
+"""
+测试模块 - test_math_model
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 try:
     from apps.backend.src.tools.math_model.lightweight_math_model import LightweightMathModel
     print("lightweight_math_model imported successfully")

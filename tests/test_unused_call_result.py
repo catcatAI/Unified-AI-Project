@@ -1,3 +1,9 @@
+"""
+测试模块 - test_unused_call_result
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 #!/usr/bin/env python3
 """
 测试和演示 "int" 类型调用表达式的结果未使用 问题的修复

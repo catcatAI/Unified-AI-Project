@@ -1,3 +1,9 @@
+"""
+测试模块 - test_project_coordinator
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch, call
 import asyncio
@@ -34,7 +40,17 @@ def project_coordinator():
     return pc
 
 @pytest.mark.asyncio
-async def test_handle_project_happy_path(project_coordinator) -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_handle_project_happy_path(project_coordinator) -> None:
     """
     Tests the full, successful execution of a project from query to final response.
     This replaces the previous, overly mocked test.

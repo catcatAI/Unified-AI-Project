@@ -1,3 +1,9 @@
+"""
+测试模块 - test_element_layer
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 import pytest
 
@@ -6,7 +12,17 @@ from apps.backend.src.modules_fragmenta.element_layer import ElementLayer
 class TestElementLayer(unittest.TestCase):
 
     @pytest.mark.timeout(5)
-    def test_01_initialization(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_01_initialization(self) -> None:
         """Test ElementLayer initialization."""
         layer = ElementLayer()
         self.assertIsNotNone(layer)

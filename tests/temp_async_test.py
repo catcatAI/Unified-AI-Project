@@ -25,12 +25,12 @@ def populated_sdm(mock_trust_manager: MagicMock):
 
     for data in caps_data:
         payload = HSPCapabilityAdvertisementPayload(
-            capability_id=data["capability_id"], ai_id=data["ai_id"], name=data["name"],
-            description=data.get("description", "Test Desc"), version=data.get("version", "1.0"),
-            availability_status=data.get("availability_status", "online"),
-            tags=data.get("tags"), input_schema_uri=None, input_schema_example=None,
-            output_schema_uri=None, output_schema_example=None, data_format_preferences=None,
-            hsp_protocol_requirements=None, cost_estimate_template=None, access_policy_id=None
+#             capability_id=data["capability_id"], ai_id=data["ai_id"], name=data["name"],
+#             description=data.get("description", "Test Desc"), version=data.get("version", "1.0"),
+#             availability_status=data.get("availability_status", "online"),
+#             tags=data.get("tags"), input_schema_uri=None, input_schema_example=None,
+#             output_schema_uri=None, output_schema_example=None, data_format_preferences=None,
+#             hsp_protocol_requirements=None, cost_estimate_template=None, access_policy_id=None
         )
         sdm.process_capability_advertisement(payload, payload['ai_id'], MagicMock(spec=HSPMessageEnvelope))
     return sdm

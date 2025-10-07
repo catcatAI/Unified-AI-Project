@@ -1,3 +1,9 @@
+"""
+测试模块 - test_hsp_integration
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 import asyncio
 import uuid
@@ -171,7 +177,17 @@ class TestHSPFactPublishing:
     """测试HSP事实发布功能"""
     
     @pytest.mark.asyncio
-    async def test_learning_manager_publishes_fact_via_hsp(self, main_ai_hsp_connector: HSPConnector, broker: Mock) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_learning_manager_publishes_fact_via_hsp(self, main_ai_hsp_connector: HSPConnector, broker: Mock) -> None:
         """测试学习管理器通过HSP发布事实"""
         # 准备测试数据
         test_fact = {

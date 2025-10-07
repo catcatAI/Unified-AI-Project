@@ -1,6 +1,8 @@
 """
 依赖关系修复器
 修复项目依赖关系，包括Python包、Node.js模块等
+
+
 """
 
 import os
@@ -20,6 +22,7 @@ from .base_fixer import BaseFixer
 
 @dataclass
 class DependencyIssue:
+
     """依赖问题"""
     package_name: str
     issue_type: str  # missing, version_conflict, unused, outdated
@@ -32,6 +35,7 @@ class DependencyIssue:
 
 @dataclass
 class PackageInfo:
+
     """包信息"""
     name: str
     version: str
@@ -56,14 +60,18 @@ class DependencyFixer(BaseFixer):
         self.dependency_files = {
             "python": ["requirements.txt", "requirements-dev.txt", "pyproject.toml", "setup.py"],
             "nodejs": ["package.json", "package-lock.json"],
+
             "system": ["Dockerfile", "docker-compose.yml"]
-        }
+            }
+
         
         # 常见依赖问题模式
         self.dependency_patterns = {
-            "import_error": r"ImportError.*No module named ['\"](\w+)['\"]",
+        "import_error": r"ImportError.*No module named ['\"](\w+)['\"]",
+
             "module_not_found": r"ModuleNotFoundError.*No module named ['\"](\w+)['\"]",
             "package_not_found": r"package.*not.*found",
+
             "version_conflict": r"version.*conflict|conflicting.*dependencies"
         }
     
@@ -88,6 +96,7 @@ class DependencyFixer(BaseFixer):
         # 分析未使用的依赖
         unused_issues = self._analyze_unused_dependencies(context)
         issues.extend(unused_issues)
+
         
         self.logger.info(f"发现 {len(issues)} 个依赖问题")
         return issues
@@ -107,7 +116,8 @@ class DependencyFixer(BaseFixer):
         venv_issues = self._check_virtual_environment()
         issues.extend(venv_issues)
         
-        # 检查已安装的包
+         # 检查已安装的包
+
         installed_issues = self._check_installed_packages()
         issues.extend(installed_issues)
         
@@ -128,32 +138,39 @@ class DependencyFixer(BaseFixer):
                 if not line or line.startswith('#'):
                     continue
                 
-                # 解析包名和版本
+                 # 解析包名和版本
+
                 package_info = self._parse_requirement_line(line)
                 if package_info:
                     package_name = package_info["name"]
-                    required_version = package_info.get("version")
-                    
-                    # 检查包是否安装
+#                     required_version = package_info.get("version")
+#                     
+                     # 检查包是否安装
+
                     if not self._is_package_installed(package_name):
                         issues.append(DependencyIssue(
                             package_name=package_name,
                             issue_type="missing",
-                            required_version=required_version,
-                            file_path=req_path,
+
+#                             required_version=required_version,
+#                             file_path=req_path,
                             line_number=i,
+
                             severity="error"
                         ))
-                    else:
+#                     else:
                         # 检查版本兼容性
+
                         installed_version = self._get_package_version(package_name)
                         if required_version and not self._version_satisfies(installed_version, required_version):
                             issues.append(DependencyIssue(
                                 package_name=package_name,
                                 issue_type="version_conflict",
                                 current_version=installed_version,
-                                required_version=required_version,
-                                file_path=req_path,
+#                                 required_version=required_version,
+# 
+ file_path=req_path,
+
                                 line_number=i,
                                 severity="warning"
                             ))
@@ -173,9 +190,11 @@ class DependencyFixer(BaseFixer):
         # 跳过注释和空行
         if not line or line.startswith('#'):
             return None
+
         
         # 移除行内注释
         if '#' in line:
+
             line = line.split('#')[0].strip()
         
         # 解析包名和版本
@@ -183,19 +202,23 @@ class DependencyFixer(BaseFixer):
         
         for op in version_operators:
             if op in line:
-                parts = line.split(op)
-                if len(parts) == 2:
+
+
+#                 parts = line.split(op)
+#                 if len(parts) == 2:
                     return {
-                        "name": parts[0].strip(),
+                    "name": parts[0].strip(),
+
                         "version": op + parts[1].strip(),
                         "operator": op
                     }
         
-        # 没有版本约束
+         # 没有版本约束
+
         return {"name": line, "version": None, "operator": None}
     
-    def _is_package_installed(self, package_name: str) -> bool:
-        """检查包是否已安装"""
+#     def _is_package_installed(self, package_name: str) -> bool:
+#         """检查包是否已安装"""
         try:
             result = subprocess.run(
                 [sys.executable, '-c', f'import {package_name}'],
@@ -206,10 +229,13 @@ class DependencyFixer(BaseFixer):
             return result.returncode == 0
         except Exception:
             return False
-    
-    def _get_package_version(self, package_name: str) -> Optional[str]:
-        """获取包版本"""
-        try:
+
+ #     
+
+#     def _get_package_version(self, package_name: str) -> Optional[str]:
+#         """获取包版本"""
+#         try:
+
             result = subprocess.run(
                 [sys.executable, '-c', f'import {package_name}; print({package_name}.__version__)'],
                 capture_output=True,
@@ -220,9 +246,11 @@ class DependencyFixer(BaseFixer):
                 return result.stdout.strip()
         except Exception:
             pass
-        
+# 
+#         
         # 尝试使用pip
         try:
+
             result = subprocess.run(
                 [sys.executable, '-m', 'pip', 'show', package_name],
                 capture_output=True,
@@ -233,6 +261,7 @@ class DependencyFixer(BaseFixer):
                 for line in result.stdout.split('\n'):
                     if line.startswith('Version:'):
                         return line.split(':', 1)[1].strip()
+
         except Exception:
             pass
         
@@ -250,7 +279,8 @@ class DependencyFixer(BaseFixer):
             # 提取版本号
             req_version = required_version.lstrip('=<>!~')
             
-            # 简化的比较逻辑
+             # 简化的比较逻辑
+
             if required_version.startswith('=='):
                 return installed_version == req_version
             elif required_version.startswith('>='):
@@ -265,9 +295,11 @@ class DependencyFixer(BaseFixer):
                 return True
         except Exception:
             return True
+
     
     def _compare_versions(self, v1: str, v2: str) -> int:
         """比较版本号"""
+
         try:
             # 简化的版本比较
             v1_parts = [int(x) for x in v1.split('.')]
@@ -280,9 +312,12 @@ class DependencyFixer(BaseFixer):
             
             for i in range(max_len):
                 if v1_parts[i] > v2_parts[i]:
+
                     return 1
-                elif v1_parts[i] < v2_parts[i]:
-                    return -1
+                    #                 elif v1_parts[i] < v2_parts[i]:
+
+#                     return -1
+
             
             return 0
         except Exception:
@@ -292,10 +327,12 @@ class DependencyFixer(BaseFixer):
         """检查虚拟环境"""
         issues = []
         
-        # 检查是否存在虚拟环境
-        venv_paths = ['venv', '.venv', 'env', '.env']
-        venv_found = False
-        
+         # 检查是否存在虚拟环境
+
+#         venv_paths = ['venv', '.venv', 'env', '.env']
+#         venv_found = False
+#         
+
         for venv_path in venv_paths:
             if (self.project_root / venv_path).exists():
                 venv_found = True
@@ -306,14 +343,16 @@ class DependencyFixer(BaseFixer):
                 package_name="virtual_environment",
                 issue_type="missing",
                 severity="warning",
-                error_message="未找到虚拟环境，建议创建虚拟环境"
+
+#                 error_message="未找到虚拟环境，建议创建虚拟环境"
             ))
-        
+#         
         return issues
     
     def _check_installed_packages(self) -> List[DependencyIssue]:
-        """检查已安装的包"""
+#         """检查已安装的包"""
         issues = []
+
         
         try:
             result = subprocess.run(
@@ -321,12 +360,14 @@ class DependencyFixer(BaseFixer):
                 capture_output=True,
                 text=True,
                 timeout=30
+
             )
             
             if result.returncode == 0:
-                packages = json.loads(result.stdout)
-                
-                # 检查是否有过时包
+#                 packages = json.loads(result.stdout)
+#                 
+                 # 检查是否有过时包
+
                 for package in packages:
                     package_name = package.get('name', '')
                     version = package.get('version', '')
@@ -334,10 +375,13 @@ class DependencyFixer(BaseFixer):
                     # 检查是否有可用更新
                     if self._has_package_update(package_name, version):
                         issues.append(DependencyIssue(
-                            package_name=package_name,
-                            issue_type="outdated",
-                            current_version=version,
-                            severity="info"
+                        package_name=package_name,
+
+ issue_type="outdated",
+
+#                             current_version=version,
+#                             severity="info"
+# 
                         ))
         
         except Exception as e:
@@ -351,6 +395,7 @@ class DependencyFixer(BaseFixer):
             result = subprocess.run(
                 [sys.executable, '-m', 'pip', 'index', 'versions', package_name],
                 capture_output=True,
+
                 text=True,
                 timeout=10
             )
@@ -376,6 +421,7 @@ class DependencyFixer(BaseFixer):
                 
                 # 检查依赖
                 dependencies = package_data.get('dependencies', {})
+
                 dev_dependencies = package_data.get('devDependencies', {})
                 
                 all_deps = {**dependencies, **dev_dependencies}
@@ -398,20 +444,24 @@ class DependencyFixer(BaseFixer):
     def _is_node_package_installed(self, package_name: str) -> bool:
         """检查Node.js包是否已安装"""
         try:
-            node_modules_path = self.project_root / "node_modules" / package_name
+#             node_modules_path = self.project_root / "node_modules" / package_name
             return node_modules_path.exists()
+
         except Exception:
             return False
     
     def _analyze_import_errors(self, context: FixContext) -> List[DependencyIssue]:
         """分析导入错误"""
+
         issues = []
         
-        # 获取Python文件
+         # 获取Python文件
+
         python_files = self._get_target_files(context)
         
         for file_path in python_files:
             try:
+
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
@@ -419,6 +469,7 @@ class DependencyFixer(BaseFixer):
                 for pattern_name, pattern in self.dependency_patterns.items():
                     matches = re.findall(pattern, content, re.IGNORECASE)
                     for match in matches:
+
                         if isinstance(match, tuple):
                             package_name = match[0] if match else "unknown"
                         else:
@@ -438,10 +489,12 @@ class DependencyFixer(BaseFixer):
     
     def _analyze_unused_dependencies(self, context: FixContext) -> List[DependencyIssue]:
         """分析未使用的依赖"""
+
         issues = []
         
         # 获取所有导入的包
         imported_packages = set()
+
         python_files = self._get_target_files(context)
         
         for file_path in python_files:
@@ -450,10 +503,12 @@ class DependencyFixer(BaseFixer):
                 imported_packages.update(packages)
             except Exception as e:
                 self.logger.error(f"提取导入失败 {file_path}: {e}")
+
         
         # 检查requirements中声明但未使用的包
-        requirements_path = self.project_root / "requirements.txt"
+#         requirements_path = self.project_root / "requirements.txt"
         if requirements_path.exists():
+
             try:
                 with open(requirements_path, 'r', encoding='utf-8') as f:
                     requirements_content = f.read()
@@ -461,12 +516,14 @@ class DependencyFixer(BaseFixer):
                 declared_packages = set()
                 for line in requirements_content.split('\n'):
                     line = line.strip()
+
                     if line and not line.startswith('#'):
                         package_name = line.split('==')[0].split('>=')[0].split('<=')[0].strip()
                         declared_packages.add(package_name)
                 
                 # 找出未使用的包
                 unused_packages = declared_packages - imported_packages
+
                 for package in unused_packages:
                     issues.append(DependencyIssue(
                         package_name=package,
@@ -483,6 +540,7 @@ class DependencyFixer(BaseFixer):
     def _extract_imports(self, file_path: Path) -> set:
         """提取文件中的导入"""
         imports = set()
+
         
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -498,8 +556,9 @@ class DependencyFixer(BaseFixer):
         
         return imports
     
-    def fix(self, context: FixContext) -> FixResult:
+#     def fix(self, context: FixContext) -> FixResult:
         """修复依赖问题"""
+
         self.logger.info("开始修复依赖问题...")
         
         import time
@@ -528,37 +587,46 @@ class DependencyFixer(BaseFixer):
             issues_by_type = {}
             for issue in issues:
                 if issue.issue_type not in issues_by_type:
+
                     issues_by_type[issue.issue_type] = []
                 issues_by_type[issue.issue_type].append(issue)
             
-            # 修复不同类型的问题
-            for issue_type, type_issues in issues_by_type.items():
+             # 修复不同类型的问题
+# 
+#             for issue_type, type_issues in issues_by_type.items():
                 try:
+
                     if issue_type == "missing":
                         fixed_count = self._fix_missing_dependencies(type_issues)
+
                     elif issue_type == "version_conflict":
                         fixed_count = self._fix_version_conflicts(type_issues)
                     elif issue_type == "unused":
                         fixed_count = self._fix_unused_dependencies(type_issues)
-                    elif issue_type == "outdated":
-                        fixed_count = self._fix_outdated_dependencies(type_issues)
-                    else:
-                        fixed_count = 0
-                    
-                    issues_fixed += fixed_count
+
+#                     elif issue_type == "outdated":
+#                         fixed_count = self._fix_outdated_dependencies(type_issues)
+#                     else:
+    #                         fixed_count = 0
+
+#                     
+#                     issues_fixed += fixed_count
                     
                 except Exception as e:
                     error_msg = f"修复 {issue_type} 类型依赖问题失败: {e}"
+
+
                     self.logger.error(error_msg)
                     error_messages.append(error_msg)
             
             # 确定修复状态
             if issues_fixed == issues_found:
                 status = FixStatus.SUCCESS
-            elif issues_fixed > 0:
-                status = FixStatus.PARTIAL_SUCCESS
-            else:
+#             elif issues_fixed > 0:
+#                 status = FixStatus.PARTIAL_SUCCESS
+#             else:
                 status = FixStatus.FAILED
+
             
             duration = time.time() - start_time
             
@@ -568,6 +636,7 @@ class DependencyFixer(BaseFixer):
                 issues_found=issues_found,
                 issues_fixed=issues_fixed,
                 error_message="; ".join(error_messages) if error_messages else None,
+
                 duration_seconds=duration,
                 details={
                     "issues_by_type": {k: len(v) for k, v in issues_by_type.items()},
@@ -581,6 +650,7 @@ class DependencyFixer(BaseFixer):
                 fix_type=self.fix_type,
                 status=FixStatus.FAILED,
                 issues_found=issues_found,
+
                 issues_fixed=issues_fixed,
                 error_message=str(e),
                 duration_seconds=time.time() - start_time
@@ -588,6 +658,7 @@ class DependencyFixer(BaseFixer):
     
     def _fix_missing_dependencies(self, issues: List[DependencyIssue]) -> int:
         """修复缺失的依赖"""
+
         fixed_count = 0
         
         for issue in issues:
@@ -600,6 +671,7 @@ class DependencyFixer(BaseFixer):
                     fixed_count += 1
                 else:
                     self.logger.warning(f"无法安装包: {package_name}")
+
             
             except Exception as e:
                 self.logger.error(f"修复缺失依赖 {issue.package_name} 失败: {e}")
@@ -619,6 +691,7 @@ class DependencyFixer(BaseFixer):
                 if self._upgrade_package(package_name, required_version):
                     self.logger.info(f"成功更新包 {package_name} 到版本 {required_version}")
                     fixed_count += 1
+
                 else:
                     self.logger.warning(f"无法更新包 {package_name} 到版本 {required_version}")
             
@@ -634,10 +707,12 @@ class DependencyFixer(BaseFixer):
         for issue in issues:
             try:
                 # 这里可以实现移除未使用依赖的逻辑
+
                 # 但为了安全起见，我们只报告而不自动移除
-                self.logger.info(f"发现未使用的依赖: {issue.package_name}")
-                self.logger.info(f"建议手动检查并移除: {issue.package_name}")
+#                 self.logger.info(f"发现未使用的依赖: {issue.package_name}")
+#                 self.logger.info(f"建议手动检查并移除: {issue.package_name}")
                 # 标记为已处理（因为我们已经识别了问题）
+
                 fixed_count += 1
             
             except Exception as e:
@@ -647,10 +722,12 @@ class DependencyFixer(BaseFixer):
     
     def _fix_outdated_dependencies(self, issues: List[DependencyIssue]) -> int:
         """修复过时的依赖"""
+
         fixed_count = 0
-        
+#         
         for issue in issues:
             try:
+
                 package_name = issue.package_name
                 
                 # 尝试升级包
@@ -659,7 +736,8 @@ class DependencyFixer(BaseFixer):
                     fixed_count += 1
                 else:
                     self.logger.warning(f"无法升级包: {package_name}")
-            
+
+#             
             except Exception as e:
                 self.logger.error(f"升级过时依赖 {issue.package_name} 失败: {e}")
         
@@ -676,21 +754,26 @@ class DependencyFixer(BaseFixer):
                 install_cmd.append(package_name)
             
             result = subprocess.run(
-                install_cmd,
-                capture_output=True,
+#             install_cmd,
+# 
+#                 capture_output=True,
                 text=True,
+
                 timeout=300  # 5分钟超时
+
             )
             
             if result.returncode == 0:
                 self.logger.info(f"成功安装包: {package_name}")
                 return True
+
             else:
                 self.logger.error(f"安装包 {package_name} 失败: {result.stderr}")
                 return False
         
         except Exception as e:
             self.logger.error(f"安装包 {package_name} 失败: {e}")
+
             return False
     
     def _upgrade_package(self, package_name: str, version: Optional[str] = None) -> bool:

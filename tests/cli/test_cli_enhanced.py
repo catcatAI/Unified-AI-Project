@@ -1,3 +1,9 @@
+"""
+测试模块 - test_cli_enhanced
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import sys
 import os
 import pytest
@@ -12,7 +18,17 @@ class TestEnhancedCLI:
     """测试增强的CLI功能"""
     
     @patch('cli.main.get_services')
-    def test_handle_model_list_success(self, mock_get_services):
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_handle_model_list_success(self, mock_get_services):
         """测试模型列表命令成功执行"""
         # Mock服务
         mock_learning_manager = MagicMock()

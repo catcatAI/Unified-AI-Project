@@ -1,3 +1,9 @@
+"""
+测试模块 - test_node_services
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 import pytest
 # Mock the Node.js service communication

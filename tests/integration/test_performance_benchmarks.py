@@ -11,7 +11,17 @@ class TestAgentPerformanceBenchmarks:
     @pytest.mark.performance
     @pytest.mark.benchmark
     @pytest.mark.asyncio
-    async def test_agent_creation_performance(self, benchmark) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_agent_creation_performance(self, benchmark) -> None:
         """测试代理创建性能"""
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         

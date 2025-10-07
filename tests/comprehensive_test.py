@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
 综合测试脚本，测试所有已修复的模块
+
+
 """
 
 def test_logic_parser():
@@ -105,6 +107,7 @@ def main():
         test_math_tool,
         test_dependency_manager,
         test_common_types
+
     ]
     
     passed = 0
@@ -119,6 +122,7 @@ def main():
     
     if passed == total:
         print("🎉 所有测试通过！")
+
     else:
         print("❌ 部分测试失败。")
 

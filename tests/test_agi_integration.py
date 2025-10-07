@@ -1,3 +1,9 @@
+"""
+测试模块 - test_agi_integration
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 #!/usr/bin/env python3
 """
 AGI系统整合测试脚本
@@ -76,7 +82,17 @@ class TestAGIIntegration:
 
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.asyncio
-    async def test_unified_control_center(self) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_unified_control_center(self) -> None:
     """测试统一控制中心"""
     logger.info("🧠 Testing Unified Control Center...")
 

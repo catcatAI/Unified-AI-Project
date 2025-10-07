@@ -1,3 +1,9 @@
+"""
+测试模块 - test_daily_language_model
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 from unittest.mock import AsyncMock # Added for AsyncMock
     import json
@@ -79,7 +85,17 @@ class TestDailyLanguageModel:
 
 
     @pytest.mark.timeout(5)
-    def test_01_initialization(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_01_initialization(self) -> None:
     assert self.dlm is not None
     print("TestDailyLanguageModel.test_01_initialization PASSED")
 

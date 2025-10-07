@@ -1,3 +1,9 @@
+"""
+测试模块 - test_tool_dispatcher_logging
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import json
 import asyncio
 import pytest
@@ -34,6 +40,16 @@ class MockHAMManager:
         }]
 
 @pytest.mark.timeout(15)
+
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
 def test_tool_dispatcher_action_policy_logged_smoke() -> None:
     """
     Smoke test: invoke a simple tool via dispatcher and check that

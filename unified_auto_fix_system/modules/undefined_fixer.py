@@ -16,6 +16,8 @@ from .base_fixer import BaseFixer
 @dataclass
 class UndefinedIssue:
     """未定义问题"""
+
+
     file_path: Path
     line_number: int
     column: int
@@ -38,7 +40,8 @@ class UndefinedFixer(BaseFixer):
         # 内置名称
         self.builtin_names = set(dir(builtins))
         
-        # 常见模块映射
+         # 常见模块映射
+
         self.common_module_imports = {
             "os": "import os",
             "sys": "import sys",
@@ -62,8 +65,11 @@ class UndefinedFixer(BaseFixer):
             "transformers": "from transformers import AutoModel, AutoTokenizer",
             "sklearn": "from sklearn import",
             "matplotlib": "import matplotlib.pyplot as plt",
-            "seaborn": "import seaborn as sns",
-        }
+
+ "seaborn": "import seaborn as sns",
+
+            }
+
         
         # 常见类映射
         self.common_class_imports = {
@@ -86,12 +92,15 @@ class UndefinedFixer(BaseFixer):
             "FastAPI": "from fastapi import FastAPI",
             "BaseModel": "from pydantic import BaseModel",
             "TestCase": "from unittest import TestCase",
+
             "patch": "from unittest.mock import patch",
             "Mock": "from unittest.mock import Mock",
+
             "MagicMock": "from unittest.mock import MagicMock",
         }
         
-        # 常见函数映射
+         # 常见函数映射
+
         self.common_function_imports = {
             "print": None,  # 内置函数，不需要导入
             "len": None,  # 内置函数
@@ -119,11 +128,15 @@ class UndefinedFixer(BaseFixer):
             "issubclass": None,  # 内置函数
             "hasattr": None,  # 内置函数
             "getattr": None,  # 内置函数
+
             "setattr": None,  # 内置函数
             "delattr": None,  # 内置函数
-            "super": None,  # 内置函数
+
+ "super": None,  # 内置函数
+
             "next": None,  # 内置函数
             "iter": None,  # 内置函数
+
         }
     
     def analyze(self, context: FixContext) -> List[UndefinedIssue]:
@@ -137,6 +150,7 @@ class UndefinedFixer(BaseFixer):
             try:
                 file_issues = self._analyze_file_undefined(file_path)
                 issues.extend(file_issues)
+
             except Exception as e:
                 self.logger.error(f"分析文件未定义问题失败 {file_path}: {e}")
         
@@ -164,6 +178,7 @@ class UndefinedFixer(BaseFixer):
             self.logger.warning(f"文件 {file_path} 有语法错误: {e}")
         except Exception as e:
             self.logger.error(f"无法分析文件 {file_path}: {e}")
+
         
         return issues
     
@@ -172,9 +187,11 @@ class UndefinedFixer(BaseFixer):
         scope_info = {
             "global_names": set(),
             "local_scopes": {},
+
             "imported_names": set(),
             "class_methods": defaultdict(set),
             "function_params": defaultdict(list),
+
             "builtin_names": self.builtin_names.copy()
         }
         
@@ -183,19 +200,25 @@ class UndefinedFixer(BaseFixer):
             if isinstance(node, ast.FunctionDef):
                 scope_info["global_names"].add(node.name)
                 # 收集函数参数
+
                 scope_info["function_params"][node.name] = [arg.arg for arg in node.args.args]
             elif isinstance(node, ast.ClassDef):
                 scope_info["global_names"].add(node.name)
                 # 收集类方法
                 for item in node.body:
+
+
                     if isinstance(item, ast.FunctionDef):
                         scope_info["class_methods"][node.name].add(item.name)
             elif isinstance(node, ast.Import):
                 for alias in node.names:
+
+
                     name = alias.asname if alias.asname else alias.name
                     scope_info["imported_names"].add(name)
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
+
                     scope_info["imported_names"].add(node.module)
                 for alias in node.names:
                     name = alias.asname if alias.asname else alias.name
@@ -212,11 +235,13 @@ class UndefinedFixer(BaseFixer):
             if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
                 name = node.id
                 issue = self._check_name_defined(name, node, file_path, scope_info)
+
                 if issue:
                     issues.append(issue)
             
             elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
                 # 检查属性访问
+
                 attr_name = node.attr
                 issue = self._check_attribute_defined(attr_name, node, file_path, scope_info)
                 if issue:
@@ -234,6 +259,7 @@ class UndefinedFixer(BaseFixer):
         # 检查是否在全局作用域
         if name in scope_info["global_names"]:
             return None
+
         
         # 检查是否已导入
         if name in scope_info["imported_names"]:
@@ -241,14 +267,17 @@ class UndefinedFixer(BaseFixer):
         
         # 检查是否在函数参数中（需要更复杂的作用域分析）
         # 简化版本：检查是否在函数定义中
-        if self._is_in_function_scope(name, node, scope_info):
+#         if self._is_in_function_scope(name, node, scope_info):
+
             return None
         
-        # 确定问题类型
+         # 确定问题类型
+# 
         issue_type = self._determine_undefined_type(name, node, scope_info)
         
         return UndefinedIssue(
-            file_path=file_path,
+        file_path=file_path,
+
             line_number=node.lineno,
             column=node.col_offset,
             name=name,
@@ -263,30 +292,38 @@ class UndefinedFixer(BaseFixer):
         """检查属性是否已定义"""
         # 获取属性所属的对象
         obj_name = self._get_object_name(node.value)
+
         
         if not obj_name:
             return None
         
         # 检查是否是已知对象的属性
         if obj_name in scope_info["class_methods"]:
-            if attr_name in scope_info["class_methods"][obj_name]:
+            #             if attr_name in scope_info["class_methods"][obj_name]:
+
                 return None
-        
-        # 检查是否是模块的属性（需要更复杂的分析）
+
+#         
+         # 检查是否是模块的属性（需要更复杂的分析）
+
         if obj_name in scope_info["imported_names"]:
             # 这里应该检查模块是否有该属性
             # 简化版本，假设常见模块属性存在
             if self._is_common_module_attribute(obj_name, attr_name):
+
                 return None
         
         return UndefinedIssue(
-            file_path=file_path,
+        file_path=file_path,
+
             line_number=node.lineno,
             column=node.col_offset,
             name=f"{obj_name}.{attr_name}",
             issue_type="attribute",
             context=self._get_context(node),
-            description=f"未定义的属性: {obj_name}.{attr_name}",
+
+ description=f"未定义的属性: {obj_name}.{attr_name}",
+
             suggested_fix=self._suggest_fix_for_attribute(obj_name, attr_name)
         )
     
@@ -307,6 +344,7 @@ class UndefinedFixer(BaseFixer):
             return "class"
         elif name.islower() and '_' in name:
             return "function"
+
         elif name.islower():
             return "variable"
         else:
@@ -319,6 +357,7 @@ class UndefinedFixer(BaseFixer):
         if parent:
             if isinstance(parent, ast.Call):
                 return "函数调用"
+
             elif isinstance(parent, ast.Assign):
                 return "赋值"
             elif isinstance(parent, ast.Compare):
@@ -328,8 +367,10 @@ class UndefinedFixer(BaseFixer):
     
     def _get_object_name(self, node: ast.AST) -> Optional[str]:
         """获取对象名称"""
+
         if isinstance(node, ast.Name):
             return node.id
+
         elif isinstance(node, ast.Attribute):
             # 递归获取属性链的根名称
             current = node
@@ -337,12 +378,16 @@ class UndefinedFixer(BaseFixer):
                 current = current.value
             if isinstance(current, ast.Name):
                 return current.id
+
+
         return None
     
     def _is_common_module_attribute(self, module_name: str, attr_name: str) -> bool:
         """检查是否是常见模块属性"""
         common_attributes = {
-            "os": ["path", "environ", "system", "getcwd", "makedirs"],
+
+ "os": ["path", "environ", "system", "getcwd", "makedirs"],
+
             "sys": ["argv", "exit", "path", "modules"],
             "json": ["loads", "dumps", "load", "dump"],
             "re": ["compile", "search", "match", "findall", "sub"],
@@ -373,12 +418,15 @@ class UndefinedFixer(BaseFixer):
         
         elif issue_type == "function":
             if name in self.common_module_imports:
+
                 return f"添加导入: {self.common_module_imports[name]}"
             elif name in self.common_function_imports:
                 if self.common_function_imports[name]:
+
                     return f"添加导入: {self.common_function_imports[name]}"
                 else:
                     return "# 这是内置函数，不需要导入"
+
             else:
                 return f"# 需要定义函数 {name} 或导入包含它的模块"
         
@@ -392,17 +440,20 @@ class UndefinedFixer(BaseFixer):
         
         else:
             if name in self.common_module_imports:
+
                 return f"添加导入: {self.common_module_imports[name]}"
             else:
                 return f"# 需要定义或导入 {name}"
-    
+#     
     def _suggest_fix_for_attribute(self, obj_name: str, attr_name: str) -> str:
         """为属性问题建议修复"""
+
         return f"# 检查对象 {obj_name} 是否有属性 {attr_name}，或考虑使用其他方法"
     
     def fix(self, context: FixContext) -> FixResult:
-        """修复未定义问题"""
+#         """修复未定义问题"""
         self.logger.info("开始修复未定义问题...")
+
         
         import time
         start_time = time.time()
@@ -432,34 +483,42 @@ class UndefinedFixer(BaseFixer):
                 issues_by_type[issue.issue_type].append(issue)
             
             # 修复不同类型的问题
-            for issue_type, type_issues in issues_by_type.items():
+#             for issue_type, type_issues in issues_by_type.items():
                 try:
                     if issue_type in ["variable", "function", "class"]:
                         fixed_count = self._fix_undefined_names(type_issues, context)
-                    elif issue_type == "attribute":
+# 
+#                     elif issue_type == "attribute":
                         fixed_count = self._fix_undefined_attributes(type_issues, context)
+
                     else:
                         fixed_count = 0
+
                     
-                    issues_fixed += fixed_count
-                    
+#                     issues_fixed += fixed_count
+#                     
                 except Exception as e:
-                    error_msg = f"修复 {issue_type} 类型未定义问题失败: {e}"
-                    self.logger.error(error_msg)
+                    #                     error_msg = f"修复 {issue_type} 类型未定义问题失败: {e}"
+
+ #                     self.logger.error(error_msg)
+
                     error_messages.append(error_msg)
-            
+#             
             # 确定修复状态
             if issues_fixed == issues_found:
+# 
+
                 status = FixStatus.SUCCESS
             elif issues_fixed > 0:
                 status = FixStatus.PARTIAL_SUCCESS
-            else:
-                status = FixStatus.FAILED
-            
+#             else:
+#                 status = FixStatus.FAILED
+#             
             duration = time.time() - start_time
             
             return FixResult(
-                fix_type=self.fix_type,
+            fix_type=self.fix_type,
+
                 status=status,
                 issues_found=issues_found,
                 issues_fixed=issues_fixed,
@@ -474,12 +533,15 @@ class UndefinedFixer(BaseFixer):
         except Exception as e:
             self.logger.error(f"未定义修复过程失败: {e}")
             return FixResult(
-                fix_type=self.fix_type,
-                status=FixStatus.FAILED,
+            fix_type=self.fix_type,
+
+ status=FixStatus.FAILED,
+
                 issues_found=issues_found,
                 issues_fixed=issues_fixed,
                 error_message=str(e),
                 duration_seconds=time.time() - start_time
+
             )
     
     def _fix_undefined_names(self, issues: List[UndefinedIssue], context: FixContext) -> int:
@@ -520,16 +582,19 @@ class UndefinedFixer(BaseFixer):
             for issue in issues:
                 if issue.issue_type in ["variable", "function", "class"]:
                     import_statement = self._get_import_for_name(issue.name, issue.issue_type)
+
                     if import_statement:
                         imports_to_add.add(import_statement)
                     else:
                         # 记录需要手动修复的行
+
                         lines_to_fix.append((issue.line_number, issue.name))
             
             # 添加导入
             new_content = content
             if imports_to_add:
                 new_content = self._add_imports(content, list(imports_to_add))
+
             
             # 写回文件
             if new_content != content:
@@ -547,12 +612,14 @@ class UndefinedFixer(BaseFixer):
     
     def _get_import_for_name(self, name: str, issue_type: str) -> Optional[str]:
         """获取名称对应的导入语句"""
+
         if issue_type == "variable":
             return self.common_module_imports.get(name)
         elif issue_type == "function":
             return self.common_function_imports.get(name)
         elif issue_type == "class":
             return self.common_class_imports.get(name)
+
         
         return None
     
@@ -564,15 +631,18 @@ class UndefinedFixer(BaseFixer):
         insert_index = 0
         for i, line in enumerate(lines):
             if line.startswith('#!') or line.startswith('# -*-'):
+
                 insert_index = i + 1
             elif line.strip() and not line.startswith('#'):
                 break
         
-        # 检查是否已经存在这些导入
+         # 检查是否已经存在这些导入
+
         new_imports = []
         for import_stmt in imports:
             if import_stmt not in content:
                 new_imports.append(import_stmt)
+
         
         # 插入新的导入
         for import_stmt in reversed(new_imports):

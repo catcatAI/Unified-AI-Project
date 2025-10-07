@@ -1,3 +1,9 @@
+"""
+测试模块 - test_training_workflow
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
 from demo_learning_manager import DemoLearningManager
@@ -19,7 +25,17 @@ class TestTrainingWorkflowE2E:
         return manager
     
     @pytest.mark.asyncio
-    async def test_complete_training_workflow(self, demo_learning_manager, execution_manager) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_complete_training_workflow(self, demo_learning_manager, execution_manager) -> None:
         """测试完整的训练工作流程"""
         # Mock依赖组件
         demo_learning_manager.model_trainer = AsyncMock()

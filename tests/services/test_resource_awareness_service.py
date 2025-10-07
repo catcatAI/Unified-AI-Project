@@ -1,3 +1,9 @@
+"""
+测试模块 - test_resource_awareness_service
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 # tests/services/test_resource_awareness_service.py
 import unittest
 import pytest

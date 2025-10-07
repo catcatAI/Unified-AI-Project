@@ -1,3 +1,9 @@
+"""
+测试模块 - test_llm_interface
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 import pytest
 
@@ -6,7 +12,17 @@ from apps.backend.src.core.services.multi_llm_service import MultiLLMService
 class TestLLMInterface(unittest.TestCase):
 
     @pytest.mark.timeout(15)
-    def test_01_initialization(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_01_initialization(self) -> None:
         """Test LLM interface initialization."""
         interface = MultiLLMService()
         self.assertIsNotNone(interface)

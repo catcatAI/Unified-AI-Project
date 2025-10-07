@@ -58,7 +58,17 @@ class TestAtlassianBridge:
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    async def test_create_confluence_page(self, bridge, mock_connector) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_create_confluence_page(self, bridge, mock_connector) -> None:
         """测试创建 Confluence 页面"""
         # Mock response
         mock_response = {

@@ -1,10 +1,26 @@
+"""
+测试模块 - test_deep_mapper
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 from apps.backend.src.core_ai.deep_mapper import DeepMapper
 from apps.backend.src.shared.types import MappableDataObject
 
 class TestDeepMapper(unittest.TestCase):
 
-    def test_map(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_map(self) -> None:
         # Arrange
         source_data = {
             "nodes": [

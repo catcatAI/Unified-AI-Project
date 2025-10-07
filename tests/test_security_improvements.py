@@ -11,7 +11,17 @@ from apps.backend.src.tools.logic_model.lightweight_logic_model import Lightweig
 class TestSecurityImprovements(unittest.TestCase):
 ""安全改进测试类"""
 
-    def test_math_safe_eval(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_math_safe_eval(self) -> None:
     """测试数学表达式的安全计算"""
     # 测试基本运算
     _ = self.assertEqual(math_safe_eval("5 + 3"), 8)

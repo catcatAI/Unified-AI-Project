@@ -1,3 +1,9 @@
+"""
+测试模块 - test_knowledge_graph_agent
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
@@ -24,7 +30,17 @@ def knowledge_graph_agent()
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_knowledge_graph_agent_init(knowledge_graph_agent) -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_knowledge_graph_agent_init(knowledge_graph_agent) -> None:
     """Test that the KnowledgeGraphAgent initializes correctly."""
     assert knowledge_graph_agent.agent_id == "did:hsp:knowledge_graph_agent_test"
     assert len(knowledge_graph_agent.capabilities) == 3

@@ -73,7 +73,17 @@ class TestAtlassianBridgeFallback:
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    async def test_endpoint_config_loading(self, bridge) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_endpoint_config_loading(self, bridge) -> None:
     """測試端點配置加載"""
     assert 'confluence' in bridge.endpoints
     assert 'jira' in bridge.endpoints

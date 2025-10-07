@@ -55,7 +55,17 @@ class TestRovoDevAgent:
     with patch('integrations.rovo_dev_agent.AtlassianBridge')
     return RovoDevAgent(mock_config)
 
-    def test_agent_initialization(self, agent, mock_config) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_agent_initialization(self, agent, mock_config) -> None:
     """测试代理初始化"""
     assert agent.agent_id == 'test-rovo-agent'
     assert not agent.is_active

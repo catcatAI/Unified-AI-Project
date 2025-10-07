@@ -38,7 +38,17 @@ class TestEnhancedRovoDevConnector:
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    async def test_context_manager(self, connector) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_context_manager(self, connector) -> None:
         """测试异步上下文管理器"""
         with patch.object(connector, 'start') as mock_start:
             with patch.object(connector, 'close') as mock_close:

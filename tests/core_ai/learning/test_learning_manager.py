@@ -1,3 +1,9 @@
+"""
+测试模块 - test_learning_manager
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 import os
 import sys
@@ -27,7 +33,17 @@ class TestLearningManager:
         self.mock_fact_extractor.extract_facts = AsyncMock(return_value=[])  # Changed to AsyncMock
         self.mock_content_analyzer.process_hsp_fact_content.return_value = {}
         
-    def test_learning_manager_initialization(self) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_learning_manager_initialization(self) -> None:
         """测试LearningManager初始化"""
         # 创建LearningManager实例
         learning_manager = LearningManager(

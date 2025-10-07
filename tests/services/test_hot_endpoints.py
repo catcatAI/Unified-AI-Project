@@ -1,3 +1,9 @@
+"""
+测试模块 - test_hot_endpoints
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -5,6 +11,16 @@ from apps.backend.src.services.main_api_server import app
 
 
 @pytest.mark.timeout(10)
+
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
 def test_hot_status_endpoint_basic_structure() -> None:
     """
     Basic smoke test for /api/v1/hot/status.

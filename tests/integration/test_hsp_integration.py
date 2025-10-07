@@ -1,3 +1,9 @@
+"""
+测试模块 - test_hsp_integration
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock
@@ -104,7 +110,17 @@ class TestHSPIntegration:
         return connector
     
     @pytest.mark.asyncio
-    async def test_hsp_message_flow(self, hsp_connector, internal_bus) -> None:
+    async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_hsp_message_flow(self, hsp_connector, internal_bus) -> None:
         """测试HSP消息从发布到接收的完整流程"""
         # 准备测试数据
         test_fact = {

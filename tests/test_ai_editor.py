@@ -1,3 +1,9 @@
+"""
+测试模块 - test_ai_editor
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 # tests/test_ai_editor.py
 """
 Unit tests for the AI Editor Service:

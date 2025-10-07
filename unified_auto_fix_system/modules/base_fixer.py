@@ -15,6 +15,8 @@ from ..core.fix_result import FixResult
 
 class BaseFixer(abc.ABC):
     """基础修复器类"""
+
+
     
     def __init__(self, project_root: Path):
         self.project_root = Path(project_root).resolve()
@@ -24,13 +26,16 @@ class BaseFixer(abc.ABC):
         # 设置日志
         self.logger = logging.getLogger(f"{__name__}.{self.name}")
         
-        # 修复统计
+         # 修复统计
+
         self.stats = {
             "total_fixes": 0,
             "successful_fixes": 0,
             "failed_fixes": 0,
             "issues_found": 0,
-            "issues_fixed": 0
+
+ "issues_fixed": 0
+
         }
     
     @abc.abstractmethod
@@ -94,9 +99,12 @@ class BaseFixer(abc.ABC):
                 if desktop_dir.exists():
                     target_files.extend(self._get_javascript_files_in_directory(desktop_dir))
         
-        # 过滤排除的路径
+         # 过滤排除的路径
+
         filtered_files = []
         excluded_paths = context.excluded_paths or []
+
+
         excluded_paths.extend([
             "node_modules", "__pycache__", ".git", "venv", ".venv",
             "backup", "unified_fix_backups", "dist", "build"
@@ -112,6 +120,7 @@ class BaseFixer(abc.ABC):
             
             if not should_exclude:
                 filtered_files.append(file_path)
+
         
         return filtered_files
     
@@ -147,18 +156,22 @@ class BaseFixer(abc.ABC):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 return f.read()
+
         except Exception as e:
             self.logger.error(f"读取文件 {file_path} 失败: {e}")
             return None
+
     
     def _write_file_content(self, file_path: Path, content: str) -> bool:
         """写入文件内容"""
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
+
             return True
         except Exception as e:
             self.logger.error(f"写入文件 {file_path} 失败: {e}")
+
             return False
     
     def _create_backup(self, file_path: Path, backup_suffix: str = ".backup") -> Optional[Path]:
@@ -166,6 +179,7 @@ class BaseFixer(abc.ABC):
         try:
             backup_path = file_path.with_suffix(file_path.suffix + backup_suffix)
             import shutil
+
             shutil.copy2(file_path, backup_path)
             return backup_path
         except Exception as e:
@@ -183,22 +197,28 @@ class BaseFixer(abc.ABC):
             self.logger.info(f"修复成功: {result.summary()}")
         elif result.status == FixStatus.FAILED:
             self.stats["failed_fixes"] += 1
+
             self.logger.error(f"修复失败: {result.summary()}")
         elif result.status == FixStatus.PARTIAL_SUCCESS:
             self.stats["successful_fixes"] += 1  # 部分成功也算成功
+
             self.logger.warning(f"部分修复成功: {result.summary()}")
         elif result.status == FixStatus.SKIPPED:
             self.logger.info(f"修复已跳过: {result.summary()}")
     
     def get_statistics(self) -> Dict[str, int]:
         """获取修复统计"""
+
+
         return self.stats.copy()
     
     def reset_statistics(self):
         """重置统计信息"""
         self.stats = {
-            "total_fixes": 0,
+        "total_fixes": 0,
+
             "successful_fixes": 0,
+
             "failed_fixes": 0,
             "issues_found": 0,
             "issues_fixed": 0

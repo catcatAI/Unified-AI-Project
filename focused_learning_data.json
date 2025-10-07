@@ -1,0 +1,47 @@
+{
+  "syntax_error": {
+    "success_count": 0,
+    "failure_count": 16,
+    "last_updated": "2025-10-07T00:34:20.146475"
+  },
+  "invalid_character": {
+    "success_count": 140,
+    "failure_count": 68,
+    "last_updated": "2025-10-07T00:34:22.447599"
+  },
+  "bracket_mismatch": {
+    "success_count": 1023,
+    "failure_count": 531,
+    "last_updated": "2025-10-07T00:34:22.446496"
+  },
+  "unterminated_string": {
+    "success_count": 815,
+    "failure_count": 372,
+    "last_updated": "2025-10-07T00:34:22.353451"
+  },
+  "brace_mismatch": {
+    "success_count": 506,
+    "failure_count": 378,
+    "last_updated": "2025-10-07T00:34:22.423320"
+  },
+  "inefficient_code": {
+    "success_count": 0,
+    "failure_count": 54,
+    "last_updated": "2025-10-07T00:34:22.449348"
+  },
+  "unused_variable": {
+    "success_count": 1192,
+    "failure_count": 295,
+    "last_updated": "2025-10-07T00:34:23.758034"
+  },
+  "missing_colon": {
+    "success_count": 229,
+    "failure_count": 125,
+    "last_updated": "2025-10-07T00:34:22.425543"
+  },
+  "learning_pattern": {
+    "success_count": 0,
+    "failure_count": 4,
+    "last_updated": "2025-10-07T00:33:31.320001"
+  }
+}

@@ -14,6 +14,8 @@ logger: Any = logging.getLogger(__name__)
 
 class UnifiedKeyManager:
     """統一金鑰管理器"""
+
+
     
     def __init__(self, config_path: str = "configs/unified_demo_config.yaml") -> None:
         self.config_path = Path(config_path)
@@ -33,6 +35,7 @@ class UnifiedKeyManager:
         
         # 顯式啟用開關（若配置中提供 enabled=True，直接啟用）
         if demo_cfg.get('enabled') is True:
+
             logger.info("配置中啟用 demo_mode.enabled=True，啟用演示模式")
             return True
         
@@ -44,6 +47,7 @@ class UnifiedKeyManager:
         
         # 明確 DEMO_FLAG 支持（任何真值都啟用）
         demo_flag = os.environ.get('DEMO_FLAG')
+
         if isinstance(demo_flag, str) and demo_flag.lower() in {"1", "true", "yes", "on"}:
             logger.info("檢測到 DEMO_FLAG=true，啟用演示模式")
             return True
@@ -68,6 +72,7 @@ class UnifiedKeyManager:
             return bool(re.match(pattern, value))
         except re.error:
             return pattern in value
+
     
     def get_key(self, key_name: str) -> Optional[str]:
         """獲取金鑰"""
@@ -78,7 +83,8 @@ class UnifiedKeyManager:
                 logger.info(f"使用演示金鑰: {key_name}")
                 return fixed_keys[key_name]
         
-        # 從環境變量獲取
+         # 從環境變量獲取
+
         return os.environ.get(key_name)
     
     def setup_demo_environment(self):
@@ -107,6 +113,7 @@ class UnifiedKeyManager:
     
     def _setup_learning(self):
         # 這裡為簡化示範，實際可調用 DemoLearningManager 等
+
         logger.info("初始化演示學習環境（示範）")
     
     def _setup_initialization(self):
@@ -120,9 +127,9 @@ class UnifiedKeyManager:
         if self.demo_mode:
             # 演示模式使用固定金鑰
             return self.get_key('MIKO_HAM_KEY') or 'DEMO_HAM_FIXED_KEY_2025_aGVsbG93b3JsZA=='
-        
+#         
         # 生產模式生成新金鑰
         return Fernet.generate_key.decode
-
+# 
 # 全局實例
 key_manager = UnifiedKeyManager

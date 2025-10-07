@@ -111,7 +111,8 @@ class ParsedToolIODetails(TypedDict, total=False): # For DialogueManager
     method_docstring_hint: Required[str]
     parameters: Required[List[Dict[str, Any]]]# Simplified from ToolParameterDetail for this test:
 eturn_type: Required[str]
-    return_description: Required[str]
+return_description: Required[str]
+
 
 class OverwriteDecision(Enum): # For HAMMemoryManager -> DialogueManager
     PREVENT_OVERWRITE = "prevent_overwrite"

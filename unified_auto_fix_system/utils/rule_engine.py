@@ -15,6 +15,8 @@ from ..core.fix_result import FixContext
 @dataclass
 class RepairRule:
     """修复规则"""
+
+
     rule_id: str
     name: str
     description: str
@@ -36,6 +38,7 @@ class RepairRule:
 
 @dataclass
 class RuleApplication:
+
     """规则应用结果"""
     rule_id: str
     applied: bool
@@ -58,6 +61,7 @@ class RuleEngine:
     
     def _load_default_rules(self):
         """加载默认规则"""
+
         default_rules = [
             # 通用规则
             RepairRule(
@@ -70,7 +74,10 @@ class RuleEngine:
                 severity="error",
                 auto_apply=True,
                 confidence=0.95,
-                examples=["print \"Hello\" → print(\"Hello\")"]
+
+ examples=["print \"Hello\" → print(\"Hello\")"]
+
+
             ),
             
             RepairRule(
@@ -81,9 +88,13 @@ class RuleEngine:
                 replacement=r'except \1 as \2:',
                 scope="general",
                 severity="error",
+
                 auto_apply=True,
                 confidence=0.95,
-                examples=["except ValueError, e: → except ValueError as e:"]
+
+
+ examples=["except ValueError, e: → except ValueError as e:"]
+
             ),
             
             # AI系统特定规则
@@ -94,9 +105,12 @@ class RuleEngine:
                 pattern=r'from\s+apps\.backend\.src\.ai\.models\s+import\s+(\w+)',
                 replacement=r'from ..ai.models import \1',
                 scope="system_specific",
-                system_type="ai_systems",
+
+ system_type="ai_systems",
+
                 severity="error",
                 auto_apply=True,
+
                 confidence=0.9,
                 examples=["from apps.backend.src.ai.models import NLPModel → from ..ai.models import NLPModel"]
             ),
@@ -106,11 +120,14 @@ class RuleEngine:
                 name="Fix HSP protocol import",
                 description="修复HSP协议的导入",
                 pattern=r'from\s+apps\.backend\.src\.core\.hsp\s+import\s+(\w+)',
+
                 replacement=r'from ..core.hsp import \1',
                 scope="system_specific", 
+
                 system_type="ai_systems",
                 severity="error",
                 auto_apply=True,
+
                 confidence=0.9,
                 examples=["from apps.backend.src.core.hsp import HSPClient → from ..core.hsp import HSPClient"]
             ),
@@ -119,10 +136,14 @@ class RuleEngine:
             RepairRule(
                 rule_id="MODEL_NLP_001",
                 name="Fix tokenizer import",
-                description="修复NLP模型的分词器导入",
+
+ description="修复NLP模型的分词器导入",
+
                 pattern=r'from\s+transformers\s+import\s+.*Tokenizer',
                 replacement=r'from transformers import AutoTokenizer',
-                scope="model_specific",
+
+ scope="model_specific",
+
                 model_type="nlp",
                 severity="warning",
                 auto_apply=True,
@@ -134,24 +155,30 @@ class RuleEngine:
                 rule_id="MODEL_VISION_001",
                 name="Fix image processing import",
                 description="修复视觉模型的图像处理导入",
+
                 pattern=r'from\s+PIL\s+import\s+Image',
                 replacement=r'from PIL import Image, ImageOps, ImageFilter',
                 scope="model_specific",
                 model_type="vision", 
+
                 severity="info",
                 auto_apply=False,
                 confidence=0.7,
                 examples=["from PIL import Image → from PIL import Image, ImageOps, ImageFilter"]
             ),
             
-            # 工具特定规则
+             # 工具特定规则
+
             RepairRule(
                 rule_id="TOOL_DATABASE_001",
                 name="Fix database connection string",
-                description="修复数据库连接字符串格式",
+
+ description="修复数据库连接字符串格式",
+
                 pattern=r'sqlite:///([^\s\'"]+)',
                 replacement=r'sqlite:///{project_root}/\1',
                 scope="tool_specific",
+
                 tool_type="database",
                 severity="warning",
                 auto_apply=True,
@@ -160,16 +187,20 @@ class RuleEngine:
             ),
             
             RepairRule(
-                rule_id="TOOL_CACHE_001",
+            rule_id="TOOL_CACHE_001",
+
                 name="Fix Redis connection",
                 description="修复Redis连接配置",
                 pattern=r'redis\.Redis\s*\(\s*host\s*=\s*[\'"]([^\'"]+)[\'"]',
                 replacement=r'redis.Redis(host="\1", port=6379, decode_responses=True)',
-                scope="tool_specific",
+
+ scope="tool_specific",
+
                 tool_type="cache",
                 severity="warning",
                 auto_apply=True,
                 confidence=0.8,
+
                 examples=["redis.Redis(host='localhost') → redis.Redis(host='localhost', port=6379, decode_responses=True)"]
             )
         ]
@@ -179,6 +210,7 @@ class RuleEngine:
     
     def add_rule(self, rule: RepairRule):
         """添加规则"""
+
         self.rules[rule.scope].append(rule)
         if rule.scope == "custom":
             self.custom_rules[rule.rule_id] = rule
@@ -206,7 +238,8 @@ class RuleEngine:
                 # 获取适用的规则
                 applicable_rules = self._get_applicable_rules(context, file_path)
                 
-                # 逐行应用规则
+                 # 逐行应用规则
+
                 lines = content.split('\n')
                 for i, line in enumerate(lines, 1):
                     for rule in applicable_rules:
@@ -224,7 +257,8 @@ class RuleEngine:
                                 "scope": rule.scope
                             }
                             
-                            # 分类问题
+                             # 分类问题
+
                             if rule.scope == "system_specific":
                                 issues["system_specific_issues"].append(issue)
                             elif rule.scope == "model_specific":
@@ -260,13 +294,15 @@ class RuleEngine:
                 for rule in applicable_rules:
                     if rule.auto_apply and rule.confidence > 0.7:
                         original_line = None
+
                         new_line = None
                         line_num = 0
-                        
+#                         
                         # 逐行应用规则
-                        lines = new_content.split('\n')
+#                         lines = new_content.split('\n')
                         for i, line in enumerate(lines):
-                            if re.search(rule.pattern, line):
+#                             if re.search(rule.pattern, line):
+
                                 original_line = line
                                 new_line = self._apply_rule_replacement(rule, line)
                                 line_num = i + 1
@@ -291,6 +327,7 @@ class RuleEngine:
                 
                 # 写回修复后的内容
                 if new_content != content:
+
                     if not context.dry_run:
                         with open(file_path, 'w', encoding='utf-8') as f:
                             f.write(new_content)
@@ -333,7 +370,8 @@ class RuleEngine:
             if context.model_type != rule.model_type:
                 return False
         
-        # 工具类型匹配
+         # 工具类型匹配
+
         if rule.tool_type and hasattr(context, 'tool_type'):
             if context.tool_type != rule.tool_type:
                 return False
@@ -362,8 +400,10 @@ class RuleEngine:
             
             # 执行正则替换
             return re.sub(rule.pattern, replacement, line)
+
         except Exception as e:
             print(f"规则替换失败: {e}")
+
             return line
     
     def _get_target_files(self, context: FixContext) -> List[Path]:
@@ -374,7 +414,8 @@ class RuleEngine:
             elif context.target_path.is_dir():
                 return list(context.target_path.rglob("*.py"))
         
-        # 默认获取所有Python文件
+         # 默认获取所有Python文件
+
         return list(context.project_root.rglob("*.py"))
     
     def get_rule_statistics(self) -> Dict[str, Dict[str, int]]:
@@ -387,8 +428,10 @@ class RuleEngine:
             rule = RepairRule(
                 rule_id=f"CUSTOM_{len(self.custom_rules) + 1}",
                 name=rule_config.get("name", "Custom Rule"),
+
                 description=rule_config.get("description", ""),
                 pattern=rule_config["pattern"],
+
                 replacement=rule_config["replacement"],
                 scope="custom",
                 severity=rule_config.get("severity", "warning"),
@@ -400,6 +443,7 @@ class RuleEngine:
             
         except Exception as e:
             print(f"添加自定义规则失败: {e}")
+
     
     def export_rules(self, file_path: Path):
         """导出规则到文件"""
@@ -411,8 +455,10 @@ class RuleEngine:
                         "rule_id": rule.rule_id,
                         "name": rule.name,
                         "description": rule.description,
+
                         "pattern": rule.pattern,
                         "replacement": rule.replacement,
+
                         "scope": rule.scope,
                         "system_type": rule.system_type,
                         "model_type": rule.model_type,

@@ -1,3 +1,9 @@
+"""
+测试模块 - test_training_manager
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 from demo_learning_manager import DemoLearningManager
 from execution_manager import ExecutionManager
@@ -17,7 +23,17 @@ class TestTrainingManager:
         manager = ExecutionManager()
         return manager
     
-    def test_demo_learning_manager_init(self, demo_learning_manager) -> None:
+    
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_demo_learning_manager_init(self, demo_learning_manager) -> None:
         """测试DemoLearningManager初始化"""
         assert demo_learning_manager is not None
         assert hasattr(demo_learning_manager, 'training_configs')

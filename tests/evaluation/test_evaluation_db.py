@@ -1,3 +1,9 @@
+"""
+测试模块 - test_evaluation_db
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import unittest
 import os
 import sqlite3

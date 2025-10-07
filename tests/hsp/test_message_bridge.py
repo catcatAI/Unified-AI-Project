@@ -1,3 +1,9 @@
+"""
+测试模块 - test_message_bridge
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 import json
@@ -35,7 +41,17 @@ def message_bridge(mock_external_connector, mock_internal_bus, mock_data_aligner
 
 @pytest.mark.asyncio
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_message_bridge_initialization(mock_external_connector, mock_internal_bus, mock_data_aligner) -> None:
+async 
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
+def test_message_bridge_initialization(mock_external_connector, mock_internal_bus, mock_data_aligner) -> None:
     bridge = MessageBridge(mock_external_connector, mock_internal_bus, mock_data_aligner)
     
     # Verify external_connector's on_message_callback is set to bridge's handle_external_message

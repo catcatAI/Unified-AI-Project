@@ -6,6 +6,16 @@ import pytest
 import sys
 import os
 
+
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
 def test_python_version() -> None:
     """测试 Python 版本"""
     assert sys.version_info >= (3, 8), "Python 版本应该 >= 3.8"

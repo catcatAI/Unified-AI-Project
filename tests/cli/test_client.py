@@ -1,3 +1,9 @@
+"""
+测试模块 - test_client
+
+自动生成的测试模块，用于验证系统功能。
+"""
+
 import os
 import json
 import types
@@ -19,6 +25,16 @@ class DummyResp:
             raise Exception(f"HTTP {self.status_code}")
 
 
+
+    def setUp(self):
+        """测试前设置"""
+        self.test_data = {}
+        self.test_config = {}
+    
+    def tearDown(self):
+        """测试后清理"""
+        self.test_data.clear()
+        self.test_config.clear()
 def test_client_base_url_env(monkeypatch):
     monkeypatch.setenv('CLI_BASE_URL', 'http://example.com:9999')
     c = UnifiedAIClient()
