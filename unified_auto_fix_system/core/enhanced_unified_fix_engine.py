@@ -42,6 +42,7 @@ class EnhancedFixContext:
     """增强修复上下文"""
 
 
+
     project_root: Path
     target_path: Optional[Path] = None
     scope: FixScope = FixScope.PROJECT
@@ -133,13 +134,16 @@ class EnhancedUnifiedFixEngine:
 #         log_file = log_dir / f"enhanced_unified_fix_{timestamp}.log"
 # 
 #         
+
         logging.basicConfig(
 #         level=logging.INFO,
 
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+#  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+
 
             handlers=[
-                logging.FileHandler(log_file, encoding='utf-8'),
+            logging.FileHandler(log_file, encoding='utf-8'),
+
                 logging.StreamHandler()
             ]
         )
@@ -177,10 +181,12 @@ class EnhancedUnifiedFixEngine:
     def _create_enhanced_import_fixer(self):
         """创建增强版导入修复器"""
         from ..modules.import_fixer import ImportFixer
+
         return ImportFixer(self.project_root)
     
     def _create_enhanced_dependency_fixer(self):
         """创建增强版依赖修复器"""
+
         from ..modules.dependency_fixer import DependencyFixer
         return DependencyFixer(self.project_root)
     
@@ -212,6 +218,7 @@ class EnhancedUnifiedFixEngine:
     def _create_enhanced_configuration_fixer(self):
         """创建增强版配置修复器"""
 
+
         from ..modules.configuration_fixer import ConfigurationFixer
         return ConfigurationFixer(self.project_root)
     
@@ -230,23 +237,27 @@ class EnhancedUnifiedFixEngine:
             "model_tool_analysis": True,
             "system_specific_rules": True,
 
-            "advanced_ast_analysis": True,
+ "advanced_ast_analysis": True,
+
 
  "rule_engine_enabled": True,
 
-            "learning_enabled": True,
+ "learning_enabled": True,
+
             "custom_rules": {},
 
             "excluded_paths": [
             "node_modules", "__pycache__", ".git", "venv", ".venv",
 
-                "backup", "unified_fix_backups", "dist", "build",
+ "backup", "unified_fix_backups", "dist", "build",
+
                 ".pytest_cache", "auto_fix_workspace"
             ],
             "auto_generated_patterns": [
             "*.log", "*.tmp", "*.cache", "*.pyc", "__pycache__",
 
-                "*.backup", "*.temp", "generated_*", "auto_*"
+ "*.backup", "*.temp", "generated_*", "auto_*"
+
 
             ],
             "system_categories": {
@@ -254,6 +265,7 @@ class EnhancedUnifiedFixEngine:
                 "backend_systems": ["api", "services", "database"],
 
  "frontend_systems": ["ui", "components", "dashboard"],
+
 
                 "infrastructure": ["config", "deployment", "monitoring"]
             },
@@ -301,6 +313,7 @@ class EnhancedUnifiedFixEngine:
 
         tracking_file = self.project_root / "auto_generated_files.json"
         if tracking_file.exists():
+
             try:
 
                 with open(tracking_file, 'r', encoding='utf-8') as f:
@@ -310,9 +323,11 @@ class EnhancedUnifiedFixEngine:
 
             except Exception as e:
                 self.logger.warning(f"加载自动生成的文件列表失败: {e}")
+
     
     def _save_auto_generated_files(self):
         """保存自动生成的文件列表"""
+
         tracking_file = self.project_root / "auto_generated_files.json"
         try:
             with open(tracking_file, 'w', encoding='utf-8') as f:
@@ -425,7 +440,8 @@ class EnhancedUnifiedFixEngine:
 
                         "severity": "info",
                         "suggested_action": "track_and_manage"
-                    }
+                        }
+
                     
                     # 检查文件是否在正确的位置
                     if not self._is_in_appropriate_location(file_path):
@@ -442,11 +458,13 @@ class EnhancedUnifiedFixEngine:
     def _is_in_appropriate_location(self, file_path: Path) -> bool:
         """检查文件是否在适当的位置"""
         # 根据文件类型判断应该在哪里
+
         if file_path.suffix == '.log':
             return 'logs' in str(file_path) or 'log' in str(file_path)
 
         elif file_path.suffix == '.cache':
             return 'cache' in str(file_path) or '.cache' in str(file_path)
+
         elif file_path.suffix == '.tmp':
             return 'temp' in str(file_path) or 'tmp' in str(file_path)
         
@@ -471,6 +489,7 @@ class EnhancedUnifiedFixEngine:
 
             model_issues = self._analyze_specific_model_issues(context)
             issues["model_issues"] = model_issues
+
         
         # 分析工具相关问题
         if context.tool_type != "general":
@@ -536,10 +555,12 @@ class EnhancedUnifiedFixEngine:
         
         if total_issues > 50:
             recommendations.append("发现大量问题，建议优先处理关键错误，然后逐步解决其他问题")
+
         
         # 自动生成文件管理建议
         if analysis_result.get("auto_generated_files"):
             recommendations.append("发现自动生成文件，建议建立统一的文件管理策略")
+
         
         # IO依赖建议
         if analysis_result.get("io_dependencies"):
@@ -565,6 +586,7 @@ class EnhancedUnifiedFixEngine:
             "overall_risk": "low",
             "critical_issues": 0,
 
+
             "high_risk_areas": [],
             "risk_factors": []
             }
@@ -574,6 +596,7 @@ class EnhancedUnifiedFixEngine:
         issues = analysis_result.get("issues", {})
         for issue_type, issue_list in issues.items():
             if issue_type in ["syntax_fix", "security_fix", "undefined_fix"]:
+
                 risk_assessment["critical_issues"] += len(issue_list)
         
         # 评估整体风险
@@ -633,6 +656,7 @@ class EnhancedUnifiedFixEngine:
             
         except Exception as e:
             self.logger.error(f"增强版修复过程失败: {e}")
+
             fix_report.errors.append(str(e))
             fix_report.traceback = traceback.format_exc()
         
@@ -655,7 +679,7 @@ class EnhancedUnifiedFixEngine:
         return fix_report
     
     def _create_enhanced_backup(self, context: EnhancedFixContext) -> Path:
-        """创建增强版备份"""
+#         """创建增强版备份"""
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -685,6 +709,7 @@ class EnhancedUnifiedFixEngine:
             # 备份自动生成文件列表
             if self.auto_generated_files:
                 files_backup = backup_path / "auto_generated_files_backup.json"
+
                 with open(files_backup, 'w', encoding='utf-8') as f:
                     json.dump([str(f) for f in self.auto_generated_files], f, indent=2)
             
@@ -725,6 +750,7 @@ class EnhancedUnifiedFixEngine:
                 
                  # 更新跟踪列表
 
+
                 self.auto_generated_files.discard(file_path)
                 self.auto_generated_files.add(new_path)
             else:
@@ -735,6 +761,7 @@ class EnhancedUnifiedFixEngine:
 
         if file_path.suffix == '.log':
             return self.project_root / "logs"
+
         elif file_path.suffix == '.cache':
             return self.project_root / "cache"
         elif file_path.suffix == '.tmp':
@@ -752,6 +779,7 @@ class EnhancedUnifiedFixEngine:
         if file_path not in self.auto_generated_files:
             self.auto_generated_files.add(file_path)
 
+
             self.logger.info(f"跟踪新的自动生成文件: {file_path}")
 
     
@@ -763,8 +791,10 @@ class EnhancedUnifiedFixEngine:
         """修复模型工具问题"""
         for issue_type, issues in model_tool_issues.items():
             fixer = self.enhanced_modules.get("MODEL_TOOL_FIX")
+
             if fixer and issues:
                 fixer.fix_specific_issues(issue_type, issues, context)
+
 
 
     
@@ -793,14 +823,16 @@ class EnhancedUnifiedFixEngine:
     def _execute_parallel_fixes(self, context: EnhancedFixContext, 
                                specific_issues: Optional[List[str]],
                                fix_report: FixReport):
-        """并行执行修复"""
+#         """并行执行修复"""
         with ThreadPoolExecutor(max_workers=4) as executor:
+
             futures = []
 
 
             
             for fix_type, module in self.enhanced_modules.items():
                 if specific_issues and str(fix_type) not in specific_issues:
+
 
                     continue
 #                 
@@ -820,16 +852,19 @@ class EnhancedUnifiedFixEngine:
                 except Exception as e:
                     self.logger.error(f"并行修复 {fix_type} 失败: {e}")
 
+
                     error_result = FixResult(
-                        fix_type=fix_type,
+                    fix_type=fix_type,
+
                         status=FixStatus.FAILED,
                         error_message=str(e)
                     )
-                    fix_report.fix_results[fix_type] = error_result
+#                     fix_report.fix_results[fix_type] = error_result
                     self.stats["failed_fixes"] += 1
-    
+#     
     def _execute_sequential_fixes(self, context: EnhancedFixContext, 
-                                 specific_issues: Optional[List[str]],
+    specific_issues: Optional[List[str]],
+
                                  fix_report: FixReport):
         """顺序执行修复"""
         for fix_type, module in self.enhanced_modules.items():
@@ -854,6 +889,7 @@ class EnhancedUnifiedFixEngine:
                     
                 except Exception as e:
                     self.logger.error(f"修复 {fix_type.value if hasattr(fix_type, 'value') else fix_type} 失败: {e}")
+
                     error_result = FixResult(
 #                         fix_type=fix_type,
 # status=FixStatus.FAILED,
@@ -873,18 +909,21 @@ class EnhancedUnifiedFixEngine:
         try:
             return module.fix(context)
 
+
         except AttributeError as e:
             # 处理方法不存在的情况
 
 
             if "_fix_missing_colon" in str(e):
                 self.logger.warning(f"修复模块 {fix_type} 缺少方法，尝试降级修复")
+
                 return self._degraded_fix(module, context, fix_type)
 
             else:
                 raise
-        except Exception as e:
+#         except Exception as e:
             self.logger.error(f"模块修复错误 {fix_type}: {e}")
+
             raise
     
     def _degraded_fix(self, module, context: EnhancedFixContext, fix_type) -> FixResult:
@@ -894,25 +933,29 @@ class EnhancedUnifiedFixEngine:
         try:
             # 尝试使用模块的基础修复能力
             if hasattr(module, 'fix_basic'):
+# 
                 return module.fix_basic(context)
 
             elif hasattr(module, 'analyze'):
                 # 只分析问题，不提供修复
                 issues = module.analyze(context)
                 return FixResult(
-                    fix_type=fix_type,
+#                 fix_type=fix_type,
+
                     status=FixStatus.SKIPPED,
                     issues_found=len(issues),
 
 
                     issues_fixed=0,
                     details={"reason": "高级修复方法不可用，降级到分析模式"}
+
                 )
             else:
                 return FixResult(
                     fix_type=fix_type,
                     status=FixStatus.NOT_APPLICABLE,
                     issues_found=0,
+
                     issues_fixed=0,
                     details={"reason": "模块没有可用的修复方法"}
                 )
@@ -921,7 +964,8 @@ class EnhancedUnifiedFixEngine:
                 fix_type=fix_type,
                 status=FixStatus.FAILED,
 
-                error_message=f"降级修复失败: {e}"
+ error_message=f"降级修复失败: {e}"
+
             )
     
     def _simulate_enhanced_fix(self, module, context: EnhancedFixContext) -> FixResult:
@@ -958,11 +1002,13 @@ class EnhancedUnifiedFixEngine:
             "timestamp": datetime.now().isoformat(),
             "validation_passed": True,
 
+
  "remaining_issues": {},
 
  "validation_errors": [],
 
-            "performance_impact": {},
+ "performance_impact": {},
+
             "security_impact": {}
             }
 
@@ -970,12 +1016,14 @@ class EnhancedUnifiedFixEngine:
         
         try:
             # 重新分析项目
+
             post_fix_analysis = self.analyze_project_enhanced(context)
 
             validation_result["post_fix_analysis"] = post_fix_analysis
             
             # 检查是否还有问题
             total_remaining = sum(len(issues) for issues in post_fix_analysis.get("issues", {}).values())
+
             validation_result["total_remaining_issues"] = total_remaining
             
             # 评估性能影响
@@ -994,6 +1042,7 @@ class EnhancedUnifiedFixEngine:
                 
         except Exception as e:
             validation_result["validation_errors"].append(str(e))
+
             validation_result["validation_passed"] = False
             self.logger.error(f"验证过程失败: {e}")
         
@@ -1021,6 +1070,7 @@ class EnhancedUnifiedFixEngine:
                                    if issue.get("severity") == "high"]),
                                    "data_exposure_risks": len(analysis_result.get("issues", {}).get("data_exposure", [])),
 
+
             "access_control_issues": len(analysis_result.get("issues", {}).get("access_control", []))
         }
     
@@ -1037,6 +1087,7 @@ class EnhancedUnifiedFixEngine:
 
         elif result.status == FixStatus.FAILED:
             self.stats["failed_fixes"] += 1
+
         elif result.status == FixStatus.SKIPPED:
             self.stats["skipped_fixes"] += 1
     
@@ -1044,19 +1095,23 @@ class EnhancedUnifiedFixEngine:
         """获取增强版最终统计信息"""
         duration = None
 
+
         if self.stats["start_time"] and self.stats["end_time"]:
             duration = (self.stats["end_time"] - self.stats["start_time"]).total_seconds()
+
         
         return {
         "total_fixes": self.stats["total_fixes"],
 
             "successful_fixes": self.stats["successful_fixes"],
             "failed_fixes": self.stats["failed_fixes"],
+
             "skipped_fixes": self.stats["skipped_fixes"],
             "success_rate": self.stats["successful_fixes"] / max(self.stats["total_fixes"], 1),
             "total_issues_found": self.stats["issues_found"],
             "total_issues_fixed": self.stats["issues_fixed"],
             "fix_efficiency": self.stats["issues_fixed"] / max(self.stats["issues_found"], 1),
+
 
             "duration_seconds": duration,
             "start_time": self.stats["start_time"].isoformat() if self.stats["start_time"] else None,

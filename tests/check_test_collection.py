@@ -6,6 +6,7 @@ def check_test_collection() -> None:
     """检查测试收集情况"""
 
 
+
     try:
         # 切换到项目根目录
         _ = os.chdir(r"D:\Projects\Unified-AI-Project")
@@ -20,7 +21,7 @@ def check_test_collection() -> None:
 #         _ = print("Return code:", result.returncode)
 #         _ = print("STDOUT:")
 #         _ = print(result.stdout)
-        _ = print("STDERR:")
+#         _ = print("STDERR:")
         _ = print(result.stderr)
         
 #         return result
@@ -28,5 +29,5 @@ def check_test_collection() -> None:
         _ = print(f"Error running pytest collection: {e}")
         return None
 # 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     _ = check_test_collection()

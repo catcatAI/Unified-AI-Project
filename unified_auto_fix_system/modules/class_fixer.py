@@ -3,6 +3,7 @@
 修复类相关的问题，包括类名冲突、继承错误、方法定义等
 
 
+
 """
 
 import ast
@@ -47,7 +48,8 @@ class ClassFixer(BaseFixer):
                 "fix": self._fix_undefined_base_classes,
                 "description": "基类未定义"
 
-            },
+ },
+
             "inheritance_error": {
 
                 "pattern": r'.*cannot\s+create\s+.*consistent\s+method\s+resolution.*',
@@ -55,19 +57,23 @@ class ClassFixer(BaseFixer):
 
  "description": "继承错误"
 
+
                 },
 
             "abstract_method_error": {
             "pattern": r'.*abstract\s+method.*',
 
-                "fix": self._fix_inheritance_issues,
+ "fix": self._fix_inheritance_issues,
+
                 "description": "抽象方法错误"
 
             },
             "method_resolution_order": {
 
-                "pattern": r'.*method\s+resolution\s+order.*',
-                "fix": self._fix_inheritance_issues,
+ "pattern": r'.*method\s+resolution\s+order.*',
+
+ "fix": self._fix_inheritance_issues,
+
 
                 "description": "方法解析顺序错误"
                 },
@@ -81,8 +87,10 @@ class ClassFixer(BaseFixer):
                 "description": "类重复定义"
                 },
 
+
             "metaclass_conflict": {
-                "pattern": r'.*metaclass\s+conflict.*',
+            "pattern": r'.*metaclass\s+conflict.*',
+
                 "fix": self._fix_inheritance_issues,
                 "description": "元类冲突"
             }
@@ -100,6 +108,7 @@ class ClassFixer(BaseFixer):
 
                 file_issues = self._analyze_file_classes(file_path)
                 issues.extend(file_issues)
+
             except Exception as e:
                 self.logger.error(f"分析文件 {file_path} 失败: {e}")
         
@@ -147,10 +156,10 @@ class ClassFixer(BaseFixer):
 #             if isinstance(node, ast.ClassDef):
                 # 检查基类是否存在
                 for base in node.bases:
-
+# 
                     if isinstance(base, ast.Name):
 #                         base_name = base.id
-                        if not self._is_base_class_defined(base_name, tree):
+#                         if not self._is_base_class_defined(base_name, tree):
 
                             issues.append(ClassIssue(
                                 line_number=base.lineno,
@@ -173,19 +182,21 @@ class ClassFixer(BaseFixer):
      #     def _check_class_naming_issues(self, tree: ast.AST, file_path: Path) -> List[ClassIssue]:
 # 
 #         """检查类命名问题"""
-
+# 
+# 
 #         issues = []
         class_names = set()
 #         
         for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
+#             if isinstance(node, ast.ClassDef):
 
                 if node.name in class_names:
                     issues.append(ClassIssue(
                         line_number=node.lineno,
                         column=node.col_offset,
 
-                        error_type="class_redefinition",
+ error_type="class_redefinition",
+
                         error_message=f"类 '{node.name}' 重复定义",
                         class_name=node.name,
                         suggested_fix=self._suggest_renaming_fix(node.name)
@@ -216,7 +227,8 @@ class ClassFixer(BaseFixer):
         issues = []
 
 #         
-        # 简化的MRO检查
+# 简化的MRO检查
+# 
         base_names = []
         for base in class_node.bases:
 # 
@@ -226,15 +238,17 @@ class ClassFixer(BaseFixer):
          # 检查常见的MRO问题模式
 
         if len(base_names) > 2:
-
+# 
             issues.append(ClassIssue(
             line_number=class_node.lineno,
+
 
  column=class_node.col_offset,
 
 
                 error_type="method_resolution_order",
                 error_message=f"多重继承可能导致方法解析顺序问题: {base_names}",
+
 
                 class_name=class_node.name,
 
@@ -246,6 +260,7 @@ class ClassFixer(BaseFixer):
     
     def _suggest_base_class_fix(self, base_name: str) -> str:
         """建议基类修复方案"""
+
         # 提供可能的修复建议
         suggestions = [
             f"确保 '{base_name}' 已导入",
@@ -267,8 +282,9 @@ class ClassFixer(BaseFixer):
 #         start_time = time.time()
         issues_fixed = 0
 
-        issues_found = 0
+#         issues_found = 0
         error_messages = []
+
         
         try:
             # 分析问题
@@ -305,20 +321,25 @@ class ClassFixer(BaseFixer):
             if issues_fixed == issues_found:
                 status = FixStatus.SUCCESS
 
-#             elif issues_fixed > 0:
+# 
+ #             elif issues_fixed > 0:
+
 #                 status = FixStatus.PARTIAL_SUCCESS
 #             else:
+
     #                 status = FixStatus.FAILED
 # 
 #             
 #             duration = time.time() - start_time
+# 
 #             
             return FixResult(
 #                 fix_type=self.fix_type,
 #                 status=status,
-                issues_found=issues_found,
+#                 issues_found=issues_found,
+# 
+ issues_fixed=issues_fixed,
 
-                issues_fixed=issues_fixed,
                 error_message="; ".join(error_messages) if error_messages else None,
 
                 duration_seconds=duration,
@@ -385,6 +406,7 @@ class ClassFixer(BaseFixer):
             if class_match:
                 indent = class_match.group(1)
                 class_name = class_match.group(2)
+
                 bases_str = class_match.group(3)
                 
                 # 分析基类
@@ -404,6 +426,7 @@ class ClassFixer(BaseFixer):
                 if fixed_bases:
                     new_line = f"{indent}class {class_name}({', '.join(fixed_bases)}):"
 
+
                 else:
                     new_line = f"{indent}class {class_name}:"
                 
@@ -420,7 +443,7 @@ class ClassFixer(BaseFixer):
         corrections = {
         'objct': 'object',
 
-            'obj': 'object',
+#             'obj': 'object',
             'basemodel': 'BaseModel',
             'baseagent': 'BaseAgent',
             'basefixer': 'BaseFixer'
@@ -431,6 +454,7 @@ class ClassFixer(BaseFixer):
     def _fix_class_redefinitions(self, content: str) -> str:
         """修复类重复定义"""
         # 这是一个复杂的任务，这里实现简化版本
+
 
         # 在实际应用中，可能需要更智能的重命名策略
         
@@ -443,6 +467,7 @@ class ClassFixer(BaseFixer):
         for line in lines:
             class_match = re.match(r'^(\s*)class\s+(\w+)', line)
             if class_match:
+
                 indent = class_match.group(1)
                 class_name = class_match.group(2)
                 
@@ -473,24 +498,29 @@ class ClassFixer(BaseFixer):
         # 
 # 
 #         return content
+
 #     
 #     def _categorize_issues(self, issues: List[ClassIssue]) -> Dict[str, int]:
-#         """按类型分类问题"""
+    #         """按类型分类问题"""
+# 
 #         categories = {}
 
         for issue in issues:
-            error_type = issue.error_type
-            categories[error_type] = categories.get(error_type, 0) + 1
+#             error_type = issue.error_type
+#             categories[error_type] = categories.get(error_type, 0) + 1
             return categories
-# 
+            # 
+
 # 
 # 
 # class ClassAnalyzer(ast.NodeVisitor):
+# 
 #     """类定义分析器"""
-
-    
-    def __init__(self, file_path: Path, content: str):
+# 
+#     
+#     def __init__(self, file_path: Path, content: str):
         self.file_path = file_path
+
         self.content = content
         self.issues = []
         self.class_names = set()
@@ -499,6 +529,7 @@ class ClassFixer(BaseFixer):
     def visit_ClassDef(self, node: ast.ClassDef):
         """访问类定义"""
         # 检查类名是否符合命名规范
+
 
         if not self._is_valid_class_name(node.name):
             self.issues.append(ClassIssue(

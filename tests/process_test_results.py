@@ -36,6 +36,7 @@ def process_test_results(results_file: str,
         baseline_file: 基线测试结果文件路径（用于性能回归检测）
 
 
+
         historical_files: 历史测试结果文件列表（用于趋势分析）
         send_email: 是否发送邮件通知
         recipient_emails: 邮件接收者列表
@@ -149,6 +150,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description='处理测试结果的完整流程')
     parser.add_argument('results_file', help='测试结果文件路径')
+
     parser.add_argument('--baseline', help='基线测试结果文件路径（用于性能回归检测）')
     parser.add_argument('--historical', nargs='*', help='历史测试结果文件列表（用于趋势分析）')
     parser.add_argument('--send-email', action='store_true', help='是否发送邮件通知')
@@ -157,11 +159,13 @@ def main() -> None:
 #     parser.add_argument('--recipients', nargs='*', help='邮件接收者列表')
 #     
 #     args = parser.parse_args()
+# 
 #     
     success = process_test_results(
-        results_file=args.results_file,
-        baseline_file=args.baseline,
+#         results_file=args.results_file,
+#         baseline_file=args.baseline,
         historical_files=args.historical,
+
         send_email=args.send_email,
         recipient_emails=args.recipients
     )

@@ -3,6 +3,7 @@
 修复数据处理相关的问题，包括JSON解析、文件读写、编码问题等
 
 
+
 """
 
 import json
@@ -49,7 +50,8 @@ class DataProcessingFixer(BaseFixer):
                 "fix": self._fix_encoding_issues,  # 临时使用现有方法
                 "description": "JSON解析错误"
 
-            },
+ },
+
             "file_not_found": {
 
                 "pattern": r'.*file.*not.*found.*|.*no.*such.*file.*',
@@ -57,12 +59,14 @@ class DataProcessingFixer(BaseFixer):
 
  "description": "文件未找到"
 
+
                 },
 
             "permission_denied": {
             "pattern": r'.*permission.*denied.*|.*access.*denied.*',
 
-                "fix": self._add_exception_handling,  # 使用实际存在的方法
+ "fix": self._add_exception_handling,  # 使用实际存在的方法
+
                 "description": "权限被拒绝"
 
             },
@@ -80,6 +84,7 @@ class DataProcessingFixer(BaseFixer):
                 "fix": self._add_exception_handling,  # 使用实际存在的方法
                 "description": "CSV处理错误"
 
+
  },
 
             "yaml_error": {
@@ -87,22 +92,28 @@ class DataProcessingFixer(BaseFixer):
                 "pattern": r'.*yaml.*error.*|.*yml.*parse.*error.*',
                 "fix": self._add_exception_handling,  # 使用实际存在的方法
 
+
                 "description": "YAML解析错误"
                 },
 
-            "xml_error": {
-            "pattern": r'.*xml.*parse.*error.*|.*xml.*syntax.*error.*',
+ "xml_error": {
+
+ "pattern": r'.*xml.*parse.*error.*|.*xml.*syntax.*error.*',
+
 
                 "fix": self._add_exception_handling,  # 使用实际存在的方法
                 "description": "XML解析错误"
 
  },
 
+
             "data_validation_error": {
             "pattern": r'.*validation.*error.*|.*invalid.*data.*',
 
+
                 "fix": self._add_exception_handling,  # 使用实际存在的方法
                 "description": "数据验证错误"
+
             },
             "missing_column": {
                 "pattern": r'.*column.*not.*found.*|.*key.*error.*',
@@ -161,10 +172,12 @@ class DataProcessingFixer(BaseFixer):
             # 检查数据格式问题
             format_issues = self._check_data_format_issues(content, file_path)
 
+
             issues.extend(format_issues)
             
         except Exception as e:
             self.logger.error(f"无法分析文件 {file_path}: {e}")
+
 
         
         return issues
@@ -193,8 +206,9 @@ class DataProcessingFixer(BaseFixer):
 #         return issues
 #     
 #     def _validate_file_path(self, file_path_str: str, line_num: int, col_num: int) -> List[DataProcessingIssue]:
+# 
         """验证文件路径"""
-
+# 
 #         issues = []
         path = Path(file_path_str)
 #         
@@ -202,6 +216,7 @@ class DataProcessingFixer(BaseFixer):
 
         if not path.exists() and not path.is_absolute():
             # 尝试相对路径
+
             project_path = self.project_root / file_path_str
 # 
             if not project_path.exists():
@@ -214,18 +229,22 @@ class DataProcessingFixer(BaseFixer):
 
                     data_source=file_path_str,
 
-                    suggested_fix=f"确保文件存在或使用正确的路径: {project_path}"
+ suggested_fix=f"确保文件存在或使用正确的路径: {project_path}"
+
                 ))
         
         # 检查文件权限
         if path.exists() and not path.is_readable():
+
             issues.append(DataProcessingIssue(
             line_number=line_num,
 
 # 
 #                 column=col_num,
 
-#                 error_type="permission_denied",
+
+ #                 error_type="permission_denied",
+
 #                 error_message=f"文件 '{file_path_str}' 无法读取",
 #                 data_source=file_path_str,
 #                 suggested_fix="检查文件权限或使用管理员权限运行"
@@ -234,8 +253,9 @@ class DataProcessingFixer(BaseFixer):
         return issues
 #     
     def _check_encoding_issues(self, content: str, file_path: Path) -> List[DataProcessingIssue]:
-        """检查编码问题"""
+#         """检查编码问题"""
         issues = []
+
 
         
          # 检查是否明确指定编码
@@ -253,7 +273,8 @@ class DataProcessingFixer(BaseFixer):
 #                         data_source="文件操作",
 #                         suggested_fix="添加 encoding='utf-8' 参数",
 
-                        severity="warning"
+ severity="warning"
+
                     ))
 #         
 #         return issues
@@ -280,14 +301,15 @@ class DataProcessingFixer(BaseFixer):
 error_type="missing_exception_handling",
 # 
                 error_message="数据处理操作缺少异常处理",
-#                 data_source="数据处理",
+                #                 data_source="数据处理",
+
 #                 suggested_fix="添加 try-except 块处理可能的异常",
 #                 severity="warning"
             ))
 #         
 #         return issues
     
-    def _check_json_handling(self, content: str) -> List[DataProcessingIssue]:
+#     def _check_json_handling(self, content: str) -> List[DataProcessingIssue]:
         """检查JSON处理问题"""
 
         issues = []
@@ -305,12 +327,13 @@ error_type="missing_exception_handling",
 #                         line_number=i + 1,
 #                         column=0,
 #                         error_type="json_error",
+# 
 #                         error_message="JSON解析操作缺少异常处理",
 #                         data_source="JSON解析",
 # 
 #                         suggested_fix="添加 try-except json.JSONDecodeError 处理",
-                        severity="warning"
-
+#                         severity="warning"
+# 
                     ))
         
         return issues
@@ -318,6 +341,7 @@ error_type="missing_exception_handling",
     def _check_csv_handling(self, content: str) -> List[DataProcessingIssue]:
         """检查CSV处理问题"""
         issues = []
+
         lines = content.split('\n')
         
         for i, line in enumerate(lines):
@@ -332,6 +356,7 @@ error_type="missing_exception_handling",
 
                         error_type="csv_error",
                         error_message="CSV读取可能遇到字段大小限制问题",
+
                         data_source="CSV处理",
                         suggested_fix="考虑设置 csv.field_size_limit(sys.maxsize)",
                         severity="info"
@@ -352,7 +377,7 @@ error_type="missing_exception_handling",
 
                 return True
         
-        return False
+#         return False
     
     def fix(self, context: FixContext) -> FixResult:
         """修复数据处理问题"""
@@ -388,26 +413,30 @@ error_type="missing_exception_handling",
             for file_path in target_files:
                 try:
 
+# 
                     fixed_count = self._fix_file_data_processing(file_path, context)
                     issues_fixed += fixed_count
 
-                    
+#                     
                 except Exception as e:
 #                     error_msg = f"修复文件 {file_path} 失败: {e}"
 #                     self.logger.error(error_msg)
 # 
+
                     error_messages.append(error_msg)
 #             
             # 确定修复状态
             if issues_fixed == issues_found:
+# 
                 status = FixStatus.SUCCESS
 # 
-            elif issues_fixed > 0:
+#             elif issues_fixed > 0:
                 status = FixStatus.PARTIAL_SUCCESS
-
-
+# 
+# 
             else:
                 status = FixStatus.FAILED
+
             
             duration = time.time() - start_time
             
@@ -451,6 +480,7 @@ error_type="missing_exception_handling",
             content = self._fix_encoding_issues(content)
             content = self._add_exception_handling(content)
             content = self._fix_file_paths(content)
+
             content = self._add_data_validation(content)
             
             # 如果内容有变化，写回文件
@@ -489,6 +519,7 @@ error_type="missing_exception_handling",
                     fixed_lines.append(line)
             else:
                 fixed_lines.append(line)
+
         
         return '\n'.join(fixed_lines)
     
@@ -507,6 +538,7 @@ error_type="missing_exception_handling",
             if self._needs_exception_handling(line):
                 # 添加 try-except 块
                 indent = len(line) - len(line.lstrip())
+
 
                 fixed_lines.append(' ' * indent + 'try:')
                 fixed_lines.append(' ' * (indent + 4) + line.strip())
@@ -531,6 +563,7 @@ error_type="missing_exception_handling",
                 self.logger.debug(f"添加异常处理: {line.strip()}")
             else:
                 fixed_lines.append(line)
+
             
             i += 1
         
@@ -539,7 +572,8 @@ error_type="missing_exception_handling",
     def _needs_exception_handling(self, line: str) -> bool:
         """检查是否需要异常处理"""
         # 简化版本 - 检查是否包含数据处理操作且不在 try 块中
-# 
+        # 
+
 #         data_operations = ['json.loads', 'json.load', 'open(', 'csv.', 'yaml.']
 #         return any(op in line for op in data_operations) and not line.strip().startswith('try:')
 
@@ -547,18 +581,20 @@ error_type="missing_exception_handling",
 #     def _fix_file_paths(self, content: str) -> str:
 #         """修复文件路径问题"""
 # 
- # 这是一个复杂的任务，需要理解项目结构
+# 这是一个复杂的任务，需要理解项目结构
+
 
         # 这里实现简化版本
 #         return content
 #     
     def _add_data_validation(self, content: str) -> str:
-#         """添加数据验证"""
+        #         """添加数据验证"""
+# 
         # 这是一个复杂的任务，需要理解数据结构
 # 
  # 这里实现简化版本
-
-
+# 
+# 
         return content
     
     def _categorize_issues(self, issues: List[DataProcessingIssue]) -> Dict[str, int]:
@@ -568,7 +604,8 @@ error_type="missing_exception_handling",
         for issue in issues:
             error_type = issue.error_type
             categories[error_type] = categories.get(error_type, 0) + 1
-        return categories
+            return categories
+
 
 
 class DataProcessingAnalyzer(ast.NodeVisitor):

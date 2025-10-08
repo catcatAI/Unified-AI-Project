@@ -18,6 +18,7 @@ class DependencyIssue:
     """依赖问题"""
 
 
+
     dependency_name: str
     issue_type: str  # missing, version_conflict, circular, unused
     current_version: Optional[str] = None
@@ -59,6 +60,7 @@ class DependencyTracker:
     
     def analyze_project_dependencies(self, context: FixContext) -> Dict[str, Any]:
         """分析项目依赖关系"""
+
         result = {
             "python_dependencies": self._analyze_python_dependencies(context),
             "javascript_dependencies": self._analyze_javascript_dependencies(context),
@@ -100,7 +102,8 @@ class DependencyTracker:
 
  "import_usage": {},
 
-            "version_specifications": {},
+ "version_specifications": {},
+
             "dependency_issues": []
             }
 
@@ -113,6 +116,7 @@ class DependencyTracker:
 
             "requirements-test.txt",
             "pyproject.toml",
+
             "setup.py",
             "setup.cfg"
         ]
@@ -154,6 +158,7 @@ class DependencyTracker:
         js_deps = {
             "package_files": [],
             "installed_packages": {},
+
             "import_usage": {},
             "version_specifications": {},
             "dependency_issues": []
@@ -177,12 +182,14 @@ class DependencyTracker:
         
         # 分析导入使用情况
         js_deps["import_usage"] = self._analyze_javascript_import_usage(context)
+
         
         return js_deps
     
     def _analyze_system_dependencies(self, context: FixContext) -> Dict[str, Any]:
         """分析系统依赖"""
         system_deps = {
+
             "docker_files": [],
             "system_packages": {},
             "environment_variables": {},
@@ -204,13 +211,15 @@ class DependencyTracker:
         system_deps["environment_variables"] = self._analyze_environment_variable_dependencies(context)
 
         
-        # 分析二进制依赖
+         # 分析二进制依赖
+
         system_deps["binary_dependencies"] = self._analyze_binary_dependencies(context)
         
         return system_deps
     
     def _analyze_internal_dependencies(self, context: FixContext) -> Dict[str, Any]:
         """分析内部依赖关系"""
+
         internal_deps = {
             "module_dependencies": {},
             "function_call_graph": {},
@@ -257,6 +266,7 @@ class DependencyTracker:
                             dependencies[name.strip()] = f"=={version.strip()}"
                         elif '>=' in line:
                             name, version = line.split('>=', 1)
+
                             dependencies[name.strip()] = f">={version.strip()}"
                         else:
                             dependencies[line] = None
@@ -330,14 +340,16 @@ class DependencyTracker:
 #         dep_string = dep_string.strip()
 
 #         
-         # 处理各种版本规范格式
+# 处理各种版本规范格式
+
 
         for operator in ['>=', '<=', '==', '>', '<', '!=', '~=']:
-#             if operator in dep_string:
+            #             if operator in dep_string:
+
 #                 name, version = dep_string.split(operator, 1)
                 return name.strip(), f"{operator}{version.strip()}"
         
-        return dep_string, None
+#         return dep_string, None
     
     def _get_installed_python_packages(self) -> Dict[str, str]:
         """获取已安装的Python包"""
@@ -349,7 +361,8 @@ class DependencyTracker:
                 capture_output=True,
                 text=True,
 
-                timeout=30
+ timeout=30
+
             )
             
             if result.returncode == 0:
@@ -411,6 +424,7 @@ class DependencyTracker:
     
     def _analyze_javascript_import_usage(self, context: FixContext) -> Dict[str, List[str]]:
         """分析JavaScript导入使用情况"""
+
         import_usage = defaultdict(list)
         
         js_files = list(context.project_root.rglob("*.js")) + list(context.project_root.rglob("*.ts"))
@@ -441,8 +455,9 @@ class DependencyTracker:
         return dict(import_usage)
     
 #     def _detect_python_dependency_issues(self, python_deps: Dict[str, Any]) -> List[DependencyIssue]:
-#         """检测Python依赖问题"""
-        issues = []
+    #         """检测Python依赖问题"""
+# 
+#         issues = []
 
 #         
 #         required_deps = python_deps["version_specifications"]
@@ -451,16 +466,19 @@ class DependencyTracker:
         import_usage = python_deps["import_usage"]
 # 
 #         
+# 
         # 检查缺失的依赖
         for dep, version_spec in required_deps.items():
             if dep not in installed_deps:
 # 
                 issues.append(DependencyIssue(
-                    dependency_name=dep,
+#                     dependency_name=dep,
                     issue_type="missing",
+
                     required_version=version_spec,
 
  severity="error",
+ # 
 # 
 #                     description=f"缺少依赖包: {dep}"
                 ))
@@ -471,6 +489,7 @@ class DependencyTracker:
                     current_version=installed_deps[dep],
                     required_version=version_spec,
                     severity="warning",
+
 
                     description=f"版本冲突: 安装版本 {installed_deps[dep]} 不满足要求 {version_spec}"
                 ))
@@ -504,6 +523,7 @@ class DependencyTracker:
             
             if node in visited:
                 return
+
 
             
             visited.add(node)
@@ -542,6 +562,7 @@ class DependencyTracker:
     def _generate_dependency_recommendations(self, analysis_result: Dict[str, Any]) -> List[str]:
         """生成依赖建议"""
         recommendations = []
+
         
         if analysis_result["circular_dependencies"]:
             recommendations.append("发现循环依赖，建议重构代码结构")
@@ -559,6 +580,7 @@ class DependencyTracker:
 
         excluded_patterns = ["__pycache__", ".git", "node_modules", "venv", ".venv"]
         return not any(pattern in str(file_path) for pattern in excluded_patterns)
+
     
     def _get_module_name(self, file_path: Path, project_root: Path) -> str:
         """获取模块名称"""
@@ -590,6 +612,7 @@ class DependencyTracker:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
+
             
             tree = ast.parse(content, filename=str(file_path))
             
@@ -649,6 +672,7 @@ class DependencyTracker:
     def _build_class_inheritance_graph(self, python_files: List[Path], context: FixContext) -> Dict[str, List[str]]:
         """构建类继承图"""
         inheritance_graph = defaultdict(list)
+
         
         for py_file in python_files:
             if self._should_analyze_file(py_file):
@@ -690,6 +714,7 @@ class DependencyTracker:
             if module in rec_stack:
                 cycle_start = rec_stack.index(module)
                 cycle = path[cycle_start:] + [module]
+
                 circular_imports.append(cycle)
                 return
 
@@ -707,6 +732,7 @@ class DependencyTracker:
         
         for module in import_graph:
             if module not in visited:
+
 
                 dfs(module, [])
         
@@ -752,8 +778,10 @@ class DependencyTracker:
                             env_deps["usage_analysis"][match].append(str(py_file))
                 except Exception as e:
                     print(f"分析环境变量依赖失败 {py_file}: {e}")
+
         
-        # 检查缺失的环境变量
+         # 检查缺失的环境变量
+
         current_env = dict(os.environ)
         for var in env_deps["required_variables"]:
             if var not in current_env:
@@ -773,6 +801,7 @@ class DependencyTracker:
 
                 try:
                     with open(py_file, 'r', encoding='utf-8') as f:
+
                         content = f.read()
                     
                     # 查找subprocess调用

@@ -24,6 +24,7 @@ class LogicNode:
     """逻辑图谱节点"""
 
 
+
     node_id: str
     node_type: str  # function, class, variable, import, etc.
     name: str
@@ -75,7 +76,8 @@ class LogicGraphFixer(BaseFixer):
         self.global_symbols = {}
         self.import_graph = nx.DiGraph()
         
-        # 修复策略
+         # 修复策略
+
         self.repair_strategies = {
             "missing_import": self._fix_missing_import,
             "circular_dependency": self._fix_circular_dependency,
@@ -93,6 +95,7 @@ class LogicGraphFixer(BaseFixer):
     def _load_knowledge_base(self) -> Dict[str, Any]:
         """加载知识库"""
 
+
         return {
             "common_patterns": {
             "singleton": ["get_instance", "instance", "singleton"],
@@ -100,6 +103,7 @@ class LogicGraphFixer(BaseFixer):
  "factory": ["create", "make", "build"],
 
  "observer": ["notify", "subscribe", "observe"],
+
 
                 "strategy": ["strategy", "algorithm", "policy"]
                 },
@@ -113,9 +117,11 @@ class LogicGraphFixer(BaseFixer):
                 "action_prefix": ["create_", "delete_", "process_"]
                 },
 
-            "error_patterns": {
+ "error_patterns": {
+
 
  "null_check": ["if.*is None", "if.*== None", "if.*!= None"],
+
 
                 "type_check": ["isinstance", "type\\(", ".__class__"],
                 "exception_handling": ["try:", "except", "finally:"]
@@ -138,6 +144,7 @@ class LogicGraphFixer(BaseFixer):
         issues.extend(self._analyze_inconsistent_apis())
         issues.extend(self._analyze_dead_code())
         issues.extend(self._analyze_logic_errors())
+
         
         self.logger.info(f"发现 {len(issues)} 个逻辑图谱问题")
         return issues
@@ -203,6 +210,7 @@ class LogicGraphFixer(BaseFixer):
             
              # 收集导入信息
 
+
             import_collector = ImportCollector(file_path, content)
             import_collector.visit(tree)
 
@@ -229,6 +237,7 @@ class LogicGraphFixer(BaseFixer):
             except SyntaxError:
                 return
 
+
             
              # 分析依赖关系
 
@@ -238,7 +247,8 @@ class LogicGraphFixer(BaseFixer):
                                                    self.global_symbols)
             dependency_analyzer.visit(tree)
             
-            # 添加依赖边
+             # 添加依赖边
+
             for dep in dependency_analyzer.dependencies:
                 self.logic_graph.add_edge(dep.source_id, dep.target_id, 
                                         **dep.__dict__)
@@ -251,6 +261,7 @@ class LogicGraphFixer(BaseFixer):
         # 检查循环依赖
         cycles = list(nx.simple_cycles(self.logic_graph))
         if cycles:
+
             self.logger.warning(f"发现 {len(cycles)} 个循环依赖")
         
          # 检查孤立节点
@@ -262,6 +273,7 @@ class LogicGraphFixer(BaseFixer):
     def _analyze_missing_imports(self) -> List[LogicIssue]:
         """分析缺失导入"""
         issues = []
+
 
         
         for node_id, node_data in self.logic_graph.nodes(data=True):
@@ -276,15 +288,18 @@ class LogicGraphFixer(BaseFixer):
                     issue_id=f"missing_import_{node_id}",
 
 
+
                         issue_type="missing_import",
                         severity="high",
+
                         description=f"未定义的符号 '{name}' 可能需要导入",
 
  affected_nodes=[node_id],
 
                         suggested_fixes=suggested_imports,
 
-                        confidence=0.8
+ confidence=0.8
+
                     ))
         
         return issues
@@ -292,6 +307,7 @@ class LogicGraphFixer(BaseFixer):
     def _analyze_circular_dependencies(self) -> List[LogicIssue]:
         """分析循环依赖"""
         issues = []
+
         cycles = list(nx.simple_cycles(self.logic_graph))
         
         for i, cycle in enumerate(cycles):
@@ -299,11 +315,13 @@ class LogicGraphFixer(BaseFixer):
 
                 cycle_description = " → ".join(cycle)
                 issues.append(LogicIssue(
-                    issue_id=f"circular_dependency_{i}",
+                issue_id=f"circular_dependency_{i}",
+
                     issue_type="circular_dependency",
 
 #                     severity="critical",
-                    description=f"循环依赖: {cycle_description}",
+description=f"循环依赖: {cycle_description}",
+
                     affected_nodes=cycle,
 
                     suggested_fixes=[
@@ -311,7 +329,7 @@ class LogicGraphFixer(BaseFixer):
                         "使用依赖注入",
                         "提取公共接口",
 
-                        "延迟导入"
+#                         "延迟导入"
 
                     ],
                     confidence=1.0
@@ -326,11 +344,13 @@ class LogicGraphFixer(BaseFixer):
         
          # 找到没有入边的函数和类
 
+
         for node_id, node_data in self.logic_graph.nodes(data=True):
             if node_data.get('node_type') in ['function', 'class']:
 
                 in_degree = self.logic_graph.in_degree(node_id)
                 if in_degree == 0 and not node_data.get('is_entry_point', False):
+
                     issues.append(LogicIssue(
                         issue_id=f"orphaned_code_{node_id}",
                         issue_type="orphaned_code",
@@ -362,13 +382,15 @@ class LogicGraphFixer(BaseFixer):
                 name = node_data.get('name', '')
                 function_groups[name].append((node_id, node_data))
         
-        # 检查同一函数名的不同实现
+         # 检查同一函数名的不同实现
+
         for func_name, functions in function_groups.items():
 
 
             if len(functions) > 1:
                 # 检查参数一致性
                 param_signatures = []
+
                 for node_id, node_data in functions:
 
                     params = node_data.get('parameters', [])
@@ -378,6 +400,7 @@ class LogicGraphFixer(BaseFixer):
                 
                 # 如果参数签名不一致
                 unique_signatures = set(tuple(sig[1]) for sig in param_signatures)
+
                 if len(unique_signatures) > 1:
 
 
@@ -391,6 +414,7 @@ class LogicGraphFixer(BaseFixer):
                         affected_nodes=affected_nodes,
                         suggested_fixes=[
                         "统一函数签名",
+
 
  "使用函数重载",
 
@@ -412,6 +436,7 @@ class LogicGraphFixer(BaseFixer):
         for node_id, node_data in self.logic_graph.nodes(data=True):
             if node_data.get('node_type') == 'function':
                 unreachable_paths = self._find_unreachable_paths(node_id)
+
                 if unreachable_paths:
                     issues.append(LogicIssue(
 #                         issue_id=f"dead_code_{node_id}",
@@ -421,7 +446,8 @@ class LogicGraphFixer(BaseFixer):
                         description=f"函数 '{node_data['name']}' 包含不可达的代码",
                         affected_nodes=[node_id],
                         suggested_fixes=[
-                            "移除不可达代码",
+                        "移除不可达代码",
+
                             "重构条件逻辑",
 # 
  "添加适当的测试",
@@ -430,24 +456,28 @@ class LogicGraphFixer(BaseFixer):
                         ],
                         confidence=0.8
 
+
                     ))
         
         return issues
     
     def _analyze_logic_errors(self) -> List[LogicIssue]:
         """分析逻辑错误"""
+
         issues = []
         
          # 分析常见的逻辑错误模式
 
         for node_id, node_data in self.logic_graph.nodes(data=True):
             if node_data.get('node_type') == 'function':
+
                 # 检查条件逻辑
                 logic_errors = self._detect_logic_errors(node_id)
 
                 for error in logic_errors:
                     issues.append(LogicIssue(
-                        issue_id=f"logic_error_{node_id}_{error['type']}",
+                    issue_id=f"logic_error_{node_id}_{error['type']}",
+
                         issue_type="logic_error",
                         severity=error.get('severity', 'medium'),
                         description=error['description'],
@@ -469,6 +499,7 @@ class LogicGraphFixer(BaseFixer):
 
             'sklearn', 'matplotlib', 'seaborn', 'flask', 'django',
             'fastapi', 'pydantic', 'sqlalchemy', 'chromadb', 'mqtt'
+
             }
 
         
@@ -479,10 +510,12 @@ class LogicGraphFixer(BaseFixer):
         import_suggestions = {
             'json': ['import json', 'from json import loads, dumps'],
             'os': ['import os', 'from os import path, environ'],
+
             'sys': ['import sys', 'from sys import argv, exit'],
 
             're': ['import re', 'from re import search, match'],
             'time': ['import time', 'from time import sleep, time'],
+
             'datetime': ['import datetime', 'from datetime import datetime, timedelta'],
             'pathlib': ['import pathlib', 'from pathlib import Path'],
             'requests': ['import requests', 'from requests import get, post'],
@@ -498,7 +531,8 @@ class LogicGraphFixer(BaseFixer):
 
  'mqtt': ['import paho.mqtt.client as mqtt', 'from paho.mqtt import client']
 
-        }
+ }
+
         
         return import_suggestions.get(name.lower(), [f"import {name}"])
     
@@ -543,32 +577,37 @@ class LogicGraphFixer(BaseFixer):
                 )
             
             # 按优先级排序问题
-#             priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+            #             priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
+# 
 # 
 #             issues.sort(key=lambda x: priority_order.get(x.severity, 4))
 #             
 
-            # 应用修复策略
+# 
+ # 应用修复策略
+
             for issue in issues:
                 try:
                     if self._apply_logic_fix(issue, context):
+
 # 
 #                         issues_fixed += 1
 # 
                         self.logger.info(f"修复了问题: {issue.issue_id}")
-                    else:
-                        self.logger.warning(f"无法修复问题: {issue.issue_id}")
-                        
+#                     else:
+#                         self.logger.warning(f"无法修复问题: {issue.issue_id}")
+#                         
                 except Exception as e:
                     error_msg = f"修复问题 {issue.issue_id} 失败: {e}"
-
+# 
                     self.logger.error(error_msg)
-                    error_messages.append(error_msg)
+#                     error_messages.append(error_msg)
 
             
             # 确定修复状态
             if issues_fixed == issues_found:
+
                 status = FixStatus.SUCCESS
             elif issues_fixed > 0:
                 status = FixStatus.PARTIAL_SUCCESS
@@ -586,7 +625,8 @@ class LogicGraphFixer(BaseFixer):
 
                 duration_seconds=duration,
                 details={
-                    "files_processed": len(self._get_target_files(context)),
+                "files_processed": len(self._get_target_files(context)),
+
                     "issues_by_type": self._categorize_issues(issues),
                     "logic_graph_stats": self._get_graph_statistics()
                 }
@@ -615,8 +655,10 @@ class LogicGraphFixer(BaseFixer):
             except Exception as e:
                 self.logger.error(f"应用修复策略失败 {issue.issue_type}: {e}")
                 return False
+
         
          # 默认修复：尝试应用建议的修复
+
 
 
         if issue.suggested_fixes:
@@ -629,6 +671,7 @@ class LogicGraphFixer(BaseFixer):
 
         if not issue.suggested_fixes:
             return False
+
         
         # 找到受影响的文件
         affected_files = set()
@@ -644,6 +687,7 @@ class LogicGraphFixer(BaseFixer):
 
         success_count = 0
         for file_path in affected_files:
+
             try:
                 if self._add_imports_to_file(file_path, issue.suggested_fixes, context):
 
@@ -655,6 +699,7 @@ class LogicGraphFixer(BaseFixer):
     
     def _fix_circular_dependency(self, issue: LogicIssue, context: FixContext) -> bool:
         """修复循环依赖"""
+
         # 这是一个复杂的重构任务
         # 简化版本：建议重构方案
         self.logger.info(f"检测到循环依赖，建议手动重构: {issue.description}")
@@ -728,7 +773,8 @@ class LogicGraphFixer(BaseFixer):
 
     
     def _find_import_insert_position(self, content: str) -> int:
-#         """找到导入插入位置"""
+        #         """找到导入插入位置"""
+
         lines = content.split('\n')
         
         # 跳过shebang和编码声明
@@ -748,9 +794,10 @@ class LogicGraphFixer(BaseFixer):
             line = lines[i].strip()
             if line.startswith('import ') or line.startswith('from '):
                 insert_line = i + 1
-#             elif line and not line.startswith('#'):
-                break
+                #             elif line and not line.startswith('#'):
 
+                break
+# 
         
         # 计算字符位置
 #         position = sum(len(line) + 1 for line in lines[:insert_line])
@@ -760,12 +807,15 @@ class LogicGraphFixer(BaseFixer):
 #         """按类型分类问题"""
 #         categories = defaultdict(int)
 
+
         for issue in issues:
             categories[issue.issue_type] += 1
+
         return dict(categories)
     
     def _get_graph_statistics(self) -> Dict[str, Any]:
         """获取图谱统计信息"""
+
 
         return {
             "total_nodes": self.logic_graph.number_of_nodes(),
@@ -788,14 +838,16 @@ class SymbolCollector(ast.NodeVisitor):
 #         self.current_scope = []
 #         self.imports = []
 
-
+# 
         
-    def visit_FunctionDef(self, node: ast.FunctionDef):
+#     def visit_FunctionDef(self, node: ast.FunctionDef):
         """访问函数定义"""
+
 
         node_id = f"{self.file_path}:{node.name}:function:{node.lineno}"
         logic_node = LogicNode(
         node_id=node_id,
+
 
  node_type="function",
 
@@ -806,22 +858,25 @@ class SymbolCollector(ast.NodeVisitor):
 
             column=node.col_offset,
             metadata={
-#             "parameters": self._extract_parameters(node.args),
+            #             "parameters": self._extract_parameters(node.args),
+
 
                 "return_annotation": self._extract_return_annotation(node.returns),
                 "decorators": [self._extract_decorator_name(d) for d in node.decorator_list],
+
 # 
 #  "docstring": ast.get_docstring(node),
 
                 "is_async": isinstance(node, ast.AsyncFunctionDef)
                 }
-
-
+# 
+# 
         )
         self.nodes.append(logic_node)
         
         self.current_scope.append(node.name)
         self.generic_visit(node)
+
         self.current_scope.pop()
 
 
@@ -829,23 +884,27 @@ class SymbolCollector(ast.NodeVisitor):
     def visit_ClassDef(self, node: ast.ClassDef):
         """访问类定义"""
 
+
         node_id = f"{self.file_path}:{node.name}:class:{node.lineno}"
         logic_node = LogicNode(
             node_id=node_id,
             node_type="class",
 
-            name=node.name,
+ name=node.name,
+
             file_path=self.file_path,
             line_number=node.lineno,
 
  column=node.col_offset,
 
             metadata={
-                "bases": [self._extract_base_name(base) for base in node.bases],
+            "bases": [self._extract_base_name(base) for base in node.bases],
+
                 "decorators": [self._extract_decorator_name(d) for d in node.decorator_list],
 
                 "docstring": ast.get_docstring(node),
                 "methods": []
+
                 }
 
         )
@@ -865,7 +924,8 @@ class SymbolCollector(ast.NodeVisitor):
             logic_node = LogicNode(
             node_id=node_id,
 
-                node_type="name",
+ node_type="name",
+
                 name=node.id,
                 file_path=self.file_path,
                 line_number=node.lineno,
@@ -897,6 +957,7 @@ class SymbolCollector(ast.NodeVisitor):
         """访问from导入"""
         module = node.module or ""
         for alias in node.names:
+
 
             self.imports.append({
                 "module": f"{module}.{alias.name}" if module else alias.name,
@@ -930,7 +991,9 @@ class SymbolCollector(ast.NodeVisitor):
     
      #     def _extract_annotation(self, annotation: Optional[ast.AST]) -> Optional[str]:
 
-#         """提取注解"""
+
+ #         """提取注解"""
+
         if annotation is None:
             return None
         
@@ -950,15 +1013,16 @@ class SymbolCollector(ast.NodeVisitor):
             return decorator.id
 # 
 #         elif isinstance(decorator, ast.Call):
+
             return self._extract_decorator_name(decorator.func)
 
         else:
             return ast.dump(decorator)
     
-    def _extract_base_name(self, base: ast.AST) -> str:
-        """提取基类名称"""
-
-
+#     def _extract_base_name(self, base: ast.AST) -> str:
+#         """提取基类名称"""
+# 
+# 
         if isinstance(base, ast.Name):
             return base.id
         elif isinstance(base, ast.Attribute):
@@ -969,8 +1033,10 @@ class SymbolCollector(ast.NodeVisitor):
 
 
 
+
 class ImportCollector(ast.NodeVisitor):
     """导入收集器"""
+
 
     
     def __init__(self, file_path: Path, content: str):
@@ -985,6 +1051,7 @@ class ImportCollector(ast.NodeVisitor):
                 "module": alias.name,
                 "alias": alias.asname,
                 "line_number": node.lineno,
+
                 "import_type": "direct"
             })
     

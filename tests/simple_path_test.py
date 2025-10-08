@@ -8,6 +8,7 @@ def test_path_config() -> None:
     """Test that we can import and use path_config."""
 
 
+
     try:
         print("✓ Path config imported successfully")
         

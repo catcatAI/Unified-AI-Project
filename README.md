@@ -343,6 +343,11 @@ pnpm clean
 - [integration_test_report.md](training/integration_test_report.md) - 集成测试报告
 - [project_completion_report.md](training/project_completion_report.md) - 项目完成报告
 
+### 自动修复系统报告
+- [ENHANCED_REPAIR_SYSTEM_COMPLETION_REPORT.md](ENHANCED_REPAIR_SYSTEM_COMPLETION_REPORT.md) - 增强版自动修复系统完成报告
+- [AUTO_REPAIR_SYSTEM_DEVELOPMENT_PLAN.md](AUTO_REPAIR_SYSTEM_DEVELOPMENT_PLAN.md) - 自动修复系统开发完善计划
+- [comprehensive_repair_test.py](comprehensive_repair_test.py) - 完整自动修复系统测试套件
+
 ### 其他重要文档
 - [FINAL_PROJECT_SUMMARY.md](FINAL_PROJECT_SUMMARY.md) - 项目最终总结报告
 - [PROJECT_STATUS_REPORT.md](PROJECT_STATUS_REPORT.md) - 项目状态报告

@@ -3,6 +3,7 @@
 修复项目依赖关系，包括Python包、Node.js模块等
 
 
+
 """
 
 import os
@@ -56,7 +57,8 @@ class DependencyFixer(BaseFixer):
         self.fix_type = FixType.DEPENDENCY_FIX
         self.name = "DependencyFixer"
         
-        # 依赖文件映射
+         # 依赖文件映射
+
         self.dependency_files = {
             "python": ["requirements.txt", "requirements-dev.txt", "pyproject.toml", "setup.py"],
             "nodejs": ["package.json", "package-lock.json"],
@@ -154,7 +156,7 @@ class DependencyFixer(BaseFixer):
 
 #                             required_version=required_version,
 #                             file_path=req_path,
-                            line_number=i,
+#                             line_number=i,
 
                             severity="error"
                         ))
@@ -169,9 +171,10 @@ class DependencyFixer(BaseFixer):
                                 current_version=installed_version,
 #                                 required_version=required_version,
 # 
- file_path=req_path,
+#  file_path=req_path,
+# 
+ line_number=i,
 
-                                line_number=i,
                                 severity="warning"
                             ))
         
@@ -217,11 +220,13 @@ class DependencyFixer(BaseFixer):
 
         return {"name": line, "version": None, "operator": None}
     
-#     def _is_package_installed(self, package_name: str) -> bool:
+     #     def _is_package_installed(self, package_name: str) -> bool:
+
 #         """检查包是否已安装"""
         try:
             result = subprocess.run(
-                [sys.executable, '-c', f'import {package_name}'],
+            [sys.executable, '-c', f'import {package_name}'],
+
                 capture_output=True,
                 text=True,
                 timeout=10
@@ -235,7 +240,7 @@ class DependencyFixer(BaseFixer):
 #     def _get_package_version(self, package_name: str) -> Optional[str]:
 #         """获取包版本"""
 #         try:
-
+# 
             result = subprocess.run(
                 [sys.executable, '-c', f'import {package_name}; print({package_name}.__version__)'],
                 capture_output=True,
@@ -246,10 +251,11 @@ class DependencyFixer(BaseFixer):
                 return result.stdout.strip()
         except Exception:
             pass
-# 
+            # 
+
 #         
         # 尝试使用pip
-        try:
+#         try:
 
             result = subprocess.run(
                 [sys.executable, '-m', 'pip', 'show', package_name],
@@ -293,6 +299,7 @@ class DependencyFixer(BaseFixer):
                 return self._compare_versions(installed_version, req_version) < 0
             else:
                 return True
+
         except Exception:
             return True
 
@@ -335,7 +342,7 @@ class DependencyFixer(BaseFixer):
 
         for venv_path in venv_paths:
             if (self.project_root / venv_path).exists():
-                venv_found = True
+#                 venv_found = True
                 break
         
         if not venv_found:
@@ -351,8 +358,8 @@ class DependencyFixer(BaseFixer):
     
     def _check_installed_packages(self) -> List[DependencyIssue]:
 #         """检查已安装的包"""
-        issues = []
-
+#         issues = []
+# 
         
         try:
             result = subprocess.run(
@@ -377,6 +384,7 @@ class DependencyFixer(BaseFixer):
                         issues.append(DependencyIssue(
                         package_name=package_name,
 
+
  issue_type="outdated",
 
 #                             current_version=version,
@@ -386,11 +394,12 @@ class DependencyFixer(BaseFixer):
         
         except Exception as e:
             self.logger.error(f"检查已安装包失败: {e}")
-        
+#         
         return issues
-    
-    def _has_package_update(self, package_name: str, current_version: str) -> bool:
+#     
+#     def _has_package_update(self, package_name: str, current_version: str) -> bool:
         """检查包是否有更新"""
+
         try:
             result = subprocess.run(
                 [sys.executable, '-m', 'pip', 'index', 'versions', package_name],
@@ -402,6 +411,7 @@ class DependencyFixer(BaseFixer):
             
             if result.returncode == 0:
                 # 解析输出获取最新版本
+
                 # 这里需要更复杂的解析逻辑
                 return True  # 简化处理
         except Exception:
@@ -423,7 +433,7 @@ class DependencyFixer(BaseFixer):
                 dependencies = package_data.get('dependencies', {})
 
                 dev_dependencies = package_data.get('devDependencies', {})
-                
+#                 
                 all_deps = {**dependencies, **dev_dependencies}
                 
                 for package_name, required_version in all_deps.items():
@@ -433,6 +443,7 @@ class DependencyFixer(BaseFixer):
                             issue_type="missing",
                             required_version=required_version,
                             file_path=package_json_path,
+
                             severity="error"
                         ))
             
@@ -462,12 +473,15 @@ class DependencyFixer(BaseFixer):
         for file_path in python_files:
             try:
 
+
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
+
                 
                 # 检查导入错误
-                for pattern_name, pattern in self.dependency_patterns.items():
+#                 for pattern_name, pattern in self.dependency_patterns.items():
                     matches = re.findall(pattern, content, re.IGNORECASE)
+
                     for match in matches:
 
                         if isinstance(match, tuple):
@@ -512,10 +526,12 @@ class DependencyFixer(BaseFixer):
             try:
                 with open(requirements_path, 'r', encoding='utf-8') as f:
                     requirements_content = f.read()
+
                 
                 declared_packages = set()
                 for line in requirements_content.split('\n'):
                     line = line.strip()
+
 
                     if line and not line.startswith('#'):
                         package_name = line.split('==')[0].split('>=')[0].split('<=')[0].strip()
@@ -523,6 +539,7 @@ class DependencyFixer(BaseFixer):
                 
                 # 找出未使用的包
                 unused_packages = declared_packages - imported_packages
+
 
                 for package in unused_packages:
                     issues.append(DependencyIssue(
@@ -563,7 +580,7 @@ class DependencyFixer(BaseFixer):
         
         import time
         start_time = time.time()
-        
+#         
         issues_fixed = 0
         issues_found = 0
         error_messages = []
@@ -615,27 +632,33 @@ class DependencyFixer(BaseFixer):
                 except Exception as e:
                     error_msg = f"修复 {issue_type} 类型依赖问题失败: {e}"
 
+# 
 
                     self.logger.error(error_msg)
-                    error_messages.append(error_msg)
-            
-            # 确定修复状态
+#                     error_messages.append(error_msg)
+
+#             
+             # 确定修复状态
+
             if issues_fixed == issues_found:
                 status = FixStatus.SUCCESS
+
 #             elif issues_fixed > 0:
 #                 status = FixStatus.PARTIAL_SUCCESS
 #             else:
                 status = FixStatus.FAILED
-
-            
-            duration = time.time() - start_time
+# 
+#             
+#             duration = time.time() - start_time
             
             return FixResult(
-                fix_type=self.fix_type,
-                status=status,
+#                 fix_type=self.fix_type,
+#                 status=status,
                 issues_found=issues_found,
+
                 issues_fixed=issues_fixed,
                 error_message="; ".join(error_messages) if error_messages else None,
+
 
                 duration_seconds=duration,
                 details={
@@ -723,6 +746,7 @@ class DependencyFixer(BaseFixer):
     def _fix_outdated_dependencies(self, issues: List[DependencyIssue]) -> int:
         """修复过时的依赖"""
 
+
         fixed_count = 0
 #         
         for issue in issues:
@@ -733,11 +757,12 @@ class DependencyFixer(BaseFixer):
                 # 尝试升级包
                 if self._upgrade_package(package_name):
                     self.logger.info(f"成功升级包: {package_name}")
-                    fixed_count += 1
+#                     fixed_count += 1
                 else:
                     self.logger.warning(f"无法升级包: {package_name}")
 
-#             
+ #             
+
             except Exception as e:
                 self.logger.error(f"升级过时依赖 {issue.package_name} 失败: {e}")
         
@@ -764,7 +789,7 @@ class DependencyFixer(BaseFixer):
             )
             
             if result.returncode == 0:
-                self.logger.info(f"成功安装包: {package_name}")
+#                 self.logger.info(f"成功安装包: {package_name}")
                 return True
 
             else:
@@ -780,6 +805,7 @@ class DependencyFixer(BaseFixer):
         """升级包"""
         try:
             upgrade_cmd = [sys.executable, '-m', 'pip', 'install', '--upgrade']
+
             
             if version:
                 upgrade_cmd.append(f"{package_name}{version}")
@@ -790,6 +816,7 @@ class DependencyFixer(BaseFixer):
                 upgrade_cmd,
                 capture_output=True,
                 text=True,
+
                 timeout=300  # 5分钟超时
             )
             

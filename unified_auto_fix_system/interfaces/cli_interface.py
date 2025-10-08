@@ -18,6 +18,7 @@ class CLIFixInterface:
     """命令行修复接口"""
 
 
+
     
     def __init__(self):
         self.parser = self._create_argument_parser()
@@ -29,7 +30,7 @@ class CLIFixInterface:
 
         parser = argparse.ArgumentParser(
 #             description="统一自动修复系统 - 命令行接口",
-            formatter_class=argparse.RawDescriptionHelpFormatter,
+#             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 使用示例:
   # 分析整个项目
@@ -56,7 +57,8 @@ class CLIFixInterface:
             """
         )
         
-        # 全局选项
+         # 全局选项
+
         parser.add_argument(
 #             "--project-root", "-p",
 #             type=str,
@@ -73,6 +75,7 @@ class CLIFixInterface:
 
  #             help="配置文件路径"
 
+
         )
         
         parser.add_argument(
@@ -82,10 +85,12 @@ class CLIFixInterface:
 
 #             help="详细输出"
 # 
+
         )
-        
+#         
         parser.add_argument(
-            "--quiet", "-q",
+        "--quiet", "-q",
+
             action="store_true",
             help="安静模式，只显示错误"
 
@@ -93,21 +98,25 @@ class CLIFixInterface:
         
         # 子命令
         subparsers = parser.add_subparsers(dest="command", help="可用命令")
+
 # 
 #         
 # 分析命令
 
         analyze_parser = subparsers.add_parser(
         "analyze",
-# 
- help="分析项目问题"
+        # 
+
+#  help="分析项目问题"
 
         )
         #         
 
         analyze_parser.add_argument(
-            "--scope", "-s",
-            choices=["project", "backend", "frontend", "desktop", "file", "directory"],
+        "--scope", "-s",
+
+ choices=["project", "backend", "frontend", "desktop", "file", "directory"],
+
 
  #             default="project",
 
@@ -116,7 +125,7 @@ class CLIFixInterface:
         )
         
         analyze_parser.add_argument(
-        "--target", "-t",
+#         "--target", "-t",
 
  #             type=str,
 
@@ -136,7 +145,8 @@ class CLIFixInterface:
             "--format",
             #             choices=["json", "text", "summary"],
 
-#             default="text",
+ #             default="text",
+
 # 
 # help="输出格式 (默认: text)"
 
@@ -144,9 +154,10 @@ class CLIFixInterface:
         )
         
          # 修复命令
-
+# 
         fix_parser = subparsers.add_parser(
-#             "fix",
+        #             "fix",
+
             help="修复项目问题"
 
         )
@@ -158,7 +169,8 @@ class CLIFixInterface:
 # 
  choices=[ft.value for ft in FixType],
 
-#             help="要修复的问题类型"
+ #             help="要修复的问题类型"
+
         )
 #         
         fix_parser.add_argument(
@@ -167,6 +179,7 @@ class CLIFixInterface:
 
 #             default="project",
 #             help="修复范围 (默认: project)"
+
 
 
         )
@@ -192,7 +205,8 @@ class CLIFixInterface:
         )
         
         fix_parser.add_argument(
-            "--dry-run",
+        "--dry-run",
+
 #             action="store_true",
 
  #             help="干运行模式，不实际执行修复"
@@ -200,14 +214,16 @@ class CLIFixInterface:
         )
         
         fix_parser.add_argument(
-            "--no-backup",
+        "--no-backup",
+
 #             action="store_true",
 #             help="不创建备份"
         )
         
         fix_parser.add_argument(
         "--ai-assisted",
-# 
+        # 
+
 #             action="store_true",
 help="启用AI辅助修复"
 
@@ -217,41 +233,47 @@ help="启用AI辅助修复"
         fix_parser.add_argument(
         #             "--output", "-o",
 
+
  type=str,
 
+# 
 # 
 #  help="输出修复报告到文件 (JSON格式)"
 
         )
         #         
 
-        # 状态命令
+ # 状态命令
+
         status_parser = subparsers.add_parser(
         "status",
-# 
-#  help="显示系统状态"
 
+ # 
+
+#  help="显示系统状态"
+# 
         )
         #         
 
         status_parser.add_argument(
 #             "--detailed",
-            action="store_true",
+#             action="store_true",
 
-            help="显示详细信息"
+#             help="显示详细信息"
         )
         
          # 配置命令
 
         config_parser = subparsers.add_parser(
-            "config",
-            help="管理配置"
+#             "config",
+#             help="管理配置"
         )
         
         config_parser.add_argument(
             "--list",
             action="store_true",
             help="列出当前配置"
+
         )
         
         config_parser.add_argument(
@@ -303,10 +325,12 @@ help="启用AI辅助修复"
 
             elif parsed_args.command == "fix":
                 return self._handle_fix_command(parsed_args)
+
             elif parsed_args.command == "status":
                 return self._handle_status_command(parsed_args)
-            elif parsed_args.command == "config":
-                return self._handle_config_command(parsed_args)
+# 
+#             elif parsed_args.command == "config":
+#                 return self._handle_config_command(parsed_args)
             else:
                 self.parser.print_help()
                 return 1
@@ -360,7 +384,8 @@ help="启用AI辅助修复"
         print("正在执行修复...")
 
         
-        # 创建上下文
+         # 创建上下文
+
         context = self._create_context(args)
         
         # 解析修复类型
@@ -368,7 +393,8 @@ help="启用AI辅助修复"
         if args.types:
             fix_types = args.types
         
-        # 执行修复
+         # 执行修复
+
         report = self.engine.fix_issues(context, fix_types)
 
         
@@ -441,38 +467,44 @@ help="启用AI辅助修复"
         elif args.reset:
             # 重置为默认配置
             self.engine.config = self.engine._load_config()
+
             # 
 
 #             self.engine.save_config()
 #             print("配置已重置为默认值")
 #         
 #         else:
+
 # 
 #             print("请指定配置操作: --list, --set, 或 --reset")
 #             return 1
 #         
+
 #         return 0
 #     
 #     def _create_context(self, args) -> FixContext:
-#         """创建修复上下文"""
+    #         """创建修复上下文"""
+
         # 解析目标路径
 
 
         target_path = None
         if hasattr(args, 'target') and args.target:
             target_path = Path(args.target)
-
+# 
             if not target_path.is_absolute():
                 target_path = self.engine.project_root / target_path
         
         # 解析范围
         scope_map = {
-            "project": FixScope.PROJECT,
+#             "project": FixScope.PROJECT,
             "backend": FixScope.BACKEND,
+
             "frontend": FixScope.FRONTEND,
             "desktop": FixScope.DESKTOP,
             "file": FixScope.SPECIFIC_FILE,
             "directory": FixScope.SPECIFIC_DIRECTORY
+
         }
         
         scope = scope_map.get(args.scope, FixScope.PROJECT)
@@ -505,6 +537,7 @@ help="启用AI辅助修复"
     def _output_analysis_text(self, result: Dict[str, Any]):
         """输出分析结果（文本格式）"""
         print("\n项目分析结果:")
+# 
 
         print("=" * 50)
         
@@ -520,6 +553,7 @@ help="启用AI辅助修复"
         
         for fix_type, issue_list in issues.items():
             if issue_list:
+
                 count = len(issue_list)
                 print(f"\n🔍 {fix_type}: {count} 个问题")
                 
@@ -559,6 +593,7 @@ help="启用AI辅助修复"
         print(f"修复时间: {report.timestamp}")
         print(f"总计问题: {report.get_total_issues_found()}")
         print(f"修复问题: {report.get_total_issues_fixed()}")
+
         print(f"成功率: {report.get_success_rate():.1%}")
         
         # 详细结果

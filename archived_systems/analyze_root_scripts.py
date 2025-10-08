@@ -162,11 +162,11 @@ class RootScriptAnalyzer:
         
         # 检查是否有不良做法
         has_bad_practices = any([
-            'os.system(' in content and 'python' in content,  # 调用其他Python脚本
+            'subprocess.run(' in content and 'python' in content,  # 调用其他Python脚本
             'subprocess' in content and 'python' in content,
             'glob(' in content and '*.py' in content,  # 批量处理Python文件
             're.sub(' in content and '.*' in content,  # 简单的全局替换
-        ])
+        ], shell=False, check=True)
         
         return has_proper_structure and not has_bad_practices
         
@@ -227,7 +227,8 @@ class RootScriptAnalyzer:
             for script_info in categories['fusion_candidates']:
                 script = script_info['name']
                 functionality = script_info['analysis']['functionality']
-                recommendations.append(f"   - {script}: 融合到unified_auto_fix_system/modules/，功能:{','.join(functionality)}")
+                recommendations.append(f"   - {script}: 融合到unified_auto_fix_system/modules/，功能:{',
+                '.join(functionality)}")
                 
         # 工具脚本 - 评估保留
         if categories['utility_scripts']:

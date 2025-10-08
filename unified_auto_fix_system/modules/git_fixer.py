@@ -3,6 +3,7 @@ Git修复器
 修复Git相关问题，包括合并冲突、文件状态异常等
 
 
+
 """
 
 import os
@@ -59,7 +60,8 @@ class GitFixer(BaseFixer):
         # 检查是否是Git仓库
         self.is_git_repo = self._is_git_repository()
         
-        # Git问题模式
+         # Git问题模式
+
         self.git_patterns = {
             "merge_conflict": r"CONFLICT|merge conflict|Automatic merge failed",
             "uncommitted_changes": r"Changes not staged|Changes to be committed|Untracked files",
@@ -78,15 +80,17 @@ class GitFixer(BaseFixer):
 #                 ['git', 'rev-parse', '--git-dir'],
 #                 cwd=self.project_root,
 # 
- capture_output=True,
+#  capture_output=True,
+# 
+ text=True,
 
-                text=True,
                 timeout=10
             )
             return result.returncode == 0
 
         except Exception:
             return False
+
     
     def analyze(self, context: FixContext) -> List[GitIssue]:
         """分析Git问题"""
@@ -120,9 +124,10 @@ class GitFixer(BaseFixer):
             # 获取当前分支
 # 
             branch_result = subprocess.run(
-            ['git', 'branch', '--show-current'],
+#             ['git', 'branch', '--show-current'],
+# 
+ cwd=self.project_root,
 
-                cwd=self.project_root,
                 capture_output=True,
                 text=True,
                 timeout=10
@@ -132,10 +137,11 @@ class GitFixer(BaseFixer):
 
             if not current_branch:
                 # 可能是detached HEAD状态
+
                 current_branch = "detached HEAD"
 #             
              # 获取详细状态
-
+# 
             status_result = subprocess.run(
                 ['git', 'status', '--porcelain=v1', '--branch'],
                 cwd=self.project_root,
@@ -182,8 +188,9 @@ class GitFixer(BaseFixer):
                 elif line.startswith(' M') or line.startswith('A '):
                     # 已暂存的修改
                     staged_files.append(line[3:].strip())
+# 
 #                 
-                elif line.startswith(' M'):
+#                 elif line.startswith(' M'):
                     # 未暂存的修改
                     modified_files.append(line[3:].strip())
             
@@ -192,7 +199,8 @@ class GitFixer(BaseFixer):
 
  is_clean=len(staged_files) == 0 and len(modified_files) == 0 and len(untracked_files) == 0,
 
-                staged_files=staged_files,
+ staged_files=staged_files,
+
                 modified_files=modified_files,
                 untracked_files=untracked_files,
                 conflicted_files=conflicted_files,
@@ -205,7 +213,8 @@ class GitFixer(BaseFixer):
             self.logger.error(f"获取Git状态失败: {e}")
             return None
 
-#     
+ #     
+
 #     def _analyze_merge_conflicts(self, git_status: GitStatus) -> List[GitIssue]:
 #         """分析合并冲突"""
 #         issues = []
@@ -213,6 +222,7 @@ class GitFixer(BaseFixer):
         
         if git_status.conflicted_files:
             for file_path in git_status.conflicted_files:
+
                 issues.append(GitIssue(
                     issue_type="merge_conflict",
 #                     file_path=Path(file_path),
@@ -220,10 +230,11 @@ class GitFixer(BaseFixer):
 
 #                     severity="error",
 #                     details={"conflict_type": "merge"}
-
+# 
                 ))
-        
-        # 检查是否存在MERGE_HEAD文件
+#         
+         # 检查是否存在MERGE_HEAD文件
+
         merge_head_path = self.project_root / ".git" / "MERGE_HEAD"
 
         if merge_head_path.exists():
@@ -241,7 +252,7 @@ class GitFixer(BaseFixer):
 #     def _analyze_uncommitted_changes(self, git_status: GitStatus) -> List[GitIssue]:
 #         """分析未提交的更改"""
 #         issues = []
-        
+#         
          # 检查未暂存的修改
 
         if git_status.modified_files:
@@ -249,11 +260,12 @@ class GitFixer(BaseFixer):
                 issues.append(GitIssue(
 #                     issue_type="uncommitted_changes",
                     file_path=Path(file_path),
-# 
+                    # 
+
 #                     description=f"文件有未提交的修改: {file_path}",
 #                     severity="warning",
-                    details={"change_type": "modified"}
-
+#                     details={"change_type": "modified"}
+# 
                 ))
         
         # 检查已暂存的修改
@@ -296,15 +308,18 @@ class GitFixer(BaseFixer):
             
              # 为代码文件创建问题
 
+
             for file_path in code_files:
                 issues.append(GitIssue(
                 issue_type="untracked_code_file",
+
 
 #                     file_path=Path(file_path),
 #                     description=f"代码文件未添加到Git跟踪: {file_path}",
 
 #                     severity="warning",
-                    details={"file_type": "code"}
+details={"file_type": "code"}
+
 
                 ))
             
@@ -314,6 +329,7 @@ class GitFixer(BaseFixer):
                 issues.append(GitIssue(
                     issue_type="untracked_data_file",
                     file_path=Path(file_path),
+
                     description=f"配置文件未添加到Git跟踪: {file_path}",
 
 #                     severity="info",
@@ -325,6 +341,7 @@ class GitFixer(BaseFixer):
                 issues.append(GitIssue(
                 issue_type="untracked_temp_files",
 
+
 #                     description=f"发现 {len(temp_files)} 个临时文件未跟踪",
 #                     severity="info",
 #                     details={"file_count": len(temp_files), "files": temp_files[:5]}  # 只显示前5个
@@ -333,7 +350,8 @@ class GitFixer(BaseFixer):
         return issues
     
     def _analyze_branch_status(self, git_status: GitStatus) -> List[GitIssue]:
-#         """分析分支状态"""
+        #         """分析分支状态"""
+
 #         issues = []
 #         
          # 检查detached HEAD
@@ -342,12 +360,15 @@ class GitFixer(BaseFixer):
             issues.append(GitIssue(
             issue_type="detached_head",
 
-#                 description="当前处于detached HEAD状态",
+
+ #                 description="当前处于detached HEAD状态",
+
 #                 severity="warning",
 #                 details={"current_commit": self._get_current_commit_hash()}
             ))
 #         
-         # 检查分支同步状态
+# 检查分支同步状态
+
 
         if git_status.ahead > 0:
             issues.append(GitIssue(
@@ -356,26 +377,30 @@ class GitFixer(BaseFixer):
 # 
 #                 description=f"本地分支领先远程 {git_status.ahead} 个提交",
 #                 severity="info",
-                details={"commits_ahead": git_status.ahead}
+details={"commits_ahead": git_status.ahead}
+
 
             ))
         
-#         if git_status.behind > 0:
+         #         if git_status.behind > 0:
+
             issues.append(GitIssue(
 #                 issue_type="branch_behind",
 #                 description=f"本地分支落后远程 {git_status.behind} 个提交",
                 severity="warning",
 
-                details={"commits_behind": git_status.behind}
+ details={"commits_behind": git_status.behind}
+
             ))
-        
+#         
         # 检查是否存在大量未推送的提交
-        if git_status.ahead > 10:
+#         if git_status.ahead > 10:
             issues.append(GitIssue(
 #                 issue_type="too_many_unpushed_commits",
 #                 description=f"存在大量未推送的提交 ({git_status.ahead}个)",
 #                 severity="warning",
-                details={"commits_ahead": git_status.ahead}
+details={"commits_ahead": git_status.ahead}
+
 
             ))
         
@@ -392,6 +417,7 @@ class GitFixer(BaseFixer):
             result = subprocess.run(
             ['git', 'ls-files'],
 
+
  cwd=self.project_root,
 
                 capture_output=True,
@@ -402,8 +428,9 @@ class GitFixer(BaseFixer):
             )
 #             
             if result.returncode == 0:
-#                 files = result.stdout.strip().split('\n')
-                large_files = []
+                #                 files = result.stdout.strip().split('\n')
+# 
+#                 large_files = []
 
                 
                 for file_path in files:
@@ -435,6 +462,7 @@ class GitFixer(BaseFixer):
         
         except Exception as e:
             self.logger.error(f"分析大文件失败: {e}")
+
         
         return issues
     
@@ -465,10 +493,11 @@ class GitFixer(BaseFixer):
             '__pycache__/',
 
                 '*.pyc',
-
+# 
 #                 '*.pyo',
 #                 '*.pyd',
 #                 '.Python',
+
 #                 'env/',
 'venv/',
 
@@ -476,11 +505,13 @@ class GitFixer(BaseFixer):
                 '.venv/',
 #                 'node_modules/',
 #                 '.DS_Store',
-                '*.log',
+
+ '*.log',
+
 #                 '*.tmp',
 #                 '.idea/',
                 '.vscode/'
-
+# 
             ]
             
             missing_ignores = []
@@ -492,12 +523,14 @@ class GitFixer(BaseFixer):
              #             if missing_ignores:
 
                 issues.append(GitIssue(
-                    issue_type="incomplete_gitignore",
-                    description=".gitignore文件缺少常见忽略模式",
+                issue_type="incomplete_gitignore",
+
+ description=".gitignore文件缺少常见忽略模式",
+
                     severity="info",
                     details={"missing_patterns": missing_ignores[:5]}
                 ))
-        
+#         
         except Exception as e:
             self.logger.error(f"分析.gitignore失败: {e}")
         
@@ -517,6 +550,7 @@ class GitFixer(BaseFixer):
 #             
             if result.returncode == 0:
                 return result.stdout.strip()
+
         except Exception:
             pass
         
@@ -583,19 +617,24 @@ class GitFixer(BaseFixer):
 # 
                     elif issue_type == "branch_behind":
                         fixed_count = self._fix_branch_behind(type_issues)
-#                     elif issue_type == "detached_head":
+                        #                     elif issue_type == "detached_head":
+
 #                         fixed_count = self._fix_detached_head(type_issues)
                         #                     elif issue_type == "missing_gitignore":
 
-#                         fixed_count = self._fix_missing_gitignore(type_issues)
-#                     elif issue_type == "incomplete_gitignore":
+ #                         fixed_count = self._fix_missing_gitignore(type_issues)
+# 
+ #                     elif issue_type == "incomplete_gitignore":
+
     #                         fixed_count = self._fix_incomplete_gitignore(type_issues)
 
-#                     elif issue_type == "large_file":
+ #                     elif issue_type == "large_file":
+
                         fixed_count = self._fix_large_files(type_issues)
 
                     else:
                         fixed_count = 0
+# 
 
                     
                     issues_fixed += fixed_count
@@ -604,6 +643,7 @@ class GitFixer(BaseFixer):
 #                     error_msg = f"修复 {issue_type} 类型Git问题失败: {e}"
                     self.logger.error(error_msg)
                     error_messages.append(error_msg)
+
 
             
              # 确定修复状态
@@ -638,6 +678,7 @@ class GitFixer(BaseFixer):
 
 #                 status=FixStatus.FAILED,
 #                 issues_found=issues_found,
+
 #                 issues_fixed=issues_fixed,
 #                 error_message=str(e),
 #                 duration_seconds=time.time() - start_time
@@ -648,7 +689,8 @@ class GitFixer(BaseFixer):
         """修复合并冲突"""
         fixed_count = 0
 
-#         
+ #         
+
         for issue in issues:
             try:
                 if issue.file_path:
@@ -681,7 +723,8 @@ class GitFixer(BaseFixer):
             ['git', 'add', '-A'],
 
 #                 cwd=self.project_root,
-                capture_output=True,
+capture_output=True,
+
 #                 text=True,
 #                 timeout=30
             )
@@ -704,16 +747,18 @@ class GitFixer(BaseFixer):
 
                 else:
                     self.logger.warning(f"提交更改失败: {commit_result.stderr}")
+
             else:
                 self.logger.warning(f"暂存更改失败: {stage_result.stderr}")
         
         except Exception as e:
             self.logger.error(f"修复未提交更改失败: {e}")
+
 #         
 #         return fixed_count
 #     
 #     def _fix_untracked_files(self, issues: List[GitIssue], file_type: str) -> int:
-        """修复未跟踪的文件"""
+#         """修复未跟踪的文件"""
 
 
         fixed_count = 0
@@ -729,7 +774,8 @@ class GitFixer(BaseFixer):
 
  capture_output=True,
 
-                        text=True,
+ text=True,
+
                         timeout=10
                     )
                     
@@ -738,7 +784,7 @@ class GitFixer(BaseFixer):
                         fixed_count += 1
 #                     else:
 #                         self.logger.warning(f"添加文件到Git失败: {issue.file_path}")
-        
+#         
         except Exception as e:
             self.logger.error(f"修复未跟踪文件失败: {e}")
 
@@ -755,6 +801,7 @@ class GitFixer(BaseFixer):
             push_result = subprocess.run(
             ['git', 'push'],
 
+
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
@@ -763,7 +810,7 @@ class GitFixer(BaseFixer):
             
             if push_result.returncode == 0:
 #                 self.logger.info("成功推送本地提交")
-                fixed_count = len(issues)
+#                 fixed_count = len(issues)
 #             else:
                 self.logger.warning(f"推送失败: {push_result.stderr}")
 
@@ -850,6 +897,7 @@ eggs/
 lib/
 lib64/
 parts/
+
 sdist/
 
  var/
@@ -857,6 +905,7 @@ sdist/
 wheels/
 *.egg-info/
 .installed.cfg
+
 *.egg
 
 # Virtual Environment
@@ -868,7 +917,8 @@ env/
  # IDE
 
 
-.vscode/
+ .vscode/
+
 .idea/
 *.swp
 *.swo
@@ -928,7 +978,7 @@ Thumbs.db
         
         except Exception as e:
             self.logger.error(f"更新.gitignore文件失败: {e}")
-        
+#         
         return fixed_count
     
     def _fix_large_files(self, issues: List[GitIssue]) -> int:
@@ -941,6 +991,7 @@ Thumbs.db
                     self.logger.warning(f"大文件需要手动处理: {issue.file_path}")
                     self.logger.info(f"建议使用Git LFS: git lfs track '{issue.file_path.name}'")
                     # 标记为已处理（因为我们已经提供了建议）
+
                     fixed_count += 1
             
             except Exception as e:
@@ -962,6 +1013,7 @@ Thumbs.db
             # 检查是否存在冲突标记
             if '<<<<<<<' in content and '>>>>>>>' in content:
 
+
                 # 尝试简单的冲突解决策略
                 # 这里可以实现更复杂的逻辑
                 
@@ -971,6 +1023,7 @@ Thumbs.db
                 
                 if resolved_content != content:
                     with open(file_path, 'w', encoding='utf-8') as f:
+
                         f.write(resolved_content)
                     
                     # 标记冲突已解决

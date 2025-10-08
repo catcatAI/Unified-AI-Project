@@ -149,11 +149,12 @@ def main():
         print("   ✅ pytest可正常导入")
         
         # 尝试运行简单测试
-        result = os.system('python -m pytest --version > nul 2>&1')
-        if result == 0:
+        result = subprocess.run(['python', '-m', 'pytest', '--version'], 
+                               capture_output=True, text=True, check=False)
+        if result.returncode == 0:
             print("   ✅ pytest命令可正常执行")
         else:
-            print("   ⚠️  pytest命令执行有问题")
+            print("   ⚠️ pytest命令执行失败")
             
     except ImportError:
         print("   ❌ pytest无法导入")

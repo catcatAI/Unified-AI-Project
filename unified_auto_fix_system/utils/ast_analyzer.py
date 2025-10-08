@@ -18,6 +18,7 @@ class ASTIssue:
     """AST分析问题"""
 
 
+
     file_path: Path
     line_number: int
     column: int
@@ -109,7 +110,8 @@ class ASTAnalyzer:
                 "context_manager_issues": [],
                 "descriptor_issues": [],
 
-                "metaclass_issues": []
+ "metaclass_issues": []
+
             }
             
             self._analyze_undefined_names(tree, file_path, file_issues)
@@ -136,9 +138,10 @@ class ASTAnalyzer:
 #                     issue_type="syntax_error",
 #                     description=f"语法错误: {e}",
 # 
- node_type="module",
+#  node_type="module",
 
-                    severity="error"
+ severity="error"
+
                 )]
             }
         except Exception as e:
@@ -160,6 +163,7 @@ class ASTAnalyzer:
 
                     if isinstance(item, ast.FunctionDef):
                         self.class_methods[node.name].append(item.name)
+
             elif isinstance(node, ast.Import):
                 for alias in node.names:
                     name = alias.asname if alias.asname else alias.name
@@ -186,16 +190,18 @@ class ASTAnalyzer:
     #                 name = node.id
 
                 if (name not in self.defined_names and 
-#                     name not in self.imported_names and 
+                #                     name not in self.imported_names and 
+
 #                     name not in self.builtin_names and
                     not name.startswith('_')):  # 忽略私有名称
 #                     
                     issue = ASTIssue(
 #                         file_path=file_path,
-                        line_number=node.lineno,
-
-                        column=node.col_offset,
+#                         line_number=node.lineno,
+# 
+#                         column=node.col_offset,
                         issue_type="undefined_variable",
+
                         description=f"未定义的变量: {name}",
                         node_type="Name",
                         code_snippet=name,
@@ -214,16 +220,18 @@ class ASTAnalyzer:
 
 #         """分析装饰器问题"""
 #         for node in ast.walk(tree):
+
 #             if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.decorator_list:
 #                 for decorator in node.decorator_list:
 #                     decorator_name = self._get_decorator_name(decorator)
 #                     if decorator_name and decorator_name not in self.defined_names and decorator_name not in self.imported_names:
 # 
                         issues["decorator_issues"].append(ASTIssue(
-                        file_path=file_path,
-
-                            line_number=decorator.lineno,
+#                         file_path=file_path,
+# 
+#                             line_number=decorator.lineno,
                             column=decorator.col_offset,
+
                             issue_type="undefined_decorator",
                             description=f"未定义的装饰器: {decorator_name}",
 
@@ -241,15 +249,17 @@ class ASTAnalyzer:
 
 #         """分析类继承问题"""
 #         for node in ast.walk(tree):
+
 #             if isinstance(node, ast.ClassDef) and node.bases:
 #                 for base in node.bases:
 # 
-                    if isinstance(base, ast.Name):
-                        base_name = base.id
+#                     if isinstance(base, ast.Name):
+#                         base_name = base.id
 
                         if base_name not in self.defined_names and base_name not in self.imported_names:
                             issues["class_inheritance_issues"].append(ASTIssue(
-                                file_path=file_path,
+                            file_path=file_path,
+
                                 line_number=base.lineno,
                                 column=base.col_offset,
                                 issue_type="undefined_base_class",
@@ -268,11 +278,11 @@ class ASTAnalyzer:
 # 
 #                 func_name = self._get_function_name(node.func)
 #                 if func_name and func_name in self.function_params:
-
+# 
 #                     expected_params = len(self.function_params[func_name])
 #                     actual_args = len(node.args)
-                    
-                    if actual_args != expected_params:
+#                     
+#                     if actual_args != expected_params:
                         issues["parameter_mismatches"].append(ASTIssue(
                             file_path=file_path,
                             line_number=node.lineno,
@@ -291,7 +301,8 @@ class ASTAnalyzer:
     #             if isinstance(node, ast.FunctionDef):
 
                 # 检查是否有返回语句
-#                 has_return = any(isinstance(n, ast.Return) for n in ast.walk(node))
+                #                 has_return = any(isinstance(n, ast.Return) for n in ast.walk(node))
+
 #                 
                  # 检查函数名是否暗示返回类型
 
@@ -309,7 +320,8 @@ class ASTAnalyzer:
 
                 if self._detect_circular_import(node, file_path):
                     issues["import_issues"].append(ASTIssue(
-                        file_path=file_path,
+                    file_path=file_path,
+
 #                         line_number=node.lineno,
 #                         column=node.col_offset,
 
@@ -328,7 +340,7 @@ class ASTAnalyzer:
 #     def _analyze_type_annotations(self, tree: ast.AST, file_path: Path, issues: Dict[str, List[ASTIssue]]):
 #         """分析类型注解问题"""
         for node in ast.walk(tree):
-
+# 
 #             if isinstance(node, ast.FunctionDef) and node.returns:
                 # 检查返回类型注解
                 #                 return_type = self._get_annotation_name(node.returns)
@@ -343,17 +355,19 @@ class ASTAnalyzer:
                         description=f"未定义的返回类型: {return_type}",
 #                         node_type="annotation",
                         code_snippet=return_type,
-#                         suggested_fix=f"# 需要定义或导入返回类型: {return_type}"
+                        #                         suggested_fix=f"# 需要定义或导入返回类型: {return_type}"
+
                     ))
-    
+#     
 #     def _analyze_async_await(self, tree: ast.AST, file_path: Path, issues: Dict[str, List[ASTIssue]]):
 #         """分析异步问题"""
         for node in ast.walk(tree):
             if isinstance(node, ast.AsyncFunctionDef):
-
+# 
 
                 # 检查是否使用了await
-#                 has_await = any(isinstance(n, ast.Await) for n in ast.walk(node))
+                #                 has_await = any(isinstance(n, ast.Await) for n in ast.walk(node))
+
 #                 if not has_await:
                     issues["async_await_issues"].append(ASTIssue(
 #                         file_path=file_path,
@@ -370,7 +384,7 @@ class ASTAnalyzer:
             elif isinstance(node, ast.Await):
                 # 检查是否在异步函数中
 #                 in_async_func = False
-
+# 
 #                 parent = node
                 while parent:
                     if isinstance(parent, ast.AsyncFunctionDef):
@@ -379,6 +393,7 @@ class ASTAnalyzer:
                         break
 #                     parent = getattr(parent, 'parent', None)
 #                 
+
                 if not in_async_func:
                     issues["async_await_issues"].append(ASTIssue(
                         file_path=file_path,
@@ -394,10 +409,10 @@ class ASTAnalyzer:
 
                     ))
     
-    def _analyze_context_managers(self, tree: ast.AST, file_path: Path, issues: Dict[str, List[ASTIssue]]):
+#     def _analyze_context_managers(self, tree: ast.AST, file_path: Path, issues: Dict[str, List[ASTIssue]]):
         """分析上下文管理器问题"""
         for node in ast.walk(tree):
-
+# 
             if isinstance(node, ast.With):
 
                 # 检查上下文管理器是否有适当的 __enter__ 和 __exit__ 方法
@@ -416,6 +431,7 @@ class ASTAnalyzer:
 
 #                                 description=f"对象 {func_name} 可能不是有效的上下文管理器",
 #                                 node_type="Call",
+
 #                                 code_snippet=func_name,
 
 #                                 suggested_fix=f"# 确保 {func_name} 实现了 __enter__ 和 __exit__ 方法"
@@ -438,22 +454,25 @@ class ASTAnalyzer:
                 if has_descriptor_methods:
                     # 检查描述符方法的正确性
 #                     for method_name in descriptor_methods:
-#                         if method_name in [m.name for m in node.body if isinstance(m, ast.FunctionDef)]:
+    #                         if method_name in [m.name for m in node.body if isinstance(m, ast.FunctionDef)]:
 
-                            method_node = next(m for m in node.body if isinstance(m, ast.FunctionDef) and m.name == method_name)
+
+#                             method_node = next(m for m in node.body if isinstance(m, ast.FunctionDef) and m.name == method_name)
                             self._check_descriptor_method(method_node, file_path, issues)
-    
-    def _analyze_metaclasses(self, tree: ast.AST, file_path: Path, issues: Dict[str, List[ASTIssue]]):
-        """分析元类问题"""
-
+#     
+#     def _analyze_metaclasses(self, tree: ast.AST, file_path: Path, issues: Dict[str, List[ASTIssue]]):
+#         """分析元类问题"""
+# 
         for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-
+#             if isinstance(node, ast.ClassDef):
+# 
                 # 检查元类定义
                 for keyword in node.keywords:
+
                     if keyword.arg == 'metaclass':
                         metaclass_name = self._get_metaclass_name(keyword.value)
                         if metaclass_name and metaclass_name not in self.defined_names:
+
                             issues["metaclass_issues"].append(ASTIssue(
                             file_path=file_path,
 
@@ -467,13 +486,16 @@ class ASTAnalyzer:
                                 code_snippet=metaclass_name,
                                 suggested_fix=f"# 需要定义元类: {metaclass_name}"
 
+
                             ))
     
-    # 辅助方法
+     # 辅助方法
+
     def _get_target_files(self, context: FixContext) -> List[Path]:
         """获取目标文件"""
         if context.target_path:
             if context.target_path.is_file():
+
 
                 return [context.target_path]
             elif context.target_path.is_dir():
@@ -510,7 +532,8 @@ class ASTAnalyzer:
             return decorator.id
         elif isinstance(decorator, ast.Call):
             return self._get_function_name(decorator.func)
-        return None
+            return None
+
     
     def _get_annotation_name(self, annotation: ast.AST) -> Optional[str]:
         """获取注解名称"""
@@ -535,23 +558,28 @@ class ASTAnalyzer:
         """函数名是否暗示返回类型"""
         return_patterns = ['get_', 'fetch_', 'find_', 'create_', 'make_']
 
+
         return any(name.startswith(pattern) for pattern in return_patterns)
     
 #     def _detect_circular_import(self, node: ast.AST, file_path: Path) -> bool:
-#         """检测循环导入"""
+    #         """检测循环导入"""
+
         # 简化的循环导入检测
         # 实际实现需要更复杂的逻辑
-#         return False
+        #         return False
+
 #     
 #     def _has_context_manager_methods(self, class_name: str) -> bool:
+# 
 #         """检查是否有上下文管理器方法"""
         # 这里应该检查类的实际定义
-
+# 
         # 简化版本
-        return True
-    
-    def _check_decorator_call(self, decorator: ast.Call, file_path: Path, issues: Dict[str, List[ASTIssue]]):
+#         return True
+#     
+#     def _check_decorator_call(self, decorator: ast.Call, file_path: Path, issues: Dict[str, List[ASTIssue]]):
         """检查装饰器调用"""
+
         # 检查装饰器参数是否正确
         pass
     

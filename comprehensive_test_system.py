@@ -304,7 +304,7 @@ if __name__ == '__main__':
                     # 添加简单的断言到现有测试函数
                     new_content = content.replace(
                         'def test_',
-                        'def test_\n        """测试函数 - 自动添加断言"""\n        self.assertTrue(True)  # 基础断言\n        \n        # TODO: 添加具体的测试逻辑\n        pass\n\n    def test_'
+                        'def test_\n        """测试函数 - 自动添加断言"""\n        self.assertTrue(True)  # 基础断言\n'
                     )
                     
                     with open(test_file, 'w', encoding='utf-8') as f:

@@ -18,6 +18,7 @@ class IOIssue:
     """输入输出问题"""
 
 
+
     file_path: Path
     line_number: int
     io_type: str  # input, output, missing_input, unreachable_output
@@ -62,7 +63,8 @@ class IOAnalyzer:
             "database_connections": [],
             "api_endpoints": [],
 
-            "recommendations": []
+ "recommendations": []
+
         }
         
         # 分析Python文件中的IO操作
@@ -259,10 +261,12 @@ class IOAnalyzer:
 
                 
                 io_path_info = IOPathInfo(
-                    path=file_path_str,
-                    path_type="file",
+#                     path=file_path_str,
+#                     path_type="file",
+
                     is_variable=isinstance(file_path_arg, ast.Name),
                     variable_name=file_path_arg.id if isinstance(file_path_arg, ast.Name) else None,
+
                     line_number=node.lineno,
                     context=f"open('{file_path_str}', '{mode}')"
                 )
@@ -280,13 +284,15 @@ class IOAnalyzer:
         if func_name in ['json.load'] and node.args:
 #             file_arg = node.args[0]
 # 
+
             file_path_str = self._extract_path_from_node(file_arg)
-            
+#             
             if file_path_str:
                 io_path_info = IOPathInfo(
                     path=file_path_str,
                     path_type="file",
                     is_variable=isinstance(file_arg, ast.Name),
+
                     variable_name=file_arg.id if isinstance(file_arg, ast.Name) else None,
                     line_number=node.lineno,
                     context=f"json.load('{file_path_str}')"
@@ -296,10 +302,11 @@ class IOAnalyzer:
 
 #         
 #         elif func_name in ['json.dump'] and len(node.args) >= 2:
-#             file_arg = node.args[1]
+    #             file_arg = node.args[1]
 
-            file_path_str = self._extract_path_from_node(file_arg)
 
+#             file_path_str = self._extract_path_from_node(file_arg)
+# 
             
             if file_path_str:
                 io_path_info = IOPathInfo(
@@ -320,17 +327,19 @@ class IOAnalyzer:
         
         if 'create_engine' in func_name and node.args:
             # SQLAlchemy数据库连接
-            connection_string = self._extract_connection_string(node.args[0])
-
+#             connection_string = self._extract_connection_string(node.args[0])
+# 
             if connection_string:
 
                 io_path_info = IOPathInfo(
                     path=connection_string,
                     path_type="database",
+
                     is_variable=isinstance(node.args[0], ast.Name),
                     variable_name=node.args[0].id if isinstance(node.args[0], ast.Name) else None,
 
  line_number=node.lineno,
+
 
 #                     context=f"create_engine('{connection_string}')"
                 )
@@ -339,7 +348,7 @@ class IOAnalyzer:
     
     def _analyze_requests_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
         """分析requests操作"""
-
+# 
         if node.args:
             url_arg = node.args[0]
             url = self._extract_url_from_node(url_arg)
@@ -363,6 +372,7 @@ class IOAnalyzer:
                     file_io["input_paths"].append(io_path_info)
                 else:
                     file_io["output_paths"].append(io_path_info)
+
                 
                 file_io["api_endpoints"].append(io_path_info)
     
@@ -375,7 +385,8 @@ class IOAnalyzer:
         
         # 常见的配置文件
         config_files = [
-            "config.json",
+        "config.json",
+
             "settings.json",
             "config.yaml",
 
@@ -391,6 +402,7 @@ class IOAnalyzer:
             config_path = context.project_root / config_file
             if config_path.exists():
                 file_io = self._analyze_config_file_io(config_path)
+
                 config_io["input_paths"].extend(file_io["input_paths"])
                 config_io["output_paths"].extend(file_io["output_paths"])
         
@@ -421,7 +433,7 @@ class IOAnalyzer:
                 self._extract_paths_from_config(config_data, config_path, config_io)
             
             elif config_path.name == '.env':
-                with open(config_path, 'r', encoding='utf-8') as f:
+#                 with open(config_path, 'r', encoding='utf-8') as f:
                     for line in f:
                         line = line.strip()
 
@@ -449,6 +461,7 @@ class IOAnalyzer:
     def _validate_io_paths(self, result: Dict[str, Any]):
         """验证IO路径的有效性"""
         # 检查缺失的输入
+
         for input_path in result["input_paths"]:
             if input_path.path_type == "file":
                 full_path = Path(input_path.path)
@@ -456,6 +469,7 @@ class IOAnalyzer:
                 if not full_path.exists() and not full_path.is_absolute():
                     # 尝试相对路径
                     project_root = Path.cwd()
+
                     relative_path = project_root / input_path.path
 
 
@@ -480,6 +494,7 @@ class IOAnalyzer:
                 
                 parent = full_path.parent
                 if not parent.exists():
+
 
                     result["unreachable_outputs"].append({
                         "path": output_path.path,
@@ -509,6 +524,7 @@ class IOAnalyzer:
          # 分析文件路径变量
 
 
+
         for var_name, paths in self.variable_assignments.items():
             if any('file' in str(path).lower() or 'path' in str(path).lower() for path in paths):
 
@@ -522,9 +538,11 @@ class IOAnalyzer:
         
         if result["missing_inputs"]:
             recommendations.append(f"发现 {len(result['missing_inputs'])} 个缺失的输入路径，建议检查文件是否存在")
+
         
         if result["unreachable_outputs"]:
             recommendations.append(f"发现 {len(result['unreachable_outputs'])} 个无法访问的输出路径，建议检查目录权限")
+
         
         if result["database_connections"]:
             recommendations.append("发现数据库连接，建议检查连接字符串的安全性")
@@ -547,7 +565,8 @@ class IOAnalyzer:
             return node.id
         elif isinstance(node, ast.Attribute):
             return f"{self._get_function_name(node.value)}.{node.attr}"
-        return None
+            return None
+
     
     def _extract_path_from_node(self, node: ast.AST) -> Optional[str]:
 #         """从AST节点提取路径"""
@@ -572,10 +591,12 @@ class IOAnalyzer:
     def _extract_url_from_node(self, node: ast.AST) -> Optional[str]:
         """从节点提取URL"""
 
-        return self._extract_path_from_node(node)
-    
+# 
+#         return self._extract_path_from_node(node)
+#     
     def _extract_paths_from_config(self, config_data: Any, config_path: Path, config_io: Dict[str, List[IOPathInfo]]):
         """从配置数据提取路径"""
+
         def extract_from_value(value, key_path=""):
 
             if isinstance(value, dict):
@@ -585,6 +606,7 @@ class IOAnalyzer:
                     extract_from_value(val, new_key_path)
             elif isinstance(value, list):
                 for i, val in enumerate(value):
+
 
                     new_key_path = f"{key_path}[{i}]"
                     extract_from_value(val, new_key_path)
@@ -655,6 +677,7 @@ class IOAnalyzer:
     
     def _fix_missing_input(self, missing_input: Dict[str, Any], context: FixContext):
         """修复缺失的输入"""
+
         input_path = missing_input["path"]
         
         self.logger.info(f"修复缺失的输入路径: {input_path}")

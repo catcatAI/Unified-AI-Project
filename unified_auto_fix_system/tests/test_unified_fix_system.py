@@ -18,6 +18,7 @@ class TestUnifiedFixSystem:
     """统一修复系统测试类"""
 
 
+
     
     @pytest.fixture
     def temp_project(self):
@@ -42,6 +43,7 @@ class TestUnifiedFixSystem:
     
     @pytest.fixture
     def fix_engine(self, temp_project):
+
         """创建修复引擎"""
         return UnifiedFixEngine(temp_project)
 
@@ -59,7 +61,8 @@ class TestUnifiedFixSystem:
     def test_analyze_empty_project(self, fix_engine):
 #         """测试分析空项目"""
         context = FixContext(
-            project_root=fix_engine.project_root,
+        project_root=fix_engine.project_root,
+
             scope=FixScope.PROJECT
         )
         
@@ -72,8 +75,9 @@ class TestUnifiedFixSystem:
         #         assert "statistics" in result
 
     
-#     def test_fix_with_no_issues(self, fix_engine):
-        """测试没有问题的修复"""
+     #     def test_fix_with_no_issues(self, fix_engine):
+
+#         """测试没有问题的修复"""
 
         context = FixContext(
             project_root=fix_engine.project_root,
@@ -90,9 +94,10 @@ class TestUnifiedFixSystem:
 #         """测试语法修复检测"""
 # 创建一个包含语法错误的文件
 
+
 #         syntax_error_file = fix_engine.project_root / "syntax_error.py"
 # 
-        syntax_error_file.write_text("def missing_colon()\n    pass")  # 缺少冒号
+#         syntax_error_file.write_text("def missing_colon()\n    pass")  # 缺少冒号
         
         context = FixContext(
             project_root=fix_engine.project_root,
@@ -134,6 +139,7 @@ class TestUnifiedFixSystem:
         
         # 干运行不应该实际修复问题
         for fix_result in report.fix_results.values():
+
             if fix_result.status != FixStatus.NOT_APPLICABLE:
                 assert fix_result.status == FixStatus.SIMULATED
     
@@ -149,12 +155,14 @@ class TestUnifiedFixSystem:
         fix_engine.enable_module(FixType.SYNTAX_FIX)
         module_status = fix_engine.get_module_status()
 
+
         assert module_status[FixType.SYNTAX_FIX.value] == "enabled"
 
     
     def test_config_loading(self, temp_project):
         """测试配置加载"""
         # 创建自定义配置文件
+
         config_path = temp_project / "custom_config.json"
         config_content = {
             "enabled_modules": ["syntax_fix", "import_fix"],
@@ -186,18 +194,21 @@ class TestUnifiedFixSystem:
         assert report.statistics is not None
 
 #         
-        # 检查统计信息
+# 检查统计信息
+
         assert "total_fixes" in report.statistics
 
 
         assert "successful_fixes" in report.statistics
         assert "failed_fixes" in report.statistics
-#     
-#     def test_specific_file_fixing(self, fix_engine):
-        """测试特定文件修复"""
+        #     
 
+#     def test_specific_file_fixing(self, fix_engine):
+#         """测试特定文件修复"""
+# 
         # 创建有问题的文件
         test_file = fix_engine.project_root / "test_file.py"
+
 
         test_file.write_text("def test(\n    pass")  # 语法错误)
         
@@ -207,9 +218,10 @@ class TestUnifiedFixSystem:
             target_path=test_file,
             scope=FixScope.SPECIFIC_FILE
 
+
         )
         
-        report = fix_engine.fix_issues(context, [FixType.SYNTAX_FIX.value])
+#         report = fix_engine.fix_issues(context, [FixType.SYNTAX_FIX.value])
         
         # 应该只修复特定文件
         assert report is not None
@@ -229,6 +241,7 @@ class TestUnifiedFixSystem:
         
         assert report is not None
         # 不应该抛出异常，而是返回失败状态
+
     
     def test_cleanup(self, fix_engine):
         """测试清理功能"""
@@ -251,10 +264,11 @@ class TestUnifiedFixSystem:
     
     @pytest.fixture
     def temp_project(self):
+
 #         """创建临时项目"""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield Path(temp_dir)
-
+# 
     
     def test_syntax_fixer(self, temp_project):
         """测试语法修复器"""
@@ -269,7 +283,8 @@ class TestUnifiedFixSystem:
         context = FixContext(
             project_root=temp_project,
             target_path=error_file
-# 
+            # 
+
         )
         
          # 分析问题
@@ -278,26 +293,31 @@ class TestUnifiedFixSystem:
         #         assert len(issues) > 0
 
         
-        # 修复问题
-        result = fixer.fix(context)
+         # 修复问题
+# 
+#         result = fixer.fix(context)
         assert result.status in [FixStatus.SUCCESS, FixStatus.PARTIAL_SUCCESS]
+
     
-    def test_import_fixer(self, temp_project):
+#     def test_import_fixer(self, temp_project):
         """测试导入修复器"""
 
         from unified_auto_fix_system.modules.import_fixer import ImportFixer
         
-        # 创建有导入问题的文件
+         # 创建有导入问题的文件
+
         main_file = temp_project / "main.py"
         main_file.write_text("from nonexistent.module import something")
         
          #         fixer = ImportFixer(temp_project)
 # 
         context = FixContext(
-            project_root=temp_project,
-            target_path=main_file
+        project_root=temp_project,
+# 
+ target_path=main_file
+
         )
-        
+#         
         # 分析问题
         issues = fixer.analyze(context)
         # 应该发现问题（导入不存在的模块）

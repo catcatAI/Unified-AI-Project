@@ -4,6 +4,7 @@
 运行测试脚本（兼容性版本）
 
 
+
 通过设置环境变量来解决依赖库兼容性问题
 """
 
@@ -59,4 +60,5 @@ def run_tests_with_compat():
 
 if __name__ == "__main__":
     success = run_tests_with_compat()
+
     sys.exit(0 if success else 1)

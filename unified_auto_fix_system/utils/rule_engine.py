@@ -17,6 +17,7 @@ class RepairRule:
     """修复规则"""
 
 
+
     rule_id: str
     name: str
     description: str
@@ -63,7 +64,8 @@ class RuleEngine:
         """加载默认规则"""
 
         default_rules = [
-            # 通用规则
+        # 通用规则
+
             RepairRule(
                 rule_id="GENERAL_001",
                 name="Fix print statement",
@@ -95,6 +97,7 @@ class RuleEngine:
 
  examples=["except ValueError, e: → except ValueError as e:"]
 
+
             ),
             
             # AI系统特定规则
@@ -113,6 +116,7 @@ class RuleEngine:
 
                 confidence=0.9,
                 examples=["from apps.backend.src.ai.models import NLPModel → from ..ai.models import NLPModel"]
+
             ),
             
             RepairRule(
@@ -128,7 +132,9 @@ class RuleEngine:
                 severity="error",
                 auto_apply=True,
 
-                confidence=0.9,
+
+ confidence=0.9,
+
                 examples=["from apps.backend.src.core.hsp import HSPClient → from ..core.hsp import HSPClient"]
             ),
             
@@ -146,6 +152,7 @@ class RuleEngine:
 
                 model_type="nlp",
                 severity="warning",
+
                 auto_apply=True,
                 confidence=0.8,
                 examples=["from transformers import BertTokenizer → from transformers import AutoTokenizer"]
@@ -159,9 +166,11 @@ class RuleEngine:
                 pattern=r'from\s+PIL\s+import\s+Image',
                 replacement=r'from PIL import Image, ImageOps, ImageFilter',
                 scope="model_specific",
+
                 model_type="vision", 
 
-                severity="info",
+ severity="info",
+
                 auto_apply=False,
                 confidence=0.7,
                 examples=["from PIL import Image → from PIL import Image, ImageOps, ImageFilter"]
@@ -179,9 +188,11 @@ class RuleEngine:
                 replacement=r'sqlite:///{project_root}/\1',
                 scope="tool_specific",
 
+
                 tool_type="database",
                 severity="warning",
                 auto_apply=True,
+
                 confidence=0.85,
                 examples=["sqlite:///data.db → sqlite:///{project_root}/data.db"]
             ),
@@ -194,10 +205,12 @@ class RuleEngine:
                 pattern=r'redis\.Redis\s*\(\s*host\s*=\s*[\'"]([^\'"]+)[\'"]',
                 replacement=r'redis.Redis(host="\1", port=6379, decode_responses=True)',
 
+
  scope="tool_specific",
 
                 tool_type="cache",
                 severity="warning",
+
                 auto_apply=True,
                 confidence=0.8,
 
@@ -213,6 +226,7 @@ class RuleEngine:
 
         self.rules[rule.scope].append(rule)
         if rule.scope == "custom":
+
             self.custom_rules[rule.rule_id] = rule
     
     def remove_rule(self, rule_id: str) -> bool:
@@ -242,6 +256,7 @@ class RuleEngine:
 
                 lines = content.split('\n')
                 for i, line in enumerate(lines, 1):
+
                     for rule in applicable_rules:
                         if re.search(rule.pattern, line):
                             issue = {
@@ -297,14 +312,16 @@ class RuleEngine:
 
                         new_line = None
                         line_num = 0
-#                         
+                        #                         
+
                         # 逐行应用规则
 #                         lines = new_content.split('\n')
                         for i, line in enumerate(lines):
 #                             if re.search(rule.pattern, line):
-
+# 
                                 original_line = line
                                 new_line = self._apply_rule_replacement(rule, line)
+
                                 line_num = i + 1
                                 lines[i] = new_line
                                 break
@@ -391,6 +408,7 @@ class RuleEngine:
     def _apply_rule_replacement(self, rule: RepairRule, line: str) -> str:
         """应用规则替换"""
         try:
+
             # 处理变量替换
             replacement = rule.replacement
             
@@ -408,6 +426,7 @@ class RuleEngine:
     
     def _get_target_files(self, context: FixContext) -> List[Path]:
         """获取目标文件"""
+
         if context.target_path:
             if context.target_path.is_file():
                 return [context.target_path]
@@ -429,6 +448,7 @@ class RuleEngine:
                 rule_id=f"CUSTOM_{len(self.custom_rules) + 1}",
                 name=rule_config.get("name", "Custom Rule"),
 
+
                 description=rule_config.get("description", ""),
                 pattern=rule_config["pattern"],
 
@@ -448,6 +468,7 @@ class RuleEngine:
     def export_rules(self, file_path: Path):
         """导出规则到文件"""
         try:
+
             all_rules = []
             for scope, rules in self.rules.items():
                 for rule in rules:
