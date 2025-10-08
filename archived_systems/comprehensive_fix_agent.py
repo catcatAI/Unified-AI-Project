@@ -2,6 +2,7 @@ import os
 import sys
 
 def fix_enhanced_demo_agent_comprehensive():
+    """fix_enhanced_demo_agent_comprehensive 函数"""
     file_path = r"d:\Projects\Unified-AI-Project\apps\backend\src\agents\enhanced_demo_agent.py"
     
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -83,12 +84,18 @@ def fix_enhanced_demo_agent_comprehensive():
     
     fixed_content = fixed_content.replace("for i in range(count)", "for i in range(count):")
     fixed_content = fixed_content.replace("await self.get_all_active_agents", "await self.get_all_active_agents()")
-    fixed_content = fixed_content.replace("await self.get_agent_registry_stats", "await self.get_agent_registry_stats()")
-    fixed_content = fixed_content.replace("health_report = await self.get_health_report()", "health_report = await self.get_health_report()")
-    fixed_content = fixed_content.replace("queue_status = await self.get_task_queue_status()", "queue_status = await self.get_task_queue_status()")
-    fixed_content = fixed_content.replace("_ = await agent.refresh_agent_status", "_ = await agent.refresh_agent_status()")
-    fixed_content = fixed_content.replace("health_report = await agent.get_health_report", "health_report = await agent.get_health_report()")
-    fixed_content = fixed_content.replace("queue_status = await agent.get_task_queue_status", "queue_status = await agent.get_task_queue_status()")
+    fixed_content = fixed_content.replace("await self.get_agent_registry_stats",
+     "await self.get_agent_registry_stats()")
+    fixed_content = fixed_content.replace("health_report = await self.get_health_report()",
+     "health_report = await self.get_health_report()")
+    fixed_content = fixed_content.replace("queue_status = await self.get_task_queue_status()",
+     "queue_status = await self.get_task_queue_status()")
+    fixed_content = fixed_content.replace("_ = await agent.refresh_agent_status",
+     "_ = await agent.refresh_agent_status()")
+    fixed_content = fixed_content.replace("health_report = await agent.get_health_report",
+     "health_report = await agent.get_health_report()")
+    fixed_content = fixed_content.replace("queue_status = await agent.get_task_queue_status",
+     "queue_status = await agent.get_task_queue_status()")
     
     # 写入修复后的内容
     with open(file_path, 'w', encoding='utf-8') as f:

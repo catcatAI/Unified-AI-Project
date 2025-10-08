@@ -23,6 +23,7 @@ class RepairIteration:
     """修复迭代记录"""
 
 
+
     iteration_id: str
     timestamp: datetime
     context: FixContext
@@ -83,7 +84,8 @@ class IntelligentIterativeFixer(BaseFixer):
         self.repair_strategies = {}
         self.strategy_effectiveness = defaultdict(lambda: {"success": 0, "failure": 0})
         
-        # 自适应参数
+         # 自适应参数
+
         self.adaptive_config = {
             "max_iterations": 5,
             "learning_threshold": 0.7,
@@ -108,7 +110,8 @@ class IntelligentIterativeFixer(BaseFixer):
                     data = json.load(f)
                     self.learning_patterns = {
 
-                        pid: LearningPattern(**pattern) 
+ pid: LearningPattern(**pattern) 
+
                         for pid, pattern in data.get('patterns', {}).items()
                         }
 
@@ -116,6 +119,7 @@ class IntelligentIterativeFixer(BaseFixer):
             
             if self.iteration_history_path.exists():
                 with open(self.iteration_history_path, 'r', encoding='utf-8') as f:
+
                     history_data = json.load(f)
 
                     self.iteration_history = [
@@ -134,8 +138,10 @@ class IntelligentIterativeFixer(BaseFixer):
     def _save_learning_data(self):
         """保存学习数据"""
 
+
         try:
             learning_data = {
+
             "patterns": {
 
                 pid: asdict(pattern) 
@@ -150,9 +156,11 @@ class IntelligentIterativeFixer(BaseFixer):
 
  }
 
+
             
             with open(self.learning_db_path, 'w', encoding='utf-8') as f:
                 json.dump(learning_data, f, indent=2, default=str)
+
             
             history_data = {
                 "iterations": [
@@ -185,10 +193,12 @@ class IntelligentIterativeFixer(BaseFixer):
         
         # 分析修复潜力
         repair_potential = self._analyze_repair_potential(context)
+
         issues.extend(repair_potential)
 
         
-        # 分析学习机会
+         # 分析学习机会
+
         learning_opportunities = self._analyze_learning_opportunities(context)
         issues.extend(learning_opportunities)
         
@@ -209,17 +219,20 @@ class IntelligentIterativeFixer(BaseFixer):
             # 分析失败模式
             failure_patterns = defaultdict(int)
 
+
             for iteration in recent_iterations:
                 if iteration.success_rate < 0.5:  # 成功率低的迭代
                     for issue in iteration.new_issues:
                         failure_patterns[issue] += 1
 
             
-            # 为高频失败模式生成预防性建议
+             # 为高频失败模式生成预防性建议
+
             for pattern, count in failure_patterns.items():
                 if count >= 3:  # 出现3次以上的失败模式
                     issues.append({
                     "issue_id": f"historical_pattern_{hashlib.md5(pattern.encode()).hexdigest()[:8]}",
+
 
                         "issue_type": "historical_pattern",
                         "severity": "medium",
@@ -245,8 +258,9 @@ class IntelligentIterativeFixer(BaseFixer):
     
     def _analyze_code_complexity(self, context: FixContext) -> List[Dict[str, Any]]:
         """分析代码复杂度"""
-# 
-        issues = []
+        # 
+
+#         issues = []
         target_files = self._get_target_files(context)
         
         for file_path in target_files:
@@ -266,8 +280,10 @@ class IntelligentIterativeFixer(BaseFixer):
 
                 if lines > 500:
                     issues.append({
-                        "issue_id": f"complexity_file_{hashlib.md5(str(file_path).encode()).hexdigest()[:8]}",
-                        "issue_type": "high_complexity",
+                    "issue_id": f"complexity_file_{hashlib.md5(str(file_path).encode()).hexdigest()[:8]}",
+
+ "issue_type": "high_complexity",
+
 
                         "severity": "medium",
                         "description": f"文件 {file_path.name} 过于复杂 ({lines} 行)",
@@ -276,7 +292,8 @@ class IntelligentIterativeFixer(BaseFixer):
                         "拆分为多个小文件",
 
 
-                            "提取公共函数",
+ "提取公共函数",
+
                             "减少函数长度",
                             "使用更简洁的算法"
 
@@ -289,7 +306,8 @@ class IntelligentIterativeFixer(BaseFixer):
                             "functions": functions,
 
 
-                            "classes": classes,
+ "classes": classes,
+
                             "complexity_score": lines / 100  # 简化复杂度评分
                         }
                     })
@@ -298,13 +316,15 @@ class IntelligentIterativeFixer(BaseFixer):
 
                 if functions > 20:
                     issues.append({
-                        "issue_id": f"too_many_functions_{hashlib.md5(str(file_path).encode()).hexdigest()[:8]}",
+                    "issue_id": f"too_many_functions_{hashlib.md5(str(file_path).encode()).hexdigest()[:8]}",
+
                         "issue_type": "too_many_functions",
 
                         "severity": "low",
                         "description": f"文件 {file_path.name} 包含过多函数 ({functions} 个)",
 
  "category": "organization",
+
 
                         "suggested_fixes": [
                             "将相关函数分组到类中",
@@ -313,12 +333,15 @@ class IntelligentIterativeFixer(BaseFixer):
 
                             "使用更面向对象的设计",
                             "减少文件职责"
+
                         ],
                         "confidence": 0.7,
 
  "metadata": {
 
-                            "file_path": str(file_path),
+
+ "file_path": str(file_path),
+
                             "function_count": functions,
 
 
@@ -333,6 +356,7 @@ class IntelligentIterativeFixer(BaseFixer):
     
     def _analyze_repair_potential(self, context: FixContext) -> List[Dict[str, Any]]:
         """分析修复潜力"""
+
         issues = []
         
          # 基于学习模式评估修复潜力
@@ -340,18 +364,21 @@ class IntelligentIterativeFixer(BaseFixer):
         high_confidence_patterns = [
         pattern for pattern in self.learning_patterns.values()
 
-            if pattern.confidence > self.adaptive_config["learning_threshold"]
+ if pattern.confidence > self.adaptive_config["learning_threshold"]
+
         ]
         
         for pattern in high_confidence_patterns:
             issues.append({
-                "issue_id": f"repair_potential_{pattern.pattern_id}",
+            "issue_id": f"repair_potential_{pattern.pattern_id}",
+
                 "issue_type": "repair_potential",
                 "severity": "info",
 
                 "description": f"高置信度修复模式可用: {pattern.name}",
 
  "category": "intelligence",
+
 
                 "suggested_fixes": pattern.successful_fixes[:3],  # 取前3个成功案例
                 "confidence": pattern.confidence,
@@ -378,19 +405,23 @@ class IntelligentIterativeFixer(BaseFixer):
 
         if len(self.learning_patterns) < 50:  # 如果学习模式较少
             issues.append({
-                "issue_id": "learning_opportunity_expansion",
+            "issue_id": "learning_opportunity_expansion",
+
                 "issue_type": "learning_opportunity",
 
 
  "severity": "info",
 
+
                 "description": "系统需要更多学习数据来提高智能修复能力",
                 "category": "intelligence",
+
 
 
                 "suggested_fixes": [
                     "运行更多修复迭代来收集数据",
                     "分析历史修复结果",
+
                     "收集用户反馈",
 
  "扩展训练数据集"
@@ -399,12 +430,15 @@ class IntelligentIterativeFixer(BaseFixer):
                 ],
                 "confidence": 0.95,
 
-                "metadata": {
+
+ "metadata": {
+
                     "current_patterns": len(self.learning_patterns),
                     "target_patterns": 50,
                     "learning_stage": "expansion_needed"
 
-                }
+ }
+
             })
         
         # 分析模式演化需求
@@ -456,27 +490,33 @@ class IntelligentIterativeFixer(BaseFixer):
 
                 
                  # 执行一轮修复
+
 # 
 #                 iteration_result = self._execute_iteration(context, iteration)
                 iterations.append(iteration_result)
+                # 
 # 
-#                 
+ #                 
+
                 # 更新统计
                 all_issues_fixed += iteration_result.issues_fixed
                 total_issues_found += iteration_result.issues_found
 
-#                 
+ #                 
+
                 # 学习本轮经验
                 self._learn_from_iteration(iteration_result)
 
-#                 
+ #                 
+# 
                  # 检查是否继续迭代
 
                 if not self._should_continue_iteration(iterations):
                     self.logger.info(f"提前停止迭代，共执行 {iteration + 1} 轮")
 #                     break
 #                 
-                 # 短暂延迟避免过度频繁
+# 短暂延迟避免过度频繁
+
 
                 time.sleep(0.1)
             
@@ -531,7 +571,8 @@ class IntelligentIterativeFixer(BaseFixer):
         
          # 应用智能修复
 
-#         issues_fixed = 0
+ #         issues_fixed = 0
+
         new_issues = []
         resolved_issues = []
         learning_data = {}
@@ -542,12 +583,14 @@ class IntelligentIterativeFixer(BaseFixer):
 
                     issues_fixed += 1
                     resolved_issues.append(issue["issue_id"])
+
                     
                      # 记录学习数据
 
                     self._record_successful_fix(issue, adapted_context)
                 else:
                     new_issues.append(issue["issue_id"])
+
                     
                      # 记录失败案例
 
@@ -555,6 +598,7 @@ class IntelligentIterativeFixer(BaseFixer):
                     
             except Exception as e:
                 self.logger.error(f"应用智能修复失败 {issue.get('issue_id', 'unknown')}: {e}")
+
                 new_issues.append(issue.get("issue_id", "unknown"))
         
         # 计算性能指标
@@ -565,10 +609,13 @@ class IntelligentIterativeFixer(BaseFixer):
 #         self.intelligence_metrics.total_iterations += 1
 #         if success_rate > 0.5:
 
-#             self.intelligence_metrics.successful_iterations += 1
-#         
+ #             self.intelligence_metrics.successful_iterations += 1
+
+ #         
+
 
  # 创建迭代记录
+
 
 
         iteration = RepairIteration(
@@ -578,10 +625,11 @@ class IntelligentIterativeFixer(BaseFixer):
 #             context=adapted_context,
 #             issues_found=issues_found,
 #             issues_fixed=issues_fixed,
-            success_rate=success_rate,
+#             success_rate=success_rate,
 #             new_issues=new_issues,
 #             resolved_issues=resolved_issues,
 #             learning_data=learning_data,
+
             performance_metrics={
 
                 "duration": iteration_duration,
@@ -625,6 +673,7 @@ class IntelligentIterativeFixer(BaseFixer):
             backup_enabled=context.backup_enabled,
             dry_run=context.dry_run,
 
+
             ai_assisted=context.ai_assisted,
             custom_rules=adapted_config,
             excluded_paths=context.excluded_paths
@@ -654,7 +703,8 @@ class IntelligentIterativeFixer(BaseFixer):
                 except Exception as e:
                     self.logger.error(f"应用模式修复失败 {pattern.pattern_id}: {e}")
         
-        # 如果没有匹配的模式，尝试通用修复
+         # 如果没有匹配的模式，尝试通用修复
+
         return self._apply_generic_fix(issue, context)
     
     def _find_matching_patterns(self, issue: Dict[str, Any]) -> List[LearningPattern]:
@@ -664,6 +714,7 @@ class IntelligentIterativeFixer(BaseFixer):
         
         for pattern in self.learning_patterns.values():
             # 检查触发条件
+
             if self._check_trigger_conditions(pattern, issue):
                 matching_patterns.append(pattern)
 
@@ -700,17 +751,20 @@ class IntelligentIterativeFixer(BaseFixer):
     
     def _apply_generic_fix(self, issue: Dict[str, Any], context: FixContext) -> bool:
         """应用通用修复"""
+
 #         issue_type = issue.get("issue_type")
 #         
         # 基于问题类型的通用修复
         generic_strategies = {
 
-            "syntax_error": self._fix_syntax_error,
+ "syntax_error": self._fix_syntax_error,
+
             "missing_import": self._fix_missing_import_generic,
 
  "complexity": self._fix_complexity_issue,
 
-            "historical_pattern": self._fix_historical_pattern,
+ "historical_pattern": self._fix_historical_pattern,
+
             "repair_potential": self._apply_repair_potential,
             "learning_opportunity": self._enhance_learning_capability
             }
@@ -722,11 +776,12 @@ class IntelligentIterativeFixer(BaseFixer):
         
         return False
     
-#     def _execute_fix_strategy(self, strategy: str, issue: Dict[str, Any], context: FixContext) -> bool:
+     #     def _execute_fix_strategy(self, strategy: str, issue: Dict[str, Any], context: FixContext) -> bool:
+
 #         """执行修复策略"""
         # 简化的策略执行
-        self.logger.info(f"执行修复策略: {strategy}")
-        return True  # 假设成功，实际实现需要具体策略逻辑
+#         self.logger.info(f"执行修复策略: {strategy}")
+#         return True  # 假设成功，实际实现需要具体策略逻辑
     
     def _fix_syntax_error(self, issue: Dict[str, Any], context: FixContext) -> bool:
         """修复语法错误"""
@@ -742,6 +797,7 @@ class IntelligentIterativeFixer(BaseFixer):
         self.logger.info("应用通用缺失导入修复")
         return True
 
+
     
     def _fix_complexity_issue(self, issue: Dict[str, Any], context: FixContext) -> bool:
         """修复复杂度问题"""
@@ -753,23 +809,29 @@ class IntelligentIterativeFixer(BaseFixer):
         """修复历史模式问题"""
 
 
+
         self.logger.info("应用历史模式修复策略")
         return True
+
     
     def _apply_repair_potential(self, issue: Dict[str, Any], context: FixContext) -> bool:
         """应用修复潜力"""
 
+
         self.logger.info("应用高潜力修复模式")
         return True
+
     
     def _enhance_learning_capability(self, issue: Dict[str, Any], context: FixContext) -> bool:
         """增强学习能力"""
+
         self.logger.info("增强学习能力")
         return True
 
     
     def _record_successful_fix(self, issue: Dict[str, Any], context: FixContext):
         """记录成功的修复"""
+
 
  # 创建或更新学习模式
 
@@ -785,6 +847,7 @@ class IntelligentIterativeFixer(BaseFixer):
 
                 failure_cases=[],
                 confidence=issue.get("confidence", 0.5)
+
             )
         else:
             # 更新现有模式
@@ -796,6 +859,7 @@ class IntelligentIterativeFixer(BaseFixer):
     
     def _record_failed_fix(self, issue: Dict[str, Any], context: FixContext):
         """记录失败的修复"""
+
         # 更新学习模式的失败率
         pattern_id = f"pattern_{issue.get('issue_type', 'unknown')}_{hashlib.md5(str(issue).encode()).hexdigest()[:8]}"
         
@@ -820,6 +884,7 @@ class IntelligentIterativeFixer(BaseFixer):
         
         # 分析新模式
         if iteration.success_rate > 0.7:  # 高成功率
+
             self._extract_new_patterns(iteration)
     
     def _extract_new_patterns(self, iteration: RepairIteration):

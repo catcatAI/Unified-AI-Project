@@ -22,6 +22,7 @@ class AIRepairSuggestion:
     """AI修复建议"""
 
 
+
     suggestion_id: str
     issue_type: str
     original_code: str
@@ -58,7 +59,8 @@ class AIAssistedFixer(BaseFixer):
         self.fix_type = FixType.AI_ASSISTED_FIX
         self.name = "AIAssistedFixer"
         
-        # AI模型配置
+         # AI模型配置
+
         self.ai_config = {
             "model_name": "gpt-4",  # 可以配置不同的AI模型
             "temperature": 0.3,
@@ -97,6 +99,7 @@ class AIAssistedFixer(BaseFixer):
     def _load_knowledge_base(self) -> Dict[str, Any]:
         """加载知识库"""
 
+
         return {
             "python_builtins": {
             "functions": ['print', 'len', 'range', 'enumerate', 'zip', 'map', 'filter'],
@@ -113,9 +116,12 @@ class AIAssistedFixer(BaseFixer):
  "json": ['loads', 'dumps', 'load', 'dump'],
 
 
-                "re": ['search', 'match', 'findall', 'sub'],
-                "pathlib": ['Path', 'PurePath'],
-                "datetime": ['datetime', 'timedelta', 'now']
+ "re": ['search', 'match', 'findall', 'sub'],
+
+ "pathlib": ['Path', 'PurePath'],
+
+ "datetime": ['datetime', 'timedelta', 'now']
+
                 },
 
  "fix_patterns": {
@@ -129,6 +135,7 @@ class AIAssistedFixer(BaseFixer):
  "parentheses_mismatch": "平衡括号数量"
 
 
+
  },
 
 
@@ -137,11 +144,15 @@ class AIAssistedFixer(BaseFixer):
  "missing_import": "添加必要的导入语句",
 
 
+
  "wrong_import": "修正导入路径",
+
 
  "circular_import": "重构导入结构"
 
-                    }
+
+ }
+
 
  }
 
@@ -150,6 +161,7 @@ class AIAssistedFixer(BaseFixer):
     def _load_code_patterns(self) -> Dict[str, List[str]]:
         """加载代码模式"""
 
+
         return {
             "error_handling": [
             "try:\n    # code\nexcept Exception as e:\n    # handle error",
@@ -157,9 +169,11 @@ class AIAssistedFixer(BaseFixer):
 
  "if condition:\n    raise ValueError('error message')"
 
+
             ],
             "type_hints": [
-                "def function(param: Type) -> ReturnType:",
+            "def function(param: Type) -> ReturnType:",
+
                 "from typing import List, Dict, Optional"
 
             ],
@@ -200,7 +214,8 @@ class AIAssistedFixer(BaseFixer):
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
-                # AI上下文分析
+                 # AI上下文分析
+
                 ai_context = self._build_ai_context(content, file_path, context)
                 
                 # 生成AI修复建议
@@ -229,16 +244,17 @@ class AIAssistedFixer(BaseFixer):
 #         import_context = self._analyze_import_context(content)
         
         # 依赖上下文
-        dependency_context = self._analyze_dependency_context(file_path, context.project_root)
-        
+#         dependency_context = self._analyze_dependency_context(file_path, context.project_root)
+#         
         # 历史上下文
-        historical_context = self._analyze_historical_context(file_path)
-        
+#         historical_context = self._analyze_historical_context(file_path)
+#         
         # 最佳实践
         best_practices = self._identify_best_practice_violations(content)
-        
+#         
         # 类似修复
         similar_fixes = self._find_similar_fixes(content, file_path)
+
 
 
         
@@ -265,11 +281,13 @@ class AIAssistedFixer(BaseFixer):
             project_info = {
             "project_type": self._detect_project_type(project_root),
 
-                "main_technologies": self._detect_main_technologies(project_root),
+ "main_technologies": self._detect_main_technologies(project_root),
+
 
  "architecture_style": self._detect_main_technologies(project_root),
 
-                "complexity_level": self._assess_project_complexity(project_root)
+ "complexity_level": self._assess_project_complexity(project_root)
+
                 }
 
             
@@ -277,6 +295,7 @@ class AIAssistedFixer(BaseFixer):
             
         except Exception as e:
             self.logger.error(f"分析项目上下文失败: {e}")
+
             return "通用Python项目"
 
     
@@ -294,11 +313,13 @@ class AIAssistedFixer(BaseFixer):
                 "class_count": content.count('class '),
                 "import_count": content.count('import '),
 
+
                 "complexity_indicators": {
                 "max_indent_level": self._calculate_max_indent(lines),
 
                     "nested_blocks": self._count_nested_blocks(content),
                     "long_functions": self._count_long_functions(content)
+
                     },
 
                 "coding_style": self._detect_coding_style(content)
@@ -314,6 +335,7 @@ class AIAssistedFixer(BaseFixer):
         """分析函数上下文"""
         try:
             import ast
+
             
             try:
                 tree = ast.parse(content)
@@ -333,7 +355,8 @@ class AIAssistedFixer(BaseFixer):
 
  "has_type_hints": self._has_type_hints(node),
 
-                        "complexity_score": self._calculate_function_complexity(node),
+ "complexity_score": self._calculate_function_complexity(node),
+
                         "decorators": [self._extract_decorator_name(d) for d in node.decorator_list]
 
                     }
@@ -368,6 +391,7 @@ class AIAssistedFixer(BaseFixer):
 
                             "alias": alias.asname,
                             "type": "direct"
+
                         })
                 elif isinstance(node, ast.ImportFrom):
                     module = node.module or "builtin"
@@ -392,13 +416,16 @@ class AIAssistedFixer(BaseFixer):
     def _analyze_dependency_context(self, file_path: Path, project_root: Path) -> str:
         """分析依赖上下文"""
         try:
+
             # 简化的依赖分析
             dependencies = {
 
 
-                "internal_modules": [],
+ "internal_modules": [],
+
                 "external_libraries": [],
                 "system_dependencies": []
+
             }
             
             # 检查requirements文件
@@ -430,12 +457,14 @@ class AIAssistedFixer(BaseFixer):
                 "success_rate": self._calculate_historical_success_rate(historical_fixes),
                 "common_issues": self._extract_common_issues(historical_fixes),
                 "effective_strategies": self._extract_effective_strategies(historical_fixes)
-            }
+                }
+
             
             return json.dumps(history_info, ensure_ascii=False, indent=2)
             
         except Exception as e:
             self.logger.error(f"分析历史上下文失败: {e}")
+
             return "无历史数据"
     
     def _identify_best_practice_violations(self, content: str) -> List[str]:
@@ -456,7 +485,8 @@ class AIAssistedFixer(BaseFixer):
             violations.append("try块缺少except处理")
 
         
-        # 检查日志记录
+         # 检查日志记录
+
         if 'print(' in content:
             violations.append("使用了print而不是日志记录")
         
@@ -472,14 +502,16 @@ class AIAssistedFixer(BaseFixer):
             similarity = self._calculate_code_similarity(content, fix.get('original_code', ''))
             if similarity > 0.7:  # 相似度阈值
                 similar_fixes.append({
-                    "fix_id": fix.get('fix_id', ''),
+                "fix_id": fix.get('fix_id', ''),
+
                     "similarity": similarity,
                     "success_rate": fix.get('success_rate', 0),
                     "fix_strategy": fix.get('fix_strategy', ''),
                     "explanation": fix.get('explanation', '')
                 })
         
-        # 按相似度排序
+         # 按相似度排序
+
         similar_fixes.sort(key=lambda x: x['similarity'], reverse=True)
         return similar_fixes[:3]  # 返回最相似的3个
 
@@ -487,9 +519,11 @@ class AIAssistedFixer(BaseFixer):
     def _generate_ai_suggestions(self, content: str, ai_context: AIRepairContext, file_path: Path) -> List[AIRepairSuggestion]:
         """生成AI修复建议"""
         suggestions = []
+
         
         # 基于上下文分析生成建议
         analysis_results = self._ai_analyze_code_issues(content, ai_context)
+
 
 
         
@@ -510,11 +544,13 @@ class AIAssistedFixer(BaseFixer):
         
         # 1. 语法和风格问题
         if 'def ' in content and '->' not in content:
+
             issues.append({
                 "type": "missing_type_hints",
                 "severity": "medium",
                 "confidence": 0.85,
                 "original_code": "函数定义缺少类型注解",
+
                 "suggested_code": "添加 -> ReturnType 类型注解",
 
 #                 "explanation": "添加类型注解可以提高代码可读性和IDE支持"
@@ -533,14 +569,15 @@ class AIAssistedFixer(BaseFixer):
                 "explanation": "try块需要对应的except或finally块"
             })
 #         
-        # 3. 代码组织问题
-        if content.count('def ') > 10:
+# 3. 代码组织问题
+
+#         if content.count('def ') > 10:
             issues.append({
             "type": "function_organization",
-
+# 
                 "severity": "low",
                 "confidence": 0.7,
-
+# 
                 "original_code": "文件包含过多函数",
                 "suggested_code": "考虑拆分到多个模块",
                 "explanation": "文件包含过多函数，考虑拆分到多个模块"
@@ -578,6 +615,7 @@ class AIAssistedFixer(BaseFixer):
             confidence=analysis_result["confidence"],
             complexity=complexity,
             estimated_time=estimated_time,
+
             prerequisites=prerequisites,
             side_effects=side_effects,
             alternatives=alternatives
@@ -615,30 +653,37 @@ class AIAssistedFixer(BaseFixer):
  #                     duration_seconds=(datetime.now() - start_time).total_seconds()
 
                 )
-            
+#             
             # 按置信度排序
             #             suggestions.sort(key=lambda x: x.confidence, reverse=True)
 # 
 #             
-            # 应用AI建议
+# 
+ # 应用AI建议
+
 #             for suggestion in suggestions:
                 try:
-# 
+                    # 
+
                     if self._apply_ai_suggestion(suggestion, context):
                         issues_fixed += 1
 
+
                         ai_suggestions_applied.append(suggestion.suggestion_id)
                         self.logger.info(f"应用了AI建议: {suggestion.suggestion_id}")
-
-                    else:
-                        self.logger.warning(f"无法应用AI建议: {suggestion.suggestion_id}")
+# 
+# 
+#                     else:
+#                         self.logger.warning(f"无法应用AI建议: {suggestion.suggestion_id}")
                         
                 except Exception as e:
-                    error_msg = f"应用AI建议 {suggestion.suggestion_id} 失败: {e}"
-                    self.logger.error(error_msg)
+#                     error_msg = f"应用AI建议 {suggestion.suggestion_id} 失败: {e}"
+#                     self.logger.error(error_msg)
                     error_messages.append(error_msg)
+
             
-            # 记录修复历史
+             # 记录修复历史
+
             self._record_repair_history(suggestions, ai_suggestions_applied, context)
             
             # 确定修复状态
@@ -663,6 +708,7 @@ class AIAssistedFixer(BaseFixer):
                     "ai_suggestions_applied": ai_suggestions_applied,
                     "ai_suggestions_total": issues_found,
 
+
                     "ai_confidence_average": sum(s.confidence for s in suggestions) / len(suggestions) if suggestions else 0,
                     "repair_history_size": len(self.repair_history)
                 }
@@ -673,6 +719,7 @@ class AIAssistedFixer(BaseFixer):
             return FixResult(
                 fix_type=self.fix_type,
                 status=FixStatus.FAILED,
+
                 issues_found=issues_found,
                 issues_fixed=issues_fixed,
 
@@ -686,6 +733,7 @@ class AIAssistedFixer(BaseFixer):
         try:
             # 检查前提条件
 
+
             if not self._check_prerequisites(suggestion.prerequisites, context):
                 self.logger.warning(f"前提条件不满足: {suggestion.suggestion_id}")
                 return False
@@ -694,6 +742,7 @@ class AIAssistedFixer(BaseFixer):
 
             if suggestion.complexity == "simple":
                 return self._apply_simple_ai_fix(suggestion, context)
+
 
             elif suggestion.complexity == "moderate":
                 return self._apply_moderate_ai_fix(suggestion, context)
@@ -708,12 +757,14 @@ class AIAssistedFixer(BaseFixer):
     def _check_prerequisites(self, prerequisites: List[str], context: FixContext) -> bool:
         """检查前提条件"""
 
+
         for prereq in prerequisites:
             if prereq == "backup_enabled" and not context.backup_enabled:
                 return False
             elif prereq == "ai_assisted" and not context.ai_assisted:
                 return False
-            # 可以添加更多前提条件检查
+                # 可以添加更多前提条件检查
+
         
         return True
     
@@ -763,9 +814,12 @@ class AIAssistedFixer(BaseFixer):
             "applied_suggestions": applied_suggestions,
             "success_rate": len(applied_suggestions) / max(len(suggestions), 1),
             "ai_model": self.ai_config["model_name"],
-            "context": asdict(context) if hasattr(context, '__dict__') else str(context)
 
-        }
+ "context": asdict(context) if hasattr(context, '__dict__') else str(context)
+
+
+ }
+
         
         self.repair_history.append(repair_record)
         
@@ -780,6 +834,7 @@ class AIAssistedFixer(BaseFixer):
         """检测项目类型"""
         if (project_root / "package.json").exists():
             return "JavaScript/Node.js"
+
         elif (project_root / "requirements.txt").exists():
             return "Python"
         elif (project_root / "Cargo.toml").exists():
@@ -791,9 +846,11 @@ class AIAssistedFixer(BaseFixer):
     
     def _detect_main_technologies(self, project_root: Path) -> List[str]:
         """检测主要技术栈"""
+
         technologies = []
         
-        # 检查框架和库
+         # 检查框架和库
+
         if (project_root / "django").exists() or (project_root / "manage.py").exists():
             technologies.append("Django")
         
@@ -827,6 +884,7 @@ class AIAssistedFixer(BaseFixer):
 
         for child in ast.walk(node):
             if isinstance(child, (ast.If, ast.For, ast.While, ast.Try)):
+
                 complexity += 1
 
         

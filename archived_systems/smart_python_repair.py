@@ -128,7 +128,7 @@ def run_command(cmd):
     """运行命令"""
     import subprocess
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
+        result = subprocess.run(cmd, shell=False, capture_output=True, text=True, timeout=120)
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
         return -1, "", "命令超时"

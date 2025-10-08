@@ -3,6 +3,7 @@
 修复安全漏洞，包括不安全的代码模式和配置
 
 
+
 """
 
 import re
@@ -46,7 +47,8 @@ class SecurityFixer(BaseFixer):
 
  "severity": "critical"
 
-            },
+ },
+
             "sql_injection": {
 
 
@@ -54,12 +56,16 @@ class SecurityFixer(BaseFixer):
                 "description": "潜在的SQL注入漏洞",
                 "severity": "high"
 
-                },
+
+ },
+
 
             "weak_crypto": {
                 "pattern": r'md5\(|sha1\(',
                 "description": "使用弱加密算法",
-                "severity": "medium"
+
+ "severity": "medium"
+
 
 
  },
@@ -75,12 +81,15 @@ class SecurityFixer(BaseFixer):
                 },
 
 
-            "xss_vulnerability": {
+ "xss_vulnerability": {
+
                 "pattern": r'render\s*\([^)]*request\.[^)]*\)|innerHTML\s*=',
                 "description": "潜在的XSS漏洞",
 
 
-                "severity": "medium"
+
+ "severity": "medium"
+
                 },
 
             "command_injection": {
@@ -132,7 +141,8 @@ class SecurityFixer(BaseFixer):
             for i, line in enumerate(lines, 1):
                 line_stripped = line.strip()
                 
-                # 跳过注释和空行
+                 # 跳过注释和空行
+
                 if not line_stripped or line_stripped.startswith('#'):
                     continue
 
@@ -145,12 +155,14 @@ class SecurityFixer(BaseFixer):
                             file_path=file_path,
                             line_number=i,
 
+
                             issue_type=issue_type,
                             severity=pattern_info["severity"],
                             description=pattern_info["description"],
 
 
-                            code_snippet=line.strip(),
+ code_snippet=line.strip(),
+
                             suggested_fix=self._suggest_security_fix(issue_type, line_stripped)
 
                         ))
@@ -162,6 +174,7 @@ class SecurityFixer(BaseFixer):
     
     def _analyze_configuration_files(self) -> List[SecurityIssue]:
         """分析配置文件安全"""
+
         issues = []
         
         # 检查常见的配置文件
@@ -171,7 +184,8 @@ class SecurityFixer(BaseFixer):
             "settings.json", 
             ".env",
 
-            "docker-compose.yml",
+ "docker-compose.yml",
+
             "Dockerfile"
         ]
         
@@ -185,6 +199,7 @@ class SecurityFixer(BaseFixer):
     
     def _check_config_security(self, config_path: Path) -> List[SecurityIssue]:
         """检查配置文件安全"""
+
 
         issues = []
         
@@ -231,7 +246,8 @@ class SecurityFixer(BaseFixer):
                             file_path=config_path,
                             line_number=i,
 
-                            issue_type="hardcoded_secret_env",
+ issue_type="hardcoded_secret_env",
+
                             severity="warning",
                             description=".env文件中包含敏感信息",
                             code_snippet=line.split('=')[0] + "=***",
@@ -252,6 +268,7 @@ class SecurityFixer(BaseFixer):
         
         # 检查requirements.txt
         req_file = self.project_root / "requirements.txt"
+
         if req_file.exists():
 
             try:
@@ -267,14 +284,16 @@ class SecurityFixer(BaseFixer):
 
                     "requests": "<2.31.0",
                     "urllib3": "<1.26.18"
-                }
+                    }
+
                 
                 for package, vulnerable_version in vulnerable_packages.items():
                     if package in requirements:
 
 
                         issues.append(SecurityIssue(
-                            file_path=req_file,
+                        file_path=req_file,
+
                             line_number=0,
 
                             issue_type="vulnerable_dependency",
@@ -282,6 +301,7 @@ class SecurityFixer(BaseFixer):
 
                             description=f"依赖包 {package} 可能存在安全漏洞",
                             code_snippet=f"{package}",
+
 
                             suggested_fix=f"升级 {package} 到安全版本"
                         ))
@@ -317,13 +337,15 @@ class SecurityFixer(BaseFixer):
         import time
         start_time = time.time()
         
-        issues_fixed = 0
+#         issues_fixed = 0
         issues_found = 0
+
 
         error_messages = []
         
         try:
             # 分析问题
+
             issues = self.analyze(context)
 
             issues_found = len(issues)
@@ -334,6 +356,7 @@ class SecurityFixer(BaseFixer):
                 return FixResult(
                     fix_type=self.fix_type,
                     status=FixStatus.SUCCESS,
+
                     issues_found=0,
 
 #                     issues_fixed=0,
@@ -355,12 +378,14 @@ class SecurityFixer(BaseFixer):
 # 
 #  ("medium", medium_issues), 
 # 
+
                                               ("low", low_issues)]:
                 if severity_issues:
                     fixed_count = self._fix_security_issues(severity_issues)
                     issues_fixed += fixed_count
                     # 
-
+# 
+# 
  #             
 
  # 确定修复状态
@@ -368,23 +393,27 @@ class SecurityFixer(BaseFixer):
             if issues_fixed == issues_found:
                 status = FixStatus.SUCCESS
 
-#             elif issues_fixed > 0:
+
+ #             elif issues_fixed > 0:
+
                 status = FixStatus.PARTIAL_SUCCESS
 
 #             else:
 #                 status = FixStatus.FAILED
 # 
 #             
+# 
 #             duration = time.time() - start_time
 #             
             return FixResult(
-                fix_type=self.fix_type,
-                status=status,
-                issues_found=issues_found,
+#                 fix_type=self.fix_type,
+#                 status=status,
+#                 issues_found=issues_found,
 
                 issues_fixed=issues_fixed,
                 error_message="; ".join(error_messages) if error_messages else None,
                 duration_seconds=duration,
+
                 details={
                     "critical_issues": len(critical_issues),
                     "high_issues": len(high_issues),
@@ -408,6 +437,7 @@ class SecurityFixer(BaseFixer):
 
                 issues_fixed=issues_fixed,
                 error_message=str(e),
+
                 duration_seconds=time.time() - start_time
             )
     
@@ -463,10 +493,11 @@ class SecurityFixer(BaseFixer):
 #                         lines.insert(0, 'import os')
                         line_index += 1
                     
-                    lines[line_index] = new_line
-                    
+#                     lines[line_index] = new_line
+#                     
                     # 写回文件
                     new_content = '\n'.join(lines)
+
                     with open(issue.file_path, 'w', encoding='utf-8') as f:
                         f.write(new_content)
                     

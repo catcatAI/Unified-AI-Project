@@ -18,6 +18,7 @@ class UndefinedIssue:
     """未定义问题"""
 
 
+
     file_path: Path
     line_number: int
     column: int
@@ -71,7 +72,8 @@ class UndefinedFixer(BaseFixer):
             }
 
         
-        # 常见类映射
+         # 常见类映射
+
         self.common_class_imports = {
             "Path": "from pathlib import Path",
             "datetime": "from datetime import datetime",
@@ -100,6 +102,7 @@ class UndefinedFixer(BaseFixer):
         }
         
          # 常见函数映射
+
 
         self.common_function_imports = {
             "print": None,  # 内置函数，不需要导入
@@ -134,7 +137,8 @@ class UndefinedFixer(BaseFixer):
 
  "super": None,  # 内置函数
 
-            "next": None,  # 内置函数
+ "next": None,  # 内置函数
+
             "iter": None,  # 内置函数
 
         }
@@ -190,6 +194,7 @@ class UndefinedFixer(BaseFixer):
 
             "imported_names": set(),
             "class_methods": defaultdict(set),
+
             "function_params": defaultdict(list),
 
             "builtin_names": self.builtin_names.copy()
@@ -197,6 +202,7 @@ class UndefinedFixer(BaseFixer):
         
         # 收集全局定义
         for node in ast.walk(tree):
+
             if isinstance(node, ast.FunctionDef):
                 scope_info["global_names"].add(node.name)
                 # 收集函数参数
@@ -216,12 +222,14 @@ class UndefinedFixer(BaseFixer):
 
                     name = alias.asname if alias.asname else alias.name
                     scope_info["imported_names"].add(name)
+
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
 
                     scope_info["imported_names"].add(node.module)
                 for alias in node.names:
                     name = alias.asname if alias.asname else alias.name
+
                     scope_info["imported_names"].add(name)
         
         return scope_info
@@ -244,6 +252,7 @@ class UndefinedFixer(BaseFixer):
 
                 attr_name = node.attr
                 issue = self._check_attribute_defined(attr_name, node, file_path, scope_info)
+
                 if issue:
                     issues.append(issue)
         
@@ -267,18 +276,20 @@ class UndefinedFixer(BaseFixer):
         
         # 检查是否在函数参数中（需要更复杂的作用域分析）
         # 简化版本：检查是否在函数定义中
+
 #         if self._is_in_function_scope(name, node, scope_info):
 
-            return None
+#             return None
         
          # 确定问题类型
 # 
         issue_type = self._determine_undefined_type(name, node, scope_info)
-        
+#         
         return UndefinedIssue(
         file_path=file_path,
 
-            line_number=node.lineno,
+ line_number=node.lineno,
+
             column=node.col_offset,
             name=name,
             issue_type=issue_type,
@@ -316,7 +327,9 @@ class UndefinedFixer(BaseFixer):
         return UndefinedIssue(
         file_path=file_path,
 
-            line_number=node.lineno,
+
+ line_number=node.lineno,
+
             column=node.col_offset,
             name=f"{obj_name}.{attr_name}",
             issue_type="attribute",
@@ -324,7 +337,8 @@ class UndefinedFixer(BaseFixer):
 
  description=f"未定义的属性: {obj_name}.{attr_name}",
 
-            suggested_fix=self._suggest_fix_for_attribute(obj_name, attr_name)
+ suggested_fix=self._suggest_fix_for_attribute(obj_name, attr_name)
+
         )
     
     def _is_in_function_scope(self, name: str, node: ast.Name, 
@@ -353,6 +367,7 @@ class UndefinedFixer(BaseFixer):
     def _get_context(self, node: ast.AST) -> str:
         """获取上下文信息"""
         # 获取父节点信息
+
         parent = getattr(node, 'parent', None)
         if parent:
             if isinstance(parent, ast.Call):
@@ -371,6 +386,7 @@ class UndefinedFixer(BaseFixer):
         if isinstance(node, ast.Name):
             return node.id
 
+
         elif isinstance(node, ast.Attribute):
             # 递归获取属性链的根名称
             current = node
@@ -388,8 +404,10 @@ class UndefinedFixer(BaseFixer):
 
  "os": ["path", "environ", "system", "getcwd", "makedirs"],
 
-            "sys": ["argv", "exit", "path", "modules"],
-            "json": ["loads", "dumps", "load", "dump"],
+ "sys": ["argv", "exit", "path", "modules"],
+
+ "json": ["loads", "dumps", "load", "dump"],
+
             "re": ["compile", "search", "match", "findall", "sub"],
             "pathlib": ["Path", "PurePath"],
             "datetime": ["datetime", "date", "time", "timedelta"],
@@ -408,6 +426,7 @@ class UndefinedFixer(BaseFixer):
                                  scope_info: Dict[str, Any]) -> str:
         """为未定义问题建议修复"""
         if issue_type == "variable":
+
             # 检查是否是常见模块
             if name in self.common_module_imports:
                 return f"添加导入: {self.common_module_imports[name]}"
@@ -455,8 +474,9 @@ class UndefinedFixer(BaseFixer):
         self.logger.info("开始修复未定义问题...")
 
         
-        import time
+#         import time
         start_time = time.time()
+
         
         issues_fixed = 0
         issues_found = 0
@@ -497,15 +517,18 @@ class UndefinedFixer(BaseFixer):
                     
 #                     issues_fixed += fixed_count
 #                     
+
                 except Exception as e:
                     #                     error_msg = f"修复 {issue_type} 类型未定义问题失败: {e}"
 
  #                     self.logger.error(error_msg)
-
+# 
                     error_messages.append(error_msg)
-#             
+                    #             
+
             # 确定修复状态
             if issues_fixed == issues_found:
+
 # 
 
                 status = FixStatus.SUCCESS
@@ -514,14 +537,16 @@ class UndefinedFixer(BaseFixer):
 #             else:
 #                 status = FixStatus.FAILED
 #             
-            duration = time.time() - start_time
-            
+#             duration = time.time() - start_time
+#             
             return FixResult(
-            fix_type=self.fix_type,
+#             fix_type=self.fix_type,
 
-                status=status,
+ status=status,
+
                 issues_found=issues_found,
                 issues_fixed=issues_fixed,
+
                 error_message="; ".join(error_messages) if error_messages else None,
                 duration_seconds=duration,
                 details={
@@ -546,6 +571,7 @@ class UndefinedFixer(BaseFixer):
     
     def _fix_undefined_names(self, issues: List[UndefinedIssue], context: FixContext) -> int:
         """修复未定义名称"""
+
         fixed_count = 0
         
         # 按文件分组问题
@@ -599,6 +625,7 @@ class UndefinedFixer(BaseFixer):
             # 写回文件
             if new_content != content:
                 with open(file_path, 'w', encoding='utf-8') as f:
+
                     f.write(new_content)
                 
                 self.logger.info(f"修复未定义名称在文件: {file_path}")
@@ -625,6 +652,7 @@ class UndefinedFixer(BaseFixer):
     
     def _add_imports(self, content: str, imports: List[str]) -> str:
         """添加导入语句"""
+
         lines = content.split('\n')
         
         # 找到合适的位置插入导入（通常在文件开头，但在shebang和编码声明之后）
@@ -643,9 +671,11 @@ class UndefinedFixer(BaseFixer):
             if import_stmt not in content:
                 new_imports.append(import_stmt)
 
+
         
         # 插入新的导入
         for import_stmt in reversed(new_imports):
+
             lines.insert(insert_index, import_stmt)
         
         return '\n'.join(lines)

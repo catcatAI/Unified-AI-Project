@@ -16,6 +16,7 @@ class FixResult:
     """单个修复结果"""
 
 
+
     fix_type: FixType
     status: FixStatus
     target_path: Optional[Path] = None
@@ -61,7 +62,8 @@ class FixResult:
 
  "details": self.details,
 
-            "duration_seconds": self.duration_seconds,
+ "duration_seconds": self.duration_seconds,
+
             "backup_path": str(self.backup_path) if self.backup_path else None
         }
 
@@ -83,6 +85,7 @@ class FixContext:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
 
+
         return {
             "project_root": str(self.project_root),
             "target_path": str(self.target_path) if self.target_path else None,
@@ -93,7 +96,8 @@ class FixContext:
             "dry_run": self.dry_run,
             "ai_assisted": self.ai_assisted,
 
-            "custom_rules": self.custom_rules,
+ "custom_rules": self.custom_rules,
+
             "excluded_paths": self.excluded_paths
 
  }
@@ -127,9 +131,11 @@ class FixReport:
         """获取失败的修复结果"""
         return [result for result in self.fix_results.values() if result.status == FixStatus.FAILED]
 
+
     
     def get_total_issues_found(self) -> int:
         """获取发现的问题总数"""
+
         return sum(result.issues_found for result in self.fix_results.values())
 
     
@@ -140,6 +146,7 @@ class FixReport:
     
     def get_success_rate(self) -> float:
         """获取修复成功率"""
+
         successful = len(self.get_successful_fixes())
         total = len(self.fix_results)
         return successful / max(total, 1)
@@ -178,16 +185,19 @@ class FixReport:
             "context": self.context.to_dict(),
             "fix_results": {
 
-                fix_type.value: result.to_dict() 
+ fix_type.value: result.to_dict() 
+
                 for fix_type, result in self.fix_results.items()
 
             },
             "analysis_result": self.analysis_result,
 
+
             "validation_result": self.validation_result,
             "backup_path": str(self.backup_path) if self.backup_path else None,
             "statistics": self.statistics,
             "errors": self.errors,
+
             "warnings": self.warnings,
             "traceback": self.traceback
             }
@@ -202,6 +212,7 @@ class FixStatistics:
     successful_fixes: int = 0
     failed_fixes: int = 0
     skipped_fixes: int = 0
+
     total_issues_found: int = 0
     total_issues_fixed: int = 0
     total_duration_seconds: float = 0.0
@@ -220,6 +231,7 @@ class FixStatistics:
         
         if result.is_successful():
             self.successful_fixes += 1
+
         elif result.status == FixStatus.FAILED:
             self.failed_fixes += 1
 
@@ -248,6 +260,7 @@ class FixResultManager:
         self.results: List[FixResult] = []
         self.statistics = FixStatistics()
 
+
     
     def add_result(self, result: FixResult):
         """添加修复结果"""
@@ -255,29 +268,37 @@ class FixResultManager:
         self.results.append(result)
         self.statistics.update_with_result(result)
 
+
     
     def get_results_by_type(self, fix_type: FixType) -> List[FixResult]:
-#         """按类型获取修复结果"""
+        #         """按类型获取修复结果"""
+
         return [result for result in self.results if result.fix_type == fix_type]
 #     
 #     def get_results_by_status(self, status: FixStatus) -> List[FixResult]:
-#         """按状态获取修复结果"""
+    #         """按状态获取修复结果"""
 
-#         return [result for result in self.results if result.status == status]
-    
-    def get_successful_results(self) -> List[FixResult]:
+
+ #         return [result for result in self.results if result.status == status]
+# 
+#     
+#     def get_successful_results(self) -> List[FixResult]:
         """获取成功的修复结果"""
-        return [result for result in self.results if result.is_successful()]
+#         return [result for result in self.results if result.is_successful()]
+
 
     
     def get_failed_results(self) -> List[FixResult]:
         """获取失败的修复结果"""
 
+
         return [result for result in self.results if result.status == FixStatus.FAILED]
     
     def generate_report(self) -> FixReport:
         """生成修复报告"""
-        # 这里可以基于收集的结果生成完整的修复报告
+
+ # 这里可以基于收集的结果生成完整的修复报告
+
         # 简化版本，实际使用时需要更多上下文信息
         return FixReport(
             timestamp=datetime.now(),

@@ -10,6 +10,7 @@ test_config = {
 'dependencies': {
 
 
+
         'core': [
         {'name': 'normal_lib', 'fallbacks': ['normal_fallback'], 'essential': False},
 
@@ -24,7 +25,8 @@ test_config = {
 
  'warn_on_fallback': True,
 
-        }
+ }
+
     }
 }
 

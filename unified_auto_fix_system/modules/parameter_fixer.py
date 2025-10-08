@@ -3,6 +3,7 @@
 修复函数参数相关的问题，包括参数类型、默认值、参数顺序等
 
 
+
 """
 
 import ast
@@ -48,7 +49,8 @@ class ParameterFixer(BaseFixer):
                 "fix": self._fix_mutable_defaults,  # 临时使用现有方法
                 "description": "缺少参数"
 
-            },
+ },
+
             "unexpected_keyword": {
 
                 "pattern": r'.*got\s+an\s+unexpected\s+keyword\s+argument\s+\'(.+)\'.*',
@@ -56,19 +58,23 @@ class ParameterFixer(BaseFixer):
 
  "description": "意外关键字参数"
 
+
                 },
 
             "multiple_values": {
             "pattern": r'.*got\s+multiple\s+values\s+for\s+argument\s+\'(.+)\'.*',
 
-                "fix": self._fix_mutable_defaults,  # 临时使用现有方法
+ "fix": self._fix_mutable_defaults,  # 临时使用现有方法
+
                 "description": "参数多重值"
 
             },
             "positional_only": {
 
-                "pattern": r'.*positional-only.*',
-                "fix": self._fix_parameter_order,  # 临时使用现有方法
+ "pattern": r'.*positional-only.*',
+
+ "fix": self._fix_parameter_order,  # 临时使用现有方法
+
 
                 "description": "仅位置参数错误"
                 },
@@ -76,16 +82,19 @@ class ParameterFixer(BaseFixer):
             "keyword_only": {
             "pattern": r'.*keyword-only.*',
 
+
                 "fix": self._fix_parameter_order,  # 临时使用现有方法
                 "description": "仅关键字参数错误"
                 },
 
-            "default_before_nondefault": {
+ "default_before_nondefault": {
+
 
                 "pattern": r'.*non-default\s+argument\s+follows\s+default\s+argument.*',
                 "fix": self._fix_parameter_order,
 
-                "description": "默认参数在非默认参数前"
+ "description": "默认参数在非默认参数前"
+
 
  },
 
@@ -145,6 +154,7 @@ class ParameterFixer(BaseFixer):
             # 检查参数顺序
             order_issues = self._check_parameter_order(tree, file_path)
             issues.extend(order_issues)
+
             
         except Exception as e:
             self.logger.error(f"无法分析文件 {file_path}: {e}")
@@ -153,6 +163,7 @@ class ParameterFixer(BaseFixer):
         #     
 # 
 #     def _check_type_annotations(self, tree: ast.AST, file_path: Path) -> List[ParameterIssue]:
+# 
         """检查类型注解问题"""
         issues = []
 #         
@@ -164,16 +175,18 @@ class ParameterFixer(BaseFixer):
                     if arg.arg != 'self' and arg.annotation is None:
                         issues.append(ParameterIssue(
                         line_number=arg.lineno,
-# 
+                        # 
+
 #                             column=arg.col_offset,
 error_type="missing_type_annotation",
 # 
 #                             error_message=f"函数 '{node.name}' 的参数 '{arg.arg}' 缺少类型注解",
+# 
 #                             function_name=node.name,
 #                             parameter_name=arg.arg,
 #                             suggested_fix=self._suggest_type_annotation(arg.arg),
 # 
- severity="warning"
+#  severity="warning"
 
                         ))
                 
@@ -194,12 +207,14 @@ error_type="missing_type_annotation",
     def _check_default_values(self, tree: ast.AST, file_path: Path) -> List[ParameterIssue]:
 #         """检查默认值问题"""
 #         issues = []
+# 
 #         
         for node in ast.walk(tree):
 #             if isinstance(node, ast.FunctionDef):
                 # 检查可变默认值
 # 
 #                 for i, default in enumerate(node.args.defaults):
+# 
                     if self._is_mutable_default(default):
 
                         param_index = len(node.args.args) - len(node.args.defaults) + i
@@ -225,13 +240,15 @@ error_type="missing_type_annotation",
 # 
 #         issues = []
 #         
+# 
         for node in ast.walk(tree):
 #             if isinstance(node, ast.FunctionDef):
+    # 
 # 
                 # 检查默认参数顺序
 #                 has_default = False
 #                 for i, arg in enumerate(node.args.args):
-                    param_index = i
+#                     param_index = i
 
                     if param_index >= len(node.args.args) - len(node.args.defaults):
 
@@ -251,6 +268,7 @@ error_type="missing_type_annotation",
                             severity="error"
                         ))
                         break
+
         
         return issues
     
@@ -288,8 +306,9 @@ error_type="missing_type_annotation",
 
         self.logger.info("开始修复参数相关问题...")
 #         
-        import time
+#         import time
         start_time = time.time()
+
         issues_fixed = 0
         issues_found = 0
         error_messages = []
@@ -328,23 +347,27 @@ error_type="missing_type_annotation",
                     error_messages.append(error_msg)
             
              # 确定修复状态
-
+# 
             if issues_fixed == issues_found:
                 status = FixStatus.SUCCESS
                 #             elif issues_fixed > 0:
+
 # 
 #                 status = FixStatus.PARTIAL_SUCCESS
 #             else:
-#                 status = FixStatus.FAILED
-            
+    #                 status = FixStatus.FAILED
+# 
+#             
 #             duration = time.time() - start_time
 #             
             return FixResult(
-                fix_type=self.fix_type,
-                status=status,
+#                 fix_type=self.fix_type,
+#                 status=status,
                 issues_found=issues_found,
 
-                issues_fixed=issues_fixed,
+
+ issues_fixed=issues_fixed,
+
                 error_message="; ".join(error_messages) if error_messages else None,
                 duration_seconds=duration,
                 details={
@@ -406,6 +429,7 @@ error_type="missing_type_annotation",
 
                 indent = func_match.group(1)
                 func_name = func_match.group(2)
+
                 params_str = func_match.group(3)
                 
                 # 检查是否有可变默认值
@@ -435,6 +459,7 @@ error_type="missing_type_annotation",
         
         lines = content.split('\n')
         fixed_lines = []
+
         
         for line in lines:
             func_match = re.match(r'^(\s*)def\s+(\w+)\s*\((.*?)\):', line)
@@ -468,6 +493,7 @@ error_type="missing_type_annotation",
         
         for line in lines:
             func_match = re.match(r'^(\s*)def\s+(\w+)\s*\((.*?)\)(.*?:)', line)
+
             if func_match:
                 indent = func_match.group(1)
 
@@ -479,7 +505,8 @@ error_type="missing_type_annotation",
                 # 检查是否需要添加返回类型注解
                 if '->' not in return_part:
 
-                    # 简单的启发式规则
+ # 简单的启发式规则
+
                     return_type = self._guess_return_type(func_name)
                     new_line = f"{indent}def {func_name}({params_str}) -> {return_type}:"
                     fixed_lines.append(new_line)
@@ -509,7 +536,8 @@ error_type="missing_type_annotation",
         # 简化版本 - 这里需要更复杂的逻辑
 
 
-        # 在实际应用中，应该解析参数并重新排序
+ # 在实际应用中，应该解析参数并重新排序
+
         return params_str
     
     def _guess_return_type(self, func_name: str) -> str:
@@ -526,7 +554,8 @@ error_type="missing_type_annotation",
 # 
 #     
 #     def _categorize_issues(self, issues: List[ParameterIssue]) -> Dict[str, int]:
-#         """按类型分类问题"""
+    #         """按类型分类问题"""
+# 
 #         categories = {}
 #         for issue in issues:
 #             error_type = issue.error_type
@@ -541,14 +570,16 @@ class ParameterAnalyzer(ast.NodeVisitor):
 #     
     def __init__(self, file_path: Path, content: str):
         self.file_path = file_path
+# 
 #         self.content = content
 #         self.issues = []
 # 
         self.function_stack = []
-    
-    def visit_FunctionDef(self, node: ast.FunctionDef):
-        """访问函数定义"""
+#     
+#     def visit_FunctionDef(self, node: ast.FunctionDef):
+#         """访问函数定义"""
         self.function_stack.append(node.name)
+
         
         # 检查参数数量
         if len(node.args.args) > 10:
@@ -559,10 +590,12 @@ class ParameterAnalyzer(ast.NodeVisitor):
 
                 column=node.col_offset,
                 error_type="too_many_parameters",
+
                 error_message=f"函数 '{node.name}' 参数过多 ({len(node.args.args)} 个)",
 
                 function_name=node.name,
                 severity="warning"
+
             ))
         
          # 检查参数命名

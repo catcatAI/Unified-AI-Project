@@ -19,6 +19,7 @@ class APIFixInterface:
     """API修复接口"""
 
 
+
     
     def __init__(self, project_root: Path, config_path: Optional[Path] = None):
         self.project_root = Path(project_root).resolve()
@@ -129,11 +130,13 @@ class APIFixInterface:
     
     def _handle_delete_request(self, path: str) -> Dict[str, Any]:
         """处理DELETE请求"""
+
         return self._error_response(405, "DELETE method not supported for this endpoint")
     
     def _get_status(self) -> Dict[str, Any]:
         """获取系统状态"""
         module_status = self.fix_engine.get_module_status()
+
         
         return {
             "status": "ok",
@@ -144,11 +147,14 @@ class APIFixInterface:
             "engine_status": {
 
 
+
  "modules_enabled": len([m for m in module_status.values() if m == "enabled"]),
 
-                "total_fixes": self.fix_engine.stats["total_fixes"],
+ "total_fixes": self.fix_engine.stats["total_fixes"],
+
                 "successful_fixes": self.fix_engine.stats["successful_fixes"],
                 "failed_fixes": self.fix_engine.stats["failed_fixes"]
+
 
                 },
 
@@ -169,6 +175,7 @@ class APIFixInterface:
 
             enabled_modules = sum(1 for status in module_status.values() if status == "enabled")
             total_modules = len(module_status)
+
 
 
             
@@ -196,13 +203,17 @@ class APIFixInterface:
                 "status": "unhealthy",
                 "health_score": 0,
 
-                "error": str(e),
+
+ "error": str(e),
+
                 "timestamp": datetime.now().isoformat()
-            }
+                }
+
     
     def _get_config(self) -> Dict[str, Any]:
         """获取配置"""
         return {
+
             "config": self.fix_engine.config,
             "available_modules": [ft.value for ft in FixType],
             "available_scopes": [fs.value for fs in FixScope],
@@ -229,7 +240,8 @@ class APIFixInterface:
             self.fix_engine.save_config()
             
             return {
-                "success": True,
+            "success": True,
+
                 "message": "Configuration updated successfully",
                 "config": self.fix_engine.config
             }
@@ -266,12 +278,14 @@ class APIFixInterface:
     
     def _start_analysis(self, body: Dict[str, Any]) -> Dict[str, Any]:
         """开始分析"""
+
         try:
 
             # 创建上下文
             context = self._create_context_from_body(body)
             
-            # 执行分析
+             # 执行分析
+
             result = self.fix_engine.analyze_project(context)
             
             # 生成分析ID
@@ -292,6 +306,7 @@ class APIFixInterface:
     def _start_fix(self, body: Dict[str, Any]) -> Dict[str, Any]:
         """开始修复"""
         try:
+
 
             # 创建上下文
             context = self._create_context_from_body(body)
@@ -338,17 +353,18 @@ class APIFixInterface:
         if "fix_types" in body:
             fix_types = []
             for ft_str in body["fix_types"]:
-
+# 
                 try:
-                    fix_type = FixType(ft_str)
-
+#                     fix_type = FixType(ft_str)
+# 
                     fix_types.append(fix_type)
                 except ValueError:
                     self.logger.warning(f"Unknown fix type: {ft_str}")
 
-
-        
+# 
+#         
          # 创建上下文
+
 
         context = FixContext(
         project_root=self.project_root,
@@ -369,10 +385,12 @@ class APIFixInterface:
     
     def _get_modules(self) -> Dict[str, Any]:
         """获取模块信息"""
+
         module_status = self.fix_engine.get_module_status()
         
         modules_info = {}
         for fix_type in FixType:
+
 
             modules_info[fix_type.value] = {
             "status": module_status.get(fix_type.value, "disabled"),
@@ -398,16 +416,21 @@ class APIFixInterface:
             FixType.IMPORT_FIX: "Fix import path issues",
             FixType.DEPENDENCY_FIX: "Fix dependency problems",
 
-            FixType.GIT_FIX: "Fix Git-related issues",
+ FixType.GIT_FIX: "Fix Git-related issues",
+
             FixType.ENVIRONMENT_FIX: "Fix environment configuration issues",
             FixType.SECURITY_FIX: "Fix security vulnerabilities",
+
 
             FixType.CODE_STYLE_FIX: "Fix code style issues",
             FixType.PATH_FIX: "Fix file path issues",
             FixType.CONFIGURATION_FIX: "Fix configuration file issues",
-            FixType.PERFORMANCE_FIX: "Optimize code performance",
 
-            FixType.COMPATIBILITY_FIX: "Fix compatibility issues",
+ FixType.PERFORMANCE_FIX: "Optimize code performance",
+
+
+ FixType.COMPATIBILITY_FIX: "Fix compatibility issues",
+
             FixType.TYPE_HINT_FIX: "Fix type hint issues"
 
         }
@@ -417,13 +440,15 @@ class APIFixInterface:
     def _get_statistics(self) -> Dict[str, Any]:
         """获取统计信息"""
         return {
+
             "engine_statistics": self.fix_engine.stats,
             "api_statistics": self.api_stats,
             "project_info": {
             "root_path": str(self.fix_engine.project_root),
 
 
-                "config_path": str(self.fix_engine.config_path)
+ "config_path": str(self.fix_engine.config_path)
+
                 }
 
         }
@@ -436,14 +461,17 @@ class APIFixInterface:
         if not reports_dir.exists():
             return {
 
+
                 "reports": [],
                 "total": 0
+
 
             }
         
         try:
             report_files = []
             for report_file in reports_dir.glob("fix_report_*.json"):
+
 
 
                 stat = report_file.stat()
@@ -460,7 +488,8 @@ class APIFixInterface:
             report_files.sort(key=lambda x: x["modified"], reverse=True)
             
             return {
-                "reports": report_files,
+            "reports": report_files,
+
                 "total": len(report_files)
 
  }
@@ -477,6 +506,7 @@ class APIFixInterface:
         
         if not report_file.exists():
             return self._error_response(404, "Report not found")
+
         
         try:
             with open(report_file, 'r', encoding='utf-8') as f:
@@ -492,11 +522,14 @@ class APIFixInterface:
         
         except Exception as e:
             return self._error_response(500, str(e))
+
     
     def _get_analysis_result(self, analysis_id: str) -> Dict[str, Any]:
         """获取分析结果"""
         # 这里可以实现分析结果的缓存和检索
-        # 简化版本：返回最新分析结果
+
+ # 简化版本：返回最新分析结果
+
         try:
             context = FixContext(project_root=self.project_root)
             result = self.fix_engine.analyze_project(context)

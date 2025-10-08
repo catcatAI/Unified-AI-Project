@@ -3,6 +3,7 @@
 修复代码风格问题，使其符合PEP 8等规范
 
 
+
 """
 
 import ast
@@ -47,7 +48,8 @@ class CodeStyleFixer(BaseFixer):
             "blank_lines_around_class": 2,
             "blank_lines_around_function": 2,
 
-            "imports_order": ["future", "standard_library", "third_party", "local"]
+ "imports_order": ["future", "standard_library", "third_party", "local"]
+
             }
 
     
@@ -107,7 +109,7 @@ class CodeStyleFixer(BaseFixer):
 
                     column=max_length,
 #                     issue_type="line_length",
-
+# 
                     description=f"行过长: {len(line)} > {max_length}",
                     code_snippet=line[:50] + "..." if len(line) > 50 else line,
 
@@ -128,30 +130,34 @@ class CodeStyleFixer(BaseFixer):
                 continue
 #             
             # 检查混合缩进
-#             if line.startswith('\t'):
+            #             if line.startswith('\t'):
+
 
                 issues.append(StyleIssue(
                     file_path=file_path,
 #                     line_number=i,
                     column=0,
-
+# 
                     issue_type="mixed_indentation",
-#                     description="使用了Tab缩进，应该使用空格",
+                    #                     description="使用了Tab缩进，应该使用空格",
+
                     code_snippet=line[:20],
                     suggested_fix=line.replace('\t', '    ')
                 ))
             
              # 检查缩进级别
 
+
             leading_spaces = len(line) - len(line.lstrip())
             if leading_spaces % 4 != 0 and leading_spaces > 0:
                 issues.append(StyleIssue(
                 file_path=file_path,
 # 
-                    line_number=i,
+#                     line_number=i,
                     column=0,
 
-                    issue_type="indentation_level",
+ issue_type="indentation_level",
+
                     description=f"缩进级别不正确: {leading_spaces} 空格",
                     code_snippet=line[:20],
                     suggested_fix=" " * ((leading_spaces // 4 + 1) * 4) + line.lstrip()
@@ -166,6 +172,7 @@ class CodeStyleFixer(BaseFixer):
 #         
         for i, line in enumerate(lines, 1):
             if not line.strip():
+
 
                 continue
             
@@ -185,14 +192,15 @@ class CodeStyleFixer(BaseFixer):
             # 检查操作符周围缺少空格
             operators = ['=', '==', '!=', '<', '>', '<=', '>=', '+', '-', '*', '/']
             for op in operators:
-                pattern = rf'[^\s]{re.escape(op)}[^\s]'
+#                 pattern = rf'[^\s]{re.escape(op)}[^\s]'
 
                 if re.search(pattern, line):
                     issues.append(StyleIssue(
                         file_path=file_path,
-                        line_number=i,
+#                         line_number=i,
 
-                        column=0,
+ column=0,
+
                         issue_type="missing_space_around_operator",
 
  description=f"操作符 '{op}' 周围缺少空格",
@@ -226,20 +234,24 @@ class CodeStyleFixer(BaseFixer):
                         file_path=file_path,
                         line_number=i,
 
+
  column=0,
 
                         issue_type="missing_blank_lines_before_class",
-#                         description="类定义前缺少空行",
-                        suggested_fix="在类定义前添加空行"
+                        #                         description="类定义前缺少空行",
 
+                        suggested_fix="在类定义前添加空行"
+# 
                     ))
             
             # 检查函数定义前的空行
             if re.match(r'^\s*def\s+\w+', line):
+
                 # 检查前面是否有足够的空行
                 if i > 1 and lines[i-2].strip():
                     issues.append(StyleIssue(
-                        file_path=file_path,
+                    file_path=file_path,
+
                         line_number=i,
                         column=0,
                         issue_type="missing_blank_lines_before_function",
@@ -264,11 +276,12 @@ class CodeStyleFixer(BaseFixer):
             return issues
 
         
-        # 简化的导入顺序检查
+         # 简化的导入顺序检查
+
         # 在实际应用中，这里需要更复杂的逻辑
 # 
         for i in range(len(imports) - 1):
-            current_import = imports[i][1]
+#             current_import = imports[i][1]
 
             next_import = imports[i + 1][1]
             
@@ -315,7 +328,8 @@ class CodeStyleFixer(BaseFixer):
         third_party_libs = [
         'requests', 'numpy', 'pandas', 'flask', 'django', 'pytest',
 
-            'click', 'typer', 'fastapi', 'sqlalchemy'
+ 'click', 'typer', 'fastapi', 'sqlalchemy'
+
         ]
         
         for lib in third_party_libs:
@@ -328,26 +342,31 @@ class CodeStyleFixer(BaseFixer):
     
      #     def _check_naming_conventions(self, content: str, file_path: Path) -> List[StyleIssue]:
 
-        """检查命名约定"""
 
+        """检查命名约定"""
+# 
         issues = []
         
         try:
-            tree = ast.parse(content, filename=str(file_path))
+#             tree = ast.parse(content, filename=str(file_path))
+
 
             
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
                     # 检查函数命名
                     if not re.match(r'^[a-z_][a-z0-9_]*$', node.name):
+
                         issues.append(StyleIssue(
 #                             file_path=file_path,
-line_number=node.lineno,
+# line_number=node.lineno,
 
                             column=node.col_offset,
 
-                            issue_type="invalid_function_name",
-                            description=f"函数名 '{node.name}' 不符合snake_case命名约定",
+#  issue_type="invalid_function_name",
+
+ description=f"函数名 '{node.name}' 不符合snake_case命名约定",
+
                             code_snippet=f"def {node.name}(",
                             suggested_fix=f"def {self._to_snake_case(node.name)}("
                         ))
@@ -362,7 +381,8 @@ line_number=node.lineno,
                             column=node.col_offset,
                             issue_type="invalid_class_name",
 
-                            description=f"类名 '{node.name}' 不符合CamelCase命名约定",
+ description=f"类名 '{node.name}' 不符合CamelCase命名约定",
+
                             code_snippet=f"class {node.name}",
 
                             suggested_fix=f"class {self._to_camel_case(node.name)}"
@@ -379,7 +399,9 @@ line_number=node.lineno,
                             issue_type="invalid_variable_name",
                             description=f"变量名 '{node.id}' 不符合snake_case命名约定",
 
-#                             code_snippet=node.id,
+
+ #                             code_snippet=node.id,
+
                             suggested_fix=self._to_snake_case(node.id)
                         ))
         
@@ -393,7 +415,7 @@ line_number=node.lineno,
         # 简化的转换
         import re
 
-        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+#         s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
     
     def _to_camel_case(self, name: str) -> str:
@@ -401,6 +423,7 @@ line_number=node.lineno,
         # 简化的转换
         parts = name.split('_')
         return parts[0] + ''.join(word.capitalize() for word in parts[1:])
+
     
     def _check_trailing_whitespace(self, lines: List[str], file_path: Path) -> List[StyleIssue]:
         """检查行尾空白"""
@@ -424,6 +447,7 @@ line_number=node.lineno,
     def _suggest_line_break(self, line: str, max_length: int) -> str:
         """建议换行位置"""
         # 简化的换行建议
+
         if len(line) <= max_length:
 
             return line
@@ -440,6 +464,7 @@ line_number=node.lineno,
             op_pos = line.rfind(op, 0, max_length)
             if op_pos != -1:
                 return line[:op_pos + len(op)] + '\\\n    ' + line[op_pos + len(op):].lstrip()
+
         
         # 默认在max_length处换行
         return line[:max_length] + '\\\n    ' + line[max_length:].lstrip()
@@ -489,21 +514,24 @@ line_number=node.lineno,
             #             for file_path, file_issues in issues_by_file.items():
 
                 try:
-                    fixed_count = self._fix_file_style_issues(file_path, file_issues)
-
+#                     fixed_count = self._fix_file_style_issues(file_path, file_issues)
+# 
+# 
                     issues_fixed += fixed_count
 #                     
                 except Exception as e:
-#                     error_msg = f"修复文件 {file_path} 风格失败: {e}"
+                    #                     error_msg = f"修复文件 {file_path} 风格失败: {e}"
+
 #                     self.logger.error(error_msg)
                     error_messages.append(error_msg)
-#             
+                    #             
+# 
             # 确定修复状态
             if issues_fixed == issues_found:
-
+# 
                 status = FixStatus.SUCCESS
-            elif issues_fixed > 0:
-                status = FixStatus.PARTIAL_SUCCESS
+#             elif issues_fixed > 0:
+#                 status = FixStatus.PARTIAL_SUCCESS
             else:
                 status = FixStatus.FAILED
             
@@ -543,7 +571,8 @@ line_number=node.lineno,
             
             lines = content.split('\n')
             
-            # 按行号排序问题（从大到小，避免行号变化）
+             # 按行号排序问题（从大到小，避免行号变化）
+
             sorted_issues = sorted(issues, key=lambda x: x.line_number, reverse=True)
             
             for issue in sorted_issues:

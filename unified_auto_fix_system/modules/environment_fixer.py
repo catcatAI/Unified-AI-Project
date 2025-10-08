@@ -3,6 +3,7 @@
 修复环境配置问题，包括虚拟环境和系统依赖
 
 
+
 """
 
 import os
@@ -47,13 +48,15 @@ class EnvironmentFixer(BaseFixer):
                 "recommended_version": "3.9+",
                 "tools": ["pip", "venv"]
 
-            },
+ },
+
             "nodejs": {
 
                 "min_version": "16.0",
                 "recommended_version": "18+",
 
  "tools": ["npm", "npx"]
+
 
                 },
 
@@ -64,7 +67,9 @@ class EnvironmentFixer(BaseFixer):
 
  "tools": ["git"]
 
-            }
+
+ }
+
         }
     
     def analyze(self, context: FixContext) -> List[EnvironmentIssue]:
@@ -105,7 +110,8 @@ class EnvironmentFixer(BaseFixer):
         # 检查Python版本
         current_version = self._get_python_version()
 
-# 
+ # 
+
         if current_version:
             min_version = self.environment_requirements["python"]["min_version"]
             if not self._version_satisfies(current_version, f">={min_version}"):
@@ -115,7 +121,8 @@ class EnvironmentFixer(BaseFixer):
 
  #                     component="python",
 
-                    current_value=current_version,
+ current_value=current_version,
+
 
 #                     required_value=f">={min_version}",
                     description=f"Python版本过低: {current_version}，需要 {min_version}+",
@@ -135,7 +142,7 @@ class EnvironmentFixer(BaseFixer):
          # 检查Python工具
 
         for tool in self.environment_requirements["python"]["tools"]:
-
+# 
             if not self._command_exists(tool):
                 issues.append(EnvironmentIssue(
                     issue_type="missing_tool",
@@ -143,6 +150,7 @@ class EnvironmentFixer(BaseFixer):
                     current_value=tool,
                     description=f"缺少Python工具: {tool}",
                     severity="warning"
+
 
                 ))
         
@@ -152,7 +160,8 @@ class EnvironmentFixer(BaseFixer):
         """分析Node.js环境"""
 
         issues = []
-#         
+        #         
+
          # 检查Node.js版本
 # 
         current_version = self._get_nodejs_version()
@@ -160,15 +169,19 @@ class EnvironmentFixer(BaseFixer):
         if current_version:
             min_version = self.environment_requirements["nodejs"]["min_version"]
             if not self._version_satisfies(current_version, f">={min_version}"):
+# 
                 issues.append(EnvironmentIssue(
-#                     issue_type="nodejs_version",
-                    component="nodejs",
+                #                     issue_type="nodejs_version",
+
+ component="nodejs",
+
                     current_value=current_version,
 
 
- required_value=f">={min_version}",
+#  required_value=f">={min_version}",
 
-                    description=f"Node.js版本过低: {current_version}，需要 {min_version}+",
+ description=f"Node.js版本过低: {current_version}，需要 {min_version}+",
+
                     severity="warning"
 
                 ))
@@ -179,7 +192,7 @@ class EnvironmentFixer(BaseFixer):
                 description="未找到Node.js（可选组件）",
 
                 severity="info"
-
+# 
             ))
         
         # 检查Node.js工具
@@ -206,17 +219,20 @@ class EnvironmentFixer(BaseFixer):
         # 检查Git版本
         current_version = self._get_git_version()
 
+
         if current_version:
             min_version = self.environment_requirements["git"]["min_version"]
             if not self._version_satisfies(current_version, f">={min_version}"):
 
                 issues.append(EnvironmentIssue(
-                    issue_type="git_version",
+#                     issue_type="git_version",
                     component="git",
+
                     current_value=current_version,
                     required_value=f">={min_version}",
                     description=f"Git版本过低: {current_version}，需要 {min_version}+",
                     severity="warning"
+
                 ))
         else:
             issues.append(EnvironmentIssue(
@@ -242,17 +258,20 @@ class EnvironmentFixer(BaseFixer):
 # 
         active_venv = False
         
-        # 检查激活的虚拟环境
+         # 检查激活的虚拟环境
+
         if hasattr(sys, 'real_prefix') or (
             hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix
         ):
             active_venv = True
+# 
         
         # 检查项目目录中的虚拟环境
         for venv_path in venv_paths:
 
             full_path = self.project_root / venv_path
             if full_path.exists() and (full_path / "bin" / "python").exists():
+
                 venv_found = True
 
                 break
@@ -262,7 +281,8 @@ class EnvironmentFixer(BaseFixer):
             issue_type="missing_venv",
 
 
-                component="python",
+ component="python",
+
                 description="未找到虚拟环境，建议创建虚拟环境",
                 severity="info"
             ))
@@ -275,18 +295,21 @@ class EnvironmentFixer(BaseFixer):
         issues = []
         
          # 检查重要的环境变量
-# 
+         # 
+
         important_vars = [
             "PATH",
             "PYTHONPATH",
             "NODE_PATH",
             "GIT_PYTHON_GIT_EXECUTABLE"
+# 
         ]
         
         for var in important_vars:
             value = os.environ.get(var)
             if not value:
                 if var == "PATH":  # PATH是必须的环境变量
+
                     issues.append(EnvironmentIssue(
                     issue_type="missing_env_var",
 
@@ -295,12 +318,14 @@ class EnvironmentFixer(BaseFixer):
 #                         current_value=var,
 #                         description=f"缺少环境变量: {var}",
 #                         severity="error"
+
                     ))
                 else:
                     issues.append(EnvironmentIssue(
-                        issue_type="missing_env_var",
-                        component="system",
+#                         issue_type="missing_env_var",
+#                         component="system",
                         current_value=var,
+
                         description=f"缺少环境变量: {var}（可选）",
                         severity="info"
                     ))
@@ -315,7 +340,8 @@ class EnvironmentFixer(BaseFixer):
         except Exception:
             return None
 
-    
+# 
+#     
     def _get_nodejs_version(self) -> Optional[str]:
         """获取Node.js版本"""
         try:
@@ -333,18 +359,22 @@ class EnvironmentFixer(BaseFixer):
             pass
 #         
 #         return None
-#     
+
+ #     
+
 #     def _get_git_version(self) -> Optional[str]:
         """获取Git版本"""
-
+# 
         try:
             result = subprocess.run(
-                ['git', '--version'],
+            ['git', '--version'],
+
                 capture_output=True,
                 text=True,
 
 
-                timeout=10
+ timeout=10
+
             )
             
             if result.returncode == 0:
@@ -360,8 +390,10 @@ class EnvironmentFixer(BaseFixer):
     def _command_exists(self, command: str) -> bool:
         """检查命令是否存在"""
         try:
+
             result = subprocess.run(
             [command, '--version'],
+
 
 
                 capture_output=True,
@@ -465,26 +497,31 @@ class EnvironmentFixer(BaseFixer):
 #                     elif issue_type == "missing_env_var":
                         fixed_count = self._fix_missing_env_vars(type_issues)
 
-#                     else:
-    #                         fixed_count = 0
+ #                     else:
+# 
+ #                         fixed_count = 0
+
 
 #                     
 #                     issues_fixed += fixed_count
+
 #                     
                 except Exception as e:
 #                     error_msg = f"修复 {issue_type} 类型环境问题失败: {e}"
 #                     self.logger.error(error_msg)
+# 
                     error_messages.append(error_msg)
-
+# 
 #             
             # 确定修复状态
 #             if issues_fixed == issues_found:
-                status = FixStatus.SUCCESS
+#                 status = FixStatus.SUCCESS
 
 
  #             elif issues_fixed > 0:
 
-#                 status = FixStatus.PARTIAL_SUCCESS
+ #                 status = FixStatus.PARTIAL_SUCCESS
+
 #             else:
                 status = FixStatus.FAILED
 
@@ -493,10 +530,11 @@ class EnvironmentFixer(BaseFixer):
 #             
             return FixResult(
 #                 fix_type=self.fix_type,
-                status=status,
-                issues_found=issues_found,
+#                 status=status,
+#                 issues_found=issues_found,
 
-                issues_fixed=issues_fixed,
+ issues_fixed=issues_fixed,
+
                 error_message="; ".join(error_messages) if error_messages else None,
                 duration_seconds=duration,
                 details={
@@ -511,6 +549,7 @@ class EnvironmentFixer(BaseFixer):
             return FixResult(
                 fix_type=self.fix_type,
                 status=FixStatus.FAILED,
+
                 issues_found=issues_found,
 
                 issues_fixed=issues_fixed,
@@ -529,7 +568,8 @@ class EnvironmentFixer(BaseFixer):
             result = subprocess.run(
             [sys.executable, '-m', 'venv', str(venv_path)],
 
-                capture_output=True,
+ capture_output=True,
+
                 text=True,
                 timeout=60
 
@@ -589,6 +629,7 @@ class EnvironmentFixer(BaseFixer):
                 if component == "python":
                     # 尝试安装Python工具
 
+
 #                     if self._install_python_tool(tool):
                         fixed_count += 1
                 elif component == "nodejs":
@@ -599,11 +640,13 @@ class EnvironmentFixer(BaseFixer):
                 
             except Exception as e:
                 self.logger.error(f"安装工具失败: {e}")
+
 #         
-        return fixed_count
-    
-    def _fix_missing_env_vars(self, issues: List[EnvironmentIssue]) -> int:
+#         return fixed_count
+#     
+#     def _fix_missing_env_vars(self, issues: List[EnvironmentIssue]) -> int:
         """修复缺失的环境变量"""
+
         fixed_count = 0
         
         for issue in issues:
@@ -617,6 +660,7 @@ class EnvironmentFixer(BaseFixer):
 
                 
                  # 标记为已处理（提供建议）
+
 
 #                 fixed_count += 1
 #             
@@ -641,6 +685,7 @@ class EnvironmentFixer(BaseFixer):
                 # 尝试使用pip安装
                 result = subprocess.run(
                 [sys.executable, '-m', 'pip', 'install', tool],
+
 
                     capture_output=True,
                     text=True,

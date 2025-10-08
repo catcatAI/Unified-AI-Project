@@ -11,7 +11,7 @@ from pathlib import Path
 def run_command(cmd, timeout=300):
     """运行命令并返回结果"""
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout)
+        result = subprocess.run(cmd, shell=False, capture_output=True, text=True, timeout=timeout)
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
         return -1, "", "命令超时"

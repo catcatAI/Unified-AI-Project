@@ -145,22 +145,6 @@ class ComprehensiveDiscoverySystem:
                             "message": "缩进不是4的倍数",
                             "severity": "low"
                         })
-                
-                # 检查未使用的导入
-                if line.strip().startswith(('import ', 'from ')):
-                    import_name = re.search(r'import\s+(\w+)', line)
-                    if import_name:
-                        imported_module = import_name.group(1)
-                        # 简单检查是否在文件后面使用
-                        remaining_content = '\n'.join(lines[i:])
-                        if not re.search(r'\b' + imported_module + r'\b', remaining_content):
-                            issues.append({
-                                "type": "unused_import",
-                                "file": str(file_path),
-                                "line": i,
-                                "message": f"可能未使用的导入: {imported_module}",
-                                "severity": "low"
-                            })
             
         except Exception as e:
             issues.append({
@@ -186,7 +170,7 @@ class ComprehensiveDiscoverySystem:
                 stripped = line.strip()
                 
                 # 检查空循环
-                if re.search(r'for\s+\w+\s+in\s+.+:\s*$', stripped):
+                if re.search(r'for\s+\w+\s+in\s+.*:\s*$', stripped):
                     issues.append({
                         "type": "empty_loop",
                         "file": str(file_path),
@@ -196,7 +180,7 @@ class ComprehensiveDiscoverySystem:
                     })
                 
                 # 检查空条件
-                if re.search(r'if\s+.+:\s*$', stripped):
+                if re.search(r'if\s+.*:\s*$', stripped):
                     issues.append({
                         "type": "empty_if",
                         "file": str(file_path),
@@ -544,5 +528,6 @@ def main():
     return 0
 
 if __name__ == "__main__":
+    import sys
     exit_code = main()
     sys.exit(exit_code)

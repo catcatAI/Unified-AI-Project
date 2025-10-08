@@ -66,6 +66,7 @@ def event_loop():
     """Create an instance of the default event loop for each test session."""
 
 
+
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
@@ -140,6 +141,7 @@ def clean_test_files() -> None:
 
 @pytest.fixture(scope="function")
 def deadlock_detector():
+
     """死鎖檢測 fixture"""
     if not deadlock_detection_available:
         pytest.skip("Deadlock detection not available")
@@ -175,7 +177,8 @@ def timeout_protection():
 
     yield
 
-    # 檢查測試是否運行過長時間
+ # 檢查測試是否運行過長時間
+
     execution_time = time.time() - start_time
     if execution_time > 60:  # 60秒警告閾值
 
@@ -196,7 +199,8 @@ def test_timeout_and_monitoring(request) -> None:
     timeout_marker = request.node.get_closest_marker("timeout")
     deadlock_marker = request.node.get_closest_marker("deadlock_detection")
 
-    # 設置默認超時
+ # 設置默認超時
+
     timeout = 30.0
     if timeout_marker:
         timeout = timeout_marker.args[0] if timeout_marker.args else 30.0
@@ -336,12 +340,14 @@ def mock_core_services():
 
             if "speaker" not in metadata:
                 metadata["speaker"] = "unknown"
-            # 确保metadata包含source字段（为ChromaDB集成测试）
+                # 确保metadata包含source字段（为ChromaDB集成测试）
+
             if "source" not in metadata:
 
                 metadata["source"] = "test_source"
             record_pkg = {
-                "raw_data": raw_data,
+            "raw_data": raw_data,
+
                 "data_type": data_type,
                 "metadata": metadata,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -371,25 +377,30 @@ def mock_core_services():
         def recall_gist(self, memory_id: str):
             """Mock implementation of recall_gist"""
 
+
             if memory_id in self.memory_store:
                 record = self.memory_store[memory_id]
 
-                # Ensure metadata is properly returned with required fields
+ # Ensure metadata is properly returned with required fields
+
                 metadata = record["metadata"].copy() if record["metadata"] else {}
                 # Ensure speaker field is present in metadata
 
                 if 'speaker' not in metadata:
 
                     metadata['speaker'] = 'unknown'
-                return {
+                    return {
+
                     "id": memory_id,
                     "timestamp": record["timestamp"],
                     "data_type": record["data_type"],
+
                     "rehydrated_gist": str(record["raw_data"]),
 
 
                     "metadata": metadata
-                }
+                    }
+
             return None
 
         def query_core_memory(self, **kwargs):
@@ -413,6 +424,7 @@ def mock_core_services():
 
     # Remove stray reassignment that overrides our AsyncMock and causes NameError
     # mock_service_discovery = MockServiceDiscovery()
+
     mock_ham_manager = MockHAMManager()
 
     # Mock individual services
@@ -482,6 +494,7 @@ def mock_core_services():
     mock_project_coordinator.agent_manager = mock_agent_manager
     mock_project_coordinator.memory_manager = mock_ham_manager
     mock_project_coordinator.learning_manager = mock_learning_manager
+
     mock_project_coordinator.personality_manager = mock_personality_manager
     mock_project_coordinator.dialogue_manager_config = {} # Pass an empty dict or a mock config
 
@@ -519,13 +532,15 @@ def mock_core_services():
 
             if metadata is not None:
 
-                # 将metadata转换为字典以确保可以进行字典操作
+ # 将metadata转换为字典以确保可以进行字典操作
+
                 if hasattr(metadata, 'to_dict'):
                     metadata_dict = metadata.to_dict()
                 elif isinstance(metadata, dict):
                     metadata_dict = metadata.copy()
                 else:
                     # 对于其他对象，创建空字典
+
                     metadata_dict = {}
             if "speaker" not in metadata_dict:
                 metadata_dict["speaker"] = "unknown"
@@ -557,6 +572,7 @@ def mock_core_services():
                             break
                 if match:
                     results.append(record_pkg)
+
 #             return results
 # 
 #         def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
@@ -564,7 +580,8 @@ def mock_core_services():
             if memory_id in self.memory_store:
                 record = self.memory_store[memory_id]
                 # Ensure metadata is properly returned with required fields
-#                 metadata = record["metadata"].copy() if record["metadata"] else {}
+                #                 metadata = record["metadata"].copy() if record["metadata"] else {}
+
 
  # Ensure speaker field is present in metadata
 # 
@@ -573,13 +590,14 @@ def mock_core_services():
                 # Build result dict that matches HAMRecallResult structure
                 result: HAMRecallResult = {
 
- "id": memory_id,
+#  "id": memory_id,
 
                     "timestamp": str(record["timestamp"]),
 #                     "data_type": str(record["data_type"]),
 
                     "rehydrated_gist": str(record["raw_data"]),
-                    "metadata": dict(metadata)
+#                     "metadata": dict(metadata)
+
                     }
 
                 return result
@@ -588,13 +606,15 @@ def mock_core_services():
         def query_core_memory(self,
                           keywords = None,
                           date_range = None,
+
                           data_type_filter = None,
 # 
                           metadata_filters = None,
 #                           user_id_for_facts = None,
 limit: int = 5,
 
-                          sort_by_confidence: bool = False,
+ sort_by_confidence: bool = False,
+
                           return_multiple_candidates: bool = False,
                           semantic_query = None) -> List[HAMRecallResult]:
             """Mock implementation of query_core_memory"""
@@ -602,7 +622,8 @@ limit: int = 5,
             results: List[HAMRecallResult] = []
             for mem_id, record in self.memory_store.items():
 # 
-                # Ensure metadata is properly returned
+# Ensure metadata is properly returned
+# 
 #                 metadata = record["metadata"].copy() if record["metadata"] else {}
                 # Build result dict that matches HAMRecallResult structure
                 result: HAMRecallResult = {
@@ -614,7 +635,7 @@ limit: int = 5,
                     "metadata": dict(metadata)
 # 
                 }
-                results.append(result)
+#                 results.append(result)
             return results
 
  # 创建MockHAMMemoryManager实例
@@ -625,7 +646,8 @@ limit: int = 5,
     mock_dialogue_manager = DialogueManager(
     ai_id="test_dialogue_manager",
 
-        personality_manager=mock_personality_manager,
+ personality_manager=mock_personality_manager,
+
         memory_manager=mock_ham_manager,
         llm_interface=mock_llm_interface,
         emotion_system=mock_emotion_system,
@@ -692,10 +714,12 @@ def client_with_overrides(mock_core_services):
         yield (
         client,
 
-            mock_core_services["service_discovery"],
-            mock_core_services["dialogue_manager"],
-            mock_core_services["ham_manager"],
+ mock_core_services["service_discovery"],
+# 
+#             mock_core_services["dialogue_manager"],
+#             mock_core_services["ham_manager"],
             mock_core_services["hsp_connector"],
+
         )
     finally:
         # Ensure the client is explicitly closed after the test completes
@@ -704,6 +728,7 @@ def client_with_overrides(mock_core_services):
             client.close()
         except Exception:
             pass
+
 
     # Restore original dependencies
     if original_get_services:

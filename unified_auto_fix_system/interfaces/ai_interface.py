@@ -20,6 +20,7 @@ class AIFixRequest:
     """AI修复请求"""
 
 
+
     agent_id: str
     request_type: str  # analyze, fix, status, config
     target_path: Optional[str] = None
@@ -86,7 +87,8 @@ class AIFixInterface:
             "failed_fixes": [],
             "patterns": {},
 
-            "recommendations": {}
+ "recommendations": {}
+
         }
     
     def process_request(self, request: AIFixRequest) -> AIFixResponse:
@@ -103,6 +105,7 @@ class AIFixInterface:
                 return self._handle_status_request(request)
             elif request.request_type == "config":
                 return self._handle_config_request(request)
+                # 
 # 
             else:
                 return AIFixResponse(
@@ -114,11 +117,12 @@ class AIFixInterface:
                 )
         
         except Exception as e:
-            self.logger.error(f"处理AI请求失败: {e}")
+#             self.logger.error(f"处理AI请求失败: {e}")
 
             return AIFixResponse(
                 success=False,
                 message="处理请求时发生错误",
+
                 error=str(e)
 
             )
@@ -136,10 +140,12 @@ class AIFixInterface:
             # AI增强分析
             ai_enhanced_result = self._enhance_analysis_with_ai(analysis_result, request)
             
-            # 记录历史
+             # 记录历史
+# 
             self._record_analysis_history(request, ai_enhanced_result)
 
-#             
+ #             
+
             return AIFixResponse(
                 success=True,
                 message="项目分析完成",
@@ -149,8 +155,10 @@ class AIFixInterface:
                     "recommended_fixes": self._get_recommended_fixes(analysis_result),
 
 
+
                     "priority_issues": self._identify_priority_issues(analysis_result),
                     "ai_insights": self._generate_ai_insights(analysis_result)
+# 
 
                 }
             )
@@ -181,10 +189,11 @@ class AIFixInterface:
             # AI后处理 - 学习和改进
             self._learn_from_fix_results(fix_report, request)
 
-            
+#             
             # 记录历史
             self._record_fix_history(request, fix_report)
-#             
+            #             
+
             # 生成AI增强报告
             enhanced_report = self._enhance_fix_report_with_ai(fix_report, request)
             
@@ -192,14 +201,17 @@ class AIFixInterface:
                 success=True,
                 message="修复执行完成",
 
+
                 data={
 
                     "fix_report": enhanced_report,
                     "ai_recommendations": self._generate_ai_recommendations(fix_report),
 # 
+# 
                     "next_steps": self._suggest_next_steps(fix_report),
                     "learning_updates": self._get_learning_updates()
-                }
+                    }
+
             )
         
         except Exception as e:
@@ -220,10 +232,11 @@ class AIFixInterface:
             
              # 获取修复历史
 
-            recent_history = self._get_recent_fix_history(limit=10)
+#             recent_history = self._get_recent_fix_history(limit=10)
 #             
              # 获取学习状态
              # 
+
 
             learning_status = self._get_learning_status()
             
@@ -234,14 +247,17 @@ class AIFixInterface:
             return AIFixResponse(
             success=True,
 
+
                 message="状态查询完成",
                 data={
                     "engine_status": module_status,
                     "recent_history": recent_history,
 # 
+# 
                     "learning_status": learning_status,
 # 
-                    "project_health": project_health,
+"project_health": project_health,
+
                     "statistics": self._get_engine_statistics()
 
 
@@ -254,18 +270,23 @@ class AIFixInterface:
             return AIFixResponse(
                 success=False,
                 message="状态查询失败",
+# 
 
-#                 error=str(e)
+ #                 error=str(e)
+
             )
     
-    def _handle_config_request(self, request: AIFixRequest) -> AIFixResponse:
+#     def _handle_config_request(self, request: AIFixRequest) -> AIFixResponse:
 #         """处理配置请求"""
         try:
             if request.custom_rules:
+
                 # 更新配置
-# 
+                # 
+
                 self.fix_engine.config.update(request.custom_rules)
                 self.fix_engine.save_config()
+
 
 
                 
@@ -302,13 +323,13 @@ class AIFixInterface:
 
         if request.target_path:
             target_path = Path(request.target_path)
-
+# 
             if not target_path.is_absolute():
                 target_path = self.project_root / target_path
         
         # 解析修复类型
 #         fix_types = []
-        if request.fix_types:
+#         if request.fix_types:
 
             for fix_type_str in request.fix_types:
                 try:
@@ -326,7 +347,8 @@ class AIFixInterface:
             target_path=target_path,
             scope=FixScope(request.scope),
 
-            priority=FixPriority(request.priority),
+ priority=FixPriority(request.priority),
+
             ai_assisted=request.ai_assisted,
 
             custom_rules=request.custom_rules or {}
@@ -344,6 +366,7 @@ class AIFixInterface:
         ai_insights = []
         
          # 分析问题模式
+
 
         for fix_type, issues in analysis_result.get("issues", {}).items():
             if len(issues) > 10:
@@ -374,17 +397,21 @@ class AIFixInterface:
 
 
             
-            # 调整优先级
+             # 调整优先级
+
             if "preferred_fix_order" in patterns:
 
                 # 重新排序修复类型
                 preferred_order = patterns["preferred_fix_order"]
 
-                # 这里可以实现具体的优先级调整逻辑
+
+ # 这里可以实现具体的优先级调整逻辑
+
                 pass
         
         # 基于问题类型调整策略
         if request.fix_types:
+
 
             if "syntax_fix" in request.fix_types:
                 # 语法修复优先
@@ -398,6 +425,7 @@ class AIFixInterface:
     
     def _learn_from_fix_results(self, fix_report: FixReport, request: AIFixRequest):
         """从修复结果中学习"""
+
 
         agent_id = request.agent_id
         
@@ -445,12 +473,14 @@ class AIFixInterface:
         successful_fixes = fix_report.get_successful_fixes()
         if successful_fixes:
 
+
             fix_type_order = [result.fix_type.value for result in successful_fixes]
             patterns["preferred_fix_order"] = fix_type_order
 
         
         # 分析成功率模式
         total_fixes = len(fix_report.fix_results)
+
         successful_count = len(successful_fixes)
         
         if total_fixes > 0:
@@ -460,6 +490,7 @@ class AIFixInterface:
             
             # 更新平均成功率
             if "avg_success_rate" not in patterns:
+
 
                 patterns["avg_success_rate"] = []
             patterns["avg_success_rate"].append(success_rate)
@@ -478,11 +509,13 @@ class AIFixInterface:
         # 基于问题严重程度推荐
         for fix_type, issues in analysis_result.get("issues", {}).items():
 
+
             if len(issues) > 0:
                 severity = "high" if len(issues) > 10 else "medium" if len(issues) > 5 else "low"
                 
                 recommendations.append({
-                    "fix_type": fix_type,
+                "fix_type": fix_type,
+
                     "priority": severity,
 
                     "issue_count": len(issues),
@@ -501,6 +534,7 @@ class AIFixInterface:
         """识别优先级问题"""
         priority_issues = []
 
+
         
          # 语法错误最高优先级
 
@@ -511,6 +545,7 @@ class AIFixInterface:
                 "type": "syntax_fix",
                 "count": len(syntax_issues),
                 "priority": "critical",
+
 
 
                 "reason": "语法错误会阻止代码运行"
@@ -525,7 +560,8 @@ class AIFixInterface:
 
  "count": len(security_issues),
 
-                "priority": "high",
+ "priority": "high",
+
                 "reason": "安全漏洞可能导致系统被攻击"
             })
         
@@ -534,6 +570,7 @@ class AIFixInterface:
     def _generate_ai_insights(self, analysis_result: Dict[str, Any]) -> List[Dict[str, Any]]:
         """生成AI洞察"""
         insights = []
+
 
         
         # 问题趋势分析
@@ -562,7 +599,8 @@ class AIFixInterface:
                 "title": "代码质量警告",
                 "description": "存在大量基础代码质量问题，建议加强代码审查",
 
-                "confidence": 0.8,
+ "confidence": 0.8,
+
                 "actionable": True
 
             })
@@ -595,12 +633,14 @@ class AIFixInterface:
     def _calculate_fix_effectiveness(self, fix_report: FixReport) -> Dict[str, Any]:
         """计算修复效果"""
         success_rate = fix_report.get_success_rate()
+
         total_fixed = fix_report.get_total_issues_fixed()
 
         total_found = fix_report.get_total_issues_found()
         
         return {
         "success_rate": success_rate,
+
 
  "fix_efficiency": total_fixed / max(total_found, 1),
 
@@ -613,7 +653,9 @@ class AIFixInterface:
     
     def _calculate_quality_score(self, success_rate: float, total_fixed: int) -> float:
         """计算质量分数"""
-        # 基于成功率和修复数量计算质量分数
+
+ # 基于成功率和修复数量计算质量分数
+
 
         base_score = success_rate * 100
         quantity_bonus = min(total_fixed / 10, 10)  # 最多10分奖励
@@ -644,7 +686,8 @@ class AIFixInterface:
         return {
 #         "total_fixes": self.fix_engine.stats["total_fixes"],
 # 
- "successful_fixes": self.fix_engine.stats["successful_fixes"],
+"successful_fixes": self.fix_engine.stats["successful_fixes"],
+
 
             "success_rate": self.fix_engine.stats["successful_fixes"] / max(self.fix_engine.stats["total_fixes"], 1),
             "module_status": self.fix_engine.get_module_status(),
@@ -654,9 +697,12 @@ class AIFixInterface:
 
                 "failed_fixes": sum(len(fixes) for fixes in self.learning_data["failed_fixes"].values()),
                 "patterns": len(self.learning_data["patterns"])
-                }
 
-        }
+ }
+# 
+# 
+ }
+
     
     def _get_recent_fix_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """获取最近的修复历史"""
@@ -687,6 +733,7 @@ class AIFixInterface:
     
     def _calculate_learning_effectiveness(self) -> float:
         """计算学习效果"""
+
         total_successes = sum(len(fixes) for fixes in self.learning_data["successful_fixes"].values())
         total_failures = sum(len(fixes) for fixes in self.learning_data["failed_fixes"].values())
         
@@ -699,7 +746,8 @@ class AIFixInterface:
         """计算项目健康度"""
         # 创建临时上下文进行分析
         context = FixContext(
-            project_root=self.project_root,
+        project_root=self.project_root,
+
             scope=FixScope.PROJECT
         )
         

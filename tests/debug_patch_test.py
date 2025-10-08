@@ -8,6 +8,7 @@ def test_different_patch_approaches() -> None:
     """測試不同的patch方法來確定哪種有效。"""
 
 
+
     
     test_config = {
     'dependencies': {
@@ -18,12 +19,14 @@ def test_different_patch_approaches() -> None:
             ]
             },
 
-        'environments': {
+ 'environments': {
+
         'development': {
 
  'allow_fallbacks': True,
 
  'warn_on_fallback': True,
+
 
             }
         }

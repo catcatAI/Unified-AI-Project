@@ -26,6 +26,7 @@ class AutomatedIntegrationTestPipeline:
 
 
 
+
     def __init__(self, project_root: str = None) -> None:
         """
         初始化自动化集成测试流水线
@@ -47,21 +48,26 @@ class AutomatedIntegrationTestPipeline:
 
  "setup_timeout": 300  # 5分钟
 
-            },
+ },
+
             "data": {
 
  "dataset_size": "medium",
 
  "generation_timeout": 120  # 2分钟
 
+
                 },
 
  "testing": {
 
-                "test_types": ["all"],
-                "execution_timeout": 1800  # 30分钟
+ "test_types": ["all"],
+
+ "execution_timeout": 1800  # 30分钟
+
 
  },
+
 
             "reporting": {
                 "generate_html": True,
@@ -112,6 +118,7 @@ class AutomatedIntegrationTestPipeline:
                 logger.warning("Failed to cleanup test environment")
 
 
+
                 # 不返回False，因为测试本身可能已经成功
 
             pipeline_end_time = time.time()
@@ -147,7 +154,8 @@ class AutomatedIntegrationTestPipeline:
                 return True
 
             cmd = [
-#                 sys.executable,
+            #                 sys.executable,
+
 #                 str(env_manager_script),
 #                 "setup",
 #                 "--services"
@@ -192,6 +200,7 @@ class AutomatedIntegrationTestPipeline:
 
         try:
             # 运行数据管理脚本
+
             data_manager_script = self.scripts_dir / "test_data_manager.py"
 
             if not data_manager_script.exists():
@@ -200,12 +209,14 @@ class AutomatedIntegrationTestPipeline:
 # 
 
             cmd = [
-#                 sys.executable,
+            #                 sys.executable,
+
 #                 str(data_manager_script),
 # 
 #                 "comprehensive",
 #                 "--size",
-                self.pipeline_config["data"]["dataset_size"]
+self.pipeline_config["data"]["dataset_size"]
+
 
             ]
 
@@ -262,9 +273,10 @@ class AutomatedIntegrationTestPipeline:
             ]
 
             # 添加测试类型标记
-#             test_types = self.pipeline_config["testing"]["test_types"]
+            #             test_types = self.pipeline_config["testing"]["test_types"]
+
             if "system" in test_types:
-                cmd.extend(["-m", "system_integration"])
+#                 cmd.extend(["-m", "system_integration"])
 #             elif "performance" in test_types:
                 cmd.extend(["-m", "performance"])
 
@@ -321,6 +333,7 @@ class AutomatedIntegrationTestPipeline:
         Returns: bool 报告生成是否成功
         """
         logger.info("Generating test reports...")
+
         report_start_time = time.time()
 
         try:
@@ -362,10 +375,11 @@ class AutomatedIntegrationTestPipeline:
 
 
             if junit_xml.exists():
-#                 report_generator_script = self.scripts_dir / "generate_test_report.py"
+                #                 report_generator_script = self.scripts_dir / "generate_test_report.py"
+
 #                 if report_generator_script.exists():
                     cmd = [
-                    sys.executable,
+#                     sys.executable,
 
                             str(report_generator_script),
                             "parse-xml",
@@ -402,7 +416,8 @@ class AutomatedIntegrationTestPipeline:
         """
         清理测试环境
 
-        Returns: bool 环境清理是否成功
+ Returns: bool 环境清理是否成功
+
         """
         logger.info("Cleaning up test environment...")
 
@@ -447,7 +462,8 @@ class AutomatedIntegrationTestPipeline:
             return False
 
 #         except Exception as e:
-# 
+    # 
+
 #             logger.error(f"Error cleaning up test environment: {e}")
 #             return False
 
@@ -457,6 +473,7 @@ def main() -> None:
 
 #     import argparse
 # 
+
 #     parser = argparse.ArgumentParser(description="Automated Integration Test Pipeline")
     parser.add_argument(
 #     "--config",
@@ -468,31 +485,37 @@ def main() -> None:
 
  #     nargs="+",
 
+
 #     choices=["all", "system", "performance", "agent", "hsp", "memory", "training", "core"],
 #     default=["all"],
 # 
+
     help="Types of tests to run"
     )
     parser.add_argument(
-    "--dataset-size",
+#     "--dataset-size",
 
-    choices=["small", "medium", "large"],
+ choices=["small", "medium", "large"],
+
     default="medium",
 
 
  help="Size of test dataset to generate"
 
+
     )
     parser.add_argument(
     "--no-environment-setup",
 
-    action="store_true",
+ action="store_true",
+
     help="Skip environment setup and teardown"
     )
     parser.add_argument(
     "--no-reporting",
 
-    action="store_true",
+ action="store_true",
+
     help="Skip report generation"
 
     )

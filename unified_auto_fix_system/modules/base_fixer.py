@@ -17,6 +17,7 @@ class BaseFixer(abc.ABC):
     """基础修复器类"""
 
 
+
     
     def __init__(self, project_root: Path):
         self.project_root = Path(project_root).resolve()
@@ -108,6 +109,7 @@ class BaseFixer(abc.ABC):
         excluded_paths.extend([
             "node_modules", "__pycache__", ".git", "venv", ".venv",
             "backup", "unified_fix_backups", "dist", "build"
+
         ])
         
         for file_path in target_files:
@@ -221,12 +223,15 @@ class BaseFixer(abc.ABC):
 
             "failed_fixes": 0,
             "issues_found": 0,
+
             "issues_fixed": 0
-        }
+            }
+
     
     def cleanup(self):
         """清理资源"""
         self.logger.info(f"清理 {self.name} 资源...")
+
         # 子类可以重写此方法进行特定的清理操作
     
     def __str__(self):
