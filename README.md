@@ -48,6 +48,9 @@ Unified AI Project是一个基于monorepo的混合式AI生态系统，整合了�
 - **协作式训练系统**：多个模型之间共享知识、协同训练的机制
 - **增量学习机制**：系统能够在运行过程中持续学习和优化
 - **自动训练系统**：能够自动识别数据、创建配置并执行训练
+- **统一系统管理**：全新的统一系统管理器，整合所有子系统
+- **上下文系统同步**：TransferBlock机制实现系统间智能同步
+- **健康监控**：完整的系统健康监控和指标收集
 - **上下文管理**：完整的上下文管理系统，包括工具、模型与代理、对话、记忆等上下文管理
 - **HSP协议**：高速同步协议支援内部模块与外部AI协作
 - **智能测试与调试**：完善的测试框架和缺陷检测系统
@@ -139,6 +142,11 @@ Unified-AI-Project/
 │   └── ...
 ├── scripts/
 ├── tools/
+├── unified_system_manager.py                    # 🆕 统一系统管理器（完整版）
+├── unified_system_manager_minimal.py            # 🆕 统一系统管理器（简化版）
+├── test_unified_system_simple.py                # 🆕 统一系统测试
+├── SYSTEM_ARCHIVAL_PLAN.md                      # 🆕 系统归档计划
+├── UNIFIED_SYSTEM_MANAGER_INTEGRATION_REPORT.md # 🆕 统一系统管理器集成报告
 ├── tool_context_manager.py
 ├── tool_call_chain_tracker.py
 ├── coverage_analyzer.py
@@ -162,6 +170,13 @@ AI代理系统是项目的核心组件之一，负责实现多智能体协作功
 
 ### 2. 上下文管理系统
 上下文管理系统负责管理AI系统运行过程中的各种上下文信息。
+
+#### 🆕 统一系统管理器 (新增)
+- **UnifiedSystemManager**: 整合所有子系统的统一管理层
+- **TransferBlock机制**: 智能系统间上下文同步
+- **健康监控**: 实时系统状态监控和指标收集
+- **操作分发**: 统一的系统操作接口
+- **异步同步**: 高效的上下文数据同步
 
 - **工具上下文管理器**：管理工具调用的上下文信息
 - **工具调用链追踪机制**：追踪工具调用的完整链路
@@ -233,6 +248,9 @@ HSP（高速同步协议）是项目内部模块与外部AI实体协作的核心
 - **闭环架构**：构建"感知-决策-行动-反馈"的完整行动闭环
 - **模块化设计**：通过 monorepo 结构实现模块化开发和管理
 - **工厂模式**：用于 AI 代理的创建(BaseAgent 作为所有代理的基础类)
+- **统一系统管理**：全新的统一系统管理器整合所有子系统
+- **TransferBlock模式**：智能系统间上下文同步机制
+- **观察者模式**：用于系统状态监控和事件通知
 - **策略模式**：用于不同训练场景的实现
 - **观察者模式**：用于训练过程的监控和日志记录
 
@@ -330,6 +348,61 @@ pnpm clean
 
 ### 执行总结报告
 - [AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md](AI_AGENT_SYSTEM_EXECUTION_SUMMARY.md) - AI代理系统执行总结
+- [UNIFIED_SYSTEM_MANAGER_INTEGRATION_REPORT.md](UNIFIED_SYSTEM_MANAGER_INTEGRATION_REPORT.md) - 🆕 统一系统管理器集成报告
+
+## 🆕 统一系统管理器使用指南
+
+### 快速开始
+```python
+# 导入统一系统管理器
+from unified_system_manager_minimal import (
+    UnifiedSystemManagerMinimal,
+    start_unified_system_minimal,
+    stop_unified_system_minimal,
+    create_transfer_block_minimal
+)
+
+# 异步启动系统
+async def main():
+    # 启动统一系统
+    await start_unified_system_minimal()
+    
+    # 创建传输块
+    block = create_transfer_block_minimal(
+        source_system="ai_agent",
+        target_system="memory_manager", 
+        content_type="dialogue",
+        content={"text": "Hello World!", "timestamp": "2025-10-08"}
+    )
+    
+    # 队列同步请求
+    await queue_sync_request("ai_agent", "memory_manager", block)
+    
+    # 执行系统操作
+    manager = get_unified_system_manager_minimal()
+    result = manager.execute_operation('repair.run_unified', target_path='.')
+    
+    # 停止系统
+    await stop_unified_system_minimal()
+
+# 运行
+asyncio.run(main())
+```
+
+### 核心功能
+- **系统管理**: 统一管理所有AI子系统
+- **TransferBlock**: 智能系统间上下文同步
+- **健康监控**: 实时监控系统状态
+- **操作分发**: 统一的操作接口
+- **异步处理**: 高效的异步同步机制
+
+### 系统类别
+- **AI系统**: AI代理、智能处理
+- **记忆系统**: HAM记忆、向量存储
+- **修复系统**: 自动修复、语法检查
+- **上下文系统**: 上下文管理、状态跟踪
+- **训练系统**: 模型训练、增量学习
+- **监控系统**: 健康检查、性能监控
 - [CONTEXT_SYSTEM_IMPLEMENTATION_SUMMARY.md](CONTEXT_SYSTEM_IMPLEMENTATION_SUMMARY.md) - 上下文系统实现总结
 - [PROJECT_CONTEXT_SYSTEM_COMPLETION_REPORT.md](PROJECT_CONTEXT_SYSTEM_COMPLETION_REPORT.md) - 项目上下文系统完成报告
 - [SYSTEM_INTEGRATION_TEST_ENHANCEMENT_PLAN.md](SYSTEM_INTEGRATION_TEST_ENHANCEMENT_PLAN.md) - 系统集成测试增强计划
