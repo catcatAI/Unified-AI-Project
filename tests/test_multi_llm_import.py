@@ -1,8 +1,15 @@
 """
 测试MultiLLMService导入的脚本
 """
+import unittest
+import sys
+import os
 
+# 添加项目根目录到Python路径
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+class TestMultiLLMImport(unittest.TestCase):
+    
     def setUp(self):
         """测试前设置"""
         self.test_data = {}
@@ -12,20 +19,27 @@
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_
-        """测试函数 - 自动添加断言"""
-        self.assertTrue(True)  # 基础断言
-        
-        # TODO: 添加具体的测试逻辑
-        pass
+    
+    def test_multi_llm_import(self):
+        """测试MultiLLMService导入"""
+        try:
+            from apps.backend.src.core.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider
+            print("✓ MultiLLMService imported successfully")
+            
+            # 测试基本功能
+            service = MultiLLMService()
+            print("✓ MultiLLMService created successfully")
+            
+            # 验证关键属性存在
+            self.assertTrue(hasattr(service, 'providers'))
+            self.assertTrue(hasattr(service, 'model_configs'))
+            self.assertTrue(hasattr(service, 'usage_stats'))
+            print("✓ MultiLLMService has required attributes")
+            
+        except ImportError as e:
+            self.fail(f"Failed to import MultiLLMService: {e}")
+        except Exception as e:
+            self.fail(f"Failed to create MultiLLMService: {e}")
 
-    def test_import() -> None:
-    try:
-        _ = print("✓ 成功从apps.backend.src.services.multi_llm_service导入MultiLLMService")
-        return True
-    except ImportError as e:
-        _ = print(f"✗ 无法从apps.backend.src.services.multi_llm_service导入MultiLLMService: {e}")
-        return False
-
-if __name__ == "__main__":
-    _ = test_import()
+if __name__ == '__main__':
+    unittest.main()

@@ -137,24 +137,15 @@ class OpenAIProvider(BaseLLMProvider):
             for msg in messages:
 
                 # Check if msg is a dictionary or ChatMessage object:
-f isinstance(msg, dict):
+                if isinstance(msg, dict):
                     openai_messages.append({"role": msg["role"], "content": msg["content"]})
                 else:
                     openai_messages.append({"role": msg.role, "content": msg.content})
             
-            # Mock fallback for tests when no/invalid key:
-pi_key = os.getenv("OPENAI_API_KEY")
-            if not api_key or api_key == "dummy_key":
-                return LLMResponse(
-                    content="Mock response (no API key)",
-                    model=self.config.model_name,
-                    provider=ModelProvider.OPENAI,
-                    usage={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-                    cost=0.0,
-                    latency=0.1,
-                    timestamp=datetime.now,
-                    metadata={}
-                )
+            # 确保使用真实API密钥进行token级别推理
+            api_key = self.config.api_key or os.getenv("OPENAI_API_KEY")
+            # 不再检查dummy_key - 让真实连接自然进行
+            
             response = await self.client.chat.completions.create(
                 model=self.config.model_name,
                 messages=openai_messages,
@@ -166,9 +157,9 @@ pi_key = os.getenv("OPENAI_API_KEY")
                 timeout=self.config.timeout
             )
             
-            latency = (datetime.now - start_time).total_seconds
-            usage_dict = response.usage.model_dump if response.usage else {}:
-sage: Dict[str, int] = {
+            latency = (datetime.now() - start_time).total_seconds()
+            usage_dict = response.usage.model_dump() if response.usage else {}
+            usage: Dict[str, int] = {
                 "prompt_tokens": usage_dict.get("prompt_tokens", 0),
                 "completion_tokens": usage_dict.get("completion_tokens", 0),
                 "total_tokens": usage_dict.get("total_tokens", 0)
@@ -182,7 +173,7 @@ sage: Dict[str, int] = {
                 usage=usage,
                 cost=cost,
                 latency=latency,
-                timestamp=datetime.now,
+                timestamp=datetime.now(),
                 metadata={"finish_reason": response.choices[0].finish_reason}
             )
             
@@ -207,7 +198,7 @@ sage: Dict[str, int] = {
         openai_messages = []
         for msg in messages:
             # Check if msg is a dictionary or ChatMessage object:
-f isinstance(msg, dict):
+            if isinstance(msg, dict):
                 openai_messages.append({"role": msg["role"], "content": msg["content"]})
             else:
                 openai_messages.append({"role": msg.role, "content": msg.content})
@@ -255,7 +246,7 @@ class AnthropicProvider(BaseLLMProvider):
             
             for msg in messages:
                 # Check if msg is a dictionary or ChatMessage object:
-f isinstance(msg, dict):
+                if isinstance(msg, dict):
                     if msg["role"] == "system":
                         system_message = msg["content"]
                     else:
@@ -331,7 +322,7 @@ f isinstance(msg, dict):
         
         for msg in messages:
             # Check if msg is a dictionary or ChatMessage object:
-f isinstance(msg, dict):
+            if isinstance(msg, dict):
                 if msg["role"] == "system":
                     system_message = msg["content"]
                 else:
@@ -349,8 +340,8 @@ f isinstance(msg, dict):
                     })
         
         try:
-            async with self.client.messages.stream(:
-odel=self.config.model_name,
+            async with self.client.messages.stream(
+                model=self.config.model_name,
                 max_tokens=kwargs.get('max_tokens', self.config.max_tokens),
                 temperature=kwargs.get('temperature', self.config.temperature),
                 system=system_message or "",
@@ -404,8 +395,8 @@ class GoogleProvider(BaseLLMProvider):
                 elif msg.role == "assistant":
                     chat_history.append({
                         "role": "user",
-                        "parts": [user_message] if user_message else ["继续"]:
-)
+                        "parts": [user_message] if user_message else ["继续"]
+                    })
                     chat_history.append({
                         "role": "model",
                         "parts": [msg.content]
@@ -423,8 +414,8 @@ class GoogleProvider(BaseLLMProvider):
             chat = self.model.start_chat(history=chat_history[:-1] if chat_history else [])
             
             # 发送最后一条消息
-            last_message = chat_history[-1]["parts"][0] if chat_history else "Hello":
-esponse = await chat.send_message_async(
+            last_message = chat_history[-1]["parts"][0] if chat_history else "Hello"
+            response = await chat.send_message_async(
                 last_message,
                 generation_config=GenerationConfig(
                     max_output_tokens=kwargs.get('max_tokens', self.config.max_tokens),
@@ -491,8 +482,8 @@ esponse = await chat.send_message_async(
             elif msg.role == "assistant":
                 chat_history.append({
                     "role": "user",
-                    "parts": [user_message] if user_message else ["继续"]:
-)
+                    "parts": [user_message] if user_message else ["继续"]
+                })
                 chat_history.append({
                     "role": "model",
                     "parts": [msg.content]
@@ -506,9 +497,9 @@ esponse = await chat.send_message_async(
             })
         
         try:
-            chat = self.model.start_chat(history=chat_history[:-1] if chat_history else []):
-ast_message = chat_history[-1]["parts"][0] if chat_history else "Hello":
-esponse = await chat.send_message_async(
+            chat = self.model.start_chat(history=chat_history[:-1] if chat_history else [])
+            last_message = chat_history[-1]["parts"][0] if chat_history else "Hello"
+            response = await chat.send_message_async(
                 last_message,
                 stream=True,
                 generation_config=GenerationConfig(
@@ -551,7 +542,8 @@ class OllamaProvider(BaseLLMProvider):
         try:
             ollama_messages = [
                 {"role": msg.role, "content": msg.content}
-                for msg in messages:
+                for msg in messages
+            ]
 
             
             payload = {
@@ -565,8 +557,8 @@ class OllamaProvider(BaseLLMProvider):
                 }
             }
             
-            async with self.session.post(:
-"{self.base_url}/api/chat",
+            async with self.session.post(
+                f"{self.base_url}/api/chat",
                 json=payload,
                 timeout=aiohttp.ClientTimeout(total=self.config.timeout)
             ) as response:
@@ -625,7 +617,8 @@ class OllamaProvider(BaseLLMProvider):
             
         ollama_messages = [
             {"role": msg.role, "content": msg.content}
-            for msg in messages:
+            for msg in messages
+        ]
 
         
         payload = {
@@ -640,8 +633,8 @@ class OllamaProvider(BaseLLMProvider):
         }
         
         try:
-            async with self.session.post(:
-"{self.base_url}/api/chat",
+            async with self.session.post(
+                f"{self.base_url}/api/chat",
                 json=payload,
                 timeout=aiohttp.ClientTimeout(total=self.config.timeout)
             ) as response:
@@ -926,8 +919,8 @@ class HuggingFaceProvider(BaseLLMProvider):
                 }
             }
             
-            async with self.session.post(:
-"{self.base_url}{self.config.model_name}",
+            async with self.session.post(
+                f"{self.base_url}{self.config.model_name}",
                 json=payload,
                 headers=self.headers,
                 timeout=aiohttp.ClientTimeout(total=self.config.timeout)
@@ -988,8 +981,8 @@ class HuggingFaceProvider(BaseLLMProvider):
         # 将完整响应分块返回
         words = response.content.split
         for i, word in enumerate(words):
-            yield word + (" " if i < len(words) - 1 else ""):
- = await asyncio.sleep(0.05)  # 模拟流式延迟
+            yield word + (" " if i < len(words) - 1 else "")
+            await asyncio.sleep(0.05)  # 模拟流式延迟
     
     def _build_prompt(self, messages: List[ChatMessage]) -> str:
         """构建提示文本"""
@@ -1093,8 +1086,8 @@ class MultiLLMService:
     
     def _ensure_router(self):
         try:
-            from ai.language_models.registry import ModelRegistry:
-rom ai.language_models.router import PolicyRouter, RoutingPolicy
+            from ai.language_models.registry import ModelRegistry
+            from ai.language_models.router import PolicyRouter, RoutingPolicy
         except Exception:
             return None, None, None
         registry = ModelRegistry(self.model_configs)
@@ -1236,8 +1229,9 @@ rom ai.language_models.router import PolicyRouter, RoutingPolicy
     def get_available_models(self) -> List[str]:
         """获取可用模型列表"""
         return [
-            model_id for model_id, config in self.model_configs.items:
-f config.enabled:
+            model_id for model_id, config in self.model_configs.items()
+            if config.enabled
+        ]
 
     
     def get_model_info(self, model_id: str) -> Dict[str, Any]:
@@ -1261,19 +1255,19 @@ f config.enabled:
     
     def get_usage_summary(self) -> Dict[str, Any]:
         """获取使用摘要"""
-        total_requests = sum(stats['total_requests'] for stats in self.usage_stats.values):
-otal_tokens = sum(stats['total_tokens'] for stats in self.usage_stats.values):
-otal_cost = sum(stats['total_cost'] for stats in self.usage_stats.values):
-otal_errors = sum(stats['error_count'] for stats in self.usage_stats.values):
-eturn {
+        total_requests = sum(stats['total_requests'] for stats in self.usage_stats.values)
+        total_tokens = sum(stats['total_tokens'] for stats in self.usage_stats.values)
+        total_cost = sum(stats['total_cost'] for stats in self.usage_stats.values)
+        total_errors = sum(stats['error_count'] for stats in self.usage_stats.values)
+        return {
             'total_requests': total_requests,
             'total_tokens': total_tokens,
             'total_cost': total_cost,
             'total_errors': total_errors,
             'models': {
                 model_id: self.get_model_info(model_id)
-                for model_id in self.model_configs.keys:
-
+                for model_id in self.model_configs.keys()
+            }
         }
     
     async def health_check(self) -> Dict[str, Any]:
