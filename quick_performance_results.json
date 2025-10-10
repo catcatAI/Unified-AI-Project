@@ -1,0 +1,34 @@
+{
+  "test_name": "AGI系统快速性能基准测试",
+  "start_time": "2025-10-10T06:01:25.023599",
+  "benchmarks": {
+    "response_time": {
+      "success": true,
+      "average_response_time": 4.452081123987834,
+      "max_response_time": 8.605681896209717,
+      "min_response_time": 0.9381113052368164,
+      "performance_score": 0,
+      "meets_requirement": false
+    },
+    "throughput": {
+      "success": true,
+      "total_tasks": 5,
+      "successful_tasks": 5,
+      "total_execution_time": 11.954601764678955,
+      "throughput_per_second": 0.41824898046984643,
+      "performance_score": 2.0912449023492323,
+      "meets_requirement": false
+    },
+    "concurrency": {
+      "success": true,
+      "total_tasks": 4,
+      "successful_tasks": 4,
+      "total_execution_time": 3.1712403297424316,
+      "concurrent_efficiency": 6.306680642404798,
+      "performance_score": 0.6306680642404798,
+      "meets_requirement": false
+    }
+  },
+  "overall_score": 0.9073043221965706,
+  "total_execution_time": 28.50510573387146
+}
