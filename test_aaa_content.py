@@ -31,11 +31,11 @@ async def test_system_with_aaa_content():
         print(aaa_content[:300] + "..." if len(aaa_content) > 300 else aaa_content)
         print()
         
-        # 分析内容特征
+        # 分析内容特征 - 针对新的aaa.md内容
         lines = aaa_content.strip().split('\n')
-        questions = [line for line in lines if '？' in line or '?' in line]
-        philosophical_questions = [q for q in questions if any(word in q for word in ['哲學', '意識', '智能', '宇宙', '現實', '死亡', '時間'])]
-        technical_questions = [q for q in questions if any(word in q for word in ['AI', '架構', '系統', '創新', '限制'])]
+        questions = [line for line in lines if '？' in line or '?' in line or '"' in line]
+        philosophical_questions = [q for q in questions if any(word in q for word in ['幽默', '道德', '智慧', '直觉', '创造力', '理解', '意识', '量子', '时间', '元认知'])]
+        technical_questions = [q for q in questions if any(word in q for word in ['代码', '逻辑', '悖论', '递归', '量子逻辑', '元元认知', '架构', '验证'])]
         
         print(f"問題總數: {len(questions)}")
         print(f"哲學性問題: {len(philosophical_questions)}")
