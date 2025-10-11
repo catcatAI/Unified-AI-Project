@@ -22,11 +22,12 @@ _ = sys.path.insert(0, str(backend_path / "src"))
 
 # 导入项目模块
 try:
-    DATA_DIR,
-    TRAINING_DIR,
-    MODELS_DIR,
-    get_data_path,
-    resolve_path
+    from apps.backend.src.core.config.path_config import (
+        DATA_DIR,
+        TRAINING_DIR,
+        MODELS_DIR,
+        get_data_path,
+        resolve_path
     )
 except ImportError:
     # 如果路径配置模块不可用，使用默认路径处理
@@ -45,8 +46,8 @@ ModelTrainer = None
 
 # 配置日志
 logging.basicConfig(
-    level: str=logging.INFO,
-    format: str='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
     _ = logging.FileHandler(TRAINING_DIR / 'auto_training.log'),
     _ = logging.StreamHandler()

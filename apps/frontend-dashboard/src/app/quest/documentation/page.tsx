@@ -1,3 +1,4 @@
+"use client"
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@acme/ui';
 import { Badge } from '@acme/ui';

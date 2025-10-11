@@ -1,3 +1,4 @@
+"use client"
 import React, { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
@@ -25,7 +26,6 @@ import { Textarea } from '@acme/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@acme/ui';
 import { Separator } from '@acme/ui';
 import { Plus, Settings, Save, Download, Upload, Layers, Code, Cpu } from 'lucide-react';
-import { ArchitectureStore, ArchitectureConfig, defaultComponentGroups, ComponentGroup } from '@/lib/architecture-store';
 
 // 模組類型定義
 interface ModuleData extends Record<string, unknown> {
