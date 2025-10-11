@@ -194,7 +194,7 @@ export default function CodeEditor() {
       name: 'new-file.ts',
       path: `/src/new-file.ts`,
       language: 'typescript',
-      content: '// 新文件\\n',
+      // 新文件
       size: 0,
       lastModified: new Date().toISOString(),
       isActive: false
