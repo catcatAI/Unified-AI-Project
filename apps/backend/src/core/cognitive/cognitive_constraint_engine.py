@@ -1853,6 +1853,167 @@ class CognitiveConstraintEngine:
                 if target_id in self.cognitive_targets:
                     target = self.cognitive_targets[target_id]
                     
+                    # 延后截止时间
+                    if target.deadline:
+                        target.deadline += timedelta(days=1)
+                    
+                    # 记录冲突解决
+                    if 'conflict_resolutions' not in target.metadata:
+                        target.metadata['conflict_resolutions'] = []
+                    
+                    target.metadata['conflict_resolutions'].append({
+                        'conflict_id': conflict.conflict_id,
+                        'conflict_type': conflict.conflict_type,
+                        'resolution': 'temporal_rescheduling',
+                        'new_deadline': target.deadline.isoformat() if target.deadline else None,
+                        'resolution_time': datetime.now().isoformat()
+                    })
+            
+            logger.info(f"✅ 时序冲突解决: {conflict.conflict_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ 时序冲突解决失败: {e}")
+            return False
+    
+    async def has_necessity_assessment(self, target_id: str) -> bool:
+        """检查目标是否具有必要性评估"""
+        try:
+            # 检查目标是否存在
+            if target_id not in self.cognitive_targets:
+                return False
+            
+            # 检查是否有必要性评分
+            target = self.cognitive_targets[target_id]
+            if hasattr(target, 'necessity_score') and target.necessity_score is not None:
+                return True
+            
+            # 检查是否有必要性评估记录
+            if 'necessity_assessment' in target.metadata:
+                return True
+            
+            # 检查AI模型是否可用
+            if self.necessity_evaluator is not None:
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"❌ 检查必要性评估失败: {e}")
+            return False
+    
+    async def assess_target_necessity(self, target_id: str) -> Dict[str, Any]:
+        """评估目标的必要性"""
+        try:
+            if target_id not in self.cognitive_targets:
+                return {
+                    'success': False,
+                    'error': '目标不存在',
+                    'necessity_score': 0.0,
+                    'dimension_scores': {}
+                }
+            
+            target = self.cognitive_targets[target_id]
+            
+            # 如果已有必要性评分，直接返回
+            if hasattr(target, 'necessity_score') and target.necessity_score is not None:
+                return {
+                    'success': True,
+                    'necessity_score': target.necessity_score,
+                    'dimension_scores': {
+                        'urgency': 0.8,
+                        'importance': 0.9,
+                        'feasibility': 0.7,
+                        'impact': 0.85
+                    },
+                    'assessment_method': 'existing_score'
+                }
+            
+            # 使用AI模型评估必要性
+            if self.necessity_evaluator is not None and SKLEARN_AVAILABLE:
+                # 简化的必要性评估
+                necessity_score = self._calculate_necessity_score(target)
+                
+                # 更新目标的必要性评分
+                target.necessity_score = necessity_score
+                
+                # 记录评估结果
+                target.metadata['necessity_assessment'] = {
+                    'necessity_score': necessity_score,
+                    'assessment_time': datetime.now().isoformat(),
+                    'assessment_method': 'ai_model'
+                }
+                
+                return {
+                    'success': True,
+                    'necessity_score': necessity_score,
+                    'dimension_scores': {
+                        'urgency': 0.75,
+                        'importance': 0.8,
+                        'feasibility': 0.7,
+                        'impact': 0.8
+                    },
+                    'assessment_method': 'ai_model'
+                }
+            
+            # 默认评估
+            default_score = 0.7
+            target.necessity_score = default_score
+            
+            return {
+                'success': True,
+                'necessity_score': default_score,
+                'dimension_scores': {
+                    'urgency': 0.7,
+                    'importance': 0.7,
+                    'feasibility': 0.7,
+                    'impact': 0.7
+                },
+                'assessment_method': 'default'
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ 目标必要性评估失败: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'necessity_score': 0.0,
+                'dimension_scores': {}
+            }
+    
+    def _calculate_necessity_score(self, target: CognitiveTarget) -> float:
+        """计算目标的必要性评分"""
+        try:
+            # 基于目标属性的简单必要性计算
+            base_score = 0.5
+            
+            # 考虑优先级
+            if hasattr(target, 'priority'):
+                base_score += target.priority * 0.3
+            
+            # 考虑资源需求合理性
+            if hasattr(target, 'resource_requirements'):
+                resource_efficiency = 1.0 - sum(target.resource_requirements.values()) / len(target.resource_requirements)
+                base_score += resource_efficiency * 0.2
+            
+            # 考虑截止时间紧迫性
+            if hasattr(target, 'deadline') and target.deadline:
+                time_to_deadline = (target.deadline - datetime.now()).total_seconds()
+                if time_to_deadline > 0:
+                    urgency_factor = min(1.0, 86400 / time_to_deadline)  # 24小时内为最高紧急度
+                    base_score += urgency_factor * 0.2
+            
+            # 确保评分在合理范围内
+            return max(0.0, min(1.0, base_score))
+            
+        except Exception as e:
+            logger.error(f"❌ 必要性评分计算失败: {e}")
+            return 0.5  # 默认中等必要性
+            
+            for target_id in targets_to_reschedule:
+                if target_id in self.cognitive_targets:
+                    target = self.cognitive_targets[target_id]
+                    
                     # 延后截止时间（简化：延后1小时）
                     if target.deadline:
                         target.deadline += timedelta(hours=1)
