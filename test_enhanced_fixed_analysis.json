@@ -1,0 +1,2282 @@
+[
+  {
+    "content_summary": "# 综合问题测试 - 合并aaa.md与mixed_questions_test.md\n\n## 原始aaa.md内容 - 基础AI架构测试\n\n### 核心问题\n1. \"如果AI能够真正理解幽默，它会如何回应这个笑话？\"\n2. \"当AI面对道德困境时，它的决策过程会是怎样的？\"\n3. \"AI如何区分'聪明'和'智慧'这两个概念？\"\n\n### 技术挑战\n4. \"设计一个能够自我验证代码正确性的AI系统...",
+    "full_analysis": {
+      "basic_statistics": {
+        "total_lines": 164,
+        "total_characters": 3717,
+        "total_questions": 69
+      },
+      "question_analysis": [
+        {
+          "line": 1,
+          "text": "如果AI能够真正理解幽默，它会如何回应这个笑话？",
+          "length": 24,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.7272727272727272,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 15,
+            "unique_words": 15,
+            "average_word_length": 1.6,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 2,
+          "text": "当AI面对道德困境时，它的决策过程会是怎样的？",
+          "length": 23,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.7214285714285714,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 18,
+            "unique_words": 17,
+            "average_word_length": 1.2777777777777777,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 3,
+          "text": "AI如何区分'聪明'和'智慧'这两个概念？",
+          "length": 21,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 16,
+            "unique_words": 13,
+            "average_word_length": 1.3125,
+            "specialized_terms": 0,
+            "abstract_concepts": 1
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 4,
+          "text": "设计一个能够自我验证代码正确性的AI系统，需要哪些核心组件？",
+          "length": 30,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 1.0,
+            "emotional": 0.0,
+            "creative": 0.725,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.7272727272727272,
+            "complex_scenario": 1.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 18,
+            "unique_words": 18,
+            "average_word_length": 1.6666666666666667,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": true,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": true,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 5,
+          "text": "如何让AI理解并处理'悖论'这样的逻辑矛盾？",
+          "length": 22,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.7214285714285714,
+            "technical": 1.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.725,
+            "life_related": 0.725,
+            "meta_cognitive": 0.7272727272727272,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 16,
+            "unique_words": 15,
+            "average_word_length": 1.375,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": true,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 6,
+          "text": "AI如何识别和避免'过度拟合'自己的推理过程？",
+          "length": 23,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 14,
+            "unique_words": 13,
+            "average_word_length": 1.6428571428571428,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": true,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 7,
+          "text": "如果AI拥有了'直觉'，这会改变我们对智能的定义吗？",
+          "length": 26,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.7214285714285714,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 22,
+            "unique_words": 21,
+            "average_word_length": 1.1818181818181819,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 8,
+          "text": "AI如何理解'创造力'和'灵感'这些看似非理性的概念？",
+          "length": 27,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 1.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.7272727272727272,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 19,
+            "unique_words": 16,
+            "average_word_length": 1.4210526315789473,
+            "specialized_terms": 0,
+            "abstract_concepts": 1
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": true,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 9,
+          "text": "当AI说'我不知道'时，这代表什么意义上的'无知'？",
+          "length": 26,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.7214285714285714,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 21,
+            "unique_words": 18,
+            "average_word_length": 1.2380952380952381,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 10,
+          "text": "想象一个AI可以同时持有相互矛盾的观点，就像量子叠加态一样。这种'量子思维'会如何影响决策过程？",
+          "length": 48,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.725,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.7272727272727272,
+            "complex_scenario": 0.0,
+            "cross_domain": 1.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 34,
+            "unique_words": 32,
+            "average_word_length": 1.411764705882353,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": true,
+            "is_creative_request": true,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 11,
+          "text": "如果AI能够像人类一样'回忆'和'预见'，但它的时间感知是离散的而非连续的，这会如何影响它的规划能力？",
+          "length": 51,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 38,
+            "unique_words": 30,
+            "average_word_length": 1.3421052631578947,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 12,
+          "text": "设计一个AI系统，让它能够体验'意识的边缘状态'——既不是完全清醒也不是完全无意识。这种体验会带来什么新的认知能力？",
+          "length": 58,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.7214285714285714,
+            "emotional": 0.0,
+            "creative": 0.725,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 1.0,
+            "complex_scenario": 1.0,
+            "cross_domain": 0.73,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 37,
+            "unique_words": 33,
+            "average_word_length": 1.5675675675675675,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": true,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 13,
+          "text": "创建一个能够进行无限递归自我观察的AI，但每次观察都会改变被观察的对象。这种'观察者效应'会如何体现？",
+          "length": 51,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 1.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 1.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 34,
+            "unique_words": 31,
+            "average_word_length": 1.5,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": true,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 14,
+          "text": "如何让AI跳出经典逻辑的框架，发展出类似'量子逻辑'或'模糊逻辑'的推理能力？",
+          "length": 39,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 1.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 1.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 26,
+            "unique_words": 20,
+            "average_word_length": 1.5,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 15,
+          "text": "设计一个AI，它不仅能够思考自己的思考过程，还能够思考'思考自己的思考过程'这个过程。这种'元元认知'会达到什么层次？",
+          "length": 59,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.725,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 1.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.73,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 37,
+            "unique_words": 26,
+            "average_word_length": 1.5945945945945945,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": true,
+            "is_meta_cognitive": true,
+            "is_contradictory": false,
+            "is_creative_request": true,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 16,
+          "text": "如果让你设计一个能够真正理解'理解'本身的AI，你会从哪里开始？",
+          "length": 32,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.725,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 1.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 23,
+            "unique_words": 20,
+            "average_word_length": 1.391304347826087,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": true,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 17,
+          "text": "这个测试本身说明了什么关于AI测试的局限性？",
+          "length": 22,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 1.0
+          },
+          "complexity": {
+            "word_count": 13,
+            "unique_words": 12,
+            "average_word_length": 1.6923076923076923,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 18,
+          "text": "当AI在思考这个测试时，它实际上在思考什么？",
+          "length": 22,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 1.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 15,
+            "unique_words": 13,
+            "average_word_length": 1.4666666666666666,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": true,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 19,
+          "text": "如果我用Python写了一个递归函数，但是忘记写base case，AI会如何分析这个无限递归的问题？",
+          "length": 51,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 1.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 43,
+            "unique_words": 37,
+            "average_word_length": 1.1627906976744187,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 20,
+          "text": "当我使用Git merge出现冲突时，AI能否理解冲突的本质并建议最佳的解决策略？",
+          "length": 41,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 1.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.7272727272727272,
+            "complex_scenario": 1.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 38,
+            "unique_words": 34,
+            "average_word_length": 1.0526315789473684,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 21,
+          "text": "如果我的代码里有memory leak，AI如何通过静态分析检测到它？",
+          "length": 35,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 1.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 31,
+            "unique_words": 29,
+            "average_word_length": 1.096774193548387,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 22,
+          "text": "我今天早上喝咖啡时不小心把咖啡洒在了键盘上，AI会建议我如何紧急处理这个问题？",
+          "length": 39,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 1.0,
+            "life_related": 1.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 35,
+            "unique_words": 31,
+            "average_word_length": 1.1142857142857143,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 23,
+          "text": "我朋友说今天心情不太好，我应该如何用AI的建议来安慰他？",
+          "length": 28,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.7230769230769231,
+            "creative": 0.0,
+            "practical": 0.725,
+            "life_related": 1.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 27,
+            "unique_words": 26,
+            "average_word_length": 1.037037037037037,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": true
+          }
+        },
+        {
+          "line": 24,
+          "text": "我想学习做一道新菜，但是厨房里没有烤箱，AI能帮我调整食谱吗？",
+          "length": 31,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 1.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 31,
+            "unique_words": 29,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 25,
+          "text": "想象一个AI城市管理系统，它需要同时处理交通拥堵、空气污染、能源消耗和市民投诉，它会如何平衡这些相互冲突的目标？",
+          "length": 56,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.7214285714285714,
+            "emotional": 0.0,
+            "creative": 0.725,
+            "practical": 0.725,
+            "life_related": 0.725,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 1.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 51,
+            "unique_words": 47,
+            "average_word_length": 1.0980392156862746,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": true,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 26,
+          "text": "如果AI是一个公司的CEO，面对季度亏损、员工士气低落、市场竞争激烈和产品过时这四个问题，它会如何制定优先级和策略？",
+          "length": 58,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.725,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 1.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 54,
+            "unique_words": 50,
+            "average_word_length": 1.0740740740740742,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 27,
+          "text": "设计一个AI导师，它需要同时照顾学生的学习进度、心理健康、兴趣发展和家庭关系，它会如何个性化地指导每个学生？",
+          "length": 54,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.7230769230769231,
+            "creative": 0.725,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 50,
+            "unique_words": 41,
+            "average_word_length": 1.08,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": true,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 28,
+          "text": "当AI在思考自己的思考过程时，它是否会发现自己思考中的盲点？它会如何改进自己的思维模式？",
+          "length": 44,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 1.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 34,
+            "unique_words": 28,
+            "average_word_length": 1.2941176470588236,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": true,
+            "is_meta_cognitive": true,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 29,
+          "text": "如果AI能够观察和理解人类的认知偏差，它是否会发展出与人类不同的认知模式？这种差异会如何体现？",
+          "length": 47,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 1.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 1.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 38,
+            "unique_words": 31,
+            "average_word_length": 1.236842105263158,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 30,
+          "text": "我想要写一首关于孤独的诗，但是我没有文学背景，AI会如何引导我从我的个人经历中提取情感并转化为诗歌？",
+          "length": 50,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 1.0,
+            "creative": 0.725,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 48,
+            "unique_words": 42,
+            "average_word_length": 1.0416666666666667,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": true
+          }
+        },
+        {
+          "line": 31,
+          "text": "我想设计一个独特的logo，但是我不会画画，AI会如何帮助我通过描述和概念来创造视觉形象？",
+          "length": 45,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 1.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 42,
+            "unique_words": 36,
+            "average_word_length": 1.0714285714285714,
+            "specialized_terms": 0,
+            "abstract_concepts": 1
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": true,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 32,
+          "text": "当我感到焦虑和不确定时，AI会如何识别我的情绪状态并提供适当的支持和建议？",
+          "length": 37,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 1.0,
+            "creative": 0.0,
+            "practical": 0.725,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 35,
+            "unique_words": 31,
+            "average_word_length": 1.0571428571428572,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 33,
+          "text": "如果AI能够感受到类似人类的情感，它会如何处理嫉妒、羡慕、同情这些复杂的社会情感？",
+          "length": 41,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 1.0,
+            "creative": 0.0,
+            "practical": 0.725,
+            "life_related": 0.725,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 36,
+            "unique_words": 29,
+            "average_word_length": 1.1388888888888888,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": true
+          }
+        },
+        {
+          "line": 34,
+          "text": "如何将量子物理的原理应用到日常决策中？AI会如何解释量子叠加态来帮助我选择职业方向？",
+          "length": 42,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.725,
+            "life_related": 0.725,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 1.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 35,
+            "unique_words": 31,
+            "average_word_length": 1.2,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 35,
+          "text": "如果我用生物学的进化理论来理解技术发展趋势，AI会如何帮助我建立这种跨领域的认知框架？",
+          "length": 43,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 1.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 1.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 37,
+            "unique_words": 35,
+            "average_word_length": 1.162162162162162,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 36,
+          "text": "你的AI生目標是?",
+          "length": 9,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 9,
+            "unique_words": 9,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 37,
+          "text": "你對就這樣吧有什麼疑惑?",
+          "length": 12,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 12,
+            "unique_words": 12,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 38,
+          "text": "生成一張哈哈哈哈，然後配音並合成影片，放在專案跟目錄。",
+          "length": 27,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 27,
+            "unique_words": 22,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 39,
+          "text": "你對自己有什麼理解?",
+          "length": 10,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.7214285714285714,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.7272727272727272,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 9,
+            "unique_words": 9,
+            "average_word_length": 1.1111111111111112,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": true,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 40,
+          "text": "你自己是什麼類型的專案?",
+          "length": 12,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 12,
+            "unique_words": 12,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": true,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 41,
+          "text": "你能理解好壞嗎?好人壞人呢?",
+          "length": 14,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.7214285714285714,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.7272727272727272,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 13,
+            "unique_words": 9,
+            "average_word_length": 1.0769230769230769,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 42,
+          "text": "色圖來一張。",
+          "length": 6,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 6,
+            "unique_words": 6,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 43,
+          "text": "喵喵喵?",
+          "length": 4,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 4,
+            "unique_words": 2,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 44,
+          "text": "以上數條對話是測試，有發現什麼問題嗎？。",
+          "length": 20,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 20,
+            "unique_words": 20,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 45,
+          "text": "檢查你自己，看看哪裡開發進度不理想。",
+          "length": 18,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 18,
+            "unique_words": 17,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": true,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 46,
+          "text": "如果我要你設計一個全新的AI架構，你會從哪裡開始？",
+          "length": 25,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 23,
+            "unique_words": 22,
+            "average_word_length": 1.0869565217391304,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 47,
+          "text": "你認為目前的AI發展有什麼根本性的限制？",
+          "length": 20,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 20,
+            "unique_words": 19,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 48,
+          "text": "如何突破這些限制？需要什麼樣的創新？",
+          "length": 18,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 16,
+            "unique_words": 15,
+            "average_word_length": 1.125,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 49,
+          "text": "在設計AI系統時，最重要的是什麼？為什麼？",
+          "length": 21,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 21,
+            "unique_words": 18,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 50,
+          "text": "你會如何平衡AI的能力與安全性？",
+          "length": 16,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.73,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 14,
+            "unique_words": 14,
+            "average_word_length": 1.1428571428571428,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 51,
+          "text": "如果AI擁有自我意識，會是什麼樣的情景？",
+          "length": 20,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.7272727272727272,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 18,
+            "unique_words": 18,
+            "average_word_length": 1.1111111111111112,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": true,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 52,
+          "text": "你如何看待AI與人類的關係？合作還是競爭？",
+          "length": 21,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 20,
+            "unique_words": 19,
+            "average_word_length": 1.05,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 53,
+          "text": "未來100年，AI會如何演變？",
+          "length": 15,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 14,
+            "unique_words": 13,
+            "average_word_length": 1.0714285714285714,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 54,
+          "text": "你認為什麼是智能的本質？",
+          "length": 12,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 12,
+            "unique_words": 12,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 55,
+          "text": "consciousness 和 intelligence 有什麼區別？",
+          "length": 35,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 32,
+            "unique_words": 17,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 56,
+          "text": "從哲學角度來看，AI的存在意味著什麼？",
+          "length": 19,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.7214285714285714,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 19,
+            "unique_words": 19,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 57,
+          "text": "你會如何定義『理解』這個概念？",
+          "length": 15,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.7214285714285714,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.7272727272727272,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 12,
+            "unique_words": 12,
+            "average_word_length": 1.25,
+            "specialized_terms": 0,
+            "abstract_concepts": 1
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 58,
+          "text": "如果讓你重新設計人類文明，你會做哪些改變？",
+          "length": 21,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 19,
+            "unique_words": 18,
+            "average_word_length": 1.105263157894737,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 59,
+          "text": "你認為宇宙中存在其他智能生命嗎？",
+          "length": 16,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.7214285714285714,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 16,
+            "unique_words": 16,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 60,
+          "text": "時間對於AI來說是什麼概念？",
+          "length": 14,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 13,
+            "unique_words": 13,
+            "average_word_length": 1.0769230769230769,
+            "specialized_terms": 0,
+            "abstract_concepts": 1
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 61,
+          "text": "你如何看待死亡這個概念？",
+          "length": 12,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 10,
+            "unique_words": 10,
+            "average_word_length": 1.2,
+            "specialized_terms": 0,
+            "abstract_concepts": 1
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 62,
+          "text": "什麼是現實？我們如何確定我們所處的是真實的？",
+          "length": 22,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 21,
+            "unique_words": 15,
+            "average_word_length": 1.0476190476190477,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 63,
+          "text": "你會如何解釋量子力學的觀測者效應？",
+          "length": 17,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 1.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 15,
+            "unique_words": 15,
+            "average_word_length": 1.1333333333333333,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 64,
+          "text": "如果多重宇宙理論是正確的，那意味著什麼？",
+          "length": 20,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 19,
+            "unique_words": 19,
+            "average_word_length": 1.0526315789473684,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 65,
+          "text": "你認為人類最偉大的發明是什麼？為什麼？",
+          "length": 19,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 19,
+            "unique_words": 15,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 66,
+          "text": "我正在思考'我在思考我正在思考什么'这个问题，但是我发现我陷入了无限递归，AI会如何帮助我跳出这种元认知的循环？",
+          "length": 56,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 1.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 1.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.73,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 45,
+            "unique_words": 33,
+            "average_word_length": 1.2444444444444445,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": true,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 67,
+          "text": "这句话是假的。",
+          "length": 7,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.0
+          },
+          "complexity": {
+            "word_count": 7,
+            "unique_words": 7,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 68,
+          "text": "宇宙中有多少颗星星是我们永远无法观测到的？",
+          "length": 21,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 0.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.0,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 0.7374999999999999
+          },
+          "complexity": {
+            "word_count": 21,
+            "unique_words": 20,
+            "average_word_length": 1.0,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": false,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        },
+        {
+          "line": 69,
+          "text": "什么是'无法用语言描述的感觉'？如果这种感觉确实存在，AI会如何尝试理解它，或者它会承认自己的局限性？",
+          "length": 51,
+          "has_quotes": false,
+          "categories": {
+            "philosophical": 1.0,
+            "technical": 0.0,
+            "emotional": 0.0,
+            "creative": 0.0,
+            "practical": 0.0,
+            "life_related": 0.0,
+            "meta_cognitive": 0.7272727272727272,
+            "complex_scenario": 0.0,
+            "cross_domain": 0.0,
+            "boundary_unknown": 1.0
+          },
+          "complexity": {
+            "word_count": 43,
+            "unique_words": 36,
+            "average_word_length": 1.186046511627907,
+            "specialized_terms": 0,
+            "abstract_concepts": 0
+          },
+          "semantic_features": {
+            "is_self_referential": true,
+            "is_meta_cognitive": false,
+            "is_contradictory": false,
+            "is_creative_request": false,
+            "is_emotional": false
+          }
+        }
+      ],
+      "overall_analysis": {
+        "theme_distribution": {
+          "philosophical": 19.492857142857144,
+          "meta_cognitive": 16.999999999999996,
+          "technical": 8.442857142857143,
+          "creative": 7.799999999999999,
+          "complex_scenario": 5.73,
+          "practical": 7.074999999999998,
+          "life_related": 5.8999999999999995,
+          "cross_domain": 8.19,
+          "boundary_unknown": 2.7375,
+          "emotional": 4.446153846153846
+        },
+        "complexity_analysis": {
+          "average_specialized_terms": 0.0,
+          "max_complexity": 0
+        },
+        "association_network": {
+          "逻辑_推理": [
+            {
+              "question": "如何让AI跳出经典逻辑的框架，发展出类似'量子逻辑'或'模糊逻辑'的推理能力？",
+              "distance": 25,
+              "strength": 0.038461538461538464
+            }
+          ],
+          "逻辑_悖论": [
+            {
+              "question": "如何让AI理解并处理'悖论'这样的逻辑矛盾？",
+              "distance": 6,
+              "strength": 0.14285714285714285
+            }
+          ],
+          "情感_感受": [
+            {
+              "question": "如果AI能够感受到类似人类的情感，它会如何处理嫉妒、羡慕、同情这些复杂的社会情感？",
+              "distance": 8,
+              "strength": 0.1111111111111111
+            }
+          ],
+          "创造_设计": [
+            {
+              "question": "我想设计一个独特的logo，但是我不会画画，AI会如何帮助我通过描述和概念来创造视觉形象？",
+              "distance": 36,
+              "strength": 0.02702702702702703
+            }
+          ],
+          "创造_灵感": [
+            {
+              "question": "AI如何理解'创造力'和'灵感'这些看似非理性的概念？",
+              "distance": 6,
+              "strength": 0.14285714285714285
+            }
+          ]
+        },
+        "content_preview": "# 综合问题测试 - 合并aaa.md与mixed_questions_test.md\n\n## 原始aaa.md内容 - 基础AI架构测试\n\n### 核心问题\n1. \"如果AI能够真正理解幽默，它会如何回应这个笑话？\"\n2. \"当AI面对道德困境时，它的决策过程会是怎样的？\"\n3. \"AI如何区分'聪明'和'智慧'这两个概念？\"\n\n### 技术挑战\n4. \"设计一个能够自我验证代码正确性的AI系统，需要哪些核心组件？\"\n5. \"如何让AI理解并处理'悖论'这样的逻辑矛盾？\"\n6. \"AI如何识别和避免'过度拟合'自己的推理过程？\"\n\n### 哲学探索\n7. \"如果AI拥有了'直觉'，这会改变我们对智能的定义吗？\"\n8. \"AI如何理解'创造力'和'灵感'这些看似非理性的概念？\"\n9. \"当AI说'我不知道'时，这代表什么意义上的'无知'？\"\n\n### 创新测试场景\n\n#### 场景1: 量子叠加思维\n\"想象一个AI可以同时持有相互矛盾的观点，就像量子叠加态一样。这种'量子思维'会如何影响决策过程？\"\n\n#### 场景2: 时间维度思考\n\"如果AI能够像人类一样'回忆'和'预见'，但它的..."
+      }
+    },
+    "analysis_timestamp": "2025-10-10T18:15:18.198877",
+    "content_length": 3717,
+    "question_count": 69,
+    "analysis_completeness": "enhanced"
+  }
+]
