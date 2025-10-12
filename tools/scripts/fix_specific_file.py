@@ -1,30 +1,12 @@
 #!/usr/bin/env python3
 """
-修复特定文件的语法问题
+此脚本已被禁用，因为它没有范围限制。
+
+原因：该脚本可能会修改下载的内容（如依赖、模型、数据集等），不符合项目本体的修复原则。
+
+请使用具有范围限制的 unified-fix.py 工具进行修复。
 """
 
-import sys
-from pathlib import Path
-
-# 添加项目根目录到路径
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
-
-try:
-    from tools.scripts.modules.syntax_fixer import SyntaxFixer
-    print("Syntax fixer module loaded successfully")
-    
-    # 修复特定文件
-    fixer = SyntaxFixer(project_root)
-    print("Syntax fixer module instance created successfully")
-    
-    # 修复unified_auto_fix.py文件
-    target_file = "scripts/unified_auto_fix.py"
-    success, message, details = fixer.fix(target=target_file)
-    print(f"Syntax fix result for {target_file}: {success}, {message}")
-    print(f"Details: {details}")
-    
-except Exception as e:
-    print(f"Error with syntax fixer module: {e}")
-    import traceback
-    traceback.print_exc()
+print("此脚本已被禁用并归档。")
+print("请使用具有范围限制的 unified-fix.py 工具进行修复。")
+print("位置：tools/unified-fix.py")
