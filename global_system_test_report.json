@@ -1,0 +1,227 @@
+{
+  "summary": {
+    "total_tests": 4,
+    "passed": 1,
+    "failed": 0,
+    "partial": 3,
+    "success_rate": 25.0
+  },
+  "errors_summary": {
+    "total_errors": 2,
+    "unique_errors": 2,
+    "error_list": [
+      "BaseAgent導入失敗: expected an indented block after 'try' statement on line 9 (base_agent.py, line 11)",
+      "WebSearchTool不可用: expected an indented block after function definition on line 8 (web_search_tool.py, line 9)"
+    ]
+  },
+  "system_impact": {
+    "cpu_delta": 0.0,
+    "memory_delta": -0.20000000000000284,
+    "duration": 60.01186394691467,
+    "baseline": {
+      "timestamp": 1760229664.237288,
+      "cpu_count": 4,
+      "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "win32",
+      "cpu_percent": 100.0,
+      "memory_percent": 93.9,
+      "memory_available_gb": 0.4753990173339844,
+      "disk_usage_percent": 52.1
+    },
+    "final": {
+      "timestamp": 1760229664.7314458,
+      "cpu_count": 4,
+      "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "win32",
+      "cpu_percent": 100.0,
+      "memory_percent": 93.7,
+      "memory_available_gb": 0.49129486083984375,
+      "disk_usage_percent": 52.1
+    }
+  },
+  "test_duration": 60.012877225875854,
+  "all_results": [
+    {
+      "test_name": "multiple_agents_simultaneous",
+      "status": "partial",
+      "agents_tested": [],
+      "errors": [
+        "BaseAgent導入失敗: expected an indented block after 'try' statement on line 9 (base_agent.py, line 11)"
+      ],
+      "performance": {},
+      "baseline_stats": {
+        "timestamp": 1760229604.8955913,
+        "cpu_count": 4,
+        "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+        "platform": "win32",
+        "cpu_percent": 100.0,
+        "memory_percent": 90.1,
+        "memory_available_gb": 0.7682685852050781,
+        "disk_usage_percent": 52.1
+      },
+      "available_agents": 0
+    },
+    {
+      "test_name": "multiple_tools_integration",
+      "status": "partial",
+      "tools_tested": [],
+      "errors": [
+        "WebSearchTool不可用: expected an indented block after function definition on line 8 (web_search_tool.py, line 9)"
+      ],
+      "integration_results": {},
+      "available_tools": 0
+    },
+    {
+      "test_name": "multiple_models_collaboration",
+      "status": "completed",
+      "models_tested": [
+        {
+          "service": "MultiLLMService",
+          "status": "initialized",
+          "models": [
+            {
+              "model_name": "gpt-4",
+              "config": {
+                "model": "gpt-4",
+                "temperature": 0.7
+              },
+              "status": "configured"
+            },
+            {
+              "model_name": "claude-3",
+              "config": {
+                "model": "claude-3",
+                "temperature": 0.5
+              },
+              "status": "configured"
+            },
+            {
+              "model_name": "gemini-pro",
+              "config": {
+                "model": "gemini-pro",
+                "temperature": 0.8
+              },
+              "status": "configured"
+            }
+          ]
+        }
+      ],
+      "errors": [],
+      "collaboration_results": {}
+    },
+    {
+      "test_name": "mixed_scenario_comprehensive",
+      "status": "partial",
+      "scenarios": [
+        {
+          "scenario_name": "AgentWebSearchScenario",
+          "description": "AI代理調用Web搜索工具",
+          "status": "failed",
+          "steps": [
+            {
+              "step": 1,
+              "action": "create_agent",
+              "status": "failed",
+              "error": "expected an indented block after 'try' statement on line 9 (base_agent.py, line 11)"
+            }
+          ],
+          "errors": [
+            "代理創建失敗: expected an indented block after 'try' statement on line 9 (base_agent.py, line 11)"
+          ]
+        },
+        {
+          "scenario_name": "ModelAnalysisScenario",
+          "description": "多模型協作進行數據分析",
+          "status": "success",
+          "steps": [
+            {
+              "step": 1,
+              "action": "init_multi_model",
+              "status": "success",
+              "service_class": "MultiLLMService"
+            },
+            {
+              "step": 2,
+              "action": "test_concept_models",
+              "status": "partial",
+              "tested_models": []
+            }
+          ],
+          "errors": []
+        },
+        {
+          "scenario_name": "CompleteWorkflowScenario",
+          "description": "完整工作流：代理→工具→模型→結果",
+          "status": "partial",
+          "steps": [
+            {
+              "step": 1,
+              "action": "initialize_agent",
+              "status": "failed",
+              "error": "expected an indented block after 'try' statement on line 9 (base_agent.py, line 11)"
+            },
+            {
+              "step": 2,
+              "action": "integrate_tools",
+              "status": "partial",
+              "available_integrations": []
+            },
+            {
+              "step": 3,
+              "action": "integrate_models",
+              "status": "success",
+              "service": "MultiLLMService"
+            },
+            {
+              "step": 4,
+              "action": "coordinate_workflow",
+              "status": "simulated_success",
+              "workflow_logic": {
+                "agent_triggers_tool": true,
+                "tool_collects_data": true,
+                "model_processes_data": true,
+                "result_returned_to_agent": true
+              },
+              "data_flow": [
+                "Agent→Tool: 請求數據收集",
+                "Tool→External: 執行實際操作",
+                "External→Tool: 返回原始數據",
+                "Tool→Model: 傳遞處理後數據",
+                "Model→Agent: 返回分析結果"
+              ]
+            }
+          ],
+          "errors": [
+            "代理初始化失敗: expected an indented block after 'try' statement on line 9 (base_agent.py, line 11)"
+          ]
+        }
+      ],
+      "errors": [],
+      "system_impact": {
+        "cpu_delta": 0.0,
+        "memory_delta": -0.20000000000000284,
+        "duration": 60.01186394691467,
+        "baseline": {
+          "timestamp": 1760229664.237288,
+          "cpu_count": 4,
+          "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+          "platform": "win32",
+          "cpu_percent": 100.0,
+          "memory_percent": 93.9,
+          "memory_available_gb": 0.4753990173339844,
+          "disk_usage_percent": 52.1
+        },
+        "final": {
+          "timestamp": 1760229664.7314458,
+          "cpu_count": 4,
+          "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+          "platform": "win32",
+          "cpu_percent": 100.0,
+          "memory_percent": 93.7,
+          "memory_available_gb": 0.49129486083984375,
+          "disk_usage_percent": 52.1
+        }
+      }
+    }
+  ]
+}

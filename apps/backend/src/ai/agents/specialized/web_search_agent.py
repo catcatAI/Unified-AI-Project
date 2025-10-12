@@ -2,9 +2,9 @@ import asyncio
 import uuid
 import logging
 
-from .base.base_agent import BaseAgent
-from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from ....tools.web_search_tool import WebSearchTool
+from agents.base_agent import BaseAgent
+from .....core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from .....core.tools.web_search_tool import WebSearchTool
 
 class WebSearchAgent(BaseAgent):
     """

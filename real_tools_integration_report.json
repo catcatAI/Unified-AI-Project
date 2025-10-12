@@ -1,0 +1,28 @@
+{
+  "tools_integration_report": {
+    "status": "failed",
+    "error": "未發現可用工具",
+    "tools_tested": 0,
+    "total_tools": 0
+  },
+  "agent_integration_test": {
+    "agent_tool_integration": "success",
+    "agent_status": {
+      "agent_id": "analysis_fafb4593",
+      "agent_name": "ToolIntegrationAgent",
+      "is_running": true,
+      "capabilities_count": 3,
+      "task_queue_size": 0,
+      "initialized": true,
+      "uptime": 0.015000000013969839
+    },
+    "simulation": {
+      "agent_id": "analysis_fafb4593",
+      "action": "integrate_tools",
+      "tools_tested": [],
+      "status": "simulated"
+    }
+  },
+  "overall_status": "completed",
+  "total_time": 0.18765830993652344
+}
