@@ -7,6 +7,7 @@ Level 5 AGI 动态配置系统
 import time
 import psutil
 import asyncio
+import random
 from datetime import datetime
 from typing import Dict, Any, Optional
 from dataclasses import dataclass, field
@@ -180,19 +181,19 @@ class Level5SystemMonitor:
         """模拟工作负载以生成真实性能数据"""
         try:
             # 模拟知识处理工作负载
-            self.metrics.total_entities_processed += np.random.randint(1, 5)
+            self.metrics.total_entities_processed += random.randint(1, 5)
             
             # 模拟多模态融合工作负载
-            self.metrics.total_modalities_fused += np.random.randint(1, 3)
+            self.metrics.total_modalities_fused += random.randint(1, 3)
             
             # 模拟认知约束工作负载
-            self.metrics.total_constraints_applied += np.random.randint(1, 4)
+            self.metrics.total_constraints_applied += random.randint(1, 4)
             
             # 模拟自主进化工作负载
-            self.metrics.total_evolution_cycles += np.random.randint(1, 2)
+            self.metrics.total_evolution_cycles += random.randint(1, 2)
             
             # 模拟创造性突破工作负载
-            self.metrics.total_concepts_generated += np.random.randint(1, 6)
+            self.metrics.total_concepts_generated += random.randint(1, 6)
             
         except Exception as e:
             logger.error(f"模拟工作负载失败: {e}")

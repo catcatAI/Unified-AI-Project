@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
 """
-修复文件中的语法错误
+此脚本已被禁用，因为它没有范围限制。
+
+原因：该脚本可能会修改下载的内容（如依赖、模型、数据集等），不符合项目本体的修复原则。
+
+请使用具有范围限制的 unified-fix.py 工具进行修复。
 """
 
-# 读取文件内容
-with open('scripts/unified_auto_fix.py', 'r', encoding='utf-8') as f:
-    content = f.read()
-
-# 修复第110行的语法错误
-content = content.replace(
-    'test_paths=[self.specific_target] if self.specific_target else None,:',
-    'test_paths=[self.specific_target] if self.specific_target else None,'
-)
-
-# 写回文件
-with open('scripts/unified_auto_fix.py', 'w', encoding='utf-8') as f:
-    f.write(content)
-
-print("Fixed syntax error in line 110")
+print("此脚本已被禁用并归档。")
+print("请使用具有范围限制的 unified-fix.py 工具进行修复。")
+print("位置：tools/unified-fix.py")
