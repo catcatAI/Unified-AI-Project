@@ -6,15 +6,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 
 # 修复导入路径 - 使用正确的模块路径
-try:
-    # Try absolute imports first (for when running with uvicorn):
-rom apps.backend.src.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-except ImportError:
-    # Fall back to relative imports (for when running as a script):
-ry:
-        from hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-    except ImportError:
-        from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +33,10 @@ class BaseAgent:
 rovides common functionality for HSP connectivity, task handling, and lifecycle management.:
 ""
 
-    def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]], agent_name: str = "BaseAgent") -> None:
+    def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]] = None, agent_name: str = "BaseAgent") -> None:
         self.agent_id = agent_id
         self.agent_name = agent_name
-        self.capabilities = capabilities
+        self.capabilities = capabilities or []  # 提供默認值
         self.hsp_connector = None
         self.collaboration_manager = None  # 代理协作管理器
         self.monitoring_manager = None  # 代理监控管理器
@@ -52,7 +44,7 @@ rovides common functionality for HSP connectivity, task handling, and lifecycle 
         self.is_running = False
         self.task_queue: List[QueuedTask] = []  # 新增：任务队列
         self.max_queue_size = 100  # 新增：最大队列大小
-        self.task_queue_lock = asyncio.Lock()  # 新增：任务队列锁
+        self.task_queue_lock = None  # 延遲初始化異步鎖
         self.task_handlers: Dict[str, Callable] = {}  # 新增：任务处理器映射
         self.max_retries = 3  # 新增：最大重试次数
         self.retry_delay = 1.0  # 新增：重试延迟（秒）
@@ -60,57 +52,52 @@ rovides common functionality for HSP connectivity, task handling, and lifecycle 
         self.services = None
         self._task_counter = 0  # 用于跟踪任务计数
         self._start_time = None  # 用于跟踪启动时间
+        self._initialized = False  # 初始化狀態標記
+        
+        # 執行基礎初始化
+        self.initialize_basic()
 
-    async def _ainit(self):
-        # 延迟导入以避免循环导入
+    def initialize_basic(self):
+        """基礎初始化 - 同步版本，避免複雜依賴"""
+        # 初始化異步鎖
+        self.task_queue_lock = asyncio.Lock()
+        self._initialized = True
+        logger.info(f"[{self.agent_id}] BaseAgent基礎初始化完成")
+    
+    async def initialize_full(self):
+        """完整初始化 - 異步版本，包含所有服務"""
+        if self._initialized:
+            return
+            
         try:
-            # Try relative imports first (for when running with uvicorn):
-rom ..core_services import initialize_services, get_services, shutdown_services
-            from apps.backend.src.ai.agent_collaboration_manager import AgentCollaborationManager
-            from apps.backend.src.ai.agent_monitoring_manager import AgentMonitoringManager
-            from apps.backend.src.ai.dynamic_agent_registry import DynamicAgentRegistry:
-xcept ImportError:
-            # Fall back to absolute imports (for when running as a script):
-rom apps.backend.src.core_services import initialize_services, get_services, shutdown_services
-            from apps.backend.src.ai.agent_collaboration_manager import AgentCollaborationManager
-            from apps.backend.src.ai.agent_monitoring_manager import AgentMonitoringManager
-            from apps.backend.src.ai.dynamic_agent_registry import DynamicAgentRegistry
-
-        # Initialize core services required by the agent
-        # Construct a minimal config for initialize_services
-        # This is needed because initialize_services now requires a config dict
-        # and BaseAgent might not have a full one.
-        minimal_config = {
-            "is_multiprocess": False,
-            "mcp": {
-                "mqtt_broker_address": "localhost",
-                "mqtt_broker_port": 1883,
-                "enable_fallback": True,
-                "fallback_config": {}
-            }
-        }
-
-        await initialize_services(
-            config=minimal_config, # Pass the constructed config
-            ai_id=self.agent_id,
-            use_mock_ham=True, # Sub-agents typically don't need their own large memory
-            llm_config=None, # Sub-agents use specific tools, may not need a full LLM
-            operational_configs=None
-        )
-        self.services = get_services()  # Remove await since get_services is not async
-        
-        # Set hsp_connector from services
-        self.hsp_connector = self.services.get("hsp_connector")
-        
-        # Initialize the collaboration manager if HSP connector is available:
-f self.hsp_connector:
+            # 延迟导入以避免循环导入
+            from core.hsp.connector import HSPConnector
+            from ai.agent_collaboration_manager import AgentCollaborationManager
+            from ai.agent_monitoring_manager import AgentMonitoringManager
+            from ai.dynamic_agent_registry import DynamicAgentRegistry
+            
+            # 創建基礎HSP連接器（簡化版本）
+            self.hsp_connector = HSPConnector(
+                broker_address="localhost",
+                broker_port=1883,
+                client_id=self.agent_id
+            )
+            
+            # 初始化協作管理器
             self.collaboration_manager = AgentCollaborationManager(self.hsp_connector)
             
-            # Initialize the monitoring manager
+            # 初始化監控管理器
             self.monitoring_manager = AgentMonitoringManager(self.hsp_connector)
             
-            # Initialize the dynamic agent registry:
-elf.agent_registry = DynamicAgentRegistry(self.hsp_connector)
+            # 初始化動態代理註冊表
+            self.agent_registry = DynamicAgentRegistry(self.hsp_connector)
+            
+            self._initialized = True
+            logger.info(f"[{self.agent_id}] BaseAgent完整初始化完成")
+            
+        except Exception as e:
+            logger.warning(f"[{self.agent_id}] 完整初始化失敗，使用基礎模式: {e}")
+            self.initialize_basic()
 
     async def start(self):
         """

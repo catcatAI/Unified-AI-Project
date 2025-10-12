@@ -1,0 +1,223 @@
+{
+  "test_summary": {
+    "total_tests": 4,
+    "passed": 0,
+    "failed": 1,
+    "partial": 3,
+    "success_rate": 0.0
+  },
+  "error_analysis": {
+    "total_errors": 1,
+    "unique_errors": 1,
+    "error_list": [
+      "BaseAgent測試失敗: SyntaxError: invalid character '，' (U+FF0C) (base_agent.py, line 61)"
+    ]
+  },
+  "system_performance": {
+    "total_test_duration": 45.610671043395996,
+    "has_system_monitoring": true
+  },
+  "detailed_results": [
+    {
+      "test_name": "real_base_agent",
+      "status": "failed",
+      "agents_tested": [],
+      "errors": [
+        "BaseAgent測試失敗: SyntaxError: invalid character '，' (U+FF0C) (base_agent.py, line 61)"
+      ],
+      "system_impact": {},
+      "baseline_stats": {
+        "timestamp": 1760232564.7679558,
+        "cpu_count": 4,
+        "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+        "platform": "win32",
+        "cpu_percent": 100.0,
+        "memory_percent": 84.8,
+        "memory_available_gb": 1.1771659851074219,
+        "disk_usage_percent": 52.1
+      },
+      "final_stats": {
+        "timestamp": 1760232564.9238753,
+        "cpu_count": 4,
+        "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+        "platform": "win32",
+        "cpu_percent": 100.0,
+        "memory_percent": 84.8,
+        "memory_available_gb": 1.1771125793457031,
+        "disk_usage_percent": 52.1
+      }
+    },
+    {
+      "test_name": "real_tools",
+      "status": "started",
+      "tools_tested": [
+        {
+          "tool_name": "calculator_tool",
+          "class_name": "CalculatorTool",
+          "file": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core\\tools\\calculator_tool.py",
+          "status": "failed",
+          "instantiation_test": {},
+          "functionality_test": {},
+          "error": "工具測試異常: IndentationError: expected an indented block after 'if' statement on line 24 (calculator_tool.py, line 27)"
+        },
+        {
+          "tool_name": "code_understanding_tool",
+          "class_name": "CodeUnderstandingTool",
+          "file": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core\\tools\\code_understanding_tool.py",
+          "status": "failed",
+          "instantiation_test": {},
+          "functionality_test": {},
+          "error": "工具測試異常: SyntaxError: unterminated string literal (detected at line 55) (code_understanding_tool.py, line 55)"
+        },
+        {
+          "tool_name": "csv_tool",
+          "class_name": "CsvTool",
+          "file": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core\\tools\\csv_tool.py",
+          "status": "failed",
+          "instantiation_test": {},
+          "functionality_test": {},
+          "error": "工具測試異常: SyntaxError: unterminated triple-quoted string literal (detected at line 52) (csv_tool.py, line 25)"
+        }
+      ],
+      "errors": [],
+      "tools_discovered": 12
+    },
+    {
+      "test_name": "real_models",
+      "status": "completed",
+      "models_tested": [
+        {
+          "service": "MultiLLMService",
+          "status": "initialized",
+          "models_available": [
+            {
+              "model_name": "gpt-4",
+              "config": {
+                "model": "gpt-4",
+                "temperature": 0.7
+              },
+              "status": "configured"
+            },
+            {
+              "model_name": "claude-3",
+              "config": {
+                "model": "claude-3",
+                "temperature": 0.5
+              },
+              "status": "configured"
+            }
+          ]
+        }
+      ],
+      "errors": [],
+      "services_status": {
+        "multi_llm": "available"
+      }
+    },
+    {
+      "test_name": "real_mixed_scenario",
+      "status": "partial",
+      "scenarios": [
+        {
+          "scenario_name": "real_agent_with_tools",
+          "description": "真實代理調用真實工具",
+          "status": "failed",
+          "steps": [
+            {
+              "step": 1,
+              "action": "create_real_agent",
+              "status": "failed",
+              "error": "invalid character '，' (U+FF0C) (base_agent.py, line 61)"
+            }
+          ],
+          "errors": [
+            "真實代理創建失敗: invalid character '，' (U+FF0C) (base_agent.py, line 61)"
+          ]
+        },
+        {
+          "scenario_name": "real_models_with_tools",
+          "description": "真實多模型協作調用真實工具",
+          "status": "success",
+          "steps": [
+            {
+              "step": 1,
+              "action": "init_real_multi_model",
+              "status": "success",
+              "service_class": "MultiLLMService",
+              "initialization": "completed"
+            },
+            {
+              "step": 2,
+              "action": "integrate_real_tools_with_models",
+              "status": "partial",
+              "collaboration_tests": [
+                {
+                  "tool": "MathTool",
+                  "model_integration": "math_calculation",
+                  "error": "unterminated triple-quoted string literal (detected at line 177) (math_tool.py, line 90)",
+                  "status": "failed"
+                }
+              ],
+              "successful_collaborations": 0
+            }
+          ],
+          "errors": []
+        },
+        {
+          "scenario_name": "real_complete_workflow",
+          "description": "完整真實工作流：代理→工具→模型→結果",
+          "status": "failed",
+          "steps": [
+            {
+              "step": 1,
+              "action": "initialize_real_agent",
+              "status": "failed",
+              "timestamp": 1760232610.1916935,
+              "error": "invalid character '，' (U+FF0C) (base_agent.py, line 61)"
+            }
+          ],
+          "errors": [
+            "真實代理初始化失敗: invalid character '，' (U+FF0C) (base_agent.py, line 61)"
+          ],
+          "workflow_metrics": {}
+        }
+      ],
+      "errors": [],
+      "system_impact": {
+        "cpu_delta": 0.0,
+        "memory_delta": 0.0,
+        "duration": 45.610671043395996,
+        "baseline": {
+          "timestamp": 1760232609.9676492,
+          "cpu_count": 4,
+          "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+          "platform": "win32",
+          "cpu_percent": 100.0,
+          "memory_percent": 86.1,
+          "memory_available_gb": 1.0793800354003906,
+          "disk_usage_percent": 52.1
+        },
+        "final": {
+          "timestamp": 1760232610.213306,
+          "cpu_count": 4,
+          "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+          "platform": "win32",
+          "cpu_percent": 100.0,
+          "memory_percent": 86.1,
+          "memory_available_gb": 1.0790290832519531,
+          "disk_usage_percent": 52.1
+        }
+      },
+      "baseline_stats": {
+        "timestamp": 1760232609.9676492,
+        "cpu_count": 4,
+        "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+        "platform": "win32",
+        "cpu_percent": 100.0,
+        "memory_percent": 86.1,
+        "memory_available_gb": 1.0793800354003906,
+        "disk_usage_percent": 52.1
+      }
+    }
+  ]
+}

@@ -5,9 +5,9 @@ import logging
 from pathlib import Path # Import Path
 from typing import Dict, Any
 
-from .base.base_agent import BaseAgent
-from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from ....core.services.multi_llm_service import MultiLLMService, ChatMessage
+from agents.base_agent import BaseAgent
+from .....core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from .....core.services.multi_llm_service import MultiLLMService, ChatMessage
 
 class CreativeWritingAgent(BaseAgent):
     """
