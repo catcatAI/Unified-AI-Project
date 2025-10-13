@@ -70,7 +70,7 @@
     "react": "^19.0.0",
     "react-day-picker": "^9.8.0",
     "react-dom": "^19.0.0",
-    "react-hook-form": "^7.60.0",
+    "react-hook-form": "^7.65.0",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^3.0.3",
     "react-router-dom": "^6.26.2",
