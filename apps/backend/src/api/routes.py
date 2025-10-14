@@ -7,7 +7,13 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 import random
 
+# 导入子路由
+from .routes.ops_routes import router as ops_router
+
 router = APIRouter()
+
+# 注册子路由
+router.include_router(ops_router)
 
 @router.get("/")
 async def root():
@@ -665,6 +671,78 @@ async def process_multimodal_fusion(request: Dict[str, Any]):
     data_items = request.get("data_items", [])
     result = await multimodal_processor.process_multimodal_fusion(data_items)
     return result
+
+# Atlassian Integration endpoints
+@router.get("/atlassian/status")
+async def get_atlassian_status():
+    """获取Atlassian集成状态"""
+    try:
+        from src.integrations.atlassian_bridge import atlassian_bridge
+        status = await atlassian_bridge.get_status()
+        return status
+    except Exception as e:
+        return {"error": str(e), "status": "unavailable"}
+
+@router.get("/atlassian/jira/projects")
+async def get_jira_projects():
+    """获取Jira项目列表"""
+    try:
+        from src.integrations.atlassian_bridge import atlassian_bridge
+        projects = await atlassian_bridge.get_jira_projects()
+        return {"projects": projects}
+    except Exception as e:
+        return {"error": str(e), "projects": []}
+
+@router.get("/atlassian/confluence/spaces")
+async def get_confluence_spaces():
+    """获取Confluence空间列表"""
+    try:
+        from src.integrations.atlassian_bridge import atlassian_bridge
+        spaces = await atlassian_bridge.get_confluence_spaces()
+        return {"spaces": spaces}
+    except Exception as e:
+        return {"error": str(e), "spaces": []}
+
+@router.get("/atlassian/rovo/agents")
+async def get_rovo_agents():
+    """获取Rovo代理列表"""
+    try:
+        from src.integrations.rovo_dev_connector import rovo_connector
+        agents = await rovo_connector.get_agents()
+        return {"agents": agents}
+    except Exception as e:
+        return {"error": str(e), "agents": []}
+
+@router.get("/atlassian/rovo/tasks")
+async def get_rovo_tasks():
+    """获取Rovo任务列表"""
+    try:
+        from src.integrations.rovo_dev_connector import rovo_connector
+        tasks = await rovo_connector.get_tasks()
+        return {"tasks": tasks}
+    except Exception as e:
+        return {"error": str(e), "tasks": []}
+
+@router.post("/atlassian/jira/issues")
+async def create_jira_issue(request: Dict[str, Any]):
+    """创建Jira问题"""
+    try:
+        from src.integrations.atlassian_bridge import atlassian_bridge
+        result = await atlassian_bridge.create_issue(request)
+        return result
+    except Exception as e:
+        return {"error": str(e), "success": False}
+
+@router.post("/atlassian/jira/search")
+async def search_jira_issues(request: Dict[str, Any]):
+    """搜索Jira问题"""
+    try:
+        from src.integrations.atlassian_bridge import atlassian_bridge
+        jql = request.get("jql", "")
+        issues = await atlassian_bridge.search_issues(jql)
+        return {"issues": issues}
+    except Exception as e:
+        return {"error": str(e), "issues": []}
 
 @router.get("/multimodal/stats")
 async def get_multimodal_stats():
