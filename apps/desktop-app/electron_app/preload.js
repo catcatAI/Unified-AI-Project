@@ -4,11 +4,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 console.log("Preload script loading...");
 
 try {
-  // 在Electron preload环境中，__dirname是可用的，但需要确保正确使用
-  // 使用path.join来构建路径更安全
-  const path = require("path");
-  
-  // 使用相对路径而不是__dirname来避免问题
+  // 修复路径问题 - 使用相对路径
   const CHANNELS = require("./src/ipc-channels.js");
   console.log("ipc-channels.js loaded successfully");
 
@@ -24,13 +20,29 @@ try {
     },
   });
 
-  contextBridge.exposeInMainWorld('initialState', JSON.parse(process.argv.find(arg => arg.startsWith('{'))));
+  // 安全地解析初始状态
+  let initialState = {};
+  try {
+    const initialStateArg = process.argv.find(arg => arg.startsWith('{'));
+    if (initialStateArg) {
+      initialState = JSON.parse(initialStateArg);
+    }
+  } catch (e) {
+    console.warn("Could not parse initial state:", e);
+  }
+  contextBridge.exposeInMainWorld('initialState', initialState);
 
   // Expose CHANNELS to the renderer process
   contextBridge.exposeInMainWorld('ipcChannels', CHANNELS);
   
-  // 不再尝试在preload中加载DOMPurify，因为已经在HTML中通过CDN加载
   console.log("Preload script loaded successfully");
 } catch (error) {
   console.error("Error in preload script:", error);
+  // 即使加载失败也要暴露基本的API
+  contextBridge.exposeInMainWorld("electronAPI", {
+    invoke: async (channel, ...args) => {
+      console.error(`IPC not available for channel '${channel}'`);
+      return null;
+    },
+  });
 }
