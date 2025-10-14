@@ -1,17 +1,398 @@
 {
-  "total_errors": 1,
+  "total_errors": 39,
   "errors_by_type": {
-    "导入路径错误": 1
+    "导入路径错误": 38,
+    "属性错误": 1
   },
   "error_details": [
     {
       "type": "导入路径错误",
-      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\ast.py",
-      "line_number": 52,
-      "message": "ImportError while loading conftest 'D:\\Projects\\Unified-AI-Project\\tests\\conftest.py'.",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\backup\\20250927_062428\\apps\\backend\\debug_test.py'.",
       "details": {
-        "context": "\nImportError while loading conftest 'D:\\Projects\\Unified-AI-Project\\tests\\conftest.py'.\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\ast.py:52: in parse\n    return compile(source, filename, mode, flags,\nE     File \"D:\\Projects\\Unified-AI-Project\\tests\\conftest.py\", line 465",
-        "full_match": "ImportError while loading conftest 'D:\\Projects\\Unified-AI-Project\\tests\\conftest.py'."
+        "context": "E           ^\nE   SyntaxError: unterminated string literal (detected at line 30)\n_____ ERROR collecting backup/20250927_062428/apps/backend/debug_test.py ______\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\backup\\20250927_062428\\apps\\backend\\debug_test.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\backup\\20250927_062428\\apps\\backend\\debug_test.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\backup\\20250927_062428\\apps\\backend\\test_hsp_fixture.py'.",
+      "details": {
+        "context": "  D:\\Projects\\Unified-AI-Project\\backup\\20250927_062428\\apps\\backend\\test_fixes.py\nHINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules\n__ ERROR collecting backup/20250927_062428/apps/backend/test_hsp_fixture.py ___\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\backup\\20250927_062428\\apps\\backend\\test_hsp_fixture.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\backup\\20250927_062428\\apps\\backend\\test_hsp_fixture.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "backup\\20250927_062428\\apps\\backend\\test_hsp_fixture.py",
+      "line_number": 10,
+      "message": "No module named 'apps.backend.tests.hsp'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nbackup\\20250927_062428\\apps\\backend\\test_hsp_fixture.py:10: in <module>\n    from apps.backend.tests.hsp.mock_mqtt_broker import MockMqttBroker\nE   ModuleNotFoundError: No module named 'apps.backend.tests.hsp'\n_____ ERROR collecting backup/20250927_062428/apps/backend/test_import.py _____\nimport file mismatch:\nimported module 'test_import' has this __file__ attribute:",
+        "full_match": "No module named 'apps.backend.tests.hsp'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\test_real_repair_functionality.py'.",
+      "details": {
+        "context": "E                  ^\nE   SyntaxError: expected ':'\n_____________ ERROR collecting test_real_repair_functionality.py ______________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\test_real_repair_functionality.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\test_real_repair_functionality.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "test_real_repair_functionality.py",
+      "line_number": 11,
+      "message": "No module named 'enhanced_intelligent_repair_system'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntest_real_repair_functionality.py:11: in <module>\n    from enhanced_intelligent_repair_system import EnhancedIntelligentRepairSystem\nE   ModuleNotFoundError: No module named 'enhanced_intelligent_repair_system'\n___________________ ERROR collecting test_repair_sample.py ____________________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'enhanced_intelligent_repair_system'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\formula_engine\\test_formula_engine.py'.",
+      "details": {
+        "context": "E             ^\nE   SyntaxError: invalid syntax\n____ ERROR collecting tests/core_ai/formula_engine/test_formula_engine.py _____\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\formula_engine\\test_formula_engine.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\formula_engine\\test_formula_engine.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\core_ai\\formula_engine\\test_formula_engine.py",
+      "line_number": 13,
+      "message": "No module named 'apps.backend.src.core_ai'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\core_ai\\formula_engine\\test_formula_engine.py:13: in <module>\n    from apps.backend.src.core_ai.formula_engine import FormulaEngine\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n_ ERROR collecting tests/core_ai/language_models/test_daily_language_model.py _\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.core_ai'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\core_ai\\learning\\conftest.py",
+      "line_number": 2,
+      "message": "No module named 'apps.backend.src.core_ai'",
+      "details": {
+        "context": "    exec(co, module.__dict__)\ntests\\core_ai\\learning\\conftest.py:2: in <module>\n    from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n__________ ERROR collecting tests/core_ai/lis/test_ham_lis_cache.py ___________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.core_ai'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\lis\\test_tonal_repair_engine.py'.",
+      "details": {
+        "context": "E                                                   ^\nE   SyntaxError: expected ':'\n_______ ERROR collecting tests/core_ai/lis/test_tonal_repair_engine.py ________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\lis\\test_tonal_repair_engine.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\lis\\test_tonal_repair_engine.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\core_ai\\lis\\test_tonal_repair_engine.py",
+      "line_number": 9,
+      "message": "No module named 'apps.backend.src.core_ai'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\core_ai\\lis\\test_tonal_repair_engine.py:9: in <module>\n    from apps.backend.src.core_ai.lis.tonal_repair_engine import TonalRepairEngine\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n___ ERROR collecting tests/core_ai/memory/test_ham_chromadb_integration.py ____\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.core_ai'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\personality\\test_personality_manager.py'.",
+      "details": {
+        "context": "E                              ^\nE   IndentationError: unindent does not match any outer indentation level\n___ ERROR collecting tests/core_ai/personality/test_personality_manager.py ____\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\personality\\test_personality_manager.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\personality\\test_personality_manager.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\core_ai\\personality\\test_personality_manager.py",
+      "line_number": 28,
+      "message": "No module named 'apps.backend.src.core_ai'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\core_ai\\personality\\test_personality_manager.py:28: in <module>\n    from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n_ ERROR collecting tests/core_ai/service_discovery/test_service_discovery_module.py _\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.core_ai'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\test_crisis_system.py'.",
+      "details": {
+        "context": "E                                                ^\nE   SyntaxError: expected ':'\n____________ ERROR collecting tests/core_ai/test_crisis_system.py _____________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\test_crisis_system.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\test_crisis_system.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\core_ai\\test_crisis_system.py",
+      "line_number": 21,
+      "message": "No module named 'apps.backend.src.core_ai'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\core_ai\\test_crisis_system.py:21: in <module>\n    from apps.backend.src.core_ai.crisis.crisis_system import CrisisSystem\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n_____________ ERROR collecting tests/core_ai/test_deep_mapper.py ______________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.core_ai'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\test_emotion_system.py'.",
+      "details": {
+        "context": "E                                          ^\nE   IndentationError: unindent does not match any outer indentation level\n____________ ERROR collecting tests/core_ai/test_emotion_system.py ____________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\test_emotion_system.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\test_emotion_system.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\core_ai\\test_emotion_system.py",
+      "line_number": 20,
+      "message": "No module named 'apps.backend.src.core_ai'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\core_ai\\test_emotion_system.py:20: in <module>\n    from apps.backend.src.core_ai.emotion.emotion_system import EmotionSystem\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n_____________ ERROR collecting tests/core_ai/test_time_system.py ______________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\test_time_system.py'.\nHint: make sure your test modules/packages have valid Python names.",
+        "full_match": "No module named 'apps.backend.src.core_ai'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\test_time_system.py'.",
+      "details": {
+        "context": "    from apps.backend.src.core_ai.emotion.emotion_system import EmotionSystem\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n_____________ ERROR collecting tests/core_ai/test_time_system.py ______________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\test_time_system.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\core_ai\\test_time_system.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\core_ai\\test_time_system.py",
+      "line_number": 20,
+      "message": "No module named 'apps.backend.src.core_ai'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\core_ai\\test_time_system.py:20: in <module>\n    from apps.backend.src.core_ai.time.time_system import TimeSystem\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n___________ ERROR collecting tests/creation/test_creation_engine.py ___________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.core_ai'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\debug_test.py'.",
+      "details": {
+        "context": "E                              ^\nE   IndentationError: unindent does not match any outer indentation level\n____________________ ERROR collecting tests/debug_test.py _____________________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\debug_test.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\debug_test.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\debug_test.py",
+      "line_number": 8,
+      "message": "No module named 'tests.src'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\debug_test.py:8: in <module>\n    from .src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule\nE   ModuleNotFoundError: No module named 'tests.src'\n____________ ERROR collecting tests/e2e/test_atlassian_workflow.py ____________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'tests.src'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\evaluation\\test_evaluation_db.py'.",
+      "details": {
+        "context": "E                                                                       ^\nE   SyntaxError: invalid syntax\n___________ ERROR collecting tests/evaluation/test_evaluation_db.py ___________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\evaluation\\test_evaluation_db.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\evaluation\\test_evaluation_db.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\evaluation\\test_evaluation_db.py",
+      "line_number": 12,
+      "message": "No module named 'apps.backend.src.core_ai'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\evaluation\\test_evaluation_db.py:12: in <module>\n    from apps.backend.src.core_ai.evaluation.evaluation_db import EvaluationDB\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n_____________ ERROR collecting tests/evaluation/test_evaluator.py _____________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.core_ai'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\evaluation\\test_task_evaluator.py'.",
+      "details": {
+        "context": "E       Evaluates a model or tool on a dataset.\nE   IndentationError: unexpected indent\n__________ ERROR collecting tests/evaluation/test_task_evaluator.py ___________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\evaluation\\test_task_evaluator.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\evaluation\\test_task_evaluator.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\evaluation\\test_task_evaluator.py",
+      "line_number": 11,
+      "message": "No module named 'apps.backend.src.core_ai'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\evaluation\\test_task_evaluator.py:11: in <module>\n    from apps.backend.src.core_ai.evaluation.task_evaluator import TaskExecutionEvaluator, MetricsCalculator, FeedbackAnalyzer\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n____________________ ERROR collecting tests/final_test.py _____________________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.core_ai'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\meta\\test_learning_log_db.py'.",
+      "details": {
+        "context": "E       ^^^^^^^^^^^^^^^\nE   SyntaxError: invalid syntax. Maybe you meant '==' or ':=' instead of '='?\n_____________ ERROR collecting tests/meta/test_learning_log_db.py _____________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\meta\\test_learning_log_db.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\meta\\test_learning_log_db.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\meta\\test_learning_log_db.py",
+      "line_number": 11,
+      "message": "No module named 'apps.backend.src.core_ai'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\meta\\test_learning_log_db.py:11: in <module>\n    from apps.backend.src.core_ai.meta.learning_log_db import LearningLogDB\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n_______ ERROR collecting tests/modules_fragmenta/test_element_layer.py ________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.core_ai'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\temp_async_test.py'.",
+      "details": {
+        "context": "E              ^\nE   SyntaxError: invalid syntax\n__________________ ERROR collecting tests/temp_async_test.py __________________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\temp_async_test.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\temp_async_test.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\temp_async_test.py",
+      "line_number": 2,
+      "message": "No module named 'apps.backend.src.core_ai'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\temp_async_test.py:2: in <module>\n    from apps.backend.src.core_ai.trust.trust_manager_module import TrustManager\nE   ModuleNotFoundError: No module named 'apps.backend.src.core_ai'\n_______________ ERROR collecting tests/test_agi_integration.py ________________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.core_ai'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\test_defect_detector.py'.",
+      "details": {
+        "context": "------------------------------- Captured stdout -------------------------------\nLoaded spaCy model\n_______________ ERROR collecting tests/test_defect_detector.py ________________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\test_defect_detector.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\test_defect_detector.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\test_defect_detector.py",
+      "line_number": 7,
+      "message": "No module named 'automated_defect_detector'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\test_defect_detector.py:7: in <module>\n    from automated_defect_detector import DefectDetector\nE   ModuleNotFoundError: No module named 'automated_defect_detector'\n______________ ERROR collecting tests/test_dependency_manager.py ______________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'automated_defect_detector'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\test_syntax_fixer.py'.",
+      "details": {
+        "context": "E       def setUp(self):\nE   IndentationError: unexpected indent\n_________________ ERROR collecting tests/test_syntax_fixer.py _________________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\test_syntax_fixer.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\test_syntax_fixer.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\test_syntax_fixer.py",
+      "line_number": 7,
+      "message": "No module named 'tools.scripts'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\test_syntax_fixer.py:7: in <module>\n    from tools.scripts.modules.syntax_fixer import SyntaxFixer\nE   ModuleNotFoundError: No module named 'tools.scripts'\n______________ ERROR collecting tests/test_system_integration.py ______________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'tools.scripts'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tools\\scripts\\auto_fix_test.py'.",
+      "details": {
+        "context": "E       ontext = PermissionContext(\nE   SyntaxError: expected 'except' or 'finally' block\n_______________ ERROR collecting tools/scripts/auto_fix_test.py _______________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tools\\scripts\\auto_fix_test.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tools\\scripts\\auto_fix_test.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "No module named 'scripts.auto_fix_test'",
+      "details": {
+        "context": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   ModuleNotFoundError: No module named 'scripts.auto_fix_test'\n________________ ERROR collecting tools/scripts/simple_test.py ________________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tools\\scripts\\simple_test.py'.\nHint: make sure your test modules/packages have valid Python names.",
+        "full_match": "No module named 'scripts.auto_fix_test'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tools\\scripts\\simple_test.py'.",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   ModuleNotFoundError: No module named 'scripts.auto_fix_test'\n________________ ERROR collecting tools/scripts/simple_test.py ________________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tools\\scripts\\simple_test.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tools\\scripts\\simple_test.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "No module named 'scripts.simple_test'",
+      "details": {
+        "context": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   ModuleNotFoundError: No module named 'scripts.simple_test'\n___________ ERROR collecting tools/scripts/test_coverage_monitor.py ___________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'scripts.simple_test'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": null,
+      "line_number": null,
+      "message": "No module named 'apps.bac...",
+      "details": {
+        "context": "ERROR tests/core_ai/dialogue/test_project_coordinator_fix.py\nERROR tests/core_ai/formula_engine/test_formula_engine.py\nERROR tests/core_ai/language_models/test_daily_language_model.py\nERROR tests/core_ai/learning - ModuleNotFoundError: No module named 'apps.bac...\nERROR tests/core_ai/lis/test_ham_lis_cache.py\nERROR tests/core_ai/lis/test_tonal_repair_engine.py\nERROR tests/core_ai/memory/test_ham_chromadb_integration.py",
+        "full_match": "No module named 'apps.bac..."
+      }
+    },
+    {
+      "type": "属性错误",
+      "file_path": "unified_auto_fix_system\\core\\fix_types.py",
+      "line_number": 120,
+      "message": "AttributeError:",
+      "details": {
+        "context": "unified_auto_fix_system\\core\\fix_types.py:120: in FixCategory\n    FixType.TYPE_HINT_FIX,\n    ^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: type object 'FixType' has no attribute 'TYPE_HINT_FIX'\n________ ERROR collecting auto_fix_system_tests/test_comprehensive.py _________\nauto_fix_system_tests\\test_comprehensive.py:21: in <module>\n    @undefined_decorator",
+        "full_match": "AttributeError:"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "backup\\20250927_062428\\apps\\backend\\debug_test.py",
+      "line_number": 8,
+      "message": "ImportError:",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nbackup\\20250927_062428\\apps\\backend\\debug_test.py:8: in <module>\n    from .src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule\nE   ImportError: attempted relative import with no known parent package\n_____ ERROR collecting backup/20250927_062428/apps/backend/final_test.py ______\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "ImportError:"
       }
     }
   ]

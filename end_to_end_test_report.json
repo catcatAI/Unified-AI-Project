@@ -1,0 +1,33 @@
+{
+  "test_time": "2025-10-14T20:20:11.534278",
+  "total_tests": 6,
+  "passed": 3,
+  "failed": 3,
+  "success_rate": "50.0%",
+  "results": [
+    {
+      "name": "数据流管道",
+      "passed": false
+    },
+    {
+      "name": "HSP协议集成",
+      "passed": false
+    },
+    {
+      "name": "API端点",
+      "passed": false
+    },
+    {
+      "name": "数据同步",
+      "passed": true
+    },
+    {
+      "name": "错误处理",
+      "passed": true
+    },
+    {
+      "name": "负载性能",
+      "passed": true
+    }
+  ]
+}

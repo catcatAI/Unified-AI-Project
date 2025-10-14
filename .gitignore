@@ -236,3 +236,57 @@ todo_grep.txt
 markdown_files.txt
 # Fix for the problematic file
 t FETCH origin...
+
+# Test execution artifacts
+test_results/
+test_output/
+*.test.log
+test_*.pyc
+test_*.pyo
+
+# Local test configurations
+test_config.json
+local_test_settings.py
+
+# Performance test results
+performance_reports/
+benchmark_results/
+*.perf
+
+# Temporary test files
+test_*.tmp
+test_*.bak
+*_test_temp.*
+
+# Local development
+test_import.py
+test_simple.py
+test_basic_import.py
+test_component_import.py
+test_functionality.py
+test_performance.py
+
+# Test databases
+test_*.db
+test_*.sqlite
+test_*.sqlite3
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+.coverage.*
+
+# pytest
+.pytest_cache/
+.tox/
+
+# Test environments
+test_env/
+test_venv/
+
+# Local test scripts (keep structure, ignore execution artifacts)
+tests/local/
+tests/temp/
+tests/logs/
