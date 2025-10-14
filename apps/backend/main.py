@@ -48,6 +48,77 @@ async def lifespan(app: FastAPI):
     
     # 初始化系统管理器
     system_manager = SystemManager()
+    
+    # 初始化实时同步系统
+    from src.core.sync.realtime_sync import sync_manager
+    try:
+        await sync_manager.initialize()
+        logger.info("✅ 实时同步系统初始化完成")
+    except Exception as e:
+        logger.warning(f"实时同步系统初始化失败: {e}")
+    
+    # 初始化知识图谱（如果可用）
+    try:
+        from src.core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraph
+        kg = UnifiedKnowledgeGraph(config.get('knowledge_config', {}))
+        await kg.initialize()
+        logger.info("✅ 知识图谱系统初始化完成")
+    except ImportError as e:
+        logger.warning(f"知识图谱模块不可用，跳过初始化: {e}")
+    except Exception as e:
+        logger.warning(f"知识图谱初始化失败，跳过: {e}")
+    
+    # 初始化企业级监控系统
+    from src.core.monitoring.enterprise_monitor import enterprise_monitor
+    try:
+        await enterprise_monitor.start()
+        logger.info("✅ 企业级监控系统初始化完成")
+    except Exception as e:
+        logger.warning(f"企业级监控系统初始化失败: {e}")
+    
+    # 初始化数据网络
+    from src.core.data.data_network_manager import data_network_manager
+    try:
+        await data_network_manager.initialize()
+        await data_network_manager.create_network("text_processing", "text_processing")
+        await data_network_manager.create_network("metric_collection", "metric_collection")
+        logger.info("✅ 数据网络初始化完成")
+    except Exception as e:
+        logger.warning(f"数据网络初始化失败: {e}")
+    
+    # 同步系统状态
+    await sync_manager.sync_system_status("backend", {
+        "status": "online",
+        "components": {
+            "api": True,
+            "system_manager": True,
+            "sync_manager": True,
+            "monitoring": True,
+            "data_network": True,
+            "knowledge_graph": "knowledge_graph" in locals()
+        }
+    })
+    
+    yield
+    
+    # 关闭时
+    logger.info("🛑 正在关闭Level 5 AGI后端系统...")
+    
+    # 清理监控系统
+    from src.core.monitoring.enterprise_monitor import enterprise_monitor
+    await enterprise_monitor.stop()
+    
+    # 清理数据网络
+    from src.core.data.data_network import data_network_manager
+    await data_network_manager.cleanup()
+    
+    # 清理同步系统
+    await sync_manager.cleanup()
+    
+    # 关闭系统管理器
+    await system_manager.shutdown()
+    
+    logger.info("✅ Level 5 AGI后端系统已关闭")
     await system_manager.initialize()
     
     # 加载系统配置
@@ -57,13 +128,14 @@ async def lifespan(app: FastAPI):
     # 初始化Level 5 AGI核心组件
     logger.info("🧠 初始化Level 5 AGI核心组件...")
     
-    # 启动系统监控器
-    await system_monitor.start_monitoring()
+    # 启动系统监控器（作为后台任务）
+    import asyncio
+    asyncio.create_task(system_monitor.start_monitoring())
     logger.info("📊 Level 5 AGI 系统监控已启动")
     
     # 初始化知识图谱（如果可用）
     try:
-        from src.core.knowledge.unified_knowledge_graph import UnifiedKnowledgeGraph
+        from src.core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraph
         kg = UnifiedKnowledgeGraph(config.get('knowledge_config', {}))
         await kg.initialize()
         logger.info("✅ 知识图谱系统初始化完成")

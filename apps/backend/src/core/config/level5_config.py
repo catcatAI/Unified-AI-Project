@@ -265,3 +265,6 @@ def get_static_level5_capabilities() -> Dict[str, Any]:
             "creative_breakthrough": "up to 3000 concepts/sec"
         }
     }
+
+# 全局监控器实例
+system_monitor = Level5SystemMonitor()

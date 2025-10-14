@@ -41,7 +41,7 @@ const AtlassianIntegration: React.FC = () => {
 
   const apiCall = async (endpoint: string, method: string = 'GET', body?: any) => {
     try {
-      const response = await fetch(`/api/py/api/v1/atlassian/${endpoint}`, {
+      const response = await fetch(`/api/v1/atlassian/${endpoint}`, {
         method,
         headers: {
           'Content-Type': 'application/json',
