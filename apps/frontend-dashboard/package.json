@@ -22,7 +22,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@mdxeditor/editor": "^3.39.1",
     "@prisma/client": "^6.13.0",
-    "@radix-ui/react-accordion": "^1.2.11",
+    "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
     "@radix-ui/react-avatar": "^1.1.10",
@@ -70,7 +70,7 @@
     "react": "^19.0.0",
     "react-day-picker": "^9.8.0",
     "react-dom": "^19.0.0",
-    "react-hook-form": "^7.60.0",
+    "react-hook-form": "^7.65.0",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^3.0.3",
     "react-router-dom": "^6.26.2",
@@ -86,7 +86,7 @@
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
     "z-ai-web-dev-sdk": "^0.0.10",
-    "zod": "^4.0.2"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.28.0",
@@ -105,7 +105,7 @@
     "autoprefixer": "^10.4.20",
     "babel-jest": "^30.0.5",
     "eslint": "^9.9.0",
-    "eslint-config-next": "15.3.5",
+    "eslint-config-next": "15.5.4",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
