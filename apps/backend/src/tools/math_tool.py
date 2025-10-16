@@ -23,8 +23,8 @@ def _load_math_model():
     try:
         # 修复导入路径
         from .math_model.model import ArithmeticSeq2Seq
-        print("Loading arithmetic model for the first time..."):
-f not os.path.exists(MODEL_WEIGHTS_PATH) or not os.path.exists(CHAR_MAPS_PATH):
+        print("Loading arithmetic model for the first time...")
+        if not os.path.exists(MODEL_WEIGHTS_PATH) or not os.path.exists(CHAR_MAPS_PATH):
             raise FileNotFoundError("Model or char map file not found.")
 
         _model_instance = ArithmeticSeq2Seq.load_for_inference(
@@ -38,11 +38,11 @@ f not os.path.exists(MODEL_WEIGHTS_PATH) or not os.path.exists(CHAR_MAPS_PATH):
         _model_instance = None
     except FileNotFoundError as e:
         print(f"Warning: Math model files not found. NN features will be disabled. Error: {e}")
-        _tensorflow_import_error = str(e)  # Treat missing files as an import-level issue for this tool:
-model_instance = None
+        _tensorflow_import_error = str(e)  # Treat missing files as an import-level issue for this tool
+        _model_instance = None
     except Exception as e:
-        print(f"An unexpected error occurred while loading the math model: {e}"):
-tensorflow_import_error = str(e)
+        print(f"An unexpected error occurred while loading the math model: {e}")
+        _tensorflow_import_error = str(e)
         _model_instance = None
 
     return _model_instance
@@ -98,13 +98,14 @@ def calculate(input_string: str) -> ToolDispatcherResponse:
             error_message="Could not understand the math problem from the input."
         )
 
-    print(f"Extracted problem: '{problem_to_solve}' for model."):
-ry:
+    print(f"Extracted problem: '{problem_to_solve}' for model.")
+
+    try:
         predicted_answer = model.predict_sequence(problem_to_solve)
         try:
             val = float(predicted_answer)
-            result_str = str(int(val)) if val.is_integer() else str(val):
-eturn ToolDispatcherResponse(
+            result_str = str(int(val)) if val.is_integer() else str(val)
+            return ToolDispatcherResponse(
                 status="success",
                 payload=result_str,
                 tool_name_attempted="calculate",

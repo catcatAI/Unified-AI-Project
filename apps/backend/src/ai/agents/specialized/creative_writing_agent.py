@@ -5,22 +5,22 @@ import logging
 from pathlib import Path # Import Path
 from typing import Dict, Any
 
-from agents.base_agent import BaseAgent
-from .....core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from .....core.services.multi_llm_service import MultiLLMService, ChatMessage
+from .base.base_agent import BaseAgent
+from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from ....core.services.multi_llm_service import MultiLLMService, ChatMessage
 
 class CreativeWritingAgent(BaseAgent):
     """
-    A specialized agent for creative writing tasks like generating marketing copy,:
-hort stories, or polishing text.
+    A specialized agent for creative writing tasks like generating marketing copy,
+    short stories, or polishing text.
     """
     def __init__(self, agent_id: str) -> None:
         capabilities = [
             {
                 "capability_id": f"{agent_id}_generate_marketing_copy_v1.0",
                 "name": "generate_marketing_copy",
-                "description": "Generates marketing copy for a given product and target audience.",:
-version": "1.0",
+                "description": "Generates marketing copy for a given product and target audience.",
+                "version": "1.0",
                 "parameters": [
                     {"name": "product_description", "type": "string", "required": True},
                     {"name": "target_audience", "type": "string", "required": True},
@@ -39,13 +39,13 @@ version": "1.0",
                 "returns": {"type": "string", "description": "The polished text."}
             }
         ]
-        super.__init__(agent_id=agent_id, capabilities=capabilities)
+        super().__init__(agent_id=agent_id, capabilities=capabilities)
 
         # This agent directly uses the LLMInterface initialized in its services.
         # Be defensive in case tests patch initialize_services to return None.
         services = getattr(self, "services", None)
-        self.llm_interface: MultiLLMService = services.get("llm_interface") if isinstance(services, dict) else None:
-elf._load_prompts()
+        self.llm_interface: MultiLLMService = services.get("llm_interface") if isinstance(services, dict) else None
+        self._load_prompts()
 
     def _load_prompts(self) -> None:
         """Loads prompts from the YAML file."""
@@ -66,10 +66,11 @@ elf._load_prompts()
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         request_id = task_payload.get("request_id", "")
         capability_id = task_payload.get("capability_id_filter", "")
-        params = task_payload.get("parameters", )
+        params = task_payload.get("parameters", {})
 
-        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'"):
-f not self.llm_interface:
+        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
+
+        if not self.llm_interface:
             result_payload = self._create_failure_payload(request_id, "INTERNAL_ERROR", "MultiLLMService is not available.")
         else:
             try:
@@ -90,10 +91,40 @@ f not self.llm_interface:
 
         callback_address = task_payload.get("callback_address")
         if self.hsp_connector and callback_address:
-            callback_topic = str(callback_address) if callback_address is not None else "":
- = await self.hsp_connector.send_task_result(result_payload, callback_topic)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}"):
-f __name__ == '__main__':
+            callback_topic = str(callback_address) if callback_address is not None else ""
+            _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
+            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
+
+    def _create_marketing_copy_prompt(self, params: Dict[str, Any]) -> str:
+        """Creates a prompt for generating marketing copy."""
+        product_description = params.get("product_description", "")
+        target_audience = params.get("target_audience", "")
+        style = params.get("style", "professional")
+
+        prompt = f"""
+        Generate marketing copy for the following product:
+        Product: {product_description}
+        Target Audience: {target_audience}
+        Desired Style: {style}
+
+        Please create compelling marketing copy that highlights the key benefits and appeals to the target audience.
+        """
+        return prompt.strip()
+
+    def _create_polish_text_prompt(self, params: Dict[str, Any]) -> str:
+        """Creates a prompt for polishing text."""
+        text_to_polish = params.get("text_to_polish", "")
+
+        prompt = f"""
+        Please improve the following text by enhancing grammar, style, and clarity:
+
+        {text_to_polish}
+
+        Make sure the polished text is clear, concise, and well-structured while preserving the original meaning.
+        """
+        return prompt.strip()
+
+if __name__ == '__main__':
     async def main() -> None:
         agent_id = f"did:hsp:creative_writing_agent_{uuid.uuid4().hex[:6]}"
         agent = CreativeWritingAgent(agent_id=agent_id)

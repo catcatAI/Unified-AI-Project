@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import uuid
-from typing import Any, Dict, List, Callable
+from typing import Any, Dict, List, Callable, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
 
@@ -33,7 +33,7 @@ class BaseAgent:
 rovides common functionality for HSP connectivity, task handling, and lifecycle management.:
 ""
 
-    def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]] = None, agent_name: str = "BaseAgent") -> None:
+    def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]] = None, agent_name: str = "BaseAgent", alignment_enabled: bool = False) -> None:
         self.agent_id = agent_id
         self.agent_name = agent_name
         self.capabilities = capabilities or []  # 提供默認值
@@ -53,6 +53,10 @@ rovides common functionality for HSP connectivity, task handling, and lifecycle 
         self._task_counter = 0  # 用于跟踪任务计数
         self._start_time = None  # 用于跟踪启动时间
         self._initialized = False  # 初始化狀態標記
+        
+        # 对齐系统支持
+        self.alignment_enabled = alignment_enabled
+        self.alignment_system: Optional[Any] = None  # 延迟初始化对齐系统
         
         # 執行基礎初始化
         self.initialize_basic()

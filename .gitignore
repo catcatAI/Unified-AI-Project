@@ -290,3 +290,7 @@ test_venv/
 tests/local/
 tests/temp/
 tests/logs/
+
+# Project backup files
+*.backup
+*.bak

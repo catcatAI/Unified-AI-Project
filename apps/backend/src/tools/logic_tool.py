@@ -14,8 +14,8 @@ from .logic_model.logic_parser_eval import LogicParserEval
 # 修复导入路径
 from apps.backend.src.core.managers.dependency_manager import dependency_manager
 
-# --- Configuration for NN Model ---:
-ODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
+# --- Configuration for NN Model ---
+MODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
 CHAR_MAP_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_maps.json")
 
 class LogicTool:
@@ -28,8 +28,8 @@ class LogicTool:
     def _get_parser_evaluator(self):
         """Initializes and returns the LogicParserEval instance."""
         if self.parser_evaluator is None:
-            logging.info("Initializing LogicParserEval for the first time..."):
-elf.parser_evaluator = LogicParserEval()
+            logging.info("Initializing LogicParserEval for the first time...")
+            self.parser_evaluator = LogicParserEval()
         return self.parser_evaluator
 
     def _get_nn_model_evaluator(self):
@@ -37,16 +37,16 @@ elf.parser_evaluator = LogicParserEval()
         if self.nn_model_evaluator is not None or self.tensorflow_import_error is not None:
             return self.nn_model_evaluator, self.nn_char_to_token
 
-        # Check if TensorFlow is available through dependency manager:
-f not dependency_manager.is_available('tensorflow'):
+        # Check if TensorFlow is available through dependency manager
+        if not dependency_manager.is_available('tensorflow'):
             self.tensorflow_import_error = "TensorFlow not available through dependency manager"
             logging.critical(f"CRITICAL: TensorFlow not available. Logic tool's NN features will be disabled.")
             return self.nn_model_evaluator, self.nn_char_to_token
 
         try:
             from .logic_model.logic_model_nn import LogicNNModel
-            logging.info("Loading LogicNNModel for the first time..."):
-f not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH):
+            logging.info("Loading LogicNNModel for the first time...")
+            if not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH):
                 raise FileNotFoundError("NN Model or Char Map not found.")
 
             self.nn_model_evaluator = LogicNNModel.load_model(MODEL_LOAD_PATH, CHAR_MAP_LOAD_PATH)
@@ -61,16 +61,16 @@ f not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH):
             logging.warning(f"Warning: Logic NN model files not found. NN features will be disabled. Error: {e}")
             self.tensorflow_import_error = str(e)
         except Exception as e:
-            logging.error(f"An unexpected error occurred while loading the LogicNNModel: {e}"):
-elf.tensorflow_import_error = str(e)
+            logging.error(f"An unexpected error occurred while loading the LogicNNModel: {e}")
+            self.tensorflow_import_error = str(e)
 
         return self.nn_model_evaluator, self.nn_char_to_token
 
     def evaluate_expression(self, expression_string: str) -> bool | str | None:
         """
         Evaluates a logical expression string using the best available method.
-        It prioritizes the NN model and falls back to the parser if the NN is unavailable.:
-""
+        It prioritizes the NN model and falls back to the parser if the NN is unavailable.
+        "
         normalized_expression = expression_string.lower()
 
         # Try NN model first
@@ -89,10 +89,10 @@ elf.tensorflow_import_error = str(e)
         try:
             parser = self._get_parser_evaluator()
             result = parser.evaluate(normalized_expression)
-            return result if result is not None else "Error: Invalid expression for parser.":
-xcept Exception as e:
-            logging.error(f"Error during parser evaluation for '{normalized_expression}': {e}"):
-eturn "Error: Invalid expression for parser.":
+            return result if result is not None else "Error: Invalid expression for parser."
+        except Exception as e:
+            logging.error(f"Error during parser evaluation for '{normalized_expression}': {e}")
+            return "Error: Invalid expression for parser.":
 ogic_tool_instance = LogicTool()
 evaluate_expression = logic_tool_instance.evaluate_expression
 
@@ -105,7 +105,8 @@ if __name__ == '__main__':
         ("true AND false", False),
         ("NOT (true OR false)", False),
         ("false OR (true AND true)", True),
-        ("invalid expression", "Error: Invalid expression for parser."):
+        ("invalid expression", "Error: Invalid expression for parser.")
+    ]
 
 
     logging.info("\n--- Testing Unified evaluate_expression (NN fallback to Parser) ---")
@@ -113,12 +114,12 @@ if __name__ == '__main__':
         result = evaluate_expression(expr)
         logging.info(f'Test: "{expr}" -> Got: {result}')
         # We can't assert expected result because it could come from NN or parser
-        # A simple check for the correct type or non-error is suitable here.:
-f isinstance(result, bool):
+        # A simple check for the correct type or non-error is suitable here.
+        if isinstance(result, bool):
             logging.info(f'  (Result is a boolean, which is valid)')
         elif isinstance(result, str) and 'Error' in result:
-            logging.info(f'  (Result is an error string, which is valid for invalid expressions)'):
-lse:
+            logging.info(f'  (Result is an error string, which is valid for invalid expressions)')
+        else:
             logging.info(f'  (Result is of an unexpected type: {type(result)})')
         assert result is not None, f'FAIL: For "{expr}"'
     
