@@ -14,7 +14,7 @@ from typing import Dict, Any, Optional, List, Literal, Union
 
 # Let's use `total=False` for payloads where many fields are optional, and
 # `total=True` (default) for envelope parts that are mostly required.:
-lass HSPMessage(TypedDict, total=False):
+class HSPMessage(TypedDict, total=False):
     payload: Dict[str, Any]
     message_type: str
     sender_ai_id: str
@@ -25,26 +25,24 @@ lass HSPMessage(TypedDict, total=False):
 
 class HSPFactStatementStructured(TypedDict, total=False):
     subject_uri: str  # Required if this structure is used:
-
-
-redicate_uri: str  # Required if this structure is used:
-bject_literal: Any
-object_uri: str
-object_datatype: str
+    predicate_uri: str  # Required if this structure is used:
+    object_literal: Any
+    object_uri: str
+    object_datatype: str
 
 
 class HSPOriginalSourceInfo(TypedDict, total=False):
     type: str  # Required if this structure is used, e.g., "url", "document_id":
 
 
-dentifier: str  # Required if this structure is used:
-lass HSPFactPayload(TypedDict, total=False):
+identifier: str  # Required if this structure is used:
+class HSPFactPayload(TypedDict, total=False):
     id: str  # UUID, considered required for a fact instance:
-tatement_type: Literal["natural_language", "semantic_triple", "json_ld"]  # Required
-statement_nl: str
-statement_structured: HSPFactStatementStructured | Dict[str, Any]  # Dict for json_ld:
-ource_ai_id: str  # DID or URI, Required
-original_source_info: HSPOriginalSourceInfo
+    statement_type: Literal["natural_language", "semantic_triple", "json_ld"]  # Required
+    statement_nl: str
+    statement_structured: HSPFactStatementStructured | Dict[str, Any]  # Dict for json_ld:
+    source_ai_id: str  # DID or URI, Required
+    original_source_info: HSPOriginalSourceInfo
 timestamp_created: str  # ISO 8601 UTC, Required
 timestamp_observed: str  # ISO 8601 UTC
 confidence_score: float  # 0.0-1.0, Required
@@ -105,10 +103,10 @@ class HSPMessageEnvelope(TypedDict):  # total=True by default, all keys are requ
 # Other payload types from HSP_SPECIFICATION.md would be defined here similarly:
 # HSPBeliefPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, etc.
 # For now, HSPFactPayload is the primary one for Step 1.2.:
-lass HSPBeliefPayload(HSPFactPayload, total=False):  # Inherits from HSPFactPayload, most fields are similar
+class HSPBeliefPayload(HSPFactPayload, total=False):  # Inherits from HSPFactPayload, most fields are similar
     belief_holder_ai_id: str  # Required, defaults to source_ai_id if not specified by sender:
-ustification_type: Optional[Literal["text", "inference_chain_id", "evidence_ids_list"]]
-justification: Optional[str | List[str]]  # Text, or ID, or list of IDs
+    justification_type: Optional[Literal["text", "inference_chain_id", "evidence_ids_list"]]
+    justification: Optional[str | List[str]]  # Text, or ID, or list of IDs
 
 
 class HSPCapability(TypedDict, total=False):
@@ -120,11 +118,9 @@ class HSPCapability(TypedDict, total=False):
 
 class HSPCapabilityAdvertisementPayload(TypedDict, total=False):
     capability_id: str  # Required, unique ID for this capability offering:
-
-
-i_id: str  # Required, DID or URI of the AI offering
-agent_name: Optional[str]  # The name of the agent script, e.g., 'data_analysis_agent'
-name: str  # Required, human-readable name
+    ai_id: str  # Required, DID or URI of the AI offering
+    agent_name: Optional[str]  # The name of the agent script, e.g., 'data_analysis_agent'
+    name: str  # Required, human-readable name
 description: str  # Required
 version: str  # Required
 input_schema_uri: Optional[str]
@@ -148,10 +144,10 @@ class HSPTaskRequestPayload(TypedDict, total=False):
     parameters: Required[Dict[str, Any]]  # Input parameters for the capability:
 
 
-equested_output_data_format: Optional[str]  # Requester can hint preferred output format
-priority: Optional[int]  # e.g., 1-10
-deadline_timestamp: Optional[str]  # ISO 8601 UTC
-callback_address: Optional[str]  # URI/topic where TaskResult should be sent
+    requested_output_data_format: Optional[str]  # Requester can hint preferred output format
+    priority: Optional[int]  # e.g., 1-10
+    deadline_timestamp: Optional[str]  # ISO 8601 UTC
+    callback_address: Optional[str]  # URI/topic where TaskResult should be sent
 
 
 class HSPErrorDetails(TypedDict, total=False):
@@ -168,10 +164,10 @@ class HSPTaskResultPayload(TypedDict, total=False):
     payload: Optional[Dict[str, Any]]  # The actual result data if status is "success":
 
 
-utput_data_format: Optional[str]  # Confirms the format of the payload, e.g., "application/json", "image/png"
-error_details: Optional[HSPErrorDetails]  # If status is "failure" or "rejected"
-timestamp_completed: Optional[str]  # ISO 8601 UTC
-execution_metadata: Optional[Dict[str, Any]]  # e.g., {"time_taken_ms": 150}
+    output_data_format: Optional[str]  # Confirms the format of the payload, e.g., "application/json", "image/png"
+    error_details: Optional[HSPErrorDetails]  # If status is "failure" or "rejected"
+    timestamp_completed: Optional[str]  # ISO 8601 UTC
+    execution_metadata: Optional[Dict[str, Any]]  # e.g., {"time_taken_ms": 150}
 
 
 class HSPTask(TypedDict, total=False):
@@ -193,11 +189,11 @@ class HSPEnvironmentalStatePayload(TypedDict, total=False):  # Also known as Con
     scope_id: Optional[str]  # Identifier for the scope:
 
 
-elevance_decay_rate: Optional[float]
+    relevance_decay_rate: Optional[float]
 
 # Placeholder for Acknowledgement/NegativeAcknowledgement payloads if they
 # need specific structure beyond a simple status:
-lass HSPAcknowledgementPayload(TypedDict):
+class HSPAcknowledgementPayload(TypedDict):
     status: Literal["received", "processed"]  # Example statuses
     ack_timestamp: str  # ISO 8601 UTC
     target_message_id: str  # ID of the message being acknowledged
@@ -238,12 +234,12 @@ class HSPNotificationPayload(TypedDict, total=False):
     target_ai_id: Optional[str]  # DID or URI of target AI (None for broadcast):
 
 
-imestamp_sent: str  # Required, ISO 8601 UTC
-title: str  # Required, brief title
-content: str  # Required, detailed content
-priority: Optional[Literal["low", "normal", "high", "urgent"]]
-actions: Optional[List[Dict[str, Any]]]  # Possible actions the recipient can take
-metadata: Optional[Dict[str, Any]]  # Additional metadata
+    timestamp_sent: str  # Required, ISO 8601 UTC
+    title: str  # Required, brief title
+    content: str  # Required, detailed content
+    priority: Optional[Literal["low", "normal", "high", "urgent"]]
+    actions: Optional[List[Dict[str, Any]]]  # Possible actions the recipient can take
+    metadata: Optional[Dict[str, Any]]  # Additional metadata
 
 
 class ChatMessage(TypedDict, total=False):

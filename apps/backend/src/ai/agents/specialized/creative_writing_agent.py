@@ -71,29 +71,23 @@ class CreativeWritingAgent(BaseAgent):
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
 
         if not self.llm_interface:
-            result_payload = self._create_failure_payload(request_id, "INTERNAL_ERROR", "MultiLLMService is not available.")
+            await self.send_task_failure(request_id, sender_ai_id, task_payload.get("callback_address", ""), "MultiLLMService is not available.")
         else:
             try:
                 if "generate_marketing_copy" in capability_id:
                     prompt = self._create_marketing_copy_prompt(params)
                     messages = [ChatMessage(role="user", content=prompt)]
                     llm_response = await self.llm_interface.chat_completion(messages)
-                    result_payload = self._create_success_payload(request_id, llm_response.content)
+                    await self.send_task_success(request_id, sender_ai_id, task_payload.get("callback_address", ""), llm_response.content)
                 elif "polish_text" in capability_id:
                     prompt = self._create_polish_text_prompt(params)
                     messages = [ChatMessage(role="user", content=prompt)]
                     llm_response = await self.llm_interface.chat_completion(messages)
-                    result_payload = self._create_success_payload(request_id, llm_response.content)
+                    await self.send_task_success(request_id, sender_ai_id, task_payload.get("callback_address", ""), llm_response.content)
                 else:
-                    result_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
+                    await self.send_task_failure(request_id, sender_ai_id, task_payload.get("callback_address", ""), f"Capability '{capability_id}' is not supported by this agent.")
             except Exception as e:
-                result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR", str(e))
-
-        callback_address = task_payload.get("callback_address")
-        if self.hsp_connector and callback_address:
-            callback_topic = str(callback_address) if callback_address is not None else ""
-            _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
+                await self.send_task_failure(request_id, sender_ai_id, task_payload.get("callback_address", ""), str(e))
 
     def _create_marketing_copy_prompt(self, params: Dict[str, Any]) -> str:
         """Creates a prompt for generating marketing copy."""

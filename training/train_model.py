@@ -3180,7 +3180,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    _ = print("🚀 Unified-AI-Project 模型训练")
+    print("🚀 Unified-AI-Project 模型训练")
     print("=" * 50)
 
     # 初始化训练器
@@ -3191,13 +3191,12 @@ def main() -> None:
 
     # 根据参数决定操作
     if args.evaluate:
-    # 评估模型
-    model_path = Path(args.evaluate)
-    results = trainer.evaluate_model(model_path)
+        # 评估模型
+        model_path = Path(args.evaluate)
+        results = trainer.evaluate_model(model_path)
         if "error" not in results:
-
-    _ = print(f"\n📊 模型评估结果:")
-            _ = print(f"  模型名称: {results['model_name']}")
+            print(f"\n📊 模型评估结果:")
+            print(f"  模型名称: {results['model_name']}")
             _ = print(f"  准确率: {results['accuracy']:.4f}")
             _ = print(f"  精确率: {results['precision']:.4f}")
             _ = print(f"  召回率: {results['recall']:.4f}")
@@ -3205,28 +3204,24 @@ def main() -> None:
             _ = print(f"  损失: {results['loss']:.4f}")
             _ = print(f"  推理时间: {results['inference_time_ms']:.2f}ms")
         else:
-
-            _ = print(f"\n❌ 评估失败: {results['error']}")
+            print(f"\n❌ 评估失败: {results['error']}")
     elif args.deploy:
-    # 部署模型
-    model_path = Path(args.deploy)
-    success = trainer.deploy_model(model_path, args.target)
+        # 部署模型
+        model_path = Path(args.deploy)
+        success = trainer.deploy_model(model_path, args.target)
         if success:
-
-    _ = print(f"\n✅ 模型部署成功: {model_path}")
+            print(f"\n✅ 模型部署成功: {model_path}")
         else:
-
-            _ = print(f"\n❌ 模型部署失败: {model_path}")
+            print(f"\n❌ 模型部署失败: {model_path}")
     elif args.auto:
         # 启用自动训练模式
-        _ = print("🤖 启用自动训练模式")
+        print("🤖 启用自动训练模式")
         try:
-
             from training.auto_training_manager import AutoTrainingManager
             auto_trainer = AutoTrainingManager()
             report = auto_trainer.run_full_auto_training_pipeline()
-            _ = print("\n✅ 自动训练完成!")
-            _ = print("请查看训练目录中的模型和报告文件")
+            print("\n✅ 自动训练完成!")
+            print("请查看训练目录中的模型和报告文件")
         except Exception as e:
 
             _ = print(f"\n❌ 自动训练失败: {e}")
@@ -3234,40 +3229,29 @@ def main() -> None:
     elif args.preset:
         # 使用预设配置训练
         if args.pause:
-
-    _ = trainer.pause_training()
+            trainer.pause_training()
         elif args.resume:
-
-    success = trainer.resume_training(args.preset)
+            success = trainer.resume_training(args.preset)
         else:
-
             success = trainer.train_with_preset(args.preset)
 
         if success:
-
-            _ = print("\n🎉 训练完成!")
-            _ = print("请查看训练目录中的模型和报告文件")
+            print("\n🎉 训练完成!")
+            print("请查看训练目录中的模型和报告文件")
         else:
-
-            _ = print("\n⚠️ 训练暂停或中断，请使用 --resume 参数继续训练")
-            _ = sys.exit(1)
+            print("\n⚠️ 训练暂停或中断，请使用 --resume 参数继续训练")
+            sys.exit(1)
     else:
         # 使用默认配置训练
         success = trainer.train_with_default_config()
 
         if success:
-
-
-    _ = print("\n🎉 训练完成!")
-            _ = print("请查看训练目录中的模型和报告文件")
+            print("\n🎉 训练完成!")
+            print("请查看训练目录中的模型和报告文件")
         else:
-
-            _ = print("\n❌ 训练失败")
-            _ = sys.exit(1)
+            print("\n❌ 训练失败")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
-
-
-
-    _ = main()
+    main()
