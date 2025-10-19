@@ -10,8 +10,6 @@ from typing import Dict, Any
 class FixType(Enum):
     """修复类型枚举"""
 
-
-
     SYNTAX_FIX = "syntax_fix"                    # 语法错误修复
     IMPORT_FIX = "import_fix"                    # 导入路径修复
     DEPENDENCY_FIX = "dependency_fix"            # 依赖关系修复
@@ -23,14 +21,14 @@ class FixType(Enum):
     CONFIGURATION_FIX = "configuration_fix"      # 配置文件修复
     PERFORMANCE_FIX = "performance_fix"          # 性能优化修复
     COMPATIBILITY_FIX = "compatibility_fix"      # 兼容性修复
-#     TYPE_HINT_FIX = "type_hint_fix"              # 类型提示修复
-#     DECORATOR_FIX = "decorator_fix"              # 装饰器修复
-#     CLASS_FIX = "class_fix"                      # 类定义修复
-#     PARAMETER_FIX = "parameter_fix"              # 参数修复
-#     UNDEFINED_FIX = "undefined_fix"              # 未定义变量修复
-#     DATA_PROCESSING_FIX = "data_processing_fix"  # 数据处理修复
-#     LOGIC_GRAPH_FIX = "logic_graph_fix"          # 逻辑图谱修复
-#     INTELLIGENT_ITERATIVE_FIX = "intelligent_iterative_fix"  # 智能迭代修复
+    TYPE_HINT_FIX = "type_hint_fix"              # 类型提示修复
+    DECORATOR_FIX = "decorator_fix"              # 装饰器修复
+    CLASS_FIX = "class_fix"                      # 类定义修复
+    PARAMETER_FIX = "parameter_fix"              # 参数修复
+    UNDEFINED_FIX = "undefined_fix"              # 未定义变量修复
+    DATA_PROCESSING_FIX = "data_processing_fix"  # 数据处理修复
+    LOGIC_GRAPH_FIX = "logic_graph_fix"          # 逻辑图谱修复
+    INTELLIGENT_ITERATIVE_FIX = "intelligent_iterative_fix"  # 智能迭代修复
     AI_ASSISTED_FIX = "ai_assisted_fix"          # AI辅助修复
 
 
@@ -59,11 +57,11 @@ class FixScope(Enum):
     SPECIFIC_TEST = "specific_test"              # 特定测试
 
 
-# class FixPriority(Enum):
-#     """修复优先级枚举"""
-#     CRITICAL = "critical"                        # 关键 - 立即修复
-#     HIGH = "high"                                # 高 - 优先修复
-#     NORMAL = "normal"                            # 正常 - 常规修复
+class FixPriority(Enum):
+    """修复优先级枚举"""
+    CRITICAL = "critical"                        # 关键 - 立即修复
+    HIGH = "high"                                # 高 - 优先修复
+    NORMAL = "normal"                            # 正常 - 常规修复
     LOW = "low"                                  # 低 - 可选修复
 
 
