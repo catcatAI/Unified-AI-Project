@@ -25,10 +25,10 @@ def test_backend_imports():
     # Test critical imports
     import_tests = [
         ("FastAPI", "from fastapi import FastAPI"),
-        ("System Manager", "from apps.backend.src.core.managers.system_manager import SystemManager"),
-        ("Config", "from apps.backend.src.core.config.level5_config import Level5Config"),
-        ("Knowledge Graph", "from apps.backend.src.core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraphImpl"),
-        ("API Routes", "from apps.backend.src.api.routes import app"),
+        ("System Manager", "from src.core.managers.system_manager import SystemManager"),
+        ("Config", "from src.core.config.level5_config import Level5Config"),
+        ("Knowledge Graph", "from src.core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraphImpl"),
+        ("API Routes", "from src.api.routes import router"),
     ]
     
     for name, import_stmt in import_tests:
@@ -126,7 +126,7 @@ def test_critical_components():
     
     # Test Level 5 AGI Config
     try:
-        from apps.backend.src.core.config.level5_config import Level5Config
+        from src.core.config.level5_config import Level5Config
         config = Level5Config()
         print("✅ Level5Config: Initialization successful")
         results["Level5Config"] = True
@@ -136,7 +136,7 @@ def test_critical_components():
     
     # Test System Manager
     try:
-        from apps.backend.src.core.managers.system_manager import SystemManager
+        from src.core.managers.system_manager import SystemManager
         manager = SystemManager()
         print("✅ SystemManager: Initialization successful")
         results["SystemManager"] = True
@@ -146,7 +146,7 @@ def test_critical_components():
     
     # Test Knowledge Graph
     try:
-        from apps.backend.src.core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraphImpl
+        from src.core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraphImpl
         kg = UnifiedKnowledgeGraphImpl()
         print("✅ KnowledgeGraph: Initialization successful")
         results["KnowledgeGraph"] = True

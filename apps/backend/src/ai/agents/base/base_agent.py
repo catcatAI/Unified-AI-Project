@@ -185,16 +185,16 @@ class BaseAgent:
 
     def is_healthy(self) -> bool:
         """
-        A basic health check for the agent.:
-ubclasses can override this for more specific health checks.:
-""
+        A basic health check for the agent.
+        Subclasses can override this for more specific health checks.
+        """
         return self.is_running and self.hsp_connector and self.hsp_connector.is_connected
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         """
-        The primary handler for incoming HSP task requests.:
-his method adds tasks to the queue for processing.:
-""
+        The primary handler for incoming HSP task requests.
+        This method adds tasks to the queue for processing.
+        """
         logger.info(f"[{self.agent_id}] Received task request: {task_payload.get('request_id')} for capability '{task_payload.get('capability_id_filter')}' from '{sender_ai_id}'.")
 
         # Report heartbeat
@@ -262,12 +262,12 @@ his method adds tasks to the queue for processing.:
         logger.info(f"[{self.agent_id}] Processing task {task.task_id} with priority {task.priority.name}")
         
         # Record task start time for performance monitoring:
-ask_start_time = asyncio.get_event_loop().time()
+        task_start_time = asyncio.get_event_loop().time()
         self._task_counter += 1
 
         try:
             # Check if we have a specific handler for this capability:
-apability_id = task.payload.get("capability_id_filter", "")
+            capability_id = task.payload.get("capability_id_filter", "")
             if capability_id in self.task_handlers:
                 # Use specific handler
                 handler = self.task_handlers[capability_id]
@@ -307,10 +307,10 @@ apability_id = task.payload.get("capability_id_filter", "")
                 await asyncio.sleep(self.retry_delay * (2 ** task.retry_count))  # Exponential backoff
                 
                 # Re-queue the task with incremented retry count:
-sync with self.task_queue_lock:
+                async with self.task_queue_lock:
                     task.retry_count += 1
                     # Re-insert at the beginning of the queue for immediate retry:
-elf.task_queue.insert(0, task)
+                    self.task_queue.insert(0, task)
             else:
                 # Send failure response after max retries
                 logger.error(f"[{self.agent_id}] Task {task.task_id} failed after {self.max_retries} retries")
@@ -332,8 +332,8 @@ elf.task_queue.insert(0, task)
 
     async def _default_task_handler(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope) -> Dict[str, Any]:
         """
-        Default task handler for unimplemented capabilities.:
-""
+        Default task handler for unimplemented capabilities.
+        """
         logger.warning(f"[{self.agent_id}] No specific handler for capability '{task_payload.get('capability_id_filter', '')}'")
         
         # Default behavior Acknowledge and report not implemented
@@ -341,14 +341,14 @@ elf.task_queue.insert(0, task)
             "status": "failure",
             "error_details": {
                 "error_code": "NOT_IMPLEMENTED",
-                "error_message": f"The '{self.__class__.__name__}' has not implemented a handler for capability '{task_payload.get('capability_id_filter', '')}'.":
-
+                "error_message": f"The '{self.__class__.__name__}' has not implemented a handler for capability '{task_payload.get('capability_id_filter', '')}'."
+            }
         }
 
     async def _send_task_rejection(self, task: QueuedTask):
         """
-        Send a rejection response for a task that couldn't be queued.:
-""
+        Send a rejection response for a task that couldn't be queued.
+        """
         if self.hsp_connector and task.payload.get("callback_address"):
             result_payload = HSPTaskResultPayload(
                 request_id=task.payload.get("request_id", ""),
@@ -389,8 +389,9 @@ elf.task_queue.insert(0, task)
     # 新增：注册特定任务处理器的方法
     def register_task_handler(self, capability_id: str, handler: Callable):
         """
-        Register a specific handler for a capability.:
-rgs:
+        Register a specific handler for a capability.
+        
+        Args:
             capability_id: The capability ID to handle
             handler: The handler function (should accept payload, sender_id, envelope)
         """
@@ -405,9 +406,10 @@ rgs:
         Args:
             target_agent_id: ID of the agent to handle the task
             capability_id: The capability needed to handle the task
-            parameters: Parameters for the task:
-eturns: str Task ID for tracking the collaboration:
-""
+            parameters: Parameters for the task
+            
+        Returns: str Task ID for tracking the collaboration
+        """
         if not self.collaboration_manager:
             raise RuntimeError("Collaboration manager not initialized")
             
@@ -423,8 +425,9 @@ eturns: str Task ID for tracking the collaboration:
         Orchestrate a sequence of tasks across multiple agents.
         
         Args:
-            task_sequence: List of task definitions with capability_id and parameters:
-eturns: Dict[…] Final result of the orchestrated task sequence
+            task_sequence: List of task definitions with capability_id and parameters
+            
+        Returns: Dict[…] Final result of the orchestrated task sequence
         """
         if not self.collaboration_manager:
             raise RuntimeError("Collaboration manager not initialized")
@@ -437,8 +440,9 @@ eturns: Dict[…] Final result of the orchestrated task sequence
     # 健康检查和监控方法
     async def get_health_report(self) -> Dict[str, Any]:
         """
-        Get the health report for this agent.:
-eturns: Dict[…] Health report data
+        Get the health report for this agent.
+        
+        Returns: Dict[…] Health report data
         """
         if not self.monitoring_manager:
             return {"error": "Monitoring manager not initialized"}
@@ -458,8 +462,8 @@ eturns: Dict[…] Health report data
                 "response_time_ms": report.response_time_ms,
                 "task_count": report.task_count,
                 "success_rate": report.success_rate,
-                "uptime_seconds": asyncio.get_event_loop().time() - self._start_time if self._start_time else 0,:
-queue_length": len(self.task_queue)
+                "uptime_seconds": asyncio.get_event_loop().time() - self._start_time if self._start_time else 0,
+                "queue_length": len(self.task_queue)
             }
         else:
             return {"error": "No health report available"}
@@ -478,30 +482,33 @@ queue_length": len(self.task_queue)
         
         Args:
             capability_id: The capability to search for
-            :
-eturns:
-            List[Dict[str, Any]]: List of agents with the specified capability:
-""
+            
+        Returns:
+            List[Dict[str, Any]]: List of agents with the specified capability
+        """
         if not self.agent_registry:
             return []
         
         agents = await self.agent_registry.find_agents_by_capability(capability_id)
-        return [asdict(agent) for agent in agents]:
-sync def find_agents_by_name(self, agent_name: str) -> List[Dict[str, Any]]:
+        return [asdict(agent) for agent in agents]
+
+    async def find_agents_by_name(self, agent_name: str) -> List[Dict[str, Any]]:
         """
         Find agents by name (partial match).
         
         Args:
-            agent_name: The agent name to search for (case-insensitive partial match):
-eturns:
-            List[Dict[str, Any]]: List of agents with matching names:
-""
+            agent_name: The agent name to search for (case-insensitive partial match)
+            
+        Returns:
+            List[Dict[str, Any]]: List of agents with matching names
+        """
         if not self.agent_registry:
             return []
         
         agents = await self.agent_registry.find_agents_by_name(agent_name)
-        return [asdict(agent) for agent in agents]:
-sync def get_all_active_agents(self) -> List[Dict[str, Any]]:
+        return [asdict(agent) for agent in agents]
+
+    async def get_all_active_agents(self) -> List[Dict[str, Any]]:
         """
         Get all currently active agents.
         
@@ -512,8 +519,9 @@ sync def get_all_active_agents(self) -> List[Dict[str, Any]]:
             return []
         
         agents = await self.agent_registry.get_all_active_agents()
-        return [asdict(agent) for agent in agents]:
-sync def get_agent_registry_stats(self) -> Dict[str, Any]:
+        return [asdict(agent) for agent in agents]
+
+    async def get_agent_registry_stats(self) -> Dict[str, Any]:
         """
         Get statistics about the agent registry.
         
@@ -551,6 +559,6 @@ sync def get_agent_registry_stats(self) -> Dict[str, Any]:
                 "priority_counts": priority_counts,
                 "oldest_task_age_seconds": (
                     asyncio.get_event_loop().time() - self.task_queue[0].received_time 
-                    if self.task_queue else 0:
-
+                    if self.task_queue else 0
+                )
             }

@@ -39,17 +39,12 @@ class WebSearchAgent(BaseAgent):
         try:
             if "web_search" in capability_id:
                 result = await self._perform_web_search(params)
-                result_payload = self._create_success_payload(request_id, result)
+                await self.send_task_success(request_id, sender_ai_id, task_payload.get("callback_address", ""), result)
             else:
-                result_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
+                await self.send_task_failure(request_id, sender_ai_id, task_payload.get("callback_address", ""), f"Capability '{capability_id}' is not supported by this agent.")
         except Exception as e:
             logging.error(f"[{self.agent_id}] Error processing task {request_id}: {e}")
-            result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR", str(e))
-
-        if self.hsp_connector and task_payload.get("callback_address"):
-            callback_topic = task_payload["callback_address"]
-            _ = await self.hsp_connector.send_task_result(result_payload, callback_topic)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
+            await self.send_task_failure(request_id, sender_ai_id, task_payload.get("callback_address", ""), str(e))
 
     async def _perform_web_search(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Performs web search based on the query."""
@@ -72,6 +67,7 @@ class WebSearchAgent(BaseAgent):
     def _create_success_payload(self, request_id: str, result: Any) -> HSPTaskResultPayload:
         return HSPTaskResultPayload(
             request_id=request_id,
+            executing_ai_id=self.agent_id,
             status="success",
             payload=result
         )
@@ -79,6 +75,7 @@ class WebSearchAgent(BaseAgent):
     def _create_failure_payload(self, request_id: str, error_code: str, error_message: str) -> HSPTaskResultPayload:
         return HSPTaskResultPayload(
             request_id=request_id,
+            executing_ai_id=self.agent_id,
             status="failure",
             error_details={"error_code": error_code, "error_message": error_message}
         )
