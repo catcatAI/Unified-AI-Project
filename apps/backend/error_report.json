@@ -1,8 +1,7 @@
 {
-  "total_errors": 39,
+  "total_errors": 38,
   "errors_by_type": {
-    "导入路径错误": 38,
-    "属性错误": 1
+    "导入路径错误": 38
   },
   "error_details": [
     {
@@ -373,16 +372,6 @@
       "details": {
         "context": "ERROR tests/core_ai/dialogue/test_project_coordinator_fix.py\nERROR tests/core_ai/formula_engine/test_formula_engine.py\nERROR tests/core_ai/language_models/test_daily_language_model.py\nERROR tests/core_ai/learning - ModuleNotFoundError: No module named 'apps.bac...\nERROR tests/core_ai/lis/test_ham_lis_cache.py\nERROR tests/core_ai/lis/test_tonal_repair_engine.py\nERROR tests/core_ai/memory/test_ham_chromadb_integration.py",
         "full_match": "No module named 'apps.bac..."
-      }
-    },
-    {
-      "type": "属性错误",
-      "file_path": "unified_auto_fix_system\\core\\fix_types.py",
-      "line_number": 120,
-      "message": "AttributeError:",
-      "details": {
-        "context": "unified_auto_fix_system\\core\\fix_types.py:120: in FixCategory\n    FixType.TYPE_HINT_FIX,\n    ^^^^^^^^^^^^^^^^^^^^^\nE   AttributeError: type object 'FixType' has no attribute 'TYPE_HINT_FIX'\n________ ERROR collecting auto_fix_system_tests/test_comprehensive.py _________\nauto_fix_system_tests\\test_comprehensive.py:21: in <module>\n    @undefined_decorator",
-        "full_match": "AttributeError:"
       }
     },
     {
