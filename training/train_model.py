@@ -2799,7 +2799,7 @@ eturn self._train_collaboratively(scenario)
         try:
 
             _ = logger.info("🔄 开始训练过程...")
-            for epoch in range(1, epochs + 1)
+            for epoch in range(1, epochs + 1):
                 # 模拟一个epoch的训练
                 epoch_metrics = self.simulate_training_step(epoch, batch_size)
 
@@ -2807,13 +2807,11 @@ eturn self._train_collaboratively(scenario)
                 _ = logger.info(f"  Epoch {epoch}/{epochs} - 进度: {progress:.1f}% - Loss: {epoch_metrics['loss']:.4f} - Accuracy: {epoch_metrics['accuracy']:.4f}")
 
                 if epoch % 5 == 0 or epoch == epochs:
-
-
-    checkpoint_path = CHECKPOINTS_DIR / f"epoch_{epoch}.ckpt"
+                    checkpoint_path = CHECKPOINTS_DIR / f"epoch_{epoch}.ckpt"
                     # 创建一个检查点文件
                     with open(checkpoint_path, 'w') as f:
-    f.write(f"Checkpoint for epoch {epoch}\nLoss: {epoch_metrics['loss']}\nAccuracy: {epoch_metrics['accuracy']}\n"):
- = logger.info(f"  💾 保存检查点: {checkpoint_path.name}")
+                        f.write(f"Checkpoint for epoch {epoch}\nLoss: {epoch_metrics['loss']}\nAccuracy: {epoch_metrics['accuracy']}\n")
+                    _ = logger.info(f"  💾 保存检查点: {checkpoint_path.name}")
 
             # 保存最终模型
             model_filename = f"default_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pth"
@@ -2821,8 +2819,8 @@ eturn self._train_collaboratively(scenario)
 
             # 创建模型文件
             with open(model_path, 'w') as f:
-    f.write("Default model trained with default config\n"):
- = f.write(f"Epochs: {epochs}\n")
+                f.write("Default model trained with default config\n")
+                f.write(f"Epochs: {epochs}\n")
                 _ = f.write(f"Batch size: {batch_size}\n")
             _ = logger.info(f"✅ 训练完成，模型保存至: {model_path}")
 
@@ -2833,19 +2831,19 @@ eturn self._train_collaboratively(scenario)
             return False
 
     def generate_training_report(self, scenario_name, scenario, model_info=None):
-""生成训练报告"""
-    report = f"""# 训练报告
+        """生成训练报告"""
+        report = f"""# 训练报告
 
 ## 训练信息
-_ = - 训练时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+- 训练时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 - 使用场景: {scenario_name}
-_ = - 场景描述: {scenario.get('description', '无描述')}
+- 场景描述: {scenario.get('description', '无描述')}
 
 ## 训练参数
-_ = - 数据集: {', '.join(scenario.get('datasets', []))}
-_ = - 训练轮数: {scenario.get('epochs', 10)}
-_ = - 批次大小: {scenario.get('batch_size', 16)}
-_ = - 目标模型: {', '.join(scenario.get('target_models', []))}
+- 数据集: {', '.join(scenario.get('datasets', []))}
+- 训练轮数: {scenario.get('epochs', 10)}
+- 批次大小: {scenario.get('batch_size', 16)}
+- 目标模型: {', '.join(scenario.get('target_models', []))}
 
 ## 数据集状态
 """
@@ -2876,12 +2874,10 @@ eport += f"- {data_type}: {count} 个样本\n"
 """
 
         if model_info:
-
-
-    report += f"""- 模型名称: {model_info.get('model_name', 'N/A')}
-_ = - 训练日期: {model_info.get('training_date', 'N/A')}
-_ = - 最终损失: {model_info.get('final_metrics', {}).get('loss', 'N/A')}
-_ = - 最终准确率: {model_info.get('final_metrics', {}).get('accuracy', 'N/A')}
+            report += f"""- 模型名称: {model_info.get('model_name', 'N/A')}
+- 训练日期: {model_info.get('training_date', 'N/A')}
+- 最终损失: {model_info.get('final_metrics', {}).get('loss', 'N/A')}
+- 最终准确率: {model_info.get('final_metrics', {}).get('accuracy', 'N/A')}
 """
 
     report += f"""
@@ -3004,20 +3000,14 @@ strengths": [],
             _ = performance_analysis["recommendations"].append("增加训练数据量")
 
         if evaluation_results["f1_score"] > 0.85:
-
-
-    _ = performance_analysis["strengths"].append("良好的平衡性")
+            _ = performance_analysis["strengths"].append("良好的平衡性")
         else:
-
             _ = performance_analysis["weaknesses"].append("精确率和召回率不平衡")
             _ = performance_analysis["recommendations"].append("调整分类阈值")
 
         if evaluation_results["inference_time_ms"] < 50:
-
-
-    _ = performance_analysis["strengths"].append("快速推理")
+            _ = performance_analysis["strengths"].append("快速推理")
         else:
-
             _ = performance_analysis["weaknesses"].append("推理速度较慢")
             _ = performance_analysis["recommendations"].append("模型优化或量化")
 
@@ -3029,17 +3019,17 @@ strengths": [],
     analysis_path = analysis_dir / analysis_filename
 
     with open(analysis_path, 'w', encoding='utf-8') as f:
-    json.dump(performance_analysis, f, ensure_ascii=False, indent=2)
+        json.dump(performance_analysis, f, ensure_ascii=False, indent=2)
 
     _ = logger.info(f"✅ 模型性能分析完成，报告保存至: {analysis_path}")
     return performance_analysis
 
     def deploy_model(self, model_path: Path, deployment_target: str = "local") -> bool:
-    """部署训练好的模型"""
-    _ = logger.info(f"🚀 开始部署模型: {model_path} 到 {deployment_target}")
+        """部署训练好的模型"""
+        _ = logger.info(f"🚀 开始部署模型: {model_path} 到 {deployment_target}")
 
         if not model_path.exists():
- = logger.error(f"❌ 模型文件不存在: {model_path}")
+            _ = logger.error(f"❌ 模型文件不存在: {model_path}")
             return False
 
         try:
@@ -3065,7 +3055,7 @@ strengths": [],
             # 保存部署配置
             config_path = deployment_dir / f"{model_path.stem}_deployment_config.json"
             with open(config_path, 'w', encoding='utf-8') as f:
-    json.dump(deployment_config, f, ensure_ascii=False, indent=2)
+                json.dump(deployment_config, f, ensure_ascii=False, indent=2)
 
             # 创建部署日志
             deployment_log = {
@@ -3084,7 +3074,7 @@ strengths": [],
             log_path = log_dir / f"deployment_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
             with open(log_path, 'w', encoding='utf-8') as f:
-    json.dump(deployment_log, f, ensure_ascii=False, indent=2)
+                json.dump(deployment_log, f, ensure_ascii=False, indent=2)
 
             _ = logger.info(f"✅ 模型部署完成: {deployed_model_path}")
             _ = logger.info(f"📄 部署配置保存至: {config_path}")
@@ -3093,8 +3083,6 @@ strengths": [],
             return True
 
         except Exception as e:
-
-
             _ = logger.error(f"❌ 模型部署过程中发生错误: {e}")
 
             # 记录部署失败日志
@@ -3113,14 +3101,13 @@ strengths": [],
             log_path = log_dir / f"deployment_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}_failed.json"
 
             with open(log_path, 'w', encoding='utf-8') as f:
-    json.dump(deployment_log, f, ensure_ascii=False, indent=2)
+                json.dump(deployment_log, f, ensure_ascii=False, indent=2)
 
             return False
 
     def _check_system_gpu_memory(self):
-""检查系统GPU内存"""
+        """检查系统GPU内存"""
         try:
-
             import platform
             system = platform.system().lower()
 
@@ -3135,33 +3122,30 @@ strengths": [],
                 ], capture_output=True, text=True, timeout=10)
 
                 if result.returncode == 0 and result.stdout.strip():
-pu_data = json.loads(result.stdout)
+                    gpu_data = json.loads(result.stdout)
 
                     # 计算总GPU内存（以GB为单位）
                     total_memory_gb = 0
 
                     # Handle both single GPU and multiple GPU cases
                     if isinstance(gpu_data, list):
-pu_list = gpu_data
+                        gpu_list = gpu_data
                     else:
-
                         gpu_list = [gpu_data]
 
                     # Sum up memory from all GPUs
                     for gpu_info in gpu_list:
-
-    adapter_ram = gpu_info.get('AdapterRAM', 0)
+                        adapter_ram = gpu_info.get('AdapterRAM', 0)
                         # Convert RAM from bytes to GB
-                        memory_gb = adapter_ram / (1024**3) if adapter_ram else 0:
-    total_memory_gb += memory_gb
+                        memory_gb = adapter_ram / (1024**3) if adapter_ram else 0
+                        total_memory_gb += memory_gb
 
                     return total_memory_gb
 
             # For other platforms or if WMI detection failed, return 0:
-eturn 0
+            return 0
         except Exception as e:
-
-    _ = logger.warning(f"检查系统GPU内存时出错: {e}")
+            _ = logger.warning(f"检查系统GPU内存时出错: {e}")
             return 0
 
 
