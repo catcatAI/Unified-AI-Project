@@ -399,7 +399,7 @@ class BaseAgent:
         logger.info(f"[{self.agent_id}] Registered handler for capability '{capability_id}'")
 
     # 代理协作方法
-    async def delegate_task_to_agent(self, target_agent_id: str, capability_id: str, parameters: Dict[str, Any]) -> str:
+    async def delegate_task_to_agent(self, target_agent_id: str, capability_id: str, parameters: Dict[str, Any], priority: int = 1, use_cache: bool = True) -> str:
         """
         Delegate a task to another agent.
         
@@ -407,6 +407,8 @@ class BaseAgent:
             target_agent_id: ID of the agent to handle the task
             capability_id: The capability needed to handle the task
             parameters: Parameters for the task
+            priority: Task priority (1-10, higher is more urgent)
+            use_cache: Whether to use caching for this task
             
         Returns: str Task ID for tracking the collaboration
         """
@@ -417,7 +419,51 @@ class BaseAgent:
             requester_agent_id=self.agent_id,
             target_agent_id=target_agent_id,
             capability_id=capability_id,
-            parameters=parameters
+            parameters=parameters,
+            priority=priority,
+            use_cache=use_cache
+        )
+    
+    async def delegate_task_to_agent_async(self, target_agent_id: str, capability_id: str, parameters: Dict[str, Any], priority: int = 1, use_cache: bool = True) -> asyncio.Future:
+        """
+        Asynchronously delegate a task to another agent.
+        
+        Args:
+            target_agent_id: ID of the agent to handle the task
+            capability_id: The capability needed to handle the task
+            parameters: Parameters for the task
+            priority: Task priority (1-10, higher is more urgent)
+            use_cache: Whether to use caching for this task
+            
+        Returns: asyncio.Future for tracking the collaboration
+        """
+        if not self.collaboration_manager:
+            raise RuntimeError("Collaboration manager not initialized")
+            
+        # Note: 当前实现中，异步委派不直接支持缓存，需要通过其他方式实现
+        return await self.collaboration_manager.delegate_task_async(
+            requester_agent_id=self.agent_id,
+            target_agent_id=target_agent_id,
+            capability_id=capability_id,
+            parameters=parameters,
+            priority=priority
+        )
+    
+    async def delegate_tasks_batch(self, task_definitions: List[Dict[str, Any]]) -> List[str]:
+        """
+        Delegate multiple tasks in batch.
+        
+        Args:
+            task_definitions: List of task definitions with target_agent_id, capability_id, parameters, and priority
+            
+        Returns: List[str] Task IDs for tracking the collaborations
+        """
+        if not self.collaboration_manager:
+            raise RuntimeError("Collaboration manager not initialized")
+            
+        return await self.collaboration_manager.delegate_tasks_batch(
+            requester_agent_id=self.agent_id,
+            task_definitions=task_definitions
         )
     
     async def orchestrate_multi_agent_task(self, task_sequence: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -436,6 +482,48 @@ class BaseAgent:
             requester_agent_id=self.agent_id,
             task_sequence=task_sequence
         )
+    
+    async def get_task_queue_status(self) -> Dict[str, Any]:
+        """
+        Get the status of the task queue.
+        
+        Returns: Dict[…] Task queue status
+        """
+        if not self.collaboration_manager:
+            return {"error": "Collaboration manager not initialized"}
+            
+        return await self.collaboration_manager.get_task_queue_status()
+    
+    async def get_cache_status(self) -> Dict[str, Any]:
+        """
+        Get the status of the task cache.
+        
+        Returns: Dict[…] Cache status
+        """
+        if not self.collaboration_manager:
+            return {"error": "Collaboration manager not initialized"}
+            
+        return await self.collaboration_manager.get_cache_status()
+    
+    async def clear_expired_cache(self) -> int:
+        """
+        Clear expired cache items.
+        
+        Returns: int Number of items cleared
+        """
+        if not self.collaboration_manager:
+            return 0
+            
+        return await self.collaboration_manager.clear_expired_cache()
+    
+    async def clear_cache(self):
+        """
+        Clear all cache items.
+        """
+        if not self.collaboration_manager:
+            return
+            
+        await self.collaboration_manager.clear_cache()
     
     # 健康检查和监控方法
     async def get_health_report(self) -> Dict[str, Any]:
