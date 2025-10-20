@@ -82,7 +82,6 @@ rocessed_data = editor_service.process_data(test_data)
         return True
     except Exception as e:
         _ = print(f"Error during service components test: {e}")
-        import traceback
         _ = traceback.print_exc()
         return False
 
@@ -101,7 +100,6 @@ def test_tool_components() -> None:
         return True
     except Exception as e:
         _ = print(f"Error during tool components test: {e}")
-        import traceback
         _ = traceback.print_exc()
         return False
 
@@ -125,7 +123,6 @@ def main() -> None:
             return False
     except Exception as e:
         _ = print(f"Error during simple integration testing: {e}")
-        import traceback
         _ = traceback.print_exc()
         return False
 

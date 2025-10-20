@@ -333,8 +333,6 @@ f line.strip:
             # For Windows, use WMI to detect integrated graphics
             if self.platform_name == "windows":
 
-    import subprocess
-                import json
 
                 # Get GPU information using WMI
                 result = subprocess.run([
@@ -414,13 +412,10 @@ f is_integrated:
     # Try to get more accurate integrated GPU information
         try:
 
-            import platform
             system = platform.system.lower
 
             if system == "windows":
                 # Windows系统使用WMI检测
-                import subprocess
-                import json
 
                 result = subprocess.run([
                     "powershell.exe",

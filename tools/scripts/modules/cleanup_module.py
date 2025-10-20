@@ -11,10 +11,10 @@ from typing import Dict, List, Tuple, Optional
 
 class CleanupModule:
     def __init__(self, project_root: Path) -> None:
-    self.project_root = project_root
-    self.backend_root = project_root / "apps" / "backend"
-    self.frontend_root = project_root / "apps" / "frontend-dashboard"
-    self.desktop_root = project_root / "apps" / "desktop-app"
+        self.project_root = project_root
+        self.backend_root = project_root / "apps" / "backend"
+        self.frontend_root = project_root / "apps" / "frontend-dashboard"
+        self.desktop_root = project_root / "apps" / "desktop-app"
 
     # 定义要清理的目录和文件模式
     self.cleanup_patterns = {

@@ -11,7 +11,7 @@ import psutil
 from pathlib import Path
 from enum import Enum
 
-class ProcessStatus(Enum)
+class ProcessStatus(Enum):
     """进程状态枚举"""
     RUNNING = "running"              # 运行中
     STOPPED = "stopped"              # 已停止
@@ -100,7 +100,7 @@ class ProcessUtils:
     result = self._run_background(command, config, result)
             else:
 
-                _ = raise ValueError(f"不支持的执行模式: {mode.value}")
+                raise ValueError(f"不支持的执行模式: {mode.value}")
 
         except Exception as e:
 
@@ -380,12 +380,12 @@ class ProcessUtils:
                 process = psutil.Process(pid)
                 return {
                     "pid": pid,
-                    _ = "command": " ".join(process.cmdline()),
+                    "command": " ".join(process.cmdline()),
                     "status": "running" if process.is_running() else "stopped",:
-    _ = "start_time": process.create_time(),
-                    _ = "duration": time.time() - process.create_time(),
-                    _ = "cpu_percent": process.cpu_percent(),
-                    _ = "memory_percent": process.memory_percent(),
+    "start_time": process.create_time(),
+                    "duration": time.time() - process.create_time(),
+                    "cpu_percent": process.cpu_percent(),
+                    "memory_percent": process.memory_percent(),
                     "managed": False
                 }
         except Exception as e:
@@ -458,16 +458,16 @@ class ProcessUtils:
         try:
 
             return {
-                _ = "cpu_count": psutil.cpu_count(),
-                _ = "cpu_percent": psutil.cpu_percent(),
-                _ = "memory_total": psutil.virtual_memory().total,
-                _ = "memory_available": psutil.virtual_memory().available,
-                _ = "memory_percent": psutil.virtual_memory().percent,
-                _ = "disk_total": psutil.disk_usage('/').total,
-                _ = "disk_free": psutil.disk_usage('/').free,
-                _ = "disk_percent": psutil.disk_usage('/').percent,
-                _ = "boot_time": psutil.boot_time(),
-                _ = "process_count": len(psutil.pids())
+                "cpu_count": psutil.cpu_count(),
+                "cpu_percent": psutil.cpu_percent(),
+                "memory_total": psutil.virtual_memory().total,
+                "memory_available": psutil.virtual_memory().available,
+                "memory_percent": psutil.virtual_memory().percent,
+                "disk_total": psutil.disk_usage('/').total,
+                "disk_free": psutil.disk_usage('/').free,
+                "disk_percent": psutil.disk_usage('/').percent,
+                "boot_time": psutil.boot_time(),
+                "process_count": len(psutil.pids())
             }
         except Exception as e:
 

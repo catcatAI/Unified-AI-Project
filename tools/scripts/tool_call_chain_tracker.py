@@ -78,7 +78,7 @@ class ToolCallChainContext:
     """开始一个工具调用"""
         if not self.current_chain:
 
-    _ = raise RuntimeError("No active call chain")
+    raise RuntimeError("No active call chain")
 
     # 生成调用ID
     self.call_id_counter += 1
@@ -109,7 +109,7 @@ class ToolCallChainContext:
     """结束当前工具调用"""
         if not self.current_call_stack:
 
-    _ = raise RuntimeError("No active call to end")
+    raise RuntimeError("No active call to end")
 
     # 获取当前调用节点
     call_node = self.current_call_stack.pop()

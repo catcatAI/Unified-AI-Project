@@ -21,7 +21,6 @@ def check_and_install_gmqtt():
         print("✅ gmqtt installed successfully")
         
         # Verify installation
-        import gmqtt  # type: ignore
         _ = gmqtt  # noqa: F841
         print("✅ gmqtt imported successfully after installation")
         return True

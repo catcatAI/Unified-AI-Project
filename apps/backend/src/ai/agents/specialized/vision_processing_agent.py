@@ -123,7 +123,6 @@ ategories = params.get('categories', ['animal', 'vehicle', 'person', 'object', '
 ommon_objects = ['person', 'car', 'dog', 'cat', 'tree', 'building', 'chair', 'table', 'phone', 'book']
         
         # Simulate object detection results
-        import random
         num_objects = random.randint(0, 5)
         detected_objects = [] 
         
@@ -176,7 +175,6 @@ ry:
                 enhanced_image = image.filter(ImageFilter.SHARPEN)
             elif enhancement_type == 'denoise':
                 # Simple denoising simulation
-                from PIL import ImageFilter
                 enhanced_image = image.filter(ImageFilter.SMOOTH)
             elif enhancement_type == 'brighten':
                 # Brighten the image
@@ -185,7 +183,6 @@ ry:
                 enhanced_image = enhancer.enhance(1.2)  # Increase brightness by 20%
             else:
                 # Default to sharpening
-                from PIL import ImageFilter
                 enhanced_image = image.filter(ImageFilter.SHARPEN)
             
             # Encode the enhanced image back to base64

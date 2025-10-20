@@ -115,7 +115,7 @@ class ProjectScopeFixer:
             
             # 修复常见的语法错误
             
-            # 1. 修复字典语法错误 (_ = "key": value)
+            # 1. 修复字典语法错误 ("key": value)
             import re
             pattern = r'_ = "([^"]+)":\s*([^,\n}]+)(,?)'
             replacement = r'"\1": \2\3'
@@ -124,25 +124,25 @@ class ProjectScopeFixer:
                 changes_made = True
                 logger.debug(f"修复字典语法: {file_path}")
             
-            # 2. 修复 _ = raise Exception 语法错误
+            # 2. 修复 raise Exception 语法错误
             content = re.sub(r'_ = raise\s+', 'raise ', content)
             if content != original_content:
                 changes_made = True
                 logger.debug(f"修复raise语法: {file_path}")
             
-            # 3. 修复 _ = @decorator 语法错误
+            # 3. 修复 @decorator 语法错误
             content = re.sub(r'_ = (@\w+)', r'\1', content)
             if content != original_content:
                 changes_made = True
                 logger.debug(f"修复装饰器语法: {file_path}")
             
-            # 4. 修复 _ = assert 语法错误
+            # 4. 修复 assert 语法错误
             content = re.sub(r'_ = assert\s+', 'assert ', content)
             if content != original_content:
                 changes_made = True
                 logger.debug(f"修复assert语法: {file_path}")
             
-            # 5. 修复 _ = **kwargs 语法错误
+            # 5. 修复 **kwargs 语法错误
             content = re.sub(r'_ = \*\*(\w+)', r'**\1', content)
             if content != original_content:
                 changes_made = True
@@ -153,8 +153,7 @@ class ProjectScopeFixer:
             content = content.replace('"""', '"""')
             content = content.replace('"', '"')
             content = content.replace('"', '"')
-            content = content.replace(''', "'")
-            content = content.replace(''', "'")
+            content = content.replace(''''''', "'")
             if content != original_content:
                 changes_made = True
                 logger.debug(f"修复智能引号: {file_path}")
@@ -190,7 +189,6 @@ class ProjectScopeFixer:
             # 修复常见的导入错误
             
             # 1. 修复不完整的导入语句
-            import re
             pattern = r'from\s+[\w\.]+\s+import\s*\n'
             replacement = ''
             content = re.sub(pattern, replacement, content)

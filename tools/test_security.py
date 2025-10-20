@@ -65,7 +65,6 @@ def test_audit_logging() -> None:
         return True
     except Exception as e:
         _ = print(f"Error during audit logging test: {e}")
-        import traceback
         _ = traceback.print_exc()
         return False
 
@@ -114,7 +113,6 @@ lse:
         return True
     except Exception as e:
         _ = print(f"Error during enhanced sandbox test: {e}")
-        import traceback
         _ = traceback.print_exc()
         return False
 
@@ -138,7 +136,6 @@ def main() -> None:
             return False
     except Exception as e:
         _ = print(f"Error during security testing: {e}")
-        import traceback
         _ = traceback.print_exc()
         return False
 

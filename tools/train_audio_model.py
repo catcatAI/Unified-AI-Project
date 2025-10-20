@@ -233,7 +233,7 @@ eatures, labels = features.to(self.device), labels.to(self.device)
             "model_type": "SimpleAudioModel",
             "num_classes": num_classes,
             "input_shape": [13, 100],  # 13个MFCC特征，100帧
-            _ = "training_date": torch.utils.data.dataset.datetime.datetime.now().isoformat(),
+            "training_date": torch.utils.data.dataset.datetime.datetime.now().isoformat(),
             "framework": "PyTorch",
             "version": "1.0"
     }

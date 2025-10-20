@@ -27,16 +27,16 @@ def fix_assignment_syntax(content):
     
     # 定義修復模式
     patterns = [
-        # 修復字典語法錯誤：_ = "key": value -> "key": value
+        # 修復字典語法錯誤："key": value -> "key": value
         (r'_ = "([^"]+)":\s*([^,\n]+)(,?)', r'"\1": \2\3'),
         
-        # 修復異常語法錯誤：_ = raise Exception -> raise Exception
+        # 修復異常語法錯誤：raise Exception -> raise Exception
         (r'_ = raise\s+(.+)$', r'raise \1'),
         
-        # 修復裝飾器語法錯誤：_ = @decorator -> @decorator
+        # 修復裝飾器語法錯誤：@decorator -> @decorator
         (r'_ = (@[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:\([^)]*\))?)', r'\1'),
         
-        # 修復斷言語法錯誤：_ = assert ... -> assert ...
+        # 修復斷言語法錯誤：assert ... -> assert ...
         (r'_ = (assert\s+.+)$', r'\1'),
         
         # 修復賦值表達式語法錯誤：_ = (...) -> (...)
@@ -66,7 +66,7 @@ def fix_assignment_syntax(content):
         # 修復註釋語法錯誤：_ = # comment -> # comment
         (r'_ = (#.*)$', r'\1'),
         
-        # 修復展開字典語法錯誤：_ = **dict -> **dict
+        # 修復展開字典語法錯誤：**dict -> **dict
         (r'_ = (\*\*[a-zA-Z_][a-zA-Z0-9_]*)', r'\1'),
         
         # 修復關鍵字參數語法錯誤：_ = key=value -> key=value
@@ -201,12 +201,6 @@ if __name__ == "__main__":
 穩健的項目修復腳本，處理項目中所有帶有 '_ = ' 前綴的語法錯誤
 """
 
-import os
-import re
-import sys
-import json
-import traceback
-from pathlib import Path
 
 # 修復報告
 fix_report = {
@@ -223,16 +217,16 @@ def fix_assignment_syntax(content):
     
     # 定義修復模式
     patterns = [
-        # 修復字典語法錯誤：_ = "key": value -> "key": value
+        # 修復字典語法錯誤："key": value -> "key": value
         (r'_ = "([^"]+)":\s*([^,\n]+)(,?)', r'"\1": \2\3'),
         
-        # 修復異常語法錯誤：_ = raise Exception -> raise Exception
+        # 修復異常語法錯誤：raise Exception -> raise Exception
         (r'_ = raise\s+(.+)$', r'raise \1'),
         
-        # 修復裝飾器語法錯誤：_ = @decorator -> @decorator
+        # 修復裝飾器語法錯誤：@decorator -> @decorator
         (r'_ = (@[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:\([^)]*\))?)', r'\1'),
         
-        # 修復斷言語法錯誤：_ = assert ... -> assert ...
+        # 修復斷言語法錯誤：assert ... -> assert ...
         (r'_ = (assert\s+.+)$', r'\1'),
         
         # 修復賦值表達式語法錯誤：_ = (...) -> (...)
@@ -262,7 +256,7 @@ def fix_assignment_syntax(content):
         # 修復註釋語法錯誤：_ = # comment -> # comment
         (r'_ = (#.*)$', r'\1'),
         
-        # 修復展開字典語法錯誤：_ = **dict -> **dict
+        # 修復展開字典語法錯誤：**dict -> **dict
         (r'_ = (\*\*[a-zA-Z_][a-zA-Z0-9_]*)', r'\1'),
         
         # 修復關鍵字參數語法錯誤：_ = key=value -> key=value
@@ -318,7 +312,6 @@ def process_file(file_path):
 def validate_syntax(file_path):
     """驗證文件語法"""
     try:
-        import ast
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         ast.parse(content)

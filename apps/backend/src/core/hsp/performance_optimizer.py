@@ -147,7 +147,6 @@ urrent_time - self.last_batch_send >= 1.0):  # 每秒至少发送一次
     def decompress_message(self, compressed_data: bytes) -> Dict[str, Any]:
         """解压缩消息"""
         try:
-            import zlib
             decompressed= zlib.decompress(compressed_data)
             message= json.loads(decompressed.decode('utf-8'))
             return message

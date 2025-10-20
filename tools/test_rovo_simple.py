@@ -38,7 +38,6 @@ def test_enhanced_connector() -> None:
         return True
     except Exception as e:
         _ = print(f"Error during Enhanced connector import test: {e}")
-        import traceback
         _ = traceback.print_exc()
         return False
 
@@ -65,7 +64,6 @@ def main() -> None:
             return False
     except Exception as e:
         _ = print(f"Error during simple testing: {e}")
-        import traceback
         _ = traceback.print_exc()
         return False
 

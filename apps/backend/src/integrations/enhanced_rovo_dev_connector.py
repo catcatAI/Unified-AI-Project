@@ -380,7 +380,6 @@ f self.session is None:
                 timeout = aiohttp.ClientTimeout(total=30)
                 self.session = aiohttp.ClientSession(timeout=timeout)
             cm_or_resp = self.session.request(method, url, **kwargs)
-            import inspect
             if inspect.isawaitable(cm_or_resp):
 
                 cm_or_resp = await cm_or_resp
@@ -742,6 +741,5 @@ async def create_enhanced_connector(config: Dict[str, Any],
 
     def _get_auth_header(self) -> str:
         """獲取認證頭"""
-        import base64
         credentials = f"{self.user_email}:{self.api_token}"
         return base64.b64encode(credentials.encode()).decode

@@ -171,7 +171,6 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
         # 加密消息载荷
         payload = response.get('payload', {})
         encrypted_payload = self.security_manager.encrypt_message(payload)
-        import base64
         response['payload'] = 'encrypted:' + base64.b64encode(encrypted_payload).decode('utf-8')
 
         # 调用下一个中间件

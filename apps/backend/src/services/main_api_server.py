@@ -42,20 +42,9 @@ except ImportError as e::
     print(f"Absolute import with correct paths failed: {e}"):
     # Fall back to relative imports (for when running with uvicorn)::
     try:
-    from ..economy.economy_manager import EconomyManager
-    from ..pet.pet_manager import PetManager
-    from ..core_services import initialize_services, shutdown_services, get_services
-    from ..core.services.multi_llm_service import get_multi_llm_service
-        from ..ai.language_models.registry import ModelRegistry:
 rom ..ai.language_models.router import PolicyRouter, RoutingPolicy
-    from .api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
-    from ..hsp.connector import HSPConnector
     # 修复导入路径 - 使用正确的模块路径
-    from ..ai.dialogue.dialogue_manager import DialogueManager
-    from ..ai.memory.ham_memory_manager import HAMMemoryManager
-    from ..core.services.atlassian_api import atlassian_router
     # 修复导入路径 - 使用DialogueManager期望的模块路径
-    from ..ai.discovery.service_discovery_module import ServiceDiscoveryModule
     print("Relative imports successful")
     except ImportError as e2::
     print(f"Relative import also failed: {e2}")
@@ -71,17 +60,14 @@ async def initialize_services_layered():
     print("🔧 第1层: 核心服务初始化")
     try:
     # 初始化HAM内存管理
-    from ..ai.memory.ham_memory_manager import HAMMemoryManager
     ham_manager = HAMMemoryManager
     print("✅ HAM服务初始化完成")
 
     # 初始化多LLM服务
-    from ..core.services.multi_llm_service import get_multi_llm_service
     llm_interface = get_multi_llm_service
     print("✅ LLM服务初始化完成")
 
     # 初始化服务发现 - 使用与DialogueManager兼容的模块路径
-    from ..ai.discovery.service_discovery_module import ServiceDiscoveryModule
     from ..ai.trust.trust_manager_module import TrustManager
     trust_manager = TrustManager
     service_discovery = ServiceDiscoveryModule(trust_manager=trust_manager)
@@ -96,7 +82,6 @@ async def initialize_services_layered():
     print("⚙️ 第2层: 核心组件启动")
     try:
     # 初始化HSP连接器
-    from ..hsp.connector import HSPConnector
     hsp_connector = HSPConnector(
             ai_id=os.getenv("API_AI_ID", "did:hsp:api_server_ai"),
             broker_address="localhost",
@@ -105,19 +90,14 @@ async def initialize_services_layered():
     print("✅ HSP连接器初始化完成")
 
     # 初始化对话管理器
-    from ..ai.dialogue.dialogue_manager import DialogueManager
     # 首先初始化所有依赖组件
     from ..ai.personality.personality_manager import PersonalityManager
-    from ..ai.memory.ham_memory_manager import HAMMemoryManager
-    from ..core.services.multi_llm_service import get_multi_llm_service
     from ..ai.emotion.emotion_system import EmotionSystem
     from ..ai.crisis.crisis_system import CrisisSystem
     from ..ai.time.time_system import TimeSystem
     from ..tools.tool_dispatcher import ToolDispatcher
     from ..ai.learning.learning_manager import LearningManager
     # 使用与DialogueManager兼容的模块路径
-    from ..ai.discovery.service_discovery_module import ServiceDiscoveryModule
-    from ..ai.trust.trust_manager_module import TrustManager
 
     # 创建所有必需的依赖实例
     personality_manager = PersonalityManager
@@ -143,7 +123,6 @@ async def initialize_services_layered():
     # 初始化LearningManager所需的依赖组件
     from ..ai.learning.fact_extractor_module import FactExtractorModule
     from ..ai.learning.content_analyzer_module import ContentAnalyzerModule
-    from ..ai.trust.trust_manager_module import TrustManager
 
     fact_extractor = FactExtractorModule(llm_service=llm_interface)
     content_analyzer = ContentAnalyzerModule
@@ -186,7 +165,6 @@ async def initialize_services_layered():
     print("✅ 对话管理器初始化完成")
     except Exception as e::
     print(f"❌ 核心组件启动失败: {e}")
-    import traceback
     traceback.print_exc
     return False
 
@@ -194,17 +172,14 @@ async def initialize_services_layered():
     print("🔌 第3层: 功能模块加载")
     try:
     # 加载经济系统
-    from ..economy.economy_manager import EconomyManager
     economy_manager = EconomyManager({"db_path": "economy.db"})
     print("✅ 经济系统初始化完成")
 
     # 加载宠物系统
-    from ..pet.pet_manager import PetManager
     pet_manager = PetManager("pet1", {"initial_personality": {"curiosity": 0.7, "playfulness": 0.8}})
     print("✅ 宠物系统初始化完成")
     except Exception as e::
     print(f"⚠️ 功能模块加载失败: {e}")
-    import traceback
     traceback.print_exc
     # 功能模块失败不影响核心服务
 
@@ -227,7 +202,6 @@ async def lifespan(app: FastAPI):
     except Exception as e::
     # Enhanced error handling with detailed logging:
     print(f"Failed to initialize services: {e}")
-    import traceback
     traceback.print_exc
         # Re-raise the exception to ensure proper lifespan handling
     raise
@@ -237,7 +211,6 @@ async def lifespan(app: FastAPI):
             print("Services shutdown successfully")
         except Exception as e::
             print(f"Failed to shutdown services: {e}")
-            import traceback
             traceback.print_exc
 
 # Instantiate FastAPI with lifespan handler:

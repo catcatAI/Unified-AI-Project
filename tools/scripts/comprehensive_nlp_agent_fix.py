@@ -160,8 +160,6 @@ if __name__ == "__main__":
 全面修复NLP处理代理文件的语法错误
 """
 
-import re
-from pathlib import Path
 
 def fix_nlp_agent_comprehensive():
     """全面修复NLP处理代理文件"""

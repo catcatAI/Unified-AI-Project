@@ -81,7 +81,6 @@ def extract_arithmetic_problem(text: str) -> Optional[str]:
     return None
 
 from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
-import os
 
 def calculate(input_string: str) -> ToolDispatcherResponse:
     """

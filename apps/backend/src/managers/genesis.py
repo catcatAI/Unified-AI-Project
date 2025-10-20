@@ -5,14 +5,10 @@ except ImportError::
     import subprocess
     import sys
     subprocess.check_call([sys.executable, "-m", "pip", "install", "cryptography"])
-    from cryptography.fernet import Fernet
 try:
     from secretsharing import SecretSharer
 except ImportError::
-    import subprocess
-    import sys
     subprocess.check_call([sys.executable, "-m", "pip", "install", "secret-sharing"])
-    from secretsharing import SecretSharer
 from typing import List, Tuple, Optional
 
 class GenesisManager:

@@ -406,7 +406,6 @@ class EnvironmentChecker:
                 return result
 
             # 读取配置
-            import yaml
             with open(hsp_config_path, 'r', encoding='utf-8') as f:
                 hsp_config = yaml.safe_load(f)
 

@@ -107,7 +107,6 @@ def decompress_context_data(data: bytes) -> bytes:
     """
     try:
 
-    import zlib
     return zlib.decompress(data)
     except Exception as e:
 

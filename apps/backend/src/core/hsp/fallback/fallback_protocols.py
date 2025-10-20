@@ -277,7 +277,6 @@ class FileBasedProtocol(BaseFallbackProtocol):
     async def initialize(self) -> bool:
         """初始化文件协议"""
         try:
-            import os
             os.makedirs(self.inbox_path, exist_ok=True)
             os.makedirs(self.outbox_path, exist_ok=True)
 
@@ -293,7 +292,6 @@ class FileBasedProtocol(BaseFallbackProtocol):
     async def send_message(self, message: FallbackMessage) -> bool:
         """发送消息到文件"""
         try:
-            import os
             # 检查消息大小
             message_data = json.dumps(message.to_dict(), ensure_ascii=False)
             if len(message_data.encode('utf-8')) > self.max_file_size:
@@ -341,7 +339,6 @@ class FileBasedProtocol(BaseFallbackProtocol):
 
     async def _file_listener(self):
         """文件监听器"""
-        import os
         processed_files = set()
 
         while self.running:
@@ -387,7 +384,6 @@ class FileBasedProtocol(BaseFallbackProtocol):
     async def health_check(self) -> bool:
         """健康检查"""
         try:
-            import os
             return (self.status == ProtocolStatus.ACTIVE and
                    os.path.exists(self.inbox_path) and
                    os.path.exists(self.outbox_path))
@@ -471,7 +467,6 @@ class HTTPProtocol(BaseFallbackProtocol):
     async def _handle_http_message(self, request):
         """处理 HTTP 消息请求"""
         try:
-            from aiohttp import web
             data = await request.json()
             message = FallbackMessage.from_dict(data)
             _ = await self.handle_message(message)
@@ -485,7 +480,6 @@ class HTTPProtocol(BaseFallbackProtocol):
 
     async def _handle_health_check(self, request):
         """处理健康检查请求"""
-        from aiohttp import web
         return web.json_response({
             "status": self.status.value,
             "stats": self.stats

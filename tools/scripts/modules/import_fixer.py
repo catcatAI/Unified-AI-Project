@@ -185,7 +185,7 @@ class ImportFixer:
     total_fixes = 0
     errors = []
 
-        for file_path in python_files:
+    for file_path in python_files:
             try:
                 fixed, message, details = self.fix_imports_in_file(file_path)
 
@@ -234,7 +234,6 @@ class ImportFixer:
 
 def main() -> None:
     """测试函数"""
-    from pathlib import Path
 
     project_root: str = Path(__file__).parent.parent.parent
     fixer = ImportFixer(project_root)

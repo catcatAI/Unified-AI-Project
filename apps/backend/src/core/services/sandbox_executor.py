@@ -25,7 +25,6 @@ DEFAULT_SANDBOX_TIMEOUT = 60
 # It takes tool_module_path, class_name, method_name, and params_json_str as command line arguments.
 SANDBOX_RUNNER_SCRIPT_TEMPLATE = """
 import importlib.util
-import json
 import sys
 import traceback # For capturing exception details
 import os # For os.path.basename, os.path.splitext

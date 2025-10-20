@@ -207,7 +207,6 @@ class EncryptionUtils:
     def rsa_sign(self, data: Union[str, bytes], private_key_pem: str) -> str:
         """RSA签名"""
         from cryptography.hazmat.primitives.asymmetric import padding
-        from cryptography.hazmat.primitives import serialization
         
         if isinstance(data, str):
             data = data.encode('utf-8')
@@ -233,8 +232,6 @@ class EncryptionUtils:
     
     def rsa_verify(self, data: Union[str, bytes], signature: str, public_key_pem: str) -> bool:
         """验证RSA签名"""
-        from cryptography.hazmat.primitives.asymmetric import padding
-        from cryptography.hazmat.primitives import serialization
         
         if isinstance(data, str):
             data = data.encode('utf-8')

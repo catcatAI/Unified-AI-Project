@@ -402,7 +402,6 @@ class DeploymentManager:
         if integrated_graphics::
             # 导入集成显卡优化器
             try:
-                from .integrated_graphics_optimizer import IntegratedGraphicsOptimizer
                 ig_optimizer = IntegratedGraphicsOptimizer(self.hardware_profile)
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier
 

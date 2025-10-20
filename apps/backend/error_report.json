@@ -1,7 +1,7 @@
 {
-  "total_errors": 38,
+  "total_errors": 42,
   "errors_by_type": {
-    "导入路径错误": 38
+    "导入路径错误": 42
   },
   "error_details": [
     {
@@ -52,6 +52,46 @@
       "details": {
         "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntest_real_repair_functionality.py:11: in <module>\n    from enhanced_intelligent_repair_system import EnhancedIntelligentRepairSystem\nE   ModuleNotFoundError: No module named 'enhanced_intelligent_repair_system'\n___________________ ERROR collecting test_repair_sample.py ____________________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
         "full_match": "No module named 'enhanced_intelligent_repair_system'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\agents\\test_audio_processing_agent.py'.",
+      "details": {
+        "context": "E                                                                    ^\nE   IndentationError: unindent does not match any outer indentation level\n________ ERROR collecting tests/agents/test_audio_processing_agent.py _________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\agents\\test_audio_processing_agent.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\agents\\test_audio_processing_agent.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\agents\\test_audio_processing_agent.py",
+      "line_number": 15,
+      "message": "No module named 'apps.backend.src.agents.audio_processing_agent'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\agents\\test_audio_processing_agent.py:15: in <module>\n    from apps.backend.src.agents.audio_processing_agent import AudioProcessingAgent\nE   ModuleNotFoundError: No module named 'apps.backend.src.agents.audio_processing_agent'\n______________ ERROR collecting tests/agents/test_base_agent.py _______________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.agents.audio_processing_agent'"
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py",
+      "line_number": 90,
+      "message": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\agents\\test_creative_writing_agent.py'.",
+      "details": {
+        "context": "E             ^\nE   SyntaxError: invalid syntax\n________ ERROR collecting tests/agents/test_creative_writing_agent.py _________\nImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\agents\\test_creative_writing_agent.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\importlib\\__init__.py:90: in import_module",
+        "full_match": "ImportError while importing test module 'D:\\Projects\\Unified-AI-Project\\tests\\agents\\test_creative_writing_agent.py'."
+      }
+    },
+    {
+      "type": "导入路径错误",
+      "file_path": "tests\\agents\\test_creative_writing_agent.py",
+      "line_number": 8,
+      "message": "No module named 'apps.backend.src.agents.creative_writing_agent'",
+      "details": {
+        "context": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\agents\\test_creative_writing_agent.py:8: in <module>\n    from apps.backend.src.agents.creative_writing_agent import CreativeWritingAgent\nE   ModuleNotFoundError: No module named 'apps.backend.src.agents.creative_writing_agent'\n________________ ERROR collecting tests/agents/test_imports.py ________________\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\python.py:498: in importtestmodule\n    mod = import_path(",
+        "full_match": "No module named 'apps.backend.src.agents.creative_writing_agent'"
       }
     },
     {

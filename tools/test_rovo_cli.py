@@ -33,10 +33,9 @@ def test_cli_command_structure() -> None:
     try:
 
 
-    from commands.rovo import rovo
 
     # Check that the rovo group exists
-    _ = assert hasattr(rovo, 'commands')
+    assert hasattr(rovo, 'commands')
 
     # Check that expected commands exist
     expected_commands = ['create_issue', 'generate_docs', 'analyze_code', 'status']
@@ -49,7 +48,6 @@ def test_cli_command_structure() -> None:
     except Exception as e:
 
     _ = print(f"Error during CLI command structure test: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 
@@ -77,7 +75,6 @@ def main() -> None:
     except Exception as e:
 
     _ = print(f"Error during CLI testing: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 

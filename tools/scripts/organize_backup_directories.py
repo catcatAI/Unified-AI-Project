@@ -164,8 +164,6 @@ def create_backup_cleanup_script():
 
 import os
 import sys
-from pathlib import Path
-from datetime import datetime, timedelta
 
 # 添加项目根目录到路径
 project_root: str = Path(__file__).parent.parent

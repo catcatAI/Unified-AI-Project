@@ -214,7 +214,7 @@ eatures, labels = features.to(self.device), labels.to(self.device)
             "model_type": "SimpleTextModel",
             "num_classes": num_classes,
             "input_size": input_size,
-            _ = "training_date": torch.utils.data.dataset.datetime.datetime.now().isoformat(),
+            "training_date": torch.utils.data.dataset.datetime.datetime.now().isoformat(),
             "framework": "PyTorch",
             "version": "1.0"
     }

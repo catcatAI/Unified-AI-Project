@@ -1,7 +1,7 @@
 @echo off
-cd /d "D:\Projects\Unified-AI-Project"
-echo 开始执行项目修复...
+cd /d "%~dp0"
+echo Starting project repair...
 python execute_project_repair.py
 echo.
-echo 修复完成！
+echo Repair completed!
 pause

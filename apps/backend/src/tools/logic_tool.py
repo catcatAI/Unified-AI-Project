@@ -97,7 +97,6 @@ ogic_tool_instance = LogicTool()
 evaluate_expression = logic_tool_instance.evaluate_expression
 
 if __name__ == '__main__':
-    import logging
     logging.basicConfig(level=logging.INFO)
     logging.info("--- Logic Tool Example Usage ---")
 

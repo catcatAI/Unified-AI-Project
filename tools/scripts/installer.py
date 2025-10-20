@@ -1,7 +1,6 @@
 import sys
 import yaml
 import os
-import sys
 from PyQt5.QtWidgets import QApplication, QWizard, QWizardPage, QVBoxLayout, QLabel, QComboBox
 
 class InstallationWizard(QWizard):
@@ -198,7 +197,6 @@ class InstallationPage(QWizardPage):
 
     def install_dependencies(self):
         import subprocess
-        import sys
 
         def install(package):
             try:

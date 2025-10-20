@@ -11,8 +11,6 @@ if SRC_DIR not in sys.path:
     _ = sys.path.insert(0, SRC_DIR)
 
 try:
-
-
     from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
 except ImportError:
     _ = print("Error: Could not import HAMMemoryManager.")
@@ -20,7 +18,7 @@ except ImportError:
     _ = print("And that ham_memory_manager.py is in core_ai/memory/ under src.")
     _ = sys.exit(1)
 
-def run_prototype()
+def run_prototype():
     _ = print("--- MikoAI Core HAM Prototype ---")
 
     # Define a unique filename for this prototype's memory to avoid conflicts

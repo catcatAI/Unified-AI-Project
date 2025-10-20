@@ -319,7 +319,6 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
     async def send_command(self, message: MCPFallbackMessage) -> bool:
         """發送命令到文件"""
         try:
-            import os
             fcntl_module = None
             try:
                 import fcntl
@@ -387,11 +386,9 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
         """文件監聽器"""
         while self.running:
             try:
-                import os
                 import glob
                 fcntl_module = None
                 try:
-                    import fcntl
                     fcntl_module = fcntl
                 except ImportError:
                     pass
@@ -451,7 +448,6 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
     async def health_check(self) -> bool:
         """健康檢查"""
         try:
-            import os
             return (self.status == MCPProtocolStatus.ACTIVE and
                    os.path.exists(self.inbox_path) and
                    os.path.exists(self.outbox_path))
@@ -555,7 +551,6 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
                 logger.error("HTTP會話未初始化")
                 return False
 
-            import aiohttp
             url = f"{endpoint}/mcp/command"
             if isinstance(self.session, aiohttp.ClientSession):
                 async with self.session.post(url, json=message.to_dict()) as response:
@@ -578,19 +573,16 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
     async def _handle_http_command(self, request):
         """處理HTTP命令請求"""
         try:
-            from aiohttp import web
             data = await request.json()
             message = MCPFallbackMessage.from_dict(data)
             await self.handle_command(message)
             return web.json_response({"status": "ok"})
         except Exception as e:
             logger.error(f"處理MCP HTTP命令失敗: {e}")
-            from aiohttp import web
             return web.json_response({"error": str(e)}, status=400)
 
     async def _handle_health_check(self, request):
         """處理健康檢查請求"""
-        from aiohttp import web
         return web.json_response({
                 "status": self.status.value,
                 "protocol": self.protocol_name,
@@ -615,7 +607,6 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
             if hasattr(self.server, 'cleanup'):
                 await self.server.cleanup()
         if self.session:
-            import aiohttp
             if isinstance(self.session, aiohttp.ClientSession):
                 await self.session.close()
 

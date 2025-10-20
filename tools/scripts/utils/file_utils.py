@@ -7,8 +7,9 @@ import shutil
 import hashlib
 import fnmatch
 import time
+from enum import Enum
 from pathlib import Path
-class FileType(Enum)
+class FileType(Enum):
     """文件类型枚举"""
     PYTHON = "python"              # Python文件
     JAVASCRIPT = "javascript"      # JavaScript文件
@@ -318,17 +319,17 @@ class FileUtils:
             stat = file_path.stat()
 
             return {
-                _ = "path": str(file_path),
+                "path": str(file_path),
                 "name": file_path.name,
                 "size": stat.st_size,
-                _ = "size_mb": round(stat.st_size / (1024 * 1024), 2),
-                _ = "type": self.get_file_type(file_path).value,
-                _ = "is_text": self.is_text_file(file_path),
-                _ = "is_binary": self.is_binary_file(file_path),
-                _ = "created": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_ctime)),
-                _ = "modified": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime)),
-                _ = "accessed": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_atime)),
-                _ = "permissions": oct(stat.st_mode)[-3:]
+                "size_mb": round(stat.st_size / (1024 * 1024), 2),
+                "type": self.get_file_type(file_path).value,
+                "is_text": self.is_text_file(file_path),
+                "is_binary": self.is_binary_file(file_path),
+                "created": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_ctime)),
+                "modified": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime)),
+                "accessed": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_atime)),
+                "permissions": oct(stat.st_mode)[-3:]
             }
         except Exception as e:
 
@@ -356,12 +357,12 @@ class FileUtils:
                 file_types[file_type.value] = file_types.get(file_type.value, 0) + 1
 
             return {
-                _ = "path": str(dir_path),
+                "path": str(dir_path),
                 "name": dir_path.name,
-                _ = "files_count": len(files),
-                _ = "directories_count": len(directories),
+                "files_count": len(files),
+                "directories_count": len(directories),
                 "total_size": total_size,
-                _ = "total_size_mb": round(total_size / (1024 * 1024), 2),
+                "total_size_mb": round(total_size / (1024 * 1024), 2),
                 "file_types": file_types,
                 "created": time.strftime("%Y-%m-%d %H:%M:%S",
                                        _ = time.localtime(dir_path.stat().st_ctime)),

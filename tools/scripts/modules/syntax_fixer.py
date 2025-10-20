@@ -338,7 +338,6 @@ class SyntaxFixer:
 
 def main() -> None:
     """测试函数"""
-    from pathlib import Path
 
     project_root: Path = Path(__file__).parent.parent.parent
     fixer = SyntaxFixer(project_root)

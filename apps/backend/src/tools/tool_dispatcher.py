@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 rag_available_flag = False
 RAGManager = None
 try:
-    from ai.rag.rag_manager import RAGManager
     rag_available_flag = True
 except ImportError as e:
     print(f"RAG Manager not available: {e}")
@@ -78,7 +77,6 @@ class ToolDispatcher:
                 pass
 
     def __init__(self, llm_service: Optional['MultiLLMService'] = None) -> None:
-        from ai.language_models.daily_language_model import DailyLanguageModel
         if DailyLanguageModel is not None:
             self.dlm = DailyLanguageModel(llm_service=llm_service)
         self.code_understanding_tool_instance = CodeUnderstandingTool
@@ -593,7 +591,6 @@ class ToolDispatcher:
 
             logging.debug(f"ToolDispatcher DEBUG (_execute_logic_evaluation) expression_to_evaluate='{expression_to_evaluate}'")
             # Create an instance of the logic tool
-            from .logic_tool import LogicTool
             logic_tool_instance = LogicTool()
             result = logic_tool_instance.evaluate_expression(expression_string=expression_to_evaluate)
 
@@ -746,7 +743,6 @@ class ToolDispatcher:
 # Example Usage
 if __name__ == '__main__':
     import asyncio
-    from apps.backend.src.core.services.multi_llm_service import MultiLLMService
 
     async def main_test():
         logging.basicConfig(level=logging.INFO)

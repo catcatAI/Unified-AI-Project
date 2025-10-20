@@ -75,7 +75,7 @@ class AutomatedTestRunner:
 
             return {
                 "success": False,
-                _ = "error": str(e),
+                "error": str(e),
                 "test_type": "unit"
             }
 
@@ -129,7 +129,7 @@ class AutomatedTestRunner:
 
             return {
                 "success": False,
-                _ = "error": str(e),
+                "error": str(e),
                 "test_type": "integration"
             }
 
@@ -180,7 +180,7 @@ class AutomatedTestRunner:
 
             return {
                 "success": False,
-                _ = "error": str(e),
+                "error": str(e),
                 "test_type": "e2e"
             }
 
@@ -198,10 +198,10 @@ class AutomatedTestRunner:
     report_file = self.reports_dir / f"test_report_{timestamp}.json"
 
     report_data = {
-            _ = "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now().isoformat(),
             "test_results": test_results,
             "summary": {
-                _ = "total_tests": len(test_results),
+                "total_tests": len(test_results),
                 "passed_tests": len([r for r in test_results if r.get("success", False)]),
                 "failed_tests": len([r for r in test_results if not r.get("success", True)]),
             }
@@ -281,7 +281,7 @@ class AutomatedTestRunner:
             "success": len(failed_tests) == 0,
             "results": results,
             "report_file": report_file,
-            _ = "failed_count": len(failed_tests)
+            "failed_count": len(failed_tests)
     }
 
 def main() -> None:

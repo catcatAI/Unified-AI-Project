@@ -54,7 +54,7 @@ def fix_with_statements(content):
 
 def fix_decorators(content):
     """修复装饰器前的下划线问题"""
-    # 修复 @_ = @decorator 的问题
+    # 修复 @@decorator 的问题
     pattern = r'_\s*=\s*(@\w+)'
     replacement = r'\1'
     return re.sub(pattern, replacement, content)

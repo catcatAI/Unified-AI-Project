@@ -119,8 +119,8 @@ eature = Feature.from_dict(feature_data)
 
             data = {
                 "features": [feature.to_dict() for feature in self.features.values()],:
-    _ = "last_updated": datetime.now().isoformat(),
-                _ = "total_features": len(self.features)
+    "last_updated": datetime.now().isoformat(),
+                "total_features": len(self.features)
             }
 
             # 确保目录存在
