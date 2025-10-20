@@ -71,7 +71,15 @@ class TestRunner:
         try:
             # 运行测试
             project_root = Path(__file__).parent.parent
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd=project_root)
+            backend_root = project_root / "apps" / "backend"
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=backend_root)
+
+            # Print stdout and stderr for debugging
+            print("--- PYTEST STDOUT ---")
+            print(result.stdout)
+            print("--- PYTEST STDERR ---")
+            print(result.stderr)
+            print("---------------------")
 
             # 解析结果
             test_results = {

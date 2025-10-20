@@ -6,7 +6,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 
 # 修复导入路径 - 使用正确的模块路径
-from core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from ....core.hsp.types_fixed import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
 
