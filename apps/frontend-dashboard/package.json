@@ -115,7 +115,7 @@
     "nodemon": "^3.1.10",
     "postcss": "^8.4.47",
     "tailwindcss": "^4",
-    "ts-jest": "^29.4.0",
+    "ts-jest": "^29.4.5",
     "tw-animate-css": "^1.3.5",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
