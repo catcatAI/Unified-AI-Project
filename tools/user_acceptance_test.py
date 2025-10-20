@@ -35,7 +35,7 @@ class UserAcceptanceTest:
             "status": status,
             "details": details,
             "execution_time": execution_time,
-            _ = "timestamp": time.time()
+            "timestamp": time.time()
     })
     _ = print(f"[{status.upper()}] {scenario}: {details} (Time: {execution_time:.2f}s)")
 
@@ -45,7 +45,7 @@ class UserAcceptanceTest:
             "severity": severity,
             "description": description,
             "scenario": scenario,
-            _ = "timestamp": time.time()
+            "timestamp": time.time()
     }
     _ = self.results["issues"].append(issue)
     _ = print(f"[ISSUE-{severity.upper()}] {description}")

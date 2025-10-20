@@ -22,7 +22,6 @@ except ImportError as e:
     KERAS_AVAILABLE = False
 
 import json
-import os
 import sys
 
 # Add src directory to sys.path for dependency manager import:

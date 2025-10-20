@@ -40,7 +40,6 @@ except ImportError:
 # 导入现有组件（可选）
 try:
     import sys
-    from pathlib import Path
     project_root = Path(__file__).parent.parent.parent
     sys.path.insert(0, str(project_root))
     from apps.backend.src.core.knowledge.unified_knowledge_graph import UnifiedKnowledgeGraph

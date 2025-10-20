@@ -149,7 +149,6 @@ class IntelligentRepairScheduler:
 def main() -> None:
     """测试函数"""
     from scripts.core.fix_engine import FixEngine
-    from pathlib import Path
     
     # 创建修复引擎和调度器
     project_root = Path(__file__).parent.parent.parent

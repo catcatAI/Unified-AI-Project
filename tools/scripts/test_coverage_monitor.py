@@ -98,11 +98,11 @@ class TestCoverageMonitor:
             # 提取关键指标
             summary = data.get("meta", {}).get("summary", {})
             coverage_stats = {
-                _ = "total_coverage": summary.get("percent_covered", 0),
-                _ = "covered_lines": summary.get("covered_lines", 0),
-                _ = "missing_lines": summary.get("missing_lines", 0),
-                _ = "total_lines": summary.get("num_statements", 0),
-                _ = "files_count": len(data.get("files", {}))
+                "total_coverage": summary.get("percent_covered", 0),
+                "covered_lines": summary.get("covered_lines", 0),
+                "missing_lines": summary.get("missing_lines", 0),
+                "total_lines": summary.get("num_statements", 0),
+                "files_count": len(data.get("files", {}))
             }
 
             # 按文件分析覆盖率
@@ -110,10 +110,10 @@ class TestCoverageMonitor:
             for file_path, file_data in data.get("files", {}).items()
 
     file_coverage[file_path] = {
-                    _ = "coverage": file_data.get("summary", {}).get("percent_covered", 0),
-                    _ = "covered_lines": file_data.get("summary", {}).get("covered_lines", 0),
-                    _ = "missing_lines": file_data.get("summary", {}).get("missing_lines", 0),
-                    _ = "total_lines": file_data.get("summary", {}).get("num_statements", 0)
+                    "coverage": file_data.get("summary", {}).get("percent_covered", 0),
+                    "covered_lines": file_data.get("summary", {}).get("covered_lines", 0),
+                    "missing_lines": file_data.get("summary", {}).get("missing_lines", 0),
+                    "total_lines": file_data.get("summary", {}).get("num_statements", 0)
                 }
 
             coverage_stats["file_coverage"] = file_coverage

@@ -14,16 +14,16 @@ from pathlib import Path
 
 # 定義要修復的語法錯誤模式
 FIX_PATTERNS = [
-    # 字典語法錯誤：_ = "key": value -> "key": value
+    # 字典語法錯誤："key": value -> "key": value
     (r'_ = "([^"]+)":\s*([^,\n]+)(,?)', r'"\1": \2\3'),
     
-    # 異常語法錯誤：_ = raise Exception -> raise Exception
+    # 異常語法錯誤：raise Exception -> raise Exception
     (r'_ = raise\s+(.+)$', r'raise \1'),
     
-    # 裝飾器語法錯誤：_ = @decorator -> @decorator
+    # 裝飾器語法錯誤：@decorator -> @decorator
     (r'_ = (@[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:\([^)]*\))?)', r'\1'),
     
-    # 斷言語法錯誤：_ = assert ... -> assert ...
+    # 斷言語法錯誤：assert ... -> assert ...
     (r'_ = (assert\s+.+)$', r'\1'),
     
     # 賦值表達式語法錯誤：_ = (...) -> (...)

@@ -4,7 +4,6 @@ try:
 except ImportError:
     import subprocess
     _ = subprocess.check_call([sys.executable, "-m", "pip", "install", "pyyaml"])
-    import yaml
 import os
 from pathlib import Path
 from apps.backend.src.shared.utils.env_utils import setup_env_file, add_env_variable
@@ -71,7 +70,6 @@ def main() -> None:
 
     # Install dependencies
     _ = print("Installing dependencies...")
-    import subprocess
 
     python_executable = sys.executable
     if os.path.exists(env_path):

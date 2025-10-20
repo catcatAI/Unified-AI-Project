@@ -666,7 +666,6 @@ async def process_multimodal_data(request: Dict[str, Any]):
 @router.post("/multimodal/fusion")
 async def process_multimodal_fusion(request: Dict[str, Any]):
     """处理多模态数据融合"""
-    from src.ai.multimodal.multimodal_processor import multimodal_processor
     
     data_items = request.get("data_items", [])
     result = await multimodal_processor.process_multimodal_fusion(data_items)
@@ -687,7 +686,6 @@ async def get_atlassian_status():
 async def get_jira_projects():
     """获取Jira项目列表"""
     try:
-        from src.integrations.atlassian_bridge import atlassian_bridge
         projects = await atlassian_bridge.get_jira_projects()
         return {"projects": projects}
     except Exception as e:
@@ -697,7 +695,6 @@ async def get_jira_projects():
 async def get_confluence_spaces():
     """获取Confluence空间列表"""
     try:
-        from src.integrations.atlassian_bridge import atlassian_bridge
         spaces = await atlassian_bridge.get_confluence_spaces()
         return {"spaces": spaces}
     except Exception as e:
@@ -717,7 +714,6 @@ async def get_rovo_agents():
 async def get_rovo_tasks():
     """获取Rovo任务列表"""
     try:
-        from src.integrations.rovo_dev_connector import rovo_connector
         tasks = await rovo_connector.get_tasks()
         return {"tasks": tasks}
     except Exception as e:
@@ -727,7 +723,6 @@ async def get_rovo_tasks():
 async def create_jira_issue(request: Dict[str, Any]):
     """创建Jira问题"""
     try:
-        from src.integrations.atlassian_bridge import atlassian_bridge
         result = await atlassian_bridge.create_issue(request)
         return result
     except Exception as e:
@@ -737,7 +732,6 @@ async def create_jira_issue(request: Dict[str, Any]):
 async def search_jira_issues(request: Dict[str, Any]):
     """搜索Jira问题"""
     try:
-        from src.integrations.atlassian_bridge import atlassian_bridge
         jql = request.get("jql", "")
         issues = await atlassian_bridge.search_issues(jql)
         return {"issues": issues}
@@ -747,7 +741,6 @@ async def search_jira_issues(request: Dict[str, Any]):
 @router.get("/multimodal/stats")
 async def get_multimodal_stats():
     """获取多模态处理统计"""
-    from src.ai.multimodal.multimodal_processor import multimodal_processor
     
     stats = multimodal_processor.get_processing_stats()
     return stats

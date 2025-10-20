@@ -66,10 +66,10 @@ class ProjectEnhancer:
     """生成訓練配置"""
     config = {
             "data_paths": {
-                _ = "flickr30k": str(self.data_dir / "flickr30k_sample"),
-                _ = "common_voice": str(self.data_dir / "common_voice_zh"),
-                _ = "coco": str(self.data_dir / "coco_captions"),
-                _ = "visual_genome": str(self.data_dir / "visual_genome_sample")
+                "flickr30k": str(self.data_dir / "flickr30k_sample"),
+                "common_voice": str(self.data_dir / "common_voice_zh"),
+                "coco": str(self.data_dir / "coco_captions"),
+                "visual_genome": str(self.data_dir / "visual_genome_sample")
             },
             "training": {
                 "batch_size": 16,

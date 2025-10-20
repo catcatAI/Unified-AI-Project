@@ -139,8 +139,8 @@ ebt = TechnicalDebt.from_dict(debt_data)
 
             data = {
                 "debts": [debt.to_dict() for debt in self.debts.values()],:
-    _ = "last_updated": datetime.now().isoformat(),
-                _ = "total_debts": len(self.debts)
+    "last_updated": datetime.now().isoformat(),
+                "total_debts": len(self.debts)
             }
 
             # 确保目录存在
@@ -392,22 +392,22 @@ ype_counts[debt.debt_type.value] = type_counts.get(debt.debt_type.value, 0) + 1
     # 常见的技术债务指示器
     debt_indicators = {
             "TODO": {
-                _ = "pattern": r"#\s*TODO[\s](.+)",
+                "pattern": r"#\s*TODO[\s](.+)",
                 "type": DebtType.MAINTAINABILITY,
                 "priority": DebtPriority.MEDIUM
             },
             "FIXME": {
-                _ = "pattern": r"#\s*FIXME[\s](.+)",
+                "pattern": r"#\s*FIXME[\s](.+)",
                 "type": DebtType.CODE_QUALITY,
                 "priority": DebtPriority.HIGH
             },
             "HACK": {
-                _ = "pattern": r"#\s*HACK[\s](.+)",
+                "pattern": r"#\s*HACK[\s](.+)",
                 "type": DebtType.CODE_QUALITY,
                 "priority": DebtPriority.HIGH
             },
             "DEBT": {
-                _ = "pattern": r"#\s*DEBT[\s](.+)",
+                "pattern": r"#\s*DEBT[\s](.+)",
                 "type": DebtType.CODE_QUALITY,
                 "priority": DebtPriority.MEDIUM
             }

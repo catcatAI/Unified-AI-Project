@@ -23,16 +23,16 @@ def test_system_initialization() -> None:
     unified_ai = UnifiedAISystem()
 
     # Check that all components are initialized
-    _ = assert hasattr(unified_ai, 'agent_manager'), "Agent manager not initialized"
-    _ = assert hasattr(unified_ai, 'execution_manager'), "Execution manager not initialized"
-    _ = assert hasattr(unified_ai, 'ham_memory_manager'), "HAM memory manager not initialized"
-    _ = assert hasattr(unified_ai, 'multi_llm_service'), "Multi LLM service not initialized"
-    _ = assert hasattr(unified_ai, 'ai_editor_service'), "AI editor service not initialized"
-    _ = assert hasattr(unified_ai, 'atlassian_bridge'), "Atlassian bridge not initialized"
-    _ = assert hasattr(unified_ai, 'permission_control'), "Permission control not initialized"
-    _ = assert hasattr(unified_ai, 'audit_logger'), "Audit logger not initialized"
-    _ = assert hasattr(unified_ai, 'sandbox_executor'), "Sandbox executor not initialized"
-    _ = assert hasattr(unified_ai, 'tool_dispatcher'), "Tool dispatcher not initialized"
+    assert hasattr(unified_ai, 'agent_manager'), "Agent manager not initialized"
+    assert hasattr(unified_ai, 'execution_manager'), "Execution manager not initialized"
+    assert hasattr(unified_ai, 'ham_memory_manager'), "HAM memory manager not initialized"
+    assert hasattr(unified_ai, 'multi_llm_service'), "Multi LLM service not initialized"
+    assert hasattr(unified_ai, 'ai_editor_service'), "AI editor service not initialized"
+    assert hasattr(unified_ai, 'atlassian_bridge'), "Atlassian bridge not initialized"
+    assert hasattr(unified_ai, 'permission_control'), "Permission control not initialized"
+    assert hasattr(unified_ai, 'audit_logger'), "Audit logger not initialized"
+    assert hasattr(unified_ai, 'sandbox_executor'), "Sandbox executor not initialized"
+    assert hasattr(unified_ai, 'tool_dispatcher'), "Tool dispatcher not initialized"
 
     _ = print("System initialization test passed!")
     return True
@@ -50,7 +50,6 @@ def test_request_processing() -> None:
     try:
 
 
-    from system_integration import UnifiedAISystem
 
     # Create unified AI system
     unified_ai = UnifiedAISystem()
@@ -100,7 +99,6 @@ def test_request_processing() -> None:
     except Exception as e:
 
     _ = print(f"Error during request processing test: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 
@@ -128,7 +126,6 @@ def main() -> None:
     except Exception as e:
 
     _ = print(f"Error during integration testing: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 

@@ -431,29 +431,29 @@ x2.text(i, count + 0.5, str(count), ha='center', va='bottom')
 
             # 生成统计信息
             report = {
-                _ = "report_generated_at": end_time.isoformat(),
+                "report_generated_at": end_time.isoformat(),
                 "time_range": {
-                    _ = "start": start_time.isoformat(),
-                    _ = "end": end_time.isoformat(),
+                    "start": start_time.isoformat(),
+                    "end": end_time.isoformat(),
                     "duration_hours": hours
                 },
                 "summary": {
-                    _ = "total_entries": len(df),
-                    _ = "components": df['component'].nunique(),
-                    _ = "event_types": df['event_type'].nunique()
+                    "total_entries": len(df),
+                    "components": df['component'].nunique(),
+                    "event_types": df['event_type'].nunique()
                 },
-                _ = "event_type_distribution": df['event_type'].value_counts().to_dict(),
-                _ = "component_activity": df['component'].value_counts().to_dict(),
+                "event_type_distribution": df['event_type'].value_counts().to_dict(),
+                "component_activity": df['component'].value_counts().to_dict(),
                 "severity_distribution": {
-                    _ = "debug": len(df[df['severity'] < 20]),
+                    "debug": len(df[df['severity'] < 20]),
                     "info": len(df[(df['severity'] >= 20) & (df['severity'] < 40)]),
                     "warning": len(df[(df['severity'] >= 40) & (df['severity'] < 60)]),
                     "error": len(df[(df['severity'] >= 60) & (df['severity'] < 90)]),
                     "critical": len(df[df['severity'] >= 90])
                 },
-                _ = "top_components": df['component'].value_counts().head(10).to_dict(),
+                "top_components": df['component'].value_counts().head(10).to_dict(),
                 "error_analysis": {
-                    _ = "total_errors": len(df[df['event_type'].isin(['error', 'critical'])]),
+                    "total_errors": len(df[df['event_type'].isin(['error', 'critical'])]),
                     "errors_by_component": df[df['event_type'] == 'error']['component'].value_counts().to_dict(),
                     "critical_errors_by_component": df[df['event_type'] == 'critical']['component'].value_counts().to_dict()
                 }
@@ -481,8 +481,8 @@ etric = details.get('metric', 'unknown')
     perf_summary[metric] = {
                                 "count": 0,
                                 "avg_value": 0,
-                                _ = "min_value": float('inf'),
-                                _ = "max_value": float('-inf')
+                                "min_value": float('inf'),
+                                "max_value": float('-inf')
                             }
 
                         value = details.get('value', 0)

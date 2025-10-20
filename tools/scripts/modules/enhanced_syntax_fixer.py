@@ -495,7 +495,6 @@ class EnhancedSyntaxFixer:
 
 def main() -> None:
     """测试函数"""
-    from pathlib import Path
     
     project_root: str = Path(__file__).parent.parent.parent
     fixer = EnhancedSyntaxFixer(project_root)

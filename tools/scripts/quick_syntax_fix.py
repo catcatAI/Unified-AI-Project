@@ -20,22 +20,22 @@ def fix_syntax_errors(file_path):
         
         original_content = content
         
-        # 修復字典語法錯誤：_ = "key": value -> "key": value
+        # 修復字典語法錯誤："key": value -> "key": value
         pattern = r'_ = "([^"]+)":\s*([^,\n]+)(,?)'
         replacement = r'"\1": \2\3'
         content = re.sub(pattern, replacement, content)
         
-        # 修復異常語法錯誤：_ = raise Exception -> raise Exception
+        # 修復異常語法錯誤：raise Exception -> raise Exception
         pattern = r'_ = raise\s+(.+)$'
         replacement = r'raise \1'
         content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
         
-        # 修復裝飾器語法錯誤：_ = @decorator -> @decorator
+        # 修復裝飾器語法錯誤：@decorator -> @decorator
         pattern = r'_ = (@[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:\([^)]*\))?)'
         replacement = r'\1'
         content = re.sub(pattern, replacement, content)
         
-        # 修復斷言語法錯誤：_ = assert ... -> assert ...
+        # 修復斷言語法錯誤：assert ... -> assert ...
         pattern = r'_ = (assert\s+.+)$'
         replacement = r'\1'
         content = re.sub(pattern, replacement, content, flags=re.MULTILINE)

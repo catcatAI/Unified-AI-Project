@@ -205,7 +205,6 @@ class DataProcessor:
     def _extract_classes(self, code: str) -> List[str]:
         """Extract class names from code"""
     # Simple regex-based extraction
-    import re
     class_pattern = r'class\s+(\w+)'
     matches = re.findall(class_pattern, code)
     return matches
@@ -220,7 +219,6 @@ class DataProcessor:
     def _extract_docstrings(self, code: str) -> List[str]:
     """Extract docstrings from code"""
     # Simple extraction
-    import re
     docstring_pattern = r'["\']{3}(.*?)["\']{3}'
     matches = re.findall(docstring_pattern, code, re.DOTALL)
     return matches

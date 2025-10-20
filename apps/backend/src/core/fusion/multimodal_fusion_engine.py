@@ -48,7 +48,6 @@ logger = logging.getLogger(__name__)
 
 # 导入统一知识图谱
 import sys
-from pathlib import Path
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent.parent.parent
@@ -350,7 +349,6 @@ class MultimodalInformationFusionEngine:
         ]
         
         # 哈希特征（用于内容相似度）
-        import hashlib
         hash_value = int(hashlib.md5(data_str.encode()).hexdigest(), 16)
         hash_features = [
             (hash_value >> (i * 8)) & 0xFF for i in range(10)
@@ -707,7 +705,6 @@ class MultimodalInformationFusionEngine:
     async def _parse_query(self, query: str) -> List[str]:
         """解析查询"""
         # 简单的关键词提取
-        import re
         words = re.findall(r'\b[a-zA-Z]{3,}\b', query.lower())
         return list(set(words))  # 去重
     

@@ -10,8 +10,6 @@ if SRC_DIR not in sys.path:
     _ = sys.path.insert(0, SRC_DIR)
 
 try:
-
-
     from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
 except ImportError:
     _ = print("Error: Could not import HAMMemoryManager.")
@@ -21,7 +19,8 @@ except ImportError:
 
 PROCESSED_CONVERSATIONS_PATH = os.path.join(PROJECT_ROOT, "data/processed_data/processed_copilot_conversations.json")
 HAM_STORAGE_FILENAME = "ham_core_memory_with_copilot.json" # Use a distinct file for this ingestion
-    def ingest_to_ham(processed_data_path: str, ham_storage_file: str)
+
+def ingest_to_ham(processed_data_path: str, ham_storage_file: str):
     """
     Loads processed conversational data and stores each entry into HAMMemoryManager.
     """

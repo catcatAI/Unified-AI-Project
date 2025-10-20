@@ -93,7 +93,6 @@ def test_enhanced_connector_initialization() -> None:
     except Exception as e:
 
     _ = print(f"Error during Enhanced Rovo Dev connector initialization test: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 
@@ -147,7 +146,6 @@ onfig = {
     except Exception as e:
 
     _ = print(f"Error during capability loading test: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 
@@ -176,7 +174,6 @@ def main() -> None:
     except Exception as e:
 
     _ = print(f"Error during testing: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 

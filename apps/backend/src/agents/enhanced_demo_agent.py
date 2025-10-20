@@ -17,7 +17,6 @@ rom .base_agent import BaseAgent, TaskPriority
 except ImportError:
     # Fall back to absolute imports (for when running as a script):
 rom apps.backend.src.core_ai.agents.base_agent import BaseAgent, TaskPriority
-    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
 logger: Any = logging.getLogger(__name__)
 

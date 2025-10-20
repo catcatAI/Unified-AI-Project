@@ -197,13 +197,11 @@ def main() -> None:
     # 安裝 astunparse 如果沒有安裝
     try:
 
-    import astunparse
     except ImportError:
 
     _ = print("Installing astunparse...")
     import subprocess
     _ = subprocess.check_call(["pip", "install", "astunparse"])
-    import astunparse
 
     # 查找所有測試文件
     test_files = []

@@ -14,17 +14,17 @@ class DependencyFixer:
     """依赖修复器"""
 
     def __init__(self, project_root: Path) -> None:
-    self.project_root = project_root
-    self.backend_root = project_root / "apps" / "backend"
-    self.frontend_root = project_root / "apps" / "frontend-dashboard"
+        self.project_root = project_root
+        self.backend_root = project_root / "apps" / "backend"
+        self.frontend_root = project_root / "apps" / "frontend-dashboard"
 
-    # 检查虚拟环境
-    self.venv_path = self._find_virtual_environment()
-    self.python_executable = self._get_python_executable()
+        # 检查虚拟环境
+        self.venv_path = self._find_virtual_environment()
+        self.python_executable = self._get_python_executable()
 
     def _find_virtual_environment(self) -> Optional[Path]:
-    """查找虚拟环境"""
-    venv_paths = [
+        """查找虚拟环境"""
+        venv_paths = [
             self.project_root / "venv",
             self.project_root / ".venv",
             self.project_root / "env",
@@ -296,7 +296,6 @@ class DependencyFixer:
 
 def main() -> None:
     """测试函数"""
-    from pathlib import Path
 
     project_root: str = Path(__file__).parent.parent.parent
     fixer = DependencyFixer(project_root)

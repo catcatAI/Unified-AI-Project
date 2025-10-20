@@ -203,8 +203,6 @@ def test_security_workflow() -> None:
     try:
 
 
-    from security.permission_control import PermissionControlSystem, PermissionContext, PermissionType
-    from security.audit_logger import AuditLogger
 
     permission_system = PermissionControlSystem()
     audit_logger = AuditLogger()
@@ -258,7 +256,6 @@ f event.event_type.name == "PERMISSION_CHECK"]:
 
 
     _ = print(f"Error during security workflow test: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 
@@ -269,8 +266,6 @@ def test_data_processing_workflow() -> None:
     try:
 
 
-    from apps.backend.src.core.services.ai_editor import DataProcessor
-    from security.audit_logger import AuditLogger
 
     data_processor = DataProcessor()
     audit_logger = AuditLogger()
@@ -320,7 +315,6 @@ f event.event_type.name == "DATA_PROCESSING"]:
 
 
     _ = print(f"Error during data processing workflow test: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 
@@ -351,7 +345,6 @@ f test2 and test3:
     except Exception as e:
 
     _ = print(f"Error during end-to-end testing: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 

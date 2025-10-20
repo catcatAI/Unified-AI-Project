@@ -60,9 +60,7 @@ try:
         USE_ENHANCED_SYSTEMS = True
     else:
         print("⚠️ 增強版系統導入不完整，使用標準系統")
-        from enhanced_project_discovery_system import EnhancedProjectDiscoverySystem
         from enhanced_unified_fix_system import EnhancedUnifiedFixSystem
-        from comprehensive_test_system import ComprehensiveTestSystem
         USE_ENHANCED_SYSTEMS = False
         
 except ImportError as e:
@@ -70,9 +68,6 @@ except ImportError as e:
     print("嘗試導入標準系統...")
     
     try:
-        from enhanced_project_discovery_system import EnhancedProjectDiscoverySystem
-        from enhanced_unified_fix_system import EnhancedUnifiedFixSystem
-        from comprehensive_test_system import ComprehensiveTestSystem
         USE_ENHANCED_SYSTEMS = False
         print("✅ 使用標準系統")
     except ImportError as e2:
@@ -441,7 +436,6 @@ class SystemSelfMaintenanceManager:
                     self.logger.info("使用增强版完整修复系统...")
                     
                     # 创建修复系统实例
-                    from enhanced_complete_repair_system import EnhancedCompleteRepairSystem
                     repair_system = EnhancedCompleteRepairSystem(max_workers=4)
                     
                     # 运行完整修复
@@ -501,7 +495,6 @@ class SystemSelfMaintenanceManager:
                 
         except Exception as e:
             self.logger.error(f"修復循環錯誤: {e}")
-            import traceback
             self.logger.error(f"詳細錯誤: {traceback.format_exc()}")
         finally:
             self.maintenance_cycle_active = False
@@ -578,7 +571,6 @@ class SystemSelfMaintenanceManager:
             if hasattr(self, 'discovery_system') and self.discovery_system:
                 if USE_ENHANCED_SYSTEMS and hasattr(self, 'detection_engine') and self.detection_engine:
                     # 使用增強版檢測引擎
-                    import asyncio
                     try:
                         loop = asyncio.get_event_loop()
                     except RuntimeError:
@@ -611,7 +603,6 @@ class SystemSelfMaintenanceManager:
             
         except Exception as e:
             self.logger.error(f"獲取待修復問題失敗: {e}")
-            import traceback
             self.logger.error(f"詳細錯誤: {traceback.format_exc()}")
             return []
     
@@ -719,7 +710,6 @@ class SystemSelfMaintenanceManager:
             
         except Exception as e:
             self.logger.error(f"智能驗證器執行失敗: {e}")
-            import traceback
             self.logger.error(f"詳細錯誤: {traceback.format_exc()}")
     
     def update_config(self, new_config: MaintenanceConfig):

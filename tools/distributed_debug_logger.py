@@ -393,9 +393,9 @@ race_id=row[6],
                 metric_data = {
                     "timestamp": entry.timestamp,
                     "component": entry.component,
-                    _ = "metric": entry.details.get("metric"),
-                    _ = "value": entry.details.get("value"),
-                    _ = "unit": entry.details.get("unit"),
+                    "metric": entry.details.get("metric"),
+                    "value": entry.details.get("value"),
+                    "unit": entry.details.get("unit"),
                     "node_id": entry.node_id
                 }
                 

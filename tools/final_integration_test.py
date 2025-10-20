@@ -144,7 +144,6 @@ rocessed_text = data_processor.process_data(text_data, 'text')
         
     except Exception as e:
         _ = print(f"Error during AI editor integration test: {e}")
-        import traceback
         _ = traceback.print_exc()
         return False
 
@@ -154,9 +153,6 @@ def test_component_compatibility() -> None:
     
     try:
         # Import components
-        from security.permission_control import PermissionControlSystem, PermissionContext, PermissionType
-        from security.audit_logger import AuditLogger
-        from apps.backend.src.core.services.ai_editor import DataProcessor
         
         # Create components
         permission_system = PermissionControlSystem()
@@ -206,7 +202,6 @@ esult = data_processor.process_data(test_data, 'text')
         
     except Exception as e:
         _ = print(f"Error during component compatibility test: {e}")
-        import traceback
         _ = traceback.print_exc()
         return False
 
@@ -231,7 +226,6 @@ def main() -> None:
             return False
     except Exception as e:
         _ = print(f"Error during final integration testing: {e}")
-        import traceback
         _ = traceback.print_exc()
         return False
 

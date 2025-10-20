@@ -28,7 +28,6 @@ def get_BaseAgent():
     except ImportError:
         try:
             # 尝试相对导入
-            import importlib
             module = importlib.import_module('.ai.agents.base.base_agent', package='apps.backend.src')
             return getattr(module, 'BaseAgent')
         except ImportError:
@@ -283,7 +282,6 @@ class HSPConnector:
 
     async def send_task_request(self, payload, target_ai_id):
         # Return a mock correlation ID
-        import uuid
         return str(uuid.uuid4())
 
 # Hardware Probe
@@ -411,7 +409,6 @@ lm_config: Optional[Dict[str, Any]] = None # Added llm_config
             print(f"Core Services: Warning - Deployment manager initialization failed: {e}")
             deployment_manager_instance = None
     
-    import os
 
     # Provide default config if none passed:
 f config is None:
@@ -726,7 +723,6 @@ allable(getattr(current_learning_manager, 'process_and_store_hsp_fact', None)):
 
     if not agent_manager_instance:
         # AgentManager needs the python executable path. We assume it's the same one running this script.
-        import sys
         # 在这里获取AgentManager类
         AgentManagerClass = get_AgentManager()
         agent_manager_instance = AgentManagerClass(python_executable=sys.executable)

@@ -51,7 +51,6 @@ def test_jira_integration() -> None:
 
 
     from integrations.jira_integration import JiraIntegration
-    from integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
     # Create a mock configuration
     config = {
@@ -72,7 +71,6 @@ def test_jira_integration() -> None:
     except Exception as e:
 
     _ = print(f"Error during Jira integration test: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 
@@ -122,7 +120,6 @@ def test_rovo_dev_agent() -> None:
     except Exception as e:
 
     _ = print(f"Error during Rovo Dev agent test: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 
@@ -151,7 +148,6 @@ def main() -> None:
     except Exception as e:
 
     _ = print(f"Error during Atlassian integration testing: {e}")
-    import traceback
     _ = traceback.print_exc()
     return False
 

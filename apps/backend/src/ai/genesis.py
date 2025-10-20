@@ -5,7 +5,6 @@ except ImportError:
     import subprocess
     import sys
     subprocess.check_call([sys.executable, "-m", "pip", "install", "cryptography"])
-    from cryptography.fernet import Fernet
 
 # 移除secretsharing导入，使用简单的替代方案
 from typing import List, Tuple, Optional

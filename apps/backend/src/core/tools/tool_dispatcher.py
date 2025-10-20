@@ -83,7 +83,6 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
             # Fallback re-instantiate the wrapper with the new LLM service:
 ry:
 
-    from ai.language_models.daily_language_model import DailyLanguageModel
                 self.dlm = DailyLanguageModel(llm_service=llm_service)
             except Exception:
 

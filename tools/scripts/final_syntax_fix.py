@@ -26,16 +26,16 @@ def fix_remaining_syntax_errors(file_path):
     replacement = r"'\1': \2\3"
     content = re.sub(pattern, replacement, content)
 
-    # Fix _ = raise Exception syntax errors
+    # Fix raise Exception syntax errors
     content = re.sub(r'_ = raise\s+', 'raise ', content)
 
-    # Fix _ = @decorator syntax errors
+    # Fix @decorator syntax errors
     content = re.sub(r'_ = (@\w+)', r'\1', content)
 
-    # Fix _ = assert syntax errors
+    # Fix assert syntax errors
     content = re.sub(r'_ = assert\s+', 'assert ', content)
 
-    # Fix _ = **kwargs syntax errors
+    # Fix **kwargs syntax errors
     content = re.sub(r'_ = \*\*(\w+)', r'**\1', content)
 
     # Fix dictionary syntax errors with variables as keys
