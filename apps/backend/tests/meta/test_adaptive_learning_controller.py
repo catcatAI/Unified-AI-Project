@@ -4,7 +4,7 @@ import shutil
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 
-from meta.adaptive_learning_controller import (
+from ....src.ai.meta.adaptive_learning_controller import (
     PerformanceTracker,
     StrategySelector,
     AdaptiveLearningController,

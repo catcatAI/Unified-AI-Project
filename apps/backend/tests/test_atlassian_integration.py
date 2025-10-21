@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch, AsyncMock
 
 # Add the src directory to the path so we can import the modules
-_ = sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # 修复导入路径
 from integrations.confluence_integration import ConfluenceIntegration
@@ -60,7 +60,7 @@ class TestAtlassianIntegration(unittest.TestCase):
     def test_rovo_dev_agent_initialization(self) -> None:
         """Test Rovo Dev agent initialization"""
         with patch('integrations.rovo_dev_agent.EnhancedRovoDevConnector'), \
-             _ = patch('integrations.rovo_dev_agent.AtlassianBridge'), \
+             patch('integrations.rovo_dev_agent.AtlassianBridge'), \
              patch('integrations.rovo_dev_agent.HSPConnector'):
             agent = RovoDevAgent(self.mock_config)
             

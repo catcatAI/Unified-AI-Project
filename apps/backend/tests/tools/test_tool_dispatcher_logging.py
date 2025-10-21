@@ -4,7 +4,7 @@ import pytest
 # Mock the ToolDispatcherResponse type
 class ToolDispatcherResponse(dict):
     def __init__(self, status, payload=None, tool_name_attempted=None, original_query_for_tool=None, error_message=None) -> None:
-        _ = super().__init__()
+        super().__init__()
         self['status'] = status
         self['payload'] = payload
         self['tool_name_attempted'] = tool_name_attempted
@@ -33,7 +33,7 @@ class MockHAMManager:
             })
         }]
 
-_ = @pytest.mark.timeout(15)
+@pytest.mark.timeout(15)
 def test_tool_dispatcher_action_policy_logged_smoke() -> None:
     """
     Smoke test: invoke a simple tool via dispatcher and check that
@@ -46,10 +46,10 @@ def test_tool_dispatcher_action_policy_logged_smoke() -> None:
     # Invoke a simple tool via dispatcher
     loop = asyncio.new_event_loop()
     try:
-        _ = asyncio.set_event_loop(loop)
-        _ = loop.run_until_complete(td_instance.dispatch("calculate 1 + 1"))
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(td_instance.dispatch("calculate 1 + 1"))
     finally:
-        _ = loop.close()
+        loop.close()
 
     # Query HAM for action policy events
     events = ham_instance.query_core_memory(

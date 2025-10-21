@@ -1,9 +1,10 @@
 import unittest
 import sys
 import os
+from unittest.mock import patch
 
 # Add the project root to the Python path
-_ = sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 class TestCoreServices(unittest.TestCase):
     """Test cases for core_services.py"""
@@ -23,14 +24,14 @@ class TestCoreServices(unittest.TestCase):
             # Directly import the module from its file path
             spec = importlib.util.spec_from_file_location(
                 "core_services", 
-                _ = os.path.join(os.path.dirname(__file__), "..", "src", "core_services.py")
+                os.path.join(os.path.dirname(__file__), "..", "src", "core_services.py")
             )
             core_services = importlib.util.module_from_spec(spec)
             # We won't execute the module as it might have side effects
             # spec.loader.exec_module(core_services)
-            _ = self.assertTrue(True)
+            self.assertTrue(True)
         except Exception as e:
-            _ = self.fail(f"core_services import raised {type(e).__name__} unexpectedly: {e}")
+            self.fail(f"core_services import raised {type(e).__name__} unexpectedly: {e}")
 
     def test_core_services_constants(self) -> None:
         """Test that core_services module has expected constants."""
@@ -38,15 +39,15 @@ class TestCoreServices(unittest.TestCase):
             # Directly import the module from its file path
             spec = importlib.util.spec_from_file_location(
                 "core_services", 
-                _ = os.path.join(os.path.dirname(__file__), "..", "src", "core_services.py")
+                os.path.join(os.path.dirname(__file__), "..", "src", "core_services.py")
             )
             core_services = importlib.util.module_from_spec(spec)
             # Check for some expected attributes
-            _ = self.assertTrue(True)
+            self.assertTrue(True)
         except Exception as e:
-            _ = self.fail(f"core_services constants check raised {type(e).__name__} unexpectedly: {e}")
+            self.fail(f"core_services constants check raised {type(e).__name__} unexpectedly: {e}")
 
-    _ = @patch('os.path.exists')
+    @patch('os.path.exists')
     def test_ham_initialization_with_mock_ham(self, mock_exists) -> None:
         """Test HAM initialization with mock HAM."""
         mock_exists.return_value = True

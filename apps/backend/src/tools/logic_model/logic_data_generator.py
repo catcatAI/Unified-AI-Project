@@ -23,24 +23,23 @@ def generate_simple_proposition(max_nesting=1, current_nesting=0):
     Generates a simple logical proposition.
     Example: "true AND false", "NOT true", "(true OR false) AND true"
     """
-    if current_nesting >= max_nesting or random.random < 0.4: # Base case simple value or unary op:
-        if random.random < 0.3 and current_nesting < max_nesting: # Add NOT:
+    if current_nesting >= max_nesting or random.random() < 0.4: # Base case simple value or unary op:
+        if random.random() < 0.3 and current_nesting < max_nesting: # Add NOT:
             return f"NOT {generate_simple_proposition(max_nesting, current_nesting + 1)}"
         else:
-
             return random.choice(VALUES)
     else:
-    # Recursive case binary operation with optional parentheses:
-    op = random.choice(OPERATORS)
-    left = generate_simple_proposition(max_nesting, current_nesting + 1)
-    right = generate_simple_proposition(max_nesting, current_nesting + 1)
+        # Recursive case binary operation with optional parentheses:
+        op = random.choice(OPERATORS)
+        left = generate_simple_proposition(max_nesting, current_nesting + 1)
+        right = generate_simple_proposition(max_nesting, current_nesting + 1)
 
-    use_parens_left = random.choice([True, False]) and ("AND" in left or "OR" in left)
-    use_parens_right = random.choice([True, False]) and ("AND" in right or "OR" in right)
+        use_parens_left = random.choice([True, False]) and ("AND" in left or "OR" in left)
+        use_parens_right = random.choice([True, False]) and ("AND" in right or "OR" in right)
 
-        left_expr = f"({left})" if use_parens_left else left::
-    right_expr = f"({right})" if use_parens_right else right::
-    return f"{left_expr} {op} {right_expr}"
+        left_expr = f"({left})" if use_parens_left else left
+        right_expr = f"({right})" if use_parens_right else right
+        return f"{left_expr} {op} {right_expr}"
 
 def evaluate_proposition(prop_str: str) -> Optional[bool]:
     """
@@ -48,99 +47,95 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
     Uses safe evaluation instead of Python's eval.
     """
     try:
-    # Replace keywords with Python equivalents:
-    normalized_str = prop_str.lower()
-    normalized_str = normalized_str.replace("true", "True")
-    normalized_str = normalized_str.replace("false", "False")
-    normalized_str = normalized_str.replace("and", " and ")  # Python 'and' is lowercase
-    normalized_str = normalized_str.replace("or", " or ")   # Python 'or' is lowercase
-    normalized_str = normalized_str.replace("not", " not ") # Python 'not' needs spaces
+        # Replace keywords with Python equivalents:
+        normalized_str = prop_str.lower()
+        normalized_str = normalized_str.replace("true", "True")
+        normalized_str = normalized_str.replace("false", "False")
+        normalized_str = normalized_str.replace("and", " and ")  # Python 'and' is lowercase
+        normalized_str = normalized_str.replace("or", " or ")   # Python 'or' is lowercase
+        normalized_str = normalized_str.replace("not", " not ") # Python 'not' needs spaces
 
-    # 定义支持的操作符和值
+        # Define supported operators and values
         def safe_eval(node):
-    if isinstance(node, ast.Constant)  # Python 3.8+:
+            if isinstance(node, ast.Constant):  # Python 3.8+:
                 # 确保只返回布尔值或None
                 if isinstance(node.value, bool):
-    return node.value
-                elif node.value is None::
-    return None
+                    return node.value
+                elif node.value is None:
+                    return None
                 else:
                     # 对于其他类型的常量值，我们需要根据上下文决定如何处理
                     # 在逻辑表达式中，我们只关心布尔值
                     raise ValueError(f"Unexpected constant value type: {type(node.value)}")
-            elif isinstance(node, ast.NameConstant)  # Python < 3.8:
+            elif isinstance(node, ast.NameConstant):  # Python < 3.8:
                 # 确保只返回布尔值或None
                 if isinstance(node.value, bool):
-    return node.value
-                elif node.value is None::
-    return None
+                    return node.value
+                elif node.value is None:
+                    return None
                 else:
                     # 对于其他类型的常量值，我们需要根据上下文决定如何处理
                     raise ValueError(f"Unexpected name constant value type: {type(node.value)}")
             elif isinstance(node, ast.Name):
-    if node.id == 'True'::
-    return True
-                elif node.id == 'False'::
-    return False
+                if node.id == 'True':
+                    return True
+                elif node.id == 'False':
+                    return False
                 else:
-
                     raise ValueError(f"Unknown name: {node.id}")
             elif isinstance(node, ast.BoolOp):
-    values = [safe_eval(value) for value in node.values]::
-    if isinstance(node.op, ast.And):
-    return all(values)
+                values = [safe_eval(value) for value in node.values]
+                if isinstance(node.op, ast.And):
+                    return all(values)
                 elif isinstance(node.op, ast.Or):
-    return any(values)
+                    return any(values)
             elif isinstance(node, ast.UnaryOp):
-    if isinstance(node.op, ast.Not):
-    return not safe_eval(node.operand)
+                if isinstance(node.op, ast.Not):
+                    return not safe_eval(node.operand)
             else:
-
                 raise ValueError(f"Unsupported operation: {type(node)}")
 
-    # 确保只包含允许的字符和关键字
-    allowed_chars = set("TrueFalseandornt ")
-        if not all(c in allowed_chars for c in normalized_str)::
-    return None
+        # 确保只包含允许的字符和关键字
+        allowed_chars = set("TrueFalseandornt ")
+        if not all(c in allowed_chars for c in normalized_str):
+            return None
 
-    # 解析并安全计算表达式
-    tree = ast.parse(normalized_str.strip, mode='eval')
-    return safe_eval(tree.body)
+        # 解析并安全计算表达式
+        tree = ast.parse(normalized_str.strip(), mode='eval')
+        return safe_eval(tree.body)
 
-    except Exception as e::
-    # print(f"Could not evaluate {prop_str} - Error {e}")
-    return None  # Indicates an error in evaluation or invalid expression
+    except Exception as e:
+        # print(f"Could not evaluate {prop_str} - Error {e}")
+        return None  # Indicates an error in evaluation or invalid expression
 
 def generate_dataset(num_samples: int, max_nesting: int = 2):
     """Generates a dataset of logical propositions and their answers."""
-    dataset =   # 修复列表初始化
-    generated_propositions = set  # 修复集合初始化
+    dataset = []  # 修复列表初始化
+    generated_propositions = set()  # 修复集合初始化
 
     while len(dataset) < num_samples:
+        prop = generate_simple_proposition(max_nesting=max_nesting)
+        if prop in generated_propositions:
+            continue
 
-
-    prop = generate_simple_proposition(max_nesting=max_nesting)
-        if prop in generated_propositions::
-    continue
-
-    answer = evaluate_proposition(prop)
+        answer = evaluate_proposition(prop)
 
         if answer is not None: # Only add if evaluation was successful:
-    dataset.append({"proposition": prop, "answer": bool(answer)}) # Store as actual boolean
+            dataset.append({"proposition": prop, "answer": bool(answer)}) # Store as actual boolean
             generated_propositions.add(prop)
-            if len(dataset) % (num_samples // 10 if num_samples >=10 else 1) == 0::
-    print(f"Generated {len(dataset)}/{num_samples} samples...")
+            if len(dataset) % (num_samples // 10 if num_samples >=10 else 1) == 0:
+                print(f"Generated {len(dataset)}/{num_samples} samples...")
 
     return dataset
 
 def save_dataset(dataset, file_path):
     """Saves the dataset to a JSON file."""
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with open(file_path, 'w', encoding='utf-8') as f::
-    json.dump(dataset, f, indent=2)
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(dataset, f, indent=2)
     print(f"Dataset saved to {file_path}")
 
-if __name__ == "__main__"::
+if __name__ == "__main__":
     print(f"Output directory: {OUTPUT_DATA_DIR}")
 
     num_train = 5000

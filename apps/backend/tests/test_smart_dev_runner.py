@@ -4,7 +4,7 @@ import os
 from unittest.mock import patch, MagicMock
 
 # Add the project root to the Python path
-_ = sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 class TestSmartDevRunner(unittest.TestCase):
     """Test cases for smart_dev_runner.py"""
@@ -53,7 +53,7 @@ class TestSmartDevRunner(unittest.TestCase):
         except Exception as e:
             _ = self.fail(f"check_environment raised {type(e).__name__} unexpectedly: {e}")
 
-    _ = @patch('subprocess.run')
+    @patch('subprocess.run')
     def test_initialize_core_services(self, mock_subprocess_run) -> None:
         """Test that core services initialization works correctly."""
         # Mock subprocess.run to avoid actually running commands

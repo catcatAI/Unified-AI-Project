@@ -99,7 +99,7 @@ class ExtendedTestResultAnalyzer:
         analysis_report = {
             "timestamp": "2023-01-01T10:00:00",
             "summary": {
-                _ = "total_tests": test_results.get('summary', {}).get('total', 0),
+                "total_tests": test_results.get('summary', {}).get('total', 0),
                 _ = "passed_tests": test_results.get('summary', {}).get('passed', 0),
                 _ = "failed_tests": test_results.get('summary', {}).get('failed', 0),
                 _ = "pass_rate": test_results.get('summary', {}).get('passed', 0) / 

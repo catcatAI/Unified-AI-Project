@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from apps.backend.src.services.main_api_server import app
 
 
-_ = @pytest.mark.timeout(10)
+@pytest.mark.timeout(10)
 def test_hot_status_endpoint_basic_structure() -> None:
     """
     Basic smoke test for /api/v1/hot/status.

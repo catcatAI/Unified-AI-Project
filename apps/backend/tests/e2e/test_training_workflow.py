@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
-from demo_learning_manager import DemoLearningManager
+from ....src.ai.learning.demo_learning_manager import DemoLearningManager
 from execution_manager import ExecutionManager
 
 class TestTrainingWorkflowE2E:

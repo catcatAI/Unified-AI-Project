@@ -17,11 +17,11 @@ class TestSandboxExecutor(unittest.TestCase):
         # 增加超时时间以避免测试中超时
         self.executor = SandboxExecutor(timeout_seconds=30) # 从2秒增加到30秒
 
-    _ = @patch('tempfile.TemporaryDirectory')
+    @patch('tempfile.TemporaryDirectory')
     @patch('builtins.open', new_callable=mock_open)
-    _ = @patch('os.path.join')
-    _ = @patch('subprocess.run')
-    _ = @pytest.mark.timeout(60)  # 增加pytest超时到60秒
+    @patch('os.path.join')
+    @patch('subprocess.run')
+    @pytest.mark.timeout(60)  # 增加pytest超时到60秒
     def test_run_successful_execution(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None:
         # --- Setup Mocks ---
         # 使用适合当前操作系统的临时目录路径
@@ -77,11 +77,11 @@ class TestSandboxExecutor(unittest.TestCase):
             capture_output=True, text=True, cwd=mock_temp_dir_path, timeout=self.executor.timeout_seconds, check=False
         )
 
-    _ = @patch('tempfile.TemporaryDirectory')
+    @patch('tempfile.TemporaryDirectory')
     @patch('builtins.open', new_callable=mock_open)
-    _ = @patch('os.path.join')
-    _ = @patch('subprocess.run')
-    _ = @pytest.mark.timeout(60)  # 增加pytest超时到60秒
+    @patch('os.path.join')
+    @patch('subprocess.run')
+    @pytest.mark.timeout(60)  # 增加pytest超时到60秒
     def test_run_execution_error_in_tool(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None:
         # 使用适合当前操作系统的临时目录路径
         mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_error"
@@ -104,11 +104,11 @@ class TestSandboxExecutor(unittest.TestCase):
         _ = self.assertIn("Error during sandboxed tool execution: TestException", error)
         _ = self.assertIn("\nTraceback:\nTraceback here...", error)
 
-    _ = @patch('tempfile.TemporaryDirectory')
+    @patch('tempfile.TemporaryDirectory')
     @patch('builtins.open', new_callable=mock_open)
-    _ = @patch('os.path.join')
-    _ = @patch('subprocess.run')
-    _ = @pytest.mark.timeout(60)  # 增加pytest超时到60秒
+    @patch('os.path.join')
+    @patch('subprocess.run')
+    @pytest.mark.timeout(60)  # 增加pytest超时到60秒
     def test_run_timeout_expired(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None:
         # 使用适合当前操作系统的临时目录路径
         mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_timeout"
@@ -125,11 +125,11 @@ class TestSandboxExecutor(unittest.TestCase):
         _ = self.assertIsNone(result)
         _ = self.assertIn(f"Sandbox execution timed out after {self.executor.timeout_seconds} seconds.", error)
 
-    _ = @patch('tempfile.TemporaryDirectory')
+    @patch('tempfile.TemporaryDirectory')
     @patch('builtins.open', new_callable=mock_open)
-    _ = @patch('os.path.join')
-    _ = @patch('subprocess.run')
-    _ = @pytest.mark.timeout(60)  # 增加pytest超时到60秒
+    @patch('os.path.join')
+    @patch('subprocess.run')
+    @pytest.mark.timeout(60)  # 增加pytest超时到60秒
     def test_run_non_json_output(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None:
         # 使用适合当前操作系统的临时目录路径
         mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_nonjson"
@@ -150,11 +150,11 @@ class TestSandboxExecutor(unittest.TestCase):
         _ = self.assertIsNone(result)
         _ = self.assertIn("Sandbox execution produced non-JSON output: This is not JSON", error)
 
-    _ = @patch('tempfile.TemporaryDirectory')
+    @patch('tempfile.TemporaryDirectory')
     @patch('builtins.open', new_callable=mock_open)
-    _ = @patch('os.path.join')
-    _ = @patch('subprocess.run')
-    _ = @pytest.mark.timeout(60)  # 增加pytest超时到60秒
+    @patch('os.path.join')
+    @patch('subprocess.run')
+    @pytest.mark.timeout(60)  # 增加pytest超时到60秒
     def test_run_stderr_output(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None:
         # 使用适合当前操作系统的临时目录路径
         mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_stderr"
