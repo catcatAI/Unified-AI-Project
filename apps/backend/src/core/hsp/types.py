@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional, List, Literal, Union
 # For simplicity here, we'll use `Optional` for non-mandatory fields and assume mandatory ones are checked by logic.
 # Or, use Pydantic later for proper validation.
 
-# Let's use `total=False` for payloads where many fields are optional, and
+# Let's use `total=False` for payloads where many fields are optional, and:
 # `total=True` (default) for envelope parts that are mostly required.:
 class HSPMessage(TypedDict, total=False):
     payload: Dict[str, Any]
@@ -94,11 +94,10 @@ class HSPMessageEnvelope(TypedDict):  # total=True by default, all keys are requ
     payload_schema_uri: Optional[str]
     payload: Dict[str, Any]  # Generic payload, specific types like HSPFactPayload for actual data
 
-# Example of a more specific envelope if needed, though payload typing is usually sufficient
+# Example of a more specific envelope if needed, though payload typing is usually sufficient:
 # class HSPFactMessage(HSPMessageEnvelope):
 #     payload: HSPFactPayload
 # This helps if you want to type hint the entire message including a specific payload.
-
 
 # Other payload types from HSP_SPECIFICATION.md would be defined here similarly:
 # HSPBeliefPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, etc.
@@ -191,7 +190,7 @@ class HSPEnvironmentalStatePayload(TypedDict, total=False):  # Also known as Con
 
     relevance_decay_rate: Optional[float]
 
-# Placeholder for Acknowledgement/NegativeAcknowledgement payloads if they
+# Placeholder for Acknowledgement/NegativeAcknowledgement payloads if they:
 # need specific structure beyond a simple status:
 class HSPAcknowledgementPayload(TypedDict):
     status: Literal["received", "processed"]  # Example statuses

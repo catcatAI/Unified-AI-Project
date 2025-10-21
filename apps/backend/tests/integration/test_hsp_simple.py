@@ -19,16 +19,16 @@ async def test_simple_hsp_flow() -> None:
             if hasattr(mock_hsp_instance, '_fact_callback'):
                 # 创建一个模拟的事实载荷
                 mock_fact = {
-                    _ = "id": fact_payload.get("id", "fact_001"),
-                    _ = "statement_type": fact_payload.get("statement_type", "natural_language"),
-                    _ = "statement_nl": fact_payload.get("statement_nl", "This is a test fact"),
-                    _ = "source_ai_id": fact_payload.get("source_ai_id", "test_ai"),
-                    _ = "timestamp_created": fact_payload.get("timestamp_created", "2023-01-01T00:00:00Z"),
-                    _ = "confidence_score": fact_payload.get("confidence_score", 1.0),
-                    _ = "tags": fact_payload.get("tags", ["test"])
+                    "id": fact_payload.get("id", "fact_001"),
+                    "statement_type": fact_payload.get("statement_type", "natural_language"),
+                    "statement_nl": fact_payload.get("statement_nl", "This is a test fact"),
+                    "source_ai_id": fact_payload.get("source_ai_id", "test_ai"),
+                    "timestamp_created": fact_payload.get("timestamp_created", "2023-01-01T00:00:00Z"),
+                    "confidence_score": fact_payload.get("confidence_score", 1.0),
+                    "tags": fact_payload.get("tags", ["test"])
                 }
                 # 触发回调
-                _ = mock_hsp_instance._fact_callback(mock_fact, "test_ai", {})
+                mock_hsp_instance._fact_callback(mock_fact, "test_ai", {})
             return True
         async def mock_subscribe_to_facts(callback):
             # 保存回调函数以便在发布时调用
@@ -60,10 +60,10 @@ async def test_simple_hsp_flow() -> None:
                 "sender_ai_id": sender_ai_id,
                 "message": message
             })
-            _ = received_event.set()
+            received_event.set()
         
         # 订阅事实消息
-        _ = await connector.subscribe_to_facts(fact_handler)
+        await connector.subscribe_to_facts(fact_handler)
         
         # 发布事实消息
         test_fact = {
@@ -79,10 +79,10 @@ async def test_simple_hsp_flow() -> None:
         publish_result = await connector.publish_fact(test_fact, "hsp/knowledge/facts/test")
         assert publish_result is True
         
-        # 等待消息处理完成（现在应该立即完成，因为我们在publish_fact中模拟了回调）
+        # 等待消息处理完成(现在应该立即完成,因为我们在publish_fact中模拟了回调)
         try:
             # 给一点时间确保回调被执行
-            _ = await asyncio.sleep(0.1)
+            await asyncio.sleep(0.1)
             # 验证消息是否正确接收
             assert len(received_messages) == 1
             received_fact = received_messages[0]["payload"]

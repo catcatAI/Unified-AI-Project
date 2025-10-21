@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-实际执行修复，不依赖外部调用
+实际执行修复,不依赖外部调用
 """
 
 import os
@@ -63,34 +63,34 @@ def fix_file_syntax(file_path):
         original_content = content
         changes_made = []
         
-        # 1. 修复字典语法错误 (_ = "key": value)
-        pattern = r'_ = "([^"]+)":\s*([^,\n}]+)(,?)'
+        # 1. 修复字典语法错误 ("key": value)
+        pattern = r'"([^"]+)":\s*([^,\n}]+)(,?)'
         replacement = r'"\1": \2\3'
         new_content = re.sub(pattern, replacement, content)
         if new_content != content:
             content = new_content
             changes_made.append("字典语法")
         
-        # 2. 修复 _ = raise Exception 语法错误
-        new_content = re.sub(r'_ = raise\s+', 'raise ', content)
+        # 2. 修复 raise Exception 语法错误
+        new_content = re.sub(r'raise\s+', 'raise ', content)
         if new_content != content:
             content = new_content
             changes_made.append("raise语法")
         
-        # 3. 修复 _ = @decorator 语法错误
-        new_content = re.sub(r'_ = (@\w+)', r'\1', content)
+        # 3. 修复 @decorator 语法错误
+        new_content = re.sub(r'(@\w+)', r'\1', content)
         if new_content != content:
             content = new_content
             changes_made.append("装饰器语法")
         
-        # 4. 修复 _ = assert 语法错误
-        new_content = re.sub(r'_ = assert\s+', 'assert ', content)
+        # 4. 修复 assert 语法错误
+        new_content = re.sub(r'assert\s+', 'assert ', content)
         if new_content != content:
             content = new_content
             changes_made.append("assert语法")
         
-        # 5. 修复 _ = **kwargs 语法错误
-        new_content = re.sub(r'_ = \*\*(\w+)', r'**\1', content)
+        # 5. 修复 **kwargs 语法错误
+        new_content = re.sub(r'\*\*(\w+)', r'**\1', content)
         if new_content != content:
             content = new_content
             changes_made.append("kwargs语法")
@@ -132,7 +132,7 @@ def fix_file_syntax(file_path):
             content = '\n'.join(new_lines)
             changes_made.append("重复导入")
         
-        # 如果有修改，写回文件
+        # 如果有修改,写回文件
         if content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
@@ -230,7 +230,7 @@ for root, dirs, files in os.walk(project_root):
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
-                # 如果包含禁用说明，跳过
+                # 如果包含禁用说明,跳过
                 if "此脚本已被归档" in content or "已被禁用" in content:
                     continue
                 
@@ -257,9 +257,9 @@ if unrestricted_scripts:
             with open(script_path, 'w', encoding='utf-8') as f:
                 f.write('''#!/usr/bin/env python3
 """
-此脚本已被禁用，因为它没有范围限制。
+此脚本已被禁用,因为它没有范围限制。
 
-原因：该脚本可能会修改下载的内容（如依赖、模型、数据集等），不符合项目本体的修复原则。
+原因：该脚本可能会修改下载的内容(如依赖、模型、数据集等),不符合项目本体的修复原则。
 
 请使用具有范围限制的 unified-fix.py 工具进行修复。
 """

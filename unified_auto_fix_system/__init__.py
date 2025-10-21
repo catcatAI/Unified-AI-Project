@@ -21,7 +21,7 @@
 - 实时监控修复
 """
 # 
-# __version__ = "2.0.0"
+__version__ = "2.0.0"
 __author__ = "Unified AI Project"
 
 from .core.unified_fix_engine import UnifiedFixEngine
@@ -30,8 +30,6 @@ from .core.fix_result import FixResult, FixReport
 from .interfaces.ai_interface import AIFixInterface
 from .interfaces.cli_interface import CLIFixInterface
 from .interfaces.api_interface import APIFixInterface
-# 
-# 
 __all__ = [
     "UnifiedFixEngine",
     "FixType", 

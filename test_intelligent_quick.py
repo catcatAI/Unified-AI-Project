@@ -1,2 +1,2 @@
-def test(x)
+def test(x):
     return x + 1

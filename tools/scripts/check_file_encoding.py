@@ -13,7 +13,7 @@ with open(file_path, 'rb') as f:
     print("前100个字节的十六进制表示:")
     print([hex(b) for b in data])
 
-# 尝试以文本模式读取前几行
+# 尝试以文本模式读取前几行:
 try:
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()[:5]

@@ -16,12 +16,12 @@ try:
     KERAS_AVAILABLE = True
 except ImportError:
     try:
-        # 如果tf-keras不可用，尝试使用tensorflow.keras
+        # 如果tf-keras不可用,尝试使用tensorflow.keras
         import tensorflow.keras as keras
         logging.info("Using tensorflow.keras")
         KERAS_AVAILABLE = True
     except ImportError:
-        # 如果都不可用，设置标志以便后续处理
+        # 如果都不可用,设置标志以便后续处理
         keras = None
         KERAS_AVAILABLE = False
         logging.warning("Could not import keras backend")

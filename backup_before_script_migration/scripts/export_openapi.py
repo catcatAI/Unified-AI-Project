@@ -16,9 +16,9 @@ try:
     with urllib.request.urlopen(OPENAPI_URL, timeout=10) as resp:
         data = resp.read().decode('utf-8')
         # validate json
-        _ = json.loads(data)
+        json.loads(data)
         out_path.write_text(data, encoding='utf-8')
-        _ = print(f'✅ Exported OpenAPI to {out_path}')
+        print(f'✅ Exported OpenAPI to {out_path}')
 except Exception as e:
-    _ = print(f'❌ Failed to export OpenAPI from {OPENAPI_URL}: {e}')
-    _ = sys.exit(1)
+    print(f'❌ Failed to export OpenAPI from {OPENAPI_URL}: {e}')
+    sys.exit(1)

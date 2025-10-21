@@ -15,15 +15,11 @@ from ..core.fix_result import FixResult
 
 class BaseFixer(abc.ABC):
     """基础修复器类"""
-
-
-
     
     def __init__(self, project_root: Path):
         self.project_root = Path(project_root).resolve()
         self.fix_type = None  # 子类必须设置
         self.name = self.__class__.__name__
-        
         # 设置日志
         self.logger = logging.getLogger(f"{__name__}.{self.name}")
         
@@ -34,8 +30,7 @@ class BaseFixer(abc.ABC):
             "successful_fixes": 0,
             "failed_fixes": 0,
             "issues_found": 0,
-
- "issues_fixed": 0
+            "issues_fixed": 0
 
         }
     
@@ -105,11 +100,9 @@ class BaseFixer(abc.ABC):
         filtered_files = []
         excluded_paths = context.excluded_paths or []
 
-
         excluded_paths.extend([
             "node_modules", "__pycache__", ".git", "venv", ".venv",
             "backup", "unified_fix_backups", "dist", "build"
-
         ])
         
         for file_path in target_files:
@@ -158,22 +151,18 @@ class BaseFixer(abc.ABC):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 return f.read()
-
         except Exception as e:
             self.logger.error(f"读取文件 {file_path} 失败: {e}")
             return None
 
-    
     def _write_file_content(self, file_path: Path, content: str) -> bool:
         """写入文件内容"""
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-
             return True
         except Exception as e:
             self.logger.error(f"写入文件 {file_path} 失败: {e}")
-
             return False
     
     def _create_backup(self, file_path: Path, backup_suffix: str = ".backup") -> Optional[Path]:
@@ -181,7 +170,6 @@ class BaseFixer(abc.ABC):
         try:
             backup_path = file_path.with_suffix(file_path.suffix + backup_suffix)
             import shutil
-
             shutil.copy2(file_path, backup_path)
             return backup_path
         except Exception as e:
@@ -193,45 +181,35 @@ class BaseFixer(abc.ABC):
         self.stats["total_fixes"] += 1
         self.stats["issues_found"] += result.issues_found
         self.stats["issues_fixed"] += result.issues_fixed
-        
         if result.status == FixStatus.SUCCESS:
             self.stats["successful_fixes"] += 1
             self.logger.info(f"修复成功: {result.summary()}")
         elif result.status == FixStatus.FAILED:
             self.stats["failed_fixes"] += 1
-
             self.logger.error(f"修复失败: {result.summary()}")
         elif result.status == FixStatus.PARTIAL_SUCCESS:
             self.stats["successful_fixes"] += 1  # 部分成功也算成功
-
             self.logger.warning(f"部分修复成功: {result.summary()}")
         elif result.status == FixStatus.SKIPPED:
             self.logger.info(f"修复已跳过: {result.summary()}")
     
     def get_statistics(self) -> Dict[str, int]:
         """获取修复统计"""
-
-
         return self.stats.copy()
     
     def reset_statistics(self):
         """重置统计信息"""
         self.stats = {
-        "total_fixes": 0,
-
+            "total_fixes": 0,
             "successful_fixes": 0,
-
             "failed_fixes": 0,
             "issues_found": 0,
-
             "issues_fixed": 0
-            }
-
+        }
     
     def cleanup(self):
         """清理资源"""
         self.logger.info(f"清理 {self.name} 资源...")
-
         # 子类可以重写此方法进行特定的清理操作
     
     def __str__(self):

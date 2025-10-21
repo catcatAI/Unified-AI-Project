@@ -2,7 +2,7 @@ import ast
 import traceback
 
 def has_syntax_error(file_path: str) -> tuple[bool, str]:
-    """检查文件是否有语法错误，如果有则返回错误信息"""
+    """检查文件是否有语法错误,如果有则返回错误信息"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -11,7 +11,7 @@ def has_syntax_error(file_path: str) -> tuple[bool, str]:
     except SyntaxError as e:
         return True, str(e)
     except Exception as e:
-        # 其他错误（如编码错误）
+        # 其他错误(如编码错误)
         return True, str(e)
 
 # 测试函数

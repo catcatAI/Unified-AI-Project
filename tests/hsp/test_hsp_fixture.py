@@ -1,7 +1,7 @@
 """
 测试模块 - test_hsp_fixture
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 import sys
@@ -20,16 +20,16 @@ from apps.backend.src.core.hsp.bridge.data_aligner import DataAligner
 # 修复hsp_connector导入路径
 from apps.backend.src.core.hsp.connector import HSPConnector
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture()
 async def mock_broker():
-    broker = MockMqttBroker()
-    _ = await broker.start()
-    try:
+    broker == MockMqttBroker()
+    await broker.start()
+    try,
         yield broker
-    finally:
-        _ = await broker.shutdown()
+    finally,
+        await broker.shutdown()
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async 
     def setUp(self):
         """测试前设置"""
@@ -40,26 +40,26 @@ async
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_fixture() -> None:
+def test_fixture() -> None,
     # Create the fixtures manually
-    mock_broker = MockMqttBroker()
-    _ = await mock_broker.start()
+    mock_broker == MockMqttBroker()
+    await mock_broker.start()
     
-    try:
+    try,
         # Create the other fixtures manually
-        ib = InternalBus()
-        da = DataAligner()
+        ib == InternalBus()
+        da == DataAligner()
         
         # Create the hsp_connector manually (not using fixture)
-        connector = HSPConnector(
+        connector == HSPConnector(
             "test_ai",
             "localhost",
             1883,
-            mock_mode=True,
+            mock_mode == True,
             mock_mqtt_client=mock_broker,
             internal_bus=ib,
-            message_bridge=None,
-            enable_fallback=False
+            message_bridge == None,,
+    enable_fallback == False
         )
         
         # 验证连接器创建成功
@@ -67,11 +67,11 @@ def test_fixture() -> None:
         assert connector.ai_id == "test_ai"
         
         # Connect the connector
-        _ = await connector.connect()
+        await connector.connect()
         assert connector.is_connected == True
         
         # Clean up
-        _ = await connector.disconnect()
+        await connector.disconnect()
         
-    finally:
-        _ = await mock_broker.shutdown()
+    finally,
+        await mock_broker.shutdown()

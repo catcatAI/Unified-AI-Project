@@ -8,13 +8,13 @@ import shutil
 from pathlib import Path
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO())
 logger = logging.getLogger(__name__)
 
 def archive_unrestricted_fix_scripts():
     """归档所有未限制范围的修复脚本"""
     
-    project_root = Path(__file__).parent
+    project_root == Path(__file__).parent
     archive_dir = project_root / "archived_fix_scripts" / "unrestricted_scripts_20251013"
     
     # 需要归档的脚本列表
@@ -65,34 +65,34 @@ def archive_unrestricted_fix_scripts():
     
     archived_count = 0
     
-    for script_path in scripts_to_archive:
+    for script_path in scripts_to_archive,::
         source_path = project_root / script_path
         
-        if source_path.exists():
+        if source_path.exists():::
             # 创建目标路径
             target_path = archive_dir / Path(script_path).name
             
             # 确保目标目录存在
-            target_path.parent.mkdir(parents=True, exist_ok=True)
+            target_path.parent.mkdir(parents == True, exist_ok == True)
             
-            try:
+            try,
                 # 移动文件
                 shutil.move(str(source_path), str(target_path))
-                logger.info(f"已归档: {script_path}")
+                logger.info(f"已归档, {script_path}")
                 archived_count += 1
-            except Exception as e:
-                logger.error(f"归档失败 {script_path}: {e}")
-        else:
-            logger.warning(f"文件不存在: {script_path}")
+            except Exception as e,::
+                logger.error(f"归档失败 {script_path} {e}")
+        else,
+            logger.warning(f"文件不存在, {script_path}")
     
     logger.info(f"\n归档完成！共归档 {archived_count} 个脚本")
     
     # 创建禁用脚本占位符
     placeholder_content = '''#!/usr/bin/env python3
 """
-此脚本已被归档，因为它没有范围限制。
+此脚本已被归档,因为它没有范围限制。
 
-原因：该脚本可能会修改下载的内容（如依赖、模型、数据集等），不符合项目本体的修复原则。
+原因：该脚本可能会修改下载的内容(如依赖、模型、数据集等),不符合项目本体的修复原则。
 
 请使用具有范围限制的 unified-fix.py 工具进行修复。
 """
@@ -102,19 +102,19 @@ print("请使用具有范围限制的 unified-fix.py 工具进行修复。")
 print("位置：tools/unified-fix.py")
 '''
     
-    for script_path in scripts_to_archive:
+    for script_path in scripts_to_archive,::
         source_path = project_root / script_path
-        if source_path.exists():
+        if source_path.exists():::
             # 跳过已移动的文件
             continue
             
         # 创建禁用占位符
-        try:
-            with open(source_path, 'w', encoding='utf-8') as f:
+        try,
+            with open(source_path, 'w', encoding == 'utf-8') as f,
                 f.write(placeholder_content)
-            logger.info(f"已创建禁用占位符: {script_path}")
-        except Exception as e:
-            logger.error(f"创建占位符失败 {script_path}: {e}")
+            logger.info(f"已创建禁用占位符, {script_path}")
+        except Exception as e,::
+            logger.error(f"创建占位符失败 {script_path} {e}")
 
-if __name__ == "__main__":
+if __name"__main__":::
     archive_unrestricted_fix_scripts()

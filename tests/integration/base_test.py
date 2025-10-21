@@ -30,8 +30,8 @@ class BaseIntegrationTest:
         
         Args:
             condition_func: 条件检查函数
-            timeout: 超时时间（秒）
-            interval: 检查间隔（秒）
+            timeout: 超时时间(秒)
+            interval: 检查间隔(秒)
             
         Returns:
             bool: 条件是否满足

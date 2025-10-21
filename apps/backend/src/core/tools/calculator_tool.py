@@ -3,13 +3,13 @@ import operator as op
 
 # supported operators
 operators = {
-    ast.Add: op.add,
-    ast.Sub: op.sub,
-    ast.Mult: op.mul,
-    ast.Div: op.truediv,
-    ast.Pow: op.pow,
-    ast.BitXor: op.xor,
-    ast.USub: op.neg
+    ast.Add, op.add(),
+    ast.Sub, op.sub(),
+    ast.Mult, op.mul(),
+    ast.Div, op.truediv(),
+    ast.Pow, op.pow(),
+    ast.BitXor, op.xor(),
+    ast.USub, op.neg()
 }
 
 
@@ -21,15 +21,13 @@ def eval_expr(expr):
 
 
 def eval_(node):
-    if isinstance(node, ast.Num):  # <number>:
-
-
-eturn node.n
-elif isinstance(node, ast.BinOp):  # <left> <operator> <right>:
-eturn operators[type(node.op)](eval_(node.left), eval_(node.right))
-elif isinstance(node, ast.UnaryOp):  # <operator> <operand> e.g., -1:
-eturn operators[type(node.op)](eval_(node.operand))
-else:
+    if isinstance(node, ast.Num())  # <number>:::
+eturn node.n()
+elif isinstance(node, ast.BinOp())  # <left> <operator> <right>:::
+eturn operators[type(node.op())](eval_(node.left()), eval_(node.right()))
+elif isinstance(node, ast.UnaryOp())  # <operator> <operand> e.g., -1,::
+eturn operators[type(node.op())](eval_(node.operand()))
+else,
     raise TypeError(node)
 
 
@@ -37,10 +35,10 @@ def calculate(expression):
     """
     Calculates the result of a mathematical expression.
 
-    Args:
-        expression: The mathematical expression to be calculated.
+    Args,
+        expression, The mathematical expression to be calculated.
 
-    Returns:
+    Returns,
         The result of the calculation.
     """
     return eval_expr(expression)

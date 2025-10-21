@@ -144,7 +144,7 @@ try:
             # 找到connect方法的位置
             connect_start = hsp_content.find('async def connect(self):')
             if connect_start != -1:
-                # 找到方法结束位置（下一个方法开始或文件结束）
+                # 找到方法结束位置(下一个方法开始或文件结束)
                 next_method = hsp_content.find('async def ', connect_start + 10)
                 if next_method == -1:
                     next_method = len(hsp_content)

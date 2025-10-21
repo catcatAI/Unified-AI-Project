@@ -24,7 +24,7 @@ SandboxConfig,
 ResourceLimits
 )
 
-__all__ = [
+__all_[
 'PermissionControlSystem',
 'PermissionType',
 'PermissionLevel',

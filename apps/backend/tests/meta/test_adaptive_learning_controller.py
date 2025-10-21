@@ -7,8 +7,7 @@ from unittest.mock import MagicMock, AsyncMock
 from ....src.ai.meta.adaptive_learning_controller import (
     PerformanceTracker,
     StrategySelector,
-    AdaptiveLearningController,
-)
+    AdaptiveLearningController)
 from meta.learning_log_db import LearningLogDB
 
 class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
@@ -25,9 +24,9 @@ class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
             {"success_rate": 0.98}
         ]
         trend = await tracker.analyze_trend(history)
-        _ = self.assertEqual(trend["direction"], "improving")
-        _ = self.assertGreater(trend["magnitude"], 0)
-        _ = self.assertGreater(trend["slope"], 0.01)
+        self.assertEqual(trend["direction"], "improving")
+        self.assertGreater(trend["magnitude"], 0)
+        self.assertGreater(trend["slope"], 0.01)
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
@@ -41,9 +40,9 @@ class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
             {"success_rate": 0.3}
         ]
         trend = await tracker.analyze_trend(history)
-        _ = self.assertEqual(trend["direction"], "degrading")
-        _ = self.assertGreater(trend["magnitude"], 0)
-        _ = self.assertLess(trend["slope"], -0.01)
+        self.assertEqual(trend["direction"], "degrading")
+        self.assertGreater(trend["magnitude"], 0)
+        self.assertLess(trend["slope"], -0.01)
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
@@ -57,8 +56,8 @@ class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
             {"success_rate": 0.73}
         ]
         trend = await tracker.analyze_trend(history)
-        _ = self.assertEqual(trend["direction"], "stable")
-        _ = self.assertLess(trend["magnitude"], 1.0) # Changed assertion to 1.0
+        self.assertEqual(trend["direction"], "stable")
+        self.assertLess(trend["magnitude"], 1.0) # Changed assertion to 1.0
         self.assertAlmostEqual(trend["slope"], 0.0, delta=0.01)
 
     # 添加重试装饰器以处理不稳定的测试
@@ -67,8 +66,8 @@ class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):
         tracker = PerformanceTracker()
         history = []
         trend = await tracker.analyze_trend(history)
-        _ = self.assertEqual(trend["direction"], "stable")
-        _ = self.assertLess(trend["magnitude"], 1.0) # Changed assertion
+        self.assertEqual(trend["direction"], "stable")
+        self.assertLess(trend["magnitude"], 1.0) # Changed assertion
 
 class TestStrategySelector(unittest.IsolatedAsyncioTestCase):
     # 添加重试装饰器以处理不稳定的测试
@@ -78,7 +77,7 @@ class TestStrategySelector(unittest.IsolatedAsyncioTestCase):
         task_context = {"complexity_level": 0.3}
         performance_trend = {"direction": "improving", "magnitude": 0.6}
         strategy = await selector.select(task_context, performance_trend)
-        _ = self.assertEqual(strategy, "current_strategy")
+        self.assertEqual(strategy, "current_strategy")
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
@@ -87,7 +86,7 @@ class TestStrategySelector(unittest.IsolatedAsyncioTestCase):
         task_context = {"complexity_level": 0.8}
         performance_trend = {"direction": "degrading", "magnitude": 0.51} # Changed magnitude
         strategy = await selector.select(task_context, performance_trend)
-        _ = self.assertEqual(strategy, "new_exploration_strategy")
+        self.assertEqual(strategy, "new_exploration_strategy")
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
@@ -96,7 +95,7 @@ class TestStrategySelector(unittest.IsolatedAsyncioTestCase):
         task_context = {"complexity_level": 0.3}
         performance_trend = {"direction": "degrading", "magnitude": 0.51}
         strategy = await selector.select(task_context, performance_trend)
-        _ = self.assertEqual(strategy, "new_exploration_strategy")
+        self.assertEqual(strategy, "new_exploration_strategy")
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
@@ -106,7 +105,7 @@ class TestStrategySelector(unittest.IsolatedAsyncioTestCase):
         task_context = {"complexity_level": 0.71}
         performance_trend = {"direction": "stable", "magnitude": 0.0}
         strategy = await selector.select(task_context, performance_trend)
-        _ = self.assertEqual(strategy, "new_exploration_strategy")
+        self.assertEqual(strategy, "new_exploration_strategy")
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
@@ -116,7 +115,7 @@ class TestStrategySelector(unittest.IsolatedAsyncioTestCase):
         task_context = {"complexity_level": 0.3}
         performance_trend = {"direction": "stable", "magnitude": 0.0}
         strategy = await selector.select(task_context, performance_trend)
-        _ = self.assertEqual(strategy, "current_strategy")
+        self.assertEqual(strategy, "current_strategy")
 
 class TestAdaptiveLearningController(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
@@ -138,10 +137,10 @@ class TestAdaptiveLearningController(unittest.IsolatedAsyncioTestCase):
     def tearDown(self):
         # Clean up mock DB file
         if os.path.exists(self.controller.db.db_path):
-            _ = os.remove(self.controller.db.db_path)
+            os.remove(self.controller.db.db_path)
         # Clean up test storage directory
         if os.path.exists(self.controller.storage_path):
-            _ = shutil.rmtree(self.controller.storage_path)
+            shutil.rmtree(self.controller.storage_path)
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
@@ -156,11 +155,11 @@ class TestAdaptiveLearningController(unittest.IsolatedAsyncioTestCase):
 
         result = await self.controller.adapt_learning_strategy(task_context, performance_history)
 
-        _ = self.assertEqual(result["strategy"], "current_strategy")
-        _ = self.assertIn("learning_rate", result["parameters"])
-        _ = self.assertIn("exploration_rate", result["parameters"])
-        _ = self.controller.performance_tracker.analyze_trend.assert_called_once_with(performance_history)
-        _ = self.controller.strategy_selector.select.assert_called_once_with(task_context, {"direction": "stable", "magnitude": 0.0})
+        self.assertEqual(result["strategy"], "current_strategy")
+        self.assertIn("learning_rate", result["parameters"])
+        self.assertIn("exploration_rate", result["parameters"])
+        self.controller.performance_tracker.analyze_trend.assert_called_once_with(performance_history)
+        self.controller.strategy_selector.select.assert_called_once_with(task_context, {"direction": "stable", "magnitude": 0.0})
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
@@ -173,7 +172,7 @@ class TestAdaptiveLearningController(unittest.IsolatedAsyncioTestCase):
         self.controller._get_historical_performance.return_value = 0.6
 
         params = await self.controller._optimize_parameters(strategy_id, strategy, context)
-        _ = self.assertGreater(params["exploration_rate"], 0.1) # Should increase exploration
+        self.assertGreater(params["exploration_rate"], 0.1) # Should increase exploration
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试

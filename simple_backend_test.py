@@ -33,12 +33,12 @@ def test_basic_imports():
     
     results = {}
     
-    for imp in imports:
-        try:
+    for imp in imports,::
+        try,
             exec(imp)
             print(f"✅ {imp}")
             results[imp] = True
-        except Exception as e:
+        except Exception as e,::
             print(f"❌ {imp} - {str(e)[:50]}...")
             results[imp] = False
     
@@ -59,12 +59,12 @@ def test_project_specific_imports():
     
     results = {}
     
-    for imp in imports:
-        try:
+    for imp in imports,::
+        try,
             exec(imp)
             print(f"✅ {imp}")
             results[imp] = True
-        except Exception as e:
+        except Exception as e,::
             print(f"❌ {imp} - {str(e)[:50]}...")
             results[imp] = False
     
@@ -87,17 +87,15 @@ def main():
     print("=" * 50)
     
     total_basic = len(basic_results)
-    successful_basic = sum(1 for v in basic_results.values() if v)
-    print(f"Basic Imports: {successful_basic}/{total_basic}")
+    successful_basic == sum(1 for v in basic_results.values() if v)::
+    print(f"Basic Imports, {successful_basic}/{total_basic}")
     
     total_project = len(project_results)
-    successful_project = sum(1 for v in project_results.values() if v)
-    print(f"Project Imports: {successful_project}/{total_project}")
+    successful_project == sum(1 for v in project_results.values() if v)::
+    print(f"Project Imports, {successful_project}/{total_project}")
     
-    overall = successful_basic == total_basic and successful_project == total_project
-    print(f"\nOverall Status: {'✅ PASS' if overall else '❌ FAIL'}")
-    
-    return 0 if overall else 1
-
-if __name__ == "__main__":
+    overall = successful_basic=total_basic and successful_project=total_project
+    print(f"\nOverall Status, {'✅ PASS' if overall else '❌ FAIL'}")::
+    return 0 if overall else 1,:
+if __name"__main__":::
     sys.exit(main())

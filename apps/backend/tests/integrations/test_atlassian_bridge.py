@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 
 # Configure pytest-asyncio
-pytest_plugins = ('pytest_asyncio',)
+pytest_plugins = ('pytest_asyncio')
 
 from apps.backend.src.integrations.atlassian_bridge import AtlassianBridge
 from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
@@ -49,10 +49,10 @@ class TestAtlassianBridge:
     async def bridge(self, mock_connector):
         """創建測試橋接器實例"""
         bridge = AtlassianBridge(mock_connector)
-        _ = await bridge.start()
+        await bridge.start()
         yield bridge
         # 確保在測試完成後關閉 bridge
-        _ = await bridge.close()
+        await bridge.close()
     
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
@@ -82,7 +82,7 @@ class TestAtlassianBridge:
         
         assert result['id'] == '123456'
         assert result['title'] == 'Test Page'
-        _ = mock_connector._make_request_with_retry.assert_called_once()
+        mock_connector._make_request_with_retry.assert_called_once()
     
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
@@ -199,9 +199,9 @@ class TestAtlassianBridge:
     # 添加重试装饰器以处理不稳定的测试
     async def test_error_handling(self, bridge, mock_connector) -> None:
         """测试错误处理"""
-        # Mock connector to raise an exception
+        # Mock connector to raise an exception:
         mock_connector._make_request_with_retry.side_effect = Exception("API Error")
-        
+
         with pytest.raises(Exception, match="API Error"):
             await bridge.create_confluence_page(
                 space_key='TEST',
@@ -229,7 +229,7 @@ class TestAtlassianBridge:
         formatted = bridge._format_content_for_confluence(markdown_content)
         
         # Should contain Confluence storage format elements
-        # 由于我们只是返回原始内容，所以不会有特定的Confluence格式
+        # 由于我们只是返回原始内容,所以不会有特定的Confluence格式
         assert isinstance(formatted, str)
 
     def test_jira_field_mapping(self, bridge) -> None:

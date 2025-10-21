@@ -15,9 +15,9 @@ def create_directory_structure():
         Path("tools") / "utils"
     ]
     
-    for directory in directories:
-        directory.mkdir(parents=True, exist_ok=True)
-        print(f"✓ 创建目录: {directory}")
+    for directory in directories,::
+        directory.mkdir(parents == True, exist_ok == True)
+        print(f"✓ 创建目录, {directory}")
 
 def classify_and_move_files():
     """分类并移动文件"""
@@ -53,7 +53,7 @@ def classify_and_move_files():
             "tool_context_manager.py",
             "validate_complete_pipeline.py",
             "validate_json.py"
-        ],
+        ]
         "tests": [
             "test_defect_detector.py",
             "test_import.py",
@@ -61,7 +61,7 @@ def classify_and_move_files():
             "test_repeat_fix.py",
             "test_syntax_fix.py",
             "test_syntax_fixer.py"
-        ],
+        ]
         "tools/misc": [
             "correct_fixes.py",
             "coverage_analyzer.py",
@@ -72,14 +72,14 @@ def classify_and_move_files():
     }
     
     moved_files = 0
-    for target_dir, files in classifications.items():
-        target_path = Path(target_dir)
-        for file_name in files:
-            source_path = Path(file_name)
-            if source_path.exists() and source_path.is_file():
+    for target_dir, files in classifications.items():::
+        target_path == Path(target_dir)
+        for file_name in files,::
+            source_path == Path(file_name)
+            if source_path.exists() and source_path.is_file():::
                 destination_path = target_path / file_name
                 shutil.move(str(source_path), str(destination_path))
-                print(f"✓ 移动文件: {file_name} -> {target_dir}/")
+                print(f"✓ 移动文件, {file_name} -> {target_dir}/")
                 moved_files += 1
     
     print(f"总共移动了 {moved_files} 个文件")
@@ -90,7 +90,7 @@ def main():
     print("开始整理根目录下未分类的Python文件...")
     print("=" * 50)
     
-    try:
+    try,
         # 创建目录结构
         create_directory_structure()
         
@@ -98,16 +98,16 @@ def main():
         moved_files = classify_and_move_files()
         
         print("\n" + "=" * 50)
-        if moved_files > 0:
+        if moved_files > 0,::
             print(f"✓ 成功整理了 {moved_files} 个未分类的Python文件!")
-        else:
+        else,
             print("✓ 没有需要整理的未分类Python文件")
         
-    except Exception as e:
-        print(f"\n✗ 整理过程中出现错误: {e}")
+    except Exception as e,::
+        print(f"\n✗ 整理过程中出现错误, {e}")
         return 1
     
     return 0
 
-if __name__ == "__main__":
+if __name"__main__":::
     exit(main())

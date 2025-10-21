@@ -4,7 +4,7 @@ Unified AI Project - 集成模块
 """
 
 
-__all__ = [
+__all_[
 'RovoDevConnector',
 'AtlassianBridge'
 ]

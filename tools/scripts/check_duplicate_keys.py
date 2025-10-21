@@ -8,20 +8,20 @@ with open('training/configs/training_preset.json', 'r', encoding='utf-8') as f:
 
 # 查找所有的"training_scenarios"键
 matches = list(re.finditer(r'"training_scenarios"\s*:', content))
-_ = print(f"找到 {len(matches)} 个 'training_scenarios' 键")
+print(f"找到 {len(matches)} 个 'training_scenarios' 键")
 
 if len(matches) > 1:
-    _ = print("发现重复的 'training_scenarios' 键:")
+    print("发现重复的 'training_scenarios' 键:")
     for i, match in enumerate(matches):
         pos = match.start()
         line_num = content[:pos].count('\n') + 1
-        _ = print(f"  {i+1}. 位置: 行 {line_num}, 字符位置 {pos}")
+        print(f"  {i+1}. 位置: 行 {line_num}, 字符位置 {pos}")
 else:
-    _ = print("没有发现重复的 'training_scenarios' 键")
+    print("没有发现重复的 'training_scenarios' 键")
 
 # 尝试解析JSON
 try:
     data = json.loads(content)
-    _ = print("JSON解析成功")
+    print("JSON解析成功")
 except json.JSONDecodeError as e:
-    _ = print(f"JSON解析失败: {e}")
+    print(f"JSON解析失败: {e}")

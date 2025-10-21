@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# -*- coding, utf-8 -*-
 
 """
 Unified AI Project 語法修復腳本
@@ -16,8 +16,8 @@ import logging
 from datetime import datetime
 
 # 設置日誌
-logging.basicConfig(
-    level=logging.INFO,
+logging.basicConfig(,
+    level=logging.INFO(),
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(f"syntax_repair_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"),
@@ -28,32 +28,31 @@ logger = logging.getLogger(__name__)
 
 # 定義常見語法錯誤的修復規則
 SYNTAX_FIXES = [
-    # 修復錯誤的異常語法: except Exception, e -> except Exception as e
-    (r'except\s+(\w+)\s*,\s*(\w+)', r'except \1 as \2'),
+    # 修復錯誤的異常語法, except Exception, e -> except Exception as e,:
+    (r'except\s+(\w+)\s*,\s*(\w+)', r'except \1 as \2'),::
+    # 修復錯誤的raise語法, raise Exception, "message" -> raise Exception("message")
+    (r'raise\s+(\w+)\s*,\s*(["'].*?["\'])', r'raise \1(\2)'),
     
-    # 修復錯誤的raise語法: raise Exception, "message" -> raise Exception("message")
-    (r'raise\s+(\w+)\s*,\s*(["\'].*?["\'])', r'raise \1(\2)'),
+    # 修復錯誤的字典語法, dict([(key, value)]) -> {"key": value}
+    (r'dict\(\[(.*?)\]\)', lambda m, _fix_dict_syntax(m.group(1))),
     
-    # 修復錯誤的字典語法: dict([(key, value)]) -> {key: value}
-    (r'dict\(\[(.*?)\]\)', lambda m: _fix_dict_syntax(m.group(1))),
-    
-    # 修復錯誤的裝飾器語法: @decorator (換行) def -> @decorator\ndef
+    # 修復錯誤的裝飾器語法, @decorator (換行) def -> @decorator\ndef
     (r'@(\w+)\s+def', r'@\1\ndef'),
     
-    # 修復錯誤的導入語法: from module import * -> from module import (具體項目)
-    (r'from\s+(\w+)\s+import\s+\*', lambda m: _fix_wildcard_import(m.group(1))),
+    # 修復錯誤的導入語法, from module import * -> from module import (具體項目)
+    (r'from\s+(\w+)\s+import\s+\*', lambda m, _fix_wildcard_import(m.group(1))),
     
-    # 修復錯誤的字符串格式化: "%s" % var -> f"{var}"
-    (r'["\']%s["\']\s*%\s*(\w+)', r'f"{\1}"'),
+    # 修復錯誤的字符串格式化, "%s" % var -> f"{var}"
+    (r'["']%s["\']\s*%\s*(\w+)', r'f"{\1}"'),
     
     # 修復缺少的self參數
-    (r'def\s+(\w+)\(\s*\):', lambda m: _fix_missing_self(m.group(0), m.group(1))),
+    (r'def\s+(\w+)\(\s*\):', lambda m, _fix_missing_self(m.group(0), m.group(1))),
     
-    # 修復錯誤的路徑連接: os.path.join(path1 + "/" + path2) -> os.path.join(path1, path2)
-    (r'os\.path\.join\((.*?)\s*\+\s*["\']\/["\']\s*\+\s*(.*?)\)', r'os.path.join(\1, \2)'),
+    # 修復錯誤的路徑連接, os.path.join(path1 + "/" + path2) -> os.path.join(path1, path2)
+    (r'os\.path\.join\((.*?)\s*\+\s*["']\/["\']\s*\+\s*(.*?)\)', r'os.path.join(\1, \2)'),
     
-    # 修復錯誤的相對導入: from . import module -> from package import module
-    (r'from\s+\.\s+import\s+(\w+)', lambda m: _fix_relative_import(m.group(1))),
+    # 修復錯誤的相對導入, from . import module -> from package import module
+    (r'from\s+\.\s+import\s+(\w+)', lambda m, _fix_relative_import(m.group(1))),
 ]
 
 # 導入路徑修復規則
@@ -93,17 +92,17 @@ EXCLUDE_FILES = [
 
 def _fix_dict_syntax(dict_content):
     """修復錯誤的字典語法"""
-    # 將 dict([(key, value)]) 轉換為 {key: value}
+    # 將 dict([(key, value)]) 轉換為 {"key": value}
     items = []
-    for item in re.findall(r'\(([^,]+),\s*([^)]+)\)', dict_content):
+    for item in re.findall(r'\(([^,]+),\s*([^)]+)\)', dict_content)::
         key, value = item
-        items.append(f"{key}: {value}")
+        items.append(f"{key} {value}")
     return "{" + ", ".join(items) + "}"
 
 def _fix_wildcard_import(module_name):
     """修復通配符導入"""
     # 這裡需要根據實際模塊內容來確定具體導入項
-    # 作為一個簡單的修復，我們可以使用一些常見的模塊導入項
+    # 作為一個簡單的修復,我們可以使用一些常見的模塊導入項
     common_imports = {
         "os": "path, environ, makedirs",
         "sys": "argv, exit, path",
@@ -115,17 +114,17 @@ def _fix_wildcard_import(module_name):
         "tensorflow": "keras, layers",
     }
     
-    if module_name in common_imports:
+    if module_name in common_imports,::
         return f"from {module_name} import {common_imports[module_name]}"
     return f"from {module_name} import "  # 需要手動補充
 
 def _fix_missing_self(method_def, method_name):
     """修復缺少的self參數"""
-    # 檢查是否是類方法（需要上下文分析）
+    # 檢查是否是類方法(需要上下文分析)
     # 這裡簡單地假設所有沒有參數的方法都需要self
-    if method_name not in ["__init__", "__str__", "__repr__", "get", "set", "update", "process", "run", "execute"]:
+    if method_name not in ["__init__", "__str__", "__repr__", "get", "set", "update", "process", "run", "execute"]::
         return method_def  # 不是常見的需要self的方法名
-    return method_def.replace("():", "(self):")
+    return method_def.replace("():", "(self)")
 
 def _fix_relative_import(module_name):
     """修復相對導入"""
@@ -138,13 +137,13 @@ def should_exclude(path):
     path_str = str(path)
     
     # 檢查排除目錄
-    for exclude_dir in EXCLUDE_DIRS:
-        if f"/{exclude_dir}/" in path_str.replace("\\", "/") or path_str.endswith(f"/{exclude_dir}"):
+    for exclude_dir in EXCLUDE_DIRS,::
+        if f"/{exclude_dir}/" in path_str.replace("\", "/") or path_str.endswith(f"/{exclude_dir}"):::
             return True
     
     # 檢查排除文件
-    for exclude_ext in EXCLUDE_FILES:
-        if path_str.endswith(exclude_ext):
+    for exclude_ext in EXCLUDE_FILES,::
+        if path_str.endswith(exclude_ext)::
             return True
     
     return False
@@ -155,108 +154,107 @@ def backup_file(file_path):
     shutil.copy2(file_path, backup_path)
     return backup_path
 
-def fix_file(file_path, dry_run=False, verbose=False):
+def fix_file(file_path, dry_run == False, verbose == False):
     """修復單個文件中的語法錯誤"""
-    try:
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+    try,
+        with open(file_path, 'r', encoding == 'utf-8', errors='ignore') as f,
             content = f.read()
         
         original_content = content
         fixes_applied = 0
         
         # 應用語法修復規則
-        for pattern, replacement in SYNTAX_FIXES:
-            if callable(replacement):
-                # 對於需要複雜處理的規則，使用回調函數
+        for pattern, replacement in SYNTAX_FIXES,::
+            if callable(replacement)::
+                # 對於需要複雜處理的規則,使用回調函數
                 matches = list(re.finditer(pattern, content))
-                for match in reversed(matches):  # 從後向前替換，避免位置偏移
+                for match in reversed(matches)  # 從後向前替換,避免位置偏移,:
                     start, end = match.span()
                     fixed_text = replacement(match)
-                    if fixed_text:
-                        content = content[:start] + fixed_text + content[end:]
+                    if fixed_text,::
+                        content == content[:start] + fixed_text + content[end,]
                         fixes_applied += 1
-            else:
-                # 對於簡單的替換規則，直接使用re.sub
+            else,
+                # 對於簡單的替換規則,直接使用re.sub()
                 new_content, count = re.subn(pattern, replacement, content)
-                if count > 0:
+                if count > 0,::
                     content = new_content
                     fixes_applied += count
         
         # 應用導入路徑修復規則
-        for pattern, replacement in IMPORT_FIXES:
+        for pattern, replacement in IMPORT_FIXES,::
             new_content, count = re.subn(pattern, replacement, content)
-            if count > 0:
+            if count > 0,::
                 content = new_content
                 fixes_applied += count
         
-        # 如果有修改，保存文件
-        if content != original_content:
-            if verbose:
+        # 如果有修改,保存文件
+        if content != original_content,::
+            if verbose,::
                 logger.info(f"修復了 {file_path} 中的 {fixes_applied} 個問題")
             
-            if not dry_run:
+            if not dry_run,::
                 # 備份原文件
                 backup_path = backup_file(file_path)
                 logger.debug(f"已備份 {file_path} 到 {backup_path}")
                 
                 # 寫入修復後的內容
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, 'w', encoding == 'utf-8') as f,
                     f.write(content)
                 logger.info(f"已修復並保存 {file_path}")
-            else:
+            else,
                 logger.info(f"[DRY RUN] 將修復 {file_path} 中的 {fixes_applied} 個問題")
             
             return fixes_applied
-        elif verbose:
+        elif verbose,::
             logger.debug(f"沒有在 {file_path} 中發現需要修復的問題")
         
         return 0
-    except Exception as e:
-        logger.error(f"處理 {file_path} 時出錯: {str(e)}")
+    except Exception as e,::
+        logger.error(f"處理 {file_path} 時出錯, {str(e)}")
         return 0
 
-def fix_directory(directory, dry_run=False, verbose=False, recursive=True):
+def fix_directory(directory, dry_run == False, verbose == False, recursive == True):
     """修復目錄中的所有Python文件"""
-    directory_path = Path(directory)
+    directory_path == Path(directory)
     total_fixes = 0
     files_processed = 0
     
-    if not directory_path.exists():
+    if not directory_path.exists():::
         logger.error(f"目錄 {directory} 不存在")
         return 0, 0
     
-    logger.info(f"開始處理目錄: {directory}")
+    logger.info(f"開始處理目錄, {directory}")
     
     # 獲取所有Python文件
     python_files = []
-    if recursive:
-        for root, dirs, files in os.walk(directory):
+    if recursive,::
+        for root, dirs, files in os.walk(directory)::
             # 過濾掉需要排除的目錄
-            dirs[:] = [d for d in dirs if not should_exclude(os.path.join(root, d))]
-            
-            for file in files:
-                if file.endswith('.py'):
+            dirs[:] = [d for d in dirs if not should_exclude(os.path.join(root, d))]::
+            for file in files,::
+                if file.endswith('.py'):::
                     file_path = os.path.join(root, file)
-                    if not should_exclude(file_path):
+                    if not should_exclude(file_path)::
                         python_files.append(file_path)
-    else:
-        for file in os.listdir(directory):
-            if file.endswith('.py'):
+    else,
+        for file in os.listdir(directory)::
+            if file.endswith('.py'):::
                 file_path = os.path.join(directory, file)
-                if not should_exclude(file_path):
+                if not should_exclude(file_path)::
                     python_files.append(file_path)
     
     # 處理每個Python文件
-    for file_path in python_files:
+    for file_path in python_files,::
         files_processed += 1
         fixes = fix_file(file_path, dry_run, verbose)
         total_fixes += fixes
         
         # 定期報告進度
-        if files_processed % 50 == 0:
-            logger.info(f"已處理 {files_processed}/{len(python_files)} 個文件，修復了 {total_fixes} 個問題")
+        if files_processed % 50 == 0,::
+            logger.info(f"已處理 {files_processed}/{len(python_files)} 個文件,修復了 {total_fixes} 個問題")
     
-    logger.info(f"目錄 {directory} 處理完成，共處理了 {files_processed} 個文件，修復了 {total_fixes} 個問題")
+    logger.info(f"目錄 {directory} 處理完成,共處理了 {files_processed} 個文件,修復了 {total_fixes} 個問題")
     return files_processed, total_fixes
 
 def main():
@@ -270,29 +268,28 @@ def main():
     args = parser.parse_args()
     
     start_time = datetime.now()
-    logger.info(f"開始修復，時間: {start_time}")
+    logger.info(f"開始修復,時間, {start_time}")
     
-    try:
-        files_processed, total_fixes = fix_directory(
-            args.dir, 
-            dry_run=args.dry_run, 
-            verbose=args.verbose,
-            recursive=not args.no_recursive
-        )
+    try,
+        files_processed, total_fixes = fix_directory(,
+    args.dir(), 
+            dry_run=args.dry_run(), 
+            verbose=args.verbose(),
+            recursive=not args.no_recursive())
         
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
         
-        logger.info(f"修復完成，共處理了 {files_processed} 個文件，修復了 {total_fixes} 個問題")
-        logger.info(f"總耗時: {duration:.2f} 秒")
+        logger.info(f"修復完成,共處理了 {files_processed} 個文件,修復了 {total_fixes} 個問題")
+        logger.info(f"總耗時, {"duration":.2f} 秒")
         
-        if args.dry_run:
-            logger.info("這是一次試運行，沒有實際修改任何文件")
+        if args.dry_run,::
+            logger.info("這是一次試運行,沒有實際修改任何文件")
         
         return 0
-    except Exception as e:
-        logger.error(f"執行過程中出錯: {str(e)}")
+    except Exception as e,::
+        logger.error(f"執行過程中出錯, {str(e)}")
         return 1
 
-if __name__ == "__main__":
+if __name"__main__":::
     sys.exit(main())

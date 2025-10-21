@@ -1,7 +1,7 @@
 """
 测试模块 - test_code_model_upgrade
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 #!/usr/bin/env python3
@@ -13,9 +13,9 @@ import sys
 import os
 
 # Add the project root to the Python path
-project_root: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
-backend_path: str = os.path.join(project_root, 'apps', 'backend')
-_ = sys.path.insert(0, backend_path)
+project_root, str = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
+backend_path, str = os.path.join(project_root, 'apps', 'backend')
+sys.path.insert(0, backend_path)
 
 
     def setUp(self):
@@ -27,58 +27,58 @@ _ = sys.path.insert(0, backend_path)
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_lightweight_code_model_upgrade() -> None:
+def test_lightweight_code_model_upgrade() -> None,
     """Test the upgraded LightweightCodeModel functionality."""
-    _ = print("Testing upgraded LightweightCodeModel...")
+    print("Testing upgraded LightweightCodeModel...")
     
-    try:
+    try,
         # Import the upgraded model
         from src.core_ai.code_understanding.lightweight_code_model import (
             LightweightCodeModel, CodeAnalysisResult
         )
         
         # Create a model instance
-        model = LightweightCodeModel()
+        model == LightweightCodeModel()
         
         print("✓ Model class imported successfully")
         
         # Test DNA chain functionality
-        _ = print("\n--- Testing DNA Chain Functionality ---")
+        print("\n--- Testing DNA Chain Functionality ---")
         chain = model.create_dna_chain("test_code_chain")
-        _ = chain.add_node("test_file_1.py")
-        _ = chain.add_node("test_file_2.py")
+        chain.add_node("test_file_1.py")
+        chain.add_node("test_file_2.py")
         
         retrieved_chain = model.get_dna_chain("test_code_chain")
         assert retrieved_chain is not None, "Failed to retrieve DNA chain"
-        assert len(retrieved_chain.nodes) == 2, "Incorrect number of nodes in chain"
-        _ = print("✓ DNA chain functionality working")
+        assert len(retrieved_chain.nodes()) == 2, "Incorrect number of nodes in chain"
+        print("✓ DNA chain functionality working")
         
         # Test code complexity calculation with a simple example
-        _ = print("\n--- Testing Code Complexity Calculation ---")
+        print("\n--- Testing Code Complexity Calculation ---")
         
         # Create a temporary test file
-        test_file_path = "test_temp_code.py"
-        with open(test_file_path, "w") as f:
-            f.write("""
-def simple_function():
+        test_file_path == "test_temp_code.py":
+        with open(test_file_path, "w") as f,
+            f.write(""",
+    def simple_function():
     return 1
 
 def complex_function(x):
-    if x > 0:
-        for i in range(x):
-            if i % 2 == 0:
-                _ = print(i)
-    else:
-        while x < 0:
+    if x > 0,::
+        for i in range(x)::
+            if i % 2 == 0,::
+                print(i)
+    else,
+        while x < 0,::
             x += 1
     return x
 
-class TestClass:
+class TestClass,
     def method1(self):
         pass
     
     def method2(self, a, b):
-        if a and b:
+        if a and b,::
             return a + b
         return 0
 """)
@@ -88,37 +88,37 @@ class TestClass:
         
         assert result is not None, "Failed to analyze test file"
         assert isinstance(result, CodeAnalysisResult), "Result is not CodeAnalysisResult"
-        assert len(result.functions) == 2, "Incorrect number of functions detected"
-        assert len(result.classes) == 1, "Incorrect number of classes detected"
+        assert len(result.functions()) == 2, "Incorrect number of functions detected"
+        assert len(result.classes()) == 1, "Incorrect number of classes detected"
         assert result.complexity_score > 0, "Complexity score should be positive"
         
-        _ = print(f"✓ Code analysis working - Functions: {len(result.functions)}, Classes: {len(result.classes)}")
-        _ = print(f"✓ Complexity score: {result.complexity_score}")
-        _ = print(f"✓ Dependencies found: {len(result.dependencies)}")
+        print(f"✓ Code analysis working - Functions, {len(result.functions())} Classes, {len(result.classes())}")
+        print(f"✓ Complexity score, {result.complexity_score}")
+        print(f"✓ Dependencies found, {len(result.dependencies())}")
         
         # Test analysis history
         history = model.get_analysis_history()
         assert len(history) > 0, "Analysis history should not be empty"
-        _ = print("✓ Analysis history tracking working")
+        print("✓ Analysis history tracking working")
         
         # Test complexity cache
         complexity = model.get_code_complexity(test_file_path)
         assert complexity is not None, "Complexity should be cached"
-        _ = print("✓ Complexity caching working")
+        print("✓ Complexity caching working")
         
         # Clean up test file
-        if os.path.exists(test_file_path):
-            _ = os.remove(test_file_path)
+        if os.path.exists(test_file_path)::
+            os.remove(test_file_path)
         
-        _ = print("\n🎉 All tests passed! LightweightCodeModel upgrade successful.")
+        print("\n🎉 All tests passed! LightweightCodeModel upgrade successful.")
         return True
         
-    except Exception as e:
-        print(f"❌ Test failed with error: {e}")
+    except Exception as e,::
+        print(f"❌ Test failed with error, {e}")
         import traceback
-        _ = traceback.print_exc()
+        traceback.print_exc()
         return False
 
-if __name__ == "__main__":
+if __name"__main__":::
     success = test_lightweight_code_model_upgrade()
     sys.exit(0 if success else 1)

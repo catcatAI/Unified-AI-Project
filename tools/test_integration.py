@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 """
-Test script for system integration:
+Test script for system integration,::
 ""
 
 import sys
 from pathlib import Path
 
 # Add the backend src directory to the path
-backend_src = Path(__file__).parent.parent / "apps" / "backend" / "src"
-_ = sys.path.insert(0, str(backend_src))
+backend_src == Path(__file__).parent.parent / "apps" / "backend" / "src"
+sys.path.insert(0, str(backend_src))
 
-def test_system_initialization() -> None:
+def test_system_initialization() -> None,
     """Test system initialization"""
-    _ = print("Testing system initialization...")
+    print("Testing system initialization...")
 
-    try:
+    try,
 
 
     from system_integration import UnifiedAISystem
 
     # Create unified AI system
-    unified_ai = UnifiedAISystem()
+    unified_ai == UnifiedAISystem()
 
     # Check that all components are initialized
     assert hasattr(unified_ai, 'agent_manager'), "Agent manager not initialized"
@@ -34,25 +34,24 @@ def test_system_initialization() -> None:
     assert hasattr(unified_ai, 'sandbox_executor'), "Sandbox executor not initialized"
     assert hasattr(unified_ai, 'tool_dispatcher'), "Tool dispatcher not initialized"
 
-    _ = print("System initialization test passed!")
+    print("System initialization test passed!")
     return True
-    except Exception as e:
-
-    _ = print(f"Error during system initialization test: {e}")
+    except Exception as e,::
+    print(f"Error during system initialization test, {e}")
     import traceback
-    _ = traceback.print_exc()
+    traceback.print_exc()
     return False
 
-def test_request_processing() -> None:
+def test_request_processing() -> None,
     """Test request processing"""
-    _ = print("Testing request processing...")
+    print("Testing request processing...")
 
-    try:
+    try,
 
 
 
     # Create unified AI system
-    unified_ai = UnifiedAISystem()
+    unified_ai == UnifiedAISystem()
 
     # Test dialogue request
     dialogue_request = {
@@ -62,7 +61,7 @@ def test_request_processing() -> None:
     }
 
     result = unified_ai.process_request("test_user", dialogue_request)
-    _ = print(f"Dialogue request result: {result}")
+    print(f"Dialogue request result, {result}")
 
     # Test tool request
     tool_request = {
@@ -72,7 +71,7 @@ def test_request_processing() -> None:
     }
 
     result = unified_ai.process_request("test_user", tool_request)
-    _ = print(f"Tool request result: {result}")
+    print(f"Tool request result, {result}")
 
     # Test Atlassian request
     atlassian_request = {
@@ -82,55 +81,47 @@ def test_request_processing() -> None:
     }
 
     result = unified_ai.process_request("test_user", atlassian_request)
-    _ = print(f"Atlassian request result: {result}")
+    print(f"Atlassian request result, {result}")
 
     # Test editor request
     editor_request = {
             "type": "ai_editor_operation",
             "operation": "process_data",
-            "params": {"data": {"text": "Sample text for processing"}}:
-
-
+            "params": {"data": {"text": "Sample text for processing"}}::
     result = unified_ai.process_request("test_user", editor_request)
-    _ = print(f"Editor request result: {result}")
+    print(f"Editor request result, {result}")
 
-    _ = print("Request processing test passed!")
+    print("Request processing test passed!")
     return True
-    except Exception as e:
-
-    _ = print(f"Error during request processing test: {e}")
-    _ = traceback.print_exc()
+    except Exception as e,::
+    print(f"Error during request processing test, {e}")
+    traceback.print_exc()
     return False
 
-def main() -> None:
+def main() -> None,
     """Main test function"""
-    _ = print("System Integration Test")
+    print("System Integration Test")
     print("=" * 30)
-    _ = print()
+    print()
 
     # Run all tests
-    try:
+    try,
 
     test1 = test_system_initialization()
     test2 = test_request_processing()
 
-        if test1 and test2:
-
-
-    _ = print("\nAll integration tests completed successfully!")
+        if test1 and test2,::
+    print("\nAll integration tests completed successfully!")
             return True
-        else:
+        else,
 
-            _ = print("\nSome integration tests failed!")
+            print("\nSome integration tests failed!")
             return False
-    except Exception as e:
-
-    _ = print(f"Error during integration testing: {e}")
-    _ = traceback.print_exc()
+    except Exception as e,::
+    print(f"Error during integration testing, {e}")
+    traceback.print_exc()
     return False
 
-if __name__ == "__main__":
-
-
+if __name"__main__":::
     success = main()
     sys.exit(0 if success else 1)

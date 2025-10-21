@@ -30,15 +30,15 @@ class FixResult:
         if self.status == FixStatus.SUCCESS:
             return f"成功修复 {self.issues_fixed} 个问题"
         elif self.status == FixStatus.PARTIAL_SUCCESS:
-            return f"部分成功，修复 {self.issues_fixed}/{self.issues_found} 个问题"
+            return f"部分成功,修复 {self.issues_fixed}/{self.issues_found} 个问题"
         elif self.status == FixStatus.FAILED:
-            return f"修复失败: {self.error_message or '未知错误'}"
+            return f"修复失败, {self.error_message or '未知错误'}"
         elif self.status == FixStatus.SKIPPED:
             return "修复已跳过"
         elif self.status == FixStatus.SIMULATED:
-            return f"模拟修复，发现 {self.issues_found} 个问题"
+            return f"模拟修复,发现 {self.issues_found} 个问题"
         else:
-            return f"修复状态: {self.status.value}"
+            return f"修复状态, {self.status.value}"
     
     def is_successful(self) -> bool:
         """检查是否修复成功"""
@@ -105,19 +105,15 @@ class FixReport:
     def get_successful_fixes(self) -> List[FixResult]:
         """获取成功的修复结果"""
         return [result for result in self.fix_results.values() if result.is_successful()]
-    
     def get_failed_fixes(self) -> List[FixResult]:
         """获取失败的修复结果"""
         return [result for result in self.fix_results.values() if result.status == FixStatus.FAILED]
-    
     def get_total_issues_found(self) -> int:
         """获取发现的问题总数"""
         return sum(result.issues_found for result in self.fix_results.values())
-    
     def get_total_issues_fixed(self) -> int:
         """获取修复的问题总数"""
         return sum(result.issues_fixed for result in self.fix_results.values())
-    
     def get_success_rate(self) -> float:
         """获取修复成功率"""
         successful = len(self.get_successful_fixes())
@@ -130,7 +126,7 @@ class FixReport:
         total_found = self.get_total_issues_found()
         success_rate = self.get_success_rate()
         
-        summary = f"修复报告摘要:\n"
+        summary = f"修复报告摘要,\n"
         summary += f"  总计发现问题: {total_found}\n"
         summary += f"  成功修复问题: {total_fixed}\n"
         summary += f"  修复成功率: {success_rate:.1%}\n"
@@ -174,7 +170,6 @@ class FixStatistics:
     total_issues_found: int = 0
     total_issues_fixed: int = 0
     total_duration_seconds: float = 0.0
-    
     def get_success_rate(self) -> float:
         """获取成功率"""
         return self.successful_fixes / max(self.total_fixes, 1)
@@ -184,7 +179,6 @@ class FixStatistics:
         self.total_fixes += 1
         self.total_issues_found += result.issues_found
         self.total_issues_fixed += result.issues_fixed
-        
         if result.is_successful():
             self.successful_fixes += 1
         elif result.status == FixStatus.FAILED:
@@ -193,7 +187,6 @@ class FixStatistics:
             self.skipped_fixes += 1
         
         self.total_duration_seconds += result.duration_seconds
-    
     def get_summary(self) -> str:
         """获取统计摘要"""
         return (
@@ -219,30 +212,26 @@ class FixResultManager:
     def get_results_by_type(self, fix_type: FixType) -> List[FixResult]:
         """按类型获取修复结果"""
         return [result for result in self.results if result.fix_type == fix_type]
-    
     def get_results_by_status(self, status: FixStatus) -> List[FixResult]:
         """按状态获取修复结果"""
         return [result for result in self.results if result.status == status]
-    
     def get_successful_results(self) -> List[FixResult]:
         """获取成功的修复结果"""
         return [result for result in self.results if result.is_successful()]
-    
     def get_failed_results(self) -> List[FixResult]:
         """获取失败的修复结果"""
         return [result for result in self.results if result.status == FixStatus.FAILED]
-    
     def generate_report(self) -> FixReport:
         """生成修复报告"""
         # 这里可以基于收集的结果生成完整的修复报告
-        # 简化版本，实际使用时需要更多上下文信息
+        # 简化版本,实际使用时需要更多上下文信息
         return FixReport(
             timestamp=datetime.now(),
             project_root=Path("."),  # 需要根据实际情况设置
             context=FixContext(project_root=Path(".")),  # 需要根据实际情况设置
             fix_results={result.fix_type: result for result in self.results}
         )
-    
+
     def clear(self):
         """清空所有结果"""
         self.results.clear()
@@ -267,4 +256,3 @@ class FixResultManager:
         with open(file_path, 'w', encoding='utf-8') as f:
             import json
             json.dump(data, f, indent=2, ensure_ascii=False)
-}

@@ -27,7 +27,7 @@ for fix_name, is_present in fixes:
     status = "✓" if is_present else "✗"
     print(f"{status} {fix_name}")
 
-# 检查HSPConnector是否正确使用ExternalConnector
+# 检查HSPConnector是否正确使用ExternalConnector:
 hsp_connector_path = r"D:\Projects\Unified-AI-Project\apps\backend\src\hsp\connector.py"
 with open(hsp_connector_path, 'r', encoding='utf-8') as f:
     hsp_content = f.read()

@@ -9,7 +9,7 @@ from .server_bridge import ServerBridge
 from .hyperlinked_parameters import HyperlinkedParameterCluster
 from .compute_node import ComputeNode
 
-__all__ = [
+__all_[
     'DistributedCoordinator',
     'LocalPoolManager', 
     'ServerBridge',

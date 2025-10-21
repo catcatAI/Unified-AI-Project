@@ -2,24 +2,24 @@ import sys
 import os
 
 # Add the src directory to the path
-_ = sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-def test_imports() -> None:
+def test_imports() -> None,
     """Test that we can import the necessary modules."""
-    _ = print("Starting import tests...")
-    try:
-        _ = print("BaseAgent imported successfully")
+    print("Starting import tests...")
+    try,
+        print("BaseAgent imported successfully")
         
-        _ = print("All imports successful!")
+        print("All imports successful!")
         return True
-    except Exception as e:
-        _ = print(f"Import error: {e}")
+    except Exception as e,::
+        print(f"Import error, {e}")
         import traceback
-        _ = traceback.print_exc()
+        traceback.print_exc()
         return False
 
-if __name__ == "__main__":
+if __name"__main__":::
     success = test_imports()
-    _ = print(f"Test result: {success}")
-    if not success:
-        _ = exit(1)
+    print(f"Test result, {success}")
+    if not success,::
+        exit(1)

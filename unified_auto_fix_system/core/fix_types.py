@@ -42,7 +42,7 @@ class FixStatus(Enum):
     SKIPPED = "skipped"                          # 跳过修复
     NOT_APPLICABLE = "not_applicable"            # 不适用
 
-    SIMULATED = "simulated"                      # 模拟修复（干运行）
+    SIMULATED = "simulated"                      # 模拟修复(干运行)
 
 
 class FixScope(Enum):
@@ -199,22 +199,22 @@ def get_fix_type_description(fix_type: FixType) -> str:
 
 
     descriptions = {
-        FixType.SYNTAX_FIX: "修复Python语法错误，如缺少冒号、缩进错误等",
-        FixType.IMPORT_FIX: "修复导入路径错误，包括相对导入和绝对导入",
+        FixType.SYNTAX_FIX: "修复Python语法错误,如缺少冒号、缩进错误等",
+        FixType.IMPORT_FIX: "修复导入路径错误,包括相对导入和绝对导入",
 
-        FixType.DEPENDENCY_FIX: "修复依赖关系问题，包括缺失的包和版本冲突",
-        FixType.GIT_FIX: "修复Git相关问题，如合并冲突、文件状态异常等",
+        FixType.DEPENDENCY_FIX: "修复依赖关系问题,包括缺失的包和版本冲突",
+        FixType.GIT_FIX: "修复Git相关问题,如合并冲突、文件状态异常等",
 
-        FixType.ENVIRONMENT_FIX: "修复环境配置问题，包括虚拟环境和系统依赖",
-        FixType.SECURITY_FIX: "修复安全漏洞，包括不安全的代码模式和配置",
-        FixType.CODE_STYLE_FIX: "修复代码风格问题，使其符合PEP 8等规范",
+        FixType.ENVIRONMENT_FIX: "修复环境配置问题,包括虚拟环境和系统依赖",
+        FixType.SECURITY_FIX: "修复安全漏洞,包括不安全的代码模式和配置",
+        FixType.CODE_STYLE_FIX: "修复代码风格问题,使其符合PEP 8等规范",
 
-        FixType.PATH_FIX: "修复文件路径问题，包括路径不存在和权限问题",
-        FixType.CONFIGURATION_FIX: "修复配置文件问题，包括格式错误和缺失配置",
-        FixType.PERFORMANCE_FIX: "优化代码性能，移除性能瓶颈",
+        FixType.PATH_FIX: "修复文件路径问题,包括路径不存在和权限问题",
+        FixType.CONFIGURATION_FIX: "修复配置文件问题,包括格式错误和缺失配置",
+        FixType.PERFORMANCE_FIX: "优化代码性能,移除性能瓶颈",
 
-        FixType.COMPATIBILITY_FIX: "修复兼容性问题，确保跨平台兼容性",
-        FixType.TYPE_HINT_FIX: "修复类型提示问题，添加或修正类型注解"
+        FixType.COMPATIBILITY_FIX: "修复兼容性问题,确保跨平台兼容性",
+        FixType.TYPE_HINT_FIX: "修复类型提示问题,添加或修正类型注解"
 
     }
     return descriptions.get(fix_type, "未知修复类型")
@@ -234,7 +234,7 @@ def get_fix_status_description(status: FixStatus) -> str:
         FixStatus.SKIPPED: "跳过修复",
 
         FixStatus.NOT_APPLICABLE: "不适用此修复",
-        FixStatus.SIMULATED: "模拟修复（干运行）"
+        FixStatus.SIMULATED: "模拟修复(干运行)"
     }
     return descriptions.get(status, "未知状态")
 

@@ -1,0 +1,6713 @@
+{
+  "total_files": 2643,
+  "files_without_syntax_errors": 742,
+  "files_with_syntax_errors": 1901,
+  "syntax_correct_rate": 28.074158153613315,
+  "file_types": {
+    "analyze_repair_system_coverage": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "archive_scripts": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "archive_unrestricted_fixes": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "auto_repair_integration": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "batch_disable_fix_scripts": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_duplicates": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_python_env": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_syntax": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "check_syntax_errors": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "check_unused_files": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "compare_test_results": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "complete_fusion_process": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "complete_real_global_test_final": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "complete_systems_summary_generator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "complete_system_recovery": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "complete_system_validator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "COMPLEXITY_ASSESSMENT_SYSTEM": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_error_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_fix_system": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "comprehensive_repair_test": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_syntax_check": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "comprehensive_syntax_fix": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_system_analysis": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_test_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "create_archive_dir": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "daily_maintenance": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "debug_ethics": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "debug_real_training": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "debug_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "deploy_complete_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "detailed_check_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "detailed_file_checker": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "diagnose_base_agent": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "disable_unrestricted_fixes": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "duplicate_analyzer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_complete_detection_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_input_validator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_output_validator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_project_discovery_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_realtime_monitoring": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_subsystems": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_unified_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "escape_sequence_finder": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "execute_project_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "execute_repair_now": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_comprehensive_summary": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_optimizer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_precision_fix": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "final_validator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_verification": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "find_class_methods": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "find_methods": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_all_syntax_errors": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "fix_base_agent": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_base_agent_end": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_line392_directly": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_line_392": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_project_syntax_errors": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_register_task_handler": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "frontend_agi_analysis": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "frontend_agi_level4_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "global_system_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "integrate_real_ai_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "intelligent_cleanup_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "lightweight_duplicate_analyzer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "manual_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "migrate_causal_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "multimodal_code_analysis": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "organize_archived_files": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "performance_benchmark_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "perform_actual_repair": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "precise_error_fix": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "precise_syntax_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "precision_fix_system": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "project_integrity_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "project_status_check": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "project_system_analysis": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "quick_performance_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "quick_system_analysis": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "quick_token_test": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "real_auto_repair_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "real_code_lines_counter": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "real_complete_global_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "real_comprehensive_solution": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "real_system_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "real_system_solution": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "real_system_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "real_tools_integration_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "run_repair_directly": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_backend_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_check_duplicates": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_check_unused": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_duplicate_scanner": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_import_test": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "simple_integrity_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_syntax_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_test": {
+      "total": 9,
+      "syntax_errors": 4,
+      "no_syntax_errors": 5
+    },
+    "simple_verify_status": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simplified_base_agent": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simplified_tools_integration_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "smart_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "start_enhanced_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "syntax_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "syntax_checker": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "systematic_import_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "system_archiver": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "system_optimizer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "system_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "targeted_fix": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "temp_head": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test-all-apis": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_aaa_content": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_aaa_content_enhanced": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_aaa_content_enhanced_fixed": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_aaa_content_real_output": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_aaa_content_token_based": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_agent_imports": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_agi_end_to_end_integration": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_ai_imports": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_archived_errors": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_archived_errors_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_attention_validation": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_autonomous_evolution": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_backend_imports": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_backend_startup": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_base_agent_import": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_base_agent_module": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_base_agent_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_causal_correctness": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_causal_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_combined_token_based": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_complete_repair_simple": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_complete_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_complete_system_core": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_concept_association": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_core_validation": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_data_authenticity": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_enhanced_collaboration": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_enhanced_repair_systems": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_evolution_quick": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_fusion_authenticity": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_gradient_validation": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_import": {
+      "total": 5,
+      "syntax_errors": 0,
+      "no_syntax_errors": 5
+    },
+    "test_imports": {
+      "total": 4,
+      "syntax_errors": 3,
+      "no_syntax_errors": 1
+    },
+    "test_import_simple": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_integrated_real_ai": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_intelligent_quick": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_intelligent_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_intermediate_reasoning": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_knowledge_graph_authenticity": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_level4_plus_components": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_level5_comprehensive": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_level5_comprehensive_final": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_level5_final_comprehensive": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_level5_simple": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_lightweight_ai": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_logic_chain_integrity": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_metacognitive_final": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_output_validation": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_quick_availability": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_quick_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_real_ai_quick": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_real_availability": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_real_causal_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_real_repair_functionality": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_real_training_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_recovery_systems": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_repair_sample": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_repair_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_simple": {
+      "total": 7,
+      "syntax_errors": 5,
+      "no_syntax_errors": 2
+    },
+    "test_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_system_availability": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_system_integration": {
+      "total": 4,
+      "syntax_errors": 3,
+      "no_syntax_errors": 1
+    },
+    "test_system_status": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_token_reasoning_path": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_token_validation": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_unified_fix": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_unified_fix_simple": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_unified_import": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_unified_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_unified_system_simple": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_agi_ecosystem": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_check_framework": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_scheduler_framework": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_system_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_system_manager_complete": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_system_manager_complete_core": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_system_manager_complete_v2": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_system_manager_minimal": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "use_ai_for_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "verify_project_status": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "verify_repairs": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "zero_error_target_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "__init__": {
+      "total": 213,
+      "syntax_errors": 10,
+      "no_syntax_errors": 203
+    },
+    "main": {
+      "total": 6,
+      "syntax_errors": 5,
+      "no_syntax_errors": 1
+    },
+    "setup": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "simple_verify": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "start_chroma_server": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "start_server": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "start_server_all_interfaces": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "config": {
+      "total": 5,
+      "syntax_errors": 2,
+      "no_syntax_errors": 3
+    },
+    "debug_based_in": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_content_analyzer": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_content_analyzer_detailed": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_content_analyzer_issues": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_detailed": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_detailed_analysis": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_matcher": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_matcher_patterns": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_mock": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_mock_v2": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_person_title": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_person_title_pattern": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_relationships": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_relationships_v2": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_relationship_extraction": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_simple": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_spacy": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "detailed_debug": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "diagnose_components": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "simple_debug": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "advanced_auto_fix": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "analyze_failures": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "auto_fix_complete": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "auto_fix_imports": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "cleanup_backup_dirs": {
+      "total": 4,
+      "syntax_errors": 3,
+      "no_syntax_errors": 1
+    },
+    "clean_old_backups": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "coverage_analyzer": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "coverage_monitor": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "enhanced_auto_fix": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "error_analyzer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "execute_smart_fix": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "final_import_fix": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "final_validation": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "fix_executor": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "fix_import_paths": {
+      "total": 5,
+      "syntax_errors": 2,
+      "no_syntax_errors": 3
+    },
+    "health_check_service": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "integration_fixer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "manage_backup_dirs": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "performance_benchmark_framework": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "performance_benchmark_workflow": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "performance_regression_detector": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "runtime_auto_fix": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "simple_auto_fix": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "smart_auto_fix": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "smart_dev_runner": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "smart_executor": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "workflow_controller": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "config_loader": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "core_services": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "enhanced_system_integration": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "path_config": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "system_integration": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "system_self_maintenance": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "aligned_base_agent": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "collaboration_demo_agent": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "enhanced_demo_agent": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "monitoring_demo_agent": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "registry_demo_agent": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "aligned_agent_example": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "agent_collaboration_manager": {
+      "total": 6,
+      "syntax_errors": 5,
+      "no_syntax_errors": 1
+    },
+    "agent_collaboration_manager_enhanced": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "agent_manager": {
+      "total": 6,
+      "syntax_errors": 3,
+      "no_syntax_errors": 3
+    },
+    "agent_monitoring_manager": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "audio_processing": {
+      "total": 4,
+      "syntax_errors": 0,
+      "no_syntax_errors": 4
+    },
+    "crisis_system": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "demo_learning_manager": {
+      "total": 6,
+      "syntax_errors": 6,
+      "no_syntax_errors": 0
+    },
+    "dependency_manager": {
+      "total": 7,
+      "syntax_errors": 6,
+      "no_syntax_errors": 1
+    },
+    "dynamic_agent_registry": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "emotion_system": {
+      "total": 5,
+      "syntax_errors": 5,
+      "no_syntax_errors": 0
+    },
+    "execution_manager": {
+      "total": 6,
+      "syntax_errors": 6,
+      "no_syntax_errors": 0
+    },
+    "execution_monitor": {
+      "total": 6,
+      "syntax_errors": 6,
+      "no_syntax_errors": 0
+    },
+    "genesis": {
+      "total": 6,
+      "syntax_errors": 6,
+      "no_syntax_errors": 0
+    },
+    "level5_asi_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simultaneous_translation": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "time_system": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "types": {
+      "total": 25,
+      "syntax_errors": 4,
+      "no_syntax_errors": 21
+    },
+    "base_agent": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "audio_processing_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "code_understanding_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "creative_writing_agent": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "data_analysis_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "image_generation_agent": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "knowledge_graph_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "nlp_processing_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "planning_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "vision_processing_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "web_search_agent": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "adversarial_generation_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "alignment_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "asi_autonomous_alignment": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "decision_theory_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ontology_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "reasoning_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "lightweight_code_model": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "alpha_deep_model": {
+      "total": 5,
+      "syntax_errors": 5,
+      "no_syntax_errors": 0
+    },
+    "adaptive_learning_controller": {
+      "total": 5,
+      "syntax_errors": 5,
+      "no_syntax_errors": 0
+    },
+    "causal_reasoning_engine": {
+      "total": 5,
+      "syntax_errors": 4,
+      "no_syntax_errors": 1
+    },
+    "environment_simulator": {
+      "total": 5,
+      "syntax_errors": 5,
+      "no_syntax_errors": 0
+    },
+    "unified_symbolic_space": {
+      "total": 6,
+      "syntax_errors": 5,
+      "no_syntax_errors": 1
+    },
+    "demo_context_system": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "dialogue_context": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "exceptions": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "integration_with_ham": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "manager_fixed": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "memory_context": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "model_context": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "tool_context": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "utils": {
+      "total": 5,
+      "syntax_errors": 3,
+      "no_syntax_errors": 2
+    },
+    "verify_context_system": {
+      "total": 4,
+      "syntax_errors": 3,
+      "no_syntax_errors": 1
+    },
+    "base": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "base_fixed": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "database": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "disk": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "memory": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "mapper": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "dialogue_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "project_coordinator": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "service_discovery_module": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "distributed_coordinator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "hyperlinked_parameters": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "evaluation_db": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "task_evaluator": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "level5_asi_demo": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_control_center": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "daily_language_model": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "registry": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "router": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "content_analyzer_module": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "experience_replay": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "fact_extractor_module": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "knowledge_distillation": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "learning_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "self_critique_module": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "lis_cache_interface": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "tonal_repair_engine": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "ham_config": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "ham_db_interface": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "ham_errors": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "ham_memory_manager": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "ham_types": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "ham_utils": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "importance_scorer": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "vector_store": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "learning_log_db": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "errx": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "meta_formula": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "undefined_field": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "multimodal_processor": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ai_ops_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "capacity_planner": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "intelligent_ops_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "performance_optimizer": {
+      "total": 6,
+      "syntax_errors": 6,
+      "no_syntax_errors": 0
+    },
+    "predictive_maintenance": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "distributed_processing": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "personality_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "rag_manager": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "causal_reasoning_engine_backup_20251011_003519": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "causal_reasoning_engine_before_integration_20251011_003811": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "lightweight_real_causal_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "real_causal_reasoning_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "token_validator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "trust_manager_module": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "routes": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ops_routes": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "transformers_compat": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "cache_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "cognitive_constraint_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "level5_config": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "system_config": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "creative_breakthrough_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "data_network": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "data_network_manager": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "query_optimizer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "error_handler": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "ethics_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "autonomous_evolution_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "emergence_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "multimodal_fusion_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "advanced_performance_optimizer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "connector": {
+      "total": 5,
+      "syntax_errors": 5,
+      "no_syntax_errors": 0
+    },
+    "extensibility": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "security": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "types_fixed": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "versioning": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "data_aligner": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "message_bridge": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "external_connector": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "fallback_protocols": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "internal_bus": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "fallback_config_loader": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "io_intelligence_orchestrator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_knowledge_graph": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_knowledge_graph_impl": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "enterprise_logger": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "core_service_demo": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "core_service_manager": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "resource_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "service_loader_example": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "service_monitor": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "system_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "metacognitive_capabilities_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enterprise_monitor": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "auth_middleware": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "encryption": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "security_audit": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ai_editor": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "ai_editor_config": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "ai_virtual_input_service": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "api_models": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "atlassian_api": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "audio_service": {
+      "total": 4,
+      "syntax_errors": 3,
+      "no_syntax_errors": 1
+    },
+    "hot_reload_service": {
+      "total": 4,
+      "syntax_errors": 3,
+      "no_syntax_errors": 1
+    },
+    "main_api_server": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "multi_llm_service": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "resource_awareness_service": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "sandbox_executor": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "service_discovery": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "vision_service": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "error": {
+      "total": 4,
+      "syntax_errors": 0,
+      "no_syntax_errors": 4
+    },
+    "key_manager": {
+      "total": 4,
+      "syntax_errors": 0,
+      "no_syntax_errors": 4
+    },
+    "network_resilience": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "common_types": {
+      "total": 4,
+      "syntax_errors": 1,
+      "no_syntax_errors": 3
+    },
+    "mappable_data_object": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "cleanup_utils": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "env_utils": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "realtime_sync": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "calculator_tool": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "code_understanding_tool": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "csv_tool": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "dependency_checker": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "file_system_tool": {
+      "total": 4,
+      "syntax_errors": 0,
+      "no_syntax_errors": 4
+    },
+    "image_generation_tool": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "image_recognition_tool": {
+      "total": 4,
+      "syntax_errors": 0,
+      "no_syntax_errors": 4
+    },
+    "logic_tool": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "math_tool": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "natural_language_generation_tool": {
+      "total": 4,
+      "syntax_errors": 0,
+      "no_syntax_errors": 4
+    },
+    "speech_to_text_tool": {
+      "total": 4,
+      "syntax_errors": 0,
+      "no_syntax_errors": 4
+    },
+    "tool_dispatcher": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "translation_tool": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "web_search_tool": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "evaluate_logic_model": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "lightweight_logic_model": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "logic_data_generator": {
+      "total": 4,
+      "syntax_errors": 3,
+      "no_syntax_errors": 1
+    },
+    "logic_data_generator_clean": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "logic_model_nn": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "logic_parser_eval": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "simple_logic_generator": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "train_logic_model": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "data_generator": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "evaluate": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "lightweight_math_model": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "model": {
+      "total": 4,
+      "syntax_errors": 2,
+      "no_syntax_errors": 2
+    },
+    "train": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "extractor": {
+      "total": 4,
+      "syntax_errors": 1,
+      "no_syntax_errors": 3
+    },
+    "creation_engine": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "unified_model_loader": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "economy_db": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "economy_manager": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "evaluator": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "fragmenta_orchestrator": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "angela": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "inventory": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "items": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "minigames": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "npcs": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "player": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "scenes": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "tiles": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "ui": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "village": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "atlassian_bridge": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "atlassian_cli_bridge": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "confluence_integration": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "enhanced_atlassian_bridge": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "enhanced_rovo_dev_connector": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "jira_integration": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "rovo_dev_agent": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "rovo_dev_connector": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "context7_connector": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "mcp_fallback_protocols": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "element_layer": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "vision_tone_inverter": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "system_monitor": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "pet_manager": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "search_engine": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "audit_logger": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "permission_control": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "deployment_manager": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "hardware_probe": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "integrated_graphics_optimizer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "async_utils": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "conftest": {
+      "total": 9,
+      "syntax_errors": 8,
+      "no_syntax_errors": 1
+    },
+    "simple_agent_test": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "simple_path_test": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "simple_pytest_test": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "simple_unittest": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "temp_async_test": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "test_ai_editor": {
+      "total": 4,
+      "syntax_errors": 3,
+      "no_syntax_errors": 1
+    },
+    "test_atlassian_integration": {
+      "total": 6,
+      "syntax_errors": 5,
+      "no_syntax_errors": 1
+    },
+    "test_base_agent_simple": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_basic": {
+      "total": 6,
+      "syntax_errors": 4,
+      "no_syntax_errors": 2
+    },
+    "test_config_loader": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_core_services": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_core_services_module": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_core_service_manager": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_dependency_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_hsp_fixture_fix": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_path_config": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_result_processing_test": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_security": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "test_smart_dev_runner": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "verify_all_agents": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "verify_base_agent": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_agent_manager": {
+      "total": 6,
+      "syntax_errors": 6,
+      "no_syntax_errors": 0
+    },
+    "test_audio_processing_agent": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_base_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_code_understanding_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_creative_writing_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_data_analysis_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_knowledge_graph_agent": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_crisis_system": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_deep_mapper": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_emotion_system": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_time_system": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_lightweight_code_model": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_alpha_deep_model": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_context_system": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_dialogue_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_project_coordinator": {
+      "total": 4,
+      "syntax_errors": 4,
+      "no_syntax_errors": 0
+    },
+    "test_project_coordinator_fix": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_formula_engine": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_daily_language_model": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_content_analyzer_module": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_learning_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_ham_lis_cache": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_tonal_repair_engine": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_ham_chromadb_integration": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_ham_memory_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_meta_formulas": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_personality_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_rag_manager": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "test_service_discovery_module": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_creation_engine": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "verify_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "verify_fixes": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "verify_fix_all": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_training_workflow": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_economy_db": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_economy_manager": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_evaluation_db": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_evaluator": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_task_evaluator": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_fragmenta_orchestrator": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_assets": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_main": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_npcs": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "mock_message_bus": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "mock_mqtt_broker": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "temp_test_gmqtt_mock": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "test_debug": {
+      "total": 5,
+      "syntax_errors": 1,
+      "no_syntax_errors": 4
+    },
+    "test_hsp_ack_retry": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_hsp_advanced_integration": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_hsp_connector": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_hsp_enhanced_integration": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_hsp_integration": {
+      "total": 6,
+      "syntax_errors": 4,
+      "no_syntax_errors": 2
+    },
+    "test_hsp_refactored": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "test_hsp_security": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_message_bridge": {
+      "total": 5,
+      "syntax_errors": 3,
+      "no_syntax_errors": 2
+    },
+    "test_mqtt_broker_startup": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "base_test": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "test_agent_collaboration": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_ai_agent_integration": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_core_services_integration": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_data_factory": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_end_to_end_project_flow": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_example_integration": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_hsp_debug": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_hsp_protocol_integration": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_hsp_simple": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_knowledge_update": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_learning_and_trust": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_memory_system_integration": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_performance_benchmark": {
+      "total": 4,
+      "syntax_errors": 3,
+      "no_syntax_errors": 1
+    },
+    "test_performance_benchmarks": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_self_improvement": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_system_level_integration": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_training_system_integration": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_utils": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_atlassian_api": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_atlassian_bridge": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_atlassian_bridge_fallback": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_rovo_dev_agent": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_rovo_dev_agent_recovery": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_rovo_dev_connector": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_context7_connector": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_mcp_connector": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_adaptive_learning_controller": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "test_learning_log_db": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_element_layer": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_vision_tone_inverter": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_pet_manager": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_search_engine": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_ai_virtual_input_service": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_audio_service": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_health_ready_endpoints": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_hot_endpoints": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_hsp_endpoints": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_llm_interface": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_main_api_server": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_main_api_server_hsp": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_models_endpoints": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_node_services": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_resource_awareness_service": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_sandbox_executor": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_vision_service": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_key_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_cleanup_utils": {
+      "total": 3,
+      "syntax_errors": 2,
+      "no_syntax_errors": 1
+    },
+    "test_code_understanding_tool": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "test_logic_model": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_math_model": {
+      "total": 4,
+      "syntax_errors": 3,
+      "no_syntax_errors": 1
+    },
+    "test_parameter_extractor": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_tool_dispatcher_logging": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_translation_model": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_training_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "check_ham_methods": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "check_matcher_patterns": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "check_path": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "check_paths": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "check_patterns": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "check_person_title": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "check_person_title_v2": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "check_query_core_memory": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "extract_failures": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "extract_failures_detail": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "extract_second_failure": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "extract_stdout": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "find_dict_errors": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "find_underscore_assign": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "scan_placeholders": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "fix_hsp_integration": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "fix_import_path": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "check_fix_system_status": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "continue_final_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "continue_unified_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "count_functions": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "current_status_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "execute_unified_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_fix_sprint": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_unified_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_chinese_punctuation": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_indentation": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "iterative_fix_process": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "lightweight_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "quick_repair_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "repair_completion_summary": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_core_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "single_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "status_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ultra_light_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "use_unified_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_187": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_193": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_196": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_218": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_236": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_243": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_253": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_260": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_276": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_283": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_292": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_292_final": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_292_new": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_294_final": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_around_180": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_end": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_file": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "check_indentation": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_line": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "check_quotes": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_system_health": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_wide_range": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "enhanced_complete_repair_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "enhanced_intelligent_repair_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "enhanced_smart_repair_validator": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "fix_causal_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_context_manager": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "fix_corrupted_file": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_encoding": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_frontend_components": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_frontend_detailed": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_parentheses": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "before_fusion_analyze_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_check_project_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_comprehensive_fix_agent": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_detailed_syntax_checker": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_execute_repair_plan": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_fix_decorators": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_fix_indentation": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_fix_method_references": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_iterative_syntax_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_pattern_fix_executor": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_scan_project_syntax_errors": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_smart_python_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_syntax_checker": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "before_fusion_systematic_repair_executor": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_braces": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_docstring": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_enhanced_system": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_lines_670": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_line_488": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_requirements_issue": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_system_simple": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "cleanup_empty_lines": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "continue_cleanup_simplified": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "continue_root_scripts_cleanup": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "count_syntax_errors": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "find_docstring_end": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "find_python_files": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_line_40": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_syntax_error": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "fusion_completed_analyze_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_check_project_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_comprehensive_fix_agent": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_detailed_syntax_checker": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_execute_repair_plan": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_fix_decorators": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_fix_indentation": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_fix_method_references": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_iterative_syntax_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_pattern_fix_executor": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_scan_project_syntax_errors": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_smart_python_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_syntax_checker": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fusion_completed_systematic_repair_executor": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "import_test": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "auto_repair_integration_manager": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "unified_auto_repair_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "analyze_root_scripts": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "analyze_syntax": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "architecture_validator": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "archive_auto_fix_docs": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "check_project_syntax": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "check_rules": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "code_quality_validator": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "complete_detection_engine": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "complete_system_analyzer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_discovery_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_fix_agent": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_project_analyzer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_system_validation": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "configuration_detector": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "continue_repair_batches": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "dependency_detector": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "design_logic_validator": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "detailed_syntax_checker": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "detailed_system_analyzer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "documentation_detector": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "efficient_mass_repair": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "emergency_fix_executor": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "enforce_no_simple_fixes": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "escape_sequence_fixer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "execute_repair_plan": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "fix_archive_script": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "fix_decorators": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "fix_method_references": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "focused_intelligent_repair": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "functionality_validator": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "intelligent_repair_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "iteration_validator": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "iterative_repair_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "iterative_syntax_fixer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "logic_error_detector": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "mass_syntax_repair_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "monitoring_dashboard": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "multidimensional_detection_engine": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "pattern_fix_executor": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "performance_analyzer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "performance_monitoring_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "quick_complexity_check": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "quick_discovery_scan": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "quick_enhanced_fix": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "quick_system_check": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "quick_verify": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "regex_escape_fixer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "scan_project_syntax_errors": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "security_detector": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "security_vulnerability_fixer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "simple_detailed_analyzer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "simple_discovery_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "simple_repair_cycle": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "smart_python_repair": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "systematic_repair_executor": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_detector": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "verify_fix_progress": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "verify_progress": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "weekly_comprehensive_check": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "deep_system_check": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_basic_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_comprehensive": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_comprehensive_system_status": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_core_functions": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_enhanced_auto_fix_comprehensive": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_enhanced_auto_fix_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_fix_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_iterative_import": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "test_quick_enhanced_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_safety_features": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_simple_enhanced_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_simplified_enhanced_system": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_syntax_fixer": {
+      "total": 3,
+      "syntax_errors": 0,
+      "no_syntax_errors": 3
+    },
+    "auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "launcher": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_enhanced_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_fix_files": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_get_files": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_improved_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_layered_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_real_syntax_errors": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_simple_errors": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_simple_syntax_errors": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_syntax_check": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_workspace": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_sandbox": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "advanced_auto_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "advanced_layered_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "auto_fix_project": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "auto_fix_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_auto_fix_updates": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "complete_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_test": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_test_no_unterminated": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "conservative_auto_fix_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "custom_fix_test_file": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "custom_fix_test_file_v2": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "debug_enhanced_ultimate_auto_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_auto_fix_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_auto_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_comprehensive_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_layered_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_layered_auto_fix_v2": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_layered_auto_fix_v3": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_layered_auto_fix_v4": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_specialized_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_targeted_auto_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_ultimate_auto_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_targeted_auto_fix_system": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "full_width_syntax_error_test": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "full_width_test": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "improved_comprehensive_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "improved_specialized_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "indentation_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "intelligent_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "interactive_auto_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "layered_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "layered_auto_fix_fixed": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "layered_error_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "multi_error_test": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "precise_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "precision_auto_fix_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "safe_auto_fix_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_indentation_test": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "simple_layered_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_test_syntax_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "single_error_test": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "specialized_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "specialized_auto_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "targeted_auto_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_enhanced_auto_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_syntax_fix": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "ultimate_auto_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ultimate_targeted_auto_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_auto_fix": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "unified_auto_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_test_results": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_patch_test": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "debug_test": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "extract_latest_failures": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "final_test": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "hello": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "run_fixed_tests": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "run_hsp_simple_test": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "run_hsp_test": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "run_test": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "run_test_direct": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "run_test_fix": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "run_test_subprocess": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "simple_hsp_test": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "temp_dbg_dep": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "temp_test_debug": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "test_agi_integration": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_apple_inc": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_capital_of": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_capital_of_debug": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_chromadb_fix": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "test_content_analyzer": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_content_analyzer_fix": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_data_analysis_debug": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_env": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_fix": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_fixes": {
+      "total": 3,
+      "syntax_errors": 1,
+      "no_syntax_errors": 2
+    },
+    "test_fix_debug": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_hsp_fixture": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_json_fix": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "test_modules": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "automated_integration_test_pipeline": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "continuous_test_improvement": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "demo_test_result_processing": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "generate_test_report": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "integration_test": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "process_test_results": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "run_integration_tests": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "smart_test_runner": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_data_manager": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "test_environment_manager": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_fix_demo": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_quality_assessor": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_result_analyzer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_result_feedback": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_result_visualizer": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "test_runner": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_smart_executor": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "chroma_config": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "deadlock_detector": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "base_agent_backup": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "base_agent_backup_modules": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "base_agent_main": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ham_memory_manager_backup": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ham_memory_manager_main": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ai_models": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "ai_orchestrator": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "analyze_baseagent_duplicates": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "analyze_ham_duplicates": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "apply_test_timeouts": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "automated_test_runner": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "check_ai_docstrings": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "check_backup_dirs": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "check_dependency_conflicts": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "check_env_vars": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "check_extraction_progress": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "cleanup_all_backups": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "cleanup_backup_modules": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "cleanup_project": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "clean_backups": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "clean_backup_archive": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "compare_imports": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_backup_cleanup": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "create_directory_structure": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "diagnose_paths": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "document_update_plan": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "download_training_data": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "enhance_project": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "execute_refactor_plan": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "execution_monitor_cli": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "export_openapi": {
+      "total": 2,
+      "syntax_errors": 0,
+      "no_syntax_errors": 2
+    },
+    "extract_common_voice": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "extract_common_voice_improved": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "find_duplicates": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "fix_nlp_agent_comprehensive": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "fix_nlp_agent_indentation": {
+      "total": 2,
+      "syntax_errors": 1,
+      "no_syntax_errors": 1
+    },
+    "generate_mock_data": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "generate_pyproject_deps": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "generate_syntax_error_report": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "health_check": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "health_monitor": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "installer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "installer_cli": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "merge_baseagent_implementations": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "merge_ham_implementations": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "migrate_documents": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "migrate_scripts": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "mock_hsp_peer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "optimized_health_check": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "organize_backup_directories": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "organize_root_backups": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "performance_benchmark": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "project_ai_orchestrator": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "project_setup_utils": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "refactor_imports": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "run_alpha_deep_model_demo": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "run_comprehensive_tests": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "run_deep_mapper_example": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "run_parameter_extractor_example": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "scan_imports": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "setup_ai_models": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "setup_project": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "start_atlassian_server": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "style_check": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_coverage_monitor": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_environment_setup": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_execution_monitor": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_failure_alert": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "training_integration": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "training_monitoring_visualization": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "update_common_voice_metadata": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "update_doc_status": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "update_project_structure": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "update_refactor_plan": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "validate_doc_links": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "validate_mcp_types": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "config_manager": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "environment_checker": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "fix_engine": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "intelligent_repair_scheduler": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "report_generator": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "ingest_processed_logs_to_ham": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "process_copilot_logs": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "cleanup_module": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "dependency_fixer": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "enhanced_syntax_fixer": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "import_fixer": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "syntax_fixer": {
+      "total": 3,
+      "syntax_errors": 3,
+      "no_syntax_errors": 0
+    },
+    "miko_core_ham_prototype": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "file_utils": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "process_utils": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "deps": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "dev": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "editor": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "git": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "integrate": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "rovo": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "environment": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "logger": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "flickr30k_entities_utils": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_agent_monitoring_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_demo_learning_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_dynamic_agent_registry": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_enhanced_demo_agent": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_execution_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_execution_monitor": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_monitoring_demo_agent": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_registry_demo_agent": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_simultaneous_translation": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "cli_runner": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ai_models_cli": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "client": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "port_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_cli": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "__main__": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "cleanup_hsp_duplicates_20251003_225646": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "organize_backend_files_20251003_225646": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "organize_root_python_files_20251003_225646": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "config_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "duplicate_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "implementation_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "path_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "quick_validate": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "run_all_repairs": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "structure_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "syntax_repair": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "validate_repairs": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "QUICK_FIX_SCRIPT": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_test_collection": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "debug_test_collection": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "enable_commented_tests": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enterprise_test_suite": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_comprehensive_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "find_skipped_tests": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "intelligent_test_generator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "maintain_test_suite": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "optimize_test_suite": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "project_function_test_mapping": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "quick_test_concept_models": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "run_simple_hsp_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "run_tests_with_compat": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "run_verification_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_enterprise_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_test_optimizer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_all_fixed_modules": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_alpha_upgrade": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_api_with_delay": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_audio_service_direct": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_automated_defect_detector": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_compat_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_concept_models_training": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_coverage_analyzer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_coverage_report": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_defect_detector": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_dependency_manager_backup": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_fixed_modules_final": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_gmqtt_import": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_intelligent_test_generator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_logic_parser": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_logic_tool": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_math_tool": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_model_integration": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_module": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_modules_with_output": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_multi_llm_import": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_path": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_performance_optimization": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_real_causal_engine_simplified": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_real_causal_reasoning_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_repeat_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_security_improvements": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_server": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_tool_call_chain": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_tool_context_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_trained_models": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_type_fixes": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_unused_call_result": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_code_model_upgrade": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_cli": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_client": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_cli_enhanced": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_cli_publish_fact": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_error_handler": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_atlassian_workflow": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "run_hsp_tests": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_external_connector_stability": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ai_ops_integration_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_test_framework": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "end_to_end_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "quick_e2e_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_e2e_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_integration_test": {
+      "total": 2,
+      "syntax_errors": 2,
+      "no_syntax_errors": 0
+    },
+    "test_api": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "benchmark_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "stress_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_ai_ops_complete": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "automated_data_pipeline": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "auto_fix_environment": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "debug_visualizer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "distributed_debug_logger": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "e2e_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhance_training_data": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "environment_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "extract_features": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "feature_status_tracker": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_integration_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "generate_minimal_training_data": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "generate_multimodal_data": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "prepare_concept_models_training_data": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "process_traditional_data": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "technical_debt_tracker": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_atlassian_full": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_integration": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_rovo_cli": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_rovo_integration": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_rovo_simple": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "train_audio_model": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "train_text_model": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "train_vision_model": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified-fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "user_acceptance_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "validate_generated_data": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "correct_fixes": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "critical_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "debug_json": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "handle_duplicate_test_files": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "archive_created_files": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "automated_defect_detector": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "auto_fix_test": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "backup_project": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_all_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_compat": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_duplicate_keys": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_environment": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_file_encoding": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_full_file": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_imports": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_json": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_line312": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_null_bytes": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_paths2": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_paths3": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "check_specific_files": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_syntax_issues": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_type_issues": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_underscore_assign": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "check_unused_imports": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "cleanup_duplicate_tests": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "cleanup_excess_backups": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "complete_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "complete_fix_all": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "complete_project_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_hsp_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_nlp_agent_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_type_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "execute_improvement_plan": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_correction": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_hsp_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_syntax_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "final_syntax_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "find_classes": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "find_duplicate_test_files": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_advanced_performance_optimizer": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_assert_syntax": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_core_services": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_decorator_syntax": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_dictionary_syntax": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_duplicate_flaky_decorators": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_flaky_decorators": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_hsp_connector": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_hsp_connector_issues": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_hsp_function_blocks": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_hsp_indentation": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_line110": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_line312": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_nlp_agent": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_project_syntax": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_raise_syntax": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_remaining_syntax_errors": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_specific_file": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_symbolic_space": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_syntax_issues": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_type_issues": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_unused_call_results": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_unused_call_results_final": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_unused_imports": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "incremental_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "install_compat_packages": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "install_dependencies": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "install_gmqtt": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "key_files_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "list_python_files": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "merge_apps_backend_tests": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "merge_directories": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "move_test_files": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "organize_project": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "precise_fix_unused_call_results": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "quick_syntax_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "rebuild_nlp_agent": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "robust_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "run_complete_training": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "run_syntax_fix": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "run_training": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "search_module_not_found": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_check_syntax": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_code_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_fix_all": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_syntax_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_syntax_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "start_backend": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "tool_call_chain_tracker": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "tool_context_manager": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "update_import_paths": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "validate_complete_pipeline": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "validate_json": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "verify_concept_models": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "verify_concept_models_training_integration": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "verify_core_functionality": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "verify_hsp_connector_fix": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "verify_module_structure": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "verify_refactor": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "auto_training_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "collaborative_training_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "comprehensive_system_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "data_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "distributed_optimizer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "dynamic_loader": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_checkpoint_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_distributed_training_fault_tolerance": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "enhanced_unit_tests": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "error_handling_framework": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fault_detector": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "gpu_optimizer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "incremental_learning_cli": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "incremental_learning_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "model_knowledge_sharing": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "model_version_controller": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "optimized_data_scanner": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "parallel_optimized_data_scanner": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "performance_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "quick_hardware_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "quick_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "real_training_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "run_auto_training": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_health_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_training_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "simple_verification": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "smart_resource_allocator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "system_health_check": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "task_migrator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "task_priority_evaluator": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_auto_training": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_collaborative_training": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_collaborative_training_simple": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_dynamic_loading": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_enhanced_auto_training": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_enhanced_collaborative_training": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_error_handling": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_fault_tolerance": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_hardware_compatibility": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_incremental_learning": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_incremental_learning_comprehensive": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_integrated_graphics_training": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_parallel_scanner": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_quick_validation": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_real_training": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "test_scanner": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_simple_collaborative": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "training_monitor": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "training_state_manager": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "training_visualizer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "train_model": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "train_model_fixed": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "train_model_simple": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "train_model_test": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "unified_execution_framework": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "visualize_progress": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "real_data_loader": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "distributed_training_fault_tolerance_example": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "real_model_base": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "enhanced_unified_fix_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_result": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "fix_result_new": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "fix_types": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "unified_fix_engine": {
+      "total": 1,
+      "syntax_errors": 0,
+      "no_syntax_errors": 1
+    },
+    "ai_interface": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "api_interface": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "cli_interface": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ai_assisted_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "base_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "class_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "code_style_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "configuration_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "data_processing_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "decorator_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "environment_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "git_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "intelligent_iterative_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "logic_graph_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "parameter_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "path_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "security_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "undefined_fixer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "test_unified_fix_system": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "ast_analyzer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "dependency_tracker": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "io_analyzer": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    },
+    "rule_engine": {
+      "total": 1,
+      "syntax_errors": 1,
+      "no_syntax_errors": 0
+    }
+  }
+}

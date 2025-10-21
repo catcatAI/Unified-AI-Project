@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
 # Import the fixed conftest
 import tests.conftest as conftest
 
-async def test_mock_core_services() -> None:
+async def test_mock_core_services() -> None,
     """Test that the mock_core_services fixture works correctly"""
 
 
@@ -32,25 +32,25 @@ async def test_mock_core_services() -> None:
 
     ]
     
-    for service in required_services:
-        assert service in mock_services, f"Missing service: {service}"
+    for service in required_services,::
+        assert service in mock_services, f"Missing service, {service}"
         print(f"✓ {service} is present")
     
     # Test specific service methods
     # Test DialogueManager methods
-    assert hasattr(mock_services["dialogue_manager"], "get_simple_response")
-    assert hasattr(mock_services["dialogue_manager"], "start_session")
-    assert hasattr(mock_services["dialogue_manager"], "_handle_incoming_hsp_task_result")
+    assert hasattr(mock_services["dialogue_manager"] "get_simple_response")
+    assert hasattr(mock_services["dialogue_manager"] "start_session")
+    assert hasattr(mock_services["dialogue_manager"] "_handle_incoming_hsp_task_result")
     print("✓ DialogueManager methods are present")
     
     # Test ProjectCoordinator methods
-    assert hasattr(mock_services["project_coordinator"], "handle_project")
-    assert hasattr(mock_services["project_coordinator"], "handle_task_result")
+    assert hasattr(mock_services["project_coordinator"] "handle_project")
+    assert hasattr(mock_services["project_coordinator"] "handle_task_result")
     print("✓ ProjectCoordinator methods are present")
     
     # Test ServiceDiscovery methods
-    assert hasattr(mock_services["service_discovery"], "get_all_capabilities")
-    assert hasattr(mock_services["service_discovery"], "get_all_capabilities_async")
+    assert hasattr(mock_services["service_discovery"] "get_all_capabilities")
+    assert hasattr(mock_services["service_discovery"] "get_all_capabilities_async")
     print("✓ ServiceDiscovery methods are present")
     
     # Test that get_all_capabilities returns a list
@@ -66,5 +66,5 @@ async def test_mock_core_services() -> None:
     
     print("All tests passed!")
 
-if __name__ == "__main__":
+if __name"__main__":::
     asyncio.run(test_mock_core_services())

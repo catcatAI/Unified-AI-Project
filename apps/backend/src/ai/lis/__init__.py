@@ -1,6 +1,6 @@
 # src/core_ai/lis/__init__.py
 """
-_ = LIS (Linguistic Immune System) Sub-package.
+LIS (Linguistic Immune System) Sub-package.
 
 This sub-package will contain modules related to the Linguistic Immune System,
 responsible for detecting, diagnosing, and responding to semantic anomalies,:

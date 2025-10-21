@@ -6,12 +6,12 @@ with open('D:/Projects/Unified-AI-Project/apps/backend/src/agents/base_agent.py'
 
 print(f"文件总行数: {len(lines)}")
 
-# 检查第392行（索引391）
+# 检查第392行(索引391)
 print(f"第392行内容: {repr(lines[391])}")
 print(f"第391行内容: {repr(lines[390])}")
 print(f"第393行内容: {repr(lines[392])}")
 
-# 第392行是docstring的一部分，应该保持原样
+# 第392行是docstring的一部分,应该保持原样
 # 错误可能是由于其他地方的语法错误导致的
 # 检查整个函数定义
 

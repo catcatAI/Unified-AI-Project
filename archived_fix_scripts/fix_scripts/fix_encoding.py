@@ -1,8 +1,8 @@
-# 修复tool_dispatcher.py的编码问题
+# 修复tool_dispatcher.py的编码问题()
 import re
 
 def fix_file_encoding():
-    with open('apps/backend/src/tools/tool_dispatcher.py', 'r', encoding='utf-8') as f:
+    with open('apps/backend/src/tools/tool_dispatcher.py', 'r', encoding == 'utf-8') as f,
         content = f.read()
     
     # 替换可能的智能引号
@@ -14,10 +14,10 @@ def fix_file_encoding():
     content = re.sub(r'["""]', '"""', content)
     
     # 写入修复后的内容
-    with open('apps/backend/src/tools/tool_dispatcher.py', 'w', encoding='utf-8') as f:
+    with open('apps/backend/src/tools/tool_dispatcher.py', 'w', encoding == 'utf-8') as f,
         f.write(content)
     
     print("Applied encoding fixes to tool_dispatcher.py")
 
-if __name__ == "__main__":
+if __name"__main__":::
     fix_file_encoding()

@@ -29,11 +29,11 @@ async def test_message_bridge_external_to_internal(message_bridge, internal_bus)
     test_topic = "test/topic"
     test_message = '{"id": "123"}'
     callback = MagicMock()
-    _ = internal_bus.subscribe(f"hsp.external.{test_topic}", callback)
+    internal_bus.subscribe(f"hsp.external.{test_topic}", callback)
 
-    _ = await message_bridge.handle_external_message(test_topic, test_message)
+    await message_bridge.handle_external_message(test_topic, test_message)
 
-    _ = callback.assert_called_once_with({"id": "123"})
+    callback.assert_called_once_with({"id": "123"})
 
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试
@@ -41,7 +41,7 @@ async def test_message_bridge_internal_to_external(message_bridge, mock_external
     test_topic = "test/topic"
     test_message = {"id": "123"}
 
-    _ = message_bridge.handle_internal_message({"topic": test_topic, "payload": test_message})
+    message_bridge.handle_internal_message({"topic": test_topic, "payload": test_message})
 
-    _ = mock_external_connector.publish.assert_called_once_with(test_topic, test_message)
+    mock_external_connector.publish.assert_called_once_with(test_topic, test_message)
 """

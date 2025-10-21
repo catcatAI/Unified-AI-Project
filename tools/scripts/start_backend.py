@@ -13,18 +13,18 @@ project_root: str = Path(__file__).parent / "apps" / "backend"
 src_dir = project_root / "src"
 
 # 添加到Python路径
-_ = sys.path.insert(0, str(project_root))
-_ = sys.path.insert(0, str(src_dir))
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(src_dir))
 
-_ = print(f"Project root: {project_root}")
-_ = print(f"Src dir: {src_dir}")
+print(f"Project root: {project_root}")
+print(f"Src dir: {src_dir}")
 
 # 切换到后端目录
-_ = os.chdir(project_root)
+os.chdir(project_root)
 
 # 启动Uvicorn服务器
 try:
-    _ = print("启动后端服务...")
+    print("启动后端服务...")
     subprocess.run([
         sys.executable, "-m", "uvicorn", 
         "src.services.main_api_server:app", 
@@ -32,6 +32,6 @@ try:
         "--port", "8000"
     ], check=True)
 except subprocess.CalledProcessError as e:
-    _ = print(f"启动后端服务失败: {e}")
+    print(f"启动后端服务失败: {e}")
 except KeyboardInterrupt:
-    _ = print("服务已停止")
+    print("服务已停止")

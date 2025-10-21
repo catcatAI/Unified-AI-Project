@@ -1,6 +1,6 @@
 """
 统一修复引擎 - 核心引擎类
-整合所有修复功能，提供统一的修复接口
+整合所有修复功能,提供统一的修复接口
 
 
 
@@ -98,21 +98,18 @@ class UnifiedFixEngine:
     
     def _setup_logging(self):
         """设置日志系统"""
-# 
-#         log_dir = self.project_root / "logs"
-#         log_dir.mkdir(exist_ok=True)
+        # 创建日志目录
+        log_dir = self.project_root / "logs"
+        log_dir.mkdir(exist_ok=True)
 
+        # 创建日志文件
+        log_file = log_dir / f"unified_fix_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
         
-         #         log_file = log_dir / f"unified_fix_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-# 
-#         
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=[
-            logging.FileHandler(log_file, encoding='utf-8'),
-
-
+                logging.FileHandler(log_file, encoding='utf-8'),
                 logging.StreamHandler()
             ]
         )
@@ -180,7 +177,7 @@ class UnifiedFixEngine:
                 return config
 
             except Exception as e:
-                self.logger.warning(f"配置文件加载失败，使用默认配置: {e}")
+                self.logger.warning(f"配置文件加载失败,使用默认配置: {e}")
 
         
         return default_config
@@ -251,7 +248,7 @@ class UnifiedFixEngine:
             analysis = self.analyze_project(context)
             fix_report.analysis_result = analysis
             
-            # 备份（如果启用）
+            # 备份(如果启用)
             if context.backup_enabled and self.config["backup_enabled"]:
                 backup_path = self._create_backup(context)
                 fix_report.backup_path = backup_path
@@ -315,7 +312,7 @@ class UnifiedFixEngine:
         return fix_report
     
     def _create_backup(self, context: FixContext) -> Path:
-#         """创建备份"""
+        #         """创建备份"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         backup_name = f"fix_backup_{timestamp}"
@@ -336,7 +333,7 @@ class UnifiedFixEngine:
 
 
             else:
-                # 备份整个项目（排除指定目录）
+                # 备份整个项目(排除指定目录)
                 shutil.copytree(
                 #                     self.project_root, 
 
@@ -348,11 +345,11 @@ class UnifiedFixEngine:
             return backup_path
             
         except Exception as e:
-#             self.logger.error(f"备份创建失败: {e}")
+            #             self.logger.error(f"备份创建失败: {e}")
             raise
 #     
 #     def _simulate_fix(self, module, context: FixContext) -> FixResult:
-        """模拟修复（干运行）"""
+        """模拟修复(干运行)"""
 #         self.logger.info(f"干运行模式 - {module.__class__.__name__}")
         
         # 分析问题但不实际修复
@@ -442,7 +439,6 @@ class UnifiedFixEngine:
 
  }
 
-    
     def _save_fix_report(self, fix_report: FixReport):
         """保存修复报告"""
         try:
@@ -477,11 +473,11 @@ class UnifiedFixEngine:
             if count > 0:
 
                 if count > 10:
-                    recommendations.append(f"发现大量 {fix_type} 问题 ({count}个)，建议优先修复")
+                    recommendations.append(f"发现大量 {fix_type} 问题 ({count}个),建议优先修复")
                 elif count > 5:
-                    recommendations.append(f"发现中等数量 {fix_type} 问题 ({count}个)，建议及时修复")
+                    recommendations.append(f"发现中等数量 {fix_type} 问题 ({count}个),建议及时修复")
                 else:
-                    recommendations.append(f"发现少量 {fix_type} 问题 ({count}个)，可以快速修复")
+                    recommendations.append(f"发现少量 {fix_type} 问题 ({count}个),可以快速修复")
 
         
         return recommendations
@@ -494,7 +490,7 @@ class UnifiedFixEngine:
         for fix_type, module in self.modules.items():
             status[fix_type.value] = "enabled" if module else "disabled"
         return status
-    
+
     def enable_module(self, fix_type: FixType):
         """启用修复模块"""
         if fix_type in self.modules:

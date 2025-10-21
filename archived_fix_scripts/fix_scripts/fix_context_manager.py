@@ -8,21 +8,21 @@ import re
 def fix_context_manager_syntax():
     """修复上下文管理器中的语法错误"""
     
-    file_path = "D:/Projects/Unified-AI-Project/apps/backend/src/ai/context/manager.py"
+    file_path == "D,/Projects/Unified-AI-Project/apps/backend/src/ai/context/manager.py"
     
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, 'r', encoding == 'utf-8') as f,
         content = f.read()
     
     # 定义修复规则
     fixes = [
         # 修复冒号后的多余空格和冒号
-        (r'if\s+(\w+).*:.*\n', r'if \1:\n'),
-        (r'if\s+(\w+)\s+in\s+(\w+).*:.*\n', r'if \1 in \2:\n'),
-        (r'for\s+(\w+)\s+in\s+(\w+).*:.*\n', r'for \1 in \2:\n'),
-        (r'except\s+Exception\s+as\s+(\w+).*:.*\n', r'except Exception as \1:\n'),
-        (r'try:.*\n', r'try:\n'),
-        (r'finally:.*\n', r'finally:\n'),
-        (r'else:.*\n', r'else:\n'),
+        (r'if\s+(\w+).*:.*\n', r'if \1,\n'),::
+        (r'if\s+(\w+)\s+in\s+(\w+).*:.*\n', r'if \1 in \2,\n'),::
+        (r'for\s+(\w+)\s+in\s+(\w+).*:.*\n', r'for \1 in \2,\n'),::
+        (r'except\s+Exception\s+as\s+(\w+).*:.*\n', r'except Exception as \1,\n'),::
+        (r'try,.*\n', r'try,\n'),
+        (r'finally,.*\n', r'finally,\n'),
+        (r'else,.*\n', r'else,\n'),
         
         # 修复函数调用
         (r'str\(uuid\.uuid4\)', r'str(uuid.uuid4())'),
@@ -46,29 +46,29 @@ def fix_context_manager_syntax():
         
         # 修复其他常见错误
         (r'logger\.(debug|info|warning|error)\(f"', r'logger.\1(f"'),
-        (r'logger\.(debug|info|warning|error)\(f\'', r'logger.\1(f\''),
+        (r'logger\.(debug|info|warning|error)\(f'', r'logger.\1(f''),
         (r'results =\s*\n', r'results = []\n'),
         (r'all_context_ids = set\s*\n', r'all_context_ids = set()\n'),
         (r'filtered_context_ids =\s*\n', r'filtered_context_ids = []\n'),
     ]
     
     # 应用修复
-    for pattern, replacement in fixes:
-        content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
+    for pattern, replacement in fixes,::
+        content = re.sub(pattern, replacement, content, flags=re.MULTILINE())
     
     # 修复特定的缩进和语法问题
     lines = content.split('\n')
     fixed_lines = []
     
-    for i, line in enumerate(lines):
+    for i, line in enumerate(lines)::
         # 修复特定的缩进问题
-        if 'def ' in line and line.strip().endswith('::'):
-            line = line.rstrip(':') + ':'
+        if 'def ' in line and line.strip().endswith(':'):::
+            line == line.rstrip(':') + ':'
         
-        # 修复if/for/while/try/except/finally/else的语法
-        if any(keyword in line for keyword in ['if ', 'for ', 'while ', 'try:', 'except:', 'finally:', 'else:']):
+        # 修复if/for/while/try/except/finally/else的语法,::
+        if any(keyword in line for keyword in ['if ', 'for ', 'while ', 'try,', 'except,', 'finally,', 'else,'])::
             # 确保正确的冒号格式
-            line = re.sub(r'\s*:\s*$', ':', line)
+            line == re.sub(r'\s*:\s*$', ':', line)
         
         # 修复函数调用
         line = re.sub(r'\.(copy|keys|values|items)\s*$', r'.\1()', line)
@@ -78,10 +78,10 @@ def fix_context_manager_syntax():
     content = '\n'.join(fixed_lines)
     
     # 写回文件
-    with open(file_path, 'w', encoding='utf-8') as f:
+    with open(file_path, 'w', encoding == 'utf-8') as f,
         f.write(content)
     
     print(f"✅ 上下文管理器语法修复完成")
 
-if __name__ == "__main__":
+if __name"__main__":::
     fix_context_manager_syntax()

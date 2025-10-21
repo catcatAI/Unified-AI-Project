@@ -11,7 +11,7 @@ start_performance_monitoring,
 stop_performance_monitoring
 )
 
-__all__ = [
+__all_[
 'PerformanceOptimizer',
 'get_performance_optimizer',
 'cache_result',

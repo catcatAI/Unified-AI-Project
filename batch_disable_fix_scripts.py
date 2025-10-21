@@ -9,9 +9,9 @@ from pathlib import Path
 # 禁用内容模板
 disabled_content = '''#!/usr/bin/env python3
 """
-此脚本已被禁用，因为它没有范围限制。
+此脚本已被禁用,因为它没有范围限制。
 
-原因：该脚本可能会修改下载的内容（如依赖、模型、数据集等），不符合项目本体的修复原则。
+原因：该脚本可能会修改下载的内容(如依赖、模型、数据集等),不符合项目本体的修复原则。
 
 请使用具有范围限制的 unified-fix.py 工具进行修复。
 """
@@ -32,8 +32,7 @@ scripts_to_disable = [
     "apps/backend/scripts/fix_executor.py",
     "apps/backend/scripts/fix_import_paths.py",
     "apps/backend/tools/fix/fix_hsp_integration.py",
-    "apps/backend/tools/fix/fix_import_path.py",
-]
+    "apps/backend/tools/fix/fix_import_path.py"]
 
 project_root = Path(__file__).parent
 disabled_count = 0
@@ -50,7 +49,7 @@ for script_path in scripts_to_disable:
                 content = f.read()
             
             if "此脚本已被禁用" in content:
-                print(f"  跳过（已禁用）: {script_path}")
+                print(f"  跳过(已禁用): {script_path}")
                 continue
             
             # 禁用脚本
@@ -84,7 +83,7 @@ if tools_scripts_dir.exists():
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # 如果包含禁用说明，跳过
+            # 如果包含禁用说明,跳过
             if "此脚本已被禁用" in content or "已被禁用" in content:
                 continue
             

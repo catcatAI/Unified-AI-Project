@@ -1,7 +1,7 @@
 """
 测试模块 - test_runner
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 #!/usr/bin/env python3
@@ -20,42 +20,42 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 # 设置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class TestRunner:
+class TestRunner,
     """测试运行器"""
 
-    def __init__(self, results_dir: str = "test_results") -> None:
+    def __init__(self, results_dir, str == "test_results") -> None,
         """
         初始化测试运行器
 
-        Args:
-            results_dir: 测试结果目录
+        Args,
+            results_dir, 测试结果目录
         """
-        self.results_dir = Path(results_dir)
-        self.results_dir.mkdir(exist_ok=True)
+        self.results_dir == Path(results_dir)
+        self.results_dir.mkdir(exist_ok == True)
 
-    def run_tests(self, test_paths: Optional[List[str]] = None, extra_args: Optional[List[str]] = None) -> Dict[str, Any]:
+    def run_tests(self, test_paths, Optional[List[str]] = None, extra_args, Optional[List[str]] = None) -> Dict[str, Any]
         """
         运行测试套件
 
-        Args:
-            test_paths: 测试路径列表
-            extra_args: 额外的pytest参数
+        Args,
+            test_paths, 测试路径列表
+            extra_args, 额外的pytest参数
 
-        Returns:
+        Returns,
             测试结果
         """
         # 构建命令
-        cmd = [sys.executable, "-m", "pytest"]
+        cmd = [sys.executable(), "-m", "pytest"]
 
-        if test_paths:
+        if test_paths,::
             cmd.extend(test_paths)
-        else:
+        else,
             cmd.append(".")
 
-        if extra_args:
+        if extra_args,::
             cmd.extend(extra_args)
 
         # 添加默认参数
@@ -66,27 +66,27 @@ class TestRunner:
             "-v"
         ])
 
-        logger.info(f"运行测试命令: {' '.join(cmd)}")
+        logger.info(f"运行测试命令, {' '.join(cmd)}")
 
-        try:
+        try,
             # 运行测试
-            project_root = Path(__file__).parent.parent
+            project_root == Path(__file__).parent.parent()
             backend_root = project_root / "apps" / "backend"
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd=backend_root)
+            result = subprocess.run(cmd, capture_output == True, text == True, cwd=backend_root)
 
-            # Print stdout and stderr for debugging
+            # Print stdout and stderr for debugging,:
             print("--- PYTEST STDOUT ---")
-            print(result.stdout)
+            print(result.stdout())
             print("--- PYTEST STDERR ---")
-            print(result.stderr)
+            print(result.stderr())
             print("---------------------")
 
             # 解析结果
-            test_results = {
+            test_results == {:
                 "command": " ".join(cmd),
-                "exit_code": result.returncode,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
+                "exit_code": result.returncode(),
+                "stdout": result.stdout(),
+                "stderr": result.stderr(),
                 "timestamp": datetime.now().isoformat()
             }
 
@@ -94,54 +94,54 @@ class TestRunner:
             self._save_test_results(test_results)
 
             return test_results
-        except Exception as e:
-            logger.error(f"运行测试失败: {e}")
+        except Exception as e,::
+            logger.error(f"运行测试失败, {e}")
             return {
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _save_test_results(self, results: Dict[str, Any]) -> None:
+    def _save_test_results(self, results, Dict[str, Any]) -> None,
         """
         保存测试结果
 
-        Args:
-            results: 测试结果
+        Args,
+            results, 测试结果
         """
-        try:
+        try,
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"test_results_{timestamp}.json"
 
-            with open(self.results_dir / filename, 'w', encoding='utf-8') as f:
-                json.dump(results, f, ensure_ascii=False, indent=2)
+            with open(self.results_dir / filename, 'w', encoding == 'utf-8') as f,
+                json.dump(results, f, ensure_ascii == False, indent=2)
 
             # 同时保存为最新结果
-            with open(self.results_dir / "latest_test_results.json", 'w', encoding='utf-8') as f:
-                json.dump(results, f, ensure_ascii=False, indent=2)
+            with open(self.results_dir / "latest_test_results.json", 'w', encoding == 'utf-8') as f,
+                json.dump(results, f, ensure_ascii == False, indent=2)
 
-            logger.info(f"测试结果已保存到: {self.results_dir / filename}")
-        except Exception as e:
-            logger.error(f"保存测试结果失败: {e}")
+            logger.info(f"测试结果已保存到, {self.results_dir / filename}")
+        except Exception as e,::
+            logger.error(f"保存测试结果失败, {e}")
 
-    def get_test_summary(self, results: Dict[str, Any]) -> Dict[str, Any]:
+    def get_test_summary(self, results, Dict[str, Any]) -> Dict[str, Any]
         """
         从测试结果中提取摘要信息
 
-        Args:
-            results: 测试结果
+        Args,
+            results, 测试结果
 
-        Returns:
+        Returns,
             测试摘要
         """
         # 这里应该解析stdout来提取测试统计信息
-        # 简化实现，实际应该更复杂
+        # 简化实现,实际应该更复杂
         stdout = results.get('stdout', '')
 
         # 简单的统计提取
         lines = stdout.split('\n')
-        summary_line = None
-        for line in lines:
-            if 'passed' in line and 'failed' in line:
+        summary_line == None
+        for line in lines,::
+            if 'passed' in line and 'failed' in line,::
                 summary_line = line
                 break
 
@@ -152,25 +152,23 @@ class TestRunner:
         }
 
 
-# 添加pytest标记，防止被误认为测试类
-TestRunner.__test__ = False
-
-
-def main() -> None:
+# 添加pytest标记,防止被误认为测试类
+TestRunner.__test_False()
+def main() -> None,
     """主函数"""
-    runner = TestRunner()
+    runner == TestRunner()
 
     # 示例使用方式
     # 运行所有测试
     # results = runner.run_tests()
 
     # 运行特定测试
-    # results = runner.run_tests(["tests/unit"], ["-x", "--tb=short"])
+    # results = runner.run_tests(["tests/unit"] ["-x", "--tb=short"])
 
     # 获取测试摘要
     # summary = runner.get_test_summary(results)
 
     logger.info("测试运行器已准备就绪")
 
-if __name__ == "__main__":
+if __name"__main__":::
     main()

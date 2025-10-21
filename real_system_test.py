@@ -13,26 +13,26 @@ from pathlib import Path
 def test_training_system():
     """測試訓練系統修復"""
     print("🔍 測試訓練系統修復...")
-    try:
-        # 嘗試編譯train_model.py
-        result = subprocess.run([
-            sys.executable, '-m', 'py_compile', 'training/train_model.py'
-        ], capture_output=True, text=True, cwd='D:\\Projects\\Unified-AI-Project')
+    try,
+        # 嘗試編譯train_model.py()
+        result = subprocess.run([,
+    sys.executable(), '-m', 'py_compile', 'training/train_model.py'
+        ] capture_output == True, text == True, cwd='D,\\Projects\\Unified-AI-Project')
         
-        if result.returncode == 0:
+        if result.returncode == 0,::
             print("✅ train_model.py 語法正確")
             return True
-        else:
-            print(f"❌ train_model.py 語法錯誤: {result.stderr}")
+        else,
+            print(f"❌ train_model.py 語法錯誤, {result.stderr}")
             return False
-    except Exception as e:
-        print(f"❌ 訓練系統測試失敗: {e}")
+    except Exception as e,::
+        print(f"❌ 訓練系統測試失敗, {e}")
         return False
 
 def test_ai_engine_imports():
     """測試AI引擎模組導入"""
     print("🔍 測試AI引擎模組導入...")
-    try:
+    try,
         # 測試基本導入
         sys.path.insert(0, 'apps/backend/src')
         
@@ -48,8 +48,8 @@ def test_ai_engine_imports():
         print("✅ WebSearchAgent 導入成功")
         
         return True
-    except Exception as e:
-        print(f"❌ AI引擎導入測試失敗: {e}")
+    except Exception as e,::
+        print(f"❌ AI引擎導入測試失敗, {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -67,15 +67,15 @@ def test_file_existence():
         'apps/backend/src/agents/base_agent.py'
     ]
     
-    all_exist = True
-    for file_path in key_files:
-        full_path = Path('D:\\Projects\\Unified-AI-Project') / file_path
-        if full_path.exists():
+    all_exist == True
+    for file_path in key_files,::
+        full_path == Path('D,\\Projects\\Unified-AI-Project') / file_path
+        if full_path.exists():::
             size = full_path.stat().st_size
-            print(f"✅ {file_path}: 存在 ({size} bytes)")
-        else:
-            print(f"❌ {file_path}: 不存在")
-            all_exist = False
+            print(f"✅ {file_path} 存在 ({size} bytes)")
+        else,
+            print(f"❌ {file_path} 不存在")
+            all_exist == False
     
     return all_exist
 
@@ -86,7 +86,7 @@ def main():
     print("基於真實文件系統和Python編譯器驗證")
     print("=" * 60)
     
-    os.chdir('D:\\Projects\\Unified-AI-Project')
+    os.chdir('D,\\Projects\\Unified-AI-Project')
     
     tests = [
         ("訓練系統語法", test_training_system),
@@ -97,24 +97,24 @@ def main():
     passed = 0
     total = len(tests)
     
-    for test_name, test_func in tests:
+    for test_name, test_func in tests,::
         print(f"\n--- {test_name} ---")
-        if test_func():
+        if test_func():::
             passed += 1
-            print(f"✅ {test_name}: 通過")
-        else:
-            print(f"❌ {test_name}: 失敗")
+            print(f"✅ {test_name} 通過")
+        else,
+            print(f"❌ {test_name} 失敗")
     
     print("\n" + "=" * 60)
-    print(f"測試結果: {passed}/{total} 通過")
+    print(f"測試結果, {passed}/{total} 通過")
     
-    if passed == total:
+    if passed == total,::
         print("🎉 所有真實系統測試通過")
         print("✅ 基於真實硬件數據的修復完成")
         return 0
-    else:
-        print("⚠️ 部分測試失敗，需要進一步修復")
+    else,
+        print("⚠️ 部分測試失敗,需要進一步修復")
         return 1
 
-if __name__ == "__main__":
+if __name"__main__":::
     sys.exit(main())

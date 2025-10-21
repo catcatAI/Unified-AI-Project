@@ -5,6 +5,7 @@
 import ast
 import json
 import re
+import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Set, Tuple
 from dataclasses import dataclass
@@ -17,8 +18,6 @@ from ..core.fix_result import FixContext
 class IOIssue:
     """输入输出问题"""
 
-
-
     file_path: Path
     line_number: int
     io_type: str  # input, output, missing_input, unreachable_output
@@ -30,7 +29,6 @@ class IOIssue:
 
 @dataclass
 class IOPathInfo:
-
     """输入输出路径信息"""
     path: str
     path_type: str  # file, directory, url, database
@@ -49,10 +47,10 @@ class IOAnalyzer:
         self.missing_inputs = set()
         self.unreachable_outputs = set()
         self.variable_assignments = defaultdict(dict)
+        self.logger = logging.getLogger(__name__)
     
     def analyze_project_io(self, context: FixContext) -> Dict[str, Any]:
         """分析项目的输入输出依赖"""
-
         result = {
             "input_paths": [],
             "output_paths": [],
@@ -62,9 +60,7 @@ class IOAnalyzer:
             "file_access_patterns": {},
             "database_connections": [],
             "api_endpoints": [],
-
- "recommendations": []
-
+            "recommendations": []
         }
         
         # 分析Python文件中的IO操作
@@ -102,9 +98,7 @@ class IOAnalyzer:
             "input_paths": [],
             "output_paths": [],
             "database_connections": [],
-
- "api_endpoints": [],
-
+            "api_endpoints": [],
             "variable_assignments": {}
         }
         
@@ -163,7 +157,6 @@ class IOAnalyzer:
                     
                     # Path操作
                     elif func_name.startswith('Path.') or func_name.startswith('pathlib.'):
-
                         self._analyze_path_operation(node, file_path, file_io)
     
     def _analyze_database_operations(self, tree: ast.AST, file_path: Path, file_io: Dict[str, Any]):
@@ -186,7 +179,6 @@ class IOAnalyzer:
                         self._analyze_mongodb_operation(node, file_path, file_io)
                     
                      # Redis操作
-
                     elif 'redis' in func_name.lower():
                         self._analyze_redis_operation(node, file_path, file_io)
 
@@ -199,21 +191,12 @@ class IOAnalyzer:
                 
                 if func_name:
                     # requests库操作
-                    if func_name in ['requests.get', 'requests.post', 'requests.put', 'requests.delete']:
+                    if func_name.startswith('requests.'):
                         self._analyze_requests_operation(node, file_path, file_io)
                     
-                    # httpx操作
-                    elif 'httpx' in func_name:
-                        self._analyze_httpx_operation(node, file_path, file_io)
-                    
                     # urllib操作
-                    elif 'urllib' in func_name:
+                    elif func_name in ['urllib.request.urlopen', 'urllib.parse.urljoin']:
                         self._analyze_urllib_operation(node, file_path, file_io)
-                    
-                    # FastAPI/Flask操作
-                    elif any(api_framework in func_name for api_framework in ['FastAPI', 'Flask', 'app.route']):
-
-                        self._analyze_web_framework_operation(node, file_path, file_io)
     
     def _analyze_network_operations(self, tree: ast.AST, file_path: Path, file_io: Dict[str, Any]):
         """分析网络操作"""
@@ -222,18 +205,13 @@ class IOAnalyzer:
                 func_name = self._get_function_name(node.func)
                 
                 if func_name:
-                    # Socket操作
-                    if 'socket' in func_name.lower():
+                    # socket操作
+                    if func_name.startswith('socket.'):
                         self._analyze_socket_operation(node, file_path, file_io)
                     
-                    # FTP操作
-                    elif 'ftp' in func_name.lower():
+                    # ftplib操作
+                    elif func_name.startswith('ftplib.'):
                         self._analyze_ftp_operation(node, file_path, file_io)
-                    
-                     # SSH操作
-
-                    elif 'ssh' in func_name.lower():
-                        self._analyze_ssh_operation(node, file_path, file_io)
     
     def _analyze_env_var_io(self, tree: ast.AST, file_path: Path, file_io: Dict[str, Any]):
         """分析环境变量相关的IO"""
@@ -241,403 +219,136 @@ class IOAnalyzer:
             if isinstance(node, ast.Call):
                 func_name = self._get_function_name(node.func)
                 
-                if func_name and 'environ' in func_name:
-                    # 分析环境变量访问
-                    self._analyze_environ_access(node, file_path, file_io)
+                if func_name:
+                    # 环境变量操作
+                    if func_name in ['os.getenv', 'os.environ.get']:
+                        self._analyze_env_var_operation(node, file_path, file_io)
     
-    def _analyze_open_call(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
-        """分析open()调用"""
-        if node.args:
-            file_path_arg = node.args[0]
-            file_path_str = self._extract_path_from_node(file_path_arg)
-            
-            if file_path_str:
-                # 检查文件模式
-
-                mode = 'r'  # 默认读取模式
-                if len(node.args) > 1 and isinstance(node.args[1], ast.Constant):
-                    mode = node.args[1].value
-
-
-                
-                io_path_info = IOPathInfo(
-#                     path=file_path_str,
-#                     path_type="file",
-
-                    is_variable=isinstance(file_path_arg, ast.Name),
-                    variable_name=file_path_arg.id if isinstance(file_path_arg, ast.Name) else None,
-
-                    line_number=node.lineno,
-                    context=f"open('{file_path_str}', '{mode}')"
-                )
-                
-                if 'r' in mode or mode == 'rb':
-                    file_io["input_paths"].append(io_path_info)
-                elif 'w' in mode or 'a' in mode or mode == 'wb' or mode == 'ab':
-                    file_io["output_paths"].append(io_path_info)
-    
-    def _analyze_json_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
-        """分析JSON操作"""
-        func_name = self._get_function_name(node.func)
-
-        
-        if func_name in ['json.load'] and node.args:
-#             file_arg = node.args[0]
-# 
-
-            file_path_str = self._extract_path_from_node(file_arg)
-#             
-            if file_path_str:
-                io_path_info = IOPathInfo(
-                    path=file_path_str,
-                    path_type="file",
-                    is_variable=isinstance(file_arg, ast.Name),
-
-                    variable_name=file_arg.id if isinstance(file_arg, ast.Name) else None,
-                    line_number=node.lineno,
-                    context=f"json.load('{file_path_str}')"
-
-                )
-                #                 file_io["input_paths"].append(io_path_info)
-
-#         
-#         elif func_name in ['json.dump'] and len(node.args) >= 2:
-    #             file_arg = node.args[1]
-
-
-#             file_path_str = self._extract_path_from_node(file_arg)
-# 
-            
-            if file_path_str:
-                io_path_info = IOPathInfo(
-                    path=file_path_str,
-                    path_type="file",
-                    is_variable=isinstance(file_arg, ast.Name),
-                    variable_name=file_arg.id if isinstance(file_arg, ast.Name) else None,
-                    line_number=node.lineno,
-                    context=f"json.dump(..., '{file_path_str}')"
-                )
-                file_io["output_paths"].append(io_path_info)
-    
-     #     def _analyze_database_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
-
-#         """分析数据库操作"""
-# 
-#         func_name = self._get_function_name(node.func)
-        
-        if 'create_engine' in func_name and node.args:
-            # SQLAlchemy数据库连接
-#             connection_string = self._extract_connection_string(node.args[0])
-# 
-            if connection_string:
-
-                io_path_info = IOPathInfo(
-                    path=connection_string,
-                    path_type="database",
-
-                    is_variable=isinstance(node.args[0], ast.Name),
-                    variable_name=node.args[0].id if isinstance(node.args[0], ast.Name) else None,
-
- line_number=node.lineno,
-
-
-#                     context=f"create_engine('{connection_string}')"
-                )
-#                 file_io["database_connections"].append(io_path_info)
-
-    
-    def _analyze_requests_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
-        """分析requests操作"""
-# 
-        if node.args:
-            url_arg = node.args[0]
-            url = self._extract_url_from_node(url_arg)
-            
-            if url:
-                io_path_info = IOPathInfo(
-                    path=url,
-                    path_type="url",
-                    is_variable=isinstance(url_arg, ast.Name),
-                    variable_name=url_arg.id if isinstance(url_arg, ast.Name) else None,
-
- line_number=node.lineno,
-
-                    context=f"requests.{self._get_function_name(node.func).split('.')[-1]}('{url}')"
-                )
-                
-                func_name = self._get_function_name(node.func)
-                if func_name and 'get' in func_name:
-
-
-                    file_io["input_paths"].append(io_path_info)
-                else:
-                    file_io["output_paths"].append(io_path_info)
-
-                
-                file_io["api_endpoints"].append(io_path_info)
-    
-    def _analyze_config_files(self, context: FixContext) -> Dict[str, List[IOPathInfo]]:
-        """分析配置文件中的IO路径"""
+    def _analyze_config_files(self, context: FixContext) -> Dict[str, Any]:
+        """分析配置文件"""
         config_io = {
             "input_paths": [],
             "output_paths": []
         }
         
-        # 常见的配置文件
+        # 常见配置文件
         config_files = [
-        "config.json",
-
-            "settings.json",
-            "config.yaml",
-
- "settings.yaml",
-
-            ".env",
-            "config.ini"
-
-
+            "config.json", "settings.json", "appsettings.json",
+            "config.yaml", "config.yml", "settings.yaml", "settings.yml",
+            ".env", ".env.local", ".env.production",
+            "docker-compose.yml", "docker-compose.yaml"
         ]
         
         for config_file in config_files:
             config_path = context.project_root / config_file
             if config_path.exists():
-                file_io = self._analyze_config_file_io(config_path)
-
-                config_io["input_paths"].extend(file_io["input_paths"])
-                config_io["output_paths"].extend(file_io["output_paths"])
+                try:
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    # 提取路径信息
+                    paths = self._extract_paths_from_config(content, config_path)
+                    config_io["input_paths"].extend(paths)
+                    
+                except Exception as e:
+                    print(f"分析配置文件失败 {config_path}: {e}")
         
         return config_io
     
-    def _analyze_config_file_io(self, config_path: Path) -> Dict[str, List[IOPathInfo]]:
-        """分析配置文件的IO路径"""
-        config_io = {
-            "input_paths": [],
-            "output_paths": []
-        }
+    def _extract_paths_from_config(self, content: str, config_path: Path) -> List[IOPathInfo]:
+        """从配置文件中提取路径"""
+        paths = []
         
-        try:
-            if config_path.suffix == '.json':
-                with open(config_path, 'r', encoding='utf-8') as f:
-                    config_data = json.load(f)
-                
-                 # 查找可能的路径配置
-
-                self._extract_paths_from_config(config_data, config_path, config_io)
-#             
-            elif config_path.suffix in ['.yaml', '.yml']:
-#                 import yaml
-                with open(config_path, 'r', encoding='utf-8') as f:
-
-                    config_data = yaml.safe_load(f)
-                
-                self._extract_paths_from_config(config_data, config_path, config_io)
-            
-            elif config_path.name == '.env':
-#                 with open(config_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        line = line.strip()
-
-                        if '=' in line and not line.startswith('#'):
-                            key, value = line.split('=', 1)
-
-                            if 'PATH' in key.upper() or 'FILE' in key.upper() or 'URL' in key.upper():
-                                if self._looks_like_path(value):
-                                    io_path_info = IOPathInfo(
-                                        path=value,
-                                        path_type=self._determine_path_type(value),
-                                        is_variable=False,
-                                        line_number=0,
-
-                                        context=f"{key}={value}"
-                                    )
-                                    config_io["input_paths"].append(io_path_info)
-
+        # 根据文件类型解析
+        if config_path.suffix in ['.json']:
+            try:
+                data = json.loads(content)
+                paths.extend(self._extract_paths_from_json(data, config_path))
+            except json.JSONDecodeError:
+                pass
+        elif config_path.suffix in ['.yaml', '.yml']:
+            # 简化处理YAML文件
+            paths.extend(self._extract_paths_from_yaml(content, config_path))
+        elif config_path.name.startswith('.env'):
+            paths.extend(self._extract_paths_from_env(content, config_path))
         
-        except Exception as e:
-            print(f"分析配置文件IO失败 {config_path}: {e}")
-        
-        return config_io
+        return paths
     
-    def _validate_io_paths(self, result: Dict[str, Any]):
-        """验证IO路径的有效性"""
-        # 检查缺失的输入
-
-        for input_path in result["input_paths"]:
-            if input_path.path_type == "file":
-                full_path = Path(input_path.path)
-
-                if not full_path.exists() and not full_path.is_absolute():
-                    # 尝试相对路径
-                    project_root = Path.cwd()
-
-                    relative_path = project_root / input_path.path
-
-
-                    if not relative_path.exists():
-                        result["missing_inputs"].append({
-                        "path": input_path.path,
-
- "type": input_path.path_type,
-
-                            "line_number": input_path.line_number,
-                            "context": input_path.context
-
-                        })
+    def _extract_paths_from_json(self, data: Any, config_path: Path) -> List[IOPathInfo]:
+        """从JSON数据中提取路径"""
+        paths = []
         
-        # 检查无法访问的输出
-        for output_path in result["output_paths"]:
-            if output_path.path_type == "file":
-                full_path = Path(output_path.path)
-                if not full_path.is_absolute():
-
-                    full_path = Path.cwd() / output_path.path
-                
-                parent = full_path.parent
-                if not parent.exists():
-
-
-                    result["unreachable_outputs"].append({
-                        "path": output_path.path,
-                        "type": output_path.path_type,
-
-                        "line_number": output_path.line_number,
-                        "context": output_path.context
-
-
-                    })
+        def traverse(obj, path=""):
+            if isinstance(obj, dict):
+                for key, value in obj.items():
+                    new_path = f"{path}.{key}" if path else key
+                    if self._is_path_like(key, value):
+                        paths.append(IOPathInfo(
+                            path=str(value),
+                            path_type=self._determine_path_type(str(value)),
+                            is_variable=False,
+                            line_number=0,
+                            context=f"JSON配置中的路径: {new_path}"
+                        ))
+                    traverse(value, new_path)
+            elif isinstance(obj, list):
+                for i, item in enumerate(obj):
+                    new_path = f"{path}[{i}]"
+                    traverse(item, new_path)
+        
+        traverse(data)
+        return paths
     
-    def _analyze_variable_dependencies(self) -> Dict[str, Any]:
-        """分析变量依赖关系"""
-        dependencies = {
-
-
- "file_path_variables": {},
-
-            "environment_variables": {},
-            "configuration_variables": {},
-
-            "computed_variables": {}
-
- }
-
-        
-         # 分析文件路径变量
-
-
-
-        for var_name, paths in self.variable_assignments.items():
-            if any('file' in str(path).lower() or 'path' in str(path).lower() for path in paths):
-
-                dependencies["file_path_variables"][var_name] = list(paths)
-        
-        return dependencies
+    def _extract_paths_from_yaml(self, content: str, config_path: Path) -> List[IOPathInfo]:
+        """从YAML内容中提取路径"""
+        paths = []
+        # 简化处理，实际应该使用yaml库
+        lines = content.split('\n')
+        for i, line in enumerate(lines):
+            if ':' in line and not line.strip().startswith('#'):
+                key, value = line.split(':', 1)
+                value = value.strip().strip('"\'')
+                if self._is_path_like(key.strip(), value):
+                    paths.append(IOPathInfo(
+                        path=value,
+                        path_type=self._determine_path_type(value),
+                        is_variable=False,
+                        line_number=i+1,
+                        context=f"YAML配置中的路径: {key.strip()}"
+                    ))
+        return paths
     
-    def _generate_io_recommendations(self, result: Dict[str, Any]) -> List[str]:
-        """生成IO建议"""
-        recommendations = []
-        
-        if result["missing_inputs"]:
-            recommendations.append(f"发现 {len(result['missing_inputs'])} 个缺失的输入路径，建议检查文件是否存在")
-
-        
-        if result["unreachable_outputs"]:
-            recommendations.append(f"发现 {len(result['unreachable_outputs'])} 个无法访问的输出路径，建议检查目录权限")
-
-        
-        if result["database_connections"]:
-            recommendations.append("发现数据库连接，建议检查连接字符串的安全性")
-        
-        if result["api_endpoints"]:
-            recommendations.append("发现API端点调用，建议检查错误处理和重试机制")
-        
-        return recommendations
+    def _extract_paths_from_env(self, content: str, config_path: Path) -> List[IOPathInfo]:
+        """从环境变量文件中提取路径"""
+        paths = []
+        lines = content.split('\n')
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                value = value.strip().strip('"\'')
+                if self._is_path_like(key, value):
+                    paths.append(IOPathInfo(
+                        path=value,
+                        path_type=self._determine_path_type(value),
+                        is_variable=False,
+                        line_number=i+1,
+                        context=f"环境变量中的路径: {key}"
+                    ))
+        return paths
     
-    def _should_analyze_file(self, file_path: Path) -> bool:
-        """检查是否应该分析文件"""
-        excluded_patterns = ["__pycache__", ".git", "node_modules", "venv", ".venv"]
-        return not any(pattern in str(file_path) for pattern in excluded_patterns)
-
-    
-    def _get_function_name(self, node: ast.AST) -> Optional[str]:
-        """获取函数名称"""
-
-        if isinstance(node, ast.Name):
-            return node.id
-        elif isinstance(node, ast.Attribute):
-            return f"{self._get_function_name(node.value)}.{node.attr}"
-            return None
-
-    
-    def _extract_path_from_node(self, node: ast.AST) -> Optional[str]:
-#         """从AST节点提取路径"""
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            return node.value
-        elif isinstance(node, ast.Name):
-            # 变量路径，需要跟踪赋值
-
-            if node.id in self.variable_assignments:
-                # 返回最新的赋值
-#                 assignments = self.variable_assignments[node.id]
-#                 if assignments:
-                    return list(assignments)[-1]
-                    return None
-
-    
-    def _extract_connection_string(self, node: ast.AST) -> Optional[str]:
-        """提取数据库连接字符串"""
-
-        return self._extract_path_from_node(node)
-    
-    def _extract_url_from_node(self, node: ast.AST) -> Optional[str]:
-        """从节点提取URL"""
-
-# 
-#         return self._extract_path_from_node(node)
-#     
-    def _extract_paths_from_config(self, config_data: Any, config_path: Path, config_io: Dict[str, List[IOPathInfo]]):
-        """从配置数据提取路径"""
-
-        def extract_from_value(value, key_path=""):
-
-            if isinstance(value, dict):
-
-                for key, val in value.items():
-                    new_key_path = f"{key_path}.{key}" if key_path else key
-                    extract_from_value(val, new_key_path)
-            elif isinstance(value, list):
-                for i, val in enumerate(value):
-
-
-                    new_key_path = f"{key_path}[{i}]"
-                    extract_from_value(val, new_key_path)
-            elif isinstance(value, str) and self._looks_like_path(value):
-                io_path_info = IOPathInfo(
-                    path=value,
-                    path_type=self._determine_path_type(value),
-                    is_variable=False,
-                    line_number=0,
-                    context=f"{config_path.name}:{key_path}"
-                )
-                
-                if 'input' in key_path.lower() or 'read' in key_path.lower():
-                    config_io["input_paths"].append(io_path_info)
-                else:
-                    config_io["output_paths"].append(io_path_info)
-        
-        extract_from_value(config_data)
-    
-    def _looks_like_path(self, value: str) -> bool:
-        """判断字符串是否像路径"""
-        if not value or len(value) < 2:
-            return False
-        
-        # 检查路径特征
+    def _is_path_like(self, key: str, value: str) -> bool:
+        """判断键值对是否像路径"""
         path_indicators = [
+            'path' in key.lower(),
+            'dir' in key.lower(),
+            'file' in key.lower(),
+            'folder' in key.lower(),
+            'directory' in key.lower(),
             '/' in value,
             '\\' in value,
             value.endswith(('.txt', '.json', '.yaml', '.yml', '.csv', '.log', '.db', '.sqlite')),
             value.startswith(('http://', 'https://', 'ftp://', 'sftp://')),
-
             'file://' in value,
             '.com' in value or '.org' in value or '.net' in value
         ]
@@ -657,9 +368,8 @@ class IOAnalyzer:
         elif path.endswith('.csv'):
             return "csv"
         elif '/' in path or '\\' in path:
-            if path.endswith('/') or '\\' in path:
+            if path.endswith('/') or path.endswith('\\'):
                 return "directory"
-
             else:
                 return "file"
         else:
@@ -677,7 +387,6 @@ class IOAnalyzer:
     
     def _fix_missing_input(self, missing_input: Dict[str, Any], context: FixContext):
         """修复缺失的输入"""
-
         input_path = missing_input["path"]
         
         self.logger.info(f"修复缺失的输入路径: {input_path}")
@@ -709,9 +418,283 @@ class IOAnalyzer:
             full_path = Path.cwd() / output_path
         
         parent_dir = full_path.parent
-        
         if not context.dry_run:
             parent_dir.mkdir(parents=True, exist_ok=True)
             self.logger.info(f"创建输出目录: {parent_dir}")
         else:
             self.logger.info(f"干运行 - 建议创建目录: {parent_dir}")
+    
+    def _should_analyze_file(self, file_path: Path) -> bool:
+        """检查是否应该分析文件"""
+        excluded_patterns = ["__pycache__", ".git", "node_modules", "venv", ".venv"]
+        return not any(pattern in str(file_path) for pattern in excluded_patterns)
+    
+    def _get_function_name(self, node: ast.AST) -> Optional[str]:
+        """获取函数名"""
+        if isinstance(node, ast.Name):
+            return node.id
+        elif isinstance(node, ast.Attribute):
+            return node.attr
+        elif isinstance(node, ast.Call):
+            return self._get_function_name(node.func)
+        return None
+    
+    def _analyze_open_call(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析open调用"""
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                file_io["input_paths"].append(IOPathInfo(
+                    path=path,
+                    path_type=self._determine_path_type(path),
+                    is_variable=False,
+                    line_number=node.lineno,
+                    context="文件打开操作"
+                ))
+            elif isinstance(path_arg, ast.Name):
+                # 变量路径
+                file_io["input_paths"].append(IOPathInfo(
+                    path=path_arg.id,
+                    path_type="variable",
+                    is_variable=True,
+                    variable_name=path_arg.id,
+                    line_number=node.lineno,
+                    context="文件打开操作(变量路径)"
+                ))
+    
+    def _analyze_json_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析JSON操作"""
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                file_io["input_paths"].append(IOPathInfo(
+                    path=path,
+                    path_type="json",
+                    is_variable=False,
+                    line_number=node.lineno,
+                    context="JSON操作"
+                ))
+    
+    def _analyze_csv_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析CSV操作"""
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                file_io["input_paths"].append(IOPathInfo(
+                    path=path,
+                    path_type="csv",
+                    is_variable=False,
+                    line_number=node.lineno,
+                    context="CSV操作"
+                ))
+    
+    def _analyze_pickle_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析Pickle操作"""
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                file_io["input_paths"].append(IOPathInfo(
+                    path=path,
+                    path_type="file",
+                    is_variable=False,
+                    line_number=node.lineno,
+                    context="Pickle操作"
+                ))
+    
+    def _analyze_filesystem_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析文件系统操作"""
+        func_name = self._get_function_name(node.func)
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                file_io["input_paths"].append(IOPathInfo(
+                    path=path,
+                    path_type="file",
+                    is_variable=False,
+                    line_number=node.lineno,
+                    context=f"文件系统操作: {func_name}"
+                ))
+    
+    def _analyze_path_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析Path操作"""
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                file_io["input_paths"].append(IOPathInfo(
+                    path=path,
+                    path_type=self._determine_path_type(path),
+                    is_variable=False,
+                    line_number=node.lineno,
+                    context="Path操作"
+                ))
+    
+    def _analyze_sqlalchemy_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析SQLAlchemy操作"""
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                file_io["database_connections"].append(IOPathInfo(
+                    path=path,
+                    path_type="database",
+                    is_variable=False,
+                    line_number=node.lineno,
+                    context="SQLAlchemy数据库连接"
+                ))
+    
+    def _analyze_sqlite_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析SQLite操作"""
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                file_io["database_connections"].append(IOPathInfo(
+                    path=path,
+                    path_type="database",
+                    is_variable=False,
+                    line_number=node.lineno,
+                    context="SQLite数据库连接"
+                ))
+    
+    def _analyze_mongodb_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析MongoDB操作"""
+        file_io["database_connections"].append(IOPathInfo(
+            path="mongodb://",
+            path_type="database",
+            is_variable=False,
+            line_number=node.lineno,
+            context="MongoDB数据库连接"
+        ))
+    
+    def _analyze_redis_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析Redis操作"""
+        file_io["database_connections"].append(IOPathInfo(
+            path="redis://",
+            path_type="database",
+            is_variable=False,
+            line_number=node.lineno,
+            context="Redis数据库连接"
+        ))
+    
+    def _analyze_requests_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析requests操作"""
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                if path.startswith(('http://', 'https://')):
+                    file_io["api_endpoints"].append(IOPathInfo(
+                        path=path,
+                        path_type="url",
+                        is_variable=False,
+                        line_number=node.lineno,
+                        context="HTTP API调用"
+                    ))
+    
+    def _analyze_urllib_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析urllib操作"""
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                if path.startswith(('http://', 'https://')):
+                    file_io["api_endpoints"].append(IOPathInfo(
+                        path=path,
+                        path_type="url",
+                        is_variable=False,
+                        line_number=node.lineno,
+                        context="URL操作"
+                    ))
+    
+    def _analyze_socket_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析socket操作"""
+        file_io["api_endpoints"].append(IOPathInfo(
+            path="socket://",
+            path_type="network",
+            is_variable=False,
+            line_number=node.lineno,
+            context="Socket网络连接"
+        ))
+    
+    def _analyze_ftp_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析FTP操作"""
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                if path.startswith(('ftp://', 'sftp://')):
+                    file_io["api_endpoints"].append(IOPathInfo(
+                        path=path,
+                        path_type="ftp",
+                        is_variable=False,
+                        line_number=node.lineno,
+                        context="FTP文件传输"
+                    ))
+    
+    def _analyze_env_var_operation(self, node: ast.Call, file_path: Path, file_io: Dict[str, Any]):
+        """分析环境变量操作"""
+        if len(node.args) > 0:
+            path_arg = node.args[0]
+            if isinstance(path_arg, ast.Constant):
+                path = path_arg.value
+                file_io["input_paths"].append(IOPathInfo(
+                    path=path,
+                    path_type="environment",
+                    is_variable=False,
+                    line_number=node.lineno,
+                    context="环境变量读取"
+                ))
+    
+    def _validate_io_paths(self, result: Dict[str, Any]):
+        """验证IO路径的存在性和可访问性"""
+        # 验证输入路径
+        for path_info in result["input_paths"]:
+            if path_info.path_type in ["file", "directory", "json", "csv"]:
+                path = Path(path_info.path)
+                if not path.exists():
+                    result["missing_inputs"].append({
+                        "path": path_info.path,
+                        "type": path_info.path_type,
+                        "context": path_info.context
+                    })
+        
+        # 验证输出路径的父目录
+        for path_info in result["output_paths"]:
+            if path_info.path_type in ["file", "directory", "json", "csv"]:
+                path = Path(path_info.path)
+                parent_dir = path.parent
+                if not parent_dir.exists():
+                    result["unreachable_outputs"].append({
+                        "path": path_info.path,
+                        "type": path_info.path_type,
+                        "context": path_info.context
+                    })
+    
+    def _analyze_variable_dependencies(self) -> Dict[str, Any]:
+        """分析变量依赖关系"""
+        # 简化实现
+        return {}
+    
+    def _generate_io_recommendations(self, result: Dict[str, Any]) -> List[str]:
+        """生成IO建议"""
+        recommendations = []
+        
+        if result["missing_inputs"]:
+            recommendations.append(f"发现 {len(result['missing_inputs'])} 个缺失的输入文件/目录")
+        
+        if result["unreachable_outputs"]:
+            recommendations.append(f"发现 {len(result['unreachable_outputs'])} 个无法访问的输出路径")
+        
+        if result["database_connections"]:
+            recommendations.append(f"发现 {len(result['database_connections'])} 个数据库连接")
+        
+        if result["api_endpoints"]:
+            recommendations.append(f"发现 {len(result['api_endpoints'])} 个API端点")
+        
+        return recommendations

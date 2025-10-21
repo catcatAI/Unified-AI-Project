@@ -8,7 +8,7 @@ from .base.base_agent import BaseAgent
 from .specialized.creative_writing_agent import CreativeWritingAgent
 from .specialized.web_search_agent import WebSearchAgent
 
-__all__ = [
+__all_[
     'BaseAgent',
     'CreativeWritingAgent', 
     'WebSearchAgent'

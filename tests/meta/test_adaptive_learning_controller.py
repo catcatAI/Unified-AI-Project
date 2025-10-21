@@ -1,7 +1,7 @@
 """
 测试模块 - test_adaptive_learning_controller
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 import unittest
@@ -13,8 +13,7 @@ from unittest.mock import MagicMock, AsyncMock
 from meta.adaptive_learning_controller import (
     PerformanceTracker,
     StrategySelector,
-    AdaptiveLearningController,
-)
+    AdaptiveLearningController)
 from meta.learning_log_db import LearningLogDB
 
 class TestPerformanceTracker(unittest.IsolatedAsyncioTestCase):

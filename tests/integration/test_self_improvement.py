@@ -1,7 +1,7 @@
 """
 测试模块 - test_self_improvement
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 import unittest
@@ -10,16 +10,16 @@ import pytest
 from unittest.mock import MagicMock, AsyncMock
 from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
 
-class TestSelfImprovement(aiounittest.AsyncTestCase):
+class TestSelfImprovement(aiounittest.AsyncTestCase()):
     """
-    A class for testing the self-improvement capabilities of the system.
+    A class for testing the self-improvement capabilities of the system.::
     """
 
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    async 
+    async,
     def setUp(self):
         """测试前设置"""
         self.test_data = {}
@@ -29,48 +29,48 @@ class TestSelfImprovement(aiounittest.AsyncTestCase):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_self_improvement(self) -> None:
+def test_self_improvement(self) -> None,
         """
         Tests the self-improvement capabilities of the system.
         """
-        dialogue_manager = DialogueManager(
-            ai_id="test_ai",
-            personality_manager=MagicMock(),
-            memory_manager=MagicMock(),
-            llm_interface=MagicMock(),
-            emotion_system=MagicMock(),
-            crisis_system=MagicMock(),
-            time_system=MagicMock(),
-            formula_engine=MagicMock(),
-            tool_dispatcher=MagicMock(),
-            learning_manager=AsyncMock(),
-            service_discovery_module=MagicMock(),
-            hsp_connector=None,
-            agent_manager=None,
-            config={}
+        dialogue_manager == DialogueManager(
+            ai_id="test_ai",,
+    personality_manager == MagicMock(),
+            memory_manager == MagicMock(),
+            llm_interface == MagicMock(),
+            emotion_system == MagicMock(),
+            crisis_system == MagicMock(),
+            time_system == MagicMock(),
+            formula_engine == MagicMock(),
+            tool_dispatcher == MagicMock(),
+            learning_manager == AsyncMock(),
+            service_discovery_module == MagicMock(),
+            hsp_connector == None,
+            agent_manager == None,
+            config = {}
         )
 
-        class DummyModel:
-            def __init__(self) -> None:
+        class DummyModel,
+            def __init__(self) -> None,
                 self.name = "DummyModel"
 
             def evaluate(self, input):
                 return input
 
-        model = DummyModel()
+        model == DummyModel()
         dialogue_manager.tool_dispatcher.models = [model]
         dialogue_manager.tool_dispatcher.tools = []
 
         async def replace_model(interaction):
             dialogue_manager.tool_dispatcher.models[0] = DummyModel()
 
-        dialogue_manager.learning_manager.learn_from_interaction = AsyncMock(
-            side_effect=replace_model
+        dialogue_manager.learning_manager.learn_from_interaction == AsyncMock(,
+    side_effect=replace_model
         )
 
-        _ = await dialogue_manager.learning_manager.learn_from_interaction(MagicMock())
+        await dialogue_manager.learning_manager.learn_from_interaction(MagicMock())
 
-        self.assertNotEqual(dialogue_manager.tool_dispatcher.models[0], model)
+        self.assertNotEqual(dialogue_manager.tool_dispatcher.models[0] model)
 
-if __name__ == "__main__":
+if __name"__main__":::
     unittest.main()

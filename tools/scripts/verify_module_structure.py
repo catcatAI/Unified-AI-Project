@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 # 添加项目根目录到Python路径
-project_root = Path(__file__).parent
+project_root == Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 def verify_module_structure():
@@ -11,7 +11,7 @@ def verify_module_structure():
     print("开始验证模块结构...")
     
     # 测试导入核心模块
-    try:
+    try,
         # 测试导入对话管理器
         from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
         print("✓ 成功导入 DialogueManager")
@@ -39,13 +39,13 @@ def verify_module_structure():
         print("\n🎉 所有模块导入测试通过！模块结构正确。")
         return True
         
-    except ImportError as e:
-        print(f"❌ 模块导入失败: {e}")
+    except ImportError as e,::
+        print(f"❌ 模块导入失败, {e}")
         return False
-    except Exception as e:
-        print(f"❌ 验证过程中出现错误: {e}")
+    except Exception as e,::
+        print(f"❌ 验证过程中出现错误, {e}")
         return False
 
-if __name__ == "__main__":
+if __name"__main__":::
     success = verify_module_structure()
     sys.exit(0 if success else 1)

@@ -23,13 +23,13 @@ try:
     # 问题可能是该行包含未闭合的docstring或错误的格式
     # 在第392行应该是docstring中的内容
     if 391 < len(lines):
-        # 修复第392行（索引391）
+        # 修复第392行(索引391)
         if "Register a specific handler for a capability." in lines[391]:
-            # 修正这行内容，确保它正确地作为docstring的一部分
+            # 修正这行内容,确保它正确地作为docstring的一部分
             lines[391] = "        Register a specific handler for a capability."
             print("✅ 修复了第392行的内容")
     
-    # 检查前一行和后一行
+    # 检查前一行和后一行:
     print(f"第391行内容: {repr(lines[390])}")
     print(f"第393行内容: {repr(lines[392])}")
     

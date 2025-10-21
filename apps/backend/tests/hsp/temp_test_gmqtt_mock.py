@@ -12,10 +12,10 @@ async def test_gmqtt_publish_mock() -> None:
 
     try:
         await client.publish(topic, payload, qos=qos)
-        _ = print("Mocked gmqtt.Client.publish called successfully.")
+        print("Mocked gmqtt.Client.publish called successfully.")
     except Exception as e:
-        _ = print(f"Error calling mocked gmqtt.Client.publish: {e}")
-        _ = pytest.fail(f"Mocked gmqtt.Client.publish raised an exception: {e}")
+        print(f"Error calling mocked gmqtt.Client.publish: {e}")
+        pytest.fail(f"Mocked gmqtt.Client.publish raised an exception: {e}")
 
     client.publish.assert_called_once_with(topic, payload, qos=qos)
     print("Assertion passed: Mocked gmqtt.Client.publish was called with correct arguments.")

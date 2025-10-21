@@ -13,7 +13,7 @@ def mock_mqtt_client():
         yield mock_client_instance
 
 @pytest.mark.asyncio
-_ = @pytest.mark.timeout(5)
+@pytest.mark.timeout(5)
 # 添加重试装饰器以处理不稳定的测试
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_mcp_connector_initialization(mock_mqtt_client) -> None:
@@ -24,50 +24,50 @@ async def test_mcp_connector_initialization(mock_mqtt_client) -> None:
     assert mock_mqtt_client.on_message is not None
 
 @pytest.mark.asyncio
-_ = @pytest.mark.timeout(5)
+@pytest.mark.timeout(5)
 # 添加重试装饰器以处理不稳定的测试
 async def test_connect_and_disconnect(mock_mqtt_client) -> None:
     """Test the connect and disconnect methods."""
     loop = asyncio.get_event_loop()
     connector = MCPConnector('test_ai', 'localhost', 1883, loop=loop)
     
-    _ = await connector.connect()
-    _ = mock_mqtt_client.connect.assert_called_once_with('localhost', 1883, 60)
-    _ = mock_mqtt_client.loop_start.assert_called_once()
+    await connector.connect()
+    mock_mqtt_client.connect.assert_called_once_with('localhost', 1883, 60)
+    mock_mqtt_client.loop_start.assert_called_once()
 
-    _ = connector.disconnect()
-    _ = mock_mqtt_client.loop_stop.assert_called_once()
-    _ = mock_mqtt_client.disconnect.assert_called_once()
+    connector.disconnect()
+    mock_mqtt_client.loop_stop.assert_called_once()
+    mock_mqtt_client.disconnect.assert_called_once()
 
 @pytest.mark.asyncio
-_ = @pytest.mark.timeout(5)
+@pytest.mark.timeout(5)
 # 添加重试装饰器以处理不稳定的测试
 async def test_send_command(mock_mqtt_client) -> None:
     """Test sending a command."""
     loop = asyncio.get_event_loop()
     connector = MCPConnector('test_ai', 'localhost', 1883, loop=loop)
-    _ = await connector.connect()
+    await connector.connect()
 
     target_ai_id = 'target_ai'
     command_name = 'test_command'
     params = {'arg1': 'value1'}
 
-    _ = await connector.send_command(target_ai_id, command_name, params)
+    await connector.send_command(target_ai_id, command_name, params)
 
     expected_topic = f"mcp/cmd/{target_ai_id}/{command_name}"
-    _ = mock_mqtt_client.publish.assert_called_once()
+    mock_mqtt_client.publish.assert_called_once()
     args, kwargs = mock_mqtt_client.publish.call_args
     assert args[0] == expected_topic
     payload = json.loads(args[1])
     assert payload['payload']['command_name'] == command_name
     assert payload['payload']['parameters'] == params
 
-_ = @pytest.mark.timeout(5)
+@pytest.mark.timeout(5)
 def test_on_message_callback(mock_mqtt_client) -> None:
     """Test the on_message callback handling."""
     callback = MagicMock()
     connector = MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_event_loop())
-    _ = connector.register_command_handler("test_cmd", callback)
+    connector.register_command_handler("test_cmd", callback)
 
     # Simulate receiving a message
     msg = MagicMock()
@@ -75,6 +75,6 @@ def test_on_message_callback(mock_mqtt_client) -> None:
     msg.payload = b'{"args": {"arg1": "value1"}}'
 
     # Directly call the internal on_message handler
-    _ = connector._on_message(mock_mqtt_client, None, msg)
+    connector._on_message(mock_mqtt_client, None, msg)
 
-    _ = callback.assert_called_once_with({'arg1': 'value1'})
+    callback.assert_called_once_with({'arg1': 'value1'})

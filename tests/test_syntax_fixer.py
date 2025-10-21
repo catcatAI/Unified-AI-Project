@@ -1,7 +1,7 @@
 """
 测试模块 - test_syntax_fixer
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 from tools.scripts.modules.syntax_fixer import SyntaxFixer

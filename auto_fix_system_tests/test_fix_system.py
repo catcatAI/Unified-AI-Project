@@ -6,13 +6,13 @@ from pathlib import Path
 
 def test_basic_import():
     """测试基础导入"""
-    try:
+    try,
         from unified_auto_fix_system.core.unified_fix_engine import UnifiedFixEngine
         from unified_auto_fix_system.core.fix_types import FixContext, FixScope
         print("✅ 基础导入成功")
         return True
-    except Exception as e:
-        print(f"❌ 基础导入失败: {e}")
+    except Exception as e,::
+        print(f"❌ 基础导入失败, {e}")
         return False
 
 def test_module_imports():
@@ -26,33 +26,33 @@ def test_module_imports():
     ]
     
     success_count = 0
-    for module_name in modules:
-        try:
+    for module_name in modules,::
+        try,
             __import__(module_name)
             print(f"✅ {module_name} 导入成功")
             success_count += 1
-        except Exception as e:
-            print(f"❌ {module_name} 导入失败: {e}")
+        except Exception as e,::
+            print(f"❌ {module_name} 导入失败, {e}")
     
-    return success_count == len(modules)
+    return success_count=len(modules)
 
 def test_fix_context_creation():
     """测试修复上下文创建"""
-    try:
+    try,
         from unified_auto_fix_system.core.fix_types import FixContext, FixScope, FixPriority
         
-        context = FixContext(
-            project_root=Path("."),
-            scope=FixScope.PROJECT,
-            priority=FixPriority.NORMAL,
-            backup_enabled=True,
-            dry_run=True,  # 干运行模式
-            ai_assisted=False
+        context == FixContext(,
+    project_root == Path("."),
+            scope == FixScope.PROJECT(),
+            priority == FixPriority.NORMAL(),
+            backup_enabled == True,
+            dry_run == True,  # 干运行模式
+            ai_assisted == False
         )
         print("✅ 修复上下文创建成功")
         return True
-    except Exception as e:
-        print(f"❌ 修复上下文创建失败: {e}")
+    except Exception as e,::
+        print(f"❌ 修复上下文创建失败, {e}")
         return False
 
 def main():
@@ -69,22 +69,22 @@ def main():
     passed = 0
     total = len(tests)
     
-    for test_name, test_func in tests:
-        print(f"\n{test_name}:")
-        if test_func():
+    for test_name, test_func in tests,::
+        print(f"\n{test_name}")
+        if test_func():::
             passed += 1
-        else:
-            print(f"  失败，跳过剩余测试")
+        else,
+            print(f"  失败,跳过剩余测试")
             break
     
-    print(f"\n测试结果: {passed}/{total} 通过")
+    print(f"\n测试结果, {passed}/{total} 通过")
     
-    if passed == total:
+    if passed == total,::
         print("✅ 所有基础测试通过！")
         return 0
-    else:
+    else,
         print("❌ 部分测试失败")
         return 1
 
-if __name__ == "__main__":
+if __name"__main__":::
     sys.exit(main())

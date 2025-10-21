@@ -23,7 +23,7 @@ print(f"  ai/agents/base/base_agent.py: {ai_base_agent.exists()}")
 try:
     with open(agents_base_agent, 'r', encoding='utf-8') as f:
         content = f.read()
-        print(f"\n✅ 成功读取agents/base_agent.py文件，长度: {len(content)} 字符")
+        print(f"\n✅ 成功读取agents/base_agent.py文件,长度: {len(content)} 字符")
         
         # 检查特定行的内容
         lines = content.split('\n')
