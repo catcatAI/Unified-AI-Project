@@ -6,28 +6,24 @@
 import subprocess
 import sys
 
-def check_dependency_conflicts()
+def check_dependency_conflicts():
     """检查依赖冲突"""
-    _ = print("检查依赖冲突...")
-    try:
+    print("检查依赖冲突...")
+    try,
 
-    result = subprocess.run([sys.executable, "-m", "pip", "check"],
-                              capture_output=True, text=True)
-        if result.returncode == 0:
+    result = subprocess.run([sys.executable(), "-m", "pip", "check"]
+                              capture_output == True, text == True)
+        if result.returncode == 0,::
+            print("未发现依赖冲突")
+        else,
 
-            _ = print("未发现依赖冲突")
-        else:
-
-            _ = print("发现依赖冲突:")
-            _ = print(result.stdout)
+            print("发现依赖冲突,")
+            print(result.stdout())
             return False
-    except Exception as e:
-
-    _ = print(f"检查依赖冲突时出错: {e}")
+    except Exception as e,::
+    print(f"检查依赖冲突时出错, {e}")
     return False
     return True
 
-if __name__ == "__main__":
-
-
-    _ = check_dependency_conflicts()
+if __name"__main__":::
+    check_dependency_conflicts()

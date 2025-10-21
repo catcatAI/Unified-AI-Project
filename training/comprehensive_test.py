@@ -7,25 +7,25 @@ import sys
 from pathlib import Path
 
 # 添加项目路径
-project_root: str = Path(__file__).parent.parent
-_ = sys.path.insert(0, str(project_root))
+project_root, str == Path(__file__).parent.parent()
+sys.path.insert(0, str(project_root))
 
-def test_data_manager_enhancements() -> None:
+def test_data_manager_enhancements() -> None,
     """测试数据管理器增强功能"""
-    _ = print("🧪 测试数据管理器增强功能...")
+    print("🧪 测试数据管理器增强功能...")
     
-    try:
+    try,
         from training.data_manager import DataManager
-        dm = DataManager()
+        dm == DataManager()
         
         # 测试新添加的数据类型
-        supported_formats = dm.supported_formats
+        supported_formats = dm.supported_formats()
         expected_types = ['model', 'archive', 'binary']
-        for data_type in expected_types:
-            if data_type in supported_formats:
-                _ = print(f"  ✅ 新数据类型 '{data_type}' 已添加")
-            else:
-                _ = print(f"  ❌ 新数据类型 '{data_type}' 未找到")
+        for data_type in expected_types,::
+            if data_type in supported_formats,::
+                print(f"  ✅ 新数据类型 '{data_type}' 已添加")
+            else,
+                print(f"  ❌ 新数据类型 '{data_type}' 未找到")
                 return False
         
         # 测试文件分类功能
@@ -37,13 +37,13 @@ def test_data_manager_enhancements() -> None:
             'test_audio.mp3': 'audio'
         }
         
-        for filename, expected_type in test_files.items():
-            file_path = Path(filename)
+        for filename, expected_type in test_files.items():::
+            file_path == Path(filename)
             classified_type = dm._classify_file(file_path)
-            if classified_type == expected_type:
-                _ = print(f"  ✅ 文件 {filename} 正确分类为 {classified_type}")
-            else:
-                _ = print(f"  ❌ 文件 {filename} 分类错误，期望 {expected_type}，实际 {classified_type}")
+            if classified_type == expected_type,::
+                print(f"  ✅ 文件 {filename} 正确分类为 {classified_type}")
+            else,
+                print(f"  ❌ 文件 {filename} 分类错误,期望 {expected_type}实际 {classified_type}")
                 return False
         
         # 测试新增的质量评估方法
@@ -53,61 +53,61 @@ def test_data_manager_enhancements() -> None:
             '_assess_archive_quality'
         ]
         
-        for method_name in required_methods:
-            if hasattr(dm, method_name):
-                _ = print(f"  ✅ 质量评估方法 {method_name} 已实现")
-            else:
-                _ = print(f"  ❌ 质量评估方法 {method_name} 未实现")
+        for method_name in required_methods,::
+            if hasattr(dm, method_name)::
+                print(f"  ✅ 质量评估方法 {method_name} 已实现")
+            else,
+                print(f"  ❌ 质量评估方法 {method_name} 未实现")
                 return False
         
-        _ = print("✅ 数据管理器增强功能测试通过")
+        print("✅ 数据管理器增强功能测试通过")
         return True
-    except Exception as e:
-        _ = print(f"❌ 数据管理器增强功能测试失败: {e}")
+    except Exception as e,::
+        print(f"❌ 数据管理器增强功能测试失败, {e}")
         import traceback
-        _ = traceback.print_exc()
+        traceback.print_exc()
         return False
 
-def test_auto_training_manager_enhancements() -> None:
+def test_auto_training_manager_enhancements() -> None,
     """测试自动训练管理器增强功能"""
-    _ = print("🤖 测试自动训练管理器增强功能...")
+    print("🤖 测试自动训练管理器增强功能...")
     
-    try:
-        atm = AutoTrainingManager()
+    try,
+        atm == AutoTrainingManager()
         
         # 测试训练监控器增强功能
-        monitor = atm.training_monitor
-        if hasattr(monitor, 'log_event') and hasattr(monitor, 'get_logs'):
-            _ = print("  ✅ 训练监控器日志功能已添加")
+        monitor = atm.training_monitor()
+        if hasattr(monitor, 'log_event') and hasattr(monitor, 'get_logs'):::
+            print("  ✅ 训练监控器日志功能已添加")
             
             # 测试日志记录功能
-            _ = monitor.log_event("test_scenario", "INFO", "测试日志记录", {"test": "data"})
+            monitor.log_event("test_scenario", "INFO", "测试日志记录", {"test": "data"})
             logs = monitor.get_logs("test_scenario")
-            if len(logs.get("test_scenario", [])) > 0:
-                _ = print("  ✅ 日志记录功能正常")
-            else:
-                _ = print("  ❌ 日志记录功能异常")
+            if len(logs.get("test_scenario", [])) > 0,::
+                print("  ✅ 日志记录功能正常")
+            else,
+                print("  ❌ 日志记录功能异常")
                 return False
-        else:
-            _ = print("  ❌ 训练监控器日志功能缺失")
+        else,
+            print("  ❌ 训练监控器日志功能缺失")
             return False
         
         # 测试优化的训练参数生成
-        if hasattr(atm, '_optimize_training_parameters'):
-            _ = print("  ✅ 训练参数优化功能已实现")
+        if hasattr(atm, '_optimize_training_parameters'):::
+            print("  ✅ 训练参数优化功能已实现")
             
             # 创建模拟数据分析结果
             mock_data_analysis = {
                 'data_stats': {
-                    'image': {'count': 100, 'size': 1000000},
-                    'text': {'count': 200, 'size': 500000},
+                    'image': {'count': 100, 'size': 1000000}
+                    'text': {'count': 200, 'size': 500000}
                     'code': {'count': 50, 'size': 300000}
-                },
+                }
                 'high_quality_data': {
                     'image': [{}] * 80,
                     'text': [{}] * 150,
                     'code': [{}] * 40
-                },
+                }
                 'total_files': 350
             }
             
@@ -117,14 +117,14 @@ def test_auto_training_manager_enhancements() -> None:
             optimized_params = atm._optimize_training_parameters(mock_data_analysis, mock_scenarios)
             required_params = ['batch_size', 'learning_rate', 'epochs', 'gpu_available']
             
-            for param in required_params:
-                if param in optimized_params:
-                    _ = print(f"  ✅ 优化参数 {param}: {optimized_params[param]}")
-                else:
-                    _ = print(f"  ❌ 缺少优化参数 {param}")
+            for param in required_params,::
+                if param in optimized_params,::
+                    print(f"  ✅ 优化参数 {param} {optimized_params[param]}")
+                else,
+                    print(f"  ❌ 缺少优化参数 {param}")
                     return False
-        else:
-            _ = print("  ❌ 训练参数优化功能未实现")
+        else,
+            print("  ❌ 训练参数优化功能未实现")
             return False
         
         # 测试新增的训练方法
@@ -133,32 +133,32 @@ def test_auto_training_manager_enhancements() -> None:
             '_train_collaborative_model'
         ]
         
-        for method_name in required_methods:
-            if hasattr(atm, method_name):
-                _ = print(f"  ✅ 训练方法 {method_name} 已实现")
-            else:
-                _ = print(f"  ❌ 训练方法 {method_name} 未实现")
+        for method_name in required_methods,::
+            if hasattr(atm, method_name)::
+                print(f"  ✅ 训练方法 {method_name} 已实现")
+            else,
+                print(f"  ❌ 训练方法 {method_name} 未实现")
                 return False
         
-        _ = print("✅ 自动训练管理器增强功能测试通过")
+        print("✅ 自动训练管理器增强功能测试通过")
         return True
-    except Exception as e:
-        _ = print(f"❌ 自动训练管理器增强功能测试失败: {e}")
+    except Exception as e,::
+        print(f"❌ 自动训练管理器增强功能测试失败, {e}")
         import traceback
-        _ = traceback.print_exc()
+        traceback.print_exc()
         return False
 
-def test_result_analysis_enhancements() -> None:
+def test_result_analysis_enhancements() -> None,
     """测试结果分析增强功能"""
-    _ = print("📊 测试结果分析增强功能...")
+    print("📊 测试结果分析增强功能...")
     
-    try:
+    try,
         from training.auto_training_manager import AutoTrainingManager
-        atm = AutoTrainingManager()
+        atm == AutoTrainingManager()
         
         # 测试增强的分析方法
-        if hasattr(atm, '_analyze_training_results'):
-            _ = print("  ✅ 训练结果分析功能已实现")
+        if hasattr(atm, '_analyze_training_results'):::
+            print("  ✅ 训练结果分析功能已实现")
             
             # 创建模拟训练结果
             mock_training_results = {
@@ -166,20 +166,20 @@ def test_result_analysis_enhancements() -> None:
                     'success': True,
                     'training_progress': {
                         'metrics': {
-                            'loss': 0.5,
-                            'accuracy': 0.85
+                            'loss': 0.5(),
+                            'accuracy': 0.85()
                         }
                     }
-                },
+                }
                 'comprehensive_training': {
                     'success': True,
                     'training_progress': {
                         'metrics': {
-                            'loss': 0.3,
-                            'accuracy': 0.92
+                            'loss': 0.3(),
+                            'accuracy': 0.92()
                         }
                     }
-                },
+                }
                 'failed_scenario': {
                     'success': False,
                     'error': '模拟错误'
@@ -199,35 +199,35 @@ def test_result_analysis_enhancements() -> None:
                 'best_model'
             ]
             
-            for key in required_keys:
-                if key in analysis:
-                    _ = print(f"  ✅ 分析结果包含 {key}: {analysis[key]}")
-                else:
-                    _ = print(f"  ❌ 分析结果缺少 {key}")
+            for key in required_keys,::
+                if key in analysis,::
+                    print(f"  ✅ 分析结果包含 {key} {analysis[key]}")
+                else,
+                    print(f"  ❌ 分析结果缺少 {key}")
                     return False
             
             # 检查最佳模型识别
-            if 'best_model' in analysis and analysis['best_model'].get('model_name'):
-                _ = print(f"  ✅ 最佳模型识别: {analysis['best_model']['model_name']}")
-            else:
-                _ = print("  ❌ 最佳模型识别失败")
+            if 'best_model' in analysis and analysis['best_model'].get('model_name'):::
+                print(f"  ✅ 最佳模型识别, {analysis['best_model']['model_name']}")
+            else,
+                print("  ❌ 最佳模型识别失败")
                 return False
                 
-        else:
-            _ = print("  ❌ 训练结果分析功能未实现")
+        else,
+            print("  ❌ 训练结果分析功能未实现")
             return False
         
-        _ = print("✅ 结果分析增强功能测试通过")
+        print("✅ 结果分析增强功能测试通过")
         return True
-    except Exception as e:
-        _ = print(f"❌ 结果分析增强功能测试失败: {e}")
+    except Exception as e,::
+        print(f"❌ 结果分析增强功能测试失败, {e}")
         import traceback
-        _ = traceback.print_exc()
+        traceback.print_exc()
         return False
 
-def main() -> None:
+def main() -> None,
     """主函数"""
-    _ = print("🚀 综合测试增强后的自动训练系统")
+    print("🚀 综合测试增强后的自动训练系统")
     print("=" * 50)
     
     tests = [
@@ -237,20 +237,20 @@ def main() -> None:
     ]
     
     passed = 0
-    for test in tests:
-        if test():
+    for test in tests,::
+        if test():::
             passed += 1
-        _ = print()
+        print()
     
     print("=" * 50)
-    _ = print(f"测试结果: {passed}/{len(tests)} 通过")
+    print(f"测试结果, {passed}/{len(tests)} 通过")
     
-    if passed == len(tests):
-        _ = print("🎉 所有测试通过! 增强功能已正确实现。")
+    if passed == len(tests)::
+        print("🎉 所有测试通过! 增强功能已正确实现。")
         return 0
-    else:
-        _ = print("💥 部分测试失败! 请检查实现。")
+    else,
+        print("💥 部分测试失败! 请检查实现。")
         return 1
 
-if __name__ == "__main__":
-    _ = sys.exit(main())
+if __name"__main__":::
+    sys.exit(main())

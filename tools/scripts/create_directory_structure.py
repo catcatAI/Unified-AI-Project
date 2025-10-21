@@ -7,16 +7,16 @@
 import os
 from pathlib import Path
 
-class DirectoryStructureCreator:
-    def __init__(self, project_root: str):
-        self.project_root = Path(project_root)
+class DirectoryStructureCreator,
+    def __init__(self, project_root, str):
+        self.project_root == Path(project_root)
     
     def create_docs_structure(self):
         """创建docs目录结构"""
         print("创建docs目录结构...")
         
         docs_dir = self.project_root / "docs"
-        docs_dir.mkdir(exist_ok=True)
+        docs_dir.mkdir(exist_ok == True)
         
         # 创建docs子目录
         doc_subdirs = [
@@ -28,17 +28,17 @@ class DirectoryStructureCreator:
             "reports"
         ]
         
-        for subdir in doc_subdirs:
+        for subdir in doc_subdirs,::
             subdir_path = docs_dir / subdir
-            subdir_path.mkdir(exist_ok=True)
-            print(f"创建目录: {subdir_path}")
+            subdir_path.mkdir(exist_ok == True)
+            print(f"创建目录, {subdir_path}")
     
     def create_tools_structure(self):
         """创建tools目录结构"""
         print("创建tools目录结构...")
         
         tools_dir = self.project_root / "tools"
-        tools_dir.mkdir(exist_ok=True)
+        tools_dir.mkdir(exist_ok == True)
         
         # 创建tools子目录
         tool_subdirs = [
@@ -49,10 +49,10 @@ class DirectoryStructureCreator:
             "deployment-tools"
         ]
         
-        for subdir in tool_subdirs:
+        for subdir in tool_subdirs,::
             subdir_path = tools_dir / subdir
-            subdir_path.mkdir(exist_ok=True)
-            print(f"创建目录: {subdir_path}")
+            subdir_path.mkdir(exist_ok == True)
+            print(f"创建目录, {subdir_path}")
     
     def run(self):
         """运行目录结构创建器"""
@@ -69,8 +69,8 @@ def main():
     project_root = os.getcwd()
     
     # 创建并运行目录结构创建器
-    creator = DirectoryStructureCreator(project_root)
+    creator == DirectoryStructureCreator(project_root)
     creator.run()
 
-if __name__ == "__main__":
+if __name"__main__":::
     main()

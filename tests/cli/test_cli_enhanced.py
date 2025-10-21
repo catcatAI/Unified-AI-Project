@@ -1,7 +1,7 @@
 """
 测试模块 - test_cli_enhanced
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 import sys
@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'cli'))
 
 from cli.main import handle_model_list, handle_model_info, handle_train_start, handle_train_status, handle_data_list, handle_data_info
 
-class TestEnhancedCLI:
+class TestEnhancedCLI,
     """测试增强的CLI功能"""
     
     @patch('cli.main.get_services')
@@ -31,13 +31,13 @@ class TestEnhancedCLI:
 def test_handle_model_list_success(self, mock_get_services):
         """测试模型列表命令成功执行"""
         # Mock服务
-        mock_learning_manager = MagicMock()
+        mock_learning_manager == MagicMock()
         mock_learning_manager.get_available_models.return_value = ['model1', 'model2', 'model3']
-        mock_services = {'learning_manager': mock_learning_manager}
+        mock_services == {'learning_manager': mock_learning_manager}
         mock_get_services.return_value = mock_services
         
         # Mock参数
-        mock_args = MagicMock()
+        mock_args == MagicMock()
         
         # 执行测试
         import asyncio
@@ -53,7 +53,7 @@ def test_handle_model_list_success(self, mock_get_services):
         mock_get_services.return_value = {}
         
         # Mock参数
-        mock_args = MagicMock()
+        mock_args == MagicMock()
         
         # 执行测试
         import asyncio
@@ -65,17 +65,17 @@ def test_handle_model_list_success(self, mock_get_services):
     def test_handle_model_info_success(self, mock_get_services):
         """测试模型信息命令成功执行"""
         # Mock服务
-        mock_learning_manager = MagicMock()
+        mock_learning_manager == MagicMock()
         mock_learning_manager.get_model_info.return_value = {
             'name': 'test_model',
             'version': '1.0',
             'description': 'Test model'
         }
-        mock_services = {'learning_manager': mock_learning_manager}
+        mock_services == {'learning_manager': mock_learning_manager}
         mock_get_services.return_value = mock_services
         
         # Mock参数
-        mock_args = MagicMock()
+        mock_args == MagicMock()
         mock_args.model_name = 'test_model'
         
         # 执行测试
@@ -89,16 +89,16 @@ def test_handle_model_list_success(self, mock_get_services):
     def test_handle_train_start_success(self, mock_get_services):
         """测试启动训练命令成功执行"""
         # Mock服务
-        mock_learning_manager = MagicMock()
+        mock_learning_manager == MagicMock()
         mock_learning_manager.start_training.return_value = {
             'status': 'started',
             'message': 'Training started successfully'
         }
-        mock_services = {'learning_manager': mock_learning_manager}
+        mock_services == {'learning_manager': mock_learning_manager}
         mock_get_services.return_value = mock_services
         
         # Mock参数
-        mock_args = MagicMock()
+        mock_args == MagicMock()
         mock_args.model_name = 'test_model'
         
         # 执行测试
@@ -112,17 +112,17 @@ def test_handle_model_list_success(self, mock_get_services):
     def test_handle_train_status_success(self, mock_get_services):
         """测试训练状态命令成功执行"""
         # Mock服务
-        mock_learning_manager = MagicMock()
+        mock_learning_manager == MagicMock()
         mock_learning_manager.get_training_status.return_value = {
             'status': 'running',
             'progress': '50%',
             'eta': '10 minutes'
         }
-        mock_services = {'learning_manager': mock_learning_manager}
+        mock_services == {'learning_manager': mock_learning_manager}
         mock_get_services.return_value = mock_services
         
         # Mock参数
-        mock_args = MagicMock()
+        mock_args == MagicMock()
         
         # 执行测试
         import asyncio
@@ -135,13 +135,13 @@ def test_handle_model_list_success(self, mock_get_services):
     def test_handle_data_list_success(self, mock_get_services):
         """测试数据列表命令成功执行"""
         # Mock服务
-        mock_learning_manager = MagicMock()
+        mock_learning_manager == MagicMock()
         mock_learning_manager.list_datasets.return_value = ['dataset1', 'dataset2', 'dataset3']
-        mock_services = {'learning_manager': mock_learning_manager}
+        mock_services == {'learning_manager': mock_learning_manager}
         mock_get_services.return_value = mock_services
         
         # Mock参数
-        mock_args = MagicMock()
+        mock_args == MagicMock()
         
         # 执行测试
         import asyncio
@@ -154,17 +154,17 @@ def test_handle_model_list_success(self, mock_get_services):
     def test_handle_data_info_success(self, mock_get_services):
         """测试数据信息命令成功执行"""
         # Mock服务
-        mock_learning_manager = MagicMock()
+        mock_learning_manager == MagicMock()
         mock_learning_manager.get_dataset_info.return_value = {
             'name': 'test_dataset',
             'size': '1000 samples',
             'description': 'Test dataset'
         }
-        mock_services = {'learning_manager': mock_learning_manager}
+        mock_services == {'learning_manager': mock_learning_manager}
         mock_get_services.return_value = mock_services
         
         # Mock参数
-        mock_args = MagicMock()
+        mock_args == MagicMock()
         mock_args.dataset_name = 'test_dataset'
         
         # 执行测试

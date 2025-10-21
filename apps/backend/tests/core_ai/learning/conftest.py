@@ -3,5 +3,5 @@ from apps.backend.src.ai.learning.content_analyzer_module import ContentAnalyzer
 
 @pytest.fixture(scope="session")
 def content_analyzer():
-    """Create a ContentAnalyzerModule instance once for the entire test session."""
+    """Create a ContentAnalyzerModule instance once for the entire test session.""":::
     return ContentAnalyzerModule()

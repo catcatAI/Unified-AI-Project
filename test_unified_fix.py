@@ -36,7 +36,7 @@ try:
     project_files = fixer.scan_project_files()
     print(f"找到 {len(project_files)} 个项目文件")
     
-    # 显示前5个文件
+    # 显示前5个文件:
     print("\n前5个文件:")
     for file_path in project_files[:5]:
         rel_path = file_path.relative_to(project_root)

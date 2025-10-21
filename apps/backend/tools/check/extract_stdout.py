@@ -12,17 +12,17 @@ print(stdout_content[:5000])
 
 # 查找失败的测试
 if "FAILED" in stdout_content:
-    print("\n=== 失败的测试 ===")
+    print("\n=失败的测试 ===")
     lines = stdout_content.split('\n')
     for line in lines:
         if "FAILED" in line:
             print(line)
 else:
-    print("\n=== 没有找到明确标记为FAILED的测试 ===")
+    print("\n=没有找到明确标记为FAILED的测试 ===")
 
 # 查找包含"timeout"的行
 if "timeout" in stdout_content.lower():
-    print("\n=== 超时相关的行 ===")
+    print("\n=超时相关的行 ===")
     lines = stdout_content.split('\n')
     for line in lines:
         if "timeout" in line.lower():

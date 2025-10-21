@@ -15,7 +15,7 @@ if start != -1 and end != -1:
     test_detail = stdout_content[start:end]
     print(test_detail)
 elif start != -1:
-    # 如果没有找到结束标记，打印到文件末尾
+    # 如果没有找到结束标记,打印到文件末尾
     test_detail = stdout_content[start:]
     print(test_detail)
 else:

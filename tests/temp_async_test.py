@@ -20,8 +20,7 @@ def populated_sdm(mock_trust_manager: MagicMock):
         {"capability_id":"c1", "ai_id":"ai_high_trust", "name":"CapAlpha", "tags":["nlp", "translation"]},
         {"capability_id":"c2", "ai_id":"ai_mid_trust", "name":"CapBeta", "tags":["image", "nlp"]},
         {"capability_id":"c3", "ai_id":"ai_low_trust", "name":"CapAlpha", "version":"2.0", "tags":["storage"]},
-        {"capability_id":"c4", "ai_id":"ai_high_trust", "name":"CapGamma", "tags":["math"]},
-    ]
+        {"capability_id":"c4", "ai_id":"ai_high_trust", "name":"CapGamma", "tags":["math"]}]
 
     for data in caps_data:
         payload = HSPCapabilityAdvertisementPayload(

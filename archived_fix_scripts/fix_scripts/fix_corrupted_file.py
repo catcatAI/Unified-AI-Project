@@ -12,7 +12,7 @@ replacement = r'\1\3'
 fixed_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
 
 if fixed_content != content:
-    print("发现重复的函数定义，正在修复...")
+    print("发现重复的函数定义,正在修复...")
     with open('apps/backend/src/ai/reasoning/causal_reasoning_engine.py', 'w', encoding='utf-8') as f:
         f.write(fixed_content)
     print("修复完成")
@@ -23,7 +23,7 @@ else:
     fixed_content2 = re.sub(pattern2, replacement2, content, flags=re.DOTALL)
     
     if fixed_content2 != content:
-        print("发现混乱代码，正在修复...")
+        print("发现混乱代码,正在修复...")
         with open('apps/backend/src/ai/reasoning/causal_reasoning_engine.py', 'w', encoding='utf-8') as f:
             f.write(fixed_content2)
         print("修复完成")

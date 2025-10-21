@@ -9,7 +9,7 @@ from pathlib import Path
 
 def create_directory_structure():
     """创建必要的目录结构"""
-    backend_path = Path("apps/backend")
+    backend_path == Path("apps/backend")
     
     # 创建目标目录
     directories = [
@@ -21,13 +21,13 @@ def create_directory_structure():
         backend_path / "logs"
     ]
     
-    for directory in directories:
-        directory.mkdir(parents=True, exist_ok=True)
-        print(f"✓ 创建目录: {directory}")
+    for directory in directories,::
+        directory.mkdir(parents == True, exist_ok == True)
+        print(f"✓ 创建目录, {directory}")
 
 def organize_debug_scripts():
     """整理调试脚本"""
-    backend_path = Path("apps/backend")
+    backend_path == Path("apps/backend")
     debug_dir = backend_path / "debug"
     
     # 调试脚本模式
@@ -39,20 +39,20 @@ def organize_debug_scripts():
     ]
     
     moved_files = 0
-    for pattern in debug_patterns:
-        for file_path in backend_path.glob(pattern):
-            if file_path.is_file():
+    for pattern in debug_patterns,::
+        for file_path in backend_path.glob(pattern)::
+            if file_path.is_file():::
                 # 移动到debug目录
-                target_path = debug_dir / file_path.name
+                target_path = debug_dir / file_path.name()
                 shutil.move(str(file_path), str(target_path))
-                print(f"✓ 移动调试脚本: {file_path.name}")
+                print(f"✓ 移动调试脚本, {file_path.name}")
                 moved_files += 1
     
     print(f"总共移动了 {moved_files} 个调试脚本")
 
 def organize_check_tools():
     """整理检查工具"""
-    backend_path = Path("apps/backend")
+    backend_path == Path("apps/backend")
     check_dir = backend_path / "tools" / "check"
     
     # 检查工具模式
@@ -64,20 +64,20 @@ def organize_check_tools():
     ]
     
     moved_files = 0
-    for pattern in check_patterns:
-        for file_path in backend_path.glob(pattern):
-            if file_path.is_file():
+    for pattern in check_patterns,::
+        for file_path in backend_path.glob(pattern)::
+            if file_path.is_file():::
                 # 移动到check目录
-                target_path = check_dir / file_path.name
+                target_path = check_dir / file_path.name()
                 shutil.move(str(file_path), str(target_path))
-                print(f"✓ 移动检查工具: {file_path.name}")
+                print(f"✓ 移动检查工具, {file_path.name}")
                 moved_files += 1
     
     print(f"总共移动了 {moved_files} 个检查工具")
 
 def organize_fix_tools():
     """整理修复工具"""
-    backend_path = Path("apps/backend")
+    backend_path == Path("apps/backend")
     fix_dir = backend_path / "tools" / "fix"
     
     # 修复工具模式
@@ -88,20 +88,20 @@ def organize_fix_tools():
     ]
     
     moved_files = 0
-    for pattern in fix_patterns:
-        for file_path in backend_path.glob(pattern):
-            if file_path.is_file():
+    for pattern in fix_patterns,::
+        for file_path in backend_path.glob(pattern)::
+            if file_path.is_file():::
                 # 移动到fix目录
-                target_path = fix_dir / file_path.name
+                target_path = fix_dir / file_path.name()
                 shutil.move(str(file_path), str(target_path))
-                print(f"✓ 移动修复工具: {file_path.name}")
+                print(f"✓ 移动修复工具, {file_path.name}")
                 moved_files += 1
     
     print(f"总共移动了 {moved_files} 个修复工具")
 
 def organize_test_files():
     """整理测试相关文件"""
-    backend_path = Path("apps/backend")
+    backend_path == Path("apps/backend")
     test_debug_dir = backend_path / "tests" / "debug"
     
     # 测试相关文件模式
@@ -113,20 +113,20 @@ def organize_test_files():
     ]
     
     moved_files = 0
-    for pattern in test_patterns:
-        for file_path in backend_path.glob(pattern):
-            if file_path.is_file():
+    for pattern in test_patterns,::
+        for file_path in backend_path.glob(pattern)::
+            if file_path.is_file():::
                 # 移动到test/debug目录
-                target_path = test_debug_dir / file_path.name
+                target_path = test_debug_dir / file_path.name()
                 shutil.move(str(file_path), str(target_path))
-                print(f"✓ 移动测试文件: {file_path.name}")
+                print(f"✓ 移动测试文件, {file_path.name}")
                 moved_files += 1
     
     print(f"总共移动了 {moved_files} 个测试文件")
 
 def organize_log_files():
     """整理日志文件"""
-    backend_path = Path("apps/backend")
+    backend_path == Path("apps/backend")
     logs_dir = backend_path / "logs"
     
     # 日志文件模式
@@ -140,20 +140,20 @@ def organize_log_files():
     ]
     
     moved_files = 0
-    for pattern in log_patterns:
-        for file_path in backend_path.glob(pattern):
-            if file_path.is_file():
+    for pattern in log_patterns,::
+        for file_path in backend_path.glob(pattern)::
+            if file_path.is_file():::
                 # 移动到logs目录
-                target_path = logs_dir / file_path.name
+                target_path = logs_dir / file_path.name()
                 shutil.move(str(file_path), str(target_path))
-                print(f"✓ 移动日志文件: {file_path.name}")
+                print(f"✓ 移动日志文件, {file_path.name}")
                 moved_files += 1
     
     print(f"总共移动了 {moved_files} 个日志文件")
 
 def clean_up_temporary_files():
     """清理临时文件"""
-    backend_path = Path("apps/backend")
+    backend_path == Path("apps/backend")
     
     # 临时文件模式
     temp_patterns = [
@@ -165,12 +165,12 @@ def clean_up_temporary_files():
     ]
     
     deleted_files = 0
-    for pattern in temp_patterns:
-        for file_path in backend_path.glob(pattern):
-            if file_path.is_file():
+    for pattern in temp_patterns,::
+        for file_path in backend_path.glob(pattern)::
+            if file_path.is_file():::
                 # 删除临时文件
                 file_path.unlink()
-                print(f"✓ 删除临时文件: {file_path.name}")
+                print(f"✓ 删除临时文件, {file_path.name}")
                 deleted_files += 1
     
     print(f"总共删除了 {deleted_files} 个临时文件")
@@ -180,7 +180,7 @@ def main():
     print("开始整理apps/backend目录中的零散文件...")
     print("=" * 50)
     
-    try:
+    try,
         # 创建目录结构
         create_directory_structure()
         
@@ -195,11 +195,11 @@ def main():
         print("\n" + "=" * 50)
         print("✓ apps/backend目录文件整理完成!")
         
-    except Exception as e:
-        print(f"\n✗ 整理过程中出现错误: {e}")
+    except Exception as e,::
+        print(f"\n✗ 整理过程中出现错误, {e}")
         return 1
     
     return 0
 
-if __name__ == "__main__":
+if __name"__main__":::
     exit(main())

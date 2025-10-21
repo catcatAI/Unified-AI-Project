@@ -18,7 +18,7 @@ if failures_start != -1:
         print("=== 测试失败详细信息 ===")
         print(failures_content)
     else:
-        # 如果没有找到汇总信息，打印到文件末尾
+        # 如果没有找到汇总信息,打印到文件末尾
         failures_content = stdout_content[failures_start:]
         print("=== 测试失败详细信息 ===")
         print(failures_content)

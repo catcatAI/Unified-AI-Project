@@ -13,26 +13,26 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 # 添加項目根目錄到 Python 路徑
-project_root: str = Path(__file__).parent.parent
-_ = sys.path.insert(0, str(project_root))
-_ = sys.path.insert(0, str(project_root / "apps"))
-_ = sys.path.insert(0, str(project_root / "apps" / "backend"))
-_ = sys.path.insert(0, str(project_root / "apps" / "backend" / "src"))
+project_root, str == Path(__file__).parent.parent()
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "apps"))
+sys.path.insert(0, str(project_root / "apps" / "backend"))
+sys.path.insert(0, str(project_root / "apps" / "backend" / "src"))
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger: Any = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
+logger, Any = logging.getLogger(__name__)
 
-class TestRunner:
+class TestRunner,
     """測試運行器"""
 
-    def __init__(self) -> None:
+    def __init__(self) -> None,
     self.project_root = project_root
     self.test_results = {}
     self.failed_tests = []
 
-    def setup_environment(self)
+    def setup_environment(self):
     """設置測試環境"""
-    _ = logger.info("設置測試環境...")
+    logger.info("設置測試環境...")
 
     # 設置演示模式環境變量
     demo_env = {
@@ -43,12 +43,10 @@ class TestRunner:
             'GEMINI_API_KEY': 'DEMO_GEMINI_KEY_2025',
             'OPENAI_API_KEY': 'DEMO_OPENAI_KEY_2025',
             'MIKO_HAM_KEY': 'DEMO_HAM_KEY_2025',
-            _ = 'PYTHONPATH': str(self.project_root)
+            'PYTHONPATH': str(self.project_root())
     }
 
-        for key, value in demo_env.items()
-
-
+        for key, value in demo_env.items()::
     os.environ[key] = value
 
     # 創建必要的目錄
@@ -60,106 +58,94 @@ class TestRunner:
             'test_data'
     ]
 
-        for dir_path in test_dirs:
-
-
+        for dir_path in test_dirs,::
     full_path = self.project_root / dir_path
-            full_path.mkdir(parents=True, exist_ok=True)
+            full_path.mkdir(parents == True, exist_ok == True)
 
-    _ = logger.info("測試環境設置完成")
+    logger.info("測試環境設置完成")
 
-    def run_test_category(self, category: str, test_paths: List[...]
+    def run_test_category(self, category, str, test_paths, List[...]
     """運行特定類別的測試
 
-    Args:
-            category: 測試類別名稱
-            test_paths: 測試文件路徑列表
+    Args,
+            category, 測試類別名稱
+            test_paths, 測試文件路徑列表
 
-    Returns:
-            Dict: 測試結果
-    """
-    _ = logger.info(f"運行 {category} 測試...")
-
+    Returns,
+            Dict, 測試結果
+    """,
+    logger.info(f"運行 {category} 測試..."):
     results = {
             'category': category,
-            _ = 'total': len(test_paths),
+            'total': len(test_paths),
             'passed': 0,
             'failed': 0,
             'skipped': 0,
             'errors': []
     }
 
-        for test_path in test_paths:
-
-
+        for test_path in test_paths,::
     full_path = self.project_root / test_path
-            if not full_path.exists()
-
-    _ = logger.warning(f"測試文件不存在: {test_path}")
+            if not full_path.exists()::
+    logger.warning(f"測試文件不存在, {test_path}")
                 results['skipped'] += 1
                 continue
 
-            try:
+            try,
                 # 運行單個測試文件
                 cmd = [
-                    sys.executable, '-m', 'pytest',
-                    _ = str(full_path),
+                    sys.executable(), '-m', 'pytest',
+                    str(full_path),
                     '-v',
                     '--tb=short',
                     '--timeout=30'
                 ]
 
                 result = subprocess.run(
-                    cmd,
-                    cwd=self.project_root,
-                    capture_output=True,
-                    text=True,
+                    cmd,,
+    cwd=self.project_root(),
+                    capture_output == True,
+                    text == True,
                     timeout=120
                 )
 
-                if result.returncode == 0:
-
-
+                if result.returncode == 0,::
     results['passed'] += 1
-                    _ = logger.info(f"✅ {test_path} - 通過")
-                else:
+                    logger.info(f"✅ {test_path} - 通過")
+                else,
 
                     results['failed'] += 1
                     results['errors'].append({
                         'test': test_path,
-                        'stdout': result.stdout,
-                        'stderr': result.stderr
+                        'stdout': result.stdout(),
+                        'stderr': result.stderr()
                     })
-                    _ = logger.error(f"❌ {test_path} - 失敗")
-                    _ = self.failed_tests.append(test_path)
+                    logger.error(f"❌ {test_path} - 失敗")
+                    self.failed_tests.append(test_path)
 
-            except subprocess.TimeoutExpired:
-
-
+            except subprocess.TimeoutExpired,::
                 results['failed'] += 1
                 results['errors'].append({
                     'test': test_path,
                     'error': 'Test timeout'
                 })
-                _ = logger.error(f"⏰ {test_path} - 超時")
-                _ = self.failed_tests.append(test_path)
+                logger.error(f"⏰ {test_path} - 超時")
+                self.failed_tests.append(test_path)
 
-            except Exception as e:
-
-
+            except Exception as e,::
                 results['failed'] += 1
                 results['errors'].append({
                     'test': test_path,
-                    _ = 'error': str(e)
+                    'error': str(e)
                 })
-                _ = logger.error(f"💥 {test_path} - 異常: {e}")
-                _ = self.failed_tests.append(test_path)
+                logger.error(f"💥 {test_path} - 異常, {e}")
+                self.failed_tests.append(test_path)
 
     return results
 
-    def run_all_tests(self)
+    def run_all_tests(self):
     """運行所有測試"""
-    _ = logger.info("開始運行綜合測試套件")
+    logger.info("開始運行綜合測試套件")
 
     # 定義測試類別和對應的測試文件
     test_categories = {
@@ -169,28 +155,28 @@ class TestRunner:
                 'apps/backend/tests/core_ai/test_time_system.py',
                 'apps/backend/tests/core_ai/memory/test_ham_memory_manager.py',
                 'apps/backend/tests/core_ai/dialogue/test_dialogue_manager.py'
-            ],
+            ]
             'Integrations': [
                 'apps/backend/tests/integrations/test_atlassian_bridge.py',
                 'apps/backend/tests/integrations/test_atlassian_bridge_fallback.py',
                 'apps/backend/tests/integrations/test_rovo_dev_agent.py',
                 'apps/backend/tests/integrations/test_rovo_dev_agent_recovery.py',
                 'apps/backend/tests/integrations/test_rovo_dev_connector.py'
-            ],
+            ]
             'HSP Protocol': [
                 'apps/backend/tests/hsp/test_hsp_connector.py',
                 'apps/backend/tests/hsp/test_hsp_integration.py'
-            ],
+            ]
             'Services': [
                 'apps/backend/tests/services/test_main_api_server.py',
                 'apps/backend/tests/services/test_llm_interface.py',
                 'apps/backend/tests/services/test_resource_awareness_service.py'
-            ],
+            ]
             'Tools': [
                 'apps/backend/tests/tools/test_math_model.py',
                 'apps/backend/tests/tools/test_logic_model.py',
                 'apps/backend/tests/tools/test_parameter_extractor.py'
-            ],
+            ]
             'Game': [
                 'apps/backend/tests/game/test_main.py',
                 'apps/backend/tests/game/test_npcs.py'
@@ -198,22 +184,19 @@ class TestRunner:
     }
 
     # 運行每個類別的測試
-        for category, test_paths in test_categories.items()
-
+        for category, test_paths in test_categories.items()::
     result = self.run_test_category(category, test_paths)
             self.test_results[category] = result
 
-    def generate_report(self)
+    def generate_report(self):
     """生成測試報告"""
-    _ = logger.info("生成測試報告...")
+    logger.info("生成測試報告...")
 
-        total_tests = sum(r['total'] for r in self.test_results.values()):
-    total_passed = sum(r['passed'] for r in self.test_results.values()):
-    total_failed = sum(r['failed'] for r in self.test_results.values()):
-    total_skipped = sum(r['skipped'] for r in self.test_results.values()):
-
-    success_rate = (total_passed / total_tests * 100) if total_tests > 0 else 0:
-
+        total_tests == sum(r['total'] for r in self.test_results.values()):::
+    total_passed == sum(r['passed'] for r in self.test_results.values()):::
+    total_failed == sum(r['failed'] for r in self.test_results.values()):::
+    total_skipped == sum(r['skipped'] for r in self.test_results.values()):::
+    success_rate == (total_passed / total_tests * 100) if total_tests > 0 else 0,::
     report = f"""
 # 🧪 綜合測試報告
 
@@ -222,60 +205,54 @@ class TestRunner:
 - **通過**: {total_passed} ✅
 - **失敗**: {total_failed} ❌
 - **跳過**: {total_skipped} ⏭️
-- **成功率**: {success_rate:.1f}%
+- **成功率**: {"success_rate":.1f}%
 
 ## 📋 分類結果
 """
 
-        for category, result in self.test_results.items()
-
-
-    category_success_rate = (result['passed'] / result['total'] * 100) if result['total'] > 0 else 0:
-    status_emoji = "✅" if result['failed'] == 0 else "❌":
-
+        for category, result in self.test_results.items()::
+    category_success_rate == (result['passed'] / result['total'] * 100) if result['total'] > 0 else 0,::
+    status_emoji == "✅" if result['failed'] == 0 else "❌":::
     report += f"""
 ### {status_emoji} {category}
-- 總數: {result['total']}
-- 通過: {result['passed']}
-- 失敗: {result['failed']}
-- 跳過: {result['skipped']}
-- 成功率: {category_success_rate:.1f}%
+- 總數, {result['total']}
+- 通過, {result['passed']}
+- 失敗, {result['failed']}
+- 跳過, {result['skipped']}
+- 成功率, {"category_success_rate":.1f}%
 """
 
-        if self.failed_tests:
-
-
+        if self.failed_tests,::
     report += f"""
 ## ❌ 失敗的測試
 """
-            for test in self.failed_tests:
-
+            for test in self.failed_tests,::
     report += f"- {test}\n"
 
     # 保存報告
     report_file = self.project_root / "test_report.md"
-    with open(report_file, 'w', encoding='utf-8') as f:
-    _ = f.write(report)
+    with open(report_file, 'w', encoding == 'utf-8') as f,
+    f.write(report)
 
-    _ = logger.info(f"測試報告已保存到: {report_file}")
-    _ = print(report)
+    logger.info(f"測試報告已保存到, {report_file}")
+    print(report)
 
-    def fix_common_issues(self)
+    def fix_common_issues(self):
     """修復常見的測試問題"""
-    _ = logger.info("修復常見測試問題...")
+    logger.info("修復常見測試問題...")
 
     # 修復導入問題
-    _ = self._fix_import_issues()
+    self._fix_import_issues()
 
     # 修復異步測試問題
-    _ = self._fix_async_issues()
+    self._fix_async_issues()
 
     # 修復模擬對象問題
-    _ = self._fix_mock_issues()
+    self._fix_mock_issues()
 
-    _ = logger.info("常見問題修復完成")
+    logger.info("常見問題修復完成")
 
-    def _fix_import_issues(self)
+    def _fix_import_issues(self):
     """修復導入問題"""
     # 確保 __init__.py 文件存在
     init_files = [
@@ -288,30 +265,27 @@ class TestRunner:
             'tests/game/__init__.py'
     ]
 
-        for init_file in init_files:
-
-
+        for init_file in init_files,::
     init_path = self.project_root / init_file
-            if not init_path.exists()
+            if not init_path.exists()::
+    init_path.parent.mkdir(parents == True, exist_ok == True)
+                init_path.touch()
 
-    init_path.parent.mkdir(parents=True, exist_ok=True)
-                _ = init_path.touch()
-
-    def _fix_async_issues(self)
+    def _fix_async_issues(self):
     """修復異步測試問題"""
     # 這裡可以添加異步測試的修復邏輯
     pass
 
-    def _fix_mock_issues(self)
+    def _fix_mock_issues(self):
     """修復模擬對象問題"""
     # 這裡可以添加模擬對象的修復邏輯
     pass
 
-    async def run_demo_learning_test(self)
+    async def run_demo_learning_test(self):
     """運行演示學習功能測試"""
-    _ = logger.info("測試演示學習功能...")
+    logger.info("測試演示學習功能...")
 
-        try:
+        try,
 
 
             from apps.backend.src.core_ai.demo_learning_manager import demo_learning_manager
@@ -327,71 +301,63 @@ class TestRunner:
             assert is_demo, "演示金鑰檢測失敗"
 
             # 測試演示模式激活
-            _ = await demo_learning_manager.activate_demo_mode(demo_credentials)
-            assert demo_learning_manager.demo_mode, "演示模式激活失敗"
+            await demo_learning_manager.activate_demo_mode(demo_credentials)
+            assert demo_learning_manager.demo_mode(), "演示模式激活失敗"
 
             # 測試學習數據記錄
             await demo_learning_manager.record_user_interaction(
                 action="test_action",
-                context={"test": True},
-                result="success"
+                context == {"test": True},
+    result="success"
             )
 
             # 測試學習洞察
             insights = await demo_learning_manager.get_learning_insights()
             assert 'interactions' in insights, "學習洞察生成失敗"
 
-            _ = logger.info("✅ 演示學習功能測試通過")
+            logger.info("✅ 演示學習功能測試通過")
             return True
 
-        except Exception as e:
-
-
-            _ = logger.error(f"❌ 演示學習功能測試失敗: {e}")
+        except Exception as e,::
+            logger.error(f"❌ 演示學習功能測試失敗, {e}")
             return False
 
-def main() -> None:
+def main() -> None,
     """主函數"""
-    runner = TestRunner()
+    runner == TestRunner()
 
-    try:
+    try,
     # 設置環境
-    _ = runner.setup_environment()
+    runner.setup_environment()
 
     # 修復常見問題
-    _ = runner.fix_common_issues()
+    runner.fix_common_issues()
 
     # 測試演示學習功能
-    _ = asyncio.run(runner.run_demo_learning_test())
+    asyncio.run(runner.run_demo_learning_test())
 
     # 運行所有測試
-    _ = runner.run_all_tests()
+    runner.run_all_tests()
 
     # 生成報告
-    _ = runner.generate_report()
+    runner.generate_report()
 
     # 檢查結果
-        total_failed = sum(r['failed'] for r in runner.test_results.values()):
-    if total_failed == 0:
+        total_failed == sum(r['failed'] for r in runner.test_results.values()):::
+    if total_failed == 0,::
+    logger.info("🎉 所有測試通過！")
+            sys.exit(0)
+        else,
 
-    _ = logger.info("🎉 所有測試通過！")
-            _ = sys.exit(0)
-        else:
+            logger.error(f"💥 有 {total_failed} 個測試失敗")
+            sys.exit(1)
 
-            _ = logger.error(f"💥 有 {total_failed} 個測試失敗")
-            _ = sys.exit(1)
+    except KeyboardInterrupt,::
+    logger.info("測試被用戶中斷")
+    sys.exit(1)
+    except Exception as e,::
+    logger.error(f"測試運行失敗, {e}")
+    sys.exit(1)
 
-    except KeyboardInterrupt:
-
-
-    _ = logger.info("測試被用戶中斷")
-    _ = sys.exit(1)
-    except Exception as e:
-
-    _ = logger.error(f"測試運行失敗: {e}")
-    _ = sys.exit(1)
-
-if __name__ == "__main__":
-
-
-    _ = main()
+if __name"__main__":::
+    main()

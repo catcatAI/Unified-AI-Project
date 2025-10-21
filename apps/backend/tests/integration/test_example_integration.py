@@ -6,25 +6,25 @@
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
 
-class TestExampleIntegration:
+class TestExampleIntegration,
     """示例集成测试"""
     
-    @pytest.mark.asyncio
-    async def test_agent_hsp_integration(self) -> None:
+    @pytest.mark.asyncio()
+    async def test_agent_hsp_integration(self) -> None,
         """测试代理与HSP集成"""
-        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager, \
-             patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector:
+        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager, \:
+             patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector,
             
             # 修复AsyncMock的使用方式
-            mock_agent_instance = Mock()
-            mock_agent_instance.start_agent = AsyncMock(return_value=True)
-            mock_agent_instance.stop_agent = AsyncMock(return_value=True)
+            mock_agent_instance == Mock()
+            mock_agent_instance.start_agent == = AsyncMock(return_value ==True)
+            mock_agent_instance.stop_agent == = AsyncMock(return_value ==True)
             mock_agent_manager.return_value = mock_agent_instance
             
-            mock_hsp_instance = Mock()
-            mock_hsp_instance.connect = AsyncMock(return_value=True)
-            mock_hsp_instance.disconnect = AsyncMock(return_value=True)
-            mock_hsp_instance.publish = AsyncMock(return_value=True)
+            mock_hsp_instance == Mock()
+            mock_hsp_instance.connect == = AsyncMock(return_value ==True)
+            mock_hsp_instance.disconnect == = AsyncMock(return_value ==True)
+            mock_hsp_instance.publish == = AsyncMock(return_value ==True)
             mock_hsp_connector.return_value = mock_hsp_instance
             
             # 测试代理启动
@@ -41,34 +41,34 @@ class TestExampleIntegration:
             publish_result = await hsp_connector.publish("test_topic", "test_message")
             assert publish_result is True
 
-    @pytest.mark.asyncio
-    async def test_memory_system_integration(self) -> None:
+    @pytest.mark.asyncio()
+    async def test_memory_system_integration(self) -> None,
         """测试记忆系统集成"""
-        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
+        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager,
             # 修复AsyncMock的使用方式
-            mock_memory_instance = Mock()
-            mock_memory_instance.store_memory = AsyncMock(return_value="test_memory_id")
-            mock_memory_instance.retrieve_memory = AsyncMock(return_value={"content": "test content"})
+            mock_memory_instance == Mock()
+            mock_memory_instance.store_memory == = AsyncMock(return_value =="test_memory_id")
+            mock_memory_instance.retrieve_memory == = AsyncMock(return_value =={"content": "test content"})
             mock_memory_manager.return_value = mock_memory_instance
             
             # 测试存储记忆
             memory_manager = mock_memory_manager()
-            memory_id = await memory_manager.store_memory({"test": "data"})
+            memory_id == await memory_manager.store_memory({"test": "data"})
             assert memory_id == "test_memory_id"
             
             # 测试检索记忆
             result = await memory_manager.retrieve_memory("test_memory_id")
             assert result["content"] == "test content"
 
-    @pytest.mark.asyncio
-    async def test_agent_collaboration_integration(self) -> None:
+    @pytest.mark.asyncio()
+    async def test_agent_collaboration_integration(self) -> None,
         """测试代理协作集成"""
-        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager:
+        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager,
             # 修复AsyncMock的使用方式
-            mock_agent_instance = Mock()
-            mock_agent_instance.create_agent = AsyncMock(return_value=Mock())
-            mock_agent_instance.start_agent = AsyncMock(return_value=True)
-            mock_agent_instance.stop_agent = AsyncMock(return_value=True)
+            mock_agent_instance == Mock()
+            mock_agent_instance.create_agent == = AsyncMock(return_value ==Mock())
+            mock_agent_instance.start_agent == = AsyncMock(return_value ==True)
+            mock_agent_instance.stop_agent == = AsyncMock(return_value ==True)
             mock_agent_manager.return_value = mock_agent_instance
             
             # 测试创建代理
@@ -84,29 +84,29 @@ class TestExampleIntegration:
             result = await agent_manager.stop_agent("test_agent")
             assert result is True
 
-    @pytest.mark.asyncio
-    async def test_end_to_end_workflow_integration(self) -> None:
+    @pytest.mark.asyncio()
+    async def test_end_to_end_workflow_integration(self) -> None,
         """测试端到端工作流程集成"""
         with patch('apps.backend.src.core.managers.agent_manager.AgentManager') as mock_agent_manager, \
-             _ = patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector, \
-             patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
+             patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector, \:
+             patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager,
             
             # 修复AsyncMock的使用方式
-            mock_agent_instance = Mock()
-            mock_agent_instance.create_agent = AsyncMock(return_value=Mock())
-            mock_agent_instance.start_agent = AsyncMock(return_value=True)
-            mock_agent_instance.stop_agent = AsyncMock(return_value=True)
+            mock_agent_instance == Mock()
+            mock_agent_instance.create_agent == = AsyncMock(return_value ==Mock())
+            mock_agent_instance.start_agent == = AsyncMock(return_value ==True)
+            mock_agent_instance.stop_agent == = AsyncMock(return_value ==True)
             mock_agent_manager.return_value = mock_agent_instance
             
-            mock_hsp_instance = Mock()
-            mock_hsp_instance.connect = AsyncMock(return_value=True)
-            mock_hsp_instance.disconnect = AsyncMock(return_value=True)
-            mock_hsp_instance.publish = AsyncMock(return_value=True)
+            mock_hsp_instance == Mock()
+            mock_hsp_instance.connect == = AsyncMock(return_value ==True)
+            mock_hsp_instance.disconnect == = AsyncMock(return_value ==True)
+            mock_hsp_instance.publish == = AsyncMock(return_value ==True)
             mock_hsp_connector.return_value = mock_hsp_instance
             
-            mock_memory_instance = Mock()
-            mock_memory_instance.store_memory = AsyncMock(return_value="test_memory_id")
-            mock_memory_instance.retrieve_memory = AsyncMock(return_value={"content": "test content"})
+            mock_memory_instance == Mock()
+            mock_memory_instance.store_memory == = AsyncMock(return_value =="test_memory_id")
+            mock_memory_instance.retrieve_memory == = AsyncMock(return_value =={"content": "test content"})
             mock_memory_manager.return_value = mock_memory_instance
             
             # 测试端到端工作流程
@@ -124,7 +124,7 @@ class TestExampleIntegration:
             assert connect_result is True
             
             # 存储记忆
-            memory_id = await memory_manager.store_memory({"test": "data"})
+            memory_id == await memory_manager.store_memory({"test": "data"})
             assert memory_id == "test_memory_id"
             
             # 发布消息
@@ -140,6 +140,6 @@ class TestExampleIntegration:
             assert disconnect_result is True
 
 
-if __name__ == "__main__":
+if __name"__main__":::
     # 可以直接运行测试
-    _ = pytest.main([__file__, "-v"])
+    pytest.main([__file__, "-v"])

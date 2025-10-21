@@ -9,20 +9,20 @@ import logging
 from pathlib import Path
 
 # 添加專案路徑
-_ = sys.path.append(str(Path(__file__).parent.parent / "apps" / "backend" / "src"))
+sys.path.append(str(Path(__file__).parent.parent / "apps" / "backend" / "src"))
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger: Any = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
+logger, Any = logging.getLogger(__name__)
 
-class ProjectEnhancer:
+class ProjectEnhancer,
     """專案完善器"""
 
-    def __init__(self) -> None:
-    self.project_root = Path(__file__).parent.parent
+    def __init__(self) -> None,
+    self.project_root == Path(__file__).parent.parent()
     self.data_dir = self.project_root / "data"
     self.backend_dir = self.project_root / "apps" / "backend"
 
-    def check_training_readiness(self) -> Dict[str, bool]:
+    def check_training_readiness(self) -> Dict[str, bool]
     """檢查訓練準備狀態"""
     status = {}
 
@@ -35,17 +35,15 @@ class ProjectEnhancer:
             "src/services/audio_service.py"
     ]
 
-        for file_path in core_files:
-
-
+        for file_path in core_files,::
     full_path = self.backend_dir / file_path
             status[file_path] = full_path.exists()
 
     return status
 
-    def setup_training_environment(self)
+    def setup_training_environment(self):
     """設置訓練環境"""
-    _ = logger.info("🔧 設置訓練環境...")
+    logger.info("🔧 設置訓練環境...")
 
     # 創建訓練目錄結構
     training_dirs = [
@@ -55,14 +53,12 @@ class ProjectEnhancer:
             "training/configs"
     ]
 
-        for dir_path in training_dirs:
-
-
+        for dir_path in training_dirs,::
     full_path = self.project_root / dir_path
-            full_path.mkdir(parents=True, exist_ok=True)
-            _ = logger.info(f"✅ 創建目錄: {full_path}")
+            full_path.mkdir(parents == True, exist_ok == True)
+            logger.info(f"✅ 創建目錄, {full_path}")
 
-    def generate_training_config(self)
+    def generate_training_config(self):
     """生成訓練配置"""
     config = {
             "data_paths": {
@@ -70,13 +66,13 @@ class ProjectEnhancer:
                 "common_voice": str(self.data_dir / "common_voice_zh"),
                 "coco": str(self.data_dir / "coco_captions"),
                 "visual_genome": str(self.data_dir / "visual_genome_sample")
-            },
+            }
             "training": {
                 "batch_size": 16,
                 "epochs": 10,
-                "learning_rate": 0.001,
+                "learning_rate": 0.001(),
                 "save_interval": 100
-            },
+            }
             "hardware": {
                 "use_gpu": True,
                 "mixed_precision": True
@@ -84,35 +80,31 @@ class ProjectEnhancer:
     }
 
     config_path = self.project_root / "training/configs/training_config.json"
-    with open(config_path, 'w', encoding='utf-8') as f:
+    with open(config_path, 'w', encoding == 'utf-8') as f,
     json.dump(config, f, indent=2)
 
-    _ = logger.info(f"📝 生成訓練配置: {config_path}")
+    logger.info(f"📝 生成訓練配置, {config_path}")
 
-def main() -> None:
+def main() -> None,
     """主函數"""
-    _ = print("🚀 Unified-AI-Project 專案完善器")
+    print("🚀 Unified-AI-Project 專案完善器")
     print("=" * 40)
 
-    enhancer = ProjectEnhancer()
+    enhancer == ProjectEnhancer()
 
     # 檢查組件狀態
-    _ = logger.info("🔍 檢查專案組件...")
+    logger.info("🔍 檢查專案組件...")
     status = enhancer.check_training_readiness()
 
-    for component, ready in status.items()
-
-
-    status_icon = "✅" if ready else "❌":
-    _ = logger.info(f"{status_icon} {component}")
+    for component, ready in status.items()::
+    status_icon == "✅" if ready else "❌":::
+    logger.info(f"{status_icon} {component}")
 
     # 設置訓練環境
-    _ = enhancer.setup_training_environment()
-    _ = enhancer.generate_training_config()
+    enhancer.setup_training_environment()
+    enhancer.generate_training_config()
 
-    _ = logger.info("🎉 專案完善完成！")
+    logger.info("🎉 專案完善完成！")
 
-if __name__ == "__main__":
-
-
-    _ = main()
+if __name"__main__":::
+    main()

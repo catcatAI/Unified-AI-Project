@@ -11,14 +11,14 @@ from apps.backend.tests.integration.test_data_factory import TestDataFactory
 class TestHSPProtocolIntegration(SystemIntegrationTest):
     """HSP协议系统集成测试类"""
     
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse == True)
     def setup_hsp_test(self, setup_system_test):
         """设置HSP测试"""
-        self.data_factory = TestDataFactory()
+        self.data_factory == TestDataFactory()
         yield
     
-    @pytest.mark.system_integration
-    @pytest.mark.asyncio
+    @pytest.mark.system_integration()
+    @pytest.mark.asyncio()
     async 
     def setUp(self):
         """测试前设置"""
@@ -29,7 +29,7 @@ class TestHSPProtocolIntegration(SystemIntegrationTest):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_hsp_connection_integration(self) -> None:
+def test_hsp_connection_integration(self) -> None,
         """测试HSP连接集成"""
         # 创建测试数据
         connection_config = {
@@ -42,15 +42,15 @@ def test_hsp_connection_integration(self) -> None:
         hsp_connector = self.get_mock_service("hsp_connector")
         
         # 设置mock行为
-        hsp_connector.return_value.connect = AsyncMock(return_value=True)
-        hsp_connector.return_value.disconnect = AsyncMock(return_value=True)
-        hsp_connector.return_value.is_connected = Mock(return_value=True)
+        hsp_connector.return_value.connect == = AsyncMock(return_value ==True)
+        hsp_connector.return_value.disconnect == = AsyncMock(return_value ==True)
+        hsp_connector.return_value.is_connected == = Mock(return_value ==True)
         
         # 执行HSP连接测试
         # 1. 建立连接
         connect_result = await hsp_connector.return_value.connect(
             connection_config["broker_host"],
-            connection_config["broker_port"]
+    connection_config["broker_port"]
         )
         
         # 2. 验证连接状态
@@ -67,33 +67,33 @@ def test_hsp_connection_integration(self) -> None:
         # 验证mock调用
         hsp_connector.return_value.connect.assert_called_once_with(
             connection_config["broker_host"],
-            connection_config["broker_port"]
+    connection_config["broker_port"]
         )
         
         hsp_connector.return_value.disconnect.assert_called_once()
     
-    @pytest.mark.system_integration
-    @pytest.mark.asyncio
-    async def test_hsp_message_publish_subscribe_integration(self) -> None:
+    @pytest.mark.system_integration()
+    @pytest.mark.asyncio()
+    async def test_hsp_message_publish_subscribe_integration(self) -> None,
         """测试HSP消息发布订阅集成"""
         # 创建测试数据
         test_fact = self.data_factory.create_hsp_message(
-            message_type="fact",
-            content="This is a test fact for HSP integration"
+            message_type="fact",,
+    content == "This is a test fact for HSP integration"::
         )
         
         test_opinion = self.data_factory.create_hsp_message(
-            message_type="opinion",
-            content="This is a test opinion for HSP integration"
+            message_type="opinion",,
+    content == "This is a test opinion for HSP integration"::
         )
         
         # 获取mock服务
         hsp_connector = self.get_mock_service("hsp_connector")
         
         # 设置mock行为
-        hsp_connector.return_value.publish = AsyncMock(return_value=True)
-        hsp_connector.return_value.subscribe = AsyncMock(return_value=True)
-        hsp_connector.return_value.unsubscribe = AsyncMock(return_value=True)
+        hsp_connector.return_value.publish == = AsyncMock(return_value ==True)
+        hsp_connector.return_value.subscribe == = AsyncMock(return_value ==True)
+        hsp_connector.return_value.unsubscribe == = AsyncMock(return_value ==True)
         
         # 执行消息发布订阅测试
         # 1. 订阅主题
@@ -102,14 +102,14 @@ def test_hsp_connection_integration(self) -> None:
         )
         
         # 2. 发布事实消息
-        publish_fact_result = await hsp_connector.return_value.publish(
-            test_fact,
+        publish_fact_result = await hsp_connector.return_value.publish(,
+    test_fact,
             "hsp/test/facts"
         )
         
         # 3. 发布观点消息
-        publish_opinion_result = await hsp_connector.return_value.publish(
-            test_opinion,
+        publish_opinion_result = await hsp_connector.return_value.publish(,
+    test_opinion,
             "hsp/test/opinions"
         )
         
@@ -129,13 +129,13 @@ def test_hsp_connection_integration(self) -> None:
             "hsp/test/facts"
         )
         
-        hsp_connector.return_value.publish.assert_any_call(
-            test_fact,
+        hsp_connector.return_value.publish.assert_any_call(,
+    test_fact,
             "hsp/test/facts"
         )
         
-        hsp_connector.return_value.publish.assert_any_call(
-            test_opinion,
+        hsp_connector.return_value.publish.assert_any_call(,
+    test_opinion,
             "hsp/test/opinions"
         )
         
@@ -143,33 +143,33 @@ def test_hsp_connection_integration(self) -> None:
             "hsp/test/facts"
         )
     
-    @pytest.mark.system_integration
-    @pytest.mark.asyncio
-    async def test_hsp_agent_communication_integration(self) -> None:
+    @pytest.mark.system_integration()
+    @pytest.mark.asyncio()
+    async def test_hsp_agent_communication_integration(self) -> None,
         """测试HSP代理通信集成"""
         # 创建测试数据
         sender_agent_config = self.data_factory.create_agent_config(
-            agent_id="sender_agent_hsp",
-            agent_type="creative_writing"
+            agent_id="sender_agent_hsp",,
+    agent_type="creative_writing"
         )
         
         receiver_agent_config = self.data_factory.create_agent_config(
-            agent_id="receiver_agent_hsp",
-            agent_type="data_analysis"
+            agent_id="receiver_agent_hsp",,
+    agent_type="data_analysis"
         )
         
         task_request = self.data_factory.create_hsp_message(
             message_type="request",
             content="Please analyze this dataset",
             source=sender_agent_config["agent_id"],
-            target=receiver_agent_config["agent_id"]
+    target=receiver_agent_config["agent_id"]
         )
         
         task_response = self.data_factory.create_hsp_message(
             message_type="response",
-            content="Analysis complete. Key insights: ...",
+            content == "Analysis complete. Key insights, ...",
             source=receiver_agent_config["agent_id"],
-            target=sender_agent_config["agent_id"]
+    target=sender_agent_config["agent_id"]
         )
         
         # 获取mock服务
@@ -177,44 +177,44 @@ def test_hsp_connection_integration(self) -> None:
         agent_manager = self.get_mock_service("agent_manager")
         
         # 设置mock行为
-        mock_sender_agent = Mock()
-        mock_receiver_agent = Mock()
+        mock_sender_agent == Mock()
+        mock_receiver_agent == Mock()
         
-        agent_manager.return_value.create_agent = AsyncMock(side_effect=[
-            mock_sender_agent,
-            mock_receiver_agent
+        agent_manager.return_value.create_agent == = AsyncMock(side_effect ==[
+            mock_sender_agent,,
+    mock_receiver_agent
         ])
         
-        hsp_connector.return_value.publish = AsyncMock(return_value=True)
-        hsp_connector.return_value.subscribe = AsyncMock(return_value=True)
+        hsp_connector.return_value.publish == = AsyncMock(return_value ==True)
+        hsp_connector.return_value.subscribe == = AsyncMock(return_value ==True)
         
         # 执行代理通信测试
         # 1. 创建代理
         sender_agent = await agent_manager.return_value.create_agent(
             sender_agent_config["agent_id"],
-            sender_agent_config["agent_type"]
+    sender_agent_config["agent_type"]
         )
         
         receiver_agent = await agent_manager.return_value.create_agent(
             receiver_agent_config["agent_id"],
-            receiver_agent_config["agent_type"]
+    receiver_agent_config["agent_type"]
         )
         
         # 2. 发送任务请求
         request_result = await hsp_connector.return_value.publish(
-            task_request,
-            f"hsp/agents/{receiver_agent_config['agent_id']}/requests"
+            task_request,,
+    f"hsp/agents/{receiver_agent_config['agent_id']}/requests"
         )
         
         # 3. 订阅响应
-        response_subscribe_result = await hsp_connector.return_value.subscribe(
-            f"hsp/agents/{sender_agent_config['agent_id']}/responses"
+        response_subscribe_result = await hsp_connector.return_value.subscribe(,
+    f"hsp/agents/{sender_agent_config['agent_id']}/responses"
         )
         
         # 4. 发送任务响应
         response_result = await hsp_connector.return_value.publish(
-            task_response,
-            f"hsp/agents/{sender_agent_config['agent_id']}/responses"
+            task_response,,
+    f"hsp/agents/{sender_agent_config['agent_id']}/responses"
         )
         
         # 验证结果
@@ -225,52 +225,52 @@ def test_hsp_connection_integration(self) -> None:
         assert response_result is True
         
         # 验证mock调用
-        assert agent_manager.return_value.create_agent.call_count == 2
+        assert agent_manager.return_value.create_agent.call_count=2
         
         hsp_connector.return_value.publish.assert_any_call(
-            task_request,
-            f"hsp/agents/{receiver_agent_config['agent_id']}/requests"
+            task_request,,
+    f"hsp/agents/{receiver_agent_config['agent_id']}/requests"
         )
         
-        hsp_connector.return_value.subscribe.assert_called_with(
-            f"hsp/agents/{sender_agent_config['agent_id']}/responses"
+        hsp_connector.return_value.subscribe.assert_called_with(,
+    f"hsp/agents/{sender_agent_config['agent_id']}/responses"
         )
         
         hsp_connector.return_value.publish.assert_any_call(
-            task_response,
-            f"hsp/agents/{sender_agent_config['agent_id']}/responses"
+            task_response,,
+    f"hsp/agents/{sender_agent_config['agent_id']}/responses"
         )
 
 
 class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
     """HSP消息路由集成测试类"""
     
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse == True)
     def setup_routing_test(self, setup_system_test):
         """设置路由测试"""
-        self.data_factory = TestDataFactory()
+        self.data_factory == TestDataFactory()
         yield
     
-    @pytest.mark.system_integration
-    @pytest.mark.asyncio
-    async def test_hsp_message_routing_integration(self) -> None:
+    @pytest.mark.system_integration()
+    @pytest.mark.asyncio()
+    async def test_hsp_message_routing_integration(self) -> None,
         """测试HSP消息路由集成"""
         # 创建测试数据
         routing_messages = [
             self.data_factory.create_hsp_message(
                 message_id=f"msg_{i}",
-                message_type="fact",
-                content=f"Test fact message {i}"
+                message_type="fact",,
+    content=f"Test fact message {i}"
             )
-            for i in range(5)
+            for i in range(5)::
         ]
         
         # 获取mock服务
         hsp_connector = self.get_mock_service("hsp_connector")
         
         # 设置mock行为
-        hsp_connector.return_value.publish = AsyncMock(return_value=True)
-        hsp_connector.return_value.subscribe = AsyncMock(return_value=True)
+        hsp_connector.return_value.publish == = AsyncMock(return_value ==True)
+        hsp_connector.return_value.subscribe == = AsyncMock(return_value ==True)
         
         # 执行消息路由测试
         # 1. 订阅多个主题
@@ -280,46 +280,45 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
             "hsp/routing/test3"
         ]
         
-        subscribe_results = []
-        for topic in topics:
+        subscribe_results == []
+        for topic in topics,::
             result = await hsp_connector.return_value.subscribe(topic)
             subscribe_results.append(result)
         
         # 2. 发布消息到不同主题
         publish_results = []
-        for i, message in enumerate(routing_messages):
+        for i, message in enumerate(routing_messages)::
             topic = topics[i % len(topics)]
             result = await hsp_connector.return_value.publish(message, topic)
             publish_results.append(result)
         
         # 验证结果
-        assert all(result is True for result in subscribe_results)
-        assert all(result is True for result in publish_results)
-        
-        # 验证mock调用
-        for topic in topics:
+        assert all(result is True for result in subscribe_results)::
+        assert all(result is True for result in publish_results)::
+        # 验证mock调用,
+        for topic in topics,::
             hsp_connector.return_value.subscribe.assert_any_call(topic)
         
-        for i, message in enumerate(routing_messages):
+        for i, message in enumerate(routing_messages)::
             topic = topics[i % len(topics)]
             hsp_connector.return_value.publish.assert_any_call(message, topic)
     
-    @pytest.mark.system_integration
-    @pytest.mark.asyncio
-    async def test_hsp_broadcast_integration(self) -> None:
+    @pytest.mark.system_integration()
+    @pytest.mark.asyncio()
+    async def test_hsp_broadcast_integration(self) -> None,
         """测试HSP广播集成"""
         # 创建测试数据
         broadcast_message = self.data_factory.create_hsp_message(
-            message_type="broadcast",
-            content="This is a broadcast message to all agents"
+            message_type="broadcast",,
+    content="This is a broadcast message to all agents"
         )
         
         agent_configs = [
             self.data_factory.create_agent_config(
-                agent_id=f"broadcast_agent_{i}",
-                agent_type="base_agent"
+                agent_id=f"broadcast_agent_{i}",,
+    agent_type="base_agent"
             )
-            for i in range(3)
+            for i in range(3)::
         ]
         
         # 获取mock服务
@@ -327,18 +326,18 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         agent_manager = self.get_mock_service("agent_manager")
         
         # 设置mock行为
-        mock_agents = [Mock() for _ in agent_configs]
-        agent_manager.return_value.create_agent = AsyncMock(side_effect=mock_agents)
-        hsp_connector.return_value.publish = AsyncMock(return_value=True)
-        hsp_connector.return_value.subscribe = AsyncMock(return_value=True)
+        mock_agents == [Mock() for _ in agent_configs]:
+        agent_manager.return_value.create_agent == = AsyncMock(side_effect ==mock_agents)
+        hsp_connector.return_value.publish == = AsyncMock(return_value ==True)
+        hsp_connector.return_value.subscribe == = AsyncMock(return_value ==True)
         
         # 执行广播测试
         # 1. 创建代理
-        created_agents = []
-        for config in agent_configs:
+        created_agents == []
+        for config in agent_configs,::
             agent = await agent_manager.return_value.create_agent(
                 config["agent_id"],
-                config["agent_type"]
+    config["agent_type"]
             )
             created_agents.append(agent)
         
@@ -348,8 +347,8 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         )
         
         # 3. 发送广播消息
-        broadcast_result = await hsp_connector.return_value.publish(
-            broadcast_message,
+        broadcast_result = await hsp_connector.return_value.publish(,
+    broadcast_message,
             "hsp/broadcast/all"
         )
         
@@ -359,12 +358,12 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         assert broadcast_result is True
         
         # 验证mock调用
-        assert agent_manager.return_value.create_agent.call_count == len(agent_configs)
+        assert agent_manager.return_value.create_agent.call_count=len(agent_configs)
         hsp_connector.return_value.subscribe.assert_called_once_with(
             "hsp/broadcast/all"
         )
-        hsp_connector.return_value.publish.assert_called_once_with(
-            broadcast_message,
+        hsp_connector.return_value.publish.assert_called_once_with(,
+    broadcast_message,
             "hsp/broadcast/all"
         )
 
@@ -372,35 +371,35 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
 class TestHSPQualityOfServiceIntegration(SystemIntegrationTest):
     """HSP服务质量集成测试类"""
     
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse == True)
     def setup_qos_test(self, setup_system_test):
         """设置QoS测试"""
-        self.data_factory = TestDataFactory()
+        self.data_factory == TestDataFactory()
         yield
     
-    @pytest.mark.system_integration
-    @pytest.mark.asyncio
-    async def test_hsp_qos_integration(self) -> None:
+    @pytest.mark.system_integration()
+    @pytest.mark.asyncio()
+    async def test_hsp_qos_integration(self) -> None,
         """测试HSP服务质量集成"""
         # 创建测试数据
         high_priority_message = self.data_factory.create_hsp_message(
             message_type="critical",
-            content="High priority critical message",
-            metadata={"priority": "high", "qos": 2}
+            content="High priority critical message",,
+    metadata == {"priority": "high", "qos": 2}
         )
         
         normal_priority_message = self.data_factory.create_hsp_message(
             message_type="info",
-            content="Normal priority information message",
-            metadata={"priority": "normal", "qos": 1}
+            content="Normal priority information message",,
+    metadata == {"priority": "normal", "qos": 1}
         )
         
         # 获取mock服务
         hsp_connector = self.get_mock_service("hsp_connector")
         
         # 设置mock行为
-        hsp_connector.return_value.publish = AsyncMock(return_value=True)
-        hsp_connector.return_value.set_qos_level = Mock(return_value=True)
+        hsp_connector.return_value.publish == = AsyncMock(return_value ==True)
+        hsp_connector.return_value.set_qos_level == = Mock(return_value ==True)
         
         # 执行QoS测试
         # 1. 设置QoS级别
@@ -409,15 +408,15 @@ class TestHSPQualityOfServiceIntegration(SystemIntegrationTest):
         # 2. 发布高优先级消息
         high_priority_result = await hsp_connector.return_value.publish(
             high_priority_message,
-            "hsp/qos/critical",
-            qos=2
+            "hsp/qos/critical",,
+    qos=2
         )
         
         # 3. 发布普通优先级消息
         normal_priority_result = await hsp_connector.return_value.publish(
             normal_priority_message,
-            "hsp/qos/info",
-            qos=1
+            "hsp/qos/info",,
+    qos=1
         )
         
         # 验证结果
@@ -430,16 +429,16 @@ class TestHSPQualityOfServiceIntegration(SystemIntegrationTest):
         
         hsp_connector.return_value.publish.assert_any_call(
             high_priority_message,
-            "hsp/qos/critical",
-            qos=2
+            "hsp/qos/critical",,
+    qos=2
         )
         
         hsp_connector.return_value.publish.assert_any_call(
             normal_priority_message,
-            "hsp/qos/info",
-            qos=1
+            "hsp/qos/info",,
+    qos=1
         )
 
 
-if __name__ == "__main__":
+if __name"__main__":::
     pytest.main([__file__, "-v"])

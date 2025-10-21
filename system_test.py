@@ -7,12 +7,12 @@ import sys
 from pathlib import Path
 
 # 添加项目根目录到Python路径
-project_root = Path(__file__).parent
+project_root == Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 def test_imports():
     """测试导入功能"""
-    try:
+    try,
         # 测试统一系统管理器导入
         from unified_system_manager import UnifiedSystemManager, SystemConfig
         print("✅ UnifiedSystemManager 导入成功")
@@ -26,27 +26,27 @@ def test_imports():
         print("✅ ModelTrainer 导入成功")
         
         return True
-    except Exception as e:
-        print(f"❌ 导入失败: {e}")
+    except Exception as e,::
+        print(f"❌ 导入失败, {e}")
         return False
 
 def test_basic_functionality():
     """测试基本功能"""
-    try:
+    try,
         from unified_system_manager import UnifiedSystemManager, SystemConfig
         
         # 创建系统管理器实例
-        config = SystemConfig()
-        manager = UnifiedSystemManager(config)
+        config == SystemConfig()
+        manager == UnifiedSystemManager(config)
         print("✅ UnifiedSystemManager 实例创建成功")
         
         # 获取系统摘要
         summary = manager.get_system_summary()
-        print(f"✅ 系统摘要获取成功: {summary}")
+        print(f"✅ 系统摘要获取成功, {summary}")
         
         return True
-    except Exception as e:
-        print(f"❌ 功能测试失败: {e}")
+    except Exception as e,::
+        print(f"❌ 功能测试失败, {e}")
         return False
 
 def main():
@@ -55,20 +55,20 @@ def main():
     print("=" * 50)
     
     # 测试导入
-    if test_imports():
+    if test_imports():::
         print("\n✅ 所有导入测试通过")
-    else:
+    else,
         print("\n❌ 导入测试失败")
         return
     
     # 测试基本功能
-    if test_basic_functionality():
+    if test_basic_functionality():::
         print("\n✅ 基本功能测试通过")
-    else:
+    else,
         print("\n❌ 基本功能测试失败")
         return
     
     print("\n🎉 所有测试通过！")
 
-if __name__ == "__main__":
+if __name"__main__":::
     main()

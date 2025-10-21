@@ -11,7 +11,7 @@ result = engine.run_fix(FixType.SYNTAX_FIX)
 print(f"修复结果: {result.status.value}")
 print(f"消息: {result.message}")
 
-# 如果有详细信息，也输出
+# 如果有详细信息,也输出
 if hasattr(result, 'details') and result.details:
     print(f"详细信息: {result.details}")
 

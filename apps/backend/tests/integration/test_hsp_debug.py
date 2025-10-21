@@ -46,7 +46,7 @@ async def test_hsp_debug() -> None:
         message_bridge=message_bridge
     )
     
-    # 设置连接状态（在mock模式下认为已连接）
+    # 设置连接状态(在mock模式下认为已连接)
     connector.is_connected = True
     
     # 记录接收到的消息
@@ -60,10 +60,10 @@ async def test_hsp_debug() -> None:
             "sender_ai_id": sender_ai_id,
             "message": message
         })
-        _ = received_event.set()
+        received_event.set()
     
     # 订阅事实消息
-    _ = await connector.subscribe_to_facts(fact_handler)
+    await connector.subscribe_to_facts(fact_handler)
     
     # 创建一个模拟的消息信封并直接调用内部处理方法
     test_fact = {
@@ -85,7 +85,7 @@ async def test_hsp_debug() -> None:
     }
     
     # 直接调用HSP连接器的内部消息处理方法
-    _ = await connector._handle_fact_message(mock_envelope, "test_ai", mock_envelope)
+    await connector._handle_fact_message(mock_envelope, "test_ai", mock_envelope)
     
     # 验证消息是否正确接收
     assert len(received_messages) == 1

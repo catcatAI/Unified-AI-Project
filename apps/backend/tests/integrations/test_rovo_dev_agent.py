@@ -7,7 +7,7 @@ import sys
 from datetime import datetime
 
 # 修复导入路径
-_ = sys.path.insert(0, 'd:\\Projects\\Unified-AI-Project\\apps\\backend\\src')
+sys.path.insert(0, 'd:\\Projects\\Unified-AI-Project\\apps\\backend\\src')
 
 from integrations.rovo_dev_agent import RovoDevAgent
 
@@ -83,13 +83,13 @@ class TestRovoDevAgent:
         agent.connector.start = AsyncMock()
         agent.connector.close = AsyncMock()
         
-        _ = await agent.start()
+        await agent.start()
         assert agent.is_active
-        _ = agent.connector.start.assert_called_once()
+        agent.connector.start.assert_called_once()
         
-        _ = await agent.stop()
+        await agent.stop()
         assert not agent.is_active
-        _ = agent.connector.close.assert_called_once()
+        agent.connector.close.assert_called_once()
     
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
@@ -113,7 +113,7 @@ class TestRovoDevAgent:
         assert 'recommendations' in result
         assert 'confluence_page' in result
         
-        _ = agent.bridge.create_confluence_page.assert_called_once()
+        agent.bridge.create_confluence_page.assert_called_once()
     
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
@@ -168,7 +168,7 @@ class TestRovoDevAgent:
         # Mock dispatch to return a result
         agent._dispatch_task = AsyncMock(return_value={'result': 'Task completed successfully'})
         
-        # 创建正确的 HSPTask 字典对象，而不是使用HSPTask类
+        # 创建正确的 HSPTask 字典对象,而不是使用HSPTask类
         task = {
             'task_id': 'test_task_001',
             'capability': 'code_analysis',
@@ -180,10 +180,10 @@ class TestRovoDevAgent:
         agent.is_active = True
         
         # Submit task
-        _ = await agent.submit_task(task)
+        await agent.submit_task(task)
             
         # Process the task manually (since we're not running the loop)
-        _ = await agent._process_task(task)
+        await agent._process_task(task)
         
         # Check metrics
         assert agent.metrics['tasks_completed'] == 1
@@ -199,7 +199,7 @@ class TestRovoDevAgent:
         # Mock dispatch to return a result
         agent._dispatch_task = AsyncMock(return_value={'result': 'Task completed successfully'})
         
-        # 创建正确的 HSPTask 字典对象，而不是使用HSPTask类
+        # 创建正确的 HSPTask 字典对象,而不是使用HSPTask类
         task = {
             'task_id': 'test_task_001',
             'capability': 'code_analysis',
@@ -211,10 +211,10 @@ class TestRovoDevAgent:
         agent.is_active = True
         
         # Submit task
-        _ = await agent.submit_task(task)
+        await agent.submit_task(task)
             
         # Process the task manually (since we're not running the loop)
-        _ = await agent._process_task(task)
+        await agent._process_task(task)
         
         # Check metrics
         assert agent.metrics['tasks_completed'] == 1
@@ -240,7 +240,7 @@ class TestRovoDevAgent:
         agent.is_active = True
         
         # Process the task
-        _ = await agent._process_task(task)
+        await agent._process_task(task)
         
         # Check error handling
         assert agent.metrics['tasks_failed'] == 1
@@ -285,7 +285,7 @@ class TestRovoDevAgent:
                 'capability': 'code_analysis',
                 'status': 'completed',
                 'processing_time': 1.0 + i,
-                _ = 'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.now().isoformat()
             }
             for i in range(10)
         ]
@@ -298,7 +298,7 @@ class TestRovoDevAgent:
         history = agent.get_task_history(limit=5)
         assert len(history) == 5
         assert history[0]['task_id'] == 'task_5'  # Should get the last 5
-    
+
     def test_report_formatting(self, agent) -> None:
         """测试报告格式化"""
         analysis_result = {
@@ -339,7 +339,7 @@ class TestRovoDevAgent:
         }
         
         with pytest.raises(ValueError, match="不支持的能力"):
-            _ = await agent._dispatch_task(task)
+            await agent._dispatch_task(task)
 
 
 class TestRovoDevAgentIntegration:

@@ -9,5 +9,5 @@ class ImportanceScorer:
         """Placeholder for importance scoring logic."""
         # In a real implementation, this would analyze content and metadata
         # to assign a numerical importance score.
-        _ = await asyncio.sleep(0.01)  # Simulate some async work
+        await asyncio.sleep(0.01)  # Simulate some async work:
         return 0.5  # Default/placeholder importance score

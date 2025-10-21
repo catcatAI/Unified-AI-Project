@@ -12,9 +12,7 @@ test_config = {
 
 
         'core': [
-        {'name': 'normal_lib', 'fallbacks': ['normal_fallback'], 'essential': False},
-
-        ]
+        {'name': 'normal_lib', 'fallbacks': ['normal_fallback'], 'essential': False}]
         },
 
  'environments': {

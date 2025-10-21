@@ -71,7 +71,7 @@ class FallbackConfigLoader:
         初始化配置加載器
         
         Args:
-            config_path: 配置文件路徑，如果為None則使用默認路徑
+            config_path: 配置文件路徑,如果為None則使用默認路徑
         """
         self.config_path = config_path or self._find_config_file
         self._config: Optional[Dict[str, Any]] = None
@@ -89,7 +89,7 @@ class FallbackConfigLoader:
             if os.path.exists(path):
                 return path
         
-        logger.warning("未找到配置文件，將使用默認配置")
+        logger.warning("未找到配置文件,將使用默認配置")
         return None
     
     def load_config(self) -> Dict[str, Any]:
@@ -102,7 +102,7 @@ class FallbackConfigLoader:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     file_config = yaml.safe_load(f)
                 
-                # 合併配置（文件配置覆蓋默認配置）
+                # 合併配置(文件配置覆蓋默認配置)
                 self._config = self._merge_configs(self.DEFAULT_CONFIG, file_config)
                 logger.info(f"已加載配置文件: {self.config_path}")
                 
@@ -130,12 +130,12 @@ class FallbackConfigLoader:
     def get_fallback_config(self) -> Dict[str, Any]:
         """獲取fallback協議配置"""
         config = self.load_config
-        return config.get("hsp_fallback", )
+        return config.get("hsp_fallback")
     
     def get_hsp_config(self) -> Dict[str, Any]:
         """獲取HSP主協議配置"""
         config = self.load_config
-        return config.get("hsp_primary", )
+        return config.get("hsp_primary")
     
     def is_fallback_enabled(self) -> bool:
         """檢查是否啟用fallback協議"""
@@ -145,18 +145,18 @@ class FallbackConfigLoader:
     def get_protocol_config(self, protocol_name: str) -> Dict[str, Any]:
         """獲取特定協議的配置"""
         fallback_config = self.get_fallback_config
-        protocols = fallback_config.get("protocols", )
-        return protocols.get(protocol_name, )
+        protocols = fallback_config.get("protocols")
+        return protocols.get(protocol_name)
     
     def get_message_config(self) -> Dict[str, Any]:
         """獲取消息配置"""
         fallback_config = self.get_fallback_config
-        return fallback_config.get("message", )
+        return fallback_config.get("message")
     
     def get_logging_config(self) -> Dict[str, Any]:
         """獲取日誌配置"""
         fallback_config = self.get_fallback_config
-        return fallback_config.get("logging", )
+        return fallback_config.get("logging")
     
     def save_config(self, config: Dict[str, Any], path: Optional[str] = None):
         """保存配置到文件"""
@@ -181,10 +181,10 @@ class FallbackConfigLoader:
         
         try:
             # 檢查必要的配置項
-            fallback_config = config.get("hsp_fallback", )
+            fallback_config = config.get("hsp_fallback")
             
             # 檢查協議配置
-            protocols = fallback_config.get("protocols", )
+            protocols = fallback_config.get("protocols")
             for protocol_name, protocol_config in protocols.items:
                 if not isinstance(protocol_config.get("priority"), int):
                     logger.error(f"協議 {protocol_name} 的優先級必須是整數")
@@ -195,7 +195,7 @@ class FallbackConfigLoader:
                     return False
             
             # 檢查消息配置
-            message_config = fallback_config.get("message", )
+            message_config = fallback_config.get("message")
             if message_config.get("default_max_retries") is not None:
                 if not isinstance(message_config["default_max_retries"], int) or message_config["default_max_retries"] < 0:
                     logger.error("default_max_retries必須是非負整數")

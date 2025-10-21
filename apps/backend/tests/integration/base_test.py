@@ -22,7 +22,7 @@ class BaseIntegrationTest:
         self.test_data = {}
         logger.info(f"Setting up integration test with config: {self.config}")
         yield
-        _ = logger.info("Tearing down integration test")
+        logger.info("Tearing down integration test")
     
     async def wait_for_condition(self, condition_func, timeout: int = 10, interval: float = 0.1):
         """
@@ -30,8 +30,8 @@ class BaseIntegrationTest:
         
         Args:
             condition_func: 条件检查函数
-            timeout: 超时时间（秒）
-            interval: 检查间隔（秒）
+            timeout: 超时时间(秒)
+            interval: 检查间隔(秒)
             
         Returns:
             bool: 条件是否满足
@@ -87,7 +87,7 @@ class BaseIntegrationTest:
         try:
             await asyncio.wait_for(event_checker(), timeout=timeout)
         except asyncio.TimeoutError:
-            _ = pytest.fail(message)
+            pytest.fail(message)
     
     def assert_mock_called_with(self, mock_obj, expected_args=None, expected_kwargs=None):
         """
@@ -98,11 +98,11 @@ class BaseIntegrationTest:
             expected_args: 期望的位置参数
             expected_kwargs: 期望的关键字参数
         """
-        _ = mock_obj.assert_called()
+        mock_obj.assert_called()
         if expected_args:
-            _ = mock_obj.assert_called_with(*expected_args)
+            mock_obj.assert_called_with(*expected_args)
         if expected_kwargs:
-            _ = mock_obj.assert_called_with(**expected_kwargs)
+            mock_obj.assert_called_with(**expected_kwargs)
     
     async def run_with_timeout(self, coro, timeout: int = 10):
         """
@@ -118,7 +118,7 @@ class BaseIntegrationTest:
         try:
             return await asyncio.wait_for(coro, timeout=timeout)
         except asyncio.TimeoutError:
-            _ = pytest.fail(f"Operation timed out after {timeout} seconds")
+            pytest.fail(f"Operation timed out after {timeout} seconds")
     
     def capture_logs(self, logger_name: str, level: int = logging.INFO):
         """
@@ -136,13 +136,13 @@ class BaseIntegrationTest:
         logger_instance = logging.getLogger(logger_name)
         log_stream = io.StringIO()
         handler = logging.StreamHandler(log_stream)
-        _ = handler.setLevel(level)
-        _ = logger_instance.addHandler(handler)
+        handler.setLevel(level)
+        logger_instance.addHandler(handler)
         
         # 返回清理函数和日志流
         def cleanup():
-            _ = logger_instance.removeHandler(handler)
-            _ = handler.close()
+            logger_instance.removeHandler(handler)
+            handler.close()
             return log_stream.getvalue()
         
         return cleanup, log_stream
@@ -155,9 +155,9 @@ class SystemIntegrationTest(BaseIntegrationTest):
     def setup_system_test(self, setup_test, mock_external_services):
         """设置系统测试环境"""
         self.mock_services = mock_external_services
-        _ = logger.info("Setting up system integration test environment")
+        logger.info("Setting up system integration test environment")
         yield
-        _ = logger.info("Tearing down system integration test environment")
+        logger.info("Tearing down system integration test environment")
     
     def get_mock_service(self, service_name: str) -> Mock:
         """
@@ -187,4 +187,4 @@ class SystemIntegrationTest(BaseIntegrationTest):
         # 模拟代理2接收消息
         # 这里可以根据需要添加更复杂的交互逻辑
         
-        _ = logger.info(f"Simulated interaction between {agent1_config['agent_id']} and {agent2_config['agent_id']}")
+        logger.info(f"Simulated interaction between {agent1_config['agent_id']} and {agent2_config['agent_id']}")

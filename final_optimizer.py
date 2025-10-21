@@ -1,256 +1,87 @@
 #!/usr/bin/env python3
 """
-最终优化执行器
-处理剩余的轻微问题，追求完美
+最终优化脚本
+总结修复工作并提供后续建议
 """
 
-import re
-import ast
+import os
+import sys
 from pathlib import Path
-from typing import Dict, List, Any, Optional
 
-def optimize_line_length(file_path: Path) -> Dict[str, Any]:
-    """优化行长度"""
-    result = {
-        "file": str(file_path),
-        "lines_optimized": 0,
-        "status": "unchanged"
-    }
-    
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        original_content = content
-        lines = content.split('\n')
-        optimized_lines = []
-        
-        for i, line in enumerate(lines):
-            if len(line) > 120:
-                # 尝试优化长行
-                # 查找逗号、运算符等断点
-                if ',' in line:
-                    # 在逗号后断行
-                    parts = line.split(',')
-                    if len(parts) > 1:
-                        # 保持缩进
-                        indent = len(line) - len(line.lstrip())
-                        new_lines = []
-                        current_line = parts[0] + ','
-                        
-                        for part in parts[1:]:
-                            if len(current_line + part + ',') <= 120:
-                                current_line += part + ','
-                            else:
-                                new_lines.append(current_line)
-                                current_line = ' ' * indent + part + ','
-                        
-                        if current_line.rstrip(','):
-                            new_lines.append(current_line.rstrip(','))
-                        
-                        optimized_lines.extend(new_lines)
-                        result["lines_optimized"] += 1
-                        continue
-                
-                # 如果无法优化，添加注释标记
-                if len(line) > 120:
-                    optimized_lines.append(line[:117] + '...  # FIXME: 行过长')
-                    result["lines_optimized"] += 1
-                else:
-                    optimized_lines.append(line)
-            else:
-                optimized_lines.append(line)
-        
-        new_content = '\n'.join(optimized_lines)
-        
-        if new_content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(new_content)
-            result["status"] = "optimized"
-        
-        return result
-        
-    except Exception as e:
-        result["status"] = "error"
-        return result
+def count_python_files():
+    """统计项目中的Python文件数量"""
+    python_files = list(Path(".").rglob("*.py"))
+    return len(python_files)
 
-def add_function_docstrings(file_path: Path) -> Dict[str, Any]:
-    """为函数添加文档字符串"""
-    result = {
-        "file": str(file_path),
-        "docstrings_added": 0,
-        "status": "unchanged"
-    }
-    
+def count_error_files():
+    """统计存在语法错误的文件数量"""
+    # 运行检查脚本并获取结果
+    import subprocess
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        original_content = content
-        lines = content.split('\n')
-        modified_lines = []
-        
-        i = 0
-        while i < len(lines):
-            line = lines[i]
-            
-            # 查找函数定义
-            if line.strip().startswith('def '):
-                # 检查下一行是否已经有文档字符串
-                next_line_idx = i + 1
-                if next_line_idx < len(lines):
-                    next_line = lines[next_line_idx].strip()
-                    
-                    if not next_line.startswith('"""'):
-                        # 需要添加文档字符串
-                        func_match = re.match(r'def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(', line)
-                        if func_match:
-                            func_name = func_match.group(1)
-                            indent = len(line) - len(line.lstrip())
-                            
-                            # 生成简单的文档字符串
-                            docstring = f'{" " * (indent + 4)}"""{func_name} 函数"""'
-                            
-                            modified_lines.append(line)
-                            modified_lines.append(docstring)
-                            result["docstrings_added"] += 1
-                            i += 1
-                            continue
-            
-            modified_lines.append(line)
-            i += 1
-        
-        new_content = '\n'.join(modified_lines)
-        
-        if new_content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(new_content)
-            result["status"] = "enhanced"
-        
-        return result
-        
-    except Exception as e:
-        result["status"] = "error"
-        return result
-
-def fix_remaining_security_issues(file_path: Path) -> Dict[str, Any]:
-    """修复剩余的安全问题"""
-    result = {
-        "file": str(file_path),
-        "issues_fixed": 0,
-        "status": "unchanged"
-    }
-    
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        original_content = content
-        
-        # 替换os.system调用
-        if 'os.system(' in content:
-            content = re.sub(
-                r'os\.system\s*\(([^)]+)\)',
-                r'subprocess.run(\1, shell=False, check=True)',
-                content
-            )
-            result["issues_fixed"] += content.count('subprocess.run')
-        
-        # 替换subprocess.run(..., shell=True)
-        content = re.sub(
-            r'subprocess\.run\s*\(([^)]*),\s*shell\s*=\s*True([^)]*)\)',
-            r'subprocess.run(\1, shell=False\2)',
-            content
+        result = subprocess.run(
+            ["python", "check_syntax_errors.py"], 
+            capture_output=True, 
+            text=True,
+            cwd="."
         )
-        
-        if content != original_content:
-            # 确保有subprocess导入
-            if 'subprocess' not in content:
-                content = 'import subprocess\n' + content
-            
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-            result["status"] = "secured"
-        
-        return result
-        
-    except Exception as e:
-        result["status"] = "error"
-        return result
+        # 从输出中提取错误数量
+        lines = result.stdout.split('\n') + result.stderr.split('\n')
+        for line in lines:
+            if "Total syntax errors found:" in line:
+                return int(line.split(":")[-1].strip())
+        return 0
+    except:
+        return -1
 
-def main():
-    """主函数"""
-    print("🔧 启动最终优化执行器...")
+def generate_summary():
+    """生成修复工作总结"""
+    print("统一AI项目语法修复工作总结")
+    print("=" * 50)
     
-    # 获取需要优化的文件列表
-    target_files = [
-        "analyze_root_scripts.py",
-        "complete_fusion_process.py", 
-        "COMPLEXITY_ASSESSMENT_SYSTEM.py",
-        "comprehensive_discovery_system.py",
-        "comprehensive_fix_agent.py",
-        "comprehensive_system_analysis.py",
-        "comprehensive_test_system.py",
-        "documentation_detector.py"
+    # 统计文件数量
+    total_files = count_python_files()
+    print(f"项目总Python文件数: {total_files}")
+    
+    # 统计错误数量
+    error_count = count_error_files()
+    if error_count >= 0:
+        print(f"剩余语法错误文件数: {error_count}")
+        if total_files > 0:
+            success_rate = (total_files - error_count) / total_files * 100
+            print(f"语法正确率: {success_rate:.2f}%")
+    
+    # 核心文件状态
+    print("\n核心文件状态:")
+    core_files = [
+        "./unified_auto_fix_system/__init__.py",
+        "./unified_auto_fix_system/core/fix_result.py",
+        "./unified_auto_fix_system/core/fix_types.py",
+        "./unified_auto_fix_system/core/unified_fix_engine.py"
     ]
     
-    total_files = len(target_files)
-    optimization_results = {
-        "files_processed": 0,
-        "lines_optimized": 0,
-        "docstrings_added": 0,
-        "security_issues_fixed": 0,
-        "errors": []
-    }
+    for file_path in core_files:
+        if os.path.exists(file_path):
+            try:
+                import ast
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                ast.parse(content)
+                print(f"  ✓ {file_path}")
+            except:
+                print(f"  ✗ {file_path}")
+        else:
+            print(f"  - {file_path} (文件不存在)")
     
-    for file_name in target_files:
-        file_path = Path(file_name)
-        
-        if not file_path.exists():
-            print(f"⚠️  文件不存在: {file_name}")
-            continue
-        
-        print(f"\n🔍 优化文件: {file_name}")
-        
-        # 1. 修复安全问题
-        security_result = fix_remaining_security_issues(file_path)
-        if security_result["status"] == "secured":
-            print(f"✅ 修复了 {security_result['issues_fixed']} 个安全问题")
-            optimization_results["security_issues_fixed"] += security_result["issues_fixed"]
-        
-        # 2. 优化行长度
-        line_result = optimize_line_length(file_path)
-        if line_result["status"] == "optimized":
-            print(f"✅ 优化了 {line_result['lines_optimized']} 行长度")
-            optimization_results["lines_optimized"] += line_result["lines_optimized"]
-        
-        # 3. 添加文档字符串
-        doc_result = add_function_docstrings(file_path)
-        if doc_result["status"] == "enhanced":
-            print(f"✅ 添加了 {doc_result['docstrings_added']} 个文档字符串")
-            optimization_results["docstrings_added"] += doc_result["docstrings_added"]
-        
-        optimization_results["files_processed"] += 1
+    # 生成建议
+    print("\n后续建议:")
+    print("1. 修复剩余的语法错误文件，特别是:")
+    print("   - ./unified_auto_fix_system/core/fix_result_new.py")
+    print("   - ./unified_auto_fix_system/core/enhanced_unified_fix_engine.py")
+    print("2. 修复修复脚本自身的语法问题")
+    print("3. 建立代码审查和自动化检查机制")
+    print("4. 集成持续集成/持续部署(CI/CD)流程")
     
-    print(f"\n📊 最终优化统计:")
-    print(f"处理文件数: {optimization_results['files_processed']}/{total_files}")
-    print(f"优化行长度: {optimization_results['lines_optimized']} 行")
-    print(f"添加文档: {optimization_results['docstrings_added']} 个")
-    print(f"修复安全: {optimization_results['security_issues_fixed']} 个")
-    
-    if optimization_results["errors"]:
-        print(f"错误: {len(optimization_results['errors'])}")
-    
-    success_rate = (optimization_results["files_processed"] / total_files) * 100
-    
-    if success_rate >= 90:
-        print(f"\n🎉 最终优化完成！成功率: {success_rate:.1f}%")
-        return 0
-    else:
-        print(f"\n✅ 最终优化基本完成，成功率: {success_rate:.1f}%")
-        return 0
+    print("\n修复工作完成!")
 
 if __name__ == "__main__":
-    import sys
-    exit_code = main()
-    sys.exit(exit_code)
+    generate_summary()

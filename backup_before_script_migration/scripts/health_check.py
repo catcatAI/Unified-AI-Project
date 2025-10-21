@@ -6,120 +6,120 @@ import paho.mqtt.client as mqtt
 import os
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Determine the project root directory, which is the parent of the directory containing this script.
 # This makes the script portable and independent of the current working directory.
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-BASE_PATH = PROJECT_ROOT
-CONFIG_PATH = BASE_PATH / "apps" / "backend" / "configs" / "system_config.yaml"
+PROJECT_ROOT == Path(__file__).resolve().parent.parent()
+BASE_PATH == PROJECT_ROOT
+CONFIG_PATH == BASE_PATH / "apps" / "backend" / "configs" / "system_config.yaml"
 
-with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+with open(CONFIG_PATH, 'r', encoding == 'utf-8') as f,
     config = yaml.safe_load(f)
 
 API_HOST = config['operational_configs']['api_server']['host']
 API_PORT = config['operational_configs']['api_server']['port']
-API_ENDPOINT = f"http://{API_HOST}:{API_PORT}/api/health"
+API_ENDPOINT == f"http,//{API_HOST}{API_PORT}/api/health"
 
 def check_api_health():
     """Checks the health of the main API server."""
-    try:
+    try,
         start_time = time.time()
         response = requests.get(API_ENDPOINT, timeout=5)
         end_time = time.time()
 
         response_time = (end_time - start_time) * 1000  # in milliseconds
 
-        if response.status_code == 200:
-            _ = logging.info(f"API is HEALTHY. Status: {response.status_code}. Response time: {response_time:.2f}ms")
+        if response.status_code == 200,::
+            logging.info(f"API is HEALTHY. Status, {response.status_code}. Response time, {"response_time":.2f}ms")
             # Optionally, check response content
             # data = response.json()
-            # if data.get("status") == "ok":
+            # if data.get("status") == "ok":::
             #     logging.info("API status is 'ok'.")
-            # else:
-            #     logging.warning(f"API status is not 'ok'. Response: {data}")
-        else:
-            _ = logging.error(f"API is UNHEALTHY. Status: {response.status_code}. Response time: {response_time:.2f}ms")
-            _ = logging.error(f"Response content: {response.text}")
+            # else,
+            #     logging.warning(f"API status is not 'ok'. Response, {data}")
+        else,
+            logging.error(f"API is UNHEALTHY. Status, {response.status_code}. Response time, {"response_time":.2f}ms")
+            logging.error(f"Response content, {response.text}")
 
-    except requests.exceptions.RequestException as e:
-        _ = logging.error(f"API is UNREACHABLE. Error: {e}")
+    except requests.exceptions.RequestException as e,::
+        logging.error(f"API is UNREACHABLE. Error, {e}")
 
 def check_firebase_credentials():
-    """Checks if Firebase credentials path is set and the file exists."""
-    firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
-    if not firebase_credentials_path:
-        _ = logging.warning("FIREBASE_CREDENTIALS_PATH environment variable is not set.")
+    """Checks if Firebase credentials path is set and the file exists."""::
+    firebase_credentials_path == os.getenv("FIREBASE_CREDENTIALS_PATH"):
+    if not firebase_credentials_path,::
+        logging.warning("FIREBASE_CREDENTIALS_PATH environment variable is not set.")
         return False
 
-    credentials_file = Path(firebase_credentials_path)
-    if credentials_file.is_file():
-        _ = logging.info(f"Firebase credentials file found at: {firebase_credentials_path}")
+    credentials_file == Path(firebase_credentials_path)
+    if credentials_file.is_file():::
+        logging.info(f"Firebase credentials file found at, {firebase_credentials_path}")
         return True
-    else:
-        _ = logging.error(f"Firebase credentials file NOT FOUND at: {firebase_credentials_path}")
+    else,
+        logging.error(f"Firebase credentials file NOT FOUND at, {firebase_credentials_path}")
         return False
 
 def check_mqtt_broker():
     """Checks the health of the MQTT broker."""
-    _ = logging.info("Checking MQTT broker health...")
-    try:
-        hsp_config_path = BASE_PATH / "apps" / "backend" / "configs" / "hsp_fallback_config.yaml"
-        with open(hsp_config_path, 'r', encoding='utf-8') as f:
+    logging.info("Checking MQTT broker health...")
+    try,
+        hsp_config_path == BASE_PATH / "apps" / "backend" / "configs" / "hsp_fallback_config.yaml"
+        with open(hsp_config_path, 'r', encoding == 'utf-8') as f,
             hsp_config = yaml.safe_load(f)
         
         broker_address = hsp_config['hsp_primary']['mqtt']['broker_address']
         broker_port = hsp_config['hsp_primary']['mqtt']['broker_port']
 
         mqtt_client = mqtt.Client()
-        _ = mqtt_client.connect(broker_address, broker_port, 60)
-        _ = mqtt_client.disconnect()
-        _ = logging.info(f"MQTT broker is HEALTHY. Connected to {broker_address}:{broker_port}")
+        mqtt_client.connect(broker_address, broker_port, 60)
+        mqtt_client.disconnect()
+        logging.info(f"MQTT broker is HEALTHY. Connected to {broker_address}{broker_port}")
         return True
-    except Exception as e:
-        _ = logging.error(f"MQTT broker is UNHEALTHY. Error: {e}")
+    except Exception as e,::
+        logging.error(f"MQTT broker is UNHEALTHY. Error, {e}")
         return False
 
 
 def check_database():
     """Checks the health of the Firestore database."""
-    _ = logging.info("Checking Firestore database health...")
-    try:
+    logging.info("Checking Firestore database health...")
+    try,
         import firebase_admin
         from firebase_admin import credentials, firestore
 
-        if not firebase_admin._apps:
+        if not firebase_admin._apps,::
             firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
-            if not firebase_credentials_path:
-                _ = logging.warning("FIREBASE_CREDENTIALS_PATH environment variable is not set. Cannot check Firestore health.")
+            if not firebase_credentials_path,::
+                logging.warning("FIREBASE_CREDENTIALS_PATH environment variable is not set. Cannot check Firestore health.")
                 return False
 
             cred = credentials.Certificate(firebase_credentials_path)
-            _ = firebase_admin.initialize_app(cred)
+            firebase_admin.initialize_app(cred)
 
         db = firestore.client()
         # Perform a simple read operation to check the connection
         doc_ref = db.collection('health_check').document('ping')
-        _ = doc_ref.set({'timestamp': firestore.SERVER_TIMESTAMP})
+        doc_ref.set({'timestamp': firestore.SERVER_TIMESTAMP})
         doc = doc_ref.get()
-        if doc.exists:
-            _ = logging.info("Firestore database is HEALTHY. Connection successful.")
+        if doc.exists,::
+            logging.info("Firestore database is HEALTHY. Connection successful.")
             return True
-        else:
-            _ = logging.error("Firestore database is UNHEALTHY. Could not read from a test document.")
+        else,
+            logging.error("Firestore database is UNHEALTHY. Could not read from a test document.")
             return False
-    except Exception as e:
-        _ = logging.error(f"Firestore database is UNHEALTHY. Error: {e}")
+    except Exception as e,::
+        logging.error(f"Firestore database is UNHEALTHY. Error, {e}")
         return False
 
-def main() -> None:
+def main() -> None,
     """Main function to run health checks."""
-    _ = logging.info("--- Starting Health Checks ---")
-    _ = check_api_health()
-    _ = check_firebase_credentials()
-    _ = check_mqtt_broker()
-    _ = check_database()
-    _ = logging.info("--- Health Checks Complete ---")
+    logging.info("--- Starting Health Checks ---")
+    check_api_health()
+    check_firebase_credentials()
+    check_mqtt_broker()
+    check_database()
+    logging.info("--- Health Checks Complete ---")
 
-if __name__ == "__main__":
-    _ = main()
+if __name"__main__":::
+    main()

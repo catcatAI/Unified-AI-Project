@@ -15,5 +15,5 @@ class HSPConnectionError(ProjectError):
 
 def project_error_handler(error: ProjectError):
     """處理項目錯誤的中央函數"""
-    # 在真實應用中，這裡可以集成日誌系統、監控和警報
+    # 在真實應用中,這裡可以集成日誌系統、監控和警報
     print(f"Caught Project Error: {error}")

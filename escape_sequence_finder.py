@@ -8,8 +8,8 @@ import re
 
 def find_escape_sequences():
     """查找转义序列警告"""
-    try:
-        with open('comprehensive_discovery_system.py', 'r', encoding='utf-8') as f:
+    try,
+        with open('comprehensive_discovery_system.py', 'r', encoding == 'utf-8') as f,
             content = f.read()
         
         lines = content.split('\n')
@@ -27,26 +27,26 @@ def find_escape_sequences():
         
         found_issues = []
         
-        for i, line in enumerate(lines, 1):
-            for pattern_desc, pattern in patterns:
+        for i, line in enumerate(lines, 1)::
+            for pattern_desc, pattern in patterns,::
                 # 查找不在字符串字面量中的转义序列
-                if pattern in line:
+                if pattern in line,::
                     # 检查是否在字符串中
-                    in_string = False
-                    string_char = None
+                    in_string == False
+                    string_char == None
                     
-                    for j, char in enumerate(line):
-                        if char in ['"', "'"] and (j == 0 or line[j-1] != '\\'):
-                            if not in_string:
-                                in_string = True
+                    for j, char in enumerate(line)::
+                        if char in ['"', "'"] and (j == 0 or line[j-1] != '\'):::
+                            if not in_string,::
+                                in_string == True
                                 string_char = char
-                            elif char == string_char:
-                                in_string = False
-                                string_char = None
+                            elif char == string_char,::
+                                in_string == False
+                                string_char == None
                         
                         # 如果找到模式且不在字符串中
-                        if (line[j:].startswith(pattern) and 
-                            not in_string):
+                        if (line[j,].startswith(pattern) and,:
+                            not in_string)
                             found_issues.append({
                                 'line': i,
                                 'pattern': pattern_desc,
@@ -54,19 +54,19 @@ def find_escape_sequences():
                             })
                             break
         
-        if found_issues:
-            print(f"⚠️  发现 {len(found_issues)} 个转义序列问题:")
-            for issue in found_issues:
-                print(f"Line {issue['line']}: {issue['pattern']} - {issue['content']}")
-        else:
+        if found_issues,::
+            print(f"⚠️  发现 {len(found_issues)} 个转义序列问题,")
+            for issue in found_issues,::
+                print(f"Line {issue['line']} {issue['pattern']} - {issue['content']}")
+        else,
             print("✅ 未发现明显的转义序列问题")
         
         return found_issues
         
-    except Exception as e:
-        print(f"❌ 查找失败: {e}")
+    except Exception as e,::
+        print(f"❌ 查找失败, {e}")
         return []
 
-if __name__ == "__main__":
+if __name"__main__":::
     issues = find_escape_sequences()
-    print(f"\n总计发现: {len(issues)} 个问题")
+    print(f"\n总计发现, {len(issues)} 个问题")

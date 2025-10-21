@@ -1,6 +1,6 @@
 """
 Rovo Dev Agent 核心实现
-提供智能开发助手功能，集成 Atlassian 生态系统
+提供智能开发助手功能,集成 Atlassian 生态系统
 """
 
 import logging

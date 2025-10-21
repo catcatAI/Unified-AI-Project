@@ -4,7 +4,7 @@ import re
 with open(r'D:\Projects\Unified-AI-Project\apps\backend\src\hsp\connector.py', 'r', encoding='utf-8') as f:
     content = f.read()
 
-# 查找字典中包含 "_ =" 的行
+# 查找字典中包含 "" 的行
 pattern = r'\{\s*[^}]*_\s*=\s*[^}]*\}'
 matches = list(re.finditer(pattern, content))
 

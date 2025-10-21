@@ -28,7 +28,7 @@ class TestHSPIntegration:
     def mock_data_aligner(self):
         """创建模拟数据对齐器"""
         aligner = Mock(spec=DataAligner)
-        # 修改模拟行为，使其根据消息类型返回正确的对齐消息
+        # 修改模拟行为,使其根据消息类型返回正确的对齐消息
         def align_message_side_effect(message_dict):
             message_type = message_dict.get("message_type", "HSP::Fact_v0.1")
             if "Opinion" in message_type:
@@ -92,14 +92,14 @@ class TestHSPIntegration:
             message_bridge=message_bridge
         )
 
-        # 连接（同步方式，因为这是在fixture初始化中）
-        # 注意：这里我们不实际调用await connector.connect()，因为fixture不是async
+        # 连接(同步方式,因为这是在fixture初始化中)
+        # 注意：这里我们不实际调用await connector.connect(),因为fixture不是async
         # 而是直接设置连接状态
         connector.is_connected = True
         
         # 订阅主题
-        # 注意：这里我们不实际调用await connector.subscribe()，因为fixture不是async
-        # 在mock模式下，订阅操作是同步的
+        # 注意：这里我们不实际调用await connector.subscribe(),因为fixture不是async
+        # 在mock模式下,订阅操作是同步的
         
         return connector
     
@@ -129,11 +129,11 @@ class TestHSPIntegration:
                 "sender_ai_id": sender_ai_id,
                 "message": message
             })
-            _ = received_event.set()
+            received_event.set()
 
         # 订阅事实消息
-        _ = print("DEBUG: Subscribing to facts")
-        _ = await hsp_connector.subscribe_to_facts(fact_handler)
+        print("DEBUG: Subscribing to facts")
+        await hsp_connector.subscribe_to_facts(fact_handler)
 
         # 直接调用内部消息处理方法来模拟消息接收
         # 创建一个模拟的消息信封
@@ -146,7 +146,7 @@ class TestHSPIntegration:
         }
         
         # 直接调用HSP连接器的内部消息处理方法
-        _ = await hsp_connector._handle_fact_message(mock_envelope, "test_ai", mock_envelope)
+        await hsp_connector._handle_fact_message(mock_envelope, "test_ai", mock_envelope)
 
         # 验证消息是否正确接收
         assert len(received_messages) == 1
@@ -180,10 +180,10 @@ class TestHSPIntegration:
                 "sender_ai_id": sender_ai_id,
                 "message": message
             })
-            _ = received_event.set()
+            received_event.set()
         
         # 订阅观点消息
-        _ = await hsp_connector.subscribe_to_opinions(opinion_handler)
+        await hsp_connector.subscribe_to_opinions(opinion_handler)
         
         # 直接调用内部消息处理方法来模拟消息接收
         # 创建一个模拟的消息信封
@@ -196,7 +196,7 @@ class TestHSPIntegration:
         }
         
         # 直接调用HSP连接器的内部消息处理方法
-        _ = await hsp_connector._handle_opinion_message(mock_envelope, "test_ai_1", mock_envelope)
+        await hsp_connector._handle_opinion_message(mock_envelope, "test_ai_1", mock_envelope)
 
         # 验证消息是否正确接收
         assert len(received_opinions) == 1
@@ -211,7 +211,7 @@ class TestMemorySystemIntegration:
     @pytest.mark.asyncio
     async def test_memory_storage_retrieval_flow(self) -> None:
         """测试记忆存储和检索流程"""
-        # 由于记忆系统依赖外部数据库，这里使用模拟测试
+        # 由于记忆系统依赖外部数据库,这里使用模拟测试
         with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_manager:
             # 模拟记忆管理器
             mock_manager_instance = mock_manager.return_value
@@ -231,7 +231,7 @@ class TestMemorySystemIntegration:
             
             result = await mock_manager_instance.store_memory(test_memory)
             assert result is True
-            _ = mock_manager_instance.store_memory.assert_called_once_with(test_memory)
+            mock_manager_instance.store_memory.assert_called_once_with(test_memory)
             
             # 测试检索流程
             mock_manager_instance.retrieve_memory.return_value = [test_memory]
@@ -255,14 +255,14 @@ class TestAgentSystemIntegration:
             # 测试创建代理
             agent = await mock_manager_instance.create_agent("test_agent", "Test Agent")
             assert agent is not None
-            _ = mock_manager_instance.create_agent.assert_called_once_with("test_agent", "Test Agent")
+            mock_manager_instance.create_agent.assert_called_once_with("test_agent", "Test Agent")
             
             # 测试启动代理
             result = await mock_manager_instance.start_agent("test_agent")
             assert result is True
-            _ = mock_manager_instance.start_agent.assert_called_once_with("test_agent")
+            mock_manager_instance.start_agent.assert_called_once_with("test_agent")
             
             # 测试停止代理
             result = await mock_manager_instance.stop_agent("test_agent")
             assert result is True
-            _ = mock_manager_instance.stop_agent.assert_called_once_with("test_agent")
+            mock_manager_instance.stop_agent.assert_called_once_with("test_agent")

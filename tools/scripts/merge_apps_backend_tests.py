@@ -18,13 +18,13 @@ for root, dirs, files in os.walk(source_dir):
     # 确保目标目录存在
     os.makedirs(dest_path, exist_ok=True)
     
-    # 复制文件
+    # 复制文件:
     for file in files:
         if file.endswith('.py'):  # 只处理Python文件
             src_file = os.path.join(root, file)
             dst_file = os.path.join(dest_path, file)
             
-            # 如果目标文件已存在，则重命名源文件以避免覆盖
+            # 如果目标文件已存在,则重命名源文件以避免覆盖
             if os.path.exists(dst_file):
                 base_name, ext = os.path.splitext(file)
                 counter = 1

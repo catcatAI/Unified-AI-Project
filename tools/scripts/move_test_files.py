@@ -25,7 +25,7 @@ for file_name, dest_dir in file_mapping.items():
     # 确保目标目录存在
     os.makedirs(dest_dir, exist_ok=True)
     
-    # 如果源文件存在，则移动它
+    # 如果源文件存在,则移动它
     if os.path.exists(source_path):
         try:
             shutil.move(source_path, dest_path)
@@ -40,7 +40,7 @@ for file_name in os.listdir(source_dir):
     source_path = os.path.join(source_dir, file_name)
     dest_path = os.path.join(target_dir, file_name)
     
-    # 如果是文件，则移动它
+    # 如果是文件,则移动它
     if os.path.isfile(source_path):
         try:
             shutil.move(source_path, dest_path)

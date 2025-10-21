@@ -1,7 +1,7 @@
 """
 测试模块 - test_fix
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 import sys
@@ -26,52 +26,52 @@ def test_
         """测试函数 - 自动添加断言"""
         self.assertTrue(True)  # 基础断言
         
-        # TODO: 添加具体的测试逻辑
+        # TODO, 添加具体的测试逻辑
         pass
 
-    def test_entity_extraction() -> None:
+    def test_entity_extraction() -> None,
     """Test entity extraction and relationship creation"""
-    analyzer = ContentAnalyzerModule()
+    analyzer == ContentAnalyzerModule()
     
     # Test simple entity extraction
     text = "Apple Inc. is a company. Steve Jobs was a person."
     kg_data, nx_graph = analyzer.analyze_content(text)
     
-    print(f"Entities extracted: {len(kg_data['entities'])}")
-    print(f"Nodes in graph: {nx_graph.number_of_nodes()}")
-    print(f"Entities match: {len(kg_data['entities']) == nx_graph.number_of_nodes()}")
+    print(f"Entities extracted, {len(kg_data['entities'])}")
+    print(f"Nodes in graph, {nx_graph.number_of_nodes()}")
+    print(f"Entities match, {len(kg_data['entities']) == nx_graph.number_of_nodes()}")
     
     # Print entities
-    for entity_id, entity in kg_data["entities"].items():
-        print(f"Entity: {entity['label']} (Type: {entity['type']})")
+    for entity_id, entity in kg_data["entities"].items():::
+        print(f"Entity, {entity['label']} (Type, {entity['type']})")
     
     # Test located_in relationship
     text2 = "Microsoft is based in Redmond."
     kg_data2, nx_graph2 = analyzer.analyze_content(text2)
     
-    print(f"\nLocated_in test:")
-    print(f"Entities extracted: {len(kg_data2['entities'])}")
-    print(f"Nodes in graph: {nx_graph2.number_of_nodes()}")
-    print(f"Relationships: {len(kg_data2['relationships'])}")
+    print(f"\nLocated_in test,")
+    print(f"Entities extracted, {len(kg_data2['entities'])}")
+    print(f"Nodes in graph, {nx_graph2.number_of_nodes()}")
+    print(f"Relationships, {len(kg_data2['relationships'])}")
     
-    for rel in kg_data2["relationships"]:
+    for rel in kg_data2["relationships"]::
         src_label = kg_data2["entities"][rel["source_id"]]["label"]
         tgt_label = kg_data2["entities"][rel["target_id"]]["label"]
-        print(f"Relationship: {src_label} --{rel['type']}--> {tgt_label}")
+        print(f"Relationship, {src_label} --{rel['type']}--> {tgt_label}")
     
-    # Test works_for relationship:
-ext3 = "John Doe works for Acme Corp.":
+    # Test works_for relationship,::
+        ext3 == "John Doe works for Acme Corp.":::
 g_data3, nx_graph3 = analyzer.analyze_content(text3)
     
-    print(f"\nWorks_for test:"):
-rint(f"Entities extracted: {len(kg_data3['entities'])}")
-    print(f"Nodes in graph: {nx_graph3.number_of_nodes()}")
-    print(f"Relationships: {len(kg_data3['relationships'])}")
+    print(f"\nWorks_for test,"):::
+        rint(f"Entities extracted, {len(kg_data3['entities'])}")
+    print(f"Nodes in graph, {nx_graph3.number_of_nodes()}")
+    print(f"Relationships, {len(kg_data3['relationships'])}")
     
-    for rel in kg_data3["relationships"]:
+    for rel in kg_data3["relationships"]::
         src_label = kg_data3["entities"][rel["source_id"]]["label"]
         tgt_label = kg_data3["entities"][rel["target_id"]]["label"]
-        print(f"Relationship: {src_label} --{rel['type']}--> {tgt_label}")
+        print(f"Relationship, {src_label} --{rel['type']}--> {tgt_label}")
 
-if __name__ == "__main__":
+if __name"__main__":::
     test_entity_extraction()

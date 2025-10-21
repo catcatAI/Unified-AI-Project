@@ -23,7 +23,7 @@ class Angela:
                 self.is_appearing = False
 
         # Placeholder for proactive interaction logic:
-elf.check_for_proactive_interaction
+            elf.check_for_proactive_interaction
 
     def render(self, surface):
         if self.is_appearing:
@@ -48,8 +48,8 @@ elf.check_for_proactive_interaction
 
     def check_for_proactive_interaction(self):
         # This method will be called periodically to check if Angela should
-        # proactively interact with the player.
-        #
+        # proactively interact with the player.:
+        #:
         # Example logic:
         # if self.game.player.is_tired and self.favorability > 50:
         #     self.game.dialogue_box.show("You look tired. Remember to rest.", "Angela", self.portrait)

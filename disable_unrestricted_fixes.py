@@ -9,9 +9,9 @@ from pathlib import Path
 # 禁用占位符内容
 placeholder_content = '''#!/usr/bin/env python3
 """
-此脚本已被归档，因为它没有范围限制。
+此脚本已被归档,因为它没有范围限制。
 
-原因：该脚本可能会修改下载的内容（如依赖、模型、数据集等），不符合项目本体的修复原则。
+原因：该脚本可能会修改下载的内容(如依赖、模型、数据集等),不符合项目本体的修复原则。
 
 请使用具有范围限制的 unified-fix.py 工具进行修复。
 """
@@ -63,8 +63,7 @@ scripts_to_disable = [
     
     # apps/backend/tools/fix/ 下的脚本
     "apps/backend/tools/fix/fix_hsp_integration.py",
-    "apps/backend/tools/fix/fix_import_path.py",
-]
+    "apps/backend/tools/fix/fix_import_path.py"]
 
 project_root = Path(__file__).parent
 disabled_count = 0

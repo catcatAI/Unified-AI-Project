@@ -21,6 +21,6 @@ if fix_script_path.exists():
     try:
         with open(fix_script_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()[:100]
-        print(f"前100行读取成功，共 {len(lines)} 行")
+        print(f"前100行读取成功,共 {len(lines)} 行")
     except Exception as e:
         print(f"读取文件失败: {e}")

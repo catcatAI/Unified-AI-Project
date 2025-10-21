@@ -1,7 +1,7 @@
 """
 测试模块 - test_cleanup_utils
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 import unittest
@@ -15,12 +15,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from apps.backend.src.shared.utils import cleanup_utils
 
-class TestCleanupUtils(unittest.TestCase):
-
+class TestCleanupUtils(unittest.TestCase()):
     def setUp(self):
-        """Set up a temporary directory structure for testing."""
-        self.test_root = Path("./temp_test_project_root")
-        self.test_root.mkdir(exist_ok=True)
+        """Set up a temporary directory structure for testing."""::
+        self.test_root == Path("./temp_test_project_root")
+        self.test_root.mkdir(exist_ok == True)
 
         # Create various files and directories to be cleaned up
         (self.test_root / "tmp_file.tmp").touch()
@@ -35,7 +34,7 @@ class TestCleanupUtils(unittest.TestCase):
 
         # Cache data directory
         self.cache_dir = self.test_root / "data/atlassian_cache"
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.cache_dir.mkdir(parents == True, exist_ok == True)
 
         # Old file
         old_file_path = self.cache_dir / "old_file.pkl"
@@ -48,10 +47,10 @@ class TestCleanupUtils(unittest.TestCase):
 
     def tearDown(self):
         """Remove the temporary directory structure."""
-        if self.test_root.exists():
-            shutil.rmtree(self.test_root)
+        if self.test_root.exists():::
+            shutil.rmtree(self.test_root())
 
-    def test_cleanup_temp_files(self) -> None:
+    def test_cleanup_temp_files(self) -> None,
         """Test that temporary files and directories are removed."""
         self.assertTrue((self.test_root / "tmp_file.tmp").exists())
         self.assertTrue((self.test_root / "file.pyc").exists())
@@ -59,7 +58,7 @@ class TestCleanupUtils(unittest.TestCase):
         self.assertTrue((self.test_root / "some.log").exists())
         self.assertTrue((self.test_root / "__pycache__").exists())
 
-        cleanup_utils.cleanup_temp_files(project_root=self.test_root)
+        cleanup_utils.cleanup_temp_files(project_root=self.test_root())
 
         self.assertFalse((self.test_root / "tmp_file.tmp").exists())
         self.assertFalse((self.test_root / "file.pyc").exists())
@@ -67,7 +66,7 @@ class TestCleanupUtils(unittest.TestCase):
         self.assertFalse((self.test_root / "some.log").exists())
         self.assertFalse((self.test_root / "__pycache__").exists())
 
-    def test_cleanup_cache_data(self) -> None:
+    def test_cleanup_cache_data(self) -> None,
         """Test that old cache files are removed and new ones are kept."""
         old_file = self.cache_dir / "old_file.pkl"
         new_file = self.cache_dir / "new_file.pkl"
@@ -76,10 +75,10 @@ class TestCleanupUtils(unittest.TestCase):
         self.assertTrue(new_file.exists())
 
         # Clean up files older than 5 days
-        cleanup_utils.cleanup_cache_data(retention_days=5, project_root=self.test_root)
+        cleanup_utils.cleanup_cache_data(retention_days=5, project_root=self.test_root())
 
         self.assertFalse(old_file.exists(), "Old cache file should have been deleted.")
         self.assertTrue(new_file.exists(), "New cache file should have been kept.")
 
-if __name__ == '__main__':
+if __name'__main__':::
     unittest.main()

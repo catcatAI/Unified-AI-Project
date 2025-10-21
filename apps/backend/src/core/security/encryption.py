@@ -33,9 +33,9 @@ class EncryptionUtils:
         # 从环境变量或配置获取密钥
         encryption_key = self.config.get('encryption_key')
         if not encryption_key:
-            # 生成新密钥（生产环境应该从安全存储获取）
+            # 生成新密钥(生产环境应该从安全存储获取)
             encryption_key = Fernet.generate_key()
-            logger.warning("生成了新的加密密钥，生产环境应该使用预定义的密钥")
+            logger.warning("生成了新的加密密钥,生产环境应该使用预定义的密钥")
         
         # 设置Fernet加密器
         self.fernet = Fernet(encryption_key)
@@ -58,14 +58,14 @@ class EncryptionUtils:
         return kdf.derive(key)
     
     def encrypt(self, data: Union[str, bytes]) -> bytes:
-        """加密数据（使用Fernet）"""
+        """加密数据(使用Fernet)"""
         if isinstance(data, str):
             data = data.encode('utf-8')
         
         return self.fernet.encrypt(data)
     
     def decrypt(self, encrypted_data: bytes) -> bytes:
-        """解密数据（使用Fernet）"""
+        """解密数据(使用Fernet)"""
         return self.fernet.decrypt(encrypted_data)
     
     def encrypt_aes(self, data: Union[str, bytes]) -> Dict[str, Any]:

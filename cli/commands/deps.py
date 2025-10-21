@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def deps():
     """依赖管理命令
 
-    用于管理Unified AI项目的依赖，包括Node.js依赖和Python依赖。
+    用于管理Unified AI项目的依赖,包括Node.js依赖和Python依赖。
 
     使用示例:
       unified-ai-cli deps install      # 安装所有依赖
@@ -25,7 +25,7 @@ def deps():
 def install():
     """安装所有依赖
 
-    安装项目所需的所有依赖，包括Node.js依赖和Python依赖。
+    安装项目所需的所有依赖,包括Node.js依赖和Python依赖。
 
     使用示例:
       unified-ai-cli deps install
@@ -51,7 +51,7 @@ def install():
             subprocess.run([pip_cmd, "install", "-r", "requirements.txt"], cwd=backend_path, check=True)
             subprocess.run([pip_cmd, "install", "-r", "requirements-dev.txt"], cwd=backend_path, check=True)
         else:
-            logger.warning("Python虚拟环境不存在，请先运行 'unified-ai-cli dev setup'")
+            logger.warning("Python虚拟环境不存在,请先运行 'unified-ai-cli dev setup'")
 
         logger.info("依赖安装完成")
 
@@ -91,7 +91,7 @@ def update():
             subprocess.run([pip_cmd, "install", "--upgrade", "-r", "requirements.txt"], cwd=backend_path, check=True)
             subprocess.run([pip_cmd, "install", "--upgrade", "-r", "requirements-dev.txt"], cwd=backend_path, check=True)
         else:
-            logger.warning("Python虚拟环境不存在，请先运行 'unified-ai-cli dev setup'")
+            logger.warning("Python虚拟环境不存在,请先运行 'unified-ai-cli dev setup'")
 
         logger.info("依赖更新完成")
 
@@ -105,7 +105,7 @@ def update():
 def check():
     """检查依赖状态
 
-    检查项目依赖的状态，包括版本冲突和缺失的依赖。
+    检查项目依赖的状态,包括版本冲突和缺失的依赖。
 
     使用示例:
       unified-ai-cli deps check
@@ -130,7 +130,7 @@ def check():
 
             subprocess.run([pip_cmd, "check"], cwd=backend_path)
         else:
-            logger.warning("Python虚拟环境不存在，请先运行 'unified-ai-cli dev setup'")
+            logger.warning("Python虚拟环境不存在,请先运行 'unified-ai-cli dev setup'")
 
         logger.info("依赖状态检查完成")
 
@@ -144,7 +144,7 @@ def check():
 def clean():
     """清理依赖
 
-    清理项目中的依赖，包括删除node_modules目录和Python虚拟环境。
+    清理项目中的依赖,包括删除node_modules目录和Python虚拟环境。
 
     使用示例:
       unified-ai-cli deps clean

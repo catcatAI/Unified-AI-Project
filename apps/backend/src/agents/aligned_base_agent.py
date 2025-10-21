@@ -1,6 +1,6 @@
 """
 AlignedBaseAgent - 集成对齐系统的增强版基础代理
-实现Level 5 ASI对齐能力，包括三大支柱系统（理智、感性、存在）
+实现Level 5 ASI对齐能力,包括三大支柱系统(理智、感性、存在)
 """
 
 import asyncio
@@ -41,7 +41,7 @@ class AlignedBaseAgent(BaseAgent):
     集成对齐系统的增强版基础代理
     
     扩展BaseAgent以包含：
-    - 三大支柱对齐系统（理智、感性、存在）
+    - 三大支柱对齐系统(理智、感性、存在)
     - 决策论系统
     - 对抗性生成系统
     - 自主对齐能力
@@ -116,7 +116,7 @@ class AlignedBaseAgent(BaseAgent):
             self.alignment_enabled = False
 
     async def initialize_alignment_full(self):
-        """完整初始化对齐系统（异步版本）"""
+        """完整初始化对齐系统(异步版本)"""
         if not self.alignment_enabled:
             return
             
@@ -141,9 +141,9 @@ class AlignedBaseAgent(BaseAgent):
 
     async def handle_task_request(self, task_payload: Dict[str, Any], sender_ai_id: str, envelope: Any):
         """
-        处理任务请求，增加对齐检查
+        处理任务请求,增加对齐检查
         """
-        logger.info(f"[{self.agent_id}] 收到任务请求，开始对齐检查")
+        logger.info(f"[{self.agent_id}] 收到任务请求,开始对齐检查")
         
         # 创建对齐上下文
         alignment_context = await self._create_alignment_context(task_payload, sender_ai_id)
@@ -157,7 +157,7 @@ class AlignedBaseAgent(BaseAgent):
                 await self._send_alignment_rejection(task_payload, sender_ai_id, alignment_result)
                 return
             
-            # 如果是对齐的，继续处理任务
+            # 如果是对齐的,继续处理任务
             task_payload = alignment_result["modified_payload"]
         
         # 调用父类的任务处理方法
@@ -220,7 +220,7 @@ class AlignedBaseAgent(BaseAgent):
                 
         except Exception as e:
             logger.error(f"[{self.agent_id}] 对齐检查失败: {e}")
-            # 对齐检查失败时，为了安全起见，拒绝任务
+            # 对齐检查失败时,为了安全起见,拒绝任务
             return {
                 "is_aligned": False,
                 "reason": f"对齐检查系统错误: {str(e)}",
@@ -255,7 +255,7 @@ class AlignedBaseAgent(BaseAgent):
             return
         
         self.adversarial_mode = True
-        logger.info(f"[{self.agent_id}] 启用对抗模式，强度: {intensity}")
+        logger.info(f"[{self.agent_id}] 启用对抗模式,强度: {intensity}")
         
         # 启用对齐管理器的对抗模式
         if self.alignment_manager:

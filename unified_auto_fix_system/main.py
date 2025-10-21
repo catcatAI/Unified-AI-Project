@@ -11,8 +11,6 @@ from pathlib import Path
 def main():
     """主函数"""
 
-
-
     # 检查是否在项目根目录下
     project_root = Path.cwd()
     

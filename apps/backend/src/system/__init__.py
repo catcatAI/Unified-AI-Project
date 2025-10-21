@@ -19,8 +19,7 @@ GPUInfo,
 MemoryInfo,
 StorageInfo,
 NetworkInfo,
-get_hardware_profile,
-)
+get_hardware_profile)
 
 # Deployment Management
 from .deployment_manager import (
@@ -31,16 +30,14 @@ ModelSize,
 ModelConfig,
 CompressionConfig,
 ProcessingConfig,
-get_deployment_config,
-)
+get_deployment_config)
 
 # Integrated Graphics Optimization
 from .integrated_graphics_optimizer import (
 IntegratedGraphicsOptimizer,
-optimize_for_integrated_graphics,
-)
+optimize_for_integrated_graphics)
 
-__all__ = [
+__all_[
     # Hardware Detection
 'HardwareProbe',
 'HardwareProfile',
@@ -63,5 +60,4 @@ __all__ = [
     
     # Integrated Graphics Optimization
 'IntegratedGraphicsOptimizer',
-'optimize_for_integrated_graphics',
-]
+'optimize_for_integrated_graphics']

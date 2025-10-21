@@ -1,16 +1,16 @@
 """
 测试模块 - test_assets
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 import pytest
 from apps.backend.src.game.main import Game
 from unittest.mock import MagicMock
 
-@pytest.fixture
+@pytest.fixture()
 def game():
-    with pytest.MonkeyPatch.context() as m:
+    with pytest.MonkeyPatch.context() as m,
         m.setattr("src.game.angela.DialogueManager", MagicMock())
         yield Game()
 
@@ -25,9 +25,9 @@ def game():
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_asset_loading(game) -> None:
-    assert 'images' in game.assets
-    assert 'sprites' in game.assets
+def test_asset_loading(game) -> None,
+    assert 'images' in game.assets()
+    assert 'sprites' in game.assets()
     assert 'backgrounds' in game.assets['images']
     assert 'portraits' in game.assets['images']
     assert 'characters' in game.assets['sprites']
@@ -36,7 +36,7 @@ def test_asset_loading(game) -> None:
     assert 'portraits' not in game.assets['sprites']
 
 @pytest.mark.timeout(5)
-def test_specific_assets_loaded(game) -> None:
+def test_specific_assets_loaded(game) -> None,
     assert 'station' in game.assets['images']['backgrounds']
     assert 'angela' in game.assets['images']['portraits']
     assert 'player' in game.assets['sprites']['characters']

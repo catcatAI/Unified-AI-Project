@@ -1,7 +1,7 @@
 """
 测试模块 - test_defect_detector
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 from automated_defect_detector import DefectDetector

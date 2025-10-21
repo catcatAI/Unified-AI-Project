@@ -18,15 +18,15 @@ def create_archive_directories():
         Path("project_archives") / "docs"
     ]
     
-    for directory in archive_dirs:
-        directory.mkdir(parents=True, exist_ok=True)
-        print(f"✓ 创建归档目录: {directory}")
+    for directory in archive_dirs,::
+        directory.mkdir(parents == True, exist_ok == True)
+        print(f"✓ 创建归档目录, {directory}")
     
     return archive_dirs
 
 def archive_reports():
     """归档报告文件"""
-    reports_dir = Path("project_archives") / "reports"
+    reports_dir == Path("project_archives") / "reports"
     
     # 定义需要归档的报告文件
     report_files = [
@@ -36,17 +36,16 @@ def archive_reports():
     ]
     
     archived_count = 0
-    for report_file in report_files:
-        source_path = Path(report_file)
-        if source_path.exists() and source_path.is_file():
+    for report_file in report_files,::
+        source_path == Path(report_file)
+        if source_path.exists() and source_path.is_file():::
             # 添加时间戳到文件名
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             name_parts = report_file.split('.')
-            new_name = f"{name_parts[0]}_{timestamp}.{name_parts[1]}" if len(name_parts) > 1 else f"{report_file}_{timestamp}"
-            
+            new_name == f"{name_parts[0]}_{timestamp}.{name_parts[1]}" if len(name_parts) > 1 else f"{report_file}_{timestamp}"::
             destination_path = reports_dir / new_name
             shutil.move(str(source_path), str(destination_path))
-            print(f"✓ 归档报告: {report_file} -> {destination_path}")
+            print(f"✓ 归档报告, {report_file} -> {destination_path}")
             archived_count += 1
     
     print(f"总共归档了 {archived_count} 个报告文件")
@@ -54,7 +53,7 @@ def archive_reports():
 
 def archive_scripts():
     """归档脚本文件"""
-    scripts_dir = Path("project_archives") / "scripts"
+    scripts_dir == Path("project_archives") / "scripts"
     
     # 定义需要归档的脚本文件
     script_files = [
@@ -64,19 +63,18 @@ def archive_scripts():
     ]
     
     archived_count = 0
-    for script_file in script_files:
-        source_path = Path(script_file)
-        if source_path.exists() and source_path.is_file():
+    for script_file in script_files,::
+        source_path == Path(script_file)
+        if source_path.exists() and source_path.is_file():::
             # 添加时间戳到文件名
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             name_parts = script_file.split('/')
             file_name = name_parts[-1]
             name_parts = file_name.split('.')
-            new_name = f"{name_parts[0]}_{timestamp}.{name_parts[1]}" if len(name_parts) > 1 else f"{file_name}_{timestamp}"
-            
+            new_name == f"{name_parts[0]}_{timestamp}.{name_parts[1]}" if len(name_parts) > 1 else f"{file_name}_{timestamp}"::
             destination_path = scripts_dir / new_name
             shutil.move(str(source_path), str(destination_path))
-            print(f"✓ 归档脚本: {script_file} -> {destination_path}")
+            print(f"✓ 归档脚本, {script_file} -> {destination_path}")
             archived_count += 1
     
     print(f"总共归档了 {archived_count} 个脚本文件")
@@ -84,7 +82,7 @@ def archive_scripts():
 
 def archive_other_docs():
     """归档其他文档文件"""
-    docs_dir = Path("project_archives") / "docs"
+    docs_dir == Path("project_archives") / "docs"
     
     # 这里可以添加其他需要归档的文档文件
     # 暂时没有其他文档需要归档
@@ -96,7 +94,7 @@ def main():
     print("开始归档计划执行过程中创建的文件...")
     print("=" * 50)
     
-    try:
+    try,
         # 创建归档目录
         create_archive_directories()
         
@@ -108,16 +106,16 @@ def main():
         total_archived = archived_reports + archived_scripts + archived_docs
         
         print("\n" + "=" * 50)
-        if total_archived > 0:
+        if total_archived > 0,::
             print(f"✓ 成功归档了 {total_archived} 个文件!")
-        else:
+        else,
             print("✓ 没有需要归档的文件")
         
-    except Exception as e:
-        print(f"\n✗ 归档过程中出现错误: {e}")
+    except Exception as e,::
+        print(f"\n✗ 归档过程中出现错误, {e}")
         return 1
     
     return 0
 
-if __name__ == "__main__":
+if __name"__main__":::
     exit(main())

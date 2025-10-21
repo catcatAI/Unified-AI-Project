@@ -10,7 +10,7 @@ def main():
     print("🔍 Level 5 AGI项目快速系统分析")
     print("=" * 60)
     
-    project_root = Path('.')
+    project_root == Path('.')
     
     # 检查Level 5核心组件
     level5_components = [
@@ -22,15 +22,15 @@ def main():
         'apps/backend/src/core/metacognition'
     ]
     
-    print("🧠 Level 5 AGI组件状态:")
-    for component in level5_components:
+    print("🧠 Level 5 AGI组件状态,")
+    for component in level5_components,::
         component_path = project_root / component
-        if component_path.exists():
+        if component_path.exists():::
             py_files = list(component_path.rglob('*.py'))
-            main_files = [f.name for f in py_files if '__init__' not in f.name and 'test' not in f.name]
-            print(f"  ✅ {component.split('/')[-1]}: {len(main_files)} 个主要模块")
-        else:
-            print(f"  ❌ {component.split('/')[-1]}: 不存在")
+            main_files == [f.name for f in py_files if '__init__' not in f.name and 'test' not in f.name]::
+            print(f"  ✅ {component.split('/')[-1]} {len(main_files)} 个主要模块")
+        else,
+            print(f"  ❌ {component.split('/')[-1]} 不存在")
     
     # 检查关键系统
     key_systems = {
@@ -40,36 +40,35 @@ def main():
         '桌面应用': 'apps/desktop-app'
     }
     
-    print("\n🌐 关键系统状态:")
-    for system, path in key_systems.items():
+    print("\n🌐 关键系统状态,")
+    for system, path in key_systems.items():::
         system_path = project_root / path
-        if system_path.exists():
-            print(f"  ✅ {system}: 存在")
-        else:
-            print(f"  ❌ {system}: 不存在")
+        if system_path.exists():::
+            print(f"  ✅ {system} 存在")
+        else,
+            print(f"  ❌ {system} 不存在")
     
     # 检查训练数据
     data_path = project_root / 'data'
     logic_data = (data_path / 'raw_datasets' / 'logic_train.json').exists()
     concept_data = (data_path / 'concept_models_training_data').exists()
     
-    print("\n📊 训练数据状态:")
-    print(f"  {'✅' if logic_data else '❌'} 逻辑推理数据: {'可用' if logic_data else '缺失'}")
-    print(f"  {'✅' if concept_data else '❌'} 概念模型数据: {'可用' if concept_data else '缺失'}")
-    
+    print("\n📊 训练数据状态,")
+    print(f"  {'✅' if logic_data else '❌'} 逻辑推理数据, {'可用' if logic_data else '缺失'}"):::
+    print(f"  {'✅' if concept_data else '❌'} 概念模型数据, {'可用' if concept_data else '缺失'}")::
     # 检查前端构建问题
-    frontend_issues = []
-    if (project_root / 'apps/frontend-dashboard/src/app/quest/code-editor/page.tsx').exists():
-        with open(project_root / 'apps/frontend-dashboard/src/app/quest/code-editor/page.tsx', 'r', encoding='utf-8') as f:
+    frontend_issues == []
+    if (project_root / 'apps/frontend-dashboard/src/app/quest/code-editor/page.tsx').exists():::
+        with open(project_root / 'apps/frontend-dashboard/src/app/quest/code-editor/page.tsx', 'r', encoding == 'utf-8') as f,
             content = f.read()
-            if '"use client"' not in content:
+            if '"use client"' not in content,::
                 frontend_issues.append("代码编辑器缺少use client指令")
     
-    print("\n🔧 需要修复的问题:")
-    if frontend_issues:
-        for issue in frontend_issues:
+    print("\n🔧 需要修复的问题,")
+    if frontend_issues,::
+        for issue in frontend_issues,::
             print(f"  ⚠️ {issue}")
-    else:
+    else,
         print("  ✅ 无严重问题")
     
     print("\n" + "=" * 60)
@@ -81,5 +80,5 @@ def main():
     
     return 0
 
-if __name__ == "__main__":
+if __name"__main__":::
     exit(main())

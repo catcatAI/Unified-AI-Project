@@ -22,7 +22,7 @@ async def test_hsp_connector() -> None:
     
     # Create a mock broker
     mock_broker = MockMqttBroker()
-#     _ = await mock_broker.start()
+#     await mock_broker.start()
     
     try:
         # Create the HSPConnector in mock mode
@@ -36,7 +36,7 @@ async def test_hsp_connector() -> None:
         )
         
         # Connect the connector
-#         _ = await connector.connect()
+#         await connector.connect()
         
         # 验证连接器创建成功
         assert connector is not None
@@ -44,7 +44,7 @@ async def test_hsp_connector() -> None:
         assert connector.is_connected == True
         
         # Clean up
-#         _ = await connector.disconnect()
+#         await connector.disconnect()
         
     finally:
-        _ = await mock_broker.shutdown()
+        await mock_broker.shutdown()

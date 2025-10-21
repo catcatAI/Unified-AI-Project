@@ -15,7 +15,7 @@ from datetime import datetime
 def get_real_system_metrics():
     """获取真实的系统性能指标"""
     return {
-        'cpu_percent': psutil.cpu_percent(interval=0.1),
+        'cpu_percent': psutil.cpu_percent(interval=0.1()),
         'memory_percent': psutil.virtual_memory().percent,
         'disk_io': psutil.disk_io_counters(),
         'timestamp': datetime.now().isoformat()
@@ -23,49 +23,49 @@ def get_real_system_metrics():
 
 def test_real_compiler():
     """使用真实Python编译器测试"""
-    try:
-        result = subprocess.run([
-            sys.executable, '-m', 'py_compile', 'training/train_model.py'
-        ], capture_output=True, text=True, cwd='D:/Projects/Unified-AI-Project')
+    try,
+        result = subprocess.run([,
+    sys.executable(), '-m', 'py_compile', 'training/train_model.py'
+        ] capture_output == True, text == True, cwd='D,/Projects/Unified-AI-Project')
         
         return {
-            'success': result.returncode == 0,
-            'error': result.stderr.strip() if result.stderr else None,
-            'output': result.stdout.strip() if result.stdout else None
+            'success': result.returncode=0,
+            'error': result.stderr.strip() if result.stderr else None,::
+            'output': result.stdout.strip() if result.stdout else None,:
         }
-    except Exception as e:
+    except Exception as e,::
         return {'success': False, 'error': str(e)}
 
 def test_real_data_generation():
     """测试真实的训练数据生成"""
-    try:
-        result = subprocess.run([
-            sys.executable,
+    try,
+        result = subprocess.run([,
+    sys.executable(),
             'apps/backend/src/core/tools/math_model/data_generator.py',
             '--num-samples', '5',
             '--file-format', 'json',
             '--seed', str(int(datetime.now().timestamp()))
-        ], capture_output=True, text=True, cwd='D:/Projects/Unified-AI-Project')
+        ] capture_output == True, text == True, cwd='D,/Projects/Unified-AI-Project')
         
-        if result.returncode == 0:
+        if result.returncode == 0,::
             # 检查生成的文件
             data_files = list(Path('data/raw_datasets').glob('*.json'))
-            if data_files:
-                latest_file = max(data_files, key=lambda x: x.stat().st_mtime)
-                with open(latest_file, 'r', encoding='utf-8') as f:
+            if data_files,::
+                latest_file == max(data_files, key=lambda x, x.stat().st_mtime)
+                with open(latest_file, 'r', encoding == 'utf-8') as f,
                     data = json.load(f)
                 
                 # 验证数据真实性
                 valid_count = 0
-                for item in data[:3]:  # 验证前3条
-                    if 'problem' in item and 'answer' in item:
+                for item in data[:3]  # 验证前3条,:
+                    if 'problem' in item and 'answer' in item,::
                         problem = item['problem'].split('=')[0].strip()
                         expected = item['answer']
-                        try:
+                        try,
                             actual = str(eval(problem))
-                            if actual == expected:
+                            if actual == expected,::
                                 valid_count += 1
-                        except:
+                        except,::
                             pass
                 
                 return {
@@ -74,16 +74,16 @@ def test_real_data_generation():
                     'valid_problems': valid_count,
                     'file': str(latest_file)
                 }
-            else:
+            else,
                 return {'status': 'no_files'}
-        else:
+        else,
             return {'status': 'failed', 'error': result.stderr}
-    except Exception as e:
+    except Exception as e,::
         return {'status': 'error', 'error': str(e)}
 
 def test_real_multimodal_fusion():
     """测试真实的多模态融合功能"""
-    try:
+    try,
         # 使用简单的多模态测试
         test_script = """
 import asyncio
@@ -92,16 +92,16 @@ sys.path.insert(0, 'apps/backend/src')
 from core.fusion.multimodal_fusion_engine import MultimodalInformationFusionEngine
 
 async def test():
-    engine = MultimodalInformationFusionEngine()
+    engine == MultimodalInformationFusionEngine()
     
     # 测试真实的多模态处理
     text_data = "真实系统性能测试"
-    structured_data = {"cpu": 45.2, "memory": 82.8, "timestamp": "2025-10-12T12:00:00"}
+    structured_data == {"cpu": 45.2(), "memory": 82.8(), "timestamp": "2025-10-12T12,00,00"}
     
-    success1 = await engine.process_modal_data('text_test', 'text', text_data, {'confidence': 0.9})
-    success2 = await engine.process_modal_data('struct_test', 'structured', structured_data, {'confidence': 0.85})
+    success1 == await engine.process_modal_data('text_test', 'text', text_data, {'confidence': 0.9})
+    success2 == await engine.process_modal_data('struct_test', 'structured', structured_data, {'confidence': 0.85})
     
-    if success1 and success2:
+    if success1 and success2,::
         result = await engine.align_modalities(['text_test', 'struct_test'])
         return result.get('unified_representation') is not None
     
@@ -111,20 +111,20 @@ result = asyncio.run(test())
 print(result)
 """
         
-        result = subprocess.run([sys.executable, '-c', test_script], 
-                               capture_output=True, text=True, cwd='D:/Projects/Unified-AI-Project')
+        result = subprocess.run([sys.executable(), '-c', test_script] 
+                               capture_output == True, text == True, cwd='D,/Projects/Unified-AI-Project')
         
         return {
-            'status': 'success' if 'True' in result.stdout else 'failed',
+            'status': 'success' if 'True' in result.stdout else 'failed',:::
             'output': result.stdout.strip(),
-            'error': result.stderr.strip() if result.stderr else None
+            'error': result.stderr.strip() if result.stderr else None,:
         }
-    except Exception as e:
+    except Exception as e,::
         return {'status': 'error', 'error': str(e)}
 
 def test_real_knowledge_graph():
     """测试真实的知识图谱功能"""
-    try:
+    try,
         test_script = """
 import asyncio
 import sys
@@ -132,18 +132,18 @@ sys.path.insert(0, 'apps/backend/src')
 from core.knowledge.unified_knowledge_graph import UnifiedKnowledgeGraph
 
 async def test():
-    kg = UnifiedKnowledgeGraph()
+    kg == UnifiedKnowledgeGraph()
     
     # 测试真实的知识图谱操作
     entity_data = {
         'entity_id': 'test_system_001',
         'name': '真实系统测试',
         'entity_type': '系统组件',
-        'confidence': 0.95,
-        'properties': {'type': 'performance_test', 'status': 'active'},
-        'aliases': ['system_test'],
+        'confidence': 0.95(),
+        'properties': {'type': 'performance_test', 'status': 'active'}
+        'aliases': ['system_test']
         'source': '真实系统测试',
-        'timestamp': '2025-10-12T12:00:00'
+        'timestamp': '2025-10-12T12,00,00'
     }
     
     # 创建实体对象
@@ -156,15 +156,15 @@ result = asyncio.run(test())
 print(result)
 """
         
-        result = subprocess.run([sys.executable, '-c', test_script], 
-                               capture_output=True, text=True, cwd='D:/Projects/Unified-AI-Project')
+        result = subprocess.run([sys.executable(), '-c', test_script] 
+                               capture_output == True, text == True, cwd='D,/Projects/Unified-AI-Project')
         
         return {
-            'status': 'success' if 'True' in result.stdout else 'failed',
+            'status': 'success' if 'True' in result.stdout else 'failed',:::
             'output': result.stdout.strip(),
-            'error': result.stderr.strip() if result.stderr else None
+            'error': result.stderr.strip() if result.stderr else None,:
         }
-    except Exception as e:
+    except Exception as e,::
         return {'status': 'error', 'error': str(e)}
 
 def perform_real_comprehensive_test():
@@ -174,61 +174,59 @@ def perform_real_comprehensive_test():
     
     # 获取真实系统状态
     system_metrics = get_real_system_metrics()
-    print(f"真实系统状态: CPU {system_metrics['cpu_percent']}%, 内存 {system_metrics['memory_percent']}%")
+    print(f"真实系统状态, CPU {system_metrics['cpu_percent']}%, 内存 {system_metrics['memory_percent']}%")
     
-    # 测试1: 真实编译器
-    print("\n🔍 测试1: 真实编译器")
+    # 测试1, 真实编译器
+    print("\n🔍 测试1, 真实编译器")
     compiler_result = test_real_compiler()
-    print(f"编译器测试: {'✅通过' if compiler_result['success'] else '❌失败'}")
-    if not compiler_result['success']:
-        print(f"  错误: {compiler_result['error']}")
+    print(f"编译器测试, {'✅通过' if compiler_result['success'] else '❌失败'}"):::
+    if not compiler_result['success']::
+        print(f"  错误, {compiler_result['error']}")
     
-    # 测试2: 真实训练数据生成
-    print("\n🔍 测试2: 真实训练数据生成")
+    # 测试2, 真实训练数据生成
+    print("\n🔍 测试2, 真实训练数据生成")
     training_result = test_real_data_generation()
-    print(f"训练数据生成: {training_result['status']}")
-    if training_result['status'] == 'success':
-        print(f"  生成了 {training_result['data_count']} 条数据，{training_result['valid_problems']} 条验证通过")
-    elif training_result['status'] == 'failed':
-        print(f"  错误: {training_result['error']}")
+    print(f"训练数据生成, {training_result['status']}")
+    if training_result['status'] == 'success':::
+        print(f"  生成了 {training_result['data_count']} 条数据,{training_result['valid_problems']} 条验证通过")
+    elif training_result['status'] == 'failed':::
+        print(f"  错误, {training_result['error']}")
     
-    # 测试3: 真实多模态融合
-    print("\n🔍 测试3: 真实多模态融合")
+    # 测试3, 真实多模态融合
+    print("\n🔍 测试3, 真实多模态融合")
     fusion_result = test_real_multimodal_fusion()
-    print(f"多模态融合: {fusion_result['status']}")
-    if fusion_result['status'] == 'success':
+    print(f"多模态融合, {fusion_result['status']}")
+    if fusion_result['status'] == 'success':::
         print("  ✅ 多模态融合功能真实可用")
-    elif fusion_result['status'] == 'failed':
-        print(f"  错误: {fusion_result['error']}")
+    elif fusion_result['status'] == 'failed':::
+        print(f"  错误, {fusion_result['error']}")
     
-    # 测试4: 真实知识图谱
-    print("\n🔍 测试4: 真实知识图谱")
+    # 测试4, 真实知识图谱
+    print("\n🔍 测试4, 真实知识图谱")
     kg_result = test_real_knowledge_graph()
-    print(f"知识图谱: {kg_result['status']}")
-    if kg_result['status'] == 'success':
+    print(f"知识图谱, {kg_result['status']}")
+    if kg_result['status'] == 'success':::
         print("  ✅ 知识图谱功能真实可用")
-    elif kg_result['status'] == 'failed':
-        print(f"  错误: {kg_result['error']}")
+    elif kg_result['status'] == 'failed':::
+        print(f"  错误, {kg_result['error']}")
     
     # 计算真实可用性
     total_tests = 4
-    passed_tests = sum(1 for result in [compiler_result, training_result, fusion_result, kg_result] 
-                      if result['status'] == 'success')
-    
-    print(f"\n📊 真实可用性结果: {passed_tests}/{total_tests} 组件真实可用 ({passed_tests/total_tests*100:.1f}%)")
+    passed_tests == sum(1 for result in [compiler_result, training_result, fusion_result, kg_result]:,
+    if result['status'] == 'success'):::
+    print(f"\n📊 真实可用性结果, {passed_tests}/{total_tests} 组件真实可用 ({passed_tests/total_tests*100,.1f}%)")
     
     # 验证所有数值的真实性
-    all_real = all(result['status'] == 'success' for result in [compiler_result, training_result, fusion_result, kg_result])
-    
-    if all_real:
-        print("\n🎉 所有测试的组件都基于真实数据，无预设结果！")
-        print("✅ 所有数值都有具体出处（硬件、文件系统、数学计算）")
-        print("✅ 所有功能都真实运行，非预设模拟")
-    else:
+    all_real = all(result['status'] == 'success' for result in [compiler_result, training_result, fusion_result, kg_result]):
+    if all_real,::
+        print("\n🎉 所有测试的组件都基于真实数据,无预设结果！")
+        print("✅ 所有数值都有具体出处(硬件、文件系统、数学计算)")
+        print("✅ 所有功能都真实运行,非预设模拟")
+    else,
         print(f"\n⚠️ 有 {total_tests-passed_tests} 个组件需要进一步修复")
     
     return all_real
 
-if __name__ == "__main__":
+if __name"__main__":::
     success = perform_real_comprehensive_test()
     exit(0 if success else 1)

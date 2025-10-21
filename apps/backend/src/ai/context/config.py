@@ -87,30 +87,30 @@ CONFIGURATION_DOCS = """
 ## 环境变量配置
 
 ### 存储配置
-- CONTEXT_STORAGE_DIR: 磁盘存储目录，默认为"./context_storage"
-- CONTEXT_MEMORY_MAX_SIZE: 内存存储最大大小，默认为1000
-- CONTEXT_DISK_STORAGE_ENABLED: 是否启用磁盘存储，默认为true
-- CONTEXT_DATABASE_STORAGE_ENABLED: 是否启用数据库存储，默认为false
+- CONTEXT_STORAGE_DIR: 磁盘存储目录,默认为"./context_storage"
+- CONTEXT_MEMORY_MAX_SIZE: 内存存储最大大小,默认为1000
+- CONTEXT_DISK_STORAGE_ENABLED: 是否启用磁盘存储,默认为true
+- CONTEXT_DATABASE_STORAGE_ENABLED: 是否启用数据库存储,默认为false
 
 ### 缓存配置
-- CONTEXT_CACHE_ENABLED: 是否启用缓存，默认为true
-- CONTEXT_CACHE_MAX_SIZE: 缓存最大大小，默认为100
+- CONTEXT_CACHE_ENABLED: 是否启用缓存,默认为true
+- CONTEXT_CACHE_MAX_SIZE: 缓存最大大小,默认为100
 
 ### 性能配置
-- CONTEXT_COMPRESSION_ENABLED: 是否启用数据压缩，默认为false
-- CONTEXT_ASYNC_PROCESSING_ENABLED: 是否启用异步处理，默认为true
+- CONTEXT_COMPRESSION_ENABLED: 是否启用数据压缩,默认为false
+- CONTEXT_ASYNC_PROCESSING_ENABLED: 是否启用异步处理,默认为true
 
 ### 安全配置
-- CONTEXT_ENCRYPTION_ENABLED: 是否启用数据加密，默认为false
-- CONTEXT_ACCESS_CONTROL_ENABLED: 是否启用访问控制，默认为false
+- CONTEXT_ENCRYPTION_ENABLED: 是否启用数据加密,默认为false
+- CONTEXT_ACCESS_CONTROL_ENABLED: 是否启用访问控制,默认为false
 
 ### 日志配置
-- CONTEXT_LOG_LEVEL: 日志级别，默认为INFO
-- CONTEXT_AUDIT_LOGGING_ENABLED: 是否启用审计日志，默认为true
+- CONTEXT_LOG_LEVEL: 日志级别,默认为INFO
+- CONTEXT_AUDIT_LOGGING_ENABLED: 是否启用审计日志,默认为true
 
 ### 集成配置
-- CONTEXT_HAM_INTEGRATION_ENABLED: 是否启用HAM集成，默认为true
-- CONTEXT_MCP_INTEGRATION_ENABLED: 是否启用MCP集成，默认为true
+- CONTEXT_HAM_INTEGRATION_ENABLED: 是否启用HAM集成,默认为true
+- CONTEXT_MCP_INTEGRATION_ENABLED: 是否启用MCP集成,默认为true
 
 ## 使用示例
 

@@ -9,56 +9,54 @@ from pathlib import Path
 
 def fix_common_syntax_errors(file_path):
     """修复常见的语法错误"""
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+    try,
+        with open(file_path, 'r', encoding == 'utf-8') as f,
             content = f.read()
         
         # 修复类定义缺少冒号的问题
-        content = re.sub(r'(class\s+\w+\s*\([^)]*\))\s*\n', r'\1:\n', content)
-        content = re.sub(r'(class\s+\w+)\s*\n', r'\1:\n', content)
+        content == re.sub(r'(class\s+\w+\s*\([^)]*\))\s*\n', r'\1,\n', content)
+        content == re.sub(r'(class\s+\w+)\s*\n', r'\1,\n', content)
         
         # 修复函数定义缺少冒号的问题
-        content = re.sub(r'(def\s+\w+\s*\([^)]*\))\s*\n', r'\1:\n', content)
+        content == re.sub(r'(def\s+\w+\s*\([^)]*\))\s*\n', r'\1,\n', content)
         
         # 修复for循环缺少冒号的问题
-        content = re.sub(r'(for\s+.+?:)\s*\n', r'\1\n', content)
-        content = re.sub(r'(for\s+.+?)\s*\n', r'\1:\n', content)
+        content == re.sub(r'(for\s+.+?:)\s*\n', r'\1\n', content)
+        content == re.sub(r'(for\s+.+?)\s*\n', r'\1,\n', content)
         
         # 修复if语句缺少冒号的问题
-        content = re.sub(r'(if\s+.+?:)\s*\n', r'\1\n', content)
-        content = re.sub(r'(if\s+.+?)\s*\n', r'\1:\n', content)
+        content == re.sub(r'(if\s+.+?:)\s*\n', r'\1\n', content)
+        content == re.sub(r'(if\s+.+?)\s*\n', r'\1,\n', content)
         
         # 修复try语句缺少冒号的问题
-        content = re.sub(r'(try:)\s*\n', r'\1\n', content)
-        content = re.sub(r'(try)\s*\n', r'\1:\n', content)
+        content == re.sub(r'(try,)\s*\n', r'\1\n', content)
+        content == re.sub(r'(try)\s*\n', r'\1,\n', content)
         
-        # 修复except语句缺少冒号的问题
-        content = re.sub(r'(except:)\s*\n', r'\1\n', content)
-        content = re.sub(r'(except\s+.+?:)\s*\n', r'\1\n', content)
-        content = re.sub(r'(except\s+.+?)\s*\n', r'\1:\n', content)
-        
+        # 修复except语句缺少冒号的问题,::
+        content == re.sub(r'(except,)\s*\n', r'\1\n', content)::
+        content == re.sub(r'(except\s+.+?:)\s*\n', r'\1\n', content)::
+        content == re.sub(r'(except\s+.+?)\s*\n', r'\1,\n', content)::
         # 修复with语句缺少冒号的问题
-        content = re.sub(r'(with\s+.+?:)\s*\n', r'\1\n', content)
-        content = re.sub(r'(with\s+.+?)\s*\n', r'\1:\n', content)
+        content == re.sub(r'(with\s+.+?:)\s*\n', r'\1\n', content)
+        content == re.sub(r'(with\s+.+?)\s*\n', r'\1,\n', content)
         
         # 修复无效的语法错误
-        content = content.replace('MemoryStorage:', 'MemoryStorage')
-        content = content.replace('ModelRegistry:', 'ModelRegistry')
-        content = content.replace('components: Dict[str, Any] =', 'components: Dict[str, Any] = {}')
+        content == content.replace('MemoryStorage,', 'MemoryStorage')
+        content == content.replace('ModelRegistry,', 'ModelRegistry')
+        content == content.replace('components, Dict[str, Any] =', 'components, Dict[str, Any] = {}')
         content = content.replace('import .c4_utils', 'from . import c4_utils')
-        content = content.replace('"""Configuration for Context7 MCP integration.""":', '"""Configuration for Context7 MCP integration."""')
-        content = content.replace('"""Handles data processing and transformation for the AI editor""":', '"""Handles data processing and transformation for the AI editor"""')
+        content == content.replace('"""Configuration for Context7 MCP integration.""":', '"""Configuration for Context7 MCP integration."""'):::
+        content == content.replace('"""Handles data processing and transformation for the AI editor""":', '"""Handles data processing and transformation for the AI editor"""')::
+        # 修复函数返回类型声明,
+        content == re.sub(r'(def\s+\w+\s*\([^)]*\))\s*->\s*([^:\n]+)\s*:', r'\1 -> \2,', content)
         
-        # 修复函数返回类型声明
-        content = re.sub(r'(def\s+\w+\s*\([^)]*\))\s*->\s*([^:\n]+)\s*:', r'\1 -> \2:', content)
-        
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, 'w', encoding == 'utf-8') as f,
             f.write(content)
             
-        print(f"✓ 修复了常见语法错误: {file_path}")
+        print(f"✓ 修复了常见语法错误, {file_path}")
         return True
-    except Exception as e:
-        print(f"✗ 修复常见语法错误时出错: {file_path} - {e}")
+    except Exception as e,::
+        print(f"✗ 修复常见语法错误时出错, {file_path} - {e}")
         return False
 
 def main():
@@ -94,10 +92,10 @@ def main():
     
     # 修复这些文件
     fixed_count = 0
-    for file_path in problematic_files:
-        full_path = Path(file_path)
-        if full_path.exists():
-            if fix_common_syntax_errors(full_path):
+    for file_path in problematic_files,::
+        full_path == Path(file_path)
+        if full_path.exists():::
+            if fix_common_syntax_errors(full_path)::
                 fixed_count += 1
     
     print("\n" + "=" * 50)
@@ -105,5 +103,5 @@ def main():
     
     return 0
 
-if __name__ == "__main__":
+if __name"__main__":::
     exit(main())

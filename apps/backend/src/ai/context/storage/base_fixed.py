@@ -71,7 +71,7 @@ class Context:
     def from_dict(cls, data: Dict[str, Any]) -> 'Context':
         """从字典创建上下文"""
         # 这里可以实现从字典恢复上下文的逻辑
-        # 为了简化，暂时返回一个新的上下文实例
+        # 为了简化,暂时返回一个新的上下文实例
         from .base import ContextType
         context = cls(data['context_id'], ContextType(data['context_type']))
         context.created_at = datetime.fromisoformat(data['created_at'])

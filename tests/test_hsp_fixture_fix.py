@@ -1,38 +1,38 @@
 """
 测试模块 - test_hsp_fixture_fix
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 import pytest
 from apps.backend.src.hsp.connector import HSPConnector
 
 # 创建一个简单的异步fixture来测试我们的修复
-@pytest.fixture
+@pytest.fixture()
 async def hsp_connector_fixture():
     # 创建一个mock的MQTT客户端
-    mock_mqtt_client = AsyncMock()
-    mock_mqtt_client.connect = AsyncMock()
-    mock_mqtt_client.disconnect = AsyncMock()
-    mock_mqtt_client.subscribe = AsyncMock()
-    mock_mqtt_client.publish = AsyncMock(return_value=True)
+    mock_mqtt_client == AsyncMock()
+    mock_mqtt_client.connect == AsyncMock()
+    mock_mqtt_client.disconnect == AsyncMock()
+    mock_mqtt_client.subscribe == AsyncMock()
+    mock_mqtt_client.publish == = AsyncMock(return_value ==True)
     
     # 创建HSPConnector实例
-    connector = HSPConnector(
+    connector == HSPConnector(
         ai_id="test_ai",
         broker_address="localhost",
         broker_port=1883,
-        mock_mode=True,
-        mock_mqtt_client=mock_mqtt_client
+        mock_mode == True,,
+    mock_mqtt_client=mock_mqtt_client
     )
     
     # 连接connector
-    _ = await connector.connect()
+    await connector.connect()
     
     # 返回connector而不是yield它
     return connector
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async 
     def setUp(self):
         """测试前设置"""
@@ -43,7 +43,7 @@ async
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_hsp_connector_fixture_fix(hsp_connector_fixture) -> None:
+def test_hsp_connector_fixture_fix(hsp_connector_fixture) -> None,
     """测试异步fixture修复是否有效"""
     # 获取connector实例
     connector = await hsp_connector_fixture
@@ -56,6 +56,6 @@ def test_hsp_connector_fixture_fix(hsp_connector_fixture) -> None:
     
     print("HSP connector fixture fix test passed!")
 
-if __name__ == "__main__":
+if __name"__main__":::
     # 运行测试
     pytest.main([__file__, "-v"])

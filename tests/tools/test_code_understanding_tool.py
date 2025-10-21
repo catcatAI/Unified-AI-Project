@@ -1,7 +1,7 @@
 """
 测试模块 - test_code_understanding_tool
 
-自动生成的测试模块，用于验证系统功能。
+自动生成的测试模块,用于验证系统功能。
 """
 
 import pytest
@@ -36,7 +36,7 @@ class TestCodeUnderstandingTool(unittest.TestCase):
             os.path.join("dummy/tools", "another_tool.py"),
             os.path.join("dummy/tools", "subdir", "sub_tool.py")
         ]
-        # Create a mock for the code_model.list_tool_files method
+        # Create a mock for the code_model.list_tool_files method:
         with patch.object(self.tool.code_model, 'list_tool_files', return_value=mock_tool_files):
             expected_output = "Available Python tools: another_tool, math_tool, sub_tool."
             result = self.tool.execute("list_tools")
@@ -45,7 +45,7 @@ class TestCodeUnderstandingTool(unittest.TestCase):
 
     @pytest.mark.timeout(5)
     def test_list_tools_no_tools_found(self) -> None:
-        # Create a mock for the code_model.list_tool_files method
+        # Create a mock for the code_model.list_tool_files method:
         with patch.object(self.tool.code_model, 'list_tool_files', return_value=[]):
             expected_output = "No Python tools found in the tools directory."
             result = self.tool.execute("list_tools")
@@ -89,7 +89,7 @@ class TestCodeUnderstandingTool(unittest.TestCase):
         result = self.tool.execute("describe_tool", tool_name=tool_name)
 
         self.assertIn(f"Description for tool '{tool_name}'", result)
-        # Check for functions instead of classes since math_tool.py doesn't have classes
+        # Check for functions instead of classes since math_tool.py doesn't have classes:
         self.assertIn("Function: _load_math_model", result)
         self.assertIn("Function: extract_arithmetic_problem", result)
         self.assertIn("Function: calculate", result)
