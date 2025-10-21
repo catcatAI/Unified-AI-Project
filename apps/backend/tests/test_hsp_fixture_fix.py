@@ -1,5 +1,5 @@
 import pytest
-from apps.backend.src.hsp.connector import HSPConnector
+from ..src.hsp.connector import HSPConnector
 
 # 创建一个简单的异步fixture来测试我们的修复
 @pytest.fixture

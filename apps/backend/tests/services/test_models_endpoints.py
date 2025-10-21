@@ -24,18 +24,18 @@ def client():
 
     def fake_get_services():
         return {
-            _ = "llm_interface": object(),
-            _ = "dialogue_manager": DialogueManager(),
-            _ = "ham_manager": object(),
-            _ = "service_discovery": object(),
-            _ = "hsp_connector": HSPConnector(),
-            _ = "trust_manager": TrustManager(),
+            "llm_interface": object(),
+            "dialogue_manager": DialogueManager(),
+            "ham_manager": object(),
+            "service_discovery": object(),
+            "hsp_connector": HSPConnector(),
+            "trust_manager": TrustManager(),
         }
 
     fastapi_app.dependency_overrides[real_get_services] = fake_get_services
     with TestClient(fastapi_app) as c:
         yield c
-    _ = fastapi_app.dependency_overrides.pop(real_get_services, None)
+    fastapi_app.dependency_overrides.pop(real_get_services, None)
 
 
 def test_models_available(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -54,8 +54,8 @@ def test_models_available(client: TestClient, monkeypatch: pytest.MonkeyPatch) -
             # Return keys with provider names to check pass-through
             return {k: {"provider": v.get("provider")} for k, v in self._cfg.items()}
 
-    _ = monkeypatch.setattr(main_api_server, "get_multi_llm_service", lambda: FakeMultiLLM())
-    _ = monkeypatch.setattr(main_api_server, "ModelRegistry", FakeRegistry)
+    monkeypatch.setattr(main_api_server, "get_multi_llm_service", lambda: FakeMultiLLM())
+    monkeypatch.setattr(main_api_server, "ModelRegistry", FakeRegistry)
 
     # Act
     resp = client.get("/api/v1/models/available")
@@ -82,12 +82,12 @@ def test_models_route(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> No
             return {
                 "selected_model": "gpt-4" if getattr(policy, "needs_tools", False) else "llama3",
                 "policy": {
-                    _ = "task_type": getattr(policy, "task_type", None),
-                    _ = "input_chars": getattr(policy, "input_chars", None),
-                    _ = "needs_tools": getattr(policy, "needs_tools", None),
-                    _ = "needs_vision": getattr(policy, "needs_vision", None),
-                    _ = "latency_target": getattr(policy, "latency_target", None),
-                    _ = "cost_ceiling": getattr(policy, "cost_ceiling", None),
+                    "task_type": getattr(policy, "task_type", None),
+                    "input_chars": getattr(policy, "input_chars", None),
+                    "needs_tools": getattr(policy, "needs_tools", None),
+                    "needs_vision": getattr(policy, "needs_vision", None),
+                    "latency_target": getattr(policy, "latency_target", None),
+                    "cost_ceiling": getattr(policy, "cost_ceiling", None),
                 },
             }
 
@@ -96,9 +96,9 @@ def test_models_route(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> No
         def __init__(self) -> None:
             self.model_configs = {"gpt-4": {}, "llama3": {}}
 
-    _ = monkeypatch.setattr(main_api_server, "get_multi_llm_service", lambda: FakeMultiLLM())
-    _ = monkeypatch.setattr(main_api_server, "ModelRegistry", FakeRegistry)
-    _ = monkeypatch.setattr(main_api_server, "PolicyRouter", FakeRouter)
+    monkeypatch.setattr(main_api_server, "get_multi_llm_service", lambda: FakeMultiLLM())
+    monkeypatch.setattr(main_api_server, "ModelRegistry", FakeRegistry)
+    monkeypatch.setattr(main_api_server, "PolicyRouter", FakeRouter)
 
     # Act: needs_tools True should select gpt-4
     body = {

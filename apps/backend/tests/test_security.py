@@ -25,6 +25,7 @@ from apps.backend.src.security.audit_logger import (
     AuditEventType
 )
 
+from apps.backend.src.security.enhanced_sandbox import (
     EnhancedSandboxExecutor, 
     SandboxConfig, 
     ResourceLimits

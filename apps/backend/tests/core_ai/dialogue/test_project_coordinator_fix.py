@@ -2,7 +2,7 @@ import asyncio
 import pytest
 
 from unittest.mock import AsyncMock, MagicMock
-from dialogue.project_coordinator import ProjectCoordinator
+from ....src.ai.dialogue.project_coordinator import ProjectCoordinator
 
 @pytest.mark.asyncio
 # 添加重试装饰器以处理不稳定的测试

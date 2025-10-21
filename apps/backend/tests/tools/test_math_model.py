@@ -26,20 +26,20 @@ class TestMathModelComponents(unittest.TestCase):
         self.char_map_file = os.path.join(TEST_OUTPUT_DIR, "test_char_maps.json")
         self.model_file = os.path.join(TEST_OUTPUT_DIR, "test_model.keras")
 
-        _ = self._cleanup_files([self.train_csv_file, self.train_json_file, self.char_map_file, self.model_file])
+        self._cleanup_files([self.train_csv_file, self.train_json_file, self.char_map_file, self.model_file])
 
     def tearDown(self):
         # Clean up generated files after tests
-        _ = self._cleanup_files([self.train_csv_file, self.train_json_file, self.char_map_file, self.model_file])
+        self._cleanup_files([self.train_csv_file, self.train_json_file, self.char_map_file, self.model_file])
 
     def _cleanup_files(self, file_list):
         for f_path in file_list:
             if os.path.exists(f_path):
-                _ = os.remove(f_path)
+                os.remove(f_path)
 
-    _ = @pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_data_generator_csv(self) -> None:
-        _ = print("\nRunning test_data_generator_csv...")
+        print("\nRunning test_data_generator_csv...")
         data_generator.generate_dataset(
             num_samples=10,
             output_dir=TEST_OUTPUT_DIR,
@@ -47,17 +47,17 @@ class TestMathModelComponents(unittest.TestCase):
             file_format="csv",
             max_digits=2
         )
-        _ = self.assertTrue(os.path.exists(self.train_csv_file))
+        self.assertTrue(os.path.exists(self.train_csv_file))
         with open(self.train_csv_file, 'r') as f:
             reader = csv.DictReader(f)
             rows = list(reader)
-            _ = self.assertEqual(len(rows), 10)
-            _ = self.assertEqual(reader.fieldnames, ["problem", "answer"])
-        _ = print("test_data_generator_csv PASSED")
+            self.assertEqual(len(rows), 10)
+            self.assertEqual(reader.fieldnames, ["problem", "answer"])
+        print("test_data_generator_csv PASSED")
 
-    _ = @pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_data_generator_json(self) -> None:
-        _ = print("\nRunning test_data_generator_json...")
+        print("\nRunning test_data_generator_json...")
         data_generator.generate_dataset(
             num_samples=5,
             output_dir=TEST_OUTPUT_DIR,
@@ -65,24 +65,24 @@ class TestMathModelComponents(unittest.TestCase):
             file_format="json",
             max_digits=1
         )
-        _ = self.assertTrue(os.path.exists(self.train_json_file))
+        self.assertTrue(os.path.exists(self.train_json_file))
         with open(self.train_json_file, 'r') as f:
             data = json.load(f)
-            _ = self.assertEqual(len(data), 5)
-            _ = self.assertTrue("problem" in data[0])
-            _ = self.assertTrue("answer" in data[0])
-        _ = print("test_data_generator_json PASSED")
+            self.assertEqual(len(data), 5)
+            self.assertTrue("problem" in data[0])
+            self.assertTrue("answer" in data[0])
+        print("test_data_generator_json PASSED")
 
     @pytest.mark.skipif(True, reason="Skipping due to tensorflow dependency issues")
-    _ = @pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_model_build_and_char_maps(self) -> None:
-        _ = print("\nRunning test_model_build_and_char_maps...")
+        print("\nRunning test_model_build_and_char_maps...")
         
         # Check if TensorFlow is available
         from apps.backend.src.ai.dependency_manager import dependency_manager
         if not dependency_manager.is_available('tensorflow'):
-            _ = print("TensorFlow not available, skipping model build tests")
-            _ = self.skipTest("TensorFlow not available")
+            print("TensorFlow not available, skipping model build tests")
+            self.skipTest("TensorFlow not available")
             return
         
         # Dummy data for testing structure
@@ -90,36 +90,36 @@ class TestMathModelComponents(unittest.TestCase):
         dummy_answers = [{'answer': '2'}, {'answer': '6'}]
 
         char_to_token, token_to_char, n_token, max_enc, max_dec = \
-            _ = get_char_token_maps(dummy_problems, dummy_answers)
+            get_char_token_maps(dummy_problems, dummy_answers)
 
-        _ = self.assertIsNotNone(char_to_token, "char_to_token should not be None")
-        _ = self.assertIsNotNone(token_to_char, "token_to_char should not be None")
-        _ = self.assertIsNotNone(n_token, "n_token should not be None")
-        _ = self.assertIsNotNone(max_enc, "max_enc should not be None")
-        _ = self.assertIsNotNone(max_dec, "max_dec should not be None")
+        self.assertIsNotNone(char_to_token, "char_to_token should not be None")
+        self.assertIsNotNone(token_to_char, "token_to_char should not be None")
+        self.assertIsNotNone(n_token, "n_token should not be None")
+        self.assertIsNotNone(max_enc, "max_enc should not be None")
+        self.assertIsNotNone(max_dec, "max_dec should not be None")
 
-        _ = self.assertGreater(n_token, 0)
-        _ = self.assertGreater(max_enc, 0)
-        _ = self.assertGreater(max_dec, 0)
-        _ = self.assertIn('1', char_to_token)
-        _ = self.assertIn('+', char_to_token)
-        _ = self.assertIn('\t', char_to_token) # Start token
-        _ = self.assertIn('\n', char_to_token) # End token
-        _ = self.assertIn('UNK', char_to_token)
+        self.assertGreater(n_token, 0)
+        self.assertGreater(max_enc, 0)
+        self.assertGreater(max_dec, 0)
+        self.assertIn('1', char_to_token)
+        self.assertIn('+', char_to_token)
+        self.assertIn('\t', char_to_token) # Start token
+        self.assertIn('\n', char_to_token) # End token
+        self.assertIn('UNK', char_to_token)
 
         # Test model instantiation and build
         # Using small dimensions for quick test, no training occurs here
         model_instance = ArithmeticSeq2Seq(char_to_token, token_to_char, max_enc, max_dec, n_token, latent_dim=32, embedding_dim=16)
         # Trigger the build
-        _ = model_instance._build_inference_models()
-        _ = self.assertIsNotNone(model_instance.model)
-        _ = self.assertIsNotNone(model_instance.encoder_model)
-        _ = self.assertIsNotNone(model_instance.decoder_model)
-        _ = print("test_model_build_and_char_maps PASSED (structure check only)")
+        model_instance._build_inference_models()
+        self.assertIsNotNone(model_instance.model)
+        self.assertIsNotNone(model_instance.encoder_model)
+        self.assertIsNotNone(model_instance.decoder_model)
+        print("test_model_build_and_char_maps PASSED (structure check only)")
 
-    _ = @pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     def test_extract_arithmetic_problem(self) -> None:
-        _ = print("\nRunning test_extract_arithmetic_problem...")
+        print("\nRunning test_extract_arithmetic_problem...")
         test_cases = {
             "what is 10 + 5?": "10 + 5",
             "calculate 100 / 25": "100 / 25",
@@ -137,14 +137,14 @@ class TestMathModelComponents(unittest.TestCase):
             extracted = extract_arithmetic_problem(query)
             # print(f"Extracted: '{extracted}'")
             self.assertEqual(extracted, expected, msg=f"Failed for query: {query}")
-        _ = print("test_extract_arithmetic_problem PASSED")
+        print("test_extract_arithmetic_problem PASSED")
 
-    _ = @pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
     async def test_math_tool_calculate_model_unavailable(self) -> None:
-        _ = print("\nRunning test_math_tool_calculate_model_unavailable...")
+        print("\nRunning test_math_tool_calculate_model_unavailable...")
         # Ensure no model is "pre-loaded" by other tests or available
         # For this test, we assume the model path is invalid or model not trained
         original_model_path = os.environ.get("ARITHMETIC_MODEL_PATH_OVERRIDE", "")
@@ -167,10 +167,10 @@ class TestMathModelComponents(unittest.TestCase):
         renamed_model = False
         renamed_char_map = False
         if os.path.exists(MODEL_WEIGHTS_PATH):
-            _ = os.rename(MODEL_WEIGHTS_PATH, MODEL_WEIGHTS_PATH + ".bak")
+            os.rename(MODEL_WEIGHTS_PATH, MODEL_WEIGHTS_PATH + ".bak")
             renamed_model = True
         if os.path.exists(CHAR_MAPS_PATH):
-            _ = os.rename(CHAR_MAPS_PATH, CHAR_MAPS_PATH + ".bak")
+            os.rename(CHAR_MAPS_PATH, CHAR_MAPS_PATH + ".bak")
             renamed_char_map = True
 
         # Reset the global model instance in math_tool for a clean test
@@ -180,8 +180,8 @@ class TestMathModelComponents(unittest.TestCase):
         # This is complex for a simple test. We'll assume it tries to load.
 
         result = await calculate_via_tool("what is 1+1?")
-        _ = self.assertEqual(result['status'], "failure_tool_error")
-        _ = self.assertIn("Error: Math model is not available.", result['error_message'])
+        self.assertEqual(result['status'], "failure_tool_error")
+        self.assertIn("Error: Math model is not available.", result['error_message'])
 
         # Restore env vars and files
         if original_model_path: os.environ["ARITHMETIC_MODEL_PATH_OVERRIDE"] = original_model_path
@@ -192,27 +192,27 @@ class TestMathModelComponents(unittest.TestCase):
         if renamed_model: os.rename(MODEL_WEIGHTS_PATH + ".bak", MODEL_WEIGHTS_PATH)
         if renamed_char_map: os.rename(CHAR_MAPS_PATH + ".bak", CHAR_MAPS_PATH)
 
-        _ = print("test_math_tool_calculate_model_unavailable PASSED")
+        print("test_math_tool_calculate_model_unavailable PASSED")
 
-    _ = @pytest.mark.timeout(10)
+    @pytest.mark.timeout(10)
     @pytest.mark.asyncio
     # 添加重试装饰器以处理不稳定的测试
     async def test_tool_dispatcher_math_routing(self) -> None:
-        _ = print("\nRunning test_tool_dispatcher_math_routing...")
+        print("\nRunning test_tool_dispatcher_math_routing...")
         dispatcher = ToolDispatcher()
         # This test assumes math_tool.calculate will return the model unavailable error
         # as we are not providing a trained model.
         result = await dispatcher.dispatch("calculate 2 + 2")
-        _ = self.assertEqual(result['status'], "failure_tool_error")
-        _ = self.assertIn("Error: Math model is not available.", result['error_message'])
+        self.assertEqual(result['status'], "failure_tool_error")
+        self.assertIn("Error: Math model is not available.", result['error_message'])
 
         result_explicit = await dispatcher.dispatch("what is 3*3?", explicit_tool_name="calculate")
-        _ = self.assertEqual(result_explicit['status'], "failure_tool_error")
-        _ = self.assertIn("Error: Math model is not available.", result_explicit['error_message'])
+        self.assertEqual(result_explicit['status'], "failure_tool_error")
+        self.assertIn("Error: Math model is not available.", result_explicit['error_message'])
 
         result_no_tool = dispatcher.dispatch("hello world")
-        _ = self.assertIsNone(result_no_tool)
-        _ = print("test_tool_dispatcher_math_routing PASSED")
+        self.assertIsNone(result_no_tool)
+        print("test_tool_dispatcher_math_routing PASSED")
 
 if __name__ == '__main__':
     # Create the test output directory if it doesn't exist
@@ -220,13 +220,13 @@ if __name__ == '__main__':
     # For consistency with how other paths are handled in the project:
 
     if not os.path.exists(TEST_OUTPUT_DIR):
-        _ = os.makedirs(TEST_OUTPUT_DIR)
+        os.makedirs(TEST_OUTPUT_DIR)
 
     # This allows running the tests directly from this file
     # Ensure that the src directory is in sys.path if running this file directly
     # The sys.path.insert above handles this for imports within the test file.
     # If running with `python -m unittest discover`, this __main__ block is not executed.
-    _ = print(f"Current working directory: {os.getcwd()}")
-    _ = print(f"Sys.path: {sys.path}")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Sys.path: {sys.path}")
     print(f"Attempting to run tests for math_model...")
     unittest.main(verbosity=2)

@@ -8,7 +8,7 @@ import os
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
 _ = sys.path.append(os.path.join(PROJECT_ROOT, 'apps', 'backend'))
 
-from compression.alpha_deep_model import AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities, CompressionAlgorithm
+from ....src.ai.compression.alpha_deep_model import AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities, CompressionAlgorithm
 
 class TestAlphaDeepModel(unittest.TestCase):
 

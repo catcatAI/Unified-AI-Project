@@ -75,13 +75,13 @@ class FakeHAMMemoryManager:
 @pytest.fixture
 def hsp_fakes():
     fakes = {
-        _ = "dialogue_manager": FakeDialogueManager(),
-        _ = "hsp_connector": FakeHSPConnector(),
+        "dialogue_manager": FakeDialogueManager(),
+        "hsp_connector": FakeHSPConnector(),
         "service_discovery": FakeServiceDiscovery(found=True),
-        _ = "ham_manager": FakeHAMMemoryManager(),
+        "ham_manager": FakeHAMMemoryManager(),
         # Optional placeholders used by other endpoints
-        _ = "llm_interface": object(),
-        _ = "trust_manager": type("Trust", (), {"get_all_trust_scores": lambda self: {}})(),
+        "llm_interface": object(),
+        "trust_manager": type("Trust", (), {"get_all_trust_scores": lambda self: {}})(),
     }
     return fakes
 
@@ -94,7 +94,7 @@ def client(hsp_fakes):
     app.dependency_overrides[real_get_services] = fake_get_services
     with TestClient(app) as c:
         yield c
-    _ = app.dependency_overrides.pop(real_get_services, None)
+    app.dependency_overrides.pop(real_get_services, None)
 
 
 def test_hsp_create_and_pending_then_complete(client: TestClient, hsp_fakes) -> None:
@@ -113,7 +113,7 @@ def test_hsp_create_and_pending_then_complete(client: TestClient, hsp_fakes) -> 
     assert data2.get("status") == "pending"
 
     # Simulate completion in HAM
-    _ = hsp_fakes["ham_manager"].add_success(corr_id, {"ok": True, "echo": {"x": 1}})
+    hsp_fakes["ham_manager"].add_success(corr_id, {"ok": True, "echo": {"x": 1}})
 
     resp3 = client.get(f"/api/v1/hsp/tasks/{corr_id}")
     assert resp3.status_code == 200

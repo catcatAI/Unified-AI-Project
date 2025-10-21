@@ -4,10 +4,8 @@ import pytest
 import yaml
 from pathlib import Path
 
-from apps.backend.src.core.services.resource_awareness_service import ResourceAwarenessService, DEFAULT_CONFIG_PATH
-    SimulatedCPUConfig,
-    SimulatedRAMConfig,
-)
+from apps.backend.src.core.services.resource_awareness_service import ResourceAwarenessService, DEFAULT_CONFIG_PATH, SimulatedCPUConfig, SimulatedRAMConfig
+
 
 # Determine project root for test file paths
 TEST_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -39,54 +37,54 @@ class TestResourceAwarenessService(unittest.TestCase):
             "gpu_available": True
         }
         with open(self.valid_config_path, 'w', encoding='utf-8') as f:
-            _ = yaml.dump({"simulated_hardware_profile": self.sample_profile_data}, f)
+            yaml.dump({"simulated_hardware_profile": self.sample_profile_data}, f)
 
         # Create a malformed YAML file
         with open(self.malformed_config_path, 'w', encoding='utf-8') as f:
-            _ = f.write("simulated_hardware_profile: \n  disk: [this is not a dict]\n  profile_name: Malformed")
+            f.write("simulated_hardware_profile: \n  disk: [this is not a dict]\n  profile_name: Malformed")
 
         # Create an incomplete (structurally valid YAML, but missing required keys)
         with open(self.incomplete_config_path, 'w', encoding='utf-8') as f:
-            _ = yaml.dump({"simulated_hardware_profile": {"profile_name": "Incomplete"}}, f)
+            yaml.dump({"simulated_hardware_profile": {"profile_name": "Incomplete"}}, f)
 
 
     def tearDown(self):
         # Clean up created test files
         if self.valid_config_path.exists():
-            _ = self.valid_config_path.unlink()
+            self.valid_config_path.unlink()
         if self.malformed_config_path.exists():
-            _ = self.malformed_config_path.unlink()
+            self.malformed_config_path.unlink()
         if self.incomplete_config_path.exists():
-            _ = self.incomplete_config_path.unlink()
+            self.incomplete_config_path.unlink()
         # Attempt to remove the directory if it's empty (optional)
         try:
             if TEST_CONFIGS_DIR.exists() and not any(TEST_CONFIGS_DIR.iterdir()):
-                _ = TEST_CONFIGS_DIR.rmdir()
+                TEST_CONFIGS_DIR.rmdir()
         except OSError:
             pass # Ignore if dir removal fails (e.g. other test files present)
 
-    _ = @pytest.mark.timeout(15)
+    @pytest.mark.timeout(15)
     def test_load_valid_config(self) -> None:
         service = ResourceAwarenessService(config_filepath=str(self.valid_config_path))
-        _ = self.assertIsNotNone(service.profile)
-        _ = self.assertEqual(service.profile.get("profile_name"), "TestProfile_Valid")
+        self.assertIsNotNone(service.profile)
+        self.assertEqual(service.profile.get("profile_name"), "TestProfile_Valid")
 
         disk_config = service.get_simulated_disk_config()
-        _ = self.assertIsNotNone(disk_config)
-        _ = self.assertEqual(disk_config.get("space_gb"), 20.0)
-        _ = self.assertEqual(disk_config.get("lag_factor_critical"), 2.5)
+        self.assertIsNotNone(disk_config)
+        self.assertEqual(disk_config.get("space_gb"), 20.0)
+        self.assertEqual(disk_config.get("lag_factor_critical"), 2.5)
 
         cpu_config = service.get_simulated_cpu_config()
-        _ = self.assertIsNotNone(cpu_config)
-        _ = self.assertEqual(cpu_config.get("cores"), 4)
+        self.assertIsNotNone(cpu_config)
+        self.assertEqual(cpu_config.get("cores"), 4)
 
         ram_config = service.get_simulated_ram_config()
-        _ = self.assertIsNotNone(ram_config)
-        _ = self.assertEqual(ram_config.get("ram_gb"), 8.0)
+        self.assertIsNotNone(ram_config)
+        self.assertEqual(ram_config.get("ram_gb"), 8.0)
 
-        _ = self.assertTrue(service.profile.get("gpu_available"))
+        self.assertTrue(service.profile.get("gpu_available"))
 
-    _ = @pytest.mark.timeout(15)
+    @pytest.mark.timeout(15)
     def test_load_non_existent_config_falls_back_to_default(self) -> None:
         # Ensure the default path doesn't accidentally exist from other tests or real config
         # For a truly isolated test of non-existent, we use a unique path.
@@ -95,28 +93,28 @@ class TestResourceAwarenessService(unittest.TestCase):
         # However, the constructor is passed a specific non-existent path here.
 
         service = ResourceAwarenessService(config_filepath=str(self.non_existent_config_path))
-        _ = self.assertIsNotNone(service.profile)
-        _ = self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorLoading")
+        self.assertIsNotNone(service.profile)
+        self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorLoading")
         disk_config = service.get_simulated_disk_config()
-        _ = self.assertIsNotNone(disk_config)
-        _ = self.assertEqual(disk_config.get("space_gb"), 1.0) # Check against safe default value
+        self.assertIsNotNone(disk_config)
+        self.assertEqual(disk_config.get("space_gb"), 1.0) # Check against safe default value
 
-    _ = @pytest.mark.timeout(15)
+    @pytest.mark.timeout(15)
     def test_load_malformed_yaml_falls_back_to_default(self) -> None:
         service = ResourceAwarenessService(config_filepath=str(self.malformed_config_path))
-        _ = self.assertIsNotNone(service.profile)
-        _ = self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorLoading")
+        self.assertIsNotNone(service.profile)
+        self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorLoading")
 
-    _ = @pytest.mark.timeout(15)
+    @pytest.mark.timeout(15)
     def test_load_incomplete_yaml_falls_back_to_default(self) -> None:
         # Tests if the profile data is missing required keys after YAML parsing.
         service = ResourceAwarenessService(config_filepath=str(self.incomplete_config_path))
-        _ = self.assertIsNotNone(service.profile)
-        _ = self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorLoading",
+        self.assertIsNotNone(service.profile)
+        self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorLoading",
                          f"Profile loaded: {service.profile}")
 
 
-    _ = @pytest.mark.timeout(15)
+    @pytest.mark.timeout(15)
     def test_default_config_path_loading_if_file_exists(self) -> None:
         # This test depends on whether the actual default config file exists and is valid.
         # For controlled testing, we can create a dummy default file.
@@ -138,19 +136,19 @@ class TestResourceAwarenessService(unittest.TestCase):
             "gpu_available": False
         }
         with open(default_path_abs, 'w', encoding='utf-8') as f:
-            _ = yaml.dump({"simulated_hardware_profile": temp_default_profile_data}, f)
+            yaml.dump({"simulated_hardware_profile": temp_default_profile_data}, f)
 
         service = ResourceAwarenessService() # Initialize with no path, should use default
-        _ = self.assertIsNotNone(service.profile)
-        _ = self.assertEqual(service.profile.get("profile_name"), "TemporaryDefaultTestProfile")
+        self.assertIsNotNone(service.profile)
+        self.assertEqual(service.profile.get("profile_name"), "TemporaryDefaultTestProfile")
 
         # Clean up / restore
         if original_content is not None:
             with open(default_path_abs, 'w') as f_orig_write:
-                _ = f_orig_write.write(original_content)
+                f_orig_write.write(original_content)
         else:
             if default_path_abs.exists():
-                _ = default_path_abs.unlink()
+                default_path_abs.unlink()
 
 if __name__ == '__main__':
-    _ = unittest.main()
+    unittest.main()

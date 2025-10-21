@@ -21,18 +21,18 @@ def client():
             def get_all_trust_scores(self):
                 return {}
         return {
-            _ = "llm_interface": object(),
-            _ = "dialogue_manager": DialogueManager(),
-            _ = "ham_manager": object(),
-            _ = "service_discovery": object(),
-            _ = "hsp_connector": HSPConnector(),
-            _ = "trust_manager": TrustManager(),
+            "llm_interface": object(),
+            "dialogue_manager": DialogueManager(),
+            "ham_manager": object(),
+            "service_discovery": object(),
+            "hsp_connector": HSPConnector(),
+            "trust_manager": TrustManager(),
         }
 
     app.dependency_overrides[real_get_services] = fake_get_services
     with TestClient(app) as c:
         yield c
-    _ = app.dependency_overrides.pop(real_get_services, None)
+    app.dependency_overrides.pop(real_get_services, None)
 
 
 def test_api_v1_health(client: TestClient) -> None:
