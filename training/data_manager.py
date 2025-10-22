@@ -25,15 +25,15 @@ sys.path.insert(0, str(backend_path / "src"))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 创建基本模拟类
-ErrorContext = type('ErrorContext', (), {
-    '__init__': lambda self, component, operation, details == None, (
+ErrorContext = type('ErrorContext', (), {)}
+    '__init__': lambda self, component, operation, details == None, ()
     setattr(self, 'component', component),
     setattr(self, 'operation', operation),
     setattr(self, 'details', details or {})
     )[-1]
 })
 
-class GlobalErrorHandler,
+class GlobalErrorHandler,:
     @staticmethod
 def handle_error(error, context, strategy == None):
         rint(f"Error in {context.component}.{context.operation} {error}")
@@ -42,7 +42,7 @@ global_error_handler == GlobalErrorHandler()
 
 # 导入路径配置模块
 try,
-    from apps.backend.src.path_config import (
+    from apps.backend.src.path_config import ()
     DATA_DIR as CONFIG_DATA_DIR,
     TRAINING_DIR as CONFIG_TRAINING_DIR,
     get_data_path,
@@ -60,15 +60,15 @@ except ImportError,::
 logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class DataManager,
+class DataManager,:
     """数据管理器,负责自动检测、分类和处理训练数据"""
 
-    def __init__(self, data_dir, Optional[str] = None) -> None,
+    def __init__(self, data_dir, Optional[str] = None) -> None,:
         self.data_dir == Path(data_dir) if data_dir else DATA_DIR,::
     self.data_catalog = {}
     self.data_quality_scores = {}
     self.error_handler = global_error_handler  # 错误处理器
-    self.supported_formats = {
+    self.supported_formats = {}
             'image': ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp']
             'audio': ['.wav', '.mp3', '.flac', '.aac', '.ogg', '.m4a', '.wma']
             'text': ['.txt', '.md', '.json', '.csv', '.xml', '.yaml', '.yml', '.log']
@@ -80,7 +80,7 @@ class DataManager,
             'archive': ['.zip', '.rar', '.7z', '.tar', '.gz']  # 压缩文件
             'binary': ['.bin', '.dat', '.exe', '.dll']  # 二进制文件
     }
-    self.model_data_mapping = {
+    self.model_data_mapping = {}
             'vision_service': ['image', 'document']
             'audio_service': ['audio']
             'causal_reasoning_engine': ['text']
@@ -96,7 +96,7 @@ class DataManager,
             'data_analysis_model': ['data', 'text']
     }
 
-    def scan_data(self) -> Dict[str, Any]
+    def scan_data(self) -> Dict[str, Any]:
     """扫描并分类所有数据"""
     context == ErrorContext("DataManager", "scan_data")
     logger.info(f"🔍 开始扫描数据目录, {self.data_dir}")
@@ -121,7 +121,7 @@ class DataManager,
                     try,
 
                         stat = file_path.stat()
-                        file_info = {
+                        file_info = {}
                             'path': str(file_path),
                             'relative_path': str(relative_path),
                             'size': stat.st_size(),
@@ -142,7 +142,7 @@ class DataManager,
             logger.error(f"❌ 扫描数据失败, {e}")
             return {}
 
-    def _classify_file(self, file_path, Path) -> str,
+    def _classify_file(self, file_path, Path) -> str,:
     """根据文件扩展名分类文件"""
     context == ErrorContext("DataManager", "_classify_file", {"file_path": str(file_path)})
         try,
@@ -197,14 +197,14 @@ class DataManager,
             logger.error(f"❌ 分类文件失败, {file_path} - {e}")
             return 'text'  # 默认返回文本类型
 
-    def assess_data_quality(self, file_path, str) -> Dict[str, Any]
+    def assess_data_quality(self, file_path, str) -> Dict[str, Any]:
     """评估单个文件的数据质量"""
     context == ErrorContext("DataManager", "assess_data_quality", {"file_path": file_path})
     path == Path(file_path)
         if not path.exists():::
             eturn {'quality_score': 0, 'issues': ['文件不存在']}
 
-    quality_info = {
+    quality_info = {}
             'quality_score': 0,
             'file_size': path.stat().st_size,
             'modified_time': path.stat().st_mtime,
@@ -268,13 +268,13 @@ class DataManager,
     self.data_quality_scores[str(path)] = quality_info
     return quality_info
 
-    def _assess_image_quality(self, file_path, Path, quality_info, Dict) -> Dict,
+    def _assess_image_quality(self, file_path, Path, quality_info, Dict) -> Dict,:
     """评估图像文件质量"""
     context == ErrorContext("DataManager", "_assess_image_quality", {"file_path": str(file_path)})
         try,
             # 尝试导入PIL来检查图像文件
             from PIL import Image
-            with Image.open(file_path) as img,
+            with Image.open(file_path) as img,:
     width, height = img.size()
                 # 检查图像尺寸
                 if width < 10 or height < 10,::
@@ -307,7 +307,7 @@ class DataManager,
                         quality_info['quality_score'] -= 5
 
                 # 记录图像信息
-                quality_info['image_info'] = {
+                quality_info['image_info'] = {}
                     'width': width,
                     'height': height,
                     'mode': img.mode(),
@@ -323,7 +323,7 @@ class DataManager,
 
     return quality_info
 
-    def _assess_audio_quality(self, file_path, Path, quality_info, Dict) -> Dict,
+    def _assess_audio_quality(self, file_path, Path, quality_info, Dict) -> Dict,:
     """评估音频文件质量"""
     context == ErrorContext("DataManager", "_assess_audio_quality", {"file_path": str(file_path)})
     # 简单的音频文件质量检查
@@ -342,12 +342,12 @@ class DataManager,
 
     return quality_info
 
-    def _assess_text_quality(self, file_path, Path, quality_info, Dict) -> Dict,
+    def _assess_text_quality(self, file_path, Path, quality_info, Dict) -> Dict,:
     """评估文本文件质量"""
     context == ErrorContext("DataManager", "_assess_text_quality", {"file_path": str(file_path)})
         try,
 
-            with open(file_path, 'r', encoding == 'utf-8') as f,
+            with open(file_path, 'r', encoding == 'utf-8') as f,:
     content = f.read()
 
             # 检查文件内容
@@ -377,7 +377,7 @@ class DataManager,
                 words = content.split()
 
                 # 记录文本信息
-                quality_info['text_info'] = {
+                quality_info['text_info'] = {}
                     'line_count': len(lines),
                     'word_count': len(words),
                     'character_count': len(content),
@@ -410,12 +410,12 @@ uality_info['quality_score'] += 5
 
     return quality_info
 
-    def _assess_code_quality(self, file_path, Path, quality_info, Dict) -> Dict,
+    def _assess_code_quality(self, file_path, Path, quality_info, Dict) -> Dict,:
     """评估代码文件质量"""
     context == ErrorContext("DataManager", "_assess_code_quality", {"file_path": str(file_path)})
         try,
 
-            with open(file_path, 'r', encoding == 'utf-8') as f,
+            with open(file_path, 'r', encoding == 'utf-8') as f,:
     content = f.read()
 
             # 检查文件内容
@@ -431,7 +431,7 @@ uality_info['quality_score'] += 5
     lines = content.splitlines()
 
                 # 记录代码信息
-                quality_info['code_info'] = {
+                quality_info['code_info'] = {}
                     'line_count': len(lines),
                     'character_count': len(content),
                     'empty_lines': sum(1 for line in lines if not line.strip()),:::
@@ -463,7 +463,7 @@ uality_info['quality_score'] += 5
 
     return quality_info
 
-    def _assess_model_quality(self, file_path, Path, quality_info, Dict) -> Dict,
+    def _assess_model_quality(self, file_path, Path, quality_info, Dict) -> Dict,:
     """评估模型文件质量"""
     context == ErrorContext("DataManager", "_assess_model_quality", {"file_path": str(file_path)})
         try,
@@ -497,7 +497,7 @@ uality_info['quality_score'] += 5
                 quality_info['quality_score'] += 15
 
             # 检查文件是否可读(基本完整性)
-            with open(file_path, 'rb') as f,
+            with open(file_path, 'rb') as f,:
     header = f.read(1024)  # 读取文件头
                 if len(header) > 0,::
     quality_info['quality_score'] += 5
@@ -513,7 +513,7 @@ uality_info['quality_score'] += 5
 
     return quality_info
 
-    def _assess_data_quality(self, file_path, Path, quality_info, Dict) -> Dict,
+    def _assess_data_quality(self, file_path, Path, quality_info, Dict) -> Dict,:
     """评估数据文件质量"""
     context == ErrorContext("DataManager", "_assess_data_quality", {"file_path": str(file_path)})
         try,
@@ -523,18 +523,18 @@ uality_info['quality_score'] += 5
             # JSON数据文件
             if extension == '.json':::
     import json
-                with open(file_path, 'r', encoding == 'utf-8') as f,
+                with open(file_path, 'r', encoding == 'utf-8') as f,:
     data = json.load(f)
 
                 # 检查数据结构
                 if isinstance(data, dict)::
-                    uality_info['data_info'] = {
+                    uality_info['data_info'] = {}
                         'type': 'dict',
                         'keys': list(data.keys()) if isinstance(data, dict) else []::
                             size': len(data) if hasattr(data, '__len__') else 0,::
                     quality_info['quality_score'] += 10
                 elif isinstance(data, list)::
-                    uality_info['data_info'] = {
+                    uality_info['data_info'] = {}
                         'type': 'list',
                         'size': len(data)
                     }
@@ -552,11 +552,11 @@ uality_info['quality_score'] += 5
             # CSV数据文件
             elif extension == '.csv':::
     import csv
-                with open(file_path, 'r', encoding == 'utf-8') as f,
+                with open(file_path, 'r', encoding == 'utf-8') as f,:
     reader = csv.reader(f)
                     rows = list(reader)
 
-                quality_info['data_info'] = {
+                quality_info['data_info'] = {}
                     'type': 'csv',
                     'rows': len(rows),
                     'columns': len(rows[0]) if rows else 0,::
@@ -570,7 +570,7 @@ uality_info['quality_score'] += 5
             # 其他数据文件
             else,
 
-                quality_info['data_info'] = {
+                quality_info['data_info'] = {}
                     'type': extension,
                     'size': quality_info['file_size']
                 }
@@ -586,7 +586,7 @@ uality_info['quality_score'] += 5
 
     return quality_info
 
-    def _assess_archive_quality(self, file_path, Path, quality_info, Dict) -> Dict,
+    def _assess_archive_quality(self, file_path, Path, quality_info, Dict) -> Dict,:
     """评估压缩文件质量"""
     context == ErrorContext("DataManager", "_assess_archive_quality", {"file_path": str(file_path)})
         try,
@@ -598,24 +598,24 @@ uality_info['quality_score'] += 5
 
             # 尝试打开压缩文件以检查完整性
             if extension in ['.zip']::
-    with zipfile.ZipFile(file_path, 'r') as zip_file,
+    with zipfile.ZipFile(file_path, 'r') as zip_file,:
     file_list = zip_file.namelist()
-                    quality_info['archive_info'] = {
+                    quality_info['archive_info'] = {}
                         'type': 'zip',
                         'file_count': len(file_list),
                         'files': file_list[:10]  # 只记录前10个文件
                     }
             elif extension in ['.tar', '.gz']::
-    with tarfile.open(file_path, 'r') as tar_file,
+    with tarfile.open(file_path, 'r') as tar_file,:
     file_list = tar_file.getnames()
-                    quality_info['archive_info'] = {
+                    quality_info['archive_info'] = {}
                         'type': 'tar',
                         'file_count': len(file_list),
                         'files': file_list[:10]  # 只记录前10个文件
                     }
             else,
 
-                quality_info['archive_info'] = {
+                quality_info['archive_info'] = {}
                     'type': 'unknown',
                     'file_count': 0
                 }
@@ -649,13 +649,13 @@ uality_info['quality_score'] += 5
 
     return quality_info
 
-    def _is_file_corrupted(self, file_path, Path) -> bool,
+    def _is_file_corrupted(self, file_path, Path) -> bool,:
     """检查文件是否可能已损坏"""
     context == ErrorContext("DataManager", "_is_file_corrupted", {"file_path": str(file_path)})
         try,
             # 计算文件的MD5哈希值
             hash_md5 = hashlib.md5()
-            with open(file_path, "rb") as f,
+            with open(file_path, "rb") as f,:
     for chunk in iter(lambda, f.read(4096), b""):::
     hash_md5.update(chunk)
 
@@ -668,7 +668,7 @@ uality_info['quality_score'] += 5
             self.error_handler.handle_error(e, context)
             return True
 
-    def get_data_by_type(self, data_type, str) -> List[Dict[str, Any]]
+    def get_data_by_type(self, data_type, str) -> List[Dict[str, Any]]:
     """根据数据类型获取文件列表"""
     context == ErrorContext("DataManager", "get_data_by_type", {"data_type": data_type})
         try,
@@ -685,7 +685,7 @@ uality_info['quality_score'] += 5
             logger.error(f"❌ 根据数据类型获取文件列表失败, {data_type} - {e}")
             return []
 
-    def get_high_quality_data(self, min_quality_score, int == 70) -> Dict[str, List[Dict[str, Any]]]
+    def get_high_quality_data(self, min_quality_score, int == 70) -> Dict[str, List[Dict[str, Any]]]:
     """获取高质量数据(按类型分组)"""
     context == ErrorContext("DataManager", "get_high_quality_data")
         try,
@@ -714,7 +714,7 @@ uality_info['quality_score'] += 5
             logger.error(f"❌ 获取高质量数据失败, {e}")
             return {}
 
-    def prepare_training_data(self, model_type, str) -> List[Dict[str, Any]]
+    def prepare_training_data(self, model_type, str) -> List[Dict[str, Any]]:
     """为特定模型类型准备训练数据"""
     context == ErrorContext("DataManager", "prepare_training_data", {"model_type": model_type})
     logger.info(f"📦 为模型 {model_type} 准备训练数据")
@@ -733,7 +733,7 @@ uality_info['quality_score'] += 5
                 training_data.extend(data_files)
 
             # 对于概念模型,直接添加概念模型训练数据
-            if model_type in ['concept_models', 'environment_simulator', 'causal_reasoning_engine',:::
+            if model_type in ['concept_models', 'environment_simulator', 'causal_reasoning_engine',:::]:
                 adaptive_learning_controller', 'alpha_deep_model']
                 # 添加概念模型专用训练数据
                 concept_data_dir = self.data_dir / "concept_models_training_data"
@@ -741,7 +741,7 @@ uality_info['quality_score'] += 5
                     or json_file in concept_data_dir.glob("*.json")
                         # 根据模型类型过滤数据
                         if self._is_data_relevant_for_model(json_file.name(), model_type)::
-                            ile_info = {
+                            ile_info = {}
                                 'path': str(json_file),
                                 'relative_path': str(json_file.relative_to(self.data_dir())),
                                 'size': json_file.stat().st_size,
@@ -772,7 +772,7 @@ uality_info['quality_score'] += 5
             logger.error(f"❌ 为模型 {model_type} 准备训练数据失败, {e}")
             return []
 
-    def _is_data_relevant_for_model(self, filename, str, model_type, str) -> bool,
+    def _is_data_relevant_for_model(self, filename, str, model_type, str) -> bool,:
     """检查数据文件是否与特定模型相关"""
     context == ErrorContext("DataManager", "_is_data_relevant_for_model", {"filename": filename, "model_type": model_type})
         try,
@@ -794,7 +794,7 @@ uality_info['quality_score'] += 5
             logger.error(f"❌ 检查数据文件相关性失败, {filename} - {model_type} - {e}")
             return False
 
-    def get_data_statistics(self) -> Dict[str, Any]
+    def get_data_statistics(self) -> Dict[str, Any]:
     """获取数据统计信息"""
     context == ErrorContext("DataManager", "get_data_statistics")
         try,
@@ -802,7 +802,7 @@ uality_info['quality_score'] += 5
             if not self.data_catalog,::
     self.scan_data()
 
-            stats = {
+            stats = {}
                 'total_files': len(self.data_catalog()),
                 'file_types': {}
                 'total_size': 0,
@@ -833,7 +833,7 @@ uality_info['quality_score'] += 5
             if not catalog_path,::
     catalog_path == TRAINING_DIR / "data_catalog.json"
 
-            catalog_data = {
+            catalog_data = {}
                 'catalog': self.data_catalog(),
                 'quality_scores': self.data_quality_scores(),
                 'statistics': self.get_data_statistics(),
@@ -843,7 +843,7 @@ uality_info['quality_score'] += 5
             try,
 
 
-                with open(catalog_path, 'w', encoding == 'utf-8') as f,
+                with open(catalog_path, 'w', encoding == 'utf-8') as f,:
     json.dump(catalog_data, f, ensure_ascii == False, indent=2)
                 logger.info(f"💾 数据目录已保存到, {catalog_path}")
             except Exception as e,::
@@ -867,7 +867,7 @@ uality_info['quality_score'] += 5
             try,
 
 
-                with open(catalog_path, 'r', encoding == 'utf-8') as f,
+                with open(catalog_path, 'r', encoding == 'utf-8') as f,:
     catalog_data = json.load(f)
 
                 self.data_catalog = catalog_data.get('catalog', {})
@@ -883,7 +883,7 @@ uality_info['quality_score'] += 5
             return False
 
 
-def main() -> None,
+def main() -> None,:
     """主函数,用于测试DataManager"""
     print("🔍 测试数据管理器...")
 

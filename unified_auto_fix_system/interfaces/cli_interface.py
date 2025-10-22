@@ -52,8 +52,7 @@ class CLIFixInterface:
             """
         )
         
-         # 全局选项
-
+        # 全局选项
         parser.add_argument(
             "--project-root", "-p",
             type=str,
@@ -114,7 +113,7 @@ class CLIFixInterface:
             help="输出格式 (默认: text)"
         )
         
-         # 修复命令
+        # 修复命令
         fix_parser = subparsers.add_parser(
             "fix",
             help="修复项目问题"
@@ -171,8 +170,7 @@ class CLIFixInterface:
             help="输出修复报告到文件 (JSON格式)"
         )
         
-         # 状态命令
-
+        # 状态命令
         status_parser = subparsers.add_parser(
             "status",
             help="显示系统状态"
@@ -184,8 +182,7 @@ class CLIFixInterface:
             help="显示详细信息"
         )
         
-         # 配置命令
-
+        # 配置命令
         config_parser = subparsers.add_parser(
             "config",
             help="管理配置"
@@ -195,7 +192,6 @@ class CLIFixInterface:
             "--list",
             action="store_true",
             help="列出当前配置"
-
         )
         
         config_parser.add_argument(
@@ -230,7 +226,7 @@ class CLIFixInterface:
             
             self._setup_logging(log_level)
             
-             # 初始化引擎
+            # 初始化引擎
             project_root = Path(parsed_args.project_root).resolve()
             config_path = Path(parsed_args.config) if parsed_args.config else None
             self.engine = UnifiedFixEngine(project_root, config_path)
@@ -305,14 +301,14 @@ class CLIFixInterface:
             print("错误: 引擎未初始化")
             return 1
 
-         # 创建上下文
+        # 创建上下文
         context = self._create_context(args)
         
         # 解析修复类型
         fix_types = None
         if args.types:
             fix_types = args.types
-         # 执行修复
+        # 执行修复
         report = self.engine.fix_issues(context, fix_types)
 
         
@@ -350,7 +346,7 @@ class CLIFixInterface:
         if args.detailed:
             print("\n模块状态:")
             for module, status in module_status.items():
-                print(f"  {module} {status}")
+                print(f"  {module}: {status}")
         
         return 0
     
@@ -392,7 +388,7 @@ class CLIFixInterface:
             print("配置已重置为默认值")
         
         else:
-            print("请指定配置操作, --list, --set, 或 --reset")
+            print("请指定配置操作: --list, --set, 或 --reset")
             return 1
 
         return 0
@@ -447,7 +443,7 @@ class CLIFixInterface:
     
     def _output_analysis_text(self, result: Dict[str, Any]):
         """输出分析结果(文本格式)"""
-        print("\n项目分析结果,")
+        print("\n项目分析结果:")
         print("=" * 50)
         
         issues = result.get("issues", {})
@@ -458,12 +454,12 @@ class CLIFixInterface:
             print("✅ 未发现问题！")
             return
         
-        print(f"发现 {sum(statistics.values())} 个问题,")
+        print(f"发现 {sum(statistics.values())} 个问题:")
         
         for fix_type, issue_list in issues.items():
             if issue_list:
                 count = len(issue_list)
-                print(f"\n🔍 {fix_type} {count} 个问题")
+                print(f"\n🔍 {fix_type}: {count} 个问题")
                 
                 # 显示前5个问题的详细信息
                 for i, issue in enumerate(issue_list[:5]):
@@ -473,7 +469,7 @@ class CLIFixInterface:
                     print(f"  ... 还有 {count - 5} 个问题")
         
         if recommendations:
-            print("\n💡 建议,")
+            print("\n💡 建议:")
             for rec in recommendations[:3]:
                 print(f"  - {rec}")
     
@@ -485,12 +481,12 @@ class CLIFixInterface:
         
         total_issues = sum(statistics.values())
         
-        print(f"\n分析摘要,")
+        print(f"\n分析摘要:")
         print(f"总问题数: {total_issues}")
         
         for fix_type, count in statistics.items():
             if count > 0:
-                print(f"  {fix_type} {count}")
+                print(f"  {fix_type}: {count}")
     
     def _output_fix_report(self, report: FixReport, output_file: Optional[str] = None):
         """输出修复报告"""

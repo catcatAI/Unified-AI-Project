@@ -14,13 +14,13 @@ project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
 # 配置日志
-logging.basicConfig(,
+logging.basicConfig(,)
     level=logging.INFO(),
     format, str='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger, Any = logging.getLogger(__name__)
 
-def test_error_handling_system() -> None,
+def test_error_handling_system() -> None,:
     """测试错误处理系统"""
     logger.info("🧪 测试错误处理系统...")
 
@@ -39,7 +39,7 @@ def test_error_handling_system() -> None,
     logger.error(f"❌ 错误处理系统测试失败, {e}")
     return False
 
-def test_training_monitoring_system() -> None,
+def test_training_monitoring_system() -> None,:
     """测试训练监控系统"""
     logger.info("🔬 测试训练监控系统...")
 
@@ -79,7 +79,7 @@ def test_training_monitoring_system() -> None,
     logger.error(f"❌ 训练监控系统测试失败, {e}")
     return False
 
-def test_incremental_learning_system() -> None,
+def test_incremental_learning_system() -> None,:
     """测试增量学习系统"""
     logger.info("📈 测试增量学习系统...")
 
@@ -115,7 +115,7 @@ def test_incremental_learning_system() -> None,
     logger.error(f"❌ 增量学习系统测试失败, {e}")
     return False
 
-def test_data_management_system() -> None,
+def test_data_management_system() -> None,:
     """测试数据管理系统"""
     logger.info("📂 测试数据管理系统...")
 
@@ -146,7 +146,7 @@ def test_data_management_system() -> None,
     logger.error(f"❌ 数据管理系统测试失败, {e}")
     return False
 
-def test_model_training_system() -> None,
+def test_model_training_system() -> None,:
     """测试模型训练系统"""
     logger.info("⚙️  测试模型训练系统...")
 
@@ -181,13 +181,13 @@ def test_model_training_system() -> None,
     traceback.print_exc()
     return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     logger.info("🚀 开始综合系统测试")
     print("=" * 60)
 
     # 运行各项测试
-    tests = [
+    tests = []
     ("错误处理系统", test_error_handling_system),
     ("训练监控系统", test_training_monitoring_system),
     ("增量学习系统", test_incremental_learning_system),

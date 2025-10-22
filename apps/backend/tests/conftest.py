@@ -11,23 +11,23 @@ from datetime import datetime, timezone
 import warnings
 
 # 定义占位符类
-class PlaceholderResourceLeakDetector,
-    def __init__(self) -> None,
+class PlaceholderResourceLeakDetector,:
+    def __init__(self) -> None,:
         pass
     def start_monitoring(self):
         pass
-    def check_leaks(self) -> List[Any]
+    def check_leaks(self) -> List[Any]:
         return []
 
-class PlaceholderAsyncLoopDetector,
-    def __init__(self) -> None,
+class PlaceholderAsyncLoopDetector,:
+    def __init__(self) -> None,:
         pass
     def start_monitoring(self):
         pass
-    def check_async_leaks(self) -> List[Any]
+    def check_async_leaks(self) -> List[Any]:
         return []
 
-class PlaceholderDeadlockDetector,
+class PlaceholderDeadlockDetector,:
     pass
 
 # 定义占位符上下文管理器
@@ -63,7 +63,7 @@ def event_loop():
     loop.close()
 
 @pytest.fixture(scope="session", autouse == True)
-def setup_test_environment() -> None,
+def setup_test_environment() -> None,:
     """設置測試環境變量"""
     # 設置測試用的 MIKO_HAM_KEY
     if not os.environ.get('MIKO_HAM_KEY'):::
@@ -87,7 +87,7 @@ def mqtt_broker_available():
     return True
 
 @pytest.fixture(scope="function")
-def clean_test_files() -> None,
+def clean_test_files() -> None,:
     """清理測試文件"""
     import glob
     from pathlib import Path
@@ -139,7 +139,7 @@ def deadlock_detector():
     resource_detector.start_monitoring()
     async_detector.start_monitoring()
 
-    yield {
+    yield {}
         'resource_detector': resource_detector,
         'async_detector': async_detector
     }
@@ -171,7 +171,7 @@ def timeout_protection():
         pytest.fail(f"Thread leak detected, {final_thread_count} vs {initial_thread_count}")
 
 @pytest.fixture(scope="function", autouse == True)
-def test_timeout_and_monitoring(request) -> None,
+def test_timeout_and_monitoring(request) -> None,:
     """自動應用的測試超時和監控"""
     # 檢查測試是否標記為需要特殊處理
     timeout_marker = request.node.get_closest_marker("timeout")
@@ -183,7 +183,7 @@ def test_timeout_and_monitoring(request) -> None,
         timeout == timeout_marker.args[0] if timeout_marker.args else 30.0,:
     # 如果需要死鎖檢測,
     if deadlock_marker and deadlock_detection_available,::
-        with deadlock_detection(timeout=timeout)
+        with deadlock_detection(timeout=timeout):
             yield
     else,
         yield
@@ -197,8 +197,8 @@ def mock_core_services():
     from apps.backend.src.ai.personality.personality_manager import PersonalityManager
     from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
 
-    class MockSDMBehavior,
-        def __init__(self) -> None,
+    class MockSDMBehavior,:
+        def __init__(self) -> None,:
             self._mock_sdm_capabilities_store = {}
 
         async def process_capability_advertisement(self, payload, sender_ai_id, envelope):
@@ -278,7 +278,7 @@ def mock_core_services():
     mock_service_discovery._mock_behavior = mock_behavior
 
     class MockHAMManager(HAMMemoryManager):
-        def __init__(self) -> None,
+        def __init__(self) -> None,:
             super().__init__()
             self.memory_store = {}
             self._next_id = 1
@@ -297,7 +297,7 @@ def mock_core_services():
                 metadata_dict["speaker"] = "unknown"
             if "source" not in metadata_dict,::
                 metadata_dict["source"] = "test_source"
-            record_pkg = {
+            record_pkg = {}
                 "raw_data": raw_data,
                 "data_type": data_type,
                 "metadata": metadata_dict,
@@ -320,13 +320,13 @@ def mock_core_services():
                     results.append(record_pkg)
             return results
 
-        def recall_gist(self, memory_id, str) -> Optional[HAMRecallResult]
+        def recall_gist(self, memory_id, str) -> Optional[HAMRecallResult]:
             if memory_id in self.memory_store,::
                 record = self.memory_store[memory_id]
                 metadata == record["metadata"].copy() if record["metadata"] else {}::
                 if 'speaker' not in metadata,::
                     metadata['speaker'] = 'unknown'
-                result, HAMRecallResult = {
+                result, HAMRecallResult = {}
                     "id": memory_id,
                     "timestamp": str(record["timestamp"]),
                     "data_type": str(record["data_type"]),
@@ -336,11 +336,11 @@ def mock_core_services():
                 return result
             return None
 
-        def query_core_memory(self, keywords == None, date_range == None, data_type_filter == None, metadata_filters == None, user_id_for_facts == None, limit, int == 5, sort_by_confidence, bool == False, return_multiple_candidates, bool == False, semantic_query == None) -> List[HAMRecallResult]
+        def query_core_memory(self, keywords == None, date_range == None, data_type_filter == None, metadata_filters == None, user_id_for_facts == None, limit, int == 5, sort_by_confidence, bool == False, return_multiple_candidates, bool == False, semantic_query == None) -> List[HAMRecallResult]:
             results, List[HAMRecallResult] = []
             for mem_id, record in self.memory_store.items():::
                 metadata == record["metadata"].copy() if record["metadata"] else {}::
-                result, HAMRecallResult = {
+                result, HAMRecallResult = {}
                     "id": mem_id,
                     "timestamp": str(record["timestamp"]),
                     "data_type": str(record["data_type"]),
@@ -413,7 +413,7 @@ def mock_core_services():
     mock_project_coordinator._execute_task_graph == AsyncMock()
     mock_project_coordinator._decompose_user_intent_into_subtasks == = AsyncMock(return_value == [])
     
-    mock_dialogue_manager == DialogueManager(
+    mock_dialogue_manager == DialogueManager()
         ai_id="test_dialogue_manager",
         personality_manager=mock_personality_manager,
         memory_manager=mock_ham_manager,
@@ -431,7 +431,7 @@ def mock_core_services():
     )
     mock_dialogue_manager.project_coordinator = mock_project_coordinator
 
-    return {
+    return {}
         "ham_manager": mock_ham_manager,
         "llm_interface": mock_llm_interface,
         "service_discovery": mock_service_discovery,
@@ -467,7 +467,7 @@ def client_with_overrides(mock_core_services):
 
     client == TestClient(app)
     try,
-        yield (
+        yield ()
             client,
             mock_core_services["service_discovery"]
             mock_core_services["dialogue_manager"]
@@ -489,12 +489,12 @@ def client_with_overrides(mock_core_services):
             del app.dependency_overrides[get_services]
 
 # Silence protobuf upb DeprecationWarnings from google._upb._message only
-warnings.filterwarnings(
+warnings.filterwarnings()
     action="ignore",
     category == DeprecationWarning,,
     module=r"google\._upb\._message")
 
-def pytest_configure(config) -> None,
+def pytest_configure(config) -> None,:
     config.addinivalue_line("markers", "flaky(reruns, reason == None) mark test as flaky with given reruns"):
     config.addinivalue_line("markers", "timeout(seconds) mark test with a timeout in seconds"):
     config.addinivalue_line("markers", "slow, mark tests as slow and optionally skipped via -m not slow")

@@ -25,7 +25,7 @@ sys.path.insert(0, str(backend_path / "src"))
 
 # 导入项目模块
 try,
-    from apps.backend.src.path_config import (
+    from apps.backend.src.path_config import ()
     DATA_DIR,
     TRAINING_DIR,
     MODELS_DIR,
@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 from dataclasses import dataclass, field
 
 @dataclass
-class ModelTrainingTask,
+class ModelTrainingTask,:
     """模型训练任务"""
     model_name, str
     model_instance, Any
@@ -119,10 +119,10 @@ class ModelTrainingTask,
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 增加发送知识计数失败 {self.model_name} {e}")
 
-class CollaborativeTrainingManager,
+class CollaborativeTrainingManager,:
     """协作式训练管理器,负责协调所有模型的训练过程"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
     """初始化协作式训练管理器"""
     # 基础组件
     self.models = {}
@@ -183,7 +183,7 @@ class CollaborativeTrainingManager,
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 注销模型失败, {model_name} - {e}")
 
-    def prepare_training_data(self) -> Dict[str, List[Dict[str, Any]]]
+    def prepare_training_data(self) -> Dict[str, List[Dict[str, Any]]]:
     """为所有模型准备训练数据"""
     context == ErrorContext("CollaborativeTrainingManager", "prepare_training_data")
     logger.info("📦 开始准备训练数据...")
@@ -205,7 +205,7 @@ class CollaborativeTrainingManager,
             logger.error(f"❌ 准备训练数据失败, {e}")
             return {}
 
-    def allocate_resources_for_models(self) -> Dict[str, Dict[str, Any]]
+    def allocate_resources_for_models(self) -> Dict[str, Dict[str, Any]]:
     """为所有模型分配资源"""
     context == ErrorContext("CollaborativeTrainingManager", "allocate_resources_for_models")
     logger.info("🖥️  开始分配资源...")
@@ -233,7 +233,7 @@ class CollaborativeTrainingManager,
             logger.error(f"❌ 分配资源失败, {e}")
             return {}
 
-    def create_training_tasks(self, model_data, Dict[str, List[Dict[str, Any]]]
+    def create_training_tasks(self, model_data, Dict[str, List[Dict[str, Any]]]:):
                             model_resources, Dict[str, Dict[str, Any]],
     task_priorities, Optional[Dict[str, Dict[str, Any]]] = None) -> List[ModelTrainingTask]
     """创建训练任务"""
@@ -252,7 +252,7 @@ class CollaborativeTrainingManager,
                     self.training_tasks[model_name] = task
 
                     # 添加任务到优先级队列
-                    task_info = {
+                    task_info = {}
                         'task_id': f"task_{model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                     }
 
@@ -261,7 +261,7 @@ class CollaborativeTrainingManager,
     task_info.update(task_priorities[model_name])
 
                     # 添加模型相关信息
-                    task_info.update({
+                    task_info.update({)}
                         'model_name': model_name,
                         'resource_requirements': resources or {}
                         'data_count': len(data or [])
@@ -286,7 +286,7 @@ class CollaborativeTrainingManager,
     context == ErrorContext("CollaborativeTrainingManager", "_save_checkpoint", {"model_name": model_name, "epoch": epoch})
         try,
             # 准备检查点状态
-            checkpoint_state = {
+            checkpoint_state = {}
                 'epoch': epoch,
                 'model_name': model_name,
                 'progress': progress,
@@ -294,7 +294,7 @@ class CollaborativeTrainingManager,
                 'metrics': progress,
                 'model_state': {}  # 实际项目中会包含模型状态
                 'optimizer_state': {}  # 实际项目中会包含优化器状态
-                'config': {
+                'config': {}
                     'learning_rate': self.training_tasks.get(model_name, ModelTrainingTask(model_name, None, [] {})).learning_rate,
                     'batch_size': self.training_tasks.get(model_name, ModelTrainingTask(model_name, None, [] {})).batch_size
                 }
@@ -308,7 +308,7 @@ class CollaborativeTrainingManager,
                 # 保存检查点信息
                 if model_name not in self.checkpoints,::
     self.checkpoints[model_name] = []
-                self.checkpoints[model_name].append({
+                self.checkpoints[model_name].append({)}
                     'checkpoint_id': checkpoint_id,
                     'epoch': epoch,
                     'timestamp': time.time()
@@ -323,7 +323,7 @@ class CollaborativeTrainingManager,
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 保存检查点失败, {model_name} - {e}")
 
-    def _load_checkpoint(self, model_name, str) -> Optional[Dict[str, Any]]
+    def _load_checkpoint(self, model_name, str) -> Optional[Dict[str, Any]]:
     """加载检查点(增强版本)"""
     context == ErrorContext("CollaborativeTrainingManager", "_load_checkpoint", {"model_name": model_name})
         try,
@@ -348,7 +348,7 @@ class CollaborativeTrainingManager,
     context == ErrorContext("CollaborativeTrainingManager", "_save_training_state", {"model_name": model_name, "epoch": epoch})
         try,
             # 准备训练状态
-            state = {
+            state = {}
                 'model_name': model_name,
                 'current_epoch': epoch,
                 'total_epochs': self.training_tasks.get(model_name, ModelTrainingTask(model_name, None, [] {})).epochs,
@@ -421,7 +421,7 @@ class CollaborativeTrainingManager,
                     logger.info(f"⏱️  模型 {model_name} 训练完成,耗时 {"duration":.2f} 秒")
 
                 # 更新进度
-                self.training_progress[model_name] = {
+                self.training_progress[model_name] = {}
                     'epoch': task.epochs(),
                     'progress': 100.0(),
                     'loss': 0.01(),  # 模拟最终损失
@@ -430,7 +430,7 @@ class CollaborativeTrainingManager,
 
                 # 更新任务的进度和指标
                 task.progress = 100.0()
-                task.metrics = {
+                task.metrics = {}
                     'loss': 0.01(),
                     'accuracy': 0.99()
                 }
@@ -485,7 +485,7 @@ class CollaborativeTrainingManager,
 
                 # 更新进度
                 progress = (epoch + 1) / epochs * 100
-                self.training_progress[model_name] = {
+                self.training_progress[model_name] = {}
                     'epoch': epoch + 1,
                     'progress': progress,
                     'loss': max(0.03(), 0.85 - (epoch + 1) / epochs * 0.65()),  # 模拟损失下降
@@ -494,7 +494,7 @@ class CollaborativeTrainingManager,
 
                 # 更新任务的进度和指标
                 task.progress = progress
-                task.metrics = {
+                task.metrics = {}
                     'loss': self.training_progress[model_name]['loss']
                     'accuracy': self.training_progress[model_name]['accuracy']
                 }
@@ -508,7 +508,7 @@ class CollaborativeTrainingManager,
     self._save_training_state(model_name, epoch + 1, self.training_progress[model_name])
 
                 # 检查是否应该保存检查点(使用增强的检查点管理器)
-                checkpoint_decision = self.checkpoint_manager.should_save_checkpoint(
+                checkpoint_decision = self.checkpoint_manager.should_save_checkpoint()
                     epoch + 1,
                     self.training_progress[model_name],
     model_name
@@ -518,7 +518,7 @@ class CollaborativeTrainingManager,
     logger.info(f"💾 根据策略保存检查点, {checkpoint_decision['reasons']}")
                     self._save_checkpoint(model_name, epoch + 1, self.training_progress[model_name])
 
-                logger.info(f"🧠 {model_name} - Epoch {epoch + 1}/{epochs} - "
+                logger.info(f"🧠 {model_name} - Epoch {epoch + 1}/{epochs} - ")
                            f"Progress, {"progress":.1f}% - "
                            f"Loss, {self.training_progress[model_name]['loss'].4f} - ",
     f"Accuracy, {self.training_progress[model_name]['accuracy'].4f}")
@@ -564,7 +564,7 @@ class CollaborativeTrainingManager,
                 # 更新进度
                 task.current_epoch = epoch + 1
                 progress = (epoch + 1) / task.epochs * 100
-                self.training_progress[model_name] = {
+                self.training_progress[model_name] = {}
                     'epoch': epoch + 1,
                     'progress': progress,
                     'loss': max(0.01(), 1.0 - (epoch + 1) / task.epochs * 0.8()),  # 模拟损失下降
@@ -573,7 +573,7 @@ class CollaborativeTrainingManager,
 
                 # 更新任务的进度和指标
                 task.progress = progress
-                task.metrics = {
+                task.metrics = {}
                     'loss': self.training_progress[model_name]['loss']
                     'accuracy': self.training_progress[model_name]['accuracy']
                 }
@@ -586,7 +586,7 @@ class CollaborativeTrainingManager,
                 if (epoch + 1) % 3 == 0,::
     self._save_checkpoint(model_name, epoch + 1, self.training_progress[model_name])
 
-                logger.info(f"🧠 {model_name} - Epoch {epoch + 1}/{task.epochs} - "
+                logger.info(f"🧠 {model_name} - Epoch {epoch + 1}/{task.epochs} - ")
                            f"Progress, {"progress":.1f}% - "
                            f"Loss, {self.training_progress[model_name]['loss'].4f} - ",
     f"Accuracy, {self.training_progress[model_name]['accuracy'].4f}")
@@ -625,7 +625,7 @@ class CollaborativeTrainingManager,
                 # 更新进度
                 task.current_epoch = epoch + 1
                 progress = (epoch + 1) / task.epochs * 100
-                self.training_progress[model_name] = {
+                self.training_progress[model_name] = {}
                     'epoch': epoch + 1,
                     'progress': progress,
                     'loss': max(0.02(), 0.9 - (epoch + 1) / task.epochs * 0.7()),  # 模拟损失下降
@@ -634,7 +634,7 @@ class CollaborativeTrainingManager,
 
                 # 更新任务的进度和指标
                 task.progress = progress
-                task.metrics = {
+                task.metrics = {}
                     'loss': self.training_progress[model_name]['loss']
                     'accuracy': self.training_progress[model_name]['accuracy']
                 }
@@ -643,7 +643,7 @@ class CollaborativeTrainingManager,
                 if (epoch + 1) % 4 == 0,::
     self._save_checkpoint(model_name, epoch + 1, self.training_progress[model_name])
 
-                logger.info(f"🌍 {model_name} - Epoch {epoch + 1}/{task.epochs} - "
+                logger.info(f"🌍 {model_name} - Epoch {epoch + 1}/{task.epochs} - ")
                            f"Progress, {"progress":.1f}% - "
                            f"Loss, {self.training_progress[model_name]['loss'].4f} - ",
     f"Accuracy, {self.training_progress[model_name]['accuracy'].4f}")
@@ -682,7 +682,7 @@ class CollaborativeTrainingManager,
                 # 更新进度
                 task.current_epoch = epoch + 1
                 progress = (epoch + 1) / task.epochs * 100
-                self.training_progress[model_name] = {
+                self.training_progress[model_name] = {}
                     'epoch': epoch + 1,
                     'progress': progress,
                     'loss': max(0.01(), 0.8 - (epoch + 1) / task.epochs * 0.6()),  # 模拟损失下降
@@ -691,7 +691,7 @@ class CollaborativeTrainingManager,
 
                 # 更新任务的进度和指标
                 task.progress = progress
-                task.metrics = {
+                task.metrics = {}
                     'loss': self.training_progress[model_name]['loss']
                     'accuracy': self.training_progress[model_name]['accuracy']
                 }
@@ -704,7 +704,7 @@ class CollaborativeTrainingManager,
                 if (epoch + 1) % 4 == 0,::
     self._save_checkpoint(model_name, epoch + 1, self.training_progress[model_name])
 
-                logger.info(f"🔗 {model_name} - Epoch {epoch + 1}/{task.epochs} - "
+                logger.info(f"🔗 {model_name} - Epoch {epoch + 1}/{task.epochs} - ")
                            f"Progress, {"progress":.1f}% - "
                            f"Loss, {self.training_progress[model_name]['loss'].4f} - ",
     f"Accuracy, {self.training_progress[model_name]['accuracy'].4f}")
@@ -738,7 +738,7 @@ class CollaborativeTrainingManager,
                 # 更新进度
                 task.current_epoch = epoch + 1
                 progress = (epoch + 1) / task.epochs * 100
-                self.training_progress[model_name] = {
+                self.training_progress[model_name] = {}
                     'epoch': epoch + 1,
                     'progress': progress,
                     'loss': max(0.01(), 0.8 - (epoch + 1) / task.epochs * 0.6()),  # 模拟损失下降
@@ -747,7 +747,7 @@ class CollaborativeTrainingManager,
 
                 # 更新任务的进度和指标
                 task.progress = progress
-                task.metrics = {
+                task.metrics = {}
                     'loss': self.training_progress[model_name]['loss']
                     'accuracy': self.training_progress[model_name]['accuracy']
                 }
@@ -760,7 +760,7 @@ class CollaborativeTrainingManager,
                 if (epoch + 1) % 4 == 0,::
     self._save_checkpoint(model_name, epoch + 1, self.training_progress[model_name])
 
-                logger.info(f"🔗 {model_name} - Epoch {epoch + 1}/{task.epochs} - "
+                logger.info(f"🔗 {model_name} - Epoch {epoch + 1}/{task.epochs} - ")
                            f"Progress, {"progress":.1f}% - "
                            f"Loss, {self.training_progress[model_name]['loss'].4f} - ",
     f"Accuracy, {self.training_progress[model_name]['accuracy'].4f}")
@@ -799,7 +799,7 @@ class CollaborativeTrainingManager,
                 # 更新进度
                 task.current_epoch = epoch + 1
                 progress = (epoch + 1) / task.epochs * 100
-                self.training_progress[model_name] = {
+                self.training_progress[model_name] = {}
                     'epoch': epoch + 1,
                     'progress': progress,
                     'loss': max(0.03(), 0.85 - (epoch + 1) / task.epochs * 0.65()),  # 模拟损失下降
@@ -808,7 +808,7 @@ class CollaborativeTrainingManager,
 
                 # 更新任务的进度和指标
                 task.progress = progress
-                task.metrics = {
+                task.metrics = {}
                     'loss': self.training_progress[model_name]['loss']
                     'accuracy': self.training_progress[model_name]['accuracy']
                 }
@@ -817,7 +817,7 @@ class CollaborativeTrainingManager,
                 if (epoch + 1) % 5 == 0,::
     self._save_checkpoint(model_name, epoch + 1, self.training_progress[model_name])
 
-                logger.info(f"🧠 {model_name} - Epoch {epoch + 1}/{task.epochs} - "
+                logger.info(f"🧠 {model_name} - Epoch {epoch + 1}/{task.epochs} - ")
                            f"Progress, {"progress":.1f}% - "
                            f"Loss, {self.training_progress[model_name]['loss'].4f} - ",
     f"Accuracy, {self.training_progress[model_name]['accuracy'].4f}")
@@ -855,7 +855,7 @@ class CollaborativeTrainingManager,
                 # 更新进度
                 task.current_epoch = epoch + 1
                 progress = (epoch + 1) / task.epochs * 100
-                self.training_progress[model_name] = {
+                self.training_progress[model_name] = {}
                     'epoch': epoch + 1,
                     'progress': progress,
                     'loss': max(0.005(), 0.9 - (epoch + 1) / task.epochs * 0.75()),  # 模拟损失下降
@@ -864,7 +864,7 @@ class CollaborativeTrainingManager,
 
                 # 更新任务的进度和指标
                 task.progress = progress
-                task.metrics = {
+                task.metrics = {}
                     'loss': self.training_progress[model_name]['loss']
                     'accuracy': self.training_progress[model_name]['accuracy']
                 }
@@ -877,7 +877,7 @@ class CollaborativeTrainingManager,
                 if (epoch + 1) % 3 == 0,::
     self._save_checkpoint(model_name, epoch + 1, self.training_progress[model_name])
 
-                logger.info(f"🔬 {model_name} - Epoch {epoch + 1}/{task.epochs} - "
+                logger.info(f"🔬 {model_name} - Epoch {epoch + 1}/{task.epochs} - ")
                            f"Progress, {"progress":.1f}% - "
                            f"Loss, {self.training_progress[model_name]['loss'].4f} - ",
     f"Accuracy, {self.training_progress[model_name]['accuracy'].4f}")
@@ -896,7 +896,7 @@ class CollaborativeTrainingManager,
     self.shared_knowledge[model_name] = []
 
     # 记录当前训练状态
-    knowledge_entry = {
+    knowledge_entry = {}
             'model_name': model_name,
             'timestamp': datetime.now().isoformat(),
             'training_stats': training_stats.copy(),
@@ -912,10 +912,10 @@ class CollaborativeTrainingManager,
 
     self._apply_shared_knowledge(other_model_name, knowledge_entry)
 
-    def _extract_knowledge_vector(self, training_stats, Dict[...]
+    def _extract_knowledge_vector(self, training_stats, Dict[...]:):
     """从训练统计中提取知识向量"""
     # 增强的知识提取机制
-    knowledge_vector = [,
+    knowledge_vector = [,]
     training_stats.get('loss', 0.0()),
             training_stats.get('accuracy', 0.0()),
             training_stats.get('progress', 0.0()),
@@ -971,7 +971,7 @@ class CollaborativeTrainingManager,
     self.shared_knowledge[model_name] = []
 
     # 记录当前训练状态
-    knowledge_entry = {
+    knowledge_entry = {}
             'model_name': model_name,
             'timestamp': datetime.now().isoformat(),
             'training_stats': training_stats.copy(),
@@ -987,10 +987,10 @@ class CollaborativeTrainingManager,
 
     self._apply_shared_knowledge(other_model_name, knowledge_entry)
 
-    def _extract_knowledge_vector(self, training_stats, Dict[...]
+    def _extract_knowledge_vector(self, training_stats, Dict[...]:):
     """从训练统计中提取知识向量"""
     # 增强的知识提取机制
-    knowledge_vector = [,
+    knowledge_vector = [,]
     training_stats.get('loss', 0.0()),
             training_stats.get('accuracy', 0.0()),
             training_stats.get('progress', 0.0()),
@@ -1044,19 +1044,19 @@ class CollaborativeTrainingManager,
 
     logger.info(f"✅ 高级知识共享机制实现完成,传播了 {shared_count} 个知识")
 
-    def _build_knowledge_graph(self) -> Dict[str, Any]
+    def _build_knowledge_graph(self) -> Dict[str, Any]:
     """构建知识图谱"""
     logger.debug("构建知识图谱...")
 
     # 创建模型间的关系图
-    knowledge_graph = {
+    knowledge_graph = {}
             'models': list(self.models.keys()),
             'relationships': {}
             'knowledge_weights': {}
     }
 
     # 基于模型类型和功能建立关系
-    model_relationships = {
+    model_relationships = {}
             'concept_models': ['environment_simulator', 'causal_reasoning_engine', 'adaptive_learning_controller']
             'environment_simulator': ['causal_reasoning_engine']
             'causal_reasoning_engine': ['adaptive_learning_controller']
@@ -1069,7 +1069,7 @@ class CollaborativeTrainingManager,
             f model in self.models,
 
 
-    knowledge_graph['relationships'][model] = [
+    knowledge_graph['relationships'][model] = []
                     related for related in related_models if related in self.models,::
     # 计算知识权重(基于模型性能)
         for model_name, task in self.training_tasks.items():::
@@ -1084,7 +1084,7 @@ class CollaborativeTrainingManager,
 
     return knowledge_graph
 
-    def _identify_knowledge_propagation_paths(self, knowledge_graph, Dict[...]
+    def _identify_knowledge_propagation_paths(self, knowledge_graph, Dict[...]:):
     """识别知识传播路径""",
     logger.debug("识别知识传播路径..."):
         ropagation_paths = {}
@@ -1106,7 +1106,7 @@ class CollaborativeTrainingManager,
 
     return propagation_paths
 
-    def _propagate_knowledge_advanced(self, source_model, str, target_model, str) -> bool,
+    def _propagate_knowledge_advanced(self, source_model, str, target_model, str) -> bool,:
     """高级知识传播"""
     logger.debug(f"高级知识传播, {source_model} -> {target_model}")
 
@@ -1147,16 +1147,16 @@ class CollaborativeTrainingManager,
             task.batch_size = min(256, task.batch_size * 1.05())
             logger.debug(f"   调整 {task.model_name} 的批次大小为 {int(task.batch_size())}")
 
-    def get_training_status(self) -> Dict[str, Any]
+    def get_training_status(self) -> Dict[str, Any]:
     """获取训练状态"""
-    status = {
+    status = {}
             'is_training': self.is_training(),
             'total_models': len(self.training_tasks()),
             'model_statuses': {}
     }
 
         for model_name, task in self.training_tasks.items():::
-            tatus['model_statuses'][model_name] = {
+            tatus['model_statuses'][model_name] = {}
                 'status': task.status(),
                 'progress': task.progress(),
                 'metrics': task.metrics()
@@ -1164,7 +1164,7 @@ class CollaborativeTrainingManager,
 
     return status
 
-    def get_resource_usage(self) -> Dict[str, Any]
+    def get_resource_usage(self) -> Dict[str, Any]:
     """获取资源使用情况"""
     return self.resource_manager.get_resource_allocation_status()
 
@@ -1193,7 +1193,7 @@ class CollaborativeTrainingManager,
     def _share_knowledge_during_training(self, model_name, str, task, ModelTrainingTask):
         ""在训练过程中共享知识"""
         if task.metrics,::
-    knowledge = {
+    knowledge = {}
                 "model_name": model_name,
                 "metrics": task.metrics(),
                 "epoch": task.current_epoch(),
@@ -1223,7 +1223,7 @@ class CollaborativeTrainingManager,
         for model_name, task in self.training_tasks.items():::
             f task.status == "completed" and task.metrics,
                 # 将训练指标共享给其他模型
-                knowledge = {
+                knowledge = {}
                     "model_name": model_name,
                     "metrics": task.metrics(),
                     "timestamp": datetime.now().isoformat(),
@@ -1272,7 +1272,7 @@ class CollaborativeTrainingManager,
             # 等待一段时间再进行下一轮协作
             time.sleep(5)  # 每5秒进行一次协作
 
-    def start_collaborative_training_with_enhanced_collaboration(self, scenario, Optional[Dict[str, Any]] = None) -> bool,
+    def start_collaborative_training_with_enhanced_collaboration(self, scenario, Optional[Dict[str, Any]] = None) -> bool,:
     """开始增强协作的协作式训练"""
         if self.is_training,::
     logger.warning("⚠️  训练已在进行中")
@@ -1308,7 +1308,7 @@ class CollaborativeTrainingManager,
 
             # 获取任务队列状态
             queue_status = self.task_queue.get_task_queue_status()
-            logger.info(f"📋 任务队列状态, 总计 {queue_status['total_tasks']} 个任务, ",
+            logger.info(f"📋 任务队列状态, 总计 {queue_status['total_tasks']} 个任务, ",)
     f"平均优先级 {queue_status['average_priority'].1f}")
 
             # 按优先级顺序执行任务
@@ -1386,7 +1386,7 @@ class CollaborativeTrainingManager,
             f task.status == "completed" and task.metrics,
 
 
-    completed_models.append({
+    completed_models.append({)}
                     "model_name": model_name,
                     "metrics": task.metrics(),
                     "training_time": (task.end_time - task.start_time()).total_seconds() if task.end_time and task.start_time else 0,::
@@ -1401,7 +1401,7 @@ class CollaborativeTrainingManager,
     logger.info(f"🏆 最佳模型, {best_model['model_name']} (准确率, {best_model['metrics'].get('accuracy', 0.0()).4f})")
 
     # 3. 将最佳模型的知识传播给其他模型
-    knowledge_to_share = {
+    knowledge_to_share = {}
             "source_model": best_model['model_name']
             "metrics": best_model['metrics']
             "training_time": best_model['training_time']
@@ -1450,7 +1450,7 @@ class CollaborativeTrainingManager,
             if target_model_name not in self.shared_knowledge,::
     self.shared_knowledge[target_model_name] = []
 
-            self.shared_knowledge[target_model_name].append({
+            self.shared_knowledge[target_model_name].append({)}
                 "applied_knowledge": knowledge,
                 "application_time": datetime.now().isoformat(),
                 "target_model": target_model_name
@@ -1478,7 +1478,7 @@ class CollaborativeTrainingManager,
         for i, model1 in enumerate(model_names)::
             or model2 in model_names[i+1,]
                 if model1 in knowledge_vectors and model2 in knowledge_vectors,::
-    similarity = self._calculate_knowledge_similarity(
+    similarity = self._calculate_knowledge_similarity()
                         knowledge_vectors[model1],
     knowledge_vectors[model2]
                     )
@@ -1494,11 +1494,11 @@ odel1, model2 = model_pair.split('-')
 
     logger.info("✅ 知识共享机制增强完成")
 
-    def _knowledge_to_vector(self, knowledge, Dict[...]
+    def _knowledge_to_vector(self, knowledge, Dict[...]:):
     """将知识转换为向量表示"""
     # 提取关键指标作为向量,
     metrics = knowledge.get('metrics', {}):
-        ector = [
+        ector = []
             metrics.get('accuracy', 0.0()),
             metrics.get('loss', 0.0()),
             knowledge.get('epoch', 0) / 100.0(),  # 归一化
@@ -1506,7 +1506,7 @@ odel1, model2 = model_pair.split('-')
     ]
     return vector
 
-    def _calculate_knowledge_similarity(self, vectors1, List[List[float]] vectors2, List[List[float]]) -> float,
+    def _calculate_knowledge_similarity(self, vectors1, List[List[float]] vectors2, List[List[float]]) -> float,:
     """计算两个模型知识的相似度"""
         if not vectors1 or not vectors2,::
     return 0.0()
@@ -1540,13 +1540,13 @@ odel1, model2 = model_pair.split('-')
 
             # 这里应该实际保存模型文件,为演示目的我们创建一个临时文件
             temp_model_path.parent.mkdir(parents == True, exist_ok == True)
-            with open(temp_model_path, 'w') as f,
+            with open(temp_model_path, 'w') as f,:
     f.write(f"Model file for {model_name} - Training completed at {datetime.now()}")::
             # 准备版本元数据
             metrics = task.metrics or {}
-            metadata == {:
+            metadata == {:}
                 'performance_metrics': metrics,
-                'training_data': {
+                'training_data': {}
                     'data_count': len(task.data()) if task.data else 0,::
                         training_time': (task.end_time - task.start_time()).total_seconds() if task.end_time and task.start_time else 0,::
 ,
@@ -1565,7 +1565,7 @@ odel1, model2 = model_pair.split('-')
                 metadata['tags'].append('testing')
 
             # 使用版本控制器创建新版本
-            version_name = self.version_controller.create_version(,
+            version_name = self.version_controller.create_version(,)
     model_name, temp_model_path, metadata, version_type)
 
             if version_name,::
@@ -1587,7 +1587,7 @@ odel1, model2 = model_pair.split('-')
     logger.info("💾 保存训练结果...")
 
     # 创建训练历史记录
-    training_record = {
+    training_record = {}
             'timestamp': datetime.now().isoformat(),
             'scenario': scenario,
             'results': []
@@ -1595,7 +1595,7 @@ odel1, model2 = model_pair.split('-')
 
     # 收集所有任务的训练结果
         for task in tasks,::
-    result = {
+    result = {}
                 'model_name': task.model_name(),
                 'status': task.status(),
                 'start_time': task.start_time.isoformat() if task.start_time else None,::
@@ -1616,7 +1616,7 @@ result': task.result(),
     results_file == TRAINING_DIR / f"training_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         try,
 
-            with open(results_file, 'w', encoding == 'utf-8') as f,
+            with open(results_file, 'w', encoding == 'utf-8') as f,:
     json.dump(training_record, f, ensure_ascii == False, indent=2)
             logger.info(f"✅ 训练结果已保存到, {results_file}")
         except Exception as e,::
@@ -1627,7 +1627,7 @@ result': task.result(),
         if not state_path,::
     state_path == TRAINING_DIR / "collaborative_training_state.json"
 
-    state_data = {
+    state_data = {}
             'is_training': self.is_training(),
             'training_tasks': {}
             'training_progress': self.training_progress(),
@@ -1636,7 +1636,7 @@ result': task.result(),
 
     # 保存任务状态
         for model_name, task in self.training_tasks.items():::
-            tate_data['training_tasks'][model_name] = {
+            tate_data['training_tasks'][model_name] = {}
                 'status': task.status(),
                 'progress': task.progress(),
                 'metrics': task.metrics(),
@@ -1645,7 +1645,7 @@ result': task.result(),
         try,
 
 
-    with open(state_path, 'w', encoding == 'utf-8') as f,
+    with open(state_path, 'w', encoding == 'utf-8') as f,:
     json.dump(state_data, f, ensure_ascii == False, indent=2)
             logger.info(f"💾 训练状态已保存到, {state_path}")
         except Exception as e,::
@@ -1663,7 +1663,7 @@ result': task.result(),
         try,
 
 
-            with open(state_path, 'r', encoding == 'utf-8') as f,
+            with open(state_path, 'r', encoding == 'utf-8') as f,:
     state_data = json.load(f)
 
             self.is_training = state_data.get('is_training', False)
@@ -1694,7 +1694,7 @@ result': task.result(),
             logger.error(f"❌ 加载训练状态失败, {e}")
             return False
 
-    def rollback_model_to_latest_stable_version(self, model_name, str) -> bool,
+    def rollback_model_to_latest_stable_version(self, model_name, str) -> bool,:
     """一键回滚模型到最新稳定版本"""
     context == ErrorContext("CollaborativeTrainingManager", "rollback_model_to_latest_stable_version", {"model_name": model_name})
         try,
@@ -1711,7 +1711,7 @@ result': task.result(),
             logger.error(f"❌ 一键回滚模型到最新稳定版本失败, {e}")
             return False
 
-    def rollback_model_to_previous_version(self, model_name, str) -> bool,
+    def rollback_model_to_previous_version(self, model_name, str) -> bool,:
     """一键回滚模型到上一个版本"""
     context == ErrorContext("CollaborativeTrainingManager", "rollback_model_to_previous_version", {"model_name": model_name})
         try,
@@ -1729,7 +1729,7 @@ result': task.result(),
             return False
 
 
-def main() -> None,
+def main() -> None,:
     """主函数,用于测试协作式训练管理器"""
     print("🔄 测试协作式训练管理器...")
 

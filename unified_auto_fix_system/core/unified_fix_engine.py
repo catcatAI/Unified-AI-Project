@@ -1,9 +1,6 @@
 """
 统一修复引擎 - 核心引擎类
 整合所有修复功能,提供统一的修复接口
-
-
-
 """
 
 import os
@@ -19,7 +16,7 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 
 from .fix_types import FixType, FixStatus, FixScope, FixPriority
-from .fix_result import FixResult, FixReport
+from .fix_result import FixResult, FixReport, FixContext
 from ..modules.syntax_fixer import EnhancedSyntaxFixer
 from ..modules.import_fixer import ImportFixer  
 from ..modules.dependency_fixer import DependencyFixer
@@ -31,26 +28,10 @@ from ..modules.path_fixer import PathFixer
 from ..modules.configuration_fixer import ConfigurationFixer
 
 
-@dataclass
-class FixContext:
-
-    """修复上下文"""
-    project_root: Path
-    target_path: Optional[Path] = None
-    scope: FixScope = FixScope.PROJECT
-    priority: FixPriority = FixPriority.NORMAL
-    backup_enabled: bool = True
-    dry_run: bool = False
-    ai_assisted: bool = False
-    custom_rules: Dict[str, Any] = field(default_factory=dict)
-    excluded_paths: List[str] = field(default_factory=list)
-
-
 class UnifiedFixEngine:
     """
     统一自动修复引擎
 
-    
     功能特点：
     - 模块化修复器架构
     - 智能修复优先级
@@ -75,24 +56,18 @@ class UnifiedFixEngine:
         self.modules = {}
         self._init_modules()
 
-        
-         # 修复统计
-
+        # 修复统计
         self.stats = {
             "total_fixes": 0,
             "successful_fixes": 0,
             "failed_fixes": 0,
-
             "skipped_fixes": 0,
             "start_time": None,
-
- "end_time": None
-
+            "end_time": None
         }
         
         # 加载配置
         self.config = self._load_config()
-
         
         self.logger.info(f"统一修复引擎初始化完成 - 项目根目录: {self.project_root}")
     
@@ -119,21 +94,16 @@ class UnifiedFixEngine:
     def _init_modules(self):
         """初始化修复模块"""
         self.modules = {
-        FixType.SYNTAX_FIX: EnhancedSyntaxFixer(self.project_root),
-
+            FixType.SYNTAX_FIX: EnhancedSyntaxFixer(self.project_root),
             FixType.IMPORT_FIX: ImportFixer(self.project_root),
             FixType.DEPENDENCY_FIX: DependencyFixer(self.project_root),
             FixType.GIT_FIX: GitFixer(self.project_root),
             FixType.ENVIRONMENT_FIX: EnvironmentFixer(self.project_root),
-
- FixType.SECURITY_FIX: SecurityFixer(self.project_root),
-
- FixType.CODE_STYLE_FIX: CodeStyleFixer(self.project_root),
-
+            FixType.SECURITY_FIX: SecurityFixer(self.project_root),
+            FixType.CODE_STYLE_FIX: CodeStyleFixer(self.project_root),
             FixType.PATH_FIX: PathFixer(self.project_root),
             FixType.CONFIGURATION_FIX: ConfigurationFixer(self.project_root)
-            }
-
+        }
         
         self.logger.info(f"已加载 {len(self.modules)} 个修复模块")
     
@@ -143,53 +113,40 @@ class UnifiedFixEngine:
             "enabled_modules": list(self.modules.keys()),
             "backup_enabled": True,
             "dry_run": False,
-
             "ai_assisted": False,
             "max_fix_attempts": 3,
-
-
             "parallel_fixing": True,
             "custom_rules": {},
             "excluded_paths": [
-            "node_modules",
-
+                "node_modules",
                 "__pycache__", 
                 ".git",
-
                 "venv",
                 ".venv",
                 "backup",
                 "unified_fix_backups"
             ]
-            }
-
+        }
         
         if self.config_path.exists():
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
-
                     user_config = json.load(f)
                 
-                 # 合并配置
-
+                # 合并配置
                 config = {**default_config, **user_config}
                 self.logger.info("已加载用户配置文件")
                 return config
-
             except Exception as e:
                 self.logger.warning(f"配置文件加载失败,使用默认配置: {e}")
-
         
         return default_config
     
     def save_config(self):
         """保存配置文件"""
         try:
-
             with open(self.config_path, 'w', encoding='utf-8') as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
-
-
             self.logger.info("配置文件已保存")
         except Exception as e:
             self.logger.error(f"配置文件保存失败: {e}")
@@ -212,7 +169,6 @@ class UnifiedFixEngine:
                 try:
                     self.logger.info(f"分析 {fix_type.value} 问题...")
                     issues = module.analyze(context)
-
                     analysis_result["issues"][fix_type.value] = issues
                     analysis_result["statistics"][fix_type.value] = len(issues)
                     
@@ -221,11 +177,8 @@ class UnifiedFixEngine:
                 except Exception as e:
                     self.logger.error(f"分析 {fix_type.value} 失败: {e}")
                     analysis_result["issues"][fix_type.value] = []
-
         
-         # 生成建议
-
-
+        # 生成建议
         analysis_result["recommendations"] = self._generate_recommendations(analysis_result)
         
         return analysis_result
@@ -233,7 +186,6 @@ class UnifiedFixEngine:
     def fix_issues(self, context: FixContext, specific_issues: Optional[List[str]] = None) -> FixReport:
         """修复问题"""
         self.logger.info("开始修复过程...")
-
         self.stats["start_time"] = datetime.now()
         
         # 创建修复报告
@@ -264,17 +216,15 @@ class UnifiedFixEngine:
                 
                 try:
                     self.logger.info(f"修复 {fix_type.value} 问题...")
-#                     
+                    
                     if context.dry_run or self.config["dry_run"]:
                         # 干运行模式
-
                         result = self._simulate_fix(module, context)
                     else:
                         # 实际修复
                         result = module.fix(context)
-
                     
-#                     fix_report.fix_results[fix_type] = result
+                    fix_report.fix_results[fix_type] = result
                     self._update_stats(result)
                     
                     self.logger.info(f"{fix_type.value} 修复完成: {result.summary()}")
@@ -293,7 +243,6 @@ class UnifiedFixEngine:
             # 验证修复结果
             self.logger.info("验证修复结果...")
             fix_report.validation_result = self._validate_fixes(context)
-
             
         except Exception as e:
             self.logger.error(f"修复过程失败: {e}")
@@ -312,9 +261,8 @@ class UnifiedFixEngine:
         return fix_report
     
     def _create_backup(self, context: FixContext) -> Path:
-        #         """创建备份"""
+        """创建备份"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
         backup_name = f"fix_backup_{timestamp}"
         backup_path = self.backup_dir / backup_name
         
@@ -323,34 +271,28 @@ class UnifiedFixEngine:
             
             if context.target_path:
                 # 备份特定文件/目录
-
                 if context.target_path.is_file():
                     backup_path.mkdir(exist_ok=True)
-
                     shutil.copy2(context.target_path, backup_path / context.target_path.name)
-#                 else:
+                else:
                     shutil.copytree(context.target_path, backup_path / context.target_path.name)
-
-
             else:
                 # 备份整个项目(排除指定目录)
                 shutil.copytree(
-                #                     self.project_root, 
-
+                    self.project_root, 
                     backup_path,
-
                     ignore=shutil.ignore_patterns(*self.config["excluded_paths"])
                 )
             
             return backup_path
             
         except Exception as e:
-            #             self.logger.error(f"备份创建失败: {e}")
+            self.logger.error(f"备份创建失败: {e}")
             raise
-#     
-#     def _simulate_fix(self, module, context: FixContext) -> FixResult:
+    
+    def _simulate_fix(self, module, context: FixContext) -> FixResult:
         """模拟修复(干运行)"""
-#         self.logger.info(f"干运行模式 - {module.__class__.__name__}")
+        self.logger.info(f"干运行模式 - {module.__class__.__name__}")
         
         # 分析问题但不实际修复
         issues = module.analyze(context)
@@ -360,19 +302,15 @@ class UnifiedFixEngine:
             status=FixStatus.SIMULATED,
             issues_found=len(issues),
             issues_fixed=0,
-
             details={"simulated": True, "issues": issues[:10]}  # 只显示前10个问题
         )
     
     def _update_stats(self, result: FixResult):
         """更新统计信息"""
-
         self.stats["total_fixes"] += 1
         
         if result.status == FixStatus.SUCCESS:
             self.stats["successful_fixes"] += 1
-
-
         elif result.status == FixStatus.FAILED:
             self.stats["failed_fixes"] += 1
         elif result.status == FixStatus.SKIPPED:
@@ -387,13 +325,11 @@ class UnifiedFixEngine:
             "validation_passed": True,
             "remaining_issues": {},
             "validation_errors": []
-            }
-
+        }
         
         try:
             # 重新分析项目
             post_fix_analysis = self.analyze_project(context)
-
             validation_result["post_fix_analysis"] = post_fix_analysis
             
             # 检查是否还有问题
@@ -402,7 +338,6 @@ class UnifiedFixEngine:
             
             if total_remaining_issues > 0:
                 validation_result["validation_passed"] = False
-
                 self.logger.warning(f"验证失败 - 仍有 {total_remaining_issues} 个问题未修复")
             else:
                 self.logger.info("验证通过 - 所有问题已修复")
@@ -410,7 +345,6 @@ class UnifiedFixEngine:
         except Exception as e:
             validation_result["validation_errors"].append(str(e))
             validation_result["validation_passed"] = False
-
             self.logger.error(f"验证过程失败: {e}")
         
         return validation_result
@@ -418,39 +352,28 @@ class UnifiedFixEngine:
     def _get_final_statistics(self) -> Dict[str, Any]:
         """获取最终统计信息"""
         duration = None
-
-
         if self.stats["start_time"] and self.stats["end_time"]:
             duration = (self.stats["end_time"] - self.stats["start_time"]).total_seconds()
-
         
         return {
-        "total_fixes": self.stats["total_fixes"],
-
-
+            "total_fixes": self.stats["total_fixes"],
             "successful_fixes": self.stats["successful_fixes"],
             "failed_fixes": self.stats["failed_fixes"],
             "skipped_fixes": self.stats["skipped_fixes"],
             "success_rate": self.stats["successful_fixes"] / max(self.stats["total_fixes"], 1),
             "duration_seconds": duration,
             "start_time": self.stats["start_time"].isoformat() if self.stats["start_time"] else None,
-
- "end_time": self.stats["end_time"].isoformat() if self.stats["end_time"] else None
-
- }
+            "end_time": self.stats["end_time"].isoformat() if self.stats["end_time"] else None
+        }
 
     def _save_fix_report(self, fix_report: FixReport):
         """保存修复报告"""
         try:
-
             reports_dir = self.project_root / "unified_fix_reports"
             reports_dir.mkdir(exist_ok=True)
-
-
             
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             report_file = reports_dir / f"fix_report_{timestamp}.json"
-
             
             with open(report_file, 'w', encoding='utf-8') as f:
                 json.dump(asdict(fix_report), f, indent=2, ensure_ascii=False, default=str)
@@ -459,33 +382,25 @@ class UnifiedFixEngine:
             
         except Exception as e:
             self.logger.error(f"修复报告保存失败: {e}")
-
     
     def _generate_recommendations(self, analysis_result: Dict[str, Any]) -> List[str]:
         """生成修复建议"""
-
-
         recommendations = []
         
-         # 基于分析结果生成建议
-
+        # 基于分析结果生成建议
         for fix_type, count in analysis_result["statistics"].items():
             if count > 0:
-
                 if count > 10:
                     recommendations.append(f"发现大量 {fix_type} 问题 ({count}个),建议优先修复")
                 elif count > 5:
                     recommendations.append(f"发现中等数量 {fix_type} 问题 ({count}个),建议及时修复")
                 else:
                     recommendations.append(f"发现少量 {fix_type} 问题 ({count}个),可以快速修复")
-
         
         return recommendations
     
     def get_module_status(self) -> Dict[str, str]:
         """获取模块状态"""
-
-
         status = {}
         for fix_type, module in self.modules.items():
             status[fix_type.value] = "enabled" if module else "disabled"

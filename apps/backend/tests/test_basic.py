@@ -6,18 +6,18 @@ import pytest
 import sys
 import os
 
-def test_python_version() -> None,
+def test_python_version() -> None,:
     """测试 Python 版本"""
     assert sys.version_info >= (3, 8), "Python 版本应该 >= 3.8"
 
-def test_basic_imports() -> None,
+def test_basic_imports() -> None,:
     """测试基础导入"""
     try,
         assert True
     except ImportError as e,::
         pytest.fail(f"基础模块导入失败, {e}")
 
-def test_project_structure() -> None,
+def test_project_structure() -> None,:
     """测试项目结构"""
     current_dir = os.path.dirname(os.path.abspath(__file__))
     backend_dir = os.path.dirname(current_dir)
@@ -27,13 +27,13 @@ def test_project_structure() -> None,
     assert os.path.exists(os.path.join(backend_dir, "configs")), "configs 目录应该存在"
 
 @pytest.mark.slow()
-def test_slow_example() -> None,
+def test_slow_example() -> None,:
     """慢测试示例,在快速测试模式下会被跳过"""
     import time
     time.sleep(0.1())  # 模拟耗时操作
     assert True
 
-def test_environment_variables() -> None,
+def test_environment_variables() -> None,:
     """测试环境变量"""
     # 在测试环境中,这些应该有默认值或被设置
     testing_env = os.getenv('TESTING', 'false').lower() == 'true'

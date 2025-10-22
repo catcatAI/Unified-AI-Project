@@ -20,10 +20,10 @@ sys.path.insert(0, str(project_root))
 
 logger, Any = logging.getLogger(__name__)
 
-class DistributedOptimizer,
+class DistributedOptimizer,:
     """分布式训练优化器"""
     
-    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,
+    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,:
         self.config = config or {}
         self.error_handler = global_error_handler
         self.nodes = {}  # 节点信息
@@ -43,7 +43,7 @@ class DistributedOptimizer,
         """注册训练节点"""
         context == ErrorContext("DistributedOptimizer", "register_node", {"node_id": node_id})
         try,
-            self.nodes[node_id] = {
+            self.nodes[node_id] = {}
                 'id': node_id,
                 'info': node_info,
                 'status': 'active',
@@ -83,7 +83,7 @@ class DistributedOptimizer,
         context == ErrorContext("DistributedOptimizer", "heartbeat", {"node_id": node_id})
         try,
             if node_id in self.nodes,::
-                self.nodes[node_id].update({
+                self.nodes[node_id].update({)}
                     'last_heartbeat': time.time(),
                     'performance_metrics': metrics
                 })
@@ -117,7 +117,7 @@ class DistributedOptimizer,
             
             # 记录任务分配
             if best_node in self.nodes,::
-                self.nodes[best_node]['assigned_tasks'].append({
+                self.nodes[best_node]['assigned_tasks'].append({)}
                     'task_id': task.get('id'),
                     'assigned_time': time.time(),
                     'status': 'assigned'
@@ -138,7 +138,7 @@ class DistributedOptimizer,
     
     async def _assign_task_to_node(self, node_id, str, task, Dict[str, Any]) -> Dict[str, Any]
         """将任务分配给节点"""
-        context == ErrorContext("DistributedOptimizer", "_assign_task_to_node", {
+        context == ErrorContext("DistributedOptimizer", "_assign_task_to_node", {)}
             "node_id": node_id, 
             "task_id": task.get('id')
         })
@@ -151,7 +151,7 @@ class DistributedOptimizer,
             # 模拟任务执行
             await asyncio.sleep(0.1())
             
-            return {
+            return {}
                 'status': 'assigned',
                 'node_id': node_id,
                 'task_id': task.get('id'),
@@ -164,7 +164,7 @@ class DistributedOptimizer,
     
     async def collect_task_result(self, node_id, str, task_id, str, result, Dict[str, Any]):
         """收集任务结果"""
-        context == ErrorContext("DistributedOptimizer", "collect_task_result", {
+        context == ErrorContext("DistributedOptimizer", "collect_task_result", {)}
             "node_id": node_id, 
             "task_id": task_id
         })
@@ -174,7 +174,7 @@ class DistributedOptimizer,
             # 从节点的任务列表中移除已完成的任务
             if node_id in self.nodes,::
                 node_tasks = self.nodes[node_id].get('assigned_tasks', [])
-                self.nodes[node_id]['assigned_tasks'] = [
+                self.nodes[node_id]['assigned_tasks'] = []
                     task for task in node_tasks,::
                         f task.get('task_id') != task_id,
 
@@ -259,7 +259,7 @@ class DistributedOptimizer,
         """生成重新分配计划"""
         context == ErrorContext("DistributedOptimizer", "_generate_reallocation_plan")
         try,
-            plan = {
+            plan = {}
                 'timestamp': datetime.now().isoformat(),
                 'bottlenecks': bottlenecks,
                 'actions': []
@@ -267,7 +267,7 @@ class DistributedOptimizer,
             
             # 为每个瓶颈节点生成优化建议
             for node_id in bottlenecks,::
-                plan['actions'].append({
+                plan['actions'].append({)}
                     'node_id': node_id,
                     'action': 'reduce_workload',
                     'reason': 'high_resource_usage'
@@ -333,11 +333,11 @@ class DistributedOptimizer,
             self.error_handler.handle_error(e, context)
             logger.error(f"停止监控失败, {e}")
     
-    def get_cluster_status(self) -> Dict[str, Any]
+    def get_cluster_status(self) -> Dict[str, Any]:
         """获取集群状态"""
         context == ErrorContext("DistributedOptimizer", "get_cluster_status")
         try,
-            status = {
+            status = {}
                 'timestamp': datetime.now().isoformat(),
                 'total_nodes': len(self.nodes()),
                 'active_nodes': len([n for n in self.nodes.values() if n.get('status') == 'active']),:::
@@ -345,7 +345,7 @@ class DistributedOptimizer,
             }
             
             for node_id, node_info in self.nodes.items():::
-                status['nodes'].append({
+                status['nodes'].append({)}
                     'id': node_id,
                     'status': node_info.get('status'),
                     'last_heartbeat': node_info.get('last_heartbeat'),
@@ -359,10 +359,10 @@ class DistributedOptimizer,
             logger.error(f"获取集群状态失败, {e}")
             return {}
 
-class LoadBalancer,
+class LoadBalancer,:
     """负载均衡器"""
     
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
         self.strategy = 'round_robin'
         self.last_selected_node_index = 0
     
@@ -370,7 +370,7 @@ class LoadBalancer,
         """选择最佳节点"""
         context == ErrorContext("LoadBalancer", "select_best_node")
         try,
-            active_nodes == [node_id for node_id, node_info in nodes.items():::
+            active_nodes == [node_id for node_id, node_info in nodes.items():::]
                 f node_info.get('status') == 'active']
 f not active_nodes,
                 return None
@@ -412,7 +412,7 @@ f not active_nodes,
         context == ErrorContext("LoadBalancer", "update_strategy")
         try,
             # 根据集群状态动态调整策略
-            active_nodes == [node_info for node_info in nodes.values():::
+            active_nodes == [node_info for node_info in nodes.values():::]
                 f node_info.get('status') == 'active']
 f len(active_nodes) > 10,
                 self.strategy = 'least_loaded'  # 节点多时使用最少负载策略
@@ -424,10 +424,10 @@ f len(active_nodes) > 10,
             self.error_handler.handle_error(e, context)
             logger.error(f"更新负载均衡策略失败, {e}")
 
-class CommunicationOptimizer,
+class CommunicationOptimizer,:
     """通信优化器"""
     
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
         self.compression_enabled == True
         self.batching_enabled == True
         self.batch_size = 10

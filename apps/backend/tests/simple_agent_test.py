@@ -4,7 +4,7 @@ import os
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-def test_imports() -> None,
+def test_imports() -> None,:
     """Test that we can import all agent classes."""
     try,
         print("✓ BaseAgent imported successfully")

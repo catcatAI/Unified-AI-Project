@@ -38,18 +38,8 @@ from ..modules.intelligent_iterative_fixer import IntelligentIterativeFixer
 
 
 @dataclass
-class EnhancedFixContext:
+class EnhancedFixContext(FixContext):
     """增强修复上下文"""
-
-    project_root: Path
-    target_path: Optional[Path] = None
-    scope: FixScope = FixScope.PROJECT
-    priority: FixPriority = FixPriority.NORMAL
-    backup_enabled: bool = True
-    dry_run: bool = False
-    ai_assisted: bool = False
-    custom_rules: Dict[str, Any] = field(default_factory=dict)
-    excluded_paths: List[str] = field(default_factory=list)
     system_type: str = "general"  # general, backend, frontend, ai_system, etc.
     subsystem_type: str = "general"  # general, agents, memory, models, etc.
     function_type: str = "general"  # general, api, ui, processing, etc.
@@ -636,7 +626,7 @@ class EnhancedUnifiedFixEngine:
         appropriate_dir = self._determine_appropriate_directory(file_path)
         
         if appropriate_dir and appropriate_dir != file_path.parent:
-            new_path = appropriate_dir / file_path.name()
+            new_path = appropriate_dir / file_path.name
             if not context.dry_run:
                 appropriate_dir.mkdir(parents=True, exist_ok=True)
                 file_path.rename(new_path)
@@ -728,7 +718,7 @@ class EnhancedUnifiedFixEngine:
                     self.logger.error(f"并行修复 {fix_type} 失败: {e}")
                     error_result = FixResult(
                         fix_type=fix_type,
-                        status=FixStatus.FAILED(),
+                        status=FixStatus.FAILED,
                         error_message=str(e)
                     )
                     fix_report.fix_results[fix_type] = error_result
@@ -759,7 +749,7 @@ class EnhancedUnifiedFixEngine:
                     self.logger.error(f"修复 {fix_type.value if hasattr(fix_type, 'value') else fix_type} 失败: {e}")
                     error_result = FixResult(
                         fix_type=fix_type,
-                        status=FixStatus.FAILED(),
+                        status=FixStatus.FAILED,
                         error_message=str(e),
                         traceback=traceback.format_exc()
                     )
@@ -793,7 +783,7 @@ class EnhancedUnifiedFixEngine:
                 issues = module.analyze(context)
                 return FixResult(
                     fix_type=fix_type,
-                    status=FixStatus.SKIPPED(),
+                    status=FixStatus.SKIPPED,
                     issues_found=len(issues),
                     issues_fixed=0,
                     details={"reason": "高级修复方法不可用,降级到分析模式"}
@@ -801,7 +791,7 @@ class EnhancedUnifiedFixEngine:
             else:
                 return FixResult(
                     fix_type=fix_type,
-                    status=FixStatus.NOT_APPLICABLE(),
+                    status=FixStatus.NOT_APPLICABLE,
                     issues_found=0,
                     issues_fixed=0,
                     details={"reason": "模块没有可用的修复方法"}
@@ -809,7 +799,7 @@ class EnhancedUnifiedFixEngine:
         except Exception as e:
             return FixResult(
                 fix_type=fix_type,
-                status=FixStatus.FAILED(),
+                status=FixStatus.FAILED,
                 error_message=f"降级修复失败: {e}"
             )
     
@@ -822,7 +812,7 @@ class EnhancedUnifiedFixEngine:
         
         return FixResult(
             fix_type=getattr(module, 'fix_type', FixType.SYNTAX_FIX),
-            status=FixStatus.SIMULATED(),
+            status=FixStatus.SIMULATED,
             issues_found=len(issues),
             issues_fixed=0,
             details={
@@ -1009,23 +999,50 @@ class EnhancedUnifiedFixEngine:
         """分析消息队列工具问题"""
         return []
     
-    def get_fix_statistics(self) -> Dict[str, Any]:
-        """获取修复统计信息"""
-        return self._get_enhanced_final_statistics()
+    def get_module_status(self) -> Dict[str, str]:
+        """获取模块状态"""
+        status = {}
+        for fix_type, module in self.enhanced_modules.items():
+            status[fix_type] = "enabled" if module else "disabled"
+        return status
+
+    def enable_module(self, fix_type: str):
+        """启用修复模块"""
+        if fix_type in self.enhanced_modules:
+            self.config["enabled_modules"].append(fix_type)
+            self.logger.info(f"已启用 {fix_type} 模块")
     
-    def reset_statistics(self):
-        """重置统计信息"""
-        self.stats = {
-            "total_fixes": 0,
-            "successful_fixes": 0,
-            "failed_fixes": 0,
-            "skipped_fixes": 0,
-            "issues_found": 0,
-            "issues_fixed": 0,
-            "start_time": None,
-            "end_time": None,
-            "auto_generated_files_managed": 0,
-            "io_dependencies_fixed": 0,
-            "model_tool_issues_fixed": 0,
-            "system_specific_issues_fixed": 0
-        }
+    def disable_module(self, fix_type: str):
+        """禁用修复模块"""
+        if fix_type in self.config["enabled_modules"]:
+            self.config["enabled_modules"].remove(fix_type)
+            self.logger.info(f"已禁用 {fix_type} 模块")
+    
+    def cleanup(self):
+        """清理资源"""
+        self.logger.info("清理增强版统一修复引擎资源...")
+        
+        # 保存配置
+        self._save_config()
+        
+        # 保存自动生成文件列表
+        self._save_auto_generated_files()
+        
+        # 清理模块
+        for module in self.enhanced_modules.values():
+            if hasattr(module, 'cleanup'):
+                try:
+                    module.cleanup()
+                except Exception as e:
+                    self.logger.warning(f"模块清理失败: {e}")
+        
+        self.logger.info("增强版统一修复引擎清理完成")
+    
+    def _save_config(self):
+        """保存配置文件"""
+        try:
+            with open(self.config_path, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=2, ensure_ascii=False)
+            self.logger.info("配置文件已保存")
+        except Exception as e:
+            self.logger.error(f"配置文件保存失败: {e}")

@@ -10,7 +10,8 @@ from typing import Dict, Any, Optional, List
 from dataclasses import asdict
 from datetime import datetime
 
-from ..core.unified_fix_engine import UnifiedFixEngine, FixContext, FixReport
+from ..core.unified_fix_engine import UnifiedFixEngine, FixContext
+from ..core.fix_result import FixReport
 from ..core.fix_types import FixType, FixScope, FixPriority
 
 
@@ -27,8 +28,7 @@ class APIFixInterface:
         # 设置API专用日志
         self.logger = logging.getLogger(f"{__name__}.APIFixInterface")
         
-         # API统计
-
+        # API统计
         self.api_stats = {
             "total_requests": 0,
             "successful_requests": 0,
@@ -140,7 +140,7 @@ class APIFixInterface:
             # 快速状态检查
             module_status = self.fix_engine.get_module_status()
             
-             # 计算健康度
+            # 计算健康度
             enabled_modules = sum(1 for status in module_status.values() if status == "enabled")
             total_modules = len(module_status)
             
@@ -174,15 +174,13 @@ class APIFixInterface:
 
     def _update_config(self, body: Dict[str, Any]) -> Dict[str, Any]:
         """更新配置"""
-
         try:
             if "config" not in body:
                 return self._error_response(400, "Missing 'config' in request body")
             
             new_config = body["config"]
             
-             # 验证配置
-
+            # 验证配置
             self._validate_config(new_config)
             
             # 更新配置
@@ -202,7 +200,6 @@ class APIFixInterface:
     
     def _validate_config(self, config: Dict[str, Any]):
         """验证配置"""
-
         # 验证修复类型
         if "enabled_modules" in config:
             for module in config["enabled_modules"]:
@@ -217,21 +214,17 @@ class APIFixInterface:
         
         # 验证整数
         int_fields = ["max_fix_attempts"]
-
         for field in int_fields:
             if field in config and not isinstance(config[field], int):
                 raise ValueError(f"Field '{field}' must be an integer")
     
     def _start_analysis(self, body: Dict[str, Any]) -> Dict[str, Any]:
         """开始分析"""
-
         try:
-
             # 创建上下文
             context = self._create_context_from_body(body)
             
-             # 执行分析
-
+            # 执行分析
             result = self.fix_engine.analyze_project(context)
             
             # 生成分析ID
@@ -250,8 +243,6 @@ class APIFixInterface:
     def _start_fix(self, body: Dict[str, Any]) -> Dict[str, Any]:
         """开始修复"""
         try:
-
-
             # 创建上下文
             context = self._create_context_from_body(body)
             
@@ -268,7 +259,7 @@ class APIFixInterface:
                 "success": True,
                 "message": "Fix started successfully",
                 "fix_id": fix_id,
-                "report": asdict(report)
+                "report": report.to_dict()
             }
         
         except Exception as e:
