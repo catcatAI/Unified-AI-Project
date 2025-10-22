@@ -9,7 +9,6 @@ from typing import Dict, Any
 
 class FixType(Enum):
     """修复类型枚举"""
-
     SYNTAX_FIX = "syntax_fix"                    # 语法错误修复
     IMPORT_FIX = "import_fix"                    # 导入路径修复
     DEPENDENCY_FIX = "dependency_fix"            # 依赖关系修复
@@ -41,7 +40,6 @@ class FixStatus(Enum):
     FAILED = "failed"                            # 修复失败
     SKIPPED = "skipped"                          # 跳过修复
     NOT_APPLICABLE = "not_applicable"            # 不适用
-
     SIMULATED = "simulated"                      # 模拟修复(干运行)
 
 
@@ -67,59 +65,38 @@ class FixPriority(Enum):
 
 class FixCategory:
     """修复分类"""
-#     
-     # 按严重程度分类
-     # 
-
+    
+    # 按严重程度分类
     SEVERITY_CATEGORIES = {
         "critical": [
-        FixType.SYNTAX_FIX,
-
+            FixType.SYNTAX_FIX,
             FixType.SECURITY_FIX,
             FixType.DEPENDENCY_FIX
-
-
         ],
         "major": [
-        FixType.IMPORT_FIX,
-
- FixType.GIT_FIX,
-
-
+            FixType.IMPORT_FIX,
+            FixType.GIT_FIX,
             FixType.ENVIRONMENT_FIX
         ],
         "minor": [
-        FixType.CODE_STYLE_FIX,
-
-
+            FixType.CODE_STYLE_FIX,
             FixType.PATH_FIX,
             FixType.CONFIGURATION_FIX
         ],
         "optional": [
-        FixType.PERFORMANCE_FIX,
-
-
-            FixType.COMPATIBILITY_FIX,
-#             FixType.TYPE_HINT_FIX
-# 
-
+            FixType.PERFORMANCE_FIX,
+            FixType.COMPATIBILITY_FIX
         ]
-        }
+    }
 
     
     # 按技术栈分类
     TECH_STACK_CATEGORIES = {
-
         "python": [
-        FixType.SYNTAX_FIX,
-
-
+            FixType.SYNTAX_FIX,
             FixType.IMPORT_FIX,
             FixType.TYPE_HINT_FIX,
-
- FixType.CODE_STYLE_FIX
-
-
+            FixType.CODE_STYLE_FIX
         ],
         "javascript": [
             FixType.SYNTAX_FIX,
@@ -127,112 +104,73 @@ class FixCategory:
             FixType.CODE_STYLE_FIX
         ],
         "git": [
-        FixType.GIT_FIX
-
-
+            FixType.GIT_FIX
         ],
         "environment": [
             FixType.ENVIRONMENT_FIX,
-            FixType.DEPENDENCY_FIX,
-#             FixType.CONFIGURATION_FIX
-# 
-
+            FixType.DEPENDENCY_FIX
         ],
         "security": [
             FixType.SECURITY_FIX
         ]
-        }
+    }
 
     
-     # 按项目部分分类
-
-
+    # 按项目部分分类
     PROJECT_CATEGORIES = {
         "backend": [
-        FixType.SYNTAX_FIX,
-
- FixType.IMPORT_FIX,
-
-
+            FixType.SYNTAX_FIX,
+            FixType.IMPORT_FIX,
             FixType.DEPENDENCY_FIX,
             FixType.TYPE_HINT_FIX
-
         ],
         "frontend": [
-        FixType.SYNTAX_FIX,
-
-
+            FixType.SYNTAX_FIX,
             FixType.IMPORT_FIX,
             FixType.CODE_STYLE_FIX
-
         ],
         "desktop": [
             FixType.SYNTAX_FIX,
             FixType.IMPORT_FIX,
-
- FixType.CONFIGURATION_FIX
-
-
+            FixType.CONFIGURATION_FIX
         ],
         "infrastructure": [
-        FixType.ENVIRONMENT_FIX,
-
-
- FixType.GIT_FIX,
-
-
- FixType.CONFIGURATION_FIX,
-
-
-
- FixType.SECURITY_FIX
-
-
-
+            FixType.ENVIRONMENT_FIX,
+            FixType.GIT_FIX,
+            FixType.CONFIGURATION_FIX,
+            FixType.SECURITY_FIX
         ]
-        }
-
+    }
 
 
 def get_fix_type_description(fix_type: FixType) -> str:
     """获取修复类型的描述"""
-
-
     descriptions = {
         FixType.SYNTAX_FIX: "修复Python语法错误,如缺少冒号、缩进错误等",
         FixType.IMPORT_FIX: "修复导入路径错误,包括相对导入和绝对导入",
-
         FixType.DEPENDENCY_FIX: "修复依赖关系问题,包括缺失的包和版本冲突",
         FixType.GIT_FIX: "修复Git相关问题,如合并冲突、文件状态异常等",
-
         FixType.ENVIRONMENT_FIX: "修复环境配置问题,包括虚拟环境和系统依赖",
         FixType.SECURITY_FIX: "修复安全漏洞,包括不安全的代码模式和配置",
         FixType.CODE_STYLE_FIX: "修复代码风格问题,使其符合PEP 8等规范",
-
         FixType.PATH_FIX: "修复文件路径问题,包括路径不存在和权限问题",
         FixType.CONFIGURATION_FIX: "修复配置文件问题,包括格式错误和缺失配置",
         FixType.PERFORMANCE_FIX: "优化代码性能,移除性能瓶颈",
-
         FixType.COMPATIBILITY_FIX: "修复兼容性问题,确保跨平台兼容性",
         FixType.TYPE_HINT_FIX: "修复类型提示问题,添加或修正类型注解"
-
     }
     return descriptions.get(fix_type, "未知修复类型")
 
 
-
 def get_fix_status_description(status: FixStatus) -> str:
     """获取修复状态的描述"""
-
     descriptions = {
         FixStatus.PENDING: "等待修复",
         FixStatus.IN_PROGRESS: "正在修复",
         FixStatus.SUCCESS: "修复成功",
         FixStatus.PARTIAL_SUCCESS: "部分修复成功",
-
         FixStatus.FAILED: "修复失败",
         FixStatus.SKIPPED: "跳过修复",
-
         FixStatus.NOT_APPLICABLE: "不适用此修复",
         FixStatus.SIMULATED: "模拟修复(干运行)"
     }

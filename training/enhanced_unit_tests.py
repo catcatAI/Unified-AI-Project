@@ -19,14 +19,14 @@ sys.path.insert(0, str(project_root))
 logging.basicConfig(level=logging.INFO())
 logger, Any = logging.getLogger(__name__)
 
-def test_error_handling_framework() -> None,
+def test_error_handling_framework() -> None,:
     """测试错误处理框架"""
     print("🧪 测试错误处理框架...")
 
     try,
 
 
-    from training.error_handling_framework import (
+    from training.error_handling_framework import ()
             ErrorHandler,
             ErrorContext,
             ErrorRecoveryStrategy,
@@ -70,7 +70,7 @@ def test_error_handling_framework() -> None,
 
     # 测试弹性操作装饰器
     @resilient_operation(handler, "TestComponent", "test_operation")
-        def test_function() -> None,
+        def test_function() -> None,:
             return "success"
 
     result = test_function()
@@ -85,7 +85,7 @@ def test_error_handling_framework() -> None,
     traceback.print_exc()
     return False
 
-def test_data_manager_comprehensive() -> None,
+def test_data_manager_comprehensive() -> None,:
     """测试数据管理器的全面功能"""
     print("📦 测试数据管理器全面功能...")
 
@@ -95,23 +95,23 @@ def test_data_manager_comprehensive() -> None,
     from training.data_manager import DataManager
 
     # 创建临时目录进行测试
-    with tempfile.TemporaryDirectory() as temp_dir,
+    with tempfile.TemporaryDirectory() as temp_dir,:
     temp_path == Path(temp_dir)
 
             # 创建一些测试文件
             # 创建真实的文本文件
-            with open(temp_path / "text.txt", "w", encoding == "utf-8") as f,
+            with open(temp_path / "text.txt", "w", encoding == "utf-8") as f,:
     f.write("This is a test text file with some content for quality assessment.")::
             # 创建真实的代码文件,
-            with open(temp_path / "code.py", "w", encoding == "utf-8") as f,
+            with open(temp_path / "code.py", "w", encoding == "utf-8") as f,:
     f.write("# This is a test code file\nprint('hello world')\n# A simple comment")
 
             # 创建真实的JSON文件
-            with open(temp_path / "data.json", "w", encoding == "utf-8") as f,
+            with open(temp_path / "data.json", "w", encoding == "utf-8") as f,:
     f.write('{"key": "value", "number": 42}')
 
             # 创建其他二进制文件
-            test_files = {
+            test_files = {}
                 "document.pdf": b"fake pdf data",
                 "audio.mp3": b"fake audio data",
                 "model.pth": b"fake model data",
@@ -176,7 +176,7 @@ def test_data_manager_comprehensive() -> None,
     traceback.print_exc()
     return False
 
-def test_model_trainer_comprehensive() -> None,
+def test_model_trainer_comprehensive() -> None,:
     """测试模型训练器的全面功能"""
     print("🏋️ 测试模型训练器全面功能...")
 
@@ -216,8 +216,8 @@ def test_model_trainer_comprehensive() -> None,
     print("  ✅ 检查点加载正常")
 
     # 测试模型评估
-    with tempfile.NamedTemporaryFile(suffix == '.json', delete == False) as f,
-    model_info = {
+    with tempfile.NamedTemporaryFile(suffix == '.json', delete == False) as f,:
+    model_info = {}
                 "model_name": "test_model",
                 "training_date": "2023-01-01",
                 "file_size": 1024
@@ -234,8 +234,8 @@ def test_model_trainer_comprehensive() -> None,
             os.unlink(f.name())
 
     # 测试性能分析
-    with tempfile.NamedTemporaryFile(suffix == '.json', delete == False) as f,
-    model_info = {
+    with tempfile.NamedTemporaryFile(suffix == '.json', delete == False) as f,:
+    model_info = {}
                 "model_name": "test_model",
                 "training_date": "2023-01-01",
                 "file_size": 1024
@@ -259,7 +259,7 @@ def test_model_trainer_comprehensive() -> None,
     traceback.print_exc()
     return False
 
-def test_auto_training_manager_comprehensive() -> None,
+def test_auto_training_manager_comprehensive() -> None,:
     """测试自动训练管理器的全面功能"""
     print("🤖 测试自动训练管理器全面功能...")
 
@@ -295,14 +295,14 @@ def test_auto_training_manager_comprehensive() -> None,
     print("  ✅ 训练监控器重置正常")
 
     # 测试自动识别训练数据(模拟)
-    with patch.object(atm.data_manager(), 'scan_data', return_value = {})
+    with patch.object(atm.data_manager(), 'scan_data', return_value = {}):
         ith patch.object(atm.data_manager(), 'assess_data_quality')
     result = atm.auto_identify_training_data()
                 assert isinstance(result, dict)
     print("  ✅ 自动识别训练数据正常")
 
     # 测试自动创建训练配置
-    mock_data_analysis = {
+    mock_data_analysis = {}
             'data_stats': {}
             'high_quality_data': {}
             'total_files': 0
@@ -319,14 +319,14 @@ def test_auto_training_manager_comprehensive() -> None,
     traceback.print_exc()
     return False
 
-def test_collaborative_training_manager_comprehensive() -> None,
+def test_collaborative_training_manager_comprehensive() -> None,:
     """测试协作式训练管理器的全面功能"""
     print("🔄 测试协作式训练管理器全面功能...")
 
     try,
 
 
-    from training.collaborative_training_manager import (
+    from training.collaborative_training_manager import ()
             CollaborativeTrainingManager,
             ModelTrainingTask
     )
@@ -345,7 +345,7 @@ def test_collaborative_training_manager_comprehensive() -> None,
     print("  ✅ 模型注销正常")
 
     # 测试训练任务
-    task == ModelTrainingTask(
+    task == ModelTrainingTask()
             model_name="test_model",
             model_instance="TestModelInstance",
             data = [],
@@ -376,14 +376,14 @@ def test_collaborative_training_manager_comprehensive() -> None,
     traceback.print_exc()
     return False
 
-def test_incremental_learning_manager_comprehensive() -> None,
+def test_incremental_learning_manager_comprehensive() -> None,:
     """测试增量学习管理器的全面功能"""
     print("📈 测试增量学习管理器全面功能...")
 
     try,
 
 
-    from training.incremental_learning_manager import (
+    from training.incremental_learning_manager import ()
             IncrementalLearningManager,
             DataTracker,
             ModelManager,
@@ -441,13 +441,13 @@ def test_incremental_learning_manager_comprehensive() -> None,
     traceback.print_exc()
     return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🚀 增强单元测试")
     print("=" * 50)
 
     # 运行各项测试
-    tests = [
+    tests = []
     test_error_handling_framework,
     test_data_manager_comprehensive,
     test_model_trainer_comprehensive,

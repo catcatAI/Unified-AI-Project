@@ -23,15 +23,13 @@ class BaseFixer(abc.ABC):
         # 设置日志
         self.logger = logging.getLogger(f"{__name__}.{self.name}")
         
-         # 修复统计
-
+        # 修复统计
         self.stats = {
             "total_fixes": 0,
             "successful_fixes": 0,
             "failed_fixes": 0,
             "issues_found": 0,
             "issues_fixed": 0
-
         }
     
     @abc.abstractmethod
@@ -95,11 +93,9 @@ class BaseFixer(abc.ABC):
                 if desktop_dir.exists():
                     target_files.extend(self._get_javascript_files_in_directory(desktop_dir))
         
-         # 过滤排除的路径
-
+        # 过滤排除的路径
         filtered_files = []
         excluded_paths = context.excluded_paths or []
-
         excluded_paths.extend([
             "node_modules", "__pycache__", ".git", "venv", ".venv",
             "backup", "unified_fix_backups", "dist", "build"
@@ -116,7 +112,6 @@ class BaseFixer(abc.ABC):
             if not should_exclude:
                 filtered_files.append(file_path)
 
-        
         return filtered_files
     
     def _get_python_files_in_directory(self, directory: Path) -> List[Path]:

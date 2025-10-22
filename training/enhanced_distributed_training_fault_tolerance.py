@@ -20,10 +20,10 @@ from training.distributed_optimizer import DistributedOptimizer
 
 logger, Any = logging.getLogger(__name__)
 
-class EnhancedDistributedTrainingFaultTolerance,
+class EnhancedDistributedTrainingFaultTolerance,:
     """增强的分布式训练容错机制"""
     
-    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,
+    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,:
         self.config = config or {}
         self.error_handler = global_error_handler
         
@@ -136,7 +136,7 @@ class EnhancedDistributedTrainingFaultTolerance,
             logger.error(f"处理节点心跳失败, {node_id} - {e}")
             return False
     
-    async def save_training_checkpoint(self, task_id, str, state, Dict[str, Any] ,
+    async def save_training_checkpoint(self, task_id, str, state, Dict[str, Any] ,)
     checkpoint_type, str == 'regular') -> Optional[str]
         """保存训练检查点"""
         context == ErrorContext("EnhancedDistributedTrainingFaultTolerance", "save_training_checkpoint", {"task_id": task_id})
@@ -281,7 +281,7 @@ class EnhancedDistributedTrainingFaultTolerance,
                 for task_id in active_tasks,::
                     # 检查是否应该保存检查点
                     task_state = self.state_manager.local_cache[task_id]
-                    checkpoint_decision = self.checkpoint_manager.should_save_checkpoint(,
+                    checkpoint_decision = self.checkpoint_manager.should_save_checkpoint(,)
     task_state.current_epoch(),
                         task_state.metrics(),
                         task_id
@@ -327,20 +327,20 @@ class EnhancedDistributedTrainingFaultTolerance,
             self.error_handler.handle_error(e, context)
             logger.error(f"触发自动恢复失败, {e}")
     
-    def get_system_status(self) -> Dict[str, Any]
+    def get_system_status(self) -> Dict[str, Any]:
         """获取系统状态"""
         context == ErrorContext("EnhancedDistributedTrainingFaultTolerance", "get_system_status")
         try,
-            status = {
+            status = {}
                 'timestamp': datetime.now().isoformat(),
                 'enabled': self.enabled(),
                 'is_running': self.is_running(),
                 'auto_recovery_enabled': self.auto_recovery_enabled(),
-                'components': {
-                    'checkpoint_manager': {
+                'components': {}
+                    'checkpoint_manager': {}
                         'total_checkpoints': len(self.checkpoint_manager.checkpoints()) if self.checkpoint_manager else 0,::
                             ,
-                    'state_manager': {
+                    'state_manager': {}
                         'total_states': len(self.state_manager.local_cache()) if self.state_manager else 0,::
                             ,
                     'fault_detector': self.fault_detector.get_cluster_status() if self.fault_detector else {}:
@@ -364,15 +364,15 @@ async def main() -> None,
     logging.basicConfig(level=logging.INFO())
     
     # 创建增强的容错机制实例
-    config = {
+    config = {}
         'enabled': True,
         'auto_recovery_enabled': True,
         'checkpoint_interval': 60,  # 1分钟
         'health_check_interval': 30,  # 30秒
-        'distributed_optimizer': {
+        'distributed_optimizer': {}
             'monitoring_interval': 15
         }
-        'task_migrator': {
+        'task_migrator': {}
             'max_retry_attempts': 3,
             'migration_strategy': 'load_balanced'
         }
@@ -389,13 +389,13 @@ async def main() -> None,
     
     # 注册测试节点
     print("注册测试节点...")
-    await fault_tolerance.register_training_node('node1', {
+    await fault_tolerance.register_training_node('node1', {)}
         'cpu_cores': 8,
         'memory_gb': 16,
         'assigned_tasks': []
     })
     
-    await fault_tolerance.register_training_node('node2', {
+    await fault_tolerance.register_training_node('node2', {)}
         'cpu_cores': 16,
         'memory_gb': 32,
         'assigned_tasks': []
@@ -403,13 +403,13 @@ async def main() -> None,
     
     # 模拟节点心跳
     print("模拟节点心跳...")
-    await fault_tolerance.handle_node_heartbeat('node1', {
+    await fault_tolerance.handle_node_heartbeat('node1', {)}
         'cpu_usage': 45.0(),
         'memory_usage': 60.0(),
         'gpu_usage': 30.0()
     })
     
-    await fault_tolerance.handle_node_heartbeat('node2', {
+    await fault_tolerance.handle_node_heartbeat('node2', {)}
         'cpu_usage': 30.0(),
         'memory_usage': 40.0(),
         'gpu_usage': 20.0()
@@ -417,7 +417,7 @@ async def main() -> None,
     
     # 模拟保存训练状态
     print("模拟保存训练状态...")
-    training_state = {
+    training_state = {}
         'model_name': 'test_model',
         'current_epoch': 5,
         'total_epochs': 10,
@@ -436,7 +436,7 @@ async def main() -> None,
     
     # 模拟保存检查点
     print("模拟保存检查点...")
-    checkpoint_id = await fault_tolerance.save_training_checkpoint(
+    checkpoint_id = await fault_tolerance.save_training_checkpoint()
         'test_task_1', ,
     training_state, 
         'epoch'

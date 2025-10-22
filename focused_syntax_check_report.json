@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-10-22 08:43:54",
+  "total_files": 39,
+  "error_count": 4,
+  "success_rate": 89.74358974358975,
+  "errors": [
+    {
+      "file_path": "D:\\Projects\\Unified-AI-Project\\unified_system_manager.py",
+      "error_message": "  File \"D:\\Projects\\Unified-AI-Project\\unified_system_manager.py\", line 27\n    logging.basicConfig(,\n                        ^\nSyntaxError: invalid syntax\n"
+    },
+    {
+      "file_path": "D:\\Projects\\Unified-AI-Project\\unified_agi_ecosystem.py",
+      "error_message": "  File \"D:\\Projects\\Unified-AI-Project\\unified_agi_ecosystem.py\", line 35\n    class SystemStatus,\n                      ^\nSyntaxError: invalid syntax\n"
+    },
+    {
+      "file_path": "D:\\Projects\\Unified-AI-Project\\complete_system_validator.py",
+      "error_message": "  File \"D:\\Projects\\Unified-AI-Project\\complete_system_validator.py\", line 17\n    class CompleteSystemValidator,\n                                 ^\nSyntaxError: invalid syntax\n"
+    },
+    {
+      "file_path": "D:\\Projects\\Unified-AI-Project\\complete_systems_summary_generator.py",
+      "error_message": "  File \"D:\\Projects\\Unified-AI-Project\\complete_systems_summary_generator.py\", line 13\n    class SystemSummaryGenerator,\n                                ^\nSyntaxError: invalid syntax\n"
+    }
+  ]
+}

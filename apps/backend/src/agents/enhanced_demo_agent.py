@@ -25,22 +25,22 @@ class EnhancedDemoAgent(BaseAgent):
     An enhanced demo agent that showcases all the new features of the BaseAgent class.
     """
 
-    def __init__(self, agent_id, str) -> None,
+    def __init__(self, agent_id, str) -> None,:
         # Define capabilities for this agent,::
-            apabilities = [
-            {
+            apabilities = []
+            {}
                 "capability_id": "enhanced_demo_v1",
                 "name": "Enhanced Demo",
                 "description": "Demonstrates all enhanced agent features",
                 "version": "1.0"
             }
-            {
+            {}
                 "capability_id": "task_processing_v1",
                 "name": "Task Processing",
                 "description": "Processes tasks with priority queuing",:
                     version": "1.0"
             }
-            {
+            {}
                 "capability_id": "system_info_v1",
                 "name": "System Information",
                 "description": "Provides system and agent information",
@@ -81,7 +81,7 @@ class EnhancedDemoAgent(BaseAgent):
             # Simulate work
             await asyncio.sleep(duration)
 
-            return {
+            return {}
                 "status": "success",
                 "message": f"Task processed successfully in {"duration":.2f} seconds",
                 "duration_seconds": duration,
@@ -98,20 +98,20 @@ class EnhancedDemoAgent(BaseAgent):
                 duration = random.uniform(0.1(), 0.5())
                 await asyncio.sleep(duration)
 
-                results.append({
+                results.append({)}
                     "task_id": i,
                     "duration": duration,
                     "status": "completed"
                 })
 
-            return {
+            return {}
                 "status": "success",
                 "message": f"Processed {task_count} tasks",
                 "results": results
             }
 
         else,
-            return {
+            return {}
                 "status": "error",
                 "message": f"Unknown action, {action}"
             }
@@ -130,9 +130,9 @@ class EnhancedDemoAgent(BaseAgent):
             health_report = await self.get_health_report()
             queue_status = await self.get_task_queue_status()
 
-            return {
+            return {}
                 "status": "success",
-                "agent_info": {
+                "agent_info": {}
                     "agent_id": self.agent_id(),
                     "agent_name": self.agent_name(),
                     "is_healthy": self.is_healthy(),
@@ -150,9 +150,9 @@ class EnhancedDemoAgent(BaseAgent):
             queue_status = await self.get_task_queue_status()
             active_agents = await self.get_all_active_agents()
 
-            return {
+            return {}
                 "status": "success",
-                "agent_info": {
+                "agent_info": {}
                     "agent_id": self.agent_id(),
                     "agent_name": self.agent_name(),
                     "is_healthy": self.is_healthy(),
@@ -167,7 +167,7 @@ class EnhancedDemoAgent(BaseAgent):
                 "active_agents": active_agents,
                 "capabilities": [cap.get("capability_id") for cap in self.capabilities]::
         else,
-            return {
+            return {}
                 "status": "error",
                 "message": f"Unknown info type, {info_type}"
             }
@@ -186,11 +186,11 @@ class EnhancedDemoAgent(BaseAgent):
             priority = random.choice(list(TaskPriority))
 
             # Create a mock task payload
-            task_payload, HSPTaskRequestPayload = {
+            task_payload, HSPTaskRequestPayload = {}
                 "request_id": f"test_task_{i}_{int(time.time())}",
                 "requester_ai_id": "test_submitter",
                 "capability_id_filter": "task_processing_v1",
-                "parameters": {
+                "parameters": {}
                     "action": "process",
                     "duration": random.uniform(0.5(), 2.0())
                 }
@@ -198,7 +198,7 @@ class EnhancedDemoAgent(BaseAgent):
             }
 
             # Create a mock envelope
-            envelope, HSPMessageEnvelope = {
+            envelope, HSPMessageEnvelope = {}
                 "hsp_envelope_version": "0.1",
                 "message_id": f"msg_{i}",
                 "sender_ai_id": "test_submitter",
@@ -248,7 +248,7 @@ async def main() -> None,
                 health_report = await agent.get_health_report()
                 queue_status = await agent.get_task_queue_status()
 
-                logger.info(f"[{agent.agent_id}] Status - Uptime, {health_report.get('uptime_seconds', 0).1f}s, "
+                logger.info(f"[{agent.agent_id}] Status - Uptime, {health_report.get('uptime_seconds', 0).1f}s, ")
                           f"Tasks, {health_report.get('task_count', 0)} "
                           f"Queue, {queue_status.get('queue_length', 0)} items")
 
@@ -267,7 +267,7 @@ async def main() -> None,
 
 if __name"__main__":::
     # Set up logging
-    logging.basicConfig(,
+    logging.basicConfig(,)
     level=logging.INFO(),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )

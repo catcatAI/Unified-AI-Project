@@ -126,7 +126,7 @@ class FixReport:
         total_found = self.get_total_issues_found()
         success_rate = self.get_success_rate()
         
-        summary = f"修复报告摘要,\n"
+        summary = f"修复报告摘要:\n"
         summary += f"  总计发现问题: {total_found}\n"
         summary += f"  成功修复问题: {total_fixed}\n"
         summary += f"  修复成功率: {success_rate:.1%}\n"

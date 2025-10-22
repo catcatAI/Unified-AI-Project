@@ -10,7 +10,7 @@ from pathlib import Path
 project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
-def test_data_manager_enhancements() -> None,
+def test_data_manager_enhancements() -> None,:
     """测试数据管理器增强功能"""
     print("🧪 测试数据管理器增强功能...")
     
@@ -29,7 +29,7 @@ def test_data_manager_enhancements() -> None,
                 return False
         
         # 测试文件分类功能
-        test_files = {
+        test_files = {}
             'test_model.pth': 'model',
             'test_archive.zip': 'archive',
             'test_binary.bin': 'binary',
@@ -47,7 +47,7 @@ def test_data_manager_enhancements() -> None,
                 return False
         
         # 测试新增的质量评估方法
-        required_methods = [
+        required_methods = []
             '_assess_model_quality',
             '_assess_data_quality', 
             '_assess_archive_quality'
@@ -68,7 +68,7 @@ def test_data_manager_enhancements() -> None,
         traceback.print_exc()
         return False
 
-def test_auto_training_manager_enhancements() -> None,
+def test_auto_training_manager_enhancements() -> None,:
     """测试自动训练管理器增强功能"""
     print("🤖 测试自动训练管理器增强功能...")
     
@@ -97,13 +97,13 @@ def test_auto_training_manager_enhancements() -> None,
             print("  ✅ 训练参数优化功能已实现")
             
             # 创建模拟数据分析结果
-            mock_data_analysis = {
-                'data_stats': {
+            mock_data_analysis = {}
+                'data_stats': {}
                     'image': {'count': 100, 'size': 1000000}
                     'text': {'count': 200, 'size': 500000}
                     'code': {'count': 50, 'size': 300000}
                 }
-                'high_quality_data': {
+                'high_quality_data': {}
                     'image': [{}] * 80,
                     'text': [{}] * 150,
                     'code': [{}] * 40
@@ -128,7 +128,7 @@ def test_auto_training_manager_enhancements() -> None,
             return False
         
         # 测试新增的训练方法
-        required_methods = [
+        required_methods = []
             '_train_math_logic_model',
             '_train_collaborative_model'
         ]
@@ -148,7 +148,7 @@ def test_auto_training_manager_enhancements() -> None,
         traceback.print_exc()
         return False
 
-def test_result_analysis_enhancements() -> None,
+def test_result_analysis_enhancements() -> None,:
     """测试结果分析增强功能"""
     print("📊 测试结果分析增强功能...")
     
@@ -161,26 +161,26 @@ def test_result_analysis_enhancements() -> None,
             print("  ✅ 训练结果分析功能已实现")
             
             # 创建模拟训练结果
-            mock_training_results = {
-                'quick_start': {
+            mock_training_results = {}
+                'quick_start': {}
                     'success': True,
-                    'training_progress': {
-                        'metrics': {
+                    'training_progress': {}
+                        'metrics': {}
                             'loss': 0.5(),
                             'accuracy': 0.85()
                         }
                     }
                 }
-                'comprehensive_training': {
+                'comprehensive_training': {}
                     'success': True,
-                    'training_progress': {
-                        'metrics': {
+                    'training_progress': {}
+                        'metrics': {}
                             'loss': 0.3(),
                             'accuracy': 0.92()
                         }
                     }
                 }
-                'failed_scenario': {
+                'failed_scenario': {}
                     'success': False,
                     'error': '模拟错误'
                 }
@@ -190,7 +190,7 @@ def test_result_analysis_enhancements() -> None,
             analysis = atm._analyze_training_results(mock_training_results)
             
             # 检查分析结果
-            required_keys = [
+            required_keys = []
                 'total_scenarios', 
                 'successful_scenarios', 
                 'failed_scenarios', 
@@ -225,12 +225,12 @@ def test_result_analysis_enhancements() -> None,
         traceback.print_exc()
         return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🚀 综合测试增强后的自动训练系统")
     print("=" * 50)
     
-    tests = [
+    tests = []
         test_data_manager_enhancements,
         test_auto_training_manager_enhancements,
         test_result_analysis_enhancements

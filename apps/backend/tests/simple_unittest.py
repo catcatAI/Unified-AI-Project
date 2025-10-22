@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 class TestSimple(unittest.TestCase()):
-    def test_import(self) -> None,
+    def test_import(self) -> None,:
         """Test that we can import config_loader."""
         try,
             print("config_loader imported successfully")

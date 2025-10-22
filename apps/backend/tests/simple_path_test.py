@@ -4,7 +4,7 @@ import os
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-def test_path_config() -> None,
+def test_path_config() -> None,:
     """Test that we can import and use path_config."""
     try,
         print("✓ Path config imported successfully")

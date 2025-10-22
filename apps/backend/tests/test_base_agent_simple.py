@@ -4,16 +4,16 @@ import os
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-def test_base_agent_import() -> None,
+def test_base_agent_import() -> None,:
     """Test that we can import BaseAgent."""
     try,
         from apps.backend.src.ai.agents.base_agent import BaseAgent
         print("BaseAgent imported successfully")
         
         # Create a simple agent instance
-        agent == BaseAgent(
+        agent == BaseAgent()
             agent_id="test_agent_123",
-            capabilities=[{
+            capabilities=[{]}
                 "capability_id": "test_capability_1",
                 "name": "Test Capability",
                 "description": "A test capability",

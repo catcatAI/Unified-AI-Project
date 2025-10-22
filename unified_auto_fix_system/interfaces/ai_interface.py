@@ -10,7 +10,8 @@ from typing import Dict, Any, Optional, List, Union
 from dataclasses import dataclass, asdict
 from datetime import datetime
 
-from ..core.unified_fix_engine import UnifiedFixEngine, FixContext, FixReport
+from ..core.unified_fix_engine import UnifiedFixEngine, FixContext
+from ..core.fix_result import FixReport
 from ..core.fix_types import FixType, FixScope, FixPriority, FixStatus
 
 
@@ -52,7 +53,6 @@ class AIFixInterface:
     """
     AI/AGI自动修复接口
 
-    
     为AI代理和AGI系统提供统一的自动修复服务接口：
     - 问题分析和诊断
     - 智能修复建议
@@ -73,8 +73,7 @@ class AIFixInterface:
         # 修复历史记录
         self.fix_history = []
         
-         # AI学习数据
-
+        # AI学习数据
         self.learning_data = {
             "successful_fixes": [],
             "failed_fixes": [],
@@ -116,13 +115,13 @@ class AIFixInterface:
             # 创建修复上下文
             context = self._create_fix_context(request)
             
-             # 分析项目
+            # 分析项目
             analysis_result = self.fix_engine.analyze_project(context)
             
             # AI增强分析
             ai_enhanced_result = self._enhance_analysis_with_ai(analysis_result, request)
             
-             # 记录历史
+            # 记录历史
             self._record_analysis_history(request, {"analysis_result": ai_enhanced_result})
 
             return AIFixResponse(
@@ -153,7 +152,7 @@ class AIFixInterface:
             # AI预处理 - 优化修复策略
             optimized_context = self._optimize_fix_strategy(context, request)
             
-             # 执行修复
+            # 执行修复
             fix_report = self.fix_engine.fix_issues(optimized_context, request.fix_types)
             
             # AI后处理 - 学习和改进
@@ -183,7 +182,7 @@ class AIFixInterface:
                 message="修复执行失败",
                 error=str(e)
             )
-#     
+    
     def _handle_status_request(self, request: AIFixRequest) -> AIFixResponse:
         """处理状态请求"""
         try:
