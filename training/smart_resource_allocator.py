@@ -118,8 +118,10 @@ from tests.test_json_fix import
             'gpu': {}
                 'devices': gpu_info,
                 'total_memory_gb': sum(gpu['total_memory'] for gpu in gpu_info) if gpu_i\
+    \
     nfo else 0, ::
                     available_memory_gb': sum(gpu['free_memory'] for gpu in gpu_info) if\
+    \
     gpu_info else 0, ::
 utilization_history': []
 {            }
@@ -147,7 +149,8 @@ utilization_history': []
 
                 gpu_info = {}
                     'id': i,
-                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name, ::
+                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name,
+    ::
     'total_memory': memory_info.total / (1024 * *3),  # GB
                     'free_memory': memory_info.free / (1024 * *3),    # GB
                     'used_memory': memory_info.used / (1024 * *3),    # GB
@@ -220,7 +223,8 @@ from tests.test_json_fix import
                             adapter_ram = gpu_info.get('AdapterRAM', 0)
 
                             # Convert RAM from bytes to GB
-                            memory_total_gb == adapter_ram / (1024 * *3) if adapter_ram else 1.0  # Default 1GB, ::
+                            memory_total_gb == adapter_ram / (1024 * *\
+    3) if adapter_ram else 1.0  # Default 1GB, ::
                                 pu_info = {}
                                 'id': idx,
                                 'name': name,
@@ -478,11 +482,14 @@ from tests.test_json_fix import
     len(relevant_history)::
             vg_memory == sum(record['request']['memory_gb'] for record in relevant_histo\
     \
+    \
     ry) / len(relevant_history)::
 vg_gpu_memory == sum(record['request']['gpu_memory_gb'] for record in relevant_history) \
     \
+    \
     / len(relevant_history)::
 vg_time == sum(record['request']['estimated_time_hours'] for record in relevant_history)\
+    \
     \
     / len(relevant_history)::
 rediction = {}
@@ -550,18 +557,22 @@ rediction = {}
     # 计算平均利用率
         avg_cpu == sum(entry['utilization'] for entry in self.resource_pools['cpu']['uti\
     \
+    \
     lization_history']) / \:::
     len(self.resource_pools['cpu']['utilization_history'])
 
         avg_memory == sum(entry['utilization'] for entry in self.resource_pools['memory'\
+    \
     \
     ]['utilization_history']) / \:::
     len(self.resource_pools['memory']['utilization_history'])
 
         avg_gpu == sum(entry['utilization'] for entry in self.resource_pools['gpu']['uti\
     \
+    \
     lization_history']) / \:::
     len(self.resource_pools['gpu']['utilization_history']) if self.resource_pools['gpu']\
+    \
     ['utilization_history'] else 0, ::
     return {}
             'avg_cpu_utilization': avg_cpu,

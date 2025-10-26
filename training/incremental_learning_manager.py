@@ -61,6 +61,7 @@ class DataTracker, :
     "data_tracking.json":::
     self.config_file == Path(config_file) if config_file else TRAINING_DIR / "configs" /\
     \
+    \
     "performance_config.json":::
     self.processed_files = {}
     self.new_files = set()
@@ -87,15 +88,19 @@ class DataTracker, :
     5000)
                     self.scan_file_types = data_scanning_config.get('file_types_to_scan'\
     \
+    \
     , [])
                     self.enable_file_type_filtering = data_scanning_config.get('enable_f\
+    \
     \
     ile_type_filtering', True)
                     self.progress_log_interval = data_scanning_config.get('progress_log_\
     \
+    \
     interval', 5000)
                     self.max_workers = data_scanning_config.get('max_workers', 8)
                     self.enable_parallel_scanning = data_scanning_config.get('enable_par\
+    \
     \
     allel_scanning', True)
                 logger.info(f"✅ 加载性能配置, {self.config_file}")
@@ -162,6 +167,7 @@ class DataTracker, :
                 # 使用并行优化的数据扫描器
                 from training.parallel_optimized_data_scanner import ParallelOptimizedDa\
     \
+    \
     taScanner
                 scanner == ParallelOptimizedDataScanner(self.data_dir(),
     self.tracking_file(), self.config_file())
@@ -175,6 +181,7 @@ class DataTracker, :
 
             # 获取要扫描的文件类型
             file_types == self.scan_file_types if self.enable_file_type_filtering else N\
+    \
     one, :
             # 查找新增文件
             new_data_files = scanner.find_new_files()
@@ -257,7 +264,8 @@ class DataTracker, :
                 if processed_count % self.progress_log_interval == 0, ::
     logger.info(f"   已处理 {processed_count} 个文件...")
 
-            logger.info(f"✅ 扫描完成, 发现 {len(new_data_files)} 个新增 / 修改文件 (总共检查 {processed_count} 个文件)")
+            logger.info(f"✅ 扫描完成,
+    发现 {len(new_data_files)} 个新增 / 修改文件 (总共检查 {processed_count} 个文件)")
             return new_data_files
         except Exception as e, ::
             self.error_handler.handle_error(e, context)
@@ -381,6 +389,7 @@ class ModelManager, :
                 self.model_versions[model_name]['latest'] = version_name
                 self.model_versions[model_name]['updated_at'] = datetime.now().isoformat\
     \
+    \
     ()
 
                 # 保存版本信息
@@ -427,6 +436,7 @@ class ModelManager, :
 
                     # 更新版本列表
                     self.model_versions[model_name]['versions'] = versions[:keep_version\
+    \
     \
     s]
                     self._save_model_versions()
@@ -938,6 +948,7 @@ class IncrementalLearningManager, :
 
             self.is_monitoring == True
             self.monitoring_thread == threading.Thread(target = = self._monitoring_loop(\
+    \
     ), daemon == True)
             self.monitoring_thread.start()
             logger.info("👀 启动数据监控...")
@@ -1025,6 +1036,7 @@ class IncrementalLearningManager, :
             for model_name, data_files in data_by_model.items():::
                 ask = {}
                     'task_id': f"task_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(se\
+    \
     \
     lf.training_scheduler.pending_tasks())}",
                     'model_name': model_name,

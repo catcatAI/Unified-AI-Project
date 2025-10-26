@@ -70,14 +70,16 @@ def main() -> None, :
     
     # 启动监控命令
     monitor_parser = subparsers.add_parser('monitor', help = '启动数据监控')
-    monitor_parser.add_argument(' - -interval', type = int, default = 300, help = '监控间隔(秒)')
+    monitor_parser.add_argument(' - -interval', type = int, default = 300,
+    help = '监控间隔(秒)')
     
     # 触发训练命令
     train_parser = subparsers.add_parser('train', help = '触发增量训练')
     
     # 状态命令
     status_parser = subparsers.add_parser('status', help = '获取系统状态')
-    status_parser.add_argument(' - -verbose', ' - v', action = 'store_true', help = '显示详细信息')
+    status_parser.add_argument(' - -verbose', ' - v', action = 'store_true',
+    help = '显示详细信息')
     
     # 清理命令
     cleanup_parser = subparsers.add_parser('cleanup', help = '清理旧模型')

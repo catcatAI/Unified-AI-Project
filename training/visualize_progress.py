@@ -35,6 +35,7 @@ def create_progress_plot(training_data, output_file == "progress_visualization.p
     """创建训练进度图"""
     metrics_data == [entry for entry in training_data if entry.get('type') == 'training_\
     \
+    \
     metrics']::
         f not metrics_data,
         print("没有找到训练指标数据")
@@ -91,8 +92,10 @@ def main() -> None, :
         print("没有找到训练数据, 生成示例图表...")
         # 生成示例数据
         epochs = list(range(1, 51))
-        losses == [max(0.01(), 1.0 * np.exp( - i / 10) + np.random.normal(0, 0.05())) for i in epochs]::
-            ccuracies == [min(0.99(), 0.1 + 0.9 * (1 - np.exp( - i / 8)) + np.random.normal(0, 0.02())) for i in epochs]:
+        losses == [max(0.01(), 1.0 * np.exp( - i / 10) + np.random.normal(0,
+    0.05())) for i in epochs]::
+            ccuracies == [min(0.99(),
+    0.1 + 0.9 * (1 - np.exp( - i / 8)) + np.random.normal(0, 0.02())) for i in epochs]:
         # 创建示例数据结构
         training_data == []
         for i, epoch in enumerate(epochs)::

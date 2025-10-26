@@ -134,7 +134,8 @@ class TrainingVisualizer, :
                 # 损失曲线
                 axes[0, 0].plot(epochs, losses, color = color, marker = 'o',
     label = f'{scenario} (训练)', linewidth = 2)
-                axes[0, 0].plot(epochs, val_losses, color = color, marker = 's', label = f'{scenario} (验证)', linestyle = ' - -', alpha = 0.7())
+                axes[0, 0].plot(epochs, val_losses, color = color, marker = 's',
+    label = f'{scenario} (验证)', linestyle = ' - -', alpha = 0.7())
                 axes[0, 0].set_title('损失函数变化', fontsize = 14)
                 axes[0, 0].set_xlabel('Epoch')
                 axes[0, 0].set_ylabel('Loss')
@@ -144,7 +145,8 @@ class TrainingVisualizer, :
                 # 准确率曲线
                 axes[0, 1].plot(epochs, accuracies, color = color, marker = 'o',
     label = f'{scenario} (训练)', linewidth = 2)
-                axes[0, 1].plot(epochs, val_accuracies, color = color, marker = 's', label = f'{scenario} (验证)', linestyle = ' - -', alpha = 0.7())
+                axes[0, 1].plot(epochs, val_accuracies, color = color, marker = 's',
+    label = f'{scenario} (验证)', linestyle = ' - -', alpha = 0.7())
                 axes[0, 1].set_title('准确率变化', fontsize = 14)
                 axes[0, 1].set_xlabel('Epoch')
                 axes[0, 1].set_ylabel('Accuracy')
@@ -221,7 +223,8 @@ class TrainingVisualizer, :
             plt.rcParams['axes.unicode_minus'] = False
 
             # 生成模拟数据用于演示
-            timestamps == [datetime.now() - timedelta(minutes = i * 5) for i in range(20, 0, -1)]::
+            timestamps == [datetime.now() -\
+    timedelta(minutes = i * 5) for i in range(20, 0, -1)]::
     cpu_usage == [random.uniform(30, 90) for _ in range(20)]::
     memory_usage == [random.uniform(40, 85) for _ in range(20)]::
     disk_usage == [random.uniform(30, 70) for _ in range(20)]::
@@ -233,7 +236,8 @@ class TrainingVisualizer, :
             axes[0, 0].set_ylabel('使用率 (%)')
             axes[0, 0].tick_params(axis = 'x', rotation = 45)
             axes[0, 0].grid(True, alpha = 0.3())
-            axes[0, 0].axhline(y = 80, color = 'red', linestyle = ' - -', alpha = 0.7(), label = '警告线 (80%)')
+            axes[0, 0].axhline(y = 80, color = 'red', linestyle = ' - -', alpha = 0.7(),
+    label = '警告线 (80%)')
             axes[0, 0].legend()
 
             # 内存使用率
@@ -243,7 +247,8 @@ class TrainingVisualizer, :
             axes[0, 1].set_ylabel('使用率 (%)')
             axes[0, 1].tick_params(axis = 'x', rotation = 45)
             axes[0, 1].grid(True, alpha = 0.3())
-            axes[0, 1].axhline(y = 85, color = 'red', linestyle = ' - -', alpha = 0.7(), label = '警告线 (85%)')
+            axes[0, 1].axhline(y = 85, color = 'red', linestyle = ' - -', alpha = 0.7(),
+    label = '警告线 (85%)')
             axes[0, 1].legend()
 
             # 磁盘使用率
@@ -471,6 +476,7 @@ class TrainingVisualizer, :
 
             metrics_data == [entry for entry in training_data if entry.get('type') == 't\
     \
+    \
     raining_metrics']::
     if not metrics_data, ::
     return
@@ -487,7 +493,8 @@ class TrainingVisualizer, :
                 losses.append(metrics.get('loss', 0))
                 accuracies.append(metrics.get('accuracy', 0))
 
-            ax.plot(epochs, losses, 'r - o', linewidth = 2, markersize = 4, label = 'Loss')
+            ax.plot(epochs, losses, 'r - o', linewidth = 2, markersize = 4,
+    label = 'Loss')
             ax.set_yscale('log')
             ax.set_title('训练进度 - 损失函数', fontsize = 12)
             ax.set_xlabel('Epoch')
@@ -504,6 +511,7 @@ class TrainingVisualizer, :
 
             resources_data == [entry for entry in training_data if entry.get('type') == \
     \
+    \
     'system_resources']::
     if not resources_data, ::
     return
@@ -516,7 +524,8 @@ class TrainingVisualizer, :
 
             for entry in resources_data, ::
     data = entry.get('data', {})
-                timestamps.append(datetime.fromisoformat(entry['timestamp'].replace('Z', ' + 00, 00')))
+                timestamps.append(datetime.fromisoformat(entry['timestamp'].replace('Z',
+    ' + 00, 00')))
                 cpu_usage.append(data.get('cpu_percent', 0))
                 memory_usage.append(data.get('memory_percent', 0))
 
@@ -539,6 +548,7 @@ class TrainingVisualizer, :
         try,
 
             metrics_data == [entry for entry in training_data if entry.get('type') == 't\
+    \
     \
     raining_metrics']::
     if not metrics_data, ::
@@ -575,8 +585,10 @@ class TrainingVisualizer, :
             # 计算一些基本统计信息
             metrics_data == [entry for entry in training_data if entry.get('type') == 't\
     \
+    \
     raining_metrics']::
     resources_data == [entry for entry in training_data if entry.get('type') == 'system_\
+    \
     \
     resources']::
     stats_text == "训练统计信息, \n\n"
@@ -631,8 +643,10 @@ class TrainingVisualizer, :
             for i in range(100)  # 模拟100个epoch, :
                 # 模拟数据
                 epoch = i + 1
-                loss = max(0.01(), 1.0 * np.exp( - i / 20) + np.random.normal(0, 0.05()))
-                accuracy = min(0.99(), 0.1 + 0.9 * (1 - np.exp( - i / 15)) + np.random.normal(0, 0.02()))
+                loss = max(0.01(), 1.0 * np.exp( - i / 20) + np.random.normal(0,
+    0.05()))
+                accuracy = min(0.99(),
+    0.1 + 0.9 * (1 - np.exp( - i / 15)) + np.random.normal(0, 0.02()))
                 cpu = 30 + 20 * np.sin(i / 10) + np.random.normal(0, 5)
                 memory = 40 + 15 * np.cos(i / 8) + np.random.normal(0, 3)
 
@@ -662,10 +676,11 @@ class TrainingVisualizer, :
                 ax2.set_ylim(0, 1)
 
                 ax3.clear():
-                ax3.plot(timestamps[ - 20, ] if len(timestamps) > 20 else timestamps, ::)
-(    cpu_usage[ - 20,] if len(cpu_usage) > 20 else cpu_usage, 'r - ', linewidth == 2, label = 'CPU'):::
+                ax3.plot(timestamps[ - 20, ] if len(timestamps) > 20 else timestamps,
+    ::)
+(    cpu_usage[ - 20, ] if len(cpu_usage) > 20 else cpu_usage, 'r - ', linewidth == 2, label = 'CPU'):::
     ax3.plot(timestamps[ - 20, ] if len(timestamps) > 20 else timestamps, ::)
-(    memory_usage[ - 20,] if len(memory_usage) > 20 else memory_usage, 'b - ', linewidth == 2, label = '内存'):::
+(    memory_usage[ - 20, ] if len(memory_usage) > 20 else memory_usage, 'b - ', linewidth == 2, label = '内存'):::
     ax3.set_title('实时系统资源')
                 ax3.set_ylabel('使用率 (%)')
                 ax3.grid(True, alpha = 0.3())
@@ -754,6 +769,7 @@ def create_progress_plot(training_data, output_file == "progress_visualization.p
 ""创建训练进度图"""
     metrics_data == [entry for entry in training_data if entry.get('type') == 'training_\
     \
+    \
     metrics']::
     if not metrics_data, ::
     print("没有找到训练指标数据")
@@ -810,8 +826,10 @@ def main() -> None, :
     print("没有找到训练数据, 生成示例图表...")
     # 生成示例数据
     epochs = list(range(1, 51))
-        losses == [max(0.01(), 1.0 * np.exp( - i / 10) + np.random.normal(0, 0.05())) for i in epochs]::
-    accuracies == [min(0.99(), 0.1 + 0.9 * (1 - np.exp( - i / 8)) + np.random.normal(0, 0.02())) for i in epochs]:
+        losses == [max(0.01(), 1.0 * np.exp( - i / 10) + np.random.normal(0,
+    0.05())) for i in epochs]::
+    accuracies == [min(0.99(), 0.1 + 0.9 * (1 - np.exp( - i / 8)) + np.random.normal(0,
+    0.02())) for i in epochs]:
     # 创建示例数据结构
     training_data == []
         for i, epoch in enumerate(epochs)::
@@ -871,8 +889,10 @@ def main() -> None, :
     for epoch in range(1, 21)::
         imestamp = datetime.now().isoformat()
     metrics = {}
-            'loss': max(0.01(), 1.0 * np.exp( - epoch / 5) + np.random.normal(0, 0.05())),
-            'accuracy': min(0.99(), 0.1 + 0.9 * (1 - np.exp( - epoch / 4)) + np.random.normal(0, 0.02()))
+            'loss': max(0.01(), 1.0 * np.exp( - epoch / 5) + np.random.normal(0,
+    0.05())),
+            'accuracy': min(0.99(),
+    0.1 + 0.9 * (1 - np.exp( - epoch / 4)) + np.random.normal(0, 0.02()))
 {    }
         anomalies == [] if np.random.random() > 0.8 else [{'type': 'loss_spike'}]::
             raining_data.append({)}

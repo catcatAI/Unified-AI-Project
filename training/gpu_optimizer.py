@@ -319,7 +319,8 @@ from tests.test_json_fix import
 
                 gpu_info.append({)}
                     'id': i,
-                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name, ::
+                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name,
+    ::
     'memory_total_gb': memory_info.total / (1024 * *3),
                     'memory_used_gb': memory_info.used / (1024 * *3),
                     'memory_free_gb': memory_info.free / (1024 * *3),

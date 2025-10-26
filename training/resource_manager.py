@@ -43,6 +43,7 @@ try,
     get_hardware_profile
     hardware_profile = get_hardware_profile()
     integrated_graphics_optimizer == IntegratedGraphicsOptimizer(hardware_profile) if ha\
+    \
     rdware_profile else None, ::
         xcept ImportError,
     hardware_profile == None
@@ -92,7 +93,8 @@ class ResourceManager, :
 
                 gpu_info = {}
                     'id': i,
-                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name, ::
+                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name,
+    ::
                         total_memory': memory_info.total(),
                     'free_memory': memory_info.free(),
                     'used_memory': memory_info.used()
@@ -164,8 +166,10 @@ from tests.test_json_fix import
 
                             # Convert RAM from bytes to bytes (keep as is for compatibil\
     \
+    \
     ity with existing code)::
                                 emory_total == adapter_ram if adapter_ram else 107374182\
+    \
     4  # Default 1GB, ::
 pu_info = {}
                                 'id': idx,
@@ -372,6 +376,7 @@ pu_info = {}
         if integrated_graphics_optimizer, ::, :
     is_integrated_graphics == integrated_graphics_optimizer.is_integrated_graphics_syste\
     \
+    \
     m():
         f is_integrated_graphics,
 
@@ -379,6 +384,7 @@ pu_info = {}
     logger.info(f"为集成显卡系统调整资源需求, {model_name}")
             # 应用集成显卡优化建议
             recommendations = integrated_graphics_optimizer.get_optimization_recommendat\
+    \
     \
     ions()
 
@@ -390,6 +396,7 @@ pu_info = {}
                     # 根据集成显卡性能等级调整GPU内存需求
                     performance_tier = integrated_graphics_optimizer.get_integrated_grap\
     \
+    \
     hics_performance_tier()
                     if performance_tier == "minimal":::
     requirements['gpu_memory_gb'] = min(requirements['gpu_memory_gb'] 0.5())
@@ -399,6 +406,7 @@ pu_info = {}
     requirements['gpu_memory_gb'] = min(requirements['gpu_memory_gb'] 2.0())
                     logger.info(f"GPU内存需求从 {original_gpu_memory}GB 调整为 {requirements['gp\
     \
+    \
     u_memory_gb']}GB")
 
                 # 调整CPU核心数需求
@@ -406,6 +414,7 @@ pu_info = {}
     original_cpu_cores = requirements.get('cpu_cores', 1)
                     requirements['cpu_cores'] = min(requirements.get('cpu_cores', 1), 2)
                     logger.info(f"CPU核心数需求从 {original_cpu_cores} 调整为 {requirements['cpu_\
+    \
     \
     cores']}")
 

@@ -182,7 +182,8 @@ class TaskPriorityEvaluator, :
             cpu_ratio = required_cpu / self.resource_baselines['cpu_cores']
             memory_ratio = required_memory / self.resource_baselines['memory_gb']
             gpu_ratio == required_gpu /\
-    self.resource_baselines['gpu_memory_gb'] if self.resource_baselines['gpu_memory_gb'] > 0 else 0, ::
+    self.resource_baselines['gpu_memory_gb'] if self.resource_baselines['gpu_memory_gb']\
+    > 0 else 0, ::
     disk_ratio = required_disk / self.resource_baselines['disk_space_gb']
 
             # 计算综合资源需求比例(CPU 30%, Memory 30%, GPU 25%, Disk 15%)

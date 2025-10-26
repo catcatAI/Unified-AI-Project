@@ -358,12 +358,16 @@ in_load = float('inf')
             status = {}
                 'total_migrations': len(self.migration_tasks()),
                 'pending_migrations': len([t for t in self.migration_tasks.values() if t\
+    \
     .status == 'pending']), :::
                     migrating_tasks': len([t for t in self.migration_tasks.values() if t\
+    \
     .status == 'migrating']), :::
 completed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'com\
+    \
     pleted']), :::
 failed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'failed\
+    \
     ']), :::
 migration_tasks': [asdict(task_info) for task_info in self.migration_tasks.values()]::
             return status

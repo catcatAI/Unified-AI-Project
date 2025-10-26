@@ -107,6 +107,7 @@ class VersionControlManager, :
                     latest_version = versions[ - 1]
                     version_str = latest_version['version'].split('_')[0]  # 获取 vX.Y.Z 部\
     \
+    \
     分
                     if version_str.startswith('v'):::
                         ersion_parts == version_str[1, ].split('.')
@@ -283,6 +284,7 @@ size_bytes': file_size,
     current_path == Path(current_version_info['path'])
                     if current_path.exists():::
                         ackup_name = f"{current_version}_backup_{datetime.now().strftime\
+    \
     \
     ('%Y%m%d_%H%M%S')}.pth"
                         backup_path = self.models_dir / backup_name

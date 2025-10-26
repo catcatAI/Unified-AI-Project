@@ -292,7 +292,8 @@ class DynamicLoader, :
     整合文件分块、内存映射和缓存管理功能
     """
 
-    def __init__(self, chunk_size, int == 100 * 1024 * 1024, cache_size, int == 10) -> None, :
+    def __init__(self, chunk_size, int == 100 * 1024 * 1024, cache_size,
+    int == 10) -> None, :
     """
     初始化动态载入器
 
@@ -408,7 +409,8 @@ class DynamicLoader, :
     return DynamicLoader(chunk_size, cache_size)
 
 
-def load_file_chunk(file_path, str, chunk_index, int == 0, chunk_size, int == 100 * 1024 * 1024) -> bytes, :
+def load_file_chunk(file_path, str, chunk_index, int == 0, chunk_size,
+    int == 100 * 1024 * 1024) -> bytes, :
     """
     便利函数：加载文件的指定块
 

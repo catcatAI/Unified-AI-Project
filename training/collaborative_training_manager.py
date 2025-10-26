@@ -226,6 +226,7 @@ class CollaborativeTrainingManager, :
             for model_name in self.models.keys()::
                 # requirements = self.resource_manager.get_model_resource_requirements(m\
     \
+    \
     odel_name)
                 # allocation = self.resource_manager.allocate_resources(requirements,
     model_name)
@@ -267,6 +268,7 @@ class CollaborativeTrainingManager, :
                     # 添加任务到优先级队列
                     task_info = {}
                         'task_id': f"task_{model_name}_{datetime.now().strftime('%Y%m%d_\
+    \
     \
     %H%M%S')}"
 {                    }
@@ -349,6 +351,7 @@ class CollaborativeTrainingManager, :
         try,
             # 使用增强的检查点管理器加载最新的检查点
             checkpoint_data = self.checkpoint_manager.load_checkpoint(task_id = model_na\
+    \
     me)
 
             if checkpoint_data, ::
@@ -574,14 +577,18 @@ class CollaborativeTrainingManager, :
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.environment_simulator import Environ\
     \
+    \
     mentSimulator
             from apps.backend.src.ai.concept_models.causal_reasoning_engine import Causa\
+    \
     \
     lReasoningEngine
             from apps.backend.src.ai.concept_models.adaptive_learning_controller import \
     \
+    \
     AdaptiveLearningController
             from apps.backend.src.ai.concept_models.alpha_deep_model import AlphaDeepMod\
+    \
     \
     el
 
@@ -653,6 +660,7 @@ class CollaborativeTrainingManager, :
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.environment_simulator import Environ\
     \
+    \
     mentSimulator
 
             # 初始化环境模拟器实例
@@ -715,6 +723,7 @@ class CollaborativeTrainingManager, :
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.causal_reasoning_engine import Causa\
     \
+    \
     lReasoningEngine
 
             # 初始化因果推理引擎实例
@@ -775,6 +784,7 @@ class CollaborativeTrainingManager, :
             # 导入因果推理引擎
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.causal_reasoning_engine import Causa\
+    \
     \
     lReasoningEngine
 
@@ -842,6 +852,7 @@ class CollaborativeTrainingManager, :
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.adaptive_learning_controller import \
     \
+    \
     AdaptiveLearningController
 
             # 初始化自适应学习控制器实例
@@ -902,6 +913,7 @@ class CollaborativeTrainingManager, :
             # 导入Alpha深度模型
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.alpha_deep_model import AlphaDeepMod\
+    \
     \
     el
 
@@ -1382,6 +1394,7 @@ class CollaborativeTrainingManager, :
 
             # 4. 启动协作式训练循环线程
             collaboration_thread = threading.Thread(target = self.implement_collaborativ\
+    \
     e_training_loop())
             collaboration_thread.daemon == True
             collaboration_thread.start()
@@ -1535,6 +1548,7 @@ class CollaborativeTrainingManager, :
                     ask.batch_size = min(task.batch_size * 1.1(), 256)  # 限制最大批次大小
                     logger.info(f"   调整 {target_model_name} 的批次大小为 {int(task.batch_size(\
     \
+    \
     ))}")
 
             # 记录知识应用
@@ -1648,6 +1662,7 @@ odel1, model2 = model_pair.split(' - ')
     task.start_time()).total_seconds() if task.end_time and task.start_time else 0, ::
 ,
                 'change_log': f'Training completed for {model_name} with accuracy {metri\
+    \
     cs.get("accuracy", 0).4f}', :::
                     tags': ['training - completed', 'auto - generated']
 {            }
@@ -1804,6 +1819,7 @@ result': task.result(),
         try,
 
             success = self.version_controller.rollback_to_latest_stable_version(model_na\
+    \
     \
     me)
             if success, ::

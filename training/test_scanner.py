@@ -21,7 +21,7 @@ def main() -> None, :
     # 创建优化的数据扫描器
     scanner == OptimizedDataScanner()
         data_dir = "data",
-        tracking_file = "training / data_tracking.json",,
+        tracking_file = "training / data_tracking.json", ,
     config_file = "training / configs / performance_config.json"
 (    )
     
