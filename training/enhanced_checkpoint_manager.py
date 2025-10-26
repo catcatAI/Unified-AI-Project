@@ -122,6 +122,7 @@ class EnhancedCheckpointManager, :
                         reasons.append(f"Epoch {epoch} 是 {self.epoch_interval} 的倍数且时间间隔已\
     \
     \
+    \
     到")
                     elif epoch_checkpoint, ::
     checkpoint_type = "epoch"
@@ -156,6 +157,7 @@ class EnhancedCheckpointManager, :
         try,
             # 获取该任务的最新检查点
             task_checkpoints == [cp for cp in self.checkpoint_history if cp.task_id = ta\
+    \
     sk_id] if task_id else self.checkpoint_history, ::
     if not task_checkpoints, ::
     return True  # 如果没有之前的检查点, 保存第一个
@@ -266,6 +268,7 @@ class EnhancedCheckpointManager, :
             elif task_id, ::
                 # 加载指定任务的最新检查点
                 task_checkpoints == [cp for cp in self.checkpoint_history if cp.task_id \
+    \
     \
     = task_id]::
     if task_checkpoints, ::

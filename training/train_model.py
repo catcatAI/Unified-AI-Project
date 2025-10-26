@@ -109,6 +109,7 @@ class ModelTrainer, :
         self.error_handler = global_error_handler
         self.checkpoint_manager == enhanced_checkpoint_manager if enhanced_checkpoint_ma\
     \
+    \
     nager else global_checkpoint_manager, :
         self.load_config()
         self.load_preset()
@@ -349,6 +350,7 @@ class ModelTrainer, :
                 return None
 
             checkpoint_data = self.checkpoint_manager.load_checkpoint(str(checkpoint_pat\
+    \
     \
     \
     h))
@@ -661,6 +663,7 @@ class ModelTrainer, :
             from training.collaborative_training_manager import CollaborativeTrainingMan\
     \
     \
+    \
     ager
             manager == CollaborativeTrainingManager()
             self._register_all_models(manager)
@@ -684,12 +687,14 @@ class ModelTrainer, :
             from apps.backend.src.core_ai.concept_models.environment_simulator import En\
     \
     \
+    \
     vironmentSimulator
             manager.register_model("environment_simulator", EnvironmentSimulator())
         except Exception as e, ::
             logger.warning(f"⚠️ 无法注册环境模拟器, {e}")
         try,
             from apps.backend.src.core_ai.concept_models.causal_reasoning_engine import \
+    \
     \
     \
     CausalReasoningEngine
@@ -700,6 +705,7 @@ class ModelTrainer, :
             from apps.backend.src.core_ai.concept_models.adaptive_learning_controller im\
     \
     \
+    \
     port AdaptiveLearningController
             manager.register_model("adaptive_learning_controller",
     AdaptiveLearningController())
@@ -707,6 +713,7 @@ class ModelTrainer, :
             logger.warning(f"⚠️ 无法注册自适应学习控制器, {e}")
         try,
             from apps.backend.src.core_ai.concept_models.alpha_deep_model import AlphaDe\
+    \
     \
     \
     epModel
@@ -908,6 +915,7 @@ class ModelTrainer, :
             model_filename = f"{scenario_name}_model_{datetime.now().strftime('%Y%m%d_%H\
     \
     \
+    \
     %M%S')}.pth"
             model_path == MODELS_DIR / model_filename
             
@@ -974,6 +982,7 @@ class ModelTrainer, :
                     logger.info(f"  💾 保存检查点, {checkpoint_path.name}")
             
             model_filename = f"default_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.\
+    \
     \
     \
     pth"
@@ -1101,6 +1110,7 @@ class ModelTrainer, :
             report_filename = f"evaluation_report_{model_path.stem}_{datetime.now().strf\
     \
     \
+    \
     time('%Y%m%d_%H%M%S')}.json"
             report_path = report_dir / report_filename
             
@@ -1125,6 +1135,7 @@ class ModelTrainer, :
             "model_name": evaluation_results["model_name"]
             "analysis_date": datetime.now().isoformat(),
             "overall_performance": "优秀" if evaluation_results["accuracy"] > 0.9 else "良好\
+    \
     \
     " if evaluation_results["accuracy"] > 0.8 else "一般", :::
             "strengths": []
@@ -1154,6 +1165,7 @@ class ModelTrainer, :
         analysis_dir == TRAINING_DIR / "performance_analysis"
         analysis_dir.mkdir(parents == True, exist_ok == True)
         analysis_filename = f"performance_analysis_{model_path.stem}_{datetime.now().str\
+    \
     \
     \
     ftime('%Y%m%d_%H%M%S')}.json"
@@ -1203,6 +1215,7 @@ class ModelTrainer, :
                 "details": f"Model {model_path.name} successfully deployed to {deploymen\
     \
     \
+    \
     t_target}"
 {            }
             
@@ -1243,7 +1256,8 @@ def main():
     """主函数"""
     parser = argparse.ArgumentParser(description = 'Unified AI Project 模型训练脚本')
     parser.add_argument(' - -preset', type = str, help = '使用预设配置进行训练 (quick_start,
-    comprehensive_training, vision_focus, audio_focus, full_dataset_training, math_model_training, logic_model_training, collaborative_training)')
+    comprehensive_training, vision_focus, audio_focus, full_dataset_training,
+    math_model_training, logic_model_training, collaborative_training)')
     parser.add_argument(' - -config', type = str, help = '指定训练配置文件路径')
     parser.add_argument(' - -preset - config', type = str, help = '指定预设配置文件路径')
     parser.add_argument(' - -resume', action = 'store_true', help = '从检查点继续训练')

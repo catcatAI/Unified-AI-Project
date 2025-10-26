@@ -65,7 +65,8 @@ from tests.run_test_subprocess import
             # 先测试是否有nvidia gpu
             try,
 
-                result = subprocess.run(["nvidia - smi", " - -query - gpu = name", " - -format = csv, noheader"])
+                result = subprocess.run(["nvidia - smi", " - -query - gpu = name",
+    " - -format = csv, noheader"])
 (    capture_output == True, text == True, timeout = 5)
                 if result.returncode == 0, ::
     logger.info("检测到NVIDIA GPU, ")
@@ -94,6 +95,7 @@ from tests.run_test_subprocess import
                         integrated_keywords = ['intel', 'amd', 'radeon', 'hd graphics',
     'uhd graphics', 'integrated']
                         is_integrated == any(keyword in gpu_name.lower() for keyword in \
+    \
     \
     \
     integrated_keywords)::

@@ -260,8 +260,10 @@ class FaultDetector, :
                 'total_nodes': len(self.nodes_status()),
                 'healthy_nodes': len([n for n in self.nodes_status.values() if n.status \
     \
+    \
     == 'healthy']), :::
                     warning_nodes': len([n for n in self.nodes_status.values() if n.stat\
+    \
     \
     us == 'warning']), :::
 critical_nodes': len([n for n in self.nodes_status.values() if n.status == 'critical']),

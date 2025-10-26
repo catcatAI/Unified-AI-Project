@@ -116,6 +116,7 @@ class ModelTrainer, :
             model_filename = f"default_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.\
     \
     \
+    \
     pth"
             model_path == MODELS_DIR / model_filename
 

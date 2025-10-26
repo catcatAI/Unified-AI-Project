@@ -169,6 +169,7 @@ class TrainingAnomalyDetector, :
     logger.warning(f"   {anomaly['type']} {anomaly['metric']} = {anomaly['current_value'\
     \
     \
+    \
     ]}")
 
             return anomalies
@@ -373,6 +374,7 @@ class TrainingPerformanceAnalyzer, :
                         'message': f"最近epoch平均时间显著增加 ({"recent_mean":.2f}s vs {"mean_dur\
     \
     \
+    \
     ation":.2f}s)",
                         'severity': 'warning'
 {(                    })
@@ -426,6 +428,7 @@ class TrainingMonitor, :
     not self.monitoring_thread.is_alive():::
                 elf.stop_monitoring_flag == False  # 修改变量名
                 self.monitoring_thread == threading.Thread(target = = self._monitoring_l\
+    \
     \
     oop(), daemon == True)
                 self.monitoring_thread.start()
@@ -520,6 +523,7 @@ reak
 
             # 如果检测到严重异常, 记录警告
             critical_anomalies == [a for a in anomalies if a.get('type') in ['loss_spike\
+    \
     \
     \
     ', 'accuracy_drop']]::

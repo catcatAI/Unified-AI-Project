@@ -113,12 +113,14 @@ class ErrorHandler, :
                 'error_handled': True,
                 'recovery_strategy': recovery_strategy.value if hasattr(recovery_strateg\
     \
+    \
     y, 'value') else recovery_strategy, ::
                     recovery_result': recovery_result,
                 'error_info': error_info
 {            }
 
             logger.error(f"错误已处理 [{context.component}.{context.operation}] {type(error).\
+    \
     \
     \
     __name__} - {str(error)}")
@@ -284,6 +286,7 @@ def resilient_operation(error_handler, ErrorHandler, component, str, operation, 
 
                     # 检查是否应该重试
                     if (result['recovery_strategy'] == ErrorRecoveryStrategy.RETRY.value\
+    \
     \
     and, ::)
 (    retry_count < (max_retries or error_handler.retry_config['max_attempts'])):

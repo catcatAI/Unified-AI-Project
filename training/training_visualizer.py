@@ -477,6 +477,7 @@ class TrainingVisualizer, :
             metrics_data == [entry for entry in training_data if entry.get('type') == 't\
     \
     \
+    \
     raining_metrics']::
     if not metrics_data, ::
     return
@@ -510,6 +511,7 @@ class TrainingVisualizer, :
         try,
 
             resources_data == [entry for entry in training_data if entry.get('type') == \
+    \
     \
     \
     'system_resources']::
@@ -550,6 +552,7 @@ class TrainingVisualizer, :
             metrics_data == [entry for entry in training_data if entry.get('type') == 't\
     \
     \
+    \
     raining_metrics']::
     if not metrics_data, ::
     return
@@ -586,8 +589,10 @@ class TrainingVisualizer, :
             metrics_data == [entry for entry in training_data if entry.get('type') == 't\
     \
     \
+    \
     raining_metrics']::
     resources_data == [entry for entry in training_data if entry.get('type') == 'system_\
+    \
     \
     \
     resources']::
@@ -678,9 +683,11 @@ class TrainingVisualizer, :
                 ax3.clear():
                 ax3.plot(timestamps[ - 20, ] if len(timestamps) > 20 else timestamps,
     ::)
-(    cpu_usage[ - 20, ] if len(cpu_usage) > 20 else cpu_usage, 'r - ', linewidth == 2, label = 'CPU'):::
+(    cpu_usage[ - 20, ] if len(cpu_usage) > 20 else cpu_usage, 'r - ', linewidth == 2,
+    label = 'CPU'):::
     ax3.plot(timestamps[ - 20, ] if len(timestamps) > 20 else timestamps, ::)
-(    memory_usage[ - 20, ] if len(memory_usage) > 20 else memory_usage, 'b - ', linewidth == 2, label = '内存'):::
+(    memory_usage[ - 20, ] if len(memory_usage) > 20 else memory_usage, 'b - ',
+    linewidth == 2, label = '内存'):::
     ax3.set_title('实时系统资源')
                 ax3.set_ylabel('使用率 (%)')
                 ax3.grid(True, alpha = 0.3())
@@ -768,6 +775,7 @@ def load_training_data(log_file == "logs / training_monitor.log"):
 def create_progress_plot(training_data, output_file == "progress_visualization.png"):
 ""创建训练进度图"""
     metrics_data == [entry for entry in training_data if entry.get('type') == 'training_\
+    \
     \
     \
     metrics']::

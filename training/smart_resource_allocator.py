@@ -119,8 +119,10 @@ from tests.test_json_fix import
                 'devices': gpu_info,
                 'total_memory_gb': sum(gpu['total_memory'] for gpu in gpu_info) if gpu_i\
     \
+    \
     nfo else 0, ::
                     available_memory_gb': sum(gpu['free_memory'] for gpu in gpu_info) if\
+    \
     \
     gpu_info else 0, ::
 utilization_history': []
@@ -483,12 +485,15 @@ from tests.test_json_fix import
             vg_memory == sum(record['request']['memory_gb'] for record in relevant_histo\
     \
     \
+    \
     ry) / len(relevant_history)::
 vg_gpu_memory == sum(record['request']['gpu_memory_gb'] for record in relevant_history) \
     \
     \
+    \
     / len(relevant_history)::
 vg_time == sum(record['request']['estimated_time_hours'] for record in relevant_history)\
+    \
     \
     \
     / len(relevant_history)::
@@ -558,10 +563,12 @@ rediction = {}
         avg_cpu == sum(entry['utilization'] for entry in self.resource_pools['cpu']['uti\
     \
     \
+    \
     lization_history']) / \:::
     len(self.resource_pools['cpu']['utilization_history'])
 
         avg_memory == sum(entry['utilization'] for entry in self.resource_pools['memory'\
+    \
     \
     \
     ]['utilization_history']) / \:::
@@ -570,8 +577,10 @@ rediction = {}
         avg_gpu == sum(entry['utilization'] for entry in self.resource_pools['gpu']['uti\
     \
     \
+    \
     lization_history']) / \:::
     len(self.resource_pools['gpu']['utilization_history']) if self.resource_pools['gpu']\
+    \
     \
     ['utilization_history'] else 0, ::
     return {}

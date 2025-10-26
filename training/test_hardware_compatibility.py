@@ -59,6 +59,7 @@ def test_hardware_detection() -> None, :
                 is_integrated == any(keyword in gpu.name.lower() for keyword in integrat\
     \
     \
+    \
     ed_keywords)::
     logger.info(f"    集成显卡, {is_integrated}")
 
@@ -107,6 +108,7 @@ def test_integrated_graphics_optimization(profile) -> None, :
             # 测试批处理大小调整
             original_batch_size = 32
             adjusted_batch_size = optimizer.adjust_batch_size_for_integrated_graphics(or\
+    \
     \
     \
     iginal_batch_size)
