@@ -9,8 +9,8 @@ project_root, str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'
 sys.path.insert(0, project_root)
 
 # 创建一个基础的BaseAgent类作为占位符
-class BaseAgent,:
-    def __init__(self, agent_id, str, capabilities, list, name, str):
+在类定义前添加空行
+在函数定义前添加空行
         self.agent_id = agent_id
         self.capabilities = capabilities
         self.name = name
@@ -24,10 +24,12 @@ class BaseAgent,:
         self.is_running == False
         print(f"Agent {self.agent_id} stopped")
     
-    async def send_task_failure(self, request_id, sender_ai_id, callback_address, error_message):
+    async def send_task_failure(self, request_id, sender_ai_id, callback_address,
+    error_message):
         print(f"Task failure sent, {error_message}")
     
-    async def send_task_success(self, request_id, sender_ai_id, callback_address, result):
+    async def send_task_success(self, request_id, sender_ai_id, callback_address,
+    result):
         print(f"Task success sent, {result}")
     
     async def orchestrate_multi_agent_task(self, task_sequence):
@@ -37,7 +39,7 @@ class BaseAgent,:
         return f"task_{target_agent_id}_{capability_id}"
 
 # 创建占位符类型
-class HSPTaskRequestPayload(dict):
+在类定义前添加空行
     pass
 
 class HSPMessageEnvelope(dict):
@@ -50,8 +52,8 @@ class CollaborationDemoAgent(BaseAgent):
     A demo agent that showcases the collaboration features between agents.
     """
 
-    def __init__(self, agent_id, str) -> None,:
-        # Define capabilities for this agent,::
+    def __init__(self, agent_id, str) -> None, :
+        # Define capabilities for this agent, ::
             apabilities = []
             {}
                 "capability_id": "collaboration_demo_v1",
@@ -69,7 +71,8 @@ class CollaborationDemoAgent(BaseAgent):
 
         super().__init__(agent_id, capabilities, "CollaborationDemoAgent")
 
-    async def handle_task_request(self, task_payload, HSPTaskRequestPayload, sender_ai_id, str, envelope, HSPMessageEnvelope):
+    async def handle_task_request(self, task_payload, HSPTaskRequestPayload,
+    sender_ai_id, str, envelope, HSPMessageEnvelope):
         """
         Handle incoming task requests.
         """
@@ -86,10 +89,10 @@ class CollaborationDemoAgent(BaseAgent):
             elif capability_id == "data_processing_v1":::
                 result = await self._handle_data_processing(parameters)
             else,
-                # Default behavior for unhandled capabilities,::
+                # Default behavior for unhandled capabilities, ::
                     wait self.send_task_failure()
                     request_id,
-                    sender_ai_id,,
+                    sender_ai_id, ,
     task_payload.get("callback_address", ""),
                     f"Unsupported capability, {capability_id}"
 (                )
@@ -98,16 +101,16 @@ class CollaborationDemoAgent(BaseAgent):
             # Send success response
             await self.send_task_success()
                 request_id,
-                sender_ai_id,,
+                sender_ai_id, ,
     task_payload.get("callback_address", ""),
                 result
 (            )
 
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"[{self.agent_id}] Error handling task, {e}")
             await self.send_task_failure()
                 request_id,
-                sender_ai_id,,
+                sender_ai_id, ,
     task_payload.get("callback_address", ""),
                 str(e)
 (            )
@@ -118,7 +121,7 @@ class CollaborationDemoAgent(BaseAgent):
         """
         logger.info(f"[{self.agent_id}] Handling collaboration demo request")
 
-        # Example Orchestrate a multi-agent task
+        # Example Orchestrate a multi - agent task
         if parameters.get("orchestrate_tasks"):::
             task_sequence = []
                 {}
@@ -132,7 +135,7 @@ class CollaborationDemoAgent(BaseAgent):
                     "capability_id": "report_generation_v1",
                     "parameters": {}
                         "action": "generate",
-                        "input": "<output_of_task_0>",  # Placeholder for previous task result,::
+                        "input": "<output_of_task_0 > ",  # Placeholder for previous task result,::
                             format": "summary"
 {                    }
 {                }
@@ -144,9 +147,9 @@ class CollaborationDemoAgent(BaseAgent):
                 return {}
                     "status": "success",
                     "result": result,
-                    "message": "Multi-agent task orchestration completed"
+                    "message": "Multi - agent task orchestration completed"
 {                }
-            except Exception as e,::
+            except Exception as e, ::
                 return {}
                     "status": "error",
                     "message": f"Failed to orchestrate tasks, {str(e)}"
@@ -157,12 +160,12 @@ class CollaborationDemoAgent(BaseAgent):
             target_agent = parameters.get("target_agent", "")
             task_params = parameters.get("task_parameters", {})
 
-            if target_agent and task_params,::
+            if target_agent and task_params, ::
                 try,
                     task_id = await self.delegate_task_to_agent()
-                        target_agent_id=target_agent,,
-    capability_id=task_params.get("capability_id", ""),
-                        parameters=task_params
+                        target_agent_id = target_agent,,
+    capability_id = task_params.get("capability_id", ""),
+                        parameters = task_params
 (                    )
 
                     return {}
@@ -170,7 +173,7 @@ class CollaborationDemoAgent(BaseAgent):
                         "task_id": task_id,
                         "message": f"Task delegated to {target_agent}"
 {                    }
-                except Exception as e,::
+                except Exception as e, ::
                     return {}
                         "status": "error",
                         "message": f"Failed to delegate task, {str(e)}"
@@ -196,9 +199,9 @@ class CollaborationDemoAgent(BaseAgent):
         if operation == "count":::
             result = len(data)
         elif operation == "sum":::
-            result == sum(data) if all(isinstance(x, (int, float)) for x in data) else 0,::
+            result == sum(data) if all(isinstance(x, (int, float)) for x in data) else 0, ::
                 lif operation == "average":::
-            result == sum(data) / len(data) if data and all(isinstance(x, (int, float)) for x in data) else 0,::
+            result == sum(data) / len(data) if data and all(isinstance(x, (int, float)) for x in data) else 0, ::
                 lse,
             result == f"Unsupported operation, {operation}"
 
@@ -215,7 +218,7 @@ async def main() -> None,
 # TODO: Fix import - module 'uuid' not found
 
     # Create agent with a unique ID,
-        gent_id == f"did,hsp,collaboration_demo_agent_{uuid.uuid4().hex[:8]}"
+        gent_id == f"did, hsp, collaboration_demo_agent_{uuid.uuid4().hex[:8]}"
     agent == CollaborationDemoAgent(agent_id)
 
     try,
@@ -224,12 +227,12 @@ async def main() -> None,
         logger.info(f"Collaboration Demo Agent {agent_id} started successfully")
 
         # Keep the agent running
-        while agent.is_running,::
+        while agent.is_running, ::
             await asyncio.sleep(1)
 
-    except KeyboardInterrupt,::
+    except KeyboardInterrupt, ::
         logger.info("Received keyboard interrupt, shutting down...")
-    except Exception as e,::
+    except Exception as e, ::
         logger.error(f"Error in main, {e}")
     finally,
         # Stop the agent
@@ -239,8 +242,8 @@ async def main() -> None,
 if __name"__main__":::
     # Set up logging
     logging.basicConfig()
-    level=logging.INFO(),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level = logging.INFO(),
+        format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 (    )
 
     # Run the agent

@@ -4,15 +4,15 @@
 负责管理计算资源(CPU、GPU、内存)并动态分配给不同模型
 """
 
-import logging
-import psutil
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'psutil' not found
 from pathlib import Path
-import json
+from tests.test_json_fix import
 from datetime import datetime
-import heapq
+# TODO: Fix import - module 'heapq' not found
 
 # 添加项目路径
-import sys
+from system_test import
 from pathlib import Path
 project_root, str == Path(__file__).parent.parent()
 backend_path, str = project_root / "apps" / "backend"
@@ -27,7 +27,7 @@ try,
     TRAINING_DIR,
     get_data_path,
     resolve_path
-    )
+(    )
 except ImportError,::
     # 如果路径配置模块不可用,使用默认路径处理
     PROJECT_ROOT = project_root
@@ -49,10 +49,10 @@ try,
 logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
-class ResourceManager,
+class ResourceManager,:
     """资源管理器,负责管理计算资源并动态分配给不同模型"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
     self.cpu_count = psutil.cpu_count()
     self.physical_cpu_count == psutil.cpu_count(logical ==False)
     self.total_memory = psutil.virtual_memory().total
@@ -71,14 +71,14 @@ class ResourceManager,
     logger.info(f"   总内存, {self.total_memory / (1024**3).2f} GB")
     logger.info(f"   GPU信息, {self.gpu_info}")
 
-    def _detect_gpus(self) -> List[Dict[str, Any]]
+    def _detect_gpus(self) -> List[Dict[str, Any]]:
     """检测可用GPU"""
     gpus = []
 
     # 首先尝试检测NVIDIA GPU
         try,
 
-            import pynvml
+# TODO: Fix import - module 'pynvml' not found
             pynvml.nvmlInit()
             device_count = pynvml.nvmlDeviceGetCount()
 
@@ -87,13 +87,13 @@ class ResourceManager,
                 name = pynvml.nvmlDeviceGetName(handle)
                 memory_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
 
-                gpu_info = {
+                gpu_info = {}
                     'id': i,
                     'name': name.decode('utf-8') if isinstance(name, bytes) else name,::
                         total_memory': memory_info.total(),
                     'free_memory': memory_info.free(),
                     'used_memory': memory_info.used()
-                }
+{                }
                 gpus.append(gpu_info)
 
             logger.info(f"✅ 检测到 {len(gpus)} 个NVIDIA GPU")
@@ -106,19 +106,19 @@ class ResourceManager,
         if not gpus,::
     try,
                 # 尝试使用torch检测GPU
-                import torch
+# TODO: Fix import - module 'torch' not found
                 if torch.cuda.is_available():::
                     or i in range(torch.cuda.device_count()):
 
 
     props = torch.cuda.get_device_properties(i)
-                        gpu_info = {
+                        gpu_info = {}
                             'id': i,
                             'name': torch.cuda.get_device_name(i),
                             'total_memory': props.total_memory(),
                             'free_memory': props.total_memory(),  # 简化处理
                             'used_memory': 0
-                        }
+{                        }
                         gpus.append(gpu_info)
                     logger.info(f"✅ 通过PyTorch检测到 {len(gpus)} 个GPU")
             except ImportError,::
@@ -130,18 +130,18 @@ class ResourceManager,
         if not gpus,::
     try,
                 # 使用psutil和系统信息检测集成显卡
-                import platform
+# TODO: Fix import - module 'platform' not found
                 system = platform.system().lower()
 
                 if system == "windows":::
                     # Windows系统使用WMI检测
-                    import subprocess
-                    import json
+from tests.run_test_subprocess import
+from tests.test_json_fix import
 
-                    result = subprocess.run([
+                    result = subprocess.run([)]
                         "powershell.exe",
                         "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
-                    ] capture_output == True, text == True, timeout=10)
+[(                    ] capture_output == True, text == True, timeout=10)
 
                     if result.returncode == 0,::
     gpu_data = json.loads(result.stdout())
@@ -160,13 +160,13 @@ class ResourceManager,
 
                             # Convert RAM from bytes to bytes (keep as is for compatibility with existing code)::
                                 emory_total == adapter_ram if adapter_ram else 1073741824  # Default 1GB,::
-pu_info = {
+pu_info = {}
                                 'id': idx,
                                 'name': name,
                                 'total_memory': memory_total,
                                 'free_memory': memory_total,  # Simplified
                                 'used_memory': 0
-                            }
+{                            }
                             gpus.append(gpu_info)
 
                         logger.info(f"✅ 通过WMI检测到 {len(gpus)} 个GPU设备")
@@ -176,7 +176,7 @@ pu_info = {
 
     return gpus
 
-    def get_system_resources(self) -> Dict[str, Any]
+    def get_system_resources(self) -> Dict[str, Any]:
     """获取当前系统资源状态"""
         try,
 
@@ -186,57 +186,57 @@ pu_info = {
             # 更新GPU信息
             gpu_info = self._update_gpu_info()
 
-            resources = {
-                'cpu': {
+            resources = {}
+                'cpu': {}
                     'count': self.cpu_count(),
                     'physical_count': self.physical_cpu_count(),
                     'usage_percent': cpu_percent,
                     'available_cores': self.cpu_count * (100 - cpu_percent) / 100
-                }
-                'memory': {
+{                }
+                'memory': {}
                     'total': memory_info.total(),
                     'available': memory_info.available(),
                     'used': memory_info.used(),
                     'usage_percent': memory_info.percent()
-                }
+{                }
                 'gpu': gpu_info,
                 'timestamp': datetime.now().isoformat()
-            }
+{            }
 
             # 记录资源使用历史
             self.resource_usage_history.append(resources)
             if len(self.resource_usage_history()) > 100,  # 限制历史记录数量,::
- = self.resource_usage_history.pop(0)
+= self.resource_usage_history.pop(0)
 
             return resources
         except Exception as e,::
             logger.error(f"❌ 获取系统资源信息失败, {e}")
             # 返回默认资源信息
-            return {
-                'cpu': {
+            return {}
+                'cpu': {}
                     'count': self.cpu_count(),
                     'physical_count': self.physical_cpu_count(),
                     'usage_percent': 0,
                     'available_cores': self.cpu_count()
-                }
-                'memory': {
+{                }
+                'memory': {}
                     'total': self.total_memory(),
                     'available': self.available_memory(),
                     'used': 0,
                     'usage_percent': 0
-                }
+{                }
                 'gpu': self.gpu_info(),
                 'timestamp': datetime.now().isoformat()
-            }
+{            }
 
-    def _update_gpu_info(self) -> List[Dict[str, Any]]
+    def _update_gpu_info(self) -> List[Dict[str, Any]]:
     """更新GPU信息"""
     updated_gpus = []
 
         try,
 
 
-            import pynvml
+# TODO: Fix import - module 'pynvml' not found
             for gpu in self.gpu_info,::
     handle = pynvml.nvmlDeviceGetHandleByIndex(gpu['id'])
                 memory_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
@@ -250,89 +250,89 @@ pu_info = {
             updated_gpus = self.gpu_info()
     return updated_gpus
 
-    def get_model_resource_requirements(self, model_type, str) -> Dict[str, Any]
+    def get_model_resource_requirements(self, model_type, str) -> Dict[str, Any]:
     """获取模型的资源需求"""
     # 定义不同模型的资源需求
-    requirements = {
-            'vision_service': {
+    requirements = {}
+            'vision_service': {}
                 'cpu_cores': 2,
                 'memory_gb': 2,
                 'gpu_memory_gb': 2,
                 'priority': 2,
                 'estimated_time_hours': 2
-            }
-            'audio_service': {
+{            }
+            'audio_service': {}
                 'cpu_cores': 1,
                 'memory_gb': 1,
                 'gpu_memory_gb': 0,  # 音频处理通常不需要GPU
                 'priority': 1,
                 'estimated_time_hours': 1
-            }
-            'causal_reasoning_engine': {
+{            }
+            'causal_reasoning_engine': {}
                 'cpu_cores': 2,
                 'memory_gb': 2,
                 'gpu_memory_gb': 0,  # 逻辑推理主要使用CPU
                 'priority': 3,
                 'estimated_time_hours': 3
-            }
-            'multimodal_service': {
+{            }
+            'multimodal_service': {}
                 'cpu_cores': 3,
                 'memory_gb': 3,
                 'gpu_memory_gb': 3,
                 'priority': 4,
                 'estimated_time_hours': 4
-            }
-            'math_model': {
+{            }
+            'math_model': {}
                 'cpu_cores': 1,
                 'memory_gb': 1,
                 'gpu_memory_gb': 0,
                 'priority': 1,
                 'estimated_time_hours': 1
-            }
-            'logic_model': {
+{            }
+            'logic_model': {}
                 'cpu_cores': 2,
                 'memory_gb': 1,
                 'gpu_memory_gb': 0,
                 'priority': 2,
                 'estimated_time_hours': 2
-            }
-            'concept_models': {
+{            }
+            'concept_models': {}
                 'cpu_cores': 2,
                 'memory_gb': 2,
                 'gpu_memory_gb': 1,
                 'priority': 3,
                 'estimated_time_hours': 3
-            }
-            'environment_simulator': {
+{            }
+            'environment_simulator': {}
                 'cpu_cores': 2,
                 'memory_gb': 1,
                 'gpu_memory_gb': 0,
                 'priority': 2,
                 'estimated_time_hours': 2
-            }
-            'adaptive_learning_controller': {
+{            }
+            'adaptive_learning_controller': {}
                 'cpu_cores': 1,
                 'memory_gb': 1,
                 'gpu_memory_gb': 0,
                 'priority': 3,
                 'estimated_time_hours': 1
-            }
-            'alpha_deep_model': {
+{            }
+            'alpha_deep_model': {}
                 'cpu_cores': 3,
                 'memory_gb': 3,
                 'gpu_memory_gb': 2,
                 'priority': 4,
                 'estimated_time_hours': 4
-            }
-    }
+{            }
+{    }
 
-    return requirements.get(model_type, {
+    return requirements.get(model_type, {)}
             'cpu_cores': 1,
             'memory_gb': 1,
             'gpu_memory_gb': 0,
             'priority': 1,
             'estimated_time_hours': 1
-    })
+{(    })
 
     def add_task_to_queue(self, task_info, Dict[str, Any]):
         ""将任务添加到队列中"""
@@ -346,7 +346,7 @@ pu_info = {
     heapq.heappush(self.task_queue(), task_tuple)
     logger.info(f"📥 任务已添加到队列, {task_info.get('model_name', 'Unknown')}")
 
-    def get_next_task(self) -> Optional[Dict[str, Any]]
+    def get_next_task(self) -> Optional[Dict[str, Any]]:
     """获取下一个要执行的任务"""
         if not self.task_queue,::
     return None
@@ -355,14 +355,14 @@ pu_info = {
     priority, estimated_time, task_info = heapq.heappop(self.task_queue())
     return task_info
 
-    def allocate_resources(self, requirements, Dict[...]
+    def allocate_resources(self, requirements, Dict[...]:)
     """为模型分配资源"""
         if not requirements,::
     return None
 
     # 为集成显卡系统特殊处理
     is_integrated_graphics == False
-        if integrated_graphics_optimizer,::,
+        if integrated_graphics_optimizer,::,:
     is_integrated_graphics == integrated_graphics_optimizer.is_integrated_graphics_system():
         f is_integrated_graphics,
 
@@ -396,14 +396,14 @@ pu_info = {
     from training.smart_resource_allocator import ResourceRequest
 
     # 创建资源请求
-    resource_request == ResourceRequest(,
+    resource_request == ResourceRequest()
     task_id=model_name or f"task_{int(datetime.now().timestamp())}",
             cpu_cores=requirements.get('cpu_cores', 1),
             memory_gb=requirements.get('memory_gb', 1),
             gpu_memory_gb=requirements.get('gpu_memory_gb', 0),
             priority=requirements.get('priority', 1),
             estimated_time_hours=requirements.get('estimated_time_hours', 1),
-            resource_type == "gpu" if requirements.get('gpu_memory_gb', 0) > 0 else "cpu":::
+            resource_type == "gpu", if requirements.get('gpu_memory_gb', 0) > 0 else "cpu":::
     # 请求资源
     self.smart_allocator.request_resources(resource_request)
 
@@ -418,12 +418,12 @@ pu_info = {
     allocation_result = allocations[0]  # 假设第一个分配就是我们需要的
 
     # 转换为原有格式
-    allocation = {
+    allocation = {}
             'cpu_cores': allocation_result.allocated_cpu_cores(),
             'memory_gb': allocation_result.allocated_memory_gb(),
             'gpu_memory_gb': allocation_result.allocated_gpu_memory_gb(),
             'allocated_at': datetime.now().isoformat()
-    }
+{    }
 
     # 记录资源分配
         if model_name,::
@@ -438,29 +438,29 @@ pu_info = {
     del self.resource_allocation[model_name]
             logger.info(f"🔄 释放模型 {model_name} 的资源")
 
-    def get_resource_utilization(self) -> Dict[str, Any]
+    def get_resource_utilization(self) -> Dict[str, Any]:
     """获取资源利用率报告"""
     system_resources = self.get_system_resources()
     cpu_info = system_resources['cpu']
     memory_info = system_resources['memory']
 
-    utilization = {
-            'cpu_utilization': {
+    utilization = {}
+            'cpu_utilization': {}
                 'used_cores': self.cpu_count - cpu_info['available_cores']
                 'total_cores': self.cpu_count(),
                 'utilization_percent': (self.cpu_count - cpu_info['available_cores']) / self.cpu_count * 100
-            }
-            'memory_utilization': {
+{            }
+            'memory_utilization': {}
                 'used_gb': (memory_info['total'] - memory_info['available']) / (1024**3),
                 'total_gb': memory_info['total'] / (1024**3),
                 'utilization_percent': memory_info['percent']
-            }
+{            }
             'allocated_models': list(self.resource_allocation.keys())
-    }
+{    }
 
     return utilization
 
-    def get_resource_allocation_status(self) -> Dict[str, Any]
+    def get_resource_allocation_status(self) -> Dict[str, Any]:
     """获取资源分配状态"""
     system_resources = self.get_system_resources()
     cpu_info = system_resources['cpu']
@@ -468,7 +468,7 @@ pu_info = {
 
         allocated_cpu == sum(allocation.get('cpu_cores', 0) for allocation in self.resource_allocation.values()):::
     allocated_memory == sum(allocation.get('memory_gb', 0) for allocation in self.resource_allocation.values()):::
-    status = {
+    status = {}
             'total_cpu': self.cpu_count(),
             'allocated_cpu': allocated_cpu,
             'available_cpu': self.cpu_count - allocated_cpu,
@@ -478,22 +478,22 @@ pu_info = {
             'gpu_info': self.gpu_info(),
             'allocated_models': list(self.resource_allocation.keys()),
             'pending_tasks': len(self.task_queue())
-    }
+{    }
 
     return status
 
-    def optimize_resource_allocation(self) -> Dict[str, Any]
+    def optimize_resource_allocation(self) -> Dict[str, Any]:
     """优化资源分配"""
     logger.info("⚙️  开始优化资源分配...")
 
     # 获取当前资源使用情况
     status = self.get_resource_allocation_status()
 
-    optimization_result = {
+    optimization_result = {}
             'timestamp': datetime.now().isoformat(),
             'actions_taken': []
             'current_status': status
-    }
+{    }
 
     # 如果有大量空闲资源,可以考虑增加并行任务
         if status['available_cpu'] > status['total_cpu'] * 0.5,::
@@ -509,7 +509,7 @@ pu_info = {
     logger.info("✅ 资源分配优化完成")
     return optimization_result
 
-    def dynamic_resource_scaling(self, model_name, str, current_performance, Dict[str, Any]) -> bool,
+    def dynamic_resource_scaling(self, model_name, str, current_performance, Dict[str, Any]) -> bool,:
     """动态调整模型资源分配"""
     logger.info(f"📈 动态调整模型 {model_name} 的资源分配")
 
@@ -559,4 +559,4 @@ pu_info = {
     # 更新资源分配记录
     self.resource_allocation[model_name] = current_allocation
     logger.info(f"✅ 模型 {model_name} 资源调整完成")
-    return True
+    return True))

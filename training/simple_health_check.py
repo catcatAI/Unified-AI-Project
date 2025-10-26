@@ -4,7 +4,7 @@
 验证核心训练系统的健康状态
 """
 
-import sys
+from system_test import
 from pathlib import Path
 
 # 添加项目路径
@@ -16,7 +16,7 @@ def check_core_components():
     print("🔍 检查核心组件...")
 
     # 检查必要的文件是否存在
-    required_files = [
+    required_files = []
     "training/auto_training_manager.py",
     "training/data_manager.py",
     "training/train_model.py",
@@ -24,13 +24,13 @@ def check_core_components():
     "training/incremental_learning_manager.py",
     "training/error_handling_framework.py",
     "training/training_monitor.py"
-    ]
+[    ]
 
     missing_files = []
     for file_path in required_files,::
     full_path = project_root / file_path
         if not full_path.exists():::
- = missing_files.append(file_path)
+= missing_files.append(file_path)
 
     if missing_files,::
     print(f"❌ 缺少文件, {missing_files}")
@@ -46,21 +46,21 @@ def check_config_files():
 
     config_dir = project_root / "training" / "configs"
     if not config_dir.exists():::
- = print("❌ 配置目录不存在")
+= print("❌ 配置目录不存在")
     return False
 
     # 检查必要的配置文件
-    required_configs = [
+    required_configs = []
     "training_config.json",
     "training_preset.json",
     "performance_config.json"
-    ]
+[    ]
 
     missing_configs = []
     for config_file in required_configs,::
     full_path = config_dir / config_file
         if not full_path.exists():::
- = missing_configs.append(config_file)
+= missing_configs.append(config_file)
 
     if missing_configs,::
     print(f"⚠️  缺少配置文件, {missing_configs}")
@@ -76,7 +76,7 @@ def check_model_directory():
 
     models_dir = project_root / "training" / "models"
     if not models_dir.exists():::
- = print("ℹ️  模型目录不存在,将创建...")
+= print("ℹ️  模型目录不存在,将创建...")
         try,
 
             models_dir.mkdir(parents == True, exist_ok == True)
@@ -95,17 +95,17 @@ def check_training_scripts():
     print("🤖 检查训练脚本...")
 
     # 检查主要的训练脚本
-    training_scripts = [
+    training_scripts = []
     "run_auto_training.py",
     "auto_train.bat",
     "incremental_train.bat"
-    ]
+[    ]
 
     missing_scripts = []
     for script in training_scripts,::
     full_path = project_root / "training" / script
         if not full_path.exists():::
- = missing_scripts.append(script)
+= missing_scripts.append(script)
 
     if missing_scripts,::
     print(f"⚠️  缺少训练脚本, {missing_scripts}")
@@ -131,19 +131,19 @@ def check_imports():
     print(f"❌ 导入检查出错, {e}")
     return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🚀 开始简化系统健康检查")
     print("=" * 50)
 
     # 运行各项检查
-    checks = [
+    checks = []
     ("核心组件", check_core_components),
     ("配置文件", check_config_files),
     ("模型目录", check_model_directory),
     ("训练脚本", check_training_scripts),
     ("关键导入", check_imports)
-    ]
+[    ]
 
     passed = 0
     total = len(checks)

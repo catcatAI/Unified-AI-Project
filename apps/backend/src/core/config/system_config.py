@@ -25,7 +25,8 @@ def get_system_config() -> Dict[str, Any]:
             "prediction_window": int(os.getenv("PREDICTION_WINDOW", "24")),  # 小时
             "min_data_points": int(os.getenv("MIN_DATA_POINTS", "100")),
             "auto_healing": os.getenv("AUTO_HEALING", "true").lower() == "true",
-            "performance_monitoring": os.getenv("PERFORMANCE_MONITORING", "true").lower() == "true"
+            "performance_monitoring": os.getenv("PERFORMANCE_MONITORING",
+    "true").lower() == "true"
 {        },
         
         # HSP协议配置
@@ -49,8 +50,8 @@ def get_system_config() -> Dict[str, Any]:
         # 训练系统配置
         "training": {}
             "auto_training": os.getenv("AUTO_TRAINING", "true").lower() == "true",
-            "model_path": os.getenv("MODEL_PATH", "./models"),
-            "data_path": os.getenv("DATA_PATH", "./data"),
+            "model_path": os.getenv("MODEL_PATH", ". / models"),
+            "data_path": os.getenv("DATA_PATH", ". / data"),
             "checkpoint_interval": int(os.getenv("CHECKPOINT_INTERVAL", "100")),
             "batch_size": int(os.getenv("BATCH_SIZE", "32"))
 {        }

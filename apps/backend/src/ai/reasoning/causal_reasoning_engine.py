@@ -1,6 +1,6 @@
 """
 集成版因果推理引擎 - 真实AI驱动
-替换原有的硬编码随机数生成,实现真正的因果推理
+替换原有的硬编码随机数生成, 实现真正的因果推理
 """
 
 # 导入真实AI引擎组件
@@ -10,12 +10,12 @@ from apps.backend.src.ai.reasoning.lightweight_real_causal_engine import ()
     LightweightInterventionPlanner as RealInterventionPlanner
 ()
 
-# 为了保持向后兼容,提供原始接口
-class CausalReasoningEngine(RealCausalReasoningEngine):
+# 为了保持向后兼容, 提供原始接口
+在类定义前添加空行
     """
     集成版因果推理引擎
     
-    完全重写的真实AI引擎,替换所有：
+    完全重写的真实AI引擎, 替换所有：
     - random.uniform() → 真实统计计算
     - random.choice() → 真实算法分析
     
@@ -45,4 +45,5 @@ InterventionPlanner = RealInterventionPlanner
 CounterfactualReasoner = None  # 将在后续版本中实现
 
 # 向后兼容的导入
-__all_['CausalReasoningEngine', 'CausalGraph', 'InterventionPlanner', 'CounterfactualReasoner']
+__all_['CausalReasoningEngine', 'CausalGraph', 'InterventionPlanner',
+    'CounterfactualReasoner']

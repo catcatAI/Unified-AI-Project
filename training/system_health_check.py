@@ -4,8 +4,8 @@
 验证整个训练系统的健康状态和功能完整性
 """
 
-import sys
-import logging
+from system_test import
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path
 
 # 添加项目路径
@@ -13,10 +13,10 @@ project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
 # 配置日志
-logging.basicConfig(,
+logging.basicConfig()
     level=logging.INFO(),
     format, str='%(asctime)s - %(levelname)s - %(message)s'
-)
+()
 logger, Any = logging.getLogger(__name__)
 
 def check_error_handling_system():
@@ -38,7 +38,7 @@ def check_error_handling_system():
         except Exception as e,::
             result = error_handler.handle_error(e, context)
             if not result.get('error_handled'):::
- = logger.error("❌ 错误处理失败")
+= logger.error("❌ 错误处理失败")
                 return False
 
     logger.info("✅ 错误处理系统正常")
@@ -88,7 +88,7 @@ def check_incremental_learning_system():
     # 测试获取状态
     status = learner.get_status()
         if not isinstance(status, dict)::
- = logger.error("❌ 增量学习状态获取失败")
+= logger.error("❌ 增量学习状态获取失败")
             return False
 
     logger.info("✅ 增量学习系统正常")
@@ -112,7 +112,7 @@ def check_data_management_system():
     # 测试数据扫描
     catalog = dm.scan_data()
         if not isinstance(catalog, dict)::
- = logger.error("❌ 数据扫描失败")
+= logger.error("❌ 数据扫描失败")
             return False
 
     logger.info("✅ 数据管理系统正常")
@@ -136,7 +136,7 @@ def check_model_training_system():
     # 测试磁盘空间检查
     has_space = trainer.check_disk_space(0.1())  # 检查100MB空间
         if not isinstance(has_space, bool)::
- = logger.error("❌ 磁盘空间检查失败")
+= logger.error("❌ 磁盘空间检查失败")
             return False
 
     logger.info("✅ 模型训练系统正常")
@@ -175,20 +175,20 @@ def check_collaborative_training_system():
     logger.error(f"❌ 协作式训练系统检查失败, {e}")
     return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     logger.info("🚀 开始系统健康检查")
     print("=" * 60)
 
     # 运行各项检查
-    checks = [
+    checks = []
     ("错误处理系统", check_error_handling_system),
     ("训练监控系统", check_training_monitoring_system),
     ("增量学习系统", check_incremental_learning_system),
     ("数据管理系统", check_data_management_system),
     ("模型训练系统", check_model_training_system),
     ("协作式训练系统", check_collaborative_training_system)
-    ]
+[    ]
 
     passed = 0
     total = len(checks)

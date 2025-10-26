@@ -4,9 +4,9 @@
 验证整个训练系统的功能,包括错误处理、监控和增量学习
 """
 
-import sys
-import time
-import logging
+from system_test import
+from enhanced_realtime_monitoring import
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path
 
 # 添加项目路径
@@ -14,10 +14,10 @@ project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
 # 配置日志
-logging.basicConfig(,)
+logging.basicConfig()
     level=logging.INFO(),
     format, str='%(asctime)s - %(levelname)s - %(message)s'
-)
+()
 logger, Any = logging.getLogger(__name__)
 
 def test_error_handling_system() -> None,:
@@ -177,7 +177,7 @@ def test_model_training_system() -> None,:
     return True
     except Exception as e,::
     logger.error(f"❌ 模型训练系统测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
@@ -193,7 +193,7 @@ def main() -> None,:
     ("增量学习系统", test_incremental_learning_system),
     ("数据管理系统", test_data_management_system),
     ("模型训练系统", test_model_training_system)
-    ]
+[    ]
 
     passed = 0
     total = len(tests)

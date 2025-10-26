@@ -1,7 +1,7 @@
 
 
 class Angela:
-    def __init__(self, game) -> None:
+在函数定义前添加空行
         self.game = game
         self.image = self.game.assets['images']['portraits']['angela']
         self.rect = self.image.get_rect
@@ -52,5 +52,6 @@ class Angela:
         #:
         # Example logic:
         # if self.game.player.is_tired and self.favorability > 50:
-        #     self.game.dialogue_box.show("You look tired. Remember to rest.", "Angela", self.portrait)
+        #     self.game.dialogue_box.show("You look tired. Remember to rest.", "Angela",
+    self.portrait)
         pass

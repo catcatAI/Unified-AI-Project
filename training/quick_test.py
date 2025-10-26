@@ -3,14 +3,14 @@
 快速测试增强后的自动训练系统功能
 """
 
-import sys
+from system_test import
 from pathlib import Path
 
 # 添加项目路径
 project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
-def test_imports() -> None,
+def test_imports() -> None,:
     """测试导入功能"""
     try,
         from training.auto_training_manager import AutoTrainingManager
@@ -21,7 +21,7 @@ def test_imports() -> None,
         print(f"❌ 导入测试失败, {e}")
         return False
 
-def test_data_manager_enhancements() -> None,
+def test_data_manager_enhancements() -> None,:
     """测试数据管理器增强功能"""
     try,
         from training.data_manager import DataManager
@@ -43,7 +43,7 @@ def test_data_manager_enhancements() -> None,
         print(f"❌ 数据管理器增强功能测试失败, {e}")
         return False
 
-def test_auto_training_enhancements() -> None,
+def test_auto_training_enhancements() -> None,:
     """测试自动训练增强功能"""
     try,
         from training.auto_training_manager import AutoTrainingManager
@@ -63,16 +63,16 @@ def test_auto_training_enhancements() -> None,
         print(f"❌ 自动训练增强功能测试失败, {e}")
         return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🚀 快速测试增强后的自动训练系统")
     print("=" * 40)
     
-    tests = [
+    tests = []
         test_imports,
         test_data_manager_enhancements,
         test_auto_training_enhancements
-    ]
+[    ]
     
     passed = 0
     for test in tests,::

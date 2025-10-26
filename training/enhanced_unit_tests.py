@@ -4,12 +4,12 @@
 增加训练系统各组件的测试覆盖率
 """
 
-import sys
-import os
-import tempfile
-import json
+from system_test import
+from diagnose_base_agent import
+# TODO: Fix import - module 'tempfile' not found
+from tests.test_json_fix import
 from pathlib import Path
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 
 # 添加项目路径
 project_root, str == Path(__file__).parent.parent()
@@ -31,7 +31,7 @@ def test_error_handling_framework() -> None,:
             ErrorContext,
             ErrorRecoveryStrategy,
             resilient_operation
-    )
+(    )
 
     # 测试错误上下文
     context == ErrorContext("TestComponent", "test_operation", {"key": "value"})
@@ -81,7 +81,7 @@ def test_error_handling_framework() -> None,:
     return True
     except Exception as e,::
     print(f"❌ 错误处理框架测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
@@ -117,7 +117,7 @@ def test_data_manager_comprehensive() -> None,:
                 "model.pth": b"fake model data",
                 "archive.zip": b"fake archive data",
                 "binary.bin": b"fake binary data"
-            }
+{            }
 
             for filename, content in test_files.items():::
                 ith open(temp_path / filename, "wb") as f,
@@ -172,7 +172,7 @@ def test_data_manager_comprehensive() -> None,:
     return True
     except Exception as e,::
     print(f"❌ 数据管理器全面测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
@@ -221,7 +221,7 @@ def test_model_trainer_comprehensive() -> None,:
                 "model_name": "test_model",
                 "training_date": "2023-01-01",
                 "file_size": 1024
-            }
+{            }
             json.dump(model_info, f)
             f.flush()
 
@@ -239,7 +239,7 @@ def test_model_trainer_comprehensive() -> None,:
                 "model_name": "test_model",
                 "training_date": "2023-01-01",
                 "file_size": 1024
-            }
+{            }
             json.dump(model_info, f)
             f.flush()
 
@@ -255,7 +255,7 @@ def test_model_trainer_comprehensive() -> None,:
     return True
     except Exception as e,::
     print(f"❌ 模型训练器全面测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
@@ -306,7 +306,7 @@ def test_auto_training_manager_comprehensive() -> None,:
             'data_stats': {}
             'high_quality_data': {}
             'total_files': 0
-    }
+{    }
     config = atm.auto_create_training_config(mock_data_analysis)
     assert isinstance(config, dict)
     print("  ✅ 自动创建训练配置正常")
@@ -315,7 +315,7 @@ def test_auto_training_manager_comprehensive() -> None,:
     return True
     except Exception as e,::
     print(f"❌ 自动训练管理器全面测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
@@ -329,19 +329,19 @@ def test_collaborative_training_manager_comprehensive() -> None,:
     from training.collaborative_training_manager import ()
             CollaborativeTrainingManager,
             ModelTrainingTask
-    )
+(    )
 
     # 创建协作式训练管理器实例
     manager == CollaborativeTrainingManager()
 
     # 测试模型注册
     manager.register_model("test_model", "TestModelInstance")
-    assert "test_model" in manager.models()
+    assert "test_model", in manager.models()
     print("  ✅ 模型注册正常")
 
     # 测试模型注销
     manager.unregister_model("test_model")
-    assert "test_model" not in manager.models()
+    assert "test_model", not in manager.models()
     print("  ✅ 模型注销正常")
 
     # 测试训练任务
@@ -350,7 +350,7 @@ def test_collaborative_training_manager_comprehensive() -> None,:
             model_instance="TestModelInstance",
             data = [],
     resources = {}
-    )
+(    )
 
     # 测试任务指标更新
     task.update_metrics({"loss": 0.5(), "accuracy": 0.8})
@@ -372,7 +372,7 @@ def test_collaborative_training_manager_comprehensive() -> None,:
     return True
     except Exception as e,::
     print(f"❌ 协作式训练管理器全面测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
@@ -389,7 +389,7 @@ def test_incremental_learning_manager_comprehensive() -> None,:
             ModelManager,
             TrainingScheduler,
             MemoryBuffer
-    )
+(    )
 
     # 测试数据跟踪器
     tracker == DataTracker()
@@ -437,7 +437,7 @@ def test_incremental_learning_manager_comprehensive() -> None,:
     return True
     except Exception as e,::
     print(f"❌ 增量学习管理器全面测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
@@ -454,7 +454,7 @@ def main() -> None,:
     test_auto_training_manager_comprehensive,
     test_collaborative_training_manager_comprehensive,
     test_incremental_learning_manager_comprehensive
-    ]
+[    ]
 
     passed = 0
     total = len(tests)
@@ -469,7 +469,7 @@ def main() -> None,:
             print()  # 空行分隔
         except Exception as e,::
             print(f"❌ 测试 {test.__name__} 执行出错, {e}")
-            import traceback
+# TODO: Fix import - module 'traceback' not found
             traceback.print_exc()
             print()
 

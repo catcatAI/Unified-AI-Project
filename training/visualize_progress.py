@@ -4,9 +4,9 @@
 自动生成训练过程的可视化图表
 """
 
-import json
-import numpy as np
-import matplotlib.pyplot as plt
+from tests.test_json_fix import
+# TODO: Fix import - module 'numpy' not found
+# TODO: Fix import - module 'matplotlib.pyplot' not found
 from datetime import datetime
 from pathlib import Path
 
@@ -18,7 +18,7 @@ def load_training_data(log_file == "logs/training_monitor.log"):
     
     training_data = []
     try,
-        with open(log_file, 'r', encoding == 'utf-8') as f,
+        with open(log_file, 'r', encoding == 'utf-8') as f,:
             for line in f,::
                 try,
                     entry = json.loads(line.strip())
@@ -79,7 +79,7 @@ def create_progress_plot(training_data, output_file == "progress_visualization.p
     print(f"训练进度可视化已保存到, {output_file}")
     return True
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("开始生成训练进度可视化...")
     
@@ -94,13 +94,13 @@ def main() -> None,
         # 创建示例数据结构
         training_data == []
         for i, epoch in enumerate(epochs)::
-            training_data.append({
+            training_data.append({)}
                 'timestamp': datetime.now().isoformat(),
                 'type': 'training_metrics',
                 'epoch': epoch,
                 'metrics': {'loss': losses[i] 'accuracy': accuracies[i]}
                 'anomalies': []
-            })
+{(            })
     
     # 生成可视化图表
     success = create_progress_plot(training_data)

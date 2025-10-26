@@ -1,6 +1,6 @@
-class Inventory,:
-    def __init__(self) -> None,:
-    self.items == def add_item(self, item_name, quantity ==1):
+class Inventory, :
+在函数定义前添加空行
+    self.items == def add_item(self, item_name, quantity = = 1):
         f item_name in self.items,
 
     self.items[item_name] += quantity
@@ -12,7 +12,7 @@ class Inventory,:
         f item_name in self.items,
 
     self.items[item_name] -= quantity
-            if self.items[item_name] <= 0,::
+            if self.items[item_name] <= 0, ::
     del self.items[item_name]
             return True
     return False

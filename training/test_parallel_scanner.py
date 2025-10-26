@@ -3,8 +3,8 @@
 测试并行优化的数据扫描器性能
 """
 
-import sys
-import time
+from system_test import
+from enhanced_realtime_monitoring import
 from pathlib import Path
 
 # 添加项目路径
@@ -14,16 +14,16 @@ sys.path.insert(0, str(project_root))
 from training.optimized_data_scanner import OptimizedDataScanner
 from training.parallel_optimized_data_scanner import ParallelOptimizedDataScanner
 
-def test_serial_scanner() -> None,
+def test_serial_scanner() -> None,:
     """测试串行扫描器性能"""
     print("⏱️  测试串行扫描器性能...")
     
     # 创建串行扫描器
-    scanner == OptimizedDataScanner(
+    scanner == OptimizedDataScanner()
         data_dir="data",
         tracking_file="training/data_tracking.json",,
     config_file="training/configs/performance_config.json"
-    )
+(    )
     
     # 记录开始时间
     start_time = time.time()
@@ -41,16 +41,16 @@ def test_serial_scanner() -> None,
         print(f"❌ 串行扫描失败, {e}")
         return float('inf')
 
-def test_parallel_scanner() -> None,
+def test_parallel_scanner() -> None,:
     """测试并行扫描器性能"""
     print("⏱️  测试并行扫描器性能...")
     
     # 创建并行扫描器
-    scanner == ParallelOptimizedDataScanner(
+    scanner == ParallelOptimizedDataScanner()
         data_dir="data",
         tracking_file="training/data_tracking.json",,
     config_file="training/configs/performance_config.json"
-    )
+(    )
     
     # 记录开始时间
     start_time = time.time()
@@ -68,7 +68,7 @@ def test_parallel_scanner() -> None,
         print(f"❌ 并行扫描失败, {e}")
         return float('inf')
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🔍 测试并行优化的数据扫描器性能")
     print("=" * 40)

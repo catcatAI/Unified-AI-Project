@@ -16,7 +16,8 @@ class ParameterExtractor:
         """
         self.repo_id = repo_id
 
-    def download_model_parameters(self, filename: str, cache_dir: str = "model_cache") -> str:
+    def download_model_parameters(self, filename: str,
+    cache_dir: str = "model_cache") -> str:
         """
         Downloads model parameters from the Hugging Face Hub.
 
@@ -29,9 +30,10 @@ class ParameterExtractor:
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
 
-        return hf_hub_download(repo_id=self.repo_id, filename=filename, cache_dir=cache_dir)
+        return hf_hub_download(repo_id = self.repo_id, filename = filename, cache_dir = cache_dir)
 
-    def map_parameters(self, source_params: Dict[str, Any], mapping_rules: Dict[str, str]) -> Dict[str, Any]:
+    def map_parameters(self, source_params: Dict[str, Any], mapping_rules: Dict[str,
+    str]) -> Dict[str, Any]:
         """
         Maps parameters from a source model to a target model.
 
@@ -55,7 +57,7 @@ class ParameterExtractor:
             model (Any) The model to load the parameters into.
             params (Dict[str, Any]) The parameters to load.
         """
-        # This is a simplified implementation. In a real-world scenario, you would
+        # This is a simplified implementation. In a real - world scenario, you would
         # need to handle different model types and parameter loading mechanisms.
         if hasattr(model, "load_state_dict"):
             model.load_state_dict(params)

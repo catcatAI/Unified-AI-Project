@@ -11,14 +11,14 @@ try:
 # TODO: Fix import - module 'redis.asyncio' not found
     REDIS_AVAILABLE = True
 except ImportError:
-    logger.warning("Redis.asyncio not found. IntelligentOpsManager will run in in-memory mode for Redis-dependent features.")
+    logger.warning("Redis.asyncio not found. IntelligentOpsManager will run in in - memory mode for Redis - dependent features.")
 
 NUMPY_AVAILABLE = False
 try:
 # TODO: Fix import - module 'numpy' not found
     NUMPY_AVAILABLE = True
 except ImportError:
-    logger.warning("Numpy not found. IntelligentOpsManager will use simpler calculations for numpy-dependent features.")
+    logger.warning("Numpy not found. IntelligentOpsManager will use simpler calculations for numpy - dependent features.")
 
 from .ai_ops_engine import
 from .predictive_maintenance import
@@ -28,10 +28,11 @@ from .capacity_planner import
 logger = logging.getLogger(__name__)
 
 @dataclass
-class OpsInsight:
+在类定义前添加空行
     """运维洞察"""
     insight_id: str
-    insight_type: str  # anomaly, performance, capacity, maintenance, system_health, pattern
+    insight_type: str  # anomaly, performance, capacity, maintenance, system_health,
+    pattern
     severity: str  # low, medium, high, critical
     title: str
     description: str
@@ -51,8 +52,8 @@ class IntelligentOpsManager:
         self.predictive_maintenance: Optional[PredictiveMaintenanceEngine] = None
         self.performance_optimizer: Optional[PerformanceOptimizer] = None
         self.capacity_planner: Optional[CapacityPlanner] = None
-        self.ops_insights: List[OpsInsight] = [] # In-memory storage for insights
-        self.action_history: List[Dict[str, Any]] = [] # In-memory storage for auto actions
+        self.ops_insights: List[OpsInsight] = [] # In - memory storage for insights
+        self.action_history: List[Dict[str, Any]] = [] # In - memory storage for auto actions
         
         # 可用性标志
         self.redis_available = REDIS_AVAILABLE
@@ -73,16 +74,16 @@ class IntelligentOpsManager:
             if self.redis_available:
                 try:
                     self.redis_client = redis.Redis()
-                        host=self.config.get('redis_host', 'localhost'),
-                        port=self.config.get('redis_port', 6379),
-                        db=self.config.get('redis_db', 0),
-                        decode_responses=True
+                        host = self.config.get('redis_host', 'localhost'),
+                        port = self.config.get('redis_port', 6379),
+                        db = self.config.get('redis_db', 0),
+                        decode_responses = True
 (                    )
                     # 测试连接
                     await self.redis_client.ping()
                     logger.info("Redis连接成功")
                 except Exception as e:
-                    logger.warning(f"Redis连接失败,使用内存模式: {e}")
+                    logger.warning(f"Redis连接失败, 使用内存模式: {e}")
                     self.redis_client = None
                     self.redis_available = False
             
@@ -108,53 +109,57 @@ class IntelligentOpsManager:
             try:
                 await self.ai_ops_engine.initialize()
             except Exception:
-                logger.warning("AI运维引擎初始化失败,继续使用默认配置")
+                logger.warning("AI运维引擎初始化失败, 继续使用默认配置")
             
             # 初始化预测性维护
             self.predictive_maintenance = PredictiveMaintenanceEngine(self.config)
             try:
                 await self.predictive_maintenance.initialize()
             except Exception:
-                logger.warning("预测性维护初始化失败,继续使用默认配置")
+                logger.warning("预测性维护初始化失败, 继续使用默认配置")
             
             # 初始化性能优化器
             self.performance_optimizer = PerformanceOptimizer(self.config)
             try:
                 await self.performance_optimizer.initialize()
             except Exception:
-                logger.warning("性能优化器初始化失败,继续使用默认配置")
+                logger.warning("性能优化器初始化失败, 继续使用默认配置")
             
             # 初始化容量规划器
             self.capacity_planner = CapacityPlanner(self.config)
             try:
                 await self.capacity_planner.initialize()
             except Exception:
-                logger.warning("容量规划器初始化失败,继续使用默认配置")
+                logger.warning("容量规划器初始化失败, 继续使用默认配置")
             
             logger.info("AI运维组件初始化完成")
         except Exception as e:
             logger.error(f"AI运维组件初始化失败: {e}")
             raise
     
-    async def collect_system_metrics(self, component_id: str, component_type: str, metrics: Dict[str, float]):
+    async def collect_system_metrics(self, component_id: str, component_type: str,
+    metrics: Dict[str, float]):
         """收集系统指标"""
         try:
             # 分发到各个组件
             if self.ai_ops_engine:
                 try:
-                    await self.ai_ops_engine.collect_system_metrics(component_id, component_type, metrics)
+                    await self.ai_ops_engine.collect_system_metrics(component_id,
+    component_type, metrics)
                 except Exception:
                     pass
             
             if self.predictive_maintenance:
                 try:
-                    await self.predictive_maintenance.collect_component_metrics(component_id, component_type, metrics)
+                    await self.predictive_maintenance.collect_component_metrics(componen\
+    t_id, component_type, metrics)
                 except Exception:
                     pass
             
             if self.performance_optimizer:
                 try:
-                    await self.performance_optimizer.collect_performance_metrics(component_id, component_type, metrics)
+                    await self.performance_optimizer.collect_performance_metrics(compone\
+    nt_id, component_type, metrics)
                 except Exception:
                     pass
             
@@ -165,34 +170,40 @@ class IntelligentOpsManager:
                     pass
             
             # 生成综合洞察
-            await self._generate_comprehensive_insights(component_id, component_type, metrics)
+            await self._generate_comprehensive_insights(component_id, component_type,
+    metrics)
             
         except Exception as e:
             logger.error(f"收集系统指标失败: {e}")
     
-    async def _generate_comprehensive_insights(self, component_id: str, component_type: str, metrics: Dict[str, float]):
+    async def _generate_comprehensive_insights(self, component_id: str,
+    component_type: str, metrics: Dict[str, float]):
         """生成综合运维洞察"""
         try:
             insights: List[OpsInsight] = []
             
             # 分析异常
             if self.ai_ops_engine:
-                anomaly_insights = await self._analyze_anomalies(component_id, component_type, metrics)
+                anomaly_insights = await self._analyze_anomalies(component_id,
+    component_type, metrics)
                 insights.extend(anomaly_insights)
             
             # 分析性能
             if self.performance_optimizer:
-                performance_insights = await self._analyze_performance(component_id, component_type, metrics)
+                performance_insights = await self._analyze_performance(component_id,
+    component_type, metrics)
                 insights.extend(performance_insights)
             
             # 分析容量
             if self.capacity_planner:
-                capacity_insights = await self._analyze_capacity(component_id, component_type, metrics)
+                capacity_insights = await self._analyze_capacity(component_id,
+    component_type, metrics)
                 insights.extend(capacity_insights)
             
             # 分析维护需求
             if self.predictive_maintenance:
-                maintenance_insights = await self._analyze_maintenance_needs(component_id, component_type, metrics)
+                maintenance_insights = await self._analyze_maintenance_needs(component_i\
+    d, component_type, metrics)
                 insights.extend(maintenance_insights)
             
             # 保存和通知洞察
@@ -203,28 +214,30 @@ class IntelligentOpsManager:
         except Exception as e:
             logger.error(f"生成综合洞察失败: {e}")
     
-    async def _analyze_anomalies(self, component_id: str, component_type: str, metrics: Dict[str, float]) -> List[OpsInsight]:
+    async def _analyze_anomalies(self, component_id: str, component_type: str,
+    metrics: Dict[str, float]) -> List[OpsInsight]:
         """分析异常"""
         insights: List[OpsInsight] = []
         
         try:
             if self.ai_ops_engine:
                 # 获取AI运维引擎的异常检测结果
-                anomalies = await self.ai_ops_engine.detect_anomalies(component_id, metrics)
+                anomalies = await self.ai_ops_engine.detect_anomalies(component_id,
+    metrics)
                 
                 for anomaly in anomalies:
                     if anomaly.severity.value in ['high', 'critical']:
                         insight = OpsInsight()
-                            insight_id=f"anomaly_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
-                            insight_type="anomaly",
-                            severity=anomaly.severity.value,
-                            title=f"检测到异常: {anomaly.anomaly_type}",
-                            description=anomaly.description,
-                            affected_components=[component_id],
-                            recommendations=anomaly.recommended_actions,
-                            confidence=anomaly.confidence,
-                            timestamp=datetime.now(timezone.utc()),
-(                            auto_actionable=anomaly.confidence > self.auto_action_threshold)
+                            insight_id = f"anomaly_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                            insight_type = "anomaly",
+                            severity = anomaly.severity.value,
+                            title = f"检测到异常: {anomaly.anomaly_type}",
+                            description = anomaly.description,
+                            affected_components = [component_id],
+                            recommendations = anomaly.recommended_actions,
+                            confidence = anomaly.confidence,
+                            timestamp = datetime.now(timezone.utc()),
+(                            auto_actionable = anomaly.confidence > self.auto_action_threshold)
                         insights.append(insight)
             
         except Exception as e:
@@ -232,14 +245,16 @@ class IntelligentOpsManager:
         
         return insights
     
-    async def _analyze_performance(self, component_id: str, component_type: str, metrics: Dict[str, float]) -> List[OpsInsight]:
+    async def _analyze_performance(self, component_id: str, component_type: str,
+    metrics: Dict[str, float]) -> List[OpsInsight]:
         """分析性能"""
         insights: List[OpsInsight] = []
         
         try:
             if self.performance_optimizer:
                 # 获取性能优化建议
-                recommendations = await self.performance_optimizer.get_optimization_recommendations(component_id)
+                recommendations = await self.performance_optimizer.get_optimization_reco\
+    mmendations(component_id)
                 
                 # 筛选高优先级建议
                 high_priority_recs = []
@@ -247,18 +262,18 @@ class IntelligentOpsManager:
                     if rec.priority in ['high', 'critical']:
 [                ]
 
-                for rec in high_priority_recs[-3:]:
+                for rec in high_priority_recs[ - 3:]:
                     insight = OpsInsight()
-                        insight_id=f"perf_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
-                        insight_type="performance",
-                        severity=rec.priority,
-                        title=f"性能优化建议: {rec.optimization_type}",
-                        description=rec.description,
-                        affected_components=[component_id],
-                        recommendations=[rec.description],
-                        confidence=0.8,
-                        timestamp=datetime.now(timezone.utc()),
-                        auto_actionable=rec.priority == 'critical'
+                        insight_id = f"perf_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                        insight_type = "performance",
+                        severity = rec.priority,
+                        title = f"性能优化建议: {rec.optimization_type}",
+                        description = rec.description,
+                        affected_components = [component_id],
+                        recommendations = [rec.description],
+                        confidence = 0.8,
+                        timestamp = datetime.now(timezone.utc()),
+                        auto_actionable = rec.priority == 'critical'
 (                    )
                     insights.append(insight)
             
@@ -267,14 +282,15 @@ class IntelligentOpsManager:
         
         return insights
     
-    async def _analyze_capacity(self, component_id: str, component_type: str, metrics: Dict[str, float]) -> List[OpsInsight]:
+    async def _analyze_capacity(self, component_id: str, component_type: str,
+    metrics: Dict[str, float]) -> List[OpsInsight]:
         """分析容量"""
         insights: List[OpsInsight] = []
         
         try:
             if self.capacity_planner:
                 # 获取容量预测
-                predictions = await self.capacity_planner.get_capacity_predictions(resource_type=component_type) # Pass component_type as resource_type
+                predictions = await self.capacity_planner.get_capacity_predictions(resource_type = component_type) # Pass component_type as resource_type
                 
                 # 筛选高紧急度预测
                 urgent_predictions = []
@@ -284,16 +300,16 @@ class IntelligentOpsManager:
 
                 for pred in urgent_predictions:
                     insight = OpsInsight()
-                        insight_id=f"capacity_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
-                        insight_type="capacity",
-                        severity=pred.urgency,
-                        title=f"容量预警: {pred.resource_type}",
-                        description=pred.recommendation,
-                        affected_components=[component_id],
-                        recommendations=[pred.recommendation],
-                        confidence=pred.confidence,
-                        timestamp=datetime.now(timezone.utc()),
-                        auto_actionable=pred.urgency == 'critical'
+                        insight_id = f"capacity_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                        insight_type = "capacity",
+                        severity = pred.urgency,
+                        title = f"容量预警: {pred.resource_type}",
+                        description = pred.recommendation,
+                        affected_components = [component_id],
+                        recommendations = [pred.recommendation],
+                        confidence = pred.confidence,
+                        timestamp = datetime.now(timezone.utc()),
+                        auto_actionable = pred.urgency == 'critical'
 (                    )
                     insights.append(insight)
             
@@ -302,27 +318,29 @@ class IntelligentOpsManager:
         
         return insights
     
-    async def _analyze_maintenance_needs(self, component_id: str, component_type: str, metrics: Dict[str, float]) -> List[OpsInsight]:
+    async def _analyze_maintenance_needs(self, component_id: str, component_type: str,
+    metrics: Dict[str, float]) -> List[OpsInsight]:
         """分析维护需求"""
         insights: List[OpsInsight] = []
         
         try:
             if self.predictive_maintenance:
                 # 获取组件健康状态
-                health = await self.predictive_maintenance.get_component_health(component_id)
+                health = await self.predictive_maintenance.get_component_health(componen\
+    t_id)
                 
                 if health and health.health_score < 60:  # 健康分数低于60:
                     insight = OpsInsight()
-                        insight_id=f"maint_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
-                        insight_type="maintenance",
-                        severity="high" if health.health_score < 40 else "medium",
-                        title=f"维护需求: {component_id}",
-                        description=health.maintenance_recommendation,
-                        affected_components=[component_id],
-                        recommendations=[health.maintenance_recommendation],
-                        confidence=0.9,
-                        timestamp=datetime.now(timezone.utc()),
-                        auto_actionable=health.health_score < 40
+                        insight_id = f"maint_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                        insight_type = "maintenance",
+                        severity = "high" if health.health_score < 40 else "medium",
+                        title = f"维护需求: {component_id}",
+                        description = health.maintenance_recommendation,
+                        affected_components = [component_id],
+                        recommendations = [health.maintenance_recommendation],
+                        confidence = 0.9,
+                        timestamp = datetime.now(timezone.utc()),
+                        auto_actionable = health.health_score < 40
 (                    )
                     insights.append(insight)
             
@@ -377,7 +395,7 @@ class IntelligentOpsManager:
                     json.dumps(notification)
 (                )
             
-            # 如果是可自动执行的洞察,触发自动操作
+            # 如果是可自动执行的洞察, 触发自动操作
             if insight.auto_actionable and self.auto_healing_enabled:
                 await self._execute_auto_action(insight)
             
@@ -409,7 +427,7 @@ class IntelligentOpsManager:
                 # 执行维护操作
                 success = await self._execute_maintenance_action(insight)
             else:
-                logger.warning(f"未知洞察类型,无法执行自动操作: {insight.insight_type}")
+                logger.warning(f"未知洞察类型, 无法执行自动操作: {insight.insight_type}")
                 success = False
             
             action_record['status'] = 'completed' if success else 'failed'
@@ -444,11 +462,12 @@ class IntelligentOpsManager:
         """执行性能优化"""
         try:
             if not self.performance_optimizer:
-                logger.warning("Performance Optimizer not initialized, skipping performance optimization.")
+                logger.warning("Performance Optimizer not initialized,
+    skipping performance optimization.")
                 return False
 
             # 获取性能优化建议并实施
-            recommendations = await self.performance_optimizer.get_optimization_recommendations(component_id=insight.affected_components[0] if insight.affected_components else None)
+            recommendations = await self.performance_optimizer.get_optimization_recommendations(component_id = insight.affected_components[0] if insight.affected_components else None)
             
             for rec in recommendations:
                 if rec.component_id in insight.affected_components:
@@ -466,11 +485,12 @@ class IntelligentOpsManager:
         """执行容量扩容"""
         try:
             if not self.capacity_planner:
-                logger.warning("Capacity Planner not initialized, skipping capacity scaling.")
+                logger.warning("Capacity Planner not initialized,
+    skipping capacity scaling.")
                 return False
 
             # 获取扩容计划并执行
-            plans = await self.capacity_planner.get_scaling_plans(resource_type=insight.affected_components[0] if insight.affected_components else None)
+            plans = await self.capacity_planner.get_scaling_plans(resource_type = insight.affected_components[0] if insight.affected_components else None)
             
             for plan in plans:
                 if plan.auto_approve:
@@ -488,14 +508,16 @@ class IntelligentOpsManager:
         """执行维护操作"""
         try:
             if not self.predictive_maintenance:
-                logger.warning("Predictive Maintenance Engine not initialized, skipping maintenance action.")
+                logger.warning("Predictive Maintenance Engine not initialized,
+    skipping maintenance action.")
                 return False
 
             # 获取维护计划并执行
-            schedules = await self.predictive_maintenance.get_maintenance_schedules(component_id=insight.affected_components[0] if insight.affected_components else None)
+            schedules = await self.predictive_maintenance.get_maintenance_schedules(component_id = insight.affected_components[0] if insight.affected_components else None)
             
             for schedule in schedules:
-                if schedule.component_id in insight.affected_components and schedule.auto_approve:
+                if schedule.component_id in insight.affected_components and \
+    schedule.auto_approve:
                     await self.predictive_maintenance.approve_maintenance()
                         schedule.schedule_id,
                         "intelligent_ops_manager"
@@ -528,7 +550,7 @@ class IntelligentOpsManager:
         """收集所有组件指标"""
         try:
             # 这里应该从监控系统获取所有组件的指标
-            # 简化实现,模拟收集
+            # 简化实现, 模拟收集
             components = []
                 {'id': 'api_server_1', 'type': 'api_server'},
                 {'id': 'database_1', 'type': 'database'},
@@ -539,11 +561,16 @@ class IntelligentOpsManager:
             for component in components:
                 # 模拟指标数据
                 metrics = {}
-                    'cpu_usage': 50 + (np.random.random() * 30 if self.numpy_available else 0),
-                    'memory_usage': 60 + (np.random.random() * 20 if self.numpy_available else 0),
-                    'response_time': 100 + (np.random.random() * 200 if self.numpy_available else 0),
-                    'error_rate': (np.random.random() * 2 if self.numpy_available else 0),
-                    'throughput': 1000 + (np.random.random() * 500 if self.numpy_available else 0)
+                    'cpu_usage': 50 +\
+    (np.random.random() * 30 if self.numpy_available else 0),
+                    'memory_usage': 60 +\
+    (np.random.random() * 20 if self.numpy_available else 0),
+                    'response_time': 100 +\
+    (np.random.random() * 200 if self.numpy_available else 0),
+                    'error_rate': (np.random.random() *\
+    2 if self.numpy_available else 0),
+                    'throughput': 1000 +\
+    (np.random.random() * 500 if self.numpy_available else 0)
 {                }
                 
                 await self.collect_system_metrics()
@@ -563,20 +590,20 @@ class IntelligentOpsManager:
             
             if system_health['overall_score'] < 70:
                 insight = OpsInsight()
-                    insight_id=f"system_health_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                    insight_type="system_health",
-                    severity="high" if system_health['overall_score'] < 50 else "medium",
-                    title="系统健康状态预警",
-                    description=f"系统整体健康分数: {system_health['overall_score']:.1f}",
-                    affected_components=system_health['unhealthy_components'],
-                    recommendations=[]
+                    insight_id = f"system_health_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    insight_type = "system_health",
+                    severity = "high" if system_health['overall_score'] < 50 else "medium",
+                    title = "系统健康状态预警",
+                    description = f"系统整体健康分数: {system_health['overall_score']:.1f}",
+                    affected_components = system_health['unhealthy_components'],
+                    recommendations = []
                         "检查系统资源使用情况",
                         "考虑增加系统容量",
                         "优化系统配置"
 [                    ],
-                    confidence=0.85,
-                    timestamp=datetime.now(timezone.utc()),
-                    auto_actionable=system_health['overall_score'] < 50
+                    confidence = 0.85,
+                    timestamp = datetime.now(timezone.utc()),
+                    auto_actionable = system_health['overall_score'] < 50
 (                )
                 
                 await self._save_insight(insight)
@@ -602,7 +629,8 @@ class IntelligentOpsManager:
             
             # 计算整体健康分数
             health_scores = [health.health_score for health in all_health.values()]
-            overall_score = np.mean(health_scores) if self.numpy_available and health_scores else 75.0
+            overall_score = np.mean(health_scores) if self.numpy_available and \
+    health_scores else 75.0
             
             # 识别不健康组件
             unhealthy_components = []
@@ -626,11 +654,13 @@ class IntelligentOpsManager:
         """分析趋势和模式"""
         try:
             if not self.performance_optimizer or not self.capacity_planner:
-                logger.warning("Performance Optimizer or Capacity Planner not initialized, skipping trend analysis.")
+                logger.warning("Performance Optimizer or \
+    Capacity Planner not initialized, skipping trend analysis.")
                 return
 
             # 分析性能趋势
-            performance_report = await self.performance_optimizer.get_performance_report()
+            performance_report = await self.performance_optimizer.get_performance_report\
+    ()
             
             # 分析容量趋势
             capacity_report = await self.capacity_planner.get_capacity_report()
@@ -641,16 +671,16 @@ class IntelligentOpsManager:
             # 基于模式生成洞察
             for pattern in patterns:
                 insight = OpsInsight()
-                    insight_id=f"pattern_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                    insight_type="pattern",
-                    severity=pattern['severity'],
-                    title=f"模式识别: {pattern['name']}",
-                    description=pattern['description'],
-                    affected_components=pattern['affected_components'],
-                    recommendations=pattern['recommendations'],
-                    confidence=pattern['confidence'],
-                    timestamp=datetime.now(timezone.utc()),
-                    auto_actionable=False
+                    insight_id = f"pattern_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    insight_type = "pattern",
+                    severity = pattern['severity'],
+                    title = f"模式识别: {pattern['name']}",
+                    description = pattern['description'],
+                    affected_components = pattern['affected_components'],
+                    recommendations = pattern['recommendations'],
+                    confidence = pattern['confidence'],
+                    timestamp = datetime.now(timezone.utc()),
+                    auto_actionable = False
 (                )
                 
                 await self._save_insight(insight)
@@ -658,7 +688,8 @@ class IntelligentOpsManager:
         except Exception as e:
             logger.error(f"分析趋势和模式失败: {e}")
     
-    def _identify_patterns(self, performance_report: Dict, capacity_report: Dict) -> List[Dict]:
+    def _identify_patterns(self, performance_report: Dict,
+    capacity_report: Dict) -> List[Dict]:
         """识别模式和异常"""
         patterns: List[Dict] = []
         
@@ -711,7 +742,7 @@ class IntelligentOpsManager:
                 await asyncio.sleep(86400)  # 每天执行一次
                 
                 # 清理过期洞察
-                cutoff_time = datetime.now(timezone.utc()) - timedelta(days=self.insight_retention_days)
+                cutoff_time = datetime.now(timezone.utc()) - timedelta(days = self.insight_retention_days)
                 
                 # 清理内存中的洞察
                 self.ops_insights = []
@@ -721,12 +752,13 @@ class IntelligentOpsManager:
 
                 # 清理Redis中的洞察
                 if self.redis_available and self.redis_client:
-                    keys = await self.redis_client.keys("intelligent_ops:insight:*")
+                    keys = await self.redis_client.keys("intelligent_ops:insight: * ")
                     for key in keys:
                         data = await self.redis_client.get(key)
                         if data:
                             insight_dict = json.loads(data)
-                            if datetime.fromisoformat(insight_dict['timestamp']) < cutoff_time:
+                            if datetime.fromisoformat(insight_dict['timestamp']) < cutof\
+    f_time:
                                 await self.redis_client.delete(key)
                 
                 logger.info("洞察清理完成")
@@ -734,11 +766,12 @@ class IntelligentOpsManager:
             except Exception as e:
                 logger.error(f"洞察清理失败: {e}")
     
-    async def get_insights(self, insight_type: Optional[str] = None, severity: Optional[str] = None, )
+    async def get_insights(self, insight_type: Optional[str] = None,
+    severity: Optional[str] = None, )
 (                        limit: int = 50) -> List[OpsInsight]:
         """获取洞察"""
         try:
-            insights = sorted(self.ops_insights, key=lambda x: x.timestamp, reverse=True)[:limit]  # 获取最近的洞察
+            insights = sorted(self.ops_insights, key = lambda x: x.timestamp, reverse = True)[:limit]  # 获取最近的洞察
             
             # 过滤
             if insight_type:
@@ -765,7 +798,7 @@ class IntelligentOpsManager:
             system_health = await self._analyze_system_health()
             
             # 最近洞察
-            recent_insights = await self.get_insights(limit=10)
+            recent_insights = await self.get_insights(limit = 10)
             
             # 活跃告警
             active_alerts = len([)]
@@ -775,7 +808,7 @@ class IntelligentOpsManager:
             
             # 自动操作统计
             auto_actions = len([)]
-                action for action in self.action_history[-24:]  # 最近24小时
+                action for action in self.action_history[ - 24:]  # 最近24小时
                 if action['status'] == 'completed':
 [(            ])
             
@@ -842,7 +875,7 @@ class IntelligentOpsManager:
             logger.error(f"执行手动操作失败: {e}")
             return False
 
-# 全局智能运维管理器实例 (由外部统一管理,此处不再创建)
+# 全局智能运维管理器实例 (由外部统一管理, 此处不再创建)
 # intelligent_ops_manager = IntelligentOpsManager()
 
 # async def get_intelligent_ops_manager() -> IntelligentOpsManager:

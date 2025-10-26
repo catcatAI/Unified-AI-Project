@@ -1,20 +1,23 @@
-from typing_extensions import TypedDict, Required, NotRequired  # Import TypedDict from typing_extensions
+from typing_extensions import TypedDict, Required,
+    NotRequired  # Import TypedDict from typing_extensions
 from typing import Dict, Any, Optional, List, Literal, Union
 
-# For TypedDict, 'Required' is implicitly all keys unless total=False.
-# For explicit Required/Optional with total=False, Python 3.9+ can use:
-# from typing import TypedDict, Required, NotRequired (Python 3.11+)
-# For broader compatibility (3.8+ for TypedDict itself, 3.9 for Literal with TypedDict effectively):
-# We will assume Python 3.9+ as per project README. 'Required' is not a standard generic type alias.
-# Standard TypedDict: if total=True (default), all keys are required.
-# If total=False, all keys are potentially optional (NotRequired).
+# For TypedDict, 'Required' is implicitly all keys unless total = False.
+# For explicit Required / Optional with total=False, Python 3.9+ can use:
+# from typing import TypedDict, Required, NotRequired (Python 3.11 + )
+# For broader compatibility (3.8+ for TypedDict itself,
+    3.9 for Literal with TypedDict effectively):
+# We will assume Python 3.9+\
+    as per project README. 'Required' is not a standard generic type alias.
+# Standard TypedDict: if total = True (default), all keys are required.
+# If total = False, all keys are potentially optional (NotRequired).
 # To mix, you'd define multiple TypedDicts and inherit.
-# For simplicity here, we'll use `Optional` for non-mandatory fields and assume mandatory ones are checked by logic.
+# For simplicity here, we'll use `Optional` for non - mandatory fields and assume mandatory ones are checked by logic.
 # Or, use Pydantic later for proper validation.
 
-# Let's use `total=False` for payloads where many fields are optional, and:
-# `total=True` (default) for envelope parts that are mostly required.:
-class HSPMessage(TypedDict, total=False):
+# Let's use `total = False` for payloads where many fields are optional, and:
+# `total = True` (default) for envelope parts that are mostly required.:
+在类定义前添加空行
     payload: Dict[str, Any]
     message_type: str
     sender_ai_id: str
@@ -23,7 +26,7 @@ class HSPMessage(TypedDict, total=False):
     correlation_id: Optional[str]
 
 
-class HSPFactStatementStructured(TypedDict, total=False):
+class HSPFactStatementStructured(TypedDict, total = False):
     subject_uri: str  # Required if this structure is used:
     predicate_uri: str  # Required if this structure is used:
     object_literal: Any
@@ -31,20 +34,22 @@ class HSPFactStatementStructured(TypedDict, total=False):
     object_datatype: str
 
 
-class HSPOriginalSourceInfo(TypedDict, total=False):
+class HSPOriginalSourceInfo(TypedDict, total = False):
     type: str  # Required if this structure is used, e.g., "url", "document_id":
     identifier: str  # Required if this structure is used
 
-class HSPFactPayload(TypedDict, total=False):
+class HSPFactPayload(TypedDict, total = False):
     id: str  # UUID, considered required for a fact instance:
-    statement_type: Literal["natural_language", "semantic_triple", "json_ld"]  # Required
+    statement_type: Literal["natural_language", "semantic_triple",
+    "json_ld"]  # Required
     statement_nl: str
-    statement_structured: HSPFactStatementStructured | Dict[str, Any]  # Dict for json_ld:
+    statement_structured: HSPFactStatementStructured | Dict[str,
+    Any]  # Dict for json_ld:
     source_ai_id: str  # DID or URI, Required
     original_source_info: HSPOriginalSourceInfo
     timestamp_created: str  # ISO 8601 UTC, Required
     timestamp_observed: str  # ISO 8601 UTC
-    confidence_score: float  # 0.0-1.0, Required
+    confidence_score: float  # 0.0 - 1.0, Required
     weight: float  # Default 1.0
     valid_from: str  # ISO 8601 UTC
     valid_until: str  # ISO 8601 UTC
@@ -53,7 +58,7 @@ class HSPFactPayload(TypedDict, total=False):
     access_policy_id: str
 
 
-class HSPSecurityParameters(TypedDict, total=False):
+class HSPSecurityParameters(TypedDict, total = False):
     signature_algorithm: str
     signature: str
     public_key: str
@@ -61,35 +66,35 @@ class HSPSecurityParameters(TypedDict, total=False):
     timestamp_signed: str  # ISO 8601 UTC
 
 
-class HSPAcknowledgementPayload(TypedDict, total=False):
+class HSPAcknowledgementPayload(TypedDict, total = False):
     original_message_id: str  # UUID of the message being acknowledged
     status: Literal["received", "processed", "failed"]
     details: str  # Optional details about the status
     timestamp_acknowledged: str  # ISO 8601 UTC
 
 
-class HSPErrorPayload(TypedDict, total=False):
+class HSPErrorPayload(TypedDict, total = False):
     error_code: str  # e.g., "invalid_payload", "processing_failed", "timeout"
     error_message: str
     details: Dict[str, Any]  # Additional details about the error
     timestamp_error: str  # ISO 8601 UTC
 
 
-class HSPHeartbeatPayload(TypedDict, total=False):
+class HSPHeartbeatPayload(TypedDict, total = False):
     sender_ai_id: str  # DID or URI
     timestamp_sent: str  # ISO 8601 UTC
     status: str  # e.g., "healthy", "degraded", "unhealthy"
     details: Dict[str, Any]  # Optional details about status
 
 
-class HSPDiscoveryPayload(TypedDict, total=False):
+class HSPDiscoveryPayload(TypedDict, total = False):
     sender_ai_id: str  # DID or URI
     capabilities: List[str]  # List of capability IDs or names
-    version: str  # Version string of the AI/agent
+    version: str  # Version string of the AI / agent
     timestamp_sent: str  # ISO 8601 UTC
 
 
-class HSPTaskRequestPayload(TypedDict, total=False):
+class HSPTaskRequestPayload(TypedDict, total = False):
     task_id: str  # UUID for the task:
     task_type: str  # e.g., "web_search", "code_generation", "data_analysis"
     task_definition: Dict[str, Any]  # Specific parameters for the task:
@@ -102,7 +107,7 @@ class HSPTaskRequestPayload(TypedDict, total=False):
     timestamp_requested: str  # ISO 8601 UTC
 
 
-class HSPTaskResultPayload(TypedDict, total=False):
+class HSPTaskResultPayload(TypedDict, total = False):
     task_id: str  # UUID, matching the request
     status: Literal["success", "partial_success", "failed", "cancelled"]
     result: Dict[str, Any]  # The actual result data
@@ -114,17 +119,17 @@ class HSPTaskResultPayload(TypedDict, total=False):
     timestamp_completed: str  # ISO 8601 UTC
 
 
-class HSPHeartbeatRequestPayload(TypedDict, total=False):
+class HSPHeartbeatRequestPayload(TypedDict, total = False):
     sender_ai_id: str  # DID or URI
     timestamp_requested: str  # ISO 8601 UTC
 
 
-class HSPDiscoveryRequestPayload(TypedDict, total=False):
+class HSPDiscoveryRequestPayload(TypedDict, total = False):
     sender_ai_id: str  # DID or URI
     timestamp_requested: str  # ISO 8601 UTC
 
 
-class HSPRegistrationRequestPayload(TypedDict, total=False):
+class HSPRegistrationRequestPayload(TypedDict, total = False):
     ai_id: str  # DID or URI
     capabilities: List[str]  # List of capability IDs or names
     version: str  # Version string
@@ -132,34 +137,35 @@ class HSPRegistrationRequestPayload(TypedDict, total=False):
     timestamp_requested: str  # ISO 8601 UTC
 
 
-class HSPRegistrationResponsePayload(TypedDict, total=False):
+class HSPRegistrationResponsePayload(TypedDict, total = False):
     registration_id: str  # UUID for this registration:
     status: Literal["success", "failed"]
     details: str  # Optional details about the status
     timestamp_responded: str  # ISO 8601 UTC
 
 
-class HSPDeregistrationRequestPayload(TypedDict, total=False):
+class HSPDeregistrationRequestPayload(TypedDict, total = False):
     registration_id: str  # UUID from the registration response
     reason: str  # Optional reason for deregistration:
     timestamp_requested: str  # ISO 8601 UTC
 
 
-class HSPDeregistrationResponsePayload(TypedDict, total=False):
+class HSPDeregistrationResponsePayload(TypedDict, total = False):
     registration_id: str  # UUID from the registration response
     status: Literal["success", "failed"]
     details: str  # Optional details about the status
     timestamp_responded: str  # ISO 8601 UTC
 
 
-class HSPMessageEnvelope(TypedDict, total=False):
+class HSPMessageEnvelope(TypedDict, total = False):
     message_id: str  # UUID for this message:
-    message_type: Literal["task_request", "task_result", "fact", "acknowledgement", "error", "heartbeat", "heartbeat_request", "discovery", "discovery_request", "registration", "registration_request", "deregistration", "deregistration_request"]
+    message_type: Literal["task_request", "task_result", "fact", "acknowledgement",
+    "error", "heartbeat", "heartbeat_request", "discovery", "discovery_request", "registration", "registration_request", "deregistration", "deregistration_request"]
     sender_ai_id: str  # DID or URI
     recipient_ai_id: str  # DID or URI, optional for broadcast:
     payload: Dict[str, Any]  # Union of payload types above
     timestamp_sent: str  # ISO 8601 UTC
-    correlation_id: Optional[str]  # UUID for request/response correlation:
+    correlation_id: Optional[str]  # UUID for request / response correlation:
     security_parameters: HSPSecurityParameters  # Optional
 
 
@@ -209,36 +215,45 @@ class HSPDiscoveryRequest(TypedDict):
 
 
 class HSPRegistration(TypedDict):
-    envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationRequestPayload or HSPRegistrationResponsePayload
-    payload: HSPRegistrationRequestPayload | HSPRegistrationResponsePayload  # The actual registration data
+    envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationRequestPayl\
+    oad or HSPRegistrationResponsePayload
+    payload: HSPRegistrationRequestPayload | HSPRegistrationResponsePayload  # The actua\
+    l registration data
 
 
 class HSPRegistrationRequest(TypedDict):
-    envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationRequestPayload
+    envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationRequestPayl\
+    oad
     payload: HSPRegistrationRequestPayload  # The actual registration request data
 
 
 class HSPRegistrationResponse(TypedDict):
-    envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationResponsePayload
+    envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationResponsePay\
+    load
     payload: HSPRegistrationResponsePayload  # The actual registration response data
 
 
 class HSPDeregistration(TypedDict):
-    envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationRequestPayload or HSPDeregistrationResponsePayload
-    payload: HSPDeregistrationRequestPayload | HSPDeregistrationResponsePayload  # The actual deregistration data
+    envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationRequestPa\
+    yload or HSPDeregistrationResponsePayload
+    payload: HSPDeregistrationRequestPayload | HSPDeregistrationResponsePayload  # The a\
+    ctual deregistration data
 
 
 class HSPDeregistrationRequest(TypedDict):
-    envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationRequestPayload
+    envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationRequestPa\
+    yload
     payload: HSPDeregistrationRequestPayload  # The actual deregistration request data
 
 
 class HSPDeregistrationResponse(TypedDict):
-    envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationResponsePayload
+    envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationResponseP\
+    ayload
     payload: HSPDeregistrationResponsePayload  # The actual deregistration response data
 
 
-# For convenience, a union of all payload types for type hints in functions that handle any payload.
+# For convenience,
+    a union of all payload types for type hints in functions that handle any payload.
 HSPPayload = Union[]
     HSPTaskRequestPayload,
     HSPTaskResultPayload,
@@ -252,5 +267,5 @@ HSPPayload = Union[]
     HSPRegistrationRequestPayload,
     HSPRegistrationResponsePayload,
     HSPDeregistrationRequestPayload,
-    HSPDeregistrationResponsePayload,:
+    HSPDeregistrationResponsePayload, :
 [        ]

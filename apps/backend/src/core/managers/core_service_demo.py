@@ -15,7 +15,7 @@ from apps.backend.src.core.managers.service_monitor import ServiceMonitor
 
 
 # 配置日志
-logging.basicConfig(level=logging.INFO())
+logging.basicConfig(level = logging.INFO())
 logger, Any = logging.getLogger(__name__)
 
 
@@ -39,7 +39,7 @@ async def main -> None,
             class_name = "MultiLLMService",
             dependencies = ,
             lazy_load == True,
-            auto_restart == True,,
+            auto_restart == True, ,
     health_check_interval = 30.0(),
             config =
 (    )
@@ -52,7 +52,7 @@ async def main -> None,
             class_name = "HAMMemoryManager",
             dependencies = ,
             lazy_load == True,
-            auto_restart == True,,
+            auto_restart == True, ,
     health_check_interval = 60.0(),
             config =
 (    )
@@ -65,10 +65,10 @@ async def main -> None,
             class_name = "HSPConnector",
             dependencies = ,
             lazy_load == True,
-            auto_restart == True,,
+            auto_restart == True, ,
     health_check_interval = 15.0(),
             config = {}
-                "ai_id": "did,hsp,test_ai_001",
+                "ai_id": "did, hsp, test_ai_001",
                 "broker_address": "localhost",
                 "broker_port": 1883
 {            }
@@ -82,7 +82,7 @@ async def main -> None,
             class_name = "DialogueManager",
             dependencies = ["llm_service", "hsp_connector"]
             lazy_load == True,
-            auto_restart == True,,
+            auto_restart == True, ,
     health_check_interval = 30.0(),
             config =
 (    )
@@ -95,7 +95,7 @@ async def main -> None,
             class_name = "LearningManager",
             dependencies = ["llm_service", "ham_manager", "hsp_connector"]
             lazy_load == True,
-            auto_restart == True,,
+            auto_restart == True, ,
     health_check_interval = 60.0(),
             config =
 (    )
@@ -104,7 +104,7 @@ async def main -> None,
     logger.info("Services registered")
 
     # 演示懒加载
-    logger.info("=== Demonstrating Lazy Loading ===")
+    logger.info(" == = Demonstrating Lazy Loading = == ")
 
     # 加载单个服务
     logger.info("Loading LLM service...")
@@ -135,12 +135,12 @@ async def main -> None,
     logger.info(f"Service status, {status}")
 
     # 演示服务重启
-    logger.info("=== Demonstrating Service Restart ===")
+    logger.info(" == = Demonstrating Service Restart = == ")
     success = await manager.restart_service("llm_service")
     logger.info(f"LLM service restart result, {success}")
 
     # 演示批量加载
-    logger.info("=== Demonstrating Batch Loading ===")
+    logger.info(" == = Demonstrating Batch Loading = == ")
 
     # 卸载所有服务
         for service_name in ["llm_service", "hsp_connector", "dialogue_manager"]::

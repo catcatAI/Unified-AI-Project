@@ -3,9 +3,9 @@
 增强协作式训练测试脚本
 """
 
-import sys
+from system_test import
 from pathlib import Path
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 
 # 添加项目路径
 project_root, str == Path(__file__).parent.parent()
@@ -17,7 +17,7 @@ sys.path.insert(0, str(backend_path / "src"))
 logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
-def test_enhanced_collaborative_training() -> None,
+def test_enhanced_collaborative_training() -> None,:
     """测试增强的协作式训练功能"""
     logger.info("=== 测试增强的协作式训练功能 ===")
     
@@ -38,12 +38,12 @@ def test_enhanced_collaborative_training() -> None,
         
         # 测试ModelTrainingTask的增强功能
         logger.info("\n🧪 测试ModelTrainingTask增强功能...")
-        task == ModelTrainingTask(
+        task == ModelTrainingTask()
             model_name="test_model",
             model_instance="TestModelInstance",
             data = [],
     resources = {}
-        )
+(        )
         
         # 测试知识共享功能
         knowledge == {"accuracy": 0.95(), "loss": 0.05}
@@ -114,11 +114,11 @@ def test_enhanced_collaborative_training() -> None,
         
     except Exception as e,::
         logger.error(f"❌ 测试过程中发生错误, {e}")
-        import traceback
+# TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
-def test_training_integration() -> None,
+def test_training_integration() -> None,:
     """测试训练集成"""
     logger.info("\n=测试训练集成 ===")
     
@@ -163,11 +163,11 @@ def test_training_integration() -> None,
         
     except Exception as e,::
         logger.error(f"❌ 训练集成测试过程中发生错误, {e}")
-        import traceback
+# TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     logger.info("开始测试增强的协作式训练功能...")
     

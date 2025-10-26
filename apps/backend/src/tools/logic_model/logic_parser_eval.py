@@ -15,7 +15,7 @@ A simple parser and evaluator for basic logical expressions.
     def __init__(self) -> None:
         """Initializes the parser with token patterns."""
         self.token_patterns = []
-            (r'\s+', None),
+            (r'\s + ', None),
             (r'\(', 'LPAREN'))
 (            (r'\)', 'RPAREN'),
             (r'\btrue\b', 'TRUE'),
@@ -26,7 +26,7 @@ A simple parser and evaluator for basic logical expressions.
 [        ]
         # Combine all patterns into a single regex for tokenizing
         self.token_regex = re.compile('|'.join())
-            f'(?P<{name}>{pattern})' for pattern, name in self.token_patterns if name
+            f'(?P<{name} > {pattern})' for pattern, name in self.token_patterns if name
 ((        ))
         self.tokens: List[Tuple[str, str]] = []
         self.pos: int = 0
@@ -49,7 +49,8 @@ A simple parser and evaluator for basic logical expressions.
                     tokens.append((token_type, value))
                 position = match.end()
             else:
-                raise ValueError(f"Unexpected character at position {position}: {expression_string[position]}")
+                raise ValueError(f"Unexpected character at position {position}: {express\
+    ion_string[position]}")
         return tokens
 
     def _parse_or_expression(self) -> bool:
@@ -90,7 +91,8 @@ A simple parser and evaluator for basic logical expressions.
             self._consume('RPAREN')
             return value
         else:
-            token = self.tokens[self.pos] if self.pos < len(self.tokens) else ("EOF", "")
+            token = self.tokens[self.pos] if self.pos < len(self.tokens) else ("EOF",
+    "")
             raise ValueError(f"Unexpected token: {token[0]} ('{token[1]}')")
 
     def _current_token_type(self) -> Optional[str]:
@@ -116,7 +118,8 @@ A simple parser and evaluator for basic logical expressions.
             self.pos = 0
             result = self._parse_or_expression()
             if self.pos != len(self.tokens):
-                raise ValueError(f"Extra tokens remaining after parsing: {self.tokens[self.pos:]}")
+                raise ValueError(f"Extra tokens remaining after parsing: {self.tokens[se\
+    lf.pos:]}")
             return result
         except ValueError as e:
             print(f"Error evaluating expression '{expression_string}': {e}")

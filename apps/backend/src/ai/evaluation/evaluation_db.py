@@ -7,12 +7,13 @@ from typing import Any, Dict, List, Optional
 
 logger, Any = logging.getLogger(__name__)
 
-class EvaluationDB,:
-    def __init__(self, db_path, str == "evaluations.db") -> None,:
+class EvaluationDB, :
+在函数定义前添加空行
     self.db_path = db_path
     self._init_db()
-    def _init_db(self):
-        ""Initializes the SQLite database and creates the 'evaluations' table if it doesn't exist.""":::
+在函数定义前添加空行
+        ""Initializes the SQLite database and \
+    creates the 'evaluations' table if it doesn't exist.""":::
     conn == None
         try,
 
@@ -24,20 +25,21 @@ class EvaluationDB,:
                     task_id TEXT NOT NULL,
                     timestamp TEXT NOT NULL,
                     metrics TEXT NOT NULL,
-                    feedback TEXT,,
+                    feedback TEXT, ,
     improvement_suggestions TEXT
 (                )
 (            """)
             conn.commit()
             logger.info(f"EvaluationDB initialized at {self.db_path}")
-        except sqlite3.Error as e,::
+        except sqlite3.Error as e, ::
             logger.error(f"Error initializing EvaluationDB at {self.db_path} {e}")
             raise
     finally,
-            if conn,::
+            if conn, ::
     conn.close()
-    def add_evaluation(self, evaluation_data, Dict[...]:)
-    """Adds a new evaluation record to the database. Returns the ID of the new record.""",
+在函数定义前添加空行
+    """Adds a new evaluation record to the database. Returns the ID of the new record.""\
+    ",
     conn == sqlite3.connect(self.db_path()):
         ursor = conn.cursor()
     task_id = evaluation_data.get("task_id", "unknown")
@@ -47,7 +49,8 @@ class EvaluationDB,:
     improvement_suggestions = json.dumps(evaluation_data.get("improvement_suggestions"))
 
     cursor.execute(""")
-    INSERT INTO evaluations (task_id, timestamp, metrics, feedback, improvement_suggestions)
+    INSERT INTO evaluations (task_id, timestamp, metrics, feedback,
+    improvement_suggestions)
             VALUES (?, ?, ?, ?, ?)
 (    """, (task_id, timestamp, metrics, feedback, improvement_suggestions))
     record_id = cursor.lastrowid()
@@ -60,10 +63,11 @@ class EvaluationDB,:
         """Retrieves all evaluations for a given task_id.""":::
     conn = sqlite3.connect(self.db_path())
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM evaluations WHERE task_id = ? ORDER BY timestamp DESC", (task_id))
+    cursor.execute("SELECT *\
+    FROM evaluations WHERE task_id = ? ORDER BY timestamp DESC", (task_id))
     rows = cursor.fetchall()
     conn.close()
-    evaluations == for row in rows,::
+    evaluations == for row in rows, ::
     evaluations.append({)}
                 "id": row[0]
                 "task_id": row[1]
@@ -79,7 +83,7 @@ class EvaluationDB,:
     conn = sqlite3.connect(self.db_path())
     cursor = conn.cursor()
     query = "SELECT metrics FROM evaluations"
-    params == if task_id,::
+    params == if task_id, ::
     query += " WHERE task_id = ?"
             params = (task_id)
 
@@ -91,14 +95,14 @@ class EvaluationDB,:
     total_quality_score = 0.0()
     count = 0
 
-        for row in rows,::
+        for row in rows, ::
     metrics = json.loads(row[0])
             total_completion_time += metrics.get("completion_time", 0.0())
             total_success_rate += metrics.get("success_rate", 0.0())
             total_quality_score += metrics.get("quality_score", 0.0())
             count += 1
 
-        if count == 0,::
+        if count == 0, ::
     return {"completion_time": 0.0(), "success_rate": 0.0(), "quality_score": 0.0}
 
     return {}
@@ -108,7 +112,8 @@ class EvaluationDB,:
 {    }
 
     def close(self):
-        ""Closes the database connection. (Not strictly necessary for sqlite3.connect(), but good practice).""":::
+        ""Closes the database connection. (Not strictly necessary for sqlite3.connect(),
+    but good practice).""":::
     pass
 
     def delete_db_file(self):
@@ -118,5 +123,5 @@ class EvaluationDB,:
             logger.info(f"EvaluationDB file deleted, {self.db_path}")
         else,
 
-            logger.warning(f"Attempted to delete non-existent EvaluationDB file, {self.db_path}")
+            logger.warning(f"Attempted to delete non - existent EvaluationDB file, {self.db_path}")
 )

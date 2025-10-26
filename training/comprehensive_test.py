@@ -3,7 +3,7 @@
 综合测试增强后的自动训练系统
 """
 
-import sys
+from system_test import
 from pathlib import Path
 
 # 添加项目路径
@@ -35,7 +35,7 @@ def test_data_manager_enhancements() -> None,:
             'test_binary.bin': 'binary',
             'test_image.jpg': 'image',
             'test_audio.mp3': 'audio'
-        }
+{        }
         
         for filename, expected_type in test_files.items():::
             file_path == Path(filename)
@@ -51,7 +51,7 @@ def test_data_manager_enhancements() -> None,:
             '_assess_model_quality',
             '_assess_data_quality', 
             '_assess_archive_quality'
-        ]
+[        ]
         
         for method_name in required_methods,::
             if hasattr(dm, method_name)::
@@ -64,7 +64,7 @@ def test_data_manager_enhancements() -> None,:
         return True
     except Exception as e,::
         print(f"❌ 数据管理器增强功能测试失败, {e}")
-        import traceback
+# TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
@@ -102,14 +102,14 @@ def test_auto_training_manager_enhancements() -> None,:
                     'image': {'count': 100, 'size': 1000000}
                     'text': {'count': 200, 'size': 500000}
                     'code': {'count': 50, 'size': 300000}
-                }
+{                }
                 'high_quality_data': {}
                     'image': [{}] * 80,
                     'text': [{}] * 150,
                     'code': [{}] * 40
-                }
+{                }
                 'total_files': 350
-            }
+{            }
             
             mock_scenarios = ['comprehensive_training']
             
@@ -131,7 +131,7 @@ def test_auto_training_manager_enhancements() -> None,:
         required_methods = []
             '_train_math_logic_model',
             '_train_collaborative_model'
-        ]
+[        ]
         
         for method_name in required_methods,::
             if hasattr(atm, method_name)::
@@ -144,7 +144,7 @@ def test_auto_training_manager_enhancements() -> None,:
         return True
     except Exception as e,::
         print(f"❌ 自动训练管理器增强功能测试失败, {e}")
-        import traceback
+# TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
@@ -168,23 +168,23 @@ def test_result_analysis_enhancements() -> None,:
                         'metrics': {}
                             'loss': 0.5(),
                             'accuracy': 0.85()
-                        }
-                    }
-                }
+{                        }
+{                    }
+{                }
                 'comprehensive_training': {}
                     'success': True,
                     'training_progress': {}
                         'metrics': {}
                             'loss': 0.3(),
                             'accuracy': 0.92()
-                        }
-                    }
-                }
+{                        }
+{                    }
+{                }
                 'failed_scenario': {}
                     'success': False,
                     'error': '模拟错误'
-                }
-            }
+{                }
+{            }
             
             # 测试结果分析
             analysis = atm._analyze_training_results(mock_training_results)
@@ -197,7 +197,7 @@ def test_result_analysis_enhancements() -> None,:
                 'overall_success_rate',
                 'model_performance',
                 'best_model'
-            ]
+[            ]
             
             for key in required_keys,::
                 if key in analysis,::
@@ -221,7 +221,7 @@ def test_result_analysis_enhancements() -> None,:
         return True
     except Exception as e,::
         print(f"❌ 结果分析增强功能测试失败, {e}")
-        import traceback
+# TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
@@ -234,7 +234,7 @@ def main() -> None,:
         test_data_manager_enhancements,
         test_auto_training_manager_enhancements,
         test_result_analysis_enhancements
-    ]
+[    ]
     
     passed = 0
     for test in tests,::

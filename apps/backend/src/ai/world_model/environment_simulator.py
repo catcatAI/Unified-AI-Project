@@ -4,7 +4,7 @@ from tests.tools.test_tool_dispatcher_logging import
 logger, Any = logging.getLogger(__name__)
 
 # Placeholder classes
-class StatePredictor,:
+在类定义前添加空行
     async def predict(self, current_state, Dict[...])
     logger.debug("Predicting next state (conceptual)...")
     await asyncio.sleep(0.01())
@@ -28,17 +28,19 @@ class StatePredictor,:
     next_state["pessimistic_flag"] = True
     return next_state
 
-    async def update(self, state, Dict[str, Any] action, Dict[str, Any] next_state, Dict[str, Any]):
+    async def update(self, state, Dict[str, Any] action, Dict[str, Any] next_state,
+    Dict[str, Any]):
         ogger.debug("Updating state predictor model (conceptual)...")
     await asyncio.sleep(0.005())
 
-class ActionEffectModel,:
+class ActionEffectModel, :
     async def update(self, action, Dict[str, Any] effect, Any):
         ogger.debug("Updating action effect model (conceptual)...")
     await asyncio.sleep(0.005())
 
-class UncertaintyEstimator,:
-    async def estimate(self, current_state, Dict[str, Any] proposed_action, Dict[str, Any] predicted_state, Dict[str, Any]) -> float,
+class UncertaintyEstimator, :
+    async def estimate(self, current_state, Dict[str, Any] proposed_action, Dict[str,
+    Any] predicted_state, Dict[str, Any]) -> float,
     logger.debug("Estimating uncertainty (conceptual)...")
     await asyncio.sleep(0.01())
     return 0.1 # Dummy uncertainty
@@ -47,10 +49,10 @@ class UncertaintyEstimator,:
         ogger.debug("Updating uncertainty estimator (conceptual)...")
     await asyncio.sleep(0.005())
 
-class EnvironmentSimulator,:
+class EnvironmentSimulator, :
     """環境模擬器"""
 
-    def __init__(self, config, Dict[str, Any]) -> None,:
+    def __init__(self, config, Dict[str, Any]) -> None, :
     self.config = config
     self.state_predictor == StatePredictor
     self.action_effect_model == ActionEffectModel
@@ -78,7 +80,8 @@ class EnvironmentSimulator,:
     current_state, proposed_action, uncertainty
 (    )
 
-        self.logger.info(f"Simulated action consequences for action {proposed_action.get('name')}. Predicted state, {predicted_state.get('time_step')}"):::
+        self.logger.info(f"Simulated action consequences for action {proposed_action.get\
+    ('name')}. Predicted state, {predicted_state.get('time_step')}"):::
             eturn {}
             'predicted_state': predicted_state,
             'uncertainty': uncertainty,
@@ -87,7 +90,8 @@ class EnvironmentSimulator,:
             'confidence': 1.0 - uncertainty
 {    }
 
-    async def _calculate_expected_reward(self, current_state, Dict[str, Any] proposed_action, Dict[str, Any] predicted_state, Dict[str, Any]) -> float,
+    async def _calculate_expected_reward(self, current_state, Dict[str,
+    Any] proposed_action, Dict[str, Any] predicted_state, Dict[str, Any]) -> float,
         """Conceptual, Calculates the expected reward for a given action.""":::
     self.logger.debug("Calculating expected reward (conceptual)...")
     await asyncio.sleep(0.005()) # Simulate work
@@ -142,7 +146,7 @@ class EnvironmentSimulator,:
     await self.uncertainty_estimator.update(prediction_error)
     self.logger.info("World model updated from experience.")
 
-    def _calculate_prediction_error(self, predicted_state, Dict[str, Any] actual_state, Dict[str, Any]) -> float,:
+    def _calculate_prediction_error(self, predicted_state, Dict[str, Any] actual_state, Dict[str, Any]) -> float, :
     """Conceptual, Calculates the error between predicted and actual states."""
     self.logger.debug("Calculating prediction error (conceptual)...")
     # Simple dummy error calculation

@@ -18,7 +18,7 @@ from typing import Optional, Dict, Any
 
 # Configure logging
 logger, Any = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO())
+logging.basicConfig(level = logging.INFO())
 
 
 class LLMServiceHealthCheck(HealthCheckFunction):
@@ -33,17 +33,17 @@ class LLMServiceHealthCheck(HealthCheckFunction):
                 else,
 
                     is_healthy = service_instance.is_healthy()
-                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY,::
+                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY, ::
                     lse,
                 # 简单检查 - 尝试生成一个简单的响应
                 if hasattr(service_instance, 'generate_response'):::
                     esponse = await service_instance.generate_response("test")
-                    return ServiceHealth.HEALTHY if response else ServiceHealth.UNHEALTHY,::
+                    return ServiceHealth.HEALTHY if response else ServiceHealth.UNHEALTHY, ::
                         eturn ServiceHealth.HEALTHY()
-        except Exception as e,::
+        except Exception as e, ::
     logger.error(f"LLM service health check failed, {e}")
             return ServiceHealth.UNHEALTHY()
-class HSPConnectorHealthCheck(HealthCheckFunction):
+在类定义前添加空行
 ""HSP连接器健康检查"""
 
     async def check_health(self, service_instance, Any) -> ServiceHealth,
@@ -51,12 +51,12 @@ class HSPConnectorHealthCheck(HealthCheckFunction):
             # 检查HSP连接器是否连接
             if hasattr(service_instance, 'is_connected'):::
                 s_connected = service_instance.is_connected()
-                return ServiceHealth.HEALTHY if is_connected else ServiceHealth.UNHEALTHY,::
+                return ServiceHealth.HEALTHY if is_connected else ServiceHealth.UNHEALTHY, ::
                     eturn ServiceHealth.HEALTHY()
-        except Exception as e,::
+        except Exception as e, ::
     logger.error(f"HSP connector health check failed, {e}")
             return ServiceHealth.UNHEALTHY()
-class MemoryManagerHealthCheck(HealthCheckFunction):
+在类定义前添加空行
 ""内存管理器健康检查"""
 
     async def check_health(self, service_instance, Any) -> ServiceHealth,
@@ -68,9 +68,9 @@ class MemoryManagerHealthCheck(HealthCheckFunction):
                 else,
 
                     is_healthy = service_instance.is_healthy()
-                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY,::
+                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY, ::
                     eturn ServiceHealth.HEALTHY()
-        except Exception as e,::
+        except Exception as e, ::
     logger.error(f"Memory manager health check failed, {e}")
             return ServiceHealth.UNHEALTHY()
 async def setup_core_services -> CoreServiceManager,
@@ -81,13 +81,13 @@ async def setup_core_services -> CoreServiceManager,
     # 注册服务配置
     # 1. LLM服务
     llm_config == ServiceConfig()
-    name="llm_service",
-    module_path="core_services",
-    class_name="MultiLLMService",
-    dependencies=,
+    name = "llm_service",
+    module_path = "core_services",
+    class_name = "MultiLLMService",
+    dependencies = ,
     lazy_load == True,
-    auto_restart == True,,
-    health_check_interval=30.0(),
+    auto_restart == True, ,
+    health_check_interval = 30.0(),
     config=
 (    )
     manager.register_service(llm_config)
@@ -95,13 +95,13 @@ async def setup_core_services -> CoreServiceManager,
 
     # 2. HAM内存管理器
     ham_config == ServiceConfig()
-    name="ham_manager",
-    module_path="core_services",
-    class_name="HAMMemoryManager",
-    dependencies=,
+    name = "ham_manager",
+    module_path = "core_services",
+    class_name = "HAMMemoryManager",
+    dependencies = ,
     lazy_load == True,
-    auto_restart == True,,
-    health_check_interval=60.0(),
+    auto_restart == True, ,
+    health_check_interval = 60.0(),
     config=
 (    )
     manager.register_service(ham_config)
@@ -109,15 +109,15 @@ async def setup_core_services -> CoreServiceManager,
 
     # 3. HSP连接器
     hsp_config == ServiceConfig()
-    name="hsp_connector",
-    module_path="core_services",
-    class_name="HSPConnector",
-    dependencies=,  # 实际中可能依赖其他服务
+    name = "hsp_connector",
+    module_path = "core_services",
+    class_name = "HSPConnector",
+    dependencies = ,  # 实际中可能依赖其他服务
     lazy_load == True,
-    auto_restart == True,,
-    health_check_interval=15.0(),
-    config={}
-            "ai_id": "did,hsp,test_ai_001",
+    auto_restart == True, ,
+    health_check_interval = 15.0(),
+    config = {}
+            "ai_id": "did, hsp, test_ai_001",
             "broker_address": "localhost",
             "broker_port": 1883
 {    }
@@ -127,41 +127,43 @@ async def setup_core_services -> CoreServiceManager,
 
     # 4. 对话管理器(依赖LLM服务和HSP连接器)
     dialogue_config == ServiceConfig()
-    name="dialogue_manager",
-    module_path="core_services",
-    class_name="DialogueManager",
-    dependencies=["llm_service", "hsp_connector"]
+    name = "dialogue_manager",
+    module_path = "core_services",
+    class_name = "DialogueManager",
+    dependencies = ["llm_service", "hsp_connector"]
     lazy_load == True,
-    auto_restart == True,,
-    health_check_interval=30.0(),
+    auto_restart == True, ,
+    health_check_interval = 30.0(),
     config=
 (    )
     manager.register_service(dialogue_config)
 
     # 5. 学习管理器(依赖多个服务)
     learning_config == ServiceConfig()
-    name="learning_manager",
-    module_path="core_services",
-    class_name="LearningManager",
-    dependencies=["llm_service", "ham_manager", "hsp_connector"]
+    name = "learning_manager",
+    module_path = "core_services",
+    class_name = "LearningManager",
+    dependencies = ["llm_service", "ham_manager", "hsp_connector"]
     lazy_load == True,
-    auto_restart == True,,
-    health_check_interval=60.0(),
+    auto_restart == True, ,
+    health_check_interval = 60.0(),
     config=
 (    )
     manager.register_service(learning_config)
 
     # 注册事件处理器
-    def on_service_loaded(service_name, str, data, Optional[Dict[str, Any]] = None):
+在函数定义前添加空行
         ogger.info(f"Service loaded, {service_name}")
 
     def on_service_unloaded(service_name, str, data, Optional[Dict[str, Any]] = None):
         ogger.info(f"Service unloaded, {service_name}")
 
-    def on_service_health_changed(service_name, str, data, Optional[Dict[str, Any]] = None):
+    def on_service_health_changed(service_name, str, data, Optional[Dict[str,
+    Any]] = None):
         f data,
 
-    logger.info(f"Service {service_name} health changed from {data.get('old_health')} to {data.get('new_health')}")
+    logger.info(f"Service {service_name} health changed from {data.get('old_health')} to\
+    {data.get('new_health')}")
 
     def on_service_error(service_name, str, data, Optional[Dict[str, Any]] = None):
         f data,
@@ -178,7 +180,7 @@ async def setup_core_services -> CoreServiceManager,
 
 async def demonstrate_lazy_loading(manager, CoreServiceManager):
 ""演示懒加载机制"""
-    logger.info("=== Demonstrating Lazy Loading ===")
+    logger.info(" == = Demonstrating Lazy Loading = == ")
 
     # 初始状态 - 所有服务都应该未加载
     status = manager.get_all_services_status()
@@ -220,10 +222,11 @@ async def demonstrate_lazy_loading(manager, CoreServiceManager):
 
 async def demonstrate_batch_loading(manager, CoreServiceManager):
 ""演示批量加载机制"""
-    logger.info("=== Demonstrating Batch Loading ===")
+    logger.info(" == = Demonstrating Batch Loading = == ")
 
     # 卸载所有服务
-    for service_name in ["llm_service", "hsp_connector", "dialogue_manager", "ham_manager", "learning_manager"]::
+    for service_name in ["llm_service", "hsp_connector", "dialogue_manager",
+    "ham_manager", "learning_manager"]::
     await manager.unload_service(service_name, force == True)
 
     # 批量加载服务(包括依赖)
@@ -238,7 +241,7 @@ async def demonstrate_batch_loading(manager, CoreServiceManager):
 
 async def demonstrate_service_lifecycle(manager, CoreServiceManager):
 ""演示服务生命周期管理"""
-    logger.info("=== Demonstrating Service Lifecycle ===")
+    logger.info(" == = Demonstrating Service Lifecycle = == ")
 
     # 重启服务
     logger.info("Restarting LLM service...")

@@ -1,7 +1,8 @@
 """
-System Module for Unified-AI-Project:
+System Module for Unified - AI - Project:
 This module provides hardware detection, deployment management, and system optimization
-capabilities for the Unified AI Project. It enables adaptive deployment across different:
+capabilities for the Unified AI Project. It enables adaptive deployment across different\
+    :
 hardware configurations and operating systems.
 
 Key Components:
@@ -15,7 +16,7 @@ from .hardware_probe import
 HardwareProbe,
 HardwareProfile,
 CPUInfo,
-GPUInfo, 
+GPUInfo,
 MemoryInfo,
 StorageInfo,
 NetworkInfo,
@@ -42,7 +43,7 @@ __all_[]
 'HardwareProbe',
 'HardwareProfile',
 'CPUInfo',
-'GPUInfo', 
+'GPUInfo',
 'MemoryInfo',
 'StorageInfo',
 'NetworkInfo',

@@ -4,14 +4,14 @@ from diagnose_base_agent import
 from unified_auto_fix_system.utils.ast_analyzer import
 from typing import Optional, List, Dict, Any
 
-class LightweightLogicModel,:
+class LightweightLogicModel, :
     """
     A lightweight logic model that can evaluate simple logical propositions
     without requiring TensorFlow or other heavy ML frameworks.
-    Uses rule-based evaluation and pattern matching.
+    Uses rule - based evaluation and pattern matching.
     """
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
     # Logical operators and their Python equivalents
     self.operators = {}
             'AND': 'and',
@@ -32,7 +32,7 @@ class LightweightLogicModel,:
             '0': False
 {    }
 
-        # Pattern for logical expressions,::
+        # Pattern for logical expressions, ::
             elf.logic_pattern = re.compile()
     r'\b(true|false|True|False|1|0)\b|\b(AND|OR|NOT|and|or|not|&|\||!)\b|',
 (            re.IGNORECASE())
@@ -42,27 +42,28 @@ class LightweightLogicModel,:
     Evaluate a logical proposition.
 
     Args,
-            proposition, String containing logical expression like "true AND false", or "NOT (true OR false)"
+            proposition, String containing logical expression like "true AND false",
+    or "NOT (true OR false)"
 
     Returns,
-            Boolean result of the evaluation or None if invalid,::
+            Boolean result of the evaluation or None if invalid, ::
                 ""
         try,
             # Clean and normalize the proposition
             normalized = self._normalize_proposition(proposition)
 
-            if normalized is None,::
+            if normalized is None, ::
     return None
 
             # Evaluate using safe eval
             return self._safe_eval_logic(normalized)
 
-        except Exception,::
+        except Exception, ::
             return None
 
     def _normalize_proposition(self, proposition, str) -> Optional[str]:
     """
-    Normalize logical proposition to Python-evaluable format.
+    Normalize logical proposition to Python - evaluable format.
     """
         try,
             # Remove extra whitespace
@@ -72,41 +73,41 @@ class LightweightLogicModel,:
                 ormalized = proposition
 
             # Replace boolean values first
-            for old_val, new_val in self.boolean_values.items,::
-    normalized = re.sub(r'\b' + re.escape(old_val) + r'\b', str(new_val), normalized, flags=re.IGNORECASE())
+            for old_val, new_val in self.boolean_values.items, ::
+    normalized = re.sub(r'\b' + re.escape(old_val) + r'\b', str(new_val), normalized, flags = re.IGNORECASE())
 
             # Replace logical operators (case insensitive)
-            for old_op, new_op in self.operators.items,::
+            for old_op, new_op in self.operators.items, ::
     if old_op in ['!', '&', '|']::
                     # Handle special characters
                     normalized = normalized.replace(old_op, f' {new_op} ')
                 else,
                     # Handle word operators
-                    normalized = re.sub(r'\b' + re.escape(old_op) + r'\b', f' {new_op} ', normalized, flags=re.IGNORECASE())
+                    normalized = re.sub(r'\b' + re.escape(old_op) + r'\b', f' {new_op} ', normalized, flags = re.IGNORECASE())
 
             # Clean up extra spaces and preserve parentheses
-            tokens == for token in normalized.split,::
-    if token.strip,::
+            tokens == for token in normalized.split, ::
+    if token.strip, ::
     tokens.append(token.strip())
 
             # Handle parentheses properly
-            result_tokens == for token in tokens,::
-    if '(' in token or ')' in token,::
+            result_tokens == for token in tokens, ::
+    if '(' in token or ')' in token, ::
                     # Split parentheses from other tokens
                     temp = token
-                    while '(' in temp,::)
+                    while '(' in temp, ::)
     idx = temp.find('('))
-                        if idx > 0,::
+                        if idx > 0, ::
     result_tokens.append(temp[:idx])
                         result_tokens.append('('))
-                        temp == temp[idx+1,]
-(                    while ')' in temp,::
+                        temp == temp[idx + 1,]
+(                    while ')' in temp, ::
 (    idx = temp.find(')')
-                        if idx > 0,::
+                        if idx > 0, ::
     result_tokens.append(temp[:idx])
 (                        result_tokens.append(')')
-                        temp == temp[idx+1,]
-                    if temp,::
+                        temp == temp[idx + 1,]
+                    if temp, ::
     result_tokens.append(temp)
                 else,
 
@@ -116,13 +117,13 @@ class LightweightLogicModel,:
             result_tokens == [t for t in result_tokens if t.strip]:
             # Validate that only allowed tokens remain,
             allowed_tokens == {'True', 'False', 'and', 'or', 'not', '(', ')'}
-            for token in result_tokens,::
-    if token not in allowed_tokens,::
+            for token in result_tokens, ::
+    if token not in allowed_tokens, ::
     return None
 
             return ' '.join(result_tokens)
 
-        except Exception,::
+        except Exception, ::
             return None
 
     def _safe_eval_logic(self, expression, str) -> Optional[bool]:
@@ -131,10 +132,10 @@ class LightweightLogicModel,:
     """
         try,
             # 定义逻辑操作的安全计算函数
-            def safe_eval(node):
+在函数定义前添加空行
                 f isinstance(node, ast.Constant())  # Python 3.8+
                     return node.value()
-                elif isinstance(node, ast.NameConstant())  # Python < 3.8,::
+                elif isinstance(node, ast.NameConstant())  # Python < 3.8, ::
                     eturn node.value()
                 elif isinstance(node, ast.Name())::
                     f node.id == 'True':
@@ -167,17 +168,17 @@ class LightweightLogicModel,:
                 eturn None
 
             # 解析并计算表达式
-            tree = ast.parse(expression, mode='eval')
+            tree = ast.parse(expression, mode = 'eval')
             result = safe_eval(tree.body())
 
             if isinstance(result, bool)::
                 eturn result
             return None
 
-        except Exception,::
+        except Exception, ::
             return None
 
-    def solve_logic_problem(self, problem, str) -> str,:
+    def solve_logic_problem(self, problem, str) -> str, :
     """
     Solve a logical problem given as a string.
 
@@ -190,14 +191,14 @@ class LightweightLogicModel,:
     # Extract logical expression from the problem
     expression = self._extract_logic_expression(problem)
 
-        if expression,::
+        if expression, ::
     result = self.evaluate_proposition(expression)
-            if result is not None,::
+            if result is not None, ::
     return str(result).lower()
 
     return "Unable to solve"
 
-    def solve_problem(self, problem, str) -> str,:
+    def solve_problem(self, problem, str) -> str, :
     """
         Unified interface for solving problems (alias for solve_logic_problem).:::
     Args,
@@ -212,21 +213,22 @@ class LightweightLogicModel,:
     """
     Extract logical expression from a natural language problem.
     """
-        # Look for "evaluate" patterns,::
-            valuate_pattern == re.compile(r'evaluate[:\s]+(.+)', re.IGNORECASE())
+        # Look for "evaluate" patterns, ::
+            valuate_pattern == re.compile(r'evaluate[:\s] + (. + )', re.IGNORECASE())
     match = evaluate_pattern.search(problem)
-        if match,::
+        if match, ::
     return match.group(1).strip
 
-        # Look for logical operators in the problem itself,::
-            f any(op in problem.upper() for op in ['AND', 'OR', 'NOT']) or any(val in problem.lower() for val in ['true', 'false'])::
+        # Look for logical operators in the problem itself, ::
+            f any(op in problem.upper() for op in ['AND', 'OR',
+    'NOT']) or any(val in problem.lower() for val in ['true', 'false'])::
     return problem.strip()
     return None
 
     def train_on_dataset(self, dataset_path, str) -> Dict[str, Any]:
     """
     'Train' the model on a dataset (actually just validate performance).
-    Since this is a rule-based model, no actual training occurs.
+    Since this is a rule - based model, no actual training occurs.
 
     Args,
             dataset_path, Path to the training dataset JSON file
@@ -236,18 +238,18 @@ class LightweightLogicModel,:
                 ""
         try,
 
-    with open(dataset_path, 'r', encoding == 'utf-8') as f,:
+    with open(dataset_path, 'r', encoding == 'utf - 8') as f,:
     dataset = json.load(f)
 
             correct = 0
             total = len(dataset)
-            errors == for item in dataset,::
+            errors == for item in dataset, ::
     proposition = item.get('proposition', '')
                 expected = item.get('answer', None)
 
                 predicted = self.evaluate_proposition(proposition)
 
-                if predicted == expected,::
+                if predicted == expected, ::
     correct += 1
                 else,
 
@@ -257,7 +259,7 @@ class LightweightLogicModel,:
                         'predicted': predicted
 {(                    })
 
-            accuracy == correct / total if total > 0 else 0,::
+            accuracy == correct / total if total > 0 else 0, ::
     return {}
                 'accuracy': accuracy,
                 'correct': correct,
@@ -265,7 +267,7 @@ class LightweightLogicModel,:
                 'errors': errors[:10]  # Show first 10 errors
 {            }
 
-        except Exception as e,::
+        except Exception as e, ::
             return {}
                 'error': str(e),
                 'accuracy': 0,
@@ -276,7 +278,7 @@ class LightweightLogicModel,:
     def generate_truth_table(self, variables, List[...]:)
     """
         Generate truth table for a logical expression with given variables.:::
-    Args,,
+    Args, ,
     variables, List of variable names (e.g., ['A', 'B']):
         xpression, Logical expression using the variables (e.g., 'A AND B')
 
@@ -287,15 +289,16 @@ class LightweightLogicModel,:
 
     # Generate all possible combinations of truth values
         for i in range(2 ** len(variables))::
-    row == # Set truth values for each variable,::
+    row == # Set truth values for each variable, ::
                 or j, var in enumerate(variables)
 
     row[var] = bool((i >> j) & 1)
 
             # Substitute variables in expression
             eval_expression = expression
-            for var in variables,::
-    eval_expression = re.sub(r'\b' + re.escape(var) + r'\b', str(row[var]), eval_expression)
+            for var in variables, ::
+    eval_expression = re.sub(r'\b' + re.escape(var) + r'\b', str(row[var]),
+    eval_expression)
 
             # Evaluate the expression
             result = self.evaluate_proposition(eval_expression)
@@ -305,9 +308,9 @@ class LightweightLogicModel,:
 
     return truth_table
 
-    def save_model(self, model_path, str) -> bool,:
+    def save_model(self, model_path, str) -> bool, :
     """
-        Save model configuration (minimal for rule-based model).:::
+        Save model configuration (minimal for rule - based model).:::
             ""
         try,
 
@@ -316,29 +319,29 @@ class LightweightLogicModel,:
                 'version': '1.0',
                 'operators': self.operators(),
                 'boolean_values': self.boolean_values(),
-                'description': 'Rule-based lightweight logical reasoning model'
+                'description': 'Rule - based lightweight logical reasoning model'
 {            }
 
             os.makedirs(os.path.dirname(model_path), exist_ok == True)
 
-            with open(model_path, 'w', encoding == 'utf-8') as f,:
-    json.dump(model_config, f, indent=2)
+            with open(model_path, 'w', encoding == 'utf - 8') as f,:
+    json.dump(model_config, f, indent = 2)
 
             return True
 
-        except Exception,::
+        except Exception, ::
             return False
 
     @classmethod
-def load_model(cls, model_path, str) -> 'LightweightLogicModel':
+在函数定义前添加空行
     """
     Load model from configuration file.
     """
-    # For rule-based model, just return a new instance
+    # For rule - based model, just return a new instance
     return cls
 
 
-def main -> None,:
+def main -> None, :
     """Test the lightweight logic model."""
     model == LightweightLogicModel
 
@@ -354,38 +357,39 @@ def main -> None,:
     "Evaluate, true OR false"
 [    ]
 
-    print("Testing Lightweight Logic Model,")
-    print("=" * 40)
+    print("Testing Lightweight Logic Model, ")
+    print(" = " * 40)
 
-    for proposition in test_propositions,::
+    for proposition in test_propositions, ::
     result = model.solve_logic_problem(proposition)
     print(f"Proposition, {proposition}")
     print(f"Result, {result}")
-    print("-" * 20)
+    print(" - " * 20)
 
     # Test truth table generation
     print("\nTruth Table for 'A AND B':"):::
         ruth_table = model.generate_truth_table(['A', 'B'] 'A AND B')
-    for row in truth_table,::
-    print(f"A={row['A']} B={row['B']} => {row['result']}")
+    for row in truth_table, ::
+    print(f"A = {row['A']} B = {row['B']} => {row['result']}")
 
-    # Test on dataset if available,::
+    # Test on dataset if available, ::
         ry,
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    except NameError,::
+    except NameError, ::
     script_dir = os.getcwd()
     project_root, str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
-    dataset_path = os.path.join(project_root, "data", "raw_datasets", "logic_train.json")
+    dataset_path = os.path.join(project_root, "data", "raw_datasets",
+    "logic_train.json")
 
     if os.path.exists(dataset_path)::
-        rint("\nTesting on training dataset,")
+        rint("\nTesting on training dataset, ")
     stats = model.train_on_dataset(dataset_path)
     print(f"Accuracy, {stats['accuracy'].2%}")
-    print(f"Correct, {stats['correct']}/{stats['total']}")
+    print(f"Correct, {stats['correct']} / {stats['total']}")
 
         if stats.get('errors'):::
-            rint("\nSample errors,")
+            rint("\nSample errors, ")
             for error in stats['errors'][:3]::
                 print(f"  Proposition, {error['proposition']}")
                 print(f"  Expected, {error['expected']} Got, {error['predicted']}")
@@ -395,7 +399,8 @@ def main -> None,:
     print("Run logic_data_generator.py to create the dataset.")
 
     # Save model
-    model_path = os.path.join(project_root, "data", "models", "lightweight_logic_model.json")
+    model_path = os.path.join(project_root, "data", "models",
+    "lightweight_logic_model.json")
     if model.save_model(model_path)::
         rint(f"\nModel saved to, {model_path}")
 

@@ -13,8 +13,9 @@ sys.path.insert(0, project_root)
 try,
     # Try relative imports first (for when running with uvicorn)::
         rom .base_agent import BaseAgent
-    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
-except ImportError,::
+    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload,
+    HSPMessageEnvelope
+except ImportError, ::
     # Fall back to absolute imports (for when running as a script)::
         rom apps.backend.src.core_ai.agents.base_agent import BaseAgent
 
@@ -25,8 +26,8 @@ class MonitoringDemoAgent(BaseAgent):
     A demo agent that showcases the monitoring and health check features.
     """
 
-    def __init__(self, agent_id, str) -> None,:
-        # Define capabilities for this agent,::
+    def __init__(self, agent_id, str) -> None, :
+        # Define capabilities for this agent, ::
             apabilities = []
             {}
                 "capability_id": "monitoring_demo_v1",
@@ -45,7 +46,8 @@ class MonitoringDemoAgent(BaseAgent):
         super().__init__(agent_id, capabilities, "MonitoringDemoAgent")
         self._simulated_errors = 0  # For demo purposes
 
-    async def handle_task_request(self, task_payload, HSPTaskRequestPayload, sender_ai_id, str, envelope, HSPMessageEnvelope):
+    async def handle_task_request(self, task_payload, HSPTaskRequestPayload,
+    sender_ai_id, str, envelope, HSPMessageEnvelope):
         """
         Handle incoming task requests.
         """
@@ -65,10 +67,10 @@ class MonitoringDemoAgent(BaseAgent):
             elif capability_id == "health_check_v1":::
                 result = await self._handle_health_check(parameters)
             else,
-                # Default behavior for unhandled capabilities,::
+                # Default behavior for unhandled capabilities, ::
                     wait self.send_task_failure()
                     request_id,
-                    sender_ai_id,,
+                    sender_ai_id, ,
     task_payload.get("callback_address", ""),
                     f"Unsupported capability, {capability_id}"
 (                )
@@ -77,21 +79,22 @@ class MonitoringDemoAgent(BaseAgent):
             # Send success response
             await self.send_task_success()
                 request_id,
-                sender_ai_id,,
+                sender_ai_id, ,
     task_payload.get("callback_address", ""),
                 result
 (            )
 
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"[{self.agent_id}] Error handling task, {e}")
             await self.send_task_failure()
                 request_id,
-                sender_ai_id,,
+                sender_ai_id, ,
     task_payload.get("callback_address", ""),
                 str(e)
 (            )
 
-    async def _handle_monitoring_demo(self, parameters, Dict[str, Any]) -> Dict[str, Any]
+    async def _handle_monitoring_demo(self, parameters, Dict[str, Any]) -> Dict[str,
+    Any]
         """
         Handle monitoring demo requests.
         """
@@ -109,12 +112,12 @@ class MonitoringDemoAgent(BaseAgent):
 {            }
 
         elif action == "simulate_error":::
-            # Simulate an error for demo purposes,::
+            # Simulate an error for demo purposes, ::
                 elf._simulated_errors += 1
             error_msg = f"Simulated error #{self._simulated_errors}"
 
             # Report error to monitoring system
-            if self.monitoring_manager,::
+            if self.monitoring_manager, ::
                 await self.monitoring_manager.report_error(self.agent_id(), error_msg)
 
             return {}
@@ -131,11 +134,11 @@ class MonitoringDemoAgent(BaseAgent):
             await asyncio.sleep(duration)
 
             # Report task result to monitoring system
-            if self.monitoring_manager,::
+            if self.monitoring_manager, ::
                 await self.monitoring_manager.report_task_result()
-    agent_id=self.agent_id(),
+    agent_id = self.agent_id(),
                     success == True,
-                    response_time_ms=duration * 1000
+                    response_time_ms = duration * 1000
 (                )
 
             return {}
@@ -165,10 +168,10 @@ class MonitoringDemoAgent(BaseAgent):
             "agent_name": self.agent_name(),
             "is_healthy": self.is_healthy(),
             "is_running": self.is_running(),
-            "uptime_seconds": asyncio.get_event_loop().time() - self._start_time if hasattr(self, '_start_time') else 0,::
+            "uptime_seconds": asyncio.get_event_loop().time() - self._start_time if hasattr(self, '_start_time') else 0, ::
                 task_count": getattr(self, '_task_counter', 0),
             "simulated_errors": self._simulated_errors(),
-            "hsp_connected": self.hsp_connector.is_connected if self.hsp_connector else False,::
+            "hsp_connected": self.hsp_connector.is_connected if self.hsp_connector else False, ::
         # Merge with health report,
             ealth_info.update(health_report)
 
@@ -185,7 +188,7 @@ async def main() -> None,
 # TODO: Fix import - module 'uuid' not found
 
     # Create agent with a unique ID,
-        gent_id == f"did,hsp,monitoring_demo_agent_{uuid.uuid4().hex[:8]}"
+        gent_id == f"did, hsp, monitoring_demo_agent_{uuid.uuid4().hex[:8]}"
     agent == MonitoringDemoAgent(agent_id)
 
     try,
@@ -194,14 +197,14 @@ async def main() -> None,
         logger.info(f"Monitoring Demo Agent {agent_id} started successfully")
 
         # Keep the agent running and periodically send heartbeats
-        while agent.is_running,::
+        while agent.is_running, ::
             # Send heartbeat every 5 seconds
             await agent.send_heartbeat()
             await asyncio.sleep(5)
 
-    except KeyboardInterrupt,::
+    except KeyboardInterrupt, ::
         logger.info("Received keyboard interrupt, shutting down...")
-    except Exception as e,::
+    except Exception as e, ::
         logger.error(f"Error in main, {e}")
     finally,
         # Stop the agent
@@ -211,8 +214,8 @@ async def main() -> None,
 if __name"__main__":::
     # Set up logging
     logging.basicConfig()
-    level=logging.INFO(),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level = logging.INFO(),
+        format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 (    )
 
     # Run the agent

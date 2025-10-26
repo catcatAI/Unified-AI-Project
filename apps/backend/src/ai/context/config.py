@@ -8,30 +8,40 @@ class ContextConfig:
     
     def __init__(self) -> None:
         # 存储配置
-        self.storage_dir = os.environ.get("CONTEXT_STORAGE_DIR", "./context_storage")
+        self.storage_dir = os.environ.get("CONTEXT_STORAGE_DIR", ". / context_storage")
         self.memory_max_size = int(os.environ.get("CONTEXT_MEMORY_MAX_SIZE", "1000"))
-        self.disk_storage_enabled = os.environ.get("CONTEXT_DISK_STORAGE_ENABLED", "true").lower() == "true"
-        self.database_storage_enabled = os.environ.get("CONTEXT_DATABASE_STORAGE_ENABLED", "false").lower() == "true"
+        self.disk_storage_enabled = os.environ.get("CONTEXT_DISK_STORAGE_ENABLED",
+    "true").lower() == "true"
+        self.database_storage_enabled = os.environ.get("CONTEXT_DATABASE_STORAGE_ENABLED\
+    ", "false").lower() == "true"
         
         # 缓存配置
-        self.cache_enabled = os.environ.get("CONTEXT_CACHE_ENABLED", "true").lower() == "true"
+        self.cache_enabled = os.environ.get("CONTEXT_CACHE_ENABLED",
+    "true").lower() == "true"
         self.cache_max_size = int(os.environ.get("CONTEXT_CACHE_MAX_SIZE", "100"))
         
         # 性能配置
-        self.compression_enabled = os.environ.get("CONTEXT_COMPRESSION_ENABLED", "false").lower() == "true"
-        self.async_processing_enabled = os.environ.get("CONTEXT_ASYNC_PROCESSING_ENABLED", "true").lower() == "true"
+        self.compression_enabled = os.environ.get("CONTEXT_COMPRESSION_ENABLED",
+    "false").lower() == "true"
+        self.async_processing_enabled = os.environ.get("CONTEXT_ASYNC_PROCESSING_ENABLED\
+    ", "true").lower() == "true"
         
         # 安全配置
-        self.encryption_enabled = os.environ.get("CONTEXT_ENCRYPTION_ENABLED", "false").lower() == "true"
-        self.access_control_enabled = os.environ.get("CONTEXT_ACCESS_CONTROL_ENABLED", "false").lower() == "true"
+        self.encryption_enabled = os.environ.get("CONTEXT_ENCRYPTION_ENABLED",
+    "false").lower() == "true"
+        self.access_control_enabled = os.environ.get("CONTEXT_ACCESS_CONTROL_ENABLED",
+    "false").lower() == "true"
         
         # 日志配置
         self.log_level = os.environ.get("CONTEXT_LOG_LEVEL", "INFO")
-        self.audit_logging_enabled = os.environ.get("CONTEXT_AUDIT_LOGGING_ENABLED", "true").lower() == "true"
+        self.audit_logging_enabled = os.environ.get("CONTEXT_AUDIT_LOGGING_ENABLED",
+    "true").lower() == "true"
         
         # 集成配置
-        self.ham_integration_enabled = os.environ.get("CONTEXT_HAM_INTEGRATION_ENABLED", "true").lower() == "true"
-        self.mcp_integration_enabled = os.environ.get("CONTEXT_MCP_INTEGRATION_ENABLED", "true").lower() == "true"
+        self.ham_integration_enabled = os.environ.get("CONTEXT_HAM_INTEGRATION_ENABLED",
+    "true").lower() == "true"
+        self.mcp_integration_enabled = os.environ.get("CONTEXT_MCP_INTEGRATION_ENABLED",
+    "true").lower() == "true"
         
     def get_storage_config(self) -> Dict[str, Any]:
         """获取存储配置"""
@@ -87,30 +97,30 @@ CONFIGURATION_DOCS = """
 ## 环境变量配置
 
 ### 存储配置
-- CONTEXT_STORAGE_DIR: 磁盘存储目录,默认为"./context_storage"
-- CONTEXT_MEMORY_MAX_SIZE: 内存存储最大大小,默认为1000
-- CONTEXT_DISK_STORAGE_ENABLED: 是否启用磁盘存储,默认为true
-- CONTEXT_DATABASE_STORAGE_ENABLED: 是否启用数据库存储,默认为false
+- CONTEXT_STORAGE_DIR: 磁盘存储目录,默认为". / context_storage"
+- CONTEXT_MEMORY_MAX_SIZE: 内存存储最大大小, 默认为1000
+- CONTEXT_DISK_STORAGE_ENABLED: 是否启用磁盘存储, 默认为true
+- CONTEXT_DATABASE_STORAGE_ENABLED: 是否启用数据库存储, 默认为false
 
 ### 缓存配置
-- CONTEXT_CACHE_ENABLED: 是否启用缓存,默认为true
-- CONTEXT_CACHE_MAX_SIZE: 缓存最大大小,默认为100
+- CONTEXT_CACHE_ENABLED: 是否启用缓存, 默认为true
+- CONTEXT_CACHE_MAX_SIZE: 缓存最大大小, 默认为100
 
 ### 性能配置
-- CONTEXT_COMPRESSION_ENABLED: 是否启用数据压缩,默认为false
-- CONTEXT_ASYNC_PROCESSING_ENABLED: 是否启用异步处理,默认为true
+- CONTEXT_COMPRESSION_ENABLED: 是否启用数据压缩, 默认为false
+- CONTEXT_ASYNC_PROCESSING_ENABLED: 是否启用异步处理, 默认为true
 
 ### 安全配置
-- CONTEXT_ENCRYPTION_ENABLED: 是否启用数据加密,默认为false
-- CONTEXT_ACCESS_CONTROL_ENABLED: 是否启用访问控制,默认为false
+- CONTEXT_ENCRYPTION_ENABLED: 是否启用数据加密, 默认为false
+- CONTEXT_ACCESS_CONTROL_ENABLED: 是否启用访问控制, 默认为false
 
 ### 日志配置
-- CONTEXT_LOG_LEVEL: 日志级别,默认为INFO
-- CONTEXT_AUDIT_LOGGING_ENABLED: 是否启用审计日志,默认为true
+- CONTEXT_LOG_LEVEL: 日志级别, 默认为INFO
+- CONTEXT_AUDIT_LOGGING_ENABLED: 是否启用审计日志, 默认为true
 
 ### 集成配置
-- CONTEXT_HAM_INTEGRATION_ENABLED: 是否启用HAM集成,默认为true
-- CONTEXT_MCP_INTEGRATION_ENABLED: 是否启用MCP集成,默认为true
+- CONTEXT_HAM_INTEGRATION_ENABLED: 是否启用HAM集成, 默认为true
+- CONTEXT_MCP_INTEGRATION_ENABLED: 是否启用MCP集成, 默认为true
 
 ## 使用示例
 

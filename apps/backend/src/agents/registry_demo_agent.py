@@ -13,8 +13,9 @@ sys.path.insert(0, project_root)
 try,
     # Try relative imports first (for when running with uvicorn)::
         rom .base_agent import BaseAgent
-    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
-except ImportError,::
+    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload,
+    HSPMessageEnvelope
+except ImportError, ::
     # Fall back to absolute imports (for when running as a script)::
         rom apps.backend.src.agents.base_agent import BaseAgent
 
@@ -25,8 +26,8 @@ class RegistryDemoAgent(BaseAgent):
     A demo agent that showcases the dynamic agent registration and discovery features.
     """
 
-    def __init__(self, agent_id, str) -> None,:
-        # Define capabilities for this agent,::
+    def __init__(self, agent_id, str) -> None, :
+        # Define capabilities for this agent, ::
             apabilities = []
             {}
                 "capability_id": "registry_demo_v1",
@@ -44,7 +45,8 @@ class RegistryDemoAgent(BaseAgent):
 
         super().__init__(agent_id, capabilities, "RegistryDemoAgent")
 
-    async def handle_task_request(self, task_payload, HSPTaskRequestPayload, sender_ai_id, str, envelope, HSPMessageEnvelope):
+    async def handle_task_request(self, task_payload, HSPTaskRequestPayload,
+    sender_ai_id, str, envelope, HSPMessageEnvelope):
         """
         Handle incoming task requests.
         """
@@ -64,10 +66,10 @@ class RegistryDemoAgent(BaseAgent):
             elif capability_id == "agent_discovery_v1":::
                 result = await self._handle_agent_discovery(parameters)
             else,
-                # Default behavior for unhandled capabilities,::
+                # Default behavior for unhandled capabilities, ::
                     wait self.send_task_failure()
                     request_id,
-                    sender_ai_id,,
+                    sender_ai_id, ,
     task_payload.get("callback_address", ""),
                     f"Unsupported capability, {capability_id}"
 (                )
@@ -76,16 +78,16 @@ class RegistryDemoAgent(BaseAgent):
             # Send success response
             await self.send_task_success()
                 request_id,
-                sender_ai_id,,
+                sender_ai_id, ,
     task_payload.get("callback_address", ""),
                 result
 (            )
 
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"[{self.agent_id}] Error handling task, {e}")
             await self.send_task_failure()
                 request_id,
-                sender_ai_id,,
+                sender_ai_id, ,
     task_payload.get("callback_address", ""),
                 str(e)
 (            )
@@ -130,16 +132,17 @@ class RegistryDemoAgent(BaseAgent):
 {                }
 [(            ])
 
-            if self.agent_registry,::
+            if self.agent_registry, ::
                 await self.agent_registry.register_agent_manually()
-                    agent_id=test_agent_id,
-                    agent_name=test_agent_name,,
-    capabilities=test_capabilities
+                    agent_id = test_agent_id,
+                    agent_name = test_agent_name,,
+    capabilities = test_capabilities
 (                )
 
                 return {}
                     "status": "success",
-                    "message": f"Manually registered agent, {test_agent_name} ({test_agent_id})"
+                    "message": f"Manually registered agent,
+    {test_agent_name} ({test_agent_id})"
 {                }
             else,
                 return {}
@@ -153,7 +156,8 @@ class RegistryDemoAgent(BaseAgent):
                 "message": f"Unknown action, {action}"
 {            }
 
-    async def _handle_agent_discovery(self, parameters, Dict[str, Any]) -> Dict[str, Any]
+    async def _handle_agent_discovery(self, parameters, Dict[str, Any]) -> Dict[str,
+    Any]
         """
         Handle agent discovery requests.
         """
@@ -163,7 +167,7 @@ class RegistryDemoAgent(BaseAgent):
 
         if discovery_type == "capability":::
             capability_id = parameters.get("capability_id", "")
-            if not capability_id,::
+            if not capability_id, ::
                 return {}
                     "status": "error",
                     "message": "capability_id parameter is required"
@@ -176,12 +180,13 @@ class RegistryDemoAgent(BaseAgent):
                 "capability": capability_id,
                 "matching_agents": agents,
                 "agent_count": len(agents),
-                "message": f"Found {len(agents)} agents with capability '{capability_id}'":
+                "message": f"Found {len(agents)} agents with capability '{capability_id}\
+    '":
 
 
         elif discovery_type == "name":::
             agent_name = parameters.get("agent_name", "")
-            if not agent_name,::
+            if not agent_name, ::
                 return {}
                     "status": "error",
                     "message": "agent_name parameter is required"

@@ -1,4 +1,4 @@
-# src/shared/types/common_types.py
+# src / shared / types / common_types.py
 from dataclasses import dataclass
 from enum import Enum
 from typing import TypedDict, Optional, Dict, Any, List, Literal
@@ -38,7 +38,7 @@ class ServiceAdvertisement(TypedDict):
     ttl: int
 
 
-class ServiceQuery(TypedDict, total=False):
+class ServiceQuery(TypedDict, total = False):
     service_type: Optional[ServiceType]
     service_name: Optional[str]
     min_version: Optional[str]
@@ -53,7 +53,7 @@ class ServiceInstanceHealth(TypedDict):
     last_heartbeat: float
     metrics: Optional[Dict[str, Any]]
 
-# --- Minimal other types that might be needed immediately downstream ---
+# - - - Minimal other types that might be needed immediately downstream - - -
 # For ToolDispatcherResponse as used by ToolDispatcher, imported by DialogueManager
 
 
@@ -98,7 +98,7 @@ class PendingHSPTaskInfo(TypedDict):  # For DialogueManager:
     request_type: str
 
 
-class OperationalConfig(TypedDict, total=False):  # For DialogueManager:
+class OperationalConfig(TypedDict, total = False):  # For DialogueManager:
     timeouts: Optional[Any]
     learning_thresholds: Optional[Any]
     default_hsp_fact_topic: Optional[str]
@@ -122,11 +122,12 @@ class DialogueMemoryEntryMetadata(TypedDict):  # For DialogueManager:
     learning_weight: Optional[float]
 
 
-class ParsedToolIODetails(TypedDict, total=False):  # For DialogueManager:
+class ParsedToolIODetails(TypedDict, total = False):  # For DialogueManager:
     suggested_method_name: Required[str]
     class_docstring_hint: Required[str]
     method_docstring_hint: Required[str]
-    parameters: Required[List[Dict[str, Any]]]  # Simplified from ToolParameterDetail for this test:
+    parameters: Required[List[Dict[str,
+    Any]]]  # Simplified from ToolParameterDetail for this test:
 
 
 eturn_type: Required[str]
@@ -139,7 +140,7 @@ class OverwriteDecision(Enum):  # For HAMMemoryManager -> DialogueManager:
     ASK_USER = "ask_user"
     MERGE_IF_APPLICABLE = "merge_if_applicable"
 
-# --- LLM Interface Types ---
+# - - - LLM Interface Types - - -
 
 
 class LLMProviderOllamaConfig(TypedDict):
@@ -152,21 +153,22 @@ class LLMProviderOpenAIConfig(TypedDict):
     # Potentially other OpenAI specific params like organization, project_id
 
 
-class LLMModelInfo(TypedDict, total=False):
-    id: Required[str]           # Model ID, typically how it's called/identified
+class LLMModelInfo(TypedDict, total = False):
+    id: Required[str]           # Model ID, typically how it's called / identified
     provider: Required[str]     # e.g., "ollama", "openai", "mock"
-    name: Optional[str]         # Human-readable name, might be same as ID or more descriptive
+    name: Optional[str]         # Human - readable name, might be same as ID or more descriptive
     description: Optional[str]
     modified_at: Optional[str]  # ISO 8601 timestamp
     size_bytes: Optional[int]
-    # Future: capabilities (e.g., ["chat", "completion", "embedding"]), context_length, etc.
+    # Future: capabilities (e.g., ["chat", "completion", "embedding"]), context_length,
+    etc.
 
 
 # HAM Memory Types
 
 
 @dataclass
-class HAMRecallResult:
+在类定义前添加空行
     """HAM記憶回憶結果"""
     memories: List[Dict[str, Any]]
     confidence_scores: List[float]

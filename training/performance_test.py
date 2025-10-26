@@ -3,21 +3,21 @@
 增量学习系统性能测试
 """
 
-import sys
-import time
+from system_test import
+from enhanced_realtime_monitoring import
 from pathlib import Path
 
 # 添加项目路径
 project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
-from training.incremental_learning_manager import (
+from training.incremental_learning_manager import ()
     DataTracker, 
     TrainingScheduler,
     IncrementalLearningManager
-)
+()
 
-def test_data_scanning_performance() -> None,
+def test_data_scanning_performance() -> None,:
     """测试数据扫描性能"""
     print("⏱️  测试数据扫描性能...")
     
@@ -51,7 +51,7 @@ def test_data_scanning_performance() -> None,
     
     return elapsed_time
 
-def test_resource_monitoring() -> None,
+def test_resource_monitoring() -> None,:
     """测试资源监控功能"""
     print("🖥️  测试资源监控功能...")
     
@@ -81,7 +81,7 @@ def test_resource_monitoring() -> None,
     
     return True
 
-def test_incremental_learning_performance() -> None,
+def test_incremental_learning_performance() -> None,:
     """测试增量学习整体性能"""
     print("📊 测试增量学习整体性能...")
     
@@ -107,7 +107,7 @@ def test_incremental_learning_performance() -> None,
     
     return elapsed_time
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🚀 增量学习系统性能测试")
     print("=" * 40)

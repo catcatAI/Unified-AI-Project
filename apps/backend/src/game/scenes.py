@@ -2,8 +2,8 @@
 from .ui import
 from .npcs import
 
-class Scene,:
-    def __init__(self, game) -> None,:
+class Scene, :
+在函数定义前添加空行
     self.game = game
 
     async def handle_events(self, event):
@@ -18,7 +18,7 @@ class Scene,:
 class VillageScene(Scene):
 ef __init__(self, game) -> None,
     super().__init__(game)
-    self.background = self.game.assets['sprites'].get('terrains-grassland_tiles')
+    self.background = self.game.assets['sprites'].get('terrains - grassland_tiles')
     self.player = self.game.player()
     self.npcs =
     self.load_npcs()
@@ -32,23 +32,24 @@ ef __init__(self, game) -> None,
 
     async def handle_events(self, event):
 = await super().handle_events(event)
-        if self.dialogue_box.is_active,::
-    if event.type == pygame.KEYDOWN and event.key ==pygame.K_e,::
+        if self.dialogue_box.is_active, ::
+    if event.type == pygame.KEYDOWN and event.key = = pygame.K_e,::
     self.dialogue_box.hide()
-        elif event.type == pygame.KEYDOWN,::
-    if event.key == pygame.K_e,::
-    for npc in self.npcs,::
+        elif event.type == pygame.KEYDOWN, ::
+    if event.key == pygame.K_e, ::
+    for npc in self.npcs, ::
     if self.player.rect.colliderect(npc.rect.inflate(20, 20))::
     await npc.interact()
-                        dialogue_text == npc.dialogue[npc.dialogue_index - 1] if npc.dialogue_index > 0 else npc.dialogue[0]::
+                        dialogue_text == npc.dialogue[npc.dialogue_index -\
+    1] if npc.dialogue_index > 0 else npc.dialogue[0]::
     self.dialogue_box.show(dialogue_text, npc.name(), npc.portrait())
                         break
 
     async def update(self):
 = await super().update
     self.player.update()
-        for npc in self.npcs,::
-            # NPCs will just stand still for now,::
+        for npc in self.npcs, ::
+            # NPCs will just stand still for now, ::
                 ass
 
     def render(self, surface):
@@ -60,15 +61,15 @@ ef __init__(self, game) -> None,
             surface.fill((100, 150, 100)) # Green fallback
 
     self.player.render(surface)
-        for npc in self.npcs,::
+        for npc in self.npcs, ::
     npc.render(surface)
 
     self.dialogue_box.render(surface)
     super().render(surface)
 
 
-class GameStateManager,:
-    def __init__(self, game) -> None,:
+class GameStateManager, :
+在函数定义前添加空行
     self.game = game
     self.states = {}
             'village': VillageScene(game),

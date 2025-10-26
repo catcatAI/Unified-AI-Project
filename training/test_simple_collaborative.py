@@ -3,7 +3,7 @@
 简单的协作式训练测试脚本
 """
 
-import sys
+from system_test import
 from pathlib import Path
 
 # 添加项目路径
@@ -12,7 +12,7 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "apps" / "backend"))
 sys.path.insert(0, str(project_root / "apps" / "backend" / "src"))
 
-def test_collaborative_training_import() -> None,
+def test_collaborative_training_import() -> None,:
     """测试协作式训练管理器导入"""
     print("🔍 测试协作式训练管理器导入...")
 
@@ -26,7 +26,7 @@ def test_collaborative_training_import() -> None,
     print(f"❌ CollaborativeTrainingManager 导入失败, {e}")
     return False
 
-def test_collaborative_training_initialization() -> None,
+def test_collaborative_training_initialization() -> None,:
     """测试协作式训练管理器初始化"""
     print("\n🔍 测试协作式训练管理器初始化...")
 
@@ -42,7 +42,7 @@ def test_collaborative_training_initialization() -> None,
     print(f"❌ CollaborativeTrainingManager 初始化失败, {e}")
     return False
 
-def test_training_script_preset() -> None,
+def test_training_script_preset() -> None,:
     """测试训练脚本的协作式训练预设"""
     print("\n🔍 测试训练脚本的协作式训练预设...")
 
@@ -68,17 +68,17 @@ def test_training_script_preset() -> None,
     print(f"❌ 训练脚本协作式训练预设测试失败, {e}")
     return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🧪 简单协作式训练功能测试")
     print("=" * 50)
 
     # 测试各个组件
-    tests = [
+    tests = []
     ("协作式训练管理器导入", test_collaborative_training_import),
     ("协作式训练管理器初始化", test_collaborative_training_initialization),
     ("训练脚本协作式训练预设", test_training_script_preset)
-    ]
+[    ]
 
     passed = 0
     total = len(tests)

@@ -4,9 +4,9 @@
 提供命令行接口来控制增量学习系统
 """
 
-import sys
-import argparse
-import json
+from system_test import
+# TODO: Fix import - module 'argparse' not found
+from tests.test_json_fix import
 from pathlib import Path
 
 # 添加项目路径
@@ -43,7 +43,7 @@ def get_status(args):
     status = learner.get_status()
     
     print(f"监控状态, {'运行中' if status['is_monitoring'] else '已停止'}"):::
- = print(f"待处理任务, {status['pending_tasks']} 个")
+= print(f"待处理任务, {status['pending_tasks']} 个")
     print(f"缓冲区数据, {status['buffered_data']} 个")
     print(f"已处理文件, {status['processed_files']} 个")
     
@@ -63,7 +63,7 @@ def cleanup_models(args):
     learner.manual_cleanup_models(keep_versions)
     print(f"✅ 模型清理完成,每个模型保留最新 {keep_versions} 个版本")
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     parser = argparse.ArgumentParser(description='Unified AI Project 增量学习系统CLI')
     subparsers = parser.add_subparsers(help='可用命令', dest='command')

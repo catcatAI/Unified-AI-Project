@@ -1,7 +1,7 @@
 """
 Base class for all specialized agents in the Unified AI Project.
 
-Provides common functionality for HSP connectivity, task handling, and 
+Provides common functionality for HSP connectivity, task handling, and
 lifecycle management.
 """
 
@@ -24,7 +24,7 @@ class TaskPriority(Enum):
     CRITICAL = 4
 
 @dataclass
-class QueuedTask:
+在类定义前添加空行
     """Represents a task in the agent's task queue."""
     task_id: str
     priority: TaskPriority
@@ -37,10 +37,12 @@ class QueuedTask:
 class BaseAgent:
     """
     The base class for all specialized agents.
-    Provides common functionality for HSP connectivity, task handling, and lifecycle management.
+    Provides common functionality for HSP connectivity, task handling,
+    and lifecycle management.
     """
 
-    def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]] = None, agent_name: str = "BaseAgent", alignment_enabled: bool = False) -> None:
+    def __init__(self, agent_id: str, capabilities: List[Dict[str, Any]] = None,
+    agent_name: str = "BaseAgent", alignment_enabled: bool = False) -> None:
         self.agent_id = agent_id
         self.agent_name = agent_name
         self.capabilities = capabilities or []
@@ -55,7 +57,7 @@ class BaseAgent:
         self.task_handlers: Dict[str, Callable] = {}
         self.max_retries = 3
         self.retry_delay = 1.0
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level = logging.INFO)
         self.services: Optional[Any] = None
         self._task_counter = 0
         self._start_time: Optional[float] = None
@@ -74,7 +76,7 @@ class BaseAgent:
 
     async def initialize_full(self):
         """Full asynchronous initialization including all services."""
-        if self._initialized and self.hsp_connector: # Avoid re-init:
+        if self._initialized and self.hsp_connector: # Avoid re - init:
             return
 
         try:
@@ -84,9 +86,9 @@ from ....ai.agent_monitoring_manager import
 from ....ai.dynamic_agent_registry import
 
             self.hsp_connector = HSPConnector()
-                broker_address="localhost",
-                broker_port=1883,
-                client_id=self.agent_id
+                broker_address = "localhost",
+                broker_port = 1883,
+                client_id = self.agent_id
 (            )
             self.collaboration_manager = AgentCollaborationManager(self.hsp_connector)
             self.monitoring_manager = AgentMonitoringManager(self.hsp_connector)
@@ -94,7 +96,8 @@ from ....ai.dynamic_agent_registry import
             self._initialized = True
             logger.info(f"[{self.agent_id}] BaseAgent full initialization complete.")
         except Exception as e:
-            logger.warning(f"[{self.agent_id}] Full initialization failed, using basic mode: {e}")
+            logger.warning(f"[{self.agent_id}] Full initialization failed,
+    using basic mode: {e}")
             self.initialize_basic()
 
     async def start(self):
@@ -131,13 +134,16 @@ from ....ai.dynamic_agent_registry import
 
     def is_healthy(self) -> bool:
         """A basic health check for the agent."""
-        return self.is_running and self.hsp_connector is not None and self.hsp_connector.is_connected()
+        return self.is_running and self.hsp_connector is not None and \
+    self.hsp_connector.is_connected()
 
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
+    async def handle_task_request(self, task_payload: HSPTaskRequestPayload,
+    sender_ai_id: str, envelope: HSPMessageEnvelope):
         """The primary handler for incoming HSP task requests."""
         request_id = task_payload.get("request_id", str(uuid.uuid4()))
         capability_id = task_payload.get('capability_id_filter', '')
-        logger.info(f"[{self.agent_id}] Received task request {request_id} for capability '{capability_id}' from '{sender_ai_id}'.")
+        logger.info(f"[{self.agent_id}] Received task request {request_id} for capabilit\
+    y '{capability_id}' from '{sender_ai_id}'.")
 
         try:
             priority = TaskPriority(task_payload.get("priority", 2))
@@ -145,24 +151,26 @@ from ....ai.dynamic_agent_registry import
             priority = TaskPriority.NORMAL
 
         queued_task = QueuedTask()
-            task_id=request_id,
-            priority=priority,
-            payload=task_payload,
-            sender_id=sender_ai_id,
-            envelope=envelope,
-            received_time=asyncio.get_event_loop().time()
+            task_id = request_id,
+            priority = priority,
+            payload = task_payload,
+            sender_id = sender_ai_id,
+            envelope = envelope,
+            received_time = asyncio.get_event_loop().time()
 (        )
 
         async with self.task_queue_lock:
             if len(self.task_queue) >= self.max_queue_size:
-                logger.warning(f"[{self.agent_id}] Task queue is full, rejecting task {queued_task.task_id}")
+                logger.warning(f"[{self.agent_id}] Task queue is full,
+    rejecting task {queued_task.task_id}")
                 await self._send_task_rejection(queued_task)
                 return
             
             # Simple append, priority can be handled in processing
             self.task_queue.append(queued_task)
-            self.task_queue.sort(key=lambda t: t.priority.value, reverse=True)
-            logger.info(f"[{self.agent_id}] Task {queued_task.task_id} added to queue with priority {queued_task.priority.name}")
+            self.task_queue.sort(key = lambda t: t.priority.value, reverse = True)
+            logger.info(f"[{self.agent_id}] Task {queued_task.task_id} added to queue wi\
+    th priority {queued_task.priority.name}")
 
         asyncio.create_task(self._process_task_queue())
 
@@ -180,7 +188,8 @@ from ....ai.dynamic_agent_registry import
 
     async def _process_single_task(self, task: QueuedTask):
         """Processes a single task."""
-        logger.info(f"[{self.agent_id}] Processing task {task.task_id} with priority {task.priority.name}")
+        logger.info(f"[{self.agent_id}] Processing task {task.task_id} with priority {ta\
+    sk.priority.name}")
         task_start_time = asyncio.get_event_loop().time()
         self._task_counter += 1
 
@@ -191,22 +200,24 @@ from ....ai.dynamic_agent_registry import
 
             if task.payload.get("callback_address") and self.hsp_connector:
                 result_payload = HSPTaskResultPayload()
-                    request_id=task.task_id,
-                    executing_ai_id=self.agent_id,
-                    **result
+                    request_id = task.task_id,
+                    executing_ai_id = self.agent_id,
+                    * * result
 (                )
-                await self.hsp_connector.send_task_result(result_payload, task.payload["callback_address"], task.task_id)
+                await self.hsp_connector.send_task_result(result_payload,
+    task.payload["callback_address"], task.task_id)
 
         except Exception as e:
             logger.error(f"[{self.agent_id}] Error processing task {task.task_id}: {e}")
             if task.retry_count < self.max_retries:
-                logger.info(f"[{self.agent_id}] Retrying task {task.task_id} ({task.retry_count + 1}/{self.max_retries})")
+                logger.info(f"[{self.agent_id}] Retrying task {task.task_id} ({task.retry_count + 1} / {self.max_retries})")
                 await asyncio.sleep(self.retry_delay * (2 ** task.retry_count))
                 task.retry_count += 1
                 async with self.task_queue_lock:
                     self.task_queue.insert(0, task)
             else:
-                logger.error(f"[{self.agent_id}] Task {task.task_id} failed after {self.max_retries} retries.")
+                logger.error(f"[{self.agent_id}] Task {task.task_id} failed after {self.\
+    max_retries} retries.")
                 if task.payload.get("callback_address") and self.hsp_connector:
                     await self.send_task_failure()
                         task.task_id,
@@ -215,15 +226,18 @@ from ....ai.dynamic_agent_registry import
                         f"Task failed after {self.max_retries} retries: {str(e)}"
 (                    )
 
-    async def _default_task_handler(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope) -> Dict[str, Any]:
+    async def _default_task_handler(self, task_payload: HSPTaskRequestPayload,
+    sender_ai_id: str, envelope: HSPMessageEnvelope) -> Dict[str, Any]:
         """Default task handler for unimplemented capabilities."""
         capability_id = task_payload.get('capability_id_filter', '')
-        logger.warning(f"[{self.agent_id}] No specific handler for capability '{capability_id}'")
+        logger.warning(f"[{self.agent_id}] No specific handler for capability '{capabili\
+    ty_id}'")
         return {}
             "status": "failure",
             "error_details": {}
                 "error_code": "NOT_IMPLEMENTED",
-                "error_message": f"The '{self.__class__.__name__}' has not implemented a handler for capability '{capability_id}'."
+                "error_message": f"The '{self.__class__.__name__}' has not implemented a\
+    handler for capability '{capability_id}'."
 {            }
 {        }
 
@@ -231,17 +245,19 @@ from ....ai.dynamic_agent_registry import
         """Sends a rejection response for a task that couldn't be queued."""
         if self.hsp_connector and task.payload.get("callback_address"):
             result_payload = HSPTaskResultPayload()
-                request_id=task.task_id,
-                executing_ai_id=self.agent_id,
-                status="rejected",
-                error_details={}
+                request_id = task.task_id,
+                executing_ai_id = self.agent_id,
+                status = "rejected",
+                error_details = {}
                     "error_code": "QUEUE_FULL",
                     "error_message": "Task queue is full, task rejected"
 {                }
 (            )
-            await self.hsp_connector.send_task_result(result_payload, task.payload["callback_address"], task.task_id)
+            await self.hsp_connector.send_task_result(result_payload,
+    task.payload["callback_address"], task.task_id)
 
     def register_task_handler(self, capability_id: str, handler: Callable):
         """Register a specific handler for a capability."""
         self.task_handlers[capability_id] = handler
-        logger.info(f"[{self.agent_id}] Registered handler for capability '{capability_id}'")
+        logger.info(f"[{self.agent_id}] Registered handler for capability '{capability_i\
+    d}'")

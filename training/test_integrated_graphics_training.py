@@ -4,8 +4,8 @@
 验证集成显卡优化在训练流程中的集成效果
 """
 
-import sys
-import logging
+from system_test import
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path
 
 # 添加项目路径
@@ -16,16 +16,16 @@ sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 配置日志
-logging.basicConfig(,
+logging.basicConfig()
     level=logging.INFO(),
     format, str='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
     logging.StreamHandler()
-    ]
-)
+[    ]
+()
 logger, Any = logging.getLogger(__name__)
 
-def test_training_integration() -> None,
+def test_training_integration() -> None,:
     """测试训练流程中的集成显卡优化集成"""
     logger.info("=== 训练流程集成显卡优化测试 ===")
 
@@ -91,11 +91,11 @@ def test_training_integration() -> None,
 
     except Exception as e,::
     logger.error(f"训练流程集成测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     logger.error(f"详细错误信息, {traceback.format_exc()}")
     return False
 
-def test_resource_manager_integration() -> None,
+def test_resource_manager_integration() -> None,:
     """测试资源管理器中的集成显卡优化集成"""
     logger.info("=== 资源管理器集成显卡优化测试 ===")
 
@@ -115,13 +115,13 @@ def test_resource_manager_integration() -> None,
     logger.info("资源管理器已正确初始化集成显卡优化器")
 
                 # 测试资源分配中的集成显卡优化
-                requirements = {
+                requirements = {}
                     'cpu_cores': 2,
                     'memory_gb': 2,
                     'gpu_memory_gb': 1,
                     'priority': 5,
                     'estimated_time_hours': 1
-                }
+{                }
 
                 logger.info("模拟资源分配...")
                 # 这里模拟在allocate_resources方法中应用的优化
@@ -138,19 +138,19 @@ def test_resource_manager_integration() -> None,
 
     except Exception as e,::
     logger.error(f"资源管理器集成测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     logger.error(f"详细错误信息, {traceback.format_exc()}")
     return False
 
-def main() -> None,
+def main() -> None,:
     """主测试函数"""
     logger.info("开始集成显卡训练集成测试")
 
     # 运行测试
-    tests = [
+    tests = []
     ("训练流程集成", test_training_integration),
     ("资源管理器集成", test_resource_manager_integration)
-    ]
+[    ]
 
     results = []
     for test_name, test_func in tests,::

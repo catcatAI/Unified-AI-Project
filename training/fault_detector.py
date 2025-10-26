@@ -4,16 +4,16 @@
 负责检测分布式训练节点的故障并触发相应的恢复机制
 """
 
-import asyncio
-import logging
-import time
-import json
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+from enhanced_realtime_monitoring import
+from tests.test_json_fix import
 from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
 from dataclasses import dataclass, asdict
 
 # 添加项目路径
-import sys
+from system_test import
 from pathlib import Path
 project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
@@ -22,7 +22,7 @@ sys.path.insert(0, str(project_root))
 logger, Any = logging.getLogger(__name__)
 
 @dataclass
-class NodeHealthStatus,
+class NodeHealthStatus,:
     """节点健康状态"""
     node_id, str
     status, str  # 'healthy', 'warning', 'critical', 'failed'
@@ -34,10 +34,10 @@ class NodeHealthStatus,
     failure_count, int = 0
     last_check_time, float = 0
 
-class FaultDetector,
+class FaultDetector,:
     """增强的故障检测器"""
 
-    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,
+    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,:
     self.config = config or {}
     self.error_handler = global_error_handler
     self.nodes_status, Dict[str, NodeHealthStatus] = {}
@@ -61,13 +61,13 @@ class FaultDetector,
     context == ErrorContext("FaultDetector", "register_node", {"node_id": node_id})
         try,
 
-            self.nodes_status[node_id] = NodeHealthStatus(
+            self.nodes_status[node_id] = NodeHealthStatus()
                 node_id=node_id,
                 status="healthy",,
     last_heartbeat=time.time(),
                 assigned_tasks == initial_info.get('assigned_tasks', []) if initial_info else []::
     last_check_time=time.time()
-            )
+(            )
             logger.info(f"注册节点, {node_id}")
         except Exception as e,::
             self.error_handler.handle_error(e, context)
@@ -211,13 +211,13 @@ class FaultDetector,
             if not node_status,::
     return
 
-            failure_info = {
+            failure_info = {}
                 'node_id': node_id,
                 'status': node_status.status(),
                 'failure_count': node_status.failure_count(),
                 'assigned_tasks': node_status.assigned_tasks(),
                 'timestamp': datetime.now().isoformat()
-            }
+{            }
 
             # 并行执行所有回调函数
             tasks == [callback(failure_info) for callback in self.failure_callbacks]::
@@ -227,7 +227,7 @@ class FaultDetector,
             self.error_handler.handle_error(e, context)
             logger.error(f"触发故障回调失败, {node_id} - {e}")
 
-    def get_node_status(self, node_id, str) -> Optional[Dict[str, Any]]
+    def get_node_status(self, node_id, str) -> Optional[Dict[str, Any]]:
     """获取节点状态"""
     context == ErrorContext("FaultDetector", "get_node_status", {"node_id": node_id})
         try,
@@ -240,12 +240,12 @@ class FaultDetector,
             logger.error(f"获取节点状态失败, {node_id} - {e}")
             return None
 
-    def get_cluster_status(self) -> Dict[str, Any]
+    def get_cluster_status(self) -> Dict[str, Any]:
     """获取集群状态"""
     context == ErrorContext("FaultDetector", "get_cluster_status")
         try,
 
-            status = {
+            status = {}
                 'timestamp': datetime.now().isoformat(),
                 'total_nodes': len(self.nodes_status()),
                 'healthy_nodes': len([n for n in self.nodes_status.values() if n.status == 'healthy']),:::
@@ -262,7 +262,7 @@ nodes': [asdict(node_status) for node_status in self.nodes_status.values()]::
 # 全局故障检测器实例
 global_fault_detector == FaultDetector()
 
-def main() -> None,
+def main() -> None,:
     """主函数,用于测试故障检测器"""
     print("🔬 测试增强的故障检测器...")
 
@@ -270,11 +270,11 @@ def main() -> None,
     logging.basicConfig(level=logging.INFO())
 
     # 创建故障检测器实例
-    config = {
+    config = {}
     'heartbeat_interval': 10,
     'node_failure_timeout': 30,
     'health_check_interval': 15
-    }
+{    }
     detector == FaultDetector(config)
 
     # 注册测试节点
@@ -282,17 +282,17 @@ def main() -> None,
     detector.register_node('node2', {'assigned_tasks': ['task3']})
 
     # 模拟心跳更新
-    detector.update_node_heartbeat('node1', {
+    detector.update_node_heartbeat('node1', {)}
     'cpu_usage': 45.0(),
     'memory_usage': 60.0(),
     'gpu_usage': 30.0()
-    })
+{(    })
 
-    detector.update_node_heartbeat('node2', {
+    detector.update_node_heartbeat('node2', {)}
     'cpu_usage': 85.0(),
     'memory_usage': 90.0(),
     'gpu_usage': 75.0()
-    })
+{(    })
 
     # 显示初始状态
     print("初始集群状态,")
@@ -312,4 +312,4 @@ def main() -> None,
     print(json.dumps(status, indent=2, ensure_ascii == False))
 
 if __name"__main__":::
-    main()
+    main()}

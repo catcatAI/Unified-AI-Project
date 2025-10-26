@@ -18,7 +18,7 @@ class ContextStatus(Enum):
     ARCHIVED = "archived"
 
 class Context:
-    def __init__(self, context_id: str, context_type: ContextType) -> None:
+在函数定义前添加空行
         """初始化上下文"""
         self.context_id = context_id
         self.context_type = context_type
@@ -68,10 +68,10 @@ class Context:
 {        }
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Context':
+在函数定义前添加空行
         """从字典创建上下文"""
         # 这里可以实现从字典恢复上下文的逻辑
-        # 为了简化,暂时返回一个新的上下文实例
+        # 为了简化, 暂时返回一个新的上下文实例
 from .base import
         context = cls(data['context_id'], ContextType(data['context_type']))
         context.created_at = datetime.fromisoformat(data['created_at'])
@@ -87,26 +87,26 @@ class Storage(ABC):
     """存储接口"""
     
     @abstractmethod
-    def save_context(self, context: Context) -> bool:
+在函数定义前添加空行
         """保存上下文"""
         pass
     
     @abstractmethod
-    def load_context(self, context_id: str) -> Optional[Context]:
+在函数定义前添加空行
         """加载上下文"""
         pass
     
     @abstractmethod
-    def delete_context(self, context_id: str) -> bool:
+在函数定义前添加空行
         """删除上下文"""
         pass
     
     @abstractmethod
-    def list_contexts(self) -> List[str]:
+在函数定义前添加空行
         """列出所有上下文ID"""
         pass
     
     @abstractmethod
-    def search_contexts(self, query: str, context_types: Optional[List[ContextType]] = None) -> List[Context]:
+在函数定义前添加空行
         """搜索上下文"""
         pass

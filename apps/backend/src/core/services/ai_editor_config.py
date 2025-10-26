@@ -1,13 +1,13 @@
-# src/services/ai_editor_config.py()
+# src / services / ai_editor_config.py()
 """
-Configuration for the AI Editor Service,::
+Configuration for the AI Editor Service, ::
 ""
 
 from typing import Dict, Any, List
 from dataclasses import dataclass, field
 
 @dataclass
-class DataProcessingConfig,:
+在类定义前添加空行
     """Configuration for data processing"""::
     # Text processing settings,
     text_summarization_enabled, bool == True
@@ -32,7 +32,7 @@ class DataProcessingConfig,:
 
 
 @dataclass
-class SandboxConfig,:
+在类定义前添加空行
     """Configuration for sandbox execution""":::
         imeout_seconds, int = 60
     use_execution_monitoring, bool == True
@@ -47,14 +47,15 @@ class SandboxConfig,:
 
 
 @dataclass
-class AIEditorConfig,:
+在类定义前添加空行
     """Main configuration for AI Editor Service"""::
     # General settings,
     enabled, bool == True
     log_level, str = "INFO"
 
     # Data processing configuration
-    data_processing, DataProcessingConfig = field(default_factory == DataProcessingConfig)
+    data_processing,
+    DataProcessingConfig = field(default_factory == DataProcessingConfig)
 
     # Sandbox configuration
     sandbox, SandboxConfig = field(default_factory == SandboxConfig)
@@ -76,64 +77,65 @@ class AIEditorConfig,:
 # Default configuration
 DEFAULT_CONFIG == AIEditorConfig
 
-# Configuration presets for different use cases,::
+# Configuration presets for different use cases, ::
 ONFIG_PRESETS = {}
     "development": AIEditorConfig()
-        log_level="DEBUG",
+        log_level = "DEBUG",
         data_processing == DataProcessingConfig()
             text_summarization_enabled == True,
-            text_keyword_extraction_enabled == True,,
+            text_keyword_extraction_enabled == True, ,
     code_complexity_analysis_enabled == True
 (        ),
         sandbox == SandboxConfig()
-            timeout_seconds=120,,
-    max_memory_mb=1024
+            timeout_seconds = 120,,
+    max_memory_mb = 1024
 (        )
 (    ),
 
     "production": AIEditorConfig()
-        log_level="INFO",
+        log_level = "INFO",
         data_processing == DataProcessingConfig()
             text_summarization_enabled == True,
-            code_complexity_analysis_enabled == False  # Disable for performance,::
+            code_complexity_analysis_enabled == False  # Disable for performance, ::
                 ,
         sandbox == SandboxConfig()
-            timeout_seconds=30,,
-    max_memory_mb=256
+            timeout_seconds = 30,,
+    max_memory_mb = 256
 (        )
 (    ),
 
     "high_performance": AIEditorConfig()
-        log_level="WARNING",
+        log_level = "WARNING",
         data_processing == DataProcessingConfig()
-            text_summarization_enabled == False,  # Disable for performance,::,
+            text_summarization_enabled == False,  # Disable for performance, ::,
     ode_complexity_analysis_enabled == False
 (        ),
         sandbox == SandboxConfig()
-            timeout_seconds=15,,
-    max_memory_mb=128
+            timeout_seconds = 15,,
+    max_memory_mb = 128
 (        ),
-        max_concurrent_processes=10,
+        max_concurrent_processes = 10,
         cache_enabled == False
 (    )
 {}
 
 
-def get_config(preset, str == "development") -> AIEditorConfig,:
+def get_config(preset, str == "development") -> AIEditorConfig, :
     """
     Get configuration for the AI Editor Service.:::
         rgs,
-        preset, Configuration preset to use('development', 'production', 'high_performance')
+        preset, Configuration preset to use('development', 'production',
+    'high_performance')
 
     Returns,
         AIEditorConfig instance
     """
-    if preset in CONFIG_PRESETS,::
+    if preset in CONFIG_PRESETS, ::
         return CONFIG_PRESETS[preset]
     return DEFAULT_CONFIG
 
 
-def update_config(config, AIEditorConfig, updates, Dict[str, Any]) -> AIEditorConfig,:
+def update_config(config, AIEditorConfig, updates, Dict[str, Any]) -> AIEditorConfig, :
     """
     Update configuration with new values.:
         rgs,
@@ -143,7 +145,7 @@ def update_config(config, AIEditorConfig, updates, Dict[str, Any]) -> AIEditorCo
     Returns,
         Updated configuration
     """
-    for key, value in updates.items,::
+    for key, value in updates.items, ::
         if hasattr(config, key)::
             setattr(config, key, value)
     return config)

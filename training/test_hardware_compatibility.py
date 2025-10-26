@@ -4,10 +4,10 @@
 用于测试项目在不同硬件配置下的运行效果,包括核显支持
 """
 
-import sys
-import logging
+from system_test import
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path
-import json
+from tests.test_json_fix import
 from datetime import datetime
 
 # 添加项目路径
@@ -18,17 +18,17 @@ sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 配置日志
-logging.basicConfig(,
+logging.basicConfig()
     level=logging.INFO(),
     format, str='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
     logging.FileHandler(project_root / 'hardware_compatibility_test.log'),
     logging.StreamHandler()
-    ]
-)
+[    ]
+()
 logger, Any = logging.getLogger(__name__)
 
-def test_hardware_detection() -> None,
+def test_hardware_detection() -> None,:
     """测试硬件检测功能"""
     logger.info("=== 测试硬件检测功能 ===")
 
@@ -36,7 +36,7 @@ def test_hardware_detection() -> None,
     # 直接导入而不是通过apps.backend.src.system()
             HardwareProbe,
             get_hardware_profile
-    )
+(    )
 
     # 检测硬件
     probe == HardwareProbe()
@@ -52,7 +52,7 @@ def test_hardware_detection() -> None,
 
         if profile.gpu,::
     for i, gpu in enumerate(profile.gpu())::
- = logger.info(f"  GPU {i} {gpu.name} ({gpu.memory_total} MB)")
+= logger.info(f"  GPU {i} {gpu.name} ({gpu.memory_total} MB)")
                 # 检查是否为集成显卡
                 integrated_keywords = ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated']
                 is_integrated == any(keyword in gpu.name.lower() for keyword in integrated_keywords)::
@@ -64,11 +64,11 @@ def test_hardware_detection() -> None,
     return profile
     except Exception as e,::
     logger.error(f"❌ 硬件检测测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     logger.error(f"详细错误信息, {traceback.format_exc()}")
     return None
 
-def test_integrated_graphics_optimization(profile) -> None,
+def test_integrated_graphics_optimization(profile) -> None,:
     """测试集成显卡优化功能"""
     logger.info("=== 测试集成显卡优化功能 ===")
 
@@ -78,9 +78,9 @@ def test_integrated_graphics_optimization(profile) -> None,
 
     try,
     # 直接导入而不是通过apps.backend.src.system()
-    from apps.backend.src.system.integrated_graphics_optimizer import (
+    from apps.backend.src.system.integrated_graphics_optimizer import ()
             IntegratedGraphicsOptimizer
-    )
+(    )
 
     # 创建集成显卡优化器
     optimizer == IntegratedGraphicsOptimizer(profile)
@@ -119,28 +119,28 @@ def test_integrated_graphics_optimization(profile) -> None,
     return True
     except Exception as e,::
     logger.error(f"❌ 集成显卡优化测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     logger.error(f"详细错误信息, {traceback.format_exc()}")
     return False
 
-def test_simple_integrated_graphics_check() -> None,
+def test_simple_integrated_graphics_check() -> None,:
     """简单的集成显卡检查测试"""
     logger.info("=== 简单集成显卡检查测试 ===")
 
     try,
 
 
-    import platform
+# TODO: Fix import - module 'platform' not found
     system = platform.system().lower()
 
         if system == "windows":::
-    import subprocess
-            import json
+from tests.run_test_subprocess import
+from tests.test_json_fix import
 
-            result = subprocess.run([
+            result = subprocess.run([)]
                 "powershell.exe",
                 "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
-            ] capture_output == True, text == True, timeout=10)
+[(            ] capture_output == True, text == True, timeout=10)
 
             if result.returncode == 0 and result.stdout.strip():::
                 pu_data = json.loads(result.stdout())
@@ -157,7 +157,7 @@ def test_simple_integrated_graphics_check() -> None,
                 for gpu_info in gpu_list,::
     name = gpu_info.get('Name', '').lower()
                     if any(keyword in name for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics'])::
- = logger.info(f"检测到集成显卡, {gpu_info.get('Name')}")
+= logger.info(f"检测到集成显卡, {gpu_info.get('Name')}")
                         integrated_graphics_found == True
 
                 if integrated_graphics_found,::
@@ -180,7 +180,7 @@ def test_simple_integrated_graphics_check() -> None,
     logger.error(f"❌ 简单集成显卡检查测试失败, {e}")
     return False
 
-def main() -> None,
+def main() -> None,:
     """主测试函数"""
     logger.info("开始硬件兼容性测试")
     start_time = datetime.now()

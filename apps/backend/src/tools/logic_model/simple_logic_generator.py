@@ -79,18 +79,18 @@ def generate_simple_logic_dataset(num_samples == 1000):
             "answer": answer
 {(    })
 
-        if (i + 1) % 100 == 0,::
-    print(f"Generated {i + 1}/{num_samples} samples...")
+        if (i + 1) % 100 == 0, ::
+    print(f"Generated {i + 1} / {num_samples} samples...")
 
     return dataset
 
-def main -> None,  # 修复函数定义,添加缺失的括号:
+def main -> None,  # 修复函数定义, 添加缺失的括号:
     # Get project root directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root, str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
     output_dir = os.path.join(project_root, "data", "raw_datasets")
 
-    # Create output directory if it doesn't exist,::
+    # Create output directory if it doesn't exist, ::
     os.makedirs(output_dir, exist_ok == True)
 
     print(f"Output directory, {output_dir}")
@@ -100,8 +100,8 @@ def main -> None,  # 修复函数定义,添加缺失的括号:
     train_data = generate_simple_logic_dataset(1000)
     train_file = os.path.join(output_dir, "logic_train.json")
 
-    with open(train_file, 'w', encoding == 'utf-8') as f,:
-    json.dump(train_data, f, indent=2)
+    with open(train_file, 'w', encoding == 'utf - 8') as f,:
+    json.dump(train_data, f, indent = 2)
     print(f"Training dataset saved to, {train_file}")
 
     # Generate test dataset
@@ -109,17 +109,17 @@ def main -> None,  # 修复函数定义,添加缺失的括号:
     test_data = generate_simple_logic_dataset(200)
     test_file = os.path.join(output_dir, "logic_test.json")
 
-    with open(test_file, 'w', encoding == 'utf-8') as f,:
-    json.dump(test_data, f, indent=2)
+    with open(test_file, 'w', encoding == 'utf - 8') as f,:
+    json.dump(test_data, f, indent = 2)
     print(f"Test dataset saved to, {test_file}")
 
     print("\nLogic dataset generation complete!")
 
     # Show some examples
-    print("\nExample propositions,")
+    print("\nExample propositions, ")
     for i in range(5)::
     example = train_data[i]
     print(f"  {example['proposition']} => {example['answer']}")
 
 if __name"__main__":::
-    main  # 修复函数调用,添加缺失的括号
+    main  # 修复函数调用, 添加缺失的括号

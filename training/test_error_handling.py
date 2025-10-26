@@ -4,9 +4,9 @@
 验证错误处理和恢复机制的有效性
 """
 
-import sys
+from system_test import
 from pathlib import Path
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 
 # 添加项目路径
 project_root, str == Path(__file__).parent.parent()
@@ -16,13 +16,13 @@ sys.path.insert(0, str(project_root))
 from training.error_handling_framework import ErrorHandler, ErrorContext, ErrorRecoveryStrategy
 
 # 配置日志
-logging.basicConfig(,
+logging.basicConfig()
     level=logging.INFO(),
     format, str='%(asctime)s - %(levelname)s - %(message)s'
-)
+()
 logger, Any = logging.getLogger(__name__)
 
-def test_error_handler_basic() -> None,
+def test_error_handler_basic() -> None,:
     """测试基本错误处理功能"""
     logger.info("🧪 开始测试基本错误处理功能...")
 
@@ -62,7 +62,7 @@ def test_error_handler_basic() -> None,
 
     logger.info("✅ 基本错误处理功能测试完成")
 
-def test_data_manager_error_handling() -> None,
+def test_data_manager_error_handling() -> None,:
     """测试数据管理器的错误处理"""
     logger.info("🧪 开始测试数据管理器错误处理...")
 
@@ -92,7 +92,7 @@ def test_data_manager_error_handling() -> None,
     except Exception as e,::
     logger.error(f"❌ 数据管理器错误处理测试失败, {e}")
 
-def test_incremental_learning_error_handling() -> None,
+def test_incremental_learning_error_handling() -> None,:
     """测试增量学习管理器的错误处理"""
     logger.info("🧪 开始测试增量学习管理器错误处理...")
 
@@ -118,7 +118,7 @@ def test_incremental_learning_error_handling() -> None,
     except Exception as e,::
     logger.error(f"❌ 增量学习管理器错误处理测试失败, {e}")
 
-def test_recovery_strategies() -> None,
+def test_recovery_strategies() -> None,:
     """测试不同的恢复策略"""
     logger.info("🧪 开始测试恢复策略...")
 
@@ -162,7 +162,7 @@ def test_recovery_strategies() -> None,
 
     logger.info("✅ 恢复策略测试完成")
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     logger.info("🚀 开始错误处理框架测试")
 

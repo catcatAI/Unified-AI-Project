@@ -2,11 +2,11 @@
 from typing import Dict, Any, Optional
 
 
-class CsvTool,:
+class CsvTool, :
     """
     A tool for performing basic analysis on CSV data.:::
         ""
-    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,:
+在函数定义前添加空行
     """
     Initializes the CsvTool.
     """
@@ -32,15 +32,17 @@ class CsvTool,:
 
             query = query.lower().strip()
 
-            if "summarize" in query,::
+            if "summarize" in query, ::
     return {"status": "success", "result": df.describe().to_string()}
-            elif "columns" in query,::
+            elif "columns" in query, ::
     return {"status": "success", "result": ", ".join(df.columns.tolist())}
-            elif "shape" in query,::
-    return {"status": "success", "result": f"Rows, {df.shape[0]} Columns, {df.shape[1]}"}
+            elif "shape" in query, ::
+    return {"status": "success", "result": f"Rows, {df.shape[0]} Columns,
+    {df.shape[1]}"}
             else,
 
-                return {"status": "failure", "error": f"Unsupported query, '{query}'. Try 'summarize', 'columns', or 'shape'."}
+                return {"status": "failure", "error": f"Unsupported query,
+    '{query}'. Try 'summarize', 'columns', or 'shape'."}
 
-        except Exception as e,::
+        except Exception as e, ::
             return {"status": "failure", "error": str(e)}

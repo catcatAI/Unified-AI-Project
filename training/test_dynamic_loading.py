@@ -4,9 +4,9 @@
 测试100MB动态载入切分方案的实现
 """
 
-import os
-import sys
-import logging
+from diagnose_base_agent import
+from system_test import
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path
 
 # 添加项目路径
@@ -20,7 +20,7 @@ sys.path.insert(0, str(backend_path / "src"))
 logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
-def test_file_chunking() -> None,
+def test_file_chunking() -> None,:
     """测试文件分块功能"""
     logger.info("开始测试文件分块功能...")
 
@@ -34,7 +34,7 @@ def test_file_chunking() -> None,
     file_size = 250 * 1024 * 1024  # 250MB
 
     logger.info(f"创建 {file_size} 字节的测试文件...")
-    with open(test_file, "wb") as f,
+    with open(test_file, "wb") as f,:
     f.write(os.urandom(file_size))
 
     # 测试文件分块
@@ -67,7 +67,7 @@ def test_file_chunking() -> None,
     return False
 
 
-def test_memory_mapping() -> None,
+def test_memory_mapping() -> None,:
     """测试内存映射功能"""
     logger.info("开始测试内存映射功能...")
 
@@ -81,13 +81,13 @@ def test_memory_mapping() -> None,
     file_size = 150 * 1024 * 1024  # 150MB
 
     logger.info(f"创建 {file_size} 字节的测试文件...")
-    with open(test_file, "wb") as f,
+    with open(test_file, "wb") as f,:
     test_data = os.urandom(file_size)
             f.write(test_data)
 
     # 测试整个文件映射
     logger.info("测试整个文件映射...")
-    with MemoryMappedFile(test_file) as mapped_file,
+    with MemoryMappedFile(test_file) as mapped_file,:
             # 读取前100字节
             data = mapped_file.read(100)
             if len(data) != 100,::
@@ -105,7 +105,7 @@ def test_memory_mapping() -> None,
     chunks = chunker.chunk_file(test_file)
 
     # 映射第一个块
-    with MemoryMappedFile(test_file, chunks[0]) as mapped_file,
+    with MemoryMappedFile(test_file, chunks[0]) as mapped_file,:
             # 读取块的所有数据
             data = mapped_file.read()
             if len(data) != chunks[0]['size']::
@@ -130,7 +130,7 @@ def test_memory_mapping() -> None,
     return False
 
 
-def test_lru_cache() -> None,
+def test_lru_cache() -> None,:
     """测试LRU缓存功能"""
     logger.info("开始测试LRU缓存功能...")
 
@@ -191,7 +191,7 @@ def test_lru_cache() -> None,
     return False
 
 
-def test_dynamic_loader() -> None,
+def test_dynamic_loader() -> None,:
     """测试动态载入器主功能"""
     logger.info("开始测试动态载入器主功能...")
 
@@ -205,7 +205,7 @@ def test_dynamic_loader() -> None,
     file_size = 250 * 1024 * 1024  # 250MB
 
     logger.info(f"创建 {file_size} 字节的测试文件...")
-    with open(test_file, "wb") as f,
+    with open(test_file, "wb") as f,:
     test_data = os.urandom(file_size)
             f.write(test_data)
 
@@ -254,7 +254,7 @@ def test_dynamic_loader() -> None,
     # 获取缓存统计信息
     stats = loader.get_cache_stats()
         if stats['current_size'] != 2,  # 应该缓存了2个块,::
- = logger.error(f"缓存大小不正确,期望, 2,实际, {stats['current_size']}")
+= logger.error(f"缓存大小不正确,期望, 2,实际, {stats['current_size']}")
             return False
 
     logger.info("动态载入器主功能测试通过")
@@ -268,17 +268,17 @@ def test_dynamic_loader() -> None,
     return False
 
 
-def main() -> None,
+def main() -> None,:
     """主测试函数"""
     logger.info("开始动态载入功能测试")
 
     # 运行所有测试
-    tests = [
+    tests = []
     ("文件分块测试", test_file_chunking),
     ("内存映射测试", test_memory_mapping),
     ("LRU缓存测试", test_lru_cache),
     ("动态载入器主功能测试", test_dynamic_loader)
-    ]
+[    ]
 
     passed = 0
     failed = 0

@@ -7,12 +7,13 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 class LearningLogDB:
-    def __init__(self, db_path: str = "learning_logs.db") -> None:
+在函数定义前添加空行
         self.db_path = db_path
         self._init_db()
 
     def _init_db(self):
-        """Initializes the SQLite database and creates the 'strategy_logs' table if it doesn't exist."""
+        """Initializes the SQLite database and \
+    creates the 'strategy_logs' table if it doesn't exist."""
         conn: Optional[sqlite3.Connection] = None
         try:
             conn = sqlite3.connect(self.db_path)
@@ -36,7 +37,8 @@ class LearningLogDB:
                 conn.close()
 
     def add_log_entry(self, log_entry: Dict[str, Any]) -> int:
-        """Adds a new log entry record to the database. Returns the ID of the new record."""
+        """Adds a new log entry record to the database. Returns the ID of the new record\
+    ."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         timestamp = log_entry.get("timestamp", datetime.now(timezone.utc()).isoformat())
@@ -45,7 +47,8 @@ class LearningLogDB:
         message = log_entry.get("message")
 
         cursor.execute(""")
-            INSERT INTO strategy_logs (timestamp, strategy_id, current_effectiveness, message)
+            INSERT INTO strategy_logs (timestamp, strategy_id, current_effectiveness,
+    message)
             VALUES (?, ?, ?, ?)
 (        """, (timestamp, strategy_id, current_effectiveness, message))
         record_id = cursor.lastrowid
@@ -54,11 +57,13 @@ class LearningLogDB:
         logger.debug(f"Added log entry for strategy {strategy_id} with ID: {record_id}")
         return record_id
 
-    def get_all_log_entries(self, strategy_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_all_log_entries(self, strategy_id: Optional[str] = None) -> List[Dict[str,
+    Any]]:
         """Retrieves all log entries, optionally filtered by strategy_id."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        query = "SELECT id, timestamp, strategy_id, current_effectiveness, message FROM strategy_logs"
+        query = "SELECT id, timestamp, strategy_id, current_effectiveness,
+    message FROM strategy_logs"
         params: List[Any] = []
         if strategy_id:
             query += " WHERE strategy_id = ?"
@@ -81,7 +86,8 @@ class LearningLogDB:
         return log_entries
 
     def close(self):
-        """Closes the database connection. (Not strictly necessary for sqlite3.connect(), but good practice)."""
+        """Closes the database connection. (Not strictly necessary for sqlite3.connect()\
+    , but good practice)."""
         pass
 
     def delete_db_file(self):
@@ -90,4 +96,4 @@ class LearningLogDB:
             os.remove(self.db_path)
             logger.info(f"LearningLogDB file deleted: {self.db_path}")
         else:
-            logger.warning(f"Attempted to delete non-existent LearningLogDB file: {self.db_path}")
+            logger.warning(f"Attempted to delete non - existent LearningLogDB file: {self.db_path}")

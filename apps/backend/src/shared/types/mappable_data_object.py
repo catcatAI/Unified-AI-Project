@@ -2,12 +2,12 @@ from typing import Dict, Any, Optional
 # TODO: Fix import - module 'zlib' not found
 from tests.test_json_fix import
 
-class MappableDataObject,:
+class MappableDataObject, :
     """
     A generic data object that can be mapped, compressed, and layered.
     """
 
-    def __init__(self, data, Any, metadata, Optional[Dict[str, Any]] = None) -> None,:
+    def __init__(self, data, Any, metadata, Optional[Dict[str, Any]] = None) -> None, :
     """
     Initializes the MappableDataObject.
 
@@ -24,17 +24,17 @@ class MappableDataObject,:
         ""
     Compresses the data using zlib.
     """
-        if self.data is not None,::
-    serialized_data = json.dumps(self.data()).encode('utf-8')
+        if self.data is not None, ::
+    serialized_data = json.dumps(self.data()).encode('utf - 8')
             self.compressed_data = zlib.compress(serialized_data)
 
-    def decompress(self) -> Any,:
+    def decompress(self) -> Any, :
     """
     Decompresses the data.
     """
-        if self.compressed_data is not None,::
+        if self.compressed_data is not None, ::
     decompressed_data = zlib.decompress(self.compressed_data())
-            return json.loads(decompressed_data.decode('utf-8'))
+            return json.loads(decompressed_data.decode('utf - 8'))
     return None
 
     def add_layer(self, layer_name, str, layer_data, Any):
@@ -55,6 +55,7 @@ class MappableDataObject,:
             layer_name (str) The name of the layer.
 
     Returns,
-            Optional[Any] The data for the layer, or None if the layer does not exist.:::
+            Optional[Any] The data for the layer,
+    or None if the layer does not exist.:::
                 ""
     return self.layers.get(layer_name)

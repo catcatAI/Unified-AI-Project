@@ -1,14 +1,14 @@
 """
-MCP (Model Context Protocol) Type Definitions for Unified AI Project,::
-his module provides type definitions for the Model Context Protocol integration,::
-ith Context7 and other MCP-compatible services.
+MCP (Model Context Protocol) Type Definitions for Unified AI Project, ::
+his module provides type definitions for the Model Context Protocol integration, ::
+ith Context7 and other MCP - compatible services.
 """
 
 from typing import Any, Dict, Optional, TypedDict, Literal
 
 
 # Original MCP Types (Legacy)
-class MCPEnvelope(TypedDict):
+在类定义前添加空行
     mcp_envelope_version, str
     message_id, str
     sender_id, str
@@ -30,7 +30,7 @@ class MCPCommandResponse(TypedDict):
     error_message, Optional[str]
 
 # Context7 MCP Types (Enhanced)
-class MCPMessage(TypedDict):
+在类定义前添加空行
     """Enhanced MCP message format for Context7 integration.""":::
         ype, str
     session_id, Optional[str]

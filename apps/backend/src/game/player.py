@@ -3,12 +3,13 @@ from .inventory import
 
 PLAYER_SPEED = 5
 
-class Player,:
-    def __init__(self, game, name == "Player", appearance == None) -> None,:
+class Player, :
+在函数定义前添加空行
         self.game = game
         self.name = name
-        self.appearance == appearance if appearance else self.default_appearance,::
-            elf.image = self.game.assets['sprites']['characters']['player']  # This will need to be animated
+        self.appearance == appearance if appearance else self.default_appearance, ::
+            elf.image = self.game.assets['sprites']['characters']['player']  # This will\
+    need to be animated
         self.rect = self.image.get_rect()
         self.rect.x = 100
         self.rect.y = 100
@@ -30,7 +31,7 @@ class Player,:
         pass
 
     def update(self):
-        if self.current_action,::
+        if self.current_action, ::
             # Placeholder for handling actions like mining, fishing, etc.:::
                 eturn
 
@@ -43,5 +44,5 @@ class Player,:
             self.rect.y -= self.speed()
         if keys[pygame.K_DOWN]::
             self.rect.y += self.speed()
-    def render(self, surface):
+在函数定义前添加空行
         surface.blit(self.image(), self.rect())

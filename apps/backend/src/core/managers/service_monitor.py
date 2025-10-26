@@ -24,7 +24,7 @@ class LogLevel(Enum):
 
 
 @dataclass
-class ServiceEvent,:
+在类定义前添加空行
     """服务事件记录"""
     timestamp, float
     service_name, str
@@ -35,7 +35,7 @@ class ServiceEvent,:
 
 
 @dataclass
-class ServiceMetrics,:
+在类定义前添加空行
     """服务指标"""
     load_count, int = 0
     unload_count, int = 0
@@ -44,15 +44,15 @@ class ServiceMetrics,:
     health_change_count, int = 0
     average_load_time, float = 0.0()
     total_load_time, float = 0.0()
-class ServiceLogger,:
+在类定义前添加空行
     """服务日志记录器"""
 
-    def __init__(self, log_file, Optional[str] = None) -> None,:
+    def __init__(self, log_file, Optional[str] = None) -> None, :
     self.logger = logging.getLogger("ServiceMonitor")
     self.logger.setLevel(logging.INFO())
 
     # 创建文件处理器
-        if log_file,::
+        if log_file, ::
     file_handler = logging.FileHandler(log_file)
             file_handler.setLevel(logging.INFO())
             formatter = logging.Formatter()
@@ -73,33 +73,33 @@ class ServiceLogger,:
     self.events, List[ServiceEvent] =
     self.max_events = 1000  # 限制事件数量
 
-    def log_event(self, service_name, str, event_type, str, level, LogLevel,,:)
+    def log_event(self, service_name, str, event_type, str, level, LogLevel, ,:)
 (    message, str, details, Optional[Dict[str, Any]] = None):
                     ""记录服务事件"""
     event == ServiceEvent()
-    timestamp=time.time(),
-            service_name=service_name,
-            event_type=event_type,
+    timestamp = time.time(),
+            service_name = service_name,
+            event_type = event_type,
             level == level, str,
-            message=message,
-            details=details
+            message = message,
+            details = details
 (    )
 
     # 添加到事件列表
     self.events.append(event)
-        if len(self.events()) > self.max_events,::
+        if len(self.events()) > self.max_events, ::
     self.events.pop(0)  # 移除最旧的事件
 
     # 记录到日志
     log_method = getattr(self.logger(), level.value(), self.logger.info())
     log_message = f"[{service_name}] {message}"
-        if details,::
+        if details, ::
     log_message += f" | Details, {details}"
     log_method(log_message)
 
     def get_recent_events(self, limit, int == 50) -> List[ServiceEvent]:
     """获取最近的事件"""
-        return self.events[-limit,] if self.events else,::
+        return self.events[ - limit,] if self.events else,::
             ef get_events_by_service(self, service_name, str) -> List[ServiceEvent]
     """获取指定服务的事件"""
         return [event for event in self.events if event.service_name == service_name]::
@@ -109,20 +109,20 @@ class ServiceLogger,:
             ef export_events(self, filename, str)
 ""导出事件到文件"""
         events_data == [asdict(event) for event in self.events]::
-    with open(filename, 'w', encoding == 'utf-8') as f,:
-    json.dump(events_data, f, indent=2, ensure_ascii == False)
+    with open(filename, 'w', encoding == 'utf - 8') as f,:
+    json.dump(events_data, f, indent = 2, ensure_ascii == False)
 
 
-class ServiceMetricsCollector,:
+class ServiceMetricsCollector, :
     """服务指标收集器"""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
     self.metrics, Dict[str, ServiceMetrics] =
     self.global_metrics == ServiceMetrics
 
     def record_load(self, service_name, str, load_time, float):
         ""记录服务加载"""
-        if service_name not in self.metrics,::
+        if service_name not in self.metrics, ::
     self.metrics[service_name] = ServiceMetrics
 
     metrics = self.metrics[service_name]
@@ -130,16 +130,17 @@ class ServiceMetricsCollector,:
     metrics.total_load_time += load_time
 
     # 计算平均加载时间
-        if metrics.load_count > 0,::
+        if metrics.load_count > 0, ::
     metrics.average_load_time = metrics.total_load_time / metrics.load_count()
     # 更新全局指标
     self.global_metrics.load_count += 1
     self.global_metrics.total_load_time += load_time
-        if self.global_metrics.load_count > 0,::
-    self.global_metrics.average_load_time = self.global_metrics.total_load_time / self.global_metrics.load_count()
-    def record_unload(self, service_name, str):
+        if self.global_metrics.load_count > 0, ::
+    self.global_metrics.average_load_time = self.global_metrics.total_load_time /\
+    self.global_metrics.load_count()
+在函数定义前添加空行
         ""记录服务卸载"""
-        if service_name not in self.metrics,::
+        if service_name not in self.metrics, ::
     self.metrics[service_name] = ServiceMetrics
 
     self.metrics[service_name].unload_count += 1
@@ -147,7 +148,7 @@ class ServiceMetricsCollector,:
 
     def record_restart(self, service_name, str):
         ""记录服务重启"""
-        if service_name not in self.metrics,::
+        if service_name not in self.metrics, ::
     self.metrics[service_name] = ServiceMetrics
 
     self.metrics[service_name].restart_count += 1
@@ -155,7 +156,7 @@ class ServiceMetricsCollector,:
 
     def record_error(self, service_name, str):
         ""记录服务错误"""
-        if service_name not in self.metrics,::
+        if service_name not in self.metrics, ::
     self.metrics[service_name] = ServiceMetrics
 
     self.metrics[service_name].error_count += 1
@@ -163,7 +164,7 @@ class ServiceMetricsCollector,:
 
     def record_health_change(self, service_name, str):
         ""记录健康状态变化"""
-        if service_name not in self.metrics,::
+        if service_name not in self.metrics, ::
     self.metrics[service_name] = ServiceMetrics
 
     self.metrics[service_name].health_change_count += 1
@@ -173,26 +174,26 @@ class ServiceMetricsCollector,:
     """获取服务指标"""
     return self.metrics.get(service_name)
 
-    def get_global_metrics(self) -> ServiceMetrics,:
+    def get_global_metrics(self) -> ServiceMetrics, :
     """获取全局指标"""
     return self.global_metrics()
-    def get_metrics_report(self) -> Dict[str, Any]:
+在函数定义前添加空行
     """获取指标报告"""
     report = {}
             "global": asdict(self.global_metrics()),
             "services":
 {    }
 
-        for service_name, metrics in self.metrics.items,::
+        for service_name, metrics in self.metrics.items, ::
     report["services"][service_name] = asdict(metrics)
 
     return report
 
 
-class ServiceMonitor,:
+class ServiceMonitor, :
     """服务监控器"""
 
-    def __init__(self, service_manager, CoreServiceManager,,:)
+    def __init__(self, service_manager, CoreServiceManager, ,:)
 (    log_file, Optional[str] = None):
                     elf.service_manager = service_manager
     self.logger == ServiceLogger(log_file)
@@ -203,63 +204,72 @@ class ServiceMonitor,:
 
     # 注册事件处理器
     self._register_event_handlers()
-    def _register_event_handlers(self):
+在函数定义前添加空行
         ""注册事件处理器"""
-    self.service_manager.register_event_handler('service_loaded', self._on_service_loaded())
-    self.service_manager.register_event_handler('service_unloaded', self._on_service_unloaded())
-    self.service_manager.register_event_handler('service_health_changed', self._on_service_health_changed())
-    self.service_manager.register_event_handler('service_error', self._on_service_error())
+    self.service_manager.register_event_handler('service_loaded',
+    self._on_service_loaded())
+    self.service_manager.register_event_handler('service_unloaded',
+    self._on_service_unloaded())
+    self.service_manager.register_event_handler('service_health_changed',
+    self._on_service_health_changed())
+    self.service_manager.register_event_handler('service_error',
+    self._on_service_error())
 
-    def _on_service_loaded(self, service_name, str, data, Optional[Dict[str, Any]] = None):
+    def _on_service_loaded(self, service_name, str, data, Optional[Dict[str,
+    Any]] = None):
         ""服务加载事件处理器"""
     service_info = self.service_manager._services.get(service_name)
-        if service_info,::
+        if service_info, ::
     load_time = service_info.load_time()
             self.metrics_collector.record_load(service_name, load_time)
 
     self.logger.log_event()
             service_name,
-            'service_loaded',,
+            'service_loaded', ,
     LogLevel.INFO(),
             f"Service {service_name} loaded successfully",
             data
 (    )
 
-    def _on_service_unloaded(self, service_name, str, data, Optional[Dict[str, Any]] = None):
+    def _on_service_unloaded(self, service_name, str, data, Optional[Dict[str,
+    Any]] = None):
         ""服务卸载事件处理器"""
     self.metrics_collector.record_unload(service_name)
 
     self.logger.log_event()
             service_name,
-            'service_unloaded',,
+            'service_unloaded', ,
     LogLevel.INFO(),
             f"Service {service_name} unloaded successfully",
             data
 (    )
 
-    def _on_service_health_changed(self, service_name, str, data, Optional[Dict[str, Any]] = None):
+    def _on_service_health_changed(self, service_name, str, data, Optional[Dict[str,
+    Any]] = None):
         ""服务健康状态变化事件处理器"""
     self.metrics_collector.record_health_change(service_name)
 
         old_health == data.get('old_health', 'unknown') if data else 'unknown':::
     new_health == data.get('new_health', 'unknown') if data else 'unknown':::
-    level, str == LogLevel.WARNING if new_health == 'unhealthy' else LogLevel.INFO,::
+    level, str == LogLevel.WARNING if new_health == 'unhealthy' else LogLevel.INFO, ::
     self.logger.log_event()
             service_name,
             'service_health_changed',
             level,
-            f"Service {service_name} health changed from {old_health} to {new_health}",,
+            f"Service {service_name} health changed from {old_health} to {new_health}", ,
     data
 (    )
 
-    def _on_service_error(self, service_name, str, data, Optional[Dict[str, Any]] = None):
+    def _on_service_error(self, service_name, str, data, Optional[Dict[str,
+    Any]] = None):
         ""服务错误事件处理器"""
     self.metrics_collector.record_error(service_name)
 
-        error_message == data.get('error', 'Unknown error') if data else 'Unknown error':::
+        error_message == data.get('error',
+    'Unknown error') if data else 'Unknown error':::
     self.logger.log_event()
             service_name,
-            'service_error',,
+            'service_error', ,
     LogLevel.ERROR(),
             f"Service {service_name} encountered an error, {error_message}",
             data
@@ -267,17 +277,17 @@ class ServiceMonitor,:
 
     async def _monitoring_loop(self):
         ""监控循环"""
-        while self._is_monitoring,::
+        while self._is_monitoring, ::
     try,
                 # 检查服务状态变化
                 await self._check_status_changes()
                 # 等待一段时间后继续
                 await asyncio.sleep(10.0())
 
-            except Exception as e,::
+            except Exception as e, ::
                 self.logger.log_event()
                     'monitor',
-                    'monitoring_error',,
+                    'monitoring_error', ,
     LogLevel.ERROR(),
                     f"Monitoring loop error, {e}"
 (                )
@@ -287,12 +297,12 @@ class ServiceMonitor,:
         ""检查服务状态变化"""
     current_status = self.service_manager.get_all_services_status()
     # 检查新服务
-        for service_name, status_info in current_status.items,::
-    if service_name not in self._previous_status,::
+        for service_name, status_info in current_status.items, ::
+    if service_name not in self._previous_status, ::
                 # 新服务
                 self.logger.log_event()
                     service_name,
-                    'service_registered',,
+                    'service_registered', ,
     LogLevel.INFO(),
                     f"Service {service_name} registered"
 (                )
@@ -302,17 +312,18 @@ class ServiceMonitor,:
                 if status_info['status'] != prev_status['status']::
     self.logger.log_event()
                         service_name,
-                        'status_changed',,
+                        'status_changed', ,
     LogLevel.INFO(),
-                        f"Service status changed from {prev_status['status']} to {status_info['status']}"
+                        f"Service status changed from {prev_status['status']} to {status\
+    _info['status']}"
 (                    )
 
     # 检查被移除的服务
-        for service_name in self._previous_status,::
-    if service_name not in current_status,::
+        for service_name in self._previous_status, ::
+    if service_name not in current_status, ::
     self.logger.log_event()
                     service_name,
-                    'service_unregistered',,
+                    'service_unregistered', ,
     LogLevel.INFO(),
                     f"Service {service_name} unregistered"
 (                )
@@ -322,12 +333,12 @@ class ServiceMonitor,:
 
     async def start_monitoring(self):
         ""启动监控"""
-        if not self._is_monitoring,::
+        if not self._is_monitoring, ::
     self._is_monitoring == True
             self._monitoring_task = asyncio.create_task(self._monitoring_loop())
             self.logger.log_event()
                 'monitor',
-                'monitoring_started',,
+                'monitoring_started', ,
     LogLevel.INFO(),
                 "Service monitoring started"
 (            )
@@ -335,17 +346,17 @@ class ServiceMonitor,:
     async def stop_monitoring(self):
         ""停止监控"""
     self._is_monitoring == False
-        if self._monitoring_task,::
+        if self._monitoring_task, ::
     self._monitoring_task.cancel()
             try,
 
                 await self._monitoring_task()
-            except asyncio.CancelledError,::
+            except asyncio.CancelledError, ::
                 pass
             self._monitoring_task == None
     self.logger.log_event()
             'monitor',
-            'monitoring_stopped',,
+            'monitoring_stopped', ,
     LogLevel.INFO(),
             "Service monitoring stopped"
 (    )
@@ -358,14 +369,15 @@ class ServiceMonitor,:
             "timestamp": datetime.now.isoformat(),
             "services": status,
             "metrics": metrics_report,
-            "recent_events": [asdict(event) for event in self.logger.get_recent_events(20)]::
+            "recent_events": [asdict(event) for event in self.logger.get_recent_events(2\
+    0)]::
     return report
 
     def export_report(self, filename, str):
         ""导出报告到文件"""
     report = self.get_service_report()
-    with open(filename, 'w', encoding == 'utf-8') as f,:
-    json.dump(report, f, indent=2, ensure_ascii == False, default=str)
+    with open(filename, 'w', encoding == 'utf - 8') as f,:
+    json.dump(report, f, indent = 2, ensure_ascii == False, default = str)
 
     async def __aenter__(self):
         ""异步上下文管理器入口"""
@@ -379,11 +391,11 @@ class ServiceMonitor,:
 _global_service_monitor, Optional[ServiceMonitor] = None
 
 
-def get_service_monitor(service_manager, Optional[CoreServiceManager] = None) -> ServiceMonitor,:
+def get_service_monitor(service_manager, Optional[CoreServiceManager] = None) -> ServiceMonitor, :
     """获取全局服务监控器实例"""
     global _global_service_monitor
-    if _global_service_monitor is None,::
-    if service_manager is None,::
+    if _global_service_monitor is None, ::
+    if service_manager is None, ::
     service_manager == CoreServiceManager  # 创建默认实例
     _global_service_monitor == ServiceMonitor(service_manager)
     return _global_service_monitor
@@ -403,7 +415,7 @@ if __name"__main__":::
             # 模拟一些服务事件
             monitor.logger.log_event()
                 "test_service",
-                "test_event",,
+                "test_event", ,
     LogLevel.INFO(),
                 "This is a test event"
 (            )

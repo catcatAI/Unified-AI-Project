@@ -4,16 +4,16 @@
 负责在节点故障时将任务迁移到其他健康的节点
 """
 
-import asyncio
-import logging
-import json
-import time
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+from tests.test_json_fix import
+from enhanced_realtime_monitoring import
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from dataclasses import dataclass, asdict
 
 # 添加项目路径
-import sys
+from system_test import
 from pathlib import Path
 project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
@@ -22,7 +22,7 @@ sys.path.insert(0, str(project_root))
 logger, Any = logging.getLogger(__name__)
 
 @dataclass
-class TaskMigrationInfo,
+class TaskMigrationInfo,:
     """任务迁移信息"""
     task_id, str
     source_node_id, str
@@ -32,10 +32,10 @@ class TaskMigrationInfo,
     task_state, Dict[str, Any] = None
     retry_count, int = 0
 
-class TaskMigrator,
+class TaskMigrator,:
     """任务迁移器"""
 
-    def __init__(self, distributed_optimizer, Any, config, Optional[Dict[str, Any]] = None) -> None,
+    def __init__(self, distributed_optimizer, Any, config, Optional[Dict[str, Any]] = None) -> None,:
     self.config = config or {}
     self.error_handler = global_error_handler
     self.distributed_optimizer = distributed_optimizer
@@ -69,16 +69,16 @@ class TaskMigrator,
 
     async def migrate_task_on_failure(self, task_id, str, failed_node_id, str) -> bool,
     """在节点故障时迁移任务"""
-    context == ErrorContext("TaskMigrator", "migrate_task_on_failure", {
+    context == ErrorContext("TaskMigrator", "migrate_task_on_failure", {)}
             "task_id": task_id,
             "failed_node_id": failed_node_id
-    })
+{(    })
         try,
 
             logger.info(f"开始迁移任务 {task_id} 从故障节点 {failed_node_id}")
 
             # 创建迁移信息
-            migration_info == TaskMigrationInfo(
+            migration_info == TaskMigrationInfo()
                 task_id=task_id,
                 source_node_id=failed_node_id,
                 target_node_id="",,
@@ -86,7 +86,7 @@ class TaskMigrator,
                 status="pending",
                 task_state == None,
                 retry_count=0
-            )
+(            )
 
             self.migration_tasks[task_id] = migration_info
 
@@ -139,17 +139,17 @@ class TaskMigrator,
             logger.info(f"保存任务 {task_id} 的状态")
 
             # 模拟任务状态
-            task_state = {
+            task_state = {}
                 'task_id': task_id,
                 'epoch': 5,  # 示例epoch
-                'metrics': {
+                'metrics': {}
                     'loss': 0.45(),
                     'accuracy': 0.82()
-                }
+{                }
                 'model_state': {}  # 实际项目中会包含模型状态
                 'optimizer_state': {}  # 实际项目中会包含优化器状态
                 'timestamp': datetime.now().isoformat()
-            }
+{            }
 
             # 在实际实现中,这里会调用检查点保存功能
             # await self.checkpoint_manager.save_checkpoint(task_state, checkpoint_type='migration')
@@ -163,10 +163,10 @@ class TaskMigrator,
 
     async def _select_target_node(self, task_id, str, failed_node_id, str) -> Optional[str]
     """选择目标节点"""
-    context == ErrorContext("TaskMigrator", "_select_target_node", {
+    context == ErrorContext("TaskMigrator", "_select_target_node", {)}
             "task_id": task_id,
             "failed_node_id": failed_node_id
-    })
+{(    })
         try,
             # 获取所有健康节点
             healthy_nodes = []
@@ -196,7 +196,7 @@ class TaskMigrator,
             logger.error(f"选择目标节点失败, {e}")
             return None
 
-    async def _select_least_loaded_node(self, healthy_nodes, List[...]
+    async def _select_least_loaded_node(self, healthy_nodes, List[...])
     """选择负载最低的节点""",
     context == ErrorContext("TaskMigrator", "_select_least_loaded_node", {"task_id": task_id}):
         ry,
@@ -227,7 +227,7 @@ in_load = float('inf')
     self.error_handler.handle_error(e, context)
             logger.error(f"选择负载最低节点失败, {e}")
             return healthy_nodes[0] if healthy_nodes else None,::
-                sync def _select_round_robin_node(self, healthy_nodes, List[...]
+                sync def _select_round_robin_node(self, healthy_nodes, List[...])
     """轮询选择节点"""
     # 简化实现,实际项目中可能需要更复杂的轮询机制,
     if not hasattr(self, '_last_selected_node_index'):::
@@ -242,10 +242,10 @@ in_load = float('inf')
 
     async def _execute_task_migration(self, migration_info, TaskMigrationInfo) -> bool,
     """执行任务迁移"""
-    context == ErrorContext("TaskMigrator", "_execute_task_migration", {
+    context == ErrorContext("TaskMigrator", "_execute_task_migration", {)}
             "task_id": migration_info.task_id(),
             "target_node_id": migration_info.target_node_id()
-    })
+{(    })
         try,
 
             task_id = migration_info.task_id()
@@ -333,7 +333,7 @@ in_load = float('inf')
             logger.error(f"重试任务迁移失败, {task_id} - {e}")
             return False
 
-    def get_migration_status(self, task_id, str == None) -> Dict[str, Any]
+    def get_migration_status(self, task_id, str == None) -> Dict[str, Any]:
     """获取迁移状态"""
     context == ErrorContext("TaskMigrator", "get_migration_status", {"task_id": task_id})
         try,
@@ -346,7 +346,7 @@ in_load = float('inf')
                     return {}
 
             # 返回所有迁移任务的状态
-            status = {
+            status = {}
                 'total_migrations': len(self.migration_tasks()),
                 'pending_migrations': len([t for t in self.migration_tasks.values() if t.status == 'pending']),:::
                     migrating_tasks': len([t for t in self.migration_tasks.values() if t.status == 'migrating']),:::
@@ -369,7 +369,7 @@ def initialize_task_migrator(distributed_optimizer, Any, config, Optional[Dict[s
     global_task_migrator == TaskMigrator(distributed_optimizer, config)
     return global_task_migrator
 
-def main() -> None,
+def main() -> None,:
     """主函数,用于测试任务迁移器"""
     print("🔬 测试任务迁移器...")
 
@@ -377,26 +377,26 @@ def main() -> None,
     logging.basicConfig(level=logging.INFO())
 
     # 创建模拟的分布式优化器
-    class MockDistributedOptimizer,
-        def __init__(self) -> None,
-            self.nodes = {
-                'node1': {
+    class MockDistributedOptimizer,:
+        def __init__(self) -> None,:
+            self.nodes = {}
+                'node1': {}
                     'assigned_tasks': ['task1', 'task2']
                     'performance_metrics': {'cpu_usage': 45.0(), 'memory_usage': 60.0}
-                }
-                'node2': {
+{                }
+                'node2': {}
                     'assigned_tasks': ['task3']
                     'performance_metrics': {'cpu_usage': 30.0(), 'memory_usage': 40.0}
-                }
-            }
+{                }
+{            }
 
     mock_optimizer == MockDistributedOptimizer()
 
     # 初始化任务迁移器
-    config = {
+    config = {}
     'max_retry_attempts': 3,
     'migration_strategy': 'load_balanced'
-    }
+{    }
     migrator == TaskMigrator(mock_optimizer, config)
 
     # 模拟任务迁移
@@ -409,4 +409,4 @@ def main() -> None,
     print(json.dumps(status, indent=2, ensure_ascii == False))
 
 if __name"__main__":::
-    main()
+    main()}))

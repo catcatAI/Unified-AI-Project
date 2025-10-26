@@ -1,9 +1,9 @@
-class SearchEngine,:
+class SearchEngine, :
     """
     A class for searching for models and tools.:::
         ""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
     pass
 
     def search(self, query):
@@ -33,7 +33,7 @@ class SearchEngine,:
 
             from huggingface_hub import HfApi
             api == HfApi
-            models = api.list_models(search=query)
+            models = api.list_models(search = query)
             # 使用正确的属性名
             return [model.id for model in models]::
                 xcept Exception as e,
@@ -51,8 +51,8 @@ class SearchEngine,:
             A list of tools that match the query.
     """
         try,
-            # GitHub搜索可能需要API密钥,这里简化处理
+            # GitHub搜索可能需要API密钥, 这里简化处理
             return
-        except Exception as e,::
+        except Exception as e, ::
             print(f"Error searching GitHub, {e}")
             return

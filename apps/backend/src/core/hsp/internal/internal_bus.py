@@ -3,8 +3,8 @@
 # TODO: Fix import - module 'inspect' not found
 
 class InternalBus:
-    def __init__(self) -> None:
-        self.subscriptions: Dict[str, List[Callable[[Any], None]]] = {} 
+在函数定义前添加空行
+        self.subscriptions: Dict[str, List[Callable[[Any], None]]] = {}
 
     def publish(self, channel: str, message: Any):
         print(f"DEBUG: InternalBus.publish - Channel: {channel}, Message: {message}")
@@ -17,9 +17,11 @@ class InternalBus:
 
     async def publish_async(self, channel: str, message: Any):
         """Awaitable version of publish that awaits coroutine callbacks sequentially.
-        Useful in tests to ensure downstream async handlers (e.g., ACK dispatch) complete before assertions.
+        Useful in tests to ensure downstream async handlers (e.g.,
+    ACK dispatch) complete before assertions.
         """
-        print(f"DEBUG: InternalBus.publish_async - Channel: {channel}, Message: {message}")
+        print(f"DEBUG: InternalBus.publish_async - Channel: {channel},
+    Message: {message}")
         if channel in self.subscriptions:
             for callback in self.subscriptions[channel]:
                 if inspect.iscoroutinefunction(callback):

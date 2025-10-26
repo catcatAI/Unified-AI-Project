@@ -30,8 +30,8 @@ class HSPTaskRequestOutput(BaseModel):
     target_capability_id, str
     error, Optional[str] = None
 
-# --- Atlassian Models ---
-class AtlassianConfigModel(BaseModel):
+# - - - Atlassian Models - - -
+在类定义前添加空行
     base_url, str
     username, str
     api_token, str
@@ -53,37 +53,37 @@ class RovoDevTaskModel(BaseModel):
 class JQLSearchModel(BaseModel):
     jql, str
 
-# --- Hot Status Models ---
-class HotStatusResponse(BaseModel):
+# - - - Hot Status Models - - -
+在类定义前添加空行
     draining, bool
     services_initialized, Dict[str, bool]
     hsp, Dict[str, Any]
     mcp, Dict[str, Any]
     metrics, Dict[str, Any]
 
-# --- Health Models ---
-class HealthResponse(BaseModel):
+# - - - Health Models - - -
+在类定义前添加空行
     status, str
     timestamp, str
     services_initialized, Dict[str, bool]
-    components, Dict[str, Any] = {} 
+    components, Dict[str, Any] = {}
 
-# --- Readiness Models ---
-class ReadinessResponse(BaseModel):
+# - - - Readiness Models - - -
+在类定义前添加空行
     ready, bool
     timestamp, str
     services_initialized, Dict[str, bool]
-    signals, Dict[str, Any] = 
+    signals, Dict[str, Any] =
     reason, Optional[str] = None
 
-# --- HSP Service Discovery Models ---
-class HSPServiceDiscoveryResponse(BaseModel):
+# - - - HSP Service Discovery Models - - -
+在类定义前添加空行
     capability_id, str
     name, str
     description, str
     version, str
     ai_id, str
     availability_status, str
-    tags, List[str] = 
-    supported_interfaces, List[str] = 
-    metadata, Dict[str, Any] = 
+    tags, List[str] =
+    supported_interfaces, List[str] =
+    metadata, Dict[str, Any] =

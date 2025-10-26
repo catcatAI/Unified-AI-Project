@@ -25,7 +25,8 @@ def generate_simple_proposition(max_nesting: int = 1, current_nesting: int = 0) 
     """Generates a simple logical proposition recursively."""
     if current_nesting >= max_nesting or random.random() < 0.4:
         if random.random() < 0.3 and current_nesting < max_nesting:
-            return f"NOT {generate_simple_proposition(max_nesting, current_nesting + 1)}"
+            return f"NOT {generate_simple_proposition(max_nesting,
+    current_nesting + 1)}"
         else:
             return random.choice(VALUES)
     else:
@@ -33,8 +34,10 @@ def generate_simple_proposition(max_nesting: int = 1, current_nesting: int = 0) 
         left = generate_simple_proposition(max_nesting, current_nesting + 1)
         right = generate_simple_proposition(max_nesting, current_nesting + 1)
 
-        use_parens_left = random.choice([True, False]) and ("AND", in left or "OR", in left)
-        use_parens_right = random.choice([True, False]) and ("AND", in right or "OR", in right)
+        use_parens_left = random.choice([True, False]) and ("AND", in left or "OR",
+    in left)
+        use_parens_right = random.choice([True, False]) and ("AND", in right or "OR",
+    in right)
 
         left_expr = f"({left})" if use_parens_left else left
         right_expr = f"({right})" if use_parens_right else right
@@ -44,7 +47,8 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
     """Safely evaluates a logical proposition string using Python's AST."""
     try:
         # Normalize string for safe evaluation
-        normalized_str = prop_str.lower().replace("true", "True").replace("false", "False")
+        normalized_str = prop_str.lower().replace("true", "True").replace("false",
+    "False")
         
         # Whitelist of allowed nodes
         allowed_nodes = {}
@@ -58,7 +62,7 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
             ast.Not
 {        }
 
-        tree = ast.parse(normalized_str, mode='eval')
+        tree = ast.parse(normalized_str, mode = 'eval')
 
         for node in ast.walk(tree):
             if type(node) not in allowed_nodes:
@@ -66,7 +70,7 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
 
         # If parsing and validation pass, use Python's eval on the normalized string.
         # This is safe because we've validated the AST structure.
-        return bool(eval(compile(tree, filename="<string>", mode="eval")))
+        return bool(eval(compile(tree, filename="<string > ", mode="eval")))
 
     except (SyntaxError, ValueError, TypeError) as e:
         # print(f"Could not evaluate '{prop_str}' - Error: {e}")
@@ -78,7 +82,7 @@ def generate_dataset(num_samples: int, max_nesting: int = 2) -> List[Dict[str, A
     generated_propositions = set()
 
     while len(dataset) < num_samples:
-        prop = generate_simple_proposition(max_nesting=max_nesting)
+        prop = generate_simple_proposition(max_nesting = max_nesting)
         if prop in generated_propositions:
             continue
 
@@ -88,13 +92,13 @@ def generate_dataset(num_samples: int, max_nesting: int = 2) -> List[Dict[str, A
             dataset.append({"proposition": prop, "answer": answer})
             generated_propositions.add(prop)
             if len(dataset) % (num_samples // 10 if num_samples >= 10 else 1) == 0:
-                print(f"Generated {len(dataset)}/{num_samples} samples...")
+                print(f"Generated {len(dataset)} / {num_samples} samples...")
 
     return dataset
 
 def save_dataset(dataset: List[Dict[str, Any]], file_path: str):
     """Saves the dataset to a JSON file."""
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with open(file_path, 'w', encoding='utf-8') as f:
-        json.dump(dataset, f, indent=2)
+    os.makedirs(os.path.dirname(file_path), exist_ok = True)
+    with open(file_path, 'w', encoding='utf - 8') as f:
+        json.dump(dataset, f, indent = 2)
     print(f"Dataset saved to {file_path}")

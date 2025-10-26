@@ -10,14 +10,15 @@ from tests.test_json_fix import
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 from tests.core_ai import
-from apps.backend.src.core.shared.utils.cleanup_utils import cleanup_temp_files, cleanup_cache_data, cleanup_log_files, cleanup_demo_artifacts
+from apps.backend.src.core.shared.utils.cleanup_utils import cleanup_temp_files,
+    cleanup_cache_data, cleanup_log_files, cleanup_demo_artifacts
 
 logger, Any = logging.getLogger(__name__)
 
-class DemoLearningManager,:
+class DemoLearningManager, :
     """演示學習管理器"""
 
-    def __init__(self, config_path, str == "configs/demo_credentials.yaml") -> None,:
+    def __init__(self, config_path, str == "configs / demo_credentials.yaml") -> None,:
     """初始化演示學習管理器
 
     Args,
@@ -26,27 +27,27 @@ class DemoLearningManager,:
     self.config_path == Path(config_path)
     self.config = self._load_config()
     self.demo_mode == False
-    self.learning_data == self.initialized === False
+    self.learning_data == self.initialized = = = False
 
     # 學習數據存儲路徑
     self.storage_path == Path(self.config.get('demo_credentials'))
                                 .get('auto_learning')
                                 .get('storage')
-(                                .get('path', 'data/demo_learning'))
+(                                .get('path', 'data / demo_learning'))
     self.storage_path.mkdir(parents == True, exist_ok == True)
 
     def _load_config(self) -> Dict[str, Any]:
     """加載配置文件"""
         try,
 
-            if self.config_path.exists,::
-    with open(self.config_path(), 'r', encoding == 'utf-8') as f,:
+            if self.config_path.exists, ::
+    with open(self.config_path(), 'r', encoding == 'utf - 8') as f,:
     return yaml.safe_load(f)
             else,
 
                 logger.warning(f"配置文件不存在, {self.config_path}")
                 return
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"加載配置文件失敗, {e}")
             return
 
@@ -61,7 +62,7 @@ class DemoLearningManager,:
     demo_patterns = self.config.get('key_detection').get('demo_patterns')
 
     # 檢查所有認證信息
-        for key, value in credentials.items,::
+        for key, value in credentials.items, ::
     if isinstance(value, str)::
         or pattern in demo_patterns,
 
@@ -89,12 +90,12 @@ class DemoLearningManager,:
     actions = self.config.get('key_detection').get('on_demo_key_detected')
     actions.sort(key == lambda x, x.get('priority', 999))
 
-        for action in actions,::
+        for action in actions, ::
     action_name = action.get('action')
             try,
 
                 await self._execute_action(action_name)
-            except Exception as e,::
+            except Exception as e, ::
                 logger.error(f"執行動作失敗 {action_name} {e}")
 
     async def _execute_action(self, action_name, str):
@@ -121,12 +122,12 @@ class DemoLearningManager,:
 
     # 創建演示模式標記文件
     demo_flag = self.storage_path / "demo_mode.flag"
-    with open(demo_flag, 'w') as f,:
+    with open(demo_flag, 'w') as f, :
     json.dump({)}
                 'enabled': True,
                 'activated_at': datetime.now.isoformat(),
                 'config': self.config.get('demo_credentials').get('demo_mode')
-{(            } f, indent=2)
+{(            } f, indent = 2)
 
     async def _initialize_learning(self):
         ""初始化學習系統"""
@@ -162,8 +163,8 @@ class DemoLearningManager,:
 
     # 創建模擬服務配置文件
     mock_config_file = self.storage_path / "mock_services.json"
-    with open(mock_config_file, 'w') as f,:
-    json.dump(mock_config, f, indent=2)
+    with open(mock_config_file, 'w') as f, :
+    json.dump(mock_config, f, indent = 2)
 
     logger.info("模擬服務設置完成")
 
@@ -182,27 +183,27 @@ class DemoLearningManager,:
 
     async def _learning_monitor_loop(self):
         ""學習監控循環"""
-        while self.demo_mode,::
+        while self.demo_mode, ::
     try,
 
 
                 await asyncio.sleep(60)  # 每分鐘檢查一次
                 await self._collect_learning_data()
-            except Exception as e,::
+            except Exception as e, ::
                 logger.error(f"學習監控錯誤, {e}")
 
     async def _cleanup_monitor_loop(self):
         ""清除監控循環"""
     cleanup_config = self.config.get('demo_credentials').get('auto_cleanup')
 
-        while self.demo_mode,::
+        while self.demo_mode, ::
     try,
 
 
 
                 await asyncio.sleep(3600)  # 每小時檢查一次
                 await self._perform_cleanup(cleanup_config)
-            except Exception as e,::
+            except Exception as e, ::
                 logger.error(f"清除監控錯誤, {e}")
 
     async def _collect_learning_data(self):
@@ -219,12 +220,12 @@ class DemoLearningManager,:
             self.learning_data['performance_metrics'].append(system_metrics)
 
             # 限制數據大小
-            if len(self.learning_data['performance_metrics']) > 1000,::
+            if len(self.learning_data['performance_metrics']) > 1000, ::
     self.learning_data['performance_metrics'] = \
-                    self.learning_data['performance_metrics'][-500,]
+                    self.learning_data['performance_metrics'][ - 500,]
 
             await self._save_learning_data()
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"收集學習數據失敗, {e}")
 
     async def _perform_cleanup(self, cleanup_config, Dict[str, Any]):
@@ -238,7 +239,7 @@ class DemoLearningManager,:
             targets = cleanup_config.get('cleanup_targets')
             retention = cleanup_config.get('retention')
 
-            for target in targets,::
+            for target in targets, ::
     if target == "temporary_files":::
     cleanup_temp_files
                 elif target == "cache_data":::
@@ -250,7 +251,7 @@ class DemoLearningManager,:
 
             logger.info("清除操作完成")
 
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"清除操作失敗, {e}")
 
 
@@ -273,9 +274,9 @@ class DemoLearningManager,:
                 'vms': process.memory_info.vms(),
                 'percent': process.memory_percent()
 {            }
-        except ImportError,::
+        except ImportError, ::
             return {'error': 'psutil not available'}
-        except Exception as e,::
+        except Exception as e, ::
             return {'error': str(e)}
 
     def _get_storage_usage(self) -> Dict[str, Any]:
@@ -283,7 +284,7 @@ class DemoLearningManager,:
         try,
 
             total_size = 0
-            for file_path in self.storage_path.rglob("*"):::
+            for file_path in self.storage_path.rglob(" * "):::
                 f file_path.is_file,
 
 
@@ -291,12 +292,12 @@ class DemoLearningManager,:
             return {}
                 'total_bytes': total_size,
                 'total_mb': total_size / (1024 * 1024),
-                'file_count': len(list(self.storage_path.rglob("*")))
+                'file_count': len(list(self.storage_path.rglob(" * ")))
 {            }
-        except Exception as e,::
+        except Exception as e, ::
             return {'error': str(e)}
 
-    def _get_active_connections(self) -> int,:
+    def _get_active_connections(self) -> int, :
     """獲取活躍連接數"""
     # 這裡可以實現實際的連接計數邏輯
     return 0
@@ -306,9 +307,9 @@ class DemoLearningManager,:
         try,
 
             learning_file = self.storage_path / "learning_data.json"
-            with open(learning_file, 'w', encoding == 'utf-8') as f,:
-    json.dump(self.learning_data(), f, indent=2, ensure_ascii == False)
-        except Exception as e,::
+            with open(learning_file, 'w', encoding == 'utf - 8') as f,:
+    json.dump(self.learning_data(), f, indent = 2, ensure_ascii == False)
+        except Exception as e, ::
             logger.error(f"保存學習數據失敗, {e}")
 
     async def record_user_interaction(self, action, str, context, Dict[str, Any])
@@ -321,7 +322,7 @@ class DemoLearningManager,:
             result, 結果
             feedback, 用戶反饋
     """
-        if not self.demo_mode,::
+        if not self.demo_mode, ::
     return
 
     interaction = {}
@@ -335,12 +336,12 @@ class DemoLearningManager,:
     self.learning_data['user_interactions'].append(interaction)
 
     # 限制數據大小
-        if len(self.learning_data['user_interactions']) > 1000,::
+        if len(self.learning_data['user_interactions']) > 1000, ::
     self.learning_data['user_interactions'] = \
-                self.learning_data['user_interactions'][-500,]
+                self.learning_data['user_interactions'][ - 500,]
 
     await self._save_learning_data()
-    async def record_error_pattern(self, error_type, str, error_message, str,)
+    async def record_error_pattern(self, error_type, str, error_message, str, )
 (    context, Dict[str, Any] resolution, str):
                                     ""記錄錯誤模式
 
@@ -350,14 +351,15 @@ class DemoLearningManager,:
             context, 上下文
             resolution, 解決方案
     """
-        if not self.demo_mode,::
+        if not self.demo_mode, ::
     return
 
     error_key == f"{error_type}{error_message}"
 
         if error_key in self.learning_data['error_patterns']::
     self.learning_data['error_patterns'][error_key]['frequency'] += 1
-            self.learning_data['error_patterns'][error_key]['last_seen'] = datetime.now.isoformat()
+            self.learning_data['error_patterns'][error_key]['last_seen'] = datetime.now.\
+    isoformat()
         else,
 
             self.learning_data['error_patterns'][error_key] = {}
@@ -377,7 +379,7 @@ class DemoLearningManager,:
     Returns,
             Dict, 學習洞察數據
     """
-        if not self.demo_mode,::
+        if not self.demo_mode, ::
     return
 
     try,
@@ -396,7 +398,7 @@ class DemoLearningManager,:
                 'recommendations': self._generate_recommendations()
 {            }
 
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"獲取學習洞察失敗, {e}")
             return {'error': str(e)}
 
@@ -404,28 +406,28 @@ class DemoLearningManager,:
     """分析用戶交互"""
     interactions = self.learning_data.get('user_interactions')
 
-        if not interactions,::
+        if not interactions, ::
     return {'total': 0}
 
     # 統計動作頻率
-    action_counts == for interaction in interactions,::
+    action_counts == for interaction in interactions, ::
     action = interaction.get('action', 'unknown')
             action_counts[action] = action_counts.get(action, 0) + 1
 
     # 計算成功率
         success_count == sum(1 for i in interactions if i.get('result') == 'success'):::
-    success_rate == success_count / len(interactions) if interactions else 0,::
+    success_rate == success_count / len(interactions) if interactions else 0, ::
     return {}
             'total': len(interactions),
             'success_rate': success_rate,
             'most_common_actions': sorted(action_counts.items())
 (                                        key == lambda x, x[1] reverse == True)[:5]
-            'recent_activity': interactions[-10,] if len(interactions) > 10 else interactions,::
-    def _analyze_errors(self) -> Dict[str, Any]:
+            'recent_activity': interactions[ - 10,] if len(interactions) > 10 else interactions,::
+在函数定义前添加空行
     """分析錯誤模式"""
     errors = self.learning_data.get('error_patterns')
 
-        if not errors,::
+        if not errors, ::
     return {'total': 0}
 
     # 按頻率排序
@@ -436,17 +438,19 @@ class DemoLearningManager,:
             'total': len(errors),
             'most_frequent': sorted_errors[:5]
             'total_occurrences': sum(e[1].get('frequency', 0) for e in errors.items())::
-    def _analyze_performance(self) -> Dict[str, Any]:
+在函数定义前添加空行
     """分析性能趨勢"""
     metrics = self.learning_data.get('performance_metrics')
 
-        if not metrics,::
+        if not metrics, ::
     return {'samples': 0}
 
     # 計算平均值
-        if metrics,::
-    avg_memory == sum(m.get('memory_usage').get('percent', 0) for m in metrics) / len(metrics)::
-        vg_storage == sum(m.get('storage_usage').get('total_mb', 0) for m in metrics) / len(metrics)::
+        if metrics, ::
+    avg_memory == sum(m.get('memory_usage').get('percent',
+    0) for m in metrics) / len(metrics)::
+        vg_storage == sum(m.get('storage_usage').get('total_mb',
+    0) for m in metrics) / len(metrics)::
 lse,
 
     avg_memory = avg_storage = 0
@@ -455,38 +459,38 @@ lse,
             'samples': len(metrics),
             'avg_memory_percent': avg_memory,
             'avg_storage_mb': avg_storage,
-            'latest_metrics': metrics[-1] if metrics else None,::
-    def _generate_recommendations(self) -> List[str]:
+            'latest_metrics': metrics[ - 1] if metrics else None,::
+在函数定义前添加空行
     """生成建議"""
     recommendations =
 
     # 基於錯誤模式的建議
     errors = self.learning_data.get('error_patterns')
-        if len(errors) > 5,::
-    recommendations.append("檢測到多種錯誤模式,建議檢查系統配置")
+        if len(errors) > 5, ::
+    recommendations.append("檢測到多種錯誤模式, 建議檢查系統配置")
 
     # 基於性能的建議
     metrics = self.learning_data.get('performance_metrics')
-        if metrics,::
-    latest = metrics[-1]
+        if metrics, ::
+    latest = metrics[ - 1]
             memory_percent = latest.get('memory_usage').get('percent', 0)
-            if memory_percent > 80,::
-    recommendations.append("內存使用率較高,建議優化內存使用")
+            if memory_percent > 80, ::
+    recommendations.append("內存使用率較高, 建議優化內存使用")
 
     # 基於交互的建議
     interactions = self.learning_data.get('user_interactions')
-        if interactions,::
+        if interactions, ::
     success_count == sum(1 for i in interactions if i.get('result') == 'success'):::
     success_rate = success_count / len(interactions)
-            if success_rate < 0.8,::
-    recommendations.append("操作成功率較低,建議檢查用戶體驗")
+            if success_rate < 0.8, ::
+    recommendations.append("操作成功率較低, 建議檢查用戶體驗")
 
     return recommendations
 
     def _get_collection_period(self) -> Dict[str, str]:
     """獲取數據收集週期"""
     interactions = self.learning_data.get('user_interactions')
-        if not interactions,::
+        if not interactions, ::
     return
 
         timestamps == [i.get('timestamp') for i in interactions if i.get('timestamp')]::
@@ -501,23 +505,24 @@ lse,
 
     async def shutdown(self):
         ""關閉演示學習管理器"""
-        if self.demo_mode,::
+        if self.demo_mode, ::
     logger.info("關閉演示學習管理器")
 
             # 執行最終清除
             cleanup_config = self.config.get('demo_credentials').get('auto_cleanup')
             if cleanup_config.get('enabled', False)::
                 riggers = cleanup_config.get('triggers')
-                if 'session_end' in triggers,::
+                if 'session_end' in triggers, ::
     await self._perform_cleanup(cleanup_config)
 
             # 保存最終學習數據
             await self._save_learning_data()
             # 生成學習報告
             insights = await self.get_learning_insights()
-            report_file = self.storage_path / f"learning_report_{datetime.now.strftime('%Y%m%d_%H%M%S')}.json"
-            with open(report_file, 'w', encoding == 'utf-8') as f,:
-    json.dump(insights, f, indent=2, ensure_ascii == False)
+            report_file = self.storage_path /\
+    f"learning_report_{datetime.now.strftime('%Y%m%d_%H%M%S')}.json"
+            with open(report_file, 'w', encoding == 'utf - 8') as f,:
+    json.dump(insights, f, indent = 2, ensure_ascii == False)
 
             self.demo_mode == False
             logger.info("演示學習管理器已關閉")

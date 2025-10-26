@@ -3,7 +3,7 @@
 测试自动训练流水线
 """
 
-import sys
+from system_test import
 from pathlib import Path
 
 # 添加项目路径
@@ -12,7 +12,7 @@ sys.path.insert(0, str(project_root))
 
 from training.auto_training_manager import AutoTrainingManager
 
-def test_auto_training() -> None,
+def test_auto_training() -> None,:
     """测试自动训练流水线"""
     print("🧪 开始测试自动训练流水线...")
     
@@ -52,7 +52,7 @@ def test_auto_training() -> None,
             
     except Exception as e,::
         print(f"❌ 测试过程中发生错误, {e}")
-        import traceback
+# TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 

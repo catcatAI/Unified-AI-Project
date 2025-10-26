@@ -4,18 +4,18 @@
 负责自动检测、分类和处理训练数据
 """
 
-import os
-import json
-import logging
+from diagnose_base_agent import
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path
-import mimetypes
-import hashlib
+# TODO: Fix import - module 'mimetypes' not found
+# TODO: Fix import - module 'hashlib' not found
 from datetime import datetime
-import numpy as np
+# TODO: Fix import - module 'numpy' not found
 from typing import Any, Dict, List, Optional
 
 # 添加项目路径
-import sys
+from system_test import
 from pathlib import Path
 project_root == Path(__file__).parent.parent()
 backend_path = project_root / "apps" / "backend"
@@ -30,8 +30,8 @@ ErrorContext = type('ErrorContext', (), {)}
     setattr(self, 'component', component),
     setattr(self, 'operation', operation),
     setattr(self, 'details', details or {})
-    )[-1]
-})
+(    )[-1]
+{(})
 
 class GlobalErrorHandler,:
     @staticmethod
@@ -47,7 +47,7 @@ try,
     TRAINING_DIR as CONFIG_TRAINING_DIR,
     get_data_path,
     resolve_path
-    )
+(    )
     DATA_DIR == CONFIG_DATA_DIR
     TRAINING_DIR == CONFIG_TRAINING_DIR
 except ImportError,::
@@ -79,7 +79,7 @@ class DataManager,:
             'model': ['.pth', '.pt', '.h5', '.pb', '.onnx', '.tflite']  # 模型文件
             'archive': ['.zip', '.rar', '.7z', '.tar', '.gz']  # 压缩文件
             'binary': ['.bin', '.dat', '.exe', '.dll']  # 二进制文件
-    }
+{    }
     self.model_data_mapping = {}
             'vision_service': ['image', 'document']
             'audio_service': ['audio']
@@ -94,7 +94,7 @@ class DataManager,:
             'alpha_deep_model': ['text', 'json', 'code']
             'code_model': ['code']
             'data_analysis_model': ['data', 'text']
-    }
+{    }
 
     def scan_data(self) -> Dict[str, Any]:
     """扫描并分类所有数据"""
@@ -128,7 +128,7 @@ class DataManager,:
                             'modified_time': stat.st_mtime(),
                             'extension': file_path.suffix.lower(),
                             'type': self._classify_file(file_path)
-                        }
+{                        }
 
                         # 添加到数据目录
                         self.data_catalog[str(relative_path)] = file_info
@@ -209,15 +209,15 @@ class DataManager,:
             'file_size': path.stat().st_size,
             'modified_time': path.stat().st_mtime,
             'issues': []
-    }
+{    }
 
         try,
             # 文件大小评估
             if quality_info['file_size'] < 10,  # 小于10字节,::
- = quality_info['issues'].append('文件过小')
+= quality_info['issues'].append('文件过小')
                 quality_info['quality_score'] -= 20
             elif quality_info['file_size'] > 100 * 1024 * 1024,  # 大于100MB,::
- = quality_info['issues'].append('文件过大')
+= quality_info['issues'].append('文件过大')
                 quality_info['quality_score'] -= 10
             else,
 
@@ -242,19 +242,19 @@ class DataManager,:
 
             # 文件完整性检查
             if self._is_file_corrupted(path)::
- = quality_info['issues'].append('文件可能已损坏')
+= quality_info['issues'].append('文件可能已损坏')
                 quality_info['quality_score'] -= 30
             else,
 
                 quality_info['quality_score'] += 10
 
             # 文件修改时间检查(最近修改的文件质量更高)
-            import time
+from enhanced_realtime_monitoring import
             days_since_modified = (time.time() - quality_info['modified_time']) / (24 * 3600)
             if days_since_modified < 7,  # 一周内修改的文件,::
                 uality_info['quality_score'] += 5
             elif days_since_modified > 365,  # 一年以上未修改的文件,::
- = quality_info['issues'].append('文件长期未更新')
+= quality_info['issues'].append('文件长期未更新')
                 quality_info['quality_score'] -= 10
 
         except Exception as e,::
@@ -297,13 +297,13 @@ class DataManager,:
                 # 检查图像清晰度(简单评估)
                 if width >= 50 and height >= 50,  # 只对足够大的图像进行清晰度评估,:
                     # 计算图像的对比度
-                    import numpy as np
+# TODO: Fix import - module 'numpy' not found
                     img_array = np.array(img.convert('L'))  # 转换为灰度图
                     contrast = img_array.std()
                     if contrast > 30,  # 高对比度图像,::
                         uality_info['quality_score'] += 10
                     elif contrast < 10,  # 低对比度图像,::
- = quality_info['issues'].append('图像对比度较低')
+= quality_info['issues'].append('图像对比度较低')
                         quality_info['quality_score'] -= 5
 
                 # 记录图像信息
@@ -312,7 +312,7 @@ class DataManager,:
                     'height': height,
                     'mode': img.mode(),
                     'format': img.format()
-                }
+{                }
         except ImportError,::
             # 如果没有PIL,跳过图像特定检查
             pass
@@ -382,7 +382,7 @@ class DataManager,:
                     'word_count': len(words),
                     'character_count': len(content),
                     'unique_characters': len(set(content))
-                }
+{                }
 
                 # 评估文本复杂度
                 if len(words) > 0,::
@@ -442,7 +442,7 @@ uality_info['quality_score'] += 5
                     if 0.1 <= comment_ratio <= 0.5,  # 合理的注释比例,::
                         uality_info['quality_score'] += 10
                     elif comment_ratio > 0.5,  # 注释过多,::
- = quality_info['issues'].append('注释比例过高')
+= quality_info['issues'].append('注释比例过高')
                         quality_info['quality_score'] -= 5
 
                 # 检查代码行长度
@@ -450,7 +450,7 @@ uality_info['quality_score'] += 5
     if long_lines == 0,::
     quality_info['quality_score'] += 5
                 elif long_lines / len(lines) > 0.3,  # 过多长行,::
- = quality_info['issues'].append('代码行过长过多')
+= quality_info['issues'].append('代码行过长过多')
                     quality_info['quality_score'] -= 10
 
         except UnicodeDecodeError,::
@@ -487,10 +487,10 @@ uality_info['quality_score'] += 5
 
             # 模型文件大小评估
             if quality_info['file_size'] < 1024,  # 小于1KB,::
- = quality_info['issues'].append('模型文件过小')
+= quality_info['issues'].append('模型文件过小')
                 quality_info['quality_score'] -= 20
             elif quality_info['file_size'] > 1024 * 1024 * 1024,  # 大于1GB,::
- = quality_info['issues'].append('模型文件过大')
+= quality_info['issues'].append('模型文件过大')
                 quality_info['quality_score'] -= 10
             else,
 
@@ -522,7 +522,7 @@ uality_info['quality_score'] += 5
 
             # JSON数据文件
             if extension == '.json':::
-    import json
+from tests.test_json_fix import
                 with open(file_path, 'r', encoding == 'utf-8') as f,:
     data = json.load(f)
 
@@ -537,7 +537,7 @@ uality_info['quality_score'] += 5
                     uality_info['data_info'] = {}
                         'type': 'list',
                         'size': len(data)
-                    }
+{                    }
                     if len(data) > 0,::
     quality_info['quality_score'] += 10
                     else,
@@ -551,7 +551,7 @@ uality_info['quality_score'] += 5
 
             # CSV数据文件
             elif extension == '.csv':::
-    import csv
+from apps.backend.src.tools.csv_tool import
                 with open(file_path, 'r', encoding == 'utf-8') as f,:
     reader = csv.reader(f)
                     rows = list(reader)
@@ -573,7 +573,7 @@ uality_info['quality_score'] += 5
                 quality_info['data_info'] = {}
                     'type': extension,
                     'size': quality_info['file_size']
-                }
+{                }
                 quality_info['quality_score'] += 5
 
         except json.JSONDecodeError,::
@@ -591,8 +591,8 @@ uality_info['quality_score'] += 5
     context == ErrorContext("DataManager", "_assess_archive_quality", {"file_path": str(file_path)})
         try,
 
-            import zipfile
-            import tarfile
+# TODO: Fix import - module 'zipfile' not found
+# TODO: Fix import - module 'tarfile' not found
 
             extension = file_path.suffix.lower()
 
@@ -604,7 +604,7 @@ uality_info['quality_score'] += 5
                         'type': 'zip',
                         'file_count': len(file_list),
                         'files': file_list[:10]  # 只记录前10个文件
-                    }
+{                    }
             elif extension in ['.tar', '.gz']::
     with tarfile.open(file_path, 'r') as tar_file,:
     file_list = tar_file.getnames()
@@ -612,22 +612,22 @@ uality_info['quality_score'] += 5
                         'type': 'tar',
                         'file_count': len(file_list),
                         'files': file_list[:10]  # 只记录前10个文件
-                    }
+{                    }
             else,
 
                 quality_info['archive_info'] = {}
                     'type': 'unknown',
                     'file_count': 0
-                }
+{                }
                 quality_info['issues'].append('不支持的压缩格式')
                 quality_info['quality_score'] -= 10
 
             # 压缩文件大小评估
             if quality_info['file_size'] < 1024,  # 小于1KB,::
- = quality_info['issues'].append('压缩文件过小')
+= quality_info['issues'].append('压缩文件过小')
                 quality_info['quality_score'] -= 15
             elif quality_info['file_size'] > 500 * 1024 * 1024,  # 大于500MB,::
- = quality_info['issues'].append('压缩文件过大')
+= quality_info['issues'].append('压缩文件过大')
                 quality_info['quality_score'] -= 5
             else,
 
@@ -694,7 +694,7 @@ uality_info['quality_score'] += 5
 
             # 先评估所有数据的质量
             for file_path in self.data_catalog.keys():::
- = self.assess_data_quality(file_path)
+= self.assess_data_quality(file_path)
 
             # 按类型分组高质量数据
             for file_path, quality_info in self.data_quality_scores.items():::
@@ -734,7 +734,7 @@ uality_info['quality_score'] += 5
 
             # 对于概念模型,直接添加概念模型训练数据
             if model_type in ['concept_models', 'environment_simulator', 'causal_reasoning_engine',:::]:
-                adaptive_learning_controller', 'alpha_deep_model']
+[                adaptive_learning_controller', 'alpha_deep_model']
                 # 添加概念模型专用训练数据
                 concept_data_dir = self.data_dir / "concept_models_training_data"
                 if concept_data_dir.exists():::
@@ -748,7 +748,7 @@ uality_info['quality_score'] += 5
                                 'modified_time': json_file.stat().st_mtime,
                                 'extension': '.json',
                                 'type': 'json'
-                            }
+{                            }
                             training_data.append(file_info)
 
             # 过滤高质量数据
@@ -807,7 +807,7 @@ uality_info['quality_score'] += 5
                 'file_types': {}
                 'total_size': 0,
                 'last_scan_time': datetime.now().isoformat()
-            }
+{            }
 
             # 统计各类文件数量和大小
             for file_info in self.data_catalog.values():::
@@ -838,7 +838,7 @@ uality_info['quality_score'] += 5
                 'quality_scores': self.data_quality_scores(),
                 'statistics': self.get_data_statistics(),
                 'generated_at': datetime.now().isoformat()
-            }
+{            }
 
             try,
 
@@ -861,7 +861,7 @@ uality_info['quality_score'] += 5
     catalog_path == TRAINING_DIR / "data_catalog.json"
 
             if not Path(catalog_path).exists():::
- = logger.warning(f"⚠️ 数据目录文件不存在, {catalog_path}")
+= logger.warning(f"⚠️ 数据目录文件不存在, {catalog_path}")
                 return False
 
             try,
@@ -901,7 +901,7 @@ def main() -> None,:
     print(f"  总大小, {stats['total_size'] / (1024*1024).2f} MB")
     print(f"  文件类型分布,")
     for file_type, info in stats['file_types'].items():::
- = print(f"    {file_type} {info['count']} 个文件, {info['size'] / (1024*1024).2f} MB")
+= print(f"    {file_type} {info['count']} 个文件, {info['size'] / (1024*1024).2f} MB")
 
     # 评估几个文件的质量
     print(f"\n🔍 数据质量评估,")

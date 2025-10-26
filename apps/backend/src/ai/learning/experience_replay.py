@@ -12,7 +12,8 @@ class ExperienceReplayBuffer:
         self.priorities: List[float] = []
         self.position = 0
 
-    def add_experience(self, state: Any, action: Any, reward: float, next_state: Any, done: bool, error: Optional[Any] = None):
+    def add_experience(self, state: Any, action: Any, reward: float, next_state: Any,
+    done: bool, error: Optional[Any] = None):
         """添加經驗"""
         experience = {}
             'state': state,
@@ -45,8 +46,8 @@ class ExperienceReplayBuffer:
         probabilities /= probabilities.sum()
         indices = np.random.choice()
             len(self.buffer),
-            size=batch_size,
-            p=probabilities
+            size = batch_size,
+            p = probabilities
 (        )
 
         return [self.buffer[i] for i in indices]

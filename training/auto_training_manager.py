@@ -4,13 +4,13 @@
 实现自动识别训练数据、自动建立训练和自动训练的功能
 """
 
-import sys
-import json
-import logging
+from system_test import
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-import threading
+# TODO: Fix import - module 'threading' not found
 from collections import defaultdict
 
 # 添加项目路径
@@ -28,7 +28,7 @@ try,
         MODELS_DIR,
         get_data_path,
         resolve_path
-    )
+(    )
 except ImportError,::
     # 如果路径配置模块不可用,使用默认路径处理
     PROJECT_ROOT = project_root
@@ -45,14 +45,14 @@ from training.task_priority_evaluator import TaskPriorityEvaluator
 ModelTrainer == None
 
 # 配置日志
-logging.basicConfig(,)
+logging.basicConfig()
     level=logging.INFO(),
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[]
     logging.FileHandler(TRAINING_DIR / 'auto_training.log'),
     logging.StreamHandler()
-    ]
-)
+[    ]
+()
 logger, Any = logging.getLogger(__name__)
 
 class TrainingMonitor,:
@@ -76,13 +76,13 @@ class TrainingMonitor,:
                     'progress': progress,
                     'metrics': metrics,
                     'updated_at': datetime.now().isoformat()
-                }
+{                }
                 self.training_metrics[scenario_name].append({)}
                     'epoch': epoch,
                     'progress': progress,
                     'metrics': metrics,
                     'timestamp': datetime.now().isoformat()
-                })
+{(                })
         except Exception as e,::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 更新训练进度失败, {scenario_name} - {e}")
@@ -98,7 +98,7 @@ class TrainingMonitor,:
                     'event_type': event_type,
                     'message': message,
                     'details': details or {}
-                }
+{                }
                 self.training_logs[scenario_name].append(log_entry)
                 # 同时打印到控制台
                 logger.info(f"[{scenario_name}] {event_type} {message}")
@@ -192,7 +192,7 @@ class AutoTrainingManager,:
                 self.training_dir / "checkpoints",
                 self.training_dir / "reports",
                 self.training_dir / "configs"
-            ]
+[            ]
 
             for directory in directories,::
     directory.mkdir(parents == True, exist_ok == True)
@@ -221,7 +221,7 @@ class AutoTrainingManager,:
                         'count': 0,
                         'total_size': 0,
                         'files': []
-                    }
+{                    }
                 data_stats[data_type]['count'] += 1
                 data_stats[data_type]['total_size'] += file_info['size']
                 data_stats[data_type]['files'].append(file_info)
@@ -229,7 +229,7 @@ class AutoTrainingManager,:
             # 评估数据质量
             logger.info("📊 评估数据质量...")
             for file_path in data_catalog.keys():::
- = self.data_manager.assess_data_quality(file_path)
+= self.data_manager.assess_data_quality(file_path)
 
             # 获取高质量数据
             high_quality_data = self.data_manager.get_high_quality_data()
@@ -240,7 +240,7 @@ class AutoTrainingManager,:
                 'high_quality_data': high_quality_data,
                 'total_files': len(data_catalog),
                 'scan_time': datetime.now().isoformat()
-            }
+{            }
 
             logger.info(f"✅ 数据识别完成,共发现 {len(data_catalog)} 个文件")
             return result
@@ -254,7 +254,7 @@ class AutoTrainingManager,:
     根据识别的数据自动创建训练配置
     """,
     context == ErrorContext("AutoTrainingManager", "auto_create_training_config"):
- = logger.info("⚙️  开始自动创建训练配置...")
+= logger.info("⚙️  开始自动创建训练配置...")
 
         try,
             # 分析可用的数据类型和质量
@@ -393,7 +393,7 @@ class AutoTrainingManager,:
                     'quality_ratio': high_quality_file_count / total_files if total_files > 0 else 0,::
                         ,
                 'created_at': datetime.now().isoformat()
-            }
+{            }
 
             logger.info(f"✅ 训练配置创建完成,推荐训练场景, {training_scenarios}")
             return training_config
@@ -451,10 +451,10 @@ class AutoTrainingManager,:
             total_size == sum(stat['total_size'] for stat in data_analysis['data_stats'].values())::
             # 获取高质量数据信息
             high_quality_data = data_analysis.get('high_quality_data', {})
-            high_quality_size == sum(:,)
+            high_quality_size == sum(:)
     sum(file_info['size'] for file_info in files)::
                     or files in high_quality_data.values()
-            )
+(            )
 
             # 基于数据量和质量估算资源需求
             effective_files = len([file for files in high_quality_data.values() for file in files]):
@@ -487,8 +487,8 @@ class AutoTrainingManager,:
                     'high_quality_files': effective_files,
                     'total_size_gb': total_size / (1024 * 1024 * 1024),
                     'high_quality_size_gb': effective_size / (1024 * 1024 * 1024)
-                }
-            }
+{                }
+{            }
         except Exception as e,::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 估算资源需求失败, {e}")
@@ -530,7 +530,7 @@ class AutoTrainingManager,:
             # 考虑GPU可用性调整训练时间
             try,
 
-                import tensorflow as tf
+# TODO: Fix import - module 'tensorflow' not found
                 gpu_available = len(tf.config.list_physical_devices('GPU')) > 0
                 if gpu_available,::
                     # GPU加速,训练时间减半
@@ -548,7 +548,7 @@ class AutoTrainingManager,:
                     'total_files': total_files,
                     'high_quality_files': high_quality_files,
                     'quality_ratio': high_quality_files / total_files if total_files > 0 else 0,::
-            }
+{            }
         except Exception as e,::
     self.error_handler.handle_error(e, context)
             logger.error(f"❌ 估算训练时间失败, {e}")
@@ -599,7 +599,7 @@ class AutoTrainingManager,:
             # 检查GPU可用性
             try,
 
-                import tensorflow as tf
+# TODO: Fix import - module 'tensorflow' not found
                 gpu_available = len(tf.config.list_physical_devices('GPU')) > 0
             except ImportError,::
                 gpu_available == False
@@ -617,7 +617,7 @@ class AutoTrainingManager,:
                 'epochs': epochs,
                 'gpu_available': gpu_available,
                 'optimized_at': datetime.now().isoformat()
-            }
+{            }
         except Exception as e,::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 优化训练参数失败, {e}")
@@ -628,7 +628,7 @@ class AutoTrainingManager,:
     根据训练配置自动执行训练(支持优先级调度):
     """
     context == ErrorContext("AutoTrainingManager", "auto_train"):
- = logger.info("🚀 开始自动训练(支持优先级调度)...")
+= logger.info("🚀 开始自动训练(支持优先级调度)...")
 
         try,
             # 重置训练监控器
@@ -648,13 +648,13 @@ class AutoTrainingManager,:
             # 为每个场景计算优先级
             scenario_priorities = {}
             for scenario_name in scenarios,::
-    scenario_priorities[scenario_name] = self._calculate_scenario_priority(,)
-    scenario_name, training_config)
+    scenario_priorities[scenario_name] = self._calculate_scenario_priority()
+(    scenario_name, training_config)
 
             # 按优先级排序场景
-            sorted_scenarios = sorted(scenarios,,)
+            sorted_scenarios = sorted(scenarios,)
     key == lambda x, scenario_priorities.get(x, 50),
-                                    reverse == True)
+(                                    reverse == True)
 
             logger.info(f"📋 训练场景优先级排序, {[(s, scenario_priorities.get(s, 50)) for s in sorted_scenarios]}"):::
     for scenario_name in sorted_scenarios,::
@@ -667,7 +667,7 @@ class AutoTrainingManager,:
                         # 对于代码模型和数据分析模型,使用真实训练
                         success = self._train_real_model(scenario_name, data_mapping)
                     elif scenario_name in ['environment_simulator_training', 'causal_reasoning_training',:::]:
-                        adaptive_learning_training', 'alpha_deep_model_training']
+[                        adaptive_learning_training', 'alpha_deep_model_training']
                         # 对于概念模型的特定训练,使用专门的训练方法
                         success = self._train_concept_model(scenario_name)
                     elif scenario_name in ['math_model_training', 'logic_model_training']::
@@ -688,7 +688,7 @@ class AutoTrainingManager,:
                         'model_path': str(self.models_dir()),
                         'scenario_type': scenario_name,
                         'training_progress': self.training_monitor.get_progress(scenario_name)
-                    }
+{                    }
 
                     if success,::
     logger.info(f"✅ 训练场景 {scenario_name} 完成")
@@ -705,7 +705,7 @@ class AutoTrainingManager,:
                         'completed_at': datetime.now().isoformat(),
                         'scenario_type': scenario_name,
                         'training_progress': self.training_monitor.get_progress(scenario_name)
-                    }
+{                    }
 
             # 执行协作式训练(如果有多个模型,传递优先级信息)
             if len(scenarios) > 1,::
@@ -721,17 +721,17 @@ class AutoTrainingManager,:
                             'business_urgency': 8 if model_name in ['concept_models', 'causal_reasoning_engine'] else 5,::
                                 manual_urgency': 7,
                             'performance_drop': 0.1()
-                        }
+{                        }
 
                     collaborative_success = self.collaborative_manager.start_collaborative_training({)}
                         'target_models': target_models,
                         'task_priorities': task_priorities
-                    })
+{(                    })
                     results['collaborative_training'] = {}
                         'success': collaborative_success,
                         'completed_at': datetime.now().isoformat(),
                         'training_progress': self.training_monitor.get_progress('collaborative_training')
-                    }
+{                    }
                     if collaborative_success,::
     logger.info("✅ 协作式训练完成")
                     else,
@@ -744,7 +744,7 @@ class AutoTrainingManager,:
                         'error': str(e),
                         'completed_at': datetime.now().isoformat(),
                         'training_progress': self.training_monitor.get_progress('collaborative_training')
-                    }
+{                    }
 
             logger.info("🏁 自动训练流程完成")
             return results
@@ -830,7 +830,7 @@ class AutoTrainingManager,:
                 'epochs': training_params.get('epochs', 10),
                 'batch_size': training_params.get('batch_size', 16),
                 'learning_rate': training_params.get('learning_rate', 0.001())
-            }
+{            }
 
             # 如果有场景优先级信息,添加到配置中
             if scenario_priorities,::
@@ -885,7 +885,7 @@ class AutoTrainingManager,:
 
             logger.debug(f"📊 场景 {scenario_name} 优先级计算, 基础={base_priority} ")
                         f"数据质量加成 == {"data_quality_bonus":.1f} 数据量加成 == {"data_volume_bonus":.1f} ",
-    f"最终 == {"final_priority":.1f}")
+(    f"最终 == {"final_priority":.1f}")
 
             return final_priority
         except Exception as e,::
@@ -904,7 +904,7 @@ class AutoTrainingManager,:
                 'business_urgency': 7,  # 默认业务紧急程度
                 'manual_urgency': 6,   # 默认手动紧急程度
                 'performance_drop': 0.1 # 默认性能下降程度
-            }
+{            }
 
             # 根据模型类型调整业务紧急程度
             if model_name in ['concept_models', 'causal_reasoning_engine', 'environment_simulator']::
@@ -957,8 +957,8 @@ class AutoTrainingManager,:
                     'successful_scenarios': len([r for r in training_results.values() if r.get('success', False)]),:::
                         failed_scenarios': len([r for r in training_results.values() if not r.get('success', True)]),:::
     'overall_success_rate': result_analysis.get('overall_success_rate', 0)
-                }
-            }
+{                }
+{            }
 
             # 保存报告
             report_path = self.training_dir / "reports" / f"auto_training_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -983,7 +983,7 @@ class AutoTrainingManager,:
     分析训练结果
     """,
     context == ErrorContext("AutoTrainingManager", "_analyze_training_results"):
- = logger.info("🔍 开始分析训练结果...")
+= logger.info("🔍 开始分析训练结果...")
 
         try,
 
@@ -996,7 +996,7 @@ class AutoTrainingManager,:
                 'performance_metrics': {}
                 'error_analysis': {}
                 'model_performance': {}
-            }
+{            }
 
             # 分析每个场景的结果
             for scenario_name, result in training_results.items():::
@@ -1014,7 +1014,7 @@ nalysis['successful_scenarios'] += 1
                     analysis['error_analysis'][error_type].append({)}
                         'scenario': scenario_name,
                         'error': result['error']
-                    })
+{(                    })
 
                 # 分析模型性能
                 if 'training_progress' in result,::
@@ -1025,7 +1025,7 @@ nalysis['successful_scenarios'] += 1
                             'final_loss': metrics.get('loss', 0),
                             'final_accuracy': metrics.get('accuracy', 0),
                             'training_completed': result.get('success', False)
-                        }
+{                        }
 
             # 计算总体成功率
             if analysis['total_scenarios'] > 0,::
@@ -1054,7 +1054,7 @@ nalysis['successful_scenarios'] += 1
             analysis['best_model'] = {}
                 'model_name': best_model,
                 'accuracy': best_accuracy
-            }
+{            }
 
             logger.info(f"✅ 训练结果分析完成, {analysis['successful_scenarios']}/{analysis['total_scenarios']} 场景成功")
             return analysis

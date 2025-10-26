@@ -7,7 +7,7 @@ LIS_InterventionOutcome == Literal["SUCCESS", "FAILURE"]
 class LIS_SemanticAnomalyDetectedEvent(TypedDict):
     anomaly_type, LIS_AnomalyType
     severity, LIS_SeverityScore
-    # ... other fields if absolutely necessary for import,::
+    # ... other fields if absolutely necessary for import, ::
         lass LIS_InterventionReport(TypedDict)
     outcome, LIS_InterventionOutcome
     # ...

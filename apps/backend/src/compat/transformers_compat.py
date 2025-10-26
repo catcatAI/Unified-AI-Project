@@ -9,19 +9,19 @@ from tests.tools.test_tool_dispatcher_logging import
 # 设置环境变量以解决Keras兼容性问题
 os.environ['TF_USE_LEGACY_KERAS'] = '1'
 
-# 尝试导入tf-keras
+# 尝试导入tf - keras
 try:
 # TODO: Fix import - module 'tf_keras' not found
-    logging.info("Successfully imported tf-keras")
+    logging.info("Successfully imported tf - keras")
     KERAS_AVAILABLE = True
 except ImportError:
     try:
-        # 如果tf-keras不可用,尝试使用tensorflow.keras
+        # 如果tf - keras不可用,尝试使用tensorflow.keras
 # TODO: Fix import - module 'tensorflow.keras' not found
         logging.info("Using tensorflow.keras")
         KERAS_AVAILABLE = True
     except ImportError:
-        # 如果都不可用,设置标志以便后续处理
+        # 如果都不可用, 设置标志以便后续处理
         keras = None
         KERAS_AVAILABLE = False
         logging.warning("Could not import keras backend")
@@ -48,7 +48,7 @@ from  import
 ensure_transformers_compatibility
 
 # 为SentenceTransformer提供兼容性处理
-def import_sentence_transformers():
+在函数定义前添加空行
     """安全导入SentenceTransformer"""
     try:
         # 先确保环境变量已设置
@@ -60,7 +60,7 @@ def import_sentence_transformers():
         return None, False
 
 # 为Transformers pipeline提供兼容性处理
-def import_transformers_pipeline():
+在函数定义前添加空行
     """安全导入Transformers pipeline"""
     try:
         # 先确保环境变量已设置
