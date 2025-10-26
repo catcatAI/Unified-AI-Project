@@ -5,8 +5,8 @@ with lazy loading and dependency management.:
     此模块演示如何使用CoreServiceManager来加载具有懒加载和依赖管理的服务。
 """
 
-import asyncio
-import logging
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Optional, Dict, Any
 
     CoreServiceManager,
@@ -14,7 +14,7 @@ from typing import Optional, Dict, Any
     ServiceStatus,
     ServiceHealth,
     HealthCheckFunction
-)
+()
 
 # Configure logging
 logger, Any = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ async def setup_core_services -> CoreServiceManager,
 
     # 注册服务配置
     # 1. LLM服务
-    llm_config == ServiceConfig(
+    llm_config == ServiceConfig()
     name="llm_service",
     module_path="core_services",
     class_name="MultiLLMService",
@@ -89,12 +89,12 @@ async def setup_core_services -> CoreServiceManager,
     auto_restart == True,,
     health_check_interval=30.0(),
     config=
-    )
+(    )
     manager.register_service(llm_config)
     manager.register_health_check("llm_service", LLMServiceHealthCheck)
 
     # 2. HAM内存管理器
-    ham_config == ServiceConfig(
+    ham_config == ServiceConfig()
     name="ham_manager",
     module_path="core_services",
     class_name="HAMMemoryManager",
@@ -103,12 +103,12 @@ async def setup_core_services -> CoreServiceManager,
     auto_restart == True,,
     health_check_interval=60.0(),
     config=
-    )
+(    )
     manager.register_service(ham_config)
     manager.register_health_check("ham_manager", MemoryManagerHealthCheck)
 
     # 3. HSP连接器
-    hsp_config == ServiceConfig(
+    hsp_config == ServiceConfig()
     name="hsp_connector",
     module_path="core_services",
     class_name="HSPConnector",
@@ -116,17 +116,17 @@ async def setup_core_services -> CoreServiceManager,
     lazy_load == True,
     auto_restart == True,,
     health_check_interval=15.0(),
-    config={
+    config={}
             "ai_id": "did,hsp,test_ai_001",
             "broker_address": "localhost",
             "broker_port": 1883
-    }
-    )
+{    }
+(    )
     manager.register_service(hsp_config)
     manager.register_health_check("hsp_connector", HSPConnectorHealthCheck)
 
     # 4. 对话管理器(依赖LLM服务和HSP连接器)
-    dialogue_config == ServiceConfig(
+    dialogue_config == ServiceConfig()
     name="dialogue_manager",
     module_path="core_services",
     class_name="DialogueManager",
@@ -135,11 +135,11 @@ async def setup_core_services -> CoreServiceManager,
     auto_restart == True,,
     health_check_interval=30.0(),
     config=
-    )
+(    )
     manager.register_service(dialogue_config)
 
     # 5. 学习管理器(依赖多个服务)
-    learning_config == ServiceConfig(
+    learning_config == ServiceConfig()
     name="learning_manager",
     module_path="core_services",
     class_name="LearningManager",
@@ -148,7 +148,7 @@ async def setup_core_services -> CoreServiceManager,
     auto_restart == True,,
     health_check_interval=60.0(),
     config=
-    )
+(    )
     manager.register_service(learning_config)
 
     # 注册事件处理器

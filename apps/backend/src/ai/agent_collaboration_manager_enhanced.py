@@ -1,11 +1,11 @@
-import asyncio
-import logging
-import hashlib
-import json
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'hashlib' not found
+from tests.test_json_fix import
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-import time
+from enhanced_realtime_monitoring import
 
 # 创建占位符类型和类
 
@@ -25,7 +25,7 @@ class HSPMessageEnvelope(dict):
         super().__init__(*args, **kwargs)
 
 
-class HSPConnector,
+class HSPConnector,:
     def register_on_task_result_callback(self, callback):
         pass
 
@@ -44,7 +44,7 @@ class CollaborationStatus(Enum):
 
 
 @dataclass
-class CollaborationTask,
+class CollaborationTask,:
     task_id, str
     requester_agent_id, str
     target_agent_id, str
@@ -60,20 +60,20 @@ class CollaborationTask,
 
 
 @dataclass
-class CachedTaskResult,
+class CachedTaskResult,:
     """缓存的任务结果"""
     result, Dict[str, Any]
     timestamp, float
     expiry_time, float
 
 
-class AgentCollaborationManager,
+class AgentCollaborationManager,:
     """
     Manages collaboration between different AI agents in the Unified AI Project.
     This class handles task delegation, result aggregation, and inter-agent communication.
     """
 
-    def __init__(self, hsp_connector, HSPConnector) -> None,
+    def __init__(self, hsp_connector, HSPConnector) -> None,:
         self.hsp_connector = hsp_connector
         self.active_collaborations, Dict[str, CollaborationTask] = {}
         self.agent_capabilities, Dict[str, List[str]] = {}
@@ -104,7 +104,7 @@ class AgentCollaborationManager,
                     return agent_id
             return None
 
-    def _generate_cache_key(self, capability_id, str, parameters, Dict[str, Any]) -> str,
+    def _generate_cache_key(self, capability_id, str, parameters, Dict[str, Any]) -> str,:
         """生成任务缓存键"""
         # 创建参数的规范化表示
         normalized_params = json.dumps(parameters, sort_keys == True)
@@ -130,17 +130,17 @@ class AgentCollaborationManager,
         """缓存任务结果"""
         current_time = time.time()
         expiry_time = current_time + self.cache_expiry_seconds()
-        cached_result == CachedTaskResult(
+        cached_result == CachedTaskResult()
             result=result,
             timestamp=current_time,,
     expiry_time=expiry_time
-        )
+(        )
         async with self.collaboration_lock,
             self.task_cache[cache_key] = cached_result
 
-    async def delegate_task(self, requester_agent_id, str, target_agent_id, str,
-                          capability_id, str, parameters, Dict[str, Any] priority, int = 1, ,
-    use_cache, bool == True) -> str,
+    async def delegate_task(self, requester_agent_id, str, target_agent_id, str)
+                        capability_id, str, parameters, Dict[str, Any] priority, int = 1, ,
+(    use_cache, bool == True) -> str,
         """
         Delegate a task from one agent to another.
 
@@ -167,7 +167,7 @@ class AgentCollaborationManager,
         task_id = f"collab_task_{int(time.time() * 1000)}_{len(self.active_collaborations()) + 1}"
 
         # Create collaboration task
-        collaboration_task == CollaborationTask(
+        collaboration_task == CollaborationTask()
             task_id=task_id,
             requester_agent_id=requester_agent_id,
             target_agent_id=target_agent_id,
@@ -175,7 +175,7 @@ class AgentCollaborationManager,
             parameters=parameters,
             priority=priority,,
     cache_key=cache_key
-        )
+(        )
 
         # Store the task,
         async with self.collaboration_lock,
@@ -184,7 +184,7 @@ class AgentCollaborationManager,
             self._add_task_to_queue(collaboration_task)
 
         # Send task request via HSP
-        task_payload == HSPTaskRequestPayload({:
+        task_payload == HSPTaskRequestPayload({:)}
             "request_id": task_id,
             "requester_ai_id": requester_agent_id,
             "target_ai_id": target_agent_id,
@@ -193,14 +193,14 @@ class AgentCollaborationManager,
             "status": "pending",
             "priority": priority,
             "use_cache": use_cache
-        })
+{(        })
 
         try,
             # Send the task request
-            success = await self.hsp_connector.send_task_request(
+            success = await self.hsp_connector.send_task_request()
                 payload=task_payload,,
     target_ai_id_or_topic=target_agent_id
-            )
+(            )
 
             if success,::
                 collaboration_task.status == CollaborationStatus.IN_PROGRESS()
@@ -216,8 +216,8 @@ class AgentCollaborationManager,
             logger.error(f"Exception while delegating task '{task_id}': {e}")::
         return task_id
 
-    async def delegate_task_async(self, requester_agent_id, str, target_agent_id, str,,
-    capability_id, str, parameters, Dict[str, Any] priority, int == 1) -> asyncio.Future,
+    async def delegate_task_async(self, requester_agent_id, str, target_agent_id, str,)
+(    capability_id, str, parameters, Dict[str, Any] priority, int == 1) -> asyncio.Future,
         """
         Asynchronously delegate a task from one agent to another.
 
@@ -242,8 +242,8 @@ class AgentCollaborationManager,
         
         return future
 
-    async def delegate_tasks_batch(self, requester_agent_id, str, ,
-    task_definitions, List[Dict[str, Any]]) -> List[str]
+    async def delegate_tasks_batch(self, requester_agent_id, str, )
+(    task_definitions, List[Dict[str, Any]]) -> List[str]
         """
         Delegate multiple tasks in batch.
 
@@ -265,14 +265,14 @@ class AgentCollaborationManager,
             task_id = f"collab_task_{int(time.time() * 1000)}_{len(self.active_collaborations()) + len(tasks_to_create) + 1}"
             
             # Create collaboration task
-            collaboration_task == CollaborationTask(
+            collaboration_task == CollaborationTask()
                 task_id=task_id,
                 requester_agent_id=requester_agent_id,
                 target_agent_id=target_agent_id,
                 capability_id=capability_id,
                 parameters=parameters,,
     priority=priority
-            )
+(            )
             
             tasks_to_create.append((task_id, collaboration_task, task_def))
         
@@ -290,7 +290,7 @@ class AgentCollaborationManager,
             parameters = task_def.get("parameters", {})
             priority = task_def.get("priority", 1)
             
-            task_payload == HSPTaskRequestPayload({
+            task_payload == HSPTaskRequestPayload({)}
                 "request_id": task_id,
                 "requester_ai_id": requester_agent_id,
                 "target_ai_id": target_agent_id,
@@ -298,14 +298,14 @@ class AgentCollaborationManager,
                 "parameters": parameters,
                 "status": "pending",
                 "priority": priority
-            })
+{(            })
 
             try,
                 # Send the task request
-                success = await self.hsp_connector.send_task_request(
+                success = await self.hsp_connector.send_task_request()
                     payload=task_payload,,
     target_ai_id_or_topic=target_agent_id
-                )
+(                )
 
                 if success,::
                     collaboration_task.status == CollaborationStatus.IN_PROGRESS()
@@ -334,8 +334,8 @@ class AgentCollaborationManager,
         if not inserted,::
             self.task_queue.append(task)
 
-    async def _handle_task_result(self, result_payload, HSPTaskResultPayload,,
-    sender_ai_id, str, envelope, HSPMessageEnvelope):
+    async def _handle_task_result(self, result_payload, HSPTaskResultPayload,)
+(    sender_ai_id, str, envelope, HSPMessageEnvelope):
         """Handle task results from collaborating agents."""
         task_id = result_payload.get("request_id", "")
 
@@ -373,24 +373,24 @@ class AgentCollaborationManager,
                 priority = task.priority()
                 priority_counts[priority] = priority_counts.get(priority, 0) + 1
             
-            return {
+            return {}
                 "queue_length": len(self.task_queue()),
                 "max_queue_size": self.max_queue_size(),
                 "priority_counts": priority_counts
-            }
+{            }
 
     async def get_cache_status(self) -> Dict[str, Any]
         """Get the status of the task cache."""
         async with self.collaboration_lock,
             current_time = time.time()
             # 计算未过期的缓存项数量
-            active_cache_count == sum(1 for cached_result in self.task_cache.values()::
-                                   if current_time < cached_result.expiry_time())::
-            return {:
+            active_cache_count == sum(1 for cached_result in self.task_cache.values()::)
+(                                if current_time < cached_result.expiry_time())::
+            return {:}
                 "total_cache_items": len(self.task_cache()),
                 "active_cache_items": active_cache_count,
                 "cache_expiry_seconds": self.cache_expiry_seconds()
-            }
+{            }
 
     async def clear_expired_cache(self) -> int,
         """清理过期的缓存项,返回清理的数量"""
@@ -398,10 +398,10 @@ class AgentCollaborationManager,
         cleaned_count = 0
         
         async with self.collaboration_lock,
-            expired_keys = [
+            expired_keys = []
                 key for key, cached_result in self.task_cache.items()::
                 if current_time >= cached_result.expiry_time,:
-            ]
+[            ]
 
             for key in expired_keys,::
                 del self.task_cache[key]
@@ -418,8 +418,8 @@ class AgentCollaborationManager,
             self.task_cache.clear()
         logger.info("Cache cleared")
 
-    async def orchestrate_multi_agent_task(self, requester_agent_id, str,,
-    task_sequence, List[Dict[str, Any]]):
+    async def orchestrate_multi_agent_task(self, requester_agent_id, str,)
+(    task_sequence, List[Dict[str, Any]]):
         """
         Orchestrate a sequence of tasks across multiple agents.
 
@@ -436,7 +436,7 @@ class AgentCollaborationManager,
 
             # Replace placeholders with previous results,
             for key, value in parameters.items():::
-                if isinstance(value, str) and "<output_of_task_" in value,::
+                if isinstance(value, str) and "<output_of_task_", in value,::
                     task_index = int(value.split("<output_of_task_")[1].split(">")[0])
                     if task_index in results,::
                         parameters[key] = results[task_index]
@@ -446,19 +446,19 @@ class AgentCollaborationManager,
 
             if not target_agent_id,::
                 logger.error(f"No agent found for capability '{capability_id}'")::
-                return {:
+                return {:}
                     "status": "failed",
                     "error": f"No agent found for capability '{capability_id}'"::
-                }
+{                }
 
             # Delegate the task
-            task_id = await self.delegate_task(
+            task_id = await self.delegate_task()
                 requester_agent_id=requester_agent_id,
                 target_agent_id=target_agent_id,
                 capability_id=capability_id,
                 parameters=parameters,,
     priority=task_def.get("priority", 1)
-            )
+(            )
 
             # Wait for task completion (with timeout)::
             timeout = task_def.get("timeout", 30)
@@ -477,15 +477,15 @@ class AgentCollaborationManager,
             else,
                 error_msg == task_status.error_message if task_status else "Task timed out":::
                 logger.error(f"Task {i} failed, {error_msg}")
-                return {
+                return {}
                     "status": "failed",
                     "error": f"Task {i} failed, {error_msg}"
-                }
+{                }
 
-        return {
+        return {}
             "status": "success",
             "results": results
-        }
+{        }
 
     async def shutdown(self):
         """Shutdown the collaboration manager and clean up resources."""

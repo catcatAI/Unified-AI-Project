@@ -1,17 +1,17 @@
-import paho.mqtt.client as mqtt
+from cli import
 from typing import Optional, Callable, Dict, Any, Awaitable
-import json
-import uuid
-import logging
-import asyncio
+from tests.test_json_fix import
+# TODO: Fix import - module 'uuid' not found
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'asyncio' not found
 from datetime import datetime, timezone
 
-from ..shared.error import ProjectError, project_error_handler
-from .types import MCPCommandRequest, MCPEnvelope
+from ..shared.error import
+from .types import
 
-class MCPConnector,
-    def __init__(self, ai_id, str, mqtt_broker_address, str, mqtt_broker_port, int,,
-    enable_fallback, bool == True, fallback_config, Optional[Dict[str, Any]] = None, loop, Optional[asyncio.AbstractEventLoop] = None):
+class MCPConnector,:
+    def __init__(self, ai_id, str, mqtt_broker_address, str, mqtt_broker_port, int,,:)
+(    enable_fallback, bool == True, fallback_config, Optional[Dict[str, Any]] = None, loop, Optional[asyncio.AbstractEventLoop] = None):
     self.ai_id = ai_id
     self.client == mqtt.Client(client_id ==f"mcp-client-{ai_id}-{uuid.uuid4}")
     self.broker_address = mqtt_broker_address
@@ -95,11 +95,11 @@ class MCPConnector,
     # 嘗試使用MQTT發送
         if self.mcp_available and self.is_connected,::
     try,
-                payload = {
+                payload = {}
                     "command_name": command_name,
                     "parameters": parameters
-                }
-                envelope, MCPEnvelope = {
+{                }
+                envelope, MCPEnvelope = {}
                     "mcp_envelope_version": "0.1",
                     "message_id": request_id,
                     "sender_id": self.ai_id(),
@@ -109,7 +109,7 @@ class MCPConnector,
                     "protocol_version": "0.1",
                     "payload": payload,
                     "correlation_id": None
-                }
+{                }
                 topic = f"mcp/cmd/{target_id}/{command_name}"
                 self.client.publish(topic, json.dumps(envelope))
                 print(f"Sent MCP command '{command_name}' to {target_id} via MQTT with request_id {request_id}"):
@@ -136,7 +136,7 @@ class MCPConnector,
     return
 
     try,
-            from .fallback.mcp_fallback_protocols import get_mcp_fallback_manager, initialize_mcp_fallback_protocols,
+from .fallback.mcp_fallback_protocols import
 
     self.fallback_manager = get_mcp_fallback_manager
 
@@ -167,14 +167,14 @@ class MCPConnector,
     return False
 
         try,
-            from .fallback.mcp_fallback_protocols import MCPMessagePriority
+from .fallback.mcp_fallback_protocols import
 
-            success = await self.fallback_manager.send_command(,
+            success = await self.fallback_manager.send_command()
     sender_id=self.ai_id(),
                 recipient_id=target_id,
                 command_name=command_name,
                 parameters=parameters,
-                priority == MCPMessagePriority.NORMAL())
+(                priority == MCPMessagePriority.NORMAL())
 
             if success,::
     self.logger.debug(f"MCP command sent via fallback, {request_id}")
@@ -201,14 +201,14 @@ class MCPConnector,
         if self.fallback_manager,::
     self.fallback_manager.register_command_handler(command_name, handler)
 
-    def get_communication_status(self) -> Dict[str, Any]
+    def get_communication_status(self) -> Dict[str, Any]:
     """獲取通訊狀態"""
-    status, Dict[str, Any] = {
+    status, Dict[str, Any] = {}
             "mcp_available": self.mcp_available(),
             "is_connected": self.is_connected(),
             "fallback_enabled": self.enable_fallback(),
             "fallback_initialized": self.fallback_initialized()
-    }
+{    }
 
         if self.fallback_manager,::
     fallback_status = self.fallback_manager.get_status()
@@ -218,11 +218,11 @@ class MCPConnector,
 
     async def health_check(self) -> Dict[str, Any]
     """健康檢查"""
-    health = {
+    health = {}
             "mcp_healthy": False,
             "fallback_healthy": False,
             "overall_healthy": False
-    }
+{    }
 
     # 檢查MCP MQTT健康狀態
         if self.mcp_available and self.is_connected,::

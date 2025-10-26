@@ -1,4 +1,4 @@
-import pygame
+# TODO: Fix import - module 'pygame' not found
 
 class DialogueBox:
     def __init__(self, game) -> None:

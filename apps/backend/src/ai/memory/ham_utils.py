@@ -1,13 +1,13 @@
-import numpy as np
+# TODO: Fix import - module 'numpy' not found
 
 # Default English stopwords
-stopwords = {
+stopwords = {}
     'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he',
     'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'will', 'with',
     'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your',
     'yours', 'yourself', 'yourselves', 'him', 'his', 'she', 'her', 'hers', 'herself',
     'they', 'them', 'their', 'theirs', 'themselves', 'this', 'these', 'those'
-}
+{}
 
 def calculate_cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
     """Calculates the cosine similarity between two vectors."""

@@ -1,5 +1,5 @@
-import asyncio
-import logging
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
@@ -22,7 +22,7 @@ class HSPMessageEnvelope(dict):
         super().__init__(*args, **kwargs)
 
 
-class HSPConnector,
+class HSPConnector,:
     def register_on_task_result_callback(self, callback):
         pass
 
@@ -41,7 +41,7 @@ class CollaborationStatus(Enum):
 
 
 @dataclass
-class CollaborationTask,
+class CollaborationTask,:
     task_id, str
     requester_agent_id, str
     target_agent_id, str
@@ -52,13 +52,13 @@ class CollaborationTask,
     error_message, Optional[str] = None
 
 
-class AgentCollaborationManager,
+class AgentCollaborationManager,:
     """
     Manages collaboration between different AI agents in the Unified AI Project.
     This class handles task delegation, result aggregation, and inter-agent communication.
     """
 
-    def __init__(self, hsp_connector, HSPConnector) -> None,
+    def __init__(self, hsp_connector, HSPConnector) -> None,:
         self.hsp_connector = hsp_connector
         self.active_collaborations, Dict[str, CollaborationTask] = {}
         self.agent_capabilities, Dict[str, List[str]] = {}
@@ -85,8 +85,8 @@ class AgentCollaborationManager,
                     return agent_id
             return None
 
-    async def delegate_task(self, requester_agent_id, str, target_agent_id, str,,
-    capability_id, str, parameters, Dict[str, Any]) -> str,
+    async def delegate_task(self, requester_agent_id, str, target_agent_id, str,)
+(    capability_id, str, parameters, Dict[str, Any]) -> str,
         """
         Delegate a task from one agent to another.
 
@@ -100,34 +100,34 @@ class AgentCollaborationManager,
         task_id = f"collab_task_{len(self.active_collaborations()) + 1}"
 
         # Create collaboration task
-        collaboration_task == CollaborationTask(
+        collaboration_task == CollaborationTask()
             task_id=task_id,
             requester_agent_id=requester_agent_id,
             target_agent_id=target_agent_id,
             capability_id=capability_id,,
     parameters=parameters
-        )
+(        )
 
         # Store the task
         async with self.collaboration_lock,
             self.active_collaborations[task_id] = collaboration_task
 
         # Send task request via HSP
-        task_payload == HSPTaskRequestPayload({
+        task_payload == HSPTaskRequestPayload({)}
             "request_id": task_id,
             "requester_ai_id": requester_agent_id,
             "target_ai_id": target_agent_id,
             "capability_id_filter": capability_id,
             "parameters": parameters,
             "status": "pending"
-        })
+{(        })
 
         try,
             # Send the task request
-            success = await self.hsp_connector.send_task_request(
+            success = await self.hsp_connector.send_task_request()
                 payload=task_payload,,
     target_ai_id_or_topic=target_agent_id
-            )
+(            )
 
             if success,::
                 collaboration_task.status == CollaborationStatus.IN_PROGRESS()
@@ -143,8 +143,8 @@ class AgentCollaborationManager,
             logger.error(f"Exception while delegating task '{task_id}': {e}"):::
                 eturn task_id
 
-    async def _handle_task_result(self, result_payload, HSPTaskResultPayload,,
-    sender_ai_id, str, envelope, HSPMessageEnvelope):
+    async def _handle_task_result(self, result_payload, HSPTaskResultPayload,)
+(    sender_ai_id, str, envelope, HSPMessageEnvelope):
         """Handle task results from collaborating agents."""
         task_id = result_payload.get("request_id", "")
 
@@ -166,8 +166,8 @@ class AgentCollaborationManager,
         async with self.collaboration_lock,
             return self.active_collaborations.get(task_id)
 
-    async def orchestrate_multi_agent_task(self, requester_agent_id, str,,
-    task_sequence, List[Dict[str, Any]]):
+    async def orchestrate_multi_agent_task(self, requester_agent_id, str,)
+(    task_sequence, List[Dict[str, Any]]):
         """
         Orchestrate a sequence of tasks across multiple agents.
 
@@ -184,7 +184,7 @@ class AgentCollaborationManager,
 
             # Replace placeholders with previous results,
                 or key, value in parameters.items():
-                if isinstance(value, str) and "<output_of_task_" in value,::
+                if isinstance(value, str) and "<output_of_task_", in value,::
                     task_index = int(value.split("<output_of_task_")[1].split(">")[0])
                     if task_index in results,::
                         parameters[key] = results[task_index]
@@ -194,16 +194,16 @@ class AgentCollaborationManager,
 
             if not target_agent_id,::
                 logger.error(f"No agent found for capability '{capability_id}'"):::
-                    eturn {
+                    eturn {}
                     "status": "failed",
                     "error": f"No agent found for capability '{capability_id}'":::
             # Delegate the task
-            task_id = await self.delegate_task(
+            task_id = await self.delegate_task()
                 requester_agent_id=requester_agent_id,
                 target_agent_id=target_agent_id,
                 capability_id=capability_id,,
     parameters=parameters
-            )
+(            )
 
             # Wait for task completion (with timeout)::
                 imeout = task_def.get("timeout", 30)
@@ -222,18 +222,18 @@ class AgentCollaborationManager,
             else,
                 error_msg == task_status.error_message if task_status else "Task timed out":::
                     ogger.error(f"Task {i} failed, {error_msg}")
-                return {
+                return {}
                     "status": "failed",
                     "error": f"Task {i} failed, {error_msg}"
-                }
+{                }
 
-        return {
+        return {}
             "status": "success",
             "results": results
-        }
+{        }
 
     async def shutdown(self):
         """Shutdown the collaboration manager and clean up resources."""
         logger.info("Shutting down AgentCollaborationManager")
         # In a more complex implementation, we might want to cancel pending tasks
-        # or notify other agents about shutdown
+        # or notify other agents about shutdown}

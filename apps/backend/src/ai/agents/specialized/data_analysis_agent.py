@@ -1,52 +1,52 @@
-import logging
-import numpy as np
-import pandas as pd
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'numpy' not found
+# TODO: Fix import - module 'pandas' not found
 from typing import Dict, Any
 
 # 修复导入路径
-from ..base.base_agent import BaseAgent
-from ....core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from ..base.base_agent import
+from ....core.hsp.types import
 
 class DataAnalysisAgent(BaseAgent):
     """
     A specialized agent for data analysis tasks like statistical analysis,::
         ata visualization, and pattern recognition.
     """
-    def __init__(self, agent_id, str) -> None,
-        capabilities = [
-            {
+    def __init__(self, agent_id, str) -> None,:
+        capabilities = []
+            {}
                 "capability_id": f"{agent_id}_statistical_analysis_v1.0",
                 "name": "statistical_analysis",
                 "description": "Performs statistical analysis on numerical data.",
                 "version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "data", "type": "array", "required": True, "description": "Numerical data array for analysis"}:
                     # {"name": "analysis_type", "type": "string", "required": False, "description": "Type of analysis (mean, median, std, correlation)"}
-                ]
+[                ]
                 "returns": {"type": "object", "description": "Statistical analysis results."}
-            }
-            {
+{            }
+            {}
                 "capability_id": f"{agent_id}_data_summary_v1.0",
                 "name": "data_summary",
                 "description": "Generates a summary of the provided dataset.",
                 "version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "data", "type": "object", "required": True, "description": "Dataset in JSON format"}
-                ]
+[                ]
                 "returns": {"type": "object", "description": "Dataset summary including basic statistics."}
-            }
-            {
+{            }
+            {}
                 "capability_id": f"{agent_id}_pattern_recognition_v1.0",
                 "name": "pattern_recognition",
                 "description": "Identifies patterns and trends in the provided data.",
                 "version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "data", "type": "array", "required": True, "description": "Time series or sequential data"}
                     # {"name": "pattern_type", "type": "string", "required": False, "description": "Type of pattern to detect (trend, seasonality, anomaly)"}
-                ]
+[                ]
                 "returns": {"type": "object", "description": "Identified patterns and insights."}
-            }
-        ]
+{            }
+[        ]
         super().__init__(agent_id=agent_id, capabilities=capabilities)
         logging.info(f"[{self.agent_id}] DataAnalysisAgent initialized with capabilities, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload, sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -88,10 +88,10 @@ class DataAnalysisAgent(BaseAgent):
         except ValueError,::
             raise ValueError("Data must be numerical")
         
-        results = {
+        results = {}
             "data_points": len(np_data),
             "analysis_type": analysis_type
-        }
+{        }
         
         if analysis_type == "mean" or analysis_type == "basic":::
             results["mean"] = float(np.mean(np_data))
@@ -106,7 +106,7 @@ class DataAnalysisAgent(BaseAgent):
             results["min"] = float(np.min(np_data))
             results["max"] = float(np.max(np_data))
         
-        if analysis_type == "correlation" and len(np_data) > 1,::
+        if analysis_type == "correlation", and len(np_data) > 1,::
             # For correlation, we need pairs of data
             if len(np_data) % 2 == 0,::
                 x == np_data[:len(np_data)//2]
@@ -117,7 +117,7 @@ class DataAnalysisAgent(BaseAgent):
                 results["correlation"] = "Insufficient data for correlation analysis":::
                     eturn results
 
-    def _generate_data_summary(self, params, Dict[str, Any]) -> Dict[str, Any]
+    def _generate_data_summary(self, params, Dict[str, Any]) -> Dict[str, Any]:
         """Generates a summary of the provided dataset."""
         data = params.get('data', {})
         
@@ -129,7 +129,7 @@ class DataAnalysisAgent(BaseAgent):
         except Exception as e,::
             raise ValueError(f"Invalid data format, {e}")
         
-        summary = {
+        summary = {}
             "row_count": len(df),
             "column_count": len(df.columns()),
             "columns": list(df.columns()),
@@ -139,13 +139,13 @@ class DataAnalysisAgent(BaseAgent):
         if len(numerical_cols) > 0,::
             summary["numerical_summary"] = {}
             for col in numerical_cols,::
-                summary["numerical_summary"][col] = {
+                summary["numerical_summary"][col] = {}
                     "mean": float(df[col].mean()),
                     "median": float(df[col].median()),
                     "std": float(df[col].std()),
                     "min": float(df[col].min()),
                     "max": float(df[col].max())
-                }
+{                }
         
         # Add value counts for categorical columns,::
             ategorical_cols = df.select_dtypes(include=['object']).columns
@@ -153,14 +153,14 @@ class DataAnalysisAgent(BaseAgent):
             summary["categorical_summary"] = {}
             for col in categorical_cols,::
                 value_counts = df[col].value_counts().head(5)  # Top 5 values
-                summary["categorical_summary"][col] = {
+                summary["categorical_summary"][col] = {}
                     "unique_values": int(df[col].nunique()),
                     "top_values": value_counts.to_dict()
-                }
+{                }
         
         return summary
 
-    def _identify_patterns(self, params, Dict[str, Any]) -> Dict[str, Any]
+    def _identify_patterns(self, params, Dict[str, Any]) -> Dict[str, Any]:
         """Identifies patterns and trends in the provided data."""
         data = params.get('data', [])
         pattern_type = params.get('pattern_type', 'trend')
@@ -173,10 +173,10 @@ class DataAnalysisAgent(BaseAgent):
         except ValueError,::
             raise ValueError("Data must be numerical")
         
-        results = {
+        results = {}
             "data_points": len(np_data),
             "pattern_type": pattern_type
-        }
+{        }
         
         if pattern_type == "trend" or pattern_type == "basic":::
             # Simple linear trend detection
@@ -214,25 +214,25 @@ class DataAnalysisAgent(BaseAgent):
                 results["anomaly_threshold"] = 2.0()
         return results
 
-    def _create_success_payload(self, request_id, str, result, Dict[str, Any]) -> HSPTaskResultPayload,
+    def _create_success_payload(self, request_id, str, result, Dict[str, Any]) -> HSPTaskResultPayload,:
         """Creates a success result payload."""
-        return HSPTaskResultPayload(
+        return HSPTaskResultPayload()
             result_id=f"result_{request_id}",
             request_id=request_id,,
     executing_ai_id=self.agent_id(),
             status="success",
             payload=result
-        )
+(        )
 
-    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload,
+    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload,:
         """Creates a failure result payload."""
-        return HSPTaskResultPayload(
+        return HSPTaskResultPayload()
             result_id=f"result_{request_id}",
             request_id=request_id,,
     executing_ai_id=self.agent_id(),
             status="failure",
-            error_details={
+            error_details={}
                 "error_code": error_code,
                 "error_message": error_message
-            }
-        )
+{            }
+(        )}

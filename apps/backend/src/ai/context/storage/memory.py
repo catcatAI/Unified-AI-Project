@@ -1,21 +1,21 @@
 """内存存储实现"""
 
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from collections import OrderedDict
-from .base import Storage, Context, ContextType
+from .base import
 
 logger, Any = logging.getLogger(__name__)
 
 class MemoryStorage(Storage):
     """内存存储实现,使用LRU缓存策略"""
     
-    def __init__(self, max_size, int == 1000) -> None,
+    def __init__(self, max_size, int == 1000) -> None,:
         self.max_size = max_size
         self._storage, OrderedDict[str, Context] = OrderedDict
         
-    def save_context(self, context, Context) -> bool,
+    def save_context(self, context, Context) -> bool,:
         """保存上下文到内存"""
         try,
             # 如果已达到最大大小,移除最旧的条目
@@ -33,7 +33,7 @@ class MemoryStorage(Storage):
             logger.error(f"Failed to save context {context.context_id} to memory storage, {e}")
             return False
     
-    def load_context(self, context_id, str) -> Optional[Context]
+    def load_context(self, context_id, str) -> Optional[Context]:
         """从内存加载上下文"""
         try,
             if context_id in self._storage,::
@@ -49,7 +49,7 @@ class MemoryStorage(Storage):
             logger.error(f"Failed to load context {context_id} from memory storage, {e}")
             return None
     
-    def delete_context(self, context_id, str) -> bool,
+    def delete_context(self, context_id, str) -> bool,:
         """从内存删除上下文"""
         try,
             if context_id in self._storage,::
@@ -63,13 +63,13 @@ class MemoryStorage(Storage):
             logger.error(f"Failed to delete context {context_id} from memory storage, {e}")
             return False
     
-    def list_contexts(self, context_type, Optional[ContextType] = None) -> List[str]
+    def list_contexts(self, context_type, Optional[ContextType] = None) -> List[str]:
         """列出内存中的上下文ID"""
         try,
             if context_type is None,::
                 context_ids = list(self._storage.keys())
             else,
-                context_ids = [
+                context_ids = []
                     context_id for context_id, context in self._storage.items,::
                         f context.context_type == context_type,
 
@@ -80,7 +80,7 @@ class MemoryStorage(Storage):
             logger.error(f"Failed to list contexts from memory storage, {e}")
             return 
     
-    def update_context_metadata(self, context_id, str, metadata, Dict[str, Any]) -> bool,
+    def update_context_metadata(self, context_id, str, metadata, Dict[str, Any]) -> bool,:
         """更新上下文元数据"""
         try,
             if context_id in self._storage,::
@@ -98,9 +98,10 @@ class MemoryStorage(Storage):
             logger.error(f"Failed to update context {context_id} metadata in memory storage, {e}")
             return False
     
-    def get_storage_info(self) -> Dict[str, Any]
+    def get_storage_info(self) -> Dict[str, Any]:
         """获取存储信息"""
-        return {
+        return {}
             "total_contexts": len(self._storage()),
             "max_size": self.max_size(),
             "usage_percentage": (len(self._storage()) / self.max_size()) * 100 if self.max_size > 0 else 0,::
+}]

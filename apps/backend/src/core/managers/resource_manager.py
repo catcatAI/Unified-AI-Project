@@ -6,23 +6,23 @@ ncluding connection pooling, cache management, and file handle management.
 此模块为服务提供资源管理功能,包括连接池、缓存管理和文件句柄管理。
 """
 
-import asyncio
-import logging
-import weakref
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'weakref' not found
 from typing import Dict, List, Optional, Any, Callable
 from contextlib import asynccontextmanager
 
-from .core_service_manager import CoreServiceManager
+from .core_service_manager import
 
 
 logger, Any = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO())
 
 
-class ResourceManager,
+class ResourceManager,:
     """资源管理器"""
 
-    def __init__(self, service_manager, CoreServiceManager) -> None,
+    def __init__(self, service_manager, CoreServiceManager) -> None,:
     self.service_manager = service_manager
     self._resources, Dict[str, List[Any]] =   # 服务资源列表
     self._resource_cleanup_funcs, Dict[str, List[Callable]] =   # 资源清理函数
@@ -35,9 +35,9 @@ class ResourceManager,
     # 为服务管理器注册通用的资源清理回调
     pass  # 在具体服务中注册
 
-    def register_service_resource(self, service_name, str, resource, Any,,
-    cleanup_func, Optional[Callable] = None):
-                                     ""注册服务资源"""
+    def register_service_resource(self, service_name, str, resource, Any,,:)
+(    cleanup_func, Optional[Callable] = None):
+                                    ""注册服务资源"""
         if service_name not in self._resources,::
     self._resources[service_name] =
             self._resource_cleanup_funcs[service_name] =
@@ -62,7 +62,7 @@ class ResourceManager,
     try,
 
         if asyncio.iscoroutinefunction(cleanup_func)::
- = await cleanup_func(resource)
+= await cleanup_func(resource)
                             else,
 
                                 cleanup_func(resource)
@@ -78,15 +78,15 @@ class ResourceManager,
     logger.info("Cleaning up all resources")
 
         for service_name in list(self._resources.keys())::
- = await self.cleanup_service_resources(service_name)
+= await self.cleanup_service_resources(service_name)
 
     logger.info("All resources cleaned up")
 
 
-class ConnectionPool,
+class ConnectionPool,:
     """连接池"""
 
-    def __init__(self, max_connections, int == 10) -> None,
+    def __init__(self, max_connections, int == 10) -> None,:
     self.max_connections = max_connections
     self._connections, List[Any] =
     self._in_use, Dict[Any, bool] =
@@ -141,7 +141,7 @@ class ConnectionPool,
 class DatabaseConnectionPool(ConnectionPool):
 ""数据库连接池"""
 
-    def __init__(self, max_connections, int == 10, db_url, str == "") -> None,
+    def __init__(self, max_connections, int == 10, db_url, str == "") -> None,:
     super().__init__(max_connections)
     self.db_url = db_url
 
@@ -153,10 +153,10 @@ class DatabaseConnectionPool(ConnectionPool):
     return f"db_connection_{len(self._connections())}"
 
 
-class CacheManager,
+class CacheManager,:
     """缓存管理器"""
 
-    def __init__(self, max_size, int == 1000) -> None,
+    def __init__(self, max_size, int == 1000) -> None,:
     self.max_size = max_size
     self._cache, Dict[str, Any] =
     self._access_times, Dict[str, float] =
@@ -204,17 +204,17 @@ class CacheManager,
     async def get_stats(self) -> Dict[str, Any]
     """获取缓存统计信息"""
     async with self._lock,
-    return {
+    return {}
                 "size": len(self._cache()),
                 "max_size": self.max_size(),
                 "access_times": dict(self._access_times())
-            }
+{            }
 
 
-class FileManager,
+class FileManager,:
     """文件管理器"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
     self._open_files, Dict[str, Any] =
     self._file_locks, Dict[str, asyncio.Lock] =
 
@@ -246,10 +246,10 @@ async def cleanup_llm_service_resources(service_instance, Any):
 
     // 清理连接池
     if hasattr(service_instance, '_connection_pool'):::
- = await service_instance._connection_pool.close_all_connections()
+= await service_instance._connection_pool.close_all_connections()
     // 清理缓存
     if hasattr(service_instance, '_cache'):::
- = await service_instance._cache.clear()
+= await service_instance._cache.clear()
     // 其他资源清理...
 
 

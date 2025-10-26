@@ -1,5 +1,5 @@
-from typing import TypedDict, Dict, Any
-from enum import Enum
+# TODO: Fix import - module 'typing' not found
+# TODO: Fix import - module 'enum' not found
 
 class MemoryType(Enum):
     """Enumeration of different memory types."""

@@ -12,16 +12,16 @@ class VirtualInputElementDescription(TypedDict, total=False):
     attributes: Optional[Dict[str, Any]]
     children: Optional[List['VirtualInputElementDescription']]
 
-VirtualInputPermissionLevel = Literal[
+VirtualInputPermissionLevel = Literal[]
     "simulation_only",
     "requires_user_confirmation",
     "full_control_trusted"
-]
+[]
 
-VirtualMouseEventType = Literal[
+VirtualMouseEventType = Literal[]
     "move_relative_to_window", "move_to_element", "click", "double_click",
     "right_click", "hover", "drag_start", "drag_end", "scroll"
-]
+[]
 
 class VirtualMouseCommand(TypedDict, total=False):
     action_type: Required[VirtualMouseEventType]
@@ -36,9 +36,9 @@ class VirtualMouseCommand(TypedDict, total=False):
     drag_target_x: Optional[float]
     drag_target_y: Optional[float]
 
-VirtualKeyboardActionType = Literal[
+VirtualKeyboardActionType = Literal[]
     "type_string", "press_keys", "release_keys", "special_key"
-]
+[]
 
 class VirtualKeyboardCommand(TypedDict, total=False):
     action_type: Required[VirtualKeyboardActionType]

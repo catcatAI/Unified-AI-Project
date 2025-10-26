@@ -1,53 +1,53 @@
-import asyncio
-import uuid
-import logging
+# TODO: Fix import - module 'asyncio' not found
+# TODO: Fix import - module 'uuid' not found
+from tests.tools.test_tool_dispatcher_logging import
 from datetime import datetime, timedelta
 
-from .base.base_agent import BaseAgent
-from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from .base.base_agent import
+from ....hsp.types import
 
 class PlanningAgent(BaseAgent):
     """
     A specialized agent for task planning, scheduling, and project management.:::
         ""
-    def __init__(self, agent_id, str) -> None,
-        capabilities = [
-            {
+    def __init__(self, agent_id, str) -> None,:
+        capabilities = []
+            {}
                 "capability_id": f"{agent_id}_task_planning_v1.0",
                 "name": "task_planning",
                 "description": "Creates detailed plans for complex tasks or projects.",:::
                     version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "goal", "type": "string", "required": True, "description": "The main goal or objective to plan for"}
                     {"name": "constraints", "type": "object", "required": False, "description": "Time, resource, or other constraints"}
                     {"name": "dependencies", "type": "array", "required": False, "description": "List of task dependencies"}
-                ]
+[                ]
                 "returns": {"type": "object", "description": "Detailed plan with tasks, timeline, and resources."}
                     ,
-            {
+            {}
                 "capability_id": f"{agent_id}_schedule_optimization_v1.0",
                 "name": "schedule_optimization",
                 "description": "Optimizes task schedules based on priorities and constraints.",
                 "version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "tasks", "type": "array", "required": True, "description": "List of tasks with durations and priorities"}
-                        "name": "resources", "type": "array", "required": False, "description": "Available resources with capacities"}
-"name": "deadline", "type": "string", "required": False, "description": "Project deadline in ISO format"}
-                ]
+{                        "name": "resources", "type": "array", "required": False, "description": "Available resources with capacities"}
+{"name": "deadline", "type": "string", "required": False, "description": "Project deadline in ISO format"}
+[                ]
                 "returns": {"type": "object", "description": "Optimized schedule with task assignments and timeline."}
                     ,
-            {
+            {}
                 "capability_id": f"{agent_id}_progress_tracking_v1.0",
                 "name": "progress_tracking",
                 "description": "Tracks and reports on project progress and identifies delays.",
                 "version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "plan", "type": "object", "required": True, "description": "Original plan with tasks and timeline"}
-                        "name": "current_status", "type": "object", "required": True, "description": "Current status of tasks with completion percentages"}
+{                        "name": "current_status", "type": "object", "required": True, "description": "Current status of tasks with completion percentages"}
 ,
                 "returns": {"type": "object", "description": "Progress report with completion status and delay analysis."}
 
-        ]
+[        ]
         super.__init__(agent_id=agent_id, capabilities=capabilities)
         logging.info(f"[{self.agent_id}] PlanningAgent initialized with capabilities, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload, sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -88,48 +88,48 @@ class PlanningAgent(BaseAgent):
         # For this example, we'll create a simple plan generator
 
         # Define common task types for different goals,::
-            ask_templates = {
-            "software development": [
+            ask_templates = {}
+            "software development": []
                 {"name": "Requirements Analysis", "duration": 5, "resources": ["analyst"]}
                 {"name": "System Design", "duration": 7, "resources": ["architect"]}
                 {"name": "Implementation", "duration": 15, "resources": ["developer"]}
                 {"name": "Testing", "duration": 8, "resources": ["tester"]}
                 {"name": "Deployment", "duration": 3, "resources": ["devops"]}
-            ]
-            "marketing campaign": [
+[            ]
+            "marketing campaign": []
                 {"name": "Market Research", "duration": 5, "resources": ["researcher"]}
                 {"name": "Campaign Design", "duration": 7, "resources": ["designer"]}
                 {"name": "Content Creation", "duration": 10, "resources": ["copywriter"]}
                 {"name": "Media Buying", "duration": 3, "resources": ["media specialist"]}
                 {"name": "Launch", "duration": 1, "resources": ["manager"]}
                 {"name": "Performance Analysis", "duration": 5, "resources": ["analyst"]}
-            ]
-            "event planning": [
+[            ]
+            "event planning": []
                 {"name": "Venue Selection", "duration": 3, "resources": ["planner"]}
                 {"name": "Vendor Coordination", "duration": 7, "resources": ["coordinator"]}
                 {"name": "Marketing", "duration": 10, "resources": ["marketer"]}
                 {"name": "Logistics", "duration": 5, "resources": ["logistics"]}
                 {"name": "Event Execution", "duration": 1, "resources": ["manager"]}
                 {"name": "Post-Event Analysis", "duration": 3, "resources": ["analyst"]}
-            ]
-        }
+[            ]
+{        }
         
         # Match goal to template or create generic plan
         plan_type = "generic"
-        if "software" in goal.lower() or "app" in goal.lower() or "application" in goal.lower():::
+        if "software", in goal.lower() or "app", in goal.lower() or "application", in goal.lower():::
             plan_type = "software development"
-        elif "marketing" in goal.lower() or "campaign" in goal.lower():::
+        elif "marketing", in goal.lower() or "campaign", in goal.lower():::
             plan_type = "marketing campaign"
-        elif "event" in goal.lower() or "conference" in goal.lower() or "party" in goal.lower():::
+        elif "event", in goal.lower() or "conference", in goal.lower() or "party", in goal.lower():::
             plan_type = "event planning"
         
-        tasks = task_templates.get(plan_type, [
+        tasks = task_templates.get(plan_type, [)]
             {"name": "Task 1", "duration": 5, "resources": ["resource1"]}
             {"name": "Task 2", "duration": 3, "resources": ["resource2"]}
             {"name": "Task 3", "duration": 7, "resources": ["resource3"]}
             {"name": "Review", "duration": 2, "resources": ["manager"]}
             {"name": "Completion", "duration": 1, "resources": ["manager"]}
-        ])
+[(        ])
         
         # Apply constraints
         start_date = constraints.get('start_date', datetime.now.isoformat())
@@ -151,7 +151,7 @@ class PlanningAgent(BaseAgent):
             if i > 0,::
                 depends_on = [tasks[i-1]['name']]
             
-            timeline.append({
+            timeline.append({)}
                 "task_id": f"task_{i+1,03}",
                 "name": task['name']
                 "start_date": task_start.isoformat(),
@@ -160,11 +160,11 @@ class PlanningAgent(BaseAgent):
                 "resources": task['resources']
                 "depends_on": depends_on,
                 "status": "pending"
-            })
+{(            })
             
             current_date = task_end
         
-        return {
+        return {}
             "plan_id": f"plan_{uuid.uuid4.hex[:8]}",
             "goal": goal,
             "plan_type": plan_type,
@@ -175,7 +175,7 @@ class PlanningAgent(BaseAgent):
             "tasks": timeline,
             "total_duration_days": sum(task['duration'] for task in tasks),::
                 critical_path_length_days": sum(task['duration'] for task in tasks)  # Simplified,::
-    def _optimize_schedule(self, params, Dict[str, Any]) -> Dict[str, Any]
+    def _optimize_schedule(self, params, Dict[str, Any]) -> Dict[str, Any]:
         """Optimizes a task schedule."""
         tasks = params.get('tasks')
         resources = params.get('resources')
@@ -192,10 +192,10 @@ class PlanningAgent(BaseAgent):
         # Assign resources to tasks
         resource_assignments = {}
         for resource in resources,::
-            resource_assignments[resource.get('name', 'unnamed')] = {
+            resource_assignments[resource.get('name', 'unnamed')] = {}
                 "capacity": resource.get('capacity', 1),
                 "assigned_tasks": [] 
-            }
+{            }
         
         # Simple resource allocation
         for task in sorted_tasks,::
@@ -221,14 +221,14 @@ class PlanningAgent(BaseAgent):
             duration = task.get('duration', 1)
             task_end = current_time + timedelta(days=duration)
             
-            timeline.append({
+            timeline.append({)}
                 "task_name": task['name']
                 "start_time": task_start.isoformat(),
                 "end_time": task_end.isoformat(),
                 "duration_days": duration,
                 "assigned_resource": task.get('assigned_resource', 'unassigned'),
                 "priority": task.get('priority', 0)
-            })
+{(            })
             
             current_time = task_end
         
@@ -242,14 +242,14 @@ class PlanningAgent(BaseAgent):
             except,::
                 pass  # Invalid deadline format
         
-        return {
+        return {}
             "optimized_schedule": timeline,
             "total_duration_days": sum(t['duration_days'] for t in timeline),::
                 meets_deadline": meets_deadline,
             "deadline": deadline,
             "resource_utilization": resource_assignments,
             "critical_path_length_days": sum(t['duration_days'] for t in timeline)  # Simplified,::
-    def _track_progress(self, params, Dict[str, Any]) -> Dict[str, Any]
+    def _track_progress(self, params, Dict[str, Any]) -> Dict[str, Any]:
         """Tracks project progress."""
         plan = params.get('plan')
         current_status = params.get('current_status')
@@ -294,14 +294,14 @@ class PlanningAgent(BaseAgent):
             else,
                 not_started_tasks += 1
             
-            task_details.append({
+            task_details.append({)}
                 "task_name": task_name,
                 "status": task_status,
                 "completion_percentage": completion_percentage,
                 "delayed": delayed,
                 "planned_end_date": task.get('end_date'),
                 "assigned_resource": task.get('assigned_resource', 'unknown')
-            })
+{(            })
         
         # Calculate overall progress
         overall_completion = 0
@@ -329,7 +329,7 @@ class PlanningAgent(BaseAgent):
         else,
             project_status = "in_progress"
         
-        return {
+        return {}
             "project_id": plan.get('plan_id', 'unknown'),
             "project_status": project_status,
             "overall_completion_percentage": round(overall_completion, 2),
@@ -341,9 +341,9 @@ class PlanningAgent(BaseAgent):
             "progress_details": task_details,
             "report_date": datetime.now.isoformat(),
             "estimated_completion_date": self._estimate_completion_date(plan, current_status)
-        }
+{        }
 
-    def _estimate_completion_date(self, plan, Dict[str, Any] current_status, Dict[str, Any]) -> str,
+    def _estimate_completion_date(self, plan, Dict[str, Any] current_status, Dict[str, Any]) -> str,:
         """Estimates project completion date based on current progress."""
         # Simplified estimation - in a real implementation, this would be more sophisticated
         plan_end_date = plan.get('estimated_end_date')
@@ -360,19 +360,19 @@ class PlanningAgent(BaseAgent):
             return plan_end_dt.isoformat()
         except,::
             return datetime.now.isoformat()
-    def _create_success_payload(self, request_id, str, result, Any) -> HSPTaskResultPayload,
-        return HSPTaskResultPayload(
+    def _create_success_payload(self, request_id, str, result, Any) -> HSPTaskResultPayload,:
+        return HSPTaskResultPayload()
             request_id=request_id,
             status="success",,
     payload=result
-        )
+(        )
 
-    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload,
-        return HSPTaskResultPayload(
+    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload,:
+        return HSPTaskResultPayload()
             request_id=request_id,
             status="failure",,
     error_details == {"error_code": error_code, "error_message": error_message}
-        )
+(        )
 
 
 if __name'__main__':::
@@ -384,4 +384,4 @@ if __name'__main__':::
     try,
         asyncio.run(main)
     except KeyboardInterrupt,::
-        print("\nPlanningAgent manually stopped.")
+        print("\nPlanningAgent manually stopped.")}}]

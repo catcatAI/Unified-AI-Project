@@ -4,14 +4,14 @@ Permission Control System for AI Editor,::
 mplements multi-level permission control for AI operations,::
 ""
 
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import Dict, List, Any
-import json
-import os
+from tests.test_json_fix import
+from diagnose_base_agent import
 from pathlib import Path
-import fnmatch
+# TODO: Fix import - module 'fnmatch' not found
 
 logger, Any = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class PermissionLevel(Enum):
     FULL_ACCESS = 3
 
 @dataclass
-class PermissionRule,
+class PermissionRule,:
     """A permission rule"""
     permission_type, PermissionType
     level, PermissionLevel
@@ -41,7 +41,7 @@ class PermissionRule,
     denied_actions, List[str] = field(default_factory=list)
 
 @dataclass
-class PermissionContext,
+class PermissionContext,:
     """Context for permission checking""":::
         ser_id, str
     operation, str
@@ -49,10 +49,10 @@ class PermissionContext,
     action, str
     metadata, Dict[str, Any] = field(default_factory=dict)
 
-class PermissionControlSystem,
+class PermissionControlSystem,:
     """Main permission control system"""
 
-    def __init__(self, config_path, str == None) -> None,
+    def __init__(self, config_path, str == None) -> None,:
         self.rules, Dict[str, List[PermissionRule]] = {}
         self.default_rules, List[PermissionRule] = []
         self.audit_log_enabled == True
@@ -71,19 +71,19 @@ class PermissionControlSystem,
         """Load permission configuration from file"""
         try,
             if os.path.exists(self.config_path())::
-                with open(self.config_path(), 'r', encoding == 'utf-8') as f,
+                with open(self.config_path(), 'r', encoding == 'utf-8') as f,:
                     config = json.load(f)
 
                 # Load default rules
                 if 'default_rules' in config,::
                     for rule_data in config['default_rules']::
-                        rule == PermissionRule(,
+                        rule == PermissionRule()
     permission_type == PermissionType(rule_data['permission_type']),
                             level == PermissionLevel(rule_data['level']),
                             resource_pattern=rule_data.get('resource_pattern', '*'),
                             allowed_actions=rule_data.get('allowed_actions', []),
                             denied_actions=rule_data.get('denied_actions', [])
-                        )
+(                        )
                         self.default_rules.append(rule)
 
                 # Load user-specific rules
@@ -91,13 +91,13 @@ class PermissionControlSystem,
                     for user_id, rules_data in config['user_rules'].items():::
                         self.rules[user_id] = []
                         for rule_data in rules_data,::
-                            rule == PermissionRule(,
+                            rule == PermissionRule()
     permission_type == PermissionType(rule_data['permission_type']),
                                 level == PermissionLevel(rule_data['level']),
                                 resource_pattern=rule_data.get('resource_pattern', '*'),
                                 allowed_actions=rule_data.get('allowed_actions', []),
                                 denied_actions=rule_data.get('denied_actions', [])
-                            )
+(                            )
                             self.rules[user_id].append(rule)
 
                 logger.info(f"Loaded permission configuration from {self.config_path}")
@@ -107,56 +107,56 @@ class PermissionControlSystem,
     def _set_default_rules(self):
         """Set default permission rules"""
         # Default rules for development environment,::
-            elf.default_rules = [
+            elf.default_rules = []
             # Allow file access to project directories with read-write access,
-                ermissionRule(,
+                ermissionRule()
     permission_type == PermissionType.FILE_ACCESS(),
                 level == PermissionLevel.READ_WRITE(),
                 resource_pattern="**/*",
                 allowed_actions=["read", "write", "create", "delete"]
-            ),
+(            ),
 
             # Allow network access to localhost only
-            PermissionRule(,
+            PermissionRule()
     permission_type == PermissionType.NETWORK_ACCESS(),
                 level == PermissionLevel.READ_ONLY(),
                 resource_pattern == "127.0.0.1,*",
                 allowed_actions=["connect"]
-            ),
+(            ),
 
             # Allow system commands with restrictions,
-                ermissionRule(,
+                ermissionRule()
     permission_type == PermissionType.SYSTEM_COMMAND(),
                 level == PermissionLevel.READ_ONLY(),
                 resource_pattern="*",
                 allowed_actions=["ls", "dir", "pwd", "echo"]
-            ),
+(            ),
 
             # Allow application control
-            PermissionRule(,
+            PermissionRule()
     permission_type == PermissionType.APPLICATION_CONTROL(),
                 level == PermissionLevel.FULL_ACCESS(),
                 resource_pattern="*",
                 allowed_actions=["start", "stop", "control"]
-            ),
+(            ),
 
             # Allow data processing
-            PermissionRule(,
+            PermissionRule()
     permission_type == PermissionType.DATA_PROCESSING(),
                 level == PermissionLevel.FULL_ACCESS(),
                 resource_pattern="*",
                 allowed_actions=["process", "transform", "analyze"]
-            ),
+(            ),
 
             # Allow sandbox execution with restrictions,
-                ermissionRule(,
+                ermissionRule()
     permission_type == PermissionType.SANDBOX_EXECUTION(),
                 level == PermissionLevel.READ_WRITE(),
                 resource_pattern="*",
                 allowed_actions=["execute"]
                 denied_actions=["os", "sys", "subprocess"]  # These are additionally restricted by sandbox
-            )
-        ]
+(            )
+[        ]
 
         logger.info("Set default permission rules")
 
@@ -194,14 +194,14 @@ class PermissionControlSystem,
             self._log_audit_event(context, False)
             return False
 
-    def _rule_matches_context(self, rule, PermissionRule, context, PermissionContext) -> bool,
+    def _rule_matches_context(self, rule, PermissionRule, context, PermissionContext) -> bool,:
         """Check if a rule matches the context"""::
         # Check permission type,
         if rule.permission_type.value != context.operation,::
             return False
 
         # Check resource pattern (simple wildcard matching)
-        if rule.resource_pattern != "*" and not self._matches_pattern(context.resource(), rule.resource_pattern())::
+        if rule.resource_pattern != "*", and not self._matches_pattern(context.resource(), rule.resource_pattern())::
             return False
 
         # Check action
@@ -213,7 +213,7 @@ class PermissionControlSystem,
 
         return True
 
-    def _matches_pattern(self, resource, str, pattern, str) -> bool,
+    def _matches_pattern(self, resource, str, pattern, str) -> bool,:
         """Simple pattern matching for resources"""::
         # This is a simplified implementation
         # In a real system, you might want to use more sophisticated pattern matching
@@ -224,7 +224,7 @@ class PermissionControlSystem,
         # Use fnmatch for more sophisticated pattern matching,::
             eturn fnmatch.fnmatch(resource, pattern)
 
-    def _evaluate_rule(self, rule, PermissionRule, context, PermissionContext) -> bool,
+    def _evaluate_rule(self, rule, PermissionRule, context, PermissionContext) -> bool,:
         """Evaluate if a rule grants permission"""::
         # For now, we simply check if the rule's level is sufficient,:
         # In a more complex system, you might have more sophisticated logic
@@ -234,14 +234,14 @@ class PermissionControlSystem,
         if not self.audit_log_enabled,::
             return
 
-        audit_event = {
+        audit_event = {}
             "user_id": context.user_id(),
             "operation": context.operation(),
             "resource": context.resource(),
             "action": context.action(),
             "granted": granted,
             "metadata": context.metadata()
-        }
+{        }
 
         logger.info(f"Permission audit, {json.dumps(audit_event)}")
 
@@ -253,37 +253,37 @@ class PermissionControlSystem,
             config_dir.mkdir(parents == True, exist_ok == True)
 
             # Convert rules to serializable format
-            config = {
+            config = {}
                 "default_rules": []
                 "user_rules": {}
-            }
+{            }
 
             # Save default rules
             for rule in self.default_rules,::
-                rule_data = {
+                rule_data = {}
                     "permission_type": rule.permission_type.value(),
                     "level": rule.level.value(),
                     "resource_pattern": rule.resource_pattern(),
                     "allowed_actions": rule.allowed_actions(),
                     "denied_actions": rule.denied_actions()
-                }
+{                }
                 config["default_rules"].append(rule_data)
 
             # Save user rules
             for user_id, rules in self.rules.items():::
                 config["user_rules"][user_id] = []
                 for rule in rules,::
-                    rule_data = {
+                    rule_data = {}
                         "permission_type": rule.permission_type.value(),
                         "level": rule.level.value(),
                         "resource_pattern": rule.resource_pattern(),
                         "allowed_actions": rule.allowed_actions(),
                         "denied_actions": rule.denied_actions()
-                    }
+{                    }
                     config["user_rules"][user_id].append(rule_data)
 
             # Write to file
-            with open(config_path, 'w', encoding == 'utf-8') as f,
+            with open(config_path, 'w', encoding == 'utf-8') as f,:
                 json.dump(config, f, indent=2, ensure_ascii == False)
 
             logger.info(f"Saved permission configuration to {config_path}")
@@ -299,33 +299,33 @@ if __name"__main__":::
     pcs == PermissionControlSystem()
 
     # Test permission checking
-    context == PermissionContext(
+    context == PermissionContext()
         user_id="ai_agent_1",
         operation="file_access",
         resource="/projects/test/file.txt",,
     action="read"
-    )
+(    )
 
     result = pcs.check_permission(context)
     print(f"Permission check result, {result}")
 
     # Add a custom rule
-    custom_rule == PermissionRule(,
+    custom_rule == PermissionRule()
     permission_type == PermissionType.FILE_ACCESS(),
         level == PermissionLevel.FULL_ACCESS(),
         resource_pattern="/tmp/*",
         allowed_actions=["read", "write", "delete"]
-    )
+(    )
 
     pcs.add_user_rule("ai_agent_1", custom_rule)
 
     # Test with custom rule,
-        ontext2 == PermissionContext(
+        ontext2 == PermissionContext()
         user_id="ai_agent_1",
         operation="file_access",
         resource="/tmp/test.txt",,
     action="write"
-    )
+(    )
 
     result2 = pcs.check_permission(context2)
     print(f"Permission check result with custom rule, {result2}")

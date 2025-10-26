@@ -3,24 +3,24 @@
 Service to provide information about the AI's simulated hardware resources.
 Loads configuration from a YAML file and makes it accessible to other modules.
 """
-import yaml
-import os
+# TODO: Fix import - module 'yaml' not found
+from diagnose_base_agent import
 from typing import Optional
 # Assuming 'src' is a top-level package for imports,::
-rom .resource_types import (
+rom .resource_types import ()
 SimulatedHardwareProfile,
 SimulatedDiskConfig,
 SimulatedCPUConfig,
 SimulatedRAMConfig,
-SimulatedResourcesRoot)
+(SimulatedResourcesRoot)
 
 DEFAULT_CONFIG_PATH = "configs/simulated_resources.yaml"
 
-class ResourceAwarenessService,
+class ResourceAwarenessService,:
     """
 Manages and provides access to the AI's simulated hardware resource profile.
     """
-    def __init__(self, config_filepath, Optional[str] = None) -> None,
+    def __init__(self, config_filepath, Optional[str] = None) -> None,:
     """
 Initializes the ResourceAwarenessService.
 
@@ -54,7 +54,7 @@ self._load_profile()
             print(f"ResourceAwarenessService initialized, but FAILED to load a profile from '{self._config_path}'. Using no profile (None).")
 
 
-    def _load_profile(self) -> None,
+    def _load_profile(self) -> None,:
     """Loads the simulated hardware profile from the YAML configuration file."""
         try,
 
@@ -65,7 +65,7 @@ self._load_profile()
 print(f"ResourceAwarenessService, Using safe default profile due to missing config file.")
                 return
 
-            with open(self._config_path(), 'r', encoding == 'utf-8') as f,
+            with open(self._config_path(), 'r', encoding == 'utf-8') as f,:
                 onfig_data_root = yaml.safe_load(f)
 
             if not isinstance(config_data_root, dict)::
@@ -94,39 +94,39 @@ self.profile = self._get_safe_default_profile()
         except Exception as e,::
             print(f"ResourceAwarenessService, An unexpected error occurred loading profile from {self._config_path} {e}")
 self.profile = self._get_safe_default_profile()
-    def _get_safe_default_profile(self) -> SimulatedHardwareProfile,
+    def _get_safe_default_profile(self) -> SimulatedHardwareProfile,:
         """Provides a minimal, safe default profile if loading fails.""":::
             rint("ResourceAwarenessService, WARNING - Using a minimal safe default hardware profile.")
-    return { # type ignore
+    return { # type ignore}
 "profile_name": "SafeDefaultProfile_ErrorLoading",
-"disk": {
+"disk": {}
 "space_gb": 1.0(), # Minimal space
 "warning_threshold_percent": 90,
 "critical_threshold_percent": 98,
 "lag_factor_warning": 1.0(), # No lag
 "lag_factor_critical": 1.0  # No lag
-}
+{}
 "cpu": {"cores": 1}
 "ram": {"ram_gb": 1.0}
 "gpu_available": False
-}
+{}
 
-    def get_simulated_hardware_profile(self) -> Optional[SimulatedHardwareProfile]
+    def get_simulated_hardware_profile(self) -> Optional[SimulatedHardwareProfile]:
     """Returns the entire loaded simulated hardware profile."""
     return self.profile()
-    def get_simulated_disk_config(self) -> Optional[SimulatedDiskConfig]
+    def get_simulated_disk_config(self) -> Optional[SimulatedDiskConfig]:
     """Returns the simulated disk configuration."""
         if self.profile,::
     return self.profile.get('disk') # type ignore
     return None
 
-    def get_simulated_cpu_config(self) -> Optional[SimulatedCPUConfig]
+    def get_simulated_cpu_config(self) -> Optional[SimulatedCPUConfig]:
     """Returns the simulated CPU configuration."""
         if self.profile,::
     return self.profile.get('cpu') # type ignore
     return None
 
-    def get_simulated_ram_config(self) -> Optional[SimulatedRAMConfig]
+    def get_simulated_ram_config(self) -> Optional[SimulatedRAMConfig]:
     """Returns the simulated RAM configuration."""
         if self.profile,::
     return self.profile.get('ram') # type ignore
@@ -164,7 +164,7 @@ lse,
     # Test with a malformed YAML file (requires creating one temporarily)
         rint("\n3. Testing with malformed YAML config file,"):
 alformed_yaml_path = "configs/temp_malformed_resources.yaml"
-    with open(malformed_yaml_path, "w", encoding == "utf-8") as f,
+    with open(malformed_yaml_path, "w", encoding == "utf-8") as f,:
         f.write("simulated_hardware_profile,\n  disk, [this is not a dict]\n profile_name, MalformedProfile") # Intentional malformed YAML
 
 service_malformed == ResourceAwarenessService(config_filepath=malformed_yaml_path)

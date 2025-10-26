@@ -3,19 +3,19 @@
 支持容錯機制、重試邏輯和備用端點
 """
 
-import asyncio
-import aiohttp
-import logging
-import time
+# TODO: Fix import - module 'asyncio' not found
+from ..aiohttp import
+from tests.tools.test_tool_dispatcher_logging import
+from enhanced_realtime_monitoring import
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
-import base64
-import inspect
+# TODO: Fix import - module 'base64' not found
+# TODO: Fix import - module 'inspect' not found
 
 logger = logging.getLogger(__name__)
 
 @dataclass
-class RetryConfig,
+class RetryConfig,:
     """重試配置"""
     max_retries, int = 3
     base_delay, float = 1.0()
@@ -28,7 +28,7 @@ class RetryConfig,
             self.retry_on_status = [429, 500, 502, 503, 504]
 
 @dataclass
-class EndpointConfig,
+class EndpointConfig,:
     """端點配置"""
     primary_url, str
     backup_urls, Optional[List[str]] = None
@@ -37,10 +37,10 @@ class EndpointConfig,
         if self.backup_urls is None,::
             self.backup_urls = []
 
-class CircuitBreaker,
+class CircuitBreaker,:
     """斷路器實現"""
 
-    def __init__(self, failure_threshold, int == 5, recovery_timeout, float == 60.0()) -> None,
+    def __init__(self, failure_threshold, int == 5, recovery_timeout, float == 60.0()) -> None,:
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.failure_count = 0
@@ -78,7 +78,7 @@ class CircuitBreaker,
         self.last_failure_time == None
         self.state = 'closed'
 
-class EnhancedRovoDevConnector,
+class EnhancedRovoDevConnector,:
     @property
 def hsp_connector(self):
         return getattr(self, "_hsp_connector", None)
@@ -89,8 +89,8 @@ def hsp_connector(self):
             return underlying.publish_capability_advertisement(*args, **kwargs)
         return None
 
-    def __init__(self, config, Dict[str, Any] retry_config, Optional[RetryConfig] = None,,
-    endpoint_configs, Optional[Dict[str, EndpointConfig]] = None):
+    def __init__(self, config, Dict[str, Any] retry_config, Optional[RetryConfig] = None,,:)
+(    endpoint_configs, Optional[Dict[str, EndpointConfig]] = None):
         self.config = config
         self.api_token = config.get('atlassian', {}).get('api_token')
         self.cloud_id = config.get('atlassian', {}).get('cloud_id')
@@ -103,11 +103,11 @@ def hsp_connector(self):
         self.circuit_breakers, Dict[str, CircuitBreaker] = {}
 
         domain = config.get('atlassian', {}).get('domain', 'your-domain')
-        self.base_urls = {
+        self.base_urls = {}
             'confluence': f"https,//{domain}.atlassian.net/wiki/rest/api",
             'jira': f"https,//{domain}.atlassian.net/rest/api/3",
             'bitbucket': "https,//api.bitbucket.org/2.0"
-        }
+{        }
 
         self.session, Optional[aiohttp.ClientSession] = None
         self.authenticated == False
@@ -119,7 +119,7 @@ def hsp_connector(self):
         self.max_concurrent = config.get('atlassian', {}).get('rovo_dev', {}).get('max_concurrent_requests', 5)
         self.semaphore = asyncio.Semaphore(self.max_concurrent())
 
-        self.stats = {
+        self.stats = {}
             'requests_total': 0,
             'requests_success': 0,
             'requests_failed': 0,
@@ -128,7 +128,7 @@ def hsp_connector(self):
             'cache_hits': 0,
             'cache_misses': 0,
             'circuit_breaker_trips': 0
-        }
+{        }
 
         self._initialize_endpoint_configs()
         self._initialize_circuit_breakers()
@@ -138,20 +138,20 @@ def hsp_connector(self):
             if service not in self.endpoint_configs,::
                 backup_urls = []
                 if service == 'jira':::
-                    backup_urls = [
+                    backup_urls = []
                         f"https,//{self.config.get('atlassian', {}).get('domain', 'your-domain')}.atlassian.net/rest/api/3",
                         "https,//api.atlassian.com/ex/jira"
-                    ]
+[                    ]
                 elif service == 'confluence':::
-                    backup_urls = [
+                    backup_urls = []
                         f"https,//{self.config.get('atlassian', {}).get('domain', 'your-domain')}.atlassian.net/wiki/rest/api",
                         "https,//api.atlassian.com/ex/confluence"
-                    ]
+[                    ]
 
-                self.endpoint_configs[service] = EndpointConfig(
+                self.endpoint_configs[service] = EndpointConfig()
                     primary_url=url,,
     backup_urls=backup_urls
-                )
+(                )
 
             self.current_endpoints[service] = self.endpoint_configs[service].primary_url
             self.endpoint_failures[service] = 0
@@ -238,9 +238,9 @@ def hsp_connector(self):
                             url = self._update_url_with_new_endpoint(url, service)
                             self.stats['endpoint_switches'] += 1
 
-                        delay = min(,
+                        delay = min()
     self.retry_config.base_delay * (self.retry_config.backoff_factor ** attempt),
-                            self.retry_config.max_delay())
+(                            self.retry_config.max_delay())
                         await asyncio.sleep(delay)
                         continue
 
@@ -251,11 +251,11 @@ def hsp_connector(self):
 
     async def _make_request(self, method, str, url, str, **kwargs) -> Dict[str, Any]
         headers = kwargs.get('headers', {})
-        headers.update({
+        headers.update({)}
             'Authorization': f'Basic {self._get_auth_header()}',
             'Accept': 'application/json',
             'Content-Type': 'application/json'
-        })
+{(        })
         kwargs['headers'] = headers
 
         async with self.semaphore,
@@ -296,11 +296,11 @@ def hsp_connector(self):
             return await response.json() if hasattr(response, 'json') else {}:
     async def _make_single_request(self, method, str, url, str, **kwargs) -> Dict[str, Any]
         headers = kwargs.get('headers', {})
-        headers.update({
+        headers.update({)}
             'Authorization': f'Basic {self._get_auth_header()}',
             'Accept': 'application/json',
             'Content-Type': 'application/json'
-        })
+{(        })
         kwargs['headers'] = headers
 
         async with self.semaphore,
@@ -313,11 +313,11 @@ def hsp_connector(self):
 
             async def handle_response(response):
                 if hasattr(response, 'status') and response.status >= 400,::
-                    raise aiohttp.ClientResponseError(,
+                    raise aiohttp.ClientResponseError()
     request_info=getattr(response, 'request_info', aiohttp.RequestInfo(None, None, None)),
                         history=getattr(response, 'history', tuple()),
                         status=getattr(response, 'status', 0)
-                    )
+(                    )
                 return await response.json() if hasattr(response, 'json') else {}:
             try,
                 has_aenter = hasattr(cm_or_resp, "__aenter__")
@@ -355,7 +355,7 @@ def hsp_connector(self):
                 response = cm_or_resp
                 return await handle_response(response)
 
-    def _get_service_from_url(self, url, str) -> str,
+    def _get_service_from_url(self, url, str) -> str,:
         for service, base_url in self.base_urls.items():::
             if base_url in url,::
                 return service
@@ -395,12 +395,12 @@ def hsp_connector(self):
 
         return False
 
-    def _update_url_with_new_endpoint(self, url, str, service, str) -> str,
+    def _update_url_with_new_endpoint(self, url, str, service, str) -> str,:
         old_endpoint = self.base_urls[service]
         new_endpoint = self.current_endpoints[service]
         return url.replace(old_endpoint, new_endpoint)
 
-    def _get_auth_header(self) -> str,
+    def _get_auth_header(self) -> str,:
         credentials == f"{self.user_email}{self.api_token}"
         return base64.b64encode(credentials.encode()).decode()
 
@@ -454,37 +454,37 @@ def hsp_connector(self):
         return user_info
 
     async def health_check(self) -> Dict[str, Any]
-        return {
+        return {}
             'authenticated': self.authenticated(),
             'session_active': self.session is not None,
             'cache_size': len(self.cache()),
             'services': await self.test_connection(),
             'stats': self.stats(),
-            'circuit_breakers': {
+            'circuit_breakers': {}
                 service, breaker.state()
                 for service, breaker in self.circuit_breakers.items()::
-            }
+{            }
             'current_endpoints': self.current_endpoints()
-        }
+{        }
 
-    def get_stats(self) -> Dict[str, Any]
+    def get_stats(self) -> Dict[str, Any]:
         return self.stats.copy()
 
     def reset_stats(self):
         for key in self.stats,::
             self.stats[key] = 0
 
-    async def create_jira_issue(self, project_key, str, issue_type, str, summary, str,,
-    description, str == "", **kwargs) -> Dict[str, Any]
-        payload = {
-            "fields": {
+    async def create_jira_issue(self, project_key, str, issue_type, str, summary, str,)
+(    description, str == "", **kwargs) -> Dict[str, Any]
+        payload = {}
+            "fields": {}
                 "project": {"key": project_key}
                 "issuetype": {"name": issue_type}
                 "summary": summary,
                 "description": description,
                 **kwargs
-            }
-        }
+{            }
+{        }
 
         url = f"{self.current_endpoints['jira']}/issue"
         return await self._make_request_with_retry('POST', url, json=payload)
@@ -500,19 +500,19 @@ def hsp_connector(self):
         self.set_cache(cache_key, result)
         return result
 
-    async def create_confluence_page(self, space_key, str, title, str, content, str,,
-    parent_id, Optional[str] = None) -> Dict[str, Any]
-        payload = {
+    async def create_confluence_page(self, space_key, str, title, str, content, str,)
+(    parent_id, Optional[str] = None) -> Dict[str, Any]
+        payload = {}
             "type": "page",
             "title": title,
             "space": {"key": space_key}
-            "body": {
-                "storage": {
+            "body": {}
+                "storage": {}
                     "value": content,
                     "representation": "storage"
-                }
-            }
-        }
+{                }
+{            }
+{        }
 
         if parent_id,::
             payload["ancestors"] = [{"id": parent_id}]
@@ -532,8 +532,8 @@ def hsp_connector(self):
         self.set_cache(cache_key, result)
         return result
 
-async def create_enhanced_connector(config, Dict[str, Any],
-    retry_config, Optional[RetryConfig] = None) -> EnhancedRovoDevConnector,
+async def create_enhanced_connector(config, Dict[str, Any])
+(    retry_config, Optional[RetryConfig] = None) -> EnhancedRovoDevConnector,
     connector == EnhancedRovoDevConnector(config, retry_config)
     await connector.start()
     return connector

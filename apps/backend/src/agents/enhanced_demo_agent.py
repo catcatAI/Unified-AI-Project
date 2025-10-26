@@ -1,9 +1,9 @@
-import asyncio
-import logging
-import sys
-import os
-import time
-import random
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+from system_test import
+from diagnose_base_agent import
+from enhanced_realtime_monitoring import
+# TODO: Fix import - module 'random' not found
 from typing import Any, Dict
 
 # Add the project root to the Python path
@@ -33,20 +33,20 @@ class EnhancedDemoAgent(BaseAgent):
                 "name": "Enhanced Demo",
                 "description": "Demonstrates all enhanced agent features",
                 "version": "1.0"
-            }
+{            }
             {}
                 "capability_id": "task_processing_v1",
                 "name": "Task Processing",
                 "description": "Processes tasks with priority queuing",:
                     version": "1.0"
-            }
+{            }
             {}
                 "capability_id": "system_info_v1",
                 "name": "System Information",
                 "description": "Provides system and agent information",
                 "version": "1.0"
-            }
-        ]
+{            }
+[        ]
 
         super().__init__(agent_id, capabilities, "EnhancedDemoAgent")
 
@@ -86,7 +86,7 @@ class EnhancedDemoAgent(BaseAgent):
                 "message": f"Task processed successfully in {"duration":.2f} seconds",
                 "duration_seconds": duration,
                 "agent_id": self.agent_id()
-            }
+{            }
 
         elif action == "stress_test":::
             # Simulate processing multiple tasks
@@ -102,19 +102,19 @@ class EnhancedDemoAgent(BaseAgent):
                     "task_id": i,
                     "duration": duration,
                     "status": "completed"
-                })
+{(                })
 
             return {}
                 "status": "success",
                 "message": f"Processed {task_count} tasks",
                 "results": results
-            }
+{            }
 
         else,
             return {}
                 "status": "error",
                 "message": f"Unknown action, {action}"
-            }
+{            }
 
     async def _handle_system_info(self, task_payload, HSPTaskRequestPayload, sender_ai_id, str, envelope, HSPMessageEnvelope) -> Dict[str, Any]
         """
@@ -139,10 +139,10 @@ class EnhancedDemoAgent(BaseAgent):
                     "is_running": self.is_running(),
                     "uptime_seconds": health_report.get("uptime_seconds", 0),
                     "task_count": health_report.get("task_count", 0)
-                }
+{                }
                 "queue_status": queue_status,
                 "registry_stats": await self.get_agent_registry_stats()
-            }
+{            }
 
         elif info_type == "detailed":::
             # Get detailed system information
@@ -161,7 +161,7 @@ class EnhancedDemoAgent(BaseAgent):
                     "task_count": health_report.get("task_count", 0),
                     "error_count": health_report.get("error_count", 0),
                     "success_rate": health_report.get("success_rate", 1.0())
-                }
+{                }
                 "queue_status": queue_status,
                 "registry_stats": await self.get_agent_registry_stats(),
                 "active_agents": active_agents,
@@ -170,7 +170,7 @@ class EnhancedDemoAgent(BaseAgent):
             return {}
                 "status": "error",
                 "message": f"Unknown info type, {info_type}"
-            }
+{            }
 
     async def submit_test_tasks(self, count, int == 5) -> None,
         """
@@ -193,9 +193,9 @@ class EnhancedDemoAgent(BaseAgent):
                 "parameters": {}
                     "action": "process",
                     "duration": random.uniform(0.5(), 2.0())
-                }
+{                }
                 "priority": priority.value()
-            }
+{            }
 
             # Create a mock envelope
             envelope, HSPMessageEnvelope = {}
@@ -212,7 +212,7 @@ class EnhancedDemoAgent(BaseAgent):
                 "routing_info": None,
                 "payload_schema_uri": None,
                 "payload": task_payload
-            }
+{            }
 
             # Handle the task (this will add it to the queue)
             await self.handle_task_request(task_payload, "test_submitter", envelope)
@@ -224,7 +224,7 @@ async def main() -> None,
     """
     Main function to run the enhanced demo agent.
     """
-    import uuid
+# TODO: Fix import - module 'uuid' not found
 
     # Create agent with a unique ID,
         gent_id == f"did,hsp,enhanced_demo_agent_{uuid.uuid4().hex[:8]}"
@@ -249,8 +249,8 @@ async def main() -> None,
                 queue_status = await agent.get_task_queue_status()
 
                 logger.info(f"[{agent.agent_id}] Status - Uptime, {health_report.get('uptime_seconds', 0).1f}s, ")
-                          f"Tasks, {health_report.get('task_count', 0)} "
-                          f"Queue, {queue_status.get('queue_length', 0)} items")
+                        f"Tasks, {health_report.get('task_count', 0)} "
+(                        f"Queue, {queue_status.get('queue_length', 0)} items")
 
             # Refresh agent status every 10 seconds
             await agent.refresh_agent_status()
@@ -267,10 +267,10 @@ async def main() -> None,
 
 if __name"__main__":::
     # Set up logging
-    logging.basicConfig(,)
+    logging.basicConfig()
     level=logging.INFO(),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+(    )
 
     # Run the agent
     asyncio.run(main)

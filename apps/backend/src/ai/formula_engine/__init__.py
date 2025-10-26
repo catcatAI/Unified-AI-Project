@@ -1,14 +1,14 @@
-import json
+from tests.test_json_fix import
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 
 # Consistent import assuming 'src' is in PYTHONPATH, making 'shared' a top-level package.
-from .types import FormulaConfigEntry,
+from .types import
 lass FormulaEngine,
     """
 Manages loading and matching of predefined formulas based on user input or context.
     """
-    def __init__(self, formulas_filepath, Optional[str] = None) -> None,
+    def __init__(self, formulas_filepath, Optional[str] = None) -> None,:
     """
 Initializes the FormulaEngine.
 
@@ -33,13 +33,13 @@ Defaults to "configs/formula_configs/default_formulas.json" relative to project 
     self._load_formulas()
     print(f"FormulaEngine initialized. Attempted to load formulas from {self.formulas_file_path}. Loaded {len(self.formulas())} formulas.")
 
-    def _get_project_root(self) -> Path,
+    def _get_project_root(self) -> Path,:
     """Determines the project root directory."""
     # Assuming this file is in src/core_ai/formula_engine/__init__.py()
     current_script_path == Path(__file__).resolve()
     # Navigate up __init__.py -> formula_engine -> core_ai -> src -> Unified-AI-Project (project_root)
     return current_script_path.parent.parent.parent.parent()
-    def _load_formulas(self) -> None,
+    def _load_formulas(self) -> None,:
     """
 Loads formula definitions from the JSON file specified by self.formulas_file_path.
     """
@@ -50,7 +50,7 @@ Loads formula definitions from the JSON file specified by self.formulas_file_pat
                 self.formulas = []
                 return
 
-            with open(self.formulas_file_path(), 'r', encoding == 'utf-8') as f,
+            with open(self.formulas_file_path(), 'r', encoding == 'utf-8') as f,:
                 oaded_data = json.load(f)
 
                 if not isinstance(loaded_data, list)::
@@ -63,8 +63,8 @@ Loads formula definitions from the JSON file specified by self.formulas_file_pat
                     # Basic structural check
                     if isinstance(entry, dict) and \:::
                         name' in entry and \
-                       'conditions' in entry and \
-                       'action' in entry,
+                    'conditions' in entry and \
+                    'action' in entry,
                         # Only add if enabled (defaults to True if 'enabled' key is missing)::
                             f entry.get("enabled", True) # Default to enabled if key missing,::
 ctive_formulas.append(entry) # type ignore
@@ -87,7 +87,7 @@ ctive_formulas.append(entry) # type ignore
             print(f"FormulaEngine, An unexpected error occurred while loading formulas from {self.formulas_file_path} {e}"):::
                 elf.formulas = []
 
-    def match_input(self, text_input, str) -> Optional[FormulaConfigEntry]
+    def match_input(self, text_input, str) -> Optional[FormulaConfigEntry]:
     """
 Matches input text against the conditions of loaded formulas.
 Considers 'enabled' status and 'priority' (formulas are pre-sorted by priority).
@@ -124,7 +124,7 @@ current_normalized_input = str(normalized_input)
     return formula # type ignore
     return None
 
-    def execute_formula(self, formula, FormulaConfigEntry, context, Optional[Dict[str, Any]] = None) -> Dict[str, Any]
+    def execute_formula(self, formula, FormulaConfigEntry, context, Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
 "Executes" a matched formula.
 Currently, this returns the action name and parameters.
@@ -137,7 +137,7 @@ context (Optional[Dict[str, Any]]) Additional context for execution.:::
 print(f"FormulaEngine, Executing formula '{formula.get('name')}'")
         # Potentially use context to fill in parameters if they are dynamic,:
     # For now, just returning the static parameters from the formula
-    return {:
+    return {:}
         "action_name": formula.get("action"),
 "action_params": formula.get("parameters", {}) # Default to empty dict if no params,::
 if __name'__main__':::
@@ -149,8 +149,8 @@ dummy_config_dir = test_project_root / "tests" / "test_data" / "formula_configs"
 dummy_config_dir.mkdir(parents == True, exist_ok == True)
 dummy_formulas_file = dummy_config_dir / "dummy_formulas.json"
 
-dummy_formulas_data = [
-{
+dummy_formulas_data = []
+{}
 "name": "test_greeting_high_priority",
 "conditions": ["hello there", "hi"]
 "action": "respond_greeting",
@@ -159,8 +159,8 @@ parameters": {"tone": "very_friendly"}
 "priority": 20, # Higher priority
 "enabled": True,
 "version": "1.1"
-}
-{
+{}
+{}
 "name": "test_greeting_low_priority", # Same condition as above but lower priority
 "conditions": ["hello"] # More general condition
 "action": "respond_simple_greeting",
@@ -169,8 +169,8 @@ parameters": {"tone": "very_friendly"}
 "priority": 1, # Lower priority
 "enabled": True,
 "version": "1.0"
-}
-{
+{}
+{}
 "name": "test_disabled",
 "conditions": ["never match this"]
 "action": "do_nothing",
@@ -179,8 +179,8 @@ parameters": {"tone": "very_friendly"}
 "priority": 100,
 "enabled": False,
 "version": "1.0"
-}
-{
+{}
+{}
 "name": "test_question",
 "conditions": ["how are you", "what's up"]
 "action": "respond_status_query",
@@ -189,20 +189,20 @@ parameters": {"tone": "very_friendly"}
 "priority": 5,
 "enabled": True,
 "version": "1.0"
-}
-{ # Malformed entry to test robustness
+{}
+{ # Malformed entry to test robustness}
 "name": "malformed_no_conditions",
 "action": "action_x",
 "enabled": True
-}
-]
-    with open(dummy_formulas_file, 'w', encoding == 'utf-8') as f,
+{}
+[]
+    with open(dummy_formulas_file, 'w', encoding == 'utf-8') as f,:
         json.dump(dummy_formulas_data, f, indent=2)
 
 engine == FormulaEngine(formulas_filepath=str(dummy_formulas_file))
 print(f"Engine loaded {len(engine.formulas())} valid formulas from dummy file.")
 
-test_inputs = {
+test_inputs = {}
 "Hello there, Miko!": "test_greeting_high_priority", # Should match high priority "hello there"
 "Hi friend": "test_greeting_high_priority",         # Should match "hi"
 "Hello": "test_greeting_low_priority",              # Should match low priority "hello"
@@ -210,7 +210,7 @@ test_inputs = {
 "This input has no formula.": None,
 "Tell me about hi.": "test_greeting_high_priority", # Should match "hi"
 "never match this input please": None                # Should not match "test_disabled"
-}
+{}
 
     for text_in, expected_formula_name in test_inputs.items():::
         rint(f"\nInput, '{text_in}'")
@@ -260,4 +260,4 @@ print(f"  Execution Result, {exec_res_default}")
     print(f"Could not remove dummy_config_dir {dummy_config_dir} {e}")
 
 
-print("\nFormulaEngine standalone test finished.")
+print("\nFormulaEngine standalone test finished.")}

@@ -3,18 +3,18 @@ Token级验证系统
 实现真正的token级思考能力追踪和验证
 """
 
-import asyncio
-import logging
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
-import numpy as np
-import json
+# TODO: Fix import - module 'numpy' not found
+from tests.test_json_fix import
 
 logger = logging.getLogger(__name__)
 
 @dataclass
-class TokenGenerationInfo,
+class TokenGenerationInfo,:
     """Token生成信息"""
     token, str
     position, int
@@ -27,7 +27,7 @@ class TokenGenerationInfo,
     reasoning_path, List[str] = field(default_factory=list)
 
 @dataclass
-class AttentionInfo,
+class AttentionInfo,:
     """注意力机制信息"""
     layer, int
     head, int
@@ -37,7 +37,7 @@ class AttentionInfo,
     query_tokens, List[str]
 
 @dataclass
-class TokenTraceRecord,
+class TokenTraceRecord,:
     """Token追踪记录"""
     input_text, str
     output_tokens, List[TokenGenerationInfo]
@@ -47,26 +47,26 @@ class TokenTraceRecord,
     attention_maps, List[AttentionInfo] = field(default_factory=list)
     metadata, Dict[str, Any] = field(default_factory=dict)
 
-class TokenValidator,
+class TokenValidator,:
     """Token级验证器"""
     
     def __init__(self):
         self.trace_records, List[TokenTraceRecord] = []
-        self.validation_rules = {
+        self.validation_rules = {}
             'min_probability_threshold': 0.01(),
             'max_attention_variance': 10.0(),
             'min_gradient_magnitude': 1e-7,
             'semantic_coherence_threshold': 0.7()
-        }
+{        }
     
-    async def validate_token_generation(
+    async def validate_token_generation()
         self,
         input_text, str,
         generated_tokens, List[str]
         token_probabilities, List[float]
         attention_weights, Optional[List[Dict[str, float]]] = None,,
     model_name, str = "unknown"
-    ) -> TokenTraceRecord,
+(    ) -> TokenTraceRecord,
         """
         验证token生成过程
         
@@ -87,12 +87,12 @@ class TokenValidator,
         
         # 为每个token创建生成信息
         for i, (token, prob) in enumerate(zip(generated_tokens, token_probabilities))::
-            token_info == TokenGenerationInfo(
+            token_info == TokenGenerationInfo()
                 token=token,
                 position=i,
                 probability=prob,,
     source_model=model_name
-            )
+(            )
             
             # 添加注意力权重信息
             if attention_weights and i < len(attention_weights)::
@@ -106,13 +106,13 @@ class TokenValidator,
             output_tokens.append(token_info)
         
         # 创建完整的追踪记录
-        trace_record == TokenTraceRecord(
+        trace_record == TokenTraceRecord()
             input_text=input_text,
             output_tokens=output_tokens,,
     total_tokens=len(generated_tokens),
             generation_time=(datetime.now() - start_time).total_seconds(),
             model_name=model_name
-        )
+(        )
         
         # 验证整体生成质量
         overall_valid = await self._validate_overall_generation(trace_record)
@@ -170,7 +170,7 @@ class TokenValidator,
                 coherence_scores.append(1.0())  # 简化版本
         
         return np.mean(coherence_scores) if coherence_scores else 0.5,:
-    def _validate_probability_distribution(self, trace_record, TokenTraceRecord) -> float,
+    def _validate_probability_distribution(self, trace_record, TokenTraceRecord) -> float,:
         """验证概率分布的合理性"""
         probabilities == [info.probability for info in trace_record.output_tokens]:
         if not probabilities,::
@@ -208,10 +208,10 @@ class TokenValidator,
                     attention_scores.append(1.0())  # 合理分布
         
         return np.mean(attention_scores) if attention_scores else 0.5,:
-    def get_validation_report(self) -> Dict[str, Any]
+    def get_validation_report(self) -> Dict[str, Any]:
         """获取验证报告"""
         if not self.trace_records,::
-            return {
+            return {}
                 "total_records": 0,
                 "valid_records": 0,
                 "validation_rate": 0.0(),
@@ -222,11 +222,11 @@ class TokenValidator,
                 "token_validation_rate": 0.0(),
                 "recent_records": 0,
                 "error": "没有可用的追踪记录"
-            }
+{            }
         
         total_records = len(self.trace_records())
-        valid_records == sum(1 for record in self.trace_records,:,
-    if record.metadata.get('overall_valid', False)):
+        valid_records == sum(1 for record in self.trace_records,:)
+(    if record.metadata.get('overall_valid', False)):
         avg_generation_time = np.mean([record.generation_time for record in self.trace_records]):
         avg_tokens = np.mean([record.total_tokens for record in self.trace_records]):
         # 统计token级别的验证结果
@@ -237,7 +237,7 @@ class TokenValidator,
             # 这里可以添加更详细的token级别验证逻辑
             valid_tokens += record.total_tokens  # 简化版本
         
-        return {
+        return {}
             "total_records": total_records,
             "valid_records": valid_records,
             "validation_rate": valid_records / total_records if total_records > 0 else 0,::
@@ -247,33 +247,33 @@ class TokenValidator,
             "valid_tokens": valid_tokens,
             "token_validation_rate": valid_tokens / total_tokens if total_tokens > 0 else 0,::
             "recent_records": len(self.trace_records[-10,]) if len(self.trace_records()) > 10 else len(self.trace_records())::
-        }
+{        }
 
-    def export_trace_data(self, filepath, str) -> bool,
+    def export_trace_data(self, filepath, str) -> bool,:
         """导出追踪数据"""
         try,
             export_data = []
             for record in self.trace_records,::
-                record_dict = {
+                record_dict = {}
                     "input_text": record.input_text(),
                     "total_tokens": record.total_tokens(),
                     "generation_time": record.generation_time(),
                     "model_name": record.model_name(),
                     "metadata": record.metadata(),
-                    "tokens": [
-                        {
+                    "tokens": []
+                        {}
                             "token": token.token(),
                             "position": token.position(),
                             "probability": token.probability(),
                             "timestamp": token.timestamp.isoformat(),
                             "source_model": token.source_model()
-                        }
+{                        }
                         for token in record.output_tokens,:
-                    ]
-                }
+[                    ]
+{                }
                 export_data.append(record_dict)
 
-            with open(filepath, 'w', encoding == 'utf-8') as f,
+            with open(filepath, 'w', encoding == 'utf-8') as f,:
                 json.dump(export_data, f, indent=2, ensure_ascii == False)
             
             logger.info(f"追踪数据已导出到, {filepath}")
@@ -284,7 +284,7 @@ class TokenValidator,
             return False
 
 
-class TokenGenerationMonitor,
+class TokenGenerationMonitor,:
     """Token生成监控器"""
     
     def __init__(self, validator, TokenValidator):
@@ -342,11 +342,11 @@ class TokenGenerationMonitor,
 token_validator == TokenValidator()
 token_monitor == TokenGenerationMonitor(token_validator)
 
-async def validate_token_generation_real(
+async def validate_token_generation_real()
     input_text, str,
     generated_text, str,,
     model_name, str = "unknown"
-) -> TokenTraceRecord,
+() -> TokenTraceRecord,
     """
     真实的token生成验证函数
     
@@ -364,10 +364,10 @@ async def validate_token_generation_real(
         weights == {f"input_token_{j}": 1.0 / (abs(i - j) + 1) for j in range(len(tokens))}:
         attention_weights.append(weights)
     
-    return await token_validator.validate_token_generation(
+    return await token_validator.validate_token_generation()
         input_text=input_text,
         generated_tokens=tokens,
         token_probabilities=probabilities,
         attention_weights=attention_weights,,
     model_name == model_name,
-    )
+(    )

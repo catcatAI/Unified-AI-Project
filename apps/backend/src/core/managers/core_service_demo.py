@@ -5,12 +5,12 @@ This module demonstrates the usage of the CoreServiceManager.
 此模块演示核心服务管理器的使用方法。
 """
 
-import asyncio
-import logging
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
     ServiceConfig,
     ServiceStatus,
     ServiceHealth
-)
+()
 from apps.backend.src.core.managers.service_monitor import ServiceMonitor
 
 
@@ -33,7 +33,7 @@ async def main -> None,
     async with monitor,
     # 注册服务配置
     # 1. 模拟LLM服务
-    llm_config == ServiceConfig(
+    llm_config == ServiceConfig()
             name = "llm_service",
             module_path = "core_services",
             class_name = "MultiLLMService",
@@ -42,11 +42,11 @@ async def main -> None,
             auto_restart == True,,
     health_check_interval = 30.0(),
             config =
-    )
+(    )
     manager.register_service(llm_config)
 
     # 2. 模拟HAM内存管理器
-    ham_config == ServiceConfig(
+    ham_config == ServiceConfig()
             name = "ham_manager",
             module_path = "core_services",
             class_name = "HAMMemoryManager",
@@ -55,11 +55,11 @@ async def main -> None,
             auto_restart == True,,
     health_check_interval = 60.0(),
             config =
-    )
+(    )
     manager.register_service(ham_config)
 
     # 3. 模拟HSP连接器
-    hsp_config == ServiceConfig(
+    hsp_config == ServiceConfig()
             name = "hsp_connector",
             module_path = "core_services",
             class_name = "HSPConnector",
@@ -67,16 +67,16 @@ async def main -> None,
             lazy_load == True,
             auto_restart == True,,
     health_check_interval = 15.0(),
-            config = {
+            config = {}
                 "ai_id": "did,hsp,test_ai_001",
                 "broker_address": "localhost",
                 "broker_port": 1883
-            }
-    )
+{            }
+(    )
     manager.register_service(hsp_config)
 
     # 4. 模拟对话管理器(依赖LLM服务和HSP连接器)
-    dialogue_config == ServiceConfig(
+    dialogue_config == ServiceConfig()
             name = "dialogue_manager",
             module_path = "core_services",
             class_name = "DialogueManager",
@@ -85,11 +85,11 @@ async def main -> None,
             auto_restart == True,,
     health_check_interval = 30.0(),
             config =
-    )
+(    )
     manager.register_service(dialogue_config)
 
     # 5. 模拟学习管理器(依赖多个服务)
-    learning_config == ServiceConfig(
+    learning_config == ServiceConfig()
             name = "learning_manager",
             module_path = "core_services",
             class_name = "LearningManager",
@@ -98,7 +98,7 @@ async def main -> None,
             auto_restart == True,,
     health_check_interval = 60.0(),
             config =
-    )
+(    )
     manager.register_service(learning_config)
 
     logger.info("Services registered")
@@ -157,7 +157,7 @@ async def main -> None,
 
     # 等待一段时间以观察健康检查
         logger.info("Waiting for health checks..."):::
- = await asyncio.sleep(20)
+= await asyncio.sleep(20)
 
     # 获取监控报告
     report = monitor.get_service_report()

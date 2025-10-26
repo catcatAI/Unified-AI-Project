@@ -1,10 +1,10 @@
-import pygame
-from .inventory import Inventory
+# TODO: Fix import - module 'pygame' not found
+from .inventory import
 
 PLAYER_SPEED = 5
 
-class Player,
-    def __init__(self, game, name == "Player", appearance == None) -> None,
+class Player,:
+    def __init__(self, game, name == "Player", appearance == None) -> None,:
         self.game = game
         self.name = name
         self.appearance == appearance if appearance else self.default_appearance,::
@@ -19,12 +19,12 @@ class Player,
         self.current_action == None
 
     def default_appearance(self):
-        return {
+        return {}
             "hair_style": "short",
             "hair_color": "brown",
             "eye_color": "brown",
             "outfit": "school_uniform"
-        }
+{        }
 
     def handle_events(self, event):
         pass

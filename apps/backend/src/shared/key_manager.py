@@ -3,12 +3,12 @@
 處理演示模式、生產模式和開發模式的金鑰管理
 """
 
-import os
-import yaml
-import logging
-from pathlib import Path
-from typing import Dict, Any, Optional
-from cryptography.fernet import Fernet
+from diagnose_base_agent import
+# TODO: Fix import - module 'yaml' not found
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'pathlib' not found
+# TODO: Fix import - module 'typing' not found
+# TODO: Fix import - module 'cryptography.fernet' not found
 
 logger: Any = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class UnifiedKeyManager:
     
     def _match_pattern(self, value: str, pattern: str) -> bool:
         """匹配模式"""
-        import re
+from tests.core_ai import
         try:
             return bool(re.match(pattern, value))
         except re.error:

@@ -8,13 +8,13 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
-import asyncio
+# TODO: Fix import - module 'asyncio' not found
 
-from ...ai.ops.intelligent_ops_manager import get_intelligent_ops_manager, IntelligentOpsManager
-from ...ai.ops.ai_ops_engine import get_ai_ops_engine
-from ...ai.ops.predictive_maintenance import get_predictive_maintenance_engine
-from ...ai.ops.performance_optimizer import get_performance_optimizer
-from ...ai.ops.capacity_planner import get_capacity_planner
+from ...ai.ops.intelligent_ops_manager import
+from ...ai.ops.ai_ops_engine import
+from ...ai.ops.predictive_maintenance import
+from ...ai.ops.performance_optimizer import
+from ...ai.ops.capacity_planner import
 
 router == APIRouter(prefix="/api/v1/ops", tags=["AI运维"])
 
@@ -33,20 +33,20 @@ async def get_ops_dashboard(ops_manager, IntelligentOpsManager == Depends(get_op
         raise HTTPException(status_code == 500, detail=f"获取仪表板数据失败, {str(e)}")
 
 @router.get("/insights")
-async def get_insights(
+async def get_insights()
     insight_type, Optional[str] = None,
     severity, Optional[str] = None,
     limit, int = 50,,
     ops_manager, IntelligentOpsManager == Depends(get_ops_manager):
-        ):
+(        ):
     """获取运维洞察"""
     try,
-        insights = await ops_manager.get_insights(
+        insights = await ops_manager.get_insights()
             insight_type=insight_type,
             severity=severity,,
     limit=limit
-        )
-        return JSONResponse(content=[{
+(        )
+        return JSONResponse(content=[{)]}
             "insight_id": insight.insight_id(),
             "insight_type": insight.insight_type(),
             "severity": insight.severity(),
@@ -57,24 +57,24 @@ async def get_insights(
             "confidence": insight.confidence(),
             "timestamp": insight.timestamp.isoformat(),
             "auto_actionable": insight.auto_actionable()
-        } for insight in insights]):
+{[(        } for insight in insights]):
     except Exception as e,::
         raise HTTPException(status_code == 500, detail=f"获取洞察失败, {str(e)}")
 
 @router.post("/insights/{insight_id}/action")
-async def execute_manual_action(
+async def execute_manual_action()
     insight_id, str,
     action_data, Dict[str, Any],
     ops_manager, IntelligentOpsManager == Depends(get_ops_manager):
-        ):
+(        ):
     """执行手动操作"""
     try,
         action_type = action_data.get("action_type")
         parameters = action_data.get("parameters", {})
         
-        success = await ops_manager.execute_manual_action(,
+        success = await ops_manager.execute_manual_action()
     insight_id, action_type, parameters
-        )
+(        )
         
         if success,::
             return JSONResponse(content == {"status": "success", "message": "操作执行成功"})
@@ -84,11 +84,11 @@ async def execute_manual_action(
         raise HTTPException(status_code == 500, detail=f"执行操作失败, {str(e)}")
 
 @router.post("/metrics")
-async def collect_system_metrics(
+async def collect_system_metrics()
     metrics_data, Dict[str, Any]
     background_tasks, BackgroundTasks,,
     ops_manager, IntelligentOpsManager == Depends(get_ops_manager):
-        ):
+(        ):
     """收集系统指标"""
     try,
         component_id = metrics_data.get("component_id")
@@ -96,10 +96,10 @@ async def collect_system_metrics(
         metrics = metrics_data.get("metrics", {})
         
         # 异步收集指标
-        background_tasks.add_task(,
+        background_tasks.add_task()
     ops_manager.collect_system_metrics(),
             component_id, component_type, metrics
-        )
+(        )
         
         return JSONResponse(content == {"status": "success", "message": "指标收集已启动"})
     except Exception as e,::
@@ -113,7 +113,7 @@ async def get_anomalies():
         ai_ops = await get_ai_ops_engine()
         anomalies = await ai_ops.get_recent_anomalies()
         
-        return JSONResponse(content=[{
+        return JSONResponse(content=[{)]}
             "anomaly_id": anomaly.anomaly_id(),
             "component_id": anomaly.component_id(),
             "anomaly_type": anomaly.anomaly_type(),
@@ -122,14 +122,14 @@ async def get_anomalies():
             "confidence": anomaly.confidence(),
             "timestamp": anomaly.timestamp.isoformat(),
             "recommended_actions": anomaly.recommended_actions()
-        } for anomaly in anomalies]):
+{[(        } for anomaly in anomalies]):
     except Exception as e,::
         raise HTTPException(status_code == 500, detail=f"获取异常数据失败, {str(e)}")
 
 @router.post("/aiops/self-healing")
-async def trigger_self_healing(,
+async def trigger_self_healing()
     healing_request, Dict[str, Any]
-):
+():
     """触发自愈操作"""
     try,
         ai_ops = await get_ai_ops_engine()
@@ -155,7 +155,7 @@ async def get_component_health(component_id, Optional[str] = None):
         if component_id,::
             health = await maintenance.get_component_health(component_id)
             if health,::
-                return JSONResponse(content={
+                return JSONResponse(content={)}
                     "component_id": health.component_id(),
                     "component_type": health.component_type(),
                     "health_score": health.health_score(),
@@ -165,20 +165,20 @@ async def get_component_health(component_id, Optional[str] = None):
                     "maintenance_recommendation": health.maintenance_recommendation(),
                     "performance_metrics": health.performance_metrics(),
                     "anomaly_indicators": health.anomaly_indicators()
-                })
+{(                })
             else,
                 raise HTTPException(status_code=404, detail="组件不存在")
         else,
             all_health = await maintenance.get_all_component_health()
-            return JSONResponse(content={,
-    component_id, {
+            return JSONResponse(content={,)}
+    component_id, {}
                     "component_id": health.component_id(),
                     "component_type": health.component_type(),
                     "health_score": health.health_score(),
                     "failure_probability": health.failure_probability(),
                     "maintenance_recommendation": health.maintenance_recommendation()
-                } for component_id, health in all_health.items()::
-            })
+{                } for component_id, health in all_health.items()::
+{(            })
     except Exception as e,::
         raise HTTPException(status_code == 500, detail=f"获取健康状态失败, {str(e)}")
 
@@ -189,7 +189,7 @@ async def get_maintenance_schedules(component_id, Optional[str] = None):
         maintenance = await get_predictive_maintenance_engine()
         schedules = await maintenance.get_maintenance_schedules(component_id)
         
-        return JSONResponse(content=[{
+        return JSONResponse(content=[{)]}
             "schedule_id": schedule.schedule_id(),
             "component_id": schedule.component_id(),
             "maintenance_type": schedule.maintenance_type(),
@@ -199,15 +199,15 @@ async def get_maintenance_schedules(component_id, Optional[str] = None):
             "required_resources": schedule.required_resources(),
             "description": schedule.description(),
             "auto_approve": schedule.auto_approve()
-        } for schedule in schedules]):
+{[(        } for schedule in schedules]):
     except Exception as e,::
         raise HTTPException(status_code == 500, detail=f"获取维护计划失败, {str(e)}")
 
 @router.post("/maintenance/schedules/{schedule_id}/approve")
-async def approve_maintenance_schedule(
+async def approve_maintenance_schedule()
     schedule_id, str,,
     approval_data, Dict[str, Any]
-):
+():
     """批准维护计划"""
     try,
         maintenance = await get_predictive_maintenance_engine()
@@ -223,10 +223,10 @@ async def approve_maintenance_schedule(
         raise HTTPException(status_code == 500, detail=f"批准维护计划失败, {str(e)}")
 
 @router.post("/maintenance/schedules/{schedule_id}/complete")
-async def complete_maintenance_schedule(
+async def complete_maintenance_schedule()
     schedule_id, str,,
     completion_data, Dict[str, Any]
-):
+():
     """完成维护"""
     try,
         maintenance = await get_predictive_maintenance_engine()
@@ -249,7 +249,7 @@ async def get_optimization_recommendations(component_id, Optional[str] = None):
         optimizer = await get_performance_optimizer()
         recommendations = await optimizer.get_optimization_recommendations(component_id)
         
-        return JSONResponse(content=[{
+        return JSONResponse(content=[{)]}
             "recommendation_id": rec.recommendation_id(),
             "component_id": rec.component_id(),
             "optimization_type": rec.optimization_type(),
@@ -259,15 +259,15 @@ async def get_optimization_recommendations(component_id, Optional[str] = None):
             "description": rec.description(),
             "parameters": rec.parameters(),
             "estimated_time": rec.estimated_time()
-        } for rec in recommendations]):
+{[(        } for rec in recommendations]):
     except Exception as e,::
         raise HTTPException(status_code == 500, detail=f"获取优化建议失败, {str(e)}")
 
 @router.post("/performance/recommendations/{recommendation_id}/implement")
-async def implement_optimization_recommendation(
+async def implement_optimization_recommendation()
     recommendation_id, str,,
     implementation_data, Dict[str, Any]
-):
+():
     """实施优化建议"""
     try,
         optimizer = await get_performance_optimizer()
@@ -283,10 +283,10 @@ async def implement_optimization_recommendation(
         raise HTTPException(status_code == 500, detail=f"实施优化失败, {str(e)}")
 
 @router.get("/performance/report")
-async def get_performance_report(
+async def get_performance_report()
     component_id, Optional[str] = None,,
     time_range, int = 24
-):
+():
     """获取性能报告"""
     try,
         optimizer = await get_performance_optimizer()
@@ -304,7 +304,7 @@ async def get_capacity_predictions(resource_type, Optional[str] = None):
         planner = await get_capacity_planner()
         predictions = await planner.get_capacity_predictions(resource_type)
         
-        return JSONResponse(content=[{
+        return JSONResponse(content=[{)]}
             "prediction_id": pred.prediction_id(),
             "resource_type": pred.resource_type(),
             "current_capacity": pred.current_capacity(),
@@ -313,7 +313,7 @@ async def get_capacity_predictions(resource_type, Optional[str] = None):
             "confidence": pred.confidence(),
             "recommendation": pred.recommendation(),
             "urgency": pred.urgency()
-        } for pred in predictions]):
+{[(        } for pred in predictions]):
     except Exception as e,::
         raise HTTPException(status_code == 500, detail=f"获取容量预测失败, {str(e)}")
 
@@ -324,7 +324,7 @@ async def get_scaling_plans(resource_type, Optional[str] = None):
         planner = await get_capacity_planner()
         plans = await planner.get_scaling_plans(resource_type)
         
-        return JSONResponse(content=[{
+        return JSONResponse(content=[{)]}
             "plan_id": plan.plan_id(),
             "resource_type": plan.resource_type(),
             "action": plan.action(),
@@ -334,15 +334,15 @@ async def get_scaling_plans(resource_type, Optional[str] = None):
             "estimated_cost": plan.estimated_cost(),
             "rollback_plan": plan.rollback_plan(),
             "auto_approve": plan.auto_approve()
-        } for plan in plans]):
+{[(        } for plan in plans]):
     except Exception as e,::
         raise HTTPException(status_code == 500, detail=f"获取扩容计划失败, {str(e)}")
 
 @router.post("/capacity/plans/{plan_id}/approve")
-async def approve_scaling_plan(
+async def approve_scaling_plan()
     plan_id, str,,
     approval_data, Dict[str, Any]
-):
+():
     """批准扩容计划"""
     try,
         planner = await get_capacity_planner()
@@ -391,14 +391,14 @@ async def get_ops_system_status():
         optimizer = await get_performance_optimizer()
         planner = await get_capacity_planner()
         
-        status = {
+        status = {}
             "ai_ops_engine": "running",
             "predictive_maintenance": "running",
             "performance_optimizer": "running",
             "capacity_planner": "running",
             "intelligent_ops_manager": "running",
             "last_update": datetime.now().isoformat()
-        }
+{        }
         
         return JSONResponse(content=status)
     except Exception as e,::

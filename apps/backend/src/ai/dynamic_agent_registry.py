@@ -4,26 +4,26 @@ anages dynamic registration and discovery of AI agents in the Unified AI Project
 This class handles agent registration, discovery, and lifecycle management.
 """
 
-import asyncio
-import time
-import logging
+# TODO: Fix import - module 'asyncio' not found
+from enhanced_realtime_monitoring import
+from tests.tools.test_tool_dispatcher_logging import
 from datetime import datetime
 from typing import Dict, List, Optional, Callable, Any
 
-from ..hsp.connector import HSPConnector
-from ..hsp.types import HSPCapabilityAdvertisementPayload
-from .types import RegisteredAgent
+from ..hsp.connector import
+from ..hsp.types import
+from .types import
 
 logger = logging.getLogger(__name__)
 
 
-class DynamicAgentRegistry,
+class DynamicAgentRegistry,:
     """
     Manages dynamic registration and discovery of AI agents in the Unified AI Project.
     This class handles agent registration, discovery, and lifecycle management.
     """
 
-    def __init__(self, hsp_connector, HSPConnector) -> None,
+    def __init__(self, hsp_connector, HSPConnector) -> None,:
         self.hsp_connector = hsp_connector
         self.registered_agents, Dict[str, RegisteredAgent] = {}
         self.registry_lock = asyncio.Lock()
@@ -36,8 +36,8 @@ class DynamicAgentRegistry,
 
         # Register callbacks for capability advertisements,::
             f self.hsp_connector,
-            self.hsp_connector.register_on_capability_advertisement_callback(,
-    self._handle_capability_advertisement())
+            self.hsp_connector.register_on_capability_advertisement_callback()
+(    self._handle_capability_advertisement())
 
     async def start_registry(self) -> None,
         """Start the dynamic agent registry."""
@@ -85,8 +85,8 @@ class DynamicAgentRegistry,
                 agent = self.registered_agents[agent_id]
                 logger.info(f"Agent {agent.agent_name} ({agent_id}) marked as inactive")
 
-    async def _handle_capability_advertisement(self, capability_payload, HSPCapabilityAdvertisementPayload,,
-    sender_ai_id, str, envelope, Dict[str, Any]) -> None,
+    async def _handle_capability_advertisement(self, capability_payload, HSPCapabilityAdvertisementPayload,)
+(    sender_ai_id, str, envelope, Dict[str, Any]) -> None,
         """Handle capability advertisements to register agents."""
         async with self.registry_lock,
             agent_id = capability_payload.get("ai_id", sender_ai_id)
@@ -96,18 +96,18 @@ class DynamicAgentRegistry,
             # Create or update agent registration
             if agent_id not in self.registered_agents,::
                 # New agent registration
-                self.registered_agents[agent_id] = RegisteredAgent(
+                self.registered_agents[agent_id] = RegisteredAgent()
                     agent_id=agent_id,
                     agent_name=agent_name,
                     capabilities=[capability_payload],
     registration_time=time.time(),
                     last_seen=time.time(),
                     status="active",
-                    metadata={
+                    metadata={}
                         "first_seen": datetime.now().isoformat(),
                         "capability_count": 1
-                    }
-                )
+{                    }
+(                )
                 logger.info(f"New agent registered, {agent_name} ({agent_id}) with capability {capability_id}")
 
                 # Notify discovery callbacks,
@@ -133,8 +133,8 @@ class DynamicAgentRegistry,
                     agent.capabilities.append(capability_payload)
                     agent.metadata["capability_count"] = len(agent.capabilities())
                     logger.info(f"Updated agent {agent_name} ({agent_id}) with new capability {capability_id}"):
-                        sync def register_agent_manually(self, agent_id, str, agent_name, str,,
-    capabilities, List[Dict[str, Any]] metadata, Optional[Dict[str, Any]] = None) -> None,
+                        sync def register_agent_manually(self, agent_id, str, agent_name, str,)
+(    capabilities, List[Dict[str, Any]] metadata, Optional[Dict[str, Any]] = None) -> None,
         """
         Manually register an agent in the registry.
 
@@ -145,7 +145,7 @@ class DynamicAgentRegistry,
                 metadata, Additional metadata about the agent
         """
         async with self.registry_lock,
-            self.registered_agents[agent_id] = RegisteredAgent(
+            self.registered_agents[agent_id] = RegisteredAgent()
                 agent_id=agent_id,
                 agent_name=agent_name,
                 capabilities=capabilities,,
@@ -153,7 +153,7 @@ class DynamicAgentRegistry,
                 last_seen=time.time(),
                 status="active",
                 metadata=metadata or {}
-            )
+(            )
             logger.info(f"Agent manually registered, {agent_name} ({agent_id})")
 
     async def unregister_agent(self, agent_id, str) -> None,
@@ -210,7 +210,7 @@ eturns,::
         async with self.registry_lock,
             return list(self.registered_agents.values())
 
-    def register_discovery_callback(self, callback, Callable[[RegisteredAgent] None]) -> None,
+    def register_discovery_callback(self, callback, Callable[[RegisteredAgent] None]) -> None,:
         """
         Register a callback to be notified when new agents are discovered.
 

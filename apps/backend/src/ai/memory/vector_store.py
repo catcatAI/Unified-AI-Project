@@ -3,14 +3,14 @@ Vector Memory Store
 Handles vector storage and retrieval using ChromaDB.
 """
 
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Any, Dict, List, Optional
-import chromadb
+from tests.test_chromadb_fix import
 from chromadb.utils import embedding_functions
 
 logger = logging.getLogger(__name__)
 
-class VectorMemoryStore,
+class VectorMemoryStore,:
     def __init__(self, persist_directory, Optional[str] = None):
         """
         Initializes the VectorMemoryStore.
@@ -25,10 +25,10 @@ class VectorMemoryStore,
                 self.client = chromadb.Client()
             
             # Create or get the collection
-            self.collection = self.client.get_or_create_collection(
+            self.collection = self.client.get_or_create_collection()
                 name="ham_memories",,
     metadata == {"hnsw,space": "cosine"}
-            )
+(            )
             logger.info("VectorMemoryStore initialized successfully.")
         except Exception as e,::
             logger.error(f"Failed to initialize VectorMemoryStore, {e}")
@@ -49,11 +49,11 @@ class VectorMemoryStore,
             return
             
         try,
-            self.collection.add(
+            self.collection.add()
                 documents=[content]
                 metadatas == [metadata] if metadata else [{}]::,
     ds=[memory_id]
-            )
+(            )
             logger.debug(f"Added memory {memory_id} to vector store.")
         except Exception as e,::
             logger.error(f"Error adding memory {memory_id} to vector store, {e}")
@@ -74,10 +74,10 @@ class VectorMemoryStore,
             return {}
             
         try,
-            results = self.collection.query(
+            results = self.collection.query()
                 query_texts=[query],
     n_results=limit
-            )
+(            )
             logger.debug(f"Semantic search returned {len(results.get('ids', []))} results.")
             return results
         except Exception as e,::

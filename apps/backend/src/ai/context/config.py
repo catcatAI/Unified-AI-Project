@@ -1,6 +1,6 @@
 """上下文系统配置"""
 
-import os
+from diagnose_base_agent import
 from typing import Dict, Any
 
 class ContextConfig:
@@ -35,47 +35,47 @@ class ContextConfig:
         
     def get_storage_config(self) -> Dict[str, Any]:
         """获取存储配置"""
-        return {
+        return {}
             "storage_dir": self.storage_dir,
             "memory_max_size": self.memory_max_size,
             "disk_storage_enabled": self.disk_storage_enabled,
             "database_storage_enabled": self.database_storage_enabled
-        }
+{        }
     
     def get_cache_config(self) -> Dict[str, Any]:
         """获取缓存配置"""
-        return {
+        return {}
             "cache_enabled": self.cache_enabled,
             "cache_max_size": self.cache_max_size
-        }
+{        }
     
     def get_performance_config(self) -> Dict[str, Any]:
         """获取性能配置"""
-        return {
+        return {}
             "compression_enabled": self.compression_enabled,
             "async_processing_enabled": self.async_processing_enabled
-        }
+{        }
     
     def get_security_config(self) -> Dict[str, Any]:
         """获取安全配置"""
-        return {
+        return {}
             "encryption_enabled": self.encryption_enabled,
             "access_control_enabled": self.access_control_enabled
-        }
+{        }
     
     def get_logging_config(self) -> Dict[str, Any]:
         """获取日志配置"""
-        return {
+        return {}
             "log_level": self.log_level,
             "audit_logging_enabled": self.audit_logging_enabled
-        }
+{        }
     
     def get_integration_config(self) -> Dict[str, Any]:
         """获取集成配置"""
-        return {
+        return {}
             "ham_integration_enabled": self.ham_integration_enabled,
             "mcp_integration_enabled": self.mcp_integration_enabled
-        }
+{        }
 
 # 全局配置实例
 config = ContextConfig

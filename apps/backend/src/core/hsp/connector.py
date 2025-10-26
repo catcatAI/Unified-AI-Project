@@ -1,31 +1,31 @@
-import os  # Added this import
+from diagnose_base_agent import
 from pathlib import Path
-from ...hsp.types import (  # 从正确的模块导入HSP类型
+from ...hsp.types import
     HSPMessageEnvelope, HSPFactPayload, HSPTaskRequestPayload,
     HSPTaskResultPayload, HSPCapabilityAdvertisementPayload,
     HSPAcknowledgementPayload, HSPQoSParameters, HSPOpinionPayload
-)
-from .versioning import HSPVersionManager, HSPVersionConverter  # 修复版本管理器导入
-from .extensibility import HSPExtensionManager, HSPMessageRegistry  # 修复扩展管理器导入
-from .advanced_performance_optimizer import HSPAdvancedPerformanceOptimizer, HSPAdvancedPerformanceEnhancer  # 添加高级性能优化器导入
-from .security import HSPSecurityManager, HSPSecurityContext  # 修复安全模块导入
-from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhancer
-from .utils.fallback_config_loader import get_config_loader
-from ..shared.network_resilience import RetryPolicy, CircuitBreaker, CircuitBreakerOpenError  # 添加网络弹性组件
-from ..shared.error import HSPConnectionError  # 修复相对导入问题
+()
+from .versioning import
+from .extensibility import
+from .advanced_performance_optimizer import
+from .security import
+from .performance_optimizer import
+from .utils.fallback_config_loader import
+from ..shared.network_resilience import
+from ..shared.error import
 from unittest.mock import MagicMock, AsyncMock  # Added for mock_mode,:
-from .bridge.message_bridge import MessageBridge
-from .bridge.data_aligner import DataAligner
-from .internal.internal_bus import InternalBus
-from .external.external_connector import ExternalConnector
+from .bridge.message_bridge import
+from .bridge.data_aligner import
+from .internal.internal_bus import
+from .external.external_connector import
 from typing_extensions import Literal  # 添加Literal类型导入
 from typing import Callable, Dict, Any, Optional, List  # Added Optional, List
-import asyncio  # 添加asyncio模块导入
+# TODO: Fix import - module 'asyncio' not found
 from datetime import datetime, timezone  # 添加datetime模块导入
-import uuid  # 添加uuid模块导入
-import time  # 添加time模块导入,
-import json  # Added for JSON serialization,::
-import logging  # 添加logging模块导入
+# TODO: Fix import - module 'uuid' not found
+from enhanced_realtime_monitoring import
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
 # 修复导入路径 - 使用正确的模块路径
 
 # 定义logger
@@ -35,7 +35,7 @@ logger, Any = logging.getLogger(__name__)
 CHEMA_BASE_PATH == Path(__file__).resolve().parent.parent.parent / "schemas"
 
 
-def get_schema_uri(schema_name, str) -> str,
+def get_schema_uri(schema_name, str) -> str,:
     """Constructs a file URI for a given schema name."""::
     schema_path == SCHEMA_BASE_PATH / schema_name,
     if not schema_path.is_file():::
@@ -53,9 +53,9 @@ def get_schema_uri(schema_name, str) -> str,
     return schema_path.as_uri()
 
 
-class HSPConnector,
-    def __init__(self, ai_id, str, broker_address, str, broker_port, int, mock_mode, bool == False,,
-    mock_mqtt_client, Optional[MagicMock] = None, internal_bus, Optional[InternalBus] = None, message_bridge, Optional[MessageBridge] = None, enable_fallback, bool == True, **kwargs) -> None,
+class HSPConnector,:
+    def __init__(self, ai_id, str, broker_address, str, broker_port, int, mock_mode, bool == False,,:)
+(    mock_mqtt_client, Optional[MagicMock] = None, internal_bus, Optional[InternalBus] = None, message_bridge, Optional[MessageBridge] = None, enable_fallback, bool == True, **kwargs) -> None,
         self.ai_id = ai_id
         self.mock_mode = mock_mode
         self.broker_address = broker_address
@@ -116,10 +116,10 @@ class HSPConnector,
             self.is_connected == True  # Considered connected in mock mode
             self.hsp_available == True  # Mock mode considers HSP available
         else,
-            self.external_connector == ExternalConnector(
+            self.external_connector == ExternalConnector()
                 ai_id=ai_id,
                 broker_address=broker_address,,
-    broker_port=broker_port)
+(    broker_port=broker_port)
             self.is_connected == False  # Actual connection status
             self.hsp_available == False
 
@@ -131,10 +131,10 @@ class HSPConnector,
         self.data_aligner == DataAligner()  # DataAligner can be unique per connector
 
         if message_bridge is None,::
-            self.message_bridge == MessageBridge(,
+            self.message_bridge == MessageBridge()
     self.external_connector(),
                 self.internal_bus(),
-                self.data_aligner())
+(                self.data_aligner())
         else,
             self.message_bridge = message_bridge
 
@@ -151,10 +151,10 @@ class HSPConnector,
         self._message_retry_counts, Dict[str, int] = {}  # New To track retry counts for messages,:
         self.ack_timeout_sec == 10  # New Default timeout for ACK,:
         self.max_ack_retries == 3  # New Max retries for messages requiring ACK,:
-        self.retry_policy == RetryPolicy(,
+        self.retry_policy == RetryPolicy()
     max_attempts=self.max_ack_retries(),
             backoff_factor=2,
-            max_delay=60)  # Initialize retry policy
+(            max_delay=60)  # Initialize retry policy
         self.circuit_breaker == = CircuitBreaker(failure_threshold ==5, recovery_timeout=300)  # Initialize circuit breaker
         # New Callback to get capabilities,
         self._capability_provider_callback, Optional[Callable[[] List[HSPCapabilityAdvertisementPayload]]] = None
@@ -164,8 +164,8 @@ class HSPConnector,
 
         # Register internal message bridge handler for external messages,:
         # 先应用高级性能增强,再应用基础性能增强
-        enhanced_handler = self.advanced_performance_enhancer.enhance_receive(,
-    self.message_bridge.handle_external_message())
+        enhanced_handler = self.advanced_performance_enhancer.enhance_receive()
+(    self.message_bridge.handle_external_message())
         callback = self.performance_enhancer.enhance_receive(enhanced_handler)
         # 确保callback是正确的类型,
         if callable(callback)::
@@ -176,35 +176,35 @@ class HSPConnector,
 
         # Subscribe to internal bus messages that are results from external
         self.internal_bus.subscribe("hsp.external.fact", self._dispatch_fact_to_callbacks_sync())
-        self.internal_bus.subscribe(
+        self.internal_bus.subscribe()
     "hsp.external.capability_advertisement",,
-    self._dispatch_capability_advertisement_to_callbacks_sync())
+(    self._dispatch_capability_advertisement_to_callbacks_sync())
         self.internal_bus.subscribe("hsp.external.task_request", self._dispatch_task_request_to_callbacks_sync())
         self.internal_bus.subscribe("hsp.external.task_result", self._dispatch_task_result_to_callbacks_sync())
-        self.internal_bus.subscribe("hsp.external.acknowledgement",,
-    self._dispatch_acknowledgement_to_callbacks_sync())  # New subscription
+        self.internal_bus.subscribe("hsp.external.acknowledgement",)
+(    self._dispatch_acknowledgement_to_callbacks_sync())  # New subscription
 
-    def _handle_internal_message(self, message, Any) -> None,
+    def _handle_internal_message(self, message, Any) -> None,:
         """处理内部消息的同步包装器"""
         asyncio.create_task(self.message_bridge.handle_internal_message(message))
 
-    def _dispatch_fact_to_callbacks_sync(self, message, Any) -> None,
+    def _dispatch_fact_to_callbacks_sync(self, message, Any) -> None,:
         """同步包装器用于分发事实消息到回调"""
         asyncio.create_task(self._dispatch_fact_to_callbacks(message))
 
-    def _dispatch_capability_advertisement_to_callbacks_sync(self, message, Any) -> None,
+    def _dispatch_capability_advertisement_to_callbacks_sync(self, message, Any) -> None,:
         """同步包装器用于分发能力广告消息到回调"""
         asyncio.create_task(self._dispatch_capability_advertisement_to_callbacks(message))
 
-    def _dispatch_task_request_to_callbacks_sync(self, message, Any) -> None,
+    def _dispatch_task_request_to_callbacks_sync(self, message, Any) -> None,:
         """同步包装器用于分发任务请求消息到回调"""
         asyncio.create_task(self._dispatch_task_request_to_callbacks(message))
 
-    def _dispatch_task_result_to_callbacks_sync(self, message, Any) -> None,
+    def _dispatch_task_result_to_callbacks_sync(self, message, Any) -> None,:
         """同步包装器用于分发任务结果消息到回调"""
         asyncio.create_task(self._dispatch_task_result_to_callbacks(message))
 
-    def _dispatch_acknowledgement_to_callbacks_sync(self, message, Any) -> None,
+    def _dispatch_acknowledgement_to_callbacks_sync(self, message, Any) -> None,:
         """同步包装器用于分发确认消息到回调"""
         asyncio.create_task(self._dispatch_acknowledgement_to_callbacks(message))
 
@@ -452,7 +452,7 @@ def on_message(self):
         Initializes the individual fallback protocols based on the provided configuration.
         """
         try,
-            from .fallback.fallback_protocols import InMemoryProtocol, FileBasedProtocol, HTTPProtocol
+from .fallback.fallback_protocols import
 
             protocols_config = config.get("protocols", {})
 
@@ -487,10 +487,10 @@ def on_message(self):
             # Initialize and start the fallback manager,
             if self.fallback_manager,::
                 # 修复：确保正确调用initialize和start方法(不是异步方法)
-                if (hasattr(self.fallback_manager(), 'initialize') and,:
+                if (hasattr(self.fallback_manager(), 'initialize') and,:)
                     callable(self.fallback_manager.initialize()) and
                     hasattr(self.fallback_manager(), 'start') and,
-                    callable(self.fallback_manager.start())):
+(                    callable(self.fallback_manager.start())):
 
 
 
@@ -527,16 +527,16 @@ def on_message(self):
             self.logger.error(f"Error initializing protocols with config, {e}")
             return False
 
-    def get_communication_status(self) -> Dict[str, Any]
+    def get_communication_status(self) -> Dict[str, Any]:
         """
         Returns the current communication status.
         """
-        status = {
+        status = {}
             "hsp_available": self.hsp_available(),
             "is_connected": self.is_connected(),
             "fallback_enabled": self.enable_fallback(),
             "fallback_initialized": self.fallback_initialized()
-        }
+{        }
 
         if self.fallback_manager,::
             # 修复：确保正确调用get_status方法(不是异步方法)
@@ -547,11 +547,11 @@ def on_message(self):
 
     async def health_check(self) -> Dict[str, Any]
         """健康检查"""
-        health = {
+        health = {}
             "hsp_healthy": False,
             "fallback_healthy": False,
             "overall_healthy": False
-        }
+{        }
 
         # 检查HSP健康状态
         if self.hsp_available and self.is_connected,::
@@ -619,11 +619,11 @@ def on_message(self):
             ""
         try,
             # Create the HSP message envelope
-            envelope, HSPMessageEnvelope = self._create_envelope(
+            envelope, HSPMessageEnvelope = self._create_envelope()
                 message_type == "HSP,Opinion",,
     payload=dict(opinion_payload),
                 payload_schema_uri=get_schema_uri("HSP_Opinion_v0.1.schema.json")
-            )
+(            )
 
             # Use the standard opinion topic if not provided,::
                 f topic is None,
@@ -660,7 +660,7 @@ def on_message(self):
         topic = f"hsp/knowledge/opinions/#"
         await self.subscribe(topic)
 
-    def get_connector_status(self) -> Dict[str, Any]
+    def get_connector_status(self) -> Dict[str, Any]:
         # Get the connector status
         return self.get_communication_status()
 
@@ -692,12 +692,12 @@ def on_message(self):
             # Check if ACK is required and send it,::
                 os_params = message.get("qos_parameters")
             if qos_params and qos_params.get("requires_ack"):::
-                ack_payload, HSPAcknowledgementPayload = {
+                ack_payload, HSPAcknowledgementPayload = {}
                     "status": "received",
                     "ack_timestamp": datetime.now(timezone.utc()).isoformat(),
                     "target_message_id": message.get("message_id", "")
-                }
-                ack_envelope, HSPMessageEnvelope = {
+{                }
+                ack_envelope, HSPMessageEnvelope = {}
                     "hsp_envelope_version": "0.1",
                     "message_id": str(uuid.uuid4()),
                     "correlation_id": message.get("message_id"),  # Use original message_id as correlation_id
@@ -712,7 +712,7 @@ def on_message(self):
                     "routing_info": None,
                     "payload_schema_uri": get_schema_uri("HSP_Acknowledgement_v0.1.schema.json"),
                     "payload": dict(ack_payload)
-                }
+{                }
                 # Publish ACK to the sender's ACK topic with correct prefix and QoS 1,
                     ck_topic = f"hsp/acks/{sender_ai_id}"
                 await self.publish_message(ack_topic, ack_envelope, qos=1)
@@ -769,24 +769,24 @@ def on_message(self):
                 opinion_message, The opinion message to handle.
         """
         # Dispatch the opinion message to callbacks (treated as facts for now)::
- = await self._dispatch_fact_to_callbacks(opinion_message)
+= await self._dispatch_fact_to_callbacks(opinion_message)
 
-    def _create_envelope(
+    def _create_envelope(:)
         self,
         message_type, str,
         payload, Dict[str, Any]
         payload_schema_uri, Optional[str] = None,
         recipient_ai_id, str = "all",
-        communication_pattern, Literal[
+        communication_pattern, Literal[]
             "publish", "request", "response",
             "stream_data", "stream_ack",
             "acknowledgement", "negative_acknowledgement",
             "broadcast", "multicast", "unicast",
             "notification", "event", "command",
             "query", "reply"
-        ] = "publish",,
+[        ] = "publish",,
     qos_parameters, Optional[HSPQoSParameters] = None
-    ) -> HSPMessageEnvelope,
+(    ) -> HSPMessageEnvelope,
         """
         Creates an HSP message envelope with standard fields.:
             rgs,
@@ -800,7 +800,7 @@ def on_message(self):
         Returns,
             HSPMessageEnvelope, The created envelope.
         """
-        envelope, HSPMessageEnvelope = {
+        envelope, HSPMessageEnvelope = {}
             "hsp_envelope_version": "0.1",
             "message_id": str(uuid.uuid4()),
             "correlation_id": None,
@@ -815,7 +815,7 @@ def on_message(self):
             "routing_info": None,
             "payload_schema_uri": payload_schema_uri,
             "payload": payload
-        }
+{        }
 
         # 应用安全处理
         try,
@@ -859,11 +859,11 @@ def on_message(self):
         # 性能优化：批量发送
         if self.batch_send_enabled and not requires_ack,::
             # 将消息添加到批处理队列
-            self.message_batch.append({
+            self.message_batch.append({)}
                 'topic': topic,
                 'envelope': envelope,
                 'qos': qos
-            })
+{(            })
             # 尝试批量发送
             await self._batch_send_messages()
             # 缓存结果
@@ -878,7 +878,7 @@ def on_message(self):
         # This ensures that external_connector.publish attempts are resilient
         try,
             # The decorated function will handle retries and circuit breaking for the direct publish,::
- = await self.circuit_breaker(self.retry_policy(self._raw_publish_message()))(topic, envelope, qos)
+= await self.circuit_breaker(self.retry_policy(self._raw_publish_message()))(topic, envelope, qos)
             self.logger.debug(f"Message {correlation_id} published via HSP (decorated).")
 
             if requires_ack,::
@@ -914,7 +914,7 @@ def on_message(self):
                         self._message_retry_counts[correlation_id] = retry_count + 1
                         self.logger.info(f"Retrying message {correlation_id} (attempt {retry_count + 1}/{self.max_ack_retries}) after ACK timeout.")
                         # Exponential backoff before retry,
- = await asyncio.sleep(2 ** retry_count)
+= await asyncio.sleep(2 ** retry_count)
                         return await self.publish_message(topic, envelope, qos)
                     else,
                         self.logger.error(f"Max retries exceeded for message {correlation_id} after ACK timeout.")::
@@ -936,7 +936,7 @@ def on_message(self):
                 self._message_retry_counts[correlation_id] = retry_count + 1
                 self.logger.info(f"Retrying message {correlation_id} (attempt {retry_count + 1}/{self.max_ack_retries}) after error.")
                 # Exponential backoff before retry,
- = await asyncio.sleep(2 ** retry_count)
+= await asyncio.sleep(2 ** retry_count)
                 return await self.publish_message(topic, envelope, qos)
             else,
                 self.logger.error(f"Max retries exceeded for message {correlation_id} after error.")::
@@ -955,11 +955,11 @@ def on_message(self):
             ""
         try,
             # Create the HSP message envelope
-            envelope, HSPMessageEnvelope = self._create_envelope(
+            envelope, HSPMessageEnvelope = self._create_envelope()
                 message_type == "HSP,Fact",,
     payload=dict(fact_payload),
                 payload_schema_uri=get_schema_uri("HSP_Fact_v0.1.schema.json")
-            )
+(            )
 
             # Use the standard fact topic if not provided,::
                 f topic is None,
@@ -981,7 +981,7 @@ def on_message(self):
 
     async def send_task_request(self, payload, HSPTaskRequestPayload, target_ai_id_or_topic, str, qos, int == 1) -> Optional[str]
         correlation_id = str(uuid.uuid4())
-        envelope, HSPMessageEnvelope = {
+        envelope, HSPMessageEnvelope = {}
             "hsp_envelope_version": "0.1",
             "message_id": str(uuid.uuid4()),
             "correlation_id": correlation_id,
@@ -996,7 +996,7 @@ def on_message(self):
             "routing_info": None,
             "payload_schema_uri": get_schema_uri("HSP_TaskRequest_v0.1.schema.json"),
             "payload": dict(payload)
-        }
+{        }
         # The topic for task requests is usually hsp/requests/{recipient_ai_id}:
         # If target_ai_id_or_topic is a topic, use it directly.
         # Otherwise, construct the topic.:
@@ -1004,7 +1004,7 @@ def on_message(self):
             uccess = await self.publish_message(mqtt_topic, envelope, qos)
         return correlation_id if success else None,::
             sync def send_task_result(self, payload, HSPTaskResultPayload, target_ai_id_or_topic, str, correlation_id, str, qos, int == 1) -> bool,
-        envelope, HSPMessageEnvelope = {
+        envelope, HSPMessageEnvelope = {}
             "hsp_envelope_version": "0.1",
             "message_id": str(uuid.uuid4()),
             "correlation_id": correlation_id,
@@ -1019,13 +1019,13 @@ def on_message(self):
             "routing_info": None,
             "payload_schema_uri": get_schema_uri("HSP_TaskResult_v0.1.schema.json"),
             "payload": dict(payload)
-        }
+{        }
         mqtt_topic == target_ai_id_or_topic if "/" in target_ai_id_or_topic else f"hsp/results/{target_ai_id_or_topic}":::
             return await self.publish_message(mqtt_topic, envelope, qos)
 
     async def publish_capability_advertisement(self, cap_payload, HSPCapabilityAdvertisementPayload, qos, int == 1):
         topic == f"hsp/capabilities/advertisements/{self.ai_id}" # Specific topic for this AI's capabilities,::
-            nvelope, HSPMessageEnvelope = {
+            nvelope, HSPMessageEnvelope = {}
             "hsp_envelope_version": "0.1",
             "message_id": str(uuid.uuid4()),
             "correlation_id": None,
@@ -1040,20 +1040,20 @@ def on_message(self):
             "routing_info": None,
             "payload_schema_uri": get_schema_uri("HSP_CapabilityAdvertisement_v0.1.schema.json"),
             "payload": dict(cap_payload)
-        }
+{        }
         # Also echo to internal bus for in-process consumers/tests,::
- = await self.internal_bus.publish_async("hsp.external.capability_advertisement", envelope)
+= await self.internal_bus.publish_async("hsp.external.capability_advertisement", envelope)
         return await self.publish_message(topic, envelope, qos)
 
     # 性能优化：消息缓存机制
     def _cache_message(self, message_id, str, message, Any):
         """缓存消息以提高性能"""
-        self.message_cache[message_id] = {
+        self.message_cache[message_id] = {}
             'message': message,
             'timestamp': time.time()
-        }
+{        }
 
-    def _get_cached_message(self, message_id, str) -> Optional[Any]
+    def _get_cached_message(self, message_id, str) -> Optional[Any]:
         """从缓存中获取消息"""
         if message_id in self.message_cache,::
             cached = self.message_cache[message_id]
@@ -1068,7 +1068,7 @@ def on_message(self):
     def _clean_expired_cache(self):
         """清理过期缓存"""
         current_time = time.time()
-        expired_keys = [
+        expired_keys = []
             key for key, value in self.message_cache.items():::
                 f current_time - value['timestamp'] >= self.cache_ttl,
 
@@ -1083,17 +1083,17 @@ def on_message(self):
 
         # 检查是否应该发送批量消息
         current_time = time.time()
-        if (len(self.message_batch()) >= self.batch_size or,::
-            urrent_time - self.last_batch_send >= 1.0())  # 每秒至少发送一次
+        if (len(self.message_batch()) >= self.batch_size or,::)
+(            urrent_time - self.last_batch_send >= 1.0())  # 每秒至少发送一次
 
             # 发送批量消息
             for message_data in self.message_batch,::
                 try,
-                    await self._raw_publish_message(
+                    await self._raw_publish_message()
                         message_data['topic']
                         message_data['envelope'],
     message_data['qos']
-                    )
+(                    )
                 except Exception as e,::
                     self.logger.error(f"批量发送消息失败, {e}")
 
@@ -1105,3 +1105,4 @@ def on_message(self):
         """通过回退协议发送消息"""
         # 这里应该实现通过回退协议发送消息的逻辑
         return False
+]

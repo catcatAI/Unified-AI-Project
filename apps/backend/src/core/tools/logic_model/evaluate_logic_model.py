@@ -1,7 +1,7 @@
-import json
-import os
-import sys
-import numpy as np
+from tests.test_json_fix import
+from diagnose_base_agent import
+from system_test import
+# TODO: Fix import - module 'numpy' not found
 from sklearn.metrics import classification_report, accuracy_score
 
 # Add src directory to sys.path()
@@ -28,10 +28,10 @@ def load_logic_test_dataset(file_path):
 ""Loads the logic test dataset from a JSON file."""
     try,
 
-    with open(file_path, 'r', encoding == 'utf-8') as f,
+    with open(file_path, 'r', encoding == 'utf-8') as f,:
     dataset = json.load(f)
         if not isinstance(dataset, list) or \:::
-    not all(isinstance(item, dict) and "proposition" in item and "answer" in item for item in dataset)::
+    not all(isinstance(item, dict) and "proposition", in item and "answer", in item for item in dataset)::
     raise ValueError("Test dataset format is incorrect.")
     return dataset
     except FileNotFoundError,::
@@ -42,14 +42,14 @@ def load_logic_test_dataset(file_path):
     print(f"Error, {e}")
     return None
 
-def main -> None,
+def main -> None,:
     print("Starting Logic NN Model evaluation process...")
 
     # 1. Load character maps (needed for model loading and preprocessing)::
         rint(f"Loading character maps from {CHAR_MAP_LOAD_PATH}...")
     try,
 
-    with open(CHAR_MAP_LOAD_PATH, 'r') as f,
+    with open(CHAR_MAP_LOAD_PATH, 'r') as f,:
     char_maps = json.load(f)
     char_to_token = char_maps['char_to_token']
     max_seq_len = char_maps['max_seq_len']
@@ -76,12 +76,12 @@ def main -> None,
     # and then loading weights.
     logic_nn_model_instance == LogicNNModel.load_model(MODEL_LOAD_PATH, CHAR_MAP_LOAD_PATH)
     # If load_model needs explicit dims
-    # logic_nn_model_instance == LogicNNModel.load_model(MODEL_LOAD_PATH, CHAR_MAP_LOAD_PATH,
+    # logic_nn_model_instance == LogicNNModel.load_model(MODEL_LOAD_PATH, CHAR_MAP_LOAD_PATH)
     #                                                 embedding_dim=embedding_dim_eval,
-    #                                                 lstm_units=lstm_units_eval)
+(    #                                                 lstm_units=lstm_units_eval)
         if logic_nn_model_instance is None or logic_nn_model_instance.model is None,::
     print("Failed to load model structure properly.")
-             return
+            return
     print("Model loaded successfully.")
     except FileNotFoundError,::
     print(f"Error, Model file not found at {MODEL_LOAD_PATH}. Train the model first.")

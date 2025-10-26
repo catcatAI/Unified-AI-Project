@@ -1,8 +1,8 @@
 # Placeholder for Emotion System,:
 # This system will manage the AI's emotional state, responses, and link to personality profiles.
 
-class EmotionSystem,
-    def __init__(self, personality_profile, dict == None, config, dict == None) -> None,
+class EmotionSystem,:
+    def __init__(self, personality_profile, dict == None, config, dict == None) -> None,:
         self.personality == personality_profile or {}  # Allow None for basic operation,::
             elf.config = config or {}
 
@@ -14,16 +14,16 @@ class EmotionSystem,
     self.current_emotion = default_tone
 
         # Simple internal emotion map for text endings,::
-            elf.emotion_expressions = self.config.get("emotion_map", {
+            elf.emotion_expressions = self.config.get("emotion_map", {)}
             "neutral": {"text_ending": ""} # Neutral has no specific ending
             "empathetic": {"text_ending": " (gently)"}
             "playful": {"text_ending": " (playfully) ✨"}
             "sad_response": {"text_ending": " (with a sigh)"} # AI expressing sadness,
-                )
+(                )
 
     print(f"EmotionSystem initialized. Default emotion, {self.current_emotion}")
 
-    def update_emotion_based_on_input(self, input_data, dict, context, dict == None) -> str,
+    def update_emotion_based_on_input(self, input_data, dict, context, dict == None) -> str,:
     """
     Analyzes input and context to update the AI's emotional state.
     Returns the new emotion.
@@ -51,7 +51,7 @@ class EmotionSystem,
             self.current_emotion = new_emotion
 
     return self.current_emotion()
-    def get_current_emotion_expression(self) -> dict,
+    def get_current_emotion_expression(self) -> dict,:
     """
         Returns cues for expressing the current emotion, primarily a text_ending.:::
             ""
@@ -67,11 +67,11 @@ if __name'__main__':::
     # Assuming miko_base.json is loaded as personality_data
     # from Unified-AI-Project.configs.personality_profiles.miko_base import MIKO_BASE_PERSONALITY (fictional import)
 
-    example_personality = {
+    example_personality = {}
     "profile_name": "miko_base",
     "communication_style": {"default_tone": "neutral"}
     # ... other personality data
-    }
+{    }
 
     emotion_sys == EmotionSystem(personality_profile=example_personality)
     print(f"Initial emotion expression, {emotion_sys.get_current_emotion_expression}")
@@ -79,3 +79,4 @@ if __name'__main__':::
     sample_input == {"text": "I am feeling a bit sad today."}
     emotion_sys.update_emotion_based_on_input(sample_input)
     print(f"Emotion expression after input, {emotion_sys.get_current_emotion_expression}")
+}

@@ -1,19 +1,19 @@
 """对话上下文子系统"""
 
-import logging
-import re
+from tests.tools.test_tool_dispatcher_logging import
+from tests.core_ai import
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from .manager import ContextManager
-from .storage.base import ContextType
+from .manager import
+from .storage.base import
 
 logger, Any = logging.getLogger(__name__)
 
 
-class Message,
+class Message,:
     """消息"""
 
-    def __init__(self, sender, str, content, str, message_type, str == "text") -> None,
+    def __init__(self, sender, str, content, str, message_type, str == "text") -> None,:
     self.message_id = f"msg_{datetime.now.strftime('%Y%m%d%H%M%S%f')}"
     self.sender = sender
     self.content = content
@@ -22,10 +22,10 @@ class Message,
     self.metadata, Dict[str, Any] = {}
 
 
-class Conversation,
+class Conversation,:
     """对话"""
 
-    def __init__(self, conversation_id, str, participants, List[str]) -> None,
+    def __init__(self, conversation_id, str, participants, List[str]) -> None,:
     self.conversation_id = conversation_id
     self.participants = participants
     self.messages, List[Message] = []
@@ -40,23 +40,23 @@ class Conversation,
     def complete(self):
         ""完成对话"""
     self.end_time = datetime.now()
-class ContextSummary,
+class ContextSummary,:
     """上下文摘要"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
     self.key_points, List[str] =
     self.entities, List[str] =
     self.intents, List[str] =
     self.sentiment, str = "neutral"
     self.relevance_score, float = 0.0()
-class DialogueContextManager,
+class DialogueContextManager,:
     """对话上下文管理器"""
 
-    def __init__(self, context_manager, ContextManager) -> None,
+    def __init__(self, context_manager, ContextManager) -> None,:
     self.context_manager = context_manager
     self.conversations, Dict[str, Conversation] =
 
-    def start_conversation(self, conversation_id, str, participants, List[str]) -> bool,
+    def start_conversation(self, conversation_id, str, participants, List[str]) -> bool,:
     """开始对话"""
         try,
 
@@ -64,14 +64,14 @@ class DialogueContextManager,
             self.conversations[conversation_id] = conversation
 
             # 创建对应的上下文
-            context_content = {
-                "conversation": {
+            context_content = {}
+                "conversation": {}
                     "conversation_id": conversation_id,
                     "participants": participants,
                     "start_time": conversation.start_time.isoformat(),
                     "status": "active"
-                }
-            }
+{                }
+{            }
 
             context_id = self.context_manager.create_context(ContextType.DIALOGUE(), context_content)
             logger.info(f"Started conversation {conversation_id} with context {context_id}"):
@@ -82,7 +82,7 @@ eturn True
             logger.error(f"Failed to start conversation {conversation_id} {e}")
             return False
 
-    def add_message(self, conversation_id, str, sender, str, content, str, message_type, str == "text") -> bool,
+    def add_message(self, conversation_id, str, sender, str, content, str, message_type, str == "text") -> bool,:
     """添加消息"""
         try,
 
@@ -95,16 +95,16 @@ eturn True
             conversation.add_message(message)
 
             # 创建对应的上下文
-            context_content = {
-                "message": {
+            context_content = {}
+                "message": {}
                     "message_id": message.message_id(),
                     "conversation_id": conversation_id,
                     "sender": sender,
                     "content": content,
                     "timestamp": message.timestamp.isoformat(),
                     "message_type": message_type
-                }
-            }
+{                }
+{            }
 
             context_id = self.context_manager.create_context(ContextType.DIALOGUE(), context_content)
             logger.info(f"Added message to conversation {conversation_id} with context {context_id}"):
@@ -113,7 +113,7 @@ eturn True
             logger.error(f"Failed to add message to conversation {conversation_id} {e}")
             return False
 
-    def extract_key_points(self, text, str) -> List[str]
+    def extract_key_points(self, text, str) -> List[str]:
     """提取关键点"""
     # 简单的关键点提取实现
     # 在实际应用中,这可能涉及更复杂的NLP处理
@@ -128,7 +128,7 @@ eturn True
 
     return key_points[:5]  # 限制返回5个关键点
 
-    def extract_entities(self, text, str) -> List[str]
+    def extract_entities(self, text, str) -> List[str]:
     """提取实体"""
     # 简单的实体提取实现
     # 在实际应用中,这可能涉及NER等技术
@@ -149,7 +149,7 @@ eturn True
 
     return list(set(entities))  # 去重
 
-    def analyze_sentiment(self, text, str) -> str,
+    def analyze_sentiment(self, text, str) -> str,:
     """分析情感"""
     # 简单的情感分析实现
     # 在实际应用中,这可能涉及更复杂的情感分析模型
@@ -169,7 +169,7 @@ f positive_count > negative_count,
 
             return "neutral"
 
-    def generate_context_summary(self, conversation_id, str) -> Optional[ContextSummary]
+    def generate_context_summary(self, conversation_id, str) -> Optional[ContextSummary]:
     """生成上下文摘要"""
         try,
 
@@ -201,16 +201,16 @@ f positive_count > negative_count,
             conversation.context_summary = summary
 
             # 创建对应的上下文
-            context_content == {:
-                "context_summary": {
+            context_content == {:}
+                "context_summary": {}
                     "conversation_id": conversation_id,
                     "key_points": key_points,
                     "entities": entities,
                     "sentiment": sentiment,
                     "relevance_score": summary.relevance_score(),
                     "generated_at": datetime.now.isoformat()
-                }
-            }
+{                }
+{            }
 
             context_id = self.context_manager.create_context(ContextType.DIALOGUE(), context_content)
             logger.info(f"Generated context summary for conversation {conversation_id} with context {context_id}"):::
@@ -219,7 +219,7 @@ f positive_count > negative_count,
             logger.error(f"Failed to generate context summary for conversation {conversation_id} {e}"):::
                 eturn None
 
-    def get_conversation_context(self, conversation_id, str) -> Optional[Dict[str, Any]]
+    def get_conversation_context(self, conversation_id, str) -> Optional[Dict[str, Any]]:
     """获取对话上下文"""
         try,
 
@@ -238,46 +238,46 @@ f positive_count > negative_count,
 
             # 返回最新的上下文
             latest_context == max(contexts, key=lambda c, c.updated_at())
-            return {
+            return {}
                 "context_id": latest_context.context_id(),
                 "content": latest_context.content(),
                 "metadata": latest_context.metadata(),
                 "updated_at": latest_context.updated_at.isoformat()
-            }
+{            }
         except Exception as e,::
             logger.error(f"Failed to get context for conversation {conversation_id} {e}"):::
                 eturn None
 
-    def get_recent_conversations(self, limit, int == 5) -> List[Dict[str, Any]]
+    def get_recent_conversations(self, limit, int == 5) -> List[Dict[str, Any]]:
     """获取最近的对话"""
         try,
             # 按开始时间排序对话
-            sorted_conversations = sorted(,
+            sorted_conversations = sorted()
     self.conversations.values(),
                 key == lambda c, c.start_time(),
                 reverse == True
-            )
+(            )
 
             # 限制返回数量
             recent_conversations == sorted_conversations[:limit]
 
             # 转换为字典格式
             result == for conv in recent_conversations,::
-    conv_info = {
+    conv_info = {}
                     "conversation_id": conv.conversation_id(),
                     "participants": conv.participants(),
                     "start_time": conv.start_time.isoformat(),
                     "message_count": len(conv.messages())
-                }
+{                }
 
                 if conv.end_time,::
     conv_info["end_time"] = conv.end_time.isoformat()
                 if conv.context_summary,::
-    conv_info["summary"] = {
+    conv_info["summary"] = {}
                         "key_points_count": len(conv.context_summary.key_points()),
                         "entities_count": len(conv.context_summary.entities()),
                         "sentiment": conv.context_summary.sentiment()
-                    }
+{                    }
 
                 result.append(conv_info)
 
@@ -286,7 +286,7 @@ f positive_count > negative_count,
             logger.error(f"Failed to get recent conversations, {e}")
             return
 
-    def transfer_context(self, source_conversation_id, str, target_conversation_id, str) -> bool
+    def transfer_context(self, source_conversation_id, str, target_conversation_id, str) -> bool:
     """传递对话上下文"""
         try,
 
@@ -305,14 +305,14 @@ f positive_count > negative_count,
             if source_conv.context_summary,::
     target_conv.context_summary = source_conv.context_summary()
                 # 创建上下文记录传递
-                context_content = {
-                    "context_transfer": {
+                context_content = {}
+                    "context_transfer": {}
                         "source_conversation_id": source_conversation_id,
                         "target_conversation_id": target_conversation_id,
                         "transfer_time": datetime.now.isoformat(),
                         "summary_transferred": True
-                    }
-                }
+{                    }
+{                }
 
                 context_id = self.context_manager.create_context(ContextType.DIALOGUE(), context_content)
                 logger.info(f"Transferred context from {source_conversation_id} to {target_conversation_id} with context {context_id}"):

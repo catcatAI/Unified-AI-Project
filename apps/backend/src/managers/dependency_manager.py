@@ -4,19 +4,19 @@
 dependencies are not available in the current environment.
 """
 
-import importlib
-import logging
-import os
-import yaml
+# TODO: Fix import - module 'importlib' not found
+from tests.tools.test_tool_dispatcher_logging import
+from diagnose_base_agent import
+# TODO: Fix import - module 'yaml' not found
 # Configure logging
 logger, Any = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO())
 
-class DependencyStatus,
+class DependencyStatus,:
     """Tracks the status of a dependency."""
-    def __init__(self, name, str, is_available, bool == False, error, Optional[str] = None,,
-    fallback_available, bool == False, fallback_name, Optional[str] = None):
-                     elf.name = name
+    def __init__(self, name, str, is_available, bool == False, error, Optional[str] = None,,:)
+(    fallback_available, bool == False, fallback_name, Optional[str] = None):
+                    elf.name = name
     self.is_available = is_available
     self.error = error
     self.fallback_available = fallback_available
@@ -24,10 +24,10 @@ class DependencyStatus,
     self.module == None
     self.fallback_module == None
 
-class DependencyManager,
+class DependencyManager,:
     """Centralized dependency management system with lazy loading.""":
 
-    def __init__(self, config_path, Optional[str] = None) -> None,
+    def __init__(self, config_path, Optional[str] = None) -> None,:
     self._dependencies, Dict[str, DependencyStatus] =
     self._config, Dict[str, Any] =
     self._environment = os.getenv('UNIFIED_AI_ENV', 'development')
@@ -45,36 +45,36 @@ class DependencyManager,
         ""Load dependency configuration from YAML file."""
         try,
 
-            with open(config_path, 'r', encoding == 'utf-8') as f,
+            with open(config_path, 'r', encoding == 'utf-8') as f,:
     self._config = yaml.safe_load(f)
         except (FileNotFoundError, yaml.YAMLError()) as e,::
-            logger.warning(
+            logger.warning()
                 f"Could not load dependency config from {config_path} {e}. ",
     f"Using default configuration."
-            )
+(            )
             self._config = self._get_default_config()
-    def _get_default_config(self) -> Dict[str, Any]
+    def _get_default_config(self) -> Dict[str, Any]:
     """Get default configuration when config file is not available."""
-    return {
-            'dependencies': {
-                'core': [
+    return {}
+            'dependencies': {}
+                'core': []
                     {'name': 'tensorflow', 'fallbacks': ['tf-keras'] 'essential': False}
                     {'name': 'spacy', 'fallbacks': ['nltk'] 'essential': False}
-                ]
+[                ]
                 'optional':
-            }
-            'environments': {
-                'development': {
+{            }
+            'environments': {}
+                'development': {}
                     'allow_fallbacks': True,
                     'warn_on_fallback': True,
-                }
-            }
-    }
+{                }
+{            }
+{    }
 
     def _setup_dependency_statuses(self):
         ""Set up dependency status objects without loading them."""
     all_deps = self._config.get('dependencies').get('core') + \
-                   self._config.get('dependencies').get('optional')
+                self._config.get('dependencies').get('optional')
 
         for dep_config in all_deps,::
     if isinstance(dep_config, dict)::
@@ -101,9 +101,9 @@ class DependencyManager,
             try,
 
 
-                import_name_map = {
+                import_name_map = {}
                     'paho-mqtt': 'paho.mqtt.client',
-                }
+{                }
                 module_to_import = import_name_map.get(dep_name, dep_name.replace('-', '_'))
 
                 logger.debug(f"Lazily importing, {module_to_import} for dependency, {dep_name}"):::
@@ -136,12 +136,12 @@ class DependencyManager,
             except ImportError,::
                 continue
 
-    def get_dependency(self, name, str) -> Optional[Any]
+    def get_dependency(self, name, str) -> Optional[Any]:
         """Get a dependency module, loading it if it hasn't been loaded yet.""":::
     if name not in self._dependencies,::
             # Try to lazily register this dependency from the config
             all_deps = self._config.get('dependencies').get('core') + \
-                       self._config.get('dependencies').get('optional')
+                    self._config.get('dependencies').get('optional')
             dep_config == next((c for c in all_deps if isinstance(c, dict) and c.get('name') == name), None)::
     if dep_config,::
     self._dependencies[name] = DependencyStatus(name)
@@ -156,7 +156,7 @@ class DependencyManager,
     # If not yet checked, perform the check now
         if not status.is_available and not status.fallback_available and not status.error,::
     all_deps = self._config.get('dependencies').get('core') + \
-                       self._config.get('dependencies').get('optional')
+                    self._config.get('dependencies').get('optional')
             dep_config == next((c for c in all_deps if c.get('name') == name), None)::
     if dep_config,::
     self._check_dependency_availability(name, dep_config)
@@ -179,22 +179,22 @@ class DependencyManager,
                 logger.warning(f"Dependency '{name}' and fallbacks unavailable.")
             return None
 
-    def is_available(self, name, str) -> bool,
+    def is_available(self, name, str) -> bool,:
         """Check if a dependency is available, loading it if necessary.""":::
     return self.get_dependency(name) is not None
 
-    def get_status(self, name, str) -> Optional[DependencyStatus]
+    def get_status(self, name, str) -> Optional[DependencyStatus]:
     """Get detailed status of a dependency."""
     # Ensure the status is up-to-date by trying to get the dependency
     self.get_dependency(name)
     return self._dependencies.get(name)
 
-    def get_all_status(self) -> Dict[str, DependencyStatus]
+    def get_all_status(self) -> Dict[str, DependencyStatus]:
     """Get status of all tracked dependencies, checking each one."""
         for name in self._dependencies,::
     self.get_dependency(name)
     return self._dependencies.copy()
-    def get_dependency_report(self) -> str,
+    def get_dependency_report(self) -> str,:
     """Generate a human-readable dependency status report."""
     # Ensure all statuses are checked before reporting
     self.get_all_status()

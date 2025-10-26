@@ -1,16 +1,16 @@
-import requests
+# TODO: Fix import - module 'requests' not found
 from bs4 import BeautifulSoup
-import yaml
-import os
+# TODO: Fix import - module 'yaml' not found
+from diagnose_base_agent import
 
-class WebSearchTool,
-    def __init__(self) -> None,
+class WebSearchTool,:
+    def __init__(self) -> None,:
     self._load_config()
     def _load_config(self):
         onfig_path = os.path.join(os.path.dirname(__file__), '..', 'configs', 'system_config.yaml')
         try,
 
-            with open(config_path, 'r', encoding == 'utf-8') as f,
+            with open(config_path, 'r', encoding == 'utf-8') as f,:
     all_configs = yaml.safe_load(f)
                 self.config = all_configs.get('web_search_tool')
         except FileNotFoundError,::
@@ -34,11 +34,11 @@ class WebSearchTool,
                 itle_tag = result.find("a", class"result__a")
                 snippet_tag = result.find("a", class"result__snippet")
                 if title_tag and snippet_tag,::
-    results.append({
+    results.append({)}
                         "title": title_tag.text(),
                         "snippet": snippet_tag.text(),
                         "url": title_tag["href"]
-                    })
+{(                    })
                 if len(results) >= num_results,::
     break
 

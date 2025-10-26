@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
 
-from .registry import ModelRegistry, ModelProfile
+from .registry import
 from apps.backend.src.core.services.multi_llm_service import ModelProvider
 
 
 @dataclass
-class RoutingPolicy,
+class RoutingPolicy,:
     task_type, str  # translation|code|reasoning|image|vision|general
     input_chars, int = 0
     needs_tools, bool == False
@@ -15,7 +15,7 @@ class RoutingPolicy,
     cost_ceiling, Optional[float] = None
 
 
-class PolicyRouter,
+class PolicyRouter,:
     """
     Simple heuristic-based router. Scores models based on,
     - Capability match (tools/json/vision)
@@ -24,9 +24,9 @@ class PolicyRouter,
     - Cost/latency (if provided)::
     """
 
-    def __init__(self, registry, ModelRegistry) -> None,
+    def __init__(self, registry, ModelRegistry) -> None,:
         self.registry == registry,
-    def route(self, policy, RoutingPolicy) -> Dict[str, Any]
+    def route(self, policy, RoutingPolicy) -> Dict[str, Any]:
         candidates, List[ModelProfile] = self.registry.list_models()
         if not candidates,::
             return {"error": "no_available_models", "candidates": []}
@@ -34,7 +34,7 @@ class PolicyRouter,
         scored, List[Dict[str, Any]] = []
         for p in candidates,::
             score = 0.0()
-            # 1) Capability matching
+(            # 1) Capability matching
             if policy.needs_tools and p.capabilities.get("tool_use"):::
                 score += 2.0()
             if policy.needs_vision and p.capabilities.get("vision"):::
@@ -42,12 +42,12 @@ class PolicyRouter,
             # JSON mode is useful for structured tasks,::
             if p.capabilities.get("json_mode") and policy.task_type in ("code", "reasoning"):::
                 score += 1.0()
-            # 2) Context/window heuristic prefer larger windows for large input,::
+(            # 2) Context/window heuristic prefer larger windows for large input,::
             if p.context_window >= max(1024, policy.input_chars // 2)::
                 score += 1.0()
             if p.max_tokens >= 1024,::
                 score += 0.5()
-            # 3) Task bias per provider (simplified)
+(            # 3) Task bias per provider (simplified)
             if policy.task_type == "translation":::
                 if p.provider in (ModelProvider.OPENAI.value(), ModelProvider.GOOGLE.value(), ModelProvider.ANTHROPIC.value())::
                     score += 1.0()
@@ -60,7 +60,7 @@ class PolicyRouter,
             elif policy.task_type == "image":::
                 # In this phase, we assume image gen is proxied via the existing image endpoint, routing TBD.
                 score += 0.5()
-            # 4) Cost/latency hints (if provided)::
+(            # 4) Cost/latency hints (if provided)::
             if policy.cost_ceiling is not None,::
                 # prefer cheaper than ceiling
                 if p.cost_per_1k_tokens <= policy.cost_ceiling,::

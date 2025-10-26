@@ -4,8 +4,8 @@ Unified AI Project - System Integration Module
 Integrates all major components of the system for end-to-end functionality.::
 """
 
-import logging
-import sys
+from tests.tools.test_tool_dispatcher_logging import
+from system_test import
 from pathlib import Path
 from typing import Dict, Any
 
@@ -42,14 +42,14 @@ class UnifiedAISystem,:
             return {:}
                 "status": "success",
                 "message": "Request processed successfully"
-            }
+{            }
                 
         except Exception as e,::
             logger.error(f"Error processing request, {e}")
             return {}
                 "status": "error",
                 "message": f"Error processing request, {str(e)}"
-            }
+{            }
 
 # Example usage
 if __name"__main__":::
@@ -64,7 +64,7 @@ if __name"__main__":::
             "type": "dialogue",
             "message": "Hello, how can you help me today?",
             "context": {}
-        }
+{        }
         
         result = unified_ai.process_request("test_user", example_request)
         print(f"Request result, {result}")

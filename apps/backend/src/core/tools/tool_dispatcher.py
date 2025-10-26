@@ -1,20 +1,20 @@
-import re
-import logging
-import importlib
-import json
-import time
-import hashlib
+from tests.core_ai import
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'importlib' not found
+from tests.test_json_fix import
+from enhanced_realtime_monitoring import
+# TODO: Fix import - module 'hashlib' not found
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, Callable, List
 
 # Assuming 'src' is in PYTHONPATH, making 'tools', 'core_ai', 'services' top-level packages
 # Correcting imports to be absolute from project root (assuming /app is project root)
-from .math_tool import calculate as math_calculate
-from .logic_tool import evaluate_expression as logic_evaluate
-from .translation_tool import translate as translate_text
-from .code_understanding_tool import CodeUnderstandingTool
-from .csv_tool import CsvTool
-from .image_generation_tool import ImageGenerationTool
+from .math_tool import
+from .logic_tool import
+from .translation_tool import
+from .code_understanding_tool import
+from .csv_tool import
+from .image_generation_tool import
 from ai.language_models.daily_language_model import DailyLanguageModel
 from apps.backend.src.core.services.multi_llm_service import MultiLLMService
 from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse  # Import new response type
@@ -31,16 +31,16 @@ f '_RAG_AVAILABLE_FLAG' not in globals,
     RAGManager == None
 
 
-class ToolDispatcher,
+class ToolDispatcher,:
     def _get_ham(self):
 ry,
 
-    from ...core_services import ham_manager_instance
+from ...core_services import
             return ham_manager_instance
         except Exception,::
             return None
 
-    def _safe_params_hash(self, params, Dict[str, Any]) -> str,
+    def _safe_params_hash(self, params, Dict[str, Any]) -> str,:
         try,
 
             s = json.dumps(params or, sort_keys == True, ensure_ascii == False, default=str)
@@ -48,19 +48,19 @@ ry,
         except Exception,::
             return ""
 
-    def _log_action_policy(self, record, Dict[str, Any]) -> None,
+    def _log_action_policy(self, record, Dict[str, Any]) -> None,:
         try,
 
             ham = self._get_ham()
             if not ham,::
     return
             raw_data = json.dumps(record, ensure_ascii == False, default=str)
-            metadata = {
+            metadata = {}
                 "ham_meta_action_policy": True,
                 "ham_meta_tool_name": record.get("tool_name"),
                 "ham_meta_success": record.get("success"),
                 "ham_meta_timestamp": record.get("timestamp"),
-            }
+{            }
             # Use a distinct data_type for action policy events,::
                 f hasattr(ham, 'store_experience'):
 am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[attr-defined]
@@ -79,26 +79,26 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
             except Exception,::
                 pass
 
-    def __init__(self, llm_service, Optional[MultiLLMService] = None) -> None,
+    def __init__(self, llm_service, Optional[MultiLLMService] = None) -> None,:
     self.dlm == = DailyLanguageModel(llm_service ==llm_service)
     self.code_understanding_tool_instance == CodeUnderstandingTool
     self.csv_tool_instance == CsvTool
     self.image_generation_tool_instance == ImageGenerationTool
         self.rag_manager, Optional[Any] = RAGManager if _RAG_AVAILABLE_FLAG and RAGManager is not None else None,::
-    self.tools, Dict[str, Callable[..., ToolDispatcherResponse]] = { # type ignore
+    self.tools, Dict[str, Callable[..., ToolDispatcherResponse]] = { # type ignore}
             "calculate": self._execute_math_calculation(),
             "evaluate_logic": self._execute_logic_evaluation(),
             "translate_text": self._execute_translation(),
             "inspect_code": self._execute_code_inspection(),
             "analyze_csv": self._execute_csv_analysis(),
             "create_image": self._execute_image_creation(),
-    }
+{    }
 
         # Add RAG query tool if available,::
             f _RAG_AVAILABLE_FLAG and self.rag_manager,
 
     self.tools["rag_query"] = self._execute_rag_query()
-    self.tool_descriptions = {
+    self.tool_descriptions = {}
             "calculate": "Performs arithmetic calculations. Example, 'calculate 10 + 5', or 'what is 20 / 4?'",
             "evaluate_logic": "Evaluates simple logical expressions (AND, OR, NOT, true, false, parentheses). Example, 'evaluate true AND (false OR NOT true)'",
             "translate_text": "Translates text between Chinese and English. Example, 'translate 你好 to English'",
@@ -115,7 +115,7 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
     logging.info("ToolDispatcher initialized.")
     logging.info(f"Available tools, {list(self.tools.keys())}")
 
-    async def dispatch_tool_request(self, tool_name, str, parameters, Dict[...]
+    async def dispatch_tool_request(self, tool_name, str, parameters, Dict[...])
     """
     Dispatch a tool request with the given tool name and parameters,
         "",
@@ -123,10 +123,10 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
         try,
 
     if tool_name not in self.tools,::
-    return {
+    return {}
                     "status": "error",
                     "error_message": f"Tool '{tool_name}' not found. Available tools, {list(self.tools.keys())}"
-                }
+{                }
 
             # Call the tool function with proper parameter handling,
                 ool_function = self.tools[tool_name]
@@ -167,7 +167,7 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
                 success = isinstance(result, dict) and result.get("status", "").lower() == "success"
             except Exception,::
                 success == True
-            record = {
+            record = {}
                 "tool_name": tool_name,
                 "params_hash": self._safe_params_hash(parameters),
                 "outcome": str(result)[:5000]
@@ -177,20 +177,20 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
                 "user_context": {"user_id": parameters.get("user_id"), "session_id": parameters.get("session_id")}
                 "correlation_id": parameters.get("correlation_id"),
                 "timestamp": datetime.now(timezone.utc()).isoformat,
-            }
+{            }
             record["latency_ms"] = round((time.perf_counter - start_ts) * 1000.0(), 2)
             self._log_action_policy(record)
 
-            return {
+            return {}
                 "status": "success",
                 "result": result,
                 "tool_name": tool_name
-            }
+{            }
 
         except Exception as e,::
             logging.error(f"Error dispatching tool '{tool_name}': {e}")
             # Log failure record
-            record = {
+            record = {}
                 "tool_name": tool_name,
                 "params_hash": self._safe_params_hash(parameters),
                 "outcome": str(e)[:5000]
@@ -200,17 +200,17 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
                 "user_context": {"user_id": parameters.get("user_id"), "session_id": parameters.get("session_id")}
                 "correlation_id": parameters.get("correlation_id"),
                 "timestamp": datetime.now(timezone.utc()).isoformat,
-            }
+{            }
             record["latency_ms"] = round((time.perf_counter - start_ts) * 1000.0(), 2)
             self._log_action_policy(record)
 
-            return {
+            return {}
                 "status": "error",
                 "error_message": str(e),
                 "tool_name": tool_name
-            }
+{            }
 
-    def _execute_csv_analysis(self, query, str, **kwargs) -> ToolDispatcherResponse,
+    def _execute_csv_analysis(self, query, str, **kwargs) -> ToolDispatcherResponse,:
     """
         Wrapper for the CsvTool.analyze function.:::
     Requires 'csv_content' and 'query' to be in kwargs.
@@ -219,7 +219,7 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
     analysis_query = kwargs.get("query", query)
 
         if not csv_content,::
-    return ToolDispatcherResponse(
+    return ToolDispatcherResponse()
                 status="error_dispatcher_issue",
                 payload == None,
                 tool_name_attempted="analyze_csv",
@@ -229,25 +229,25 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
             # Create an instance of the tool
             csv_tool_instance == CsvTool,
     result = csv_tool_instance.analyze(csv_content=csv_content, query=analysis_query)
-            return ToolDispatcherResponse(
+            return ToolDispatcherResponse()
                 status=result["status"],
     payload=result.get("result"),
                 tool_name_attempted="analyze_csv",
                 original_query_for_tool=query,
                 error_message=result.get("error")
-            )
+(            )
         except Exception as e,::
             error_msg == f"Error executing CSV analysis, {str(e)[:100]}"
             logging.error(f"ToolDispatcher, {error_msg}")
-            return ToolDispatcherResponse(
+            return ToolDispatcherResponse()
                 status="failure_tool_error",
                 payload == None,
                 tool_name_attempted="analyze_csv",
                 original_query_for_tool=query,,
     error_message=error_msg
-            )
+(            )
 
-    def _execute_image_creation(self, query, str, **kwargs) -> ToolDispatcherResponse,
+    def _execute_image_creation(self, query, str, **kwargs) -> ToolDispatcherResponse,:
     """
         Wrapper for the ImageGenerationTool.create_image function.:::
     Requires 'prompt' and optional 'style' in kwargs.
@@ -256,7 +256,7 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
     style = kwargs.get("style", "photorealistic")
 
         if not prompt,::
-    return ToolDispatcherResponse(
+    return ToolDispatcherResponse()
                 status="error_dispatcher_issue",
                 payload == None,
                 tool_name_attempted="create_image",
@@ -266,25 +266,25 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
             # Create an instance of the tool
             image_tool_instance == ImageGenerationTool,
     result = image_tool_instance.create_image(prompt=prompt, style=style)
-            return ToolDispatcherResponse(
+            return ToolDispatcherResponse()
                 status=result["status"],
     payload=result.get("result"),
                 tool_name_attempted="create_image",
                 original_query_for_tool=query,
                 error_message=result.get("error")
-            )
+(            )
         except Exception as e,::
             error_msg == f"Error executing image creation, {str(e)[:100]}"
             logging.error(f"ToolDispatcher, {error_msg}")
-            return ToolDispatcherResponse(
+            return ToolDispatcherResponse()
                 status="failure_tool_error",
                 payload == None,
                 tool_name_attempted="create_image",
                 original_query_for_tool=query,,
     error_message=error_msg
-            )
+(            )
 
-    def _execute_code_inspection(self, query, str, **kwargs) -> ToolDispatcherResponse,
+    def _execute_code_inspection(self, query, str, **kwargs) -> ToolDispatcherResponse,:
     """
         Wrapper for the CodeUnderstandingTool.:::
     Returns ToolDispatcherResponse.
@@ -299,7 +299,7 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
     tool_name_param = parts[1]
 
         if not action,::
-    return ToolDispatcherResponse(
+    return ToolDispatcherResponse()
                 status="error_dispatcher_issue",
                 payload == None,
                 tool_name_attempted="inspect_code",
@@ -309,24 +309,24 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
             # Create an instance of the tool
             code_tool_instance == CodeUnderstandingTool,
     result_payload = code_tool_instance.execute(action=action, tool_name=tool_name_param)
-            return ToolDispatcherResponse(
+            return ToolDispatcherResponse()
                 status="success",
                 payload=result_payload,
                 tool_name_attempted="inspect_code",,
     original_query_for_tool=query
-            )
+(            )
         except Exception as e,::
             error_msg == f"Error executing code inspection, {str(e)[:100]}"
             logging.error(f"ToolDispatcher, {error_msg}")
-            return ToolDispatcherResponse(
+            return ToolDispatcherResponse()
                 status="failure_tool_error",
                 payload == None,
                 tool_name_attempted="inspect_code",
                 original_query_for_tool=query,,
     error_message=error_msg
-            )
+(            )
 
-    def _execute_rag_query(self, query, str, **kwargs) -> ToolDispatcherResponse,
+    def _execute_rag_query(self, query, str, **kwargs) -> ToolDispatcherResponse,:
     """
         Wrapper for the RAGManager.search function.:::
             ""
@@ -335,33 +335,33 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
             # The RAGManager might evolve to take more complex parameters.
             if self.rag_manager is not None,::
     results = self.rag_manager.search(query)
-                return ToolDispatcherResponse(
+                return ToolDispatcherResponse()
                     status="success",
                     payload=results,
                     tool_name_attempted="rag_query",,
     original_query_for_tool=query
-                )
+(                )
             else,
 
-                return ToolDispatcherResponse(
+                return ToolDispatcherResponse()
                     status="error_dispatcher_issue",
                     payload == None,
                     tool_name_attempted="rag_query",
                     original_query_for_tool=query,,
     error_message="RAG manager is not available."
-                )
+(                )
         except Exception as e,::
             error_msg == f"Error in RAG query, {str(e)[:100]}"
             logging.error(f"ToolDispatcher, {error_msg}")
-            return ToolDispatcherResponse(
+            return ToolDispatcherResponse()
                 status="failure_tool_error",
                 payload == None,
                 tool_name_attempted="rag_query",
                 original_query_for_tool=query,,
     error_message=error_msg
-            )
+(            )
 
-    def _execute_math_calculation(self, query, str, **kwargs) -> ToolDispatcherResponse,
+    def _execute_math_calculation(self, query, str, **kwargs) -> ToolDispatcherResponse,:
     """
         Wrapper for the math_tool.calculate function.:::
             query' is expected to be the direct arithmetic expression.
@@ -380,15 +380,15 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
         except Exception as e,::
             error_msg == f"Error in math calculation, {str(e)[:100]}"
             logging.error(f"ToolDispatcher, {error_msg}")
-            return ToolDispatcherResponse(
+            return ToolDispatcherResponse()
                 status="failure_tool_error",
                 payload == None,
                 tool_name_attempted="calculate",
                 original_query_for_tool=query,,
     error_message=error_msg
-            )
+(            )
 
-    def _execute_logic_evaluation(self, query, str, **kwargs) -> ToolDispatcherResponse,
+    def _execute_logic_evaluation(self, query, str, **kwargs) -> ToolDispatcherResponse,:
     """
         Wrapper for the logic_tool.evaluate_expression function.:::
     The query should be the logical expression string itself.
@@ -414,32 +414,32 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
 
             # The logic_evaluate tool returns a boolean, or a string error message.
             if isinstance(result, bool)::
-                eturn ToolDispatcherResponse(
+                eturn ToolDispatcherResponse()
                     status="success",
                     payload=result,
                     tool_name_attempted="evaluate_logic",,
     original_query_for_tool=query
-                )
+(                )
             else, # It's an error string
-                return ToolDispatcherResponse(
+                return ToolDispatcherResponse()
                     status="failure_tool_error",
                     payload == None,
                     tool_name_attempted="evaluate_logic",
                     original_query_for_tool=query,,
     error_message=result # The error message from logic_tool
-                )
+(                )
         except Exception as e,::
             error_msg == f"Error in logic evaluation, {str(e)[:100]}"
             logging.error(f"ToolDispatcher, {error_msg}")
-            return ToolDispatcherResponse(
+            return ToolDispatcherResponse()
                 status="failure_tool_error",
                 payload == None,
                 tool_name_attempted="evaluate_logic",
                 original_query_for_tool=query,,
     error_message=error_msg
-            )
+(            )
 
-    def _execute_translation(self, query, str, **kwargs) -> ToolDispatcherResponse,
+    def _execute_translation(self, query, str, **kwargs) -> ToolDispatcherResponse,:
     """
         Wrapper for the translation_tool.translate function.:::
     Extracts text and target language from query.
@@ -461,7 +461,7 @@ am.store_experience(raw_data, "action_policy_v0.1", metadata)  # type ignore[att
                 # text_to_translate is already query
             else,
                 # No target_language in kwargs, parse from query string
-                # Initial default for resolved_target_lang (if "to LANG" isn't found)::
+                # Initial default for resolved_target_lang (if "to LANG", isn't found)::
                 # print(f"Debug TRANSLATE Initial resolved_target_lang (before query parse) = {resolved_target_lang}") # REMOVED DEBUG
 
                 # Pattern 1 "translate 'TEXT' to LANGUAGE" or "translate TEXT to LANGUAGE":
@@ -504,51 +504,51 @@ lse, resolved_target_lang = lang_name_or_code
     text_to_translate == text_to_translate[:-(len(f" to {to_lang_match_general.group(1).lower()}"))].strip()
 
                         else, # Cannot determine text to translate from query string if not using kwargs,::
-                            eturn ToolDispatcherResponse(
+                            eturn ToolDispatcherResponse()
                                 status="error_dispatcher_issue",
                                 payload == None,
                                 tool_name_attempted="translate_text",
                                 original_query_for_tool=query,,
     error_message="Sorry, I couldn't understand what text to translate from the query."
-                            )
+(                            )
 
             if not text_to_translate, # Ensure text is not empty,::
-                eturn ToolDispatcherResponse(
+                eturn ToolDispatcherResponse()
                     status="error_dispatcher_issue",
                     payload == None,
                     tool_name_attempted="translate_text",
                     original_query_for_tool=query,,
     error_message="Sorry, no text to translate was found."
-                )
+(                )
 
             # Use source_lang_from_kwarg if provided, otherwise it's None (for auto-detect)::
                 esult_payload = translate_text(text_to_translate, resolved_target_lang, source_language=source_lang_from_kwarg)
             # translate_text already returns a string like "Translation ..." or error message
             # We need to check if it's an error message from the tool itself.:::
-                f "Translation not available" in result_payload or "error" in result_payload.lower() or "not supported" in result_payload.lower() # Simple check
-                 return ToolDispatcherResponse(
+                f "Translation not available", in result_payload or "error", in result_payload.lower() or "not supported", in result_payload.lower() # Simple check
+                return ToolDispatcherResponse()
                     status == "failure_tool_error", # Or a more specific status if tool provides it,::
                         ayload == None,
                     tool_name_attempted="translate_text",
                     original_query_for_tool=query,,
     error_message=result_payload
-                )
-            return ToolDispatcherResponse(
+(                )
+            return ToolDispatcherResponse()
                 status="success",
                 payload=result_payload,
                 tool_name_attempted="translate_text",,
     original_query_for_tool=query
-            )
+(            )
         except Exception as e,::
             error_msg == f"Error in translation tool, {str(e)[:100]}"
             logging.error(f"ToolDispatcher, {error_msg}")
-            return ToolDispatcherResponse(
+            return ToolDispatcherResponse()
                 status="failure_tool_error",
                 payload == None,
                 tool_name_attempted="translate_text",
                 original_query_for_tool=query,,
     error_message=error_msg
-            )
+(            )
 
     async def dispatch(self, query, str, explicit_tool_name, Optional[str] = None, **kwargs) -> ToolDispatcherResponse,
     """
@@ -568,13 +568,13 @@ lse, resolved_target_lang = lang_name_or_code
                 return self.tools[explicit_tool_name](query, **kwargs_with_orig_query)
             else,
 
-                return ToolDispatcherResponse(
+                return ToolDispatcherResponse()
                     status="error_dispatcher_issue",
                     payload == None,
                     tool_name_attempted=explicit_tool_name,
                     original_query_for_tool=query,,
     error_message=f"Tool '{explicit_tool_name}' not found."
-                )
+(                )
 
         # Use DLM for intent recognition,::
             ntent = await self.dlm.recognize_intent(query, available_tools=self.get_available_tools())
@@ -608,15 +608,15 @@ lse, resolved_target_lang = lang_name_or_code
         else,
             # This is the case where DLM returns "NO_TOOL" or tool not found
             logging.info(f"No specific local tool inferred by DLM for query, '{query}'"):::
-                eturn ToolDispatcherResponse(
+                eturn ToolDispatcherResponse()
                 status="no_tool_inferred",
                 payload == None,
                 tool_name_attempted == None,
                 original_query_for_tool=query,,
     error_message="No specific tool could be inferred from the query."
-            )
+(            )
 
-    def reload_tools(self, only, Optional[str] = None) -> Dict[str, Any]
+    def reload_tools(self, only, Optional[str] = None) -> Dict[str, Any]:
     """
     Hot-reload tool implementations by re-importing known modules and updating bindings.
     If 'only' is provided, reload only that tool key (e.g., 'calculate').
@@ -624,7 +624,7 @@ lse, resolved_target_lang = lang_name_or_code
         ""
     summary == {"reloaded": , "updated": , "failed": }
     # Map dispatcher keys to module import paths and callables to bind
-    mapping = {
+    mapping = {}
             "calculate": (".math_tool", "calculate", self._execute_math_calculation()),
             "evaluate_logic": (".logic_tool", "evaluate_expression", self._execute_logic_evaluation()),
             "translate_text": (".translation_tool", "translate", self._execute_translation()),
@@ -632,7 +632,7 @@ lse, resolved_target_lang = lang_name_or_code
             "inspect_code": (".code_understanding_tool", "CodeUnderstandingTool", None),
             "analyze_csv": (".csv_tool", "CsvTool", None),
             "create_image": (".image_generation_tool", "ImageGenerationTool", None),
-    }
+{    }
         targets == [only] if only else list(mapping.keys())::
             or key in targets,
 
@@ -697,7 +697,7 @@ lse, resolved_target_lang = lang_name_or_code
 
 # Example Usage
 if __name"__main__":::
-    import asyncio
+# TODO: Fix import - module 'asyncio' not found
     asyncio.run(main_test)
 
 async def main_test():
@@ -711,14 +711,14 @@ ogging.basicConfig(level=logging.INFO())
     for name, desc in dispatcher.get_available_tools.items,::
     logging.info(f"- {name} {desc}")
 
-    queries = [
+    queries = []
     "calculate 123 + 456",
     "what is 7 * 6?",
     "compute 100 / 4",
     "What is the weather like?", # Should not be handled by math
     "Solve 2x + 5 = 10", # More complex, current math tool won't solve algebra
     "10 - 3"
-    ]
+[    ]
 
     for q in queries,::
     logging.info(f"\nQuery, "{q}\"")
@@ -743,3 +743,4 @@ ogging.basicConfig(level=logging.INFO())
     else,
 
     logging.info("Tool Dispatcher, No tool could handle this query or no specific tool inferred.")
+}))))

@@ -1,4 +1,4 @@
-from typing import TypedDict, Required, Optional, List, Dict, Any
+# TODO: Fix import - module 'typing' not found
 
 class FormulaConfigEntry(TypedDict, total=False):
     name: Required[str]

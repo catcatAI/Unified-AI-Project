@@ -1,11 +1,11 @@
 # Placeholder for Crisis Management System,:
 # This system will detect and manage crisis situations, potentially involving safety protocols,
 # user well-being checks, or handing off to other support systems.
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from datetime import datetime
 
-class CrisisSystem,
-    def __init__(self, config, dict == None, emotion_system_ref == None, memory_system_ref == None, log_file, str == "crisis_log.txt") -> None,
+class CrisisSystem,:
+    def __init__(self, config, dict == None, emotion_system_ref == None, memory_system_ref == None, log_file, str == "crisis_log.txt") -> None,:
     self.config = config or {}
     self.emotion_system = emotion_system_ref # Reference to an EmotionSystem instance
     self.memory_system = memory_system_ref   # Reference to a MemoryManager instance
@@ -23,7 +23,7 @@ class CrisisSystem,
     self.crisis_protocols = self.config.get("crisis_protocols")
     logging.info(f"CrisisSystem initialized. Keywords, {self.crisis_keywords}")
 
-    def assess_input_for_crisis(self, input_data, dict, context, dict == None) -> int,
+    def assess_input_for_crisis(self, input_data, dict, context, dict == None) -> int,:
     """
         Assesses input and context for potential crisis indicators.:::
     Updates self.crisis_level.
@@ -49,9 +49,9 @@ class CrisisSystem,
     print(f"CrisisSystem, Potential crisis detected or level escalated. New level, {detected_level}.")
             elif detected_level < self.crisis_level,::
     print(f"CrisisSystem, Input suggests potential de-escalation, but maintaining current crisis level {self.crisis_level} until resolved.")
-                 # For now, crisis level only goes up through assess, and down through resolve_crisis.
-                 # More sophisticated logic could allow assess_input to also de-escalate.
-                 return self.crisis_level # Return current higher level
+                # For now, crisis level only goes up through assess, and down through resolve_crisis.
+                # More sophisticated logic could allow assess_input to also de-escalate.
+                return self.crisis_level # Return current higher level
             else, # detected_level=self.crisis_level and self.crisis_level > 0
                 print(f"CrisisSystem, Input is consistent with ongoing crisis level {self.crisis_level}."):
                     elf.crisis_level = detected_level # Set or maintain the detected crisis level
@@ -77,7 +77,7 @@ class CrisisSystem,
 
 
 
-                with open(self.log_file(), "a") as f,
+                with open(self.log_file(), "a") as f,:
     f.write(f"[{datetime.now}] CRISIS_LOG, Level {level} event. Details, {details}\n")
                 logging.info(f"CRISIS_LOG, Level {level} event. Details, {details}")
             except Exception as e,::
@@ -93,7 +93,7 @@ lif action_details == "log_only":::
     try,
 
 
-            with open(self.log_file(), "a") as f,
+            with open(self.log_file(), "a") as f,:
     f.write(f"[{datetime.now}] CRISIS_LOG, Level {level} event. Details, {details}\n")
                     logging.info(f"CRISIS_LOG, Level {level} event. Details, {details}")
                 except Exception as e,::
@@ -108,13 +108,13 @@ lif action_details == "log_only":::
 
     def _load_config_from_file(self):
         ""Loads configuration from a JSON file."""
-    import json
-    import os
+from tests.test_json_fix import
+from diagnose_base_agent import
         try,
 
             current_dir = os.path.dirname(os.path.abspath(__file__))
             config_path = os.path.join(current_dir, '..', '..', '..', 'configs', 'crisis_system_config.json')
-            with open(config_path, 'r') as f,
+            with open(config_path, 'r') as f,:
     self.config = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError()) as e,::
             logging.error(f"Error loading crisis system config, {e}")
@@ -123,17 +123,17 @@ lif action_details == "log_only":::
 
 if __name'__main__':::
     logging.basicConfig(level=logging.INFO())
-    example_config = {
+    example_config = {}
     "crisis_keywords": ["emergency help", "i am scared"]
     "negative_words": ["sad", "angry", "hate", "kill", "depressed"]
     "default_crisis_level_on_keyword": 2,
-    "crisis_protocols": {
+    "crisis_protocols": {}
             "1": "monitor_closely",
             "2": "offer_support_resources",
             "3": "notify_human_moderator",
             "default": "log_and_monitor"
-    }
-    }
+{    }
+{    }
     crisis_sys == CrisisSystem(config=example_config)
 
     logging.info(f"Initial crisis level, {crisis_sys.get_current_crisis_level}")

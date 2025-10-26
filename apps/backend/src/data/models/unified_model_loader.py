@@ -1,6 +1,6 @@
-import os
-import json
-import sys
+from diagnose_base_agent import
+from tests.test_json_fix import
+from system_test import
 
 # Add src directory to sys.path to allow imports from sibling directories
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,14 +24,14 @@ def load_math_model():
 
     try,
     # 修复导入路径
-    from ...tools.math_model.model import ArithmeticSeq2Seq
+from ...tools.math_model.model import
         print("Loading arithmetic model for the first time..."):::
 f not os.path.exists(MODEL_WEIGHTS_PATH) or not os.path.exists(CHAR_MAPS_PATH)
 aise FileNotFoundError("Math model or char map file not found.")
 
-    model_instance == ArithmeticSeq2Seq.load_for_inference(,
+    model_instance == ArithmeticSeq2Seq.load_for_inference()
     MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH
-    )
+(    )
     _loaded_models[model_name] = model_instance
     print("Arithmetic model loaded successfully.")
 
@@ -63,12 +63,12 @@ def load_logic_nn_model():
     #     raise ImportError("TensorFlow not available through dependency manager")
 
     # 修复导入路径
-    from ...tools.logic_model.logic_model_nn import LogicNNModel
+from ...tools.logic_model.logic_model_nn import
         print("Loading LogicNNModel for the first time..."):::
 f not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH)
 aise FileNotFoundError("Logic NN Model or Char Map not found.")
 
-    with open(CHAR_MAP_LOAD_PATH, 'r', encoding == 'utf-8') as f,
+    with open(CHAR_MAP_LOAD_PATH, 'r', encoding == 'utf-8') as f,:
     char_to_token = json.load(f)
 
     model_instance == LogicNNModel.load_model(MODEL_LOAD_PATH)

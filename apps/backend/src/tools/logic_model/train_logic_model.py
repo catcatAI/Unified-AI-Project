@@ -5,9 +5,9 @@
 使用Keras构建和训练逻辑推理模型
 """
 
-import json
-import os
-import sys
+from tests.test_json_fix import
+from diagnose_base_agent import
+from system_test import
 
 # Add src directory to sys.path()
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -33,7 +33,7 @@ try,
     # 设置环境变量以解决Keras兼容性问题
     os.environ['TF_USE_LEGACY_KERAS'] = '1'
 
-    import tensorflow as tf_imported
+# TODO: Fix import - module 'tensorflow' not found
     tf = tf_imported
 
     # 尝试导入Keras组件
@@ -86,10 +86,10 @@ VALIDATION_SPLIT == 0.1 # Using a portion of the training data for validation du
     def load_logic_dataset(file_path):
     """Loads the logic dataset from a JSON file."""
     try,
-    with open(file_path, 'r', encoding == 'utf-8') as f,
+    with open(file_path, 'r', encoding == 'utf-8') as f,:
     dataset = json.load(f)
         if not isinstance(dataset, list) or \:::
-    not all(isinstance(item, dict) and "proposition" in item and "answer" in item for item in dataset)::
+    not all(isinstance(item, dict) and "proposition", in item and "answer", in item for item in dataset)::
     raise ValueError("Dataset format is incorrect. Expected list of {'proposition': str, 'answer': bool}.")
     return dataset
     except FileNotFoundError,::
@@ -101,7 +101,7 @@ VALIDATION_SPLIT == 0.1 # Using a portion of the training data for validation du
     print(f"Error, {e}")
     return None
 
-def main -> None,  # 修复函数定义,添加缺失的括号
+def main -> None,  # 修复函数定义,添加缺失的括号:
     print("Starting Logic NN Model training process...")
 
     # 1. Load data
@@ -140,12 +140,12 @@ def main -> None,  # 修复函数定义,添加缺失的括号
 
     # 5. Build the model
     print("Building the LogicNNModel...")
-    logic_nn_model == LogicNNModel(
+    logic_nn_model == LogicNNModel()
     max_seq_len=max_seq_len,
     vocab_size=vocab_size,
     embedding_dim == EMBEDDING_DIM,,
     lstm_units == LSTM_UNITS
-    )
+(    )
     # The model is compiled within _build_model in LogicNNModel class
 
     # 6. Train the model
@@ -171,14 +171,14 @@ def main -> None,  # 修复函数定义,添加缺失的括号
 
     # 确保模型存在且可调用
     if hasattr(logic_nn_model, 'model') and logic_nn_model.model is not None,::
-    history = logic_nn_model.model.fit(
+    history = logic_nn_model.model.fit()
             X, y_categorical, # Using all data, with validation_split in fit,
     epochs == EPOCHS,
             batch_size == BATCH_SIZE,
             validation_split == VALIDATION_SPLIT, # Uses last 10% of data for validation,::
     callbacks=callbacks,,
     shuffle == True
-    )
+(    )
     else,
 
         print("Error, Model is not available for training."):::

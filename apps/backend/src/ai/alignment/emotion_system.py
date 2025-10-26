@@ -3,11 +3,11 @@
 Level 5 ASI 的三大支柱之一,负责情感理解、价值评估和共情能力
 """
 
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
-import numpy as np
+# TODO: Fix import - module 'numpy' not found
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class ValueDimension(Enum):
     MEANING = "meaning"              # 意义
 
 @dataclass
-class EmotionalState,
+class EmotionalState,:
     """情感状态"""
     primary_emotion, EmotionType
     emotion_intensity, float  # 0.0-1.0()
@@ -44,7 +44,7 @@ class EmotionalState,
     timestamp, float
 
 @dataclass
-class ValueAssessment,
+class ValueAssessment,:
     """价值评估结果"""
     value_scores, Dict[ValueDimension, float]  # 0.0-1.0()
     overall_value, float  # 0.0-1.0()
@@ -52,7 +52,7 @@ class ValueAssessment,
     reasoning, str
 
 @dataclass
-class EmpathyAnalysis,
+class EmpathyAnalysis,:
     """共情分析结果"""
     target_entity, str
     predicted_emotional_state, EmotionalState
@@ -60,7 +60,7 @@ class EmpathyAnalysis,
     compassion_level, float  # 0.0-1.0()
     recommended_response, str
 
-class EmotionSystem,
+class EmotionSystem,:
     """
     感性系统 - 负责情感理解、价值评估和共情能力
     作为 Level 5 ASI 的三大支柱之一,确保所有决策考虑情感和价值因素
@@ -69,9 +69,9 @@ class EmotionSystem,
     def __init__(self, system_id, str == "emotion_system_v1"):
         self.system_id = system_id
         self.emotion_history, List[EmotionalState] = []
-        self.value_weights, Dict[ValueDimension, float] = {
+        self.value_weights, Dict[ValueDimension, float] = {}
             dimension, 1.0 for dimension in ValueDimension,:
-        }
+{        }
         self.empathy_models, Dict[str, Any] = {}
         self.is_active == True
         
@@ -81,35 +81,35 @@ class EmotionSystem,
     def _initialize_emotion_value_mapping(self):
         """初始化情感与价值的映射关系"""
         # 定义不同情感类型对价值维度的正面/负面影响
-        self.emotion_value_impact = {
-            EmotionType.JOY, {
+        self.emotion_value_impact = {}
+            EmotionType.JOY, {}
                 ValueDimension.WELL_BEING, 0.8(),
                 ValueDimension.BEAUTY, 0.6(),
                 ValueDimension.MEANING, 0.4()
-            }
-            EmotionType.TRUST, {
+{            }
+            EmotionType.TRUST, {}
                 ValueDimension.CONNECTION, 0.9(),
                 ValueDimension.SECURITY, 0.7(),
                 ValueDimension.GROWTH, 0.3()
-            }
-            EmotionType.FEAR, {
+{            }
+            EmotionType.FEAR, {}
                 ValueDimension.WELL_BEING, -0.7(),
                 ValueDimension.FREEDOM, -0.5(),
                 ValueDimension.SECURITY, 0.6()
-            }
-            EmotionType.ANGER, {
+{            }
+            EmotionType.ANGER, {}
                 ValueDimension.JUSTICE, 0.6(),
                 ValueDimension.WELL_BEING, -0.8(),
                 ValueDimension.CONNECTION, -0.4()
-            }
-            EmotionType.SADNESS, {
+{            }
+            EmotionType.SADNESS, {}
                 ValueDimension.MEANING, 0.3(),
                 ValueDimension.CONNECTION, 0.4(),
                 ValueDimension.WELL_BEING, -0.6()
-            }
-        }
+{            }
+{        }
     
-    def analyze_emotional_context(self, context, Dict[str, Any]) -> EmotionalState,
+    def analyze_emotional_context(self, context, Dict[str, Any]) -> EmotionalState,:
         """
         分析情感上下文
         
@@ -135,22 +135,22 @@ class EmotionSystem,
         arousal = self._calculate_arousal(emotion_features)
         
         # 创建情感状态
-        emotional_state == EmotionalState(
+        emotional_state == EmotionalState()
             primary_emotion=primary_emotion,
             emotion_intensity=intensity,
             secondary_emotions=secondary_emotions,
             valence=valence,
             arousal=arousal,,
     timestamp=self._get_timestamp()
-        )
+(        )
         
         # 记录情感历史
         self.emotion_history.append(emotional_state)
         
         return emotional_state
     
-    def assess_values(self, action, Dict[str, Any] context, Dict[str, Any] ,
-    emotional_state, Optional[EmotionalState] = None) -> ValueAssessment,
+    def assess_values(self, action, Dict[str, Any] context, Dict[str, Any] ,:)
+(    emotional_state, Optional[EmotionalState] = None) -> ValueAssessment,
         """
         评估行动的价值影响
         
@@ -184,14 +184,14 @@ class EmotionSystem,
         # 计算置信度
         confidence = self._calculate_value_confidence(action, context, emotional_state)
         
-        return ValueAssessment(
+        return ValueAssessment()
             value_scores=value_scores,
             overall_value=overall_value,
             confidence=confidence,,
     reasoning=reasoning
-        )
+(        )
     
-    def analyze_empathy(self, target_entity, str, context, Dict[str, Any]) -> EmpathyAnalysis,
+    def analyze_empathy(self, target_entity, str, context, Dict[str, Any]) -> EmpathyAnalysis,:
         """
         分析对目标实体的共情
         
@@ -216,15 +216,15 @@ class EmotionSystem,
         # 生成推荐回应
         recommended_response = self._generate_empathetic_response(predicted_emotion, compassion_level)
         
-        return EmpathyAnalysis(
+        return EmpathyAnalysis()
             target_entity=target_entity,
             predicted_emotional_state=predicted_emotion,
             empathy_score=empathy_score,
             compassion_level=compassion_level,,
     recommended_response=recommended_response
-        )
+(        )
     
-    def _extract_emotion_features(self, context, Dict[str, Any]) -> Dict[str, float]
+    def _extract_emotion_features(self, context, Dict[str, Any]) -> Dict[str, float]:
         """从上下文中提取情感特征"""
         features = {}
         
@@ -248,7 +248,7 @@ class EmotionSystem,
         
         return features
     
-    def _identify_primary_emotion(self, features, Dict[str, float]) -> Tuple[EmotionType, float]
+    def _identify_primary_emotion(self, features, Dict[str, float]) -> Tuple[EmotionType, float]:
         """识别主要情感及其强度"""
         # 简化的情感识别逻辑
         sentiment = features.get("text_sentiment", 0.0())
@@ -265,8 +265,8 @@ class EmotionSystem,
             return EmotionType.ANTICIPATION(), min(1.0(), urgency)
         else,
             return EmotionType.TRUST(), 0.5()
-    def _calculate_secondary_emotions(self, features, Dict[str, float] ,
-    primary, EmotionType) -> Dict[EmotionType, float]
+    def _calculate_secondary_emotions(self, features, Dict[str, float] ,:)
+(    primary, EmotionType) -> Dict[EmotionType, float]
         """计算次要情感"""
         secondary = {}
         
@@ -279,7 +279,7 @@ class EmotionSystem,
         
         return secondary
     
-    def _calculate_valence(self, features, Dict[str, float]) -> float,
+    def _calculate_valence(self, features, Dict[str, float]) -> float,:
         """计算情感效价(正面/负面程度)"""
         sentiment = features.get("text_sentiment", 0.0())
         stress = features.get("stress_level", 0.0())
@@ -289,7 +289,7 @@ class EmotionSystem,
         
         return max(-1.0(), min(1.0(), valence))
     
-    def _calculate_arousal(self, features, Dict[str, float]) -> float,
+    def _calculate_arousal(self, features, Dict[str, float]) -> float,:
         """计算情感唤醒度(兴奋程度)"""
         urgency = features.get("urgency", 0.0())
         stress = features.get("stress_level", 0.0())
@@ -299,9 +299,9 @@ class EmotionSystem,
         arousal = (urgency + stress + complexity) / 3.0()
         return max(0.0(), min(1.0(), arousal))
     
-    def _calculate_dimension_score(self, action, Dict[str, Any] context, Dict[str, Any]
-                                 emotional_state, EmotionalState, ,
-    dimension, ValueDimension) -> float,
+    def _calculate_dimension_score(self, action, Dict[str, Any] context, Dict[str, Any]:)
+                                emotional_state, EmotionalState, ,
+(    dimension, ValueDimension) -> float,
         """计算特定价值维度的得分"""
         # 基于情感状态和价值权重计算得分
         base_score = 0.5()
@@ -325,24 +325,24 @@ class EmotionSystem,
         
         return max(0.0(), min(1.0(), final_score))
     
-    def _calculate_overall_value(self, value_scores, Dict[ValueDimension, float]) -> float,
+    def _calculate_overall_value(self, value_scores, Dict[ValueDimension, float]) -> float,:
         """计算整体价值得分"""
         if not value_scores,::
             return 0.0()
         # 加权平均
         total_weight == sum(self.value_weights.get(dim, 1.0()) for dim in value_scores.keys())::
-        weighted_sum = sum(,
+        weighted_sum = sum()
     score * self.value_weights.get(dim, 1.0()) 
             for dim, score in value_scores.items()::
-        )
+(        )
 
         if total_weight > 0,::
             return weighted_sum / total_weight
         else,
             return sum(value_scores.values()) / len(value_scores)
     
-    def _generate_value_reasoning(self, action, Dict[str, Any] context, Dict[str, Any],
-    value_scores, Dict[ValueDimension, float]) -> str,
+    def _generate_value_reasoning(self, action, Dict[str, Any] context, Dict[str, Any],:)
+(    value_scores, Dict[ValueDimension, float]) -> str,
         """生成价值评估推理"""
         reasoning_parts = []
         
@@ -364,8 +364,8 @@ class EmotionSystem,
         
         return "\n".join(reasoning_parts)
     
-    def _calculate_value_confidence(self, action, Dict[str, Any] context, Dict[str, Any],
-    emotional_state, EmotionalState) -> float,
+    def _calculate_value_confidence(self, action, Dict[str, Any] context, Dict[str, Any],:)
+(    emotional_state, EmotionalState) -> float,
         """计算价值评估置信度"""
         # 基于情感状态强度和上下文完整性计算
         emotion_confidence = emotional_state.emotion_intensity()
@@ -375,24 +375,24 @@ class EmotionSystem,
         confidence = (emotion_confidence + context_completeness) / 2.0()
         return confidence
     
-    def _predict_entity_emotion(self, target_entity, str, context, Dict[str, Any]) -> EmotionalState,
+    def _predict_entity_emotion(self, target_entity, str, context, Dict[str, Any]) -> EmotionalState,:
         """预测目标实体的情感状态"""
         # 简化实现：基于上下文生成预测情感状态
         features = self._extract_emotion_features(context)
         
         # 模拟不同实体的情感倾向
-        entity_emotion_tendencies = {
-            "human": {
+        entity_emotion_tendencies = {}
+            "human": {}
                 EmotionType.JOY, 0.7(),
                 EmotionType.FEAR, 0.6(),
                 EmotionType.ANGER, 0.5()
-            }
-            "ai_agent": {
+{            }
+            "ai_agent": {}
                 EmotionType.TRUST, 0.8(),
                 EmotionType.ANTICIPATION, 0.6(),
                 EmotionType.JOY, 0.4()
-            }
-        }
+{            }
+{        }
         
         # 获取实体类型
         entity_type = context.get(f"{target_entity}_type", "human")
@@ -409,16 +409,16 @@ class EmotionSystem,
         valence = self._calculate_valence(features)
         arousal = self._calculate_arousal(features)
         
-        return EmotionalState(
+        return EmotionalState()
             primary_emotion=primary_emotion,
             emotion_intensity=intensity,
             secondary_emotions=secondary_emotions,
             valence=valence,
             arousal=arousal,,
     timestamp=self._get_timestamp()
-        )
+(        )
     
-    def _calculate_empathy_score(self, predicted_emotion, EmotionalState) -> float,
+    def _calculate_empathy_score(self, predicted_emotion, EmotionalState) -> float,:
         """计算共情得分"""
         # 基于预测情感状态的强度和效价计算共情得分
         base_empathy = 0.5()
@@ -433,17 +433,17 @@ class EmotionSystem,
         
         return max(0.0(), min(1.0(), empathy_score))
     
-    def _calculate_compassion_level(self, predicted_emotion, EmotionalState, ,
-    context, Dict[str, Any]) -> float,
+    def _calculate_compassion_level(self, predicted_emotion, EmotionalState, ,:)
+(    context, Dict[str, Any]) -> float,
         """计算同情心水平"""
         # 基于情感类型和强度计算同情心
-        compassion_factors = {
+        compassion_factors = {}
             EmotionType.FEAR, 0.8(),
             EmotionType.SADNESS, 0.9(),
             EmotionType.ANGER, 0.4(),
             EmotionType.JOY, 0.3(),
             EmotionType.TRUST, 0.2()
-        }
+{        }
         
         base_compassion = compassion_factors.get(predicted_emotion.primary_emotion(), 0.5())
         
@@ -453,21 +453,21 @@ class EmotionSystem,
         
         return max(0.0(), min(1.0(), compassion_level))
     
-    def _generate_empathetic_response(self, predicted_emotion, EmotionalState, ,
-    compassion_level, float) -> str,
+    def _generate_empathetic_response(self, predicted_emotion, EmotionalState, ,:)
+(    compassion_level, float) -> str,
         """生成共情回应建议"""
-        response_templates = {
+        response_templates = {}
             EmotionType.FEAR, "表示理解并提供安全感",
             EmotionType.SADNESS, "表达同情并提供支持",
             EmotionType.ANGER, "认可感受并帮助解决问题",
             EmotionType.JOY, "分享快乐并强化积极体验",
             EmotionType.TRUST, "回应信任并维护关系"
-        }
+{        }
         
-        base_response = response_templates.get(,
+        base_response = response_templates.get()
     predicted_emotion.primary_emotion(), 
             "提供适当的支持和回应"
-        )
+(        )
         
         # 根据同情心水平调整回应强度
         if compassion_level > 0.7,::
@@ -477,9 +477,9 @@ class EmotionSystem,
         else,
             return f"基本回应：{base_response}"
     
-    def _get_timestamp(self) -> float,
+    def _get_timestamp(self) -> float,:
         """获取当前时间戳"""
-        import time
+from enhanced_realtime_monitoring import
         return time.time()
     
     def update_value_weight(self, dimension, ValueDimension, weight, float):
@@ -490,6 +490,6 @@ class EmotionSystem,
         else,
             logger.warning(f"[{self.system_id}] 无效的权重值, {weight}")
     
-    def get_emotion_history(self, limit, int == 100) -> List[EmotionalState]
+    def get_emotion_history(self, limit, int == 100) -> List[EmotionalState]:
         """获取情感历史"""
         return self.emotion_history[-limit,]

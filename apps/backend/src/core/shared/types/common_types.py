@@ -58,21 +58,21 @@ class ServiceInstanceHealth(TypedDict):
 
 
 class ToolDispatcherResponse(TypedDict):
-    status: Literal[
+    status: Literal[]
         "success",
         "failure_tool_not_found",
         "failure_tool_error",
         "failure_parsing_query",
         "error_dispatcher_issue",
         "unhandled_by_local_tool"
-    ]
+[    ]
     payload: Optional[Any]
     tool_name_attempted: Optional[str]
     original_query_for_tool: Optional[str]
     error_message: Optional[str]
 
 
-class LLMConfig(TypedDict):  # For ToolDispatcher
+class LLMConfig(TypedDict):  # For ToolDispatcher:
     model_name: str
     api_key: Optional[str]
     base_url: Optional[str]
@@ -80,14 +80,14 @@ class LLMConfig(TypedDict):  # For ToolDispatcher
     max_tokens: int
 
 
-class DialogueTurn(TypedDict):  # For DialogueManager
+class DialogueTurn(TypedDict):  # For DialogueManager:
     speaker: Literal["user", "ai", "system"]
     text: str
     timestamp: str
     metadata: Optional[Dict[str, Any]]
 
 
-class PendingHSPTaskInfo(TypedDict):  # For DialogueManager
+class PendingHSPTaskInfo(TypedDict):  # For DialogueManager:
     user_id: Optional[str]
     session_id: Optional[str]
     original_query_text: str
@@ -98,7 +98,7 @@ class PendingHSPTaskInfo(TypedDict):  # For DialogueManager
     request_type: str
 
 
-class OperationalConfig(TypedDict, total=False):  # For DialogueManager
+class OperationalConfig(TypedDict, total=False):  # For DialogueManager:
     timeouts: Optional[Any]
     learning_thresholds: Optional[Any]
     default_hsp_fact_topic: Optional[str]
@@ -106,13 +106,13 @@ class OperationalConfig(TypedDict, total=False):  # For DialogueManager
     operational_configs: Optional[Dict[str, Any]]
 
 
-class CritiqueResult(TypedDict):  # For DialogueMemoryEntryMetadata
+class CritiqueResult(TypedDict):  # For DialogueMemoryEntryMetadata:
     score: float
     reason: Optional[str]
     suggested_alternative: Optional[str]
 
 
-class DialogueMemoryEntryMetadata(TypedDict):  # For DialogueManager
+class DialogueMemoryEntryMetadata(TypedDict):  # For DialogueManager:
     speaker: str
     timestamp: str
     user_input_ref: Optional[str]
@@ -122,7 +122,7 @@ class DialogueMemoryEntryMetadata(TypedDict):  # For DialogueManager
     learning_weight: Optional[float]
 
 
-class ParsedToolIODetails(TypedDict, total=False):  # For DialogueManager
+class ParsedToolIODetails(TypedDict, total=False):  # For DialogueManager:
     suggested_method_name: Required[str]
     class_docstring_hint: Required[str]
     method_docstring_hint: Required[str]
@@ -133,7 +133,7 @@ eturn_type: Required[str]
 return_description: Required[str]
 
 
-class OverwriteDecision(Enum):  # For HAMMemoryManager -> DialogueManager
+class OverwriteDecision(Enum):  # For HAMMemoryManager -> DialogueManager:
     PREVENT_OVERWRITE = "prevent_overwrite"
     OVERWRITE_EXISTING = "overwrite_existing"
     ASK_USER = "ask_user"

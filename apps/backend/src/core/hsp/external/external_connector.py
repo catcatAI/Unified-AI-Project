@@ -1,15 +1,15 @@
-import asyncio
-import logging
-import ssl
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'ssl' not found
 from typing import Callable, Optional, Awaitable
-import gmqtt  # type, ignore
+from tests.test_gmqtt_import import
 
 logger = logging.getLogger(__name__)
 
 
-class ExternalConnector,
-    def __init__(self, ai_id, str, broker_address, str, broker_port, int, client_id_suffix, str = "hsp_connector",,
-    tls_ca_certs, Optional[str] = None, tls_certfile, Optional[str] = None, tls_keyfile, Optional[str] = None, tls_insecure, bool == False, username, Optional[str] = None, password, Optional[str] = None):
+class ExternalConnector,:
+    def __init__(self, ai_id, str, broker_address, str, broker_port, int, client_id_suffix, str = "hsp_connector",,:)
+(    tls_ca_certs, Optional[str] = None, tls_certfile, Optional[str] = None, tls_keyfile, Optional[str] = None, tls_insecure, bool == False, username, Optional[str] = None, password, Optional[str] = None):
         self.ai_id = ai_id
         self.broker_address = broker_address
         self.broker_port = broker_port
@@ -47,8 +47,8 @@ class ExternalConnector,
         try,
 
             # Check if the mqtt_client and its transport are still valid,::
-                f(hasattr(self.mqtt_client(), '_transport') and
-                self.mqtt_client._transport is not None)
+                f(hasattr(self.mqtt_client(), '_transport') and)
+(                self.mqtt_client._transport is not None)
                 await self.mqtt_client.disconnect()
             else,
                 logger.debug("MQTT client transport already closed, marking as disconnected")

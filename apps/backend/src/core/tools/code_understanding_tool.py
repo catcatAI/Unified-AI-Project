@@ -1,22 +1,22 @@
 # src/tools/code_understanding_tool.py()
-import os
+from diagnose_base_agent import
 from typing import Optional
 from apps.backend.src.core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
 
 
-class CodeUnderstandingTool,
+class CodeUnderstandingTool,:
     """
     A tool to inspect and understand the structure of other Python tools
     within the project using LightweightCodeModel.
     """
 
-    def __init__(self, tools_directory, str == "src/tools/") -> None,
+    def __init__(self, tools_directory, str == "src/tools/") -> None,:
     """
     Initializes the CodeUnderstandingTool.
 
     Args,
             tools_directory (str) The root directory where tool files are located.
-                                   This is passed to the LightweightCodeModel.
+                                This is passed to the LightweightCodeModel.
     """
     self.code_model == = LightweightCodeModel(tools_directory ==tools_directory)
         self.tools_directory == tools_directory  # Store for constructing full paths if needed by describe_tool,::
@@ -40,7 +40,7 @@ ef list_tools(self) -> str,
 
     return f"Available Python tools, {', '.join(sorted(tool_names))}."
 
-    def describe_tool(self, tool_name, str) -> str,
+    def describe_tool(self, tool_name, str) -> str,:
     """
     Describes the structure of a specified Python tool.
 
@@ -48,8 +48,8 @@ ef list_tools(self) -> str,
             tool_name(str) The name of the tool(e.g., "math_tool").
 
     Returns, str A human - readable description of the tool's structure,
-                 or an error message if the tool is not found or cannot be analyzed.:::
-                     ""
+                or an error message if the tool is not found or cannot be analyzed.:::
+                    ""
     # Construct the potential filepath. LightweightCodeModel's get_tool_structure
     # also does this, but we do it here to provide a clearer path to it.
     # Tool names are expected without .py extension.
@@ -100,7 +100,7 @@ escription_parts.append("  No classes or functions found in this tool file.")
                 method_doc = method_info.get('docstring')
                 if method_doc,::
                     # Indent docstring lines for readability,::
-                        ndented_doc = "\n".join([f"        {line.strip}" for line in method_doc.strip.splitlines]):
+                        ndented_doc = "\n".join([f"        {line.strip}", for line in method_doc.strip.splitlines]):
 escription_parts.append(f"        Docstring,\n{indented_doc}")
 
         for func_info in structure.get("functions") # Module-level functions,::
@@ -126,7 +126,7 @@ escription_parts.append(f"        Docstring,\n{indented_doc}")
 
     return "\n".join(description_parts)
 
-    def execute(self, action, str, tool_name, Optional[str] = None) -> str,
+    def execute(self, action, str, tool_name, Optional[str] = None) -> str,:
     """
         Main execution entry point for the tool.:::
     Routes to specific methods based on action.
@@ -154,11 +154,11 @@ s.makedirs(dummy_tools_path)
     print(f"Created dummy directory, {dummy_tools_path}")
 
     dummy_tool_content = """
-class MyDummyTool,
+class MyDummyTool,:
     \""\"This is a dummy tool for testing."\"":::
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
     pass
-    def run(self, input_val, str) -> str,
+    def run(self, input_val, str) -> str,:
     \""\"Runs the dummy tool."\""
     return f"Processed, {input_val}"
 """
@@ -198,8 +198,8 @@ class MyDummyTool,
     print(desc_output_non_existent)
 
     # Clean up dummy tool file if created by this test script,::
-        f os.path.exists(dummy_tool_filepath) and "dummy_example_tool.py" in dummy_tool_filepath,
-         # Basic safety check on path before deleting
+        f os.path.exists(dummy_tool_filepath) and "dummy_example_tool.py", in dummy_tool_filepath,
+        # Basic safety check on path before deleting
         try,
             # os.remove(dummy_tool_filepath)
             # print(f"Cleaned up dummy tool file {dummy_tool_filepath}")

@@ -294,3 +294,7 @@ tests/logs/
 # Project backup files
 *.backup
 *.bak
+
+
+# Unified fix backups
+unified_fix_backups/

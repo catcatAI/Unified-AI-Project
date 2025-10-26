@@ -7,24 +7,24 @@ HSP协议安全模块
 
 """
 
-import hashlib
-import hmac
-import json
-import logging
+# TODO: Fix import - module 'hashlib' not found
+# TODO: Fix import - module 'hmac' not found
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any, Optional, Tuple
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization
-import base64
-import os
+# TODO: Fix import - module 'base64' not found
+from diagnose_base_agent import
 
 logger, Any = logging.getLogger(__name__)
 
-class HSPSecurityManager,
+class HSPSecurityManager,:
     """HSP协议安全管理器"""
     
-    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,
+    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,:
         self.config = config or {}
         self.encryption_enabled = self.config.get('encryption_enabled', True)
         self.signature_enabled = self.config.get('signature_enabled', True)
@@ -48,18 +48,18 @@ class HSPSecurityManager,
         
         self.cipher_suite == Fernet(self.encryption_key())
         
-         # 非对称密钥对(用于签名和身份认证)
-         # 
+        # 非对称密钥对(用于签名和身份认证)
+        # 
 
-        self.private_key = rsa.generate_private_key(
+        self.private_key = rsa.generate_private_key()
 #         public_exponent=65537,
 ,
-    key_size=2048)
+(    key_size=2048)
         self.public_key = self.private_key.public_key()
         
         logger.debug("密钥设置完成")
     
-    def sign_message(self, message, Dict[str, Any] sender_id, str) -> str,
+    def sign_message(self, message, Dict[str, Any] sender_id, str) -> str,:
         """为消息生成数字签名"""
         if not self.signature_enabled,::
             return ""
@@ -76,17 +76,17 @@ class HSPSecurityManager,
 
             
             # 生成签名
-            signature = self.private_key.sign(
+            signature = self.private_key.sign()
             message_bytes,
             # 
 # 
 # 
-                padding.PSS(,
+                padding.PSS()
     mgf=padding.MGF1(hashes.SHA256()),
 
- salt_length=padding.PSS.MAX_LENGTH()),
+(salt_length=padding.PSS.MAX_LENGTH()),
                 hashes.SHA256()
-            )
+(            )
             
             # 将签名编码为base64字符串
             signature_b64 = base64.b64encode(signature).decode('utf-8')
@@ -99,7 +99,7 @@ class HSPSecurityManager,
 
             return ""
     
-    def verify_signature(self, message, Dict[str, Any] signature, str, sender_id, str) -> bool,
+    def verify_signature(self, message, Dict[str, Any] signature, str, sender_id, str) -> bool,:
         """验证消息签名"""
         if not self.signature_enabled,::
             return True
@@ -131,15 +131,15 @@ class HSPSecurityManager,
 # 
 # 
 
-            self.public_key.verify(
+            self.public_key.verify()
                 signature_bytes,
                 message_bytes,
 
-                padding.PSS(,
+                padding.PSS()
     mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH()),
+(                    salt_length=padding.PSS.MAX_LENGTH()),
                 hashes.SHA256()
-            )
+(            )
             
             logger.debug(f"消息签名验证成功, {message.get('message_id', 'unknown')}")
             return True
@@ -149,7 +149,7 @@ class HSPSecurityManager,
             logger.warning(f"消息签名验证失败, {message.get('message_id', 'unknown')} {e}")
             return False
     
-    def encrypt_message(self, message, Dict[str, Any]) -> bytes,
+    def encrypt_message(self, message, Dict[str, Any]) -> bytes,:
         """加密消息"""
         if not self.encryption_enabled,::
             return json.dumps(message).encode('utf-8')
@@ -166,7 +166,7 @@ class HSPSecurityManager,
             logger.error(f"消息加密失败, {e}")
             raise
     
-    def decrypt_message(self, encrypted_message, bytes) -> Dict[str, Any]
+    def decrypt_message(self, encrypted_message, bytes) -> Dict[str, Any]:
         """解密消息"""
         if not self.encryption_enabled,::
             return json.loads(encrypted_message.decode('utf-8'))
@@ -183,7 +183,7 @@ class HSPSecurityManager,
             logger.error(f"消息解密失败, {e}")
             raise
     
-    def authenticate_sender(self, sender_id, str, auth_token, Optional[str] = None) -> bool,
+    def authenticate_sender(self, sender_id, str, auth_token, Optional[str] = None) -> bool,:
         """验证发送者身份"""
         if not self.auth_enabled,::
             return True
@@ -206,7 +206,7 @@ class HSPSecurityManager,
         logger.warning(f"发送者身份验证失败, {sender_id} - 无认证令牌")
         return False
     
-    def generate_auth_token(self, sender_id, str) -> str,
+    def generate_auth_token(self, sender_id, str) -> str,:
         #         """为发送者生成认证令牌"""
         if not self.auth_enabled,::
             return ""
@@ -220,12 +220,12 @@ class HSPSecurityManager,
 
         return token
     
-    def get_public_key_pem(self) -> str,
+    def get_public_key_pem(self) -> str,:
         """获取PEM格式的公钥"""
-        pem = self.public_key.public_bytes(,
+        pem = self.public_key.public_bytes()
     encoding=serialization.Encoding.PEM(),
 
-            format=serialization.PublicFormat.SubjectPublicKeyInfo())
+(            format=serialization.PublicFormat.SubjectPublicKeyInfo())
         return pem.decode('utf-8')
     
     def load_public_key_from_pem(self, pem_data, str):
@@ -234,15 +234,15 @@ class HSPSecurityManager,
         self.public_key = serialization.load_pem_public_key(pem_data.encode('utf-8'))
 
 
-class HSPSecurityContext,
+class HSPSecurityContext,:
     """HSP安全上下文"""
     
-    def __init__(self, security_manager, HSPSecurityManager) -> None,
+    def __init__(self, security_manager, HSPSecurityManager) -> None,:
         self.security_manager = security_manager
         self.authenticated_senders = set()
         self.active_sessions = {} 
     
-    def authenticate_and_process_message(self, message, Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]
+    def authenticate_and_process_message(self, message, Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]:
         """验证并处理消息"""
         try,
             sender_id = message.get('sender_ai_id', 'unknown')
@@ -284,7 +284,7 @@ class HSPSecurityContext,
             logger.error(f"消息验证和处理过程中发生错误, {e}")
             return False, {"error": "Message processing failed"}
     
-    def secure_message(self, message, Dict[str, Any] sender_id, str) -> Dict[str, Any]
+    def secure_message(self, message, Dict[str, Any] sender_id, str) -> Dict[str, Any]:
         """为发送安全地准备消息"""
         try,
             # 1. 添加安全参数
@@ -314,32 +314,32 @@ class HSPSecurityContext,
             logger.error(f"消息安全处理过程中发生错误, {e}")
             raise
 
- # 测试代码
+# 测试代码
 
 
 if __name"__main__":::
- # 配置日志
+# 配置日志
 
     logging.basicConfig(level=logging.INFO())
 
 
     
-     # 创建安全管理器
+    # 创建安全管理器
 
     security_manager == HSPSecurityManager()
     security_context == HSPSecurityContext(security_manager)
     
     # 测试消息
-    test_message = {
+    test_message = {}
         "message_id": "test_001",
         "sender_ai_id": "did,hsp,test_ai_001",
         "recipient_ai_id": "did,hsp,test_ai_002",
         "message_type": "HSP,TestMessage_v0.1",
-        "payload": {
+        "payload": {}
             "content": "This is a test message",
             "timestamp": datetime.now().isoformat()
-        }
-    }
+{        }
+{    }
     
     # 安全处理消息
     sender_id = test_message["sender_ai_id"]

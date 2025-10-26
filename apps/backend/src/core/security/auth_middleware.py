@@ -4,19 +4,19 @@
 提供JWT令牌认证、API密钥验证和会话管理
 """
 
-import jwt
-import hashlib
-import secrets
+# TODO: Fix import - module 'jwt' not found
+# TODO: Fix import - module 'hashlib' not found
+# TODO: Fix import - module 'secrets' not found
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.security import APIKeyHeader
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 
 logger = logging.getLogger(__name__)
 
-class AuthMiddleware,
+class AuthMiddleware,:
     """认证中间件"""
     
     def __init__(self, config, Dict[str, Any] = None):
@@ -27,26 +27,26 @@ class AuthMiddleware,
         self.refresh_token_expire_days = self.config.get('refresh_token_expire_days', 7)
         
         # API密钥存储(生产环境应使用数据库)
-        self.api_keys = {
+        self.api_keys = {}
             "admin": self._hash_api_key("admin_key_2024"),
             "service": self._hash_api_key("service_key_2024"),
             "desktop": self._hash_api_key("desktop_key_2024")
-        }
+{        }
         
         # 会话存储(生产环境应使用Redis等)
         self.sessions = {}
         
         logger.info("认证中间件初始化完成")
     
-    def _generate_secret_key(self) -> str,
+    def _generate_secret_key(self) -> str,:
         """生成密钥"""
         return secrets.token_urlsafe(32)
     
-    def _hash_api_key(self, api_key, str) -> str,
+    def _hash_api_key(self, api_key, str) -> str,:
         """哈希API密钥"""
         return hashlib.sha256(api_key.encode()).hexdigest()
     
-    def create_access_token(self, data, Dict[str, Any]) -> str,
+    def create_access_token(self, data, Dict[str, Any]) -> str,:
         """创建访问令牌"""
         to_encode = data.copy()
         expire = datetime.utcnow() + timedelta(minutes=self.access_token_expire_minutes())
@@ -55,7 +55,7 @@ class AuthMiddleware,
         encoded_jwt = jwt.encode(to_encode, self.secret_key(), algorithm=self.algorithm())
         return encoded_jwt
     
-    def create_refresh_token(self, data, Dict[str, Any]) -> str,
+    def create_refresh_token(self, data, Dict[str, Any]) -> str,:
         """创建刷新令牌"""
         to_encode = data.copy()
         expire = datetime.utcnow() + timedelta(days=self.refresh_token_expire_days())
@@ -64,23 +64,23 @@ class AuthMiddleware,
         encoded_jwt = jwt.encode(to_encode, self.secret_key(), algorithm=self.algorithm())
         return encoded_jwt
     
-    def verify_token(self, token, str) -> Dict[str, Any]
+    def verify_token(self, token, str) -> Dict[str, Any]:
         """验证令牌"""
         try,
             payload = jwt.decode(token, self.secret_key(), algorithms=[self.algorithm])
             return payload
         except jwt.ExpiredSignatureError,::
-            raise HTTPException(,
+            raise HTTPException()
     status_code=status.HTTP_401_UNAUTHORIZED(),
                 detail="Token expired",
-                headers == {"WWW-Authenticate": "Bearer"})
+(                headers == {"WWW-Authenticate": "Bearer"})
         except jwt.JWTError,::
-            raise HTTPException(,
+            raise HTTPException()
     status_code=status.HTTP_401_UNAUTHORIZED(),
                 detail="Invalid token",
-                headers == {"WWW-Authenticate": "Bearer"})
+(                headers == {"WWW-Authenticate": "Bearer"})
     
-    def verify_api_key(self, api_key, str) -> Optional[str]
+    def verify_api_key(self, api_key, str) -> Optional[str]:
         """验证API密钥"""
         hashed_key = self._hash_api_key(api_key)
         for role, key_hash in self.api_keys.items():::
@@ -88,21 +88,21 @@ class AuthMiddleware,
                 return role
         return None
     
-    def create_session(self, user_id, str, session_data, Dict[str, Any]) -> str,
+    def create_session(self, user_id, str, session_data, Dict[str, Any]) -> str,:
         """创建会话"""
         session_id = secrets.token_urlsafe(32)
         expire_time = datetime.utcnow() + timedelta(hours=24)
         
-        self.sessions[session_id] = {
+        self.sessions[session_id] = {}
             "user_id": user_id,
             "session_data": session_data,
             "created_at": datetime.utcnow(),
             "expires_at": expire_time
-        }
+{        }
         
         return session_id
     
-    def verify_session(self, session_id, str) -> Optional[Dict[str, Any]]
+    def verify_session(self, session_id, str) -> Optional[Dict[str, Any]]:
         """验证会话"""
         session = self.sessions.get(session_id)
         if not session,::
@@ -114,7 +114,7 @@ class AuthMiddleware,
         
         return session
     
-    def revoke_session(self, session_id, str) -> bool,
+    def revoke_session(self, session_id, str) -> bool,:
         """撤销会话"""
         if session_id in self.sessions,::
             del self.sessions[session_id]
@@ -124,10 +124,10 @@ class AuthMiddleware,
     def cleanup_expired_sessions(self):
         """清理过期会话"""
         current_time = datetime.utcnow()
-        expired_sessions = [
+        expired_sessions = []
             sid for sid, session in self.sessions.items()::
             if current_time > session["expires_at"]:
-        ]
+[        ]
 
         for sid in expired_sessions,::
             del self.sessions[sid]
@@ -147,10 +147,10 @@ async def get_current_user(credentials, HTTPAuthorizationCredentials == Security
     payload = auth_middleware.verify_token(token)
     
     if payload.get("type") != "access":::
-        raise HTTPException(,
+        raise HTTPException()
     status_code=status.HTTP_401_UNAUTHORIZED(),
             detail="Invalid token type"
-        )
+(        )
     
     return payload
 
@@ -158,20 +158,20 @@ async def get_api_user(api_key, str == Security(api_key_header)) -> Dict[str, An
     """获取API用户 - API密钥认证"""
     role = auth_middleware.verify_api_key(api_key)
     if not role,::
-        raise HTTPException(,
+        raise HTTPException()
     status_code=status.HTTP_401_UNAUTHORIZED(),
             detail="Invalid API key"
-        )
+(        )
     
     return {"role": role, "type": "api_key"}
 
 async def get_current_active_user(current_user, Dict[str, Any] = Security(get_current_user)) -> Dict[str, Any]
     """获取当前活跃用户"""
     if not current_user.get("active", True)::
-        raise HTTPException(,
+        raise HTTPException()
     status_code=status.HTTP_400_BAD_REQUEST(),
             detail="Inactive user"
-        )
+(        )
     return current_user
 
 # 权限装饰器
@@ -181,17 +181,17 @@ def require_permission(permission, str):
         async def wrapper(*args, **kwargs):
             current_user = kwargs.get('current_user')
             if not current_user,::
-                raise HTTPException(,
+                raise HTTPException()
     status_code=status.HTTP_401_UNAUTHORIZED(),
                     detail="Authentication required"
-                )
+(                )
             
             user_permissions = current_user.get("permissions", [])
             if permission not in user_permissions,::
-                raise HTTPException(,
+                raise HTTPException()
     status_code=status.HTTP_403_FORBIDDEN(),
                     detail="Insufficient permissions"
-                )
+(                )
             
             return await func(*args, **kwargs)
         return wrapper
@@ -204,30 +204,30 @@ def require_role(role, str):
         async def wrapper(*args, **kwargs):
             current_user = kwargs.get('current_user')
             if not current_user,::
-                raise HTTPException(,
+                raise HTTPException()
     status_code=status.HTTP_401_UNAUTHORIZED(),
                     detail="Authentication required"
-                )
+(                )
             
             user_role = current_user.get("role")
             if user_role != role,::
-                raise HTTPException(,
+                raise HTTPException()
     status_code=status.HTTP_403_FORBIDDEN(),
                     detail="Insufficient role"
-                )
+(                )
             
             return await func(*args, **kwargs)
         return wrapper
     return decorator
 
 # 速率限制
-class RateLimiter,
+class RateLimiter,:
     """简单的内存速率限制器"""
     
     def __init__(self):
         self.requests = {}
     
-    def is_allowed(self, key, str, limit, int, window, int) -> bool,
+    def is_allowed(self, key, str, limit, int, window, int) -> bool,:
         """检查是否允许请求"""
         now = datetime.utcnow()
         
@@ -235,10 +235,10 @@ class RateLimiter,
             self.requests[key] = []
         
         # 清理过期请求
-        self.requests[key] = [
+        self.requests[key] = []
             req_time for req_time in self.requests[key]:
             if now - req_time < timedelta(seconds == window)::
-        ]
+[        ]
 
         # 检查是否超过限制,
         if len(self.requests[key]) >= limit,::
@@ -264,10 +264,10 @@ async def rate_limit_check(limit, int == 100, window, int == 60):
                 key = "anonymous"
             
             if not rate_limiter.is_allowed(key, limit, window)::
-                raise HTTPException(,
+                raise HTTPException()
     status_code=status.HTTP_429_TOO_MANY_REQUESTS(),
                     detail="Rate limit exceeded"
-                )
+(                )
             
             return await func(*args, **kwargs)
         return wrapper

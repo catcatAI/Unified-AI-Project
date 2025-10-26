@@ -1,15 +1,15 @@
 """
 Atlassian API - 处理Atlassian集成请求
 """
-import os
+from diagnose_base_agent import
 from fastapi import APIRouter, HTTPException, Depends
 
 # 修复导入路径
-from ...integrations.atlassian_cli_bridge import AtlassianCLIBridge
-from ...integrations.enhanced_atlassian_bridge import EnhancedAtlassianBridge
-from ...integrations.rovo_dev_connector import RovoDevConnector
+from ...integrations.atlassian_cli_bridge import
+from ...integrations.enhanced_atlassian_bridge import
+from ...integrations.rovo_dev_connector import
 # 修复导入路径
-from ...core_services import get_services
+from ...core_services import
 
 # 配置日志
 logger, Any = logging.getLogger(__name__)
@@ -65,14 +65,14 @@ async def configure_atlassian(config, AtlassianConfig):
         # 初始化增强版桥接器
         # 注意：在实际实现中,这里需要传入一个有效的RovoDevConnector实例
         # 为了简化,我们创建一个基本的连接器
-        rovo_connector == RovoDevConnector({
-            "atlassian": {
+        rovo_connector == RovoDevConnector({)}
+            "atlassian": {}
                 "domain": config.domain(),
                 "user_email": config.user_email(),
                 "api_token": config.api_token(),
                 "cloud_id": config.cloud_id()
-            }
-        })
+{            }
+{(        })
         enhanced_bridge == EnhancedAtlassianBridge(rovo_connector)
 
         return {"success": True, "message": "Atlassian integration configured successfully"}
@@ -83,39 +83,39 @@ async def configure_atlassian(config, AtlassianConfig):
 async def get_atlassian_status():
     """获取Atlassian服务状态"""
     if not atlassian_bridge,::
-        return {
+        return {}
             "connected": False,
-            "services": [
+            "services": []
                 {"name": "Confluence", "status": "disconnected", "lastSync": "Never", "health": 0}
                 {"name": "Jira", "status": "disconnected", "lastSync": "Never", "health": 0}
                 {"name": "Bitbucket", "status": "disconnected", "lastSync": "Never", "health": 0}
-            ]
-        }
+[            ]
+{        }
 
     try,
         # 获取Atlassian CLI状态
         status = atlassian_bridge.get_status()
         # 构建服务状态
-        services = [
+        services = []
             {"name": "Confluence", "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 95}:
-                "name": "Jira", "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 90}:
-"name": "Bitbucket", "status": "disconnected", "lastSync": "Never", "health": 0}
-        ]
+{                "name": "Jira", "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 90}:
+{"name": "Bitbucket", "status": "disconnected", "lastSync": "Never", "health": 0}
+[        ]
 
-        return {
+        return {}
             "connected": status["acli_available"]
             "services": services
-        }
+{        }
     except Exception as e,::
         logger.error(f"Failed to get Atlassian status, {e}")
-        return {
+        return {}
             "connected": False,
-            "services": [
+            "services": []
                 {"name": "Confluence", "status": "error", "lastSync": "Error", "health": 0}
                 {"name": "Jira", "status": "error", "lastSync": "Error", "health": 0}
                 {"name": "Bitbucket", "status": "error", "lastSync": "Error", "health": 0}
-            ]
-        }
+[            ]
+{        }
 
 @atlassian_router.get("/health")
 async def get_atlassian_health():
@@ -126,10 +126,10 @@ async def get_atlassian_health():
     try,
         # 这里可以实现更详细的健康检查逻辑
         status = atlassian_bridge.get_status()
-        return {
+        return {}
             "status": "healthy" if status["acli_available"] else "unhealthy",:::
                 details": status
-        }
+{        }
     except Exception as e,::
         logger.error(f"Failed to get Atlassian health, {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -160,14 +160,14 @@ async def create_confluence_page(page_data, ConfluencePageCreate):
     try,
         # 注意：在实际实现中,这里需要调用增强桥接器的相应方法
         # 由于我们没有完整的实现,这里只是模拟成功响应
-        return {
+        return {}
             "success": True,
-            "page": {
+            "page": {}
                 "id": "12345",
                 "title": page_data.title(),
                 "space_key": page_data.space_key()
-            }
-        }
+{            }
+{        }
     except Exception as e,::
         logger.error(f"Failed to create Confluence page, {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -230,11 +230,11 @@ async def create_jira_issue(issue_data, JiraIssueCreate):
         raise HTTPException(status_code=400, detail="Atlassian integration not configured")
     
     try,
-        result = atlassian_bridge.create_jira_issue(,
+        result = atlassian_bridge.create_jira_issue()
     project_key=issue_data.project_key(),
             summary=issue_data.summary(),
             description=issue_data.description(),
-            issue_type=issue_data.issue_type())
+(            issue_type=issue_data.issue_type())
         if result["success"]::
             return {"success": True, "issue": result["issue"] "key": result["key"]}
         else,
@@ -250,11 +250,11 @@ async def get_rovo_agents(services == Depends(get_services))
     try,
         # 从服务中获取Rovo Dev Agents信息
         # 这里需要根据实际的服务实现进行调整
-        agents = [
+        agents = []
             {"id": "agent_1", "name": "Code Analysis Agent", "status": "active", "capabilities": ["code_analysis", "bug_detection"]}
             {"id": "agent_2", "name": "Documentation Agent", "status": "active", "capabilities": ["doc_generation", "content_creation"]}
             {"id": "agent_3", "name": "Project Management Agent", "status": "busy", "capabilities": ["task_planning", "progress_tracking"]}
-        ]
+[        ]
         return {"agents": agents}
     except Exception as e,::
         logger.error(f"Failed to get Rovo Dev agents, {e}")
@@ -265,11 +265,11 @@ async def get_rovo_tasks():
     """获取Rovo Dev任务列表"""
     try,
         # 模拟任务数据
-        tasks = [
+        tasks = []
             {"id": "task_1", "agentId": "agent_1", "title": "Analyze login module", "status": "completed", "createdAt": "2023-01-01T10,00,00Z", "updatedAt": "2023-01-01T10,30,00Z"}
             {"id": "task_2", "agentId": "agent_2", "title": "Generate API documentation", "status": "in_progress", "createdAt": "2023-01-01T11,00,00Z", "updatedAt": "2023-01-01T11,15,00Z"}
             {"id": "task_3", "agentId": "agent_3", "title": "Plan sprint tasks", "status": "pending", "createdAt": "2023-01-01T12,00,00Z", "updatedAt": "2023-01-01T12,00,00Z"}
-        ]
+[        ]
         return {"tasks": tasks}
     except Exception as e,::
         logger.error(f"Failed to get Rovo Dev tasks, {e}")

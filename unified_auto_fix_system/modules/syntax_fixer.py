@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 增强语法修复器
 修复Python语法错误,包括缩进、缺少冒号、括号不匹配等
@@ -149,6 +150,27 @@ class EnhancedSyntaxFixer(BaseFixer):
             if i > 1:
                 indent_issues = self._check_indentation_consistency(lines[i-2], line, i)
                 issues.extend(indent_issues)
+            
+            # 检查其他常见语法问题
+            stripped = line.strip()
+            if stripped:
+                # 检查是否在with语句中错误使用了==
+                if 'with open(' in stripped and 'encoding == ' in stripped:
+                    issues.append(SyntaxIssue(
+                        line_number=i,
+                        column=line.find('encoding'),
+                        error_type="syntax_error",
+                        error_message="在with语句中错误使用了==，应使用="
+                    ))
+                
+                # 检查是否缺少逗号
+                if '(' in stripped and ')' in stripped and '" ' in stripped and ' "' in stripped:
+                    issues.append(SyntaxIssue(
+                        line_number=i,
+                        column=0,
+                        error_type="syntax_error",
+                        error_message="可能缺少逗号分隔符"
+                    ))
         
         return issues
     
@@ -161,9 +183,31 @@ class EnhancedSyntaxFixer(BaseFixer):
         # 需要冒号的关键字
         colon_keywords = ['class', 'def', 'if', 'elif', 'else', 'for', 'while', 
                          'try', 'except', 'finally', 'with']
+        
+        # 检查是否以这些关键字开头
         for keyword in colon_keywords:
+            # 精确匹配关键字后跟空格的情况
             if stripped.startswith(keyword + ' '):
                 return not stripped.endswith(':')
+            
+            # 完整关键字匹配
+            if stripped == keyword:
+                return True
+            
+            # 检查关键字后跟括号的情况（函数/类定义）
+            if (stripped.startswith(keyword + '(') and ')' in stripped and 
+                not stripped.endswith(':')):
+                return True
+            
+            # 检查with语句等特殊情况
+            if (stripped.startswith(keyword + ' ') and 
+                not stripped.endswith(':')):
+                # 检查是否是合法的with语句（包含as关键字）
+                if keyword == 'with' and ' as ' in stripped:
+                    return True
+                # 其他控制流语句
+                if keyword in ['if', 'elif', 'for', 'while', 'except']:
+                    return True
         
         return False
     
@@ -213,17 +257,43 @@ class EnhancedSyntaxFixer(BaseFixer):
         """检查缩进一致性"""
         issues = []
         
-        # 简单的缩进检查逻辑
+        # 忽略空行和注释行
+        if not prev_line.strip() or prev_line.strip().startswith('#'):
+            return issues
+        if not current_line.strip() or current_line.strip().startswith('#'):
+            return issues
+        
+        # 计算缩进
         prev_indent = len(prev_line) - len(prev_line.lstrip())
         current_indent = len(current_line) - len(current_line.lstrip())
         
-        # 检查缩进突变
-        if abs(current_indent - prev_indent) > 4 and current_line.strip() and prev_line.strip():
+        # 检查缩进是否是4的倍数（Python标准）
+        if prev_indent % 4 != 0:
+            issues.append(SyntaxIssue(
+                line_number=line_num-1,
+                column=0,
+                error_type="indentation_inconsistency",
+                error_message=f"前一行缩进不规范, {prev_indent} 空格,应为4的倍数",
+                severity="warning"
+            ))
+        
+        if current_indent % 4 != 0:
             issues.append(SyntaxIssue(
                 line_number=line_num,
                 column=0,
                 error_type="indentation_inconsistency",
-                error_message=f"缩进不一致, 前一行 {prev_indent} 空格,当前行 {current_indent} 空格",
+                error_message=f"当前行缩进不规范, {current_indent} 空格,应为4的倍数",
+                severity="warning"
+            ))
+        
+        # 检查缩进突变
+        indent_diff = abs(current_indent - prev_indent)
+        if indent_diff > 8 and current_line.strip() and prev_line.strip():
+            issues.append(SyntaxIssue(
+                line_number=line_num,
+                column=0,
+                error_type="indentation_inconsistency",
+                error_message=f"缩进突变过大, 前一行 {prev_indent} 空格,当前行 {current_indent} 空格,差值 {indent_diff}",
                 severity="warning"
             ))
 
@@ -344,11 +414,13 @@ class EnhancedSyntaxFixer(BaseFixer):
 
             # 检查是否需要冒号
             if self._needs_colon(line):
-                # 在行尾添加冒号
-                indent = line[:len(line) - len(line.lstrip())]
-                fixed_line = line.rstrip() + ':'
-                fixed_lines.append(fixed_line)
-                self.logger.debug(f"修复缺少冒号, {stripped}")
+                # 在行尾添加冒号，但要确保不会在已经有冒号的地方添加
+                if not stripped.endswith(':'):
+                    fixed_line = line.rstrip() + ':'
+                    fixed_lines.append(fixed_line)
+                    self.logger.debug(f"修复缺少冒号: {stripped}")
+                else:
+                    fixed_lines.append(line)
             else:
                 fixed_lines.append(line)
         
@@ -356,34 +428,78 @@ class EnhancedSyntaxFixer(BaseFixer):
     
     def _fix_indentation(self, content: str) -> str:
         """修复缩进问题"""
-        # 这里可以实现更复杂的缩进修复逻辑
-        # 目前只是简单的标准化
-        lines = content.split('\n')
-        fixed_lines = []
-        
-        for line in lines:
-            # 将Tab转换为空格
-            fixed_line = line.replace('\t', '    ')
-            fixed_lines.append(fixed_line)
-        
-        return '\n'.join(fixed_lines)
+        # 使用更完善的缩进修复逻辑
+        return self._fix_unexpected_indent(content)
     
     def _fix_unmatched_parentheses(self, content: str) -> str:
-        """修复不匹配的括号"""
-        # 这是一个复杂的任务,这里实现简化版本
-        # 在实际应用中,可能需要更智能的分析
-        
+        """修复不匹配的括号 - 改进版本"""
         lines = content.split('\n')
         fixed_lines = []
         
-        for line in lines:
-            # 简单的括号平衡检查
-            if self._has_unmatched_parentheses(line):
-                # 尝试修复(简化版本)
-                fixed_line = self._try_fix_parentheses(line)
-                fixed_lines.append(fixed_line)
-            else:
-                fixed_lines.append(line)
+        # 跟踪整个文件的括号平衡
+        paren_balance = {'(': 0, '[': 0, '{': 0}
+        
+        for line_num, line in enumerate(lines):
+            original_line = line
+            
+            # 更新括号平衡计数
+            for char in line:
+                if char in paren_balance:
+                    paren_balance[char] += 1
+                elif char == ')' and paren_balance['('] > 0:
+                    paren_balance['('] -= 1
+                elif char == ']' and paren_balance['['] > 0:
+                    paren_balance['['] -= 1
+                elif char == '}' and paren_balance['{'] > 0:
+                    paren_balance['{'] -= 1
+            
+            # 修复行末不平衡的括号（更智能的方式）
+            # 检查行内的括号平衡
+            line_paren_count = {'(': 0, ')': 0, '[': 0, ']': 0, '{': 0, '}': 0}
+            for char in line:
+                if char in line_paren_count:
+                    line_paren_count[char] += 1
+            
+            # 计算行内不平衡的括号数量
+            unmatched_parens = line_paren_count['('] - line_paren_count[')']
+            unmatched_brackets = line_paren_count['['] - line_paren_count[']']
+            unmatched_braces = line_paren_count['{'] - line_paren_count['}']
+            
+            # 修复不平衡的括号
+            if unmatched_parens > 0:
+                # 行内有未闭合的圆括号，在行末添加
+                line += ')' * unmatched_parens
+            elif unmatched_parens < 0:
+                # 行内有多余的右圆括号，这是一个严重错误，需要更仔细处理
+                # 简单处理：在行首添加缺失的左括号
+                line = '(' * abs(unmatched_parens) + line
+            
+            if unmatched_brackets > 0:
+                # 行内有未闭合的方括号，在行末添加
+                line += ']' * unmatched_brackets
+            elif unmatched_brackets < 0:
+                # 行内有多余的右方括号
+                line = '[' * abs(unmatched_brackets) + line
+            
+            if unmatched_braces > 0:
+                # 行内有未闭合的花括号，在行末添加
+                line += '}' * unmatched_braces
+            elif unmatched_braces < 0:
+                # 行内有多余的右花括号
+                line = '{' * abs(unmatched_braces) + line
+            
+            fixed_lines.append(line)
+        
+        # 在文件末尾添加缺失的右括号（如果有）
+        missing_parens = paren_balance['(']
+        missing_brackets = paren_balance['[']
+        missing_braces = paren_balance['{']
+        
+        if missing_parens > 0 or missing_brackets > 0 or missing_braces > 0:
+            # 添加缺失的右括号
+            end_braces = '}' * missing_braces + ']' * missing_brackets + ')' * missing_parens
+            if fixed_lines:
+                fixed_lines[-1] = fixed_lines[-1] + end_braces
         
         return '\n'.join(fixed_lines)
     
@@ -394,28 +510,41 @@ class EnhancedSyntaxFixer(BaseFixer):
                 line.count('[') != line.count(']') or 
                 line.count('{') != line.count('}'))
     
-    def _try_fix_parentheses(self, line: str) -> str:
-        """尝试修复括号"""
-        # 简化的修复逻辑
-        # 在实际应用中,这里需要更智能的分析
-        
-        # 如果行尾有不匹配的左括号,尝试添加右括号
-        if line.count('(') > line.count(')'):
-            line += ')' * (line.count('(') - line.count(')'))
-        
-        if line.count('[') > line.count(']'):
-            line += ']' * (line.count('[') - line.count(']'))
-        
-        if line.count('{') > line.count('}'):
-            line += '}' * (line.count('{') - line.count('}'))
-        
-        return line
-    
     def _fix_invalid_syntax(self, content: str) -> str:
         """修复无效语法"""
-        # 这里可以添加更多特定的语法修复规则
-        # 目前只是一个占位符
-        return content
+        lines = content.split('\n')
+        fixed_lines = []
+        
+        for line in lines:
+            fixed_line = line
+            stripped = fixed_line.strip()
+            
+            # 修复常见的语法错误
+            
+            # 1. 修复赋值错误 (== 应该是 =)
+            if ' =' in stripped and ' ==' not in stripped and ' !=' not in stripped:
+                # 检查是否在with语句中错误使用了==
+                if 'with open(' in stripped and 'encoding == ' in stripped:
+                    fixed_line = fixed_line.replace('encoding == ', 'encoding=')
+                elif ' as ' in stripped and ':' in stripped:
+                    # 可能是在参数中错误使用了==
+                    fixed_line = fixed_line.replace(' == ', ' = ')
+            
+            # 2. 修复缺少逗号的情况
+            # 检查函数调用中可能缺少逗号的情况
+            if '(' in stripped and ')' in stripped:
+                # 简单的启发式检查
+                if '" ' in stripped and ' "' in stripped:
+                    # 可能是字符串参数之间缺少逗号
+                    fixed_line = re.sub(r'("[^"]*") ([a-zA-Z_])', r'\1, \2', fixed_line)
+            
+            # 3. 修复多余的逗号
+            if stripped.endswith(',)'):
+                fixed_line = fixed_line[:-2] + ')'
+            
+            fixed_lines.append(fixed_line)
+        
+        return '\n'.join(fixed_lines)
     
     def _categorize_issues(self, issues: List[SyntaxIssue]) -> Dict[str, int]:
         """按类型分类问题"""
@@ -427,20 +556,100 @@ class EnhancedSyntaxFixer(BaseFixer):
     
     def _fix_unexpected_indent(self, content: str) -> str:
         """修复意外缩进"""
-        # 实现意外缩进修复逻辑
-        return content
+        lines = content.split('\n')
+        fixed_lines = []
+        
+        # 跟踪预期的缩进级别
+        expected_indent = 0
+        indent_stack = [0]  # 缩进栈，用于跟踪嵌套级别
+        
+        for line in lines:
+            stripped = line.lstrip()
+            if not stripped:  # 空行
+                fixed_lines.append(line)
+                continue
+                
+            current_indent = len(line) - len(stripped)
+            
+            # 检查是否是控制流语句的开始
+            if stripped.startswith(('class ', 'def ', 'if ', 'elif ', 'else:', 'for ', 'while ', 'try:', 'except', 'finally:', 'with ')):
+                # 如果是控制流语句，确保缩进是4的倍数
+                standard_indent = (current_indent // 4) * 4
+                if standard_indent != current_indent:
+                    line = ' ' * standard_indent + stripped
+                    current_indent = standard_indent
+                
+                # 更新预期缩进
+                if stripped.endswith(':'):
+                    indent_stack.append(current_indent + 4)
+                    expected_indent = current_indent + 4
+                else:
+                    expected_indent = current_indent
+            
+            # 检查是否是块结束语句
+            elif stripped.startswith(('elif ', 'else:', 'except', 'finally:')):
+                # 这些语句应该与对应的开始语句有相同的缩进
+                if len(indent_stack) > 1:
+                    expected_indent = indent_stack[-2]
+                
+                # 调整缩进
+                if current_indent != expected_indent:
+                    line = ' ' * expected_indent + stripped
+            
+            # 普通语句
+            else:
+                # 确保缩进是4的倍数
+                standard_indent = (current_indent // 4) * 4
+                if standard_indent != current_indent:
+                    line = ' ' * standard_indent + stripped
+            
+            fixed_lines.append(line)
+        
+        return '\n'.join(fixed_lines)
     
     def _fix_unindent_mismatch(self, content: str) -> str:
         """修复缩进不匹配"""
-        # 实现缩进不匹配修复逻辑
-        return content
+        # 使用与意外缩进相同的逻辑
+        return self._fix_unexpected_indent(content)
     
     def _fix_eof_while_scanning(self, content: str) -> str:
         """修复扫描时遇到文件结尾"""
-        # 实现EOF修复逻辑
-        return content
+        # 检查是否缺少引号
+        lines = content.split('\n')
+        fixed_lines = []
+        
+        for line in lines:
+            # 检查引号是否匹配
+            single_quotes = line.count("'")
+            double_quotes = line.count('"')
+            
+            # 如果引号数量是奇数，可能缺少闭合引号
+            if single_quotes % 2 == 1:
+                line = line + "'"  # 添加缺失的引号
+            if double_quotes % 2 == 1:
+                line = line + '"'  # 添加缺失的引号
+            
+            fixed_lines.append(line)
+        
+        return '\n'.join(fixed_lines)
     
     def _fix_invalid_token(self, content: str) -> str:
         """修复无效标记"""
-        # 实现无效标记修复逻辑
-        return content
+        # 修复常见的无效标记问题
+        lines = content.split('\n')
+        fixed_lines = []
+        
+        for line in lines:
+            fixed_line = line
+            
+            # 修复非标准字符
+            # 替换常见的非标准引号
+            fixed_line = fixed_line.replace('“', '"').replace('”', '"')
+            fixed_line = fixed_line.replace('‘', "'").replace('’', "'")
+            
+            # 修复常见的Unicode字符问题
+            fixed_line = fixed_line.replace('\u2013', '-').replace('\u2014', '-')
+            
+            fixed_lines.append(fixed_line)
+        
+        return '\n'.join(fixed_lines)

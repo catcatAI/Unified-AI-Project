@@ -4,9 +4,9 @@
 生成逻辑推理训练数据
 """
 
-import json
-import random
-import os
+from tests.test_json_fix import
+# TODO: Fix import - module 'random' not found
+from diagnose_base_agent import
 from typing import Optional
 
 # 定义输出目录和文件名
@@ -38,14 +38,14 @@ def generate_simple_proposition(max_nesting == 1, current_nesting=0):
         left = generate_simple_proposition(max_nesting, current_nesting + 1)
         right = generate_simple_proposition(max_nesting, current_nesting + 1)
         
-        use_parens_left = random.choice([True, False]) and ("AND" in left or "OR" in left)
-        use_parens_right = random.choice([True, False]) and ("AND" in right or "OR" in right)
+        use_parens_left = random.choice([True, False]) and ("AND", in left or "OR", in left)
+        use_parens_right = random.choice([True, False]) and ("AND", in right or "OR", in right)
         
         left_expr == f"({left})" if use_parens_left else left,:
         right_expr == f"({right})" if use_parens_right else right,:
         return f"{left_expr} {op} {right_expr}"
 
-def evaluate_proposition(prop_str, str) -> Optional[bool]
+def evaluate_proposition(prop_str, str) -> Optional[bool]:
     """
     评估简单的逻辑命题字符串
     使用Python的eval,将逻辑关键字替换为Python等价物
@@ -76,12 +76,12 @@ def generate_dataset(num_samples == 1000, max_nesting=2):
         result = evaluate_proposition(proposition)
         
         if result is not None,::
-            dataset.append({
+            dataset.append({)}
                 "id": i,
                 "proposition": proposition,
                 "result": result,
                 "complexity": max_nesting
-            })
+{(            })
         
         if i % 100 == 0,::
             print(f"生成进度, {i}/{num_samples}")
@@ -111,11 +111,11 @@ def main():
     
     # 保存数据
     print(f"\n💾 保存训练数据到, {TRAIN_FILE}")
-    with open(TRAIN_FILE, 'w', encoding == 'utf-8') as f,
+    with open(TRAIN_FILE, 'w', encoding == 'utf-8') as f,:
         json.dump(train_data, f, indent=2, ensure_ascii == False)
     
     print(f"💾 保存测试数据到, {TEST_FILE}")
-    with open(TEST_FILE, 'w', encoding == 'utf-8') as f,
+    with open(TEST_FILE, 'w', encoding == 'utf-8') as f,:
         json.dump(test_data, f, indent=2, ensure_ascii == False)
     
     print("\n🎉 逻辑模型数据生成完成！")

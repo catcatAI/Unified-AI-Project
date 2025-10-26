@@ -1,30 +1,30 @@
-import sqlite3
-import json
+# TODO: Fix import - module 'sqlite3' not found
+from tests.test_json_fix import
 from typing import Dict, Any, List, Optional
 
-class UnifiedSymbolicSpace,
+class UnifiedSymbolicSpace,:
     """
     Represents a unified symbolic space for the AGI, managing symbols, their properties,::
     and relationships within a SQLite database.
     """
-    def __init__(self, db_path, str == 'unified_symbolic_space.db') -> None,
+    def __init__(self, db_path, str == 'unified_symbolic_space.db') -> None,:
     self.db_path = db_path
     self._init_db  # 修复：添加括号调用方法
 
     def _init_db(self):
         onn = sqlite3.connect(self.db_path())
     cursor = conn.cursor()  # 修复：添加括号调用方法
-    cursor.execute("""
-            CREATE TABLE IF NOT EXISTS symbols (
+    cursor.execute(""")
+            CREATE TABLE IF NOT EXISTS symbols ()
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 symbol_name TEXT UNIQUE NOT NULL,
                 type TEXT,
                 properties TEXT, -- JSON string for flexible properties,::,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-    """)
-    cursor.execute("""
-            CREATE TABLE IF NOT EXISTS relationships (
+(            )
+(    """)
+    cursor.execute(""")
+            CREATE TABLE IF NOT EXISTS relationships ()
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 source_symbol_id INTEGER,
                 target_symbol_id INTEGER,
@@ -32,19 +32,19 @@ class UnifiedSymbolicSpace,
                 properties TEXT, -- JSON string for relationship properties,::,
     FOREIGN KEY (source_symbol_id) REFERENCES symbols(id),
                 FOREIGN KEY (target_symbol_id) REFERENCES symbols(id)
-            )
-    """)
+(            )
+(    """)
     conn.commit()  # 修复：添加括号调用方法
     conn.close()   # 修复：添加括号调用方法
 
-    def add_symbol(self, symbol_name, str, symbol_type, str, properties, Optional[Dict[str, Any]] = None) -> int,
+    def add_symbol(self, symbol_name, str, symbol_type, str, properties, Optional[Dict[str, Any]] = None) -> int,:
     conn = sqlite3.connect(self.db_path())
     cursor = conn.cursor  # 修复：添加括号调用方法
         props_json == json.dumps(properties) if properties else '':::
     try,
 
-    cursor.execute("INSERT INTO symbols (symbol_name, type, properties) VALUES (?, ?, ?)",
-                           (symbol_name, symbol_type, props_json))
+    cursor.execute("INSERT INTO symbols (symbol_name, type, properties) VALUES (?, ?, ?)")
+(                        (symbol_name, symbol_type, props_json))
             symbol_id = cursor.lastrowid()
             conn.commit()  # 修复：添加括号调用方法
             return symbol_id
@@ -59,8 +59,8 @@ class UnifiedSymbolicSpace,
     current_props = {}
                 current_props.update(properties)
                 props_json = json.dumps(current_props)
-            cursor.execute("UPDATE symbols SET type = ?, properties = ?, last_updated == CURRENT_TIMESTAMP WHERE symbol_name = ?",
-                           (symbol_type, props_json, symbol_name))
+            cursor.execute("UPDATE symbols SET type = ?, properties = ?, last_updated == CURRENT_TIMESTAMP WHERE symbol_name = ?")
+(                        (symbol_type, props_json, symbol_name))
             conn.commit()  # 修复：添加括号调用方法
             cursor.execute("SELECT id FROM symbols WHERE symbol_name = ?", (symbol_name))
             result = cursor.fetchone()
@@ -71,22 +71,22 @@ class UnifiedSymbolicSpace,
     if 'conn' in locals and conn,::
     conn.close()
 
-    def get_symbol(self, symbol_name, str) -> Optional[Dict[str, Any]]
+    def get_symbol(self, symbol_name, str) -> Optional[Dict[str, Any]]:
     conn = sqlite3.connect(self.db_path())
     cursor = conn.cursor  # 修复：添加括号调用方法
     cursor.execute("SELECT id, symbol_name, type, properties FROM symbols WHERE symbol_name = ?", (symbol_name))
     row = cursor.fetchone()  # 修复：添加括号调用方法
     conn.close()  # 修复：添加括号调用方法
         if row,::
-    return {
+    return {}
                 'id': row[0]
                 'symbol_name': row[1]
                 'type': row[2]
                 'properties': json.loads(row[3]) if row[3] else {}::
     return None
 
-    def update_symbol(self, symbol_name, str, new_symbol_name, Optional[str] = None,,
-    new_type, Optional[str] = None, properties, Optional[Dict[str, Any]] = None):
+    def update_symbol(self, symbol_name, str, new_symbol_name, Optional[str] = None,,:)
+(    new_type, Optional[str] = None, properties, Optional[Dict[str, Any]] = None):
     # Get current properties first to avoid connection issues
     current_props = {}
         if properties,::
@@ -121,8 +121,8 @@ class UnifiedSymbolicSpace,
     conn.close()   # 修复：添加括号调用方法
     return rows_affected > 0
 
-    def add_relationship(self, source_symbol_name, str, target_symbol_name, str,,
-    relationship_type, str, properties, Optional[Dict[str, Any]] = None) -> Optional[int]
+    def add_relationship(self, source_symbol_name, str, target_symbol_name, str,,:)
+(    relationship_type, str, properties, Optional[Dict[str, Any]] = None) -> Optional[int]
     # Get symbols first to avoid connection issues
     source_symbol = self.get_symbol(source_symbol_name)
     target_symbol = self.get_symbol(target_symbol_name)
@@ -134,14 +134,14 @@ class UnifiedSymbolicSpace,
     conn = sqlite3.connect(self.db_path())
     cursor = conn.cursor  # 修复：添加括号调用方法
         props_json == json.dumps(properties) if properties else '':::
-    cursor.execute("INSERT INTO relationships (source_symbol_id, target_symbol_id, relationship_type, properties) VALUES (?, ?, ?, ?)",
-                       (source_symbol['id'] target_symbol['id'] relationship_type, props_json))
+    cursor.execute("INSERT INTO relationships (source_symbol_id, target_symbol_id, relationship_type, properties) VALUES (?, ?, ?, ?)")
+(                    (source_symbol['id'] target_symbol['id'] relationship_type, props_json))
     rel_id = cursor.lastrowid()
     conn.commit()  # 修复：添加括号调用方法
     conn.close()   # 修复：添加括号调用方法
     return rel_id
 
-    def get_relationships(self, symbol_name, str) -> List[Dict[str, Any]]
+    def get_relationships(self, symbol_name, str) -> List[Dict[str, Any]]:
     # Get symbol first to avoid connection issues
     symbol = self.get_symbol(symbol_name)
         if not symbol,::
@@ -149,27 +149,27 @@ class UnifiedSymbolicSpace,
 
     conn = sqlite3.connect(self.db_path())
     cursor = conn.cursor  # 修复：添加括号调用方法
-    cursor.execute(""",
+    cursor.execute(""")
     SELECT r.id(), s_src.symbol_name(), s_tgt.symbol_name(), r.relationship_type(), r.properties()
             FROM relationships r
             JOIN symbols s_src ON r.source_symbol_id = s_src.id()
             JOIN symbols s_tgt ON r.target_symbol_id = s_tgt.id()
             WHERE s_src.symbol_name == ? OR s_tgt.symbol_name == ?
-    """, (symbol_name, symbol_name))
+(    """, (symbol_name, symbol_name))
 
     relationships = []
         for row in cursor.fetchall()  # 修复：添加括号调用方法,::
-            elationships.append({
+            elationships.append({)}
                 'id': row[0]
                 'source': row[1]
                 'target': row[2]
                 'type': row[3]
                 'properties': json.loads(row[4]) if row[4] else {}::
-                    )
+(                    )
     conn.close()  # 修复：添加括号调用方法
     return relationships
 
-    def delete_symbol(self, symbol_name, str) -> bool,
+    def delete_symbol(self, symbol_name, str) -> bool,:
     conn = sqlite3.connect(self.db_path())
     cursor = conn.cursor  # 修复：添加括号调用方法
     symbol = self.get_symbol(symbol_name)
@@ -185,7 +185,7 @@ class UnifiedSymbolicSpace,
     conn.close()   # 修复：添加括号调用方法
     return rows_affected > 0
 
-    def delete_relationship(self, rel_id, int) -> bool,
+    def delete_relationship(self, rel_id, int) -> bool,:
     conn = sqlite3.connect(self.db_path())
     cursor = conn.cursor  # 修复：添加括号调用方法
     cursor.execute("DELETE FROM relationships WHERE id = ?", (rel_id))
@@ -234,7 +234,7 @@ if __name'__main__':::
     print("\nUnified Symbolic Space operations completed.")
 
     # Clean up test database
-    import os
+from diagnose_base_agent import
     if os.path.exists('test_symbolic_space.db'):::
         s.remove('test_symbolic_space.db')
-    print("Cleaned up test_symbolic_space.db")
+    print("Cleaned up test_symbolic_space.db")}}

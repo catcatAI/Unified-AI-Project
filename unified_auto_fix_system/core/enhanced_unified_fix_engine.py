@@ -841,7 +841,8 @@ class EnhancedUnifiedFixEngine:
             post_fix_analysis = self.analyze_project_enhanced(context)
             
             # 比较修复前后的结果
-            pre_fix_issues = context.get("pre_fix_analysis", {}).get("issues", {})
+            pre_fix_analysis = getattr(context, "pre_fix_analysis", {})
+            pre_fix_issues = pre_fix_analysis.get("issues", {}) if isinstance(pre_fix_analysis, dict) else {}
             post_fix_issues = post_fix_analysis.get("issues", {})
             
             # 计算剩余问题

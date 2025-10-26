@@ -2,17 +2,17 @@
 增強版 Atlassian Bridge - 集成演示學習管理器
 """
 
-import asyncio
-import logging
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any, Optional
-from .atlassian_bridge import AtlassianBridge
-from .rovo_dev_connector import RovoDevConnector
+from .atlassian_bridge import
+from .rovo_dev_connector import
 
 logger, Any = logging.getLogger(__name__)
 
 # 定义 DemoLearningManager 类(如果它不存在的话)
-class DemoLearningManager,
-    def __init__(self) -> None,
+class DemoLearningManager,:
+    def __init__(self) -> None,:
     self.config == def detect_demo_credentials(self, credentials):
     # 简单实现,总是返回 False
     return False
@@ -29,7 +29,7 @@ class DemoLearningManager,
 class EnhancedAtlassianBridge(AtlassianBridge):
 ""增強版 Atlassian Bridge,支持演示學習功能"""
 
-    def __init__(self, connector, RovoDevConnector, demo_learning_manager, Optional[DemoLearningManager] = None) -> None,
+    def __init__(self, connector, RovoDevConnector, demo_learning_manager, Optional[DemoLearningManager] = None) -> None,:
     """初始化增強版 Atlassian 橋接器
 
     Args,
@@ -56,12 +56,12 @@ class EnhancedAtlassianBridge(AtlassianBridge):
         ""檢查並激活演示模式"""
         try,
             # 獲取認證信息
-            credentials = {
+            credentials = {}
                 'api_token': self.config.get('api_token', ''),
                 'cloud_id': self.config.get('cloud_id', ''),
                 'user_email': self.config.get('user_email', ''),
                 'domain': self.config.get('domain', '')
-            }
+{            }
 
             # 檢測演示金鑰
             if self.demo_manager.detect_demo_credentials(credentials)::
@@ -114,20 +114,20 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                 logger.info(f"創建演示空間, {space_config['name']} ({space_config['key']})")
 
                 # 記錄學習數據
-                await self.demo_manager.record_user_interaction(
+                await self.demo_manager.record_user_interaction()
                     action="create_demo_space",
                     context=space_config,,
     result="success"
-                )
+(                )
 
         except Exception as e,::
             logger.error(f"創建演示空間失敗, {e}")
-            await self.demo_manager.record_error_pattern(
+            await self.demo_manager.record_error_pattern()
                 error_type="demo_initialization",,
     error_message=str(e),
                 context == {"step": "create_demo_spaces"}
                 resolution="logged_for_analysis"
-            )
+(            )
 
     async def _setup_test_projects(self) -> None,
     """設置測試 Jira 項目"""
@@ -142,20 +142,20 @@ class EnhancedAtlassianBridge(AtlassianBridge):
     logger.info(f"創建演示項目, {project_config['name']} ({project_config['key']})")
 
                 # 記錄學習數據
-                await self.demo_manager.record_user_interaction(
+                await self.demo_manager.record_user_interaction()
                     action="create_demo_project",
                     context=project_config,,
     result="success"
-                )
+(                )
 
         except Exception as e,::
             logger.error(f"設置測試項目失敗, {e}")
-            await self.demo_manager.record_error_pattern(
+            await self.demo_manager.record_error_pattern()
                 error_type="demo_initialization",,
     error_message=str(e),
                 context == {"step": "setup_test_projects"}
                 resolution="logged_for_analysis"
-            )
+(            )
 
     async def _initialize_agents(self):
         ""初始化代理"""
@@ -174,13 +174,13 @@ class EnhancedAtlassianBridge(AtlassianBridge):
 
     # 重寫父類方法以添加學習功能
 
-    async def create_confluence_page(
+    async def create_confluence_page()
     self,
     space_key, str,
     title, str,
     content, str,,
     parent_id, Optional[str] = None
-    ) -> Dict[str, Any]
+(    ) -> Dict[str, Any]
     """創建 Confluence 頁面(增強版)"""
     start_time = asyncio.get_event_loop.time()
         try,
@@ -190,42 +190,42 @@ class EnhancedAtlassianBridge(AtlassianBridge):
 
             # 記錄成功的用戶交互
             if self.demo_mode_active,::
-    await self.demo_manager.record_user_interaction(
+    await self.demo_manager.record_user_interaction()
                     action="create_confluence_page",,
-    context={
+    context={}
                         "space_key": space_key,
                         "title": title,
                         "has_parent": parent_id is not None,
                         "content_length": len(content)
-                    }
+{                    }
                     result="success"
-                )
+(                )
 
             return result
 
         except Exception as e,::
             # 記錄錯誤
             if self.demo_mode_active,::
-    await self.demo_manager.record_error_pattern(
+    await self.demo_manager.record_error_pattern()
                     error_type="confluence_operation",,
     error_message=str(e),
-                    context={
+                    context={}
                         "operation": "create_page",
                         "space_key": space_key,
                         "title": title
-                    }
+{                    }
                     resolution="fallback_attempted"
-                )
+(                )
 
-                await self.demo_manager.record_user_interaction(
+                await self.demo_manager.record_user_interaction()
                     action="create_confluence_page",,
-    context={
+    context={}
                         "space_key": space_key,
                         "title": title,
                         "error": str(e)
-                    }
+{                    }
                     result="error"
-                )
+(                )
 
             raise
 
@@ -235,15 +235,15 @@ class EnhancedAtlassianBridge(AtlassianBridge):
             duration = end_time - start_time
 
             if self.demo_mode_active and hasattr(self.demo_manager(), 'learning_data'):::
-                erformance_metric = {
+                erformance_metric = {}
                     'operation': 'create_confluence_page',
                     'duration': duration,
                     'success': True,
                     'timestamp': asyncio.get_event_loop.time()
-                }
+{                }
                 self.demo_manager.learning_data.setdefault('performance_metrics').append(performance_metric)
 
-    async def create_jira_issue(
+    async def create_jira_issue()
     self,
     project_key, str,
     summary, str,
@@ -251,7 +251,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
     issue_type, str = "Task",
     priority, str = "Medium",,
     assignee, Optional[str] = None
-    ) -> Dict[str, Any]
+(    ) -> Dict[str, Any]
     """創建 Jira 問題(增強版)"""
     start_time = asyncio.get_event_loop.time()
         try,
@@ -261,42 +261,42 @@ class EnhancedAtlassianBridge(AtlassianBridge):
 
             # 記錄成功的用戶交互
             if self.demo_mode_active,::
-    await self.demo_manager.record_user_interaction(
+    await self.demo_manager.record_user_interaction()
                     action="create_jira_issue",,
-    context={
+    context={}
                         "project_key": project_key,
                         "issue_type": issue_type,
                         "priority": priority,
                         "has_assignee": assignee is not None,
                         "summary_length": len(summary)
-                    }
+{                    }
                     result="success"
-                )
+(                )
 
             return result
 
         except Exception as e,::
             # 記錄錯誤
             if self.demo_mode_active,::
-    await self.demo_manager.record_error_pattern(
+    await self.demo_manager.record_error_pattern()
                     error_type="jira_operation",,
     error_message=str(e),
-                    context={
+                    context={}
                         "operation": "create_issue",
                         "project_key": project_key,
                         "issue_type": issue_type
-                    }
+{                    }
                     resolution="fallback_attempted"
-                )
+(                )
 
-                await self.demo_manager.record_user_interaction(
+                await self.demo_manager.record_user_interaction()
                     action="create_jira_issue",,
-    context={
+    context={}
                         "project_key": project_key,
                         "error": str(e)
-                    }
+{                    }
                     result="error"
-                )
+(                )
 
             raise
 
@@ -306,12 +306,12 @@ class EnhancedAtlassianBridge(AtlassianBridge):
             duration = end_time - start_time
 
             if self.demo_mode_active and hasattr(self.demo_manager(), 'learning_data'):::
-                erformance_metric = {
+                erformance_metric = {}
                     'operation': 'create_jira_issue',
                     'duration': duration,
                     'success': True,
                     'timestamp': asyncio.get_event_loop.time()
-                }
+{                }
                 self.demo_manager.learning_data.setdefault('performance_metrics').append(performance_metric)
 
     async def get_learning_insights(self) -> Dict[str, Any]
@@ -320,14 +320,14 @@ class EnhancedAtlassianBridge(AtlassianBridge):
     return {"demo_mode": False, "message": "演示模式未激活"}
 
     return await self.demo_manager.get_learning_insights()
-    def get_demo_status(self) -> Dict[str, Any]
+    def get_demo_status(self) -> Dict[str, Any]:
     """獲取演示狀態"""
-    return {
+    return {}
             "demo_mode_active": self.demo_mode_active(),
             "demo_manager_active": self.demo_manager.demo_mode(),
             "storage_path": str(self.demo_manager.storage_path()),
             "config_loaded": bool(self.demo_manager.config())
-    }
+{    }
 
     async def shutdown(self):
         ""關閉增強版橋接層"""
@@ -335,4 +335,4 @@ class EnhancedAtlassianBridge(AtlassianBridge):
     await self.demo_manager.shutdown()
     # 調用父類的關閉方法(如果有的話)
         if hasattr(super, 'shutdown'):::
- = await super().shutdown
+= await super().shutdown

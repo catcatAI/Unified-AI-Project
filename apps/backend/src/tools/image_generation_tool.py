@@ -1,18 +1,18 @@
 from typing import Dict, Any, Optional
 
-class ImageGenerationTool,
+class ImageGenerationTool,:
     """
     A tool for generating images from text prompts.:::
         laceholder version, Returns a static URL.
     """
-    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,
+    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,:
         """
         Initializes the ImageGenerationTool.
         """
         self.config = config or {}
         print(f"{self.__class__.__name__} initialized.")
 
-    def create_image(self, prompt, str, style, str == "photorealistic") -> Dict[str, Any]
+    def create_image(self, prompt, str, style, str == "photorealistic") -> Dict[str, Any]:
         """
         Generates an image based on a text prompt.
 
@@ -29,9 +29,9 @@ class ImageGenerationTool,
         seed == sum(ord(c) for c in prompt)  # Simple seed from prompt,::
             laceholder_url == f"https,//picsum.photos/seed/{seed}/600/400"
 
-        result = {
+        result = {}
             "image_url": placeholder_url,
             "alt_text": f"A {style} image of, {prompt}"
-        }
+{        }
 
         return {"status": "success", "result": result}

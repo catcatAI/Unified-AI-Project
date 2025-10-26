@@ -1,37 +1,24 @@
-import sys
-import os
+"""
+Simple agent test to verify imports and basic instantiation.
+"""
 
-# Add the src directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+import pytest
+from apps.backend.src.ai.agents.base.base_agent import BaseAgent
 
-def test_simple() -> None,
-    """Simple test to verify imports work."""
-    try,
-        from apps.backend.src.core_ai.agents.base_agent import BaseAgent
-        print("BaseAgent imported successfully")
-        
-        # Create a simple agent instance
-        agent == BaseAgent(
+def test_simple_agent_creation():
+    """Tests if a BaseAgent can be imported and instantiated."""
+    try:
+        agent = BaseAgent(
             agent_id="test_agent_123",
+            agent_name="TestAgent",
             capabilities=[{
                 "capability_id": "test_capability_1",
                 "name": "Test Capability",
                 "description": "A test capability",
                 "version": "1.0"
-            }],
-    agent_name="TestAgent"
+            }]
         )
-        
-        print(f"Agent created, {agent.agent_id}")
-        print("All tests passed!")
-        return True
-    except Exception as e,::
-        print(f"Error, {e}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-if __name"__main__":::
-    success = test_simple()
-    if not success,::
-        exit(1)
+        assert agent.agent_id == "test_agent_123"
+        assert agent.agent_name == "TestAgent"
+    except Exception as e:
+        pytest.fail(f"Failed to create BaseAgent: {e}")

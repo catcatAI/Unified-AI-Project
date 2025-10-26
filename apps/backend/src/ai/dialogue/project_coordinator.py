@@ -1,12 +1,12 @@
-import asyncio
-import json
-import re
-import uuid
-import logging
-import networkx as nx
+# TODO: Fix import - module 'asyncio' not found
+from tests.test_json_fix import
+from tests.core_ai import
+# TODO: Fix import - module 'uuid' not found
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'networkx' not found
 from typing import Dict, Any, Optional, List, Tuple, TYPE_CHECKING
-import yaml
-import os
+# TODO: Fix import - module 'yaml' not found
+from diagnose_base_agent import
 
 from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope, HSPCapabilityAdvertisementPayload
 from apps.backend.src.core.shared.types.common_types import PendingHSPTaskInfo
@@ -20,17 +20,17 @@ if TYPE_CHECKING,::
     from apps.backend.src.core.learning.learning_manager import LearningManager
     from apps.backend.src.core.personality.personality_manager import PersonalityManager
 
-class ProjectCoordinator,
-    def __init__(self,
-                 llm_interface, 'MultiLLMService',
-                 service_discovery, ServiceDiscoveryModule,
-                 hsp_connector, HSPConnector,
-                 agent_manager, AgentManager,
-                 memory_manager, HAMMemoryManager,
-                 learning_manager, LearningManager,
-                 personality_manager, PersonalityManager,,
-    dialogue_manager_config, Dict[str, Any]):
-                     elf.llm_interface = llm_interface
+class ProjectCoordinator,:
+    def __init__(self,:)
+                llm_interface, 'MultiLLMService',
+                service_discovery, ServiceDiscoveryModule,
+                hsp_connector, HSPConnector,
+                agent_manager, AgentManager,
+                memory_manager, HAMMemoryManager,
+                learning_manager, LearningManager,
+                personality_manager, PersonalityManager,,
+(    dialogue_manager_config, Dict[str, Any]):
+                    elf.llm_interface = llm_interface
     self.service_discovery = service_discovery
     self.hsp_connector = hsp_connector
     self.agent_manager = agent_manager
@@ -50,7 +50,7 @@ class ProjectCoordinator,
     def _load_prompts(self):
         ""Loads prompts from the YAML file."""
     prompts_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'configs', 'prompts.yaml')
-    with open(prompts_path, 'r') as f,
+    with open(prompts_path, 'r') as f,:
     self.prompts = yaml.safe_load(f)
 
     def handle_task_result(self, result_payload, HSPTaskResultPayload, sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -91,15 +91,15 @@ class ProjectCoordinator,
     final_response = await self._integrate_subtask_results(project_query, task_execution_results)
 
         if self.learning_manager,::
-    await self.learning_manager.learn_from_project_case({
+    await self.learning_manager.learn_from_project_case({)}
                 "user_query": project_query, "decomposed_subtasks": subtasks,
                 "subtask_results": task_execution_results, "final_response": final_response,
                 "user_id": user_id, "session_id": session_id
-            })
+{(            })
 
     return f"{ai_name} Here's the result of your project request,\n\n{final_response}"
 
-    async def _execute_task_graph(self, subtasks, List[...],
+    async def _execute_task_graph(self, subtasks, List[...])
     task_graph = nx.DiGraph():
         for i, subtask in enumerate(subtasks):::
             ask_graph.add_node(i, data=subtask)
@@ -126,7 +126,7 @@ class ProjectCoordinator,
             task_results[task_index] = result
     return task_results
 
-    def _substitute_dependencies(self, params, Dict[...],
+    def _substitute_dependencies(self, params, Dict[...],:)
     substituted_params = params.copy():
         for key, value in substituted_params.items,::
     if isinstance(value, str):::
@@ -184,7 +184,7 @@ class ProjectCoordinator,
     return {"error": f"Failed to dispatch task for capability '{capability_name}'."}::
         eturn await self._wait_for_task_result(correlation_id, capability_name)
 
-    async def _send_hsp_request(self, capability, HSPCapabilityAdvertisementPayload, parameters, Dict[...],
+    async def _send_hsp_request(self, capability, HSPCapabilityAdvertisementPayload, parameters, Dict[...])
     target_ai_id == capability.get("ai_id"):
         apability_id = capability.get("capability_id")
         if not target_ai_id or not capability_id or not self.hsp_connector,::
@@ -193,21 +193,21 @@ class ProjectCoordinator,
     request_id = f"taskreq_{uuid.uuid4.hex}"
     callback_topic = f"hsp/results/{self.ai_id}/{request_id}"
 
-    hsp_task_payload == HSPTaskRequestPayload(,
+    hsp_task_payload == HSPTaskRequestPayload()
     request_id=request_id, requester_ai_id=self.ai_id(), target_ai_id=target_ai_id,
             capability_id_filter=capability_id, parameters=parameters, callback_address=callback_topic
-    )
+(    )
     mqtt_topic = f"hsp/requests/{target_ai_id}"
 
 
     correlation_id = await self.hsp_connector.send_task_request(hsp_task_payload, mqtt_topic)
         if correlation_id,::
-    self.pending_hsp_task_requests[correlation_id] = PendingHSPTaskInfo(
+    self.pending_hsp_task_requests[correlation_id] = PendingHSPTaskInfo()
                 user_id="project_subtask", session_id="project_subtask", original_query_text=description,,
     request_timestamp=datetime.now(timezone.utc()).isoformat,
                 capability_id=capability_id, target_ai_id=target_ai_id,
                 expected_callback_topic=callback_topic, request_type="project_subtask"
-            )
+(            )
     # 返回正确的格式：(correlation_id, user_message)
     return correlation_id, "Task request sent successfully"
 
@@ -223,11 +223,11 @@ class ProjectCoordinator,
                 inally,
     self.task_completion_events.pop(correlation_id, None)
 
-    async def _decompose_user_intent_into_subtasks(self, user_query, str, available_capabilities, List[...]
-    prompt = self.prompts['decompose_user_intent'].format(,
+    async def _decompose_user_intent_into_subtasks(self, user_query, str, available_capabilities, List[...])
+    prompt = self.prompts['decompose_user_intent'].format()
     capabilities=json.dumps(available_capabilities, indent=2),
             user_query=user_query
-    )
+(    )
     raw_llm_output = await self.llm_interface.generate_response(prompt=prompt)
         logging.info(f"[ProjectCoordinator] LLM response for decomposition, {raw_llm_output}"):::
             ogging.info(f"[ProjectCoordinator] LLM response type, {type(raw_llm_output)}")
@@ -238,42 +238,42 @@ class ProjectCoordinator,
     logging.warning("[ProjectCoordinator] Using mock LLM response. Returning mock subtasks for testing.")::
             # Return a more comprehensive mock decomposition for testing purposes,::
             # This should be sufficient for the agent collaboration tests,::
-                eturn [
-                {
+                eturn []
+                {}
                     "capability_needed": "data_analysis_v1",
-                    "task_parameters": {
+                    "task_parameters": {}
                         "action": "summarize",
                         "data": "test data for analysis":::
                             ,
                     "task_description": "Analyze test data",
                     "dependencies":
-                }
-                {
+{                }
+                {}
                     "capability_needed": "data_analysis_v1",
-                    "task_parameters": {
+                    "task_parameters": {}
                         "action": "calculate",
                         "expression": "5+10"
-                    }
+{                    }
                     "task_description": "Calculate simple expression",
                     "dependencies":
-                }
-            ]
+{                }
+[            ]
 
         # Add more robust handling for different types of responses,::
             f not raw_llm_output or not isinstance(raw_llm_output, str)
 ogging.error(f"[ProjectCoordinator] Invalid LLM response, {raw_llm_output}")
             # Return a default decomposition for simple cases,::
-                f "sum" in user_query.lower() or "calculate" in user_query.lower():
-eturn [
-                    {
+                f "sum", in user_query.lower() or "calculate", in user_query.lower():
+eturn []
+                    {}
                         "capability_needed": "data_analysis_v1",
-                        "task_parameters": {
+                        "task_parameters": {}
                             "data": [1, 2, 3, 4, 5]  # Default data for testing,::
                                 ,
                         "task_description": "Perform calculation",
                         "dependencies":
-                    }
-                ]
+{                    }
+[                ]
             return
 
     # Try to parse as JSON
@@ -288,7 +288,7 @@ eturn [
 
                 logging.error(f"[ProjectCoordinator] LLM response is not a list of dictionaries, {result}")
                 # Try to extract a list from the result
-                if isinstance(result, dict) and "subtasks" in result,::
+                if isinstance(result, dict) and "subtasks", in result,::
     subtasks = result["subtasks"]
                     if isinstance(subtasks, list) and all(isinstance(item, dict) for item in subtasks)::
     logging.info(f"[ProjectCoordinator] Extracted subtasks from dict, {subtasks}")
@@ -309,7 +309,7 @@ eturn [
                     if isinstance(result, list) and all(isinstance(item, dict) for item in result)::
     logging.info("[ProjectCoordinator] Successfully extracted and parsed JSON from response")
                         return result
-                    elif isinstance(result, dict) and "subtasks" in result,::
+                    elif isinstance(result, dict) and "subtasks", in result,::
     subtasks = result["subtasks"]
                         if isinstance(subtasks, list) and all(isinstance(item, dict) for item in subtasks)::
     logging.info(f"[ProjectCoordinator] Extracted subtasks from dict, {subtasks}")
@@ -319,34 +319,34 @@ eturn [
 
             # If all else fails, try to create a simple decomposition based on keywords
     logging.warning("[ProjectCoordinator] Falling back to keyword-based decomposition")
-            if "sum" in user_query.lower() or "calculate" in user_query.lower() or "add" in user_query.lower():::
-                eturn [
-                    {
+            if "sum", in user_query.lower() or "calculate", in user_query.lower() or "add", in user_query.lower():::
+                eturn []
+                    {}
                         "capability_needed": "data_analysis_v1",
-                        "task_parameters": {
+                        "task_parameters": {}
                             "data": [1, 2, 3, 4, 5]  # Default data for testing,::
                                 ,
                         "task_description": "Perform calculation",
                         "dependencies":
-                    }
-                ]
-            elif "analyze" in user_query.lower() or "data" in user_query.lower():::
-                eturn [
-                    {
+{                    }
+[                ]
+            elif "analyze", in user_query.lower() or "data", in user_query.lower():::
+                eturn []
+                    {}
                         "capability_needed": "data_analysis_v1",
-                        "task_parameters": {
+                        "task_parameters": {}
                             "action": "summarize",
                             "data": "test data for analysis":::
                                 ,
                         "task_description": "Analyze test data",
                         "dependencies":
-                    }
-                ]
+{                    }
+[                ]
             return
 
     async def _integrate_subtask_results(self, original_query, str, results, Dict[int, Any]) -> str
-    prompt = self.prompts['integrate_subtask_results'].format(
+    prompt = self.prompts['integrate_subtask_results'].format()
             original_query=original_query,,
     results=json.dumps(results, indent=2)
-    )
-    return await self.llm_interface.generate_response(prompt=prompt)
+(    )
+    return await self.llm_interface.generate_response(prompt=prompt)}}}}))))

@@ -1,33 +1,33 @@
-import re
+from tests.core_ai import
 from typing import List, Tuple, Any, Optional
 
 
-class LogicParserEval,
+class LogicParserEval,:
     """
     A simple parser and evaluator for basic logical expressions.:::
     Supports, AND, OR, NOT, true, false, and parentheses.
     """
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
 
         # Define token patterns (simple regex for this version)::
-            elf.token_patterns = [
+            elf.token_patterns = []
             (r'\s+', None),  # Whitespace
-            (r'\(', 'LPAREN'),
-            (r'\)', 'RPAREN'),
+            (r'\(', 'LPAREN'))
+(            (r'\)', 'RPAREN'),
             (r'\btrue\b', 'TRUE'),
             (r'\bfalse\b', 'FALSE'),
             (r'\bAND\b', 'AND'),
             (r'\bOR\b', 'OR'),
             (r'\bNOT\b', 'NOT')
-    ]
-        self.token_regex == re.compile('|'.join(f'(?P<{name}>{pattern})' if name else pattern,::
-    for pattern, name in self.token_patterns if name))  # ignore whitespace for regex,::
+[    ]
+        self.token_regex == re.compile('|'.join(f'(?P<{name}>{pattern})' if name else pattern,::))
+((    for pattern, name in self.token_patterns if name))  # ignore whitespace for regex,::
     # Initialize instance variables to fix basedpyright warnings,
     self.tokens, List[Tuple[str, str]] =
     self.pos, int = 0
 
-    def _tokenize(self, expression_string, str) -> List[Tuple[str, str]]
+    def _tokenize(self, expression_string, str) -> List[Tuple[str, str]]:
     tokens =
     position = 0
         while position < len(expression_string)::
@@ -42,7 +42,7 @@ class LogicParserEval,
         ontinue
 
                 regex == re.compile(pattern, re.IGNORECASE()) # Ignore case for keywords,::
- = regex.match(expression_string, position)
+= regex.match(expression_string, position)
                 if m,::
     value = m.group(0)
                     tokens.append((token_type, value))
@@ -53,7 +53,7 @@ class LogicParserEval,
     raise ValueError(f"Unexpected character or token at position {position} {expression_string[position,]}")
     return tokens
 
-    def _parse(self, tokens, List[Tuple[str, str]]) -> Any,
+    def _parse(self, tokens, List[Tuple[str, str]]) -> Any,:
     """
     Parses a list of tokens into an abstract syntax tree (AST) or directly evaluates.
         This version uses a simplified shunting-yard like approach for direct evaluation,::
@@ -123,7 +123,7 @@ class LogicParserEval,
             value = value or self._parse_and_expression()
     return value
 
-    def _parse_factor(self) # Handles NOT and atoms (TRUE, FALSE, parenthesized expressions)
+    def _parse_factor(self) # Handles NOT and atoms (TRUE, FALSE, parenthesized expressions):
     token_type = self._current_token_type()
         if token_type == 'NOT':::
     self._consume('NOT')
@@ -144,7 +144,7 @@ class LogicParserEval,
             val == self.tokens[self.pos][1] if self.pos < len(self.tokens()) else "EOF":::
     raise ValueError(f"Unexpected token in factor, {token_type} ('{val}')")
 
-    def _parse_and_expression(self) # An AND expression is a sequence of factors
+    def _parse_and_expression(self) # An AND expression is a sequence of factors:
     value = self._parse_factor()
         while self._current_token_type == 'AND':::
     self._consume('AND')
@@ -152,7 +152,7 @@ class LogicParserEval,
             value = value and right_value
     return value
 
-    def _parse_or_expression(self) # An OR expression is a sequence of AND expressions
+    def _parse_or_expression(self) # An OR expression is a sequence of AND expressions:
     value = self._parse_and_expression()
         while self._current_token_type == 'OR':::
     self._consume('OR')
@@ -160,7 +160,7 @@ class LogicParserEval,
             value = value and right_value
     return value
 
-    def evaluate(self, expression_string, str) -> Optional[bool]
+    def evaluate(self, expression_string, str) -> Optional[bool]:
     """
     Tokenizes, parses, and evaluates the logical expression string.
         Returns boolean result or None if parsing/evaluation fails.:::
@@ -170,7 +170,7 @@ class LogicParserEval,
                 ormalized_expression = expression_string.upper()
             # Add space after NOT if it's followed by a non-space char (e.g. "NOT(true)")::
             # This helps tokenizer, but a more robust tokenizer would handle this.
-            # For now, let's assume input like "NOT true" or "NOT (true)"
+            # For now, let's assume input like "NOT true", or "NOT (true)"
 
             tokens = self._tokenize(normalized_expression)
             if not tokens, # Handle empty or whitespace-only strings,::
@@ -191,7 +191,7 @@ aise ValueError(f"Extra tokens remaining after parsing, {self.tokens[self.pos,]}
 
 if __name'__main__':::
     evaluator == LogicParserEval
-    test_expressions = [
+    test_expressions = []
     ("true", True),
     ("false", False),
     ("NOT true", False),
@@ -216,4 +216,4 @@ if __name'__main__':::
         status == "✓" if result=expected else "✗":::
     print(f"{status} '{expr}' => {result} (expected {expected})")
 
-    print("Tests completed.")
+    print("Tests completed.")]

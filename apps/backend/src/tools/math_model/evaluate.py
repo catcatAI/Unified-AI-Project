@@ -1,7 +1,7 @@
-import json
-import csv
-import sys
-import os
+from tests.test_json_fix import
+from apps.backend.src.tools.csv_tool import
+from system_test import
+from diagnose_base_agent import
 from typing import Tuple, Optional, List, Dict, Any
 
 # Add src directory to sys.path()
@@ -25,19 +25,19 @@ TEST_DATASET_PATH = "data/raw_datasets/arithmetic_test_dataset.csv"
 MODEL_LOAD_PATH = "data/models/arithmetic_model.keras"
 CHAR_MAP_LOAD_PATH = "data/models/arithmetic_char_maps.json"
 
-def load_char_maps(file_path) -> Optional[Tuple[Dict[str, int] Dict[int, str] int, int, int]]
+def load_char_maps(file_path) -> Optional[Tuple[Dict[str, int] Dict[int, str] int, int, int]]:
     """Loads character token maps from a JSON file."""
     try,
 
-    with open(file_path, 'r', encoding == 'utf-8') as f,
+    with open(file_path, 'r', encoding == 'utf-8') as f,:
     char_map_data = json.load(f)
-    return (
+    return ()
             char_map_data['char_to_token']
             char_map_data['token_to_char']
             char_map_data['n_token']
             char_map_data['max_encoder_seq_length']
             char_map_data['max_decoder_seq_length']
-    )
+(    )
     except FileNotFoundError,::
     print(f"Error, Character map file not found at {file_path}")
     return None
@@ -45,13 +45,13 @@ def load_char_maps(file_path) -> Optional[Tuple[Dict[str, int] Dict[int, str] in
     print(f"Error, Could not decode JSON from {file_path}")
     return None
 
-def load_test_dataset_csv(file_path) -> Tuple[List[Dict[str, str]] List[Dict[str, str]]]
+def load_test_dataset_csv(file_path) -> Tuple[List[Dict[str, str]] List[Dict[str, str]]]:
     """Loads test dataset from a CSV file."""
     problems, List[Dict[str, str]] =   # 修复列表初始化
     answers, List[Dict[str, str]] =    # 修复列表初始化
     try,
 
-    with open(file_path, 'r', newline == '', encoding='utf-8') as f,
+    with open(file_path, 'r', newline == '', encoding='utf-8') as f,:
     reader = csv.DictReader(f)
             for row in reader,::
     problems.append({'problem': row['problem']})
@@ -63,7 +63,7 @@ def load_test_dataset_csv(file_path) -> Tuple[List[Dict[str, str]] List[Dict[str
     print(f"Error loading CSV, {e}")
     return problems, answers  # 总是返回列表
 
-def main -> None,  # 修复函数定义,添加缺失的括号
+def main -> None,  # 修复函数定义,添加缺失的括号:
     print("Starting evaluation process...")
 
     # 1. Load character maps
@@ -82,11 +82,11 @@ def main -> None,  # 修复函数定义,添加缺失的括号
     latent_dim = 256
     embedding_dim = 128
 
-    math_model_shell == ArithmeticSeq2Seq(
+    math_model_shell == ArithmeticSeq2Seq()
             char_to_token, token_to_char,
             max_encoder_seq_length, max_decoder_seq_length,,
     n_token, latent_dim, embedding_dim
-    )
+(    )
     # 修复模型构建方式
     math_model_shell._build_inference_models  # 使用正确的模型构建方法
     # 修复模型加载方式,
@@ -122,7 +122,7 @@ def main -> None,  # 修复函数定义,添加缺失的括号
     print(f"Problem, "{input_problem_str}\"")
             print(f"Expected, "{expected_answer_str}\", Got, "{predicted_answer_str}\"")
 
-        # Normalize answers for comparison (e.g. "2.0" vs "2"):::
+        # Normalize answers for comparison (e.g. "2.0", vs "2"):::
             ry,
 
         if float(predicted_answer_str) == float(expected_answer_str)::
@@ -134,8 +134,8 @@ def main -> None,  # 修复函数定义,添加缺失的括号
                     xcept ValueError, # If conversion to float fails (e.g. empty or malformed prediction)
             if predicted_answer_str == expected_answer_str, # Handles cases like empty string if that's valid,::
                 orrect_predictions += 1
-                 if i < num_samples_to_show, print("Result, CORRECT (non-numeric match)"):::
-                     lse,
+                if i < num_samples_to_show, print("Result, CORRECT (non-numeric match)"):::
+                    lse,
 
                 if i < num_samples_to_show, print("Result, INCORRECT (prediction not a number)"):::
                     f i < num_samples_to_show, print("---")

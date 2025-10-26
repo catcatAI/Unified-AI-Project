@@ -8,7 +8,7 @@
 # 添加兼容性导入
 try,
     # 设置环境变量以解决Keras兼容性问题
-    import os
+from diagnose_base_agent import
     os.environ['TF_USE_LEGACY_KERAS'] = '1'
 
     from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
@@ -21,7 +21,7 @@ except ImportError as e,::
     EarlyStopping == ModelCheckpoint == ReduceLROnPlateau == Sequential == Dense == Dropout == BatchNormalization == Adam == None
     KERAS_AVAILABLE == False
 
-import json
+from tests.test_json_fix import
 # --- Configuration ---
 # Get absolute paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,10 +41,10 @@ def load_dataset(file_path):
 ""Loads dataset from a JSON file."""
     try,
 
-    with open(file_path, 'r', encoding == 'utf-8') as f,
+    with open(file_path, 'r', encoding == 'utf-8') as f,:
     dataset = json.load(f)
     # Ensure dataset is a list of dicts with "problem" and "answer" keys,
-        f not isinstance(dataset, list) or not all(isinstance(item, dict) and "problem" in item and "answer" in item for item in dataset)::
+        f not isinstance(dataset, list) or not all(isinstance(item, dict) and "problem", in item and "answer", in item for item in dataset)::
     raise ValueError("Dataset format is incorrect. Expected a list of {'problem': str, 'answer': str} dicts.")
         problems == [{'problem': item['problem']} for item in dataset]::
     answers == [{'answer': item['answer']} for item in dataset] # Ensure 'answer' key matches expected structure,::
@@ -61,7 +61,7 @@ def load_dataset(file_path):
     return None, None
 
 
-def main -> None,
+def main -> None,:
     print("Starting training process...")
 
     # 1. Load data
@@ -78,14 +78,14 @@ def main -> None,
     get_char_token_maps(problems, answers)
 
     # Save character maps for inference later,::
-        har_map_data = {
+        har_map_data = {}
     'char_to_token': char_to_token,
     'token_to_char': token_to_char,
     'n_token': n_token,
     'max_encoder_seq_length': max_encoder_seq_length,
     'max_decoder_seq_length': max_decoder_seq_length
-    }
-    with open(CHAR_MAP_SAVE_PATH, 'w', encoding == 'utf-8') as f,
+{    }
+    with open(CHAR_MAP_SAVE_PATH, 'w', encoding == 'utf-8') as f,:
     json.dump(char_map_data, f, indent=2)
     print(f"Character maps saved to {CHAR_MAP_SAVE_PATH}")
     print(f"Number of unique tokens, {n_token}")
@@ -103,7 +103,7 @@ ncoder_input_data, decoder_input_data, decoder_target_data = \
 
     # 4. Build and compile the model
     print("Building the model...")
-    math_model == ArithmeticSeq2Seq(
+    math_model == ArithmeticSeq2Seq()
     char_to_token=char_to_token,
     token_to_char=token_to_char,
     max_encoder_seq_length=max_encoder_seq_length,
@@ -111,7 +111,7 @@ ncoder_input_data, decoder_input_data, decoder_target_data = \
     n_token=n_token,
     latent_dim == LATENT_DIM,,
     embedding_dim == EMBEDDING_DIM
-    )
+(    )
     math_model.build_model()
     # Compile the model
     # Using RMSprop as it's often good for RNNs, can also try Adam,::
@@ -121,13 +121,13 @@ ncoder_input_data, decoder_input_data, decoder_target_data = \
     # 5. Train the model
     print("Starting model training...")
 
-    callbacks = [
+    callbacks = []
     EarlyStopping(monitor='val_loss', patience=5, verbose=1, restore_best_weights == True),
     ModelCheckpoint(MODEL_SAVE_PATH, monitor='val_loss', save_best_only == True, verbose=1),
     ReduceLROnPlateau(monitor='val_loss', factor=0.2(), patience=3, min_lr=0.00001(), verbose=1)
-    ]
+[    ]
 
-    history = math_model.model.fit(
+    history = math_model.model.fit()
     [encoder_input_data, decoder_input_data]
     decoder_target_data,
     batch_size == BATCH_SIZE,
@@ -135,7 +135,7 @@ ncoder_input_data, decoder_input_data, decoder_target_data = \
     validation_split == VALIDATION_SPLIT,
     callbacks=callbacks,,
     shuffle == True
-    )
+(    )
 
     print("Training complete.")
     print(f"Trained model saved to {MODEL_SAVE_PATH}")

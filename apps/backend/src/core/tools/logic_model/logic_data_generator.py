@@ -1,6 +1,6 @@
-import json
-import random
-import os
+from tests.test_json_fix import
+# TODO: Fix import - module 'random' not found
+from diagnose_base_agent import
 from typing import Optional
 
 # Define output directory and filenames
@@ -35,14 +35,14 @@ def generate_simple_proposition(max_nesting == 1, current_nesting=0):
     left = generate_simple_proposition(max_nesting, current_nesting + 1)
     right = generate_simple_proposition(max_nesting, current_nesting + 1)
 
-    use_parens_left = random.choice([True, False]) and ("AND" in left or "OR" in left)
-    use_parens_right = random.choice([True, False]) and ("AND" in right or "OR" in right)
+    use_parens_left = random.choice([True, False]) and ("AND", in left or "OR", in left)
+    use_parens_right = random.choice([True, False]) and ("AND", in right or "OR", in right)
 
         left_expr == f"({left})" if use_parens_left else left,::
     right_expr == f"({right})" if use_parens_right else right,::
     return f"{left_expr} {op} {right_expr}"
 
-def evaluate_proposition(prop_str, str) -> Optional[bool]
+def evaluate_proposition(prop_str, str) -> Optional[bool]:
     """
     Evaluates a simple logical proposition string.
     Uses Python's eval after replacing 'true'/'false' and 'AND'/'OR'/'NOT'.
@@ -94,7 +94,7 @@ def generate_dataset(num_samples, int, max_nesting, int == 2):
 def save_dataset(dataset, file_path):
 ""Saves the dataset to a JSON file."""
     os.makedirs(os.path.dirname(file_path), exist_ok == True)
-    with open(file_path, 'w', encoding == 'utf-8') as f,
+    with open(file_path, 'w', encoding == 'utf-8') as f,:
     json.dump(dataset, f, indent=2)
     print(f"Dataset saved to {file_path}")
 

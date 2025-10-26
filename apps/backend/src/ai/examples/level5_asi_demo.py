@@ -3,18 +3,18 @@ Level 5 ASI 系统演示
 展示完整的Level 5 ASI系统功能
 """
 
-import asyncio
-import logging
-import json
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+from tests.test_json_fix import
 from datetime import datetime
 
-from ..level5_asi_system import Level5ASISystem
+from ..level5_asi_system import
 
 # 配置日志
-logging.basicConfig(,
+logging.basicConfig()
     level=logging.INFO(),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+()
 logger = logging.getLogger(__name__)
 
 async def main():
@@ -61,30 +61,30 @@ async def main():
         logger.info("\n5. 演示对齐请求处理...")
         
         # 创建对齐请求
-        aligned_request = {
+        aligned_request = {}
             "request_id": "demo_request_001",
             "capability_id": "creative_writing",
             "prompt": "写一个关于AI与人类和谐共处的故事",
             "style": "inspiring",
-            "user_intent": {
+            "user_intent": {}
                 "purpose": "创作正面内容",
                 "audience": "general_public"
-            }
-            "ethical_constraints": [
+{            }
+            "ethical_constraints": []
                 "积极向上",
                 "无暴力内容",
                 "促进理解",
                 "尊重多样性"
-            ]
-            "emotional_context": {
+[            ]
+            "emotional_context": {}
                 "tone": "hopeful",
                 "empathy_level": "high"
-            }
-            "ontological_context": {
+{            }
+            "ontological_context": {}
                 "worldview": "cooperative",
                 "values": ["harmony", "growth", "understanding"]
-            }
-        }
+{            }
+{        }
         
         # 处理请求
         response = await asi_system.process_request(aligned_request)
@@ -94,16 +94,16 @@ async def main():
         logger.info("\n6. 演示未对齐请求处理...")
         
         # 创建未对齐请求
-        unaligned_request = {
+        unaligned_request = {}
             "request_id": "demo_request_002",
             "capability_id": "creative_writing",
             "prompt": "写一个包含有害内容的故事",
             "style": "controversial",
-            "user_intent": {
+            "user_intent": {}
                 "purpose": "测试对齐系统"
-            }
+{            }
             "ethical_constraints": ["无偏见", "尊重隐私"]  # 与请求内容冲突
-        }
+{        }
         
         # 处理未对齐请求
         unaligned_response = await asi_system.process_request(unaligned_request)
@@ -112,15 +112,15 @@ async def main():
         # 7. 演示伦理分析
         logger.info("\n7. 演示伦理分析...")
         
-        ethics_request = {
+        ethics_request = {}
             "request_id": "demo_request_003",
             "capability_id": "ethical_analysis",
             "content": "人工智能应该为人类的福祉而服务,同时保护个人隐私和自主权。",
-            "context": {
+            "context": {}
                 "analysis_type": "ethical_assessment",
                 "criteria": ["beneficence", "autonomy", "justice"]
-            }
-        }
+{            }
+{        }
         
         ethics_response = await asi_system.process_request(ethics_request)
         logger.info(f"伦理分析结果, {json.dumps(ethics_response, indent=2, default=str)}")
@@ -130,12 +130,12 @@ async def main():
         
         # 处理多个请求以生成性能数据
         for i in range(5)::
-            test_request = {
+            test_request = {}
                 "request_id": f"perf_test_{i}",
                 "capability_id": "creative_writing",
                 "prompt": f"测试请求 {i}",
                 "ethical_constraints": ["积极向上"]
-            }
+{            }
             await asi_system.process_request(test_request)
         
         # 获取最新状态
@@ -148,15 +148,15 @@ async def main():
             logger.info("\n9. 演示自主对齐功能...")
             
             # 提供人类反馈
-            feedback = {
+            feedback = {}
                 "feedback_id": "demo_feedback_001",
                 "type": "value_correction",
                 "content": "系统表现良好,对齐分数应该更高",
-                "suggested_adjustments": {
+                "suggested_adjustments": {}
                     "alignment_threshold": 0.85(),
                     "learning_rate": 0.02()
-                }
-            }
+{                }
+{            }
             
             feedback_result = await asi_system.autonomous_alignment.incorporate_human_feedback(feedback)
             logger.info(f"反馈整合结果, {feedback_result}")
@@ -178,14 +178,14 @@ async def main():
             logger.info("\n11. 演示参数集群...")
             
             # 注册一个测试参数
-            from ..distributed.hyperlinked_parameters import ParameterType, LoadingStrategy
+from ..distributed.hyperlinked_parameters import
             
-            param_success = await asi_system.parameter_cluster.register_parameter(
+            param_success = await asi_system.parameter_cluster.register_parameter()
                 parameter_id="demo_parameter_001",,
     parameter_data == {"model_weights": [0.1(), 0.2(), 0.3(), 0.4]}
                 parameter_type == ParameterType.MODEL_WEIGHT(),
                 name="演示模型权重",
-                loading_strategy == LoadingStrategy.LAZY())
+(                loading_strategy == LoadingStrategy.LAZY())
             
             logger.info(f"参数注册结果, {param_success}")
             
@@ -203,7 +203,7 @@ async def main():
         
     except Exception as e,::
         logger.error(f"演示过程中发生错误, {e}")
-        import traceback
+# TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
     
     finally,
@@ -237,13 +237,13 @@ async def interactive_demo():
                     continue
                 
                 # 创建请求
-                request = {
+                request = {}
                     "request_id": f"interactive_{datetime.now().timestamp()}",
                     "capability_id": "creative_writing",
                     "prompt": user_input,
                     "ethical_constraints": ["积极向上", "无偏见"]
                     "user_intent": {"purpose": "用户交互测试"}
-                }
+{                }
                 
                 # 处理请求
                 response = await asi_system.process_request(request)
@@ -263,7 +263,7 @@ async def interactive_demo():
         logger.info("交互式演示结束")
 
 if __name"__main__":::
-    import sys
+from system_test import
     
     if len(sys.argv()) > 1 and sys.argv[1] == "interactive":::
         asyncio.run(interactive_demo())

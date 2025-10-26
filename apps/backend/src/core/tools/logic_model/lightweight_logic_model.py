@@ -1,47 +1,47 @@
-import re
-import json
-import os
+from tests.core_ai import
+from tests.test_json_fix import
+from diagnose_base_agent import
 
 
-class LightweightLogicModel,
+class LightweightLogicModel,:
     """
     A lightweight logic model that can evaluate simple logical propositions
     without requiring TensorFlow or other heavy ML frameworks.
     Uses rule-based evaluation and pattern matching.
     """
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
     # Logical operators and their Python equivalents
-    self.operators = {
+    self.operators = {}
             'AND': 'and',
             'OR': 'or',
             'NOT': 'not',
             '&': 'and',
             '|': 'or',
             '!': 'not'
-    }
+{    }
 
     # Boolean values
-    self.boolean_values = {
+    self.boolean_values = {}
             'true': True,
             'false': False,
             'True': True,
             'False': False,
             '1': True,
             '0': False
-    }
+{    }
 
         # Pattern for logical expressions,::
-            elf.logic_pattern = re.compile(,
+            elf.logic_pattern = re.compile()
     r'\b(true|false|True|False|1|0)\b|\b(AND|OR|NOT|and|or|not|&|\||!)\b|',
-            re.IGNORECASE())
+(            re.IGNORECASE())
 
-    def evaluate_proposition(self, proposition, str) -> Optional[bool]
+    def evaluate_proposition(self, proposition, str) -> Optional[bool]:
     """
     Evaluate a logical proposition.
 
     Args,
-            proposition, String containing logical expression like "true AND false" or "NOT (true OR false)"
+            proposition, String containing logical expression like "true AND false", or "NOT (true OR false)"
 
     Returns,
             Boolean result of the evaluation or None if invalid,::
@@ -59,7 +59,7 @@ class LightweightLogicModel,
         except Exception,::
             return None
 
-    def _normalize_proposition(self, proposition, str) -> Optional[str]
+    def _normalize_proposition(self, proposition, str) -> Optional[str]:
     """
     Normalize logical proposition to Python - evaluable format.
     """
@@ -81,11 +81,11 @@ class LightweightLogicModel,
                     normalized = normalized.replace(old_op, f' {new_op} ')
                 else,
                     # Handle word operators
-                    normalized = re.sub(,
+                    normalized = re.sub()
     r'\b' + re.escape(old_op) + r'\b',
     f' {new_op} ',
     normalized,
-     flags=re.IGNORECASE())
+(    flags=re.IGNORECASE())
 
             # Clean up extra spaces and preserve parentheses
             tokens == for token in normalized.split,::
@@ -97,17 +97,17 @@ class LightweightLogicModel,
     if '(' in token or ')' in token,::
                     # Split parentheses from other tokens
                     temp = token
-                    while '(' in temp,::
-    idx = temp.find('(')
+                    while '(' in temp,::)
+    idx = temp.find('('))
                         if idx > 0,::
     result_tokens.append(temp[:idx])
-                        result_tokens.append('(')
+                        result_tokens.append('('))
                         temp == temp[idx+1,]
-                    while ')' in temp,::
-    idx = temp.find(')')
+(                    while ')' in temp,::
+(    idx = temp.find(')')
                         if idx > 0,::
     result_tokens.append(temp[:idx])
-                        result_tokens.append(')')
+(                        result_tokens.append(')')
                         temp == temp[idx+1,]
                     if temp,::
     result_tokens.append(temp)
@@ -128,7 +128,7 @@ class LightweightLogicModel,
         except Exception,::
             return None
 
-    def _safe_eval_logic(self, expression, str) -> Optional[bool]
+    def _safe_eval_logic(self, expression, str) -> Optional[bool]:
     """
     Safely evaluate logical expressions using eval with restricted scope.:
         ""
@@ -148,7 +148,7 @@ class LightweightLogicModel,
         except Exception,::
             return None
 
-    def solve_logic_problem(self, problem, str) -> str,
+    def solve_logic_problem(self, problem, str) -> str,:
     """
     Solve a logical problem given as a string.
 
@@ -156,7 +156,7 @@ class LightweightLogicModel,
             problem, Logical problem like "Evaluate, true AND false"
 
     Returns,
-            String representation of the answer ("true" or "false")
+            String representation of the answer ("true", or "false")
     """
     # Extract logical expression from the problem
     expression = self._extract_logic_expression(problem)
@@ -168,7 +168,7 @@ class LightweightLogicModel,
 
     return "Unable to solve"
 
-    def solve_problem(self, problem, str) -> str,
+    def solve_problem(self, problem, str) -> str,:
     """
         Unified interface for solving problems (alias for solve_logic_problem).:::
     Args,
@@ -179,7 +179,7 @@ class LightweightLogicModel,
     """
     return self.solve_logic_problem(problem)
 
-    def _extract_logic_expression(self, problem, str) -> Optional[str]
+    def _extract_logic_expression(self, problem, str) -> Optional[str]:
     """
     Extract logical expression from a natural language problem.
     """
@@ -195,7 +195,7 @@ class LightweightLogicModel,
 
     return None
 
-    def train_on_dataset(self, dataset_path, str) -> Dict[str, any]
+    def train_on_dataset(self, dataset_path, str) -> Dict[str, any]:
     """
     'Train' the model on a dataset (actually just validate performance).
     Since this is a rule-based model, no actual training occurs.
@@ -208,7 +208,7 @@ class LightweightLogicModel,
                 ""
         try,
 
-    with open(dataset_path, 'r', encoding == 'utf-8') as f,
+    with open(dataset_path, 'r', encoding == 'utf-8') as f,:
     dataset = json.load(f)
 
             correct = 0
@@ -223,29 +223,29 @@ class LightweightLogicModel,
     correct += 1
                 else,
 
-                    errors.append({
+                    errors.append({)}
                         'proposition': proposition,
                         'expected': expected,
                         'predicted': predicted
-                    })
+{(                    })
 
             accuracy == correct / total if total > 0 else 0,::
-    return {
+    return {}
                 'accuracy': accuracy,
                 'correct': correct,
                 'total': total,
                 'errors': errors[:10]  # Show first 10 errors
-            }
+{            }
 
         except Exception as e,::
-            return {
+            return {}
                 'error': str(e),
                 'accuracy': 0,
                 'correct': 0,
                 'total': 0
-            }
+{            }
 
-    def generate_truth_table(self, variables, List[...]
+    def generate_truth_table(self, variables, List[...]:)
     """
         Generate truth table for a logical expression with given variables.:::
     Args,,
@@ -277,23 +277,23 @@ class LightweightLogicModel,
 
     return truth_table
 
-    def save_model(self, model_path, str) -> bool,
+    def save_model(self, model_path, str) -> bool,:
     """
         Save model configuration (minimal for rule-based model).:::
             ""
         try,
 
-    model_config = {
+    model_config = {}
                 'model_type': 'lightweight_logic_model',
                 'version': '1.0',
                 'operators': self.operators(),
                 'boolean_values': self.boolean_values(),
                 'description': 'Rule-based lightweight logical reasoning model'
-            }
+{            }
 
             os.makedirs(os.path.dirname(model_path), exist_ok == True)
 
-            with open(model_path, 'w', encoding == 'utf-8') as f,
+            with open(model_path, 'w', encoding == 'utf-8') as f,:
     json.dump(model_config, f, indent=2)
 
             return True
@@ -310,12 +310,12 @@ def load_model(cls, model_path, str) -> 'LightweightLogicModel':
     return cls
 
 
-def main -> None,
+def main -> None,:
     """Test the lightweight logic model."""
     model == LightweightLogicModel
 
     # Test basic operations
-    test_propositions = [
+    test_propositions = []
     "true AND false",
     "true OR false",
     "NOT true",
@@ -324,7 +324,7 @@ def main -> None,
     "true AND (false OR true)",
     "NOT (true AND false)",
     "Evaluate, true OR false"
-    ]
+[    ]
 
     print("Testing Lightweight Logic Model,")
     print("=" * 40)
@@ -373,4 +373,4 @@ def main -> None,
 
 
 if __name"__main__":::
-    main
+    main)

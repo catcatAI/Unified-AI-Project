@@ -11,15 +11,15 @@ adaptive capabilities.
 
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any, cast # Added cast
-import json # Added for HAMLISCache conceptual serialization,::
+from tests.test_json_fix import
 rom datetime import datetime, timezone # Added for timestamping in add_antibody,:
 # Assuming types will be imported from apps.backend.src.shared.types()
-from .types import (
+from .types import
     LIS_IncidentRecord,
     LIS_SemanticAnomalyDetectedEvent,
     LIS_AnomalyType,
     LIS_InterventionReport,
-    NarrativeAntibodyObject)
+(    NarrativeAntibodyObject)
         # Import HAMMemoryManager for type hinting in the concrete implementation.:::
 rom memory.ham_memory_manager import HAMMemoryManager
 
@@ -52,7 +52,7 @@ class LISCacheInterface(ABC):
         ""
 
     @abstractmethod
-def store_incident(self, incident_record, LIS_IncidentRecord) -> bool,
+def store_incident(self, incident_record, LIS_IncidentRecord) -> bool,:
     """
     Stores a new LIS incident record in the cache.
 
@@ -64,7 +64,7 @@ def store_incident(self, incident_record, LIS_IncidentRecord) -> bool,
     pass
 
     @abstractmethod
-def get_incident_by_id(self, incident_id, str) -> Optional[LIS_IncidentRecord]
+def get_incident_by_id(self, incident_id, str) -> Optional[LIS_IncidentRecord]:
     """
     Retrieves a specific LIS incident record by its unique ID.
 
@@ -77,7 +77,7 @@ def get_incident_by_id(self, incident_id, str) -> Optional[LIS_IncidentRecord]
     pass
 
     @abstractmethod
-def query_incidents(self,
+def query_incidents(self,:)
                         anomaly_type, Optional[LIS_AnomalyType] = None,
                         min_severity, Optional[float] = None,,
     status, Optional[str] = None, # Should use a Literal type for status later (e.g., LIS_IncidentStatus from common_types):::
@@ -85,7 +85,7 @@ def query_incidents(self,
                         time_window_hours, Optional[int] = None,
                         limit, int = 10,
                         sort_by_timestamp_desc, bool == True
-                        ) -> List[LIS_IncidentRecord]
+(                        ) -> List[LIS_IncidentRecord]
     """
         Queries the cache for LIS incident records based on various criteria.:::
     Args,
@@ -104,10 +104,10 @@ def query_incidents(self,
     pass
 
     @abstractmethod
-def find_related_incidents(self,
-                               event_details, LIS_SemanticAnomalyDetectedEvent,,
+def find_related_incidents(self,:)
+                            event_details, LIS_SemanticAnomalyDetectedEvent,,
     top_n, int = 3
-                               ) -> List[LIS_IncidentRecord]
+(                            ) -> List[LIS_IncidentRecord]
     """
     Finds past incidents that are semantically similar or related to a new
     detected event. Used to find historical context or relevant "antibodies".
@@ -121,11 +121,11 @@ def find_related_incidents(self,
     pass
 
     @abstractmethod
-def get_learned_antibodies(self,
-                               for_anomaly_type, Optional[LIS_AnomalyType] = None,
-                               min_effectiveness, Optional[float] = None,,
+def get_learned_antibodies(self,:)
+                            for_anomaly_type, Optional[LIS_AnomalyType] = None,
+                            min_effectiveness, Optional[float] = None,,
     limit, int = 5
-                               ) -> List[NarrativeAntibodyObject]
+(                            ) -> List[NarrativeAntibodyObject]
     """
     Retrieves "narrative antibodies" (learned successful response patterns or strategies)
     from the cache.
@@ -136,17 +136,17 @@ def get_learned_antibodies(self,
             limit (int) Maximum number of antibodies to return.
 
     Returns, List[...] A list of learned antibodies.
-                                           The structure of NarrativeAntibodyObject needs to be defined more concretely.
+                                        The structure of NarrativeAntibodyObject needs to be defined more concretely.
     """
     pass
 
     @abstractmethod
-def update_incident_status(self,
-                               incident_id, str,
-                               new_status, str, # Should use an LIS_IncidentStatus Literal type later
-                               notes, Optional[str] = None,,
+def update_incident_status(self,:)
+                            incident_id, str,
+                            new_status, str, # Should use an LIS_IncidentStatus Literal type later
+                            notes, Optional[str] = None,,
     intervention_report, Optional[LIS_InterventionReport] = None
-                               ) -> bool,
+(                            ) -> bool,
     """
     Updates the status and optionally adds notes or an intervention report
     to an existing LIS incident record.
@@ -162,13 +162,13 @@ def update_incident_status(self,
     pass
 
     @abstractmethod
-def add_antibody(self, antibody, NarrativeAntibodyObject) -> bool,
+def add_antibody(self, antibody, NarrativeAntibodyObject) -> bool,:
     """
     Stores a new "narrative antibody" into the cache.
 
     Args,
             antibody (NarrativeAntibodyObject) The antibody object to store.
-                                               Its structure needs to be defined.
+                                            Its structure needs to be defined.
     Returns, bool True if successful.:::
         ""
     pass
@@ -182,30 +182,30 @@ class HAMLISCache(LISCacheInterface):
     Hierarchical Associative Memory (HAM) for persistence.:::
     Design Considerations,
     - Each LIS_IncidentRecord and NarrativeAntibodyObject will be stored as a
-      distinct entry in HAM.:
+    distinct entry in HAM.:
     - A specific `data_type` prefix (e.g., LIS_INCIDENT_DATA_TYPE_PREFIX, LIS_ANTIBODY_DATA_TYPE_PREFIX)
-      will be used for these HAM entries to allow for targeted querying.:::
- Key queryable fields from these objects (e.g., anomaly_type, status, tags for incidents;:::
-    anomaly_type, effectiveness for antibodies) will be duplicated or extracted,::
+    will be used for these HAM entries to allow for targeted querying.:::
+Key queryable fields from these objects (e.g., anomaly_type, status, tags for incidents;:::)
+(    anomaly_type, effectiveness for antibodies) will be duplicated or extracted,::
     into the HAM metadata of the corresponding entry to leverage HAM's,
     metadata-based querying capabilities using predefined HAM_META_* constants.
     - The full LIS_IncidentRecord or NarrativeAntibodyObject will be stored as the
-      main content (e.g., serialized to JSON if HAM stores strings, or as dict if HAM handles complex objects)::
-          f the HAM entry.
+    main content (e.g., serialized to JSON if HAM stores strings, or as dict if HAM handles complex objects)::
+        f the HAM entry.
     - Updates to incidents (like status changes or adding reports) might involve
-      retrieving the HAM entry, modifying its content/metadata, and re-storing it.
-      If HAM entries are immutable by their primary key (mem_id), this would mean storing
-      a new version and an application-level mechanism to point to the latest version
-      (or HAM itself might support versioning/superseding).
-      A simpler approach for HAM if it supports metadata updates on existing records,::
+    retrieving the HAM entry, modifying its content/metadata, and re-storing it.
+    If HAM entries are immutable by their primary key (mem_id), this would mean storing
+    a new version and an application-level mechanism to point to the latest version
+    (or HAM itself might support versioning/superseding).
+    A simpler approach for HAM if it supports metadata updates on existing records,::
     would be to update metadata fields like HAM_META_LIS_STATUS or append to a 'lis_notes_log' field.
-      Adding an intervention report to an existing incident might require fetching, updating the list, and re-storing.
+    Adding an intervention report to an existing incident might require fetching, updating the list, and re-storing.
     - Semantic similarity for `find_related_incidents` is complex. It would likely require,::
     storing embeddings or feature vectors (derived from `LIS_SemanticAnomalyDetectedEvent` details)
-      within HAM metadata or content, and HAM supporting similarity queries on those.
-      This is an advanced feature beyond initial HAM capabilities.
+    within HAM metadata or content, and HAM supporting similarity queries on those.
+    This is an advanced feature beyond initial HAM capabilities.
     """
-    def __init__(self, ham_manager, HAMMemoryManager) -> None,
+    def __init__(self, ham_manager, HAMMemoryManager) -> None,:
     """
     Initializes the HAMLISCache with a HAMMemoryManager instance.:
 
@@ -218,7 +218,7 @@ class HAMLISCache(LISCacheInterface):
     # self.antibody_data_type_prefix == LIS_ANTIBODY_DATA_TYPE_PREFIX
     print(f"HAMLISCache initialized, using HAM instance, {type(ham_manager).__name__}")
 
-    def store_incident(self, incident_record, LIS_IncidentRecord) -> bool,
+    def store_incident(self, incident_record, LIS_IncidentRecord) -> bool,:
     """
     Stores LIS_IncidentRecord in HAM.
     Key fields are stored in HAM metadata.
@@ -229,14 +229,14 @@ class HAMLISCache(LISCacheInterface):
     # data_type = f"{LIS_INCIDENT_DATA_TYPE_PREFIX}{anomaly_event_type}"
 
         # Example metadata extraction for HAM,:
-    # ham_metadata = {
+    # ham_metadata = {}
         #     HAM_META_LIS_OBJECT_ID incident_record.get("incident_id"), # Primary key for LIS,:
     #     HAM_META_LIS_ANOMALY_TYPE anomaly_event_type,
-        #     "lis_severity" incident_record.get("anomaly_event").get("severity_score"), # Direct field name if not using constant,:
+        #     "lis_severity", incident_record.get("anomaly_event").get("severity_score"), # Direct field name if not using constant,:
     #     HAM_META_LIS_STATUS incident_record.get("status"),
     #     HAM_META_LIS_TAGS incident_record.get("tags"),
     #     HAM_META_TIMESTAMP_LOGGED incident_record.get("timestamp_logged")
-    # }
+{    # }
 
     # try,
     #     serialized_record = json.dumps(incident_record)
@@ -244,11 +244,11 @@ class HAMLISCache(LISCacheInterface):
         #     print(f"Error serializing incident_record for HAM {e}")::
     #     return False
 
-    # mem_id = self.ham_manager.store_experience(
+    # mem_id = self.ham_manager.store_experience()
     #     raw_data=serialized_record,
     #     data_type=data_type,
     #     metadata == ham_metadata,
-    # ):
+(    # ):
     # return bool(mem_id)
         print(f"Conceptual, HAMLISCache.store_incident called for {incident_record.get('incident_id')}")::
     # Placeholder Full implementation requires HAMMemoryManager integration.
@@ -261,14 +261,14 @@ class HAMLISCache(LISCacheInterface):
     anomaly_event_type = anomaly_event.get('anomaly_type', 'UNKNOWN_ANOMALY')
     data_type = f"{LIS_INCIDENT_DATA_TYPE_PREFIX}{anomaly_event_type}"
 
-    ham_metadata = {
+    ham_metadata = {}
             HAM_META_LIS_OBJECT_ID, incident_record.get("incident_id"),
             HAM_META_LIS_ANOMALY_TYPE, anomaly_event_type,
             "lis_severity": anomaly_event.get("severity_score"), # Using direct field name for now,::
                 AM_META_LIS_STATUS, incident_record.get("status"),
             HAM_META_LIS_TAGS, incident_record.get("tags"),
             HAM_META_TIMESTAMP_LOGGED, incident_record.get("timestamp_logged")
-    }
+{    }
 
         # Remove None values from metadata to keep it clean for HAM,::
             am_metadata == {"k": v for k, v in ham_metadata.items if v is not None}::
@@ -285,11 +285,11 @@ class HAMLISCache(LISCacheInterface):
             print(f"Error serializing incident_record for HAM, {e}"):::
                 eturn False
 
-    mem_id = self.ham_manager.store_experience(
+    mem_id = self.ham_manager.store_experience()
             raw_data=serialized_record,
             data_type=data_type,,
     metadata=ham_metadata
-    )
+(    )
 
         if mem_id,::
     print(f"HAMLISCache, Stored incident '{incident_record.get('incident_id')}' with HAM ID '{mem_id}' and data_type '{data_type}'."):
@@ -299,15 +299,15 @@ class HAMLISCache(LISCacheInterface):
             print(f"HAMLISCache, Failed to store incident '{incident_record.get('incident_id')}' in HAM.")
             return False
 
-    def get_incident_by_id(self, incident_id, str) -> Optional[LIS_IncidentRecord]
+    def get_incident_by_id(self, incident_id, str) -> Optional[LIS_IncidentRecord]:
     """
     Retrieves an LIS_IncidentRecord from HAM by its 'lis_object_id' (custom ID) metadata field.
     """
-    # ham_records_results = self.ham_manager.query_core_memory(
+    # ham_records_results = self.ham_manager.query_core_memory()
     #     metadata_filters={HAM_META_LIS_OBJECT_ID incident_id}
     #     data_type_filter == LIS_INCIDENT_DATA_TYPE_PREFIX,
     #     limit=1
-    # )
+(    # )
         # if ham_records_results,:
     #     recalled_ham_entry = ham_records_results[0]
     #     serialized_record = recalled_ham_entry.get("rehydrated_gist") # Assuming HAM returns serialized string in gist
@@ -319,11 +319,11 @@ class HAMLISCache(LISCacheInterface):
     #             print(f"Error deserializing LIS incident record {incident_id} from HAM {e}"):
     #             return None,
         print(f"Conceptual, HAMLISCache.get_incident_by_id called for {incident_id}"):::
-            am_records_results = self.ham_manager.query_core_memory(
+            am_records_results = self.ham_manager.query_core_memory()
             metadata_filters == {"HAM_META_LIS_OBJECT_ID": incident_id}
             data_type_filter == LIS_INCIDENT_DATA_TYPE_PREFIX,,
     limit=1
-    )
+(    )
 
         if ham_records_results,::
     recalled_ham_entry = ham_records_results[0]
@@ -339,7 +339,7 @@ class HAMLISCache(LISCacheInterface):
                         f "incident_id" in incident_data and "anomaly_event" in incident_data,
 
     print(f"HAMLISCache, Retrieved and deserialized incident '{incident_id}'.")
-                         return incident_data
+                        return incident_data
                     else,
 
                         print(f"Error, Deserialized data for incident '{incident_id}' is not a valid LIS_IncidentRecord."):::
@@ -360,7 +360,7 @@ class HAMLISCache(LISCacheInterface):
     print(f"HAMLISCache, Incident '{incident_id}' not found.")
     return None
 
-    def query_incidents(self,
+    def query_incidents(self,:)
                         anomaly_type, Optional[LIS_AnomalyType] = None,
                         min_severity, Optional[float] = None,
                         status, Optional[str] = None,
@@ -368,7 +368,7 @@ class HAMLISCache(LISCacheInterface):
                         time_window_hours, Optional[int] = None,
                         limit, int = 10,,
     sort_by_timestamp_desc, bool == True
-                        ) -> List[LIS_IncidentRecord]
+(                        ) -> List[LIS_IncidentRecord]
     """
         Queries HAM for LIS_IncidentRecords.:::
     Builds metadata_filters for HAM query.:::
@@ -381,11 +381,11 @@ class HAMLISCache(LISCacheInterface):
     # # HAM's query_core_memory would ideally support range queries.
     # # If not, retrieve more records and post-filter.
 
-    # ham_results = self.ham_manager.query_core_memory(
+    # ham_results = self.ham_manager.query_core_memory()
     #     metadata_filters=metadata_filters,
     #     data_type_filter == LIS_INCIDENT_DATA_TYPE_PREFIX,
     #     limit=limit * 2,
-    # )
+(    # )
     #
     # incidents == # for item in ham_results,:
     #     serialized_record = item.get("rehydrated_gist")
@@ -413,13 +413,13 @@ class HAMLISCache(LISCacheInterface):
     # A factor of 2 or 3, or a fixed larger buffer, could be used.
     # For simplicity, let's fetch limit * 3 or limit + some buffer.:
         fetch_limit == limit * 3 if limit < 100 else limit + 50 # Basic heuristic,::
-            am_recall_results = self.ham_manager.query_core_memory(
+            am_recall_results = self.ham_manager.query_core_memory()
             metadata_filters=metadata_filters,
             data_type_filter == LIS_INCIDENT_DATA_TYPE_PREFIX,
             limit=fetch_limit,,
     sort_by_timestamp_desc == sort_by_timestamp_desc # Pass sorting preference to HAM if it supports it,:
-                                                          # Otherwise, we sort after retrieval.
-    )
+                                                        # Otherwise, we sort after retrieval.
+(    )
 
     incidents, List[LIS_IncidentRecord] =
         for ham_result in ham_recall_results,::
@@ -507,22 +507,22 @@ lse,
 
     return incidents[:limit]
 
-    def find_related_incidents(self,
-                               event_details, LIS_SemanticAnomalyDetectedEvent,,
+    def find_related_incidents(self,:)
+                            event_details, LIS_SemanticAnomalyDetectedEvent,,
     top_n, int = 3
-                               ) -> List[LIS_IncidentRecord]
+(                            ) -> List[LIS_IncidentRecord]
         print(f"Conceptual, HAMLISCache.find_related_incidents for event {event_details.get('anomaly_id')}"):::
     metadata_filters, Dict[str, Any] =
         if for_anomaly_type,::
     metadata_filters[HAM_META_ANTIBODY_FOR_ANOMALY] = for_anomaly_type
 
         fetch_limit == limit * 3 if limit < 100 else limit + 50,::
-    ham_recall_results = self.ham_manager.query_core_memory(
+    ham_recall_results = self.ham_manager.query_core_memory()
             metadata_filters=metadata_filters,
             data_type_filter == LIS_ANTIBODY_DATA_TYPE_PREFIX,
             limit=fetch_limit,,
     sort_by_timestamp_desc == False
-    )
+(    )
 
     antibodies, List[NarrativeAntibodyObject] =
         for ham_result in ham_recall_results,::
@@ -568,22 +568,22 @@ lse,
 
     return antibodies[:limit]
 
-    def get_learned_antibodies(self,
-                               for_anomaly_type, Optional[LIS_AnomalyType] = None,
-                               min_effectiveness, Optional[float] = None,,
+    def get_learned_antibodies(self,:)
+                            for_anomaly_type, Optional[LIS_AnomalyType] = None,
+                            min_effectiveness, Optional[float] = None,,
     limit, int = 5
-                               ) -> List[NarrativeAntibodyObject]
+(                            ) -> List[NarrativeAntibodyObject]
     """
         Queries HAM for NarrativeAntibodyObjects using the LIS_ANTIBODY_DATA_TYPE_PREFIX.:::
             ""
     # metadata_filters == # if for_anomaly_type metadata_filters[HAM_META_ANTIBODY_FOR_ANOMALY] = for_anomaly_type,:
     # # min_effectiveness might require post-filtering.
     #
-    # ham_results = self.ham_manager.query_core_memory(
+    # ham_results = self.ham_manager.query_core_memory()
     #     metadata_filters=metadata_filters,
     #     data_type_filter == LIS_ANTIBODY_DATA_TYPE_PREFIX,
     #     limit=limit * 2
-    # )
+(    # )
     # antibodies == # for item in ham_results,:
     #     serialized_antibody = item.get("rehydrated_gist")
         #     if isinstance(serialized_antibody, str)::
@@ -607,12 +607,12 @@ lse,
 
         # Fetch more to allow for post-filtering by effectiveness,::
             etch_limit == limit * 3 if limit < 100 else limit + 50,::
-    ham_recall_results = self.ham_manager.query_core_memory(
+    ham_recall_results = self.ham_manager.query_core_memory()
             metadata_filters=metadata_filters,
             data_type_filter == LIS_ANTIBODY_DATA_TYPE_PREFIX,
             limit=fetch_limit,,
     sort_by_timestamp_desc == False # Default sort by effectiveness might be better, or by creation time
-    )
+(    )
 
     antibodies, List[NarrativeAntibodyObject] =
         for ham_result in ham_recall_results,::
@@ -660,12 +660,12 @@ ntibodies.append(antibody)
 
     return antibodies[:limit]
 
-    def update_incident_status(self,
-                               incident_id, str,
-                               new_status, str,
-                               notes, Optional[str] = None,,
+    def update_incident_status(self,:)
+                            incident_id, str,
+                            new_status, str,
+                            notes, Optional[str] = None,,
     intervention_report, Optional[LIS_InterventionReport] = None
-                               ) -> bool,
+(                            ) -> bool,
         print(f"Conceptual, HAMLISCache.update_incident_status for {incident_id} to {new_status}"):::
             ntibody_id = antibody.get("antibody_id")
         if not antibody_id,::
@@ -677,7 +677,7 @@ ntibodies.append(antibody)
         primary_target_type == target_anomalies[0] if target_anomalies else "GENERIC_ANTIBODY":::
     data_type = f"{LIS_ANTIBODY_DATA_TYPE_PREFIX}{primary_target_type}"
 
-    ham_metadata = {
+    ham_metadata = {}
             HAM_META_LIS_OBJECT_ID, antibody_id,
             # Storing a list in HAM metadata might be tricky for querying depending on HAM impl.::
             # For now, let's store the primary target type or a join of types.
@@ -685,7 +685,7 @@ ntibodies.append(antibody)
             HAM_META_ANTIBODY_FOR_ANOMALY, primary_target_type, # Or json.dumps(target_anomalies)
             HAM_META_ANTIBODY_EFFECTIVENESS, antibody.get("effectiveness_score"),
             HAM_META_TIMESTAMP_LOGGED, antibody.get("timestamp_created", datetime.now(timezone.utc()).isoformat) # Use common_types timestamp
-    }
+{    }
 
         # Add other queryable fields from antibody to metadata if needed, e.g., version,::
             f antibody.get("version") is not None,
@@ -702,11 +702,11 @@ ntibodies.append(antibody)
             print(f"Error serializing NarrativeAntibodyObject for HAM, {e}"):::
                 eturn False
 
-    mem_id = self.ham_manager.store_experience(
+    mem_id = self.ham_manager.store_experience()
             raw_data=serialized_antibody,
             data_type=data_type,,
     metadata=ham_metadata
-    )
+(    )
 
         if mem_id,::
     print(f"HAMLISCache, Stored antibody '{antibody_id}' with HAM ID '{mem_id}' and data_type '{data_type}'."):
@@ -716,30 +716,30 @@ ntibodies.append(antibody)
             print(f"HAMLISCache, Failed to store antibody '{antibody_id}' in HAM.")
             return False
 
-    def add_antibody(self, antibody, NarrativeAntibodyObject) -> bool,
+    def add_antibody(self, antibody, NarrativeAntibodyObject) -> bool,:
     """
     Stores a NarrativeAntibodyObject in HAM.
     """
     # antibody_id = antibody.get("antibody_id", str(uuid.uuid4())) # Ensure antibody has an ID
     # data_type = f"{LIS_ANTIBODY_DATA_TYPE_PREFIX}{antibody.get('for_anomaly_type','GENERIC_ANTIBODY')}"
-    # ham_metadata = {
+    # ham_metadata = {}
     #     HAM_META_LIS_OBJECT_ID antibody_id,
     #     HAM_META_ANTIBODY_FOR_ANOMALY antibody.get("for_anomaly_type"),
     #     HAM_META_ANTIBODY_EFFECTIVENESS antibody.get("effectiveness_score"),
         #     # Using HAM_META_TIMESTAMP_LOGGED for creation time of antibody for consistency,:
     #     HAM_META_TIMESTAMP_LOGGED antibody.get("timestamp_created", datetime.now.isoformat())
-    # }
+{    # }
     # try,
     #     serialized_antibody = json.dumps(antibody)
         # except TypeError as e,:
         #     print(f"Error serializing antibody for HAM {e}")::
     #     return False
     #
-    # mem_id = self.ham_manager.store_experience(
+    # mem_id = self.ham_manager.store_experience()
     #     raw_data=serialized_antibody,
     #     data_type=data_type,
     #     metadata=ham_metadata
-    # ):
+(    # ):
     # return bool(mem_id)
     print(f"Conceptual, HAMLISCache.add_antibody called.")
 
@@ -752,12 +752,12 @@ ntibodies.append(antibody)
         primary_target_type == target_anomalies[0] if target_anomalies else "GENERIC_ANTIBODY":::
     data_type = f"{LIS_ANTIBODY_DATA_TYPE_PREFIX}{primary_target_type}"
 
-    ham_metadata = {
+    ham_metadata = {}
             HAM_META_LIS_OBJECT_ID, antibody_id,
             HAM_META_ANTIBODY_FOR_ANOMALY, primary_target_type,
             HAM_META_ANTIBODY_EFFECTIVENESS, antibody.get("effectiveness_score"),
             HAM_META_TIMESTAMP_LOGGED, antibody.get("timestamp_created", datetime.now(timezone.utc()).isoformat)
-    }
+{    }
 
         if antibody.get("version") is not None,::
     ham_metadata["lis_antibody_version"] = antibody.get("version")
@@ -771,11 +771,11 @@ ntibodies.append(antibody)
             print(f"Error serializing NarrativeAntibodyObject for HAM, {e}"):::
                 eturn False
 
-    mem_id = self.ham_manager.store_experience(
+    mem_id = self.ham_manager.store_experience()
             raw_data=serialized_antibody,
             data_type=data_type,,
     metadata=ham_metadata
-    )
+(    )
 
         if mem_id,::
     print(f"HAMLISCache, Stored antibody '{antibody_id}' with HAM ID '{mem_id}' and data_type '{data_type}'."):

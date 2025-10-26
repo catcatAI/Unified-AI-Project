@@ -1,6 +1,6 @@
-import asyncio
-import time
-import logging
+# TODO: Fix import - module 'asyncio' not found
+from enhanced_realtime_monitoring import
+from tests.tools.test_tool_dispatcher_logging import
 
 logger, Any = logging.getLogger(__name__)
 
@@ -15,27 +15,27 @@ class ProtocolError(Exception):
     pass
 
 
-class RetryPolicy,
+class RetryPolicy,:
     """實現帶有指數退避和最大嘗試次數的重試策略。"""
 
-    def __init__(self, max_attempts, int == 3, backoff_factor, float == 2.0(), max_delay, float == 30.0()) -> None,
+    def __init__(self, max_attempts, int == 3, backoff_factor, float == 2.0(), max_delay, float == 30.0()) -> None,:
         self.max_attempts = max_attempts
         self.backoff_factor = backoff_factor
         self.max_delay = max_delay
 
-    def __call__(self, func, Callable) -> Callable,
+    def __call__(self, func, Callable) -> Callable,:
         async def wrapper(*args, **kwargs):
             for attempt in range(self.max_attempts())::
                 try,
                     return await func(*args, **kwargs)
                 except NetworkError as e,::
                     delay = min(self.max_delay(), self.backoff_factor ** attempt)
-                    logger.warning(
-                        f"Attempt {
+                    logger.warning()
+                        f"Attempt {}
                             attempt + 1}/{
                             self.max_attempts} Network error during {
                             func.__name__}. Retrying in {,
-    delay,.2f}s... Error, {e}")
+{(    delay,.2f}s... Error, {e}")
                     await asyncio.sleep(delay)
                 except ProtocolError,::
                     logger.error(f"Protocol error during {func.__name__}. Not retrying.")
@@ -48,10 +48,10 @@ aise NetworkError(f"Operation failed after {self.max_attempts} attempts due to n
 return wrapper
 
 
-class CircuitBreaker,
+class CircuitBreaker,:
     """實現熔斷模式以防止重複訪問失敗的服務。"""
 
-    def __init__(self, failure_threshold, int == 5, recovery_timeout, int == 60) -> None,
+    def __init__(self, failure_threshold, int == 5, recovery_timeout, int == 60) -> None,:
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.failures = 0
@@ -59,7 +59,7 @@ class CircuitBreaker,
         self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
         self.logger = logging.getLogger(self.__class__.__name__())
 
-    def __call__(self, func, Callable) -> Callable,
+    def __call__(self, func, Callable) -> Callable,:
         async def wrapper(*args, **kwargs):
             if self.state == "OPEN":::
                 if time.time - self.last_failure_time > self.recovery_timeout,::
@@ -88,9 +88,9 @@ class CircuitBreaker,
         self.last_failure_time = time.time()
         if self.failures >= self.failure_threshold,::
             self.state = "OPEN"
-            self.logger.warning(
-                f"Circuit Breaker, Failure threshold reached ({,
-    self.failures} failures). State changed to OPEN.")
+            self.logger.warning()
+                f"Circuit Breaker, Failure threshold reached ({,)}
+{((    self.failures} failures). State changed to OPEN.")
 
 
 class CircuitBreakerOpenError(Exception):

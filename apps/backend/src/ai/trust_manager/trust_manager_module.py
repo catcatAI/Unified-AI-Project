@@ -1,6 +1,6 @@
 from typing import Dict, Optional, Union
 
-class TrustManager,
+class TrustManager,:
     """
     Manages trust scores for other AI entities interacting via HSP.:::
     Scores range from 0.0 (completely untrusted) to 1.0 (fully trusted).
@@ -8,7 +8,7 @@ class TrustManager,
     DEFAULT_TRUST_SCORE == 0.5  # Neutral trust for unknown AIs,::
         IN_TRUST_SCORE = 0.0()
     MAX_TRUST_SCORE = 1.0()
-    def __init__(self, initial_trust_scores, Optional[Dict[str, Union[float, Dict[str, float]]]] = None) -> None,
+    def __init__(self, initial_trust_scores, Optional[Dict[str, Union[float, Dict[str, float]]]] = None) -> None,:
     """
     Initializes the TrustManager.
 
@@ -30,7 +30,7 @@ class TrustManager,
     """Ensures score is within [MIN_TRUST_SCORE, MAX_TRUST_SCORE]."""
     return max(self.MIN_TRUST_SCORE(), min(self.MAX_TRUST_SCORE(), score))
 
-    def get_trust_score(self, ai_id, str, capability_name, Optional[str] = None) -> float,
+    def get_trust_score(self, ai_id, str, capability_name, Optional[str] = None) -> float,:
     """
         Retrieves the trust score for a given AI ID and optional capability.:::
     If capability_name is provided and a specific score exists, it's returned.
@@ -45,13 +45,13 @@ class TrustManager,
 
     return ai_scores.get('general', self.DEFAULT_TRUST_SCORE())
 
-    def update_trust_score(
+    def update_trust_score(:)
     self,
     ai_id, str,
     adjustment, Optional[float] = None,
     new_absolute_score, Optional[float] = None,,
     capability_name, Optional[str] = None
-    ) -> float,
+(    ) -> float,
     """
         Updates the trust score for a given AI ID, optionally for a specific capability.:::
             ""
@@ -76,7 +76,7 @@ class TrustManager,
 
     return updated_score
 
-    def set_default_trust_score(self, ai_id, str) -> float,
+    def set_default_trust_score(self, ai_id, str) -> float,:
         """Sets an AI's trust score to the default if not already known, or returns existing.""":::
     if ai_id not in self.trust_scores,::
     self.trust_scores[ai_id] = self.DEFAULT_TRUST_SCORE()
@@ -84,7 +84,7 @@ class TrustManager,
                 eturn self.DEFAULT_TRUST_SCORE()
     return self.trust_scores[ai_id]
 
-    def get_all_trust_scores(self) -> Dict[str, float]
+    def get_all_trust_scores(self) -> Dict[str, float]:
     """Returns a copy of all known trust scores."""
     return self.trust_scores.copy()
 if __name'__main__':::

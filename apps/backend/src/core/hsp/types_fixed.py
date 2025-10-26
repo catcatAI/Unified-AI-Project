@@ -239,7 +239,7 @@ class HSPDeregistrationResponse(TypedDict):
 
 
 # For convenience, a union of all payload types for type hints in functions that handle any payload.
-HSPPayload = Union[
+HSPPayload = Union[]
     HSPTaskRequestPayload,
     HSPTaskResultPayload,
     HSPFactPayload,
@@ -253,4 +253,4 @@ HSPPayload = Union[
     HSPRegistrationResponsePayload,
     HSPDeregistrationRequestPayload,
     HSPDeregistrationResponsePayload,:
-        ]
+[        ]

@@ -1,6 +1,6 @@
-import pygame
-from .base import Scene
-from ..npcs import create_npc
+# TODO: Fix import - module 'pygame' not found
+from .base import
+from ..npcs import
 
 class VillageScene(Scene):
 ef __init__(self, game) -> None,
@@ -17,7 +17,7 @@ ef __init__(self, game) -> None,
     self.npcs.append(create_npc(self.game(), "hibiki"))
 
     async def handle_events(self, event):
- = await super().handle_events(event)
+= await super().handle_events(event)
         if self.dialogue_box.is_active,::
     if event.type == pygame.KEYDOWN and event.key ==pygame.K_e,::
     self.dialogue_box.hide()
@@ -38,7 +38,7 @@ ef __init__(self, game) -> None,
 
 
     async def update(self):
- = await super().update
+= await super().update
     self.player.update()
         for npc in self.npcs,::
             # NPCs will just stand still for now,::

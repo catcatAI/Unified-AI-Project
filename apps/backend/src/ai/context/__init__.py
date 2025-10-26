@@ -1,6 +1,6 @@
 """上下文系统模块初始化"""
 
-__all_[
+__all_[]
 "Context",
 "MemoryStorage",
 "DiskStorage",
@@ -12,4 +12,4 @@ __all_[
 "AgentContextManager",
 "DialogueContextManager",
 "MemoryContextManager"
-]
+[]

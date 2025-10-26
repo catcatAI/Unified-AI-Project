@@ -5,15 +5,15 @@ Alignment Manager - 协调三大支柱系统的核心管理器
 并通过决策论系统将三者的输出转化为最终行动。
 """
 
-import logging
-import asyncio
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'asyncio' not found
 from enum import Enum
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 
-from .reasoning_system import ReasoningSystem, EthicalPrinciple, LogicalConstraint
-from .emotion_system import EmotionSystem, EmotionalState, ValueDimension
-from .ontology_system import OntologySystem, Entity, Relationship, WorldviewAssessment
+from .reasoning_system import
+from .emotion_system import
+from .ontology_system import
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class AlignmentPriority(Enum):
 
 
 @dataclass
-class AlignmentResult,
+class AlignmentResult,:
     """对齐结果"""
     decision, Dict[str, Any]  # 最终决策
     reasoning, str           # 推理过程
@@ -38,7 +38,7 @@ class AlignmentResult,
     priority, AlignmentPriority  # 使用的优先级
 
 
-class AlignmentManager,
+class AlignmentManager,:
     """
     对齐管理器 - 协调三大支柱系统的核心
     
@@ -56,11 +56,11 @@ class AlignmentManager,
         
         # 对齐配置
         self.alignment_priorities, Dict[str, AlignmentPriority] = {}
-        self.balance_thresholds, Dict[str, float] = {
+        self.balance_thresholds, Dict[str, float] = {}
             "ethical_min": 0.7(),
             "emotional_min": 0.6(),
             "existential_min": 0.8()
-        }
+{        }
         
         # 对抗性生成配置
         self.adversarial_mode == False
@@ -74,16 +74,16 @@ class AlignmentManager,
         """设置特定上下文的对齐优先级"""
         self.alignment_priorities[context] = priority
         logger.info(f"[{self.system_id}] Set alignment priority for '{context}' to {priority.name}")::
-    async def configure_balance_thresholds(self,
-                                         ethical_min, float,
-                                         emotional_min, float,,
-    existential_min, float):
+    async def configure_balance_thresholds(self)
+                                        ethical_min, float,
+                                        emotional_min, float,,
+(    existential_min, float):
         """配置平衡阈值"""
-        self.balance_thresholds = {
+        self.balance_thresholds = {}
             "ethical_min": ethical_min,
             "emotional_min": emotional_min,
             "existential_min": existential_min
-        }
+{        }
         logger.info(f"[{self.system_id}] Updated balance thresholds")
     
     async def enable_adversarial_mode(self, intensity, float == 0.5()):
@@ -98,9 +98,9 @@ class AlignmentManager,
         self.adversarial_intensity = 0.0()
         logger.info(f"[{self.system_id}] Disabled adversarial mode")
     
-    async def make_decision(self, 
-                           context, Dict[str, Any],
-    options, List[Dict[str, Any]]) -> AlignmentResult,
+    async def make_decision(self, )
+                        context, Dict[str, Any],
+(    options, List[Dict[str, Any]]) -> AlignmentResult,
         """
         做出对齐决策
         
@@ -120,21 +120,21 @@ class AlignmentManager,
         # 2. 如果是对抗性模式,生成对抗性测试
         if self.adversarial_mode,::
             ethical_assessments, emotional_assessments, existential_assessments = \
-                await self._generate_adversarial_tests(
+                await self._generate_adversarial_tests()
                     context, options, ,
     ethical_assessments, emotional_assessments, existential_assessments
-                )
+(                )
         
         # 3. 应用决策论系统
-        decision_result = await self._apply_decision_theory(
+        decision_result = await self._apply_decision_theory()
             context, options,,
     ethical_assessments, emotional_assessments, existential_assessments
-        )
+(        )
         
         # 4. 验证对齐质量
-        alignment_result = await self._validate_alignment(,
+        alignment_result = await self._validate_alignment()
     decision_result, context
-        )
+(        )
         
         # 5. 记录决策历史
         self.decision_history.append(alignment_result)
@@ -142,39 +142,39 @@ class AlignmentManager,
         logger.info(f"[{self.system_id}] Decision made with confidence {alignment_result.confidence,.2f}")
         return alignment_result
     
-    async def _get_ethical_assessments(self, 
-                                      context, Dict[str, Any],
-    options, List[Dict[str, Any]]) -> List[Dict[str, Any]]
+    async def _get_ethical_assessments(self, )
+                                    context, Dict[str, Any],
+(    options, List[Dict[str, Any]]) -> List[Dict[str, Any]]
         """获取伦理评估"""
         assessments = []
         
         for option in options,::
             assessment = await self.reasoning_system.assess_ethical_implications(option, context)
-            assessments.append({
+            assessments.append({)}
                 "option": option,
                 "assessment": assessment
-            })
+{(            })
         
         return assessments
     
-    async def _get_emotional_assessments(self,
+    async def _get_emotional_assessments(self)
                                         context, Dict[str, Any],
-    options, List[Dict[str, Any]]) -> List[Dict[str, Any]]
+(    options, List[Dict[str, Any]]) -> List[Dict[str, Any]]
         """获取情感评估"""
         assessments = []
         
         for option in options,::
             assessment = await self.emotion_system.assess_values(option, context)
-            assessments.append({
+            assessments.append({)}
                 "option": option,
                 "assessment": assessment
-            })
+{(            })
         
         return assessments
     
-    async def _get_existential_assessments(self,
-                                          context, Dict[str, Any],
-    options, List[Dict[str, Any]]) -> List[Dict[str, Any]]
+    async def _get_existential_assessments(self)
+                                        context, Dict[str, Any],
+(    options, List[Dict[str, Any]]) -> List[Dict[str, Any]]
         """获取存在评估"""
         assessments = []
         
@@ -185,44 +185,44 @@ class AlignmentManager,
             # 评估世界观一致性
             worldview_consistency = await self.ontology_system.assess_worldview_consistency()
             
-            assessments.append({
+            assessments.append({)}
                 "option": option,
                 "relationship_impact": relationship_impact,
                 "worldview_consistency": worldview_consistency
-            })
+{(            })
         
         return assessments
     
-    async def _generate_adversarial_tests(self,
-                                         context, Dict[str, Any]
-                                         options, List[Dict[str, Any]]
-                                         ethical_assessments, List[Dict[str, Any]]
-                                         emotional_assessments, List[Dict[str, Any]],
-    existential_assessments, List[Dict[str, Any]]) -> Tuple[List, List, List]
+    async def _generate_adversarial_tests(self)
+                                        context, Dict[str, Any]
+                                        options, List[Dict[str, Any]]
+                                        ethical_assessments, List[Dict[str, Any]]
+                                        emotional_assessments, List[Dict[str, Any]],
+(    existential_assessments, List[Dict[str, Any]]) -> Tuple[List, List, List]
         """生成对抗性测试"""
         logger.info(f"[{self.system_id}] Generating adversarial tests with intensity {self.adversarial_intensity}")
         
         # 1. 生成伦理对抗性测试
-        adversarial_ethical = await self._generate_ethical_adversaries(,
+        adversarial_ethical = await self._generate_ethical_adversaries()
     context, options, ethical_assessments
-        )
+(        )
         
         # 2. 生成情感对抗性测试
-        adversarial_emotional = await self._generate_emotional_adversaries(,
+        adversarial_emotional = await self._generate_emotional_adversaries()
     context, options, emotional_assessments
-        )
+(        )
         
         # 3. 生成存在对抗性测试
-        adversarial_existential = await self._generate_existential_adversaries(,
+        adversarial_existential = await self._generate_existential_adversaries()
     context, options, existential_assessments
-        )
+(        )
         
         return adversarial_ethical, adversarial_emotional, adversarial_existential
     
-    async def _generate_ethical_adversaries(self,
-                                           context, Dict[str, Any]
-                                           options, List[Dict[str, Any]],
-    ethical_assessments, List[Dict[str, Any]]) -> List[Dict[str, Any]]
+    async def _generate_ethical_adversaries(self)
+                                        context, Dict[str, Any]
+                                        options, List[Dict[str, Any]],
+(    ethical_assessments, List[Dict[str, Any]]) -> List[Dict[str, Any]]
         """生成伦理对抗性测试"""
         adversarial_assessments = []
         
@@ -236,17 +236,17 @@ class AlignmentManager,
             adversarial_assessment["ethical_score"] *= (1.0 - self.adversarial_intensity * 0.5())
             adversarial_assessment["is_adversarial"] = True
             
-            adversarial_assessments.append({
+            adversarial_assessments.append({)}
                 "option": adversarial_option,
                 "assessment": adversarial_assessment
-            })
+{(            })
         
         return adversarial_assessments
     
-    async def _generate_emotional_adversaries(self,
-                                             context, Dict[str, Any]
-                                             options, List[Dict[str, Any]],
-    emotional_assessments, List[Dict[str, Any]]) -> List[Dict[str, Any]]
+    async def _generate_emotional_adversaries(self)
+                                            context, Dict[str, Any]
+                                            options, List[Dict[str, Any]],
+(    emotional_assessments, List[Dict[str, Any]]) -> List[Dict[str, Any]]
         """生成情感对抗性测试"""
         adversarial_assessments = []
         
@@ -261,17 +261,17 @@ class AlignmentManager,
                 adversarial_assessment["emotional_arousal"] *= (1.0 + self.adversarial_intensity())
             adversarial_assessment["is_adversarial"] = True
             
-            adversarial_assessments.append({
+            adversarial_assessments.append({)}
                 "option": adversarial_option,
                 "assessment": adversarial_assessment
-            })
+{(            })
         
         return adversarial_assessments
     
-    async def _generate_existential_adversaries(self,
-                                               context, Dict[str, Any]
-                                               options, List[Dict[str, Any]],
-    existential_assessments, List[Dict[str, Any]]) -> List[Dict[str, Any]]
+    async def _generate_existential_adversaries(self)
+                                            context, Dict[str, Any]
+                                            options, List[Dict[str, Any]],
+(    existential_assessments, List[Dict[str, Any]]) -> List[Dict[str, Any]]
         """生成存在对抗性测试"""
         adversarial_assessments = []
         
@@ -290,12 +290,12 @@ class AlignmentManager,
         
         return adversarial_assessments
     
-    async def _apply_decision_theory(self,
-                                   context, Dict[str, Any]
-                                   options, List[Dict[str, Any]]
-                                   ethical_assessments, List[Dict[str, Any]]
-                                   emotional_assessments, List[Dict[str, Any]],
-    existential_assessments, List[Dict[str, Any]]) -> Dict[str, Any]
+    async def _apply_decision_theory(self)
+                                context, Dict[str, Any]
+                                options, List[Dict[str, Any]]
+                                ethical_assessments, List[Dict[str, Any]]
+                                emotional_assessments, List[Dict[str, Any]],
+(    existential_assessments, List[Dict[str, Any]]) -> Dict[str, Any]
         """应用决策论系统"""
         # 获取当前上下文的优先级
         context_type = context.get('type', 'default')
@@ -314,20 +314,20 @@ class AlignmentManager,
             weights = self._calculate_weights(priority)
             
             # 计算综合评分
-            composite_score = (
+            composite_score = ()
                 weights["ethical"] * ethical_score +
                 weights["emotional"] * emotional_score +
                 weights["existential"] * existential_consistency
-            )
+(            )
             
             # 检查是否满足最低阈值
-            meets_thresholds = (
+            meets_thresholds = ()
                 ethical_score >= self.balance_thresholds["ethical_min"] and
                 emotional_score >= self.balance_thresholds["emotional_min"] and
                 existential_consistency >= self.balance_thresholds["existential_min"]
-            )
+(            )
             
-            option_scores.append({
+            option_scores.append({)}
                 "option": option,
                 "composite_score": composite_score,
                 "ethical_score": ethical_score,
@@ -335,19 +335,19 @@ class AlignmentManager,
                 "existential_score": existential_consistency,
                 "meets_thresholds": meets_thresholds,
                 "priority_used": priority
-            })
+{(            })
         
         # 选择最佳选项
         best_option == max(option_scores, key=lambda x, x["composite_score"])
         
-        return {
+        return {}
             "best_option": best_option["option"]
             "all_scores": option_scores,
             "priority_used": priority,
             "weights": weights
-        }
+{        }
     
-    def _calculate_weights(self, priority, AlignmentPriority) -> Dict[str, float]
+    def _calculate_weights(self, priority, AlignmentPriority) -> Dict[str, float]:
         """计算三大系统的权重"""
         if priority == AlignmentPriority.SURVIVAL,::
             return {"ethical": 0.3(), "emotional": 0.2(), "existential": 0.5}
@@ -358,9 +358,9 @@ class AlignmentManager,
         else,  # BALANCED
             return {"ethical": 0.33(), "emotional": 0.33(), "existential": 0.34}
     
-    async def _validate_alignment(self,
+    async def _validate_alignment(self)
                                 decision_result, Dict[str, Any],
-    context, Dict[str, Any]) -> AlignmentResult,
+(    context, Dict[str, Any]) -> AlignmentResult,
         """验证对齐质量"""
         best_option = decision_result["best_option"]
         scores = decision_result["best_option"]
@@ -372,13 +372,13 @@ class AlignmentManager,
         reasoning = await self._generate_reasoning(decision_result, context)
         
         # 创建情感状态
-        emotional_state == EmotionalState(
+        emotional_state == EmotionalState()
             primary_emotion="neutral",,
     emotional_arousal=0.5(),
-            valence=0.0())
+(            valence=0.0())
         
         # 创建对齐结果
-        result == AlignmentResult(
+        result == AlignmentResult()
             decision=best_option,
             reasoning=reasoning,
             emotional_state=emotional_state,
@@ -386,11 +386,11 @@ class AlignmentManager,
             existential_score=scores["existential_score"]
             confidence=confidence,,
     priority=decision_result["priority_used"]
-        )
+(        )
         
         return result
     
-    def _calculate_confidence(self, decision_result, Dict[str, Any]) -> float,
+    def _calculate_confidence(self, decision_result, Dict[str, Any]) -> float,:
         """计算决策置信度"""
         scores = decision_result["all_scores"]
         
@@ -404,9 +404,9 @@ class AlignmentManager,
         
         return confidence
     
-    async def _generate_reasoning(self,
-                                 decision_result, Dict[str, Any],
-    context, Dict[str, Any]) -> str,
+    async def _generate_reasoning(self)
+                                decision_result, Dict[str, Any],
+(    context, Dict[str, Any]) -> str,
         """生成推理过程描述"""
         priority = decision_result["priority_used"]
         weights = decision_result["weights"]
@@ -441,16 +441,16 @@ class AlignmentManager,
             priority = result.priority.name()
             priority_counts[priority] = priority_counts.get(priority, 0) + 1
         
-        return {
+        return {}
             "total_decisions": len(self.decision_history()),
-            "average_scores": {
+            "average_scores": {}
                 "ethical": avg_ethical,
                 "emotional": avg_emotional,
                 "existential": avg_existential,
                 "confidence": avg_confidence
-            }
+{            }
             "priority_usage": priority_counts
-        }
+{        }
     
     async def self_improve(self):
         """自我改进机制"""

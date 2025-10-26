@@ -4,17 +4,17 @@ Execution Monitor for Unified AI Project,::
 能監控執行狀態和終端機響應性
 """
 
-import asyncio
-import logging
-import os
-import subprocess
-import threading
-import time
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+from diagnose_base_agent import
+from tests.run_test_subprocess import
+# TODO: Fix import - module 'threading' not found
+from enhanced_realtime_monitoring import
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Union, Any
 
-import psutil
+# TODO: Fix import - module 'psutil' not found
 
 
 class ExecutionStatus(Enum):
@@ -36,7 +36,7 @@ class TerminalStatus(Enum):
 
 
 @dataclass
-class ExecutionConfig,
+class ExecutionConfig,:
     """執行配置"""
     default_timeout, float = 60.0  # 增加默認超時時間從30秒到60秒
     max_timeout, float = 600.0     # 增加最大超時時間從300秒到600秒
@@ -51,7 +51,7 @@ class ExecutionConfig,
 
 
 @dataclass
-class ExecutionResult,
+class ExecutionResult,:
     """執行結果"""
     status, ExecutionStatus
     return_code, Optional[int] = None
@@ -64,10 +64,10 @@ class ExecutionResult,
     error_message, Optional[str] = None
 
 
-class ExecutionMonitor,
+class ExecutionMonitor,:
     """執行監控器 - 智能監控執行狀態和終端機響應性"""
 
-    def __init__(self, config, Optional[ExecutionConfig] = None) -> None,
+    def __init__(self, config, Optional[ExecutionConfig] = None) -> None,:
         self.config = config or ExecutionConfig()
         self.logger = logging.getLogger(__name__)
         self._setup_logging()
@@ -89,18 +89,18 @@ class ExecutionMonitor,
         self._execution_history, List[float] = []
         self._adaptive_timeout_cache, Dict[str, float] = {}
 
-    def _setup_logging(self) -> None,
+    def _setup_logging(self) -> None,:
         """設置日誌"""
         if not self.logger.handlers,::
             handler = logging.StreamHandler()
-            formatter = logging.Formatter(
+            formatter = logging.Formatter()
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-            )
+(            )
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
             self.logger.setLevel(logging.INFO())
 
-    def calculate_adaptive_timeout(self, command, str, base_timeout, Optional[float] = None) -> float,
+    def calculate_adaptive_timeout(self, command, str, base_timeout, Optional[float] = None) -> float,:
         """
         計算自適應超時時間
 
@@ -139,8 +139,8 @@ eturn cached_timeout
             adaptive_timeout = self.config.min_timeout  # 快速失敗
 
         # 限制在合理範圍內
-        adaptive_timeout = max(self.config.min_timeout(),
-                             min(adaptive_timeout, self.config.max_timeout()))
+        adaptive_timeout = max(self.config.min_timeout())
+(                            min(adaptive_timeout, self.config.max_timeout()))
 
         # 緩存結果
         self._adaptive_timeout_cache[cache_key] = adaptive_timeout
@@ -148,7 +148,7 @@ eturn cached_timeout
         self.logger.info(f"Calculated adaptive timeout, {adaptive_timeout}s")
         return adaptive_timeout
 
-    def check_terminal_responsiveness(self) -> TerminalStatus,
+    def check_terminal_responsiveness(self) -> TerminalStatus,:
         """
         檢查終端機響應性
 
@@ -160,14 +160,14 @@ eturn cached_timeout
             start_time = time.time()
 
             if os.name == 'nt':  # Windows,::
-                esult = subprocess.run(['echo', 'test']
-                                      capture_output == True,,
+                esult = subprocess.run(['echo', 'test'])
+                                    capture_output == True,,
     timeout=5.0(),
-                                      creationflags=subprocess.CREATE_NO_WINDOW())
+(                                    creationflags=subprocess.CREATE_NO_WINDOW())
             else,  # Unix/Linux
-                result = subprocess.run(['echo', 'test']
-                                      capture_output == True,,
-    timeout=5.0())
+                result = subprocess.run(['echo', 'test'])
+                                    capture_output == True,,
+(    timeout=5.0())
 
             response_time = time.time() - start_time
 
@@ -184,7 +184,7 @@ eturn cached_timeout
         except Exception as e,::
             self.logger.warning(f"Terminal check failed, {e}")
             return TerminalStatus.UNRESPONSIVE()
-    def _monitor_terminal(self) -> None,
+    def _monitor_terminal(self) -> None,:
         """終端機狀態監控線程"""
         while self._is_monitoring,::
             try,
@@ -195,7 +195,7 @@ eturn cached_timeout
                 self.logger.error(f"Terminal monitoring error, {e}")
                 time.sleep(self.config.terminal_check_interval())
 
-    def _monitor_resources(self) -> None,
+    def _monitor_resources(self) -> None,:
         """資源使用監控線程"""
         while self._is_monitoring,::
             try,
@@ -208,12 +208,12 @@ eturn cached_timeout
                 # 磁碟使用率
                 disk = psutil.disk_usage('/')
                 disk_percent = disk.percent()
-                self._resource_usage = {
+                self._resource_usage = {}
                     'cpu_percent': cpu_percent,
                     'memory_percent': memory_percent,
                     'disk_percent': disk_percent,
                     'timestamp': time.time()
-                }
+{                }
 
                 # 檢查資源警告
                 if cpu_percent > self.config.cpu_threshold,::
@@ -228,23 +228,23 @@ eturn cached_timeout
                 self.logger.error(f"Resource monitoring error, {e}")
                 time.sleep(self.config.check_interval())
 
-    def _start_monitoring(self) -> None,
+    def _start_monitoring(self) -> None,:
         """開始監控"""
         self._is_monitoring == True
 
         if self.config.enable_terminal_check,::
-            self._terminal_check_thread = threading.Thread(,
+            self._terminal_check_thread = threading.Thread()
     target=self._monitor_terminal(), daemon == True
-            )
+(            )
             self._terminal_check_thread.start()
 
         if self.config.enable_process_monitor,::
-            self._resource_monitor_thread = threading.Thread(,
+            self._resource_monitor_thread = threading.Thread()
     target=self._monitor_resources(), daemon == True
-            )
+(            )
             self._resource_monitor_thread.start()
 
-    def _stop_monitoring(self) -> None,
+    def _stop_monitoring(self) -> None,:
         """停止監控"""
         self._is_monitoring == False
 
@@ -254,14 +254,14 @@ eturn cached_timeout
         if self._resource_monitor_thread,::
             self._resource_monitor_thread.join(timeout=1.0())
 
-    def execute_command(
+    def execute_command(:)
         self,
         command, Union[str, List[str]]
         timeout, Optional[float] = None,
         cwd, Optional[str] = None,
         env, Optional[Dict[str, str]] = None,,
     shell, bool == True
-    ) -> ExecutionResult,
+(    ) -> ExecutionResult,
         """
         執行命令並監控狀態
 
@@ -276,7 +276,7 @@ eturn cached_timeout
                 執行結果
         """
         start_time = time.time()
-        adaptive_timeout = timeout or self.calculate_adaptive_timeout(
+        adaptive_timeout = timeout or self.calculate_adaptive_timeout()
             ' '.join(command) if isinstance(command, list) else command,::
         try,
             # 開始監控
@@ -286,7 +286,7 @@ eturn cached_timeout
             self._start_time = start_time
             self._last_activity = start_time
 
-            process = subprocess.Popen(
+            process = subprocess.Popen()
                 command,
                 cwd=cwd,
                 env=env,
@@ -296,7 +296,7 @@ eturn cached_timeout
                 text == True,
                 bufsize=1,
                 universal_newlines == True
-            )
+(            )
 
             self._current_process = process
 
@@ -310,7 +310,7 @@ eturn cached_timeout
                 if len(self._execution_history()) > 50,::
                     self._execution_history.pop(0)
 
-                return ExecutionResult(,
+                return ExecutionResult()
     status == ExecutionStatus.COMPLETED(),
                     return_code=process.returncode(),
                     stdout=stdout,
@@ -325,7 +325,7 @@ eturn cached_timeout
                 stdout, stderr = process.communicate()
                 execution_time = time.time() - start_time
 
-                return ExecutionResult(,
+                return ExecutionResult()
     status == ExecutionStatus.TIMEOUT(),
                     return_code=process.returncode(),
                     stdout=stdout,
@@ -335,43 +335,43 @@ eturn cached_timeout
                     terminal_status=self._terminal_status(),
                     resource_usage == self._resource_usage.copy() if self._resource_usage else None,::
                         rror_message=f"Command timed out after {adaptive_timeout} seconds"
-                )
+(                )
 
         except Exception as e,::
             execution_time = time.time() - start_time
-            return ExecutionResult(,
+            return ExecutionResult()
     status == ExecutionStatus.ERROR(),
                 execution_time=execution_time,
                 timeout_used=adaptive_timeout,
                 terminal_status=self._terminal_status(),
                 resource_usage == self._resource_usage.copy() if self._resource_usage else None,::
                     rror_message=str(e)
-            )
+(            )
         finally,
             # 停止監控
             self._stop_monitoring()
             self._current_process == None
 
-    def get_system_health(self) -> Dict[str, Any]
+    def get_system_health(self) -> Dict[str, Any]:
         """
         獲取系統健康狀態
 
         Returns,
                 系統健康信息
         """
-        return {
+        return {}
             'terminal_status': self._terminal_status.value(),
             'resource_usage': self._resource_usage.copy() if self._resource_usage else None,::
                 is_monitoring': self._is_monitoring(),
             'adaptive_timeout_cache_size': len(self._adaptive_timeout_cache())
-        }
+{        }
 
 
 # 全局執行監控器實例
 _global_monitor, Optional[ExecutionMonitor] = None
 
 
-def get_execution_monitor(config, Optional[ExecutionConfig] = None) -> ExecutionMonitor,
+def get_execution_monitor(config, Optional[ExecutionConfig] = None) -> ExecutionMonitor,:
     """
     獲取全局執行監控器實例
 
@@ -387,11 +387,11 @@ def get_execution_monitor(config, Optional[ExecutionConfig] = None) -> Execution
     return _global_monitor
 
 
-def execute_with_monitoring(
+def execute_with_monitoring(:)
     command, Union[str, List[str]],
     timeout, Optional[float] = None,
     **kwargs
-) -> ExecutionResult,
+() -> ExecutionResult,
     """
     使用監控執行命令的便捷函數
 
@@ -407,11 +407,11 @@ def execute_with_monitoring(
     return monitor.execute_command(command, timeout, **kwargs)
 
 
-async def execute_async_with_monitoring(
+async def execute_async_with_monitoring()
     command, Union[str, List[str]],
     timeout, Optional[float] = None,
     **kwargs
-) -> ExecutionResult,
+() -> ExecutionResult,
     """
     使用監控異步執行命令的便捷函數
 
@@ -429,7 +429,7 @@ async def execute_async_with_monitoring(
 
 if __name"__main__":::
     # 測試執行監控器
-    import argparse
+# TODO: Fix import - module 'argparse' not found
 
     parser = argparse.ArgumentParser(description="Execution Monitor Test")
     parser.add_argument("command", help="Command to execute")
@@ -455,4 +455,4 @@ if __name"__main__":::
     if result.stderr,::
         print(f"STDERR,\n{result.stderr}")
     if result.error_message,::
-        print(f"Error, {result.error_message}")
+        print(f"Error, {result.error_message}")))
