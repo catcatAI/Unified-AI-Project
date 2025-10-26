@@ -378,20 +378,20 @@ class EnhancedSyntaxFixer(BaseFixer):
 
             original_content = content
             
-            # 应用各种修复
-            content = self._fix_missing_colons(content)
-            content = self._fix_indentation(content)
-            content = self._fix_unmatched_parentheses(content)
-            content = self._fix_invalid_syntax(content)
+            # [DISABLED] 应用各种修复
+            # content = self._fix_missing_colons(content)
+            # content = self._fix_indentation(content)
+            # content = self._fix_unmatched_parentheses(content)
+            # content = self._fix_invalid_syntax(content)
             
-            # 如果内容有变化,写回文件
+            # [DISABLED] 如果内容有变化,写回文件
             if content != original_content:
-                if not context.dry_run:
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(content)
+                # if not context.dry_run:
+                #     with open(file_path, 'w', encoding='utf-8') as f:
+                #         f.write(content)
                 
-                self.logger.info(f"已修复文件, {file_path}")
-                return 1  # 认为修复了一个问题
+                self.logger.warning(f"检测到潜在修复，但已禁用: {file_path}")
+                return 1 # 报告问题已找到，但未修复
             
             return 0
             

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 统一日志记录工具
 """
@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 class UnifiedLogger:
-    def __init__(self, name="unified-ai", level=logging.INFO) -> None:
+在函数定义前添加空行
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
         
@@ -21,10 +21,10 @@ class UnifiedLogger:
             
             # 创建文件处理器
             log_dir = Path(__file__).parent.parent.parent / "logs"
-            log_dir.mkdir(exist_ok=True)
-            log_file = log_dir / "unified-ai.log"
+            log_dir.mkdir(exist_ok = True)
+            log_file = log_dir / "unified - ai.log"
             
-            file_handler = logging.FileHandler(log_file, encoding='utf-8')
+            file_handler = logging.FileHandler(log_file, encoding='utf - 8')
             file_handler.setLevel(level)
             
             # 创建格式器

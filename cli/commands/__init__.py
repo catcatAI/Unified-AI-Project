@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 Unified AI Project CLI 命令模块初始化文件
 """
