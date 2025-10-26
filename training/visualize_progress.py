@@ -18,7 +18,7 @@ def load_training_data(log_file == "logs / training_monitor.log"):
     
     training_data = []
     try,
-        with open(log_file, 'r', encoding == 'utf - 8') as f,:
+        with open(log_file, 'r', encoding == 'utf - 8') as f, :
             for line in f, ::
                 try,
                     entry = json.loads(line.strip())
@@ -34,6 +34,7 @@ def load_training_data(log_file == "logs / training_monitor.log"):
 def create_progress_plot(training_data, output_file == "progress_visualization.png"):
     """创建训练进度图"""
     metrics_data == [entry for entry in training_data if entry.get('type') == 'training_\
+    \
     metrics']::
         f not metrics_data,
         print("没有找到训练指标数据")
@@ -58,7 +59,7 @@ def create_progress_plot(training_data, output_file == "progress_visualization.p
     fig.suptitle('训练进度可视化', fontsize = 16, fontweight = 'bold')
     
     # 损失曲线
-    ax1.plot(epochs, losses, 'r - o', linewidth=2, markersize=4)
+    ax1.plot(epochs, losses, 'r - o', linewidth = 2, markersize = 4)
     ax1.set_title('损失函数变化', fontsize = 14)
     ax1.set_xlabel('Epoch')
     ax1.set_ylabel('Loss')
@@ -66,7 +67,7 @@ def create_progress_plot(training_data, output_file == "progress_visualization.p
     ax1.set_yscale('log')
     
     # 准确率曲线
-    ax2.plot(epochs, accuracies, 'b - s', linewidth=2, markersize=4)
+    ax2.plot(epochs, accuracies, 'b - s', linewidth = 2, markersize = 4)
     ax2.set_title('准确率变化', fontsize = 14)
     ax2.set_xlabel('Epoch')
     ax2.set_ylabel('Accuracy')
@@ -90,8 +91,8 @@ def main() -> None, :
         print("没有找到训练数据, 生成示例图表...")
         # 生成示例数据
         epochs = list(range(1, 51))
-        losses == [max(0.01(), 1.0 * np.exp(-i / 10) + np.random.normal(0, 0.05())) for i in epochs]::
-            ccuracies == [min(0.99(), 0.1 + 0.9 * (1 - np.exp(-i / 8)) + np.random.normal(0, 0.02())) for i in epochs]:
+        losses == [max(0.01(), 1.0 * np.exp( - i / 10) + np.random.normal(0, 0.05())) for i in epochs]::
+            ccuracies == [min(0.99(), 0.1 + 0.9 * (1 - np.exp( - i / 8)) + np.random.normal(0, 0.02())) for i in epochs]:
         # 创建示例数据结构
         training_data == []
         for i, epoch in enumerate(epochs)::

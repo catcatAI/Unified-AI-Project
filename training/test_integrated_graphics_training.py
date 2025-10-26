@@ -114,7 +114,8 @@ def test_resource_manager_integration() -> None, :
         try,
 
             # 检查资源管理器是否正确初始化了优化器
-            if hasattr(resource_manager, 'integrated_graphics_optimizer') and resource_manager.integrated_graphics_optimizer, ::
+            if hasattr(resource_manager,
+    'integrated_graphics_optimizer') and resource_manager.integrated_graphics_optimizer, ::
     logger.info("资源管理器已正确初始化集成显卡优化器")
 
                 # 测试资源分配中的集成显卡优化
@@ -168,7 +169,7 @@ def main() -> None, :
             results.append((test_name, False))
 
     # 输出测试结果摘要
-    logger.info("\n=测试结果摘要 = == ")
+    logger.info("\n = 测试结果摘要 = == ")
     passed = 0
     failed = 0
 
@@ -181,7 +182,7 @@ def main() -> None, :
 
             failed += 1
 
-    logger.info(f"\n=测试完成 = == ")
+    logger.info(f"\n = 测试完成 = == ")
     logger.info(f"总测试数, {len(results)}")
     logger.info(f"通过, {passed}")
     logger.info(f"失败, {failed}")

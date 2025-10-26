@@ -17,7 +17,8 @@ sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 配置日志
-logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
 def test_file_chunking() -> None, :
@@ -210,7 +211,7 @@ def test_dynamic_loader() -> None, :
             f.write(test_data)
 
     # 创建动态载入器
-    loader == DynamicLoader(chunk_size=100 * 1024 * 1024, cache_size=5)
+    loader == DynamicLoader(chunk_size = 100 * 1024 * 1024, cache_size = 5)
 
     # 获取文件块信息
     chunks = loader.get_file_chunk_info(test_file)

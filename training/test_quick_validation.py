@@ -15,7 +15,8 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
-logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
 def test_data_manager() -> None, :

@@ -65,7 +65,7 @@ from tests.run_test_subprocess import
             # 先测试是否有nvidia gpu
             try,
 
-                result = subprocess.run(["nvidia - smi", " - -query - gpu=name", " - -format=csv,noheader"])
+                result = subprocess.run(["nvidia - smi", " - -query - gpu = name", " - -format = csv,noheader"])
 (    capture_output == True, text == True, timeout = 5)
                 if result.returncode == 0, ::
     logger.info("检测到NVIDIA GPU, ")
@@ -94,6 +94,7 @@ from tests.run_test_subprocess import
                         integrated_keywords = ['intel', 'amd', 'radeon', 'hd graphics',
     'uhd graphics', 'integrated']
                         is_integrated == any(keyword in gpu_name.lower() for keyword in \
+    \
     integrated_keywords)::
     if is_integrated, ::
     logger.info(f"    -> 集成显卡, 是")
@@ -173,23 +174,23 @@ def test_imports() -> None, :
 
     cpu_info == CPUInfo()
             cores_physical = 2,
-            cores_logical = 4,,
+            cores_logical = 4, ,
     frequency_max = 2400.0(),
             frequency_current = 2000.0(),
             architecture = "x86_64",
-            brand="Intel Core i5 - 7200U",
+            brand = "Intel Core i5 - 7200U",
 (            usage_percent = 25.0())
 
     memory_info == MemoryInfo()
             total = 8192,  # 8GB
             available = 4096,
-            used = 4096,,
+            used = 4096, ,
 (    usage_percent = 50.0())
 
     storage_info == StorageInfo()
             total = 256,
             available = 128,
-            used = 128,,
+            used = 128, ,
     disk_type = "SSD"
 (    )
 
@@ -208,7 +209,7 @@ def test_imports() -> None, :
             network = network_info,
             platform = "windows",
             os_version = "10.0.19042",
-            performance_tier = "Low",,
+            performance_tier = "Low", ,
 (    ai_capability_score = 35.0())
 
     # 测试优化器
@@ -217,7 +218,8 @@ def test_imports() -> None, :
     logger.info(f"是否为集成显卡系统, {optimizer.is_integrated_graphics_system()}")
 
     recommendations = optimizer.get_optimization_recommendations()
-    logger.info(f"优化建议, {json.dumps(recommendations, ensure_ascii == False, indent = 2)}")
+    logger.info(f"优化建议, {json.dumps(recommendations, ensure_ascii == False,
+    indent = 2)}")
 
     batch_size = optimizer.adjust_batch_size_for_integrated_graphics(32)
     logger.info(f"调整后的批处理大小, {batch_size}")
@@ -266,7 +268,7 @@ def main() -> None, :
             results.append((test_name, False))
 
     # 输出测试结果摘要
-    logger.info("\n=测试结果摘要 = == ")
+    logger.info("\n = 测试结果摘要 = == ")
     passed = 0
     failed = 0
 
@@ -279,7 +281,7 @@ def main() -> None, :
 
             failed += 1
 
-    logger.info(f"\n=测试完成 = == ")
+    logger.info(f"\n = 测试完成 = == ")
     logger.info(f"总测试数, {len(results)}")
     logger.info(f"通过, {passed}")
     logger.info(f"失败, {failed}")

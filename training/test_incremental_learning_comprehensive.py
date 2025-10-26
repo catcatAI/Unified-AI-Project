@@ -48,7 +48,7 @@ def test_data_tracker_comprehensive() -> None, :
             
             # 验证文件是否正确保存,
             if tracking_file.exists():::
-                with open(tracking_file, 'r', encoding == 'utf - 8') as f,:
+                with open(tracking_file, 'r', encoding == 'utf - 8') as f, :
                     data = json.load(f)
                     if test_hash in data.get('processed_files', {}):
                         print(f"  ✅ 数据持久化功能正常")
@@ -83,7 +83,8 @@ def test_model_manager_comprehensive() -> None, :
                 print(f"  ⚠️  获取最新模型功能可能有问题")
             
             # 测试保存增量模型(创建一个临时文件作为模型)
-            with tempfile.NamedTemporaryFile(suffix == '.pth', delete == False) as tmp_model, :
+            with tempfile.NamedTemporaryFile(suffix == '.pth',
+    delete == False) as tmp_model, :
                 tmp_model_path == Path(tmp_model.name())
                 tmp_model_path.write_text("fake model data")
             

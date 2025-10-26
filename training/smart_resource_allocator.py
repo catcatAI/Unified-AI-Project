@@ -67,7 +67,8 @@ from tests.test_json_fix import
 
                 result = subprocess.run([)]
                     "powershell.exe",
-                    "Get - WmiObject -Class Win32_VideoController | Select - Object Name, AdapterRAM | ConvertTo - Json"
+                    "Get - WmiObject -Class Win32_VideoController | Select -\
+    Object Name, AdapterRAM | ConvertTo - Json"
 [(                ] capture_output == True, text == True, timeout = 10)
 
                 if result.returncode == 0 and result.stdout.strip():::
@@ -116,13 +117,16 @@ from tests.test_json_fix import
 {            }
             'gpu': {}
                 'devices': gpu_info,
-                'total_memory_gb': sum(gpu['total_memory'] for gpu in gpu_info) if gpu_info else 0, ::
-                    available_memory_gb': sum(gpu['free_memory'] for gpu in gpu_info) if gpu_info else 0, ::
+                'total_memory_gb': sum(gpu['total_memory'] for gpu in gpu_info) if gpu_i\
+    nfo else 0, ::
+                    available_memory_gb': sum(gpu['free_memory'] for gpu in gpu_info) if\
+    gpu_info else 0, ::
 utilization_history': []
 {            }
 {    }
 
-    logger.info(f"资源池初始化, CPU核心 == {cpu_count} 内存 = {"total_memory":.2f}GB, GPU设备 = {len(gpu_info)}")
+    logger.info(f"资源池初始化, CPU核心 == {cpu_count} 内存 = {"total_memory":.2f}GB,
+    GPU设备 = {len(gpu_info)}")
     return resource_pools
 
     def _detect_gpus(self) -> List[Dict[str, Any]]:
@@ -143,7 +147,7 @@ utilization_history': []
 
                 gpu_info = {}
                     'id': i,
-                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name,::
+                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name, ::
     'total_memory': memory_info.total / (1024 * *3),  # GB
                     'free_memory': memory_info.free / (1024 * *3),    # GB
                     'used_memory': memory_info.used / (1024 * *3),    # GB
@@ -157,7 +161,7 @@ utilization_history': []
         except Exception as e, ::
             logger.warning(f"检测NVIDIA GPU时出错, {e}")
 
-    # 如果没有检测到NVIDIA GPU,尝试检测其他GPU(AMD / Intel等)
+    # 如果没有检测到NVIDIA GPU, 尝试检测其他GPU(AMD / Intel等)
         if not gpus, ::
     try,
                 # 尝试使用torch检测GPU
@@ -196,7 +200,8 @@ from tests.test_json_fix import
 
                     result = subprocess.run([)]
                         "powershell.exe",
-                        "Get - WmiObject -Class Win32_VideoController | Select - Object Name, AdapterRAM | ConvertTo - Json"
+                        "Get - WmiObject -Class Win32_VideoController | Select -\
+    Object Name, AdapterRAM | ConvertTo - Json"
 [(                    ] capture_output == True, text == True, timeout = 10)
 
                     if result.returncode == 0, ::
@@ -215,7 +220,7 @@ from tests.test_json_fix import
                             adapter_ram = gpu_info.get('AdapterRAM', 0)
 
                             # Convert RAM from bytes to GB
-                            memory_total_gb == adapter_ram / (1024 * *3) if adapter_ram else 1.0  # Default 1GB,::
+                            memory_total_gb == adapter_ram / (1024 * *3) if adapter_ram else 1.0  # Default 1GB, ::
                                 pu_info = {}
                                 'id': idx,
                                 'name': name,
@@ -236,7 +241,8 @@ from tests.test_json_fix import
     def request_resources(self, request, ResourceRequest) -> bool, :
     """请求资源"""
     self.pending_requests.append(request)
-    logger.info(f"收到资源请求, 任务 {request.task_id} CPU = {request.cpu_cores}核, 内存 = {request.memory_gb}GB")
+    logger.info(f"收到资源请求, 任务 {request.task_id} CPU = {request.cpu_cores}核,
+    内存 = {request.memory_gb}GB")
     return True
 
     def allocate_resources(self) -> List[ResourceAllocation]:
@@ -375,7 +381,8 @@ from tests.test_json_fix import
     {"allocated_memory":.2f}GB内存, {"allocated_gpu_memory":.2f}GB GPU内存")
     return allocation
 
-    def _allocate_mixed_resources(self, request, ResourceRequest) -> ResourceAllocation, :
+    def _allocate_mixed_resources(self, request, ResourceRequest) -> ResourceAllocation,
+    :
     """分配混合资源"""
     # 对于混合资源, 我们尝试平衡分配
     return self._allocate_gpu_resources(request)  # 目前与GPU资源分配相同
@@ -441,13 +448,13 @@ from tests.test_json_fix import
     max_history = 100
         if len(self.resource_pools['cpu']['utilization_history']) > max_history, ::
     self.resource_pools['cpu']['utilization_history'] = \
-                self.resource_pools['cpu']['utilization_history'][ - max_history,]
+                self.resource_pools['cpu']['utilization_history'][ - max_history, ]
         if len(self.resource_pools['memory']['utilization_history']) > max_history, ::
     self.resource_pools['memory']['utilization_history'] = \
-                self.resource_pools['memory']['utilization_history'][ - max_history,]
+                self.resource_pools['memory']['utilization_history'][ - max_history, ]
         if len(self.resource_pools['gpu']['utilization_history']) > max_history, ::
     self.resource_pools['gpu']['utilization_history'] = \
-                self.resource_pools['gpu']['utilization_history'][ - max_history,]
+                self.resource_pools['gpu']['utilization_history'][ - max_history, ]
 
     return utilization
 
@@ -470,10 +477,13 @@ from tests.test_json_fix import
         avg_cpu == sum(record['request']['cpu_cores'] for record in relevant_history) /\
     len(relevant_history)::
             vg_memory == sum(record['request']['memory_gb'] for record in relevant_histo\
+    \
     ry) / len(relevant_history)::
 vg_gpu_memory == sum(record['request']['gpu_memory_gb'] for record in relevant_history) \
+    \
     / len(relevant_history)::
 vg_time == sum(record['request']['estimated_time_hours'] for record in relevant_history)\
+    \
     / len(relevant_history)::
 rediction = {}
             'cpu_cores': round(avg_cpu),
@@ -539,16 +549,20 @@ rediction = {}
 
     # 计算平均利用率
         avg_cpu == sum(entry['utilization'] for entry in self.resource_pools['cpu']['uti\
+    \
     lization_history']) / \:::
     len(self.resource_pools['cpu']['utilization_history'])
 
         avg_memory == sum(entry['utilization'] for entry in self.resource_pools['memory'\
+    \
     ]['utilization_history']) / \:::
     len(self.resource_pools['memory']['utilization_history'])
 
         avg_gpu == sum(entry['utilization'] for entry in self.resource_pools['gpu']['uti\
+    \
     lization_history']) / \:::
-    len(self.resource_pools['gpu']['utilization_history']) if self.resource_pools['gpu']['utilization_history'] else 0, ::
+    len(self.resource_pools['gpu']['utilization_history']) if self.resource_pools['gpu']\
+    ['utilization_history'] else 0, ::
     return {}
             'avg_cpu_utilization': avg_cpu,
             'avg_memory_utilization': avg_memory,
@@ -585,7 +599,7 @@ if __name"__main__":::
     # 创建资源请求
     request1 == ResourceRequest()
     task_id = "task1",
-    cpu_cores = 4,,
+    cpu_cores = 4, ,
     memory_gb = 8.0(),
     gpu_memory_gb = 2.0(),
     priority = 8,
@@ -595,7 +609,7 @@ if __name"__main__":::
 
     request2 == ResourceRequest()
     task_id = "task2",
-    cpu_cores = 2,,
+    cpu_cores = 2, ,
     memory_gb = 4.0(),
     gpu_memory_gb = 0.0(),
     priority = 5,

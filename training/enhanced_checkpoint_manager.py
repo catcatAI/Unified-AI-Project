@@ -120,6 +120,7 @@ class EnhancedCheckpointManager, :
                     if epoch_checkpoint and time_checkpoint, ::
     checkpoint_type = "epoch_and_time"
                         reasons.append(f"Epoch {epoch} 是 {self.epoch_interval} 的倍数且时间间隔已\
+    \
     到")
                     elif epoch_checkpoint, ::
     checkpoint_type = "epoch"
@@ -148,11 +149,12 @@ class EnhancedCheckpointManager, :
             logger.error(f"判断是否保存检查点失败, {e}")
             return {'should_save': False, 'checkpoint_type': 'regular', 'reasons': []}
 
-    def _should_save_for_improvement(self, metrics, Dict[str, Any] task_id, str == None) -> bool, :
+    def _should_save_for_improvement(self, metrics, Dict[str, Any] task_id,
+    str == None) -> bool, :
     """判断是否因改善而保存检查点"""
         try,
             # 获取该任务的最新检查点
-            task_checkpoints == [cp for cp in self.checkpoint_history if cp.task_id = task_id] if task_id else self.checkpoint_history,::
+            task_checkpoints == [cp for cp in self.checkpoint_history if cp.task_id = task_id] if task_id else self.checkpoint_history, ::
     if not task_checkpoints, ::
     return True  # 如果没有之前的检查点, 保存第一个
 
@@ -206,7 +208,7 @@ class EnhancedCheckpointManager, :
     checkpoint_data = self._compress_checkpoint_data(checkpoint_data)
 
             # 保存检查点到文件
-            with open(checkpoint_path, 'w', encoding == 'utf - 8') as f,:
+            with open(checkpoint_path, 'w', encoding == 'utf - 8') as f, :
     json.dump(checkpoint_data, f, ensure_ascii == False, indent = 2)
 
             # 获取文件大小
@@ -215,7 +217,7 @@ class EnhancedCheckpointManager, :
             # 创建检查点信息
             checkpoint_info == CheckpointInfo()
                 checkpoint_id = checkpoint_id,
-                task_id = task_id or 'default',,
+                task_id = task_id or 'default', ,
     epoch = state.get('epoch', 0),
                 timestamp = time.time(),
                 file_path = str(checkpoint_path),
@@ -261,7 +263,8 @@ class EnhancedCheckpointManager, :
                 target_checkpoint = self.checkpoints.get(checkpoint_id)
             elif task_id, ::
                 # 加载指定任务的最新检查点
-                task_checkpoints == [cp for cp in self.checkpoint_history if cp.task_id = task_id]::
+                task_checkpoints == [cp for cp in self.checkpoint_history if cp.task_id \
+    = task_id]::
     if task_checkpoints, ::
     target_checkpoint == max(task_checkpoints, key = lambda x, x.timestamp())
             else,
@@ -279,7 +282,7 @@ class EnhancedCheckpointManager, :
 = logger.error(f"检查点文件不存在, {checkpoint_path}")
                 return None
 
-            with open(checkpoint_path, 'r', encoding == 'utf - 8') as f,:
+            with open(checkpoint_path, 'r', encoding == 'utf - 8') as f, :
     checkpoint_data = json.load(f)
 
             # 解压缩数据(如果需要)
@@ -315,9 +318,11 @@ class EnhancedCheckpointManager, :
             # 如果检查点数量超过保留数量, 删除最旧的
             if len(task_checkpoints) > self.keep_last_n_checkpoints, ::
                 # 按时间排序
-                sorted_checkpoints == sorted(task_checkpoints, key = lambda x, x.timestamp())
+                sorted_checkpoints == sorted(task_checkpoints, key = lambda x,
+    x.timestamp())
                 # 确定要删除的检查点
-                checkpoints_to_remove == sorted_checkpoints[: - self.keep_last_n_checkpoints]
+                checkpoints_to_remove == sorted_checkpoints[: -\
+    self.keep_last_n_checkpoints]
 
                 # 删除文件和记录
                 for checkpoint_info in checkpoints_to_remove, ::

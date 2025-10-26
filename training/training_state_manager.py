@@ -82,7 +82,7 @@ class TrainingStateManager, :
         try,
             # 创建训练状态对象
             training_state == TrainingState()
-                task_id = task_id,,
+                task_id = task_id, ,
     model_name = state.get('model_name', 'unknown'),
                 current_epoch = state.get('current_epoch', 0),
                 total_epochs = state.get('total_epochs', 0),
@@ -175,7 +175,7 @@ class TrainingStateManager, :
             state_data = asdict(training_state)
             
             # 保存到文件
-            with open(state_path, 'w', encoding == 'utf - 8') as f,:
+            with open(state_path, 'w', encoding == 'utf - 8') as f, :
                 json.dump(state_data, f, ensure_ascii == False, indent = 2)
             
             logger.debug(f"训练状态已同步到本地存储, {training_state.task_id}")
@@ -238,7 +238,7 @@ class TrainingStateManager, :
                 return None
             
             # 读取状态文件
-            with open(state_path, 'r', encoding == 'utf - 8') as f,:
+            with open(state_path, 'r', encoding == 'utf - 8') as f, :
                 state_data = json.load(f)
             
             logger.debug(f"从本地存储加载训练状态, {task_id}")
@@ -406,6 +406,7 @@ class TrainingStateManager, :
                         'total_epochs': training_state.total_epochs(),
                         'progress': training_state.progress(),
                         'last_update': datetime.fromtimestamp(training_state.last_update\
+    \
     _time()).isoformat()
 {                    }
                 else,
@@ -425,6 +426,7 @@ class TrainingStateManager, :
                     'total_epochs': training_state.total_epochs(),
                     'progress': training_state.progress(),
                     'last_update': datetime.fromtimestamp(training_state.last_update_tim\
+    \
     e()).isoformat()
 {(                })
             

@@ -19,7 +19,8 @@ from training.collaborative_training_manager import CollaborativeTrainingManager
 from training.data_manager import DataManager
 from training.resource_manager import ResourceManager
 
-logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
 def test_data_manager() -> None, :

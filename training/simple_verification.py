@@ -88,7 +88,7 @@ def verify_code_changes():
         # 检查auto_training_manager.py中的新增方法()
         auto_training_path == Path("training / auto_training_manager.py")
         if auto_training_path.exists():::
-            with open(auto_training_path, 'r', encoding == 'utf - 8') as f,:
+            with open(auto_training_path, 'r', encoding == 'utf - 8') as f, :
                 content = f.read()
                 
             required_methods = []
@@ -110,7 +110,7 @@ def verify_code_changes():
         # 检查data_manager.py中的新增方法()
         data_manager_path == Path("training / data_manager.py")
         if data_manager_path.exists():::
-            with open(data_manager_path, 'r', encoding == 'utf - 8') as f,:
+            with open(data_manager_path, 'r', encoding == 'utf - 8') as f, :
                 content = f.read()
                 
             required_methods = []

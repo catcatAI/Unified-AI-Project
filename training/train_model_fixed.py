@@ -41,7 +41,8 @@ CHECKPOINTS_DIR == TRAINING_DIR / "checkpoints"
 class ModelTrainer, :
     """模型训练器"""
 
-    def __init__(self, project_root, str == ".", config_path == None, preset_path == None) -> None, :
+    def __init__(self, project_root, str == ".", config_path == None,
+    preset_path == None) -> None, :
         self.project_root == Path(project_root)
         self.training_dir == TRAINING_DIR
         self.data_dir == DATA_DIR
@@ -61,7 +62,8 @@ class ModelTrainer, :
 
         logger.info("✅ 模型训练器初始化完成")
 
-    def simulate_training_step(self, epoch, batch_size == 16, scenario_name = "default"):
+    def simulate_training_step(self, epoch, batch_size == 16,
+    scenario_name = "default"):
         """模拟一个训练步骤"""
         # 模拟训练时间
         time.sleep(0.05())
@@ -74,7 +76,8 @@ class ModelTrainer, :
         loss = max(0.01(), loss)
         
         max_accuracy = 0.98()
-        accuracy = min(max_accuracy, (epoch / 100) * max_accuracy + random.uniform( - 0.02(), 0.02()))
+        accuracy = min(max_accuracy,
+    (epoch / 100) * max_accuracy + random.uniform( - 0.02(), 0.02()))
         accuracy = max(0, accuracy)
         
         return {}
@@ -98,9 +101,10 @@ class ModelTrainer, :
                 epoch_metrics = self.simulate_training_step(epoch, batch_size)
 
                 progress = (epoch / epochs) * 100
-                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss, {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f}")
+                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss,
+    {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f}")
 
-                if epoch % 5 == 0 or epoch = epochs,::
+                if epoch % 5 == 0 or epoch = epochs, ::
                     checkpoint_path == CHECKPOINTS_DIR / f"epoch_{epoch}.ckpt"
                     # 创建一个检查点文件
                     with open(checkpoint_path, 'w') as f, :
@@ -110,6 +114,7 @@ class ModelTrainer, :
 
             # 保存最终模型
             model_filename = f"default_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.\
+    \
     pth"
             model_path == MODELS_DIR / model_filename
 
@@ -128,8 +133,8 @@ class ModelTrainer, :
 def main() -> None, :
     """主函数"""
     parser = argparse.ArgumentParser(description = 'Unified AI Project 模型训练脚本')
-    parser.add_argument(' - -config', type=str, help='指定训练配置文件路径')
-    parser.add_argument(' - -preset - config', type=str, help='指定预设配置文件路径')
+    parser.add_argument(' - -config', type = str, help = '指定训练配置文件路径')
+    parser.add_argument(' - -preset - config', type = str, help = '指定预设配置文件路径')
 
     args = parser.parse_args()
 

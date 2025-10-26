@@ -21,8 +21,8 @@ def test_serial_scanner() -> None, :
     # 创建串行扫描器
     scanner == OptimizedDataScanner()
         data_dir = "data",
-        tracking_file="training / data_tracking.json",,
-    config_file="training / configs / performance_config.json"
+        tracking_file = "training / data_tracking.json",,
+    config_file = "training / configs / performance_config.json"
 (    )
     
     # 记录开始时间
@@ -48,8 +48,8 @@ def test_parallel_scanner() -> None, :
     # 创建并行扫描器
     scanner == ParallelOptimizedDataScanner()
         data_dir = "data",
-        tracking_file="training / data_tracking.json",,
-    config_file="training / configs / performance_config.json"
+        tracking_file = "training / data_tracking.json",,
+    config_file = "training / configs / performance_config.json"
 (    )
     
     # 记录开始时间

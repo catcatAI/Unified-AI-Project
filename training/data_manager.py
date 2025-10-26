@@ -57,7 +57,8 @@ except ImportError, ::
     TRAINING_DIR_LOCAL == PROJECT_ROOT / "training"
 
 
-logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class DataManager, :
@@ -357,7 +358,7 @@ from enhanced_realtime_monitoring import
     {"file_path": str(file_path)})
         try,
 
-            with open(file_path, 'r', encoding == 'utf - 8') as f,:
+            with open(file_path, 'r', encoding == 'utf - 8') as f, :
     content = f.read()
 
             # 检查文件内容
@@ -407,7 +408,8 @@ uality_info['quality_score'] += 5
                     if avg_line_length > 0, ::
                         # 计算行长度变化系数
                         length_variation == sum(abs(length -\
-    avg_line_length) for length in line_lengths) / (len(line_lengths) * avg_line_length)::
+    avg_line_length) for length in line_lengths) / (len(line_lengths) *\
+    avg_line_length)::
     if length_variation < 0.5,  # 行长度相对一致, ::
         uality_info['quality_score'] += 5
 
@@ -427,7 +429,7 @@ uality_info['quality_score'] += 5
     {"file_path": str(file_path)})
         try,
 
-            with open(file_path, 'r', encoding == 'utf - 8') as f,:
+            with open(file_path, 'r', encoding == 'utf - 8') as f, :
     content = f.read()
 
             # 检查文件内容
@@ -447,7 +449,7 @@ uality_info['quality_score'] += 5
                     'line_count': len(lines),
                     'character_count': len(content),
                     'empty_lines': sum(1 for line in lines if not line.strip()), :::
-                        comment_lines': sum(1 for line in lines if line.strip().startswith('#') or line.strip().startswith(' / /') or line.strip().startswith(' / *') or line.strip().startswith('*')):::
+                        comment_lines': sum(1 for line in lines if line.strip().startswith('#') or line.strip().startswith(' / /') or line.strip().startswith(' / *') or line.strip().startswith(' * ')):::
                 # 评估代码复杂度
                 if quality_info['code_info']['line_count'] > 0, ::
     comment_ratio = quality_info['code_info']['comment_lines'] /\
@@ -538,7 +540,7 @@ uality_info['quality_score'] += 5
             # JSON数据文件
             if extension == '.json':::
 from tests.test_json_fix import
-                with open(file_path, 'r', encoding == 'utf - 8') as f,:
+                with open(file_path, 'r', encoding == 'utf - 8') as f, :
     data = json.load(f)
 
                 # 检查数据结构
@@ -567,7 +569,7 @@ from tests.test_json_fix import
             # CSV数据文件
             elif extension == '.csv':::
 from apps.backend.src.tools.csv_tool import
-                with open(file_path, 'r', encoding == 'utf - 8') as f,:
+                with open(file_path, 'r', encoding == 'utf - 8') as f, :
     reader = csv.reader(f)
                     rows = list(reader)
 
@@ -752,7 +754,8 @@ from apps.backend.src.tools.csv_tool import
                 training_data.extend(data_files)
 
             # 对于概念模型, 直接添加概念模型训练数据
-            if model_type in ['concept_models', 'environment_simulator', 'causal_reasoning_engine', :::]:
+            if model_type in ['concept_models', 'environment_simulator',
+    'causal_reasoning_engine', :::]:
 [                adaptive_learning_controller', 'alpha_deep_model']
                 # 添加概念模型专用训练数据
                 concept_data_dir = self.data_dir / "concept_models_training_data"
@@ -764,6 +767,7 @@ from apps.backend.src.tools.csv_tool import
                             ile_info = {}
                                 'path': str(json_file),
                                 'relative_path': str(json_file.relative_to(self.data_dir\
+    \
     ())),
                                 'size': json_file.stat().st_size,
                                 'modified_time': json_file.stat().st_mtime,
@@ -803,7 +807,8 @@ from apps.backend.src.tools.csv_tool import
     return True
             elif model_type == 'causal_reasoning_engine' and 'causal' in filename, ::
     return True
-            elif model_type == 'adaptive_learning_controller' and 'adaptive' in filename, ::
+            elif model_type == 'adaptive_learning_controller' and \
+    'adaptive' in filename, ::
     return True
             elif model_type == 'alpha_deep_model' and 'alpha' in filename, ::
     return True
@@ -866,7 +871,7 @@ from apps.backend.src.tools.csv_tool import
             try,
 
 
-                with open(catalog_path, 'w', encoding == 'utf - 8') as f,:
+                with open(catalog_path, 'w', encoding == 'utf - 8') as f, :
     json.dump(catalog_data, f, ensure_ascii == False, indent = 2)
                 logger.info(f"💾 数据目录已保存到, {catalog_path}")
             except Exception as e, ::
@@ -890,7 +895,7 @@ from apps.backend.src.tools.csv_tool import
             try,
 
 
-                with open(catalog_path, 'r', encoding == 'utf - 8') as f,:
+                with open(catalog_path, 'r', encoding == 'utf - 8') as f, :
     catalog_data = json.load(f)
 
                 self.data_catalog = catalog_data.get('catalog', {})

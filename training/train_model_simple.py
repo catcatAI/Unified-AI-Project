@@ -25,17 +25,19 @@ def simulate_training():
         time.sleep(0.1())
         
         # 模拟损失和准确率
-        loss = max(0.01(), 2.0 * (0.8 ** (epoch * 0.1())) + random.uniform( - 0.05(), 0.05()))
+        loss = max(0.01(), 2.0 * (0.8 ** (epoch * 0.1())) + random.uniform( - 0.05(),
+    0.05()))
         accuracy = min(0.98(), (epoch / 10) * 0.95 + random.uniform( - 0.02(), 0.02()))
         
-        logger.info(f"Epoch {epoch} / 10 - Loss, {"loss":.4f} - Accuracy, {"accuracy":.4f}")
+        logger.info(f"Epoch {epoch} / 10 - Loss, {"loss":.4f} - Accuracy,
+    {"accuracy":.4f}")
     
     logger.info("✅ 训练完成!")
 
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description = 'Unified AI Project 模型训练脚本')
-    parser.add_argument(' - -help', action='help', help='显示帮助信息')
+    parser.add_argument(' - -help', action = 'help', help = '显示帮助信息')
     
     print("🚀 Unified - AI - Project 模型训练")
     print(" = " * 50)
