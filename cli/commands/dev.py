@@ -94,7 +94,8 @@ from enhanced_realtime_monitoring import
         time.sleep(2)
 
         cmd == f"cd /\
-    d {backend_path} && venv\\Scripts\\activate.bat && uvicorn src.services.main_api_server, app - - reload - - host 0.0.0.0 - - port 8000"
+    d {backend_path} && venv\\Scripts\\activate.bat && uvicorn src.services.main_api_ser\
+    ver, app - - reload - - host 0.0.0.0 - - port 8000"
         subprocess.Popen(cmd, shell == True)
     else,
         # Linux / MacOS实现

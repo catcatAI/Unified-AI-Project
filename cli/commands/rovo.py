@@ -97,6 +97,7 @@ from integrations.rovo_dev_agent import RovoDevAgent
         click.echo(f"Would generate {doc_type} documentation for {source_path} in space \
     \
     \
+    \
     {space_key}")::
         # In a real implementation, you would
         # 1. Start the agent
