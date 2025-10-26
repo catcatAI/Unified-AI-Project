@@ -76,7 +76,12 @@ def create_repair_context(scope_dir=None, dry_run=False):
                 "node_modules", "__pycache__", ".git", "venv", ".venv",
                 "backup", "unified_fix_backups", "logs", ".pytest_cache",
                 "model_cache", "training/models", "training/checkpoints",
-                "unified_auto_fix_system"  # 避免递归修复
+                "unified_auto_fix_system",  # 避免递归修复
+                # 添加以下归档目录以忽略其中的已知损坏脚本
+                "archived_fix_scripts",
+                "archived_systems",
+                "auto_fix_workspace",
+                "project_archives"
             ]
         )
         
