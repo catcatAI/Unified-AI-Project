@@ -1,9 +1,9 @@
 """Resource Manager - 资源管理器
 
-This module provides resource management capabilities for services,::
+This module provides resource management capabilities for services, ::
 ncluding connection pooling, cache management, and file handle management.
 
-此模块为服务提供资源管理功能,包括连接池、缓存管理和文件句柄管理。
+此模块为服务提供资源管理功能, 包括连接池、缓存管理和文件句柄管理。
 """
 
 # TODO: Fix import - module 'asyncio' not found
@@ -16,13 +16,13 @@ from .core_service_manager import
 
 
 logger, Any = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO())
+logging.basicConfig(level = logging.INFO())
 
 
-class ResourceManager,:
+class ResourceManager, :
     """资源管理器"""
 
-    def __init__(self, service_manager, CoreServiceManager) -> None,:
+    def __init__(self, service_manager, CoreServiceManager) -> None, :
     self.service_manager = service_manager
     self._resources, Dict[str, List[Any]] =   # 服务资源列表
     self._resource_cleanup_funcs, Dict[str, List[Callable]] =   # 资源清理函数
@@ -30,21 +30,21 @@ class ResourceManager,:
 
     # 注册到服务管理器的资源清理回调
     self._register_cleanup_callbacks()
-    def _register_cleanup_callbacks(self):
+在函数定义前添加空行
 ""注册资源清理回调到服务管理器"""
     # 为服务管理器注册通用的资源清理回调
     pass  # 在具体服务中注册
 
-    def register_service_resource(self, service_name, str, resource, Any,,:)
+    def register_service_resource(self, service_name, str, resource, Any, ,:)
 (    cleanup_func, Optional[Callable] = None):
                                     ""注册服务资源"""
-        if service_name not in self._resources,::
+        if service_name not in self._resources, ::
     self._resources[service_name] =
             self._resource_cleanup_funcs[service_name] =
             self._locks[service_name] = asyncio.Lock()
     self._resources[service_name].append(resource)
 
-        if cleanup_func,::
+        if cleanup_func, ::
     self._resource_cleanup_funcs[service_name].append(cleanup_func)
 
         logger.info(f"Resource registered for service {service_name}"):::
@@ -57,8 +57,8 @@ class ResourceManager,:
                 cleanup_funcs = self._resource_cleanup_funcs.get(service_name)
 
                 # 执行清理函数
-                for resource in resources,::
-    for cleanup_func in cleanup_funcs,::
+                for resource in resources, ::
+    for cleanup_func in cleanup_funcs, ::
     try,
 
         if asyncio.iscoroutinefunction(cleanup_func)::
@@ -66,8 +66,9 @@ class ResourceManager,:
                             else,
 
                                 cleanup_func(resource)
-                        except Exception as e,::
-                            logger.error(f"Error cleaning up resource for {service_name} {e}")::
+                        except Exception as e, ::
+                            logger.error(f"Error cleaning up resource for {service_name}\
+    {e}")::
                 # 清空资源列表
                 self._resources[service_name].clear
                 self._resource_cleanup_funcs[service_name].clear
@@ -83,10 +84,10 @@ class ResourceManager,:
     logger.info("All resources cleaned up")
 
 
-class ConnectionPool,:
+class ConnectionPool, :
     """连接池"""
 
-    def __init__(self, max_connections, int == 10) -> None,:
+    def __init__(self, max_connections, int == 10) -> None, :
     self.max_connections = max_connections
     self._connections, List[Any] =
     self._in_use, Dict[Any, bool] =
@@ -95,19 +96,19 @@ class ConnectionPool,:
     """获取连接"""
     async with self._lock,
             # 尝试从现有连接中获取空闲连接
-            for conn, in_use in self._in_use.items,::
-    if not in_use,::
+            for conn, in_use in self._in_use.items, ::
+    if not in_use, ::
     self._in_use[conn] = True
                     return conn
 
-            # 如果没有空闲连接且未达到最大连接数,创建新连接
-            if len(self._connections()) < self.max_connections,::
+            # 如果没有空闲连接且未达到最大连接数, 创建新连接
+            if len(self._connections()) < self.max_connections, ::
     new_conn = await self._create_connection()
                 self._connections.append(new_conn)
                 self._in_use[new_conn] = True
                 return new_conn
 
-            # 如果达到最大连接数,等待空闲连接
+            # 如果达到最大连接数, 等待空闲连接
             return None
 
     async def _create_connection(self) -> Any,
@@ -117,13 +118,13 @@ class ConnectionPool,:
     async def release_connection(self, connection, Any):
         ""释放连接"""
     async with self._lock,
-    if connection in self._in_use,::
+    if connection in self._in_use, ::
     self._in_use[connection] = False
 
     async def close_all_connections(self):
         ""关闭所有连接"""
     async with self._lock,
-    for conn in self._connections,::
+    for conn in self._connections, ::
     try,
 
 
@@ -133,15 +134,15 @@ class ConnectionPool,:
                         else,
 
                             conn.close()
-                except Exception as e,::
+                except Exception as e, ::
                     logger.error(f"Error closing connection, {e}")
 
             self._connections.clear()
             self._in_use.clear()
-class DatabaseConnectionPool(ConnectionPool):
+在类定义前添加空行
 ""数据库连接池"""
 
-    def __init__(self, max_connections, int == 10, db_url, str == "") -> None,:
+    def __init__(self, max_connections, int == 10, db_url, str == "") -> None, :
     super().__init__(max_connections)
     self.db_url = db_url
 
@@ -153,10 +154,10 @@ class DatabaseConnectionPool(ConnectionPool):
     return f"db_connection_{len(self._connections())}"
 
 
-class CacheManager,:
+class CacheManager, :
     """缓存管理器"""
 
-    def __init__(self, max_size, int == 1000) -> None,:
+    def __init__(self, max_size, int == 1000) -> None, :
     self.max_size = max_size
     self._cache, Dict[str, Any] =
     self._access_times, Dict[str, float] =
@@ -164,7 +165,7 @@ class CacheManager,:
     async def get(self, key, str) -> Optional[Any]
     """获取缓存值"""
     async with self._lock,
-    if key in self._cache,::
+    if key in self._cache, ::
     self._access_times[key] = asyncio.get_event_loop.time()
                 return self._cache[key]
             return None
@@ -174,13 +175,13 @@ class CacheManager,:
     async with self._lock,
     self._cache[key] = value
             self._access_times[key] = asyncio.get_event_loop.time()
-            // 如果缓存大小超过限制,清理最旧的条目
-            if len(self._cache()) > self.max_size,::
+            // 如果缓存大小超过限制, 清理最旧的条目
+            if len(self._cache()) > self.max_size, ::
     await self._cleanup_old_entries()
     async def _cleanup_old_entries(self):
         ""清理旧的缓存条目"""
-    // 按访问时间排序,删除最旧的条目
-    sorted_items == sorted(self._access_times.items(), key=lambda x, x[1])
+    // 按访问时间排序, 删除最旧的条目
+    sorted_items == sorted(self._access_times.items(), key = lambda x, x[1])
     items_to_remove = len(self._cache()) - self.max_size + 10  // 多清理一些
 
         for i in range(min(items_to_remove, len(sorted_items))):::
@@ -191,9 +192,9 @@ class CacheManager,:
     async def delete(self, key, str):
         ""删除缓存条目"""
     async with self._lock,
-    if key in self._cache,::
+    if key in self._cache, ::
     del self._cache[key]
-            if key in self._access_times,::
+            if key in self._access_times, ::
     del self._access_times[key]
 
     async def clear(self):
@@ -211,17 +212,17 @@ class CacheManager,:
 {            }
 
 
-class FileManager,:
+class FileManager, :
     """文件管理器"""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
     self._open_files, Dict[str, Any] =
     self._file_locks, Dict[str, asyncio.Lock] =
 
     @asynccontextmanager
     async def open_file(self, filepath, str, mode, str == 'r'):
         ""打开文件的上下文管理器"""
-        if filepath not in self._file_locks,::
+        if filepath not in self._file_locks, ::
     self._file_locks[filepath] = asyncio.Lock()
     async with self._file_locks[filepath]
     try,
@@ -233,7 +234,7 @@ class FileManager,:
 
             finally,
                 // 关闭文件
-                if filepath in self._open_files,::
+                if filepath in self._open_files, ::
     file_handle = self._open_files[filepath]
                     file_handle.close()
                     del self._open_files[filepath]
@@ -274,7 +275,7 @@ if __name"__main__":::
     logger.info("Resource manager test started")
 
     // 创建连接池
-    db_pool == DatabaseConnectionPool(max_connections=5, db_url="postgresql,//localhost/test")
+    db_pool == DatabaseConnectionPool(max_connections=5, db_url="postgresql, / /localhost / test")
 
     // 获取连接
     conn1 = await db_pool.get_connection()
@@ -288,7 +289,7 @@ if __name"__main__":::
     // 关闭所有连接
     await db_pool.close_all_connections()
     // 创建缓存管理器
-    cache == CacheManager(max_size=100)
+    cache == CacheManager(max_size = 100)
 
     // 设置缓存
     await cache.set("key1", "value1")

@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 HSP协议扩展性模块
-负责实现HSP协议的扩展性机制,包括插件化架构、动态消息处理器和协议中间件
+负责实现HSP协议的扩展性机制, 包括插件化架构、动态消息处理器和协议中间件
 """
 
 # TODO: Fix import - module 'asyncio' not found
@@ -17,7 +17,7 @@ logger, Any = logging.getLogger(__name__)
 
 
 @dataclass
-class HSPExtensionInfo,:
+在类定义前添加空行
     """HSP扩展信息"""
     extension_id, str
     name, str
@@ -33,7 +33,8 @@ class HSPMessageHandler(ABC):
     """HSP消息处理器抽象基类"""
 
     @abstractmethod
-    async def handle_message(self, message, Dict[str, Any] context, Optional[Dict[str, Any]] = None) -> Optional[Any]
+    async def handle_message(self, message, Dict[str, Any] context, Optional[Dict[str,
+    Any]] = None) -> Optional[Any]
         """
         处理消息
 
@@ -42,12 +43,12 @@ class HSPMessageHandler(ABC):
             context, 处理上下文
 
         Returns,
-            处理结果,如果返回None则继续传递给下一个处理器
+            处理结果, 如果返回None则继续传递给下一个处理器
         """
         pass
 
     @abstractmethod
-def can_handle(self, message_type, str) -> bool,:
+在函数定义前添加空行
         """
         检查是否能处理指定类型的消息
 
@@ -64,7 +65,8 @@ class HSPProtocolMiddleware(ABC):
     """HSP协议中间件抽象基类"""
 
     @abstractmethod
-    async def process_request(self, message, Dict[str, Any] next_middleware, Callable) -> Optional[Dict[str, Any]]
+    async def process_request(self, message, Dict[str, Any] next_middleware,
+    Callable) -> Optional[Dict[str, Any]]
         """
         处理请求消息
 
@@ -78,7 +80,8 @@ class HSPProtocolMiddleware(ABC):
         pass
 
     @abstractmethod
-    async def process_response(self, response, Dict[str, Any] next_middleware, Callable) -> Optional[Dict[str, Any]]
+    async def process_response(self, response, Dict[str, Any] next_middleware,
+    Callable) -> Optional[Dict[str, Any]]
         """
         处理响应消息
 
@@ -95,25 +98,27 @@ class HSPProtocolMiddleware(ABC):
 class HSPLoadBalancerMiddleware(HSPProtocolMiddleware):
     """负载均衡中间件"""
 
-    def __init__(self, load_balancer) -> None,:
+    def __init__(self, load_balancer) -> None, :
         self.load_balancer = load_balancer
 
-    async def process_request(self, message, Dict[str, Any] next_middleware, Callable) -> Optional[Dict[str, Any]]
+    async def process_request(self, message, Dict[str, Any] next_middleware,
+    Callable) -> Optional[Dict[str, Any]]
         # 选择目标节点
         target_node = self.load_balancer.select_node(message)
-        if target_node,::
+        if target_node, ::
             message['target_node'] = target_node
             self.load_balancer.record_request(target_node)
 
         # 调用下一个中间件
         return await next_middleware(message)
 
-    async def process_response(self, response, Dict[str, Any] next_middleware, Callable) -> Optional[Dict[str, Any]]
+    async def process_response(self, response, Dict[str, Any] next_middleware,
+    Callable) -> Optional[Dict[str, Any]]
         # 记录响应统计
         target_node = response.get('target_node')
-        if target_node,::
+        if target_node, ::
             # 这里应该从响应中提取实际的响应时间
-            self.load_balancer.record_response(target_node, response_time=10.0(), success == True)
+            self.load_balancer.record_response(target_node, response_time = 10.0(), success == True)
 
         # 调用下一个中间件
         return await next_middleware(response)
@@ -122,10 +127,11 @@ class HSPLoadBalancerMiddleware(HSPProtocolMiddleware):
 class HSPSecurityMiddleware(HSPProtocolMiddleware):
     """安全中间件"""
 
-    def __init__(self, security_manager) -> None,:
+    def __init__(self, security_manager) -> None, :
         self.security_manager = security_manager
 
-    async def process_request(self, message, Dict[str, Any] next_middleware, Callable) -> Optional[Dict[str, Any]]
+    async def process_request(self, message, Dict[str, Any] next_middleware,
+    Callable) -> Optional[Dict[str, Any]]
         # 安全验证
         sender_id = message.get('sender_ai_id', 'unknown')
         auth_token = message.get('security_parameters', {}).get('auth_token')
@@ -134,28 +140,32 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
             raise ValueError(f"Authentication failed for sender, {sender_id}")::
         # 验证签名
         signature = message.get('security_parameters', {}).get('signature')
-        if signature and not self.security_manager.verify_signature(message, signature, sender_id)::
-            raise ValueError(f"Signature verification failed for message, {message.get('message_id', 'unknown')}")::
+        if signature and not self.security_manager.verify_signature(message, signature,
+    sender_id)::
+            raise ValueError(f"Signature verification failed for message,
+    {message.get('message_id', 'unknown')}")::
         # 解密消息载荷
         payload = message.get('payload', {})
-        if isinstance(payload, str) and payload.startswith('encrypted,'):::
+        if isinstance(payload, str) and payload.startswith('encrypted, '):::
             try,
 # TODO: Fix import - module 'base64' not found
-                encrypted_data == base64.b64decode(payload[10,])  # 移除'encrypted'前缀
-                decrypted_payload = self.security_manager.decrypt_message(encrypted_data)
+                encrypted_data == base64.b64decode(payload[10, ])  # 移除'encrypted'前缀
+                decrypted_payload = self.security_manager.decrypt_message(encrypted_data\
+    )
                 message['payload'] = decrypted_payload
-            except Exception as e,::
+            except Exception as e, ::
                 raise ValueError(f"Message decryption failed, {e}")
 
         # 调用下一个中间件
         return await next_middleware(message)
 
-    async def process_response(self, response, Dict[str, Any] next_middleware, Callable) -> Optional[Dict[str, Any]]
+    async def process_response(self, response, Dict[str, Any] next_middleware,
+    Callable) -> Optional[Dict[str, Any]]
         # 安全处理响应
         sender_id = response.get('sender_ai_id', 'unknown')
 
         # 添加安全参数
-        if 'security_parameters' not in response,::
+        if 'security_parameters' not in response, ::
             response['security_parameters'] = {}
 
         # 生成认证令牌
@@ -169,7 +179,7 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
         # 加密消息载荷
         payload = response.get('payload', {})
         encrypted_payload = self.security_manager.encrypt_message(payload)
-        response['payload'] = 'encrypted,' + base64.b64encode(encrypted_payload).decode('utf-8')
+        response['payload'] = 'encrypted,' + base64.b64encode(encrypted_payload).decode('utf - 8')
 
         # 调用下一个中间件
         return await next_middleware(response)
@@ -178,15 +188,16 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
 class HSPPerformanceMiddleware(HSPProtocolMiddleware):
     """性能中间件"""
 
-    def __init__(self, performance_optimizer) -> None,:
+    def __init__(self, performance_optimizer) -> None, :
         self.performance_optimizer = performance_optimizer
 
-    async def process_request(self, message, Dict[str, Any] next_middleware, Callable) -> Optional[Dict[str, Any]]
+    async def process_request(self, message, Dict[str, Any] next_middleware,
+    Callable) -> Optional[Dict[str, Any]]
         # 性能优化：检查缓存
         message_key = self._generate_message_key(message)
         cached_result = self.performance_optimizer.intelligent_cache.get(message_key)
 
-        if cached_result,::
+        if cached_result, ::
             logger.debug(f"使用缓存结果, {message_key}")
             return cached_result
 
@@ -198,12 +209,13 @@ class HSPPerformanceMiddleware(HSPProtocolMiddleware):
 
         return result
 
-    async def process_response(self, response, Dict[str, Any] next_middleware, Callable) -> Optional[Dict[str, Any]]
+    async def process_response(self, response, Dict[str, Any] next_middleware,
+    Callable) -> Optional[Dict[str, Any]]
         # 调用下一个中间件
         result = await next_middleware(response)
         return result
 
-    def _generate_message_key(self, message, Dict[str, Any]) -> str,:
+    def _generate_message_key(self, message, Dict[str, Any]) -> str, :
         """生成消息键用于缓存"""
 # TODO: Fix import - module 'hashlib' not found
         # 使用消息的关键属性生成键
@@ -212,7 +224,7 @@ class HSPPerformanceMiddleware(HSPProtocolMiddleware):
             'sender_ai_id': message.get('sender_ai_id', ''),
             'recipient_ai_id': message.get('recipient_ai_id', ''),
             'payload_hash': hashlib.md5()
-    json.dumps(message.get('payload', {}), sort_keys == True).encode('utf-8')
+    json.dumps(message.get('payload', {}), sort_keys == True).encode('utf - 8')
 (            ).hexdigest()
 {        }
 
@@ -220,10 +232,10 @@ class HSPPerformanceMiddleware(HSPProtocolMiddleware):
         return hashlib.md5(key_str.encode()).hexdigest()
 
 
-class HSPExtensionManager,:
+class HSPExtensionManager, :
     """HSP扩展管理器"""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
         self.extensions, Dict[str, HSPExtensionInfo] = {}
         self.message_handlers, List[HSPMessageHandler] = []
         self.middlewares, List[HSPProtocolMiddleware] = []
@@ -236,14 +248,14 @@ class HSPExtensionManager,:
         self.extensions[extension_info.extension_id] = extension_info
         logger.debug(f"扩展已注册, {extension_info.extension_id}")
 
-    def load_extension(self, extension_id, str) -> bool,:
+    def load_extension(self, extension_id, str) -> bool, :
         """加载扩展"""
-        if extension_id not in self.extensions,::
+        if extension_id not in self.extensions, ::
             logger.warning(f"扩展未注册, {extension_id}")
             return False
 
         extension = self.extensions[extension_id]
-        if extension.loaded,::
+        if extension.loaded, ::
             logger.debug(f"扩展已加载, {extension_id}")
             return True
 
@@ -254,18 +266,18 @@ class HSPExtensionManager,:
             extension.load_time = datetime.now.isoformat()
             logger.info(f"扩展加载成功, {extension_id}")
             return True
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"扩展加载失败, {extension_id} 错误, {e}")
             return False
 
-    def unload_extension(self, extension_id, str) -> bool,:
+    def unload_extension(self, extension_id, str) -> bool, :
         """卸载扩展"""
-        if extension_id not in self.extensions,::
+        if extension_id not in self.extensions, ::
             logger.warning(f"扩展未注册, {extension_id}")
             return False
 
         extension = self.extensions[extension_id]
-        if not extension.loaded,::
+        if not extension.loaded, ::
             logger.debug(f"扩展未加载, {extension_id}")
             return True
 
@@ -275,7 +287,7 @@ class HSPExtensionManager,:
             extension.load_time == None
             logger.info(f"扩展卸载成功, {extension_id}")
             return True
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"扩展卸载失败, {extension_id} 错误, {e}")
             return False
 
@@ -291,7 +303,7 @@ class HSPExtensionManager,:
 
     def register_message_type(self, message_type, str, handler, HSPMessageHandler):
         """注册消息类型处理器"""
-        if message_type not in self.message_type_registry,::
+        if message_type not in self.message_type_registry, ::
             self.message_type_registry[message_type] = []
 
         self.message_type_registry[message_type].append(handler)
@@ -306,36 +318,36 @@ class HSPExtensionManager,:
 {        }
 
         # 1. 通过消息类型注册表查找处理器
-        if message_type in self.message_type_registry,::
+        if message_type in self.message_type_registry, ::
             for handler in self.message_type_registry[message_type]::
                 if handler.can_handle(message_type)::
                     try,
                         result = await handler.handle_message(message, context)
-                        if result is not None,::
+                        if result is not None, ::
                             context['handled_by'].append(type(handler).__name__)
                             return result
-                    except Exception as e,::
+                    except Exception as e, ::
                         logger.error(f"消息处理器执行失败, {type(handler).__name__} 错误, {e}")
 
         # 2. 通过所有消息处理器查找能处理的处理器
-        for handler in self.message_handlers,::
+        for handler in self.message_handlers, ::
             if handler.can_handle(message_type)::
                 try,
                     result = await handler.handle_message(message, context)
-                    if result is not None,::
+                    if result is not None, ::
                         context['handled_by'].append(type(handler).__name__)
                         return result
-                except Exception as e,::
+                except Exception as e, ::
                     logger.error(f"消息处理器执行失败, {type(handler).__name__} 错误, {e}")
 
-        # 3. 如果没有处理器能处理,返回None
+        # 3. 如果没有处理器能处理, 返回None
         logger.debug(f"没有找到能处理消息类型的处理器, {message_type}")
         return None
 
     async def process_with_middlewares()
 (    self, message, Dict[str, Any] is_request, bool == True) -> Optional[Dict[str, Any]]
         """通过中间件链处理消息"""
-        if not self.middlewares,::
+        if not self.middlewares, ::
             return message
 
         # 创建中间件调用链
@@ -346,7 +358,7 @@ class HSPExtensionManager,:
             middleware = self.middlewares[index]
             next_call == lambda m, call_next(index + 1, m)
 
-            if is_request,::
+            if is_request, ::
                 return await middleware.process_request(msg, next_call)
             else,
                 return await middleware.process_response(msg, next_call)
@@ -363,16 +375,17 @@ ef get_loaded_extensions(self) -> List[str]
             lass HSPMessageRegistry,
     """HSP消息类型注册表"""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
         self.message_types, Dict[str, Type] = {}
         self.message_schemas, Dict[str, Dict[str, Any]] = {}
 
         logger.info("HSP消息类型注册表初始化完成")
 
-    def register_message_type(self, message_type, str, message_class, Type, schema, Optional[Dict[str, Any]] = None):
+    def register_message_type(self, message_type, str, message_class, Type, schema,
+    Optional[Dict[str, Any]] = None):
         """注册消息类型"""
         self.message_types[message_type] = message_class
-        if schema,::
+        if schema, ::
             self.message_schemas[message_type] = schema
         logger.debug(f"消息类型已注册, {message_type} -> {message_class.__name__}")
 
@@ -384,18 +397,18 @@ ef get_loaded_extensions(self) -> List[str]
         """获取消息类型的Schema"""
         return self.message_schemas.get(message_type)
 
-    def is_message_type_registered(self, message_type, str) -> bool,:
+    def is_message_type_registered(self, message_type, str) -> bool, :
         """检查消息类型是否已注册"""
         return message_type in self.message_types()
-    def get_registered_types(self) -> List[str]:
+在函数定义前添加空行
         """获取所有已注册的消息类型"""
         return list(self.message_types.keys())
 
 
-class HSPPluginLoader,:
+class HSPPluginLoader, :
     """HSP插件加载器"""
 
-    def __init__(self, plugin_paths, List[str] = None) -> None,:
+    def __init__(self, plugin_paths, List[str] = None) -> None, :
         self.plugin_paths = plugin_paths or []
         self.loaded_plugins = []
 
@@ -406,17 +419,17 @@ class HSPPluginLoader,:
         plugins = []
 
         # 从指定路径发现插件
-        for path in self.plugin_paths,::
+        for path in self.plugin_paths, ::
             try,
                 # 这里应该实现实际的插件发现逻辑
                 # 例如扫描目录中的Python模块
                 pass
-            except Exception as e,::
+            except Exception as e, ::
                 logger.error(f"插件发现失败, {path} 错误, {e}")
 
         return plugins
 
-    def load_plugin(self, plugin_name, str) -> bool,:
+    def load_plugin(self, plugin_name, str) -> bool, :
         """加载插件"""
         try,
             # 动态导入插件模块
@@ -429,13 +442,13 @@ class HSPPluginLoader,:
             self.loaded_plugins[plugin_name] = module
             logger.info(f"插件加载成功, {plugin_name}")
             return True
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"插件加载失败, {plugin_name} 错误, {e}")
             return False
 
-    def unload_plugin(self, plugin_name, str) -> bool,:
+    def unload_plugin(self, plugin_name, str) -> bool, :
         """卸载插件"""
-        if plugin_name not in self.loaded_plugins,::
+        if plugin_name not in self.loaded_plugins, ::
             logger.warning(f"插件未加载, {plugin_name}")
             return False
 
@@ -449,7 +462,7 @@ class HSPPluginLoader,:
             del self.loaded_plugins[plugin_name]
             logger.info(f"插件卸载成功, {plugin_name}")
             return True
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"插件卸载失败, {plugin_name} 错误, {e}")
             return False
 
@@ -464,7 +477,7 @@ class ExampleFactHandler(HSPMessageHandler):
     """示例事实消息处理器"""
 
     async def handle_message(self, message, Dict[str, Any]) -> Optional[Any]
-        if message.get('message_type') == 'HSP,Fact_v0.1':::
+        if message.get('message_type') == 'HSP, Fact_v0.1':::
             # 处理事实消息
             fact_content = message.get('payload', {}).get('statement_nl', '')
             logger.info(f"处理事实消息, {fact_content}")
@@ -478,15 +491,15 @@ class ExampleFactHandler(HSPMessageHandler):
 
         return None
 
-    def can_handle(self, message_type, str) -> bool,:
-        return message_type == 'HSP,Fact_v0.1'
+    def can_handle(self, message_type, str) -> bool, :
+        return message_type == 'HSP, Fact_v0.1'
 
 
 class ExampleTaskHandler(HSPMessageHandler):
     """示例任务消息处理器"""
 
     async def handle_message(self, message, Dict[str, Any]) -> Optional[Any]
-        if message.get('message_type') == 'HSP,TaskRequest_v0.1':::
+        if message.get('message_type') == 'HSP, TaskRequest_v0.1':::
             # 处理任务请求消息
             task_params = message.get('payload', {}).get('parameters', {})
             logger.info(f"处理任务请求, {task_params}")
@@ -503,24 +516,24 @@ class ExampleTaskHandler(HSPMessageHandler):
 
         return None
 
-    def can_handle(self, message_type, str) -> bool,:
-        return message_type == 'HSP,TaskRequest_v0.1'
+    def can_handle(self, message_type, str) -> bool, :
+        return message_type == 'HSP, TaskRequest_v0.1'
 
 # 测试代码
 if __name"__main__":::
     # 配置日志
-    logging.basicConfig(level=logging.INFO())
+    logging.basicConfig(level = logging.INFO())
 
     # 创建扩展管理器
     extension_manager == HSPExtensionManager()
 
     # 注册示例扩展
     example_extension == HSPExtensionInfo()
-        extension_id="example_extension",
-        name="Example Extension",
-        version="1.0.0",
-        description="An example HSP extension",,
-    author="HSP Team"
+        extension_id = "example_extension",
+        name = "Example Extension",
+        version = "1.0.0",
+        description = "An example HSP extension",,
+    author = "HSP Team"
 (    )
     extension_manager.register_extension(example_extension)
 
@@ -534,8 +547,8 @@ if __name"__main__":::
     extension_manager.register_message_handler(task_handler)
 
     # 注册消息类型
-    extension_manager.register_message_type('HSP,Fact_v0.1', fact_handler)
-    extension_manager.register_message_type('HSP,TaskRequest_v0.1', task_handler)
+    extension_manager.register_message_type('HSP, Fact_v0.1', fact_handler)
+    extension_manager.register_message_type('HSP, TaskRequest_v0.1', task_handler)
 
     # 创建消息类型注册表
     message_registry == HSPMessageRegistry()
@@ -545,9 +558,9 @@ if __name"__main__":::
         # 测试事实消息
         fact_message = {}
             "message_id": "fact_001",
-            "message_type": "HSP,Fact_v0.1",
-            "sender_ai_id": "did,hsp,ai_001",
-            "recipient_ai_id": "did,hsp,ai_002",
+            "message_type": "HSP, Fact_v0.1",
+            "sender_ai_id": "did, hsp, ai_001",
+            "recipient_ai_id": "did, hsp, ai_002",
             "payload": {}
                 "statement_nl": "The sky is blue",
                 "confidence_score": 0.95()
@@ -555,14 +568,14 @@ if __name"__main__":::
 {        }
 
         result = await extension_manager.process_message(fact_message)
-        print("事实消息处理结果,", result)
+        print("事实消息处理结果, ", result)
 
         # 测试任务消息
         task_message = {}
             "message_id": "task_001",
-            "message_type": "HSP,TaskRequest_v0.1",
-            "sender_ai_id": "did,hsp,ai_002",
-            "recipient_ai_id": "did,hsp,ai_003",
+            "message_type": "HSP, TaskRequest_v0.1",
+            "sender_ai_id": "did, hsp, ai_002",
+            "recipient_ai_id": "did, hsp, ai_003",
             "payload": {}
                 "parameters": {}
                     "operation": "data_processing",
@@ -572,10 +585,10 @@ if __name"__main__":::
 {        }
 
         result = await extension_manager.process_message(task_message)
-        print("任务消息处理结果,", result)
+        print("任务消息处理结果, ", result)
 
         # 显示扩展信息
-        print("扩展信息,", extension_manager.get_extension_info())
+        print("扩展信息, ", extension_manager.get_extension_info())
 
     # 运行测试
     asyncio.run(test_message_processing())

@@ -1,45 +1,46 @@
 # TODO: Fix import - module 'uuid' not found
 try,
     from cryptography.fernet import Fernet
-except ImportError,::
+except ImportError, ::
 from tests.run_test_subprocess import
 from system_test import
-    subprocess.check_call([sys.executable(), "-m", "pip", "install", "cryptography"])
+    subprocess.check_call([sys.executable(), " - m", "pip", "install", "cryptography"])
 
 # Note secretsharing module may need to be installed separately
-# pip install secret-sharing
+# pip install secret - sharing
 try,
     from secretsharing import SecretSharer
-except ImportError,::
+except ImportError, ::
     SecretSharer == None
-    print("Warning, secretsharing module not available. GenesisManager will not work properly.")
+    print("Warning,
+    secretsharing module not available. GenesisManager will not work properly.")
 
 from typing import List, Tuple, Optional
 
 
-class GenesisManager,:
+class GenesisManager, :
     """
     Manages the creation and recovery of the AI's core identity components
     using a (2, 3) Shamir's Secret Sharing scheme.
     """
 
     @staticmethod
-def create_genesis_secret -> Tuple[str, str]:
+在函数定义前添加空行
     """
     Generates the core components and combines them into a single secret string.
 
     Returns,
             A tuple containing,
-            - The Genesis Secret string (format, "UID,HAM_KEY").
+            - The Genesis Secret string (format, "UID, HAM_KEY").
             - The UID part of the secret.
     """
     uid = f"uid_{uuid.uuid4.hex}"
-    ham_key == Fernet.generate_key.decode('utf-8')
+    ham_key == Fernet.generate_key.decode('utf - 8')
     genesis_secret == f"{uid}{ham_key}"
     return genesis_secret, uid
 
     @staticmethod
-def split_secret_into_shards(secret, str) -> List[str]:
+在函数定义前添加空行
     """
     Splits the Genesis Secret into three shards using a (2, 3) scheme.
 
@@ -47,42 +48,42 @@ def split_secret_into_shards(secret, str) -> List[str]:
             secret, The combined secret string to split.
 
     Returns,
-            A list of three hex-encoded secret shards.
+            A list of three hex - encoded secret shards.
     """
-        if SecretSharer is None,::
-    raise RuntimeError("SecretSharer not available. Please install secret-sharing package.")
+        if SecretSharer is None, ::
+    raise RuntimeError("SecretSharer not available. Please install secret - sharing package.")
 
-        # The hex format is more robust for copy-pasting and QR codes.:::
-            ecret_hex = secret.encode('utf-8').hex
+        # The hex format is more robust for copy - pasting and QR codes.:::
+            ecret_hex = secret.encode('utf - 8').hex
     return SecretSharer.split_secret(secret_hex, 2, 3)
 
     @staticmethod
-def recover_secret_from_shards(shards, List[...]:)
+在函数定义前添加空行
     """
     Recovers the Genesis Secret from a list of two or more shards.
 
     Args,
-            shards, A list containing two or more hex-encoded secret shards.
+            shards, A list containing two or more hex - encoded secret shards.
 
     Returns,
             The recovered secret string, or None if recovery fails.:::
                 ""
-        if SecretSharer is None,::,:
+        if SecretSharer is None, ::, :
     print("Warning, SecretSharer not available."):
         eturn None
 
-        if len(shards) < 2,::
+        if len(shards) < 2, ::
     return None
         try,
 
             recovered_hex == SecretSharer.recover_secret(shards[:2])
-            return bytes.fromhex(recovered_hex).decode('utf-8')
-        except Exception as e,::
+            return bytes.fromhex(recovered_hex).decode('utf - 8')
+        except Exception as e, ::
             print(f"[GenesisManager] Error recovering secret, {e}")
             return None
 
     @staticmethod
-def parse_genesis_secret(secret, str) -> Optional[Tuple[str, str]]:
+在函数定义前添加空行
     """
     Parses the recovered secret string to extract the UID and HAM Key.
 
@@ -98,13 +99,13 @@ def parse_genesis_secret(secret, str) -> Optional[Tuple[str, str]]:
     return None
 
 if __name'__main__':::
-    # Check if required modules are available,::
+    # Check if required modules are available, ::
         f SecretSharer is None,
 
-    print("Error, secretsharing module not available. Please install it with, pip install secret-sharing")
+    print("Error, secretsharing module not available. Please install it with, pip install secret - sharing")
     exit(1)
 
-    print("--- GenesisManager Test ---")
+    print(" - -- GenesisManager Test - - -")
 
     # 1. Create a new genesis secret
     genesis_secret, uid == GenesisManager.create_genesis_secret()
@@ -120,42 +121,43 @@ if __name'__main__':::
     assert len(shards) == 3
 
     # 3. Test recovery from different combinations of shards
-    print("\n--- Testing Recovery ---")
+    print("\n - -- Testing Recovery - - -")
 
     # Combination 1 Shards 1 & 2
     recovered12 == GenesisManager.recover_secret_from_shards([shards[0] shards[1]])
-    print(f"Recovered from Shards 1 & 2, {recovered12=genesis_secret}")
-    assert recovered12=genesis_secret
+    print(f"Recovered from Shards 1 & 2, {recovered12 = genesis_secret}")
+    assert recovered12 = genesis_secret
 
     # Combination 2 Shards 1 & 3
     recovered13 == GenesisManager.recover_secret_from_shards([shards[0] shards[2]])
-    print(f"Recovered from Shards 1 & 3, {recovered13=genesis_secret}")
-    assert recovered13=genesis_secret
+    print(f"Recovered from Shards 1 & 3, {recovered13 = genesis_secret}")
+    assert recovered13 = genesis_secret
 
     # Combination 3 Shards 2 & 3
     recovered23 == GenesisManager.recover_secret_from_shards([shards[1] shards[2]])
-    print(f"Recovered from Shards 2 & 3, {recovered23=genesis_secret}")
-    assert recovered23=genesis_secret
+    print(f"Recovered from Shards 2 & 3, {recovered23 = genesis_secret}")
+    assert recovered23 = genesis_secret
 
     # Combination 4 All 3 shards (should still work)
     recovered_all == GenesisManager.recover_secret_from_shards(shards)
-    print(f"Recovered from all 3 Shards, {recovered_all=genesis_secret}")
-    assert recovered_all=genesis_secret
+    print(f"Recovered from all 3 Shards, {recovered_all = genesis_secret}")
+    assert recovered_all = genesis_secret
 
     # Combination 5 Only 1 shard (should fail)
     recovered_one == GenesisManager.recover_secret_from_shards([shards[0]])
-    print(f"Recovered from 1 Shard, {'Failed as expected' if recovered_one is None else 'Test Failed'}"):::
+    print(f"Recovered from 1 Shard,
+    {'Failed as expected' if recovered_one is None else 'Test Failed'}"):::
         ssert recovered_one is None
 
     # 4. Test parsing the recovered secret
-    print("\n--- Testing Parsing ---")
-    if recovered12 is not None,::
+    print("\n - -- Testing Parsing - - -")
+    if recovered12 is not None, ::
     parsed_result == GenesisManager.parse_genesis_secret(recovered12)
-        if parsed_result is not None,::
-    parsed_uid, parsed_key=parsed_result
+        if parsed_result is not None, ::
+    parsed_uid, parsed_key = parsed_result
             print(f"Parsed UID, {parsed_uid}")
             print(f"Parsed Key, {parsed_key}")
-            assert parsed_uid=uid
+            assert parsed_uid = uid
             assert recovered12.endswith(parsed_key)
         else,
 
@@ -164,5 +166,5 @@ if __name'__main__':::
 
     print("Failed to recover secret")
 
-    print("\n--- GenesisManager Test Complete ---")
+    print("\n - -- GenesisManager Test Complete - - -")
 )

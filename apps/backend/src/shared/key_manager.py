@@ -15,7 +15,7 @@ logger: Any = logging.getLogger(__name__)
 class UnifiedKeyManager:
     """統一金鑰管理器"""
     
-    def __init__(self, config_path: str = "configs/unified_demo_config.yaml") -> None:
+    def __init__(self, config_path: str = "configs / unified_demo_config.yaml") -> None:
         self.config_path = Path(config_path)
         self.config = self._load_config
         self.demo_mode = self._detect_demo_mode
@@ -23,17 +23,17 @@ class UnifiedKeyManager:
     def _load_config(self) -> Dict[str, Any]:
         """載入配置"""
         if self.config_path.exists:
-            with open(self.config_path, 'r', encoding='utf-8') as f:
+            with open(self.config_path, 'r', encoding='utf - 8') as f:
                 return yaml.safe_load(f)
-        return 
+        return
     
     def _detect_demo_mode(self) -> bool:
         """檢測是否為演示模式"""
         demo_cfg = self.config.get('demo_mode')
         
-        # 顯式啟用開關(若配置中提供 enabled=True,直接啟用)
+        # 顯式啟用開關(若配置中提供 enabled = True,直接啟用)
         if demo_cfg.get('enabled') is True:
-            logger.info("配置中啟用 demo_mode.enabled=True,啟用演示模式")
+            logger.info("配置中啟用 demo_mode.enabled = True,啟用演示模式")
             return True
         
         # 自動偵測開關
@@ -45,7 +45,7 @@ class UnifiedKeyManager:
         # 明確 DEMO_FLAG 支持(任何真值都啟用)
         demo_flag = os.environ.get('DEMO_FLAG')
         if isinstance(demo_flag, str) and demo_flag.lower in {"1", "true", "yes", "on"}:
-            logger.info("檢測到 DEMO_FLAG=true,啟用演示模式")
+            logger.info("檢測到 DEMO_FLAG = true,啟用演示模式")
             return True
         
         # 檢查環境變量的「鍵」或「值」是否匹配
@@ -106,7 +106,7 @@ from tests.core_ai import
             self._setup_cleanup
     
     def _setup_learning(self):
-        # 這裡為簡化示範,實際可調用 DemoLearningManager 等
+        # 這裡為簡化示範, 實際可調用 DemoLearningManager 等
         logger.info("初始化演示學習環境(示範)")
     
     def _setup_initialization(self):
@@ -119,7 +119,7 @@ from tests.core_ai import
         """生成 HAM 金鑰"""
         if self.demo_mode:
             # 演示模式使用固定金鑰
-            return self.get_key('MIKO_HAM_KEY') or 'DEMO_HAM_FIXED_KEY_2025_aGVsbG93b3JsZA=='
+            return self.get_key('MIKO_HAM_KEY') or 'DEMO_HAM_FIXED_KEY_2025_aGVsbG93b3JsZA == '
         
         # 生產模式生成新金鑰
         return Fernet.generate_key.decode

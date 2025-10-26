@@ -1,7 +1,7 @@
-# src/security/permission_control.py()
+# src / security / permission_control.py()
 """
-Permission Control System for AI Editor,::
-mplements multi-level permission control for AI operations,::
+Permission Control System for AI Editor, ::
+mplements multi - level permission control for AI operations,::
 ""
 
 from tests.tools.test_tool_dispatcher_logging import
@@ -32,36 +32,36 @@ class PermissionLevel(Enum):
     FULL_ACCESS = 3
 
 @dataclass
-class PermissionRule,:
+在类定义前添加空行
     """A permission rule"""
     permission_type, PermissionType
     level, PermissionLevel
-    resource_pattern, str == "*"  # Wildcard pattern for resources,::
-        llowed_actions, List[str] = field(default_factory=list)
-    denied_actions, List[str] = field(default_factory=list)
+    resource_pattern, str == " * "  # Wildcard pattern for resources,::
+        llowed_actions, List[str] = field(default_factory = list)
+    denied_actions, List[str] = field(default_factory = list)
 
 @dataclass
-class PermissionContext,:
+在类定义前添加空行
     """Context for permission checking""":::
         ser_id, str
     operation, str
     resource, str
     action, str
-    metadata, Dict[str, Any] = field(default_factory=dict)
+    metadata, Dict[str, Any] = field(default_factory = dict)
 
-class PermissionControlSystem,:
+class PermissionControlSystem, :
     """Main permission control system"""
 
-    def __init__(self, config_path, str == None) -> None,:
+    def __init__(self, config_path, str == None) -> None, :
         self.rules, Dict[str, List[PermissionRule]] = {}
         self.default_rules, List[PermissionRule] = []
         self.audit_log_enabled == True
-        self.config_path = config_path or "configs/permission_config.json"
+        self.config_path = config_path or "configs / permission_config.json"
 
-        # Load configuration if available,::
+        # Load configuration if available, ::
             elf._load_configuration()
 
-        # Set default rules if none loaded,::
+        # Set default rules if none loaded, ::
             f not self.default_rules,
             self._set_default_rules()
 
@@ -71,90 +71,90 @@ class PermissionControlSystem,:
         """Load permission configuration from file"""
         try,
             if os.path.exists(self.config_path())::
-                with open(self.config_path(), 'r', encoding == 'utf-8') as f,:
+                with open(self.config_path(), 'r', encoding == 'utf - 8') as f,:
                     config = json.load(f)
 
                 # Load default rules
-                if 'default_rules' in config,::
+                if 'default_rules' in config, ::
                     for rule_data in config['default_rules']::
                         rule == PermissionRule()
     permission_type == PermissionType(rule_data['permission_type']),
                             level == PermissionLevel(rule_data['level']),
-                            resource_pattern=rule_data.get('resource_pattern', '*'),
-                            allowed_actions=rule_data.get('allowed_actions', []),
-                            denied_actions=rule_data.get('denied_actions', [])
+                            resource_pattern=rule_data.get('resource_pattern', ' * '),
+                            allowed_actions = rule_data.get('allowed_actions', []),
+                            denied_actions = rule_data.get('denied_actions', [])
 (                        )
                         self.default_rules.append(rule)
 
-                # Load user-specific rules
-                if 'user_rules' in config,::
+                # Load user - specific rules
+                if 'user_rules' in config, ::
                     for user_id, rules_data in config['user_rules'].items():::
                         self.rules[user_id] = []
-                        for rule_data in rules_data,::
+                        for rule_data in rules_data, ::
                             rule == PermissionRule()
     permission_type == PermissionType(rule_data['permission_type']),
                                 level == PermissionLevel(rule_data['level']),
-                                resource_pattern=rule_data.get('resource_pattern', '*'),
-                                allowed_actions=rule_data.get('allowed_actions', []),
-                                denied_actions=rule_data.get('denied_actions', [])
+                                resource_pattern=rule_data.get('resource_pattern', ' * '),
+                                allowed_actions = rule_data.get('allowed_actions', []),
+                                denied_actions = rule_data.get('denied_actions', [])
 (                            )
                             self.rules[user_id].append(rule)
 
                 logger.info(f"Loaded permission configuration from {self.config_path}")
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"Error loading permission configuration, {e}")
 
     def _set_default_rules(self):
         """Set default permission rules"""
-        # Default rules for development environment,::
+        # Default rules for development environment, ::
             elf.default_rules = []
-            # Allow file access to project directories with read-write access,
+            # Allow file access to project directories with read - write access,
                 ermissionRule()
     permission_type == PermissionType.FILE_ACCESS(),
                 level == PermissionLevel.READ_WRITE(),
-                resource_pattern="**/*",
-                allowed_actions=["read", "write", "create", "delete"]
+                resource_pattern="** / *",
+                allowed_actions = ["read", "write", "create", "delete"]
 (            ),
 
             # Allow network access to localhost only
             PermissionRule()
     permission_type == PermissionType.NETWORK_ACCESS(),
                 level == PermissionLevel.READ_ONLY(),
-                resource_pattern == "127.0.0.1,*",
-                allowed_actions=["connect"]
+                resource_pattern == "127.0.0.1, * ",
+                allowed_actions = ["connect"]
 (            ),
 
             # Allow system commands with restrictions,
                 ermissionRule()
     permission_type == PermissionType.SYSTEM_COMMAND(),
                 level == PermissionLevel.READ_ONLY(),
-                resource_pattern="*",
-                allowed_actions=["ls", "dir", "pwd", "echo"]
+                resource_pattern=" * ",
+                allowed_actions = ["ls", "dir", "pwd", "echo"]
 (            ),
 
             # Allow application control
             PermissionRule()
     permission_type == PermissionType.APPLICATION_CONTROL(),
                 level == PermissionLevel.FULL_ACCESS(),
-                resource_pattern="*",
-                allowed_actions=["start", "stop", "control"]
+                resource_pattern=" * ",
+                allowed_actions = ["start", "stop", "control"]
 (            ),
 
             # Allow data processing
             PermissionRule()
     permission_type == PermissionType.DATA_PROCESSING(),
                 level == PermissionLevel.FULL_ACCESS(),
-                resource_pattern="*",
-                allowed_actions=["process", "transform", "analyze"]
+                resource_pattern=" * ",
+                allowed_actions = ["process", "transform", "analyze"]
 (            ),
 
             # Allow sandbox execution with restrictions,
                 ermissionRule()
     permission_type == PermissionType.SANDBOX_EXECUTION(),
                 level == PermissionLevel.READ_WRITE(),
-                resource_pattern="*",
-                allowed_actions=["execute"]
-                denied_actions=["os", "sys", "subprocess"]  # These are additionally restricted by sandbox
+                resource_pattern=" * ",
+                allowed_actions = ["execute"]
+                denied_actions = ["os", "sys", "subprocess"]  # These are additionally restricted by sandbox
 (            )
 [        ]
 
@@ -170,8 +170,8 @@ class PermissionControlSystem,:
             ef check_permission(self, context, PermissionContext) -> bool,
         """Check if a permission is granted""":::
             ry,
-            # First check user-specific rules
-            if context.user_id in self.rules,::
+            # First check user - specific rules
+            if context.user_id in self.rules, ::
                 for rule in self.rules[context.user_id]::
                     if self._rule_matches_context(rule, context)::
                         result = self._evaluate_rule(rule, context)
@@ -179,59 +179,59 @@ class PermissionControlSystem,:
                         return result
 
             # Then check default rules
-            for rule in self.default_rules,::
+            for rule in self.default_rules, ::
                 if self._rule_matches_context(rule, context)::
                     result = self._evaluate_rule(rule, context)
                     self._log_audit_event(context, result)
                     return result
 
-            # Default deny if no rules match,::
+            # Default deny if no rules match, ::
                 elf._log_audit_event(context, False)
             return False
 
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"Error checking permission, {e}")
             self._log_audit_event(context, False)
             return False
 
-    def _rule_matches_context(self, rule, PermissionRule, context, PermissionContext) -> bool,:
+    def _rule_matches_context(self, rule, PermissionRule, context, PermissionContext) -> bool, :
         """Check if a rule matches the context"""::
         # Check permission type,
-        if rule.permission_type.value != context.operation,::
+        if rule.permission_type.value != context.operation, ::
             return False
 
         # Check resource pattern (simple wildcard matching)
-        if rule.resource_pattern != "*", and not self._matches_pattern(context.resource(), rule.resource_pattern())::
+        if rule.resource_pattern != " * ", and not self._matches_pattern(context.resource(), rule.resource_pattern())::
             return False
 
         # Check action
-        if rule.denied_actions and context.action in rule.denied_actions,::
+        if rule.denied_actions and context.action in rule.denied_actions, ::
             return False
 
-        if rule.allowed_actions and context.action not in rule.allowed_actions,::
+        if rule.allowed_actions and context.action not in rule.allowed_actions, ::
             return False
 
         return True
 
-    def _matches_pattern(self, resource, str, pattern, str) -> bool,:
+    def _matches_pattern(self, resource, str, pattern, str) -> bool, :
         """Simple pattern matching for resources"""::
         # This is a simplified implementation
         # In a real system, you might want to use more sophisticated pattern matching
 
-        if pattern == "*":::
+        if pattern == " * ":::
             return True
 
-        # Use fnmatch for more sophisticated pattern matching,::
+        # Use fnmatch for more sophisticated pattern matching, ::
             eturn fnmatch.fnmatch(resource, pattern)
 
-    def _evaluate_rule(self, rule, PermissionRule, context, PermissionContext) -> bool,:
+    def _evaluate_rule(self, rule, PermissionRule, context, PermissionContext) -> bool, :
         """Evaluate if a rule grants permission"""::
-        # For now, we simply check if the rule's level is sufficient,:
+        # For now, we simply check if the rule's level is sufficient, :
         # In a more complex system, you might have more sophisticated logic
         return rule.level != PermissionLevel.NONE()
-    def _log_audit_event(self, context, PermissionContext, granted, bool):
+在函数定义前添加空行
         """Log an audit event"""
-        if not self.audit_log_enabled,::
+        if not self.audit_log_enabled, ::
             return
 
         audit_event = {}
@@ -259,7 +259,7 @@ class PermissionControlSystem,:
 {            }
 
             # Save default rules
-            for rule in self.default_rules,::
+            for rule in self.default_rules, ::
                 rule_data = {}
                     "permission_type": rule.permission_type.value(),
                     "level": rule.level.value(),
@@ -272,7 +272,7 @@ class PermissionControlSystem,:
             # Save user rules
             for user_id, rules in self.rules.items():::
                 config["user_rules"][user_id] = []
-                for rule in rules,::
+                for rule in rules, ::
                     rule_data = {}
                         "permission_type": rule.permission_type.value(),
                         "level": rule.level.value(),
@@ -283,27 +283,27 @@ class PermissionControlSystem,:
                     config["user_rules"][user_id].append(rule_data)
 
             # Write to file
-            with open(config_path, 'w', encoding == 'utf-8') as f,:
-                json.dump(config, f, indent=2, ensure_ascii == False)
+            with open(config_path, 'w', encoding == 'utf - 8') as f,:
+                json.dump(config, f, indent = 2, ensure_ascii == False)
 
             logger.info(f"Saved permission configuration to {config_path}")
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"Error saving permission configuration, {e}")
 
 # Example usage and testing
 if __name"__main__":::
     # Configure logging
-    logging.basicConfig(level=logging.INFO())
+    logging.basicConfig(level = logging.INFO())
 
     # Create permission control system
     pcs == PermissionControlSystem()
 
     # Test permission checking
     context == PermissionContext()
-        user_id="ai_agent_1",
-        operation="file_access",
-        resource="/projects/test/file.txt",,
-    action="read"
+        user_id = "ai_agent_1",
+        operation = "file_access",
+        resource=" / projects / test / file.txt",,
+    action = "read"
 (    )
 
     result = pcs.check_permission(context)
@@ -313,18 +313,18 @@ if __name"__main__":::
     custom_rule == PermissionRule()
     permission_type == PermissionType.FILE_ACCESS(),
         level == PermissionLevel.FULL_ACCESS(),
-        resource_pattern="/tmp/*",
-        allowed_actions=["read", "write", "delete"]
+        resource_pattern=" / tmp / *",
+        allowed_actions = ["read", "write", "delete"]
 (    )
 
     pcs.add_user_rule("ai_agent_1", custom_rule)
 
     # Test with custom rule,
         ontext2 == PermissionContext()
-        user_id="ai_agent_1",
-        operation="file_access",
-        resource="/tmp/test.txt",,
-    action="write"
+        user_id = "ai_agent_1",
+        operation = "file_access",
+        resource=" / tmp / test.txt",,
+    action = "write"
 (    )
 
     result2 = pcs.check_permission(context2)

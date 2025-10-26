@@ -1,6 +1,6 @@
 """
 Rovo Dev Agent 核心实现
-提供智能开发助手功能,集成 Atlassian 生态系统
+提供智能开发助手功能, 集成 Atlassian 生态系统
 """
 
 from tests.tools.test_tool_dispatcher_logging import
@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 class RovoDevAgent:
     """Rovo Dev Agent 主要实现类"""
 
-    def __init__(self, config: Dict[str, Any], agent_manager: Optional[Any] = None) -> None:
+    def __init__(self, config: Dict[str, Any],
+    agent_manager: Optional[Any] = None) -> None:
         """初始化 Rovo Dev Agent
 
         Args:

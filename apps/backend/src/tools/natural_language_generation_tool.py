@@ -6,7 +6,8 @@ from diagnose_base_agent import
     
     # 使用我们的兼容性模块
     try:
-        from apps.backend.src.compat.transformers_compat import import_transformers_pipeline
+        from apps.backend.src.compat.transformers_compat import import_transformers_pipe\
+    line
         pipeline, TRANSFORMERS_AVAILABLE = import_transformers_pipeline
         if not TRANSFORMERS_AVAILABLE:
             print("Warning: Could not import transformers pipeline")
@@ -29,7 +30,7 @@ def generate_text(prompt):
     Returns:
         The generated text.
     """
-    generator = pipeline("text-generation")
+    generator = pipeline("text - generation")
     return generator(prompt)
 
 def save_model(model, model_path):
@@ -52,4 +53,4 @@ def load_model(model_path):
     Returns:
         The loaded model.
     """
-    return pipeline("text-generation", model=model_path)
+    return pipeline("text - generation", model=model_path)

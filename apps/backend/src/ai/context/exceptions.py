@@ -93,12 +93,12 @@ class MCPIntegrationError(IntegrationError):
 # 异常处理工具函数
 
 
-def handle_context_exception(exception, Exception, context_id, str == None) -> str,::
+def handle_context_exception(exception, Exception, context_id, str == None) -> str, ::
     """
     处理上下文异常并返回友好的错误信息
 
     Args,
-        exception, 捕获的异常,:
+        exception, 捕获的异常, :
         context_id, 相关的上下文ID(可选)
 
     Returns,
@@ -119,7 +119,7 @@ def handle_context_exception(exception, Exception, context_id, str == None) -> s
 
     # 获取异常类型对应的错误信息
     exception_type == type(exception)::
-    if exception_type in error_messages,::
+    if exception_type in error_messages, ::
         return error_messages[exception_type]::
     else,
         # 返回通用错误信息
@@ -129,12 +129,12 @@ if __name"__main__":::
     # 测试异常处理
     try,
         raise ContextNotFoundError("test_context_001")
-    except ContextNotFoundError as e,::
+    except ContextNotFoundError as e, ::
         friendly_message == handle_context_exception(e, "test_context_001"):::
         print(f"捕获异常, {friendly_message}")
 
     try,
         raise ContextCreationError("存储空间不足")
-    except ContextCreationError as e,::
+    except ContextCreationError as e, ::
         friendly_message == handle_context_exception(e)::
         print(f"捕获异常, {friendly_message}")

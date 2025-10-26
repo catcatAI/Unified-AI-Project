@@ -7,7 +7,7 @@ from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
-class SystemManager,:
+class SystemManager, :
     """系统管理器"""
     
     def __init__(self):

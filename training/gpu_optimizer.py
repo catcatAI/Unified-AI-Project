@@ -4,19 +4,19 @@ GPU优化器
 负责优化GPU资源使用,包括内存管理、计算优化等
 """
 
-import logging
-import os
-import gc
+from tests.tools.test_tool_dispatcher_logging import
+from diagnose_base_agent import
+# TODO: Fix import - module 'gc' not found
 
 logger, Any = logging.getLogger(__name__)
 
 # 添加兼容性导入
 try,
     # 设置环境变量以解决Keras兼容性问题
-    import os
+from diagnose_base_agent import
     os.environ['TF_USE_LEGACY_KERAS'] = '1'
 
-    import tensorflow as tf
+# TODO: Fix import - module 'tensorflow' not found
     from tensorflow import keras
     TENSORFLOW_AVAILABLE == True
 except ImportError as e,::
@@ -24,40 +24,40 @@ except ImportError as e,::
     tf = keras == None
     TENSORFLOW_AVAILABLE == False
 
-class GPUOptimizer,
+class GPUOptimizer,:
     """GPU优化器"""
 
-    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,
+    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,:
     self.config = config or {}
     self.gpu_available = self._check_gpu_availability()
-    self.optimization_strategies = self.config.get('optimization_strategies', [
+    self.optimization_strategies = self.config.get('optimization_strategies', [)]
             'memory_growth',
             'mixed_precision',
             'gradient_checkpointing',
             'layer_fusion'
-    ])
+[(    ])
 
     # 检查是否为集成显卡系统
     self.is_integrated_graphics = self._check_integrated_graphics()
 
     logger.info(f"GPU优化器初始化完成,GPU可用, {self.gpu_available}集成显卡, {self.is_integrated_graphics}")
 
-    def _check_integrated_graphics(self) -> bool,
+    def _check_integrated_graphics(self) -> bool,:
     """检查是否为集成显卡系统"""
         try,
 
-            import platform
+# TODO: Fix import - module 'platform' not found
             system = platform.system().lower()
 
             if system == "windows":::
                 # Windows系统使用WMI检查
-                import subprocess
-                import json
+from tests.run_test_subprocess import
+from tests.test_json_fix import
 
-                result = subprocess.run([
+                result = subprocess.run([)]
                     "powershell.exe",
                     "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
-                ] capture_output == True, text == True, timeout=10)
+[(                ] capture_output == True, text == True, timeout=10)
 
                 if result.returncode == 0 and result.stdout.strip():::
                     pu_data = json.loads(result.stdout())
@@ -80,11 +80,11 @@ class GPUOptimizer,
 
     return False
 
-    def _check_gpu_availability(self) -> bool,
+    def _check_gpu_availability(self) -> bool,:
     """检查GPU是否可用"""
         try,
 
-            import tensorflow as tf
+# TODO: Fix import - module 'tensorflow' not found
             # 检查TensorFlow版本兼容性
             if hasattr(tf.config(), 'list_physical_devices'):::
                 pus = tf.config.list_physical_devices('GPU')
@@ -100,18 +100,18 @@ class GPUOptimizer,
                 # 在集成显卡上,TensorFlow可能不会自动检测到GPU,但我们仍然可以尝试优化
                 try,
                     # 检查系统是否有GPU设备(即使TensorFlow没有检测到)
-                    import platform
+# TODO: Fix import - module 'platform' not found
                     system = platform.system().lower()
 
                     if system == "windows":::
                         # Windows系统使用WMI检查
-                        import subprocess
-                        import json
+from tests.run_test_subprocess import
+from tests.test_json_fix import
 
-                        result = subprocess.run([
+                        result = subprocess.run([)]
                             "powershell.exe",
                             "Get-WmiObject -Class Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json"
-                        ] capture_output == True, text == True, timeout=10)
+[(                        ] capture_output == True, text == True, timeout=10)
 
                         if result.returncode == 0 and result.stdout.strip():::
                             pu_data = json.loads(result.stdout())
@@ -122,7 +122,7 @@ class GPUOptimizer,
                                 logger.info("ℹ️  检测到系统GPU设备,但TensorFlow未识别,将使用CPU优化策略")
                                 return False  # TensorFlow无法使用GPU,但系统有GPU
                             elif isinstance(gpu_data, dict)::
- = logger.info("ℹ️  检测到系统GPU设备,但TensorFlow未识别,将使用CPU优化策略")
+= logger.info("ℹ️  检测到系统GPU设备,但TensorFlow未识别,将使用CPU优化策略")
                                 return False  # TensorFlow无法使用GPU,但系统有GPU
 
                     # 如果无法确定或没有检测到GPU设备
@@ -147,7 +147,7 @@ class GPUOptimizer,
         try,
 
 
-            import tensorflow as tf
+# TODO: Fix import - module 'tensorflow' not found
             # 兼容不同版本的TensorFlow
             if hasattr(tf.config(), 'list_physical_devices'):::
                 pus = tf.config.list_physical_devices('GPU')
@@ -163,9 +163,9 @@ class GPUOptimizer,
             for gpu in gpus,::
                 # 兼容不同版本的TensorFlow
                 if hasattr(tf.config(), 'experimental') and hasattr(tf.config.experimental(), 'set_memory_growth'):::
- = tf.config.experimental.set_memory_growth(gpu, True)
+= tf.config.experimental.set_memory_growth(gpu, True)
                 elif hasattr(tf.config(), 'set_memory_growth'):::
- = tf.config.set_memory_growth(gpu, True)
+= tf.config.set_memory_growth(gpu, True)
                 else,
                     # 兼容旧版本
                     tf.config.experimental.set_memory_growth(gpu, True)
@@ -190,7 +190,7 @@ class GPUOptimizer,
         try,
 
 
-            import tensorflow as tf
+# TODO: Fix import - module 'tensorflow' not found
 
             # 检查TensorFlow版本和硬件支持
             if self.is_integrated_graphics,::
@@ -229,7 +229,7 @@ class GPUOptimizer,
             # 对于TensorFlow模型,可以通过设置checkpoint来实现
             # 这里提供一个通用的接口
             if hasattr(model, 'enable_gradient_checkpointing'):::
- = model.enable_gradient_checkpointing()
+= model.enable_gradient_checkpointing()
                 logger.info("梯度检查点已启用")
                 return True
             else,
@@ -268,7 +268,7 @@ class GPUOptimizer,
         ""获取代表性数据集用于量化"""
     # 这里应该返回一个小型数据集用于量化校准
     # 为了示例,我们返回一个简单的生成器
-    import numpy as np
+# TODO: Fix import - module 'numpy' not found
 
         for _ in range(100)::
             ield [np.random.random((1, 224, 224, 3)).astype(np.float32())]
@@ -277,7 +277,7 @@ class GPUOptimizer,
         ""清理GPU内存"""
         try,
 
-            import tensorflow as tf
+# TODO: Fix import - module 'tensorflow' not found
 
             # 清理TensorFlow会话
             tf.keras.backend.clear_session()
@@ -291,7 +291,7 @@ class GPUOptimizer,
             logger.error(f"清理GPU内存失败, {e}")
             return False
 
-    def get_gpu_utilization(self) -> Dict[str, Any]
+    def get_gpu_utilization(self) -> Dict[str, Any]:
     """获取GPU利用率信息"""
         if not self.gpu_available,::
     return {}
@@ -299,7 +299,7 @@ class GPUOptimizer,
         try,
 
 
-            import pynvml
+# TODO: Fix import - module 'pynvml' not found
             pynvml.nvmlInit()
 
             device_count = pynvml.nvmlDeviceGetCount()
@@ -311,7 +311,7 @@ class GPUOptimizer,
                 memory_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 utilization = pynvml.nvmlDeviceGetUtilizationRates(handle)
 
-                gpu_info.append({
+                gpu_info.append({)}
                     'id': i,
                     'name': name.decode('utf-8') if isinstance(name, bytes) else name,::
     'memory_total_gb': memory_info.total / (1024**3),
@@ -319,17 +319,17 @@ class GPUOptimizer,
                     'memory_free_gb': memory_info.free / (1024**3),
                     'gpu_utilization': utilization.gpu(),
                     'memory_utilization': utilization.memory()
-                })
+{(                })
 
-            return {
+            return {}
                 'timestamp': self._get_current_timestamp(),
                 'gpus': gpu_info
-            }
+{            }
         except Exception as e,::
             logger.error(f"获取GPU利用率信息失败, {e}")
             return {}
 
-    def _get_current_timestamp(self) -> str,
+    def _get_current_timestamp(self) -> str,:
     """获取当前时间戳"""
     from datetime import datetime
     return datetime.now().isoformat()
@@ -360,7 +360,7 @@ class GPUOptimizer,
         ""启用层融合优化"""
         try,
 
-            import tensorflow as tf
+# TODO: Fix import - module 'tensorflow' not found
 
             # 启用TensorFlow的图优化
             tf.config.optimizer.set_jit(True)

@@ -36,7 +36,7 @@ class ActionType(Enum):
     MAINTENANCE_MODE = "maintenance_mode"
 
 @dataclass
-class SystemState:
+在类定义前添加空行
     """系统状态"""
     timestamp: datetime
     cpu_usage: float
@@ -50,7 +50,7 @@ class SystemState:
     queue_length: int
 
 @dataclass
-class AnomalyDetection:
+在类定义前添加空行
     """异常检测结果"""
     anomaly_id: str
     component_id: str
@@ -62,7 +62,7 @@ class AnomalyDetection:
     recommended_actions: List[str]
 
 @dataclass
-class AutoAction:
+在类定义前添加空行
     """自动操作"""
     action_id: str
     component_id: str
@@ -97,20 +97,20 @@ class AIOpsEngine:
             if self.redis_available:
                 try:
                     self.redis_client = redis.Redis()
-                        host=self.config.get('redis_host', 'localhost'),
-                        port=self.config.get('redis_port', 6379),
-                        db=self.config.get('redis_db', 0),
-                        decode_responses=True
+                        host = self.config.get('redis_host', 'localhost'),
+                        port = self.config.get('redis_port', 6379),
+                        db = self.config.get('redis_db', 0),
+                        decode_responses = True
 (                    )
                     # 测试连接
                     await self.redis_client.ping()
                     logger.info("Redis连接成功")
                 except Exception as e:
-                    logger.warning(f"Redis连接失败,使用内存模式: {e}")
+                    logger.warning(f"Redis连接失败, 使用内存模式: {e}")
                     self.redis_client = None
                     self.redis_available = False
             else:
-                logger.info("Redis不可用,使用内存模式")
+                logger.info("Redis不可用, 使用内存模式")
                 self.redis_client = None
             
             # 加载历史数据
@@ -141,23 +141,24 @@ class AIOpsEngine:
             logger.warning(f"加载历史数据失败: {e}")
             self.system_states = []
     
-    async def collect_system_metrics(self, component_id: str, component_type: str, metrics: Dict[str, float]):
+    async def collect_system_metrics(self, component_id: str, component_type: str,
+    metrics: Dict[str, float]):
         """收集系统指标"""
         try:
             timestamp = datetime.now(timezone.utc())
             
             # 创建系统状态
             system_state = SystemState()
-                timestamp=timestamp,
-                cpu_usage=metrics.get('cpu_usage', 0.0),
-                memory_usage=metrics.get('memory_usage', 0.0),
-                disk_usage=metrics.get('disk_usage', 0.0),
-                network_io=metrics.get('network_io', 0.0),
-                request_rate=metrics.get('request_rate', 0.0),
-                error_rate=metrics.get('error_rate', 0.0),
-                response_time=metrics.get('response_time', 0.0),
-                active_connections=metrics.get('active_connections', 0),
-                queue_length=metrics.get('queue_length', 0)
+                timestamp = timestamp,
+                cpu_usage = metrics.get('cpu_usage', 0.0),
+                memory_usage = metrics.get('memory_usage', 0.0),
+                disk_usage = metrics.get('disk_usage', 0.0),
+                network_io = metrics.get('network_io', 0.0),
+                request_rate = metrics.get('request_rate', 0.0),
+                error_rate = metrics.get('error_rate', 0.0),
+                response_time = metrics.get('response_time', 0.0),
+                active_connections = metrics.get('active_connections', 0),
+                queue_length = metrics.get('queue_length', 0)
 (            )
             
             # 保存系统状态
@@ -186,7 +187,7 @@ class AIOpsEngine:
             else:
                 # 内存模式下限制数据数量
                 if len(self.system_states) > 10000:
-                    self.system_states = self.system_states[-10000:]
+                    self.system_states = self.system_states[ - 10000:]
             
             # 检测异常
             anomalies = await self.detect_anomalies(component_id, metrics)
@@ -198,7 +199,8 @@ class AIOpsEngine:
         except Exception as e:
             logger.error(f"收集系统指标失败: {e}")
     
-    async def detect_anomalies(self, component_id: str, metrics: Dict[str, float]) -> List[AnomalyDetection]:
+    async def detect_anomalies(self, component_id: str, metrics: Dict[str,
+    float]) -> List[AnomalyDetection]:
         """检测异常"""
         try:
             anomalies = []
@@ -206,50 +208,50 @@ class AIOpsEngine:
             # 简单的阈值检测
             if metrics.get('cpu_usage', 0.0) > 90.0:
                 anomalies.append(AnomalyDetection())
-                    anomaly_id=f"cpu_high_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                    component_id=component_id,
-                    anomaly_type="high_cpu",
-                    severity=AlertSeverity.HIGH,
-                    description=f"CPU使用率过高: {metrics.get('cpu_usage', 0.0)}%",
-                    confidence=0.9,
-                    timestamp=datetime.now(timezone.utc()),
-                    recommended_actions=["增加CPU资源", "优化CPU密集型任务"]
+                    anomaly_id = f"cpu_high_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    component_id = component_id,
+                    anomaly_type = "high_cpu",
+                    severity = AlertSeverity.HIGH,
+                    description = f"CPU使用率过高: {metrics.get('cpu_usage', 0.0)}%",
+                    confidence = 0.9,
+                    timestamp = datetime.now(timezone.utc()),
+                    recommended_actions = ["增加CPU资源", "优化CPU密集型任务"]
 ((                ))
             
             if metrics.get('memory_usage', 0.0) > 85.0:
                 anomalies.append(AnomalyDetection())
-                    anomaly_id=f"memory_high_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                    component_id=component_id,
-                    anomaly_type="high_memory",
-                    severity=AlertSeverity.HIGH,
-                    description=f"内存使用率过高: {metrics.get('memory_usage', 0.0)}%",
-                    confidence=0.85,
-                    timestamp=datetime.now(timezone.utc()),
-                    recommended_actions=["增加内存", "清理内存缓存"]
+                    anomaly_id = f"memory_high_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    component_id = component_id,
+                    anomaly_type = "high_memory",
+                    severity = AlertSeverity.HIGH,
+                    description = f"内存使用率过高: {metrics.get('memory_usage', 0.0)}%",
+                    confidence = 0.85,
+                    timestamp = datetime.now(timezone.utc()),
+                    recommended_actions = ["增加内存", "清理内存缓存"]
 ((                ))
             
             if metrics.get('error_rate', 0.0) > 5.0:
                 anomalies.append(AnomalyDetection())
-                    anomaly_id=f"error_rate_high_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                    component_id=component_id,
-                    anomaly_type="high_error_rate",
-                    severity=AlertSeverity.CRITICAL,
-                    description=f"错误率过高: {metrics.get('error_rate', 0.0)}%",
-                    confidence=0.95,
-                    timestamp=datetime.now(timezone.utc()),
-                    recommended_actions=["检查应用日志", "重启服务", "回滚版本"]
+                    anomaly_id = f"error_rate_high_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    component_id = component_id,
+                    anomaly_type = "high_error_rate",
+                    severity = AlertSeverity.CRITICAL,
+                    description = f"错误率过高: {metrics.get('error_rate', 0.0)}%",
+                    confidence = 0.95,
+                    timestamp = datetime.now(timezone.utc()),
+                    recommended_actions = ["检查应用日志", "重启服务", "回滚版本"]
 ((                ))
             
             if metrics.get('response_time', 0.0) > 1000.0:
                 anomalies.append(AnomalyDetection())
-                    anomaly_id=f"response_time_high_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                    component_id=component_id,
-                    anomaly_type="high_response_time",
-                    severity=AlertSeverity.HIGH,
-                    description=f"响应时间过长: {metrics.get('response_time', 0.0)}ms",
-                    confidence=0.8,
-                    timestamp=datetime.now(timezone.utc()),
-                    recommended_actions=["优化数据库查询", "增加缓存", "扩容服务"]
+                    anomaly_id = f"response_time_high_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    component_id = component_id,
+                    anomaly_type = "high_response_time",
+                    severity = AlertSeverity.HIGH,
+                    description = f"响应时间过长: {metrics.get('response_time', 0.0)}ms",
+                    confidence = 0.8,
+                    timestamp = datetime.now(timezone.utc()),
+                    recommended_actions = ["优化数据库查询", "增加缓存", "扩容服务"]
 ((                ))
             
             return anomalies
@@ -311,33 +313,33 @@ class AIOpsEngine:
             action: Optional[AutoAction] = None
             if anomaly.anomaly_type == "high_cpu":
                 action = AutoAction()
-                    action_id=f"heal_{anomaly.anomaly_id}",
-                    component_id=anomaly.component_id,
-                    action_type=ActionType.SCALE_UP,
-                    parameters={"resource": "cpu", "scale_factor": 1.5},
-                    execution_time=datetime.now(timezone.utc()),
-                    status="pending",
-                    result=None
+                    action_id = f"heal_{anomaly.anomaly_id}",
+                    component_id = anomaly.component_id,
+                    action_type = ActionType.SCALE_UP,
+                    parameters = {"resource": "cpu", "scale_factor": 1.5},
+                    execution_time = datetime.now(timezone.utc()),
+                    status = "pending",
+                    result = None
 (                )
             elif anomaly.anomaly_type == "high_memory":
                 action = AutoAction()
-                    action_id=f"heal_{anomaly.anomaly_id}",
-                    component_id=anomaly.component_id,
-                    action_type=ActionType.CLEAR_CACHE,
-                    parameters={"cache_type": "memory"},
-                    execution_time=datetime.now(timezone.utc()),
-                    status="pending",
-                    result=None
+                    action_id = f"heal_{anomaly.anomaly_id}",
+                    component_id = anomaly.component_id,
+                    action_type = ActionType.CLEAR_CACHE,
+                    parameters = {"cache_type": "memory"},
+                    execution_time = datetime.now(timezone.utc()),
+                    status = "pending",
+                    result = None
 (                )
             elif anomaly.anomaly_type == "high_error_rate":
                 action = AutoAction()
-                    action_id=f"heal_{anomaly.anomaly_id}",
-                    component_id=anomaly.component_id,
-                    action_type=ActionType.RESTART_SERVICE,
-                    parameters={"graceful": True},
-                    execution_time=datetime.now(timezone.utc()),
-                    status="pending",
-                    result=None
+                    action_id = f"heal_{anomaly.anomaly_id}",
+                    component_id = anomaly.component_id,
+                    action_type = ActionType.RESTART_SERVICE,
+                    parameters = {"graceful": True},
+                    execution_time = datetime.now(timezone.utc()),
+                    status = "pending",
+                    result = None
 (                )
             
             if action:
@@ -362,10 +364,12 @@ class AIOpsEngine:
                 success = await self._scale_up(action.component_id, action.parameters)
             elif action.action_type == ActionType.CLEAR_CACHE:
                 # 清理缓存
-                success = await self._clear_cache(action.component_id, action.parameters)
+                success = await self._clear_cache(action.component_id,
+    action.parameters)
             elif action.action_type == ActionType.RESTART_SERVICE:
                 # 重启服务
-                success = await self._restart_service(action.component_id, action.parameters)
+                success = await self._restart_service(action.component_id,
+    action.parameters)
             
             action.status = "completed" if success else "failed"
             action.result = "成功" if success else "失败"
@@ -404,7 +408,8 @@ class AIOpsEngine:
             logger.error(f"清理缓存失败: {e}")
             return False
     
-    async def _restart_service(self, component_id: str, parameters: Dict[str, Any]) -> bool:
+    async def _restart_service(self, component_id: str, parameters: Dict[str,
+    Any]) -> bool:
         """重启服务"""
         try:
             logger.info(f"重启服务: {component_id} 优雅重启: {parameters.get('graceful')}")
@@ -433,7 +438,7 @@ class AIOpsEngine:
         """清理旧数据"""
         try:
             # 清理超过7天的数据
-            cutoff_time = datetime.now(timezone.utc()) - timedelta(days=7)
+            cutoff_time = datetime.now(timezone.utc()) - timedelta(days = 7)
             
             # 清理内存中的旧数据
             self.system_states = []
@@ -457,8 +462,8 @@ class AIOpsEngine:
             
             # 分析CPU趋势
             cpu_values = []
-                state['state']['cpu_usage'] 
-                for state in self.system_states[-50:]:
+                state['state']['cpu_usage']
+                for state in self.system_states[ - 50:]:
 [            ]
             
             if len(cpu_values) > 10:
@@ -479,22 +484,22 @@ class AIOpsEngine:
         try:
             if self.redis_available and self.redis_client:
                 # 从Redis获取异常
-                keys = await self.redis_client.keys("ai_ops:anomaly:*")
+                keys = await self.redis_client.keys("ai_ops:anomaly: * ")
                 anomalies = []
                 
                 for key in keys[:limit]:
                     data = await self.redis_client.get(key)
                     if data:
                         anomaly_dict = json.loads(data)
-                        anomalies.append(AnomalyDetection(**anomaly_dict))
+                        anomalies.append(AnomalyDetection( * *anomaly_dict))
                 
                 # 按时间排序
-                anomalies.sort(key=lambda x: x.timestamp, reverse=True)
+                anomalies.sort(key = lambda x: x.timestamp, reverse = True)
                 
                 return anomalies[:limit]
             else:
                 # 内存模式返回内存中的异常
-                anomalies = sorted(self.anomalies, key=lambda x: x.timestamp, reverse=True)
+                anomalies = sorted(self.anomalies, key = lambda x: x.timestamp, reverse = True)
                 return anomalies[:limit]
             
         except Exception as e:
@@ -506,14 +511,14 @@ class AIOpsEngine:
         try:
             # 创建模拟异常
             anomaly = AnomalyDetection()
-                anomaly_id=f"manual_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                component_id=component_id,
-                anomaly_type=issue_type,
-                severity=AlertSeverity.HIGH,
-                description=f"手动触发的自愈: {issue_type}",
-                confidence=1.0,
-                timestamp=datetime.now(timezone.utc()),
-                recommended_actions=[f"处理{issue_type}问题"]
+                anomaly_id = f"manual_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                component_id = component_id,
+                anomaly_type = issue_type,
+                severity = AlertSeverity.HIGH,
+                description = f"手动触发的自愈: {issue_type}",
+                confidence = 1.0,
+                timestamp = datetime.now(timezone.utc()),
+                recommended_actions = [f"处理{issue_type}问题"]
 (            )
             
             # 触发自动修复
@@ -532,11 +537,11 @@ class AIOpsEngine:
                 return {"error": "数据不足"}
             
             # 获取最近的系统状态
-            recent_states = self.system_states[-self.min_data_points:]
+            recent_states = self.system_states[ - self.min_data_points:]
             
             # 预测CPU需求
             cpu_values = []
-                state['state']['cpu_usage'] 
+                state['state']['cpu_usage']
                 for state in recent_states:
 [            ]
 
@@ -549,8 +554,9 @@ class AIOpsEngine:
                 
                 return {}
                     "predicted_cpu": max(0.0, min(100.0, predicted_cpu)),
-                    "current_cpu": cpu_values[-1],
-                    "trend": "increasing", if slope > 0 else ("decreasing", if slope < 0 else "stable"),
+                    "current_cpu": cpu_values[ - 1],
+                    "trend": "increasing", if slope > 0 else ("decreasing",
+    if slope < 0 else "stable"),
                     "confidence": 0.7
 {                }
             
@@ -560,7 +566,7 @@ class AIOpsEngine:
             logger.error(f"容量预测失败: {e}")
             return {"error": str(e)}
 
-# 全局AI运维引擎实例 (由外部统一管理,此处不再创建)
+# 全局AI运维引擎实例 (由外部统一管理, 此处不再创建)
 # ai_ops_engine = AIOpsEngine()
 
 # async def get_ai_ops_engine() -> AIOpsEngine:

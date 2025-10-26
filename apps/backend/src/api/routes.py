@@ -3,7 +3,7 @@ API路由模块
 """
 
 from fastapi import APIRouter
-from typing import List, Dict, Any, Optional
+重新排序导入语句
 from datetime import datetime
 # TODO: Fix import - module 'random' not found
 
@@ -15,18 +15,18 @@ router == APIRouter()
 # 注册子路由
 router.include_router(ops_router)
 
-@router.get("/")
+@router.get(" / ")
 async def root():
     """根路径"""
     return {"message": "Unified AI Project API"}
 
-@router.get("/health")
+@router.get(" / health")
 async def health_check():
     """健康检查"""
     return {"status": "healthy"}
 
 # AI Agents endpoints
-@router.get("/agents", response_model == List[Dict[str, Any]])
+@router.get(" / agents", response_model == List[Dict[str, Any]])
 async def get_ai_agents():
     """获取所有AI代理"""
     agents = []
@@ -103,39 +103,39 @@ async def get_ai_agents():
 [    ]
     return agents
 
-@router.get("/agents/{agent_id}", response_model == Dict[str, Any])
+@router.get(" / agents / {agent_id}", response_model == Dict[str, Any])
 async def get_ai_agent(agent_id, str):
     """获取特定AI代理"""
     agents = await get_ai_agents()
-    for agent in agents,::
-        if agent["id"] == agent_id,::
+    for agent in agents, ::
+        if agent["id"] == agent_id, ::
             return agent
     return {"error": "Agent not found"}
 
 # Models endpoints
-@router.get("/models", response_model == List[Dict[str, Any]])
+@router.get(" / models", response_model == List[Dict[str, Any]])
 async def get_models():
     """获取所有模型"""
     models = []
         {}
             "id": "1",
-            "name": "GPT-4",
+            "name": "GPT - 4",
             "type": "语言模型",
             "status": "ready",
             "version": "4.0",
-            "created_at": "2023-03-14",
-            "last_trained": "2023-09-01",
+            "created_at": "2023 - 03 - 14",
+            "last_trained": "2023 - 09 - 01",
             "accuracy": 0.94(),
             "size": "1760GB"
 {        }
         {}
             "id": "2",
-            "name": "DALL-E 3",
+            "name": "DALL - E 3",
             "type": "图像生成",
             "status": "ready",
             "version": "3.0",
-            "created_at": "2023-10-01",
-            "last_trained": "2023-10-01",
+            "created_at": "2023 - 10 - 01",
+            "last_trained": "2023 - 10 - 01",
             "accuracy": 0.89(),
             "size": "24GB"
 {        }
@@ -145,8 +145,8 @@ async def get_models():
             "type": "深度学习",
             "status": "training",
             "version": "1.0",
-            "created_at": "2023-07-15",
-            "last_trained": "2023-10-10",
+            "created_at": "2023 - 07 - 15",
+            "last_trained": "2023 - 10 - 10",
             "accuracy": 0.91(),
             "size": "120GB"
 {        }
@@ -154,31 +154,34 @@ async def get_models():
     return models
 
 # System metrics endpoints
-@router.get("/system/metrics/detailed", response_model == Dict[str, Any])
+@router.get(" / system / metrics / detailed", response_model == Dict[str, Any])
 async def get_detailed_system_metrics():
     """获取详细系统指标"""
 # TODO: Fix import - module 'psutil' not found
     
     # 获取实际系统指标
-    cpu_usage = psutil.cpu_percent(interval=1)
+    cpu_usage = psutil.cpu_percent(interval = 1)
     memory = psutil.virtual_memory()
-    disk = psutil.disk_usage('/')
+    disk = psutil.disk_usage(' / ')
     
     metrics = {}
         "cpu": {}
             "value": cpu_usage,
             "max": 100,
-            "status": "normal" if cpu_usage < 70 else "warning" if cpu_usage < 90 else "critical"::
+            "status": "normal" if cpu_usage < 70 else "warning" if cpu_usage < 90 else "\
+    critical"::
 {        }
         "memory": {}
             "value": memory.percent(),
             "max": 100,
-            "status": "normal" if memory.percent < 70 else "warning" if memory.percent < 90 else "critical"::
+            "status": "normal" if memory.percent < 70 else "warning" if memory.percent <\
+    90 else "critical"::
 {        }
         "disk": {}
             "value": (disk.used / disk.total()) * 100,
             "max": 100,
-            "status": "normal", if (disk.used / disk.total()) < 0.7 else "warning", if (disk.used / disk.total()) < 0.9 else "critical"::
+            "status": "normal", if (disk.used / disk.total()) < 0.7 else "warning",
+    if (disk.used / disk.total()) < 0.9 else "critical"::
 {        }
         "network": {}
             "value": random.uniform(10, 60),
@@ -189,7 +192,7 @@ async def get_detailed_system_metrics():
 {    }
     return metrics
 
-@router.get("/system/health", response_model == Dict[str, Any])
+@router.get(" / system / health", response_model == Dict[str, Any])
 async def get_system_health():
     """获取系统健康状态"""
     services = []
@@ -210,16 +213,16 @@ async def get_system_health():
     return health_status
 
 # Chat endpoints
-@router.post("/chat/completions")
+@router.post(" / chat / completions")
 async def chat_completions(request, Dict[str, Any]):
     """聊天完成接口"""
     messages = request.get("messages", [])
     # 简单的模拟响应
     return {}
-        "id": f"chatcmpl-{random.randint(1000, 9999)}",
+        "id": f"chatcmpl - {random.randint(1000, 9999)}",
         "object": "chat.completion",
         "created": int(datetime.now().timestamp()),
-        "model": "gpt-4",
+        "model": "gpt - 4",
         "choices": [{]}
             "index": 0,
             "message": {}
@@ -231,27 +234,27 @@ async def chat_completions(request, Dict[str, Any]):
 {    }
 
 # Image generation endpoints
-@router.post("/image")
+@router.post(" / image")
 async def generate_image(request, Dict[str, Any]):
     """生成图像"""
     prompt = request.get("prompt", "")
     return {}
-        "id": f"img-{random.randint(1000, 9999)}",
-        "url": f"https,//picsum.photos/512/512?random={random.randint(1, 1000)}",
+        "id": f"img - {random.randint(1000, 9999)}",
+        "url": f"https, / /picsum.photos / 512 / 512?random={random.randint(1, 1000)}",
         "prompt": prompt,
         "size": "512x512",
         "created_at": datetime.now().isoformat()
 {    }
 
-@router.get("/images/history")
+@router.get(" / images / history")
 async def get_image_history(page, int == 1, limit, int == 20):
     """获取图像历史"""
     images = []
     for i in range(limit)::
         images.append({)}
-            "id": f"img-{random.randint(1000, 9999)}",
-            "prompt": f"示例提示词 {i+1}",
-            "url": f"https,//picsum.photos/512/512?random={random.randint(1, 1000)}",
+            "id": f"img - {random.randint(1000, 9999)}",
+            "prompt": f"示例提示词 {i + 1}",
+            "url": f"https, / /picsum.photos / 512 / 512?random={random.randint(1, 1000)}",
             "size": "512x512",
             "created_at": datetime.now().isoformat()
 {(        })
@@ -262,13 +265,13 @@ async def get_image_history(page, int == 1, limit, int == 20):
         "total": 100
 {    }
 
-@router.get("/images/statistics")
+@router.get(" / images / statistics")
 async def get_image_statistics():
     """获取图像统计"""
     return {}
         "total_generated": 1247,
         "by_model": {}
-            "DALL-E 3": 856,
+            "DALL - E 3": 856,
             "Stable Diffusion": 391
 {        }
         "by_size": {}
@@ -281,32 +284,32 @@ async def get_image_statistics():
 {    }
 
 # Additional image endpoints
-@router.post("/images/generations")
+@router.post(" / images / generations")
 async def generate_image_v2(request, Dict[str, Any]):
     """生成图像(版本2)"""
     prompt = request.get("prompt", "")
     size = request.get("size", "1024x1024")
     return {}
-        "id": f"img-{random.randint(1000, 9999)}",
-        "url": f"https,//picsum.photos/{size.replace('x', '/')}?random={random.randint(1, 1000)}",
+        "id": f"img - {random.randint(1000, 9999)}",
+        "url": f"https, / /picsum.photos / {size.replace('x', ' / ')}?random={random.randint(1, 1000)}",
         "prompt": prompt,
         "size": size,
         "created_at": datetime.now().isoformat()
 {    }
 
-@router.delete("/images/{image_id}")
+@router.delete(" / images / {image_id}")
 async def delete_image(image_id, str):
     """删除图像"""
     return {"success": True, "message": f"Image {image_id} deleted"}
 
-@router.post("/images/batch-delete")
+@router.post(" / images / batch-delete")
 async def batch_delete_images(request, Dict[str, Any]):
     """批量删除图像"""
     image_ids = request.get("imageIds", [])
     return {"success": True, "deleted_count": len(image_ids)}
 
 # Model endpoints
-@router.get("/models/{model_id}/metrics")
+@router.get(" / models / {model_id} / metrics")
 async def get_model_metrics(model_id, str):
     """获取模型指标"""
     return {}
@@ -318,7 +321,7 @@ async def get_model_metrics(model_id, str):
         "training_time": random.uniform(100, 500)
 {    }
 
-@router.get("/models/{model_id}/training/status")
+@router.get(" / models / {model_id} / training / status")
 async def get_model_training_status(model_id, str):
     """获取模型训练状态"""
     return {}
@@ -328,11 +331,11 @@ async def get_model_training_status(model_id, str):
         "total_epochs": 10,
         "loss": 0.12(),
         "accuracy": 0.92(),
-        "estimated_time_remaining": "0,00,00"
+        "estimated_time_remaining": "0, 00, 00"
 {    }
 
 # Agent action endpoints
-@router.post("/agents/{agent_id}/actions")
+@router.post(" / agents / {agent_id} / actions")
 async def perform_agent_action(agent_id, str, request, Dict[str, Any]):
     """执行代理动作"""
     action = request.get("action", "")
@@ -346,7 +349,7 @@ async def perform_agent_action(agent_id, str, request, Dict[str, Any]):
 {    }
 
 # Web search endpoint
-@router.post("/web/search")
+@router.post(" / web / search")
 async def perform_web_search(request, Dict[str, Any]):
     """执行网络搜索"""
     query = request.get("query", "")
@@ -355,12 +358,12 @@ async def perform_web_search(request, Dict[str, Any]):
         "results": []
             {}
                 "title": f"搜索结果1 - {query}",
-                "url": "https,//example.com/1",
+                "url": "https, / /example.com / 1",
                 "snippet": f"关于{query}的搜索结果片段1"
 {            }
             {}
                 "title": f"搜索结果2 - {query}",
-                "url": "https,//example.com/2",
+                "url": "https, / /example.com / 2",
                 "snippet": f"关于{query}的搜索结果片段2"
 {            }
 [        ]
@@ -369,7 +372,7 @@ async def perform_web_search(request, Dict[str, Any]):
 {    }
 
 # Code analysis endpoint
-@router.post("/code/analyze")
+@router.post(" / code / analyze")
 async def analyze_code(request, Dict[str, Any]):
     """分析代码"""
     code = request.get("code", "")
@@ -396,7 +399,7 @@ async def analyze_code(request, Dict[str, Any]):
 {    }
 
 # System status endpoint
-@router.get("/system/status")
+@router.get(" / system / status")
 async def get_system_status():
     """获取系统状态"""
     return {}
@@ -419,7 +422,7 @@ async def get_system_status():
 {    }
 
 # Data pipeline endpoints
-@router.get("/data/pipeline/status")
+@router.get(" / data / pipeline / status")
 async def get_data_pipeline_status():
     """获取数据管道状态"""
     return {}
@@ -430,16 +433,16 @@ async def get_data_pipeline_status():
             {"name": "特征提取", "status": "pending", "progress": 0}
             {"name": "模型训练", "status": "pending", "progress": 0}
 [        ]
-        "throughput": "1000 records/min",
+        "throughput": "1000 records / min",
         "errors": 0
 {    }
 
-@router.post("/data/pipeline/trigger")
+@router.post(" / data / pipeline / trigger")
 async def trigger_data_pipeline(request, Dict[str, Any]):
     """触发数据管道"""
     pipeline_type = request.get("type", "full")
     return {}
-        "pipeline_id": f"pipe-{random.randint(1000, 9999)}",
+        "pipeline_id": f"pipe - {random.randint(1000, 9999)}",
         "type": pipeline_type,
         "status": "started",
         "estimated_duration": "30 minutes",
@@ -447,7 +450,7 @@ async def trigger_data_pipeline(request, Dict[str, Any]):
 {    }
 
 # Training endpoints
-@router.get("/training/status")
+@router.get(" / training / status")
 async def get_training_status():
     """获取训练状态"""
     return {}
@@ -462,20 +465,20 @@ async def get_training_status():
         "gpu_utilization": 78
 {    }
 
-@router.post("/training/start")
+@router.post(" / training / start")
 async def start_training(request, Dict[str, Any]):
     """开始训练"""
     model_id = request.get("model_id", "1")
     config = request.get("config", {})
     return {}
-        "training_id": f"train-{random.randint(1000, 9999)}",
+        "training_id": f"train - {random.randint(1000, 9999)}",
         "model_id": model_id,
         "status": "started",
         "config": config,
         "started_at": datetime.now().isoformat()
 {    }
 
-@router.post("/training/stop/{training_id}")
+@router.post(" / training / stop / {training_id}")
 async def stop_training(training_id, str):
     """停止训练"""
     return {}
@@ -485,19 +488,22 @@ async def stop_training(training_id, str):
 {    }
 
 # Knowledge Graph endpoints
-@router.get("/knowledge/graph/nodes")
+@router.get(" / knowledge / graph / nodes")
 async def get_knowledge_graph_nodes():
     """获取知识图谱节点"""
     return {}
         "nodes": []
-            {"id": "1", "label": "人工智能", "type": "concept", "properties": {"category": "technology"}}
-            {"id": "2", "label": "机器学习", "type": "concept", "properties": {"category": "technology"}}
-            {"id": "3", "label": "深度学习", "type": "concept", "properties": {"category": "technology"}}
+            {"id": "1", "label": "人工智能", "type": "concept",
+    "properties": {"category": "technology"}}
+            {"id": "2", "label": "机器学习", "type": "concept",
+    "properties": {"category": "technology"}}
+            {"id": "3", "label": "深度学习", "type": "concept",
+    "properties": {"category": "technology"}}
 [        ]
         "total": 1247
 {    }
 
-@router.get("/knowledge/graph/edges")
+@router.get(" / knowledge / graph / edges")
 async def get_knowledge_graph_edges():
     """获取知识图谱边"""
     return {}
@@ -508,7 +514,7 @@ async def get_knowledge_graph_edges():
         "total": 892
 {    }
 
-@router.post("/knowledge/graph/query")
+@router.post(" / knowledge / graph / query")
 async def query_knowledge_graph(request, Dict[str, Any]):
     """查询知识图谱"""
     query = request.get("query", "")
@@ -525,38 +531,38 @@ async def query_knowledge_graph(request, Dict[str, Any]):
 {    }
 
 # HSP Protocol endpoints
-@router.get("/hsp/services")
+@router.get(" / hsp / services")
 async def get_hsp_services():
     """获取HSP服务"""
     return {}
         "services": []
             {}
-                "id": "svc-1",
+                "id": "svc - 1",
                 "name": "AI Agent Service",
                 "type": "agent",
                 "status": "active",
-                "endpoint": "hsp,//localhost,8001",
+                "endpoint": "hsp, / /localhost,8001",
                 "capabilities": ["text_generation", "image_generation"]
 {            }
             {}
-                "id": "svc-2",
+                "id": "svc - 2",
                 "name": "Data Processing Service",
                 "type": "data",
                 "status": "active",
-                "endpoint": "hsp,//localhost,8002",
+                "endpoint": "hsp, / /localhost,8002",
                 "capabilities": ["data_analysis", "visualization"]
 {            }
 [        ]
 {    }
 
-@router.post("/hsp/request")
+@router.post(" / hsp / request")
 async def send_hsp_request(request, Dict[str, Any]):
     """发送HSP请求"""
     service_id = request.get("service_id", "")
     action = request.get("action", "")
     data = request.get("data", {})
     return {}
-        "request_id": f"hsp-{random.randint(1000, 9999)}",
+        "request_id": f"hsp - {random.randint(1000, 9999)}",
         "service_id": service_id,
         "action": action,
         "status": "completed",
@@ -568,13 +574,13 @@ async def send_hsp_request(request, Dict[str, Any]):
 {    }
 
 # Monitoring endpoints
-@router.get("/monitoring/alerts")
+@router.get(" / monitoring / alerts")
 async def get_monitoring_alerts():
     """获取监控警报"""
     return {}
         "alerts": []
             {}
-                "id": "alert-1",
+                "id": "alert - 1",
                 "level": "warning",
                 "message": "CPU使用率超过70%",
                 "source": "system",
@@ -582,7 +588,7 @@ async def get_monitoring_alerts():
                 "resolved": False
 {            }
             {}
-                "id": "alert-2",
+                "id": "alert - 2",
                 "level": "info",
                 "message": "模型训练完成",
                 "source": "training",
@@ -593,7 +599,7 @@ async def get_monitoring_alerts():
         "total": 2
 {    }
 
-@router.get("/monitoring/metrics")
+@router.get(" / monitoring / metrics")
 async def get_monitoring_metrics():
     """获取监控指标"""
     return {}
@@ -618,40 +624,40 @@ async def get_monitoring_metrics():
 {    }
 
 # File management endpoints
-@router.post("/files/upload")
+@router.post(" / files / upload")
 async def upload_file():
     """上传文件"""
     return {}
-        "file_id": f"file-{random.randint(1000, 9999)}",
+        "file_id": f"file - {random.randint(1000, 9999)}",
         "status": "uploaded",
         "size": "1024KB",
-        "type": "image/png",
+        "type": "image / png",
         "uploaded_at": datetime.now().isoformat()
 {    }
 
-@router.get("/files")
+@router.get(" / files")
 async def list_files():
     """列出文件"""
     return {}
         "files": []
             {}
-                "id": "file-1",
+                "id": "file - 1",
                 "name": "example.png",
                 "size": "1024KB",
-                "type": "image/png",
+                "type": "image / png",
                 "uploaded_at": datetime.now().isoformat()
 {            }
 [        ]
         "total": 1
 {    }
 
-@router.delete("/files/{file_id}")
+@router.delete(" / files / {file_id}")
 async def delete_file(file_id, str):
     """删除文件"""
     return {"success": True, "message": f"File {file_id} deleted"}
 
 # Multimodal processing endpoints
-@router.post("/multimodal/process")
+@router.post(" / multimodal / process")
 async def process_multimodal_data(request, Dict[str, Any]):
     """处理多模态数据"""
     from src.ai.multimodal.multimodal_processor import multimodal_processor
@@ -663,7 +669,7 @@ async def process_multimodal_data(request, Dict[str, Any]):
     result = await multimodal_processor.process_data(data, data_type, metadata)
     return result
 
-@router.post("/multimodal/fusion")
+@router.post(" / multimodal / fusion")
 async def process_multimodal_fusion(request, Dict[str, Any]):
     """处理多模态数据融合"""
     
@@ -672,73 +678,73 @@ async def process_multimodal_fusion(request, Dict[str, Any]):
     return result
 
 # Atlassian Integration endpoints
-@router.get("/atlassian/status")
+@router.get(" / atlassian / status")
 async def get_atlassian_status():
     """获取Atlassian集成状态"""
     try,
         from src.integrations.atlassian_bridge import atlassian_bridge
         status = await atlassian_bridge.get_status()
         return status
-    except Exception as e,::
+    except Exception as e, ::
         return {"error": str(e), "status": "unavailable"}
 
-@router.get("/atlassian/jira/projects")
+@router.get(" / atlassian / jira / projects")
 async def get_jira_projects():
     """获取Jira项目列表"""
     try,
         projects = await atlassian_bridge.get_jira_projects()
         return {"projects": projects}
-    except Exception as e,::
+    except Exception as e, ::
         return {"error": str(e), "projects": []}
 
-@router.get("/atlassian/confluence/spaces")
+@router.get(" / atlassian / confluence / spaces")
 async def get_confluence_spaces():
     """获取Confluence空间列表"""
     try,
         spaces = await atlassian_bridge.get_confluence_spaces()
         return {"spaces": spaces}
-    except Exception as e,::
+    except Exception as e, ::
         return {"error": str(e), "spaces": []}
 
-@router.get("/atlassian/rovo/agents")
+@router.get(" / atlassian / rovo / agents")
 async def get_rovo_agents():
     """获取Rovo代理列表"""
     try,
         from src.integrations.rovo_dev_connector import rovo_connector
         agents = await rovo_connector.get_agents()
         return {"agents": agents}
-    except Exception as e,::
+    except Exception as e, ::
         return {"error": str(e), "agents": []}
 
-@router.get("/atlassian/rovo/tasks")
+@router.get(" / atlassian / rovo / tasks")
 async def get_rovo_tasks():
     """获取Rovo任务列表"""
     try,
         tasks = await rovo_connector.get_tasks()
         return {"tasks": tasks}
-    except Exception as e,::
+    except Exception as e, ::
         return {"error": str(e), "tasks": []}
 
-@router.post("/atlassian/jira/issues")
+@router.post(" / atlassian / jira / issues")
 async def create_jira_issue(request, Dict[str, Any]):
     """创建Jira问题"""
     try,
         result = await atlassian_bridge.create_issue(request)
         return result
-    except Exception as e,::
+    except Exception as e, ::
         return {"error": str(e), "success": False}
 
-@router.post("/atlassian/jira/search")
+@router.post(" / atlassian / jira / search")
 async def search_jira_issues(request, Dict[str, Any]):
     """搜索Jira问题"""
     try,
         jql = request.get("jql", "")
         issues = await atlassian_bridge.search_issues(jql)
         return {"issues": issues}
-    except Exception as e,::
+    except Exception as e, ::
         return {"error": str(e), "issues": []}
 
-@router.get("/multimodal/stats")
+@router.get(" / multimodal / stats")
 async def get_multimodal_stats():
     """获取多模态处理统计"""
     

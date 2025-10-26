@@ -3,22 +3,22 @@
 测试增量学习系统功能
 """
 
-import sys
+from system_test import
 from pathlib import Path
 
 # 添加项目路径
 project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
-from training.incremental_learning_manager import (
+from training.incremental_learning_manager import ()
     DataTracker, 
     ModelManager, 
     TrainingScheduler, 
     MemoryBuffer,
     IncrementalLearningManager
-)
+()
 
-def test_data_tracker() -> None,
+def test_data_tracker() -> None,:
     """测试数据跟踪器"""
     print("🧪 测试数据跟踪器...")
     
@@ -42,7 +42,7 @@ def test_data_tracker() -> None,
         print(f"❌ 数据跟踪器测试失败, {e}")
         return False
 
-def test_model_manager() -> None,
+def test_model_manager() -> None,:
     """测试模型管理器"""
     print("🤖 测试模型管理器...")
     
@@ -67,7 +67,7 @@ def test_model_manager() -> None,
         print(f"❌ 模型管理器测试失败, {e}")
         return False
 
-def test_training_scheduler() -> None,
+def test_training_scheduler() -> None,:
     """测试训练调度器"""
     print("⏰ 测试训练调度器...")
     
@@ -79,10 +79,10 @@ def test_training_scheduler() -> None,
         is_idle = scheduler.is_system_idle()
         print(f"  ✅ 系统空闲检测功能正常,当前状态, {'空闲' if is_idle else '忙碌'}")::
         # 测试调度训练任务
-        test_task == {:
+        test_task == {:}
             'model_name': 'concept_models',
             'data_files': []
-        }
+{        }
         scheduler.schedule_training(test_task)
         print(f"  ✅ 调度训练任务功能正常")
         
@@ -96,7 +96,7 @@ def test_training_scheduler() -> None,
         print(f"❌ 训练调度器测试失败, {e}")
         return False
 
-def test_memory_buffer() -> None,
+def test_memory_buffer() -> None,:
     """测试内存缓冲区"""
     print("📦 测试内存缓冲区...")
     
@@ -119,7 +119,7 @@ def test_memory_buffer() -> None,
         print(f"❌ 内存缓冲区测试失败, {e}")
         return False
 
-def test_incremental_learning_manager() -> None,
+def test_incremental_learning_manager() -> None,:
     """测试增量学习管理器"""
     print("🚀 测试增量学习管理器...")
     
@@ -145,18 +145,18 @@ def test_incremental_learning_manager() -> None,
         print(f"❌ 增量学习管理器测试失败, {e}")
         return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🚀 测试增量学习系统功能")
     print("=" * 40)
     
-    tests = [
+    tests = []
         test_data_tracker,
         test_model_manager,
         test_training_scheduler,
         test_memory_buffer,
         test_incremental_learning_manager
-    ]
+[    ]
     
     passed = 0
     for test in tests,::

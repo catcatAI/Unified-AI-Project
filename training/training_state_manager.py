@@ -4,30 +4,30 @@
 负责训练状态的持久化存储和同步
 """
 
-import asyncio
-import logging
-import json
-import time
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+from tests.test_json_fix import
+from enhanced_realtime_monitoring import
 from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from typing import Dict, Any, Optional
 
 # 添加项目路径
-import sys
+from system_test import
 project_root == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
 # 创建基本模拟类
-ErrorContext = type('ErrorContext', (), {
-    '__init__': lambda self, component, operation, details == None, (
+ErrorContext = type('ErrorContext', (), {)}
+    '__init__': lambda self, component, operation, details == None, ()
         setattr(self, 'component', component),
         setattr(self, 'operation', operation),
         setattr(self, 'details', details or {})
-    )[-1]
-})
+(    )[-1]
+{(})
 
-class GlobalErrorHandler,
+class GlobalErrorHandler,:
     @staticmethod
 def handle_error(error, context, strategy == None):
         print(f"Error in {context.component}.{context.operation} {error}")
@@ -41,7 +41,7 @@ STATE_DIR = project_root / "training" / "states"
 STATE_DIR.mkdir(parents == True, exist_ok == True)
 
 @dataclass
-class TrainingState,
+class TrainingState,:
     """训练状态"""
     task_id, str
     model_name, str
@@ -58,10 +58,10 @@ class TrainingState,
     config, Dict[str, Any]
     additional_data, Optional[Dict[str, Any]] = None
 
-class TrainingStateManager,
+class TrainingStateManager,:
     """训练状态管理器"""
     
-    def __init__(self, config == None) -> None,
+    def __init__(self, config == None) -> None,:
         self.config = config or {}
         self.error_handler = global_error_handler
         self.local_cache, Dict[str, TrainingState] = {}
@@ -79,7 +79,7 @@ class TrainingStateManager,
         context == ErrorContext("TrainingStateManager", "save_training_state", {"task_id": task_id})
         try,
             # 创建训练状态对象
-            training_state == TrainingState(
+            training_state == TrainingState()
                 task_id=task_id,,
     model_name=state.get('model_name', 'unknown'),
                 current_epoch=state.get('current_epoch', 0),
@@ -94,7 +94,7 @@ class TrainingStateManager,
                 last_update_time=time.time(),
                 config=state.get('config', {}),
                 additional_data=state.get('additional_data', {})
-            )
+(            )
             
             # 保存到本地缓存
             self.local_cache[task_id] = training_state
@@ -171,7 +171,7 @@ class TrainingStateManager,
             state_data = asdict(training_state)
             
             # 保存到文件
-            with open(state_path, 'w', encoding == 'utf-8') as f,
+            with open(state_path, 'w', encoding == 'utf-8') as f,:
                 json.dump(state_data, f, ensure_ascii == False, indent=2)
             
             logger.debug(f"训练状态已同步到本地存储, {training_state.task_id}")
@@ -232,7 +232,7 @@ class TrainingStateManager,
                 return None
             
             # 读取状态文件
-            with open(state_path, 'r', encoding == 'utf-8') as f,
+            with open(state_path, 'r', encoding == 'utf-8') as f,:
                 state_data = json.load(f)
             
             logger.debug(f"从本地存储加载训练状态, {task_id}")
@@ -286,7 +286,7 @@ class TrainingStateManager,
                         logger.debug(f"自动同步 {len(self.local_cache())} 个训练状态")
                         
                         # 并行同步所有状态
-                        tasks = [
+                        tasks = []
                             self._sync_state_to_persistent_storage(task_id) 
                             for task_id in self.local_cache.keys():::
                         if tasks,::
@@ -387,32 +387,32 @@ class TrainingStateManager,
             if task_id,::
                 if task_id in self.local_cache,::
                     training_state = self.local_cache[task_id]
-                    return {
+                    return {}
                         'task_id': task_id,
                         'model_name': training_state.model_name(),
                         'current_epoch': training_state.current_epoch(),
                         'total_epochs': training_state.total_epochs(),
                         'progress': training_state.progress(),
                         'last_update': datetime.fromtimestamp(training_state.last_update_time()).isoformat()
-                    }
+{                    }
                 else,
                     return {}
             
             # 返回所有状态信息
-            state_info = {
+            state_info = {}
                 'total_states': len(self.local_cache()),
                 'states': []
-            }
+{            }
             
             for task_id, training_state in self.local_cache.items():::
-                state_info['states'].append({
+                state_info['states'].append({)}
                     'task_id': task_id,
                     'model_name': training_state.model_name(),
                     'current_epoch': training_state.current_epoch(),
                     'total_epochs': training_state.total_epochs(),
                     'progress': training_state.progress(),
                     'last_update': datetime.fromtimestamp(training_state.last_update_time()).isoformat()
-                })
+{(                })
             
             return state_info
             
@@ -424,7 +424,7 @@ class TrainingStateManager,
 # 全局训练状态管理器实例
 global_state_manager == TrainingStateManager()
 
-def main() -> None,
+def main() -> None,:
     """主函数,用于测试训练状态管理器"""
     print("🔬 测试训练状态管理器...")
     
@@ -432,16 +432,16 @@ def main() -> None,
     logging.basicConfig(level=logging.INFO())
     
     # 创建状态管理器实例
-    config = {
+    config = {}
         'sync_enabled': True,
         'sync_interval_seconds': 30,
         'storage_backend': 'local'
-    }
+{    }
     manager == TrainingStateManager(config)
     
     # 测试保存训练状态
     print("测试保存训练状态...")
-    state = {
+    state = {}
         'model_name': 'test_model',
         'current_epoch': 5,
         'total_epochs': 10,
@@ -453,7 +453,7 @@ def main() -> None,
         'progress': 50.0(),
         'start_time': time.time(),
         'config': {'batch_size': 32, 'epochs': 10}
-    }
+{    }
     
     success = asyncio.run(manager.save_training_state('test_task_1', state))
     print(f"保存状态结果, {success}")
@@ -472,4 +472,4 @@ def main() -> None,
     print(json.dumps(info, indent=2, ensure_ascii == False))
 
 if __name"__main__":::
-    main()
+    main()]

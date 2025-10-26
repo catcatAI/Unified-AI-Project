@@ -1,4 +1,4 @@
-# src/shared/types/common_types.py()
+# src / shared / types / common_types.py()
 from enum import Enum
 
 print("common_types.py (debug version) is being imported and defining ServiceStatus...")
@@ -45,9 +45,9 @@ class ServiceInstanceHealth(TypedDict):
     last_heartbeat, float
     metrics, Optional[Dict[str, Any]]
 
-# --- Minimal other types that might be needed immediately downstream ---
+# - - - Minimal other types that might be needed immediately downstream - - -
 # For ToolDispatcherResponse as used by ToolDispatcher, imported by DialogueManager
-class ToolDispatcherResponse(TypedDict):
+在类定义前添加空行
     status, Literal[]
         "success",
         "failure_tool_not_found",
@@ -89,7 +89,7 @@ class OperationalConfig(TypedDict, total == False) # For DialogueManager:
     learning_thresholds, Optional[Any]
     default_hsp_fact_topic, Optional[str]
     max_dialogue_history, Optional[int]
-    operational_configs, Optional[Dict[str,Any]]
+    operational_configs, Optional[Dict[str, Any]]
 
 class CritiqueResult(TypedDict) # For DialogueMemoryEntryMetadata:
     score, float
@@ -109,7 +109,7 @@ class ParsedToolIODetails(TypedDict, total == False) # For DialogueManager:
     suggested_method_name, Required[str]
     class_docstring_hint, Required[str]
     method_docstring_hint, Required[str]
-    parameters, Required[List[Dict[str, Any]]]# Simplified from ToolParameterDetail for this test,::
+    parameters, Required[List[Dict[str, Any]]]# Simplified from ToolParameterDetail for this test, ::
         eturn_type, Required[str]
 return_description, Required[str]
 
@@ -120,8 +120,8 @@ class OverwriteDecision(Enum) # For HAMMemoryManager -> DialogueManager:
     ASK_USER = "ask_user"
     MERGE_IF_APPLICABLE = "merge_if_applicable"
 
-# --- LLM Interface Types ---
-class LLMProviderOllamaConfig(TypedDict):
+# - - - LLM Interface Types - - -
+在类定义前添加空行
     base_url, Required[str]
     # Potentially other Ollama specific params like default_keep_alive, etc.
 
@@ -130,20 +130,21 @@ class LLMProviderOpenAIConfig(TypedDict):
     # Potentially other OpenAI specific params like organization, project_id
 
 class LLMModelInfo(TypedDict, total == False):
-    id, Required[str]           # Model ID, typically how it's called/identified
+    id, Required[str]           # Model ID, typically how it's called / identified
     provider, Required[str]     # e.g., "ollama", "openai", "mock"
-    name, Optional[str]         # Human-readable name, might be same as ID or more descriptive
+    name, Optional[str]         # Human - readable name, might be same as ID or more descriptive
     description, Optional[str]
     modified_at, Optional[str]  # ISO 8601 timestamp
     size_bytes, Optional[int]
-    # Future, capabilities (e.g., ["chat", "completion", "embedding"]), context_length, etc.
+    # Future, capabilities (e.g., ["chat", "completion", "embedding"]), context_length,
+    etc.
 
 
 # HAM Memory Types
 from dataclasses import dataclass
 
 @dataclass
-class HAMRecallResult,:
+在类定义前添加空行
     """HAM記憶回憶結果"""
     memories, List[Dict[str, Any]]
     confidence_scores, List[float]

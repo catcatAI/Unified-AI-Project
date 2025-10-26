@@ -36,7 +36,7 @@ class HSPTaskRequestOutput(BaseModel):
     target_capability_id, str
     error, Optional[str] = None
 
-# --- Atlassian Models ---
+# - - - Atlassian Models - - -
 
 
 class AtlassianConfigModel(BaseModel):
@@ -65,7 +65,7 @@ class RovoDevTaskModel(BaseModel):
 class JQLSearchModel(BaseModel):
     jql, str
 
-# --- Hot Status Models ---
+# - - - Hot Status Models - - -
 
 
 class HotStatusResponse(BaseModel):
@@ -75,7 +75,7 @@ class HotStatusResponse(BaseModel):
     mcp, Dict[str, Any]
     metrics, Dict[str, Any]
 
-# --- Health Models ---
+# - - - Health Models - - -
 
 
 class HealthResponse(BaseModel):
@@ -84,7 +84,7 @@ class HealthResponse(BaseModel):
     services_initialized, Dict[str, bool]
     components, Dict[str, Any] =
 
-# --- Readiness Models ---
+# - - - Readiness Models - - -
 
 
 class ReadinessResponse(BaseModel):
@@ -94,7 +94,7 @@ class ReadinessResponse(BaseModel):
     signals, Dict[str, Any] =
     reason, Optional[str] = None
 
-# --- HSP Service Discovery Models ---
+# - - - HSP Service Discovery Models - - -
 
 
 class HSPServiceDiscoveryResponse(BaseModel):

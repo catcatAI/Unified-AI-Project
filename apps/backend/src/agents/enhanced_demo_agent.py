@@ -13,8 +13,9 @@ sys.path.insert(0, project_root)
 try,
     # Try relative imports first (for when running with uvicorn)::
         rom .base_agent import BaseAgent, TaskPriority
-    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
-except ImportError,::
+    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload,
+    HSPMessageEnvelope
+except ImportError, ::
     # Fall back to absolute imports (for when running as a script)::
         rom apps.backend.src.core_ai.agents.base_agent import BaseAgent, TaskPriority
 
@@ -25,8 +26,8 @@ class EnhancedDemoAgent(BaseAgent):
     An enhanced demo agent that showcases all the new features of the BaseAgent class.
     """
 
-    def __init__(self, agent_id, str) -> None,:
-        # Define capabilities for this agent,::
+    def __init__(self, agent_id, str) -> None, :
+        # Define capabilities for this agent, ::
             apabilities = []
             {}
                 "capability_id": "enhanced_demo_v1",
@@ -37,7 +38,7 @@ class EnhancedDemoAgent(BaseAgent):
             {}
                 "capability_id": "task_processing_v1",
                 "name": "Task Processing",
-                "description": "Processes tasks with priority queuing",:
+                "description": "Processes tasks with priority queuing", :
                     version": "1.0"
 {            }
             {}
@@ -54,7 +55,8 @@ class EnhancedDemoAgent(BaseAgent):
         self.register_task_handler("task_processing_v1", self._handle_task_processing())
         self.register_task_handler("system_info_v1", self._handle_system_info())
 
-    async def handle_task_request(self, task_payload, HSPTaskRequestPayload, sender_ai_id, str, envelope, HSPMessageEnvelope):
+    async def handle_task_request(self, task_payload, HSPTaskRequestPayload,
+    sender_ai_id, str, envelope, HSPMessageEnvelope):
         """
         Handle incoming task requests.
         """
@@ -63,10 +65,11 @@ class EnhancedDemoAgent(BaseAgent):
         # Refresh agent status
         await self.refresh_agent_status()
 
-        # Use the parent class's queue-based handling
+        # Use the parent class's queue - based handling
         await super().handle_task_request(task_payload, sender_ai_id, envelope)
 
-    async def _handle_task_processing(self, task_payload, HSPTaskRequestPayload, sender_ai_id, str, envelope, HSPMessageEnvelope) -> Dict[str, Any]
+    async def _handle_task_processing(self, task_payload, HSPTaskRequestPayload,
+    sender_ai_id, str, envelope, HSPMessageEnvelope) -> Dict[str, Any]
         """
         Handle task processing requests with priority queuing.:
             ""
@@ -77,7 +80,8 @@ class EnhancedDemoAgent(BaseAgent):
         if action == "process":::
             # Simulate task processing with variable duration,
                 uration = parameters.get("duration", random.uniform(0.5(), 2.0()))
-            logger.info(f"[{self.agent_id}] Processing task for {"duration":.2f} seconds")::
+            logger.info(f"[{self.agent_id}] Processing task for {"duration":.2f} seconds\
+    ")::
             # Simulate work
             await asyncio.sleep(duration)
 
@@ -116,7 +120,8 @@ class EnhancedDemoAgent(BaseAgent):
                 "message": f"Unknown action, {action}"
 {            }
 
-    async def _handle_system_info(self, task_payload, HSPTaskRequestPayload, sender_ai_id, str, envelope, HSPMessageEnvelope) -> Dict[str, Any]
+    async def _handle_system_info(self, task_payload, HSPTaskRequestPayload,
+    sender_ai_id, str, envelope, HSPMessageEnvelope) -> Dict[str, Any]
         """
         Handle system information requests.
         """
@@ -165,7 +170,8 @@ class EnhancedDemoAgent(BaseAgent):
                 "queue_status": queue_status,
                 "registry_stats": await self.get_agent_registry_stats(),
                 "active_agents": active_agents,
-                "capabilities": [cap.get("capability_id") for cap in self.capabilities]::
+                "capabilities": [cap.get("capability_id") for cap in self.capabilities]:\
+    :
         else,
             return {}
                 "status": "error",
@@ -203,8 +209,8 @@ class EnhancedDemoAgent(BaseAgent):
                 "message_id": f"msg_{i}",
                 "sender_ai_id": "test_submitter",
                 "recipient_ai_id": self.agent_id(),
-                "timestamp_sent": time.strftime("%Y-%m-%dT%H,%M,%SZ"),
-                "message_type": "HSP,TaskRequest_v0.1",
+                "timestamp_sent": time.strftime("%Y - %m - %dT%H,%M,%SZ"),
+                "message_type": "HSP, TaskRequest_v0.1",
                 "protocol_version": "0.1",
                 "communication_pattern": "request",
                 "security_parameters": None,
@@ -227,7 +233,7 @@ async def main() -> None,
 # TODO: Fix import - module 'uuid' not found
 
     # Create agent with a unique ID,
-        gent_id == f"did,hsp,enhanced_demo_agent_{uuid.uuid4().hex[:8]}"
+        gent_id == f"did, hsp, enhanced_demo_agent_{uuid.uuid4().hex[:8]}"
     agent == EnhancedDemoAgent(agent_id)
 
     try,
@@ -240,15 +246,16 @@ async def main() -> None,
 
         # Keep the agent running and periodically show status
         iteration = 0
-        while agent.is_running,::
+        while agent.is_running, ::
             iteration += 1
 
             # Every 15 seconds, show agent status
-            if iteration % 15 == 0,::
+            if iteration % 15 == 0, ::
                 health_report = await agent.get_health_report()
                 queue_status = await agent.get_task_queue_status()
 
-                logger.info(f"[{agent.agent_id}] Status - Uptime, {health_report.get('uptime_seconds', 0).1f}s, ")
+                logger.info(f"[{agent.agent_id}] Status - Uptime,
+    {health_report.get('uptime_seconds', 0).1f}s, ")
                         f"Tasks, {health_report.get('task_count', 0)} "
 (                        f"Queue, {queue_status.get('queue_length', 0)} items")
 
@@ -256,9 +263,9 @@ async def main() -> None,
             await agent.refresh_agent_status()
             await asyncio.sleep(1)
 
-    except KeyboardInterrupt,::
+    except KeyboardInterrupt, ::
         logger.info("Received keyboard interrupt, shutting down...")
-    except Exception as e,::
+    except Exception as e, ::
         logger.error(f"Error in main, {e}")
     finally,
         # Stop the agent
@@ -268,8 +275,8 @@ async def main() -> None,
 if __name"__main__":::
     # Set up logging
     logging.basicConfig()
-    level=logging.INFO(),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level = logging.INFO(),
+        format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 (    )
 
     # Run the agent

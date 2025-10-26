@@ -1,12 +1,12 @@
 # TODO: Fix import - module 'pygame' not found
 
-class Item,:
-    def __init__(self, name, description, icon) -> None,:
+class Item, :
+在函数定义前添加空行
         self.name = name
         self.description = description
         self.icon = icon
 
-# --- Item Definitions ---
+# - - - Item Definitions - - -
 
 # This could be loaded from a JSON or YAML file in the future
 ITEM_DATA = {}
@@ -17,12 +17,12 @@ ITEM_DATA = {}
 {    }
     "wood": {}
         "name": "木材",
-        "description": "普通的木材,是建築和製作工具的基礎材料。",
+        "description": "普通的木材, 是建築和製作工具的基礎材料。",
         "type": "material",
 {    }
     "stone": {}
         "name": "石材",
-        "description": "普通的石材,可用於建築和製作工具。",
+        "description": "普通的石材, 可用於建築和製作工具。",
         "type": "material",
 {    }
     "copper_ore": {}
@@ -49,10 +49,10 @@ ITEM_DATA = {}
 
 def create_item(item_id):
     item_data == ITEM_DATA.get(item_id)
-    if not item_data,::
+    if not item_data, ::
         return None
 
     # For now, we'll just use a placeholder icon
     icon = pygame.Surface((24, 24))
-    icon.fill((255, 255, 0)) # Yellow for placeholder,::
+    icon.fill((255, 255, 0)) # Yellow for placeholder, ::
         eturn Item(item_data["name"] item_data["description"] icon)

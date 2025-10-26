@@ -298,3 +298,12 @@ tests/logs/
 
 # Unified fix backups
 unified_fix_backups/
+# Auto-fix additions
+__pycache__/
+*.pyc
+*.pyo
+.Python
+venv/
+node_modules/
+.DS_Store
+*.log

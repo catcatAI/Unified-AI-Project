@@ -3,8 +3,8 @@
 测试真实训练功能的脚本
 """
 
-import sys
-from pathlib import Path
+from system_test import
+# TODO: Fix import - module 'pathlib' not found
 
 # 添加项目路径
 project_root: str = Path(__file__).parent.parent
@@ -17,7 +17,7 @@ print(f"项目根目录: {project_root}")
 
 # 测试导入训练器
 try:
-    from train_model import ModelTrainer
+from .train_model import
     print("✅ 成功导入ModelTrainer")
     
     # 测试创建训练器实例
@@ -44,7 +44,7 @@ try:
         
 except Exception as e:
     print(f"❌ 导入ModelTrainer时出错: {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
 
 print("测试完成")

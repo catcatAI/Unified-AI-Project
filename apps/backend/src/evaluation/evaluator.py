@@ -1,9 +1,9 @@
-class Evaluator,:
+class Evaluator, :
     """
     A class for evaluating models and tools.:::
         ""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
         pass
 
     def evaluate(self, model_or_tool, dataset):
@@ -37,12 +37,12 @@ class Evaluator,:
             The accuracy of the model or tool.
         """
         correct = 0
-        for input, expected_output in dataset,::
+        for input, expected_output in dataset, ::
             output = model_or_tool.evaluate(input)
             print(f"Input, {input} Output, {output} Expected, {expected_output}")
-            if output == expected_output,::
+            if output == expected_output, ::
                 correct += 1
-        if len(dataset) == 0,::
+        if len(dataset) == 0, ::
             return 0
         return correct / len(dataset)
 
@@ -58,7 +58,7 @@ class Evaluator,:
         """
 from enhanced_realtime_monitoring import
         start_time = time.time()
-        for input, _ in dataset,::
+        for input, _ in dataset, ::
             model_or_tool.evaluate(input)
         end_time = time.time()
         return end_time - start_time
@@ -73,13 +73,13 @@ from enhanced_realtime_monitoring import
                 eturns,
             The robustness of the model or tool.
         """
-        no_exception == 0,::
-        for input, _ in dataset,::
+        no_exception == 0, ::
+        for input, _ in dataset, ::
             try,
                 model_or_tool.evaluate(input)
-                no_exception += 1,::
-            except,::
+                no_exception += 1, ::
+            except, ::
                 pass
-        if len(dataset) == 0,::
+        if len(dataset) == 0, ::
             return 0
         return no_exception / len(dataset)::

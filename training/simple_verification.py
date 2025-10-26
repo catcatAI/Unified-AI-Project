@@ -3,7 +3,7 @@
 简单验证增强后的自动训练系统核心功能
 """
 
-import sys
+from system_test import
 from pathlib import Path
 
 # 添加项目路径
@@ -29,11 +29,11 @@ def verify_data_manager_enhancements():
                 return False
         
         # 验证文件分类功能
-        test_files = {
+        test_files = {}
             'test_model.pth': 'model',
             'test_archive.zip': 'archive',
             'test_binary.bin': 'binary'
-        }
+{        }
         
         for filename, expected_type in test_files.items():::
             file_path == Path(filename)
@@ -88,14 +88,14 @@ def verify_code_changes():
         # 检查auto_training_manager.py中的新增方法()
         auto_training_path == Path("training/auto_training_manager.py")
         if auto_training_path.exists():::
-            with open(auto_training_path, 'r', encoding == 'utf-8') as f,
+            with open(auto_training_path, 'r', encoding == 'utf-8') as f,:
                 content = f.read()
                 
-            required_methods = [
+            required_methods = []
                 '_optimize_training_parameters',
                 '_train_math_logic_model',
                 '_train_collaborative_model'
-            ]
+[            ]
             
             for method in required_methods,::
                 if method in content,::
@@ -110,14 +110,14 @@ def verify_code_changes():
         # 检查data_manager.py中的新增方法()
         data_manager_path == Path("training/data_manager.py")
         if data_manager_path.exists():::
-            with open(data_manager_path, 'r', encoding == 'utf-8') as f,
+            with open(data_manager_path, 'r', encoding == 'utf-8') as f,:
                 content = f.read()
                 
-            required_methods = [
+            required_methods = []
                 '_assess_model_quality',
                 '_assess_data_quality',
                 '_assess_archive_quality'
-            ]
+[            ]
             
             for method in required_methods,::
                 if method in content,::
@@ -135,16 +135,16 @@ def verify_code_changes():
         print(f"❌ 代码修改验证失败, {e}")
         return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🚀 简单验证增强后的自动训练系统")
     print("=" * 40)
     
-    tests = [
+    tests = []
         verify_data_manager_enhancements,
         verify_auto_training_enhancements,
         verify_code_changes
-    ]
+[    ]
     
     passed = 0
     for test in tests,::

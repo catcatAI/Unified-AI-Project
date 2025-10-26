@@ -14,7 +14,7 @@ def recognize_image(image, template):
     """
     result = match_template(image, template)
     ij = np.unravel_index(np.argmax(result), result.shape)
-    x, y = ij[::-1]
+    x, y = ij[:: - 1]
     return x, y
 
 def save_model(model, model_path):

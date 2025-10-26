@@ -3,18 +3,18 @@
 简化版协作式训练测试脚本
 """
 
-import sys
+from system_test import
 from pathlib import Path
 
 # 添加项目路径
 project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
-def test_collaborative_training_manager_basic() -> None,
+def test_collaborative_training_manager_basic() -> None,:
     """测试协作式训练管理器基本功能"""
     logger.info("🔄 测试协作式训练管理器基本功能...")
 
@@ -44,11 +44,11 @@ def test_collaborative_training_manager_basic() -> None,
 
     except Exception as e,::
     logger.error(f"❌ 协作式训练管理器测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def test_model_training_task() -> None,
+def test_model_training_task() -> None,:
     """测试模型训练任务类"""
     logger.info("🎯 测试模型训练任务类...")
 
@@ -58,12 +58,12 @@ def test_model_training_task() -> None,
     from training.collaborative_training_manager import ModelTrainingTask
 
     # 创建训练任务实例
-    task == ModelTrainingTask(
+    task == ModelTrainingTask()
             model_name="test_model",
             model_instance="TestModelInstance",
             data = [],
     resources = {}
-    )
+(    )
 
     logger.info("✅ 模型训练任务初始化成功")
 
@@ -85,20 +85,20 @@ def test_model_training_task() -> None,
 
     except Exception as e,::
     logger.error(f"❌ 模型训练任务类测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🧪 测试协作式训练组件(简化版)...")
     print("=" * 50)
 
     # 测试各个组件
-    tests = [
+    tests = []
     ("模型训练任务类", test_model_training_task),
     ("协作式训练管理器基本功能", test_collaborative_training_manager_basic)
-    ]
+[    ]
 
     passed = 0
     total = len(tests)
@@ -115,7 +115,7 @@ def main() -> None,
                 print(f"❌ {test_name} 测试失败")
         except Exception as e,::
             print(f"❌ {test_name} 测试出错, {e}")
-            import traceback
+# TODO: Fix import - module 'traceback' not found
             traceback.print_exc()
 
     # 总结

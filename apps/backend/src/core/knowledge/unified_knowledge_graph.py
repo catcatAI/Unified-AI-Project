@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 统一知识图谱 (Unified Knowledge Graph)
 Level 5 AGI核心组件 - 实现跨领域知识表示与推理
@@ -8,7 +8,7 @@ Level 5 AGI核心组件 - 实现跨领域知识表示与推理
 - 关系抽取与验证 (Relation Extraction)
 - 知识融合与消歧 (Knowledge Fusion)
 - 时序知识更新 (Temporal Knowledge Updates)
-- 跨领域知识迁移 (Cross-domain Knowledge Transfer)
+- 跨领域知识迁移 (Cross - domain Knowledge Transfer)
 """
 
 # TODO: Fix import - module 'asyncio' not found
@@ -28,7 +28,7 @@ try,
 # TODO: Fix import - module 'torch.nn' not found
 # TODO: Fix import - module 'torch.nn.functional' not found
     TORCH_AVAILABLE == True
-except ImportError,::
+except ImportError, ::
     TORCH_AVAILABLE == False
 
 try,
@@ -36,15 +36,15 @@ try,
     from sklearn.metrics.pairwise import cosine_similarity
     from sklearn.cluster import DBSCAN
     SKLEARN_AVAILABLE == True
-except ImportError,::
+except ImportError, ::
     SKLEARN_AVAILABLE == False
 
 # 配置日志
-logging.basicConfig(level=logging.INFO())
+logging.basicConfig(level = logging.INFO())
 logger = logging.getLogger(__name__)
 
 @dataclass
-class Entity,:
+在类定义前添加空行
     """实体定义"""
     entity_id, str
     name, str
@@ -60,7 +60,7 @@ class Entity,:
             self.timestamp = datetime.fromisoformat(self.timestamp())
 
 @dataclass
-class Relation,:
+在类定义前添加空行
     """关系定义"""
     relation_id, str
     source_entity, str
@@ -78,7 +78,7 @@ class Relation,:
             self.timestamp = datetime.fromisoformat(self.timestamp())
 
 @dataclass
-class KnowledgeTriple,:
+在类定义前添加空行
     """知识三元组"""
     subject, str
     predicate, str
@@ -89,7 +89,7 @@ class KnowledgeTriple,:
     metadata, Dict[str, Any]
 
 @dataclass
-class DomainKnowledge,:
+在类定义前添加空行
     """领域知识"""
     domain, str
     entities, Dict[str, Entity]
@@ -97,7 +97,7 @@ class DomainKnowledge,:
     patterns, List[Dict[str, Any]]
     last_updated, datetime
 
-class UnifiedKnowledgeGraph,:
+class UnifiedKnowledgeGraph, :
     """统一知识图谱 - Level 5 AGI核心组件"""
     
     def __init__(self, config, Dict[str, Any] = None):
@@ -139,34 +139,34 @@ class UnifiedKnowledgeGraph,:
     def _initialize_ai_components(self):
         """初始化AI组件"""
         try,
-            if SKLEARN_AVAILABLE,::
+            if SKLEARN_AVAILABLE, ::
                 # 初始化实体嵌入模型
                 self.entity_vectorizer == TfidfVectorizer()
-                    max_features=1000,,
-    ngram_range=(1, 2),
-                    analyzer='char'
+                    max_features = 1000,,
+    ngram_range = (1, 2),
+                    analyzer = 'char'
 (                )
                 
                 # 初始化关系嵌入模型
                 self.relation_vectorizer == TfidfVectorizer()
-                    max_features=500,,
-    ngram_range=(1, 3)
+                    max_features = 500,,
+    ngram_range = (1, 3)
 (                )
                 
                 logger.info("✅ AI组件初始化成功")
             else,
-                logger.warning("⚠️ scikit-learn不可用,将使用简化算法")
+                logger.warning("⚠️ scikit - learn不可用,将使用简化算法")
                 
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"❌ AI组件初始化失败, {e}")
     
-    # ==================== 实体管理 == async def add_entity(self, entity, Entity) -> bool,
+    # = == == == == == == == == == = 实体管理 == async def add_entity(self, entity, Entity) -> bool,
         """添加实体"""
         try,
             # 实体消歧与合并
             existing_entity = await self._resolve_entity_ambiguity(entity)
             
-            if existing_entity,::
+            if existing_entity, ::
                 # 合并实体信息
                 merged_entity = await self._merge_entities(existing_entity, entity)
                 self.entities[merged_entity.entity_id] = merged_entity
@@ -180,12 +180,12 @@ class UnifiedKnowledgeGraph,:
             await self._update_entity_linking(entity)
             
             # 生成嵌入向量
-            if SKLEARN_AVAILABLE,::
+            if SKLEARN_AVAILABLE, ::
                 await self._generate_entity_embedding(entity)
             
             return True
             
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"❌ 添加实体失败, {e}")
             return False
     
@@ -197,13 +197,15 @@ class UnifiedKnowledgeGraph,:
                 return existing_entity
             
             # 检查别名匹配
-            if entity.name.lower() in [alias.lower() for alias in existing_entity.aliases]::
+            if entity.name.lower() in [alias.lower() for alias in existing_entity.aliase\
+    s]::
                 return existing_entity
             
             # 检查相似性(基于嵌入向量)
-            if SKLEARN_AVAILABLE and existing_id in self.entity_embeddings,::
-                similarity = await self._calculate_entity_similarity(entity, existing_entity)
-                if similarity > self.similarity_threshold,::
+            if SKLEARN_AVAILABLE and existing_id in self.entity_embeddings, ::
+                similarity = await self._calculate_entity_similarity(entity,
+    existing_entity)
+                if similarity > self.similarity_threshold, ::
                     return existing_entity
         
         return None
@@ -211,23 +213,23 @@ class UnifiedKnowledgeGraph,:
     async def _merge_entities(self, entity1, Entity, entity2, Entity) -> Entity,
         """合并实体信息"""
         # 保留置信度更高的信息
-        if entity2.confidence > entity1.confidence,::
-            merged_properties = {**entity1.properties(), **entity2.properties}
+        if entity2.confidence > entity1.confidence, ::
+            merged_properties = { * *entity1.properties(), * * entity2.properties}
             merged_aliases = list(set(entity1.aliases + entity2.aliases()))
             
             return Entity()
-    entity_id=entity1.entity_id(),
-                name=entity2.name(),
-                entity_type=entity2.entity_type(),
-                confidence=max(entity1.confidence(), entity2.confidence()),
-                properties=merged_properties,
-                aliases=merged_aliases,
-                source=f"{entity1.source}|{entity2.source}",
-                timestamp=datetime.now()
+    entity_id = entity1.entity_id(),
+                name = entity2.name(),
+                entity_type = entity2.entity_type(),
+                confidence = max(entity1.confidence(), entity2.confidence()),
+                properties = merged_properties,
+                aliases = merged_aliases,
+                source = f"{entity1.source}|{entity2.source}",
+                timestamp = datetime.now()
 (            )
         else,
-            # 保留entity1的主要信息,合并其他属性
-            merged_properties = {**entity2.properties(), **entity1.properties}
+            # 保留entity1的主要信息, 合并其他属性
+            merged_properties = { * *entity2.properties(), * * entity1.properties}
             merged_aliases = list(set(entity1.aliases + entity2.aliases()))
             
             entity1.properties = merged_properties
@@ -242,7 +244,7 @@ class UnifiedKnowledgeGraph,:
         self.entity_linking_map[entity.name.lower()].add(entity.entity_id())
         
         # 别名链接
-        for alias in entity.aliases,::
+        for alias in entity.aliases, ::
             self.entity_linking_map[alias.lower()].add(entity.entity_id())
         
         # 类型层次结构
@@ -250,16 +252,17 @@ class UnifiedKnowledgeGraph,:
     
     async def _generate_entity_embedding(self, entity, Entity):
         """生成实体嵌入向量"""
-        if not SKLEARN_AVAILABLE,::
+        if not SKLEARN_AVAILABLE, ::
             return
         
         try,
             # 构建实体描述文本
-            entity_text = f"{entity.name} {' '.join(entity.aliases())} {entity.entity_type}"
+            entity_text = f"{entity.name} {' '.join(entity.aliases())} {entity.entity_ty\
+    pe}"
             for key, value in entity.properties.items():::
                 entity_text += f" {key} {value}"
             
-            # 使用TF-IDF向量化
+            # 使用TF - IDF向量化
             if not hasattr(self, '_entity_vocab_fitted'):::
                 # 首次拟合词汇表
                 all_entity_texts = []
@@ -267,7 +270,7 @@ class UnifiedKnowledgeGraph,:
                     text = f"{e.name} {' '.join(e.aliases())} {e.entity_type}"
                     all_entity_texts.append(text)
                 
-                if all_entity_texts,::
+                if all_entity_texts, ::
                     self.entity_vectorizer.fit(all_entity_texts)
                     self._entity_vocab_fitted == True
             
@@ -275,42 +278,45 @@ class UnifiedKnowledgeGraph,:
             embedding = self.entity_vectorizer.transform([entity_text]).toarray()[0]
             self.entity_embeddings[entity.entity_id] = embedding
             
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"❌ 实体嵌入生成失败, {e}")
     
-    async def _calculate_entity_similarity(self, entity1, Entity, entity2, Entity) -> float,
+    async def _calculate_entity_similarity(self, entity1, Entity, entity2,
+    Entity) -> float,
         """计算实体相似度"""
-        if not SKLEARN_AVAILABLE,::
+        if not SKLEARN_AVAILABLE, ::
             # 简化相似度计算
-            name_similarity == 1.0 if entity1.name.lower() == entity2.name.lower() else 0.0,:
-            type_similarity == 1.0 if entity1.entity_type=entity2.entity_type else 0.0,:
+            name_similarity == 1.0 if entity1.name.lower() == entity2.name.lower() else 0.0, :
+            type_similarity == 1.0 if entity1.entity_type = entity2.entity_type else 0.0,:
             return (name_similarity + type_similarity) / 2
 
         try,
             id1, id2 = entity1.entity_id(), entity2.entity_id()
-            if id1 in self.entity_embeddings and id2 in self.entity_embeddings,::
+            if id1 in self.entity_embeddings and id2 in self.entity_embeddings, ::
                 emb1 = self.entity_embeddings[id1].reshape(1, -1)
                 emb2 = self.entity_embeddings[id2].reshape(1, -1)
                 similarity = cosine_similarity(emb1, emb2)[0][0]
                 return float(similarity)
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"❌ 实体相似度计算失败, {e}")
         
         return 0.0()
-    # ==================== 关系管理 == async def add_relation(self, relation, Relation) -> bool,
+    # = == == == == == == == == == = 关系管理 == async def add_relation(self, relation, Relation) -> bool,
         """添加关系"""
         try,
             # 验证实体存在
-            if relation.source_entity not in self.entities or relation.target_entity not in self.entities,::
-                logger.warning(f"⚠️ 关系实体不存在, {relation.source_entity} -> {relation.target_entity}")
+            if relation.source_entity not in self.entities or relation.target_entity not in self.entities, ::
+                logger.warning(f"⚠️ 关系实体不存在,
+    {relation.source_entity} -> {relation.target_entity}")
                 return False
             
             # 关系验证与去重
             existing_relation = await self._resolve_relation_ambiguity(relation)
             
-            if existing_relation,::
+            if existing_relation, ::
                 # 更新现有关系
-                merged_relation = await self._merge_relations(existing_relation, relation)
+                merged_relation = await self._merge_relations(existing_relation,
+    relation)
                 self.relations[merged_relation.relation_id] = merged_relation
                 logger.info(f"🔄 关系更新, {merged_relation.relation_type}")
             else,
@@ -322,39 +328,41 @@ class UnifiedKnowledgeGraph,:
             await self._generate_knowledge_triple(relation)
             
             # 生成关系嵌入
-            if SKLEARN_AVAILABLE,::
+            if SKLEARN_AVAILABLE, ::
                 await self._generate_relation_embedding(relation)
             
             return True
             
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"❌ 添加关系失败, {e}")
             return False
     
-    async def _resolve_relation_ambiguity(self, relation, Relation) -> Optional[Relation]
+    async def _resolve_relation_ambiguity(self, relation,
+    Relation) -> Optional[Relation]
         """关系消歧"""
         for existing_id, existing_relation in self.relations.items():::
-            if (existing_relation.source_entity == relation.source_entity and,:)
+            if (existing_relation.source_entity == relation.source_entity and, :)
                 existing_relation.target_entity == relation.target_entity and,
-(                existing_relation.relation_type=relation.relation_type())
+(                existing_relation.relation_type = relation.relation_type())
                 return existing_relation
         
         return None
     
-    async def _merge_relations(self, relation1, Relation, relation2, Relation) -> Relation,
+    async def _merge_relations(self, relation1, Relation, relation2,
+    Relation) -> Relation,
         """合并关系信息"""
-        if relation2.confidence > relation1.confidence,::
+        if relation2.confidence > relation1.confidence, ::
             return Relation()
-    relation_id=relation1.relation_id(),
-                source_entity=relation1.source_entity(),
-                target_entity=relation1.target_entity(),
-                relation_type=relation1.relation_type(),
-                confidence=max(relation1.confidence(), relation2.confidence()),
-                properties={**relation1.properties(), **relation2.properties}
-                source=f"{relation1.source}|{relation2.source}",
-                timestamp=datetime.now(),
-                is_temporal=relation1.is_temporal or relation2.is_temporal(),
-(                temporal_properties=relation1.temporal_properties or relation2.temporal_properties())
+    relation_id = relation1.relation_id(),
+                source_entity = relation1.source_entity(),
+                target_entity = relation1.target_entity(),
+                relation_type = relation1.relation_type(),
+                confidence = max(relation1.confidence(), relation2.confidence()),
+                properties={ * *relation1.properties(), * * relation2.properties}
+                source = f"{relation1.source}|{relation2.source}",
+                timestamp = datetime.now(),
+                is_temporal = relation1.is_temporal or relation2.is_temporal(),
+(                temporal_properties = relation1.temporal_properties or relation2.temporal_properties())
         else,
             relation1.properties.update(relation2.properties())
             relation1.source = f"{relation1.source}|{relation2.source}"
@@ -365,13 +373,13 @@ class UnifiedKnowledgeGraph,:
     async def _generate_knowledge_triple(self, relation, Relation):
         """生成知识三元组"""
         triple == KnowledgeTriple()
-            subject=self.entities[relation.source_entity].name,,
-    predicate=relation.relation_type(),
-            object=self.entities[relation.target_entity].name,
-            confidence=relation.confidence(),
-            source=relation.source(),
-            timestamp=relation.timestamp(),
-            metadata={}
+            subject = self.entities[relation.source_entity].name,,
+    predicate = relation.relation_type(),
+            object = self.entities[relation.target_entity].name,
+            confidence = relation.confidence(),
+            source = relation.source(),
+            timestamp = relation.timestamp(),
+            metadata = {}
                 'relation_id': relation.relation_id(),
                 'source_entity_id': relation.source_entity(),
                 'target_entity_id': relation.target_entity(),
@@ -384,13 +392,13 @@ class UnifiedKnowledgeGraph,:
         # 更新领域知识
         source_entity = self.entities[relation.source_entity]
         domain = source_entity.entity_type()
-        if domain not in self.domain_knowledge,::
+        if domain not in self.domain_knowledge, ::
             self.domain_knowledge[domain] = DomainKnowledge()
-                domain=domain,
+                domain = domain,
                 entities = {}
                 relations = {}
                 patterns = [],
-    last_updated=datetime.now()
+    last_updated = datetime.now()
 (            )
         
         self.domain_knowledge[domain].relations[relation.relation_id] = relation
@@ -398,7 +406,7 @@ class UnifiedKnowledgeGraph,:
     
     async def _generate_relation_embedding(self, relation, Relation):
         """生成关系嵌入向量"""
-        if not SKLEARN_AVAILABLE,::
+        if not SKLEARN_AVAILABLE, ::
             return
         
         try,
@@ -407,7 +415,7 @@ class UnifiedKnowledgeGraph,:
             target_name = self.entities[relation.target_entity].name
             relation_text = f"{source_name} {relation.relation_type} {target_name}"
             
-            # 使用TF-IDF向量化
+            # 使用TF - IDF向量化
             if not hasattr(self, '_relation_vocab_fitted'):::
                 # 首次拟合词汇表
                 all_relation_texts = []
@@ -417,7 +425,7 @@ class UnifiedKnowledgeGraph,:
                     text = f"{src_name} {r.relation_type} {tgt_name}"
                     all_relation_texts.append(text)
                 
-                if all_relation_texts,::
+                if all_relation_texts, ::
                     self.relation_vectorizer.fit(all_relation_texts)
                     self._relation_vocab_fitted == True
             
@@ -425,14 +433,14 @@ class UnifiedKnowledgeGraph,:
             embedding = self.relation_vectorizer.transform([relation_text]).toarray()[0]
             self.relation_embeddings[relation.relation_id] = embedding
             
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"❌ 关系嵌入生成失败, {e}")
     
-    # ==================== 跨领域知识迁移 == async def find_cross_domain_patterns(self, source_domain, str, target_domain, str) -> List[Dict[str, Any]]
+    # = == == == == == == == == == = 跨领域知识迁移 == async def find_cross_domain_patterns(self, source_domain, str, target_domain, str) -> List[Dict[str, Any]]
         """发现跨领域模式"""
         patterns = []
         
-        if source_domain not in self.domain_knowledge or target_domain not in self.domain_knowledge,::
+        if source_domain not in self.domain_knowledge or target_domain not in self.domain_knowledge, ::
             return patterns
         
         source_knowledge = self.domain_knowledge[source_domain]
@@ -443,15 +451,17 @@ class UnifiedKnowledgeGraph,:
         target_patterns = await self._extract_structural_patterns(target_knowledge)
         
         # 模式相似度计算
-        for s_pattern in source_patterns,::
-            for t_pattern in target_patterns,::
-                similarity = await self._calculate_pattern_similarity(s_pattern, t_pattern)
-                if similarity > 0.7,  # 相似度阈值,:
+        for s_pattern in source_patterns, ::
+            for t_pattern in target_patterns, ::
+                similarity = await self._calculate_pattern_similarity(s_pattern,
+    t_pattern)
+                if similarity > 0.7,  # 相似度阈值, :
                     patterns.append({)}
                         'source_pattern': s_pattern,
                         'target_pattern': t_pattern,
                         'similarity': similarity,
-                        'transfer_potential': self._assess_transfer_potential(s_pattern, t_pattern)
+                        'transfer_potential': self._assess_transfer_potential(s_pattern,
+    t_pattern)
 {(                    })
         
         # 更新迁移模式库
@@ -459,7 +469,8 @@ class UnifiedKnowledgeGraph,:
         
         return patterns
     
-    async def _extract_structural_patterns(self, domain_knowledge, DomainKnowledge) -> List[Dict[str, Any]]
+    async def _extract_structural_patterns(self, domain_knowledge,
+    DomainKnowledge) -> List[Dict[str, Any]]
         """提取结构模式"""
         patterns = []
         
@@ -485,7 +496,8 @@ class UnifiedKnowledgeGraph,:
         
         return patterns
     
-    async def _extract_graph_patterns(self, domain_knowledge, DomainKnowledge) -> List[Dict[str, Any]]
+    async def _extract_graph_patterns(self, domain_knowledge,
+    DomainKnowledge) -> List[Dict[str, Any]]
         """提取图结构模式"""
         patterns = []
         
@@ -495,18 +507,20 @@ class UnifiedKnowledgeGraph,:
             adjacency[relation.source_entity].append(relation.target_entity())
         
         # 发现常见子图模式
-        for entity_id in adjacency,::
+        for entity_id in adjacency, ::
             neighbors = adjacency[entity_id]
-            if len(neighbors) > 1,::
+            if len(neighbors) > 1, ::
                 patterns.append({)}
                     'center_entity': entity_id,
                     'neighbor_count': len(neighbors),
-                    'neighbor_types': [domain_knowledge.entities[nid].entity_type for nid in neighbors if nid in domain_knowledge.entities]:
+                    'neighbor_types': [domain_knowledge.entities[nid].entity_type for ni\
+    d in neighbors if nid in domain_knowledge.entities]:
 {(                })
         
         return patterns,
 
-    async def _calculate_pattern_similarity(self, pattern1, Dict[str, Any] pattern2, Dict[str, Any]) -> float,
+    async def _calculate_pattern_similarity(self, pattern1, Dict[str, Any] pattern2,
+    Dict[str, Any]) -> float,
         """计算模式相似度"""
         # 实体类型相似度
         entity_sim = self._calculate_distribution_similarity()
@@ -528,18 +542,18 @@ class UnifiedKnowledgeGraph,:
         
         return (entity_sim + relation_sim + graph_sim) / 3
     
-    def _calculate_distribution_similarity(self, dist1, Dict[str, int] dist2, Dict[str, int]) -> float,:
+    def _calculate_distribution_similarity(self, dist1, Dict[str, int] dist2, Dict[str, int]) -> float, :
         """计算分布相似度"""
-        if not dist1 or not dist2,::
+        if not dist1 or not dist2, ::
             return 0.0()
-        # 使用Jensen-Shannon散度
+        # 使用Jensen - Shannon散度
         all_keys = set(dist1.keys()) | set(dist2.keys())
         
         # 转换为概率分布
         total1 = sum(dist1.values())
         total2 = sum(dist2.values())
         
-        if total1 == 0 or total2=0,::
+        if total1 == 0 or total2 = 0,::
             return 0.0()
         prob1 = np.array([dist1.get(key, 0) / total1 for key in all_keys]):
         prob2 = np.array([dist2.get(key, 0) / total2 for key in all_keys]):
@@ -547,43 +561,48 @@ class UnifiedKnowledgeGraph,:
         similarity = cosine_similarity(prob1.reshape(1, -1), prob2.reshape(1, -1))[0][0]
         return float(similarity)
 
-    def _calculate_graph_similarity(self, patterns1, List[Dict[str, Any]] patterns2, List[Dict[str, Any]]) -> float,:
+    def _calculate_graph_similarity(self, patterns1, List[Dict[str, Any]] patterns2, List[Dict[str, Any]]) -> float, :
         """计算图结构相似度"""
-        if not patterns1 or not patterns2,::
+        if not patterns1 or not patterns2, ::
             return 0.0()
         # 简化的图相似度：基于邻居数量和类型分布
         similarities = []
         
-        for p1 in patterns1,::
-            for p2 in patterns2,::
-                neighbor_sim = 1.0 - abs(p1.get('neighbor_count', 0) - p2.get('neighbor_count', 0)) / max(p1.get('neighbor_count', 1), p2.get('neighbor_count', 1))
+        for p1 in patterns1, ::
+            for p2 in patterns2, ::
+                neighbor_sim = 1.0 - abs(p1.get('neighbor_count',
+    0) - p2.get('neighbor_count', 0)) / max(p1.get('neighbor_count', 1), p2.get('neighbor_count', 1))
                 
                 # 类型分布相似度
                 types1 = set(p1.get('neighbor_types', []))
                 types2 = set(p2.get('neighbor_types', []))
                 
-                if types1 or types2,::
+                if types1 or types2, ::
                     type_sim = len(types1 & types2) / len(types1 | types2)
                 else,
                     type_sim = 0.0()
                 similarities.append((neighbor_sim + type_sim) / 2)
         
-        return max(similarities) if similarities else 0.0,:
-    def _assess_transfer_potential(self, source_pattern, Dict[str, Any] target_pattern, Dict[str, Any]) -> float,:
+        return max(similarities) if similarities else 0.0, :
+在函数定义前添加空行
         """评估迁移潜力"""
         # 基于模式复杂度和相似度评估迁移潜力
-        source_complexity = len(source_pattern.get('entity_types', {})) + len(source_pattern.get('relation_types', {}))
-        target_complexity = len(target_pattern.get('entity_types', {})) + len(target_pattern.get('relation_types', {}))
+        source_complexity = len(source_pattern.get('entity_types',
+    {})) + len(source_pattern.get('relation_types', {}))
+        target_complexity = len(target_pattern.get('entity_types',
+    {})) + len(target_pattern.get('relation_types', {}))
         
         # 复杂度匹配度
-        complexity_match = 1.0 - abs(source_complexity - target_complexity) / max(source_complexity, target_complexity)
+        complexity_match = 1.0 - abs(source_complexity -\
+    target_complexity) / max(source_complexity, target_complexity)
         
         # 结构相似度
-        structural_sim = self._calculate_pattern_similarity(source_pattern, target_pattern)
+        structural_sim = self._calculate_pattern_similarity(source_pattern,
+    target_pattern)
         
         return (complexity_match + structural_sim) / 2
     
-    # ==================== 知识查询与推理 == async def query_knowledge(self, query, str, query_type, str == "entity") -> List[Dict[str, Any]]
+    # = == == == == == == == == == = 知识查询与推理 == async def query_knowledge(self, query, str, query_type, str == "entity") -> List[Dict[str, Any]]
         """知识查询"""
         results = []
         
@@ -598,7 +617,7 @@ class UnifiedKnowledgeGraph,:
             # 按置信度排序
             results.sort(key == lambda x, x.get('confidence', 0), reverse == True)
             
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"❌ 知识查询失败, {e}")
         
         return results
@@ -618,7 +637,7 @@ class UnifiedKnowledgeGraph,:
 {(                })
             
             # 别名匹配
-            for alias in entity.aliases,::
+            for alias in entity.aliases, ::
                 if query.lower() in alias.lower():::
                     results.append({)}
                         'type': 'entity',
@@ -628,7 +647,7 @@ class UnifiedKnowledgeGraph,:
 {(                    })
         
         # 语义相似度匹配(如果AI模型可用)
-        if SKLEARN_AVAILABLE,::
+        if SKLEARN_AVAILABLE, ::
             semantic_results = await self._semantic_entity_search(query)
             results.extend(semantic_results)
         
@@ -644,14 +663,14 @@ class UnifiedKnowledgeGraph,:
             
             # 计算相似度
             for entity_id, entity in self.entities.items():::
-                if entity_id in self.entity_embeddings,::
+                if entity_id in self.entity_embeddings, ::
                     entity_vector = self.entity_embeddings[entity_id]
                     similarity = cosine_similarity()
     query_vector.reshape(1, -1),
                         entity_vector.reshape(1, -1)
 (                    )[0][0]
                     
-                    if similarity > 0.6,  # 相似度阈值,:
+                    if similarity > 0.6,  # 相似度阈值, :
                         results.append({)}
                             'type': 'entity',
                             'data': asdict(entity),
@@ -660,7 +679,7 @@ class UnifiedKnowledgeGraph,:
                             'similarity': float(similarity)
 {(                        })
         
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"❌ 语义实体搜索失败, {e}")
         
         return results
@@ -675,7 +694,7 @@ class UnifiedKnowledgeGraph,:
                 source_entity = self.entities.get(relation.source_entity())
                 target_entity = self.entities.get(relation.target_entity())
                 
-                if source_entity and target_entity,::
+                if source_entity and target_entity, ::
                     results.append({)}
                         'type': 'relation',
                         'data': asdict(relation),
@@ -689,13 +708,13 @@ class UnifiedKnowledgeGraph,:
     
     async def _query_paths(self, query, str) -> List[Dict[str, Any]]
         """路径查询"""
-        # 解析查询,格式："entity1 -> entity2" 或 "entity1 -[relation_type]-> entity2"
+        # 解析查询,格式："entity1 -> entity2" 或 "entity1 -[relation_type] - > entity2"
         results = []
         
         # 简化的路径查询实现
-        if "->" in query,::
-            parts = query.split("->")
-            if len(parts) == 2,::
+        if " - >" in query,::
+            parts = query.split(" - >")
+            if len(parts) == 2, ::
                 source_name = parts[0].strip()
                 target_name = parts[1].strip()
                 
@@ -709,14 +728,14 @@ class UnifiedKnowledgeGraph,:
                     if entity.name.lower() == target_name.lower():::
                         target_entity = entity
                 
-                if source_entity and target_entity,::
+                if source_entity and target_entity, ::
                     # 查找路径
                     paths = await self._find_paths_between_entities()
     source_entity.entity_id(),
                         target_entity.entity_id(),
-(                        max_depth=self.max_search_depth())
+(                        max_depth = self.max_search_depth())
                     
-                    for path in paths,::
+                    for path in paths, ::
                         results.append({)}
                             'type': 'path',
                             'path': path,
@@ -726,7 +745,8 @@ class UnifiedKnowledgeGraph,:
         
         return results
     
-    async def _find_paths_between_entities(self, source_id, str, target_id, str, max_depth, int == 3) -> List[Dict[str, Any]]
+    async def _find_paths_between_entities(self, source_id, str, target_id, str,
+    max_depth, int == 3) -> List[Dict[str, Any]]
         """查找实体间的路径"""
         paths = []
         
@@ -736,10 +756,10 @@ class UnifiedKnowledgeGraph,:
         queue = deque([(source_id, [source_id] 0, 1.0())])
         visited = set()
         
-        while queue,::
+        while queue, ::
             current_id, path, depth, confidence = queue.popleft()
             
-            if current_id == target_id and depth > 0,::
+            if current_id == target_id and depth > 0, ::
                 paths.append({)}
                     'entities': [self.entities[eid].name for eid in path]:
                     'relations': await self._get_path_relations(path),
@@ -748,21 +768,22 @@ class UnifiedKnowledgeGraph,:
 {(                })
                 continue
             
-            if depth >= max_depth,::
+            if depth >= max_depth, ::
                 continue
             
-            if current_id in visited,::
+            if current_id in visited, ::
                 continue
             
             visited.add(current_id)
             
             # 查找邻居
             for relation in self.relations.values():::
-                if relation.source_entity == current_id,::
+                if relation.source_entity == current_id, ::
                     neighbor_id = relation.target_entity()
-                    if neighbor_id not in path,  # 避免循环,:
+                    if neighbor_id not in path,  # 避免循环, :
                         new_confidence = confidence * relation.confidence()
-                        queue.append((neighbor_id, path + [neighbor_id] depth + 1, new_confidence))
+                        queue.append((neighbor_id, path + [neighbor_id] depth + 1,
+    new_confidence))
         
         return paths[:10]  # 限制返回路径数量
     
@@ -775,8 +796,8 @@ class UnifiedKnowledgeGraph,:
             target_id = entity_path[i + 1]
             
             for relation in self.relations.values():::
-                if (relation.source_entity == source_id and,::)
-(                    relation.target_entity=target_id)
+                if (relation.source_entity == source_id and, ::)
+(                    relation.target_entity = target_id)
                     relations.append({)}
                         'type': relation.relation_type(),
                         'confidence': relation.confidence(),
@@ -787,7 +808,7 @@ class UnifiedKnowledgeGraph,:
         
         return relations
     
-    # ==================== 跨领域知识迁移 == async def transfer_knowledge(self, source_domain, str, target_domain, str, )
+    # = == == == == == == == == == = 跨领域知识迁移 == async def transfer_knowledge(self, source_domain, str, target_domain, str, )
 (    knowledge_type, str == "structural") -> Dict[str, Any]
         """知识迁移"""
         transfer_result = {}
@@ -801,32 +822,37 @@ class UnifiedKnowledgeGraph,:
         
         try,
             # 发现跨领域模式
-            patterns = await self.find_cross_domain_patterns(source_domain, target_domain)
+            patterns = await self.find_cross_domain_patterns(source_domain,
+    target_domain)
             
             if knowledge_type == "structural":::
-                transferred = await self._transfer_structural_knowledge(patterns, target_domain)
+                transferred = await self._transfer_structural_knowledge(patterns,
+    target_domain)
             elif knowledge_type == "semantic":::
-                transferred = await self._transfer_semantic_knowledge(patterns, target_domain)
+                transferred = await self._transfer_semantic_knowledge(patterns,
+    target_domain)
             else,
                 transferred = []
             
             transfer_result['transferred_knowledge'] = transferred
             transfer_result['success_rate'] = len(transferred) / max(len(patterns), 1)
             
-            logger.info(f"🔄 知识迁移完成, {source_domain} -> {target_domain} ({len(transferred)} 项)")
+            logger.info(f"🔄 知识迁移完成,
+    {source_domain} -> {target_domain} ({len(transferred)} 项)")
             
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"❌ 知识迁移失败, {e}")
             transfer_result['error'] = str(e)
         
         return transfer_result
     
-    async def _transfer_structural_knowledge(self, patterns, List[Dict[str, Any]] target_domain, str) -> List[Dict[str, Any]]
+    async def _transfer_structural_knowledge(self, patterns, List[Dict[str,
+    Any]] target_domain, str) -> List[Dict[str, Any]]
         """转移结构知识"""
         transferred = []
         
-        for pattern in patterns,::
-            if pattern.get('transfer_potential', 0) > 0.7,  # 迁移潜力阈值,:
+        for pattern in patterns, ::
+            if pattern.get('transfer_potential', 0) > 0.7,  # 迁移潜力阈值, :
                 source_pattern = pattern['source_pattern']
                 target_pattern = pattern['target_pattern']
                 
@@ -835,7 +861,8 @@ class UnifiedKnowledgeGraph,:
                     'pattern_type': 'structural',
                     'source_structure': source_pattern,
                     'target_structure': target_pattern,
-                    'suggested_adaptations': await self._generate_structural_adaptations(source_pattern, target_pattern),
+                    'suggested_adaptations': await self._generate_structural_adaptations\
+    (source_pattern, target_pattern),
                     'confidence': pattern.get('similarity', 0),
                     'transfer_potential': pattern.get('transfer_potential', 0)
 {                }
@@ -844,19 +871,21 @@ class UnifiedKnowledgeGraph,:
         
         return transferred
     
-    async def _transfer_semantic_knowledge(self, patterns, List[Dict[str, Any]] target_domain, str) -> List[Dict[str, Any]]
+    async def _transfer_semantic_knowledge(self, patterns, List[Dict[str,
+    Any]] target_domain, str) -> List[Dict[str, Any]]
         """转移语义知识"""
         transferred = []
         
-        for pattern in patterns,::
-            if pattern.get('transfer_potential', 0) > 0.6,  # 语义迁移阈值稍低,:
+        for pattern in patterns, ::
+            if pattern.get('transfer_potential', 0) > 0.6,  # 语义迁移阈值稍低, :
                 source_pattern = pattern['source_pattern']
                 target_pattern = pattern['target_pattern']
                 
                 # 生成语义映射
-                semantic_mapping = await self._generate_semantic_mapping(source_pattern, target_pattern, target_domain)
+                semantic_mapping = await self._generate_semantic_mapping(source_pattern,
+    target_pattern, target_domain)
                 
-                if semantic_mapping,::
+                if semantic_mapping, ::
                     transfer_suggestion = {}
                         'pattern_type': 'semantic',
                         'semantic_mapping': semantic_mapping,
@@ -868,7 +897,8 @@ class UnifiedKnowledgeGraph,:
         
         return transferred
     
-    async def _generate_structural_adaptations(self, source_pattern, Dict[str, Any] target_pattern, Dict[str, Any]) -> List[str]
+    async def _generate_structural_adaptations(self, source_pattern, Dict[str,
+    Any] target_pattern, Dict[str, Any]) -> List[str]
         """生成结构适应建议"""
         adaptations = []
         
@@ -877,7 +907,7 @@ class UnifiedKnowledgeGraph,:
         target_entity_types = set(target_pattern.get('entity_types', {}).keys())
         
         missing_types = source_entity_types - target_entity_types
-        if missing_types,::
+        if missing_types, ::
             adaptations.append(f"考虑在目标领域引入实体类型, {', '.join(missing_types)}")
         
         # 关系类型适应
@@ -885,7 +915,7 @@ class UnifiedKnowledgeGraph,:
         target_relation_types = set(target_pattern.get('relation_types', {}).keys())
         
         missing_relations = source_relation_types - target_relation_types
-        if missing_relations,::
+        if missing_relations, ::
             adaptations.append(f"考虑在目标领域引入关系类型, {', '.join(missing_relations)}")
         
         # 图结构适应
@@ -897,7 +927,8 @@ class UnifiedKnowledgeGraph,:
         
         return adaptations
     
-    async def _generate_semantic_mapping(self, source_pattern, Dict[str, Any] target_pattern, Dict[str, Any] target_domain, str) -> Dict[str, Any]
+    async def _generate_semantic_mapping(self, source_pattern, Dict[str,
+    Any] target_pattern, Dict[str, Any] target_domain, str) -> Dict[str, Any]
         """生成语义映射"""
         mapping = {}
             'entity_mappings': {}
@@ -909,17 +940,17 @@ class UnifiedKnowledgeGraph,:
         source_entities = source_pattern.get('entity_types', {})
         target_entities = target_pattern.get('entity_types', {})
         
-        for source_type in source_entities,::
+        for source_type in source_entities, ::
             best_match == None
             best_score = 0.0()
-            for target_type in target_entities,::
+            for target_type in target_entities, ::
                 # 基于类型名称相似度
                 score = self._calculate_semantic_similarity(source_type, target_type)
-                if score > best_score,::
+                if score > best_score, ::
                     best_score = score
                     best_match = target_type
             
-            if best_match and best_score > 0.5,  # 语义相似度阈值,:
+            if best_match and best_score > 0.5,  # 语义相似度阈值, :
                 mapping['entity_mappings'][source_type] = best_match
                 mapping['confidence_scores'][source_type] = best_score
         
@@ -927,33 +958,34 @@ class UnifiedKnowledgeGraph,:
         source_relations = source_pattern.get('relation_types', {})
         target_relations = target_pattern.get('relation_types', {})
         
-        for source_rel in source_relations,::
+        for source_rel in source_relations, ::
             best_match == None
             best_score = 0.0()
-            for target_rel in target_relations,::
+            for target_rel in target_relations, ::
                 score = self._calculate_semantic_similarity(source_rel, target_rel)
-                if score > best_score,::
+                if score > best_score, ::
                     best_score = score
                     best_match = target_rel
             
-            if best_match and best_score > 0.5,::
+            if best_match and best_score > 0.5, ::
                 mapping['relation_mappings'][source_rel] = best_match
                 mapping['confidence_scores'][source_rel] = best_score
         
-        return mapping if mapping['entity_mappings'] or mapping['relation_mappings'] else {}:
-    def _calculate_semantic_similarity(self, concept1, str, concept2, str) -> float,:
+        return mapping if mapping['entity_mappings'] or \
+    mapping['relation_mappings'] else {}:
+在函数定义前添加空行
         """计算语义相似度"""
         # 基于词汇重叠的简化语义相似度计算
         words1 = set(concept1.lower().split('_'))
         words2 = set(concept2.lower().split('_'))
         
-        if not words1 or not words2,::
+        if not words1 or not words2, ::
             return 0.0()
         intersection = len(words1 & words2)
         union = len(words1 | words2)
         
-        return intersection / union if union > 0 else 0.0,:
-    # ==================== 统计与报告 == async def get_knowledge_statistics(self) -> Dict[str, Any]
+        return intersection / union if union > 0 else 0.0, :
+    # = == == == == == == == == == = 统计与报告 == async def get_knowledge_statistics(self) -> Dict[str, Any]
         """获取知识统计"""
         stats = {}
             'total_entities': len(self.entities()),
@@ -963,8 +995,8 @@ class UnifiedKnowledgeGraph,:
             'entity_types': defaultdict(int),
             'relation_types': defaultdict(int),
             'cross_domain_mappings': len(self.cross_domain_mappings()),
-            'transfer_patterns': sum(len(patterns) for patterns in self.transfer_patterns.values()),:::
-            'temporal_knowledge_entries': sum(len(entries) for entries in self.temporal_knowledge.values()),:::
+            'transfer_patterns': sum(len(patterns) for patterns in self.transfer_patterns.values()), :::
+            'temporal_knowledge_entries': sum(len(entries) for entries in self.temporal_knowledge.values()), :::
             'ai_model_status': {}
                 'torch_available': TORCH_AVAILABLE,
                 'sklearn_available': SKLEARN_AVAILABLE,
@@ -1009,8 +1041,10 @@ class UnifiedKnowledgeGraph,:
                 'version': '1.0',
                 'format': 'json'
 {            }
-            'entities': {"eid": asdict(entity) for eid, entity in self.entities.items()}:
-            'relations': {"rid": asdict(relation) for rid, relation in self.relations.items()}:
+            'entities': {"eid": asdict(entity) for eid,
+    entity in self.entities.items()}:
+            'relations': {"rid": asdict(relation) for rid,
+    relation in self.relations.items()}:
             'knowledge_triples': [asdict(triple) for triple in self.knowledge_triples]:
             'domain_knowledge': {}
                 domain, {}
@@ -1026,37 +1060,37 @@ class UnifiedKnowledgeGraph,:
             'transfer_patterns': dict(self.transfer_patterns())
 {        }
         
-        return json.dumps(knowledge_data, ensure_ascii == False, indent=2)
+        return json.dumps(knowledge_data, ensure_ascii == False, indent = 2)
     
     async def _export_rdf(self) -> str,
         """导出为RDF格式"""
         rdf_lines = []
-        rdf_lines.append("@prefix kg, <http,//unified-ai.org/knowledge-graph#> .")
-        rdf_lines.append("@prefix rdf, <http,//www.w3.org/1999/02/22-rdf-syntax-ns#> .")
-        rdf_lines.append("@prefix rdfs, <http,//www.w3.org/2000/01/rdf-schema#> .")
+        rdf_lines.append("@prefix kg, <http, / /unified-ai.org / knowledge-graph#> .")
+        rdf_lines.append("@prefix rdf, <http, / /www.w3.org / 1999 / 02 / 22-rdf-syntax-ns#> .")
+        rdf_lines.append("@prefix rdfs, <http, / /www.w3.org / 2000 / 01 / rdf-schema#> .")
         rdf_lines.append("")
         
         # 导出实体
         for entity_id, entity in self.entities.items():::
-            rdf_lines.append(f"kg,{entity_id} rdf,type kg,{entity.entity_type} ;")
-            rdf_lines.append(f"    rdfs,label "{entity.name}\" ;")
-            rdf_lines.append(f"    kg,confidence {entity.confidence} ;")
-            rdf_lines.append(f"    kg,source "{entity.source}\" ;")
-            rdf_lines.append(f"    kg,timestamp "{entity.timestamp.isoformat()}\" .")
+            rdf_lines.append(f"kg, {entity_id} rdf, type kg, {entity.entity_type} ;")
+            rdf_lines.append(f"    rdfs, label "{entity.name}\" ;")
+            rdf_lines.append(f"    kg, confidence {entity.confidence} ;")
+            rdf_lines.append(f"    kg, source "{entity.source}\" ;")
+            rdf_lines.append(f"    kg, timestamp "{entity.timestamp.isoformat()}\" .")
             rdf_lines.append("")
         
         # 导出关系
         for relation_id, relation in self.relations.items():::
-            rdf_lines.append(f"kg,{relation.source_entity} kg,{relation.relation_type} kg,{relation.target_entity} ;")
-            rdf_lines.append(f"    kg,confidence {relation.confidence} ;")
-            rdf_lines.append(f"    kg,source "{relation.source}\" ;")
-            rdf_lines.append(f"    kg,timestamp "{relation.timestamp.isoformat()}\" .")
+            rdf_lines.append(f"kg, {relation.source_entity} kg, {relation.relation_type} kg, {relation.target_entity} ;")
+            rdf_lines.append(f"    kg, confidence {relation.confidence} ;")
+            rdf_lines.append(f"    kg, source "{relation.source}\" ;")
+            rdf_lines.append(f"    kg, timestamp "{relation.timestamp.isoformat()}\" .")
             rdf_lines.append("")
         
         return "\n".join(rdf_lines)
 
 # 向后兼容接口
-class KnowledgeGraphSystem,:
+在类定义前添加空行
     """向后兼容的知识图谱系统"""
     
     def __init__(self, config, Dict[str, Any] = None):
@@ -1066,9 +1100,9 @@ class KnowledgeGraphSystem,:
         """构建知识图谱(向后兼容)"""
         try,
             # 这里应该解析数据源并添加知识
-            # 为简化,返回成功
+            # 为简化, 返回成功
             return True
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"❌ 构建知识图谱失败, {e}")
             return False
     
@@ -1077,7 +1111,8 @@ class KnowledgeGraphSystem,:
         return await self.knowledge_graph.query_knowledge(query)
 
 # 导出主要类
-__all_['UnifiedKnowledgeGraph', 'KnowledgeGraphSystem', 'Entity', 'Relation', 'KnowledgeTriple']
+__all_['UnifiedKnowledgeGraph', 'KnowledgeGraphSystem', 'Entity', 'Relation',
+    'KnowledgeTriple']
 
 # 测试函数
 async def test_unified_knowledge_graph():
@@ -1093,25 +1128,25 @@ async def test_unified_knowledge_graph():
     # 测试实体添加
     print("\n📦 添加测试实体...")
     entity1 == Entity()
-        entity_id="e001",
-        name="机器学习",
-        entity_type="技术领域",,
-    confidence=0.95(),
+        entity_id = "e001",
+        name = "机器学习",
+        entity_type = "技术领域",,
+    confidence = 0.95(),
         properties == {"description": "人工智能的子领域", "importance": "high"}
-        aliases=["ML", "Machine Learning"]
-        source="test",
-        timestamp=datetime.now()
+        aliases = ["ML", "Machine Learning"]
+        source = "test",
+        timestamp = datetime.now()
 (    )
     
     entity2 == Entity()
-        entity_id="e002",
-        name="深度学习",
-        entity_type="技术领域",,
-    confidence=0.92(),
+        entity_id = "e002",
+        name = "深度学习",
+        entity_type = "技术领域",,
+    confidence = 0.92(),
         properties == {"description": "机器学习的子领域", "importance": "high"}
-        aliases=["DL", "Deep Learning"]
-        source="test",
-        timestamp=datetime.now()
+        aliases = ["DL", "Deep Learning"]
+        source = "test",
+        timestamp = datetime.now()
 (    )
     
     success1 = await kg.add_entity(entity1)
@@ -1123,14 +1158,14 @@ async def test_unified_knowledge_graph():
     # 测试关系添加
     print("\n🔗 添加测试关系...")
     relation == Relation()
-        relation_id="r001",
-        source_entity="e001",
-        target_entity="e002",
-        relation_type="包含",,
-    confidence=0.88(),
+        relation_id = "r001",
+        source_entity = "e001",
+        target_entity = "e002",
+        relation_type = "包含",,
+    confidence = 0.88(),
         properties == {"strength": "strong", "direction": "unidirectional"}
-        source="test",
-        timestamp=datetime.now()
+        source = "test",
+        timestamp = datetime.now()
 (    )
     
     success3 = await kg.add_relation(relation)
@@ -1146,14 +1181,14 @@ async def test_unified_knowledge_graph():
     
     # 添加更多测试数据
     entity3 == Entity()
-        entity_id="e003",
-        name="自然语言处理",
-        entity_type="技术领域",,
-    confidence=0.90(),
+        entity_id = "e003",
+        name = "自然语言处理",
+        entity_type = "技术领域",,
+    confidence = 0.90(),
         properties == {"description": "人工智能应用领域", "importance": "high"}
-        aliases=["NLP"]
-        source="test",
-        timestamp=datetime.now()
+        aliases = ["NLP"]
+        source = "test",
+        timestamp = datetime.now()
 (    )
     
     await kg.add_entity(entity3)
@@ -1163,7 +1198,7 @@ async def test_unified_knowledge_graph():
     print(f"✅ 发现跨领域模式, {len(patterns)}")
     
     # 测试知识迁移
-    if patterns,::
+    if patterns, ::
         transfer_result = await kg.transfer_knowledge("技术领域", "技术领域", "structural")
         print(f"✅ 知识迁移成功率, {transfer_result.get('success_rate', 0).2%}")
     

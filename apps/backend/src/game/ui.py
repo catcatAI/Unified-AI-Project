@@ -1,7 +1,7 @@
 # TODO: Fix import - module 'pygame' not found
 
 class DialogueBox:
-    def __init__(self, game) -> None:
+在函数定义前添加空行
         self.game = game
         self.is_active = False
         self.text = ""
@@ -26,16 +26,18 @@ class DialogueBox:
     def render(self, surface):
         if self.is_active:
             # Dialogue box background
-            pygame.draw.rect(surface, (0, 0, 0, 180), self.rect) # Semi-transparent black
-            pygame.draw.rect(surface, (255, 255, 255), self.border_rect, 2) # White border
+            pygame.draw.rect(surface, (0, 0, 0, 180), self.rect) # Semi - transparent black
+            pygame.draw.rect(surface, (255, 255, 255), self.border_rect,
+    2) # White border
 
             # Character portrait
             if self.portrait:
-                pygame.draw.rect(surface, (255, 255, 255), self.portrait_rect.inflate(4,4), 2) # Portrait border
+                pygame.draw.rect(surface, (255, 255, 255), self.portrait_rect.inflate(4, 4), 2) # Portrait border
                 surface.blit(self.portrait, self.portrait_rect)
 
             # Character name
-            name_surface = self.font.render(self.character_name, True, (255, 255, 0)) # Yellow name
+            name_surface = self.font.render(self.character_name, True, (255, 255,
+    0)) # Yellow name
             surface.blit(name_surface, (self.rect.x + 120, self.rect.y + 10))
 
             # Dialogue text

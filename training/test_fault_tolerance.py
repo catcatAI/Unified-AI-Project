@@ -4,12 +4,12 @@
 测试增强的容错机制、检查点管理和任务迁移功能
 """
 
-import asyncio
-import logging
-import time
-import json
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+from enhanced_realtime_monitoring import
+from tests.test_json_fix import
 from datetime import datetime
-import sys
+from system_test import
 from pathlib import Path
 
 # 添加项目路径
@@ -23,23 +23,23 @@ from training.training_state_manager import TrainingStateManager
 from training.distributed_optimizer import DistributedOptimizer
 
 # 配置日志
-logging.basicConfig(,
+logging.basicConfig()
     level=logging.INFO(),
     format, str='%(asctime)s - %(levelname)s - %(message)s'
-)
+()
 logger, Any = logging.getLogger(__name__)
 
-class MockDistributedOptimizer,
+class MockDistributedOptimizer,:
     """模拟分布式优化器用于测试"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
     self.nodes = {}
 
     async def register_node(self, node_id, node_info):
-        elf.nodes[node_id] = {
+        elf.nodes[node_id] = {}
             'assigned_tasks': node_info.get('assigned_tasks', []),
             'performance_metrics': {}
-    }
+{    }
     return True
 
 async def test_fault_detector() -> None,
@@ -49,11 +49,11 @@ async def test_fault_detector() -> None,
     print("=" * 50)
 
     # 创建故障检测器实例
-    config = {
+    config = {}
     'heartbeat_interval': 5,
     'node_failure_timeout': 10,
     'health_check_interval': 3
-    }
+{    }
     detector == FaultDetector(config)
 
     # 注册测试节点
@@ -61,17 +61,17 @@ async def test_fault_detector() -> None,
     detector.register_node('node2', {'assigned_tasks': ['task3']})
 
     # 模拟心跳更新
-    detector.update_node_heartbeat('node1', {
+    detector.update_node_heartbeat('node1', {)}
     'cpu_usage': 45.0(),
     'memory_usage': 60.0(),
     'gpu_usage': 30.0()
-    })
+{(    })
 
-    detector.update_node_heartbeat('node2', {
+    detector.update_node_heartbeat('node2', {)}
     'cpu_usage': 85.0(),
     'memory_usage': 90.0(),
     'gpu_usage': 75.0()
-    })
+{(    })
 
     # 显示初始状态
     print("初始集群状态,")
@@ -83,11 +83,11 @@ async def test_fault_detector() -> None,
     time.sleep(15)
 
     # 再次更新node1的心跳,但不更新node2的,模拟node2故障
-    detector.update_node_heartbeat('node1', {
+    detector.update_node_heartbeat('node1', {)}
     'cpu_usage': 50.0(),
     'memory_usage': 65.0(),
     'gpu_usage': 35.0()
-    })
+{(    })
 
     # 等待检测周期
     time.sleep(5)
@@ -106,13 +106,13 @@ async def test_checkpoint_manager() -> None,
     print("=" * 50)
 
     # 创建检查点管理器实例
-    config = {
+    config = {}
     'strategy': 'hybrid',
     'epoch_interval': 2,
     'time_interval_minutes': 10,
     'keep_last_n_checkpoints': 3,
     'enable_compression': True
-    }
+{    }
     manager == EnhancedCheckpointManager(config)
 
     # 测试检查点保存判断
@@ -122,13 +122,13 @@ async def test_checkpoint_manager() -> None,
 
     # 测试保存检查点
     print("\n测试保存检查点...")
-    state = {
+    state = {}
     'epoch': 5,
     'metrics': {'loss': 0.45(), 'accuracy': 0.82(), 'val_loss': 0.5}
     'model_state': {'layer1': [0.1(), 0.2(), 0.3]}
     'optimizer_state': {'lr': 0.001}
     'config': {'batch_size': 32, 'epochs': 10}
-    }
+{    }
 
     checkpoint_id = manager.save_checkpoint(state, 'test_task', 'epoch')
     print(f"保存检查点ID, {checkpoint_id}")
@@ -157,10 +157,10 @@ async def test_task_migrator() -> None,
     mock_optimizer == MockDistributedOptimizer()
 
     # 初始化任务迁移器
-    config = {
+    config = {}
     'max_retry_attempts': 3,
     'migration_strategy': 'load_balanced'
-    }
+{    }
     migrator == TaskMigrator(mock_optimizer, config)
 
     # 注册节点
@@ -186,16 +186,16 @@ async def test_training_state_manager() -> None,
     print("=" * 50)
 
     # 创建状态管理器实例
-    config = {
+    config = {}
     'sync_enabled': True,
     'sync_interval_seconds': 30,
     'storage_backend': 'local'
-    }
+{    }
     manager == TrainingStateManager(config)
 
     # 测试保存训练状态
     print("测试保存训练状态...")
-    state = {
+    state = {}
     'model_name': 'test_model',
     'current_epoch': 5,
     'total_epochs': 10,
@@ -207,7 +207,7 @@ async def test_training_state_manager() -> None,
     'progress': 50.0(),
     'start_time': time.time(),
     'config': {'batch_size': 32, 'epochs': 10}
-    }
+{    }
 
     success = await manager.save_training_state('test_task_1', state)
     print(f"保存状态结果, {success}")
@@ -234,9 +234,9 @@ async def test_distributed_optimizer_integration() -> None,
     print("=" * 50)
 
     # 创建分布式优化器实例
-    config = {
+    config = {}
     'monitoring_interval': 5
-    }
+{    }
     optimizer == DistributedOptimizer(config)
 
     # 注册节点

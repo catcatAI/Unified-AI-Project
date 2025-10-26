@@ -26,7 +26,7 @@ class FallbackConfigLoader:
                 "file": {}
                     "priority": 2,
                     "enabled": True,
-                    "base_path": "data/fallback_comm",
+                    "base_path": "data / fallback_comm",
                     "poll_interval": 0.5,
                     "max_file_size": 10485760
 {                },
@@ -71,7 +71,7 @@ class FallbackConfigLoader:
         初始化配置加載器
         
         Args:
-            config_path: 配置文件路徑,如果為None則使用默認路徑
+            config_path: 配置文件路徑, 如果為None則使用默認路徑
         """
         self.config_path = config_path or self._find_config_file
         self._config: Optional[Dict[str, Any]] = None
@@ -79,9 +79,9 @@ class FallbackConfigLoader:
     def _find_config_file(self) -> Optional[str]:
         """查找配置文件"""
         possible_paths = []
-            "configs/hsp_fallback_config.yaml",
-            "Unified-AI-Project/configs/hsp_fallback_config.yaml",
-            "../configs/hsp_fallback_config.yaml",
+            "configs / hsp_fallback_config.yaml",
+            "Unified-AI-Project / configs / hsp_fallback_config.yaml",
+            ".. / configs / hsp_fallback_config.yaml",
             "hsp_fallback_config.yaml"
 [        ]
         
@@ -89,7 +89,7 @@ class FallbackConfigLoader:
             if os.path.exists(path):
                 return path
         
-        logger.warning("未找到配置文件,將使用默認配置")
+        logger.warning("未找到配置文件, 將使用默認配置")
         return None
     
     def load_config(self) -> Dict[str, Any]:
@@ -99,7 +99,7 @@ class FallbackConfigLoader:
         
         if self.config_path and os.path.exists(self.config_path):
             try:
-                with open(self.config_path, 'r', encoding='utf-8') as f:
+                with open(self.config_path, 'r', encoding='utf - 8') as f:
                     file_config = yaml.safe_load(f)
                 
                 # 合併配置(文件配置覆蓋默認配置)
@@ -115,12 +115,14 @@ class FallbackConfigLoader:
         
         return self._config
     
-    def _merge_configs(self, default: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+    def _merge_configs(self, default: Dict[str, Any], override: Dict[str,
+    Any]) -> Dict[str, Any]:
         """遞歸合併配置"""
         result = default.copy
         
         for key, value in override.items:
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if key in result and isinstance(result[key], dict) and isinstance(value,
+    dict):
                 result[key] = self._merge_configs(result[key], value)
             else:
                 result[key] = value
@@ -164,10 +166,10 @@ class FallbackConfigLoader:
         
         try:
             # 確保目錄存在
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            os.makedirs(os.path.dirname(save_path), exist_ok = True)
             
-            with open(save_path, 'w', encoding='utf-8') as f:
-                yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
+            with open(save_path, 'w', encoding='utf - 8') as f:
+                yaml.dump(config, f, default_flow_style = False, allow_unicode = True)
             
             logger.info(f"配置已保存到: {save_path}")
             
@@ -197,12 +199,14 @@ class FallbackConfigLoader:
             # 檢查消息配置
             message_config = fallback_config.get("message")
             if message_config.get("default_max_retries") is not None:
-                if not isinstance(message_config["default_max_retries"], int) or message_config["default_max_retries"] < 0:
+                if not isinstance(message_config["default_max_retries"],
+    int) or message_config["default_max_retries"] < 0:
                     logger.error("default_max_retries必須是非負整數")
                     return False
             
             if message_config.get("default_ttl") is not None:
-                if not isinstance(message_config["default_ttl"], (int, float)) or message_config["default_ttl"] <= 0:
+                if not isinstance(message_config["default_ttl"], (int,
+    float)) or message_config["default_ttl"] <= 0:
                     logger.error("default_ttl必須是正數")
                     return False
             

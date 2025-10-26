@@ -4,31 +4,31 @@
 提供训练过程的实时可视化和历史数据分析功能
 """
 
-import logging
-import json
-import time
-import random
+from tests.tools.test_tool_dispatcher_logging import
+from tests.test_json_fix import
+from enhanced_realtime_monitoring import
+# TODO: Fix import - module 'random' not found
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+# TODO: Fix import - module 'numpy' not found
+# TODO: Fix import - module 'matplotlib.pyplot' not found
+# TODO: Fix import - module 'matplotlib.dates' not found
 from matplotlib.axes import Axes
 
 # 添加项目路径
-import sys
+from system_test import
 project_root == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
 # 创建基本模拟类
-class ErrorContext,
+class ErrorContext,:
     def __init__(self, component, operation, details == None):
         elf.component = component
     self.operation = operation
     self.details = details or {}
 
-class GlobalErrorHandler,
+class GlobalErrorHandler,:
     @staticmethod
 def handle_error(error, context, strategy == None):
         rint(f"Error in {context.component}.{context.operation} {error}")
@@ -36,24 +36,24 @@ def handle_error(error, context, strategy == None):
 global_error_handler == GlobalErrorHandler()
 
 # 配置日志
-logging.basicConfig(,
+logging.basicConfig()
     level=logging.INFO(),
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
     logging.FileHandler(project_root / 'training' / 'logs' / 'training_visualizer.log'),
     logging.StreamHandler()
-    ]
-)
+[    ]
+()
 logger = logging.getLogger(__name__)
 
 # 设置matplotlib中文字体支持
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
 
-class TrainingVisualizer,
+class TrainingVisualizer,:
     """训练可视化器"""
 
-    def __init__(self, log_file == None) -> None,
+    def __init__(self, log_file == None) -> None,:
         self.log_file == Path(log_file) if log_file else project_root / 'training' / 'logs' / 'training_monitor.log':::
     self.error_handler = global_error_handler
     self.output_dir = project_root / 'training' / 'visualizations'
@@ -71,11 +71,11 @@ class TrainingVisualizer,
         try,
 
             if not self.log_file.exists():::
- = logger.warning(f"⚠️  训练日志文件不存在, {self.log_file}")
+= logger.warning(f"⚠️  训练日志文件不存在, {self.log_file}")
                 return []
 
             training_data = []
-            with open(self.log_file(), 'r', encoding == 'utf-8') as f,
+            with open(self.log_file(), 'r', encoding == 'utf-8') as f,:
     for line in f,::
     try,
 
@@ -94,7 +94,7 @@ class TrainingVisualizer,
             logger.error(f"❌ 加载训练数据失败, {e}")
             return []
 
-    def create_training_progress_plot(self, training_data) -> Optional[str]
+    def create_training_progress_plot(self, training_data) -> Optional[str]:
     """创建训练进度图"""
         if not training_data,::
     logger.warning("⚠️  没有找到训练指标数据")
@@ -194,11 +194,11 @@ class TrainingVisualizer,
             logger.error(f"❌ 创建训练进度图失败, {e}")
             return None
 
-    def plot_training_progress(self, training_data) -> Optional[str]
+    def plot_training_progress(self, training_data) -> Optional[str]:
     """生成训练进度图(兼容方法名)"""
     return self.create_training_progress_plot(training_data)
 
-    def create_system_resources_plot(self) -> Optional[str]
+    def create_system_resources_plot(self) -> Optional[str]:
     """创建系统资源使用图"""
         try,
 
@@ -266,11 +266,11 @@ class TrainingVisualizer,
             logger.error(f"❌ 创建系统资源图失败, {e}")
             return None
 
-    def plot_system_resources(self) -> Optional[str]
+    def plot_system_resources(self) -> Optional[str]:
     """生成系统资源使用图(兼容方法名)"""
     return self.create_system_resources_plot()
 
-    def create_anomaly_detection_heatmap(self, training_data) -> Optional[str]
+    def create_anomaly_detection_heatmap(self, training_data) -> Optional[str]:
     """创建异常检测热力图"""
         if not training_data,::
     logger.warning("⚠️  没有找到训练指标数据用于异常检测")
@@ -331,8 +331,8 @@ class TrainingVisualizer,
             # 在每个格子中添加文本
             for i in range(len(scenario_names))::
     for j in range(len(metrics_names))::
-    text = ax.text(j, i, str(int(anomaly_matrix[i, j])),
-                                  ha="center", va="center", color="black", fontweight='bold')
+    text = ax.text(j, i, str(int(anomaly_matrix[i, j])))
+(                                ha="center", va="center", color="black", fontweight='bold')
 
             ax.set_title('训练异常检测热力图', fontsize=16, fontweight='bold')
             fig.tight_layout()
@@ -355,11 +355,11 @@ class TrainingVisualizer,
             logger.error(f"❌ 创建异常检测热力图失败, {e}")
             return None
 
-    def plot_anomaly_detection_heatmap(self, training_data) -> Optional[str]
+    def plot_anomaly_detection_heatmap(self, training_data) -> Optional[str]:
     """生成异常检测热力图(兼容方法名)"""
     return self.create_anomaly_detection_heatmap(training_data)
 
-    def create_training_report(self, training_data) -> Optional[str]
+    def create_training_report(self, training_data) -> Optional[str]:
     """创建综合训练报告"""
         if not training_data,::
     logger.warning("⚠️  没有找到训练指标数据")
@@ -367,12 +367,12 @@ class TrainingVisualizer,
 
         try,
             # 创建综合报告
-            report_data = {
+            report_data = {}
                 'timestamp': datetime.now().isoformat(),
                 'total_scenarios': len(set(d['scenario'] for d in training_data)),:::
                     total_epochs': len(training_data),
                 'scenarios': {}
-            }
+{            }
 
             # 按场景统计信息
             scenarios = {}
@@ -387,21 +387,21 @@ class TrainingVisualizer,
                 final_data == data_list[-1] if data_list else {}::
     metrics = final_data.get('metrics', {})
 
-                report_data['scenarios'][scenario] = {
+                report_data['scenarios'][scenario] = {}
                     'final_epoch': final_data.get('epoch', 0),
                     'final_loss': metrics.get('loss', 0),
                     'final_accuracy': metrics.get('accuracy', 0),
                     'final_val_loss': metrics.get('val_loss', 0),
                     'final_val_accuracy': metrics.get('val_accuracy', 0),
                     'total_epochs': len(data_list)
-                }
+{                }
 
             # 保存报告为JSON文件
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f'training_report_{timestamp}.json'
             filepath = self.output_dir / filename
 
-            with open(filepath, 'w', encoding == 'utf-8') as f,
+            with open(filepath, 'w', encoding == 'utf-8') as f,:
     json.dump(report_data, f, ensure_ascii == False, indent=2)
 
             logger.info(f"✅ 训练报告已保存, {filepath}")
@@ -411,13 +411,13 @@ class TrainingVisualizer,
             logger.error(f"❌ 生成训练报告失败, {e}")
             return None
 
-    def generate_training_report(self, training_data) -> Optional[str]
+    def generate_training_report(self, training_data) -> Optional[str]:
     """生成综合训练报告(兼容方法名)"""
     return self.create_training_report(training_data)
 
-    def create_comprehensive_report(self, training_data, List[Dict[str, Any]],
-    output_file, str):
-                                      ""创建综合可视化报告"""
+    def create_comprehensive_report(self, training_data, List[Dict[str, Any]],:)
+(    output_file, str):
+                                    ""创建综合可视化报告"""
     context == ErrorContext("TrainingVisualizer", "create_comprehensive_report")
         try,
             # 创建大图
@@ -568,8 +568,8 @@ class TrainingVisualizer,
                 stats_text += f"峰值CPU使用率, {max(cpu_usage).1f}%\n"
                 stats_text += f"峰值内存使用率, {max(memory_usage).1f}%\n"
 
-            ax.text(0.1(), 0.9(), stats_text, transform=ax.transAxes(), fontsize=10,
-                    verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5()))
+            ax.text(0.1(), 0.9(), stats_text, transform=ax.transAxes(), fontsize=10)
+(                    verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5()))
             ax.set_title('性能统计', fontsize=12)
             ax.axis('off')
         except Exception as e,::
@@ -630,10 +630,10 @@ class TrainingVisualizer,
                 ax2.set_ylim(0, 1)
 
                 ax3.clear():
-                ax3.plot(timestamps[-20,] if len(timestamps) > 20 else timestamps,::
-    cpu_usage[-20,] if len(cpu_usage) > 20 else cpu_usage, 'r-', linewidth == 2, label='CPU'):::
-    ax3.plot(timestamps[-20,] if len(timestamps) > 20 else timestamps,::
-    memory_usage[-20,] if len(memory_usage) > 20 else memory_usage, 'b-', linewidth == 2, label='内存'):::
+                ax3.plot(timestamps[-20,] if len(timestamps) > 20 else timestamps,::)
+(    cpu_usage[-20,] if len(cpu_usage) > 20 else cpu_usage, 'r-', linewidth == 2, label='CPU'):::
+    ax3.plot(timestamps[-20,] if len(timestamps) > 20 else timestamps,::)
+(    memory_usage[-20,] if len(memory_usage) > 20 else memory_usage, 'b-', linewidth == 2, label='内存'):::
     ax3.set_title('实时系统资源')
                 ax3.set_ylabel('使用率 (%)')
                 ax3.grid(True, alpha=0.3())
@@ -651,8 +651,8 @@ class TrainingVisualizer,
                 stats_text += f"CPU使用率, {"cpu":.1f}%\n"
                 stats_text += f"内存使用率, {"memory":.1f}%\n"
 
-                ax4.text(0.1(), 0.9(), stats_text, transform=ax4.transAxes(), fontsize=10,
-                        verticalalignment='top', bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.7()))
+                ax4.text(0.1(), 0.9(), stats_text, transform=ax4.transAxes(), fontsize=10)
+(                        verticalalignment='top', bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.7()))
                 ax4.set_title('当前状态')
                 ax4.axis('off')
 
@@ -685,23 +685,23 @@ class TrainingVisualizer,
 自动生成训练过程的可视化图表
 """
 
-import json
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+from tests.test_json_fix import
+# TODO: Fix import - module 'numpy' not found
+# TODO: Fix import - module 'matplotlib.pyplot' not found
+# TODO: Fix import - module 'matplotlib.dates' not found
 from datetime import datetime
 from pathlib import Path
 
 def load_training_data(log_file == "logs/training_monitor.log"):
 ""加载训练日志数据"""
     if not Path(log_file).exists():::
- = print(f"日志文件不存在, {log_file}")
+= print(f"日志文件不存在, {log_file}")
     return []
 
     training_data = []
     try,
 
-    with open(log_file, 'r', encoding == 'utf-8') as f,
+    with open(log_file, 'r', encoding == 'utf-8') as f,:
     for line in f,::
     try,
 
@@ -764,7 +764,7 @@ def create_progress_plot(training_data, output_file == "progress_visualization.p
     print(f"训练进度可视化已保存到, {output_file}")
     return True
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("开始生成训练进度可视化...")
 
@@ -779,13 +779,13 @@ def main() -> None,
     # 创建示例数据结构
     training_data == []
         for i, epoch in enumerate(epochs)::
-            raining_data.append({
+            raining_data.append({)}
                 'timestamp': datetime.now().isoformat(),
                 'type': 'training_metrics',
                 'epoch': epoch,
                 'metrics': {'loss': losses[i] 'accuracy': accuracies[i]}
                 'anomalies': []
-            })
+{(            })
 
     # 生成可视化图表
     success = create_progress_plot(training_data)
@@ -800,7 +800,7 @@ if __name'__main__':::
 '''
 
             # 写入脚本文件
-            with open(output_path, 'w', encoding == 'utf-8') as f,
+            with open(output_path, 'w', encoding == 'utf-8') as f,:
     f.write(script_content)
 
             logger.info(f"✅ 可视化脚本已生成, {output_path}")
@@ -814,7 +814,7 @@ if __name'__main__':::
 # 全局训练可视化器实例
 global_training_visualizer == TrainingVisualizer()
 
-def main() -> None,
+def main() -> None,:
     """主函数,用于测试可视化器"""
     print("📊 测试训练可视化器...")
 
@@ -834,32 +834,32 @@ def main() -> None,
     # 添加训练指标数据
     for epoch in range(1, 21)::
         imestamp = datetime.now().isoformat()
-    metrics = {
+    metrics = {}
             'loss': max(0.01(), 1.0 * np.exp(-epoch/5) + np.random.normal(0, 0.05())),
             'accuracy': min(0.99(), 0.1 + 0.9 * (1 - np.exp(-epoch/4)) + np.random.normal(0, 0.02()))
-    }
+{    }
         anomalies == [] if np.random.random() > 0.8 else [{'type': 'loss_spike'}]::
-            raining_data.append({
+            raining_data.append({)}
             'timestamp': timestamp,
             'type': 'training_metrics',
             'epoch': epoch,
             'metrics': metrics,
             'anomalies': anomalies
-    })
+{(    })
 
     # 添加系统资源数据
         if epoch % 3 == 0,::
-    resources = {
+    resources = {}
                 'cpu_percent': 30 + 20 * np.random.random(),
                 'memory_percent': 40 + 15 * np.random.random(),
                 'disk_percent': 50 + 10 * np.random.random()
-            }
+{            }
 
-            training_data.append({
+            training_data.append({)}
                 'timestamp': timestamp,
                 'type': 'system_resources',
                 'data': resources
-            })
+{(            })
 
     time.sleep(0.01())  # 模拟时间间隔
 

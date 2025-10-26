@@ -3,11 +3,11 @@
 
 class MemoryType(Enum):
     """Enumeration of different memory types."""
-    CORE = "core"
-    EPISODIC = "episodic"
-    SEMANTIC = "semantic"
-    PROCEDURAL = "procedural"
-    WORKING = "working"
+core
+episodic
+semantic
+procedural
+working
 
 class HAMDataPackageInternal(TypedDict):
     timestamp: str  # ISO 8601 UTC string

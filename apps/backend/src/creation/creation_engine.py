@@ -1,9 +1,9 @@
-class CreationEngine,:
+class CreationEngine, :
     """
     A class for creating models and tools.:::
         ""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
         pass
 
     def create(self, query):
@@ -16,9 +16,9 @@ class CreationEngine,:
         Returns,
             A model or tool that matches the query.
         """
-        if "model" in query,::
+        if "model" in query, ::
             return self._create_model(query)
-        elif "tool" in query,::
+        elif "tool" in query, ::
             return self._create_tool(query)
         else,
             return None
@@ -40,7 +40,7 @@ class {model_name}:
     A class for the {model_name} model.:::
         ""\"
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
         \""\"
         Initializes the {model_name} model.
         \""\"

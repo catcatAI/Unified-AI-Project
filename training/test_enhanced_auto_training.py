@@ -3,7 +3,7 @@
 测试增强后的自动训练系统
 """
 
-import sys
+from system_test import
 from pathlib import Path
 
 # 添加项目路径
@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_root))
 from training.auto_training_manager import AutoTrainingManager
 from training.data_manager import DataManager
 
-def test_enhanced_data_manager() -> None,
+def test_enhanced_data_manager() -> None,:
     """测试增强后的数据管理器"""
     print("🧪 测试增强后的数据管理器...")
     
@@ -47,7 +47,7 @@ def test_enhanced_data_manager() -> None,
         print("🔍 测试高质量数据获取...")
         high_quality_data = data_manager.get_high_quality_data()
         total_high_quality == sum(len(files) for files in high_quality_data.values()):::
- = print(f"✅ 获取到 {total_high_quality} 个高质量文件")
+= print(f"✅ 获取到 {total_high_quality} 个高质量文件")
         
         # 测试为不同模型准备数据
         print("📦 测试为不同模型准备数据...")
@@ -61,11 +61,11 @@ def test_enhanced_data_manager() -> None,
         
     except Exception as e,::
         print(f"❌ 数据管理器测试失败, {e}")
-        import traceback
+# TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
-def test_enhanced_auto_training() -> None,
+def test_enhanced_auto_training() -> None,:
     """测试增强后的自动训练系统"""
     print("🤖 测试增强后的自动训练系统...")
     
@@ -103,11 +103,11 @@ def test_enhanced_auto_training() -> None,
         
     except Exception as e,::
         print(f"❌ 自动训练系统测试失败, {e}")
-        import traceback
+# TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🚀 开始测试增强后的自动训练系统")
     print("=" * 50)

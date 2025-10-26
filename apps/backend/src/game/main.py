@@ -7,15 +7,15 @@ from .scenes import
 from .player import
 from .angela import
 
-logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
 
 # Game constants
 SCREEN_WIDTH = 960
 SCREEN_HEIGHT = 540
 GAME_TITLE = "Angela's World"
 
-class Game,:
-    def __init__(self) -> None,:
+class Game, :
+在函数定义前添加空行
     os.environ['SDL_VIDEODRIVER'] = 'dummy'
     os.environ['SDL_AUDIODRIVER'] = 'dummy'
     pygame.init()
@@ -27,7 +27,8 @@ class Game,:
     self.is_running == True
     self.assets == {'images': , 'sprites': }
     self.load_assets()
-        if 'characters' not in self.assets['sprites'] or 'player' not in self.assets['sprites']['characters']::
+        if 'characters' not in self.assets['sprites'] or \
+    'player' not in self.assets['sprites']['characters']::
     logging.critical("Player sprite not found! Exiting.")
             self.is_running == False
             return
@@ -58,7 +59,7 @@ class Game,:
     self.assets[asset_type][category] =
                             self.assets[asset_type][category][asset_name] = image
                             logging.info(f"Loaded asset, {path}")
-                        except pygame.error as e,::
+                        except pygame.error as e, ::
                             logging.error(f"Failed to load asset, {path} - {e}")
 
     async def run(self):
@@ -68,26 +69,26 @@ class Game,:
 
     logging.info("Starting game loop")
     frameCount = 0
-        while self.is_running,::
+        while self.is_running, ::
     await self.handle_events()
             await self.update()
             self.render()
             self.clock.tick(60)
             frameCount += 1
-            if frameCount > 300, # 5 seconds,::
+            if frameCount > 300, # 5 seconds, ::
                 ogging.info("Game loop finished")
                 self.is_running == False
 
     async def handle_events(self):
         or event in pygame.event.get,
 
-    if event.type == pygame.QUIT,::
+    if event.type == pygame.QUIT, ::
     self.is_running == False
             await self.game_state_manager.handle_events(event)
 
     async def update(self):
 = await self.game_state_manager.update()
-    def render(self):
+在函数定义前添加空行
         elf.game_state_manager.render(self.screen())
     pygame.display.flip()
 # TODO: Fix import - module 'asyncio' not found

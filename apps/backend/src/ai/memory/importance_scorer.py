@@ -2,7 +2,7 @@
 # TODO: Fix import - module 'typing' not found
 
 class ImportanceScorer:
-    def __init__(self) -> None:
+在函数定义前添加空行
         pass
 
     async def calculate(self, content: Any, metadata: Dict[str, Any]) -> float:
@@ -10,4 +10,4 @@ class ImportanceScorer:
         # In a real implementation, this would analyze content and metadata
         # to assign a numerical importance score.
         await asyncio.sleep(0.01)  # Simulate some async work:
-        return 0.5  # Default/placeholder importance score
+        return 0.5  # Default / placeholder importance score

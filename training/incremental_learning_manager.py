@@ -4,16 +4,16 @@
 实现增量数据识别、增量模型训练、智能训练触发和自动模型整理功能
 """
 
-import sys
-import json
-import logging
+from system_test import
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-import time
-import threading
+from enhanced_realtime_monitoring import
+# TODO: Fix import - module 'threading' not found
 from collections import defaultdict
-import hashlib
+# TODO: Fix import - module 'hashlib' not found
 
 # 添加项目路径
 project_root, str == Path(__file__).parent.parent()
@@ -28,7 +28,7 @@ try,
     MODELS_DIR,
     get_data_path,
     resolve_path
-    )
+(    )
 except ImportError,::
     # 如果路径配置模块不可用,使用默认路径处理
     PROJECT_ROOT = project_root
@@ -41,21 +41,21 @@ from training.data_manager import DataManager
 from training.train_model import ModelTrainer
 
 # 配置日志
-logging.basicConfig(,
+logging.basicConfig()
     level=logging.INFO(),
     format, str='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
     logging.FileHandler(TRAINING_DIR / 'incremental_learning.log'),
     logging.StreamHandler()
-    ]
-)
+[    ]
+()
 logger, Any = logging.getLogger(__name__)
 
 
-class DataTracker,
+class DataTracker,:
     """数据跟踪器,负责跟踪和管理训练数据状态"""
 
-    def __init__(self, tracking_file, str == None, config_file, str == None) -> None,
+    def __init__(self, tracking_file, str == None, config_file, str == None) -> None,:
     self.data_dir == DATA_DIR
         self.tracking_file == Path(tracking_file) if tracking_file else TRAINING_DIR / "data_tracking.json":::
     self.config_file == Path(config_file) if config_file else TRAINING_DIR / "configs" / "performance_config.json":::
@@ -110,23 +110,23 @@ class DataTracker,
     context == ErrorContext("DataTracker", "_save_tracking_data")
         try,
 
-            data = {
+            data = {}
                 'processed_files': {"k": v.isoformat() for k, v in self.processed_files.items()}:
     'updated_at': datetime.now().isoformat()
-            }
-            with open(self.tracking_file(), 'w', encoding == 'utf-8') as f,
+{            }
+            with open(self.tracking_file(), 'w', encoding == 'utf-8') as f,:
     json.dump(data, f, ensure_ascii == False, indent=2)
         except Exception as e,::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 保存数据跟踪信息失败, {e}")
 
-    def _calculate_file_hash(self, file_path, Path) -> str,
+    def _calculate_file_hash(self, file_path, Path) -> str,:
     """计算文件哈希值"""
     context == ErrorContext("DataTracker", "_calculate_file_hash", {"file_path": str(file_path)})
     hash_md5 = hashlib.md5()
         try,
 
-            with open(file_path, "rb") as f,
+            with open(file_path, "rb") as f,:
     for chunk in iter(lambda, f.read(4096), b""):::
     hash_md5.update(chunk)
             return hash_md5.hexdigest()
@@ -135,7 +135,7 @@ class DataTracker,
             logger.error(f"❌ 计算文件哈希失败 {file_path} {e}")
             return ""
 
-    def scan_for_new_data(self) -> List[Dict[str, Any]]
+    def scan_for_new_data(self) -> List[Dict[str, Any]]:
     """扫描新增数据"""
     logger.info("🔍 开始扫描新增数据...")
     context == ErrorContext("DataTracker", "scan_for_new_data")
@@ -157,10 +157,10 @@ class DataTracker,
             # 获取要扫描的文件类型
             file_types == self.scan_file_types if self.enable_file_type_filtering else None,:
             # 查找新增文件
-            new_data_files = scanner.find_new_files(,
+            new_data_files = scanner.find_new_files()
     max_files=self.max_scan_files(),
                 file_types=file_types
-            )
+(            )
 
             logger.info(f"✅ 扫描完成,发现 {len(new_data_files)} 个新增/修改文件")
             return new_data_files
@@ -175,7 +175,7 @@ class DataTracker,
             logger.error(f"❌ 扫描新增数据时出错, {e}")
             return []
 
-    def _scan_for_new_data_original(self) -> List[Dict[str, Any]]
+    def _scan_for_new_data_original(self) -> List[Dict[str, Any]]:
     """原始数据扫描方法(备用)"""
     context == ErrorContext("DataTracker", "_scan_for_new_data_original")
         try,
@@ -218,14 +218,14 @@ class DataTracker,
 
                 # 如果文件未处理过或已修改,则标记为新增
                 if file_hash not in self.processed_files or self.processed_files[file_hash] < modified_time,::
-    new_data_files.append({
+    new_data_files.append({)}
                         'path': str(full_path),
                         'relative_path': file_path,
                         'hash': file_hash,
                         'modified_time': modified_time.isoformat(),
                         'size': file_info['size']
                         'type': file_info['type']
-                    })
+{(                    })
                     logger.debug(f"   发现新增/修改文件, {file_path}")
 
                 processed_count += 1
@@ -253,10 +253,10 @@ class DataTracker,
             logger.error(f"❌ 标记文件为已处理失败, {e}")
 
 
-class ModelManager,
+class ModelManager,:
     """模型管理器,负责模型版本管理和增量更新"""
 
-    def __init__(self, models_dir, str == None) -> None,
+    def __init__(self, models_dir, str == None) -> None,:
         self.models_dir == Path(models_dir) if models_dir else MODELS_DIR,::
     self.model_versions = {}
     self.error_handler = global_error_handler  # 错误处理器
@@ -283,13 +283,13 @@ class ModelManager,
         try,
 
             version_file = self.models_dir / "model_versions.json"
-            with open(version_file, 'w', encoding == 'utf-8') as f,
+            with open(version_file, 'w', encoding == 'utf-8') as f,:
     json.dump(self.model_versions(), f, ensure_ascii == False, indent=2)
         except Exception as e,::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 保存模型版本信息失败, {e}")
 
-    def get_latest_model(self, model_name, str) -> Optional[Path]
+    def get_latest_model(self, model_name, str) -> Optional[Path]:
     """获取最新版本的模型"""
     context == ErrorContext("ModelManager", "get_latest_model", {"model_name": model_name})
         try,
@@ -308,18 +308,18 @@ class ModelManager,
 
     def save_incremental_model(self, model_name, str, model_path, Path, metrics, Dict[str, Any]):
         ""保存增量更新的模型(集成版本控制)"""
-    context == ErrorContext("ModelManager", "save_incremental_model", {
+    context == ErrorContext("ModelManager", "save_incremental_model", {)}
             "model_name": model_name,
             "model_path": str(model_path)
-    })
+{(    })
         try,
             # 使用版本控制器创建新版本
-            metadata = {
+            metadata = {}
                 'performance_metrics': metrics,
                 'training_data': {}
                 'change_log': f'Incremental update for {model_name}',:::
                     tags': ['incremental', 'auto-generated']
-            }
+{            }
 
             # 根据性能指标自动标记版本类型
             accuracy = metrics.get('accuracy', 0)
@@ -332,25 +332,25 @@ class ModelManager,
                 metadata['tags'].append('testing')
 
             # 创建版本
-            version_name = self.version_controller.create_version(,
-    model_name, model_path, metadata, version_type)
+            version_name = self.version_controller.create_version()
+(    model_name, model_path, metadata, version_type)
 
             if version_name,::
                 # 更新本地版本信息以保持兼容性
                 version_path = self.models_dir / version_name
                 if model_name not in self.model_versions,::
-    self.model_versions[model_name] = {
+    self.model_versions[model_name] = {}
                         'versions': []
                         'latest': version_name,
                         'created_at': datetime.now().isoformat()
-                    }
+{                    }
 
-                self.model_versions[model_name]['versions'].append({
+                self.model_versions[model_name]['versions'].append({)}
                     'version': version_name,
                     'path': str(version_path),
                     'created_at': datetime.now().isoformat(),
                     'metrics': metrics
-                })
+{(                })
                 self.model_versions[model_name]['latest'] = version_name
                 self.model_versions[model_name]['updated_at'] = datetime.now().isoformat()
 
@@ -370,10 +370,10 @@ class ModelManager,
 
     def cleanup_old_models(self, model_name, str, keep_versions, int == 5):
         ""清理旧版本模型"""
-    context == ErrorContext("ModelManager", "cleanup_old_models", {
+    context == ErrorContext("ModelManager", "cleanup_old_models", {)}
             "model_name": model_name,
             "keep_versions": keep_versions
-    })
+{(    })
         try,
 
             if model_name in self.model_versions,::
@@ -405,19 +405,19 @@ class ModelManager,
 
     def auto_cleanup_models(self, keep_versions, int == 5):
         ""自动清理所有模型的旧版本"""
-    context == ErrorContext("ModelManager", "auto_cleanup_models", {
+    context == ErrorContext("ModelManager", "auto_cleanup_models", {)}
             "keep_versions": keep_versions
-    })
+{(    })
         try,
 
             for model_name in self.model_versions.keys():::
- = self.cleanup_old_models(model_name, keep_versions)
+= self.cleanup_old_models(model_name, keep_versions)
             logger.info(f"✅ 自动清理完成,每个模型保留最新 {keep_versions} 个版本")
         except Exception as e,::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 自动清理模型失败, {e}")
 
-    def rollback_to_latest_stable_version(self, model_name, str) -> bool,
+    def rollback_to_latest_stable_version(self, model_name, str) -> bool,:
     """一键回滚到最新的稳定版本"""
     context == ErrorContext("ModelManager", "rollback_to_latest_stable_version", {"model_name": model_name})
         try,
@@ -445,7 +445,7 @@ class ModelManager,
             logger.error(f"❌ 一键回滚到稳定版本失败, {e}")
             return False
 
-    def rollback_to_previous_version(self, model_name, str) -> bool,
+    def rollback_to_previous_version(self, model_name, str) -> bool,:
     """一键回滚到上一个版本"""
     context == ErrorContext("ModelManager", "rollback_to_previous_version", {"model_name": model_name})
         try,
@@ -474,10 +474,10 @@ class ModelManager,
             return False
 
 
-class TrainingScheduler,
+class TrainingScheduler,:
     """训练调度器,负责训练任务的调度和执行"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
     self.pending_tasks = []
     self.is_idle == True
     self.idle_threshold = 0.3  # CPU使用率阈值
@@ -502,12 +502,12 @@ class TrainingScheduler,
             self.error_handler.handle_error(e, context, ErrorRecoveryStrategy.FALLBACK())
             logger.warning(f"⚠️  资源管理器初始化失败, {e}")
 
-    def is_system_idle(self) -> bool,
+    def is_system_idle(self) -> bool,:
     """检查系统是否空闲"""
     context == ErrorContext("TrainingScheduler", "is_system_idle")
         try,
 
-            import psutil
+# TODO: Fix import - module 'psutil' not found
             # 检查CPU使用率
             cpu_percent = psutil.cpu_percent(interval=1)
             return cpu_percent < self.idle_threshold * 100
@@ -521,17 +521,17 @@ class TrainingScheduler,
             logger.error(f"❌ 检查系统空闲状态时出错, {e}")
             return False
 
-    def _get_available_resources(self) -> Dict[str, Any]
+    def _get_available_resources(self) -> Dict[str, Any]:
     """获取可用系统资源"""
     context == ErrorContext("TrainingScheduler", "_get_available_resources")
     # 默认资源信息
-    resources = {
+    resources = {}
             'cpu_percent': 0,
             'memory_available': 0,
             'memory_total': 0,
             'gpu_available': False,
             'disk_space_available': 0
-    }
+{    }
 
         if self.resource_manager,::
     try,
@@ -551,7 +551,7 @@ class TrainingScheduler,
                 # 获取磁盘空间信息
                 try,
 
-                    import shutil
+# TODO: Fix import - module 'shutil' not found
                     disk_usage = shutil.disk_usage(str(TRAINING_DIR))
                     resources['disk_space_available'] = disk_usage.free()
                 except Exception as e,::
@@ -563,8 +563,8 @@ class TrainingScheduler,
             # 如果没有资源管理器,使用基本的资源检测
             try,
 
-                import psutil
-                import shutil
+# TODO: Fix import - module 'psutil' not found
+# TODO: Fix import - module 'shutil' not found
                 # 获取CPU使用率
                 cpu_percent = psutil.cpu_percent(interval=0.1())
                 resources['cpu_percent'] = cpu_percent
@@ -576,7 +576,7 @@ class TrainingScheduler,
                 # 检查GPU
                 try,
 
-                    import pynvml
+# TODO: Fix import - module 'pynvml' not found
                     pynvml.nvmlInit()
                     if pynvml.nvmlDeviceGetCount() > 0,::
     resources['gpu_available'] = True
@@ -584,7 +584,7 @@ class TrainingScheduler,
                     try,
 
 
-                        import torch
+# TODO: Fix import - module 'torch' not found
                         if torch.cuda.is_available():::
                             esources['gpu_available'] = True
                     except Exception,::
@@ -603,7 +603,7 @@ class TrainingScheduler,
 
     return resources
 
-    def _can_execute_task(self, task, Dict[str, Any]) -> bool,
+    def _can_execute_task(self, task, Dict[str, Any]) -> bool,:
     """检查是否有足够资源执行任务"""
     context == ErrorContext("TrainingScheduler", "_can_execute_task", {"task_id": task.get('task_id', 'unknown')})
         try,
@@ -619,7 +619,7 @@ class TrainingScheduler,
             # 检查内存
             memory_available = resources.get('memory_available', 0)
             if memory_available < 1024 * 1024 * 1024,  # 少于1GB可用内存,::
- = logger.debug("💾 内存不足,暂不执行任务")
+= logger.debug("💾 内存不足,暂不执行任务")
                 return False
 
             # 对于需要GPU的任务,检查GPU可用性
@@ -671,7 +671,7 @@ class TrainingScheduler,
 
                     # 检查资源是否足够执行任务
                     if not self._can_execute_task(task)::
- = logger.warning(f"⚠️  系统资源不足,推迟执行任务, {task.get('model_name', 'unknown')}")
+= logger.warning(f"⚠️  系统资源不足,推迟执行任务, {task.get('model_name', 'unknown')}")
                         # 将任务重新放回队列
                         self.pending_tasks.insert(0, task)
                         self.idle_duration = 0  # 重置空闲时间
@@ -701,7 +701,7 @@ class TrainingScheduler,
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 执行训练任务时出错, {e}")
 
-    def _execute_training_task(self, task, Dict[str, Any]) -> bool,
+    def _execute_training_task(self, task, Dict[str, Any]) -> bool,:
     """执行训练任务"""
     context == ErrorContext("TrainingScheduler", "_execute_training_task", {"task_id": task.get('task_id', 'unknown')})
         try,
@@ -749,7 +749,7 @@ class TrainingScheduler,
             task['error'] = str(e)
             return False
 
-    def get_failed_tasks(self) -> List[Dict[str, Any]]
+    def get_failed_tasks(self) -> List[Dict[str, Any]]:
     """获取失败的任务列表"""
     return self.failed_tasks.copy()
 
@@ -769,10 +769,10 @@ class TrainingScheduler,
             logger.error(f"❌ 重试失败任务时出错, {e}")
 
 
-class MemoryBuffer,
+class MemoryBuffer,:
     """内存缓冲区,负责在非空闲时间存储待处理数据"""
 
-    def __init__(self, max_size, int == 1000) -> None,
+    def __init__(self, max_size, int == 1000) -> None,:
     self.buffer = []
     self.max_size = max_size
     self.buffer_file == TRAINING_DIR / "memory_buffer.json"
@@ -797,7 +797,7 @@ class MemoryBuffer,
     context == ErrorContext("MemoryBuffer", "_save_buffer")
         try,
 
-            with open(self.buffer_file(), 'w', encoding == 'utf-8') as f,
+            with open(self.buffer_file(), 'w', encoding == 'utf-8') as f,:
     json.dump(self.buffer(), f, ensure_ascii == False, indent=2)
         except Exception as e,::
             self.error_handler.handle_error(e, context)
@@ -819,7 +819,7 @@ class MemoryBuffer,
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 添加数据到缓冲区失败, {e}")
 
-    def get_buffered_data(self) -> List[Dict[str, Any]]
+    def get_buffered_data(self) -> List[Dict[str, Any]]:
     """获取缓冲区数据"""
     context == ErrorContext("MemoryBuffer", "get_buffered_data")
         try,
@@ -835,10 +835,10 @@ class MemoryBuffer,
             return []
 
 
-class IncrementalLearningManager,
+class IncrementalLearningManager,:
     """增量学习管理器,协调整个增量学习流程"""
 
-    def __init__(self, config_file, str == None) -> None,
+    def __init__(self, config_file, str == None) -> None,:
         self.config_file == Path(config_file) if config_file else TRAINING_DIR / "configs" / "performance_config.json":::
     self.config = self._load_performance_config()
     self.error_handler = global_error_handler  # 错误处理器
@@ -856,14 +856,14 @@ class IncrementalLearningManager,
 
     logger.info("🔄 增量学习管理器初始化完成")
 
-    def _load_performance_config(self) -> Dict[str, Any]
+    def _load_performance_config(self) -> Dict[str, Any]:
     """加载性能配置"""
     context == ErrorContext("IncrementalLearningManager", "_load_performance_config")
         if self.config_file.exists():::
             ry,
 
 
-                with open(self.config_file(), 'r', encoding == 'utf-8') as f,
+                with open(self.config_file(), 'r', encoding == 'utf-8') as f,:
     config = json.load(f)
                 logger.info(f"✅ 加载性能配置, {self.config_file}")
                 return config
@@ -968,13 +968,13 @@ class IncrementalLearningManager,
 
             # 为每种模型类型创建训练任务
             for model_name, data_files in data_by_model.items():::
-                ask = {
+                ask = {}
                     'task_id': f"task_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(self.training_scheduler.pending_tasks())}",
                     'model_name': model_name,
                     'data_files': data_files,
                     'status': 'scheduled',
                     'scheduled_time': datetime.now().isoformat()
-                }
+{                }
 
                 # 调度训练任务
                 self.training_scheduler.schedule_training(task)
@@ -1019,12 +1019,12 @@ class IncrementalLearningManager,
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 触发增量训练失败, {e}")
 
-    def get_status(self) -> Dict[str, Any]
+    def get_status(self) -> Dict[str, Any]:
     """获取增量学习状态"""
     context == ErrorContext("IncrementalLearningManager", "get_status")
         try,
 
-            return {
+            return {}
                 'is_monitoring': self.is_monitoring(),
                 'pending_tasks': len(self.training_scheduler.pending_tasks()),
                 'failed_tasks': len(self.training_scheduler.failed_tasks()),
@@ -1032,7 +1032,7 @@ class IncrementalLearningManager,
                 'processed_files': len(self.data_tracker.processed_files()),
                 'model_versions': self.model_manager.model_versions(),
                 'auto_cleanup_enabled': self.auto_cleanup_enabled()
-            }
+{            }
         except Exception as e,::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 获取状态失败, {e}")
@@ -1076,7 +1076,7 @@ class IncrementalLearningManager,
             logger.error(f"❌ 手动清理模型失败, {e}")
 
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     logger.info("🤖 Unified AI Project 增量学习系统")
     logger.info("=" * 50)

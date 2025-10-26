@@ -4,9 +4,9 @@
 用于快速验证训练系统各组件是否正常工作
 """
 
-import sys
+from system_test import
 from pathlib import Path
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 
 # 添加项目路径
 project_root, str == Path(__file__).parent.parent()
@@ -18,7 +18,7 @@ sys.path.insert(0, str(backend_path / "src"))
 logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
-def test_data_manager() -> None,
+def test_data_manager() -> None,:
     """测试数据管理器"""
     logger.info("🔍 测试数据管理器...")
 
@@ -41,7 +41,7 @@ def test_data_manager() -> None,
     logger.error(f"❌ 数据管理器测试失败, {e}")
     return False
 
-def test_resource_manager() -> None,
+def test_resource_manager() -> None,:
     """测试资源管理器"""
     logger.info("🖥️  测试资源管理器...")
 
@@ -63,7 +63,7 @@ def test_resource_manager() -> None,
     logger.error(f"❌ 资源管理器测试失败, {e}")
     return False
 
-def test_gpu_optimizer() -> None,
+def test_gpu_optimizer() -> None,:
     """测试GPU优化器"""
     logger.info("🎮 测试GPU优化器...")
 
@@ -85,7 +85,7 @@ def test_gpu_optimizer() -> None,
     logger.error(f"❌ GPU优化器测试失败, {e}")
     return False
 
-def test_distributed_optimizer() -> None,
+def test_distributed_optimizer() -> None,:
     """测试分布式优化器"""
     logger.info("🌐 测试分布式优化器...")
 
@@ -103,7 +103,7 @@ def test_distributed_optimizer() -> None,
     logger.error(f"❌ 分布式优化器测试失败, {e}")
     return False
 
-def test_collaborative_training_manager() -> None,
+def test_collaborative_training_manager() -> None,:
     """测试协作式训练管理器"""
     logger.info("🔄 测试协作式训练管理器...")
 
@@ -129,19 +129,19 @@ def test_collaborative_training_manager() -> None,
     logger.error(f"❌ 协作式训练管理器测试失败, {e}")
     return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     logger.info("🚀 开始快速验证测试...")
     logger.info("=" * 50)
 
     # 测试各个组件
-    tests = [
+    tests = []
     ("数据管理器", test_data_manager),
     ("资源管理器", test_resource_manager),
     ("GPU优化器", test_gpu_optimizer),
     ("分布式优化器", test_distributed_optimizer),
     ("协作式训练管理器", test_collaborative_training_manager)
-    ]
+[    ]
 
     passed = 0
     total = len(tests)
@@ -158,7 +158,7 @@ def main() -> None,
                 logger.error(f"❌ {test_name} 测试失败")
         except Exception as e,::
             logger.error(f"❌ {test_name} 测试出错, {e}")
-            import traceback
+# TODO: Fix import - module 'traceback' not found
             traceback.print_exc()
 
     # 总结

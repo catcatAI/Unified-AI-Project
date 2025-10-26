@@ -15,14 +15,14 @@ class CodeUnderstandingTool:
     within the project using LightweightCodeModel.
     """
 
-    def __init__(self, tools_directory: str = "apps/backend/src/tools"):
+    def __init__(self, tools_directory: str = "apps / backend / src / tools"):
         """
         Initializes the CodeUnderstandingTool.
 
         Args:
             tools_directory (str): The root directory where tool files are located.
         """
-        self.code_model = LightweightCodeModel(tools_directory=tools_directory)
+        self.code_model = LightweightCodeModel(tools_directory = tools_directory)
 
     def list_tools(self) -> str:
         """
@@ -35,7 +35,8 @@ class CodeUnderstandingTool:
         if not tool_files:
             return "No Python tools found in the tools directory."
 
-        tool_names = [os.path.splitext(os.path.basename(f_path))[0] for f_path in tool_files]
+        tool_names = [os.path.splitext(os.path.basename(f_path))[0] for f_path in tool_f\
+    iles]
         
         if not tool_names:
             return "No Python tools found after processing file list."
@@ -50,14 +51,15 @@ class CodeUnderstandingTool:
             tool_name (str): The name of the tool (e.g., "math_tool").
 
         Returns:
-            A human-readable description of the tool's structure, or an error message.
+            A human - readable description of the tool's structure, or an error message.
         """
         structure = self.code_model.get_tool_structure(tool_name)
 
         if not structure:
             return f"Tool '{tool_name}' not found or could not be analyzed."
 
-        # This is a simplified formatting. A more robust version would be needed for complex cases.
+        # This is a simplified formatting. A more robust version would be needed for com\
+    plex cases.
         return str(structure)
 
     def execute(self, action: str, tool_name: Optional[str] = None) -> str:
@@ -69,7 +71,9 @@ class CodeUnderstandingTool:
             return self.list_tools()
         elif action == "describe_tool":
             if not tool_name:
-                return "Error: 'tool_name' parameter is required for the 'describe_tool' action."
+                return "Error: 'tool_name' parameter is required for the 'describe_tool'\
+    action."
             return self.describe_tool(tool_name)
         else:
-            return f"Error: Unknown action '{action}' for CodeUnderstandingTool. Available actions: list_tools, describe_tool."
+            return f"Error: Unknown action '{action}' for CodeUnderstandingTool. Availab\
+    le actions: list_tools, describe_tool."

@@ -15,19 +15,19 @@ try:
     from redis.asyncio import Redis
     REDIS_AVAILABLE = True
 except ImportError:
-    logger.warning("Redis.asyncio not found. CapacityPlanner will run in in-memory mode.")
+    logger.warning("Redis.asyncio not found. CapacityPlanner will run in in - memory mode.")
 
-# Scikit-learn可用性检查
+# Scikit - learn可用性检查
 SKLEARN_AVAILABLE = False
 try:
     from sklearn.linear_model import LinearRegression
     from sklearn.metrics import mean_squared_error
     SKLEARN_AVAILABLE = True
 except ImportError:
-    logger.warning("Scikit-learn not found. CapacityPlanner will use simpler prediction models.")
+    logger.warning("Scikit - learn not found. CapacityPlanner will use simpler prediction models.")
 
 @dataclass
-class ResourceUsage:
+在类定义前添加空行
     """资源使用情况"""
     timestamp: datetime
     cpu_cores: float
@@ -40,7 +40,7 @@ class ResourceUsage:
     request_rate: float
 
 @dataclass
-class CapacityPrediction:
+在类定义前添加空行
     """容量预测"""
     prediction_id: str
     resource_type: str
@@ -52,7 +52,7 @@ class CapacityPrediction:
     urgency: str  # low, medium, high, critical
 
 @dataclass
-class ScalingPlan:
+在类定义前添加空行
     """扩容计划"""
     plan_id: str
     resource_type: str
@@ -91,20 +91,20 @@ class CapacityPlanner:
             if self.redis_available:
                 try:
                     self.redis_client = redis.Redis()
-                        host=self.config.get('redis_host', 'localhost'),
-                        port=self.config.get('redis_port', 6379),
-                        db=self.config.get('redis_db', 0),
-                        decode_responses=True
+                        host = self.config.get('redis_host', 'localhost'),
+                        port = self.config.get('redis_port', 6379),
+                        db = self.config.get('redis_db', 0),
+                        decode_responses = True
 (                    )
                     # 测试连接
                     await self.redis_client.ping()
                     logger.info("Redis连接成功")
                 except Exception as e:
-                    logger.warning(f"Redis连接失败,使用内存模式: {e}")
+                    logger.warning(f"Redis连接失败, 使用内存模式: {e}")
                     self.redis_client = None
                     self.redis_available = False
             
-            # 加载或初始化预测模型 (此处省略,因为模型是动态生成的)
+            # 加载或初始化预测模型 (此处省略, 因为模型是动态生成的)
             
             # 加载历史数据
             await self._load_usage_data()
@@ -122,7 +122,8 @@ class CapacityPlanner:
         try:
             if self.redis_available and self.redis_client:
                 # 从Redis加载历史数据
-                data = await self.redis_client.lrange("capacity_planner:usage_history", 0, -1)
+                data = await self.redis_client.lrange("capacity_planner:usage_history",
+    0, -1)
                 self.usage_history = [json.loads(item) for item in data] if data else []
                 logger.info(f"加载资源使用历史数据: {len(self.usage_history)} 条记录")
         except Exception as e:
@@ -135,15 +136,15 @@ class CapacityPlanner:
             
             # 创建资源使用对象
             usage = ResourceUsage()
-                timestamp=timestamp,
-                cpu_cores=resource_data.get('cpu_cores', 0.0),
-                memory_gb=resource_data.get('memory_gb', 0.0),
-                disk_gb=resource_data.get('disk_gb', 0.0),
-                network_mbps=resource_data.get('network_mbps', 0.0),
-                gpu_count=resource_data.get('gpu_count', 0.0),
-                active_instances=resource_data.get('active_instances', 0),
-                concurrent_users=resource_data.get('concurrent_users', 0),
-                request_rate=resource_data.get('request_rate', 0.0)
+                timestamp = timestamp,
+                cpu_cores = resource_data.get('cpu_cores', 0.0),
+                memory_gb = resource_data.get('memory_gb', 0.0),
+                disk_gb = resource_data.get('disk_gb', 0.0),
+                network_mbps = resource_data.get('network_mbps', 0.0),
+                gpu_count = resource_data.get('gpu_count', 0.0),
+                active_instances = resource_data.get('active_instances', 0),
+                concurrent_users = resource_data.get('concurrent_users', 0),
+                request_rate = resource_data.get('request_rate', 0.0)
 (            )
             
             # 存储使用数据
@@ -191,7 +192,8 @@ class CapacityPlanner:
         except Exception as e:
             logger.error(f"分析容量需求失败: {e}")
     
-    async def _predict_resource_needs(self, current_usage: ResourceUsage) -> List[CapacityPrediction]:
+    async def _predict_resource_needs(self,
+    current_usage: ResourceUsage) -> List[CapacityPrediction]:
         """预测资源需求"""
         predictions: List[CapacityPrediction] = []
         
@@ -227,13 +229,14 @@ class CapacityPlanner:
             logger.error(f"预测资源需求失败: {e}")
             return []
     
-    async def _predict_cpu_needs(self, current_usage: ResourceUsage) -> Optional[CapacityPrediction]:
+    async def _predict_cpu_needs(self,
+    current_usage: ResourceUsage) -> Optional[CapacityPrediction]:
         """预测CPU需求"""
         try:
             # 获取CPU使用历史
             cpu_history = []
-                record['usage']['cpu_cores'] 
-                for record in self.usage_history[-self.min_data_points:]:
+                record['usage']['cpu_cores']
+                for record in self.usage_history[ - self.min_data_points:]:
 [            ]
             
             if len(cpu_history) < self.prediction_window:
@@ -241,19 +244,19 @@ class CapacityPlanner:
             
             # 计算趋势
             if self.sklearn_available and len(cpu_history) > 1:
-                x = np.arange(len(cpu_history)).reshape(-1, 1)
+                x = np.arange(len(cpu_history)).reshape( - 1, 1)
                 model = LinearRegression()
                 model.fit(x, cpu_history)
                 
                 # 预测未来需求
-                future_x = np.arange(len(cpu_history), len(cpu_history) + self.prediction_window).reshape(-1, 1)
+                future_x = np.arange(len(cpu_history), len(cpu_history) + self.prediction_window).reshape( - 1, 1)
                 predicted_cpu_values = model.predict(future_x)
-                predicted_cpu = predicted_cpu_values[-1]
+                predicted_cpu = predicted_cpu_values[ - 1]
                 
                 # 计算置信度 (基于MSE)
                 predicted_values_past = model.predict(x)
                 mse = mean_squared_error(cpu_history, predicted_values_past)
-                confidence = max(0.5, min(0.95, 1.0 - mse / (np.var(cpu_history) + 1e-6))) # 避免除以0
+                confidence = max(0.5, min(0.95, 1.0 - mse / (np.var(cpu_history) + 1e - 6))) # 避免除以0
             else:
                 # 简单预测
                 predicted_cpu = np.mean(cpu_history) if cpu_history else 0.0
@@ -280,27 +283,28 @@ class CapacityPlanner:
                 recommendation = "CPU资源充足"
             
             return CapacityPrediction()
-                prediction_id=f"cpu_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                resource_type="cpu",
-                current_capacity=current_usage.cpu_cores,
-                predicted_need=predicted_cpu,
-                time_horizon=self.prediction_window,
-                confidence=confidence,
-                recommendation=recommendation,
-                urgency=urgency
+                prediction_id = f"cpu_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                resource_type = "cpu",
+                current_capacity = current_usage.cpu_cores,
+                predicted_need = predicted_cpu,
+                time_horizon = self.prediction_window,
+                confidence = confidence,
+                recommendation = recommendation,
+                urgency = urgency
 (            )
             
         except Exception as e:
             logger.error(f"CPU需求预测失败: {e}")
             return None
     
-    async def _predict_memory_needs(self, current_usage: ResourceUsage) -> Optional[CapacityPrediction]:
+    async def _predict_memory_needs(self,
+    current_usage: ResourceUsage) -> Optional[CapacityPrediction]:
         """预测内存需求"""
         try:
             # 获取内存使用历史
             memory_history = []
-                record['usage']['memory_gb'] 
-                for record in self.usage_history[-self.min_data_points:]:
+                record['usage']['memory_gb']
+                for record in self.usage_history[ - self.min_data_points:]:
 [            ]
             
             if len(memory_history) < self.prediction_window:
@@ -308,19 +312,19 @@ class CapacityPlanner:
             
             # 计算趋势和季节性
             if self.sklearn_available and len(memory_history) > 1:
-                x = np.arange(len(memory_history)).reshape(-1, 1)
+                x = np.arange(len(memory_history)).reshape( - 1, 1)
                 model = LinearRegression()
                 model.fit(x, memory_history)
                 
                 # 预测未来需求
-                future_x = np.arange(len(memory_history), len(memory_history) + self.prediction_window).reshape(-1, 1)
+                future_x = np.arange(len(memory_history), len(memory_history) + self.prediction_window).reshape( - 1, 1)
                 predicted_memory_values = model.predict(future_x)
-                predicted_memory = predicted_memory_values[-1]
+                predicted_memory = predicted_memory_values[ - 1]
                 
                 # 计算置信度 (基于MSE)
                 predicted_values_past = model.predict(x)
                 mse = mean_squared_error(memory_history, predicted_values_past)
-                confidence = max(0.5, min(0.95, 1.0 - mse / (np.var(memory_history) + 1e-6)))
+                confidence = max(0.5, min(0.95, 1.0 - mse / (np.var(memory_history) + 1e - 6)))
             else:
                 # 简单预测
                 predicted_memory = np.mean(memory_history) if memory_history else 0.0
@@ -350,27 +354,28 @@ class CapacityPlanner:
                 recommendation = "内存资源充足"
             
             return CapacityPrediction()
-                prediction_id=f"mem_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                resource_type="memory",
-                current_capacity=current_usage.memory_gb,
-                predicted_need=predicted_memory,
-                time_horizon=self.prediction_window,
-                confidence=confidence,
-                recommendation=recommendation,
-                urgency=urgency
+                prediction_id = f"mem_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                resource_type = "memory",
+                current_capacity = current_usage.memory_gb,
+                predicted_need = predicted_memory,
+                time_horizon = self.prediction_window,
+                confidence = confidence,
+                recommendation = recommendation,
+                urgency = urgency
 (            )
             
         except Exception as e:
             logger.error(f"内存需求预测失败: {e}")
             return None
     
-    async def _predict_disk_needs(self, current_usage: ResourceUsage) -> Optional[CapacityPrediction]:
+    async def _predict_disk_needs(self,
+    current_usage: ResourceUsage) -> Optional[CapacityPrediction]:
         """预测磁盘需求"""
         try:
             # 获取磁盘使用历史
             disk_history = []
-                record['usage']['disk_gb'] 
-                for record in self.usage_history[-self.min_data_points:]:
+                record['usage']['disk_gb']
+                for record in self.usage_history[ - self.min_data_points:]:
 [            ]
             
             if len(disk_history) < self.prediction_window:
@@ -378,14 +383,14 @@ class CapacityPlanner:
             
             # 磁盘通常是线性增长
             if self.sklearn_available and len(disk_history) > 1:
-                x = np.arange(len(disk_history)).reshape(-1, 1)
+                x = np.arange(len(disk_history)).reshape( - 1, 1)
                 model = LinearRegression()
                 model.fit(x, disk_history)
                 
                 # 预测未来需求
-                future_x = np.arange(len(disk_history), len(disk_history) + self.prediction_window).reshape(-1, 1)
+                future_x = np.arange(len(disk_history), len(disk_history) + self.prediction_window).reshape( - 1, 1)
                 predicted_disk_values = model.predict(future_x)
-                predicted_disk = predicted_disk_values[-1]
+                predicted_disk = predicted_disk_values[ - 1]
             else:
                 predicted_disk = np.mean(disk_history) if disk_history else 0.0
 
@@ -409,27 +414,28 @@ class CapacityPlanner:
                 recommendation = "磁盘空间充足"
             
             return CapacityPrediction()
-                prediction_id=f"disk_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                resource_type="disk",
-                current_capacity=current_usage.disk_gb,
-                predicted_need=predicted_disk,
-                time_horizon=self.prediction_window,
-                confidence=confidence,
-                recommendation=recommendation,
-                urgency=urgency
+                prediction_id = f"disk_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                resource_type = "disk",
+                current_capacity = current_usage.disk_gb,
+                predicted_need = predicted_disk,
+                time_horizon = self.prediction_window,
+                confidence = confidence,
+                recommendation = recommendation,
+                urgency = urgency
 (            )
             
         except Exception as e:
             logger.error(f"磁盘需求预测失败: {e}")
             return None
     
-    async def _predict_network_needs(self, current_usage: ResourceUsage) -> Optional[CapacityPrediction]:
+    async def _predict_network_needs(self,
+    current_usage: ResourceUsage) -> Optional[CapacityPrediction]:
         """预测网络需求"""
         try:
             # 获取网络使用历史
             network_history = []
-                record['usage']['network_mbps'] 
-                for record in self.usage_history[-self.min_data_points:]:
+                record['usage']['network_mbps']
+                for record in self.usage_history[ - self.min_data_points:]:
 [            ]
             
             if len(network_history) < self.prediction_window:
@@ -437,19 +443,19 @@ class CapacityPlanner:
             
             # 网络使用可能有周期性
             if self.sklearn_available and len(network_history) > 1:
-                x = np.arange(len(network_history)).reshape(-1, 1)
+                x = np.arange(len(network_history)).reshape( - 1, 1)
                 model = LinearRegression()
                 model.fit(x, network_history)
                 
                 # 预测未来需求
-                future_x = np.arange(len(network_history), len(network_history) + self.prediction_window).reshape(-1, 1)
+                future_x = np.arange(len(network_history), len(network_history) + self.prediction_window).reshape( - 1, 1)
                 predicted_network_values = model.predict(future_x)
-                predicted_network = predicted_network_values[-1]
+                predicted_network = predicted_network_values[ - 1]
                 
                 # 计算置信度 (基于MSE)
                 predicted_values_past = model.predict(x)
                 mse = mean_squared_error(network_history, predicted_values_past)
-                confidence = max(0.6, min(0.9, 1.0 - mse / (np.var(network_history) + 1e-6)))
+                confidence = max(0.6, min(0.9, 1.0 - mse / (np.var(network_history) + 1e - 6)))
             else:
                 predicted_network = np.mean(network_history) if network_history else 0.0
                 confidence = 0.6
@@ -476,27 +482,28 @@ class CapacityPlanner:
                 recommendation = "网络带宽充足"
             
             return CapacityPrediction()
-                prediction_id=f"net_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                resource_type="network",
-                current_capacity=current_usage.network_mbps,
-                predicted_need=predicted_network,
-                time_horizon=self.prediction_window,
-                confidence=confidence,
-                recommendation=recommendation,
-                urgency=urgency
+                prediction_id = f"net_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                resource_type = "network",
+                current_capacity = current_usage.network_mbps,
+                predicted_need = predicted_network,
+                time_horizon = self.prediction_window,
+                confidence = confidence,
+                recommendation = recommendation,
+                urgency = urgency
 (            )
             
         except Exception as e:
             logger.error(f"网络需求预测失败: {e}")
             return None
     
-    async def _predict_gpu_needs(self, current_usage: ResourceUsage) -> Optional[CapacityPrediction]:
+    async def _predict_gpu_needs(self,
+    current_usage: ResourceUsage) -> Optional[CapacityPrediction]:
         """预测GPU需求"""
         try:
-            # GPU通常用于AI计算,需求相对稳定
+            # GPU通常用于AI计算, 需求相对稳定
             gpu_history = []
-                record['usage']['gpu_count'] 
-                for record in self.usage_history[-self.min_data_points:]:
+                record['usage']['gpu_count']
+                for record in self.usage_history[ - self.min_data_points:]:
 [            ]
             
             if len(gpu_history) < self.prediction_window:
@@ -524,19 +531,19 @@ class CapacityPlanner:
             if utilization_rate > self.scaling_threshold:
                 recommendation = f"建议增加GPU资源至 {int(predicted_gpu)} 个"
             elif utilization_rate < 0.3:
-                recommendation = "GPU资源利用率低,可考虑优化调度"
+                recommendation = "GPU资源利用率低, 可考虑优化调度"
             else:
                 recommendation = "GPU资源充足"
             
             return CapacityPrediction()
-                prediction_id=f"gpu_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
-                resource_type="gpu",
-                current_capacity=current_usage.gpu_count,
-                predicted_need=predicted_gpu,
-                time_horizon=self.prediction_window,
-                confidence=confidence,
-                recommendation=recommendation,
-                urgency=urgency
+                prediction_id = f"gpu_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                resource_type = "gpu",
+                current_capacity = current_usage.gpu_count,
+                predicted_need = predicted_gpu,
+                time_horizon = self.prediction_window,
+                confidence = confidence,
+                recommendation = recommendation,
+                urgency = urgency
 (            )
             
         except Exception as e:
@@ -550,22 +557,22 @@ class CapacityPlanner:
                 return 0.0
             # 获取最近48小时的用户数据
             user_data = []
-                record['usage']['concurrent_users'] 
-                for record in self.usage_history[-48:]:
+                record['usage']['concurrent_users']
+                for record in self.usage_history[ - 48:]:
 [            ]
             
             if len(user_data) < 24:
                 return 0.0
             # 计算增长率
-            first_half = user_data[:len(user_data)//2]
-            second_half = user_data[len(user_data)//2:]
+            first_half = user_data[:len(user_data) / /2]
+            second_half = user_data[len(user_data) / /2:]
             
             first_avg = np.mean(first_half)
             second_avg = np.mean(second_half)
             
             if first_avg > 0:
                 growth_rate = (second_avg - first_avg) / first_avg
-                return max(-0.1, min(0.5, growth_rate))  # 限制在-10%到50%之间
+                return max( - 0.1, min(0.5, growth_rate))  # 限制在 - 10%到50%之间
             
             return 0.0
         except Exception as e:
@@ -579,22 +586,22 @@ class CapacityPlanner:
                 return 0.0
             # 获取最近48小时的请求数据
             request_data = []
-                record['usage']['request_rate'] 
-                for record in self.usage_history[-48:]:
+                record['usage']['request_rate']
+                for record in self.usage_history[ - 48:]:
 [            ]
             
             if len(request_data) < 24:
                 return 0.0
             # 计算增长率
-            first_half = request_data[:len(request_data)//2]
-            second_half = request_data[len(request_data)//2:]
+            first_half = request_data[:len(request_data) / /2]
+            second_half = request_data[len(request_data) / /2:]
             
             first_avg = np.mean(first_half)
             second_avg = np.mean(second_half)
             
             if first_avg > 0:
                 growth_rate = (second_avg - first_avg) / first_avg
-                return max(-0.1, min(1.0, growth_rate))  # 限制在-10%到100%之间
+                return max( - 0.1, min(1.0, growth_rate))  # 限制在 - 10%到100%之间
             
             return 0.0
         except Exception as e:
@@ -613,39 +620,39 @@ class CapacityPlanner:
             if prediction.urgency == 'critical':
                 action = 'scale_up'
                 target_capacity = prediction.predicted_need * 1.5
-                execution_time = datetime.now(timezone.utc()) + timedelta(hours=1)
+                execution_time = datetime.now(timezone.utc()) + timedelta(hours = 1)
                 auto_approve = True
             elif prediction.urgency == 'high':
                 action = 'scale_up'
                 target_capacity = prediction.predicted_need * 1.2
-                execution_time = datetime.now(timezone.utc()) + timedelta(hours=4)
+                execution_time = datetime.now(timezone.utc()) + timedelta(hours = 4)
                 auto_approve = True
             elif prediction.urgency == 'medium':
                 action = 'scale_up'
                 target_capacity = prediction.predicted_need * 1.1
-                execution_time = datetime.now(timezone.utc()) + timedelta(hours=12)
+                execution_time = datetime.now(timezone.utc()) + timedelta(hours = 12)
                 auto_approve = False
             else:
                 return  # 低紧急程度不需要扩容
             
             # 计算成本
             estimated_cost = self._calculate_scaling_cost()
-                prediction.resource_type, 
-                prediction.current_capacity, 
+                prediction.resource_type,
+                prediction.current_capacity,
                 target_capacity
 (            )
             
             # 创建扩容计划
             plan = ScalingPlan()
-                plan_id=f"scale_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{prediction.resource_type}",
-                resource_type=prediction.resource_type,
-                action=action,
-                target_capacity=target_capacity,
-                current_capacity=prediction.current_capacity,
-                execution_time=execution_time,
-                estimated_cost=estimated_cost,
-                rollback_plan=f"回滚至 {prediction.current_capacity} {prediction.resource_type}",
-                auto_approve=auto_approve
+                plan_id = f"scale_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{prediction.resource_type}",
+                resource_type = prediction.resource_type,
+                action = action,
+                target_capacity = target_capacity,
+                current_capacity = prediction.current_capacity,
+                execution_time = execution_time,
+                estimated_cost = estimated_cost,
+                rollback_plan = f"回滚至 {prediction.current_capacity} {prediction.resource_type}",
+                auto_approve = auto_approve
 (            )
             
             # 保存扩容计划
@@ -664,7 +671,8 @@ class CapacityPlanner:
         except Exception as e:
             logger.error(f"创建扩容计划失败: {e}")
     
-    def _calculate_scaling_cost(self, resource_type: str, current: float, target: float) -> float:
+    def _calculate_scaling_cost(self, resource_type: str, current: float,
+    target: float) -> float:
         """计算扩容成本"""
         try:
             if resource_type == 'cpu':
@@ -688,7 +696,8 @@ class CapacityPlanner:
             logger.error(f"计算扩容成本失败: {e}")
             return 0.0
 
-    async def _send_scaling_notification(self, plan: ScalingPlan, prediction: CapacityPrediction):
+    async def _send_scaling_notification(self, plan: ScalingPlan,
+    prediction: CapacityPrediction):
         """发送扩容通知"""
         try:
             notification = {}
@@ -723,7 +732,7 @@ class CapacityPlanner:
                 current_time = datetime.now(timezone.utc())
                 upcoming_plans = []
                     plan for plan in self.capacity_plans.values()
-                    if plan.execution_time <= current_time + timedelta(hours=24):
+                    if plan.execution_time <= current_time + timedelta(hours = 24):
 [                ]
 
                 # 执行自动批准的计划
@@ -734,13 +743,14 @@ class CapacityPlanner:
                 # 清理过期计划
                 expired_plans = []
                     plan_id for plan_id, plan in self.capacity_plans.items()
-                    if plan.execution_time < current_time - timedelta(days=1):
+                    if plan.execution_time < current_time - timedelta(days = 1):
 [                ]
 
                 for plan_id in expired_plans:
                     del self.capacity_plans[plan_id]
                     if self.redis_available and self.redis_client:
-                        await self.redis_client.delete(f"capacity_planner:plan:{plan_id}")
+                        await self.redis_client.delete(f"capacity_planner:plan:{plan_id}\
+    ")
                 
             except Exception as e:
                 logger.error(f"定期容量检查失败: {e}")
@@ -778,20 +788,22 @@ class CapacityPlanner:
         except Exception as e:
             logger.error(f"执行扩容计划失败: {e}")
     
-    async def get_capacity_predictions(self, resource_type: Optional[str] = None) -> List[CapacityPrediction]:
+    async def get_capacity_predictions(self,
+    resource_type: Optional[str] = None) -> List[CapacityPrediction]:
         """获取容量预测"""
         try:
             predictions: List[CapacityPrediction] = []
             
             if self.redis_available and self.redis_client:
                 # 从Redis获取最近的预测
-                keys = await self.redis_client.keys("capacity_planner:prediction:*")
+                keys = await self.redis_client.keys("capacity_planner:prediction: * ")
                 for key in keys:
                     data = await self.redis_client.get(key)
                     if data:
                         pred = json.loads(data)
-                        if resource_type is None or pred['resource_type'] == resource_type:
-                            predictions.append(CapacityPrediction(**pred))
+                        if resource_type is None or \
+    pred['resource_type'] == resource_type:
+                            predictions.append(CapacityPrediction( * *pred))
             
             return predictions
             
@@ -799,7 +811,8 @@ class CapacityPlanner:
             logger.error(f"获取容量预测失败: {e}")
             return []
     
-    async def get_scaling_plans(self, resource_type: Optional[str] = None) -> List[ScalingPlan]:
+    async def get_scaling_plans(self,
+    resource_type: Optional[str] = None) -> List[ScalingPlan]:
         """获取扩容计划"""
         try:
             plans: List[ScalingPlan] = []
@@ -846,7 +859,7 @@ class CapacityPlanner:
         """获取容量报告"""
         try:
             # 获取时间范围内的数据
-            cutoff_time = datetime.now(timezone.utc()) - timedelta(hours=time_range)
+            cutoff_time = datetime.now(timezone.utc()) - timedelta(hours = time_range)
             recent_data = []
                 record for record in self.usage_history
                 if datetime.fromisoformat(record['timestamp']) > cutoff_time:
@@ -877,11 +890,12 @@ class CapacityPlanner:
         try:
             summary = {}
             
-            for resource in ['cpu_cores', 'memory_gb', 'disk_gb', 'network_mbps', 'gpu_count']:
+            for resource in ['cpu_cores', 'memory_gb', 'disk_gb', 'network_mbps',
+    'gpu_count']:
                 values = [record['usage'].get(resource, 0.0) for record in data]
                 if values:
                     summary[resource] = {}
-                        'current': values[-1] if values else 0.0,
+                        'current': values[ - 1] if values else 0.0,
                         'average': np.mean(values) if values else 0.0,
                         'min': np.min(values) if values else 0.0,
                         'max': np.max(values) if values else 0.0,
@@ -954,7 +968,7 @@ class CapacityPlanner:
             logger.error(f"分析成本趋势失败: {e}")
             return {}
 
-# 全局容量规划引擎实例 (由外部统一管理,此处不再创建)
+# 全局容量规划引擎实例 (由外部统一管理, 此处不再创建)
 # capacity_planner = CapacityPlanner()
 
 # async def get_capacity_planner() -> CapacityPlanner:

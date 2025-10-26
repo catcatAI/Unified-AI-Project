@@ -9,7 +9,7 @@ from .storage.base import
 
 logger, Any = logging.getLogger(__name__)
 
-def serialize_context(context, Context) -> bytes,:
+def serialize_context(context, Context) -> bytes, :
     """
     序列化上下文对象
 
@@ -34,12 +34,12 @@ def serialize_context(context, Context) -> bytes,:
 {    }
 
     json_str = json.dumps(context_dict, ensure_ascii == False)
-    return json_str.encode('utf-8')
-    except Exception as e,::
+    return json_str.encode('utf - 8')
+    except Exception as e, ::
     logger.error(f"Failed to serialize context {context.context_id} {e}")
     raise
 
-def deserialize_context(data, bytes) -> Context,:
+def deserialize_context(data, bytes) -> Context, :
     """
     反序列化上下文对象
 
@@ -53,11 +53,11 @@ def deserialize_context(data, bytes) -> Context,:
 
 from .storage.base import
 
-    json_str = data.decode('utf-8')
+    json_str = data.decode('utf - 8')
     context_dict = json.loads(json_str)
 
     context == Context()
-            context_id=context_dict["context_id"],
+            context_id = context_dict["context_id"],
     context_type == ContextType(context_dict["context_type"])
 (    )
 
@@ -70,11 +70,11 @@ from .storage.base import
     context.tags = context_dict["tags"]
 
     return context
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"Failed to deserialize context, {e}")
     raise
 
-def compress_context_data(data, bytes) -> bytes,:
+def compress_context_data(data, bytes) -> bytes, :
     """
     压缩上下文数据
 
@@ -88,11 +88,11 @@ def compress_context_data(data, bytes) -> bytes,:
 
 # TODO: Fix import - module 'zlib' not found
     return zlib.compress(data)
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"Failed to compress context data, {e}")
     raise
 
-def decompress_context_data(data, bytes) -> bytes,:
+def decompress_context_data(data, bytes) -> bytes, :
     """
     解压缩上下文数据
 
@@ -105,11 +105,11 @@ def decompress_context_data(data, bytes) -> bytes,:
     try,
 
     return zlib.decompress(data)
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"Failed to decompress context data, {e}")
     raise
 
-def encrypt_context_data(data, bytes, key, Optional[bytes] = None) -> bytes,:
+def encrypt_context_data(data, bytes, key, Optional[bytes] = None) -> bytes, :
     """
     加密上下文数据
 
@@ -122,8 +122,8 @@ def encrypt_context_data(data, bytes, key, Optional[bytes] = None) -> bytes,:
     """
     try,
 
-        if key is None,::
-            # 如果没有提供密钥,返回原始数据(不加密)
+        if key is None, ::
+            # 如果没有提供密钥, 返回原始数据(不加密)
             logger.warning("No encryption key provided, returning raw data")
             return data
 
@@ -135,11 +135,11 @@ def encrypt_context_data(data, bytes, key, Optional[bytes] = None) -> bytes,:
             ncrypted.append(byte ^ key[i % key_len])
 
     return bytes(encrypted)
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"Failed to encrypt context data, {e}")
     raise
 
-def decrypt_context_data(data, bytes, key, Optional[bytes] = None) -> bytes,:
+def decrypt_context_data(data, bytes, key, Optional[bytes] = None) -> bytes, :
     """
     解密上下文数据
 
@@ -152,18 +152,18 @@ def decrypt_context_data(data, bytes, key, Optional[bytes] = None) -> bytes,:
     """
     try,
 
-        if key is None,::
-            # 如果没有提供密钥,返回原始数据(不解密)
+        if key is None, ::
+            # 如果没有提供密钥, 返回原始数据(不解密)
             logger.warning("No decryption key provided, returning raw data")
             return data
 
-    # XOR加密是对称的,解密过程与加密过程相同
+    # XOR加密是对称的, 解密过程与加密过程相同
     return encrypt_context_data(data, key)
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"Failed to decrypt context data, {e}")
     raise
 
-def calculate_context_hash(context, Context) -> str,:
+def calculate_context_hash(context, Context) -> str, :
     """
     计算上下文的哈希值
 
@@ -179,11 +179,11 @@ def calculate_context_hash(context, Context) -> str,:
     # 计算哈希值
     hash_object = hashlib.sha256(serialized_data)
     return hash_object.hexdigest()
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"Failed to calculate context hash, {e}")
     raise
 
-def validate_context(context, Context) -> bool,:
+def validate_context(context, Context) -> bool, :
     """
     验证上下文对象的有效性
 
@@ -194,32 +194,32 @@ def validate_context(context, Context) -> bool,:
     """
     try,
     # 检查必需字段
-        if not context.context_id,::
+        if not context.context_id, ::
     logger.error("Context ID is required")
             return False
 
-        if not context.context_type,::
+        if not context.context_type, ::
     logger.error("Context type is required")
             return False
 
-        if context.created_at > datetime.now,::
+        if context.created_at > datetime.now, ::
     logger.error("Context created_at cannot be in the future")
             return False
 
-        if context.updated_at > datetime.now,::
+        if context.updated_at > datetime.now, ::
     logger.error("Context updated_at cannot be in the future")
             return False
 
-        if context.created_at > context.updated_at,::
+        if context.created_at > context.updated_at, ::
     logger.error("Context created_at cannot be later than updated_at")
             return False
 
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"Failed to validate context, {e}")
     return False
 
-def merge_contexts(context1, Context, context2, Context) -> Context,:
+def merge_contexts(context1, Context, context2, Context) -> Context, :
     """
     合并两个上下文对象
 
@@ -234,34 +234,34 @@ def merge_contexts(context1, Context, context2, Context) -> Context,:
 
 from .storage.base import
 
-    # 创建新的上下文对象,使用较新的ID和类型
+    # 创建新的上下文对象, 使用较新的ID和类型
     merged_context == Context()
-    context_id == context2.context_id if context2.updated_at > context1.updated_at else context1.context_id(),::
-    context_type == context2.context_type if context2.updated_at > context1.updated_at else context1.context_type,::
+    context_id == context2.context_id if context2.updated_at > context1.updated_at else context1.context_id(), ::
+    context_type == context2.context_type if context2.updated_at > context1.updated_at else context1.context_type, ::
     # 合并时间戳(取较新的)
     merged_context.created_at = min(context1.created_at(), context2.created_at())
     merged_context.updated_at = max(context1.updated_at(), context2.updated_at())
 
     # 合并元数据
-    merged_context.metadata = {**context1.metadata(), **context2.metadata}
+    merged_context.metadata = { * *context1.metadata(), * * context2.metadata}
 
     # 合并内容
-    merged_context.content = {**context1.content(), **context2.content}
+    merged_context.content = { * *context1.content(), * * context2.content}
 
     # 合并标签
     merged_context.tags = list(set(context1.tags + context2.tags()))
 
     # 合并版本信息
-    merged_context.version = f"{context1.version}-{context2.version}"
+    merged_context.version = f"{context1.version} - {context2.version}"
 
     return merged_context
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"Failed to merge contexts, {e}")
     raise
 
 def filter_context_content(content, Dict[...]:)
     """
-    过滤上下文内容,只保留允许的键
+    过滤上下文内容, 只保留允许的键
 
     Args,
     content, 原始内容字典
@@ -271,11 +271,11 @@ def filter_context_content(content, Dict[...]:)
     """
     try,
 
-    filtered_content == for key in allowed_keys,::
-    if key in content,::
+    filtered_content == for key in allowed_keys, ::
+    if key in content, ::
     filtered_content[key] = content[key]
     return filtered_content
-    except Exception as e,::,:
+    except Exception as e, ::, :
     logger.error(f"Failed to filter context content, {e}"):
         aise
 

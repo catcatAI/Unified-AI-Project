@@ -4,9 +4,9 @@
 提供命令行接口来执行自动训练流程
 """
 
-import sys
-import argparse
-import json
+from system_test import
+# TODO: Fix import - module 'argparse' not found
+from tests.test_json_fix import
 from pathlib import Path
 from datetime import datetime
 
@@ -16,7 +16,7 @@ sys.path.insert(0, str(project_root))
 
 from training.auto_training_manager import AutoTrainingManager
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     parser = argparse.ArgumentParser(description='Unified AI Project 自动训练系统')
     parser.add_argument('--config', type=str, help='指定训练配置文件路径')
@@ -60,7 +60,7 @@ def main() -> None,
             output_path = auto_trainer.training_dir / "reports" / f"auto_training_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         
         # 保存报告
-        with open(output_path, 'w', encoding == 'utf-8') as f,
+        with open(output_path, 'w', encoding == 'utf-8') as f,:
             json.dump(report, f, ensure_ascii == False, indent=2)
         
         print(f"✅ 自动训练完成,详细报告已保存至, {output_path}")
@@ -84,13 +84,13 @@ def main() -> None,
         training_results = report.get('training_results', {})
         print(f"\n🎯 训练结果,")
         for scenario, result in training_results.items():::
-            status == "✅ 成功" if result.get('success', False) else "❌ 失败":::
- = print(f"   {scenario} {status}")
+            status == "✅ 成功", if result.get('success', False) else "❌ 失败":::
+= print(f"   {scenario} {status}")
         
     except Exception as e,::
         print(f"❌ 自动训练过程中发生错误, {e}")
         if args.verbose,::
-            import traceback
+# TODO: Fix import - module 'traceback' not found
             traceback.print_exc()
         sys.exit(1)
 

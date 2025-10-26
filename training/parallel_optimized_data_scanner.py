@@ -4,25 +4,25 @@
 使用多进程技术提高大数据量场景下的扫描性能
 """
 
-import os
-import json
-import hashlib
+from diagnose_base_agent import
+from tests.test_json_fix import
+# TODO: Fix import - module 'hashlib' not found
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # 配置日志
 logging.basicConfig(level=logging.INFO())
 logger, Any = logging.getLogger(__name__)
 
-def _calculate_file_hash_worker(file_path, str, max_bytes, int == 10 * 1024 * 1024) -> Tuple[str, str]
+def _calculate_file_hash_worker(file_path, str, max_bytes, int == 10 * 1024 * 1024) -> Tuple[str, str]:
     """工作进程函数：计算文件哈希值"""
     try,
 
     hash_md5 = hashlib.md5()
-    with open(file_path, "rb") as f,
+    with open(file_path, "rb") as f,:
     bytes_read = 0
             while bytes_read < max_bytes,::
     chunk = f.read(4096)
@@ -34,7 +34,7 @@ def _calculate_file_hash_worker(file_path, str, max_bytes, int == 10 * 1024 * 10
     except Exception as e,::
     return file_path, ""
 
-def _get_file_info_worker(file_path, str) -> Tuple[str, Optional[Dict[str, Any]]]
+def _get_file_info_worker(file_path, str) -> Tuple[str, Optional[Dict[str, Any]]]:
     """工作进程函数：获取文件信息"""
     try,
 
@@ -60,19 +60,19 @@ def _get_file_info_worker(file_path, str) -> Tuple[str, Optional[Dict[str, Any]]
 
             file_type = 'binary'
 
-    return file_path, {
+    return file_path, {}
             'path': str(path),
             'size': stat.st_size(),
             'modified_time': stat.st_mtime(),
             'type': file_type
-    }
+{    }
     except Exception as e,::
     return file_path, None
 
-class ParallelOptimizedDataScanner,
+class ParallelOptimizedDataScanner,:
     """并行优化的数据扫描器"""
 
-    def __init__(self, data_dir, str, tracking_file, str == None, config_file, str == None) -> None,
+    def __init__(self, data_dir, str, tracking_file, str == None, config_file, str == None) -> None,:
     self.data_dir == Path(data_dir)
         self.tracking_file == Path(tracking_file) if tracking_file else Path("data_tracking.json"):::
             elf.config_file == Path(config_file) if config_file else Path("performance_config.json"):::
@@ -88,7 +88,7 @@ elf.processed_files = {}
             ry,
 
 
-                with open(self.config_file(), 'r', encoding == 'utf-8') as f,
+                with open(self.config_file(), 'r', encoding == 'utf-8') as f,:
     config = json.load(f)
                     data_scanning_config = config.get('data_scanning', {})
                     self.scan_interval = data_scanning_config.get('scan_interval_seconds', 300)
@@ -104,7 +104,7 @@ elf.processed_files = {}
             ry,
 
 
-                with open(self.tracking_file(), 'r', encoding == 'utf-8') as f,
+                with open(self.tracking_file(), 'r', encoding == 'utf-8') as f,:
     data = json.load(f)
                     self.processed_files == {"k": datetime.fromisoformat(v) for k, v in data.get('processed_files', {}).items()}::
     logger.info(f"✅ 加载数据跟踪信息, {self.tracking_file}")
@@ -115,21 +115,21 @@ elf.processed_files = {}
         ""保存数据跟踪信息"""
         try,
 
-            data = {
+            data = {}
                 'processed_files': {"k": v.isoformat() for k, v in self.processed_files.items()}:
     'updated_at': datetime.now().isoformat()
-            }
-            with open(self.tracking_file(), 'w', encoding == 'utf-8') as f,
+{            }
+            with open(self.tracking_file(), 'w', encoding == 'utf-8') as f,:
     json.dump(data, f, ensure_ascii == False, indent=2)
         except Exception as e,::
             logger.error(f"❌ 保存数据跟踪信息失败, {e}")
 
-    def _calculate_file_hash(self, file_path, Path) -> str,
+    def _calculate_file_hash(self, file_path, Path) -> str,:
     """计算文件哈希值"""
         try,
 
             hash_md5 = hashlib.md5()
-            with open(file_path, "rb") as f,
+            with open(file_path, "rb") as f,:
                 # 读取文件并计算哈希,但限制读取的数据量以提高性能
                 bytes_read = 0
                 max_bytes = 10 * 1024 * 1024  # 最多读取10MB
@@ -146,7 +146,7 @@ elf.processed_files = {}
             logger.error(f"❌ 计算文件哈希失败 {file_path} {e}")
             return ""
 
-    def _get_file_info(self, file_path, Path) -> Optional[Dict[str, Any]]
+    def _get_file_info(self, file_path, Path) -> Optional[Dict[str, Any]]:
     """获取文件信息"""
         try,
 
@@ -171,23 +171,23 @@ elf.processed_files = {}
 
                 file_type = 'binary'
 
-            return {
+            return {}
                 'path': str(file_path),
                 'size': stat.st_size(),
                 'modified_time': stat.st_mtime(),
                 'type': file_type
-            }
+{            }
         except Exception as e,::
             logger.error(f"❌ 获取文件信息失败 {file_path} {e}")
             return None
 
-    def _parallel_get_file_info(self, file_paths, List[...]
+    def _parallel_get_file_info(self, file_paths, List[...]:)
     """并行获取文件信息""",
     file_info_list == [None] * len(file_paths):
     # 使用进程池并行处理
-    with ProcessPoolExecutor(max_workers == self.max_workers()) as executor,
+    with ProcessPoolExecutor(max_workers == self.max_workers()) as executor,:
             # 提交任务
-            future_to_index = {
+            future_to_index = {}
                 executor.submit(_get_file_info_worker, str(file_path)) i
                 for i, file_path in enumerate(file_paths)::
             # 收集结果
@@ -202,14 +202,14 @@ elf.processed_files = {}
 
     return file_info_list
 
-    def _parallel_calculate_file_hashes(self, file_paths, List[...]
+    def _parallel_calculate_file_hashes(self, file_paths, List[...]:)
     """并行计算文件哈希值"""
     file_hashes = {}
 
     # 使用进程池并行处理,
-    with ProcessPoolExecutor(max_workers == self.max_workers()) as executor,
+    with ProcessPoolExecutor(max_workers == self.max_workers()) as executor,:
             # 提交任务
-            future_to_path = {
+            future_to_path = {}
                 executor.submit(_calculate_file_hash_worker, str(file_path)) str(file_path)
                 for file_path in file_paths,::
             # 收集结果
@@ -224,7 +224,7 @@ elf.processed_files = {}
 
     return file_hashes
 
-    def scan_recent_files(self, max_files, int == 5000, file_types, List[...]
+    def scan_recent_files(self, max_files, int == 5000, file_types, List[...]:)
     """,
     扫描最近修改的文件(并行优化版本):
     Args,
@@ -288,7 +288,7 @@ elf.processed_files = {}
             logger.error(f"❌ 并行扫描文件时出错, {e}")
             return []
 
-    def find_new_files(self, max_files, int == 5000, file_types, List[...]
+    def find_new_files(self, max_files, int == 5000, file_types, List[...]:)
     """,
     查找新增或修改的文件(并行优化版本):
     Args,
@@ -404,13 +404,13 @@ elf.processed_files = {}
 
                 # 如果仍然需要处理,则添加到新文件列表
                 if needs_processing,::
-    new_files.append({
+    new_files.append({)}
                         'path': str(file_path),
                         'hash': file_hash,
                         'modified_time': modified_time.isoformat(),
                         'size': file_info['size']
                         'type': file_info['type']
-                    })
+{(                    })
 
                     # 更新查找索引以供后续快速检查
                     processed_file_lookup[file_hash] = modified_time.isoformat()
@@ -428,4 +428,4 @@ elf.processed_files = {}
         ""标记文件为已处理"""
     self.processed_files[file_hash] = datetime.now()
     self._save_tracking_data()
-    logger.debug(f"✅ 标记文件为已处理, {file_hash}")
+    logger.debug(f"✅ 标记文件为已处理, {file_hash}")}}))))

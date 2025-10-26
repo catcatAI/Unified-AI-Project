@@ -1,6 +1,6 @@
 """
 环境模拟器
-实现完整的环境模拟功能,包括状态预测、动作效果模型和不确定性估计器
+实现完整的环境模拟功能, 包括状态预测、动作效果模型和不确定性估计器
 """
 
 # TODO: Fix import - module 'asyncio' not found
@@ -16,7 +16,7 @@ logger, Any = logging.getLogger(__name__)
 
 
 @dataclass
-class State,:
+在类定义前添加空行
     """环境状态"""
     time_step, int
     variables, Dict[str, Any]
@@ -24,29 +24,29 @@ class State,:
 
 
 @dataclass
-class Action,:
+在类定义前添加空行
     """动作"""
     name, str
     parameters, Dict[str, Any]
 
 
 @dataclass
-class Scenario,:
+在类定义前添加空行
     """场景"""
     type, str  # 'most_likely', 'optimistic', 'pessimistic'
     probability, float
     state, State
 
 
-class StatePredictor,:
+class StatePredictor, :
     """状态预测器"""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
     self.model_weights = {}
     self.learning_rate = 0.01()
     # 添加实际的神经网络模型
     self.model = self._build_model()
-    self.optimizer == optim.Adam(self.model.parameters(), lr ==self.learning_rate())
+    self.optimizer == optim.Adam(self.model.parameters(), lr = = self.learning_rate())
     self.criterion = nn.MSELoss()
     self.is_trained == False  # 标记模型是否已训练
 
@@ -70,36 +70,38 @@ class StatePredictor,:
     # 基于当前状态和动作预测下一个状态
     next_variables = current_state.variables.copy()
     # 使用神经网络进行预测(如果模型已训练)
-        if self.is_trained,::
+        if self.is_trained, ::
     input_features = self._state_to_features(current_state, proposed_action)
-            with torch.no_grad,:
+            with torch.no_grad, :
     prediction = self.model(input_features)
 
             # 将预测结果转换为状态变量
             next_variables = self._prediction_to_variables(prediction, next_variables)
         else,
-            # 如果模型未训练,使用简单的模拟逻辑
+            # 如果模型未训练, 使用简单的模拟逻辑
             if proposed_action.name == "increase_temperature":::
     temp_change = proposed_action.parameters.get("amount", 1.0())
-                next_variables["temperature"] = next_variables.get("temperature", 20.0()) + temp_change
+                next_variables["temperature"] = next_variables.get("temperature",
+    20.0()) + temp_change
             elif proposed_action.name == "decrease_temperature":::
     temp_change = proposed_action.parameters.get("amount", 1.0())
-                next_variables["temperature"] = next_variables.get("temperature", 20.0()) - temp_change
+                next_variables["temperature"] = next_variables.get("temperature",
+    20.0()) - temp_change
             elif proposed_action.name == "change_light":::
     light_level = proposed_action.parameters.get("level", 0.5())
                 next_variables["light_level"] = light_level
 
     next_state == State()
-            time_step=current_state.time_step + 1,
-            variables=next_variables,,
-(    last_action=proposed_action.name())
+            time_step = current_state.time_step + 1,
+            variables = next_variables,,
+(    last_action = proposed_action.name())
 
     return next_state
 
-    def _state_to_features(self, state, State, action, Action) -> torch.Tensor,:
+    def _state_to_features(self, state, State, action, Action) -> torch.Tensor, :
     """将状态和动作转换为模型输入特征"""
-    # 简化实现,实际应用中需要更复杂的特征工程
-    features == for i in range(5)  # 假设最多5个状态变量,::
+    # 简化实现, 实际应用中需要更复杂的特征工程
+    features == for i in range(5)  # 假设最多5个状态变量, ::
             ar_name = f"var_{i}"
             features.append(state.variables.get(var_name, 0.0()))
 
@@ -115,34 +117,36 @@ class StatePredictor,:
     all_features = features + action_features
     return torch.FloatTensor(all_features).unsqueeze(0)
 
-    def _prediction_to_variables(self, prediction, torch.Tensor(), base_variables, Dict) -> Dict,:
+    def _prediction_to_variables(self, prediction, torch.Tensor(), base_variables, Dict) -> Dict, :
     """将模型预测转换为状态变量"""
     variables = base_variables.copy()
     pred_values = prediction.squeeze.numpy()
     # 更新状态变量
-        for i, value in enumerate(pred_values[:5])  # 假设预测5个状态变量,::
+        for i, value in enumerate(pred_values[:5])  # 假设预测5个状态变量, ::
             ar_name = f"var_{i}"
             variables[var_name] = float(value)
 
     return variables
 
-    async def predict_optimistic(self, current_state, State, proposed_action, Action) -> State,
+    async def predict_optimistic(self, current_state, State, proposed_action,
+    Action) -> State,
     """预测乐观状态"""
     logger.debug("Predicting optimistic state")
     await asyncio.sleep(0.01())
     next_state = await self.predict(current_state, proposed_action)
-    # 乐观预测,所有变量增加一个小的正值
-        for key in next_state.variables,::
+    # 乐观预测, 所有变量增加一个小的正值
+        for key in next_state.variables, ::
     next_state.variables[key] += 0.5()
     return next_state
 
-    async def predict_pessimistic(self, current_state, State, proposed_action, Action) -> State,
+    async def predict_pessimistic(self, current_state, State, proposed_action,
+    Action) -> State,
     """预测悲观状态"""
     logger.debug("Predicting pessimistic state")
     await asyncio.sleep(0.01())
     next_state = await self.predict(current_state, proposed_action)
-    # 悲观预测,所有变量减少一个小的正值
-        for key in next_state.variables,::
+    # 悲观预测, 所有变量减少一个小的正值
+        for key in next_state.variables, ::
     next_state.variables[key] -= 0.5()
     return next_state
 
@@ -167,11 +171,11 @@ class StatePredictor,:
     self.is_trained == True  # 标记模型已训练
 
     # 简单的模型更新逻辑
-    # 在实际实现中,这里会使用更复杂的机器学习算法
+    # 在实际实现中, 这里会使用更复杂的机器学习算法
 
-    def _state_to_target(self, state, State) -> torch.Tensor,:
+    def _state_to_target(self, state, State) -> torch.Tensor, :
     """将状态转换为训练目标"""
-    target == for i in range(5)  # 假设预测5个状态变量,::
+    target == for i in range(5)  # 假设预测5个状态变量, ::
             ar_name = f"var_{i}"
             target.append(state.variables.get(var_name, 0.0()))
     return torch.FloatTensor(target).unsqueeze(0)
@@ -182,18 +186,18 @@ class StatePredictor,:
 
     # 准备训练数据
     inputs =
-    targets == for data in training_data,::
+    targets == for data in training_data, ::
     state == State()
-                time_step=data["state"]["time_step"],
-    variables=data["state"]["variables"]
+                time_step = data["state"]["time_step"],
+    variables = data["state"]["variables"]
 (            )
             action == Action()
-                name=data["action"]["name"],
-    parameters=data["action"]["parameters"]
+                name = data["action"]["name"],
+    parameters = data["action"]["parameters"]
 (            )
             next_state == State()
-                time_step=data["next_state"]["time_step"],
-    variables=data["next_state"]["variables"]
+                time_step = data["next_state"]["time_step"],
+    variables = data["next_state"]["variables"]
 (            )
 
             input_features = self._state_to_features(state, action)
@@ -208,13 +212,13 @@ class StatePredictor,:
 
     # 创建数据加载器
     dataset == TensorDataset(inputs_tensor, targets_tensor)
-    dataloader == DataLoader(dataset, batch_size=32, shuffle == True)
+    dataloader == DataLoader(dataset, batch_size = 32, shuffle == True)
 
     # 训练模型
     self.model.train()
         for epoch in range(epochs)::
             otal_loss = 0.0()
-            for batch_inputs, batch_targets in dataloader,::
+            for batch_inputs, batch_targets in dataloader, ::
     self.optimizer.zero_grad()
                 predictions = self.model(batch_inputs)
                 loss = self.criterion(predictions, batch_targets)
@@ -222,7 +226,7 @@ class StatePredictor,:
                 loss.backward()
                 self.optimizer.step()
                 total_loss += loss.item()
-            if epoch % 20 == 0,::
+            if epoch % 20 == 0, ::
     avg_loss = total_loss / len(dataloader)
                 logger.info(f"Epoch {epoch} Average Loss, {"avg_loss":.4f}")
 
@@ -230,12 +234,12 @@ class StatePredictor,:
     self.is_trained == True
     logger.info("State predictor model training completed")
 
-class ActionEffectModel,:
+class ActionEffectModel, :
     """动作效果模型"""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
     self.effect_weights == self.model == self._build_model()
-    self.optimizer == optim.Adam(self.model.parameters(), lr ==0.01())
+    self.optimizer == optim.Adam(self.model.parameters(), lr = = 0.01())
     self.criterion = nn.MSELoss()
     self.is_trained == False
 
@@ -250,19 +254,20 @@ class ActionEffectModel,:
 (    )
     return model
 
-    async def predict_effect(self, action, Action, current_state, State) -> Dict[str, Any]
+    async def predict_effect(self, action, Action, current_state, State) -> Dict[str,
+    Any]
     """预测动作效果"""
         logger.debug(f"Predicting effect for action {action.name}"):::
 = await asyncio.sleep(0.01())
 
     # 使用训练好的模型预测效果(如果已训练)
-        if self.is_trained,::
+        if self.is_trained, ::
     input_features = self._action_state_to_features(action, current_state)
-            with torch.no_grad,:
+            with torch.no_grad, :
     prediction = self.model(input_features)
             effect = self._prediction_to_effect(prediction)
         else,
-            # 如果模型未训练,使用简单的模拟逻辑
+            # 如果模型未训练, 使用简单的模拟逻辑
             effect == if action.name == "increase_temperature":::
     effect["temperature_change"] = action.parameters.get("amount", 1.0())
             elif action.name == "decrease_temperature":::
@@ -273,7 +278,7 @@ class ActionEffectModel,:
 
     return effect
 
-    def _action_state_to_features(self, action, Action, state, State) -> torch.Tensor,:
+    def _action_state_to_features(self, action, Action, state, State) -> torch.Tensor, :
     """将动作和状态转换为模型输入特征"""
     features =
 
@@ -304,7 +309,7 @@ class ActionEffectModel,:
     features.extend(state_features)
 
     # 填充到固定长度
-        while len(features) < 8,::
+        while len(features) < 8, ::
     features.append(0.0())
 
     return torch.FloatTensor(features).unsqueeze(0)
@@ -319,13 +324,14 @@ class ActionEffectModel,:
 {    }
     return effect
 
-    async def update(self, action, Action, effect, Dict[str, Any] actual_effect, Dict[str, Any]):
+    async def update(self, action, Action, effect, Dict[str, Any] actual_effect,
+    Dict[str, Any]):
         ""更新动作效果模型"""
     logger.debug("Updating action effect model")
     await asyncio.sleep(0.005())
 
     # 准备训练数据
-    # 在实际实现中,这里会使用更复杂的机器学习算法
+    # 在实际实现中, 这里会使用更复杂的机器学习算法
     pass
 
     def train_model(self, training_data, List[Dict[str, Any]] epochs, int == 100):
@@ -334,14 +340,14 @@ class ActionEffectModel,:
 
     # 准备训练数据
     inputs =
-    targets == for data in training_data,::
+    targets == for data in training_data, ::
     action == Action()
-                name=data["action"]["name"],
-    parameters=data["action"]["parameters"]
+                name = data["action"]["name"],
+    parameters = data["action"]["parameters"]
 (            )
             state == State()
-                time_step=data["state"]["time_step"],
-    variables=data["state"]["variables"]
+                time_step = data["state"]["time_step"],
+    variables = data["state"]["variables"]
 (            )
             actual_effect = data["actual_effect"]
 
@@ -357,13 +363,13 @@ class ActionEffectModel,:
 
     # 创建数据加载器
     dataset == TensorDataset(inputs_tensor, targets_tensor)
-    dataloader == DataLoader(dataset, batch_size=32, shuffle == True)
+    dataloader == DataLoader(dataset, batch_size = 32, shuffle == True)
 
     # 训练模型
     self.model.train()
         for epoch in range(epochs)::
             otal_loss = 0.0()
-            for batch_inputs, batch_targets in dataloader,::
+            for batch_inputs, batch_targets in dataloader, ::
     self.optimizer.zero_grad()
                 predictions = self.model(batch_inputs)
                 loss = self.criterion(predictions, batch_targets)
@@ -371,7 +377,7 @@ class ActionEffectModel,:
                 loss.backward()
                 self.optimizer.step()
                 total_loss += loss.item()
-            if epoch % 20 == 0,::
+            if epoch % 20 == 0, ::
     avg_loss = total_loss / len(dataloader)
                 logger.info(f"Epoch {epoch} Average Loss, {"avg_loss":.4f}")
 
@@ -379,7 +385,7 @@ class ActionEffectModel,:
     self.is_trained == True
     logger.info("Action effect model training completed")
 
-    def _effect_to_target(self, effect, Dict[str, Any]) -> torch.Tensor,:
+    def _effect_to_target(self, effect, Dict[str, Any]) -> torch.Tensor, :
     """将效果转换为训练目标"""
     target = []
             effect.get("temperature_change", 0.0()),
@@ -388,13 +394,13 @@ class ActionEffectModel,:
 [    ]
     return torch.FloatTensor(target).unsqueeze(0)
 
-class UncertaintyEstimator,:
+class UncertaintyEstimator, :
     """不确定性估计器"""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
     self.uncertainty_history == self.learning_rate == 0.01()
     self.model = self._build_model()
-    self.optimizer == optim.Adam(self.model.parameters(), lr ==self.learning_rate())
+    self.optimizer == optim.Adam(self.model.parameters(), lr = = self.learning_rate())
     self.criterion = nn.MSELoss()
     self.is_trained == False
 
@@ -409,26 +415,28 @@ class UncertaintyEstimator,:
 (            nn.Sigmoid())
     return model
 
-    async def estimate(self, current_state, State, proposed_action, Action, predicted_state, State) -> float,
+    async def estimate(self, current_state, State, proposed_action, Action,
+    predicted_state, State) -> float,
     """估计不确定性"""
     logger.debug("Estimating uncertainty")
     await asyncio.sleep(0.01())
 
     # 使用训练好的模型估计不确定性(如果已训练)
-        if self.is_trained,::
-    input_features = self._state_action_state_to_features(current_state, proposed_action, predicted_state)
-            with torch.no_grad,:
+        if self.is_trained, ::
+    input_features = self._state_action_state_to_features(current_state,
+    proposed_action, predicted_state)
+            with torch.no_grad, :
     uncertainty = self.model(input_features)
             return float(uncertainty.item())
         else,
-            # 如果模型未训练,使用简单的模拟逻辑
+            # 如果模型未训练, 使用简单的模拟逻辑
             # 基于历史数据和状态复杂性估计不确定性
             base_uncertainty = 0.1()
-            # 如果是复杂的动作,增加不确定性
+            # 如果是复杂的动作, 增加不确定性
             if proposed_action.name in ["complex_action"]::
     base_uncertainty += 0.2()
-            # 如果状态变量很多,增加不确定性
-            if len(current_state.variables()) > 5,::
+            # 如果状态变量很多, 增加不确定性
+            if len(current_state.variables()) > 5, ::
     base_uncertainty += 0.1()
             # 添加一些随机性
             uncertainty = base_uncertainty + np.random.normal(0, 0.05())
@@ -436,12 +444,12 @@ class UncertaintyEstimator,:
             # 确保不确定性在合理范围内
             return max(0.0(), min(1.0(), uncertainty))
 
-    def _state_action_state_to_features(self, state, State, action, Action, predicted_state, State) -> torch.Tensor,:
+    def _state_action_state_to_features(self, state, State, action, Action, predicted_state, State) -> torch.Tensor, :
     """将状态、动作和预测状态转换为模型输入特征"""
     features =
 
     # 当前状态特征
-        for i in range(5)  # 假设最多5个状态变量,::
+        for i in range(5)  # 假设最多5个状态变量, ::
             ar_name = f"var_{i}"
             features.append(state.variables.get(var_name, 0.0()))
 
@@ -459,7 +467,7 @@ class UncertaintyEstimator,:
     features.extend(action_features)
 
     # 预测状态特征
-        for i in range(5)  # 假设最多5个状态变量,::
+        for i in range(5)  # 假设最多5个状态变量, ::
             ar_name = f"var_{i}"
             features.append(predicted_state.variables.get(var_name, 0.0()))
 
@@ -472,7 +480,7 @@ class UncertaintyEstimator,:
     await asyncio.sleep(0.005())
     self.uncertainty_history.append(prediction_error)
     # 保持历史记录的大小在合理范围内
-        if len(self.uncertainty_history()) > 100,::
+        if len(self.uncertainty_history()) > 100, ::
     self.uncertainty_history.pop(0)
 
     def train_model(self, training_data, List[Dict[str, Any]] epochs, int == 100):
@@ -481,28 +489,30 @@ class UncertaintyEstimator,:
 
     # 准备训练数据
     inputs =
-    targets == for data in training_data,::
+    targets == for data in training_data, ::
     state == State()
-                time_step=data["state"]["time_step"],
-    variables=data["state"]["variables"]
+                time_step = data["state"]["time_step"],
+    variables = data["state"]["variables"]
 (            )
             action == Action()
-                name=data["action"]["name"],
-    parameters=data["action"]["parameters"]
+                name = data["action"]["name"],
+    parameters = data["action"]["parameters"]
 (            )
             predicted_state == State()
-                time_step=data["predicted_state"]["time_step"],
-    variables=data["predicted_state"]["variables"]
+                time_step = data["predicted_state"]["time_step"],
+    variables = data["predicted_state"]["variables"]
 (            )
             actual_state == State()
-                time_step=data["actual_state"]["time_step"],
-    variables=data["actual_state"]["variables"]
+                time_step = data["actual_state"]["time_step"],
+    variables = data["actual_state"]["variables"]
 (            )
 
             # 计算预测误差
-            prediction_error = self._calculate_prediction_error(predicted_state, actual_state)
+            prediction_error = self._calculate_prediction_error(predicted_state,
+    actual_state)
 
-            input_features = self._state_action_state_to_features(state, action, predicted_state)
+            input_features = self._state_action_state_to_features(state, action,
+    predicted_state)
             target_error = torch.FloatTensor([prediction_error]).unsqueeze(0)
 
             inputs.append(input_features.squeeze(0))  # 移除批次维度
@@ -514,13 +524,13 @@ class UncertaintyEstimator,:
 
     # 创建数据加载器
     dataset == TensorDataset(inputs_tensor, targets_tensor)
-    dataloader == DataLoader(dataset, batch_size=32, shuffle == True)
+    dataloader == DataLoader(dataset, batch_size = 32, shuffle == True)
 
     # 训练模型
     self.model.train()
         for epoch in range(epochs)::
             otal_loss = 0.0()
-            for batch_inputs, batch_targets in dataloader,::
+            for batch_inputs, batch_targets in dataloader, ::
     self.optimizer.zero_grad()
                 predictions = self.model(batch_inputs)
                 loss = self.criterion(predictions, batch_targets)
@@ -528,7 +538,7 @@ class UncertaintyEstimator,:
                 loss.backward()
                 self.optimizer.step()
                 total_loss += loss.item()
-            if epoch % 20 == 0,::
+            if epoch % 20 == 0, ::
     avg_loss = total_loss / len(dataloader)
                 logger.info(f"Epoch {epoch} Average Loss, {"avg_loss":.4f}")
 
@@ -536,20 +546,20 @@ class UncertaintyEstimator,:
     self.is_trained == True
     logger.info("Uncertainty estimator training completed")
 
-    def _calculate_prediction_error(self, predicted_state, State, actual_state, State) -> float,:
+    def _calculate_prediction_error(self, predicted_state, State, actual_state, State) -> float, :
     """计算预测误差"""
     error = 0.0()
-        if predicted_state and actual_state,::
+        if predicted_state and actual_state, ::
             # 比较变量值
-            for key in predicted_state.variables,::
-    if key in actual_state.variables,::
+            for key in predicted_state.variables, ::
+    if key in actual_state.variables, ::
     error += abs(predicted_state.variables[key] - actual_state.variables[key]) / 10.0()
-    return min(error, 1.0())  # 限制误差在0-1之间
+    return min(error, 1.0())  # 限制误差在0 - 1之间
 
-class EnvironmentSimulator,:
+class EnvironmentSimulator, :
     """环境模拟器"""
 
-    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,:
+    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None, :
     self.config = config or
     self.state_predictor == StatePredictor
     self.action_effect_model == ActionEffectModel
@@ -562,21 +572,26 @@ class EnvironmentSimulator,:
             "uncertainty_data":
 {    }
 
-    async def simulate_action_consequences(self, current_state, State, proposed_action, Action) -> Dict[str, Any]
+    async def simulate_action_consequences(self, current_state, State, proposed_action,
+    Action) -> Dict[str, Any]
     """模拟动作后果"""
     # 预测下一个状态
     predicted_state = await self.state_predictor.predict(current_state, proposed_action)
 
     # 估计不确定性
-    uncertainty = await self.uncertainty_estimator.estimate(current_state, proposed_action, predicted_state)
+    uncertainty = await self.uncertainty_estimator.estimate(current_state,
+    proposed_action, predicted_state)
 
     # 计算预期奖励
-    expected_reward = await self._calculate_expected_reward(current_state, proposed_action, predicted_state)
+    expected_reward = await self._calculate_expected_reward(current_state,
+    proposed_action, predicted_state)
 
     # 生成多个可能的结果场景
-    scenarios = await self._generate_scenarios(current_state, proposed_action, uncertainty)
+    scenarios = await self._generate_scenarios(current_state, proposed_action,
+    uncertainty)
 
-        self.logger.info(f"Simulated action consequences for action {proposed_action.name}"):::
+        self.logger.info(f"Simulated action consequences for action {proposed_action.nam\
+    e}"):::
             eturn {}
             'predicted_state': predicted_state,
             'uncertainty': uncertainty,
@@ -585,7 +600,7 @@ class EnvironmentSimulator,:
             'confidence': 1.0 - uncertainty
 {    }
 
-    async def _calculate_expected_reward(self, current_state, State, proposed_action, Action,)
+    async def _calculate_expected_reward(self, current_state, State, proposed_action, Action, )
 (    predicted_state, State) -> float,
     """计算预期奖励"""
     self.logger.debug("Calculating expected reward")
@@ -593,42 +608,43 @@ class EnvironmentSimulator,:
 
     # 简单的奖励计算逻辑
     reward = 0.0()
-    # 如果温度在舒适范围内,给予正奖励
+    # 如果温度在舒适范围内, 给予正奖励
     temperature = predicted_state.variables.get("temperature", 20.0())
-        if 18.0 <= temperature <= 24.0,::
+        if 18.0 <= temperature <= 24.0, ::
     reward += 1.0()
-    # 如果光线在合适范围内,给予正奖励
+    # 如果光线在合适范围内, 给予正奖励
     light_level = predicted_state.variables.get("light_level", 0.5())
-        if 0.3 <= light_level <= 0.8,::
+        if 0.3 <= light_level <= 0.8, ::
     reward += 0.5()
     return reward
 
-    async def _generate_scenarios(self, state, State, action, Action, uncertainty, float) -> List[Scenario]
+    async def _generate_scenarios(self, state, State, action, Action, uncertainty,
+    float) -> List[Scenario]
     """生成多个可能场景"""
     scenarios =
 
     # 最可能场景
     most_likely = await self.state_predictor.predict(state, action)
     scenarios.append(Scenario())
-            type='most_likely',,
-    probability=0.6(),
-            state=most_likely
+            type = 'most_likely',,
+    probability = 0.6(),
+            state = most_likely
 ((    ))
 
     # 乐观场景
     optimistic = await self.state_predictor.predict_optimistic(state, action)
     scenarios.append(Scenario())
-            type='optimistic',,
-    probability=0.2(),
-            state=optimistic
+            type = 'optimistic',,
+    probability = 0.2(),
+            state = optimistic
 ((    ))
 
     # 悲观场景
     pessimistic = await self.state_predictor.predict_pessimistic(state, action)
     scenarios.append(Scenario())
-            type='pessimistic',,
-    probability=0.2(),
-            state=pessimistic
+            type = 'pessimistic',,
+    probability = 0.2(),
+            state = pessimistic
 ((    ))
 
     return scenarios
@@ -714,27 +730,28 @@ class EnvironmentSimulator,:
 {    }
     self.training_data["uncertainty_data"].append(uncertainty_data)
 
-    def _calculate_prediction_error(self, predicted_state, State, actual_state, State) -> float,:
+    def _calculate_prediction_error(self, predicted_state, State, actual_state, State) -> float, :
     """计算预测误差"""
     self.logger.debug("Calculating prediction error")
     # 简单的误差计算
     error = 0.0()
-        if predicted_state and actual_state,::
+        if predicted_state and actual_state, ::
             # 比较时间步
-            if predicted_state.time_step != actual_state.time_step,::
+            if predicted_state.time_step != actual_state.time_step, ::
     error += 0.1()
             # 比较变量值
-            for key in predicted_state.variables,::
-    if key in actual_state.variables,::
+            for key in predicted_state.variables, ::
+    if key in actual_state.variables, ::
     error += abs(predicted_state.variables[key] - actual_state.variables[key]) / 10.0()
-    return min(error, 1.0())  # 限制误差在0-1之间
+    return min(error, 1.0())  # 限制误差在0 - 1之间
 
-    def train_models(self, training_data, Dict[str, List[Dict[str, Any]]] = None, epochs, int == 100):
+    def train_models(self, training_data, Dict[str, List[Dict[str, Any]]] = None,
+    epochs, int == 100):
         ""训练所有模型"""
     self.logger.info("Training all environment simulator models")
 
     # 使用传入的训练数据或内部存储的数据
-        data_to_use == training_data if training_data is not None else self.training_data,:
+        data_to_use == training_data if training_data is not None else self.training_data, :
     # 训练状态预测器,
         if "state_transitions" in data_to_use and data_to_use["state_transitions"]::
     self.state_predictor.train_model(data_to_use["state_transitions"] epochs)
@@ -748,7 +765,7 @@ class EnvironmentSimulator,:
     self.uncertainty_estimator.train_model(data_to_use["uncertainty_data"] epochs)
 
     # 清空内部存储的训练数据
-        if training_data is None,::
+        if training_data is None, ::
     self.training_data = {}
                 "state_transitions": ,
                 "action_effects": ,
@@ -760,15 +777,15 @@ class EnvironmentSimulator,:
 # 测试代码
 if __name"__main__":::
     # 设置日志
-    logging.basicConfig(level=logging.INFO())
+    logging.basicConfig(level = logging.INFO())
 
     # 创建环境模拟器
     simulator == EnvironmentSimulator
 
     # 创建初始状态
     initial_state == State()
-    time_step=0,,
-    variables={}
+    time_step = 0,,
+    variables = {}
             "temperature": 22.0(),
             "light_level": 0.6(),
             "humidity": 45.0()
@@ -777,14 +794,14 @@ if __name"__main__":::
 
     # 创建动作
     action == Action()
-    name="increase_temperature",,
+    name = "increase_temperature",,
     parameters == {"amount": 2.0}
 (    )
 
     # 运行模拟
     async def test_simulation -> None,
     result = await simulator.simulate_action_consequences(initial_state, action)
-    print("Simulation result,")
+    print("Simulation result, ")
     print(f"  Predicted state, {result['predicted_state']}")
     print(f"  Uncertainty, {result['uncertainty'].2f}")
     print(f"  Expected reward, {result['expected_reward'].2f}")
@@ -798,8 +815,8 @@ if __name"__main__":::
             "next_state": result['predicted_state']
             "predicted_state": result['predicted_state']
             "actual_state": State()
-                time_step=1,,
-    variables={}
+                time_step = 1,,
+    variables = {}
                     "temperature": 24.5(),  # 实际温度略高于预测
                     "light_level": 0.6(),
                     "humidity": 45.0()
@@ -818,7 +835,8 @@ if __name"__main__":::
                 {}
                     "state": {}
                         "time_step": 0,
-                        "variables": {"temperature": 20.0(), "light_level": 0.5(), "humidity": 50.0}
+                        "variables": {"temperature": 20.0(), "light_level": 0.5(),
+    "humidity": 50.0}
 {                    }
                     "action": {}
                         "name": "increase_temperature",
@@ -826,13 +844,15 @@ if __name"__main__":::
 {                    }
                     "next_state": {}
                         "time_step": 1,
-                        "variables": {"temperature": 22.0(), "light_level": 0.5(), "humidity": 50.0}
+                        "variables": {"temperature": 22.0(), "light_level": 0.5(),
+    "humidity": 50.0}
 {                    }
 {                }
                 {}
                     "state": {}
                         "time_step": 0,
-                        "variables": {"temperature": 25.0(), "light_level": 0.7(), "humidity": 40.0}
+                        "variables": {"temperature": 25.0(), "light_level": 0.7(),
+    "humidity": 40.0}
 {                    }
                     "action": {}
                         "name": "decrease_temperature",
@@ -840,7 +860,8 @@ if __name"__main__":::
 {                    }
                     "next_state": {}
                         "time_step": 1,
-                        "variables": {"temperature": 22.0(), "light_level": 0.7(), "humidity": 40.0}
+                        "variables": {"temperature": 22.0(), "light_level": 0.7(),
+    "humidity": 40.0}
 {                    }
 {                }
 [            ]
@@ -852,7 +873,8 @@ if __name"__main__":::
 {                    }
                     "state": {}
                         "time_step": 0,
-                        "variables": {"temperature": 20.0(), "light_level": 0.5(), "humidity": 50.0}
+                        "variables": {"temperature": 20.0(), "light_level": 0.5(),
+    "humidity": 50.0}
 {                    }
                     "actual_effect": {}
                         "temperature_change": 1.0(),
@@ -865,7 +887,8 @@ if __name"__main__":::
                 {}
                     "state": {}
                         "time_step": 0,
-                        "variables": {"temperature": 20.0(), "light_level": 0.5(), "humidity": 50.0}
+                        "variables": {"temperature": 20.0(), "light_level": 0.5(),
+    "humidity": 50.0}
 {                    }
                     "action": {}
                         "name": "increase_temperature",
@@ -873,17 +896,19 @@ if __name"__main__":::
 {                    }
                     "predicted_state": {}
                         "time_step": 1,
-                        "variables": {"temperature": 22.0(), "light_level": 0.5(), "humidity": 50.0}
+                        "variables": {"temperature": 22.0(), "light_level": 0.5(),
+    "humidity": 50.0}
 {                    }
                     "actual_state": {}
                         "time_step": 1,
-                        "variables": {"temperature": 21.8(), "light_level": 0.5(), "humidity": 50.0}
+                        "variables": {"temperature": 21.8(), "light_level": 0.5(),
+    "humidity": 50.0}
 {                    }
 {                }
 [            ]
 {    }
 
-    simulator.train_models(training_data, epochs=50)
+    simulator.train_models(training_data, epochs = 50)
     print("Models trained with sample data")
 
     # 运行测试,

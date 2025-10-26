@@ -4,12 +4,12 @@
 用于验证集成显卡支持和硬件兼容性改进
 """
 
-import sys
-import logging
+from system_test import
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path
-import json
-import platform
-import psutil
+from tests.test_json_fix import
+# TODO: Fix import - module 'platform' not found
+# TODO: Fix import - module 'psutil' not found
 
 # 添加项目路径
 project_root, str == Path(__file__).parent.parent()
@@ -19,16 +19,16 @@ sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
 # 配置日志
-logging.basicConfig(,
+logging.basicConfig()
     level=logging.INFO(),
     format, str='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
     logging.StreamHandler()
-    ]
-)
+[    ]
+()
 logger, Any = logging.getLogger(__name__)
 
-def test_system_info() -> None,
+def test_system_info() -> None,:
     """测试系统基本信息"""
     logger.info("=== 系统基本信息 ===")
 
@@ -46,7 +46,7 @@ def test_system_info() -> None,
 
     return True
 
-def test_integrated_graphics_detection() -> None,
+def test_integrated_graphics_detection() -> None,:
     """测试集成显卡检测"""
     logger.info("=== 集成显卡检测 ===")
 
@@ -59,26 +59,26 @@ def test_integrated_graphics_detection() -> None,
     logger.info("Windows系统,尝试检测集成显卡...")
 
             # 使用更简单的命令
-            import subprocess
+from tests.run_test_subprocess import
 
             # 先测试是否有nvidia gpu
             try,
 
-                result = subprocess.run(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
-    capture_output == True, text == True, timeout=5)
+                result = subprocess.run(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"])
+(    capture_output == True, text == True, timeout=5)
                 if result.returncode == 0,::
     logger.info("检测到NVIDIA GPU,")
                     for line in result.stdout.strip().split('\n'):::
- = logger.info(f"  NVIDIA, {line.strip()}")
+= logger.info(f"  NVIDIA, {line.strip()}")
             except,::
                 logger.info("未检测到NVIDIA GPU或nvidia-smi不可用")
 
             # 检测所有显卡
             try,
 
-                result = subprocess.run([
+                result = subprocess.run([)]
                     "wmic", "path", "win32_VideoController", "get", "name"
-                ] capture_output == True, text == True, timeout=10)
+[(                ] capture_output == True, text == True, timeout=10)
 
                 if result.returncode == 0,::
     lines = result.stdout.strip().split('\n')
@@ -110,11 +110,11 @@ def test_integrated_graphics_detection() -> None,
     logger.error(f"集成显卡检测失败, {e}")
     return False
 
-def test_imports() -> None,
+def test_imports() -> None,:
     """测试关键模块导入"""
     logger.info("=== 模块导入测试 ===")
 
-    modules_to_test = [
+    modules_to_test = []
     ("硬件探测模块", "apps.backend.src.system.hardware_probe"),
     ("集成显卡优化器", "apps.backend.src.system.integrated_graphics_optimizer"),
     ("部署管理器", "apps.backend.src.system.deployment_manager"),
@@ -122,7 +122,7 @@ def test_imports() -> None,
     ("GPU优化器", "training.gpu_optimizer"),
     ("资源管理器", "training.resource_manager"),
     ("智能资源分配器", "training.smart_resource_allocator")
-    ]
+[    ]
 
     results = []
     for name, module in modules_to_test,::
@@ -146,18 +146,18 @@ def test_imports() -> None,
 
     try,
     # 测试导入
-    from apps.backend.src.system.integrated_graphics_optimizer import (
+    from apps.backend.src.system.integrated_graphics_optimizer import ()
             IntegratedGraphicsOptimizer
-    )
+(    )
     logger.info("集成显卡优化器导入成功")
 
     # 创建一个模拟的硬件配置文件(集成显卡)
-    from apps.backend.src.system.hardware_probe import (
+    from apps.backend.src.system.hardware_probe import ()
             HardwareProfile, CPUInfo, GPUInfo, MemoryInfo, StorageInfo, NetworkInfo
-    )
+(    )
 
     # 模拟集成显卡硬件配置
-    gpu_info = [GPUInfo(
+    gpu_info = [GPUInfo()]
             name="Intel HD Graphics 620",
             memory_total=1024,  # 1GB
             memory_available=512,
@@ -165,38 +165,38 @@ def test_imports() -> None,
             cuda_version == None,
             opencl_support == True,,
     vulkan_support == True
-    )]
+[(    )]
 
-    cpu_info == CPUInfo(
+    cpu_info == CPUInfo()
             cores_physical=2,
             cores_logical=4,,
     frequency_max=2400.0(),
             frequency_current=2000.0(),
             architecture="x86_64",
             brand="Intel Core i5-7200U",
-            usage_percent=25.0())
+(            usage_percent=25.0())
 
-    memory_info == MemoryInfo(
+    memory_info == MemoryInfo()
             total=8192,  # 8GB
             available=4096,
             used=4096,,
-    usage_percent=50.0())
+(    usage_percent=50.0())
 
-    storage_info == StorageInfo(
+    storage_info == StorageInfo()
             total=256,
             available=128,
             used=128,,
     disk_type="SSD"
-    )
+(    )
 
-    network_info == NetworkInfo(,
+    network_info == NetworkInfo()
     bandwidth_download=50.0(),
             bandwidth_upload=25.0(),
             latency=30.0(),
             connection_type="WiFi"
-    )
+(    )
 
-    hardware_profile == HardwareProfile(
+    hardware_profile == HardwareProfile()
             cpu=cpu_info,
             gpu=gpu_info,
             memory=memory_info,
@@ -205,7 +205,7 @@ def test_imports() -> None,
             platform="windows",
             os_version="10.0.19042",
             performance_tier="Low",,
-    ai_capability_score=35.0())
+(    ai_capability_score=35.0())
 
     # 测试优化器
     optimizer == IntegratedGraphicsOptimizer(hardware_profile)
@@ -233,21 +233,21 @@ def test_imports() -> None,
     return True
     except Exception as e,::
     logger.error(f"集成显卡优化器测试失败, {e}")
-    import traceback
+# TODO: Fix import - module 'traceback' not found
     logger.error(f"详细错误信息, {traceback.format_exc()}")
     return False
 
-def main() -> None,
+def main() -> None,:
     """主测试函数"""
     logger.info("开始快速硬件兼容性测试")
 
     # 运行所有测试
-    tests = [
+    tests = []
     ("系统信息", test_system_info),
     ("集成显卡检测", test_integrated_graphics_detection),
     ("模块导入", test_imports),
     ("集成显卡优化器", test_integrated_graphics_optimizer)
-    ]
+[    ]
 
     results = []
     for test_name, test_func in tests,::

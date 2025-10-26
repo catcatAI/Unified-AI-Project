@@ -9,10 +9,10 @@ from .storage.base import
 logger, Any = logging.getLogger(__name__)
 
 
-class Memory,:
+class Memory, :
     """记忆"""
 
-    def __init__(self, content, str, memory_type, str == "short_term") -> None,:
+    def __init__(self, content, str, memory_type, str == "short_term") -> None, :
     self.memory_id = f"mem_{datetime.now.strftime('%Y%m%d%H%M%S%f')}"
     self.content = content
     self.memory_type = memory_type  # short_term, long_term
@@ -27,20 +27,20 @@ class Memory,:
     self.last_accessed = datetime.now()
     self.access_count += 1
 
-class MemoryContextManager,:
+class MemoryContextManager, :
     """记忆上下文管理器"""
 
-    def __init__(self, context_manager, ContextManager) -> None,:
+    def __init__(self, context_manager, ContextManager) -> None, :
     self.context_manager = context_manager
     self.memories, Dict[str, Memory] =
 
-    def create_memory(self, content, str, memory_type, str = "short_term",,:)
+    def create_memory(self, content, str, memory_type, str = "short_term", ,:)
 (    metadata, Optional[Dict[str, Any]] = None) -> str,
     """创建记忆"""
         try,
 
             memory == Memory(content, memory_type)
-            if metadata,::
+            if metadata, ::
     memory.metadata = metadata
 
             self.memories[memory.memory_id] = memory
@@ -56,10 +56,11 @@ class MemoryContextManager,:
 {                }
 {            }
 
-            context_id = self.context_manager.create_context(ContextType.MEMORY(), context_content)
+            context_id = self.context_manager.create_context(ContextType.MEMORY(),
+    context_content)
             logger.info(f"Created memory {memory.memory_id} with context {context_id}"):
                 eturn memory.memory_id()
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"Failed to create memory, {e}")
             raise
 
@@ -67,7 +68,7 @@ class MemoryContextManager,:
     """访问记忆"""
         try,
 
-            if memory_id not in self.memories,::
+            if memory_id not in self.memories, ::
     logger.error(f"Memory {memory_id} not found")
                 return None
 
@@ -82,7 +83,8 @@ class MemoryContextManager,:
 {                }
 {            }
 
-            context_id = self.context_manager.create_context(ContextType.MEMORY(), context_content)
+            context_id = self.context_manager.create_context(ContextType.MEMORY(),
+    context_content)
             logger.info(f"Accessed memory {memory_id} with context {context_id}"):
                 eturn {}
                 "memory_id": memory.memory_id(),
@@ -93,15 +95,15 @@ class MemoryContextManager,:
                 "access_count": memory.access_count(),
                 "metadata": memory.metadata()
 {            }
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"Failed to access memory {memory_id} {e}")
             return None
 
-    def update_memory_embedding(self, memory_id, str, embedding, List[float]) -> bool,:
+    def update_memory_embedding(self, memory_id, str, embedding, List[float]) -> bool, :
     """更新记忆向量表示"""
         try,
 
-            if memory_id not in self.memories,::
+            if memory_id not in self.memories, ::
     logger.error(f"Memory {memory_id} not found")
                 return False
 
@@ -117,10 +119,12 @@ class MemoryContextManager,:
 {                }
 {            }
 
-            context_id = self.context_manager.create_context(ContextType.MEMORY(), context_content)
-            logger.info(f"Updated embedding for memory {memory_id} with context {context_id}"):::
+            context_id = self.context_manager.create_context(ContextType.MEMORY(),
+    context_content)
+            logger.info(f"Updated embedding for memory {memory_id} with context {context\
+    _id}"):::
                 eturn True
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"Failed to update embedding for memory {memory_id} {e}"):::
                 eturn False
 
@@ -128,38 +132,40 @@ class MemoryContextManager,:
     """获取记忆上下文"""
         try,
 
-            if memory_id not in self.memories,::
+            if memory_id not in self.memories, ::
     logger.error(f"Memory {memory_id} not found")
                 return None
 
             memory = self.memories[memory_id]
 
             # 搜索相关的上下文
-            contexts = self.context_manager.search_contexts(memory_id, [ContextType.MEMORY])
+            contexts = self.context_manager.search_contexts(memory_id,
+    [ContextType.MEMORY])
 
-            if not contexts,::
+            if not contexts, ::
     logger.debug(f"No context found for memory {memory_id}"):::
         eturn None
 
             # 返回最新的上下文
-            latest_context == max(contexts, key=lambda c, c.updated_at())
+            latest_context == max(contexts, key = lambda c, c.updated_at())
             return {}
                 "context_id": latest_context.context_id(),
                 "content": latest_context.content(),
                 "metadata": latest_context.metadata(),
                 "updated_at": latest_context.updated_at.isoformat()
 {            }
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"Failed to get context for memory {memory_id} {e}"):::
                 eturn None
 
-    def get_memories_by_type(self, memory_type, str, limit, int == 10) -> List[Dict[str, Any]]:
+    def get_memories_by_type(self, memory_type, str, limit, int == 10) -> List[Dict[str,
+    Any]]:
     """根据类型获取记忆"""
         try,
             # 筛选指定类型的记忆
             type_memories = []
-                mem for mem in self.memories.values,::
-    if mem.memory_type == memory_type,::
+                mem for mem in self.memories.values, ::
+    if mem.memory_type == memory_type, ::
             # 按最后访问时间排序
             type_memories.sort(key == lambda x, x.last_accessed(), reverse == True)
 
@@ -167,7 +173,7 @@ class MemoryContextManager,:
             type_memories == type_memories[:limit]
 
             # 转换为字典格式
-            result == for memory in type_memories,::
+            result == for memory in type_memories, ::
     result.append({)}
                     "memory_id": memory.memory_id(),
                     "content": memory.content(),
@@ -178,7 +184,7 @@ class MemoryContextManager,:
 {(                })
 
             return result
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"Failed to get memories by type {memory_type} {e}")
             return
 
@@ -186,15 +192,15 @@ class MemoryContextManager,:
     """清理旧记忆"""
         try,
 
-            cutoff_date = datetime.now - timedelta(days=days)
+            cutoff_date = datetime.now - timedelta(days = days)
             deleted_count = 0
 
             # 找到需要删除的旧记忆
             memories_to_delete = []
-                mem_id for mem_id, memory in self.memories.items,::
-    if memory.last_accessed < cutoff_date,::
+                mem_id for mem_id, memory in self.memories.items, ::
+    if memory.last_accessed < cutoff_date, ::
             # 删除记忆
-            for mem_id in memories_to_delete,::
+            for mem_id in memories_to_delete, ::
     del self.memories[mem_id]
                 deleted_count += 1
 
@@ -207,19 +213,22 @@ class MemoryContextManager,:
 {                    }
 {                }
 
-                context_id = self.context_manager.create_context(ContextType.MEMORY(), context_content)
-                logger.info(f"Cleaned up old memory {mem_id} with context {context_id}"):
+                context_id = self.context_manager.create_context(ContextType.MEMORY(),
+    context_content)
+                logger.info(f"Cleaned up old memory {mem_id} with context {context_id}")\
+    :
                     ogger.info(f"Cleaned up {deleted_count} old memories")
             return deleted_count
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"Failed to cleanup old memories, {e}")
             return 0
 
-    def transfer_memory(self, source_memory_id, str, target_memory_type, str) -> Optional[str]:
+    def transfer_memory(self, source_memory_id, str, target_memory_type,
+    str) -> Optional[str]:
     """转移记忆(例如从短期记忆转移到长期记忆)"""
         try,
 
-            if source_memory_id not in self.memories,::
+            if source_memory_id not in self.memories, ::
     logger.error(f"Source memory {source_memory_id} not found")
                 return None
 
@@ -227,11 +236,11 @@ class MemoryContextManager,:
 
             # 创建新的记忆(转移后的记忆)
             new_memory_id = self.create_memory()
-    content=source_memory.content(),
-                memory_type=target_memory_type,
-                metadata == source_memory.metadata.copy if source_memory.metadata else None,::
-            # 如果源记忆有向量表示,也复制过去
-            if source_memory.embedding,::
+    content = source_memory.content(),
+                memory_type = target_memory_type,
+                metadata == source_memory.metadata.copy if source_memory.metadata else None, ::
+            # 如果源记忆有向量表示, 也复制过去
+            if source_memory.embedding, ::
     self.update_memory_embedding(new_memory_id, source_memory.embedding())
 
             # 创建转移记录上下文
@@ -245,10 +254,12 @@ class MemoryContextManager,:
 {                }
 {            }
 
-            context_id = self.context_manager.create_context(ContextType.MEMORY(), context_content)
-            logger.info(f"Transferred memory from {source_memory_id} to {new_memory_id} with context {context_id}"):
+            context_id = self.context_manager.create_context(ContextType.MEMORY(),
+    context_content)
+            logger.info(f"Transferred memory from {source_memory_id} to {new_memory_id} \
+    with context {context_id}"):
                 eturn new_memory_id
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"Failed to transfer memory {source_memory_id} {e}")
             return None
 ]])

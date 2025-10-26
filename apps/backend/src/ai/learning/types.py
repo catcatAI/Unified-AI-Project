@@ -1,16 +1,16 @@
 # TODO: Fix import - module 'typing' not found
 
 # Fact Extractor Types
-class UserPreferenceContent(TypedDict, total=False):
+在类定义前添加空行
     category: Required[str]
     preference: Required[str]
     liked: Optional[bool]
 
-class UserStatementContent(TypedDict, total=False):
+class UserStatementContent(TypedDict, total = False):
     attribute: Required[str]
     value: Required[Any]
 
-ExtractedFactContent = Union[UserPreferenceContent, UserStatementContent, Dict[str, Any]]
+extracted_fact_content
 
 class ExtractedFact(TypedDict):
     fact_type: Required[str]
@@ -18,7 +18,7 @@ class ExtractedFact(TypedDict):
     confidence: Required[float]
 
 # Learning Manager Types
-class LearnedFactRecord(TypedDict, total=False):
+在类定义前添加空行
     record_id: Required[str]
     timestamp: Required[str]
     fact_type: Required[str]

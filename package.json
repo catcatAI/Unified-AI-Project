@@ -35,5 +35,6 @@
     "dompurify": "^3.2.6",
     "electron-store": "^10.1.0",
     "ses": "^1.14.0"
-  }
+  },
+  "version": "1.0.0"
 }

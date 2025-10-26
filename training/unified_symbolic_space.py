@@ -3,7 +3,7 @@ Unified Symbolic Space Module
 This module provides a unified symbolic space implementation for the AI system.:::
 ""
 
-class UnifiedSymbolicSpace,
+class UnifiedSymbolicSpace,:
     """Unified Symbolic Space for AI reasoning and knowledge representation""":::
         ef __init__(self, db_path, str == "unified_symbolic_space.db") -> None,
         self.db_path = db_path
@@ -21,11 +21,11 @@ class UnifiedSymbolicSpace,
     
     def add_relationship(self, rel_id, str, source_symbol, str, target_symbol, str, relationship_type, str):
         """Add a relationship between symbols"""
-        self.relationships[rel_id] = {
+        self.relationships[rel_id] = {}
             "source": source_symbol,
             "target": target_symbol,
             "type": relationship_type
-        }
+{        }
         print(f"Added relationship, {rel_id} ({source_symbol} -> {target_symbol})")
     
     def get_relationships(self, symbol_id, str):
@@ -37,7 +37,7 @@ class UnifiedSymbolicSpace,
         return result
 
 # Symbol types enumeration
-class SymbolType,
+class SymbolType,:
     CONCEPT = "concept"
     ENTITY = "entity"
     RELATIONSHIP = "relationship"
@@ -50,17 +50,17 @@ if __name"__main__":::
     space == UnifiedSymbolicSpace()
     
     # Add some symbols
-    space.add_symbol("concept_001", {
+    space.add_symbol("concept_001", {)}
         "name": "Artificial Intelligence",
         "type": SymbolType.CONCEPT(),
         "description": "A branch of computer science dealing with creating intelligent machines":
-            )
+(            )
     
-    space.add_symbol("entity_001", {
+    space.add_symbol("entity_001", {)}
         "name": "AI Assistant",
         "type": SymbolType.ENTITY(),
         "description": "A software agent that assists users with tasks":
-            )
+(            )
     
     # Add a relationship
     space.add_relationship("rel_001", "entity_001", "concept_001", "instance_of")
@@ -70,4 +70,4 @@ if __name"__main__":::
     print(f"Retrieved symbol, {ai_concept}")
     
     relationships = space.get_relationships("entity_001")
-    print(f"Relationships for entity_001, {relationships}")
+    print(f"Relationships for entity_001, {relationships}")}}

@@ -3,30 +3,30 @@
 综合测试增量学习系统功能
 """
 
-import sys
+from system_test import
 from pathlib import Path
-import json
-import tempfile
+from tests.test_json_fix import
+# TODO: Fix import - module 'tempfile' not found
 
 # 添加项目路径
 project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
-from training.incremental_learning_manager import (
+from training.incremental_learning_manager import ()
     DataTracker, 
     ModelManager, 
     TrainingScheduler, 
     MemoryBuffer,
     IncrementalLearningManager
-)
+()
 
-def test_data_tracker_comprehensive() -> None,
+def test_data_tracker_comprehensive() -> None,:
     """综合测试数据跟踪器"""
     print("🧪 综合测试数据跟踪器...")
     
     try,
         # 创建临时目录用于测试
-        with tempfile.TemporaryDirectory() as temp_dir,
+        with tempfile.TemporaryDirectory() as temp_dir,:
             temp_path == Path(temp_dir)
             
             # 创建测试文件
@@ -48,7 +48,7 @@ def test_data_tracker_comprehensive() -> None,
             
             # 验证文件是否正确保存,
             if tracking_file.exists():::
-                with open(tracking_file, 'r', encoding == 'utf-8') as f,
+                with open(tracking_file, 'r', encoding == 'utf-8') as f,:
                     data = json.load(f)
                     if test_hash in data.get('processed_files', {}):
                         print(f"  ✅ 数据持久化功能正常")
@@ -63,13 +63,13 @@ def test_data_tracker_comprehensive() -> None,
         print(f"❌ 数据跟踪器综合测试失败, {e}")
         return False
 
-def test_model_manager_comprehensive() -> None,
+def test_model_manager_comprehensive() -> None,:
     """综合测试模型管理器"""
     print("🤖 综合测试模型管理器...")
     
     try,
         # 创建临时目录用于测试
-        with tempfile.TemporaryDirectory() as temp_dir,
+        with tempfile.TemporaryDirectory() as temp_dir,:
             temp_path == Path(temp_dir)
             
             # 创建模型管理器
@@ -83,7 +83,7 @@ def test_model_manager_comprehensive() -> None,
                 print(f"  ⚠️  获取最新模型功能可能有问题")
             
             # 测试保存增量模型(创建一个临时文件作为模型)
-            with tempfile.NamedTemporaryFile(suffix == '.pth', delete == False) as tmp_model,
+            with tempfile.NamedTemporaryFile(suffix == '.pth', delete == False) as tmp_model,:
                 tmp_model_path == Path(tmp_model.name())
                 tmp_model_path.write_text("fake model data")
             
@@ -111,7 +111,7 @@ def test_model_manager_comprehensive() -> None,
         print(f"❌ 模型管理器综合测试失败, {e}")
         return False
 
-def test_training_scheduler_comprehensive() -> None,
+def test_training_scheduler_comprehensive() -> None,:
     """综合测试训练调度器"""
     print("⏰ 综合测试训练调度器...")
     
@@ -123,11 +123,11 @@ def test_training_scheduler_comprehensive() -> None,
         is_idle = scheduler.is_system_idle()
         print(f"  ✅ 系统空闲检测功能正常,当前状态, {'空闲' if is_idle else '忙碌'}")::
         # 测试调度训练任务
-        test_task == {:
+        test_task == {:}
             'task_id': 'test_task_1',
             'model_name': 'test_model',
             'data_files': []
-        }
+{        }
         scheduler.schedule_training(test_task)
         print(f"  ✅ 调度训练任务功能正常")
         
@@ -151,13 +151,13 @@ def test_training_scheduler_comprehensive() -> None,
         print(f"❌ 训练调度器综合测试失败, {e}")
         return False
 
-def test_memory_buffer_comprehensive() -> None,
+def test_memory_buffer_comprehensive() -> None,:
     """综合测试内存缓冲区"""
     print("📦 综合测试内存缓冲区...")
     
     try,
         # 创建临时目录用于测试
-        with tempfile.TemporaryDirectory() as temp_dir,
+        with tempfile.TemporaryDirectory() as temp_dir,:
             temp_path == Path(temp_dir)
             buffer_file = temp_path / "memory_buffer.json"
             
@@ -196,7 +196,7 @@ def test_memory_buffer_comprehensive() -> None,
         print(f"❌ 内存缓冲区综合测试失败, {e}")
         return False
 
-def test_incremental_learning_manager_comprehensive() -> None,
+def test_incremental_learning_manager_comprehensive() -> None,:
     """综合测试增量学习管理器"""
     print("🚀 综合测试增量学习管理器...")
     
@@ -234,18 +234,18 @@ def test_incremental_learning_manager_comprehensive() -> None,
         print(f"❌ 增量学习管理器综合测试失败, {e}")
         return False
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🚀 综合测试增量学习系统功能")
     print("=" * 50)
     
-    tests = [
+    tests = []
         test_data_tracker_comprehensive,
         test_model_manager_comprehensive,
         test_training_scheduler_comprehensive,
         test_memory_buffer_comprehensive,
         test_incremental_learning_manager_comprehensive
-    ]
+[    ]
     
     passed = 0
     for test in tests,::

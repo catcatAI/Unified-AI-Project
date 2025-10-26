@@ -3,8 +3,8 @@
 测试优化的数据扫描器
 """
 
-import sys
-import time
+from system_test import
+from enhanced_realtime_monitoring import
 from pathlib import Path
 
 # 添加项目路径
@@ -13,17 +13,17 @@ sys.path.insert(0, str(project_root))
 
 from training.optimized_data_scanner import OptimizedDataScanner
 
-def main() -> None,
+def main() -> None,:
     """主函数"""
     print("🔍 测试优化的数据扫描器")
     print("=" * 30)
     
     # 创建优化的数据扫描器
-    scanner == OptimizedDataScanner(
+    scanner == OptimizedDataScanner()
         data_dir="data",
         tracking_file="training/data_tracking.json",,
     config_file="training/configs/performance_config.json"
-    )
+(    )
     
     # 测试扫描少量文件
     print("⏱️  开始扫描测试...")

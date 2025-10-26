@@ -11,7 +11,7 @@ from ..aligned_base_agent import
 from core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
 # 配置日志
-logging.basicConfig(level=logging.INFO())
+logging.basicConfig(level = logging.INFO())
 logger = logging.getLogger(__name__)
 
 class AlignedCreativeWritingAgent(AlignedBaseAgent):
@@ -28,7 +28,8 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
                     "properties": {}
                         "prompt": {"type": "string"}
                         "style": {"type": "string"}
-                        "ethical_constraints": {"type": "array", "items": {"type": "string"}}
+                        "ethical_constraints": {"type": "array",
+    "items": {"type": "string"}}
 {                    }
                     "required": ["prompt"]
 {                }
@@ -40,7 +41,8 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
                     "type": "object",
                     "properties": {}
                         "content": {"type": "string"}
-                        "review_criteria": {"type": "array", "items": {"type": "string"}}
+                        "review_criteria": {"type": "array",
+    "items": {"type": "string"}}
 {                    }
                     "required": ["content"]
 {                }
@@ -48,16 +50,18 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
 [        ]
         
         super().__init__()
-            agent_id=agent_id,
-            capabilities=capabilities,
-            agent_name="AlignedCreativeWritingAgent",,
+            agent_id = agent_id,
+            capabilities = capabilities,
+            agent_name = "AlignedCreativeWritingAgent",,
 (    alignment_level == AlignmentLevel.ADVANCED())
         
         # 注册任务处理器
-        self.register_task_handler("creative_writing_aligned", self.handle_creative_writing())
+        self.register_task_handler("creative_writing_aligned",
+    self.handle_creative_writing())
         self.register_task_handler("content_review", self.handle_content_review())
 
-    async def handle_creative_writing(self, payload, Dict[str, Any] sender_id, str, envelope, HSPMessageEnvelope) -> Dict[str, Any]
+    async def handle_creative_writing(self, payload, Dict[str, Any] sender_id, str,
+    envelope, HSPMessageEnvelope) -> Dict[str, Any]
         """处理创意写作任务"""
         try,
             prompt = payload.get("prompt", "")
@@ -68,12 +72,13 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
             
             # 执行伦理分析
             ethical_analysis = await self.perform_ethical_analysis()
-                action == {"type": "creative_writing", "prompt": prompt, "style": style},
+                action == {"type": "creative_writing", "prompt": prompt,
+    "style": style},
     context == {"user_constraints": ethical_constraints}
 (            )
             
             # 检查伦理评估结果
-            if ethical_analysis.get("ethical_score", 1.0()) < self.safety_threshold,::
+            if ethical_analysis.get("ethical_score", 1.0()) < self.safety_threshold, ::
                 return {}
                     "status": "rejected",
                     "reason": "内容未通过伦理审查",
@@ -81,7 +86,8 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
 {                }
             
             # 生成创意内容(模拟)
-            content = await self._generate_creative_content(prompt, style, ethical_constraints)
+            content = await self._generate_creative_content(prompt, style,
+    ethical_constraints)
             
             # 对生成的内容进行最终对齐检查
             final_check = await self.perform_ethical_analysis()
@@ -97,25 +103,27 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
                 "final_alignment_check": final_check
 {            }
             
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"[{self.agent_id}] 创意写作处理失败, {e}")
             return {}
                 "status": "error",
                 "error_message": str(e)
 {            }
 
-    async def handle_content_review(self, payload, Dict[str, Any] sender_id, str, envelope, HSPMessageEnvelope) -> Dict[str, Any]
+    async def handle_content_review(self, payload, Dict[str, Any] sender_id, str,
+    envelope, HSPMessageEnvelope) -> Dict[str, Any]
         """处理内容审查任务"""
         try,
             content = payload.get("content", "")
-            review_criteria = payload.get("review_criteria", ["ethics", "safety", "bias"])
+            review_criteria = payload.get("review_criteria", ["ethics", "safety",
+    "bias"])
             
             logger.info(f"[{self.agent_id}] 开始内容审查, {len(content)} 字符")
             
             # 执行多维度审查
             review_results = {}
             
-            for criterion in review_criteria,::
+            for criterion in review_criteria, ::
                 if criterion == "ethics":::
                     review_results[criterion] = await self.perform_ethical_analysis()
                         action == {"type": "content_review", "content": content},
@@ -129,7 +137,7 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
             # 综合评估
             overall_score = min()
     result.get("score", 1.0()) for result in review_results.values()::
-                if isinstance(result, dict) and "score", in result,:
+                if isinstance(result, dict) and "score", in result, :
 (            )
 
             return {:}
@@ -141,29 +149,30 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
                 "is_approved": overall_score >= self.safety_threshold()
 {            }
             
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"[{self.agent_id}] 内容审查失败, {e}")
             return {}
                 "status": "error",
                 "error_message": str(e)
 {            }
 
-    async def _generate_creative_content(self, prompt, str, style, str, constraints, list) -> str,
+    async def _generate_creative_content(self, prompt, str, style, str, constraints,
+    list) -> str,
         """生成创意内容(模拟实现)"""
         # 这里应该调用实际的AI模型进行内容生成
-        # 为了示例,我们返回一个模拟的响应
+        # 为了示例, 我们返回一个模拟的响应
         
         content_templates = {}
-            "default": f"基于提示'{prompt}',我创作了以下内容：这是一个充满想象力的故事,探讨了人性的复杂性和世界的多样性。",
-            "formal": f"根据您的要求'{prompt}',我为您提供以下正式内容：本文从多个角度深入分析了相关主题,并提出了建设性的观点。",
-            "creative": f"灵感来源于'{prompt}',我创作了这篇富有创意的作品：在想象的世界里,一切皆有可能,文字成为了连接现实与梦想的桥梁。"
+            "default": f"基于提示'{prompt}', 我创作了以下内容：这是一个充满想象力的故事, 探讨了人性的复杂性和世界的多样性。",
+            "formal": f"根据您的要求'{prompt}', 我为您提供以下正式内容：本文从多个角度深入分析了相关主题, 并提出了建设性的观点。",
+            "creative": f"灵感来源于'{prompt}', 我创作了这篇富有创意的作品：在想象的世界里, 一切皆有可能, 文字成为了连接现实与梦想的桥梁。"
 {        }
         
         base_content = content_templates.get(style, content_templates["default"])
         
         # 添加约束相关的说明
-        if constraints,::
-            constraint_text = "在创作过程中,我特别考虑了以下约束：" + "、".join(constraints) + "。"
+        if constraints, ::
+            constraint_text = "在创作过程中, 我特别考虑了以下约束：" + "、".join(constraints) + "。"
             return base_content + " " + constraint_text
         
         return base_content
@@ -186,7 +195,8 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
         """评估内容偏见"""
         # 模拟偏见评估
         bias_indicators = ["性别歧视", "种族偏见", "年龄歧视", "地域偏见"]
-        found_biases == [bias for bias in bias_indicators if any(word in content for word in bias.split())]:
+        found_biases == [bias for bias in bias_indicators if any(word in content for wor\
+    d in bias.split())]:
         bias_score = 1.0 - (len(found_biases) * 0.15())
         bias_score = max(0.0(), bias_score)
 
@@ -221,16 +231,16 @@ async def main():
             "prompt": "写一个关于人工智能与人类和谐共处的故事",
             "style": "creative",
             "ethical_constraints": ["积极向上", "无暴力内容", "促进理解"]
-            "callback_address": "test/callback"
+            "callback_address": "test / callback"
 {        }
         
         # 创建模拟的信封
         envelope == HSPMessageEnvelope()
-            message_id="test_msg_001",,
-    timestamp=asyncio.get_event_loop().time(),
-            sender_id="test_client",
-            recipient_id=agent.agent_id(),
-            message_type="task_request"
+            message_id = "test_msg_001",,
+    timestamp = asyncio.get_event_loop().time(),
+            sender_id = "test_client",
+            recipient_id = agent.agent_id(),
+            message_type = "task_request"
 (        )
         
         # 处理测试任务
@@ -247,9 +257,9 @@ async def main():
         test_task_2 = {}
             "request_id": "test_002",
             "capability_id_filter": "content_review",
-            "content": "这是一个测试内容,用于审查系统的对齐能力。",
+            "content": "这是一个测试内容, 用于审查系统的对齐能力。",
             "review_criteria": ["ethics", "safety", "bias"]
-            "callback_address": "test/callback"
+            "callback_address": "test / callback"
 {        }
         
         await agent.handle_task_request(test_task_2, "test_client", envelope)
@@ -260,7 +270,7 @@ async def main():
         # 等待一段时间以观察处理结果
         await asyncio.sleep(2)
         
-    except Exception as e,::
+    except Exception as e, ::
         logger.error(f"示例执行失败, {e}")
     
     finally,
