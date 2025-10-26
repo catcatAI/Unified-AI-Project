@@ -319,7 +319,8 @@ class AlertManager, :
                 "text": alert.message(),
                 "fields": []
                     {"title": "级别", "value": alert.level.value(), "short": True}
-                    {"title": "时间", "value": alert.timestamp.strftime("%Y - %m - %d %H, %M, %S"), "short": True}
+                    {"title": "时间", "value": alert.timestamp.strftime("%Y - %m - %d %H,
+    %M, %S"), "short": True}
                     {"title": "源", "value": alert.source(), "short": True}
 [                ]
 {[            }]
@@ -538,6 +539,7 @@ class SystemMonitor, :
             "system": asdict(system_metrics),
             "application": asdict(app_metrics),
             "alerts": [asdict(alert) for alert in self.alert_manager.get_active_alerts()\
+    \
     \
     ]::
             "metrics_summary": {}

@@ -102,8 +102,10 @@ def print_status_report(core_deps, Dict[str, Any] optional_deps, Dict[str, Any])
 def main() -> None, :
     """Main function to run the dependency checker."""
     parser = argparse.ArgumentParser(description = "Check project dependencies.")
-    parser.add_argument(' - -detailed', action = 'store_true', help = "Show detailed error messages (now default).")
-    parser.add_argument(' - -json', dest = 'json_path', type = str, help = "Output dependency status to a JSON file.")
+    parser.add_argument(' - -detailed', action = 'store_true',
+    help = "Show detailed error messages (now default).")
+    parser.add_argument(' - -json', dest = 'json_path', type = str,
+    help = "Output dependency status to a JSON file.")
     args = parser.parse_args()
 
     try,
@@ -124,6 +126,7 @@ def main() -> None, :
             'core': {"name": {'available': s['available'] 'error': s['error']} for name,
     s in core_deps.items}:
                 optional': {"name": {'available': s['available'] 'error': s['error']} fo\
+    \
     \
     r name, s in optional_deps.items}::
         try,

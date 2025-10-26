@@ -8,6 +8,7 @@ from diagnose_base_agent import
     try:
         from apps.backend.src.compat.transformers_compat import import_transformers_pipe\
     \
+    \
     line
         pipeline, TRANSFORMERS_AVAILABLE = import_transformers_pipeline
         if not TRANSFORMERS_AVAILABLE:

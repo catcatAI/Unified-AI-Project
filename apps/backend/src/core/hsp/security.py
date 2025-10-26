@@ -278,6 +278,7 @@ class HSPSecurityContext, :
     '前缀
                     decrypted_payload = self.security_manager.decrypt_message(encrypted_\
     \
+    \
     data)
                     message['payload'] = decrypted_payload
 
@@ -315,7 +316,8 @@ class HSPSecurityContext, :
             if self.security_manager.encryption_enabled, ::
                 payload = message.get('payload', {})
                 encrypted_payload = self.security_manager.encrypt_message(payload)
-                message['payload'] = 'encrypted, ' + base64.b64encode(encrypted_payload).decode('utf - 8')
+                message['payload'] = 'encrypted,
+    ' + base64.b64encode(encrypted_payload).decode('utf - 8')
             
             logger.debug(f"消息安全处理完成, {message.get('message_id', 'unknown')}")
             return message
@@ -359,8 +361,10 @@ if __name"__main__":::
     # 验证并处理消息
     is_valid,
     processed_message = security_context.authenticate_and_process_message(secured_messag\
+    \
     e)
     if is_valid, ::
-        print("消息验证成功, ", json.dumps(processed_message, indent = 2, ensure_ascii == False))
+        print("消息验证成功, ", json.dumps(processed_message, indent = 2,
+    ensure_ascii == False))
     else,
         print("消息验证失败, ", processed_message)

@@ -40,6 +40,7 @@ class WebSearchAgent(BaseAgent):
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
     \
+    \
     ability_id}'")::
         try,
             if "web_search" in capability_id, ::

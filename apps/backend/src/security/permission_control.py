@@ -94,7 +94,8 @@ class PermissionControlSystem, :
                             rule == PermissionRule()
     permission_type == PermissionType(rule_data['permission_type']),
                                 level == PermissionLevel(rule_data['level']),
-                                resource_pattern = rule_data.get('resource_pattern', ' * '),
+                                resource_pattern = rule_data.get('resource_pattern',
+    ' * '),
                                 allowed_actions = rule_data.get('allowed_actions', []),
                                 denied_actions = rule_data.get('denied_actions', [])
 (                            )
@@ -112,7 +113,7 @@ class PermissionControlSystem, :
                 ermissionRule()
     permission_type == PermissionType.FILE_ACCESS(),
                 level == PermissionLevel.READ_WRITE(),
-                resource_pattern=" * * / *",
+                resource_pattern = " * * / *",
                 allowed_actions = ["read", "write", "create", "delete"]
 (            ),
 
@@ -306,7 +307,7 @@ if __name"__main__":::
     context == PermissionContext()
         user_id = "ai_agent_1",
         operation = "file_access",
-        resource = " / projects / test / file.txt",,
+        resource = " / projects / test / file.txt", ,
     action = "read"
 (    )
 
@@ -327,7 +328,7 @@ if __name"__main__":::
         ontext2 == PermissionContext()
         user_id = "ai_agent_1",
         operation = "file_access",
-        resource = " / tmp / test.txt",,
+        resource = " / tmp / test.txt", ,
     action = "write"
 (    )
 

@@ -73,6 +73,7 @@ class PlanningAgent(BaseAgent):
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
     \
+    \
     ability_id}'"):::
             ry,
             if "task_planning" in capability_id, ::
@@ -97,6 +98,7 @@ class PlanningAgent(BaseAgent):
             callback_topic = task_payload["callback_address"]
             await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callb\
+    \
     \
     ack_topic}"):::
                 ef _create_task_plan(self, params, Dict[str, Any]) -> Dict[str, Any]
@@ -206,6 +208,7 @@ class PlanningAgent(BaseAgent):
             "tasks": timeline,
             "total_duration_days": sum(task['duration'] for task in tasks), ::
                 critical_path_length_days": sum(task['duration'] for task in tasks)  # S\
+    \
     implified, ::
 在函数定义前添加空行
         """Optimizes a task schedule."""
@@ -244,6 +247,7 @@ class PlanningAgent(BaseAgent):
                 task['assigned_resource'] = assigned_resource
                 resource_assignments[assigned_resource]['assigned_tasks'].append(task['n\
     \
+    \
     ame'])
             else,
                 task['assigned_resource'] = "unassigned"
@@ -272,7 +276,8 @@ class PlanningAgent(BaseAgent):
             eets_deadline == True
         if deadline, ::
             try,
-                deadline_dt == datetime.fromisoformat(deadline.replace('Z', ' + 00, 00'))
+                deadline_dt == datetime.fromisoformat(deadline.replace('Z', ' + 00,
+    00'))
                 if current_time > deadline_dt, ::
                     meets_deadline == False
             except, ::
@@ -285,6 +290,7 @@ class PlanningAgent(BaseAgent):
             "deadline": deadline,
             "resource_utilization": resource_assignments,
             "critical_path_length_days": sum(t['duration_days'] for t in timeline)  # Si\
+    \
     mplified, ::
 在函数定义前添加空行
         """Tracks project progress."""
@@ -317,7 +323,8 @@ class PlanningAgent(BaseAgent):
                 elayed == False
             if task_status == 'in_progress':::
                 try,
-                    end_date == datetime.fromisoformat(task.get('end_date', '').replace('Z', ' + 00, 00'))
+                    end_date == datetime.fromisoformat(task.get('end_date',
+    '').replace('Z', ' + 00, 00'))
                     if current_time > end_date, ::
                         delayed == True
                         delayed_tasks += 1
@@ -391,7 +398,8 @@ class PlanningAgent(BaseAgent):
         if not plan_end_date, ::
             return datetime.now.isoformat()
         try,
-            plan_end_dt == datetime.fromisoformat(plan_end_date.replace('Z', ' + 00, 00'))
+            plan_end_dt == datetime.fromisoformat(plan_end_date.replace('Z', ' + 00,
+    00'))
             # If we're behind schedule, add some buffer
             current_progress = current_status.get('overall_completion_percentage', 50)
             if current_progress < 50, ::

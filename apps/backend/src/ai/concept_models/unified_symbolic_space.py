@@ -86,11 +86,14 @@ class UnifiedSymbolicSpace, :
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_symbols_type ON symbols(type)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_relationships_source ON relationships\
     \
+    \
     (source_symbol_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_relationships_target ON relationships\
     \
+    \
     (target_symbol_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_relationships_type ON relationships(t\
+    \
     \
     ype)")
 
@@ -245,6 +248,7 @@ class UnifiedSymbolicSpace, :
     cursor = conn.cursor()
     # 先删除相关的关系
     cursor.execute("DELETE FROM relationships WHERE source_symbol_id = ? OR target_symbo\
+    \
     \
     l_id = ?")
 (                    (symbol_id, symbol_id))
@@ -406,6 +410,7 @@ class UnifiedSymbolicSpace, :
 
             logger.warning(f"No rows affected when deleting relationship ID {relationshi\
     \
+    \
     p_id}")
 
     return rows_affected > 0
@@ -463,7 +468,8 @@ class UnifiedSymbolicSpace, :
                 for row in cursor.fetchall, ::
     source_id, target_id = row
                     # 确定邻居ID(不是当前符号的另一个符号)
-                    neighbor_id == target_id if source_id = current_symbol_id else source_id, ::
+                    neighbor_id == target_id if source_id = current_symbol_id else sourc\
+    e_id, ::
     if neighbor_id not in visited, ::
     visited.add(neighbor_id)
                         next_level.append(neighbor_id)

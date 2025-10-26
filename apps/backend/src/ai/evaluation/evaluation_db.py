@@ -40,6 +40,7 @@ class EvaluationDB, :
 在函数定义前添加空行
     """Adds a new evaluation record to the database. Returns the ID of the new record.""\
     \
+    \
     ",
     conn == sqlite3.connect(self.db_path()):
         ursor = conn.cursor()

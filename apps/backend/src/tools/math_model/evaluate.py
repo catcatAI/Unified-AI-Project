@@ -53,7 +53,7 @@ def load_test_dataset_csv(file_path) -> Tuple[List[Dict[str, str]] List[Dict[str
     answers, List[Dict[str, str]] =    # 修复列表初始化
     try,
 
-    with open(file_path, 'r', newline == '', encoding = 'utf - 8') as f,:
+    with open(file_path, 'r', newline == '', encoding = 'utf - 8') as f, :
     reader = csv.DictReader(f)
             for row in reader, ::
     problems.append({'problem': row['problem']})
@@ -97,16 +97,19 @@ def main -> None,  # 修复函数定义, 添加缺失的括号:
         if math_model_shell.model is not None, ::
     math_model_shell.model.load_weights(MODEL_LOAD_PATH) # Load weights into the trainin\
     \
+    \
     g model structure
 
     # The inference models (encoder_model, decoder_model) inside math_model_shell
     # should now have the trained weights because they share layers with math_model_shel\
+    \
     \
     l.model,
         rint("Model loaded successfully.")
     except Exception as e, ::
     print(f"Error loading model, {e}")
     print(f"Ensure that the model was saved correctly at {MODEL_LOAD_PATH} after trainin\
+    \
     \
     g.")
     return

@@ -40,11 +40,13 @@ from .math_model.model import
     except ImportError as e:
         print(f"CRITICAL: TensorFlow could not be imported. Math tool's NN features will\
     \
+    \
     be disabled. Error: {e}")
         _tensorflow_import_error = str(e)
         _model_instance = None
     except FileNotFoundError as e:
         print(f"Warning: Math model files not found. NN features will be disabled. Error\
+    \
     \
     : {e}")
         _tensorflow_import_error = str(e)  # Treat missing files as an import -\
@@ -61,13 +63,14 @@ def extract_arithmetic_problem(text: str) -> str | None:
     """
     Extracts a basic arithmetic problem from a string.
     """
-    normalized_text = text.lower().replace("plus", " + ").replace("add", " + ").replace("minus", " - ").replace("subtract", " - ") \
+    normalized_text = text.lower().replace("plus", " + ").replace("add",
+    " + ").replace("minus", " - ").replace("subtract", " - ") \
                         .replace("times", " * ").replace("multiply by",
     " * ").replace("multiplied by", " * ") \
                         .replace("divided by", " / ").replace("divide by", " / ")
 
     float_num_pattern = r"[ - +]?\d + (?:\.\d + )?"
-    problem_pattern_grouped = rf"({float_num_pattern})\s * ([\+\-\ * \ / ])\s * ({float_num_pattern})"
+    problem_pattern_grouped = rf"({float_num_pattern})\s * ([\+\ - \ * \ / ])\s * ({float_num_pattern})"
 
     match = re.search(problem_pattern_grouped, normalized_text)
     if match:
@@ -127,7 +130,8 @@ def calculate(input_string: str) -> ToolDispatcherResponse:
                 payload = None,
                 tool_name_attempted = "calculate",
                 original_query_for_tool = input_string,
-                error_message = f"Model returned a non - numeric answer: {predicted_answer}"
+                error_message = f"Model returned a non -\
+    numeric answer: {predicted_answer}"
 (            )
 
     except Exception as e:

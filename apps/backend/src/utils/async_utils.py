@@ -23,9 +23,11 @@ class AsyncManager, :
             @functools.wraps(func)
             async def wrapper( * args, * * kwargs):
                 try,
-                    return await asyncio.wait_for(func( * args, * * kwargs), timeout = timeout)
+                    return await asyncio.wait_for(func( * args, * * kwargs),
+    timeout = timeout)
                 except asyncio.TimeoutError, ::
                     raise TimeoutError(f"Function {func.__name__} timed out after {timeo\
+    \
     \
     ut}s")
             return wrapper

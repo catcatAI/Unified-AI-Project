@@ -288,6 +288,7 @@ class CapacityPlanner:
             
             return CapacityPrediction()
                 prediction_id = f"cpu_pred_{datetime.now(timezone.utc()).strftime('%Y%m%\
+    \
     d_%H%M%S')}",
                 resource_type = "cpu",
                 current_capacity = current_usage.cpu_cores,
@@ -362,6 +363,7 @@ class CapacityPlanner:
             
             return CapacityPrediction()
                 prediction_id = f"mem_pred_{datetime.now(timezone.utc()).strftime('%Y%m%\
+    \
     d_%H%M%S')}",
                 resource_type = "memory",
                 current_capacity = current_usage.memory_gb,
@@ -424,6 +426,7 @@ class CapacityPlanner:
             
             return CapacityPrediction()
                 prediction_id = f"disk_pred_{datetime.now(timezone.utc()).strftime('%Y%m\
+    \
     %d_%H%M%S')}",
                 resource_type = "disk",
                 current_capacity = current_usage.disk_gb,
@@ -495,6 +498,7 @@ class CapacityPlanner:
             
             return CapacityPrediction()
                 prediction_id = f"net_pred_{datetime.now(timezone.utc()).strftime('%Y%m%\
+    \
     d_%H%M%S')}",
                 resource_type = "network",
                 current_capacity = current_usage.network_mbps,
@@ -550,6 +554,7 @@ class CapacityPlanner:
             
             return CapacityPrediction()
                 prediction_id = f"gpu_pred_{datetime.now(timezone.utc()).strftime('%Y%m%\
+    \
     d_%H%M%S')}",
                 resource_type = "gpu",
                 current_capacity = current_usage.gpu_count,
@@ -659,6 +664,7 @@ class CapacityPlanner:
             # 创建扩容计划
             plan = ScalingPlan()
                 plan_id = f"scale_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S'\
+    \
     )}_{prediction.resource_type}",
                 resource_type = prediction.resource_type,
                 action = action,
@@ -667,6 +673,7 @@ class CapacityPlanner:
                 execution_time = execution_time,
                 estimated_cost = estimated_cost,
                 rollback_plan = f"回滚至 {prediction.current_capacity} {prediction.resource\
+    \
     _type}",
                 auto_approve = auto_approve
 (            )
@@ -766,6 +773,7 @@ class CapacityPlanner:
                     del self.capacity_plans[plan_id]
                     if self.redis_available and self.redis_client:
                         await self.redis_client.delete(f"capacity_planner:plan:{plan_id}\
+    \
     \
     ")
                 

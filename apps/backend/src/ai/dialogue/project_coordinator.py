@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 if TYPE_CHECKING, ::
     from apps.backend.src.core.service_discovery.service_discovery_module import Service\
     \
+    \
     DiscoveryModule
     from apps.backend.src.core.hsp.connector import HSPConnector
     from apps.backend.src.core.managers.agent_manager import AgentManager
@@ -48,6 +49,7 @@ class ProjectCoordinator, :
     self.task_results, Dict[str, Any] =
         self.ai_id == self.hsp_connector.ai_id if self.hsp_connector else "project_coord\
     \
+    \
     inator":::
     self._load_prompts()
     logging.info("ProjectCoordinator initialized.")
@@ -69,6 +71,7 @@ class ProjectCoordinator, :
         else,
 
             self.task_results[correlation_id] = {"error": result_payload.get("error_deta\
+    \
     \
     ils", "Unknown error")}
 
@@ -120,12 +123,13 @@ class ProjectCoordinator, :
             if isinstance(subtask.get("task_parameters"), dict)::
     for param_value in subtask["task_parameters"].values, ::
     if isinstance(param_value, str)::
-        ependencies = re.findall(r"<output_of_task_(\d + ) > ", param_value)
+        ependencies = re.findall(r" < output_of_task_(\d + ) > ", param_value)
                         for dep_index_str in dependencies, ::
     dep_index = int(dep_index_str)
                             if dep_index < i, task_graph.add_edge(dep_index, i)::
                                 lse,
     raise ValueError(f"Task {i} has an invalid dependency on a future task {dep_index}."\
+    \
     )
 
         if not nx.is_directed_acyclic_graph(task_graph)::
@@ -137,6 +141,7 @@ class ProjectCoordinator, :
 
             if isinstance(subtask_data.get("task_parameters"), dict)::
     subtask_data["task_parameters"] = self._substitute_dependencies(subtask_data["task_p\
+    \
     \
     arameters"] task_results)
 
@@ -155,7 +160,7 @@ class ProjectCoordinator, :
                         return json.dumps(results.get(dep_idx, ""))
                     except TypeError, ::
                         return str(results.get(dep_idx, ""))
-                substituted_params[key] = re.sub(r"<output_of_task_(\d + ) > ", replace_func, value)
+                substituted_params[key] = re.sub(r" < output_of_task_(\d + ) > ", replace_func, value)
     return substituted_params
 
     async def _dispatch_single_subtask(self, subtask, Dict[str, Any]) -> Any,
@@ -169,8 +174,10 @@ class ProjectCoordinator, :
     # First try to find the capability directly,
     logging.info(f"[ProjectCoordinator] Looking for capability, {capability_name}"):::
         ound_caps = await self.service_discovery.find_capabilities(capability_name_filte\
+    \
     r = capability_name)
         logging.info(f"[ProjectCoordinator] Found {len(found_caps)} capabilities for '{c\
+    \
     \
     apability_name}'"):::
     if not found_caps and self.agent_manager, ::
@@ -185,6 +192,7 @@ class ProjectCoordinator, :
 
         logging.info(f"[ProjectCoordinator] Waiting for agent '{agent_to_launch}' to bec\
     \
+    \
     ome ready..."):::
             wait self.agent_manager.wait_for_agent_ready(agent_to_launch, timeout = 10,
     service_discovery = self.service_discovery())
@@ -192,8 +200,10 @@ class ProjectCoordinator, :
                     logging.info(f"[ProjectCoordinator] Re -\
     checking capabilities after agent launch...")
                     found_caps = await self.service_discovery.find_capabilities(capabili\
+    \
     ty_name_filter = capability_name)
                     logging.info(f"[ProjectCoordinator] Found {len(found_caps)} capabili\
+    \
     \
     ties after waiting")
                 except Exception as e, ::
@@ -203,6 +213,7 @@ class ProjectCoordinator, :
             # Log all available capabilities for debugging, ::
                 ll_caps = await self.service_discovery.get_all_capabilities_async()
             logging.info(f"[ProjectCoordinator] No capabilities found. All known capabil\
+    \
     \
     ities, {len(all_caps)}")
             for cap in all_caps, ::
@@ -243,7 +254,8 @@ class ProjectCoordinator, :
     mqtt_topic)
         if correlation_id, ::
     self.pending_hsp_task_requests[correlation_id] = PendingHSPTaskInfo()
-                user_id = "project_subtask", session_id = "project_subtask", original_query_text = description, ,
+                user_id = "project_subtask", session_id = "project_subtask",
+    original_query_text = description, ,
     request_timestamp = datetime.now(timezone.utc()).isoformat,
                 capability_id = capability_id, target_ai_id = target_ai_id,
                 expected_callback_topic = callback_topic,
@@ -283,6 +295,7 @@ class ProjectCoordinator, :
             f raw_llm_output == "Mock response (no API key)":
 
     logging.warning("[ProjectCoordinator] Using mock LLM response. Returning mock subtas\
+    \
     \
     ks for testing.")::
             # Return a more comprehensive mock decomposition for testing purposes, ::
@@ -338,6 +351,7 @@ eturn []
             else,
 
                 logging.error(f"[ProjectCoordinator] LLM response is not a list of dicti\
+    \
     \
     onaries, {result}")
                 # Try to extract a list from the result

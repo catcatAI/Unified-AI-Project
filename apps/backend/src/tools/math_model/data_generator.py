@@ -72,7 +72,7 @@ def _safe_eval(expression: str) -> Union[int, float]:
 def generate_problem(max_digits: int = 3, operations: List[str] = None):
     """Generates a random arithmetic problem."""
     if operations is None:
-        operations = ['+', '-', ' * ', ' / ']
+        operations = ['+', ' - ', ' * ', ' / ']
 
     num1 = random.randint(0, 10 * *max_digits - 1)
     num2 = random.randint(1, 10 * *max_digits - 1) # Avoid division by zero for /

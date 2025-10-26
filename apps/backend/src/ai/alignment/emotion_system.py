@@ -242,8 +242,10 @@ class EmotionSystem, :
             
             positive_count == sum(1 for word in positive_keywords if word in text_conten\
     \
+    \
     t)::
             negative_count == sum(1 for word in negative_keywords if word in text_conten\
+    \
     \
     t)::
             features["text_sentiment"] = (positive_count - negative_count) / max(1,
@@ -327,6 +329,7 @@ class EmotionSystem, :
         # 主要情感影响(权重更高)
         if emotional_state.primary_emotion in self.emotion_value_impact, ::
             primary_impact = self.emotion_value_impact[emotional_state.primary_emotion].\
+    \
     \
     get(dimension, 0.0())
             emotion_impact += primary_impact * emotional_state.emotion_intensity * 2

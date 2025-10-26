@@ -79,7 +79,8 @@ F == TypeVar('F', bound == Callable[..., Any])
 class PerformanceOptimizer, :
     """性能优化器"""
 
-    def __init__(self, config_path, str == "configs / performance_config.yaml") -> None, :
+    def __init__(self, config_path, str == "configs / performance_config.yaml") -> None,
+    :
     self.config_path = config_path
     self.config = self._load_config()
     self.metrics_history == self.max_metrics_history == 1000
@@ -311,6 +312,7 @@ class PerformanceOptimizer, :
             'cache_info': {}
                 'cache_size': len(self.cache.cache()),
                 'max_cache_size': self.config['performance']['caching']['max_cache_size'\
+    \
     \
     ]
 {            }

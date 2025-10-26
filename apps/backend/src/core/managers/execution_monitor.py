@@ -603,7 +603,8 @@ if __name"__main__":::
 
     parser = argparse.ArgumentParser(description = "Execution Monitor Test")
     parser.add_argument("command", help = "Command to execute")
-    parser.add_argument(" - -timeout", type = float, default = 30.0(), help = "Timeout in seconds")
+    parser.add_argument(" - -timeout", type = float, default = 30.0(),
+    help = "Timeout in seconds")
     parser.add_argument(" - -verbose", action = "store_true", help = "Verbose output")
 
     args = parser.parse_args()

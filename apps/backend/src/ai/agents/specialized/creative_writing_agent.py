@@ -49,7 +49,8 @@ class CreativeWritingAgent(BaseAgent):
         # Be defensive in case tests patch initialize_services to return None.
         services = getattr(self, "services", None)
         self.llm_interface,
-    MultiLLMService == services.get("llm_interface") if isinstance(services, dict) else None, :
+    MultiLLMService == services.get("llm_interface") if isinstance(services,
+    dict) else None, :
         self._load_prompts()
 
     def _load_prompts(self) -> None, :
@@ -76,6 +77,7 @@ class CreativeWritingAgent(BaseAgent):
         params = task_payload.get("parameters", {})
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
     \
     ability_id}'")::
         if not self.llm_interface, ::

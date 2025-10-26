@@ -54,6 +54,7 @@ class RealCausalGraph, :
                 # 使用[CLS] token的embedding作为语义表示
                 cls_embedding == outputs.last_hidden_state[:, 0, ]
                 similarity = torch.cosine_similarity(cls_embedding[0] cls_embedding[1] d\
+    \
     im = 0)
             
             similarity_score = similarity.item()
@@ -353,6 +354,7 @@ class RealCounterfactualReasoner, :
         # 考虑干预强度
         intervention_magnitude = self._calculate_intervention_magnitude(intervention_val\
     \
+    \
     )
         
         return semantic_similarity * intervention_magnitude
@@ -501,6 +503,7 @@ class RealCausalReasoningEngine, :
                 # 验证因果关系
                 validated = await self._validate_causal_relationships_enhanced(observati\
     \
+    \
     on, causal_insights)
                 validated_relationships.extend(validated)
             
@@ -509,6 +512,7 @@ class RealCausalReasoningEngine, :
             
             # 生成学习洞察
             learning_insights = await self._generate_learning_insights(validated_relatio\
+    \
     \
     nships)
             self.logger.info(f"生成{len(learning_insights)}个因果学习洞察")
@@ -530,11 +534,14 @@ class RealCausalReasoningEngine, :
                 'correlation_matrix': await self._compute_correlations(observation),
                 'causal_candidates': await self._identify_causal_candidates(observation)\
     \
+    \
     ,
                 'confounding_factors': await self._detect_confounding_factors(observatio\
     \
+    \
     n),
                 'semantic_relationships': await self._analyze_semantic_relationships(obs\
+    \
     \
     ervation)
 {            }
@@ -892,6 +899,7 @@ class RealCausalReasoningEngine, :
                 if i < j,  # 避免重复, :
                     similarity = await self.causal_graph.calculate_semantic_similarity(v\
     \
+    \
     ar1, var2)
                     semantic_relationships[f"{var1}_{var2}"] = similarity
         
@@ -950,7 +958,7 @@ class RealCausalReasoningEngine, :
             n = min(len(cause_data), len(effect_data))
             
             # 计算t统计量
-            t_stat == correlation * np.sqrt((n - 2) / (1 - correlation * *2)) if correlation * *2 < 1 else 0,:
+            t_stat == correlation * np.sqrt((n - 2) / (1 - correlation * *2)) if correlation * *2 < 1 else 0, :
             # 近似p值(简化计算)
             if abs(t_stat) > 2.0,  # 近似显著性, :
                 return min(abs(correlation), 1.0())
@@ -967,6 +975,7 @@ class RealCausalReasoningEngine, :
         
         # 语义相似度验证
         semantic_similarity = await self.causal_graph.calculate_semantic_similarity(caus\
+    \
     \
     e, effect)
         
@@ -1053,6 +1062,7 @@ class RealCausalReasoningEngine, :
             
             # 1. 干预语义影响置信度
             intervention_confidence = await self._calculate_intervention_confidence(inte\
+    \
     \
     rvention, scenario)
             

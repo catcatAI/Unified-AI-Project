@@ -83,6 +83,7 @@ class AIVirtualInputService, :
     element_id (str) The ID of the element to find.
             search_list (Optional[List[VirtualInputElementDescription]]) The list of ele\
     \
+    \
     ments
                 to search within. If None, searches self.virtual_ui_elements.
 
@@ -126,6 +127,7 @@ class AIVirtualInputService, :
     all non - simulation modes are treated as "not implemented for real action".:::
                 utcome == {"status": "error",
     "message": f"Mode '{self.mode}' not fully supported for actual mouse actions yet. Si\
+    \
     mulating."}::
             # Fall through to simulation for now.:::
                 rint(f"AVIS, Processing mouse command, {action_type}")
@@ -153,7 +155,8 @@ class AIVirtualInputService, :
     target_element = command.get("target_element_id")
             click_type = command.get("click_type", "left")
             pos_x == command.get("relative_x",
-    self.virtual_cursor_position[0]) # Click at current virtual cursor if not specified, ::
+    self.virtual_cursor_position[0]) # Click at current virtual cursor if not specified,
+    ::
                 os_y = command.get("relative_y", self.virtual_cursor_position[1])
 
             # If target_element_id is provided,
@@ -163,7 +166,8 @@ class AIVirtualInputService, :
                 "click_type": click_type,
                 "target_element_id": target_element,
                 "position": (pos_x,
-    pos_y) # This might be element - relative or window - relative based on command version
+    pos_y) # This might be element - relative or \
+    window - relative based on command version
 {            }
             outcome == {"status": "simulated", "action": "click",
     "details": click_details}
@@ -184,7 +188,8 @@ class AIVirtualInputService, :
             hover_details == {:}
                 "target_element_id": target_element,
                 "position": (pos_x,
-    pos_y) if pos_x is not None and pos_y is not None else self.virtual_cursor_position, ::
+    pos_y) if pos_x is not None and pos_y is not None else self.virtual_cursor_position,
+    ::
             outcome == {"status": "simulated", "action": "hover",
     "details": hover_details}
             print(f"  AVIS Sim, Hover logged, {hover_details}")
@@ -225,6 +230,7 @@ class AIVirtualInputService, :
         if self.mode != "simulation_only":::
     outcome == {"status": "error",
     "message": f"Mode '{self.mode}' not fully supported for actual keyboard actions yet.\
+    \
     Simulating."}:
             # Fall through to simulation
 
@@ -251,6 +257,7 @@ class AIVirtualInputService, :
     # Prefer typing into already focused element if no new target, ::
                 lement_to_type_in = self._find_element_by_id(self.virtual_focused_elemen\
     \
+    \
     t_id())
 
             if target_element, # If a specific target is given,
@@ -271,14 +278,17 @@ class AIVirtualInputService, :
                     type_details["value_updated"] = True
                     type_details["updated_element_id"] = element_to_type_in.get("element\
     \
+    \
     _id")
                     print(f"  AVIS Sim,
     Element '{element_to_type_in.get('element_id')}' value updated to '{text_to_type}'."\
+    \
     )
                 else,
 
                     print(f"  AVIS Sim,
     Element '{element_to_type_in.get('element_id')}' not a text input type (no 'value' a\
+    \
     ttribute). Typing simulated by log only.")
             else,
 
@@ -324,6 +334,7 @@ class AIVirtualInputService, :
     "details": special_key_details}
             print(f"  AVIS Sim,
     Special key '{key_name}' press logged on focused '{self.virtual_focused_element_id o\
+    \
     r 'unknown'}'.")
 
         # For other keyboard actions, just log as simulated_not_implemented for now, ::

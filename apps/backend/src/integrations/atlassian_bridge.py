@@ -302,7 +302,8 @@ class AtlassianBridge, :
 
             start_time = time.time()
             # 簡單的健康檢查請求
-            health_endpoint == f"{url} / rest / api / space" if 'confluence' in url else f"{url} / rest / api / 3 / myself":::
+            health_endpoint == f"{url} / rest / api /\
+    space" if 'confluence' in url else f"{url} / rest / api / 3 / myself":::
     async with aiohttp.ClientSession as session,
     async with session.get(health_endpoint, timeout == 10) as response,
     response_time = time.time - start_time
@@ -692,7 +693,8 @@ class AtlassianBridge, :
     logger.info(f"转换 Jira 问题状态成功, {issue_key}")
     return result
 
-    # = == == == == == == == == == = Bitbucket 操作 = async def get_bitbucket_repositories()
+    # = == == == == == == == == == = Bitbucket 操作 = async def get_bitbucket_repositories\
+    ()
     self, ,
     workspace, str
 (    ) -> List[Dict[str, Any]]
@@ -759,11 +761,12 @@ class AtlassianBridge, :
         try,
             # 在 Jira 问题中添加 Confluence 页面链接
             comment == f"相关文档,
-    [Confluence 页面|{self.endpoints['confluence'].primary_url} / content / {confluence_page_id}]"
+    [Confluence 页面|{self.endpoints['confluence'].primary_url} / content /\
+    {confluence_page_id}]"
 
             await self._make_request_with_fallback()
                 'jira', 'POST',
-                f"rest / api / 3 / issue / {jira_key} / comment",,
+                f"rest / api / 3 / issue / {jira_key} / comment", ,
     data = {}
                     'body': {}
                         'type': 'doc',

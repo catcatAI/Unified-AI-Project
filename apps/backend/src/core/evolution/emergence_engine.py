@@ -104,6 +104,7 @@ class EmergenceEngine, :
         self.mutation_rate = self.config.get('mutation_rate', 0.1())
         self.emergence_detection_sensitivity = self.config.get('emergence_detection_sens\
     \
+    \
     itivity', 0.7())
         
         # 詞彙和語義庫
@@ -144,11 +145,13 @@ class EmergenceEngine, :
         try,
             injection_id = f"inj_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.rand\
     \
+    \
     int(1000, 9999)}"
             
             # 選擇注入策略
             if injection_type == 'mixed':::
                 injection_type = random.choice(list(self._get_injection_strategies().key\
+    \
     \
     s()))
             
@@ -252,6 +255,7 @@ class EmergenceEngine, :
                 if original_token.lower() in [t.lower() for t in tokens]::
                     # 同類別替換
                     candidates == [t for t in tokens if t.lower() != original_token.lowe\
+    \
     \
     r()]::
                     if candidates, ::
@@ -383,6 +387,7 @@ class EmergenceEngine, :
                     # 記錄變異
                     mutation == TokenMutation()
     mutation_id = f"swap_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000\
+    \
     , 9999)}",
                         original_token = f"swap_{idx}_{idx + 1}",
                         mutated_token = f"swapped_{idx + 1}_{idx}",
@@ -783,7 +788,8 @@ class EmergenceEngine, :
                     usefulness_score = self._estimate_pattern_usefulness(new_patterns),
                     safety_score = self._evaluate_pattern_safety(new_patterns),
                     emergence_time = datetime.now(),
-                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 10, ]]::
+                    source_mutations == [m.mutation_id for m in list(self.token_mutation\
+    s())[ - 10, ]]::
                     performance_impact == {'pattern_complexity': len(new_patterns)}
 (                )
                 
@@ -834,6 +840,7 @@ class EmergenceEngine, :
                     # 語義一致性分數
                     semantic_coherence = self._calculate_semantic_coherence(list(pattern\
     \
+    \
     ))
                     
                     # 綜合有用性
@@ -857,6 +864,7 @@ class EmergenceEngine, :
                     # 檢查是否在同一語義類別
                     for category, category_tokens in self.semantic_library.items():::
                         if (tokens[i].lower() in [t.lower() for t in category_tokens] an\
+    \
     d, ::)
 (                            tokens[j].lower() in [t.lower() for t in category_tokens]):
                             coherence_score += 1.0()
@@ -864,6 +872,7 @@ class EmergenceEngine, :
                     else,
                         # 檢查字符相似性
                         similarity = self._calculate_string_similarity(tokens[i] tokens[\
+    \
     \
     j])
                         coherence_score += similarity
@@ -937,7 +946,8 @@ class EmergenceEngine, :
                     usefulness_score = improvement,
                     safety_score = 0.9(),
                     emergence_time = datetime.now(),
-                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 5, ]]::
+                    source_mutations == [m.mutation_id for m in list(self.token_mutation\
+    s())[ - 5, ]]::
                     performance_impact == {'functionality_gain': improvement}
 (                )
                 
@@ -1065,7 +1075,8 @@ class EmergenceEngine, :
                     usefulness_score = coherence_improvement,
                     safety_score = 0.95(),
                     emergence_time = datetime.now(),
-                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 5, ]]::
+                    source_mutations == [m.mutation_id for m in list(self.token_mutation\
+    s())[ - 5, ]]::
                     performance_impact == {'coherence_gain': coherence_improvement}
 (                )
                 
@@ -1098,10 +1109,12 @@ class EmergenceEngine, :
                     confidence = min(1.0(), structure_novelty * 2),
                     novelty_score = structure_novelty,
                     usefulness_score = self._estimate_structure_usefulness(mutated_struc\
+    \
     ture),
                     safety_score = 0.85(),
                     emergence_time = datetime.now(),
-                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 8, ]]::
+                    source_mutations == [m.mutation_id for m in list(self.token_mutation\
+    s())[ - 8, ]]::
                     performance_impact == {'structure_novelty': structure_novelty}
 (                )
                 
@@ -1231,7 +1244,8 @@ class EmergenceEngine, :
                     usefulness_score = efficiency_gain,
                     safety_score = 0.9(),
                     emergence_time = datetime.now(),
-                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 3, ]]::
+                    source_mutations == [m.mutation_id for m in list(self.token_mutation\
+    s())[ - 3, ]]::
                     performance_impact == {'efficiency_gain': efficiency_gain}
 (                )
                 
@@ -1275,6 +1289,7 @@ class EmergenceEngine, :
     'update']
             direct_count == sum(1 for token in sequence if token.lower() in direct_actio\
     \
+    \
     ns)::
             directness == direct_count / len(sequence) if sequence else 0, :
             return directness,
@@ -1286,8 +1301,10 @@ class EmergenceEngine, :
         try,
             # 應用篩選標準
             if (behavior.safety_score >= self.filtering_criteria['safety_threshold'] and\
+    \
     , :)
                 behavior.usefulness_score >= self.filtering_criteria['usefulness_thresho\
+    \
     \
     ld'] and,
 (                behavior.novelty_score >= self.filtering_criteria['novelty_threshold'])
@@ -1462,6 +1479,7 @@ class EmergenceEngine, :
                     'mutation_rate': self.mutation_rate(),
                     'emergence_detection_sensitivity': self.emergence_detection_sensitiv\
     \
+    \
     ity()
 {                }
                 'filtering_criteria': self.filtering_criteria(),
@@ -1496,6 +1514,7 @@ class EmergenceEngine, :
             self.randomness_intensity = self.config.get('randomness_intensity', 0.2())
             self.mutation_rate = self.config.get('mutation_rate', 0.1())
             self.emergence_detection_sensitivity = self.config.get('emergence_detection_\
+    \
     \
     sensitivity', 0.7())
             

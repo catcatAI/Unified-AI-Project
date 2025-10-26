@@ -65,6 +65,7 @@ class ServiceStatus(Enum):
             # 确保capability_id是字符串类型
             capability_id_str == str(capability_id) if capability_id is not None else ""\
     \
+    \
     ::
             # 更新现有能力或创建新能力,
             if capability_id_str in self.capabilities, ::

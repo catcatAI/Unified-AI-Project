@@ -26,7 +26,8 @@ class HotReloadService, :
     - Start / stop draining (pause new work acceptance – advisory flag)
     - Reload LLM service and rewire dependent components (ToolDispatcher,
     DialogueManager)
-    - Reload HSP connector (blue / green style) bring up a new connection, re - subscribe,
+    - Reload HSP connector (blue / green style) bring up a new connection,
+    re - subscribe,
     swap references, then tear down the old connector
 
     Notes,
@@ -169,6 +170,7 @@ class HotReloadService, :
                 try,
 
                     from ai.lis.lis_cache_interface import LIS_INCIDENT_DATA_TYPE_PREFIX\
+    \
     \
     , LIS_ANTIBODY_DATA_TYPE_PREFIX  # type ignore
                     lis_incident_data_type_prefix == LIS_INCIDENT_DATA_TYPE_PREFIX
@@ -340,6 +342,7 @@ Connect and subscribe required topics
                     f sdm is not None,
 
     new_hsp.register_on_capability_advertisement_callback(sdm.process_capability_adverti\
+    \
     sement())  # type ignore[arg - type]
 
                 # Disconnect old connector last

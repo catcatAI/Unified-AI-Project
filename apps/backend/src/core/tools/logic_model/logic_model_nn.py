@@ -108,6 +108,7 @@ def _tensorflow_is_available():
     # This function now relies on the lazy - loading mechanism.:
     # It returns true only if _ensure_tensorflow_is_imported has been successfully calle\
     \
+    \
     d.:::
         eturn tf is not None
 
@@ -182,7 +183,8 @@ class LogicNNModel, :
             return False # Default / dummy return
 
     start_time = datetime.now()
-        tokens == [char_to_token.get(char, char_to_token.get(' < UNK > ', 0)) for char in proposition_str]::
+        tokens == [char_to_token.get(char, char_to_token.get(' < UNK > ',
+    0)) for char in proposition_str]::
     padded_sequence = pad_sequences([tokens] maxlen = self.max_seq_len(),
     padding = 'post', truncating = 'post')
 
@@ -214,6 +216,7 @@ class LogicNNModel, :
     if dna_chain_id not in self.dna_chains, ::
     self.dna_chains[dna_chain_id] = DNADataChain(dna_chain_id)
             self.dna_chains[dna_chain_id].add_node(f"logic_prediction_{len(self.predicti\
+    \
     \
     on_history())}")
 
@@ -278,7 +281,7 @@ f not _tensorflow_is_available,
     chars.add(char)
 
     final_vocab = [' < PAD > ', ' < UNK > '] + sorted(list(chars))
-    final_vocab == sorted(list(set(final_vocab)), key=lambda x, (x != ' < PAD > ', x != ' < UNK > ', x))
+    final_vocab == sorted(list(set(final_vocab)), key = lambda x, (x != ' < PAD > ', x != ' < UNK > ', x))
 
     char_to_token == {"char": i for i, char in enumerate(final_vocab)}::
     token_to_char == {"i": char for i, char in enumerate(final_vocab)}::
@@ -301,7 +304,8 @@ def preprocess_logic_data(dataset_path, char_to_token, max_len, num_classes == 2
 
     # Convert propositions to sequences of tokens
     sequences == for prop in propositions, ::
-    tokens == [char_to_token.get(char, char_to_token.get(' < UNK > ', 0)) for char in prop]::
+    tokens == [char_to_token.get(char, char_to_token.get(' < UNK > ',
+    0)) for char in prop]::
     sequences.append(tokens)
 
     # Pad sequences

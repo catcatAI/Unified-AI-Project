@@ -85,6 +85,7 @@ EPOCHS = 50 # Can be adjusted, EarlyStopping will help
 EMBEDDING_DIM == 32 # Should match model definition if not loaded from char_map, ::
 LSTM_UNITS == 64    # Should match model definition if not loaded from char_map, ::
 VALIDATION_SPLIT == 0.1 # Using a portion of the training data for validation during tra\
+    \
     ining, ::
 在函数定义前添加空行
     """Loads the logic dataset from a JSON file."""

@@ -49,16 +49,19 @@ eturn 'zh'
     # Basic check for common English characters / structure (very naive)::
     # This is not robust, as many languages use Latin characters.:
     # A proper lang detect library would be better for production.:::
-        f re.search(r'[A - Za - z]', text) and not re.search(r'[\u00c0 - \u024f]', text)  # No accented Latin chars for simplicity, ::
+        f re.search(r'[A - Za - z]', text) and not re.search(r'[\u00c0 - \u024f]',
+    text)  # No accented Latin chars for simplicity, ::
 eturn 'en'
     return None  # Cannot determine or mixed
 
 
-def translate(text, str, target_language, str, source_language, Optional[str] = None, * * kwargs) -> str, :
+def translate(text, str, target_language, str, source_language, Optional[str] = None,
+    * * kwargs) -> str, :
     """
     Translates text using a dictionary - based approach.
     Args,
         text (str) The text to translate (often the full query if not overridden by kwar\
+    \
     \
     gs).:::
     target_language (str) The target language name or code (e.g., 'en', 'zh',
@@ -79,6 +82,7 @@ def translate(text, str, target_language, str, source_language, Optional[str] = 
     request_model_upgrade(f"Language detection failed for input,
     {text_to_actually_translate[:50]}..."):::
         eturn f"Could not determine source language for '{text_to_actually_translate}'. \
+    \
     \
     Translation unavailable."::
     # print(f"Detected source language {source_language}") # Keep commented
@@ -102,7 +106,8 @@ def translate(text, str, target_language, str, source_language, Optional[str] = 
     translation_map_key = str(f"{source_lang_code}_to_{target_lang_code}")
 
     # Sanitized key check
-    current_map_key_for_debug_check == str(translation_map_key).encode('utf - 8').decode('utf - 8') # for debug comparison, ::
+    current_map_key_for_debug_check == str(translation_map_key).encode('utf -\
+    8').decode('utf - 8') # for debug comparison, ::
         ey_present == False
     dict_keys_for_debug == if dictionary, ::
     dict_keys_for_debug == [str(k) for k in dictionary.keys]::
@@ -132,12 +137,15 @@ def translate(text, str, target_language, str, source_language, Optional[str] = 
 or k, v in dictionary.get(translation_map_key).items,
 
 
-    if str(k).lower.encode('utf - 8').decode('utf - 8') == sanitized_lookup_text.lower, ::
+    if str(k).lower.encode('utf - 8').decode('utf - 8') == sanitized_lookup_text.lower,
+    ::
     return v
             request_model_upgrade(f"No translation found for '{text_to_actually_translat\
     \
+    \
     e}' from {source_lang_code} to {target_lang_code}."):::
                 eturn f"Translation not available for '{text_to_actually_translate}' fro\
+    \
     \
     m {source_lang_code} to {target_lang_code}.":::
 lse,
@@ -145,6 +153,7 @@ lse,
     request_model_upgrade(f"Unsupported translation direction,
     {source_lang_code} to {target_lang_code}.")
     return f"Translation from {source_lang_code} to {target_lang_code} is not supported.\
+    \
     \
     "
 
@@ -195,7 +204,8 @@ if __name'__main__':::
 ranslation = translate(text, target_lang)  # Rely on auto - detect
         else,
 
-            translation == translate(text, target_lang)  # Rely on auto - detect, or pass source_lang if needed, ::
+            translation == translate(text, target_lang)  # Rely on auto - detect,
+    or pass source_lang if needed, ::
                 rint(f"  -> Got, '{translation}'")
         if expected is not None,  # For cases where we have a clear expected output, ::
             f translation == expected,

@@ -15,9 +15,11 @@ class WebSearchTool, :
     all_configs = yaml.safe_load(f)
                 self.config = all_configs.get('web_search_tool')
         except FileNotFoundError, ::
-            self.config == self.search_url_template == self.config.get('search_url_template', "https, / /duckduckgo.com / html / ?q = {query}")
+            self.config == self.search_url_template == self.config.get('search_url_templ\
+    ate', "https, / /duckduckgo.com / html / ?q = {query}")
     self.user_agent = self.config.get('user_agent',
-    "Mozilla / 5.0 (Windows NT 10.0; Win64; x64) AppleWebKit / 537.36 (KHTML, like Gecko) Chrome / 58.0.3029.110 Safari / 537.36")
+    "Mozilla / 5.0 (Windows NT 10.0; Win64; x64) AppleWebKit / 537.36 (KHTML,
+    like Gecko) Chrome / 58.0.3029.110 Safari / 537.36")
 
     async def search(self, query, str, num_results, int == 5):
         ""

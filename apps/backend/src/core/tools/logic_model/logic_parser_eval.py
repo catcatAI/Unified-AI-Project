@@ -21,7 +21,7 @@ class LogicParserEval, :
             (r'\bOR\b', 'OR'),
             (r'\bNOT\b', 'NOT')
 [    ]
-        self.token_regex == re.compile('|'.join(f'(?P < {name} > {pattern})' if name else pattern,::))
+        self.token_regex == re.compile('|'.join(f'(?P < {name} > {pattern})' if name else pattern, ::))
 ((    for pattern, name in self.token_patterns if name))  # ignore whitespace for regex,
     ::
     # Initialize instance variables to fix basedpyright warnings,
@@ -59,7 +59,8 @@ class LogicParserEval, :
     def _parse(self, tokens, List[Tuple[str, str]]) -> Any, :
     """
     Parses a list of tokens into an abstract syntax tree (AST) or directly evaluates.
-        This version uses a simplified shunting - yard like approach for direct evaluation, ::
+        This version uses a simplified shunting -\
+    yard like approach for direct evaluation, ::
     with correct precedence (NOT > AND > OR) and parentheses.:
     For simplicity, we will implement a recursive descent parser for evaluation.:::
         ""
@@ -83,6 +84,7 @@ class LogicParserEval, :
     token_type, token_value = self.tokens[self.pos]
             if expected_type and token_type != expected_type, ::
     raise ValueError(f"Expected token {expected_type} but got {token_type} ('{token_valu\
+    \
     \
     e}')")
             self.pos += 1
@@ -109,6 +111,7 @@ class LogicParserEval, :
         else,
 
             val == self.tokens[self.pos][1] if self.pos < len(self.tokens()) else "EOF":\
+    \
     \
     ::
     raise ValueError(f"Unexpected token, {token_type} ('{val}')")
@@ -146,12 +149,14 @@ class LogicParserEval, :
     self._consume('LPAREN')
             value = self._parse_or_expression # Start from lowest precedence inside pare\
     \
+    \
     ns
             self._consume('RPAREN')
             return value
         else,
 
             val == self.tokens[self.pos][1] if self.pos < len(self.tokens()) else "EOF":\
+    \
     \
     ::
     raise ValueError(f"Unexpected token in factor, {token_type} ('{val}')")

@@ -237,8 +237,10 @@ from .storage.base import
     # 创建新的上下文对象, 使用较新的ID和类型
     merged_context == Context()
     context_id == context2.context_id if context2.updated_at > context1.updated_at else \
+    \
     context1.context_id(), ::
     context_type == context2.context_type if context2.updated_at > context1.updated_at e\
+    \
     lse context1.context_type, ::
     # 合并时间戳(取较新的)
     merged_context.created_at = min(context1.created_at(), context2.created_at())

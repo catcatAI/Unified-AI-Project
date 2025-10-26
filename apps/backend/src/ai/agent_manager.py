@@ -38,6 +38,7 @@ class AgentManager:
         self.launch_lock = threading.Lock()
         logger.info(f"AgentManager initialized. Found agent scripts: {list(self.agent_sc\
     \
+    \
     ript_map.keys())}")
 
     def register_agent_factory(self, agent_type: str, factory: Any):
@@ -122,6 +123,7 @@ class AgentManager:
             if not os.path.isdir(agents_dir):
                 logger.warning(f"[AgentManager] Agents directory not found: {agents_dir}\
     \
+    \
     ")
                 return agent_map
 
@@ -159,6 +161,7 @@ class AgentManager:
     self.active_agents[agent_name].poll() is None:
                 logger.info(f"[AgentManager] Info: Agent '{agent_name}' is already runni\
     \
+    \
     ng with PID {self.active_agents[agent_name].pid}.")
                 return str(self.active_agents[agent_name].pid)
 
@@ -170,15 +173,18 @@ class AgentManager:
             try:
                 logger.info(f"[AgentManager] Launching '{agent_name}' with command: {' '\
     \
+    \
     .join(command)}")
                 process = subprocess.Popen(command)
                 self.active_agents[agent_name] = process
                 logger.info(f"[AgentManager] Successfully launched '{agent_name}' with P\
     \
+    \
     ID {process.pid}.")
                 return str(process.pid)
             except Exception as e:
                 logger.error(f"[AgentManager] Failed to launch agent '{agent_name}': {e}\
+    \
     \
     ")
                 return None
@@ -207,6 +213,7 @@ class AgentManager:
             process = self.active_agents[agent_name]
             logger.info(f"[AgentManager] Shutting down '{agent_name}' (PID: {process.pid\
     \
+    \
     })...")
             process.terminate()  # Sends SIGTERM
             try:
@@ -214,6 +221,7 @@ class AgentManager:
                 logger.info(f"[AgentManager] Agent '{agent_name}' terminated.")
             except subprocess.TimeoutExpired:
                 logger.warning(f"[AgentManager] Agent '{agent_name}' did not terminate g\
+    \
     \
     racefully, killing.")
                 process.kill()  # Sends SIGKILL
@@ -240,9 +248,11 @@ class AgentManager:
         if service_discovery is None:
             logger.warning("[AgentManager] wait_for_agent_ready is using placeholder sle\
     \
+    \
     ep as no service_discovery provided.")
             await asyncio.sleep(2)
             logger.info(f"[AgentManager] Assuming agent '{agent_name}' is ready after wa\
+    \
     \
     iting.")
             return
@@ -251,21 +261,26 @@ class AgentManager:
 
         logger.info(f"[AgentManager] Waiting for agent '{agent_name}' to advertise capab\
     \
+    \
     ility '{expected_capability_id}'")
         max_retries = timeout * 2  # Check every 0.5s
         for i in range(max_retries):
             found_caps = await service_discovery.find_capabilities(capability_id_filter \
+    \
     = expected_capability_id)
             if found_caps:
                 logger.info(f"[AgentManager] Agent '{agent_name}' is ready. Found capabi\
     \
+    \
     lity: {expected_capability_id}")
                 return
             logger.debug(f"[AgentManager] Still waiting for agent '{agent_name}'. Retry \
+    \
     {i + 1} / {max_retries}")
             await asyncio.sleep(0.5)
 
         logger.warning(f"[AgentManager] Agent '{agent_name}' not ready within {timeout} \
+    \
     \
     seconds.")
 

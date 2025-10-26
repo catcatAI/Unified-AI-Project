@@ -82,6 +82,7 @@ class EnhancedDemoAgent(BaseAgent):
                 uration = parameters.get("duration", random.uniform(0.5(), 2.0()))
             logger.info(f"[{self.agent_id}] Processing task for {"duration":.2f} seconds\
     \
+    \
     ")::
             # Simulate work
             await asyncio.sleep(duration)
@@ -172,6 +173,7 @@ class EnhancedDemoAgent(BaseAgent):
                 "registry_stats": await self.get_agent_registry_stats(),
                 "active_agents": active_agents,
                 "capabilities": [cap.get("capability_id") for cap in self.capabilities]:\
+    \
     \
     :
         else,

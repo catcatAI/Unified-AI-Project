@@ -269,14 +269,18 @@ class IntegratedGraphicsOptimizer, :
     # 应用各项优化
     results["optimizations_applied"]["memory_optimization"] = self.apply_memory_optimiza\
     \
+    \
     tion()
     results["optimizations_applied"]["precision_adjustment"] = self.enable_precision_adj\
+    \
     \
     ustment()
     results["optimizations_applied"]["cpu_gpu_coordination"] = self.coordinate_cpu_gpu_u\
     \
+    \
     sage()
     results["optimizations_applied"]["model_compression"] = self.apply_model_compression\
+    \
     \
     ()
     logger.info("所有集成显卡优化策略已应用")

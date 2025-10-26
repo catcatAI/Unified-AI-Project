@@ -115,6 +115,7 @@ class CausalGraph, :
         """从观察数据中发现因果关系"""
         logger.info(f"Discovering causal relationships from {len(observations)} observat\
     \
+    \
     ions")
         
         discovered_relationships = []
@@ -289,6 +290,7 @@ class CausalGraph, :
     def train_model(self, training_data, List[Dict[str, Any]] epochs, int == 100):
         """训练因果发现模型"""
         logger.info(f"Training causal discovery model with {len(training_data)} samples"\
+    \
     \
     )
         
@@ -467,6 +469,7 @@ class InterventionPlanner, :
         """训练干预效果预测模型"""
         logger.info(f"Training intervention effect model with {len(training_data)} sampl\
     \
+    \
     es")
         
         # 准备训练数据
@@ -638,6 +641,7 @@ class CounterfactualReasoner, :
         """训练反事实推理模型"""
         logger.info(f"Training counterfactual reasoning model with {len(training_data)} \
     \
+    \
     samples")
         
         # 准备训练数据
@@ -713,6 +717,7 @@ class CausalReasoningEngine, :
         """从观察数据中学习因果关系"""
         self.logger.info(f"Learning causal relationships from {len(observations)} observ\
     \
+    \
     ations")
         
         learned_relationships = []
@@ -736,6 +741,7 @@ class CausalReasoningEngine, :
                     
             self.logger.info(f"Learned {len(learned_relationships)} causal relationships\
     \
+    \
     ")
             return learned_relationships
             
@@ -747,6 +753,7 @@ class CausalReasoningEngine, :
 (    intervention, Intervention) -> CounterfactualScenario,
         """执行反事实推理"""
         self.logger.info(f"Performing counterfactual reasoning for scenario {scenario.ge\
+    \
     \
     t('name')}")::
         # 计算反事实结果
@@ -812,11 +819,13 @@ class CausalReasoningEngine, :
         if "intervention_effects" in training_data, ::
             self.intervention_planner.train_model(training_data["intervention_effects"] \
     \
+    \
     epochs)
         
         # 训练反事实推理模型
         if "counterfactual_data" in training_data, ::
             self.counterfactual_reasoner.train_model(training_data["counterfactual_data"\
+    \
     \
     ] epochs)
         

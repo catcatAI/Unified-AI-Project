@@ -193,6 +193,7 @@ class MetacognitiveCapabilitiesEngine, :
                 # 自我反思质量评估模型
                 self.ai_models['reflection_quality_predictor'] = GradientBoostingRegress\
     \
+    \
     or()
                     n_estimators = 20, ,
     random_state = 42
@@ -262,6 +263,7 @@ class MetacognitiveCapabilitiesEngine, :
 {        }
     
     # = == == == == == == == == == = 深度自我理解 == async def develop_self_understanding(self\
+    \
     , context, Dict[str, Any]) -> Dict[str, Any]
         """发展自我理解"""
         try,
@@ -324,16 +326,20 @@ class MetacognitiveCapabilitiesEngine, :
             capabilities = {}
                 'learning_efficiency': self._calculate_learning_efficiency(recent_proces\
     \
+    \
     ses),
                 'problem_solving_ability': self._calculate_problem_solving_ability(recen\
+    \
     \
     t_processes),
                 'adaptation_speed': self._calculate_adaptation_speed(recent_states),
                 'knowledge_retention': self._calculate_knowledge_retention(recent_states\
     \
+    \
     ),
                 'creative_output': self._calculate_creative_output(recent_processes),
                 'reasoning_accuracy': self._calculate_reasoning_accuracy(recent_processe\
+    \
     \
     s),
                 'processing_speed': self._calculate_processing_speed(recent_processes),
@@ -483,14 +489,17 @@ class MetacognitiveCapabilitiesEngine, :
             metacognitive_features = {}
                 'self_monitoring_frequency': len(recent_states) / 20,  # 自我监控频率
                 'self_awareness_consistency': np.mean([s.self_awareness_level for s in r\
+    \
     ecent_states]), :::
                 'uncertainty_management': 1.0 -\
     np.mean([s.uncertainty_level for s in recent_states]), :::
                 'cognitive_load_management': 1.0 -\
     np.mean([s.cognitive_load for s in recent_states]), :::
                 'strategy_diversity': len(set([strategy for state in recent_states for s\
+    \
     trategy in state.cognitive_strategies])), :::
                 'emotional_regulation': self._calculate_emotional_regulation(recent_stat\
+    \
     \
     es)
 {            }
@@ -504,6 +513,7 @@ class MetacognitiveCapabilitiesEngine, :
                 'strongest_feature': strongest_feature[0]
                 'feature_strength': strongest_feature[1]
                 'overall_metacognitive_ability': np.mean(list(metacognitive_features.val\
+    \
     \
     ues())),
                 'improvement_recommendations': []
@@ -586,6 +596,7 @@ class MetacognitiveCapabilitiesEngine, :
                 'severity_scores': severity_scores,
                 'critical_limitations': critical_limitations,
                 'mitigation_strategies': self._suggest_limitation_mitigation(critical_li\
+    \
     \
     mitations),
                 'confidence': 0.80(),
@@ -813,6 +824,7 @@ class MetacognitiveCapabilitiesEngine, :
         # 基于学习收益和效率计算
         total_gains == sum(sum(p.learning_gains()) for p in learning_processes if p.lear\
     \
+    \
     ning_gains())::
         avg_processing_time = np.mean([p.processing_time for p in learning_processes]):
         # 归一化评分
@@ -832,8 +844,10 @@ class MetacognitiveCapabilitiesEngine, :
         # 基于输出质量和错误恢复计算
         avg_quality = np.mean([p.output_quality for p in reasoning_processes if p.output\
     \
+    \
     _quality]):
         avg_errors = np.mean([len(p.errors_encountered()) for p in reasoning_processes])\
+    \
     \
     :
         # 质量评分 + 错误恢复评分
@@ -881,6 +895,7 @@ class MetacognitiveCapabilitiesEngine, :
         try,
             snapshot_id = f"process_{process_type}_{process_id}_{datetime.now().strftime\
     \
+    \
     ('%H%M%S')}"
             
             snapshot == CognitiveProcessSnapshot()
@@ -923,6 +938,7 @@ class MetacognitiveCapabilitiesEngine, :
             # 更新资源利用情况
             if 'resource_utilization' in update_data, ::
                 snapshot.resource_utilization.update(update_data['resource_utilization']\
+    \
     \
     )
             
@@ -996,6 +1012,7 @@ class MetacognitiveCapabilitiesEngine, :
         try,
             pattern_key = f"{snapshot.process_type}_{len(snapshot.intermediate_states())\
     \
+    \
     }"
             
             pattern_data = {}
@@ -1004,8 +1021,10 @@ class MetacognitiveCapabilitiesEngine, :
                 'output_quality': snapshot.output_quality(),
                 'error_count': len(snapshot.errors_encountered()),
                 'learning_gain': np.mean(snapshot.learning_gains()) if snapshot.learning\
+    \
     _gains else 0, ::
                 'resource_efficiency': np.mean(list(snapshot.resource_utilization.values\
+    \
     \
     ()))
 {            }
@@ -1014,7 +1033,8 @@ class MetacognitiveCapabilitiesEngine, :
             
             # 保持模式历史在合理范围内
             if len(self.processing_patterns[pattern_key]) > 50, ::
-                self.processing_patterns[pattern_key] = self.processing_patterns[pattern_key][ - 50, ]
+                self.processing_patterns[pattern_key] = self.processing_patterns[pattern\
+    _key][ - 50, ]
             
         except Exception as e, ::
             logger.error(f"❌ 处理模式分析失败, {e}")
@@ -1060,6 +1080,7 @@ class MetacognitiveCapabilitiesEngine, :
             # 基于性能指标生成洞察
             if snapshot.output_quality < 0.7,  # 低质量输出, :
                 insight_content == f"{snapshot.process_type}过程输出质量低于预期({snapshot.output_\
+    \
     quality, .3f})"
                 evidence_supporting = []
                     {'type': 'quality_metric', 'content': f"输出质量,
@@ -1074,6 +1095,7 @@ class MetacognitiveCapabilitiesEngine, :
 [                ]
             elif snapshot.processing_time > 2.0,  # 处理时间过长, :
                 insight_content == f"{snapshot.process_type}过程处理时间过长({snapshot.processin\
+    \
     g_time, .3f}s)"
                 evidence_supporting = []
                     {'type': 'time_metric', 'content': f"处理时间,
@@ -1120,6 +1142,7 @@ class MetacognitiveCapabilitiesEngine, :
             if avg_learning_gain > 0.1,  # 显著学习收益, :
                 insight_content == f"{snapshot.process_type}过程产生了显著的学习收益({"avg_learning_\
     \
+    \
     gain":.3f})"
                 evidence_supporting = []
                     {'type': 'learning_gains', 'content': f"学习收益,
@@ -1133,6 +1156,7 @@ class MetacognitiveCapabilitiesEngine, :
 [                ]
             elif avg_learning_gain < 0.01,  # 学习收益不足, :
                 insight_content == f"{snapshot.process_type}过程学习收益不足({"avg_learning_gain\
+    \
     \
     ":.3f})"
                 evidence_supporting = []
@@ -1234,6 +1258,7 @@ class MetacognitiveCapabilitiesEngine, :
                 'frequency': most_common_error[1] / len(errors),
                 'prevention_strategy': prevention_strategies.get(most_common_error[0] 'g\
     \
+    \
     eneral_improvement')
 {            }
             
@@ -1269,20 +1294,24 @@ class MetacognitiveCapabilitiesEngine, :
             # 1. 学习环境分析
             learning_environment = await self._analyze_learning_environment(learning_con\
     \
+    \
     text)
             
             # 2. 策略效果评估
             strategy_evaluation = await self._evaluate_strategy_effectiveness(learning_e\
+    \
     \
     nvironment)
             
             # 3. 元学习模式发现
             meta_patterns = await self._discover_meta_learning_patterns(strategy_evaluat\
     \
+    \
     ion)
             
             # 4. 适应性策略生成
             adaptive_strategies = await self._generate_adaptive_strategies(meta_patterns\
+    \
     \
     )
             
@@ -1297,6 +1326,7 @@ class MetacognitiveCapabilitiesEngine, :
                 'validation_results': validation_results,
                 'timestamp': datetime.now().isoformat(),
                 'learning_improvement': validation_results.get('performance_improvement'\
+    \
     \
     , 0.0())
 {            }
@@ -1317,6 +1347,7 @@ class MetacognitiveCapabilitiesEngine, :
                 'task_complexity': self._assess_task_complexity(context),
                 'data_characteristics': self._analyze_data_characteristics(context),
                 'performance_requirements': self._identify_performance_requirements(cont\
+    \
     \
     ext),
                 'resource_constraints': self._identify_resource_constraints(context),
@@ -1433,10 +1464,12 @@ class MetacognitiveCapabilitiesEngine, :
                 # 基于历史数据评估效果
                 historical_effectiveness = self._get_historical_effectiveness(strategy_n\
     \
+    \
     ame, environment)
                 
                 # 预测潜在效果
                 predicted_effectiveness = self._predict_strategy_effectiveness(strategy_\
+    \
     \
     config, environment)
                 
@@ -1464,6 +1497,7 @@ class MetacognitiveCapabilitiesEngine, :
             return {}
                 'strategy_performance': strategy_performance,
                 'recommended_strategies': [strategy[0] for strategy in sorted_strategies\
+    \
     \
     [:3]]::
                 'best_strategy': sorted_strategies[0] if sorted_strategies else None, ::
@@ -1539,6 +1573,7 @@ class MetacognitiveCapabilitiesEngine, :
             if high_performing_strategies, ::
                 patterns.append({)}
                     'pattern_id': f'high_performance_{datetime.now().strftime("%H%M%S")}\
+    \
     \
     ',
                     'pattern_type': 'learning_strategy',

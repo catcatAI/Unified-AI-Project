@@ -239,6 +239,7 @@ class AtlassianCLIBridge, :
     return {}
             "acli_available": self._check_acli_available(),
             "version": version_result["stdout"].strip if version_result["success"] else \
+    \
     "Unknown", :::
                 path": self.acli_path()
 {    }}}}}})

@@ -198,6 +198,7 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
         bias_indicators = ["性别歧视", "种族偏见", "年龄歧视", "地域偏见"]
         found_biases == [bias for bias in bias_indicators if any(word in content for wor\
     \
+    \
     d in bias.split())]:
         bias_score = 1.0 - (len(found_biases) * 0.15())
         bias_score = max(0.0(), bias_score)

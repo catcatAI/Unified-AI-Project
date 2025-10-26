@@ -301,6 +301,7 @@ class DecisionTheorySystem, :
                 # 高不确定性和混沌状态下的概率估计
                 probability = await self._estimate_probability_under_high_uncertainty(ou\
     \
+    \
     tcome, context)
             
             # 计算该结果的效用
@@ -381,11 +382,13 @@ class DecisionTheorySystem, :
 (            )["option"]
             alternatives == [item["option"] for item in sorted_options if item["option"]\
     \
+    \
     != best_option]::
         elif strategy == DecisionStrategy.SATISFICING, ::
             # 选择第一个满足最低要求的选项
             threshold = 0.7  # 满意度阈值
             satisfactory_options == [item for item in sorted_options if item["overall_sc\
+    \
     \
     ore"] >= threshold]::
             if satisfactory_options, ::
@@ -402,6 +405,7 @@ class DecisionTheorySystem, :
 (            )["option"]
             alternatives == [item["option"] for item in sorted_options if item["option"]\
     \
+    \
     != best_option]::
         elif strategy == DecisionStrategy.MAXIMAX, ::
             # 乐观策略：最大化最大可能收益
@@ -410,6 +414,7 @@ class DecisionTheorySystem, :
     key == lambda x, self._calculate_best_case_score(x["option"])
 (            )["option"]
             alternatives == [item["option"] for item in sorted_options if item["option"]\
+    \
     \
     != best_option]::
         else,  # BALANCED_APPROACH
@@ -488,7 +493,8 @@ class DecisionTheorySystem, :
         
         # 根据历史决策准确性调整
         if self.decision_history, ::
-            recent_accuracy == sum(1 for d in self.decision_history[ - 10, ] if d.confidence_level > 0.7()) / min(10, len(self.decision_history()))::
+            recent_accuracy == sum(1 for d in self.decision_history[ - 10,
+    ] if d.confidence_level > 0.7()) / min(10, len(self.decision_history()))::
             confidence *= (0.5 + 0.5 * recent_accuracy)
         
         return confidence

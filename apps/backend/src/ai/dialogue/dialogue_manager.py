@@ -18,6 +18,7 @@ from apps.backend.src.ai.formula_engine import FormulaEngine
 from apps.backend.src.ai.learning.learning_manager import LearningManager
 from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscoveryModul\
     \
+    \
     e
 from apps.backend.src.core.shared.types.common_types import ()
     OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
@@ -60,6 +61,7 @@ class DialogueManager:
         self.learning_manager = learning_manager
         self.service_discovery = service_discovery_module # Store service_discovery_modu\
     \
+    \
     le
         self.hsp_connector = hsp_connector # Store hsp_connector
         self.config = config or {}
@@ -89,6 +91,7 @@ class DialogueManager:
         if self.hsp_connector:
                 self.hsp_connector.register_on_task_result_callback(self._handle_incomin\
     \
+    \
     g_hsp_task_result())
     async def _handle_incoming_hsp_task_result(self,
     result_payload: HSPTaskResultPayload, sender_ai_id: str,
@@ -103,6 +106,7 @@ class DialogueManager:
 
             logging.warning(f"[{self.ai_id}] Received HSP task result but ProjectCoordin\
     \
+    \
     ator is not available.")
 
     async def get_simple_response(self, user_input: str,
@@ -116,6 +120,7 @@ class DialogueManager:
     user_input.lower().startswith(self.triggers["complex_project"]):
             roject_query = user_input[len(self.triggers["complex_project"])].strip()
             logging.info(f"[{self.ai_id}] Complex project detected. Delegating to Projec\
+    \
     \
     tCoordinator...")
             return await self.project_coordinator.handle_project(project_query,
@@ -170,6 +175,7 @@ class DialogueManager:
             if self.learning_manager:
                 adjustment = await self.learning_manager.analyze_for_personality_adjustm\
     \
+    \
     ent(user_input)
             if adjustment and self.personality_manager:
                 self.personality_manager.apply_personality_adjustment(adjustment)
@@ -205,6 +211,7 @@ class DialogueManager:
             # 构建包含真实推理的提示
             system_prompt = f"""You are {ai_name} an AI assistant with genuine reasoning\
     \
+    \
     capabilities.
 
             Guidelines,
@@ -222,6 +229,7 @@ class DialogueManager:
             {user_context}
             
             Please provide a thoughtful response that demonstrates real understanding an\
+    \
     \
     d reasoning."""
             
@@ -241,6 +249,7 @@ class DialogueManager:
                 if len(llm_response.content.strip()) > 10:  # 基本质量检查:
                     # 记录真实的推理过程
                     self.logger.info(f"Generated intelligent response with {len(llm_resp\
+    \
     \
     onse.content())} characters using real LLM inference")
                     return f"{ai_name} {llm_response.content}"
@@ -266,13 +275,16 @@ class DialogueManager:
             elif "?" in user_input:
                 return f"{ai_name} That's an interesting question. Let me think about it\
     \
+    \
     carefully..."
             elif any(word in user_input.lower() for word in ["hello", "hi", "hey"]):
                 return f"{ai_name} Hello! I'm here to help with thoughtful responses. Wh\
     \
+    \
     at would you like to discuss?"
             else:
                 return f"{ai_name} I understand you're sharing something important. Let \
+    \
     \
     me consider this thoughtfully..."
         except Exception as e:
@@ -301,6 +313,7 @@ class DialogueManager:
     
             if not self.hsp_connector or \
     not self.hsp_connector.is_connected:                return ("HSP connector is not av\
+    \
     ailable or not connected.", None):
 
             # Generate correlation ID
@@ -327,6 +340,7 @@ class DialogueManager:
 
             if success:
                 return (f"Task request sent successfully to {capability_advertisement.ge\
+    \
     \
     t('ai_id')}", correlation_id)
             else:

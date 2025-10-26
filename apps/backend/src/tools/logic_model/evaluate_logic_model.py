@@ -59,6 +59,7 @@ def main -> None, :
     char_to_token = char_maps['char_to_token']
     max_seq_len = char_maps['max_seq_len']
         # vocab_size == char_maps['vocab_size'] # Needed if building model structure her\
+    \
     e, ::
             xcept FileNotFoundError,
 
@@ -82,6 +83,7 @@ def main -> None, :
 
     # The load_model method in LogicNNModel handles rebuilding the structure with these \
     \
+    \
     params
     # and then loading weights.
     logic_nn_model_instance == LogicNNModel.load_model(MODEL_LOAD_PATH,
@@ -90,6 +92,7 @@ def main -> None, :
     # logic_nn_model_instance == LogicNNModel.load_model(MODEL_LOAD_PATH,
     CHAR_MAP_LOAD_PATH)
     #                                                 embedding_dim = embedding_dim_eval\
+    \
     ,
 (    #                                                 lstm_units = lstm_units_eval)
         if logic_nn_model_instance is None or logic_nn_model_instance.model is None, ::
@@ -116,9 +119,10 @@ def main -> None, :
     test_propositions_str, List[...]
     test_answers_bool, List[bool] = [item['answer'] for item in test_dataset]:
     # Tokenize and pad propositions
-    sequences == [[char_to_token.get(char, char_to_token[' < UNK > ']) for char in prop] for prop in test_propositions_str]:
+    sequences == [[char_to_token.get(char,
+    char_to_token[' < UNK > ']) for char in prop] for prop in test_propositions_str]:
     # Use the imported pad_sequences function
-    X_test = pad_sequences(sequences, maxlen=max_seq_len, padding='post', value=char_to_token[' < PAD > '])
+    X_test = pad_sequences(sequences, maxlen = max_seq_len, padding = 'post', value = char_to_token[' < PAD > '])
 
     # True answers as integers (0 or 1) for scikit - learn metrics, ::
         _test_true_int = np.array([1 if ans else 0 for ans in test_answers_bool]):

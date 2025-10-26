@@ -21,6 +21,7 @@ except ImportError as e, ::
     print(f"Warning, Could not import keras, {e}")
     EarlyStopping == ModelCheckpoint == ReduceLROnPlateau == Sequential == Dense == Drop\
     \
+    \
     out == BatchNormalization == Adam == None
     KERAS_AVAILABLE == False
 
@@ -55,6 +56,7 @@ EPOCHS == 50  # Can be adjusted, EarlyStopping will help,
 EMBEDDING_DIM == 32  # Should match model definition if not loaded from char_map, ::
 STM_UNITS == 64    # Should match model definition if not loaded from char_map, ::
 ALIDATION_SPLIT == 0.1  # Using a portion of the training data for validation during tra\
+    \
     ining, ::
 ef load_logic_dataset(file_path)
 ""Loads the logic dataset from a JSON file."""

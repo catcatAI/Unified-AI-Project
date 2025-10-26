@@ -158,6 +158,7 @@ class AlignedBaseAgent(BaseAgent):
             if not alignment_result["is_aligned"]:
                 logger.warning(f"[{self.agent_id}] 任务未通过对齐检查: {alignment_result['reason'\
     \
+    \
     ]}")
                 await self._send_alignment_rejection(task_payload, sender_ai_id,
     alignment_result)
@@ -344,6 +345,7 @@ class AlignedBaseAgent(BaseAgent):
             except ValueError:
                 logger.warning(f"[{self.agent_id}] 无效的对齐级别: {parameters['alignment_level\
     \
+    \
     ']}")
         
         logger.info(f"[{self.agent_id}] 对齐参数已更新: {parameters}")
@@ -357,6 +359,7 @@ class AlignedBaseAgent(BaseAgent):
         try:
             # 使用推理系统进行伦理评估
             ethical_assessment = await self.reasoning_system.assess_ethical_implications\
+    \
     \
     (action, context)
             
@@ -383,6 +386,7 @@ class AlignedBaseAgent(BaseAgent):
         try:
             # 处理人类反馈
             alignment_update = await self.alignment_manager.process_human_feedback(human\
+    \
     \
     _feedback)
             
