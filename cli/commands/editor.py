@@ -128,20 +128,25 @@ def get_config():
                 "text_summarization_enabled": config.data_processing.text_summarization_\
     \
     \
+    \
     enabled(),
                 "text_keyword_extraction_enabled": config.data_processing.text_keyword_e\
+    \
     \
     \
     xtraction_enabled(),
                 "code_function_extraction_enabled": config.data_processing.code_function\
     \
     \
+    \
     _extraction_enabled(),
                 "code_class_extraction_enabled": config.data_processing.code_class_extra\
     \
     \
+    \
     ction_enabled(),
                 "code_complexity_analysis_enabled": config.data_processing.code_complexi\
+    \
     \
     \
     ty_analysis_enabled()

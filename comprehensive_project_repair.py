@@ -135,11 +135,7 @@ def repair_key_project_areas():
         
         # 定义要修复的关键区域
         key_areas = [
-            ("apps/backend/src", "后端源码"),
-            ("apps/backend/tests", "后端测试"),
-            ("training", "训练系统"),
-            ("analysis", "分析模块"),
-            ("cli", "命令行工具")
+            ("apps/backend/src", "后端源码")
         ]
         
         # 修复每个区域
