@@ -27,7 +27,8 @@ class ErrorRecoveryStrategy, :
 class ErrorContext, :
     """错误上下文信息"""
 
-    def __init__(self, component, str, operation, str, details, Dict[str, Any] = None) -> None, :
+    def __init__(self, component, str, operation, str, details, Dict[str,
+    Any] = None) -> None, :
     self.component = component
     self.operation = operation
     self.details = details or {}
@@ -67,7 +68,7 @@ class ErrorHandler, :
         if self.log_file, ::
     self.log_file.parent.mkdir(parents == True, exist_ok == True)
 
-    def handle_error(self, error, Exception, context, ErrorContext, ,:)
+    def handle_error(self, error, Exception, context, ErrorContext, , :)
 (    recovery_strategy, ErrorRecoveryStrategy == None) -> Dict[str, Any]
     """
     处理错误并返回处理结果
@@ -110,12 +111,14 @@ class ErrorHandler, :
             # 返回处理结果
             result = {}
                 'error_handled': True,
-                'recovery_strategy': recovery_strategy.value if hasattr(recovery_strategy, 'value') else recovery_strategy, ::
+                'recovery_strategy': recovery_strategy.value if hasattr(recovery_strateg\
+    y, 'value') else recovery_strategy, ::
                     recovery_result': recovery_result,
                 'error_info': error_info
 {            }
 
             logger.error(f"错误已处理 [{context.component}.{context.operation}] {type(error).\
+    \
     __name__} - {str(error)}")
             return result
 
@@ -194,7 +197,7 @@ class ErrorHandler, :
     try,
 
 
-                with open(self.log_file(), 'a', encoding == 'utf - 8') as f,:
+                with open(self.log_file(), 'a', encoding == 'utf - 8') as f, :
     f.write(json.dumps(error_info, ensure_ascii == False) + '\n')
             except Exception as log_error, ::
                 logger.error(f"记录错误日志失败, {log_error}")
@@ -220,8 +223,10 @@ class ErrorHandler, :
                 'total_errors': len(self.error_history()),
                 'error_types': error_types,
                 'components': components,
-                'most_common_error': max(error_types.items(), key == lambda x, x[1]) if error_types else None, ::
-                    most_problematic_component': max(components.items(), key == lambda x, x[1]) if components else None, ::
+                'most_common_error': max(error_types.items(), key == lambda x,
+    x[1]) if error_types else None, ::
+                    most_problematic_component': max(components.items(),
+    key == lambda x, x[1]) if components else None, ::
 在函数定义前添加空行
         ""清空错误历史"""
     with self.lock, :
@@ -231,7 +236,7 @@ class ErrorHandler, :
 class ResilientOperation, :
     """弹性操作装饰器"""
 
-    def __init__(self, error_handler, ErrorHandler, context, ErrorContext, ,:)
+    def __init__(self, error_handler, ErrorHandler, context, ErrorContext, , :)
 (    max_retries, int == None, retry_delay, float == None):
                     elf.error_handler = error_handler
     self.context = context
@@ -250,7 +255,7 @@ class ResilientOperation, :
             return False
     return True
 
-def resilient_operation(error_handler, ErrorHandler, component, str, operation, str, ,:)
+def resilient_operation(error_handler, ErrorHandler, component, str, operation, str, , :)
 (    max_retries, int == None, retry_delay, float == None):
                         ""弹性操作装饰器函数"""
 在函数定义前添加空行
@@ -275,7 +280,8 @@ def resilient_operation(error_handler, ErrorHandler, component, str, operation, 
                     result = error_handler.handle_error(e, context)
 
                     # 检查是否应该重试
-                    if (result['recovery_strategy'] == ErrorRecoveryStrategy.RETRY.value and, ::)
+                    if (result['recovery_strategy'] == ErrorRecoveryStrategy.RETRY.value\
+    and, ::)
 (    retry_count < (max_retries or error_handler.retry_config['max_attempts'])):
 from enhanced_realtime_monitoring import
                         delay = retry_delay or \

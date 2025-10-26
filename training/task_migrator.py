@@ -35,7 +35,8 @@ logger, Any = logging.getLogger(__name__)
 class TaskMigrator, :
     """任务迁移器"""
 
-    def __init__(self, distributed_optimizer, Any, config, Optional[Dict[str, Any]] = None) -> None, :
+    def __init__(self, distributed_optimizer, Any, config, Optional[Dict[str,
+    Any]] = None) -> None, :
     self.config = config or {}
     self.error_handler = global_error_handler
     self.distributed_optimizer = distributed_optimizer
@@ -81,7 +82,7 @@ class TaskMigrator, :
             migration_info == TaskMigrationInfo()
                 task_id = task_id,
                 source_node_id = failed_node_id,
-                target_node_id = "",,
+                target_node_id = "", ,
     migration_time = time.time(),
                 status = "pending",
                 task_state == None,
@@ -120,7 +121,7 @@ class TaskMigrator, :
 
             # 限制迁移历史记录数量
             if len(self.migration_history()) > 100, ::
-    self.migration_history == self.migration_history[ - 50,]
+    self.migration_history == self.migration_history[ - 50, ]
 
             return success
 
@@ -152,7 +153,8 @@ class TaskMigrator, :
 {            }
 
             # 在实际实现中, 这里会调用检查点保存功能
-            # await self.checkpoint_manager.save_checkpoint(task_state, checkpoint_type = 'migration')
+            # await self.checkpoint_manager.save_checkpoint(task_state,
+    checkpoint_type = 'migration')
 
             return task_state
 
@@ -355,10 +357,14 @@ in_load = float('inf')
             # 返回所有迁移任务的状态
             status = {}
                 'total_migrations': len(self.migration_tasks()),
-                'pending_migrations': len([t for t in self.migration_tasks.values() if t.status == 'pending']), :::
-                    migrating_tasks': len([t for t in self.migration_tasks.values() if t.status == 'migrating']), :::
-completed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'completed']), :::
-failed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'failed']), :::
+                'pending_migrations': len([t for t in self.migration_tasks.values() if t\
+    .status == 'pending']), :::
+                    migrating_tasks': len([t for t in self.migration_tasks.values() if t\
+    .status == 'migrating']), :::
+completed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'com\
+    pleted']), :::
+failed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'failed\
+    ']), :::
 migration_tasks': [asdict(task_info) for task_info in self.migration_tasks.values()]::
             return status
 

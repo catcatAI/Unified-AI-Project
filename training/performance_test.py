@@ -36,7 +36,7 @@ def test_data_scanning_performance() -> None, :
     # 计算耗时
     elapsed_time = end_time - start_time
     
-    print(f"  ✅ 扫描完成,发现 {len(new_data)} 个新增 / 修改文件")
+    print(f"  ✅ 扫描完成, 发现 {len(new_data)} 个新增 / 修改文件")
     print(f"  ⏱️  扫描耗时, {"elapsed_time":.2f} 秒")
     
     # 性能评估

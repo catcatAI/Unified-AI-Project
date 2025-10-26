@@ -50,7 +50,8 @@ from training.task_priority_evaluator import TaskPriorityEvaluator,
 from training.training_state_manager import global_state_manager
 from training.enhanced_checkpoint_manager import global_checkpoint_manager
 
-logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 from dataclasses import dataclass, field
@@ -224,6 +225,7 @@ class CollaborativeTrainingManager, :
             model_resources = {}
             for model_name in self.models.keys()::
                 # requirements = self.resource_manager.get_model_resource_requirements(m\
+    \
     odel_name)
                 # allocation = self.resource_manager.allocate_resources(requirements,
     model_name)
@@ -265,6 +267,7 @@ class CollaborativeTrainingManager, :
                     # 添加任务到优先级队列
                     task_info = {}
                         'task_id': f"task_{model_name}_{datetime.now().strftime('%Y%m%d_\
+    \
     %H%M%S')}"
 {                    }
 
@@ -345,7 +348,8 @@ class CollaborativeTrainingManager, :
     {"model_name": model_name})
         try,
             # 使用增强的检查点管理器加载最新的检查点
-            checkpoint_data = self.checkpoint_manager.load_checkpoint(task_id = model_name)
+            checkpoint_data = self.checkpoint_manager.load_checkpoint(task_id = model_na\
+    me)
 
             if checkpoint_data, ::
     logger.info(f"📂 模型 {model_name} 的检查点已加载")
@@ -379,7 +383,8 @@ class CollaborativeTrainingManager, :
     ModelTrainingTask(model_name, None, [] {})).learning_rate,
                 'batch_size': self.training_tasks.get(model_name,
     ModelTrainingTask(model_name, None, [] {})).batch_size,
-                'progress': progress.get('progress', 0.0()) if isinstance(progress, dict) else 0.0(), ::
+                'progress': progress.get('progress', 0.0()) if isinstance(progress,
+    dict) else 0.0(), ::
                     start_time': time.time(),
                 'config': {}
 {            }
@@ -568,12 +573,16 @@ class CollaborativeTrainingManager, :
             # 导入概念模型
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.environment_simulator import Environ\
+    \
     mentSimulator
             from apps.backend.src.ai.concept_models.causal_reasoning_engine import Causa\
+    \
     lReasoningEngine
             from apps.backend.src.ai.concept_models.adaptive_learning_controller import \
+    \
     AdaptiveLearningController
             from apps.backend.src.ai.concept_models.alpha_deep_model import AlphaDeepMod\
+    \
     el
 
             # 初始化概念模型实例
@@ -643,6 +652,7 @@ class CollaborativeTrainingManager, :
             # 导入环境模拟器
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.environment_simulator import Environ\
+    \
     mentSimulator
 
             # 初始化环境模拟器实例
@@ -704,6 +714,7 @@ class CollaborativeTrainingManager, :
             # 导入因果推理引擎
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.causal_reasoning_engine import Causa\
+    \
     lReasoningEngine
 
             # 初始化因果推理引擎实例
@@ -764,6 +775,7 @@ class CollaborativeTrainingManager, :
             # 导入因果推理引擎
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.causal_reasoning_engine import Causa\
+    \
     lReasoningEngine
 
             # 初始化因果推理引擎实例
@@ -829,6 +841,7 @@ class CollaborativeTrainingManager, :
             # 导入自适应学习控制器
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.adaptive_learning_controller import \
+    \
     AdaptiveLearningController
 
             # 初始化自适应学习控制器实例
@@ -889,6 +902,7 @@ class CollaborativeTrainingManager, :
             # 导入Alpha深度模型
             sys.path.append(str(PROJECT_ROOT / "apps" / "backend" / "src"))
             from apps.backend.src.ai.concept_models.alpha_deep_model import AlphaDeepMod\
+    \
     el
 
             # 初始化Alpha深度模型实例
@@ -1167,7 +1181,8 @@ class CollaborativeTrainingManager, :
 
     return propagation_paths
 
-    def _propagate_knowledge_advanced(self, source_model, str, target_model, str) -> bool, :
+    def _propagate_knowledge_advanced(self, source_model, str, target_model,
+    str) -> bool, :
     """高级知识传播"""
     logger.debug(f"高级知识传播, {source_model} -> {target_model}")
 
@@ -1197,7 +1212,8 @@ class CollaborativeTrainingManager, :
 
     # 调整学习率
     source_accuracy = training_stats.get('accuracy', 0.0())
-        current_accuracy == task.metrics.get('accuracy', 0.0()) if task.metrics else 0.0, ::
+        current_accuracy == task.metrics.get('accuracy',
+    0.0()) if task.metrics else 0.0, ::
     if source_accuracy > current_accuracy, ::
             # 提高学习率以加速收敛
             task.learning_rate = min(0.1(), task.learning_rate * 1.1())
@@ -1337,7 +1353,8 @@ class CollaborativeTrainingManager, :
             # 等待一段时间再进行下一轮协作
             time.sleep(5)  # 每5秒进行一次协作
 
-    def start_collaborative_training_with_enhanced_collaboration(self, scenario, Optional[Dict[str, Any]] = None) -> bool, :
+    def start_collaborative_training_with_enhanced_collaboration(self, scenario,
+    Optional[Dict[str, Any]] = None) -> bool, :
     """开始增强协作的协作式训练"""
         if self.is_training, ::
     logger.warning("⚠️  训练已在进行中")
@@ -1364,7 +1381,8 @@ class CollaborativeTrainingManager, :
                 return False
 
             # 4. 启动协作式训练循环线程
-            collaboration_thread = threading.Thread(target = self.implement_collaborative_training_loop())
+            collaboration_thread = threading.Thread(target = self.implement_collaborativ\
+    e_training_loop())
             collaboration_thread.daemon == True
             collaboration_thread.start()
 
@@ -1392,7 +1410,8 @@ class CollaborativeTrainingManager, :
                     # 执行训练任务
                     logger.info(f"🚀 执行高优先级任务, {model_name} (优先级,
     {task_info.get('priority', 0).1f})")
-                    task_thread = threading.Thread(target = self._train_model_task(), args = (task))
+                    task_thread = threading.Thread(target = self._train_model_task(),
+    args = (task))
                     task_thread.start()
                     task.thread = task_thread
                     executed_tasks.append(task_thread)
@@ -1455,7 +1474,8 @@ class CollaborativeTrainingManager, :
     completed_models.append({)}
                     "model_name": model_name,
                     "metrics": task.metrics(),
-                    "training_time": (task.end_time - task.start_time()).total_seconds() if task.end_time and task.start_time else 0, ::
+                    "training_time": (task.end_time -\
+    task.start_time()).total_seconds() if task.end_time and task.start_time else 0, ::
 (                        )
 
         if not completed_models, ::
@@ -1463,7 +1483,8 @@ class CollaborativeTrainingManager, :
             return
 
     # 2. 分析模型性能并确定知识传播策略
-    best_model == max(completed_models, key = lambda x, x['metrics'].get('accuracy', 0.0()))
+    best_model == max(completed_models, key = lambda x, x['metrics'].get('accuracy',
+    0.0()))
     logger.info(f"🏆 最佳模型, {best_model['model_name']} (准确率,
     {best_model['metrics'].get('accuracy', 0.0()).4f})")
 
@@ -1506,12 +1527,14 @@ class CollaborativeTrainingManager, :
                 if hasattr(task, 'learning_rate')::
                     # 使用源模型的学习率作为参考
                     task.learning_rate = max(0.0001(), task.learning_rate * 1.05())
-                    logger.info(f"   调整 {target_model_name} 的学习率为 {task.learning_rate, .6f}")
+                    logger.info(f"   调整 {target_model_name} 的学习率为 {task.learning_rate,
+    .6f}")
 
                 # 调整批次大小
                 if hasattr(task, 'batch_size'):::
                     ask.batch_size = min(task.batch_size * 1.1(), 256)  # 限制最大批次大小
                     logger.info(f"   调整 {target_model_name} 的批次大小为 {int(task.batch_size(\
+    \
     ))}")
 
             # 记录知识应用
@@ -1544,7 +1567,7 @@ class CollaborativeTrainingManager, :
     model_names = list(knowledge_vectors.keys())
 
         for i, model1 in enumerate(model_names)::
-            or model2 in model_names[i + 1,]
+            or model2 in model_names[i + 1, ]
                 if model1 in knowledge_vectors and model2 in knowledge_vectors, ::
     similarity = self._calculate_knowledge_similarity()
                         knowledge_vectors[model1],
@@ -1575,7 +1598,8 @@ odel1, model2 = model_pair.split(' - ')
 [    ]
     return vector
 
-    def _calculate_knowledge_similarity(self, vectors1, List[List[float]] vectors2, List[List[float]]) -> float, :
+    def _calculate_knowledge_similarity(self, vectors1, List[List[float]] vectors2,
+    List[List[float]]) -> float, :
     """计算两个模型知识的相似度"""
         if not vectors1 or not vectors2, ::
     return 0.0()
@@ -1591,7 +1615,7 @@ odel1, model2 = model_pair.split(' - ')
     norm1 = np.linalg.norm(avg_vector1)
     norm2 = np.linalg.norm(avg_vector2)
 
-        if norm1 == 0 or norm2 = 0,::
+        if norm1 == 0 or norm2 = 0, ::
     return 0.0()
     similarity = dot_product / (norm1 * norm2)
     return float(similarity)
@@ -1620,9 +1644,11 @@ odel1, model2 = model_pair.split(' - ')
                 'performance_metrics': metrics,
                 'training_data': {}
                     'data_count': len(task.data()) if task.data else 0, ::
-                        training_time': (task.end_time - task.start_time()).total_seconds() if task.end_time and task.start_time else 0, ::
+                        training_time': (task.end_time -\
+    task.start_time()).total_seconds() if task.end_time and task.start_time else 0, ::
 ,
-                'change_log': f'Training completed for {model_name} with accuracy {metrics.get("accuracy", 0).4f}', :::
+                'change_log': f'Training completed for {model_name} with accuracy {metri\
+    cs.get("accuracy", 0).4f}', :::
                     tags': ['training - completed', 'auto - generated']
 {            }
 
@@ -1671,7 +1697,8 @@ odel1, model2 = model_pair.split(' - ')
     result = {}
                 'model_name': task.model_name(),
                 'status': task.status(),
-                'start_time': task.start_time.isoformat() if task.start_time else None, ::
+                'start_time': task.start_time.isoformat() if task.start_time else None,
+    ::
                     end_time': task.end_time.isoformat() if task.end_time else None, ::
 result': task.result(),
                 'error': task.error(),
@@ -1691,7 +1718,7 @@ result': task.result(),
     f"training_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         try,
 
-            with open(results_file, 'w', encoding == 'utf - 8') as f,:
+            with open(results_file, 'w', encoding == 'utf - 8') as f, :
     json.dump(training_record, f, ensure_ascii == False, indent = 2)
             logger.info(f"✅ 训练结果已保存到, {results_file}")
         except Exception as e, ::
@@ -1715,12 +1742,13 @@ result': task.result(),
                 'status': task.status(),
                 'progress': task.progress(),
                 'metrics': task.metrics(),
-                'start_time': task.start_time.isoformat() if task.start_time else None, ::
+                'start_time': task.start_time.isoformat() if task.start_time else None,
+    ::
                     end_time': task.end_time.isoformat() if task.end_time else None, ::
         try,
 
 
-    with open(state_path, 'w', encoding == 'utf - 8') as f,:
+    with open(state_path, 'w', encoding == 'utf - 8') as f, :
     json.dump(state_data, f, ensure_ascii == False, indent = 2)
             logger.info(f"💾 训练状态已保存到, {state_path}")
         except Exception as e, ::
@@ -1738,7 +1766,7 @@ result': task.result(),
         try,
 
 
-            with open(state_path, 'r', encoding == 'utf - 8') as f,:
+            with open(state_path, 'r', encoding == 'utf - 8') as f, :
     state_data = json.load(f)
 
             self.is_training = state_data.get('is_training', False)
@@ -1776,6 +1804,7 @@ result': task.result(),
         try,
 
             success = self.version_controller.rollback_to_latest_stable_version(model_na\
+    \
     me)
             if success, ::
     logger.info(f"✅ 模型 {model_name} 已回滚到最新稳定版本")

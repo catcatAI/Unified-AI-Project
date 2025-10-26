@@ -20,7 +20,7 @@ class FileChunker, :
     负责将大型文件切分为100MB大小的块
     """
 
-    def __init__(self, chunk_size, int == 100 * 1024 * 1024) -> None,:
+    def __init__(self, chunk_size, int == 100 * 1024 * 1024) -> None, :
     """
     初始化文件分块器
 
@@ -86,7 +86,8 @@ class MemoryMappedFile, :
     负责处理大文件的内存映射, 避免将整个文件加载到内存中
     """
 
-    def __init__(self, file_path, str, chunk_info, Optional[Dict[str, Any]] = None) -> None, :
+    def __init__(self, file_path, str, chunk_info, Optional[Dict[str,
+    Any]] = None) -> None, :
     """
     初始化内存映射文件
 
@@ -291,7 +292,7 @@ class DynamicLoader, :
     整合文件分块、内存映射和缓存管理功能
     """
 
-    def __init__(self, chunk_size, int == 100 * 1024 * 1024, cache_size, int == 10) -> None,:
+    def __init__(self, chunk_size, int == 100 * 1024 * 1024, cache_size, int == 10) -> None, :
     """
     初始化动态载入器
 
@@ -407,7 +408,7 @@ class DynamicLoader, :
     return DynamicLoader(chunk_size, cache_size)
 
 
-def load_file_chunk(file_path, str, chunk_index, int == 0, chunk_size, int == 100 * 1024 * 1024) -> bytes,:
+def load_file_chunk(file_path, str, chunk_index, int == 0, chunk_size, int == 100 * 1024 * 1024) -> bytes, :
     """
     便利函数：加载文件的指定块
 
@@ -425,7 +426,8 @@ def load_file_chunk(file_path, str, chunk_index, int == 0, chunk_size, int == 10
 
 if __name"__main__":::
     # 配置日志
-    logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s')
 
     # 示例使用
     try,

@@ -60,6 +60,7 @@ class DataTracker, :
         self.tracking_file == Path(tracking_file) if tracking_file else TRAINING_DIR /\
     "data_tracking.json":::
     self.config_file == Path(config_file) if config_file else TRAINING_DIR / "configs" /\
+    \
     "performance_config.json":::
     self.processed_files = {}
     self.new_files = set()
@@ -85,13 +86,17 @@ class DataTracker, :
                     self.max_scan_files = data_scanning_config.get('max_files_per_scan',
     5000)
                     self.scan_file_types = data_scanning_config.get('file_types_to_scan'\
+    \
     , [])
                     self.enable_file_type_filtering = data_scanning_config.get('enable_f\
+    \
     ile_type_filtering', True)
                     self.progress_log_interval = data_scanning_config.get('progress_log_\
+    \
     interval', 5000)
                     self.max_workers = data_scanning_config.get('max_workers', 8)
                     self.enable_parallel_scanning = data_scanning_config.get('enable_par\
+    \
     allel_scanning', True)
                 logger.info(f"✅ 加载性能配置, {self.config_file}")
         except Exception as e, ::
@@ -123,7 +128,7 @@ class DataTracker, :
     v in self.processed_files.items()}:
     'updated_at': datetime.now().isoformat()
 {            }
-            with open(self.tracking_file(), 'w', encoding == 'utf - 8') as f,:
+            with open(self.tracking_file(), 'w', encoding == 'utf - 8') as f, :
     json.dump(data, f, ensure_ascii == False, indent = 2)
         except Exception as e, ::
             self.error_handler.handle_error(e, context)
@@ -156,6 +161,7 @@ class DataTracker, :
             if self.enable_parallel_scanning, ::
                 # 使用并行优化的数据扫描器
                 from training.parallel_optimized_data_scanner import ParallelOptimizedDa\
+    \
     taScanner
                 scanner == ParallelOptimizedDataScanner(self.data_dir(),
     self.tracking_file(), self.config_file())
@@ -168,14 +174,15 @@ class DataTracker, :
                 logger.info("🔄 使用串行优化的数据扫描器")
 
             # 获取要扫描的文件类型
-            file_types == self.scan_file_types if self.enable_file_type_filtering else None, :
+            file_types == self.scan_file_types if self.enable_file_type_filtering else N\
+    one, :
             # 查找新增文件
             new_data_files = scanner.find_new_files()
     max_files = self.max_scan_files(),
                 file_types = file_types
 (            )
 
-            logger.info(f"✅ 扫描完成,发现 {len(new_data_files)} 个新增 / 修改文件")
+            logger.info(f"✅ 扫描完成, 发现 {len(new_data_files)} 个新增 / 修改文件")
             return new_data_files
 
         except ImportError as e, ::
@@ -210,9 +217,11 @@ class DataTracker, :
 
             # 如果文件数量过多, 只处理最近修改的文件
             if len(data_catalog) > self.max_scan_files, ::
-    logger.warning(f"⚠️  发现 {len(data_catalog)} 个文件, 超过限制 {self.max_scan_files} 个, 将只处理最近修改的文件")
+    logger.warning(f"⚠️  发现 {len(data_catalog)} 个文件, 超过限制 {self.max_scan_files} 个,
+    将只处理最近修改的文件")
                 # 按修改时间排序, 取最新的文件
-                sorted_files == sorted(data_catalog.items(), key = lambda x, x[1]['modified_time'] reverse == True)
+                sorted_files == sorted(data_catalog.items(), key = lambda x,
+    x[1]['modified_time'] reverse == True)
                 data_catalog == dict(sorted_files[:self.max_scan_files])
 
             new_data_files = []
@@ -231,7 +240,8 @@ class DataTracker, :
                 modified_time = datetime.fromtimestamp(file_info['modified_time'])
 
                 # 如果文件未处理过或已修改, 则标记为新增
-                if file_hash not in self.processed_files or self.processed_files[file_hash] < modified_time, ::
+                if file_hash not in self.processed_files or \
+    self.processed_files[file_hash] < modified_time, ::
     new_data_files.append({)}
                         'path': str(full_path),
                         'relative_path': file_path,
@@ -247,7 +257,7 @@ class DataTracker, :
                 if processed_count % self.progress_log_interval == 0, ::
     logger.info(f"   已处理 {processed_count} 个文件...")
 
-            logger.info(f"✅ 扫描完成,发现 {len(new_data_files)} 个新增 / 修改文件 (总共检查 {processed_count} 个文件)")
+            logger.info(f"✅ 扫描完成, 发现 {len(new_data_files)} 个新增 / 修改文件 (总共检查 {processed_count} 个文件)")
             return new_data_files
         except Exception as e, ::
             self.error_handler.handle_error(e, context)
@@ -298,7 +308,7 @@ class ModelManager, :
         try,
 
             version_file = self.models_dir / "model_versions.json"
-            with open(version_file, 'w', encoding == 'utf - 8') as f,:
+            with open(version_file, 'w', encoding == 'utf - 8') as f, :
     json.dump(self.model_versions(), f, ensure_ascii == False, indent = 2)
         except Exception as e, ::
             self.error_handler.handle_error(e, context)
@@ -370,6 +380,7 @@ class ModelManager, :
 {(                })
                 self.model_versions[model_name]['latest'] = version_name
                 self.model_versions[model_name]['updated_at'] = datetime.now().isoformat\
+    \
     ()
 
                 # 保存版本信息
@@ -416,6 +427,7 @@ class ModelManager, :
 
                     # 更新版本列表
                     self.model_versions[model_name]['versions'] = versions[:keep_version\
+    \
     s]
                     self._save_model_versions()
         except Exception as e, ::
@@ -656,7 +668,8 @@ class TrainingScheduler, :
             # 对于需要GPU的任务, 检查GPU可用性
             model_name = task.get('model_name', '')
             gpu_available = resources.get('gpu_available', False)
-            if model_name in ['vision_service', 'audio_service'] and not gpu_available, ::
+            if model_name in ['vision_service', 'audio_service'] and not gpu_available,
+    ::
     logger.debug("🎮 GPU不可用, 暂不执行需要GPU的任务")
                 return False
 
@@ -700,7 +713,8 @@ class TrainingScheduler, :
                 # 如果空闲时间足够长, 执行训练任务
                 if self.idle_duration >= self.min_idle_duration, ::
     task = self.pending_tasks.pop(0)
-                    logger.info(f"🚀 系统空闲, 开始执行训练任务, {task.get('model_name', 'unknown')} (ID, {task.get('task_id', 'unknown')})")
+                    logger.info(f"🚀 系统空闲, 开始执行训练任务, {task.get('model_name',
+    'unknown')} (ID, {task.get('task_id', 'unknown')})")
 
                     # 检查资源是否足够执行任务
                     if not self._can_execute_task(task)::
@@ -717,7 +731,8 @@ class TrainingScheduler, :
                     if not success, ::
     task['retry_count'] += 1
                         if task['retry_count'] < self.max_retry_attempts, ::
-    logger.warning(f"⚠️  训练任务失败, 将在下次重试, {task.get('model_name', 'unknown')} (重试次数, {task['retry_count']})")
+    logger.warning(f"⚠️  训练任务失败, 将在下次重试, {task.get('model_name', 'unknown')} (重试次数,
+    {task['retry_count']})")
                             self.pending_tasks.append(task)
                         else,
 
@@ -832,7 +847,7 @@ class MemoryBuffer, :
     context == ErrorContext("MemoryBuffer", "_save_buffer")
         try,
 
-            with open(self.buffer_file(), 'w', encoding == 'utf - 8') as f,:
+            with open(self.buffer_file(), 'w', encoding == 'utf - 8') as f, :
     json.dump(self.buffer(), f, ensure_ascii == False, indent = 2)
         except Exception as e, ::
             self.error_handler.handle_error(e, context)
@@ -902,7 +917,7 @@ class IncrementalLearningManager, :
             ry,
 
 
-                with open(self.config_file(), 'r', encoding == 'utf - 8') as f,:
+                with open(self.config_file(), 'r', encoding == 'utf - 8') as f, :
     config = json.load(f)
                 logger.info(f"✅ 加载性能配置, {self.config_file}")
                 return config
@@ -922,7 +937,8 @@ class IncrementalLearningManager, :
                 return
 
             self.is_monitoring == True
-            self.monitoring_thread == threading.Thread(target = = self._monitoring_loop(), daemon == True)
+            self.monitoring_thread == threading.Thread(target = = self._monitoring_loop(\
+    ), daemon == True)
             self.monitoring_thread.start()
             logger.info("👀 启动数据监控...")
         except Exception as e, ::
@@ -1009,6 +1025,7 @@ class IncrementalLearningManager, :
             for model_name, data_files in data_by_model.items():::
                 ask = {}
                     'task_id': f"task_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(se\
+    \
     lf.training_scheduler.pending_tasks())}",
                     'model_name': model_name,
                     'data_files': data_files,
@@ -1084,7 +1101,8 @@ class IncrementalLearningManager, :
     context == ErrorContext("IncrementalLearningManager", "_check_auto_cleanup")
         try,
 
-            if self.auto_cleanup_enabled and time.time() - self.last_cleanup_time > self.auto_cleanup_interval, ::
+            if self.auto_cleanup_enabled and \
+    time.time() - self.last_cleanup_time > self.auto_cleanup_interval, ::
     logger.info("🧹 执行自动模型清理...")
                 self.model_manager.auto_cleanup_models()
                 self.last_cleanup_time = time.time()

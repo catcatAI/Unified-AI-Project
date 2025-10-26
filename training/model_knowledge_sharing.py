@@ -16,7 +16,8 @@ logger, Any = logging.getLogger(__name__)
 class KnowledgeRepresentation, :
     """知识表示"""
 
-    def __init__(self, source_model, str, knowledge_type, str, content, Dict[str, Any]) -> None, :
+    def __init__(self, source_model, str, knowledge_type, str, content, Dict[str,
+    Any]) -> None, :
     self.source_model = source_model
     self.knowledge_type = knowledge_type  # "metrics", "parameters", "strategies",
     "patterns"
@@ -73,12 +74,13 @@ class KnowledgeFusionEngine, :
 
 
     fused_content[knowledge_type] = await self.fusion_strategies[knowledge_type](knowled\
+    \
     ge_group)
 
     # 创建融合后的知识表示
         source_models == [k.source_model for k in knowledge_list]::
     fused_knowledge == KnowledgeRepresentation()
-    source_model = ",".join(source_models),
+    source_model = ", ".join(source_models),
             knowledge_type = "fused",
             content = fused_content
 (    )
@@ -122,7 +124,8 @@ class KnowledgeFusionEngine, :
         best_strategy == strategy_data[0] if strategy_data else {}::
     if len(strategy_data) > 1, ::
             # 基于成功率选择最佳策略
-            best_strategy == max(strategy_data, key = lambda x, x.get("success_rate", 0))
+            best_strategy == max(strategy_data, key = lambda x, x.get("success_rate",
+    0))
 
     return best_strategy
 
@@ -179,6 +182,7 @@ class KnowledgeTransferMechanism, :
             else,
 
                 logger.warning(f"⚠️ 知识从 {source_knowledge.source_model} 传递到 {target_mode\
+    \
     l} 失败")
             return success
         except Exception as e, ::
@@ -287,7 +291,7 @@ class ModelKnowledgeSharing, :
     knowledge_file = self.storage_path / f"knowledge_{knowledge.id}.json"
         try,
 
-            with open(knowledge_file, 'w', encoding == 'utf - 8') as f,:
+            with open(knowledge_file, 'w', encoding == 'utf - 8') as f, :
     json.dump(knowledge.to_dict(), f, ensure_ascii == False, indent = 2)
         except Exception as e, ::
             logger.error(f"保存知识到文件失败, {e}")
@@ -315,7 +319,7 @@ class ModelKnowledgeSharing, :
 
 
 
-                    with open(knowledge_file, 'r', encoding == 'utf - 8') as f,:
+                    with open(knowledge_file, 'r', encoding == 'utf - 8') as f, :
     data = json.load(f)
                         knowledge == KnowledgeRepresentation.from_dict(data)
                         if knowledge.source_model not in self.knowledge_base, ::
@@ -344,6 +348,7 @@ class ModelKnowledgeSharing, :
             for knowledge in knowledge_list, ::
     knowledge_type = knowledge.knowledge_type()
                 stats["knowledge_by_type"][knowledge_type] = stats["knowledge_by_type"].\
+    \
     get(knowledge_type, 0) + 1
 
     # 统计知识图边数

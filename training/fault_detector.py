@@ -69,7 +69,7 @@ class FaultDetector, :
 
             self.nodes_status[node_id] = NodeHealthStatus()
                 node_id = node_id,
-                status = "healthy",,
+                status = "healthy", ,
     last_heartbeat = time.time(),
                 assigned_tasks == initial_info.get('assigned_tasks',
     []) if initial_info else []::
@@ -189,7 +189,8 @@ class FaultDetector, :
 
             for node_id, node_status in self.nodes_status.items()::
                 # 检查心跳超时,
-                if current_time - node_status.last_heartbeat > self.node_failure_timeout, ::
+                if current_time -\
+    node_status.last_heartbeat > self.node_failure_timeout, ::
                     # 增加故障计数
                     node_status.failure_count += 1
 
@@ -257,9 +258,12 @@ class FaultDetector, :
             status = {}
                 'timestamp': datetime.now().isoformat(),
                 'total_nodes': len(self.nodes_status()),
-                'healthy_nodes': len([n for n in self.nodes_status.values() if n.status == 'healthy']), :::
-                    warning_nodes': len([n for n in self.nodes_status.values() if n.status == 'warning']), :::
-critical_nodes': len([n for n in self.nodes_status.values() if n.status == 'critical']), :::
+                'healthy_nodes': len([n for n in self.nodes_status.values() if n.status \
+    == 'healthy']), :::
+                    warning_nodes': len([n for n in self.nodes_status.values() if n.stat\
+    us == 'warning']), :::
+critical_nodes': len([n for n in self.nodes_status.values() if n.status == 'critical']),
+    :::
 failed_nodes': len([n for n in self.nodes_status.values() if n.status == 'failed']), :::
 nodes': [asdict(node_status) for node_status in self.nodes_status.values()]::
             return status

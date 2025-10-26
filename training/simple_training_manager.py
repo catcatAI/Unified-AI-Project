@@ -101,7 +101,7 @@ class SimpleTrainingManager, :
         
         # 保存训练配置
         config_path = self.training_dir / "current_training_config.json"
-        with open(config_path, 'w', encoding == 'utf - 8') as f,:
+        with open(config_path, 'w', encoding == 'utf - 8') as f, :
             json.dump(training_config, f, indent = 2, ensure_ascii == False)
         
         logger.info(f"✅ 基础训练配置已保存, {config_path}")
@@ -113,7 +113,7 @@ class SimpleTrainingManager, :
         config_path = self.training_dir / "current_training_config.json"
         
         if config_path.exists():::
-            with open(config_path, 'r', encoding == 'utf - 8') as f,:
+            with open(config_path, 'r', encoding == 'utf - 8') as f, :
                 config = json.load(f)
             return config
         else,
@@ -125,9 +125,9 @@ def main():
 # TODO: Fix import - module 'argparse' not found
     
     parser = argparse.ArgumentParser(description = '简化训练管理器')
-    parser.add_argument(' - -check - data', action='store_true', help='检查训练数据')
-    parser.add_argument(' - -start - training', action='store_true', help='开始基础训练')
-    parser.add_argument(' - -status', action='store_true', help='获取训练状态')
+    parser.add_argument(' - -check - data', action = 'store_true', help = '检查训练数据')
+    parser.add_argument(' - -start - training', action = 'store_true', help = '开始基础训练')
+    parser.add_argument(' - -status', action = 'store_true', help = '获取训练状态')
     
     args = parser.parse_args()
     

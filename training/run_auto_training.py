@@ -19,10 +19,10 @@ from training.auto_training_manager import AutoTrainingManager
 def main() -> None, :
     """主函数"""
     parser = argparse.ArgumentParser(description = 'Unified AI Project 自动训练系统')
-    parser.add_argument(' - -config', type=str, help='指定训练配置文件路径')
-    parser.add_argument(' - -output', type=str, help='指定输出报告路径')
-    parser.add_argument(' - -verbose', action='store_true', help='启用详细日志输出')
-    parser.add_argument(' - -dry - run', action='store_true', help='仅显示将要执行的操作,不实际执行')
+    parser.add_argument(' - -config', type = str, help = '指定训练配置文件路径')
+    parser.add_argument(' - -output', type = str, help = '指定输出报告路径')
+    parser.add_argument(' - -verbose', action = 'store_true', help = '启用详细日志输出')
+    parser.add_argument(' - -dry - run', action = 'store_true', help = '仅显示将要执行的操作,不实际执行')
     
     args = parser.parse_args()
     
@@ -61,7 +61,7 @@ def main() -> None, :
     f"auto_training_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         
         # 保存报告
-        with open(output_path, 'w', encoding == 'utf - 8') as f,:
+        with open(output_path, 'w', encoding == 'utf - 8') as f, :
             json.dump(report, f, ensure_ascii == False, indent = 2)
         
         print(f"✅ 自动训练完成, 详细报告已保存至, {output_path}")

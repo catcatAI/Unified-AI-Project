@@ -42,12 +42,14 @@ try,
     from apps.backend.src.system import IntegratedGraphicsOptimizer,
     get_hardware_profile
     hardware_profile = get_hardware_profile()
-    integrated_graphics_optimizer == IntegratedGraphicsOptimizer(hardware_profile) if hardware_profile else None, ::
+    integrated_graphics_optimizer == IntegratedGraphicsOptimizer(hardware_profile) if ha\
+    rdware_profile else None, ::
         xcept ImportError,
     hardware_profile == None
     integrated_graphics_optimizer == None
 
-logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
 class ResourceManager, :
@@ -90,7 +92,7 @@ class ResourceManager, :
 
                 gpu_info = {}
                     'id': i,
-                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name,::
+                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name, ::
                         total_memory': memory_info.total(),
                     'free_memory': memory_info.free(),
                     'used_memory': memory_info.used()
@@ -103,7 +105,7 @@ class ResourceManager, :
         except Exception as e, ::
             logger.warning(f"⚠️  检测NVIDIA GPU时出错, {e}")
 
-    # 如果没有检测到NVIDIA GPU,尝试检测其他GPU(AMD / Intel等)
+    # 如果没有检测到NVIDIA GPU, 尝试检测其他GPU(AMD / Intel等)
         if not gpus, ::
     try,
                 # 尝试使用torch检测GPU
@@ -141,7 +143,8 @@ from tests.test_json_fix import
 
                     result = subprocess.run([)]
                         "powershell.exe",
-                        "Get - WmiObject -Class Win32_VideoController | Select - Object Name, AdapterRAM | ConvertTo - Json"
+                        "Get - WmiObject -Class Win32_VideoController | Select -\
+    Object Name, AdapterRAM | ConvertTo - Json"
 [(                    ] capture_output == True, text == True, timeout = 10)
 
                     if result.returncode == 0, ::
@@ -160,8 +163,10 @@ from tests.test_json_fix import
                             adapter_ram = gpu_info.get('AdapterRAM', 0)
 
                             # Convert RAM from bytes to bytes (keep as is for compatibil\
+    \
     ity with existing code)::
-                                emory_total == adapter_ram if adapter_ram else 1073741824  # Default 1GB, ::
+                                emory_total == adapter_ram if adapter_ram else 107374182\
+    4  # Default 1GB, ::
 pu_info = {}
                                 'id': idx,
                                 'name': name,
@@ -366,6 +371,7 @@ pu_info = {}
     is_integrated_graphics == False
         if integrated_graphics_optimizer, ::, :
     is_integrated_graphics == integrated_graphics_optimizer.is_integrated_graphics_syste\
+    \
     m():
         f is_integrated_graphics,
 
@@ -373,6 +379,7 @@ pu_info = {}
     logger.info(f"为集成显卡系统调整资源需求, {model_name}")
             # 应用集成显卡优化建议
             recommendations = integrated_graphics_optimizer.get_optimization_recommendat\
+    \
     ions()
 
             # 根据优化建议调整资源需求
@@ -382,6 +389,7 @@ pu_info = {}
     original_gpu_memory = requirements['gpu_memory_gb']
                     # 根据集成显卡性能等级调整GPU内存需求
                     performance_tier = integrated_graphics_optimizer.get_integrated_grap\
+    \
     hics_performance_tier()
                     if performance_tier == "minimal":::
     requirements['gpu_memory_gb'] = min(requirements['gpu_memory_gb'] 0.5())
@@ -390,6 +398,7 @@ pu_info = {}
                     elif performance_tier == "medium":::
     requirements['gpu_memory_gb'] = min(requirements['gpu_memory_gb'] 2.0())
                     logger.info(f"GPU内存需求从 {original_gpu_memory}GB 调整为 {requirements['gp\
+    \
     u_memory_gb']}GB")
 
                 # 调整CPU核心数需求
@@ -397,6 +406,7 @@ pu_info = {}
     original_cpu_cores = requirements.get('cpu_cores', 1)
                     requirements['cpu_cores'] = min(requirements.get('cpu_cores', 1), 2)
                     logger.info(f"CPU核心数需求从 {original_cpu_cores} 调整为 {requirements['cpu_\
+    \
     cores']}")
 
     # 使用智能资源分配器进行资源分配
@@ -438,7 +448,8 @@ pu_info = {}
     self.resource_allocation[model_name] = allocation
 
     logger.info(f"✅ 资源分配成功, CPU {allocation_result.allocated_cpu_cores} 核心,
-    内存 {allocation_result.allocated_memory_gb} GB, GPU {allocation_result.allocated_gpu_memory_gb} GB")
+    内存 {allocation_result.allocated_memory_gb} GB,
+    GPU {allocation_result.allocated_gpu_memory_gb} GB")
     return allocation
 
     def release_resources(self, model_name, str):
@@ -461,7 +472,8 @@ pu_info = {}
     cpu_info['available_cores']) / self.cpu_count * 100
 {            }
             'memory_utilization': {}
-                'used_gb': (memory_info['total'] - memory_info['available']) / (1024 * *3),
+                'used_gb': (memory_info['total'] -\
+    memory_info['available']) / (1024 * *3),
                 'total_gb': memory_info['total'] / (1024 * *3),
                 'utilization_percent': memory_info['percent']
 {            }
@@ -521,7 +533,8 @@ pu_info = {}
     logger.info("✅ 资源分配优化完成")
     return optimization_result
 
-    def dynamic_resource_scaling(self, model_name, str, current_performance, Dict[str, Any]) -> bool, :
+    def dynamic_resource_scaling(self, model_name, str, current_performance, Dict[str,
+    Any]) -> bool, :
     """动态调整模型资源分配"""
     logger.info(f"📈 动态调整模型 {model_name} 的资源分配")
 

@@ -73,11 +73,14 @@ def _get_file_info_worker(file_path, str) -> Tuple[str, Optional[Dict[str, Any]]
 class ParallelOptimizedDataScanner, :
     """并行优化的数据扫描器"""
 
-    def __init__(self, data_dir, str, tracking_file, str == None, config_file, str == None) -> None, :
+    def __init__(self, data_dir, str, tracking_file, str == None, config_file,
+    str == None) -> None, :
     self.data_dir == Path(data_dir)
         self.tracking_file == Path(tracking_file) if tracking_file else Path("data_track\
+    \
     ing.json"):::
             elf.config_file == Path(config_file) if config_file else Path("performance_c\
+    \
     onfig.json"):::
 elf.processed_files = {}
     self.scan_interval = 300  # 默认扫描间隔(秒)
@@ -91,10 +94,11 @@ elf.processed_files = {}
             ry,
 
 
-                with open(self.config_file(), 'r', encoding == 'utf - 8') as f,:
+                with open(self.config_file(), 'r', encoding == 'utf - 8') as f, :
     config = json.load(f)
                     data_scanning_config = config.get('data_scanning', {})
                     self.scan_interval = data_scanning_config.get('scan_interval_seconds\
+    \
     ', 300)
                     # 获取并行处理相关配置
                     self.max_workers = min(32, data_scanning_config.get('max_workers',
@@ -109,7 +113,7 @@ elf.processed_files = {}
             ry,
 
 
-                with open(self.tracking_file(), 'r', encoding == 'utf - 8') as f,:
+                with open(self.tracking_file(), 'r', encoding == 'utf - 8') as f, :
     data = json.load(f)
                     self.processed_files == {"k": datetime.fromisoformat(v) for k,
     v in data.get('processed_files', {}).items()}::
@@ -126,7 +130,7 @@ elf.processed_files = {}
     v in self.processed_files.items()}:
     'updated_at': datetime.now().isoformat()
 {            }
-            with open(self.tracking_file(), 'w', encoding == 'utf - 8') as f,:
+            with open(self.tracking_file(), 'w', encoding == 'utf - 8') as f, :
     json.dump(data, f, ensure_ascii == False, indent = 2)
         except Exception as e, ::
             logger.error(f"❌ 保存数据跟踪信息失败, {e}")
@@ -270,7 +274,7 @@ elf.processed_files = {}
             files_info = []
 
             for i in range(0, len(file_paths), batch_size)::
-    batch_paths == file_paths[i,i + batch_size]
+    batch_paths == file_paths[i, i + batch_size]
                 batch_info = self._parallel_get_file_info(batch_paths)
 
                 # 过滤有效信息并应用文件类型过滤
@@ -316,7 +320,8 @@ elf.processed_files = {}
     # 创建已处理文件的快速查找索引(基于修改时间和大小)
     processed_file_lookup = {}
         for file_hash, processed_time in self.processed_files.items():::
-            rocessed_file_lookup[file_hash] = processed_time.isoformat() if isinstance(processed_time, datetime) else processed_time, :
+            rocessed_file_lookup[file_hash] = processed_time.isoformat() if isinstance(p\
+    rocessed_time, datetime) else processed_time, :
     # 收集需要计算哈希的文件路径
     files_needing_hash == []
         for file_info in files_info, ::
@@ -342,7 +347,8 @@ elf.processed_files = {}
                 processed_time_str = processed_file_lookup[quick_key]
                 try,
 
-                    processed_time == datetime.fromisoformat(processed_time_str) if isinstance(processed_time_str, str) else processed_time_str, ::
+                    processed_time == datetime.fromisoformat(processed_time_str) if isin\
+    stance(processed_time_str, str) else processed_time_str, ::
     if processed_time >= modified_time, ::
     needs_processing == False
                 except Exception, ::
@@ -389,7 +395,8 @@ elf.processed_files = {}
                 processed_time_str = processed_file_lookup[quick_key]
                 try,
 
-                    processed_time == datetime.fromisoformat(processed_time_str) if isinstance(processed_time_str, str) else processed_time_str, ::
+                    processed_time == datetime.fromisoformat(processed_time_str) if isin\
+    stance(processed_time_str, str) else processed_time_str, ::
     if processed_time >= modified_time, ::
     needs_processing == False
                 except Exception, ::
@@ -404,7 +411,8 @@ elf.processed_files = {}
 
 
                         processed_time_str = processed_file_lookup[file_hash]
-                        processed_time == datetime.fromisoformat(processed_time_str) if isinstance(processed_time_str, str) else processed_time_str, ::
+                        processed_time == datetime.fromisoformat(processed_time_str) if \
+    isinstance(processed_time_str, str) else processed_time_str, ::
     if processed_time >= modified_time, ::
     needs_processing == False
                     except Exception, ::
@@ -430,7 +438,7 @@ elf.processed_files = {}
             if processed_count % 5000 == 0, ::
     logger.info(f"   已检查 {processed_count} 个文件... (计算哈希, {hash_calculated_count} 个)")
 
-    logger.info(f"✅ 并行检查完成,发现 {len(new_files)} 个新增 / 修改文件 (计算哈希, {hash_calculated_count} 个)")
+    logger.info(f"✅ 并行检查完成, 发现 {len(new_files)} 个新增 / 修改文件 (计算哈希, {hash_calculated_count} 个)")
     return new_files
 
     def mark_as_processed(self, file_hash, str):

@@ -100,14 +100,14 @@ def test_data_manager_comprehensive() -> None, :
 
             # 创建一些测试文件
             # 创建真实的文本文件
-            with open(temp_path / "text.txt", "w", encoding == "utf - 8") as f,:
+            with open(temp_path / "text.txt", "w", encoding == "utf - 8") as f, :
     f.write("This is a test text file with some content for quality assessment.")::
             # 创建真实的代码文件,
-            with open(temp_path / "code.py", "w", encoding == "utf - 8") as f,:
+            with open(temp_path / "code.py", "w", encoding == "utf - 8") as f, :
     f.write("# This is a test code file\nprint('hello world')\n# A simple comment")
 
             # 创建真实的JSON文件
-            with open(temp_path / "data.json", "w", encoding == "utf - 8") as f,:
+            with open(temp_path / "data.json", "w", encoding == "utf - 8") as f, :
     f.write('{"key": "value", "number": 42}')
 
             # 创建其他二进制文件

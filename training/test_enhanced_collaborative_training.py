@@ -14,7 +14,8 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
-logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
 def test_enhanced_collaborative_training() -> None, :
@@ -23,6 +24,7 @@ def test_enhanced_collaborative_training() -> None, :
     
     try,
         from training.collaborative_training_manager import CollaborativeTrainingManager\
+    \
     , ModelTrainingTask
         
         # 创建协作式训练管理器
@@ -122,7 +124,7 @@ def test_enhanced_collaborative_training() -> None, :
 
 def test_training_integration() -> None, :
     """测试训练集成"""
-    logger.info("\n=测试训练集成 = == ")
+    logger.info("\n = 测试训练集成 = == ")
     
     try,
         from training.collaborative_training_manager import CollaborativeTrainingManager

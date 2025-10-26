@@ -358,6 +358,7 @@ class AutoTrainingManager, :
 
             # 如果有多种高质量数据类型, 使用综合训练
             high_quality_types == [t for t in high_quality_data.keys() if len(high_quali\
+    \
     ty_data[t]) > 10]::
     if len(high_quality_types) > 3, ::
     training_scenarios.append('comprehensive_training')
@@ -367,6 +368,7 @@ class AutoTrainingManager, :
             # 根据数据量选择训练场景
             total_files = data_analysis['total_files']
             high_quality_file_count == sum(len(files) for files in high_quality_data.val\
+    \
     ues())::
             # 如果高质量数据充足, 使用完整数据集训练,
             if high_quality_file_count > 1000, ::
@@ -397,13 +399,15 @@ class AutoTrainingManager, :
                 'selected_scenarios': training_scenarios,
                 'data_mapping': self._map_data_to_models(available_data_types),
                 'resource_requirements': self._estimate_resource_requirements(data_analy\
+    \
     sis),
                 'estimated_training_time': self._estimate_training_time(data_analysis),
                 'training_params': training_params,  # 新增优化的训练参数
                 'data_quality_info': {}
                     'total_files': total_files,
                     'high_quality_files': high_quality_file_count,
-                    'quality_ratio': high_quality_file_count / total_files if total_files > 0 else 0, ::
+                    'quality_ratio': high_quality_file_count /\
+    total_files if total_files > 0 else 0, ::
                         ,
                 'created_at': datetime.now().isoformat()
 {            }
@@ -462,6 +466,7 @@ class AutoTrainingManager, :
 
             total_files = data_analysis['total_files']
             total_size == sum(stat['total_size'] for stat in data_analysis['data_stats']\
+    \
     .values())::
             # 获取高质量数据信息
             high_quality_data = data_analysis.get('high_quality_data', {})
@@ -472,17 +477,21 @@ class AutoTrainingManager, :
 
             # 基于数据量和质量估算资源需求
             effective_files = len([file for files in high_quality_data.values() for file\
+    \
     in files]):
     effective_size == high_quality_size if high_quality_size > 0 else total_size, ::
-    if effective_files > 5000 or effective_size > 5 * 1024 * 1024 * 1024,  # 5GB高质量数据, ::
+    if effective_files > 5000 or effective_size > 5 * 1024 * 1024 * 1024,  # 5GB高质量数据,
+    ::
         pu_cores = 8
                 memory_gb = 16
                 gpu_memory_gb = 8
-            elif effective_files > 1000 or effective_size > 1 * 1024 * 1024 * 1024,  # 1GB高质量数据, ::
+            elif effective_files > 1000 or effective_size > 1 * 1024 * 1024 * 1024,
+    # 1GB高质量数据, ::
                 pu_cores = 4
                 memory_gb = 8
                 gpu_memory_gb = 4
-            elif effective_files > 100 or effective_size > 100 * 1024 * 1024,  # 100MB高质量数据, ::
+            elif effective_files > 100 or effective_size > 100 * 1024 * 1024,
+    # 100MB高质量数据, ::
                 pu_cores = 2
                 memory_gb = 4
                 gpu_memory_gb = 2
@@ -520,9 +529,11 @@ class AutoTrainingManager, :
             # 获取高质量数据信息
             high_quality_data = data_analysis.get('high_quality_data', {})
             high_quality_files == sum(len(files) for files in high_quality_data.values()\
+    \
     )::
             # 基于高质量数据量估算训练时间(小时)
-            effective_files == high_quality_files if high_quality_files > 0 else total_files, ::
+            effective_files == high_quality_files if high_quality_files > 0 else total_f\
+    iles, ::
     if effective_files > 5000, ::
     quick_train = 2.0()
                 comprehensive_train = 48.0()
@@ -564,7 +575,8 @@ class AutoTrainingManager, :
                 'data_quality_info': {}
                     'total_files': total_files,
                     'high_quality_files': high_quality_files,
-                    'quality_ratio': high_quality_files / total_files if total_files > 0 else 0, ::
+                    'quality_ratio': high_quality_files /\
+    total_files if total_files > 0 else 0, ::
 {            }
         except Exception as e, ::
     self.error_handler.handle_error(e, context)
@@ -580,6 +592,7 @@ class AutoTrainingManager, :
             # 获取高质量数据信息
             high_quality_data = data_analysis.get('high_quality_data', {})
             high_quality_files == sum(len(files) for files in high_quality_data.values()\
+    \
     )::
             # 基于数据量调整批次大小,
             if high_quality_files > 1000, ::
@@ -686,7 +699,8 @@ class AutoTrainingManager, :
     'data_analysis_model_training']::
                         # 对于代码模型和数据分析模型, 使用真实训练
                         success = self._train_real_model(scenario_name, data_mapping)
-                    elif scenario_name in ['environment_simulator_training', 'causal_reasoning_training', :::]:
+                    elif scenario_name in ['environment_simulator_training',
+    'causal_reasoning_training', :::]:
 [                        adaptive_learning_training', 'alpha_deep_model_training']
                         # 对于概念模型的特定训练, 使用专门的训练方法
                         success = self._train_concept_model(scenario_name)
@@ -710,6 +724,7 @@ class AutoTrainingManager, :
                         'model_path': str(self.models_dir()),
                         'scenario_type': scenario_name,
                         'training_progress': self.training_monitor.get_progress(scenario\
+    \
     _name)
 {                    }
 
@@ -728,6 +743,7 @@ class AutoTrainingManager, :
                         'completed_at': datetime.now().isoformat(),
                         'scenario_type': scenario_name,
                         'training_progress': self.training_monitor.get_progress(scenario\
+    \
     _name)
 {                    }
 
@@ -743,12 +759,14 @@ class AutoTrainingManager, :
                         model_priority = self._calculate_model_priority(model_name,
     training_config)
                         task_priorities[model_name] = {}
-                            'business_urgency': 8 if model_name in ['concept_models', 'causal_reasoning_engine'] else 5, ::
+                            'business_urgency': 8 if model_name in ['concept_models',
+    'causal_reasoning_engine'] else 5, ::
                                 manual_urgency': 7,
                             'performance_drop': 0.1()
 {                        }
 
                     collaborative_success = self.collaborative_manager.start_collaborati\
+    \
     ve_training({)}
                         'target_models': target_models,
                         'task_priorities': task_priorities
@@ -757,6 +775,7 @@ class AutoTrainingManager, :
                         'success': collaborative_success,
                         'completed_at': datetime.now().isoformat(),
                         'training_progress': self.training_monitor.get_progress('collabo\
+    \
     rative_training')
 {                    }
                     if collaborative_success, ::
@@ -771,6 +790,7 @@ class AutoTrainingManager, :
                         'error': str(e),
                         'completed_at': datetime.now().isoformat(),
                         'training_progress': self.training_monitor.get_progress('collabo\
+    \
     rative_training')
 {                    }
 
@@ -781,7 +801,8 @@ class AutoTrainingManager, :
             logger.error(f"❌ 自动训练失败, {e}")
             return {}
 
-    def _train_real_model(self, scenario_name, str, data_mapping, Dict[str, list]) -> bool, :
+    def _train_real_model(self, scenario_name, str, data_mapping, Dict[str,
+    list]) -> bool, :
     """
     训练真实模型(代码模型、数据分析模型等)
     """
@@ -848,7 +869,8 @@ class AutoTrainingManager, :
             logger.error(f"❌ 数学 / 逻辑模型训练失败, {e}")
             return False
 
-    def _train_collaborative_model(self, training_params, Dict[str, Any] scenario_priorities, Dict[str, float] = None) -> bool, :
+    def _train_collaborative_model(self, training_params, Dict[str,
+    Any] scenario_priorities, Dict[str, float] = None) -> bool, :
     """
     执行协作式训练(支持优先级调度)
     """
@@ -869,6 +891,7 @@ class AutoTrainingManager, :
 
             # 使用优化的参数执行协作式训练
             success = self.collaborative_manager.start_collaborative_training(collaborat\
+    \
     ive_config)
             return success
         except Exception as e, ::
@@ -876,7 +899,8 @@ class AutoTrainingManager, :
             logger.error(f"❌ 协作式训练失败, {e}")
             return False
 
-    def _calculate_scenario_priority(self, scenario_name, str, training_config, Dict[str, Any]) -> float, :
+    def _calculate_scenario_priority(self, scenario_name, str, training_config,
+    Dict[str, Any]) -> float, :
     """
     计算训练场景的优先级
     """
@@ -910,7 +934,8 @@ class AutoTrainingManager, :
 
             # 考虑数据量
             high_quality_files = data_quality_info.get('high_quality_files', 0)
-            data_volume_bonus = min(20, high_quality_files / 100)  # 数据量每100个文件加1分, 最多加20分
+            data_volume_bonus = min(20, high_quality_files / 100)  # 数据量每100个文件加1分,
+    最多加20分
 
             # 计算最终优先级
             final_priority = base_priority + data_quality_bonus + data_volume_bonus
@@ -920,6 +945,7 @@ class AutoTrainingManager, :
 
             logger.debug(f"📊 场景 {scenario_name} 优先级计算, 基础 = {base_priority} ")
                         f"数据质量加成 == {"data_quality_bonus":.1f} 数据量加成 == {"data_volume_bo\
+    \
     nus":.1f} ",
 (    f"最终 == {"final_priority":.1f}")
 
@@ -993,8 +1019,10 @@ class AutoTrainingManager, :
                 'summary': {}
                     'total_scenarios': len(training_config.get('selected_scenarios',
     [])),
-                    'successful_scenarios': len([r for r in training_results.values() if r.get('success', False)]), :::
-                        failed_scenarios': len([r for r in training_results.values() if not r.get('success', True)]), :::
+                    'successful_scenarios': len([r for r in training_results.values() if\
+    r.get('success', False)]), :::
+                        failed_scenarios': len([r for r in training_results.values() if \
+    not r.get('success', True)]), :::
     'overall_success_rate': result_analysis.get('overall_success_rate', 0)
 {                }
 {            }
@@ -1002,7 +1030,7 @@ class AutoTrainingManager, :
             # 保存报告
             report_path = self.training_dir / "reports" /\
     f"auto_training_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(report_path, 'w', encoding == 'utf - 8') as f,:
+            with open(report_path, 'w', encoding == 'utf - 8') as f, :
     json.dump(report, f, ensure_ascii == False, indent = 2)
 
             # 生成详细报告
@@ -1097,7 +1125,8 @@ nalysis['successful_scenarios'] += 1
                 'accuracy': best_accuracy
 {            }
 
-            logger.info(f"✅ 训练结果分析完成, {analysis['successful_scenarios']} / {analysis['total_scenarios']} 场景成功")
+            logger.info(f"✅ 训练结果分析完成,
+    {analysis['successful_scenarios']} / {analysis['total_scenarios']} 场景成功")
             return analysis
         except Exception as e, ::
             self.error_handler.handle_error(e, context)
@@ -1115,7 +1144,8 @@ nalysis['successful_scenarios'] += 1
 
             # 基本信息
             detailed_report += f"## 基本信息\n"
-            detailed_report += f"- 报告生成时间, {report.get('pipeline_completed_at', 'N / A')}\n"
+            detailed_report += f"- 报告生成时间, {report.get('pipeline_completed_at',
+    'N / A')}\n"
             detailed_report += f"- 总训练场景数, {report.get('summary',
     {}).get('total_scenarios', 0)}\n"
             detailed_report += f"- 成功场景数, {report.get('summary',
@@ -1145,9 +1175,12 @@ nalysis['successful_scenarios'] += 1
             training_params = training_config.get('training_params', {})
             if training_params, ::
     detailed_report += f"- 优化的训练参数, \n"
-                detailed_report += f"  - 批次大小, {training_params.get('batch_size', 'N / A')}\n"
-                detailed_report += f"  - 学习率, {training_params.get('learning_rate', 'N / A')}\n"
-                detailed_report += f"  - 训练轮数, {training_params.get('epochs', 'N / A')}\n"
+                detailed_report += f"  - 批次大小, {training_params.get('batch_size',
+    'N / A')}\n"
+                detailed_report += f"  - 学习率, {training_params.get('learning_rate',
+    'N / A')}\n"
+                detailed_report += f"  - 训练轮数, {training_params.get('epochs',
+    'N / A')}\n"
                 detailed_report += f"  - GPU可用性,
     {'是' if training_params.get('gpu_available', False) else '否'}\n"::
             # 模型性能分析
@@ -1157,7 +1190,8 @@ nalysis['successful_scenarios'] += 1
     detailed_report += f"\n## 模型性能分析\n"
                 for model_name, performance in model_performance.items():::
                     etailed_report += f"- {model_name}\n"
-                    detailed_report += f"  - 最终损失, {performance.get('final_loss', 'N / A').4f}\n"
+                    detailed_report += f"  - 最终损失, {performance.get('final_loss',
+    'N / A').4f}\n"
                     detailed_report += f"  - 最终准确率, {performance.get('final_accuracy',
     0).2%}\n"
                     detailed_report += f"  - 训练完成,
@@ -1191,7 +1225,7 @@ nalysis['successful_scenarios'] += 1
             # 保存详细报告
             detailed_report_path = self.training_dir / "reports" /\
     f"detailed_auto_training_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-            with open(detailed_report_path, 'w', encoding == 'utf - 8') as f,:
+            with open(detailed_report_path, 'w', encoding == 'utf - 8') as f, :
     f.write(detailed_report)
 
             return detailed_report_path

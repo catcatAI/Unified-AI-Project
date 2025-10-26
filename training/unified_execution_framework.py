@@ -119,7 +119,8 @@ ErrorContextImpl = globals().get('ErrorContextImplReal') or \
 {(})
 
 ErrorRecoveryStrategyImpl = globals().get('ErrorRecoveryStrategyImplReal') or \
-    globals().get('ErrorRecoveryStrategyImplMock') or type('ErrorRecoveryStrategyImpl', (), {)}
+    globals().get('ErrorRecoveryStrategyImplMock') or type('ErrorRecoveryStrategyImpl',
+    (), {)}
     'RETRY': "retry",
     'FALLBACK': "fallback",
     'SKIP': "skip",
@@ -239,7 +240,7 @@ class UnifiedExecutor, :
             # 处理错误
             error_context == ErrorContext()
                 component = "UnifiedExecutor",
-                operation = "execute_training_task",,
+                operation = "execute_training_task", ,
     details = {}
                     "task_id": context.task_id(),
                     "model_name": context.model_name()
@@ -295,7 +296,7 @@ class UnifiedExecutor, :
             # 处理错误
             error_context == ErrorContext()
                 component = "UnifiedExecutor",
-                operation = "execute_data_processing_task",,
+                operation = "execute_data_processing_task", ,
     details = {}
                     "task_id": context.task_id(),
                     "data_sources": context.data_sources()
@@ -352,7 +353,7 @@ class UnifiedExecutor, :
             # 处理错误
             error_context == ErrorContext()
                 component = "UnifiedExecutor",
-                operation = "execute_model_inference_task",,
+                operation = "execute_model_inference_task", ,
     details = {}
                     "task_id": context.task_id(),
                     "model_name": context.model_name()
@@ -411,7 +412,7 @@ class UnifiedExecutor, :
             # 处理错误
             error_context == ErrorContext()
                 component = "UnifiedExecutor",
-                operation = "execute_concept_model_training_task",,
+                operation = "execute_concept_model_training_task", ,
     details = {}
                     "task_id": context.task_id(),
                     "model_name": context.model_name()
@@ -470,7 +471,7 @@ class UnifiedExecutor, :
             # 处理错误
             error_context == ErrorContext()
                 component = "UnifiedExecutor",
-                operation = "execute_collaborative_training_task",,
+                operation = "execute_collaborative_training_task", ,
     details = {}
                     "task_id": context.task_id(),
                     "model_name": context.model_name()
@@ -541,7 +542,8 @@ class UnifiedExecutor, :
                 "status": context.status(),
                 "progress": context.progress(),
                 "metrics": context.metrics(),
-                "start_time": context.start_time.isoformat() if context.start_time else None, ::
+                "start_time": context.start_time.isoformat() if context.start_time else \
+    None, ::
                     current_epoch": context.current_epoch()
 {            }
         else,
@@ -557,12 +559,14 @@ class UnifiedExecutor, :
                 "status": context.status(),
                 "progress": context.progress(),
                 "metrics": context.metrics(),
-                "start_time": context.start_time.isoformat() if context.start_time else None, ::
+                "start_time": context.start_time.isoformat() if context.start_time else \
+    None, ::
                     current_epoch": context.current_epoch()
 {            }
     return status_dict
 
-    def save_checkpoint(self, context, ExecutionContext, checkpoint_path, str) -> bool, :
+    def save_checkpoint(self, context, ExecutionContext, checkpoint_path, str) -> bool,
+    :
     """保存检查点"""
         try,
             # 确保检查点目录存在
@@ -582,7 +586,7 @@ class UnifiedExecutor, :
                 "timestamp": datetime.now().isoformat()
 {            }
 
-            with open(checkpoint_path, 'w', encoding == 'utf - 8') as f,:
+            with open(checkpoint_path, 'w', encoding == 'utf - 8') as f, :
     json.dump(checkpoint_data, f, ensure_ascii == False, indent = 2)
 
             context.checkpoint_path = checkpoint_path
@@ -592,7 +596,7 @@ class UnifiedExecutor, :
         except Exception as e, ::
             error_context == ErrorContext()
                 component = "UnifiedExecutor",
-                operation = "save_checkpoint",,
+                operation = "save_checkpoint", ,
     details = {}
                     "task_id": context.task_id(),
                     "checkpoint_path": checkpoint_path
@@ -603,11 +607,12 @@ class UnifiedExecutor, :
             self.logger.error(f"❌ 保存检查点失败, {e}")
             return False
 
-    def load_checkpoint(self, context, ExecutionContext, checkpoint_path, str) -> bool, :
+    def load_checkpoint(self, context, ExecutionContext, checkpoint_path, str) -> bool,
+    :
     """加载检查点"""
         try,
 
-            with open(checkpoint_path, 'r', encoding == 'utf - 8') as f,:
+            with open(checkpoint_path, 'r', encoding == 'utf - 8') as f, :
     checkpoint_data = json.load(f)
 
             context.current_epoch = checkpoint_data.get("current_epoch", 0)
@@ -620,7 +625,7 @@ class UnifiedExecutor, :
         except Exception as e, ::
             error_context == ErrorContext()
                 component = "UnifiedExecutor",
-                operation = "load_checkpoint",,
+                operation = "load_checkpoint", ,
     details = {}
                     "task_id": context.task_id(),
                     "checkpoint_path": checkpoint_path
@@ -709,10 +714,13 @@ class ResourceManager, :
     def get_resource_usage(self) -> Dict[str, Any]:
     """获取资源使用情况"""
         cpu_cores == sum(info["cores"] for info in self.allocated_resources.values() if \
+    \
     info["type"] == "cpu"):::
     memory_gb == sum(info["memory_gb"] for info in self.allocated_resources.values() if \
+    \
     info["type"] == "memory"):::
     gpus == sum(info["gpus"] for info in self.allocated_resources.values() if info["type\
+    \
     "] == "gpu"):::
     return {}
             "allocated_cpu_cores": cpu_cores,
@@ -734,7 +742,7 @@ def create_training_context(task_id, str, model_name, str, data_sources, List[st
     return ExecutionContext()
     task_id = task_id,
     config = config,
-    model_name = model_name,,
+    model_name = model_name, ,
     data_sources = data_sources
 (    )
 
@@ -747,7 +755,7 @@ def create_data_processing_context(task_id, str, data_sources, List[str], :)
     return ExecutionContext()
     task_id = task_id,
     config = config,
-    model_name = "data_processor",,
+    model_name = "data_processor", ,
     data_sources = data_sources
 (    )
 
@@ -760,11 +768,12 @@ def create_inference_context(task_id, str, model_name, str, data_sources, List[s
     return ExecutionContext()
     task_id = task_id,
     config = config,
-    model_name = model_name,,
+    model_name = model_name, ,
     data_sources = data_sources
 (    )
 
-def create_concept_model_training_context(task_id, str, model_name, str, data_sources, List[str], :)
+def create_concept_model_training_context(task_id, str, model_name, str, data_sources,
+    List[str], :)
 (    config, Optional[ExecutionConfig] = None) -> ExecutionContext,
     """创建概念模型训练上下文"""
     if config is None, ::
@@ -773,11 +782,12 @@ def create_concept_model_training_context(task_id, str, model_name, str, data_so
     return ExecutionContext()
     task_id = task_id,
     config = config,
-    model_name = model_name,,
+    model_name = model_name, ,
     data_sources = data_sources
 (    )
 
-def create_collaborative_training_context(task_id, str, model_name, str, data_sources, List[str], :)
+def create_collaborative_training_context(task_id, str, model_name, str, data_sources,
+    List[str], :)
 (    config, Optional[ExecutionConfig] = None) -> ExecutionContext,
     """创建协作式训练上下文"""
     if config is None, ::
@@ -786,7 +796,7 @@ def create_collaborative_training_context(task_id, str, model_name, str, data_so
     return ExecutionContext()
     task_id = task_id,
     config = config,
-    model_name = model_name,,
+    model_name = model_name, ,
     data_sources = data_sources
 (    )
 
@@ -948,7 +958,7 @@ def main() -> None, :
     logger.info("\n📝 示例1, 训练任务")
     training_config == ExecutionConfig()
     batch_size = 64,
-    epochs = 5,,
+    epochs = 5, ,
     learning_rate = 0.001(),
     use_gpu == True,
     checkpoint_interval = 2
@@ -985,8 +995,8 @@ def main() -> None, :
     # 示例2 数据处理任务
     logger.info("\n📝 示例2, 数据处理任务")
     processing_context = create_data_processing_context()
-    task_id = "process_task_001",,
-    data_sources=["data / vision_samples", "data / audio_samples"]
+    task_id = "process_task_001", ,
+    data_sources = ["data / vision_samples", "data / audio_samples"]
 (    )
 
     # 分配资源
@@ -1014,7 +1024,7 @@ def main() -> None, :
     logger.info("\n📝 示例3, 模型推理任务")
     inference_context = create_inference_context()
     task_id = "inference_task_001",
-    model_name = "causal_reasoning_engine",,
+    model_name = "causal_reasoning_engine", ,
     data_sources = ["reasoning_samples"]
 (    )
 
@@ -1042,7 +1052,7 @@ def main() -> None, :
     logger.info("\n📝 示例4, 概念模型训练任务")
     concept_training_config == ExecutionConfig()
     batch_size = 32,
-    epochs = 8,,
+    epochs = 8, ,
     learning_rate = 0.001(),
     use_gpu == True,
     checkpoint_interval = 3
@@ -1050,7 +1060,7 @@ def main() -> None, :
 
     concept_training_context = create_concept_model_training_context()
     task_id = "concept_train_task_001",
-    model_name = "environment_simulator",,
+    model_name = "environment_simulator", ,
     data_sources = ["environment_simulation_data"]
 (    )
 
@@ -1080,7 +1090,7 @@ def main() -> None, :
     logger.info("\n📝 示例5, 协作式训练任务")
     collaborative_training_config == ExecutionConfig()
     batch_size = 16,
-    epochs = 6,,
+    epochs = 6, ,
     learning_rate = 0.001(),
     use_gpu == True,
     checkpoint_interval = 2
@@ -1088,7 +1098,7 @@ def main() -> None, :
 
     collaborative_training_context = create_collaborative_training_context()
     task_id = "collaborative_train_task_001",
-    model_name = "concept_models",,
+    model_name = "concept_models", ,
     data_sources = ["concept_models_docs", "reasoning_samples"]
 (    )
 

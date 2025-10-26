@@ -45,7 +45,7 @@ def test_hardware_detection() -> None, :
     logger.info(f"硬件检测结果, ")
     logger.info(f"  平台, {profile.platform} {profile.os_version}")
     logger.info(f"  性能等级, {profile.performance_tier}")
-    logger.info(f"  AI能力评分, {profile.ai_capability_score,.1f} / 100")
+    logger.info(f"  AI能力评分, {profile.ai_capability_score, .1f} / 100")
     logger.info(f"  CPU, {profile.cpu.brand} ({profile.cpu.cores_logical}逻辑核心)")
     logger.info(f"  内存, {profile.memory.total} MB 总计, {profile.memory.available} MB 可用")
     logger.info(f"  存储, {profile.storage.total} GB {profile.storage.disk_type}")
@@ -57,6 +57,7 @@ def test_hardware_detection() -> None, :
                 integrated_keywords = ['intel', 'amd', 'radeon', 'hd graphics',
     'uhd graphics', 'integrated']
                 is_integrated == any(keyword in gpu.name.lower() for keyword in integrat\
+    \
     ed_keywords)::
     logger.info(f"    集成显卡, {is_integrated}")
 
@@ -94,15 +95,18 @@ def test_integrated_graphics_optimization(profile) -> None, :
         if is_ig_system, ::
             # 获取优化建议
             recommendations = optimizer.get_optimization_recommendations()
-            logger.info(f"优化建议, {json.dumps(recommendations, ensure_ascii == False, indent = 2)}")
+            logger.info(f"优化建议, {json.dumps(recommendations, ensure_ascii == False,
+    indent = 2)}")
 
             # 应用所有优化
             optimization_results = optimizer.apply_all_optimizations()
-            logger.info(f"优化结果, {json.dumps(optimization_results, ensure_ascii == False, indent = 2)}")
+            logger.info(f"优化结果, {json.dumps(optimization_results, ensure_ascii == False,
+    indent = 2)}")
 
             # 测试批处理大小调整
             original_batch_size = 32
             adjusted_batch_size = optimizer.adjust_batch_size_for_integrated_graphics(or\
+    \
     iginal_batch_size)
             logger.info(f"批处理大小调整, {original_batch_size} -> {adjusted_batch_size}")
 
@@ -142,7 +146,8 @@ from tests.test_json_fix import
 
             result = subprocess.run([)]
                 "powershell.exe",
-                "Get - WmiObject -Class Win32_VideoController | Select - Object Name, AdapterRAM | ConvertTo - Json"
+                "Get - WmiObject -Class Win32_VideoController | Select - Object Name,
+    AdapterRAM | ConvertTo - Json"
 [(            ] capture_output == True, text == True, timeout = 10)
 
             if result.returncode == 0 and result.stdout.strip():::

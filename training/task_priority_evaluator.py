@@ -139,7 +139,7 @@ class TaskPriorityEvaluator, :
         try,
 
             model_name = task.get('model_name', '')
-            business_urgency = task.get('business_urgency', 5)  # 业务紧急程度(1 - 10,默认5)
+            business_urgency = task.get('business_urgency', 5)  # 业务紧急程度(1 - 10, 默认5)
 
             # 获取模型重要性得分
             model_importance_score = self.model_importance.get(model_name, 5)
@@ -181,7 +181,8 @@ class TaskPriorityEvaluator, :
             # 计算资源需求相对于基准的比例
             cpu_ratio = required_cpu / self.resource_baselines['cpu_cores']
             memory_ratio = required_memory / self.resource_baselines['memory_gb']
-            gpu_ratio == required_gpu / self.resource_baselines['gpu_memory_gb'] if self.resource_baselines['gpu_memory_gb'] > 0 else 0, ::
+            gpu_ratio == required_gpu /\
+    self.resource_baselines['gpu_memory_gb'] if self.resource_baselines['gpu_memory_gb'] > 0 else 0, ::
     disk_ratio = required_disk / self.resource_baselines['disk_space_gb']
 
             # 计算综合资源需求比例(CPU 30%, Memory 30%, GPU 25%, Disk 15%)
@@ -219,7 +220,7 @@ class TaskPriorityEvaluator, :
             data_last_modified = task.get('data_last_modified')  # 数据最后修改时间
             last_training_time = task.get('last_training_time')  # 上次训练时间
             performance_drop = task.get('performance_drop', 0)  # 性能下降程度(0 - 1)
-            manual_urgency = task.get('manual_urgency', 5)  # 手动设置的紧急程度(1 - 10,默认5)
+            manual_urgency = task.get('manual_urgency', 5)  # 手动设置的紧急程度(1 - 10, 默认5)
 
             urgency_score = 50.0  # 默认得分
 
@@ -511,8 +512,10 @@ class PriorityAwareTaskQueue, :
             if self.tasks, ::
                 # 按优先级分组统计
                 priority_groups = {}
-                    'high': len([t for t in self.tasks if t.get('priority', 0) >= 80]), :::
-                        medium': len([t for t in self.tasks if 50 <= t.get('priority', 0) < 80]), :::
+                    'high': len([t for t in self.tasks if t.get('priority', 0) >= 80]),
+    :::
+                        medium': len([t for t in self.tasks if 50 <= t.get('priority',
+    0) < 80]), :::
 low': len([t for t in self.tasks if t.get('priority', 0) < 50]):
                 status['tasks_by_priority'] = priority_groups
                 status['average_priority'] = sum(t.get('priority',

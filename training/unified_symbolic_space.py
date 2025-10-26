@@ -55,6 +55,7 @@ if __name"__main__":::
         "name": "Artificial Intelligence",
         "type": SymbolType.CONCEPT(),
         "description": "A branch of computer science dealing with creating intelligent m\
+    \
     achines":
 (            )
     

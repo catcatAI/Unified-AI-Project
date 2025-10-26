@@ -11,7 +11,8 @@ project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
 from tests.tools.test_tool_dispatcher_logging import
-logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
 def test_collaborative_training_manager_basic() -> None, :

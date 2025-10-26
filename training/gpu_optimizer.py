@@ -40,7 +40,8 @@ class GPUOptimizer, :
     # 检查是否为集成显卡系统
     self.is_integrated_graphics = self._check_integrated_graphics()
 
-    logger.info(f"GPU优化器初始化完成, GPU可用, {self.gpu_available}集成显卡, {self.is_integrated_graphics}")
+    logger.info(f"GPU优化器初始化完成, GPU可用, {self.gpu_available}集成显卡,
+    {self.is_integrated_graphics}")
 
     def _check_integrated_graphics(self) -> bool, :
     """检查是否为集成显卡系统"""
@@ -56,7 +57,8 @@ from tests.test_json_fix import
 
                 result = subprocess.run([)]
                     "powershell.exe",
-                    "Get - WmiObject -Class Win32_VideoController | Select - Object Name, AdapterRAM | ConvertTo - Json"
+                    "Get - WmiObject -Class Win32_VideoController | Select -\
+    Object Name, AdapterRAM | ConvertTo - Json"
 [(                ] capture_output == True, text == True, timeout = 10)
 
                 if result.returncode == 0 and result.stdout.strip():::
@@ -111,7 +113,8 @@ from tests.test_json_fix import
 
                         result = subprocess.run([)]
                             "powershell.exe",
-                            "Get - WmiObject -Class Win32_VideoController | Select - Object Name, AdapterRAM | ConvertTo - Json"
+                            "Get - WmiObject -Class Win32_VideoController | Select -\
+    Object Name, AdapterRAM | ConvertTo - Json"
 [(                        ] capture_output == True, text == True, timeout = 10)
 
                         if result.returncode == 0 and result.stdout.strip():::
@@ -120,7 +123,8 @@ from tests.test_json_fix import
                             # 检查是否有GPU设备
                             if isinstance(gpu_data, list) and len(gpu_data) > 0, ::
                                 # 有GPU设备, 即使TensorFlow没有检测到, 也认为可以尝试优化
-                                logger.info("ℹ️  检测到系统GPU设备, 但TensorFlow未识别, 将使用CPU优化策略")
+                                logger.info("ℹ️  检测到系统GPU设备, 但TensorFlow未识别,
+    将使用CPU优化策略")
                                 return False  # TensorFlow无法使用GPU, 但系统有GPU
                             elif isinstance(gpu_data, dict)::
 = logger.info("ℹ️  检测到系统GPU设备, 但TensorFlow未识别, 将使用CPU优化策略")
@@ -315,7 +319,7 @@ from tests.test_json_fix import
 
                 gpu_info.append({)}
                     'id': i,
-                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name,::
+                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name, ::
     'memory_total_gb': memory_info.total / (1024 * *3),
                     'memory_used_gb': memory_info.used / (1024 * *3),
                     'memory_free_gb': memory_info.free / (1024 * *3),

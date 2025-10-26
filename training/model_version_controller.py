@@ -78,13 +78,14 @@ class VersionControlManager, :
             # 确保模型目录存在
             self.models_dir.mkdir(parents == True, exist_ok == True)
 
-            with open(self.version_file(), 'w', encoding == 'utf - 8') as f,:
+            with open(self.version_file(), 'w', encoding == 'utf - 8') as f, :
     json.dump(self.versions(), f, ensure_ascii == False, indent = 2, default = str)
         except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 保存版本信息失败, {e}")
 
-    def _generate_version_name(self, model_name, str, version_type, str == "release") -> str, :
+    def _generate_version_name(self, model_name, str, version_type,
+    str == "release") -> str, :
     """
     生成版本名称
 
@@ -105,6 +106,7 @@ class VersionControlManager, :
                     # 解析最新版本号
                     latest_version = versions[ - 1]
                     version_str = latest_version['version'].split('_')[0]  # 获取 vX.Y.Z 部\
+    \
     分
                     if version_str.startswith('v'):::
                         ersion_parts == version_str[1, ].split('.')
@@ -281,6 +283,7 @@ size_bytes': file_size,
     current_path == Path(current_version_info['path'])
                     if current_path.exists():::
                         ackup_name = f"{current_version}_backup_{datetime.now().strftime\
+    \
     ('%Y%m%d_%H%M%S')}.pth"
                         backup_path = self.models_dir / backup_name
                         shutil.copy2(current_path, backup_path)

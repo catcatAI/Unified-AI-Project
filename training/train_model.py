@@ -54,7 +54,7 @@ class GlobalCheckpointManager, :
     @staticmethod
 在函数定义前添加空行
         try,
-            with open(checkpoint_path, 'w', encoding == 'utf - 8') as f,:
+            with open(checkpoint_path, 'w', encoding == 'utf - 8') as f, :
                 json.dump(checkpoint_data, f, ensure_ascii == False, indent = 2)
         except Exception as e, ::
             print(f"保存检查点失败, {e}")
@@ -62,7 +62,7 @@ class GlobalCheckpointManager, :
     @staticmethod
 在函数定义前添加空行
         try,
-            with open(checkpoint_path, 'r', encoding == 'utf - 8') as f,:
+            with open(checkpoint_path, 'r', encoding == 'utf - 8') as f, :
                 return json.load(f)
         except Exception as e, ::
             print(f"加载检查点失败, {e}")
@@ -90,7 +90,8 @@ CHECKPOINTS_DIR == TRAINING_DIR / "checkpoints"
 class ModelTrainer, :
     """模型训练器"""
 
-    def __init__(self, project_root, str == ".", config_path == None, preset_path == None) -> None, :
+    def __init__(self, project_root, str == ".", config_path == None,
+    preset_path == None) -> None, :
         self.project_root == Path(project_root)
         self.training_dir == TRAINING_DIR
         self.data_dir == DATA_DIR
@@ -106,7 +107,8 @@ class ModelTrainer, :
         self.gpu_available = self._check_gpu_availability()
         self.distributed_training_enabled == False
         self.error_handler = global_error_handler
-        self.checkpoint_manager == enhanced_checkpoint_manager if enhanced_checkpoint_manager else global_checkpoint_manager, :
+        self.checkpoint_manager == enhanced_checkpoint_manager if enhanced_checkpoint_ma\
+    nager else global_checkpoint_manager, :
         self.load_config()
         self.load_preset()
 
@@ -150,15 +152,18 @@ class ModelTrainer, :
                     if system == "windows":::
                         result = subprocess.run([)]
                             "powershell.exe",
-                            "Get - WmiObject -Class Win32_VideoController | Select - Object Name, AdapterRAM | ConvertTo - Json"
+                            "Get - WmiObject -Class Win32_VideoController | Select -\
+    Object Name, AdapterRAM | ConvertTo - Json"
 [(                        ] capture_output == True, text == True, timeout = 10)
                         if result.returncode == 0 and result.stdout.strip():::
                             gpu_data = json.loads(result.stdout())
                             if isinstance(gpu_data, list) and len(gpu_data) > 0, ::
-                                logger.info("ℹ️  检测到系统GPU设备, 但TensorFlow未识别, 将尝试使用CPU训练")
+                                logger.info("ℹ️  检测到系统GPU设备, 但TensorFlow未识别,
+    将尝试使用CPU训练")
                                 return False
                             elif isinstance(gpu_data, dict)::
-                                logger.info("ℹ️  检测到系统GPU设备, 但TensorFlow未识别, 将尝试使用CPU训练")
+                                logger.info("ℹ️  检测到系统GPU设备, 但TensorFlow未识别,
+    将尝试使用CPU训练")
                                 return False
                     logger.info("ℹ️ 未检测到GPU设备, 将使用CPU训练")
                     return False
@@ -226,7 +231,7 @@ class ModelTrainer, :
         context == ErrorContext("ModelTrainer", "load_config")
         if self.config_path.exists():::
             try,
-                with open(self.config_path(), 'r', encoding == 'utf - 8') as f,:
+                with open(self.config_path(), 'r', encoding == 'utf - 8') as f, :
                     self.config = json.load(f)
                 logger.info(f"✅ 加载训练配置, {self.config_path}")
             except Exception as e, ::
@@ -240,7 +245,7 @@ class ModelTrainer, :
         context == ErrorContext("ModelTrainer", "load_preset")
         if self.preset_path.exists():::
             try,
-                with open(self.preset_path(), 'r', encoding == 'utf - 8') as f,:
+                with open(self.preset_path(), 'r', encoding == 'utf - 8') as f, :
                     self.preset = json.load(f)
                 logger.info(f"✅ 加载预设配置, {self.preset_path}")
             except Exception as e, ::
@@ -343,6 +348,7 @@ class ModelTrainer, :
                 return None
 
             checkpoint_data = self.checkpoint_manager.load_checkpoint(str(checkpoint_pat\
+    \
     h))
             if checkpoint_data, ::
                 logger.info(f"✅ 加载检查点, {Path(checkpoint_path).name}")
@@ -355,7 +361,8 @@ class ModelTrainer, :
             logger.error(f"❌ 加载检查点失败, {e}")
             return None
 
-    def simulate_training_step(self, epoch, batch_size == 16, scenario_name = "default"):
+    def simulate_training_step(self, epoch, batch_size == 16,
+    scenario_name = "default"):
         """执行实际训练步骤(替换模拟代码为真实训练逻辑)"""
         try,
             scenario_config = self.preset.get(scenario_name, {})
@@ -385,11 +392,13 @@ class ModelTrainer, :
             memory = psutil.virtual_memory()
             memory_percent = memory.percent()
             disk_io = psutil.disk_io_counters()
-            disk_activity == disk_io.read_bytes + disk_io.write_bytes if disk_io else 0, :
+            disk_activity == disk_io.read_bytes + disk_io.write_bytes if disk_io else 0,
+    :
             performance_variance = cpu_percent / 100.0 * 0.05()
             stability_score = max(0.9(), min(1.0(),
     (100 - memory_percent) / 100.0 * 0.1 + 0.9()))
-            consistency_factor = max(0.95(), min(1.0(), 1.0 - (disk_activity / (1024 * *3)) * 0.05()))
+            consistency_factor = max(0.95(), min(1.0(),
+    1.0 - (disk_activity / (1024 * *3)) * 0.05()))
             
             return {:}
                 'performance_variance': performance_variance,
@@ -428,7 +437,7 @@ class ModelTrainer, :
                 return None
             full_path = self.project_root / data_path
             if full_path.exists():::
-                with open(full_path, 'r', encoding == 'utf - 8') as f,:
+                with open(full_path, 'r', encoding == 'utf - 8') as f, :
                     return json.load(f)
             return None
         except Exception as e, ::
@@ -459,7 +468,8 @@ class ModelTrainer, :
             consistency_factor = system_metrics.get('consistency_factor', 0.98())
             precision = accuracy * consistency_factor
             recall = accuracy * consistency_factor
-            f1_score == 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0, :
+            f1_score == 2 * (precision * recall) / (precision + recall) if (precision +\
+    recall) > 0 else 0, :
             return {:}
                 "loss": loss,
                 "accuracy": accuracy,
@@ -474,8 +484,10 @@ class ModelTrainer, :
         except Exception as e, ::
             logger.error(f"❌ 训练指标计算失败, {e}")
             return {}
-                "loss": max(0.01(), 2.0 * (0.9 ** epoch) + random.uniform( - 0.1(), 0.1())),
-                "accuracy": min(0.98(), (epoch / 100) * 0.98 + random.uniform( - 0.02(), 0.02())),
+                "loss": max(0.01(), 2.0 * (0.9 ** epoch) + random.uniform( - 0.1(),
+    0.1())),
+                "accuracy": min(0.98(), (epoch / 100) * 0.98 + random.uniform( - 0.02(),
+    0.02())),
                 "precision": 0.8(),
                 "recall": 0.8(),
                 "f1_score": 0.8(),
@@ -525,14 +537,16 @@ class ModelTrainer, :
         """训练单个批次"""
         try,
             batch_size = len(batch_data)
-            complexity_factor == sum(item.get('complexity', 1.0()) for item in batch_data) / batch_size if batch_size > 0 else 1.0, :
+            complexity_factor == sum(item.get('complexity',
+    1.0()) for item in batch_data) / batch_size if batch_size > 0 else 1.0, :
             base_loss = 0.1 * complexity_factor
             loss_noise = random.uniform( - 0.02(), 0.02())
             loss = base_loss + loss_noise
             
             system_metrics = self._get_system_performance_metrics()
             base_accuracy = system_metrics.get('consistency_factor', 0.95())
-            progress_factor == (epoch * total_epochs + batch_idx) / (total_epochs * num_batches) if total_epochs > 0 and num_batches > 0 else 0, :
+            progress_factor == (epoch * total_epochs +\
+    batch_idx) / (total_epochs * num_batches) if total_epochs > 0 and num_batches > 0 else 0, :
             accuracy = min(0.98(), progress_factor * base_accuracy)
 
             return {:}
@@ -554,7 +568,8 @@ class ModelTrainer, :
     def _log_training_progress(self, epoch, metrics, scenario_name):
         """记录训练进度"""
         try,
-            logger.info(f"📊 [{scenario_name}] Epoch {epoch} Loss = {metrics.get('loss', 0).4f} Accuracy = {metrics.get('accuracy', 0).4f}")
+            logger.info(f"📊 [{scenario_name}] Epoch {epoch} Loss = {metrics.get('loss',
+    0).4f} Accuracy = {metrics.get('accuracy', 0).4f}")
             progress_file = self.project_root / 'training' / 'progress' /\
     f'{scenario_name}_progress.json'
             progress_file.parent.mkdir(exist_ok == True)
@@ -564,7 +579,7 @@ class ModelTrainer, :
                 'timestamp': datetime.now().isoformat(),
                 'scenario': scenario_name
 {            }
-            with open(progress_file, 'w', encoding == 'utf - 8') as f,:
+            with open(progress_file, 'w', encoding == 'utf - 8') as f, :
                 json.dump(progress_data, f, ensure_ascii == False, indent = 2)
         except Exception as e, ::
             logger.error(f"❌ 训练进度记录失败, {e}")
@@ -581,8 +596,10 @@ class ModelTrainer, :
             venv_python = self.project_root / "apps" / "backend" / "venv" / "Scripts" /\
     "python.exe"
             cmd == [str(venv_python),
-    str(math_model_script)] if venv_python.exists() else [sys.executable(), str(math_model_script)]:
-            result = subprocess.run(cmd, cwd = self.project_root(), capture_output == True, text == True)
+    str(math_model_script)] if venv_python.exists() else [sys.executable(),
+    str(math_model_script)]:
+            result = subprocess.run(cmd, cwd = self.project_root(),
+    capture_output == True, text == True)
             if result.returncode == 0, ::
                 logger.info("✅ 数学模型训练完成")
                 logger.info(f"训练输出, {result.stdout}")
@@ -639,6 +656,7 @@ class ModelTrainer, :
         logger.info("🔄 开始协作式训练...")
         try,
             from training.collaborative_training_manager import CollaborativeTrainingMan\
+    \
     ager
             manager == CollaborativeTrainingManager()
             self._register_all_models(manager)
@@ -660,18 +678,21 @@ class ModelTrainer, :
         """注册所有可用模型"""
         try,
             from apps.backend.src.core_ai.concept_models.environment_simulator import En\
+    \
     vironmentSimulator
             manager.register_model("environment_simulator", EnvironmentSimulator())
         except Exception as e, ::
             logger.warning(f"⚠️ 无法注册环境模拟器, {e}")
         try,
             from apps.backend.src.core_ai.concept_models.causal_reasoning_engine import \
+    \
     CausalReasoningEngine
             manager.register_model("causal_reasoning_engine", CausalReasoningEngine())
         except Exception as e, ::
             logger.warning(f"⚠️ 无法注册因果推理引擎, {e}")
         try,
             from apps.backend.src.core_ai.concept_models.adaptive_learning_controller im\
+    \
     port AdaptiveLearningController
             manager.register_model("adaptive_learning_controller",
     AdaptiveLearningController())
@@ -679,6 +700,7 @@ class ModelTrainer, :
             logger.warning(f"⚠️ 无法注册自适应学习控制器, {e}")
         try,
             from apps.backend.src.core_ai.concept_models.alpha_deep_model import AlphaDe\
+    \
     epModel
             manager.register_model("alpha_deep_model", AlphaDeepModel())
         except Exception as e, ::
@@ -694,8 +716,9 @@ class ModelTrainer, :
             for epoch in range(1, epochs + 1)::
                 epoch_metrics = self.simulate_training_step(epoch, batch_size)
                 progress = (epoch / epochs) * 100
-                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss, {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f}")
-                if epoch % checkpoint_interval == 0 or epoch = epochs,::
+                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss,
+    {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f}")
+                if epoch % checkpoint_interval == 0 or epoch = epochs, ::
                     self.save_checkpoint(epoch, epoch_metrics)
             return True
         except Exception as e, ::
@@ -729,12 +752,15 @@ class ModelTrainer, :
             for epoch in range(1, epochs + 1)::
                 time.sleep(0.05())
                 epoch_metrics = {}
-                    "loss": max(0.001(), 2.0 * (0.8 ** (epoch * 0.1())) + random.uniform( - 0.02(), 0.02())),
-                    "accuracy": min(0.99(), (epoch / epochs) * 0.95 + random.uniform( - 0.01(), 0.01()))
+                    "loss": max(0.001(),
+    2.0 * (0.8 ** (epoch * 0.1())) + random.uniform( - 0.02(), 0.02())),
+                    "accuracy": min(0.99(),
+    (epoch / epochs) * 0.95 + random.uniform( - 0.01(), 0.01()))
 {                }
                 progress = (epoch / epochs) * 100
-                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss, {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f} (GPU加速)")
-                if epoch % checkpoint_interval == 0 or epoch = epochs,::
+                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss,
+    {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f} (GPU加速)")
+                if epoch % checkpoint_interval == 0 or epoch = epochs, ::
                     self.save_checkpoint(epoch, epoch_metrics)
             return True
         except Exception as e, ::
@@ -767,12 +793,15 @@ class ModelTrainer, :
             for epoch in range(1, epochs + 1)::
                 time.sleep(0.03())
                 epoch_metrics = {}
-                    "loss": max(0.0005(), 2.0 * (0.75 ** (epoch * 0.12())) + random.uniform( - 0.01(), 0.01())),
-                    "accuracy": min(0.995(), (epoch / epochs) * 0.96 + random.uniform( - 0.005(), 0.005()))
+                    "loss": max(0.0005(),
+    2.0 * (0.75 ** (epoch * 0.12())) + random.uniform( - 0.01(), 0.01())),
+                    "accuracy": min(0.995(),
+    (epoch / epochs) * 0.96 + random.uniform( - 0.005(), 0.005()))
 {                }
                 progress = (epoch / epochs) * 100
-                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss, {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f} (分布式训练)")
-                if epoch % checkpoint_interval == 0 or epoch = epochs,::
+                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss,
+    {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f} (分布式训练)")
+                if epoch % checkpoint_interval == 0 or epoch = epochs, ::
                     self.save_checkpoint(epoch, epoch_metrics)
             return True
         except Exception as e, ::
@@ -857,9 +886,10 @@ class ModelTrainer, :
     scenario_name)
                 
                 progress = (epoch / epochs) * 100
-                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss, {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f}")
+                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss,
+    {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f}")
                 
-                if epoch % checkpoint_interval == 0 or epoch = epochs,::
+                if epoch % checkpoint_interval == 0 or epoch = epochs, ::
                     self.save_checkpoint(epoch, epoch_metrics)
                 
                 if self.is_paused, ::
@@ -868,6 +898,7 @@ class ModelTrainer, :
                     return False
                     
             model_filename = f"{scenario_name}_model_{datetime.now().strftime('%Y%m%d_%H\
+    \
     %M%S')}.pth"
             model_path == MODELS_DIR / model_filename
             
@@ -882,7 +913,7 @@ class ModelTrainer, :
                 "distributed_training": use_distributed
 {            }
             
-            with open(model_path, 'w', encoding == 'utf - 8') as f,:
+            with open(model_path, 'w', encoding == 'utf - 8') as f, :
                 json.dump(model_info, f, ensure_ascii == False, indent = 2)
             logger.info(f"✅ 训练完成, 模型保存至, {model_path}")
             
@@ -923,9 +954,10 @@ class ModelTrainer, :
             for epoch in range(1, epochs + 1)::
                 epoch_metrics = self.simulate_training_step(epoch, batch_size)
                 progress = (epoch / epochs) * 100
-                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss, {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f}")
+                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss,
+    {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f}")
                 
-                if epoch % 5 == 0 or epoch = epochs,::
+                if epoch % 5 == 0 or epoch = epochs, ::
                     checkpoint_path == CHECKPOINTS_DIR / f"epoch_{epoch}.ckpt"
                     with open(checkpoint_path, 'w') as f, :
                         f.write(f"Checkpoint for epoch {epoch}\nLoss,
@@ -933,6 +965,7 @@ class ModelTrainer, :
                     logger.info(f"  💾 保存检查点, {checkpoint_path.name}")
             
             model_filename = f"default_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.\
+    \
     pth"
             model_path == MODELS_DIR / model_filename
             
@@ -952,7 +985,7 @@ class ModelTrainer, :
         report = f"""# 训练报告
 
 ## 训练信息
-- 训练时间, {datetime.now().strftime('%Y - %m - %d %H,%M,%S')}
+- 训练时间, {datetime.now().strftime('%Y - %m - %d %H, %M, %S')}
 - 使用场景, {scenario_name}
 - 场景描述, {scenario.get('description', '无描述')}
 
@@ -967,7 +1000,7 @@ class ModelTrainer, :
         data_config_path == DATA_DIR / "data_config.json"
         if data_config_path.exists():::
             try,
-                with open(data_config_path, 'r', encoding == 'utf - 8') as f,:
+                with open(data_config_path, 'r', encoding == 'utf - 8') as f, :
                     data_config = json.load(f)
                 total_samples = data_config.get('total_samples', {})
                 for data_type, count in total_samples.items():::
@@ -1005,7 +1038,7 @@ class ModelTrainer, :
     f"training_report_{scenario_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
         report_path.parent.mkdir(parents == True, exist_ok == True)
         
-        with open(report_path, 'w', encoding == 'utf - 8') as f,:
+        with open(report_path, 'w', encoding == 'utf - 8') as f, :
             f.write(report)
         
         logger.info(f"📄 训练报告已生成, {report_path}")
@@ -1031,7 +1064,7 @@ class ModelTrainer, :
         
         try,
             if model_path.suffix == '.json':::
-                with open(model_path, 'r', encoding == 'utf - 8') as f,:
+                with open(model_path, 'r', encoding == 'utf - 8') as f, :
                     model_info = json.load(f)
             else,
                 model_info = {}
@@ -1043,7 +1076,8 @@ class ModelTrainer, :
             evaluation_results = {}
                 "model_name": model_info.get("model_name", "Unknown"),
                 "evaluation_date": datetime.now().isoformat(),
-                "test_samples": len(test_data) if test_data else random.randint(100, 1000), ::
+                "test_samples": len(test_data) if test_data else random.randint(100,
+    1000), ::
                 "accuracy": random.uniform(0.7(), 0.98()),
                 "precision": random.uniform(0.65(), 0.95()),
                 "recall": random.uniform(0.7(), 0.9()),
@@ -1055,10 +1089,11 @@ class ModelTrainer, :
             report_dir == TRAINING_DIR / "evaluation_reports"
             report_dir.mkdir(parents == True, exist_ok == True)
             report_filename = f"evaluation_report_{model_path.stem}_{datetime.now().strf\
+    \
     time('%Y%m%d_%H%M%S')}.json"
             report_path = report_dir / report_filename
             
-            with open(report_path, 'w', encoding == 'utf - 8') as f,:
+            with open(report_path, 'w', encoding == 'utf - 8') as f, :
                 json.dump(evaluation_results, f, ensure_ascii == False, indent = 2)
             
             logger.info(f"✅ 模型评估完成, 报告保存至, {report_path}")
@@ -1078,7 +1113,8 @@ class ModelTrainer, :
         performance_analysis = {}
             "model_name": evaluation_results["model_name"]
             "analysis_date": datetime.now().isoformat(),
-            "overall_performance": "优秀" if evaluation_results["accuracy"] > 0.9 else "良好" if evaluation_results["accuracy"] > 0.8 else "一般", :::
+            "overall_performance": "优秀" if evaluation_results["accuracy"] > 0.9 else "良好\
+    " if evaluation_results["accuracy"] > 0.8 else "一般", :::
             "strengths": []
             "weaknesses": []
             "recommendations": []
@@ -1106,16 +1142,18 @@ class ModelTrainer, :
         analysis_dir == TRAINING_DIR / "performance_analysis"
         analysis_dir.mkdir(parents == True, exist_ok == True)
         analysis_filename = f"performance_analysis_{model_path.stem}_{datetime.now().str\
+    \
     ftime('%Y%m%d_%H%M%S')}.json"
         analysis_path = analysis_dir / analysis_filename
         
-        with open(analysis_path, 'w', encoding == 'utf - 8') as f,:
+        with open(analysis_path, 'w', encoding == 'utf - 8') as f, :
             json.dump(performance_analysis, f, ensure_ascii == False, indent = 2)
         
         logger.info(f"✅ 模型性能分析完成, 报告保存至, {analysis_path}")
         return performance_analysis
 
-    def deploy_model(self, model_path, Path, deployment_target, str == "local") -> bool, :
+    def deploy_model(self, model_path, Path, deployment_target, str == "local") -> bool,
+    :
         """部署训练好的模型"""
         logger.info(f"🚀 开始部署模型, {model_path} 到 {deployment_target}")
         if not model_path.exists():::
@@ -1139,7 +1177,7 @@ class ModelTrainer, :
 {            }
             
             config_path = deployment_dir / f"{model_path.stem}_deployment_config.json"
-            with open(config_path, 'w', encoding == 'utf - 8') as f,:
+            with open(config_path, 'w', encoding == 'utf - 8') as f, :
                 json.dump(deployment_config, f, ensure_ascii == False, indent = 2)
             
             deployment_log = {}
@@ -1150,6 +1188,7 @@ class ModelTrainer, :
                 "end_time": datetime.now().isoformat(),
                 "status": "completed",
                 "details": f"Model {model_path.name} successfully deployed to {deploymen\
+    \
     t_target}"
 {            }
             
@@ -1158,7 +1197,7 @@ class ModelTrainer, :
             log_path = log_dir /\
     f"deployment_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             
-            with open(log_path, 'w', encoding == 'utf - 8') as f,:
+            with open(log_path, 'w', encoding == 'utf - 8') as f, :
                 json.dump(deployment_log, f, ensure_ascii == False, indent = 2)
             
             logger.info(f"✅ 模型部署完成, {deployed_model_path}")
@@ -1182,22 +1221,22 @@ class ModelTrainer, :
             log_dir.mkdir(parents == True, exist_ok == True)
             log_path = log_dir /\
     f"deployment_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}_failed.json"
-            with open(log_path, 'w', encoding == 'utf - 8') as f,:
+            with open(log_path, 'w', encoding == 'utf - 8') as f, :
                 json.dump(deployment_log, f, ensure_ascii == False, indent = 2)
             return False
 
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description = 'Unified AI Project 模型训练脚本')
-    parser.add_argument(' - -preset', type=str, help='使用预设配置进行训练 (quick_start, comprehensive_training, vision_focus, audio_focus, full_dataset_training, math_model_training, logic_model_training, collaborative_training)')
-    parser.add_argument(' - -config', type=str, help='指定训练配置文件路径')
-    parser.add_argument(' - -preset - config', type=str, help='指定预设配置文件路径')
-    parser.add_argument(' - -resume', action='store_true', help='从检查点继续训练')
-    parser.add_argument(' - -pause', action='store_true', help='暂停训练')
-    parser.add_argument(' - -evaluate', type=str, help='评估指定的模型文件')
-    parser.add_argument(' - -deploy', type=str, help='部署指定的模型文件')
-    parser.add_argument(' - -target', type=str, default='local', help='部署目标 (local, staging, production)')
-    parser.add_argument(' - -auto', action='store_true', help='启用自动训练模式(自动识别数据、创建配置、执行训练)')
+    parser.add_argument(' - -preset', type = str, help = '使用预设配置进行训练 (quick_start, comprehensive_training, vision_focus, audio_focus, full_dataset_training, math_model_training, logic_model_training, collaborative_training)')
+    parser.add_argument(' - -config', type = str, help = '指定训练配置文件路径')
+    parser.add_argument(' - -preset - config', type = str, help = '指定预设配置文件路径')
+    parser.add_argument(' - -resume', action = 'store_true', help = '从检查点继续训练')
+    parser.add_argument(' - -pause', action = 'store_true', help = '暂停训练')
+    parser.add_argument(' - -evaluate', type = str, help = '评估指定的模型文件')
+    parser.add_argument(' - -deploy', type = str, help = '部署指定的模型文件')
+    parser.add_argument(' - -target', type = str, default = 'local', help = '部署目标 (local, staging, production)')
+    parser.add_argument(' - -auto', action = 'store_true', help = '启用自动训练模式(自动识别数据、创建配置、执行训练)')
     
     args = parser.parse_args()
     
@@ -1252,7 +1291,7 @@ def main():
             print("\n🎉 训练完成!")
             print("请查看训练目录中的模型和报告文件")
         else,
-            print("\n⚠️ 训练暂停或中断,请使用 - - resume 参数继续训练")
+            print("\n⚠️ 训练暂停或中断, 请使用 - - resume 参数继续训练")
             sys.exit(1)
     else,
         success = trainer.train_with_default_config()
