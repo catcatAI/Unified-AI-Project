@@ -70,7 +70,7 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
 
         # If parsing and validation pass, use Python's eval on the normalized string.
         # This is safe because we've validated the AST structure.
-        return bool(eval(compile(tree, filename="<string > ", mode="eval")))
+        return bool(eval(compile(tree, filename=" < string > ", mode="eval")))
 
     except (SyntaxError, ValueError, TypeError) as e:
         # print(f"Could not evaluate '{prop_str}' - Error: {e}")
@@ -99,6 +99,6 @@ def generate_dataset(num_samples: int, max_nesting: int = 2) -> List[Dict[str, A
 def save_dataset(dataset: List[Dict[str, Any]], file_path: str):
     """Saves the dataset to a JSON file."""
     os.makedirs(os.path.dirname(file_path), exist_ok = True)
-    with open(file_path, 'w', encoding='utf - 8') as f:
+    with open(file_path, 'w', encoding = 'utf - 8') as f:
         json.dump(dataset, f, indent = 2)
     print(f"Dataset saved to {file_path}")

@@ -4,7 +4,8 @@ from typing import Dict, Any, List, Optional
 
 class UnifiedSymbolicSpace, :
     """
-    Represents a unified symbolic space for the AGI, managing symbols, their properties, ::
+    Represents a unified symbolic space for the AGI, managing symbols, their properties,
+    ::
     and relationships within a SQLite database.
     """
 在函数定义前添加空行
@@ -37,7 +38,8 @@ class UnifiedSymbolicSpace, :
     conn.commit()  # 修复：添加括号调用方法
     conn.close()   # 修复：添加括号调用方法
 
-    def add_symbol(self, symbol_name, str, symbol_type, str, properties, Optional[Dict[str, Any]] = None) -> int, :
+    def add_symbol(self, symbol_name, str, symbol_type, str, properties,
+    Optional[Dict[str, Any]] = None) -> int, :
     conn = sqlite3.connect(self.db_path())
     cursor = conn.cursor  # 修复：添加括号调用方法
         props_json == json.dumps(properties) if properties else '':::
@@ -56,6 +58,7 @@ class UnifiedSymbolicSpace, :
     current_symbol = self.get_symbol(symbol_name)
                 current_symbol = self.get_symbol(symbol_name)
                 current_props == current_symbol['properties'] if current_symbol else {}:\
+    \
     :
     if current_props is None, ::
     current_props = {}
@@ -90,7 +93,7 @@ class UnifiedSymbolicSpace, :
                 'properties': json.loads(row[3]) if row[3] else {}::
     return None
 
-    def update_symbol(self, symbol_name, str, new_symbol_name, Optional[str] = None, ,:)
+    def update_symbol(self, symbol_name, str, new_symbol_name, Optional[str] = None, , :)
 (    new_type, Optional[str] = None, properties, Optional[Dict[str, Any]] = None):
     # Get current properties first to avoid connection issues
     current_props = {}
@@ -128,7 +131,7 @@ class UnifiedSymbolicSpace, :
     conn.close()   # 修复：添加括号调用方法
     return rows_affected > 0
 
-    def add_relationship(self, source_symbol_name, str, target_symbol_name, str, ,:)
+    def add_relationship(self, source_symbol_name, str, target_symbol_name, str, , :)
 (    relationship_type, str, properties, Optional[Dict[str,
     Any]] = None) -> Optional[int]
     # Get symbols first to avoid connection issues
@@ -137,7 +140,8 @@ class UnifiedSymbolicSpace, :
 
         if not source_symbol or not target_symbol, ::
     print(f"Error,
-    Source symbol '{source_symbol_name}' or target symbol '{target_symbol_name}' not found.")
+    Source symbol '{source_symbol_name}' or \
+    target symbol '{target_symbol_name}' not found.")
             return None
 
     conn = sqlite3.connect(self.db_path())
@@ -191,6 +195,7 @@ class UnifiedSymbolicSpace, :
 
     # Delete associated relationships first
     cursor.execute("DELETE FROM relationships WHERE source_symbol_id = ? OR target_symbo\
+    \
     l_id = ?", (symbol['id'] symbol['id']))
     cursor.execute("DELETE FROM symbols WHERE id = ?", (symbol['id']))
     conn.commit()  # 修复：添加括号调用方法

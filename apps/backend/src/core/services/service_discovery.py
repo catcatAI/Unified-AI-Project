@@ -64,6 +64,7 @@ class ServiceStatus(Enum):
 
             # 确保capability_id是字符串类型
             capability_id_str == str(capability_id) if capability_id is not None else ""\
+    \
     ::
             # 更新现有能力或创建新能力,
             if capability_id_str in self.capabilities, ::
@@ -76,12 +77,13 @@ class ServiceStatus(Enum):
             else,
                 # 创建新能力
                 capability == ServiceCapability()
-                    capability_id = capability_id_str,,
+                    capability_id = capability_id_str, ,
     name = capability_data.get('name', ''),
                     description = capability_data.get('description', ''),
                     version = capability_data.get('version', '1.0'),
                     ai_id = capability_data.get('ai_id', ''),
-                    availability_status = capability_data.get('availability_status', 'unknown'),
+                    availability_status = capability_data.get('availability_status',
+    'unknown'),
                     tags = capability_data.get('tags'),
                     supported_interfaces = capability_data.get('supported_interfaces'),
                     metadata = capability_data.get('metadata'),
@@ -127,7 +129,8 @@ class ServiceStatus(Enum):
             # 应用筛选条件
             filtered_capabilities == for capability in self.capabilities.values, ::
                 # 检查能力ID筛选
-                if capability_id_filter and capability.capability_id != capability_id_filter, ::
+                if capability_id_filter and \
+    capability.capability_id != capability_id_filter, ::
     continue
 
                 # 检查名称筛选
@@ -141,7 +144,8 @@ class ServiceStatus(Enum):
                         ontinue
 
                 # 检查最小信任分数
-                if min_trust_score is not None and capability.trust_score < min_trust_score, ::
+                if min_trust_score is not None and \
+    capability.trust_score < min_trust_score, ::
     continue
 
                 filtered_capabilities.append(capability)

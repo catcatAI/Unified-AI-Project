@@ -51,7 +51,8 @@ class GenesisManager, :
             A list of three hex - encoded secret shards.
     """
         if SecretSharer is None, ::
-    raise RuntimeError("SecretSharer not available. Please install secret - sharing package.")
+    raise RuntimeError("SecretSharer not available. Please install secret -\
+    sharing package.")
 
         # The hex format is more robust for copy - pasting and QR codes.:::
             ecret_hex = secret.encode('utf - 8').hex
@@ -102,7 +103,8 @@ if __name'__main__':::
     # Check if required modules are available, ::
         f SecretSharer is None,
 
-    print("Error, secretsharing module not available. Please install it with, pip install secret - sharing")
+    print("Error, secretsharing module not available. Please install it with,
+    pip install secret - sharing")
     exit(1)
 
     print(" - -- GenesisManager Test - - -")

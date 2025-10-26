@@ -93,7 +93,8 @@ def _ensure_tensorflow_is_imported():
     except Exception as e, ::
         # Catch any exception during import, including fatal ones if possible.:::
             rint(f"CRITICAL,
-    Failed to import TensorFlow. Logic model NN functionality will be disabled. Error, {e}")
+    Failed to import TensorFlow. Logic model NN functionality will be disabled. Error,
+    {e}")
     status = dependency_manager.get_status('tensorflow')
         if status, ::
     status.is_available == False
@@ -106,23 +107,27 @@ def _tensorflow_is_available():
 ""Check if TensorFlow is available without triggering an import."""::
     # This function now relies on the lazy - loading mechanism.:
     # It returns true only if _ensure_tensorflow_is_imported has been successfully calle\
+    \
     d.:::
         eturn tf is not None
 
 # DO NOT attempt to import TensorFlow on module load. It will be loaded lazily.
 # _ensure_tensorflow_is_imported
 
-# Define paths (relative to project root, assuming this script is in src / tools / logic_model)
+# Define paths (relative to project root,
+    assuming this script is in src / tools / logic_model)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
-CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT, "data / models / logic_model_char_maps.json")
+CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT,
+    "data / models / logic_model_char_maps.json")
 MODEL_SAVE_PATH = os.path.join(PROJECT_ROOT, "data / models / logic_model_nn.keras")
 TRAIN_DATA_PATH = os.path.join(PROJECT_ROOT, "data / raw_datasets / logic_train.json")
 
 class LogicNNModel, :
 在函数定义前添加空行
         if not _ensure_tensorflow_is_imported, ::
-    print("LogicNNModel, TensorFlow not available. This instance will be non - functional.")
+    print("LogicNNModel,
+    TensorFlow not available. This instance will be non - functional.")
             self.model == None
             self.dna_chains =   # DNA数据链存储
             self.prediction_history =   # 预测历史记录
@@ -147,10 +152,12 @@ class LogicNNModel, :
 (                                    name = "embedding")(input_layer)
     lstm_layer == LSTM(self.lstm_units(), name = "lstm_layer")(embedding_layer)
     dropout_layer == Dropout(0.5(), name = "dropout")(lstm_layer)
-    output_layer == Dense(2, activation = 'softmax', name = "output_boolean")(dropout_layer)
+    output_layer == Dense(2, activation = 'softmax',
+    name = "output_boolean")(dropout_layer)
 
     model == Model(inputs = input_layer, outputs = output_layer)
-    model.compile(optimizer = 'adam', loss = 'categorical_crossentropy', metrics = ['accuracy'])
+    model.compile(optimizer = 'adam', loss = 'categorical_crossentropy',
+    metrics = ['accuracy'])
     self.model = model
 
     def train(self, X_train, y_train, X_val, y_val, epochs == 20, batch_size = 32):
@@ -161,7 +168,7 @@ class LogicNNModel, :
     print(f"Starting training, epochs = {epochs} batch_size = {batch_size}")
     history = self.model.fit(X_train, y_train)
                                 epochs = epochs,
-                                batch_size = batch_size,,
+                                batch_size = batch_size, ,
     validation_data = (X_val, y_val),
 (                                verbose = 1)
     print("Training complete.")
@@ -175,8 +182,9 @@ class LogicNNModel, :
             return False # Default / dummy return
 
     start_time = datetime.now()
-        tokens == [char_to_token.get(char, char_to_token.get('<UNK > ', 0)) for char in proposition_str]::
-    padded_sequence = pad_sequences([tokens] maxlen = self.max_seq_len(), padding = 'post', truncating = 'post')
+        tokens == [char_to_token.get(char, char_to_token.get(' < UNK > ', 0)) for char in proposition_str]::
+    padded_sequence = pad_sequences([tokens] maxlen = self.max_seq_len(),
+    padding = 'post', truncating = 'post')
 
     prediction = self.model.predict(padded_sequence, verbose = 0)
         predicted_class = np.argmax(prediction, axis = 1)[0]
@@ -193,7 +201,7 @@ class LogicNNModel, :
             predicted_result = result_bool,
             confidence = confidence,
             processing_time = processing_time,
-            timestamp = end_time,,
+            timestamp = end_time, ,
     dna_chain_id = dna_chain_id
 (    )
 
@@ -206,6 +214,7 @@ class LogicNNModel, :
     if dna_chain_id not in self.dna_chains, ::
     self.dna_chains[dna_chain_id] = DNADataChain(dna_chain_id)
             self.dna_chains[dna_chain_id].add_node(f"logic_prediction_{len(self.predicti\
+    \
     on_history())}")
 
     return result_bool
@@ -268,8 +277,8 @@ f not _tensorflow_is_available,
     for char in prop, ::
     chars.add(char)
 
-    final_vocab = ['<PAD > ', '<UNK > '] + sorted(list(chars))
-    final_vocab == sorted(list(set(final_vocab)), key=lambda x, (x != '<PAD > ', x != '<UNK > ', x))
+    final_vocab = [' < PAD > ', ' < UNK > '] + sorted(list(chars))
+    final_vocab == sorted(list(set(final_vocab)), key=lambda x, (x != ' < PAD > ', x != ' < UNK > ', x))
 
     char_to_token == {"char": i for i, char in enumerate(final_vocab)}::
     token_to_char == {"i": char for i, char in enumerate(final_vocab)}::
@@ -292,11 +301,12 @@ def preprocess_logic_data(dataset_path, char_to_token, max_len, num_classes == 2
 
     # Convert propositions to sequences of tokens
     sequences == for prop in propositions, ::
-    tokens == [char_to_token.get(char, char_to_token.get('<UNK > ', 0)) for char in prop]::
+    tokens == [char_to_token.get(char, char_to_token.get(' < UNK > ', 0)) for char in prop]::
     sequences.append(tokens)
 
     # Pad sequences
-    X = pad_sequences(sequences, maxlen = max_len, padding = 'post', truncating = 'post')
+    X = pad_sequences(sequences, maxlen = max_len, padding = 'post',
+    truncating = 'post')
 
     # Convert labels to categorical
     y = to_categorical(labels, num_classes = num_classes)

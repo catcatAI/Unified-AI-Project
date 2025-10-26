@@ -136,6 +136,7 @@ class PerformanceTracker, :
     # 使用最近N条记录进行趋势分析
     N = min(len(performance_history), 10)
         recent_success_rates == np.array([record.success_rate for record in performance_\
+    \
     history[:N]])::
     # 简单线性回归计算斜率
     x = np.arange(N)
@@ -223,7 +224,7 @@ class StrategySelector, :
 
     return selected_strategy
 
-    def _context_to_features(self, task_context, TaskContext, ,:)
+    def _context_to_features(self, task_context, TaskContext, , :)
 (    performance_trend, Dict[str, Any]) -> torch.Tensor,
     """将任务上下文和性能趋势转换为特征向量"""
     features =
@@ -245,11 +246,14 @@ class StrategySelector, :
     # 添加历史性能特征(如果有)
         if task_context.previous_performance, ::
     recent_success_rates == [p.success_rate for p in task_context.previous_performance[:\
+    \
     5]]::
-        vg_success_rate == np.mean(recent_success_rates) if recent_success_rates else 0.5, ::
+        vg_success_rate == np.mean(recent_success_rates) if recent_success_rates else 0.\
+    5, ::
     features.append(avg_success_rate)
 
-            success_rate_std == np.std(recent_success_rates) if len(recent_success_rates) > 1 else 0.0, ::
+            success_rate_std == np.std(recent_success_rates) if len(recent_success_rates\
+    ) > 1 else 0.0, ::
     features.append(success_rate_std)
         else,
 
@@ -373,7 +377,7 @@ class LearningStrategyOptimizer, :
             "current_strategy": LearningStrategy()
                 id = "current_strategy",
                 name = "当前策略",
-                description = "继续使用当前学习策略",,
+                description = "继续使用当前学习策略", ,
     parameters = {}
                     "learning_rate": 0.01(),
                     "exploration_rate": 0.1(),
@@ -383,7 +387,7 @@ class LearningStrategyOptimizer, :
             "exploration_strategy": LearningStrategy()
                 id = "exploration_strategy",
                 name = "探索策略",
-                description = "增加探索率以发现更好的策略",,
+                description = "增加探索率以发现更好的策略", ,
     parameters = {}
                     "learning_rate": 0.02(),
                     "exploration_rate": 0.3(),
@@ -393,7 +397,7 @@ class LearningStrategyOptimizer, :
             "conservative_strategy": LearningStrategy()
                 id = "conservative_strategy",
                 name = "保守策略",
-                description = "降低学习率以稳定学习过程",,
+                description = "降低学习率以稳定学习过程", ,
     parameters = {}
                     "learning_rate": 0.005(),
                     "exploration_rate": 0.05(),
@@ -432,6 +436,7 @@ class LearningStrategyOptimizer, :
             if context.previous_performance, ::
     recent_performance == context.previous_performance[:10]  # 最近10条记录
                 avg_success_rate = np.mean([p.success_rate for p in recent_performance])\
+    \
     :
                     f avg_success_rate < 0.7,  # 表现不佳,
 f "exploration_rate" in base_params,
@@ -447,7 +452,7 @@ f "exploration_rate" in base_params,
 
     return params
 
-    def _context_to_parameter_features(self, context, TaskContext, ,:)
+    def _context_to_parameter_features(self, context, TaskContext, , :)
 (    strategy, LearningStrategy) -> torch.Tensor,
     """将上下文和策略转换为参数优化模型的输入特征"""
     features =
@@ -455,7 +460,8 @@ f "exploration_rate" in base_params,
     # 添加上下文特征
     features.extend([, )]
     context.complexity_level(),
-            float(len(context.previous_performance())) if context.previous_performance else 0.0, ::
+            float(len(context.previous_performance())) if context.previous_performance e\
+    lse 0.0, ::
 (                )
 
     # 添加策略特征
@@ -514,7 +520,8 @@ f "exploration_rate" in base_params,
                 strategy.effectiveness = max(0.0(), strategy.effectiveness - 0.05())
 
             strategy.last_used = datetime.now.timestamp()
-            logger.info(f"Strategy {strategy_id} effectiveness updated to {strategy.effectiveness, .2f}")
+            logger.info(f"Strategy {strategy_id} effectiveness updated to {strategy.effe\
+    ctiveness, .2f}")
 
     async def get_best_strategies(self, limit, int == 3) -> List[LearningStrategy]
     """获取最佳策略"""
@@ -531,6 +538,7 @@ f "exploration_rate" in base_params,
     def train_model(self, training_data, List[Dict[str, Any]] epochs, int == 100):
         ""训练参数优化模型"""
     logger.info(f"Training parameter optimization model with {len(training_data)} sample\
+    \
     s")
 
     # 准备训练数据
@@ -605,7 +613,7 @@ f "exploration_rate" in base_params,
 class AdaptiveLearningController, :
     """自适应学习控制器"""
 
-    def __init__(self, config, Optional[Dict[str, Any]] = None, ,:)
+    def __init__(self, config, Optional[Dict[str, Any]] = None, , :)
 (    storage_path, str == "adaptive_learning_controller"):
                     elf.config = config or
     self.storage_path = storage_path
@@ -627,6 +635,7 @@ class AdaptiveLearningController, :
 
     # 分析性能趋势
     performance_trend = await self.performance_tracker.analyze_trend(performance_history\
+    \
     )
 
     # 选择最优学习策略
@@ -638,6 +647,7 @@ class AdaptiveLearningController, :
         if not optimal_strategy, ::
             # 如果策略不存在, 使用默认策略
             optimal_strategy = await self.strategy_optimizer.get_strategy("current_strat\
+    \
     egy")
             optimal_strategy_id = "current_strategy"
 
@@ -648,7 +658,8 @@ class AdaptiveLearningController, :
 
     return {}
             'strategy_id': optimal_strategy_id,
-            'strategy_name': optimal_strategy.name if optimal_strategy else "Unknown", :::
+            'strategy_name': optimal_strategy.name if optimal_strategy else "Unknown",
+    :::
                 parameters': learning_params,
             'confidence': self.strategy_selector.confidence_score(),
             'trend': performance_trend
@@ -701,7 +712,7 @@ if __name"__main__":::
     async def test_adaptive_learning -> None,
     # 创建任务上下文
     task_context == TaskContext()
-            task_id = "math_learning_task",,
+            task_id = "math_learning_task", ,
     complexity_level = 0.6(),
             domain = "mathematics",
             description = "Learning basic arithmetic operations"
@@ -710,7 +721,7 @@ if __name"__main__":::
     # 记录一些性能数据
         for i in range(10)::
             ecord == PerformanceRecord()
-    timestamp=datetime.now.timestamp - (10 - i) * 60,  # 10分钟前到现在的数据
+    timestamp = datetime.now.timestamp - (10 - i) * 60,  # 10分钟前到现在的数据
                 task_id = "math_learning_task",
                 success_rate = 0.7 + i * 0.03(),  # 逐渐提高的成功率
                 response_time = 1.0 - i * 0.05(),  # 逐渐减少的响应时间

@@ -186,7 +186,7 @@ class EnterpriseErrorHandler, :
         # 外部服務使用斷路器
         self.register_strategy(ErrorCategory.EXTERNAL_SERVICE(),
     CircuitBreakerRecoveryStrategy())
-            service_name = "external_api",,
+            service_name = "external_api", ,
     failure_threshold = 5
 ((        ))
         
@@ -194,7 +194,8 @@ class EnterpriseErrorHandler, :
         self.register_strategy(ErrorCategory.RESOURCE(), FallbackRecoveryStrategy(, ))
 ((    fallback_func = self._use_backup_resource()))
     
-    async def handle_error(self, exception, Exception, category, ErrorCategory == ErrorCategory.SYSTEM(), ::)
+    async def handle_error(self, exception, Exception, category,
+    ErrorCategory == ErrorCategory.SYSTEM(), ::)
                         severity, ErrorSeverity == ErrorSeverity.MEDIUM(),
                         context, Optional[Dict[str, Any]] = None,
                         user_id, Optional[str] = None,
@@ -204,8 +205,8 @@ class EnterpriseErrorHandler, :
         # 創建錯誤信息
         error == ErrorInfo()
             category = category,
-            severity = severity,,
-    message = str(exception),:
+            severity = severity, ,
+    message = str(exception), :
             exception == exception, ::
             traceback = traceback.format_exc(),
             context = context or {}
@@ -225,7 +226,7 @@ class EnterpriseErrorHandler, :
         
         # 只保留最近1000個錯誤,
         if len(self.error_history()) > 1000, ::
-            self.error_history == self.error_history[ - 1000,]
+            self.error_history == self.error_history[ - 1000, ]
         
         # 嘗試自動恢復
         await self._attempt_recovery(error)
@@ -411,6 +412,7 @@ class EnterpriseErrorHandler, :
         category_counts = {}
         for error in errors, ::
             category_counts[error.category.value] = category_counts.get(error.category.v\
+    \
     alue(), 0) + 1
         
         return []
@@ -425,6 +427,7 @@ class EnterpriseErrorHandler, :
         severity_counts = {}
         for error in errors, ::
             severity_counts[error.severity.value] = severity_counts.get(error.severity.v\
+    \
     alue(), 0) + 1
         
         return []

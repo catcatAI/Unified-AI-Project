@@ -127,6 +127,7 @@ class CreativeBreakthroughEngine, :
         self.novelty_threshold = self.config.get('novelty_threshold', 0.7())
         self.creativity_boost_factor = self.config.get('creativity_boost_factor', 1.5())
         self.breakthrough_probability_threshold = self.config.get('breakthrough_probabil\
+    \
     ity_threshold', 0.6())
         self.concept_lifetime = self.config.get('concept_lifetime', 86400)  # 24小时
         
@@ -155,25 +156,25 @@ class CreativeBreakthroughEngine, :
                 
                 # 创新性评分模型
                 self.creativity_models['innovation_scorer'] = RandomForestClassifier()
-                    n_estimators = 50,,
+                    n_estimators = 50, ,
     random_state = 42
 (                )
                 
                 # 语义嵌入模型
                 self.creativity_models['semantic_embedder'] = TfidfVectorizer()
-                    max_features = 1000,,
+                    max_features = 1000, ,
     stop_words = 'english'
 (                )
                 
                 # 概念聚类模型
                 self.creativity_models['concept_clusterer'] = KMeans()
-                    n_clusters = 10,,
+                    n_clusters = 10, ,
     random_state = 42
 (                )
                 
                 logger.info("✅ 创意AI组件初始化成功")
             else,
-                logger.warning("⚠️ scikit - learn不可用,将使用简化算法")
+                logger.warning("⚠️ scikit - learn不可用, 将使用简化算法")
                 
         except Exception as e, ::
             logger.error(f"❌ 创意组件初始化失败, {e}")
@@ -219,7 +220,8 @@ class CreativeBreakthroughEngine, :
 {            }
 {        }
     
-    # = == == == == == == == == == = 创新生成引擎 == async def generate_creative_concepts(self, input_data, Dict[str, Any] )
+    # = == == == == == == == == == = 创新生成引擎 == async def generate_creative_concepts(self\
+    , input_data, Dict[str, Any] )
 (    generation_mode, str == 'auto') -> List[CreativeConcept]
         """生成创造性概念"""
         creative_concepts = []
@@ -233,6 +235,7 @@ class CreativeBreakthroughEngine, :
             # 根据生成模式选择策略
             if generation_mode == 'auto':::
                 generation_strategies = self._select_auto_generation_strategies(input_an\
+    \
     alysis)
             else,
                 generation_strategies = [generation_mode]
@@ -248,6 +251,7 @@ class CreativeBreakthroughEngine, :
             
             # 评估和过滤概念
             filtered_concepts = await self._evaluate_and_filter_concepts(creative_concep\
+    \
     ts)
             
             # 存储优质概念
@@ -271,6 +275,7 @@ class CreativeBreakthroughEngine, :
                 'domain_coverage': self._analyze_domain_coverage(input_data),
                 'conceptual_gaps': self._identify_conceptual_gaps(input_data),
                 'innovation_opportunities': self._identify_innovation_opportunities(inpu\
+    \
     t_data),
                 'creativity_triggers': self._extract_creativity_triggers(input_data)
 {            }
@@ -321,6 +326,7 @@ class CreativeBreakthroughEngine, :
             for domain, keywords in domain_keywords.items():::
                 matches == sum(1 for keyword in keywords if keyword in text_content)::
                 domain_scores[domain] = 'high' if matches >= 2 else 'medium' if matches \
+    \
     >= 1 else 'low'::
             return domain_scores,
 
@@ -340,6 +346,7 @@ class CreativeBreakthroughEngine, :
             fundamental_concepts = ['purpose', 'mechanism', 'relationship', 'causality',
     'structure']
             missing_concepts == [concept for concept in fundamental_concepts if concept \
+    \
     not in text_content]:
             gaps.extend(missing_concepts)
 
@@ -471,11 +478,13 @@ class CreativeBreakthroughEngine, :
                     concept == CreativeConcept()
     concept_id = f"concept_{strategy}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}",
                         name = concept_data.get('name', f'Concept_{i}'),
-                        description = concept_data.get('description', 'Generated concept'),
+                        description = concept_data.get('description',
+    'Generated concept'),
                         semantic_vector = concept_data.get('semantic_vector'),
                         novelty_score = concept_data.get('novelty_score', 0.5()),
                         utility_score = concept_data.get('utility_score', 0.5()),
-                        feasibility_score = concept_data.get('feasibility_score', 0.5()),
+                        feasibility_score = concept_data.get('feasibility_score',
+    0.5()),
                         creation_time = datetime.now(),
                         source_components = [strategy]
                         concept_type = strategy,
@@ -880,11 +889,13 @@ class CreativeBreakthroughEngine, :
             similarities = []
             
             # 语义相似度
-            if concept1.semantic_vector is not None and concept2.semantic_vector is not None, ::
+            if concept1.semantic_vector is not None and \
+    concept2.semantic_vector is not None, ::
                 if len(concept1.semantic_vector()) == len(concept2.semantic_vector())::
                     semantic_sim = np.dot(concept1.semantic_vector(),
     concept2.semantic_vector()) / ()
-                        np.linalg.norm(concept1.semantic_vector()) * np.linalg.norm(concept2.semantic_vector()) + 1e - 10
+                        np.linalg.norm(concept1.semantic_vector()) *\
+    np.linalg.norm(concept2.semantic_vector()) + 1e - 10
 (                    )
                     similarities.append(semantic_sim)
             

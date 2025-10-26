@@ -87,7 +87,7 @@ ONFIG_PRESETS = {}
     code_complexity_analysis_enabled == True
 (        ),
         sandbox == SandboxConfig()
-            timeout_seconds = 120,,
+            timeout_seconds = 120, ,
     max_memory_mb = 1024
 (        )
 (    ),
@@ -99,7 +99,7 @@ ONFIG_PRESETS = {}
             code_complexity_analysis_enabled == False  # Disable for performance, ::
                 ,
         sandbox == SandboxConfig()
-            timeout_seconds = 30,,
+            timeout_seconds = 30, ,
     max_memory_mb = 256
 (        )
 (    ),
@@ -111,7 +111,7 @@ ONFIG_PRESETS = {}
     ode_complexity_analysis_enabled == False
 (        ),
         sandbox == SandboxConfig()
-            timeout_seconds = 15,,
+            timeout_seconds = 15, ,
     max_memory_mb = 128
 (        ),
         max_concurrent_processes = 10,

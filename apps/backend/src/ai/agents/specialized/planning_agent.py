@@ -15,7 +15,8 @@ class PlanningAgent(BaseAgent):
             {}
                 "capability_id": f"{agent_id}_task_planning_v1.0",
                 "name": "task_planning",
-                "description": "Creates detailed plans for complex tasks or projects.", :::
+                "description": "Creates detailed plans for complex tasks or projects.",
+    :::
                     version": "1.0",
                 "parameters": []
                     {"name": "goal", "type": "string", "required": True,
@@ -71,6 +72,7 @@ class PlanningAgent(BaseAgent):
         params = task_payload.get("parameters")
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
     ability_id}'"):::
             ry,
             if "task_planning" in capability_id, ::
@@ -84,7 +86,8 @@ class PlanningAgent(BaseAgent):
                 result_payload = self._create_success_payload(request_id, result)
             else,
                 result_payload = self._create_failure_payload(request_id,
-    "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
+    "CAPABILITY_NOT_SUPPORTED",
+    f"Capability '{capability_id}' is not supported by this agent.")
         except Exception as e, ::
             logging.error(f"[{self.agent_id}] Error processing task {request_id} {e}")
             result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR",
@@ -94,6 +97,7 @@ class PlanningAgent(BaseAgent):
             callback_topic = task_payload["callback_address"]
             await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callb\
+    \
     ack_topic}"):::
                 ef _create_task_plan(self, params, Dict[str, Any]) -> Dict[str, Any]
         """Creates a detailed task plan."""
@@ -134,7 +138,8 @@ class PlanningAgent(BaseAgent):
                 {"name": "Marketing", "duration": 10, "resources": ["marketer"]}
                 {"name": "Logistics", "duration": 5, "resources": ["logistics"]}
                 {"name": "Event Execution", "duration": 1, "resources": ["manager"]}
-                {"name": "Post - Event Analysis", "duration": 3, "resources": ["analyst"]}
+                {"name": "Post - Event Analysis", "duration": 3,
+    "resources": ["analyst"]}
 [            ]
 {        }
         
@@ -163,7 +168,7 @@ class PlanningAgent(BaseAgent):
         
         # Create timeline
         try,
-            start_dt == datetime.fromisoformat(start_date.replace('Z', ' + 00,00'))
+            start_dt == datetime.fromisoformat(start_date.replace('Z', ' + 00, 00'))
         except, ::
             start_dt = datetime.now()
         timeline = []
@@ -178,7 +183,7 @@ class PlanningAgent(BaseAgent):
                 depends_on = [tasks[i - 1]['name']]
             
             timeline.append({)}
-                "task_id": f"task_{i + 1,03}",
+                "task_id": f"task_{i + 1, 03}",
                 "name": task['name']
                 "start_date": task_start.isoformat(),
                 "end_date": task_end.isoformat(),
@@ -200,7 +205,8 @@ class PlanningAgent(BaseAgent):
             "deadline": deadline,
             "tasks": timeline,
             "total_duration_days": sum(task['duration'] for task in tasks), ::
-                critical_path_length_days": sum(task['duration'] for task in tasks)  # Simplified, ::
+                critical_path_length_days": sum(task['duration'] for task in tasks)  # S\
+    implified, ::
 在函数定义前添加空行
         """Optimizes a task schedule."""
         tasks = params.get('tasks')
@@ -214,7 +220,8 @@ class PlanningAgent(BaseAgent):
         
         # Sort tasks by priority (assuming priority is a numeric value,
     higher is more important)
-        sorted_tasks == sorted(tasks, key = lambda x, x.get('priority', 0), reverse == True)
+        sorted_tasks == sorted(tasks, key = lambda x, x.get('priority', 0),
+    reverse == True)
         
         # Assign resources to tasks
         resource_assignments = {}
@@ -236,6 +243,7 @@ class PlanningAgent(BaseAgent):
             if assigned_resource, ::
                 task['assigned_resource'] = assigned_resource
                 resource_assignments[assigned_resource]['assigned_tasks'].append(task['n\
+    \
     ame'])
             else,
                 task['assigned_resource'] = "unassigned"
@@ -264,7 +272,7 @@ class PlanningAgent(BaseAgent):
             eets_deadline == True
         if deadline, ::
             try,
-                deadline_dt == datetime.fromisoformat(deadline.replace('Z', ' + 00,00'))
+                deadline_dt == datetime.fromisoformat(deadline.replace('Z', ' + 00, 00'))
                 if current_time > deadline_dt, ::
                     meets_deadline == False
             except, ::
@@ -276,7 +284,8 @@ class PlanningAgent(BaseAgent):
                 meets_deadline": meets_deadline,
             "deadline": deadline,
             "resource_utilization": resource_assignments,
-            "critical_path_length_days": sum(t['duration_days'] for t in timeline)  # Simplified, ::
+            "critical_path_length_days": sum(t['duration_days'] for t in timeline)  # Si\
+    mplified, ::
 在函数定义前添加空行
         """Tracks project progress."""
         plan = params.get('plan')
@@ -308,7 +317,7 @@ class PlanningAgent(BaseAgent):
                 elayed == False
             if task_status == 'in_progress':::
                 try,
-                    end_date == datetime.fromisoformat(task.get('end_date', '').replace('Z', ' + 00,00'))
+                    end_date == datetime.fromisoformat(task.get('end_date', '').replace('Z', ' + 00, 00'))
                     if current_time > end_date, ::
                         delayed == True
                         delayed_tasks += 1
@@ -373,7 +382,8 @@ class PlanningAgent(BaseAgent):
     current_status)
 {        }
 
-    def _estimate_completion_date(self, plan, Dict[str, Any] current_status, Dict[str, Any]) -> str, :
+    def _estimate_completion_date(self, plan, Dict[str, Any] current_status, Dict[str,
+    Any]) -> str, :
         """Estimates project completion date based on current progress."""
         # Simplified estimation - in a real implementation,
     this would be more sophisticated
@@ -381,7 +391,7 @@ class PlanningAgent(BaseAgent):
         if not plan_end_date, ::
             return datetime.now.isoformat()
         try,
-            plan_end_dt == datetime.fromisoformat(plan_end_date.replace('Z', ' + 00,00'))
+            plan_end_dt == datetime.fromisoformat(plan_end_date.replace('Z', ' + 00, 00'))
             # If we're behind schedule, add some buffer
             current_progress = current_status.get('overall_completion_percentage', 50)
             if current_progress < 50, ::
@@ -394,14 +404,15 @@ class PlanningAgent(BaseAgent):
 在函数定义前添加空行
         return HSPTaskResultPayload()
             request_id = request_id,
-            status = "success",,
+            status = "success", ,
     payload = result
 (        )
 
-    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload, :
+    def _create_failure_payload(self, request_id, str, error_code, str, error_message,
+    str) -> HSPTaskResultPayload, :
         return HSPTaskResultPayload()
             request_id = request_id,
-            status = "failure",,
+            status = "failure", ,
     error_details == {"error_code": error_code, "error_message": error_message}
 (        )
 

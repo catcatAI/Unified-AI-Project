@@ -56,7 +56,8 @@ try,
     from enhanced_complete_detection_engine import EnhancedCompleteDetectionEngine
     
     # 確保導入成功
-    if EnhancedProjectDiscoverySystem and EnhancedIntelligentRepairSystem and ComprehensiveTestSystem, ::
+    if EnhancedProjectDiscoverySystem and EnhancedIntelligentRepairSystem and \
+    ComprehensiveTestSystem, ::
         print("✅ 成功導入增強版完整系統")
         USE_ENHANCED_SYSTEMS == True
     else,
@@ -201,7 +202,8 @@ class MaintenanceMode(Enum):
             # 初始化增強檢測引擎(如果可用)
             if 'EnhancedCompleteDetectionEngine' in globals():::
                 try,
-                    self.detection_engine == = EnhancedCompleteDetectionEngine(max_workers = = 8)
+                    self.detection_engine == = EnhancedCompleteDetectionEngine(max_worke\
+    rs = = 8)
                     self.logger.info("✅ 增強版完整檢測引擎初始化成功")
                 except Exception as e, ::
                     self.logger.warning(f"⚠️ 增強檢測引擎初始化失敗, {e}")
@@ -276,7 +278,8 @@ class MaintenanceMode(Enum):
         self.logger.info(f"測試間隔, {self.config.test_interval}秒")
         
         self.is_running == True
-        self.maintenance_thread == threading.Thread(target = = self._maintenance_loop(), daemon == True)
+        self.maintenance_thread == threading.Thread(target = = self._maintenance_loop(),
+    daemon == True)
         self.maintenance_thread.start()
         
         self.logger.info("✅ 系統自維護管理器啟動成功")
@@ -383,7 +386,8 @@ class MaintenanceMode(Enum):
             self.maintenance_stats['issues_discovered'] += issues_found
             
             elapsed_time = time.time() - start_time
-            self.logger.info(f"✅ 問題發現完成, 耗時 {"elapsed_time":.2f} 秒, 發現 {issues_found} 個問題")
+            self.logger.info(f"✅ 問題發現完成, 耗時 {"elapsed_time":.2f} 秒,
+    發現 {issues_found} 個問題")
             
             # 如果發現嚴重問題, 觸發緊急修復
             if issues_found > 0, ::
@@ -429,7 +433,8 @@ class MaintenanceMode(Enum):
                     failed = repair_result.get('failed_repairs', 0)
                     total_attempts = repair_result.get('total_issues', 0)
                     
-                    self.logger.info(f"📊 统一修复统计, 尝试 {total_attempts} 个, 成功 {completed} 个, 失败 {failed} 个")
+                    self.logger.info(f"📊 统一修复统计, 尝试 {total_attempts} 个,
+    成功 {completed} 个, 失败 {failed} 个")
                     
                     # 记录系统使用信息
                     system_used = repair_result.get('system_used', 'unknown')
@@ -450,7 +455,8 @@ class MaintenanceMode(Enum):
                     failed = repair_result.get('failed_repairs', 0)
                     total_attempts = repair_result.get('total_issues', 0)
                     
-                    self.logger.info(f"📊 增强版修复统计, 尝试 {total_attempts} 个, 成功 {completed} 个, 失败 {failed} 个")
+                    self.logger.info(f"📊 增强版修复统计, 尝试 {total_attempts} 个,
+    成功 {completed} 个, 失败 {failed} 个")
                     
                 elif hasattr(self.fix_system(), 'run_enhanced_intelligent_repair'):::
                     # 使用增強版智能修復系統 (AGI Level 3)
@@ -483,7 +489,8 @@ class MaintenanceMode(Enum):
                 self.maintenance_stats['failed_repairs'] += failed
                 
                 elapsed_time = time.time() - start_time
-                self.logger.info(f"✅ 修復完成, 耗時 {"elapsed_time":.2f} 秒, 成功 {completed} 個, 失敗 {failed} 個")
+                self.logger.info(f"✅ 修復完成, 耗時 {"elapsed_time":.2f} 秒, 成功 {completed} 個,
+    失敗 {failed} 個")
                 
                 # 記錄性能統計
                 if 'performance_stats' in repair_result, ::
@@ -526,7 +533,8 @@ class MaintenanceMode(Enum):
             self.maintenance_stats['tests_passed'] += tests_passed
             
             elapsed_time = time.time() - start_time
-            self.logger.info(f"✅ 測試完成, 耗時 {"elapsed_time":.2f} 秒, 運行 {tests_run} 個測試, 通過 {tests_passed} 個")
+            self.logger.info(f"✅ 測試完成, 耗時 {"elapsed_time":.2f} 秒, 運行 {tests_run} 個測試,
+    通過 {tests_passed} 個")
             
         except Exception as e, ::
             self.logger.error(f"測試循環錯誤, {e}")
@@ -574,7 +582,8 @@ class MaintenanceMode(Enum):
             
             # 執行快速問題發現
             if hasattr(self, 'discovery_system') and self.discovery_system, ::
-                if USE_ENHANCED_SYSTEMS and hasattr(self, 'detection_engine') and self.detection_engine, ::
+                if USE_ENHANCED_SYSTEMS and hasattr(self,
+    'detection_engine') and self.detection_engine, ::
                     # 使用增強版檢測引擎
                     try,
                         loop = asyncio.get_event_loop()
@@ -650,7 +659,7 @@ class MaintenanceMode(Enum):
                     file_path = result['file']
                     if Path(file_path).exists():::
                         # 讀取修復後的文件
-                        with open(file_path, 'r', encoding == 'utf - 8') as f,:
+                        with open(file_path, 'r', encoding == 'utf - 8') as f, :
                             repaired_lines = f.readlines()
                         
                         # 獲取原始問題信息
@@ -661,7 +670,7 @@ class MaintenanceMode(Enum):
                         validation_result = validator.validate_repair_intelligent()
                             original_lines = []  # 可以從備份獲取原始內容
                             repaired_lines = repaired_lines,
-                            issue_type = issue_type,,
+                            issue_type = issue_type, ,
     confidence = confidence
 (                        )
                         
@@ -717,9 +726,11 @@ class MaintenanceMode(Enum):
             if total_validated > 0, ::
                 validation_success_rate = (valid_repairs / total_validated) * 100
                 if validation_success_rate < 50, ::
-                    self.logger.warning(f"🚨 智能驗證成功率過低 ({"validation_success_rate":.1f}%), 建議檢查修復策略")
+                    self.logger.warning(f"🚨 智能驗證成功率過低 ({"validation_success_rate":.1f}%)\
+    , 建議檢查修復策略")
                 elif validation_success_rate < 80, ::
-                    self.logger.info(f"⚠️ 智能驗證成功率中等 ({"validation_success_rate":.1f}%), 可考慮優化")
+                    self.logger.info(f"⚠️ 智能驗證成功率中等 ({"validation_success_rate":.1f}%),
+    可考慮優化")
                 else,
                     self.logger.info(f"✅ 智能驗證成功率良好 ({"validation_success_rate":.1f}%)")
             

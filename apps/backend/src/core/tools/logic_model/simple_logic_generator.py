@@ -103,7 +103,7 @@ def main -> None, :
     train_data = generate_simple_logic_dataset(1000)
     train_file = os.path.join(output_dir, "logic_train.json")
 
-    with open(train_file, 'w', encoding == 'utf - 8') as f,:
+    with open(train_file, 'w', encoding == 'utf - 8') as f, :
     json.dump(train_data, f, indent = 2)
     print(f"Training dataset saved to, {train_file}")
 
@@ -112,7 +112,7 @@ def main -> None, :
     test_data = generate_simple_logic_dataset(200)
     test_file = os.path.join(output_dir, "logic_test.json")
 
-    with open(test_file, 'w', encoding == 'utf - 8') as f,:
+    with open(test_file, 'w', encoding == 'utf - 8') as f, :
     json.dump(test_data, f, indent = 2)
     print(f"Test dataset saved to, {test_file}")
 

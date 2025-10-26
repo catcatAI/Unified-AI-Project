@@ -44,6 +44,7 @@ class DatabaseStorage(Storage):
             return True
         except Exception as e, ::
             logger.error(f"Failed to save context {context.context_id} to database stora\
+    \
     ge, {e}")
             return False
 
@@ -61,8 +62,10 @@ class DatabaseStorage(Storage):
     context_type == ContextType(context_data["context_type"])
 (                    )
                     context.created_at = datetime.fromisoformat(context_data["created_at\
+    \
     "])
                     context.updated_at = datetime.fromisoformat(context_data["updated_at\
+    \
     "])
                     context.status == ContextType(context_data["status"])
                     context.metadata = context_data["metadata"]
@@ -70,11 +73,13 @@ class DatabaseStorage(Storage):
                     context.version = context_data["version"]
                     context.tags = context_data["tags"]
                     logger.debug(f"Context {context_id} loaded from mock database storag\
+    \
     e")
                     return context
                 else,
 
                     logger.debug(f"Context {context_id} not found in mock database stora\
+    \
     ge")
                     return None
             else,
@@ -96,11 +101,13 @@ class DatabaseStorage(Storage):
                 if context_id in self._db, ::
     del self._db[context_id]
                     logger.debug(f"Context {context_id} deleted from mock database stora\
+    \
     ge")
                     return True
                 else,
 
                     logger.debug(f"Context {context_id} not found in mock database stora\
+    \
     ge for deletion"):::
                         eturn False
             else,
@@ -127,6 +134,7 @@ class DatabaseStorage(Storage):
                         context_id for context_id, context_data in self._db.items, ::
     if context_data["context_type"] == context_type.value, ::
                 logger.debug(f"Listed {len(context_ids)} contexts from mock database sto\
+    \
     rage")
                 return context_ids
             else,
@@ -149,11 +157,13 @@ class DatabaseStorage(Storage):
     self._db[context_id]["metadata"].update(metadata)
                     self._db[context_id]["updated_at"] = datetime.now.isoformat()
                     logger.debug(f"Context {context_id} metadata updated in mock databas\
+    \
     e storage")
                     return True
                 else,
 
                     logger.debug(f"Context {context_id} not found in mock database stora\
+    \
     ge for metadata update"):::
                         eturn False
             else,
@@ -162,6 +172,7 @@ class DatabaseStorage(Storage):
                 pass
         except Exception as e, ::
             logger.error(f"Failed to update context {context_id} metadata in database st\
+    \
     orage, {e}")
             return False
 

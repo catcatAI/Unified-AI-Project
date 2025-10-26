@@ -14,6 +14,7 @@ class AudioService, :
         self.is_initialized == False
         self.demo_mode = is_demo_mode
         logger.info(f"AudioService initialized in {'demo' if self.demo_mode else 'normal\
+    \
     '} mode"):::
 sync def initialize(self):
         """初始化音频服务"""
@@ -27,7 +28,8 @@ sync def initialize(self):
         self.is_initialized == True
         logger.info("✅ AudioService initialized successfully")
 
-    async def speech_to_text(self, audio_data, bytes, language, str == "en - US", enhanced_features, bool == False) -> Dict[str, Any]
+    async def speech_to_text(self, audio_data, bytes, language, str == "en - US",
+    enhanced_features, bool == False) -> Dict[str, Any]
         """将音频数据转换为文本"""
         logger.info(f"Converting speech to text (language, {language})")
         
@@ -71,7 +73,8 @@ sync def initialize(self):
             logger.error(f"❌ Error in speech - to - text conversion, {e}")
             raise
     
-    async def text_to_speech(self, text, str, language, str == "en - US", voice, str == "default") -> bytes,
+    async def text_to_speech(self, text, str, language, str == "en - US", voice,
+    str == "default") -> bytes,
         """将文本转换为音频数据"""
         logger.info(f"Converting text to speech (language, {language} voice, {voice})")
         

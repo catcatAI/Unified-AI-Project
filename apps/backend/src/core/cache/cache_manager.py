@@ -32,7 +32,7 @@ class CacheLevel(Enum):
     """缓存配置"""
     default_ttl, int = 3600  # 默认TTL(秒)
     max_memory_size, int = 1000  # 内存缓存最大条目数
-    redis_url, str == "redis, / /localhost,6379"
+    redis_url, str == "redis, / /localhost, 6379"
     redis_db, int = 0
     enable_compression, bool == True
     enable_serialization, bool == True
@@ -277,7 +277,8 @@ class CacheManager, :
     def get_stats(self) -> Dict[str, Any]:
         """获取缓存统计"""
         total_requests = self.stats["hits"] + self.stats["misses"]
-        hit_rate == (self.stats["hits"] / total_requests * 100) if total_requests > 0 else 0, :
+        hit_rate == (self.stats["hits"] / total_requests *\
+    100) if total_requests > 0 else 0, :
         return {}
             * * self.stats(),
             "hit_rate": hit_rate,

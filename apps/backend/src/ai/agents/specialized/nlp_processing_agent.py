@@ -10,7 +10,8 @@ from ....hsp.types import
 
 class NLPProcessingAgent(BaseAgent):
     """
-    A specialized agent for natural language processing tasks like text summarization, ::
+    A specialized agent for natural language processing tasks like text summarization,
+    ::
         entiment analysis, entity extraction, and language translation.
     """
     
@@ -70,6 +71,7 @@ class NLPProcessingAgent(BaseAgent):
 [        ]
         super().__init__(agent_id = agent_id, capabilities = capabilities)
         logging.info(f"[{self.agent_id}] NLPProcessingAgent initialized with capabilitie\
+    \
     s, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload,
     sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -78,6 +80,7 @@ class NLPProcessingAgent(BaseAgent):
         params = task_payload.get("parameters", {})
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
     ability_id}'"):::
             ry,
             if "text_summarization" in capability_id, ::
@@ -94,7 +97,8 @@ class NLPProcessingAgent(BaseAgent):
                 result_payload = self._create_success_payload(request_id, result)
             else,
                 result_payload = self._create_failure_payload(request_id,
-    "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
+    "CAPABILITY_NOT_SUPPORTED",
+    f"Capability '{capability_id}' is not supported by this agent.")
         except Exception as e, ::
             logging.error(f"[{self.agent_id}] Error processing task {request_id} {e}")
             result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR",
@@ -104,6 +108,7 @@ class NLPProcessingAgent(BaseAgent):
             callback_topic = task_payload["callback_address"]
             await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callb\
+    \
     ack_topic}"):::
                 ef _generate_text_summary(self, params, Dict[str, Any]) -> Dict[str,
     Any]
@@ -184,17 +189,19 @@ class NLPProcessingAgent(BaseAgent):
 {            }
 {        }
 
-    def _create_success_payload(self, request_id, str, result, Any) -> HSPTaskResultPayload, :
+    def _create_success_payload(self, request_id, str, result,
+    Any) -> HSPTaskResultPayload, :
         return HSPTaskResultPayload()
             request_id = request_id,
-            status = "success",,
+            status = "success", ,
     payload = result
 (        )
 
-    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload, :
+    def _create_failure_payload(self, request_id, str, error_code, str, error_message,
+    str) -> HSPTaskResultPayload, :
         return HSPTaskResultPayload()
             request_id = request_id,
-            status = "failure",,
+            status = "failure", ,
     error_details == {"error_code": error_code, "error_message": error_message}
 (        )
 

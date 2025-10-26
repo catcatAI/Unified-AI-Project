@@ -35,7 +35,7 @@ class ResourceManager, :
     # 为服务管理器注册通用的资源清理回调
     pass  # 在具体服务中注册
 
-    def register_service_resource(self, service_name, str, resource, Any, ,:)
+    def register_service_resource(self, service_name, str, resource, Any, , :)
 (    cleanup_func, Optional[Callable] = None):
                                     ""注册服务资源"""
         if service_name not in self._resources, ::
@@ -68,6 +68,7 @@ class ResourceManager, :
                                 cleanup_func(resource)
                         except Exception as e, ::
                             logger.error(f"Error cleaning up resource for {service_name}\
+    \
     {e}")::
                 # 清空资源列表
                 self._resources[service_name].clear
@@ -275,7 +276,7 @@ if __name"__main__":::
     logger.info("Resource manager test started")
 
     // 创建连接池
-    db_pool == DatabaseConnectionPool(max_connections=5, db_url="postgresql, / /localhost / test")
+    db_pool == DatabaseConnectionPool(max_connections = 5, db_url = "postgresql, / /localhost / test")
 
     // 获取连接
     conn1 = await db_pool.get_connection()

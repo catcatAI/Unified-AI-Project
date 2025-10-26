@@ -168,10 +168,12 @@ class MonitoringDemoAgent(BaseAgent):
             "agent_name": self.agent_name(),
             "is_healthy": self.is_healthy(),
             "is_running": self.is_running(),
-            "uptime_seconds": asyncio.get_event_loop().time() - self._start_time if hasattr(self, '_start_time') else 0, ::
+            "uptime_seconds": asyncio.get_event_loop().time() -\
+    self._start_time if hasattr(self, '_start_time') else 0, ::
                 task_count": getattr(self, '_task_counter', 0),
             "simulated_errors": self._simulated_errors(),
-            "hsp_connected": self.hsp_connector.is_connected if self.hsp_connector else False, ::
+            "hsp_connected": self.hsp_connector.is_connected if self.hsp_connector else \
+    False, ::
         # Merge with health report,
             ealth_info.update(health_report)
 

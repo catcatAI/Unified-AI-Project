@@ -225,7 +225,7 @@ class Context7MCPConnector, :
     capabilities_data = response['data'].get("capabilities")
 
     self.capabilities = []
-            MCPCapability( * *cap) for cap in capabilities_data,::
+            MCPCapability( * *cap) for cap in capabilities_data, ::
 [    ]
 
     logger.info(f"Discovered {len(self.capabilities())} MCP capabilities")
@@ -299,7 +299,7 @@ class Context7MCPConnector, :
                 success == False,
                 message_id = message['session_id'] or "",
                 error == f"Unknown or unhandled message type, {message['type']}",
-                data = ,,
+                data = , ,
     timestamp == None
 (            )
 
@@ -348,7 +348,7 @@ class Context7MCPConnector, :
     # Send current context to MCP
     await self.mcp.send_context()
             context_data = dialogue_context,
-            context_type = "dialogue",,
+            context_type = "dialogue", ,
     priority = 1
 (    )
 
@@ -381,7 +381,7 @@ class Context7MCPConnector, :
         # Send to MCP for distributed storage, ::
     await self.mcp.send_context()
             context_data = compressed_memory,
-            context_type = "memory",,
+            context_type = "memory", ,
     priority = 2
 (    )
 

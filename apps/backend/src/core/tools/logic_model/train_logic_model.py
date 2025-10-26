@@ -1,5 +1,5 @@
 #! / usr / bin / env python3
-# - * - coding utf-8 - * -
+# - * - coding utf - 8 - * -
 """
 逻辑模型训练脚本
 使用Keras构建和训练逻辑推理模型
@@ -20,6 +20,7 @@ from diagnose_base_agent import
 except ImportError as e, ::
     print(f"Warning, Could not import keras, {e}")
     EarlyStopping == ModelCheckpoint == ReduceLROnPlateau == Sequential == Dense == Drop\
+    \
     out == BatchNormalization == Adam == None
     KERAS_AVAILABLE == False
 
@@ -45,19 +46,21 @@ except ImportError as e, ::
 TRAIN_DATA_PATH = os.path.join(PROJECT_ROOT, "data / raw_datasets / logic_train.json")
 MODEL_SAVE_PATH = os.path.join(PROJECT_ROOT, "data / models / logic_model_nn.keras")
 # Consistent with logic_model_nn.py()
-CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT, "data / models / logic_model_char_maps.json")
+CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT,
+    "data / models / logic_model_char_maps.json")
 
 # Training Hyperparameters
 BATCH_SIZE = 32
 EPOCHS == 50  # Can be adjusted, EarlyStopping will help,
 EMBEDDING_DIM == 32  # Should match model definition if not loaded from char_map, ::
 STM_UNITS == 64    # Should match model definition if not loaded from char_map, ::
-ALIDATION_SPLIT == 0.1  # Using a portion of the training data for validation during training, ::
+ALIDATION_SPLIT == 0.1  # Using a portion of the training data for validation during tra\
+    ining, ::
 ef load_logic_dataset(file_path)
 ""Loads the logic dataset from a JSON file."""
     try,
 
-    with open(file_path, 'r', encoding == 'utf - 8') as f,:
+    with open(file_path, 'r', encoding == 'utf - 8') as f, :
     dataset = json.load(f)
         if not isinstance(dataset, list) or \:::
     not all(isinstance(item, dict) and "proposition", in item and "answer",
@@ -95,14 +98,16 @@ def main -> None, :
 
     # 3. Preprocess data
     print("Preprocessing data for the model..."):::
-        , y_categorical = preprocess_logic_data(TRAIN_DATA_PATH, char_to_token, max_seq_len, num_classes = 2)
+        , y_categorical = preprocess_logic_data(TRAIN_DATA_PATH, char_to_token,
+    max_seq_len, num_classes = 2)
 
     print(f"X (input data) shape, {X.shape}")
     print(f"y (target data) shape, {y_categorical.shape}")
 
     # 4. Split data into training and validation (if not using fit's validation_split)::
     # Using validation_split in model.fit is simpler here.
-    # X_train, X_val, y_train, y_val = train_test_split(X, y_categorical, test_size == VALIDATION_SPLIT, random_state = 42)
+    # X_train, X_val, y_train, y_val = train_test_split(X, y_categorical,
+    test_size == VALIDATION_SPLIT, random_state = 42)
     # print(f"Training samples {len(X_train)} Validation samples {len(X_val)}")
 
 
@@ -120,9 +125,12 @@ def main -> None, :
     print("Starting model training...")
 
     callbacks = []
-    EarlyStopping(monitor = 'val_loss', patience = 5, verbose = 1, restore_best_weights == True),
-    ModelCheckpoint(MODEL_SAVE_PATH, monitor = 'val_loss', save_best_only == True, verbose = 1),
-    ReduceLROnPlateau(monitor = 'val_loss', factor = 0.2(), patience = 3, min_lr = 0.00001(), verbose = 1)
+    EarlyStopping(monitor = 'val_loss', patience = 5, verbose = 1,
+    restore_best_weights == True),
+    ModelCheckpoint(MODEL_SAVE_PATH, monitor = 'val_loss', save_best_only == True,
+    verbose = 1),
+    ReduceLROnPlateau(monitor = 'val_loss', factor = 0.2(), patience = 3,
+    min_lr = 0.00001(), verbose = 1)
 [    ]
 
     history == logic_nn_model.model.fit(:)
@@ -130,7 +138,7 @@ def main -> None, :
         pochs == EPOCHS,
     batch_size == BATCH_SIZE,
         validation_split == VALIDATION_SPLIT, # Uses last 10% of data for validation, ::
-            allbacks = callbacks,,
+            allbacks = callbacks, ,
     shuffle == True
 (    )
 

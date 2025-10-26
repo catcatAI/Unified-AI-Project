@@ -23,17 +23,21 @@ class ServiceDiscoveryModule, :
     """
     DEFAULT_STALENESS_THRESHOLD_SECONDS, int = 600 # 10 minutes
 
-    def __init__(self, trust_manager, TrustManager, staleness_threshold_seconds, Optional[int] = None) -> None, :
+    def __init__(self, trust_manager, TrustManager, staleness_threshold_seconds,
+    Optional[int] = None) -> None, :
     """
         Initializes the ServiceDiscoveryModule for HSP capabilities.:::
     Args,
     trust_manager (TrustManager) An instance of the TrustManager to use for
                                         assessing the trustworthiness of capability adve\
+    \
     rtisers.:::
     staleness_threshold_seconds (Optional[int]) The duration in seconds after which
                                                         a capability advertisement is co\
+    \
     nsidered stale.
                                                         Defaults to DEFAULT_STALENESS_TH\
+    \
     RESHOLD_SECONDS.
     """
     self.trust_manager, TrustManager = trust_manager
@@ -52,7 +56,8 @@ class ServiceDiscoveryModule, :
     self._cleanup_thread == None
     self._stop_event = threading.Event()
     logger.info()
-            "HSP ServiceDiscoveryModule initialized. Staleness threshold, %d seconds.", ,
+            "HSP ServiceDiscoveryModule initialized. Staleness threshold, %d seconds.",
+    ,
 (    self.staleness_threshold_seconds())
 
     def start_cleanup_task(self, cleanup_interval_seconds, int == 60):
@@ -66,12 +71,14 @@ class ServiceDiscoveryModule, :
 (            )
             self._cleanup_thread.start()
             logger.info(f"ServiceDiscoveryModule cleanup task started with interval {cle\
+    \
     anup_interval_seconds}s."):
                 ef stop_cleanup_task(self)
 ""Stops the periodic cleanup task."""
         if self._cleanup_thread is not None, ::
     self._stop_event.set()
-            self._cleanup_thread.join(timeout = 5) # Add a timeout to prevent indefinite blocking
+            self._cleanup_thread.join(timeout = 5) # Add a timeout to prevent indefinite\
+    blocking
             self._cleanup_thread == None
             logger.info("ServiceDiscoveryModule cleanup task stopped.")
 
@@ -117,24 +124,29 @@ class ServiceDiscoveryModule, :
 
         if not capability_id, ::
     logger.error("Received capability advertisement with no capability_id. Discarding. P\
+    \
     ayload, %s", payload)
         eturn
 
         if not advertiser_ai_id, ::
             ogger.error("Received capability advertisement (ID,
-    %s) with no 'ai_id' (advertiser AI ID) in payload. Discarding. Payload, %s", capability_id, payload)
+    %s) with no 'ai_id' (advertiser AI ID) in payload. Discarding. Payload, %s",
+    capability_id, payload)
 eturn
 
-    logger.debug("Processing capability advertisement, ID = %s, AI = %s, Sender = %s", capability_id, advertiser_ai_id, sender_ai_id)
+    logger.debug("Processing capability advertisement, ID = %s, AI = %s, Sender = %s",
+    capability_id, advertiser_ai_id, sender_ai_id)
 
-        # Optional Could use sender_ai_id for additional trust checks or logging if different from advertiser_ai_id, ::
+        # Optional Could use sender_ai_id for additional trust checks or \
+    logging if different from advertiser_ai_id, ::
         # For now,
     the primary identifier for trust is the advertiser_ai_id from the payload.:::
             ith self.lock,
     current_time = datetime.now(timezone.utc())
             self.known_capabilities[capability_id] = (payload, current_time)
             logger.info()
-                "Processed capability advertisement for ID, %s from AI, %s (Sender, %s). Last seen updated to, %s.", :::
+                "Processed capability advertisement for ID, %s from AI, %s (Sender,
+    %s). Last seen updated to, %s.", :::
 (= capability_id, advertiser_ai_id, sender_ai_id, current_time.isoformat())
             logger.debug("Stored capability, %s, Last seen, %s", capability_id,
     current_time.isoformat())
@@ -171,7 +183,7 @@ eturn
 
     current_time = datetime.now(timezone.utc())
 
-    logger.debug("Finding capabilities with filters, ID == %s, Name = %s, Tags = %s, MinTrust = %s, SortByTrust = %s",:)
+    logger.debug("Finding capabilities with filters, ID == %s, Name = %s, Tags = %s, MinTrust = %s, SortByTrust = %s", :)
 (    apability_id_filter, capability_name_filter, tags_filter, min_trust_score,
     sort_by_trust)
     logger.debug("Current known_capabilities before filtering, %s",
@@ -179,6 +191,7 @@ eturn
 
     with self.lock, :
             # Iterate over a copy of values in case of concurrent modification (though l\
+    \
     ess likely here)
             # No, iterate items to get capability_id for logging if needed.:::
             # capabilities_to_check = list(self.known_capabilities.values())
@@ -204,7 +217,8 @@ eturn
     capability_id, capability_id_filter)
                     continue
 
-                # Apply capability_name_filter with exact matching for test compatibility, ::
+                # Apply capability_name_filter with exact matching for test compatibilit\
+    y, ::
                     f capability_name_filter,
 
     payload_name = payload.get('name', '')
@@ -221,7 +235,8 @@ eturn
                     if not capability_tags or \
     not all(tag in capability_tags for tag in tags_filter)::
                         ogger.debug("Skipping capability %s,
-    Tags filter mismatch (expected all of %s, got %s)", capability_id, tags_filter, capability_tags)
+    Tags filter mismatch (expected all of %s, got %s)", capability_id, tags_filter,
+    capability_tags)
                         continue
 
                 advertiser_ai_id = payload.get('ai_id')
@@ -250,7 +265,8 @@ eturn
 
         # Extract just the payloads for the final list, ::
             inal_results == [payload for payload, _ in pre_results]::
-    logger.info("Found %d capabilities matching criteria. ID_filter, %s, Name_filter, %s, Tags_filter, %s, Min_trust, %s", )
+    logger.info("Found %d capabilities matching criteria. ID_filter, %s, Name_filter,
+    %s, Tags_filter, %s, Min_trust, %s", )
 (    len(final_results), capability_id_filter, capability_name_filter, tags_filter,
     min_trust_score)
     return final_results
@@ -285,7 +301,7 @@ eturn
 
     current_time = datetime.now(timezone.utc())
 
-    logger.debug("Finding capabilities with filters, ID == %s, Name = %s, Tags = %s, MinTrust = %s, SortByTrust = %s",:)
+    logger.debug("Finding capabilities with filters, ID == %s, Name = %s, Tags = %s, MinTrust = %s, SortByTrust = %s", :)
 (    apability_id_filter, capability_name_filter, tags_filter, min_trust_score,
     sort_by_trust)
     logger.debug("Current known_capabilities before filtering, %s",
@@ -293,6 +309,7 @@ eturn
 
     with self.lock, :
             # Iterate over a copy of values in case of concurrent modification (though l\
+    \
     ess likely here)
             # No, iterate items to get capability_id for logging if needed.:::
             # capabilities_to_check = list(self.known_capabilities.values())
@@ -318,7 +335,8 @@ eturn
     capability_id, capability_id_filter)
                     continue
 
-                # Apply capability_name_filter with exact matching for test compatibility, ::
+                # Apply capability_name_filter with exact matching for test compatibilit\
+    y, ::
                     f capability_name_filter,
 
     payload_name = payload.get('name', '')
@@ -335,7 +353,8 @@ eturn
                     if not capability_tags or \
     not all(tag in capability_tags for tag in tags_filter)::
                         ogger.debug("Skipping capability %s,
-    Tags filter mismatch (expected all of %s, got %s)", capability_id, tags_filter, capability_tags)
+    Tags filter mismatch (expected all of %s, got %s)", capability_id, tags_filter,
+    capability_tags)
                         continue
 
                 advertiser_ai_id = payload.get('ai_id')
@@ -364,7 +383,8 @@ eturn
 
         # Extract just the payloads for the final list, ::
             inal_results == [payload for payload, _ in pre_results]::
-    logger.info("Found %d capabilities matching criteria. ID_filter, %s, Name_filter, %s, Tags_filter, %s, Min_trust, %s", )
+    logger.info("Found %d capabilities matching criteria. ID_filter, %s, Name_filter,
+    %s, Tags_filter, %s, Min_trust, %s", )
 (    len(final_results), capability_id_filter, capability_name_filter, tags_filter,
     min_trust_score)
     return final_results
@@ -381,7 +401,8 @@ eturn
     capability_id (str) The unique ID of the capability to retrieve.
 
     Returns,
-            Optional[HSPCapabilityAdvertisementPayload] The capability payload if found and not stale, ::
+            Optional[HSPCapabilityAdvertisementPayload] The capability payload if found \
+    and not stale, ::
     otherwise None.
     """
     with self.lock, :
@@ -445,6 +466,7 @@ ef get_trust_score(self, ai_id, str, capability_name, Optional[str] = None) -> f
     logger.info(f"Known capabilities initially, {sdm_instance.known_capabilities}")
 
     # Example of how process_capability_advertisement might be called (method not yet im\
+    \
     plemented)
     sample_cap_payload == HSPCapabilityAdvertisementPayload()
     capability_id = "test_cap_001",
@@ -452,14 +474,17 @@ ef get_trust_score(self, ai_id, str, capability_name, Optional[str] = None) -> f
     agent_name = "test_agent",
     name = "Test Capability",
         description == "A capability for testing.", :::
-    version = "1.0",,
+    version = "1.0", ,
     availability_status = "online",
     # other fields as required by HSPCapabilityAdvertisementPayload
 (    )
-    # sdm_instance.process_capability_advertisement(sample_cap_payload, "did, hsptest_advertiser_ai") # type ignore
+    # sdm_instance.process_capability_advertisement(sample_cap_payload, "did,
+    hsptest_advertiser_ai") # type ignore
     # logger.info(f"Known capabilities after hypothetical advertisement {sdm_instance.kn\
+    \
     own_capabilities}")
 
     # Example of find_capabilities (method not yet implemented)
-    # found_caps = sdm_instance.find_capabilities(capability_name_filter = "Test Capability")
+    # found_caps = sdm_instance.find_capabilities(capability_name_filter = "Test Capabil\
+    ity")
     # logger.info(f"Found capabilities {found_caps}")]

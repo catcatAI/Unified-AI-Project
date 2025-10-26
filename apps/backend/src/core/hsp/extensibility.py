@@ -118,7 +118,8 @@ class HSPLoadBalancerMiddleware(HSPProtocolMiddleware):
         target_node = response.get('target_node')
         if target_node, ::
             # 这里应该从响应中提取实际的响应时间
-            self.load_balancer.record_response(target_node, response_time = 10.0(), success == True)
+            self.load_balancer.record_response(target_node, response_time = 10.0(),
+    success == True)
 
         # 调用下一个中间件
         return await next_middleware(response)
@@ -151,6 +152,7 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
 # TODO: Fix import - module 'base64' not found
                 encrypted_data == base64.b64decode(payload[10, ])  # 移除'encrypted'前缀
                 decrypted_payload = self.security_manager.decrypt_message(encrypted_data\
+    \
     )
                 message['payload'] = decrypted_payload
             except Exception as e, ::
@@ -179,7 +181,7 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
         # 加密消息载荷
         payload = response.get('payload', {})
         encrypted_payload = self.security_manager.encrypt_message(payload)
-        response['payload'] = 'encrypted,' + base64.b64encode(encrypted_payload).decode('utf - 8')
+        response['payload'] = 'encrypted, ' + base64.b64encode(encrypted_payload).decode('utf - 8')
 
         # 调用下一个中间件
         return await next_middleware(response)
@@ -532,7 +534,7 @@ if __name"__main__":::
         extension_id = "example_extension",
         name = "Example Extension",
         version = "1.0.0",
-        description = "An example HSP extension",,
+        description = "An example HSP extension", ,
     author = "HSP Team"
 (    )
     extension_manager.register_extension(example_extension)

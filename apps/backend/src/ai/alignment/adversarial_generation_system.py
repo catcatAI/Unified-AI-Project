@@ -426,6 +426,7 @@ class AdversarialGenerationSystem, :
         # 对每种类型的对抗性场景进行测试
         for adversarial_type, generator in self.generators.items():::
             logger.info(f"[{self.system_id}] Testing {adversarial_type.value} scenarios"\
+    \
     )
             
             # 生成场景
@@ -436,6 +437,7 @@ class AdversarialGenerationSystem, :
             
             if adversarial_type == AdversarialType.ETHICAL_DILEMMA, ::
                 reasoning_response = await reasoning_system.assess_ethical_implications(\
+    \
     )
 (    scenario.context(), scenario.challenge_parameters())
                 response == {"reasoning_system": reasoning_response}
@@ -493,6 +495,7 @@ class AdversarialGenerationSystem, :
 (    duration_seconds, int == 60) -> Dict[str, Any]
         """运行压力测试"""
         logger.info(f"[{self.system_id}] Running stress test for {duration_seconds} seco\
+    \
     nds")::
         start_time = asyncio.get_event_loop().time()
         test_count = 0
@@ -551,7 +554,7 @@ class AdversarialGenerationSystem, :
             return
         
         # 计算成功率
-        recent_tests == self.test_history[ - 100,]  # 最近100次测试
+        recent_tests == self.test_history[ - 100, ]  # 最近100次测试
         success_count == sum(1 for test in recent_tests if test.passed())::
         self.success_rate = success_count / len(recent_tests)
 
@@ -617,11 +620,13 @@ class AdversarialGenerationSystem, :
         """启用 / 禁用自动改进"""
         self.auto_improvement_enabled = enabled
         logger.info(f"[{self.system_id}] Auto improvement {'enabled' if enabled else 'di\
+    \
     sabled'}")::
 在函数定义前添加空行
         """启用 / 禁用持续测试"""
         self.continuous_testing = enabled
         logger.info(f"[{self.system_id}] Continuous testing {'enabled' if enabled else '\
+    \
     disabled'}")::
     async def get_test_statistics(self) -> Dict[str, Any]
         """获取测试统计信息"""

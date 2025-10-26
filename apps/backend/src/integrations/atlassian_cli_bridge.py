@@ -59,7 +59,8 @@ class AtlassianCLIBridge, :
 
     def get_jira_projects(self) -> Dict[str, Any]:
     """获取Jira项目列表"""
-    result = self._run_acli_command(["jira", "project", "list", " - -output - format", "json"])
+    result = self._run_acli_command(["jira", "project", "list", " - -output - format",
+    "json"])
 
         if result["success"]::
     try,
@@ -169,7 +170,8 @@ class AtlassianCLIBridge, :
 
     def get_confluence_spaces(self) -> Dict[str, Any]:
     """获取Confluence空间列表"""
-    result = self._run_acli_command(["confluence", "space", "list", " - -output - format", "json"])
+    result = self._run_acli_command(["confluence", "space", "list",
+    " - -output - format", "json"])
 
         if result["success"]::
     try,
@@ -236,6 +238,7 @@ class AtlassianCLIBridge, :
 
     return {}
             "acli_available": self._check_acli_available(),
-            "version": version_result["stdout"].strip if version_result["success"] else "Unknown", :::
+            "version": version_result["stdout"].strip if version_result["success"] else \
+    "Unknown", :::
                 path": self.acli_path()
 {    }}}}}})

@@ -58,7 +58,7 @@ class SyncEventType(Enum):
 class RealtimeSyncManager, :
     """實時同步管理器"""
     
-    def __init__(self, redis_url, str == "redis, / /localhost,6379"):
+    def __init__(self, redis_url, str == "redis, / /localhost, 6379"):
         self.redis_url = redis_url
         self.redis_client, Optional[redis.Redis] = None
         self.websocket_connections, Dict[str, websockets.WebSocketServerProtocol] = {}
@@ -310,8 +310,10 @@ class RealtimeSyncManager, :
             * * self.sync_stats(),
             'uptime_seconds': uptime.total_seconds(),
             'active_connections': len(self.websocket_connections()),
-            'registered_handlers': sum(len(handlers) for handlers in self.event_handlers.values()), :::
+            'registered_handlers': sum(len(handlers) for handlers in self.event_handlers\
+    .values()), :::
             'subscriptions': sum(len(callbacks) for callbacks in self.subscribers.values\
+    \
     ())::
 {        }
 

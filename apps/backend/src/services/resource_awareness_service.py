@@ -6,7 +6,7 @@ Loads configuration from a YAML file and makes it accessible to other modules.
 # TODO: Fix import - module 'yaml' not found
 from diagnose_base_agent import
 from typing import Optional
-# Assuming 'src' is a top - level package for imports,::
+# Assuming 'src' is a top - level package for imports, ::
 rom .resource_types import ()
 SimulatedHardwareProfile,
 SimulatedDiskConfig,
@@ -63,13 +63,14 @@ self._load_profile()
             if not os.path.exists(self._config_path())::
                 rint(f"ResourceAwarenessService,
     Error - Config file not found at {self._config_path}")
-                # Fallback to a very basic default if file not found, or keep self.profile as None, ::
+                # Fallback to a very basic default if file not found,
+    or keep self.profile as None, ::
                     elf.profile = self._get_safe_default_profile()
 print(f"ResourceAwarenessService,
     Using safe default profile due to missing config file.")
                 return
 
-            with open(self._config_path(), 'r', encoding == 'utf - 8') as f,:
+            with open(self._config_path(), 'r', encoding == 'utf - 8') as f, :
                 onfig_data_root = yaml.safe_load(f)
 
             if not isinstance(config_data_root, dict)::
@@ -81,11 +82,13 @@ self.profile = self._get_safe_default_profile()
 profile_data = config_data_root.get('simulated_hardware_profile')
             if not isinstance(profile_data, dict)::
                 rint(f"ResourceAwarenessService,
-    Error - 'simulated_hardware_profile' key missing or not a dict in {self._config_path}.")
+    Error - 'simulated_hardware_profile' key missing or \
+    not a dict in {self._config_path}.")
 self.profile = self._get_safe_default_profile()
                 return
 
             # Basic validation against TypedDict structure (runtime check for key fields\
+    \
     )::
             # A more robust solution might use Pydantic for parsing and \
     validation here.:::
@@ -164,13 +167,14 @@ print(f"  Disk Warning Threshold (%) {disk_conf.get('warning_threshold_percent')
     print("  Failed to load default profile.")
 
     # Test with a non - existent config file path,
-        rint("\n2. Testing with non - existent config file,"):
-ervice_non_existent == ResourceAwarenessService(config_filepath="configs / non_existent_resources.yaml")
+        rint("\n2. Testing with non - existent config file, "):
+ervice_non_existent == ResourceAwarenessService(config_filepath = "configs / non_existent_resources.yaml")
     if service_non_existent.profile and \
-    service_non_existent.profile.get('profile_name') == "SafeDefaultProfile_ErrorLoading":::
+    service_non_existent.profile.get('profile_name') == "SafeDefaultProfile_ErrorLoading\
+    ":::
     print(f"  Correctly fell back to safe default,
     {service_non_existent.profile.get('profile_name')}")
-print(f"  Default Disk Space (GB) {service_non_existent.get_simulated_disk_config.get('space_gb') if service_non_existent.get_simulated_disk_config else 'N / A'}") # type ignore,::
+print(f"  Default Disk Space (GB) {service_non_existent.get_simulated_disk_config.get('space_gb') if service_non_existent.get_simulated_disk_config else 'N / A'}") # type ignore, ::
 lse,
 
     print(f"  Test failed or profile was unexpectedly loaded,
@@ -179,12 +183,14 @@ lse,
     # Test with a malformed YAML file (requires creating one temporarily)
         rint("\n3. Testing with malformed YAML config file, "):
 alformed_yaml_path = "configs / temp_malformed_resources.yaml"
-    with open(malformed_yaml_path, "w", encoding == "utf - 8") as f,:
-        f.write("simulated_hardware_profile, \n  disk, [this is not a dict]\n profile_name, MalformedProfile") # Intentional malformed YAML
+    with open(malformed_yaml_path, "w", encoding == "utf - 8") as f, :
+        f.write("simulated_hardware_profile, \n  disk,
+    [this is not a dict]\n profile_name, MalformedProfile") # Intentional malformed YAML
 
 service_malformed == ResourceAwarenessService(config_filepath = malformed_yaml_path)
     if service_malformed.profile and \
-    service_malformed.profile.get('profile_name') == "SafeDefaultProfile_ErrorLoading":::
+    service_malformed.profile.get('profile_name') == "SafeDefaultProfile_ErrorLoading"::\
+    :
     print(f"  Correctly fell back to safe default for malformed YAML,
     {service_malformed.profile.get('profile_name')}"):::
         lse,

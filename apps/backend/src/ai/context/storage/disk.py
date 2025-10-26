@@ -12,7 +12,7 @@ logger, Any = logging.getLogger(__name__)
 class DiskStorage(Storage):
 ""磁盘存储实现"""
 
-    def __init__(self, storage_dir, str == ". / context_storage") -> None,:
+    def __init__(self, storage_dir, str == ". / context_storage") -> None, :
     self.storage_dir = storage_dir
     # 确保存储目录存在
     os.makedirs(self.storage_dir(), exist_ok == True)
@@ -59,10 +59,11 @@ class DiskStorage(Storage):
             # 将上下文转换为字典并保存为JSON文件
             context_data = self._context_to_dict(context)
 
-            with open(file_path, 'w', encoding == 'utf - 8') as f,:
+            with open(file_path, 'w', encoding == 'utf - 8') as f, :
     json.dump(context_data, f, ensure_ascii == False, indent = 2)
 
             logger.debug(f"Context {context.context_id} saved to disk storage at {file_p\
+    \
     ath}")
             return True
         except Exception as e, ::
@@ -80,7 +81,7 @@ class DiskStorage(Storage):
                 ogger.debug(f"Context {context_id} not found in disk storage")
                 return None
 
-            with open(file_path, 'r', encoding == 'utf - 8') as f,:
+            with open(file_path, 'r', encoding == 'utf - 8') as f, :
     context_data = json.load(f)
 
             context = self._dict_to_context(context_data)
@@ -103,6 +104,7 @@ class DiskStorage(Storage):
             else,
 
                 logger.debug(f"Context {context_id} not found in disk storage for deleti\
+    \
     on"):::
                     eturn False
         except Exception as e, ::
@@ -145,10 +147,12 @@ ontext_id == filename[: - 5]  # 移除.json后缀()
             else,
 
                 logger.debug(f"Context {context_id} not found in disk storage for metada\
+    \
     ta update"):::
                     eturn False
         except Exception as e, ::
             logger.error(f"Failed to update context {context_id} metadata in disk storag\
+    \
     e, {e}")
             return False
 

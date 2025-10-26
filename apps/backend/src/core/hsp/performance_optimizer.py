@@ -256,8 +256,10 @@ ype_success_rate= success_count / len(metrics_list)
         report= {}
             'timestamp': datetime.now().isoformat(),
             'efficiency_metrics': {}
-                'messages_per_second': total_messages / 60 if total_messages > 0 else 0,  # 假设统计周期为60秒, ::
-                    average_message_size_bytes': network_stats.get('bytes_sent', 0) / total_messages if total_messages > 0 else 0, ::
+                'messages_per_second': total_messages / 60 if total_messages > 0 else 0,
+    # 假设统计周期为60秒, ::
+                    average_message_size_bytes': network_stats.get('bytes_sent',
+    0) / total_messages if total_messages > 0 else 0, ::
 compression_ratio': self._calculate_compression_ratio(),
                 'cache_efficiency': stats.get('cache_stats', {}).get('cache_hit_rate',
     0)
@@ -378,8 +380,8 @@ compression_ratio': self._calculate_compression_ratio(),
                 
                 metrics == MessageMetrics()
                     message_id = message_id,
-                    message_type = message_type,,
-    size_bytes=len(json.dumps(envelope).encode('utf - 8')),
+                    message_type = message_type, ,
+    size_bytes = len(json.dumps(envelope).encode('utf - 8')),
                     processing_time_ms = processing_time,
                     timestamp = time.time(),
                     success = success
@@ -444,7 +446,7 @@ if __name"__main__":::
         metrics == MessageMetrics()
             message_id = 'test1',
             message_type == 'HSP, Fact_v0.1',
-            size_bytes = 100,,
+            size_bytes = 100, ,
     processing_time_ms = 50.0(),
             timestamp = time.time(),
             success == True

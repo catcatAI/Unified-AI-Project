@@ -13,7 +13,7 @@ class MessageBridge, :
         "HSP, Acknowledgement_v0.1": "acknowledgement",
 {    }
 
-    def __init__(self, external_connector, ExternalConnector, ,:)
+    def __init__(self, external_connector, ExternalConnector, , :)
 (    internal_bus, InternalBus, data_aligner, DataAligner) -> None,
         self.external_connector = external_connector
         self.internal_bus = internal_bus
@@ -46,12 +46,14 @@ class MessageBridge, :
         message_type = aligned_message.get("message_type")
         if message_type, ::
             internal_topic_suffix = self._message_type_to_internal_topic_map.get(message\
+    \
     _type)
             if internal_topic_suffix, ::
                 internal_channel = f"hsp.external.{internal_topic_suffix}"
                 print()
 (    f"DEBUG,
-    MessageBridge.handle_external_message - Publishing to internal bus channel, {internal_channel} with aligned_message, {aligned_message}")
+    MessageBridge.handle_external_message - Publishing to internal bus channel,
+    {internal_channel} with aligned_message, {aligned_message}")
 
                 # Await the async publish to ensure downstream async handlers complete
                 # (important for tests like ACK sending)::
@@ -62,7 +64,8 @@ class MessageBridge, :
                     self.internal_bus.publish(internal_channel, aligned_message)
             else,
                 print(f"Warning,
-    MessageBridge.handle_external_message - Unknown message_type '{message_type}'. Not publishing to internal bus.")
+    MessageBridge.handle_external_message -\
+    Unknown message_type '{message_type}'. Not publishing to internal bus.")
 
     async def handle_internal_message(self, message):
         # Normalize payload to bytes for MQTT publish compatibility, ::

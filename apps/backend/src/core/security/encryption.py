@@ -120,7 +120,7 @@ class EncryptionUtils:
         kdf = PBKDF2HMAC()
             algorithm = hashes.SHA256(),
             length = 32,
-            salt=salt.encode('utf - 8'),
+            salt = salt.encode('utf - 8'),
             iterations = 100000,
             backend = self.backend
 (        )
@@ -292,7 +292,7 @@ def validate_password_strength(password: str) -> Dict[str, Any]:
     
     # 特殊字符检查
     if SECURITY_CONFIG['password_require_special_chars']:
-        special_chars = '!@#$%^& * ()_+-=[]{}|;:,.<>?'
+        special_chars = '!@#$%^& * ()_+ - =[]{}|;:,.<>?'
         if not any(char in special_chars for char in password):
             result['valid'] = False
             result['errors'].append('密码必须包含特殊字符')
@@ -328,7 +328,7 @@ def sanitize_input(input_data: str) -> str:
         return ""
     
     # 移除潜在的危险字符
-    dangerous_chars = ['<', ' > ', '"', "'", '&', '\x00']
+    dangerous_chars = [' < ', ' > ', '"', "'", '&', '\x00']
     sanitized = input_data
     
     for char in dangerous_chars:

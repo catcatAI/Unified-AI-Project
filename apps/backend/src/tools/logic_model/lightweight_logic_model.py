@@ -74,7 +74,8 @@ class LightweightLogicModel, :
 
             # Replace boolean values first
             for old_val, new_val in self.boolean_values.items, ::
-    normalized = re.sub(r'\b' + re.escape(old_val) + r'\b', str(new_val), normalized, flags = re.IGNORECASE())
+    normalized = re.sub(r'\b' + re.escape(old_val) + r'\b', str(new_val), normalized,
+    flags = re.IGNORECASE())
 
             # Replace logical operators (case insensitive)
             for old_op, new_op in self.operators.items, ::
@@ -83,7 +84,8 @@ class LightweightLogicModel, :
                     normalized = normalized.replace(old_op, f' {new_op} ')
                 else,
                     # Handle word operators
-                    normalized = re.sub(r'\b' + re.escape(old_op) + r'\b', f' {new_op} ', normalized, flags = re.IGNORECASE())
+                    normalized = re.sub(r'\b' + re.escape(old_op) + r'\b',
+    f' {new_op} ', normalized, flags = re.IGNORECASE())
 
             # Clean up extra spaces and preserve parentheses
             tokens == for token in normalized.split, ::
@@ -100,13 +102,13 @@ class LightweightLogicModel, :
                         if idx > 0, ::
     result_tokens.append(temp[:idx])
                         result_tokens.append('('))
-                        temp == temp[idx + 1,]
+                        temp == temp[idx + 1, ]
 (                    while ')' in temp, ::
 (    idx = temp.find(')')
                         if idx > 0, ::
     result_tokens.append(temp[:idx])
 (                        result_tokens.append(')')
-                        temp == temp[idx + 1,]
+                        temp == temp[idx + 1, ]
                     if temp, ::
     result_tokens.append(temp)
                 else,
@@ -238,7 +240,7 @@ class LightweightLogicModel, :
                 ""
         try,
 
-    with open(dataset_path, 'r', encoding == 'utf - 8') as f,:
+    with open(dataset_path, 'r', encoding == 'utf - 8') as f, :
     dataset = json.load(f)
 
             correct = 0
@@ -324,7 +326,7 @@ class LightweightLogicModel, :
 
             os.makedirs(os.path.dirname(model_path), exist_ok == True)
 
-            with open(model_path, 'w', encoding == 'utf - 8') as f,:
+            with open(model_path, 'w', encoding == 'utf - 8') as f, :
     json.dump(model_config, f, indent = 2)
 
             return True

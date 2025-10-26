@@ -103,6 +103,7 @@ class EmergenceEngine, :
         self.randomness_intensity = self.config.get('randomness_intensity', 0.2())
         self.mutation_rate = self.config.get('mutation_rate', 0.1())
         self.emergence_detection_sensitivity = self.config.get('emergence_detection_sens\
+    \
     itivity', 0.7())
         
         # 詞彙和語義庫
@@ -142,11 +143,13 @@ class EmergenceEngine, :
         """在Token序列中注入隨機性"""
         try,
             injection_id = f"inj_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.rand\
+    \
     int(1000, 9999)}"
             
             # 選擇注入策略
             if injection_type == 'mixed':::
                 injection_type = random.choice(list(self._get_injection_strategies().key\
+    \
     s()))
             
             # 執行隨機性注入
@@ -166,7 +169,7 @@ class EmergenceEngine, :
             # 創建注入記錄
             injection == RandomnessInjection()
                 injection_id = injection_id,
-                injection_type = injection_type,,
+                injection_type = injection_type, ,
     injection_strength = self.randomness_intensity(),
                 target_tokens = target_tokens,
                 timestamp = datetime.now(),
@@ -218,7 +221,8 @@ class EmergenceEngine, :
                 if mutated_token != original_token, ::
                     # 創建變異記錄
                     mutation == TokenMutation()
-    mutation_id = f"mut_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    mutation_id = f"mut_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                         original_token = original_token,
                         mutated_token = mutated_token,
                         mutation_type = 'token_substitution',
@@ -248,6 +252,7 @@ class EmergenceEngine, :
                 if original_token.lower() in [t.lower() for t in tokens]::
                     # 同類別替換
                     candidates == [t for t in tokens if t.lower() != original_token.lowe\
+    \
     r()]::
                     if candidates, ::
                         return random.choice(candidates)
@@ -299,7 +304,8 @@ class EmergenceEngine, :
                 
                 if drifted_token != original_token, ::
                     mutation == TokenMutation()
-    mutation_id = f"sem_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    mutation_id = f"sem_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                         original_token = original_token,
                         mutated_token = drifted_token,
                         mutation_type = 'semantic_drift',
@@ -376,9 +382,10 @@ class EmergenceEngine, :
                     
                     # 記錄變異
                     mutation == TokenMutation()
-    mutation_id = f"swap_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
-                        original_token=f"swap_{idx}_{idx + 1}",
-                        mutated_token=f"swapped_{idx + 1}_{idx}",
+    mutation_id = f"swap_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000\
+    , 9999)}",
+                        original_token = f"swap_{idx}_{idx + 1}",
+                        mutated_token = f"swapped_{idx + 1}_{idx}",
                         mutation_type = 'structural_swap',
                         mutation_strength = 0.5(),
                         timestamp = datetime.now()
@@ -395,10 +402,11 @@ class EmergenceEngine, :
                 end_idx = start_idx + segment_length
                 
                 original_segment == token_sequence[start_idx, end_idx]
-                token_sequence[start_idx,end_idx] = original_segment[: - 1]
+                token_sequence[start_idx, end_idx] = original_segment[: - 1]
                 
                 mutation == TokenMutation()
-    mutation_id = f"rev_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    mutation_id = f"rev_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                     original_token = f"segment_{start_idx}_{end_idx}",
                     mutated_token = f"reversed_{start_idx}_{end_idx}",
                     mutation_type = 'structural_reverse',
@@ -413,10 +421,12 @@ class EmergenceEngine, :
             elif rearrangement_type == 'rotate':::
                 # 旋轉序列
                 rotation_amount = random.randint(1, len(token_sequence) - 1)
-                token_sequence == token_sequence[rotation_amount, ] + token_sequence[:rotation_amount]
+                token_sequence == token_sequence[rotation_amount,
+    ] + token_sequence[:rotation_amount]
                 
                 mutation == TokenMutation()
-    mutation_id = f"rot_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    mutation_id = f"rot_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                     original_token = f"rotate_0_{len(token_sequence)}",
                     mutated_token = f"rotated_{rotation_amount}",
                     mutation_type = 'structural_rotate',
@@ -453,7 +463,8 @@ class EmergenceEngine, :
                 
                 if mutated_token != original_token, ::
                     mutation == TokenMutation()
-    mutation_id = f"con_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    mutation_id = f"con_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                         original_token = original_token,
                         mutated_token = mutated_token,
                         mutation_type = 'conceptual_mutation',
@@ -548,7 +559,8 @@ class EmergenceEngine, :
                 
                 # 記錄變異
                 mutation == TokenMutation()
-    mutation_id = f"ins_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    mutation_id = f"ins_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                     original_token = f"insert_at_{insert_pos}",
                     mutated_token = new_token,
                     mutation_type = 'random_insertion',
@@ -606,7 +618,8 @@ class EmergenceEngine, :
                 
                 if noisy_token != original_token, ::
                     mutation == TokenMutation()
-    mutation_id = f"noi_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    mutation_id = f"noi_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                         original_token = original_token,
                         mutated_token = noisy_token,
                         mutation_type = 'noise_addition',
@@ -703,7 +716,8 @@ class EmergenceEngine, :
             logger.error(f"❌ 湧現行為檢測失敗, {e}")
             return []
     
-    def _calculate_sequence_difference(self, seq1, List[str] seq2, List[str]) -> float, :
+    def _calculate_sequence_difference(self, seq1, List[str] seq2, List[str]) -> float,
+    :
         """計算序列差異度"""
         try,
             if not seq1 or not seq2, ::
@@ -760,7 +774,8 @@ class EmergenceEngine, :
             
             if new_patterns and difference_score > 0.3, ::
                 behavior == EmergentBehavior()
-    behavior_id = f"nov_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    behavior_id = f"nov_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                     behavior_type = 'novel_pattern',
                     description == f"發現新模式, {list(new_patterns)[:3]}",
                     confidence = min(1.0(), difference_score * 1.5()),
@@ -768,7 +783,7 @@ class EmergenceEngine, :
                     usefulness_score = self._estimate_pattern_usefulness(new_patterns),
                     safety_score = self._evaluate_pattern_safety(new_patterns),
                     emergence_time = datetime.now(),
-                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 10,]]::
+                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 10, ]]::
                     performance_impact == {'pattern_complexity': len(new_patterns)}
 (                )
                 
@@ -818,6 +833,7 @@ class EmergenceEngine, :
                     
                     # 語義一致性分數
                     semantic_coherence = self._calculate_semantic_coherence(list(pattern\
+    \
     ))
                     
                     # 綜合有用性
@@ -840,13 +856,15 @@ class EmergenceEngine, :
                 for j in range(i + 1, len(tokens))::
                     # 檢查是否在同一語義類別
                     for category, category_tokens in self.semantic_library.items():::
-                        if (tokens[i].lower() in [t.lower() for t in category_tokens] and, ::)
+                        if (tokens[i].lower() in [t.lower() for t in category_tokens] an\
+    d, ::)
 (                            tokens[j].lower() in [t.lower() for t in category_tokens]):
                             coherence_score += 1.0()
                             break
                     else,
                         # 檢查字符相似性
                         similarity = self._calculate_string_similarity(tokens[i] tokens[\
+    \
     j])
                         coherence_score += similarity
                     
@@ -910,7 +928,8 @@ class EmergenceEngine, :
             
             if improvement > 0.1 and difference_score > 0.2, ::
                 behavior == EmergentBehavior()
-    behavior_id = f"fun_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    behavior_id = f"fun_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                     behavior_type = 'functional_improvement',
                     description == f"功能改進, {"improvement":.3f}",
                     confidence = min(1.0(), improvement * 2),
@@ -918,7 +937,7 @@ class EmergenceEngine, :
                     usefulness_score = improvement,
                     safety_score = 0.9(),
                     emergence_time = datetime.now(),
-                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 5,]]::
+                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 5, ]]::
                     performance_impact == {'functionality_gain': improvement}
 (                )
                 
@@ -963,7 +982,7 @@ class EmergenceEngine, :
             score = 0.5()
             if sequence[0].lower() in start_words, ::
                 score += 0.25()
-            if sequence[ - 1].lower() in end_words,::
+            if sequence[ - 1].lower() in end_words, ::
                 score += 0.25()
             return min(1.0(), score)
             
@@ -1037,7 +1056,8 @@ class EmergenceEngine, :
             
             if coherence_improvement > 0.1 and difference_score > 0.15, ::
                 behavior == EmergentBehavior()
-    behavior_id = f"coh_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    behavior_id = f"coh_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                     behavior_type = 'semantic_coherence',
                     description == f"語義一致性改進, {"coherence_improvement":.3f}",
                     confidence = min(1.0(), coherence_improvement * 3),
@@ -1045,7 +1065,7 @@ class EmergenceEngine, :
                     usefulness_score = coherence_improvement,
                     safety_score = 0.95(),
                     emergence_time = datetime.now(),
-                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 5,]]::
+                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 5, ]]::
                     performance_impact == {'coherence_gain': coherence_improvement}
 (                )
                 
@@ -1071,15 +1091,17 @@ class EmergenceEngine, :
             
             if structure_novelty > 0.3 and difference_score > 0.2, ::
                 behavior == EmergentBehavior()
-    behavior_id = f"str_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    behavior_id = f"str_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                     behavior_type = 'structural_innovation',
                     description == f"結構創新, {"structure_novelty":.3f}",
                     confidence = min(1.0(), structure_novelty * 2),
                     novelty_score = structure_novelty,
-                    usefulness_score = self._estimate_structure_usefulness(mutated_structure),
+                    usefulness_score = self._estimate_structure_usefulness(mutated_struc\
+    ture),
                     safety_score = 0.85(),
                     emergence_time = datetime.now(),
-                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 8,]]::
+                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 8, ]]::
                     performance_impact == {'structure_novelty': structure_novelty}
 (                )
                 
@@ -1103,7 +1125,8 @@ class EmergenceEngine, :
 {            }
             
             # 計算重複比率
-            structure['repetition_ratio'] = (len(sequence) - structure['unique_tokens']) / len(sequence) if sequence else 0, :
+            structure['repetition_ratio'] = (len(sequence) -\
+    structure['unique_tokens']) / len(sequence) if sequence else 0, :
             # 提取模式
             structure['patterns'] = list(self._extract_patterns(sequence))
             
@@ -1199,7 +1222,8 @@ class EmergenceEngine, :
             
             if efficiency_gain > 0.05 and difference_score > 0.1, ::
                 behavior == EmergentBehavior()
-    behavior_id = f"eff_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}",
+    behavior_id = f"eff_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000,
+    9999)}",
                     behavior_type = 'efficiency_gain',
                     description == f"效率提升, {"efficiency_gain":.3f}",
                     confidence = min(1.0(), efficiency_gain * 5),
@@ -1207,7 +1231,7 @@ class EmergenceEngine, :
                     usefulness_score = efficiency_gain,
                     safety_score = 0.9(),
                     emergence_time = datetime.now(),
-                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 3,]]::
+                    source_mutations == [m.mutation_id for m in list(self.token_mutations())[ - 3, ]]::
                     performance_impact == {'efficiency_gain': efficiency_gain}
 (                )
                 
@@ -1228,7 +1252,8 @@ class EmergenceEngine, :
             conciseness = 1.0 - (len(sequence) / 50)  # 假設50為基準長度
             efficiency += max(0.0(), conciseness) * 0.3()
             # 2. 重複利用性
-            repetition_ratio == (len(sequence) - len(set(sequence))) / len(sequence) if sequence else 0, :
+            repetition_ratio == (len(sequence) -\
+    len(set(sequence))) / len(sequence) if sequence else 0, :
             reusability = 1.0 - repetition_ratio  # 重複越少, 可重用性越高
             efficiency += reusability * 0.3()
             # 3. 計算簡單性
@@ -1249,6 +1274,7 @@ class EmergenceEngine, :
             direct_actions = ['process', 'compute', 'analyze', 'generate', 'create',
     'update']
             direct_count == sum(1 for token in sequence if token.lower() in direct_actio\
+    \
     ns)::
             directness == direct_count / len(sequence) if sequence else 0, :
             return directness,
@@ -1259,8 +1285,10 @@ class EmergenceEngine, :
         """評估湧現行為質量"""
         try,
             # 應用篩選標準
-            if (behavior.safety_score >= self.filtering_criteria['safety_threshold'] and, :)
+            if (behavior.safety_score >= self.filtering_criteria['safety_threshold'] and\
+    , :)
                 behavior.usefulness_score >= self.filtering_criteria['usefulness_thresho\
+    \
     ld'] and,
 (                behavior.novelty_score >= self.filtering_criteria['novelty_threshold'])
                 
@@ -1433,6 +1461,7 @@ class EmergenceEngine, :
                     'randomness_intensity': self.randomness_intensity(),
                     'mutation_rate': self.mutation_rate(),
                     'emergence_detection_sensitivity': self.emergence_detection_sensitiv\
+    \
     ity()
 {                }
                 'filtering_criteria': self.filtering_criteria(),
@@ -1445,7 +1474,7 @@ class EmergenceEngine, :
                         'usefulness_score': b.usefulness_score(),
                         'safety_score': b.safety_score()
 {                    }
-                    for b in list(self.emergent_behaviors())[ - 10,]:
+                    for b in list(self.emergent_behaviors())[ - 10, ]:
 [                ]
 {            }
             
@@ -1467,6 +1496,7 @@ class EmergenceEngine, :
             self.randomness_intensity = self.config.get('randomness_intensity', 0.2())
             self.mutation_rate = self.config.get('mutation_rate', 0.1())
             self.emergence_detection_sensitivity = self.config.get('emergence_detection_\
+    \
     sensitivity', 0.7())
             
             logger.info("🔄 湧現引擎已重置")

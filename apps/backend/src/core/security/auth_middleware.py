@@ -24,6 +24,7 @@ class AuthMiddleware, :
         self.secret_key = self.config.get('secret_key', self._generate_secret_key())
         self.algorithm = self.config.get('algorithm', 'HS256')
         self.access_token_expire_minutes = self.config.get('access_token_expire_minutes'\
+    \
     , 30)
         self.refresh_token_expire_days = self.config.get('refresh_token_expire_days', 7)
         
@@ -50,10 +51,12 @@ class AuthMiddleware, :
     def create_access_token(self, data, Dict[str, Any]) -> str, :
         """创建访问令牌"""
         to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(minutes = self.access_token_expire_minutes())
+        expire = datetime.utcnow() +\
+    timedelta(minutes = self.access_token_expire_minutes())
         to_encode.update({"exp": expire, "type": "access"})
         
-        encoded_jwt = jwt.encode(to_encode, self.secret_key(), algorithm = self.algorithm())
+        encoded_jwt = jwt.encode(to_encode, self.secret_key(),
+    algorithm = self.algorithm())
         return encoded_jwt
     
     def create_refresh_token(self, data, Dict[str, Any]) -> str, :
@@ -62,13 +65,15 @@ class AuthMiddleware, :
         expire = datetime.utcnow() + timedelta(days = self.refresh_token_expire_days())
         to_encode.update({"exp": expire, "type": "refresh"})
         
-        encoded_jwt = jwt.encode(to_encode, self.secret_key(), algorithm = self.algorithm())
+        encoded_jwt = jwt.encode(to_encode, self.secret_key(),
+    algorithm = self.algorithm())
         return encoded_jwt
     
     def verify_token(self, token, str) -> Dict[str, Any]:
         """验证令牌"""
         try,
-            payload = jwt.decode(token, self.secret_key(), algorithms = [self.algorithm])
+            payload = jwt.decode(token, self.secret_key(),
+    algorithms = [self.algorithm])
             return payload
         except jwt.ExpiredSignatureError, ::
             raise HTTPException()
@@ -137,7 +142,7 @@ class AuthMiddleware, :
 
 # FastAPI安全方案
 security == HTTPBearer()
-api_key_header == APIKeyHeader(name="X - API - Key")
+api_key_header == APIKeyHeader(name = "X - API - Key")
 
 # 全局认证实例
 auth_middleware == AuthMiddleware()

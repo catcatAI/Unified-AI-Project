@@ -135,7 +135,7 @@ class CollaborationDemoAgent(BaseAgent):
                     "capability_id": "report_generation_v1",
                     "parameters": {}
                         "action": "generate",
-                        "input": "<output_of_task_0 > ",  # Placeholder for previous task result,::
+                        "input": " < output_of_task_0 > ",  # Placeholder for previous task result,::
                             format": "summary"
 {                    }
 {                }
@@ -163,7 +163,7 @@ class CollaborationDemoAgent(BaseAgent):
             if target_agent and task_params, ::
                 try,
                     task_id = await self.delegate_task_to_agent()
-                        target_agent_id = target_agent,,
+                        target_agent_id = target_agent, ,
     capability_id = task_params.get("capability_id", ""),
                         parameters = task_params
 (                    )
@@ -199,9 +199,11 @@ class CollaborationDemoAgent(BaseAgent):
         if operation == "count":::
             result = len(data)
         elif operation == "sum":::
-            result == sum(data) if all(isinstance(x, (int, float)) for x in data) else 0, ::
+            result == sum(data) if all(isinstance(x, (int,
+    float)) for x in data) else 0, ::
                 lif operation == "average":::
-            result == sum(data) / len(data) if data and all(isinstance(x, (int, float)) for x in data) else 0, ::
+            result == sum(data) / len(data) if data and all(isinstance(x, (int,
+    float)) for x in data) else 0, ::
                 lse,
             result == f"Unsupported operation, {operation}"
 

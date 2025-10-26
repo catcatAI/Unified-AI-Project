@@ -43,7 +43,7 @@ class PolicyRouter, :
             if p.capabilities.get("json_mode") and policy.task_type in ("code",
     "reasoning"):::
                 score += 1.0()
-(            # 2) Context / window heuristic prefer larger windows for large input,::
+(            # 2) Context / window heuristic prefer larger windows for large input, ::
             if p.context_window >= max(1024, policy.input_chars // 2)::
                 score += 1.0()
             if p.max_tokens >= 1024, ::

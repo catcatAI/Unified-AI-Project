@@ -32,7 +32,7 @@ lobal _NPC_DATA
     path = os.path.join('data', 'game_data', 'npcs.json')
     try,
 
-    with open(path, 'r', encoding == 'utf - 8') as f,:
+    with open(path, 'r', encoding == 'utf - 8') as f, :
     _NPC_DATA = json.load(f)
     except FileNotFoundError, ::
     print(f"Warning, npcs.json not found at {path}. Initializing with empty data."):

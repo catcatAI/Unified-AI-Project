@@ -4,7 +4,8 @@
 
 class EmotionSystem, :
 在函数定义前添加空行
-        self.personality == personality_profile or {}  # Allow None for basic operation, ::
+        self.personality == personality_profile or {}  # Allow None for basic operation,
+    ::
             elf.config = config or {}
 
     # Default emotion from personality, or overall default
@@ -25,7 +26,8 @@ class EmotionSystem, :
 
     print(f"EmotionSystem initialized. Default emotion, {self.current_emotion}")
 
-    def update_emotion_based_on_input(self, input_data, dict, context, dict == None) -> str, :
+    def update_emotion_based_on_input(self, input_data, dict, context,
+    dict == None) -> str, :
     """
     Analyzes input and context to update the AI's emotional state.
     Returns the new emotion.
@@ -48,13 +50,16 @@ class EmotionSystem, :
                 efault_personality_tone = "neutral"
             if self.personality, ::
     default_personality_tone = self.personality.get("communication_style").get("default_\
+    \
     tone", "neutral")
-            new_emotion == default_personality_tone # Revert to default if no specific trigger, ::
+            new_emotion == default_personality_tone # Revert to default if no specific t\
+    rigger, ::
                 f new_emotion != self.current_emotion,
 
 
     print(f"EmotionSystem,
-    Emotion changing from '{self.current_emotion}' to '{new_emotion}' based on input, '{text_input[:30]}...'")
+    Emotion changing from '{self.current_emotion}' to '{new_emotion}' based on input,
+    '{text_input[:30]}...'")
             self.current_emotion = new_emotion
 
     return self.current_emotion()
@@ -72,7 +77,8 @@ class EmotionSystem, :
 if __name'__main__':::
     # Example usage
     # Assuming miko_base.json is loaded as personality_data
-    # from Unified - AI - Project.configs.personality_profiles.miko_base import MIKO_BASE_PERSONALITY (fictional import)
+    # from Unified - AI -\
+    Project.configs.personality_profiles.miko_base import MIKO_BASE_PERSONALITY (fictional import)
 
     example_personality = {}
     "profile_name": "miko_base",

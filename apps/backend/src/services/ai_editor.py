@@ -244,7 +244,8 @@ from tests.core_ai import
         """Perform basic complexity analysis"""
         lines = code.split('\n')
         return {}
-            "lines_of_code": len([l for l in lines if l.strip() and not l.strip().startswith('#')]), :::
+            "lines_of_code": len([l for l in lines if l.strip() and \
+    not l.strip().startswith('#')]), :::
             "comment_lines": len([l for l in lines if l.strip().startswith('#')]), :::
             "empty_lines": len([l for l in lines if not l.strip()]), :::
             "nesting_depth": self._calculate_max_nesting(code)
@@ -539,9 +540,10 @@ if __name"__main__":::
 
     # Test text processing
     sample_text == "This is a sample text for processing. It contains multiple sentences\
+    \
     . This is the third sentence."::
     text_result = editor.process_text_content(sample_text)
-    print("Text processing result,", json.dumps(text_result, indent = 2, ensure_ascii == False))
+    print("Text processing result, ", json.dumps(text_result, indent = 2, ensure_ascii == False))
 
     # Test code processing
     sample_code = """
@@ -554,7 +556,7 @@ class SampleClass, :
         self.value = 42
 """
     code_result = editor.process_code_content(sample_code)
-    print("Code processing result,", json.dumps(code_result, indent = 2, ensure_ascii == False))
+    print("Code processing result, ", json.dumps(code_result, indent = 2, ensure_ascii == False))
 
     # Test application data processing
     sample_app_data = {}
@@ -566,4 +568,4 @@ class SampleClass, :
     "focused_element": "txt1"
 {    }
     app_result = editor.process_application_data(sample_app_data)
-    print("Application data processing result,", json.dumps(app_result, indent = 2, ensure_ascii == False))
+    print("Application data processing result, ", json.dumps(app_result, indent = 2, ensure_ascii == False))

@@ -3,16 +3,17 @@ from typing_extensions import TypedDict, Required,
 from typing import Dict, Any, Optional, List, Literal, Union
 
 # For TypedDict, 'Required' is implicitly all keys unless total = False.
-# For explicit Required / Optional with total=False, Python 3.9+ can use:
+# For explicit Required / Optional with total = False, Python 3.9+ can use:
 # from typing import TypedDict, Required, NotRequired (Python 3.11 + )
 # For broader compatibility (3.8+ for TypedDict itself,
     3.9 for Literal with TypedDict effectively):
-# We will assume Python 3.9+\
+# We will assume Python 3.9 + \
     as per project README. 'Required' is not a standard generic type alias.
 # Standard TypedDict: if total = True (default), all keys are required.
 # If total = False, all keys are potentially optional (NotRequired).
 # To mix, you'd define multiple TypedDicts and inherit.
-# For simplicity here, we'll use `Optional` for non - mandatory fields and assume mandatory ones are checked by logic.
+# For simplicity here,
+    we'll use `Optional` for non - mandatory fields and assume mandatory ones are checked by logic.
 # Or, use Pydantic later for proper validation.
 
 # Let's use `total = False` for payloads where many fields are optional, and:
@@ -160,7 +161,8 @@ class HSPDeregistrationResponsePayload(TypedDict, total = False):
 class HSPMessageEnvelope(TypedDict, total = False):
     message_id: str  # UUID for this message:
     message_type: Literal["task_request", "task_result", "fact", "acknowledgement",
-    "error", "heartbeat", "heartbeat_request", "discovery", "discovery_request", "registration", "registration_request", "deregistration", "deregistration_request"]
+    "error", "heartbeat", "heartbeat_request", "discovery", "discovery_request",
+    "registration", "registration_request", "deregistration", "deregistration_request"]
     sender_ai_id: str  # DID or URI
     recipient_ai_id: str  # DID or URI, optional for broadcast:
     payload: Dict[str, Any]  # Union of payload types above
@@ -216,38 +218,46 @@ class HSPDiscoveryRequest(TypedDict):
 
 class HSPRegistration(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationRequestPayl\
+    \
     oad or HSPRegistrationResponsePayload
     payload: HSPRegistrationRequestPayload | HSPRegistrationResponsePayload  # The actua\
+    \
     l registration data
 
 
 class HSPRegistrationRequest(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationRequestPayl\
+    \
     oad
     payload: HSPRegistrationRequestPayload  # The actual registration request data
 
 
 class HSPRegistrationResponse(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationResponsePay\
+    \
     load
     payload: HSPRegistrationResponsePayload  # The actual registration response data
 
 
 class HSPDeregistration(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationRequestPa\
+    \
     yload or HSPDeregistrationResponsePayload
     payload: HSPDeregistrationRequestPayload | HSPDeregistrationResponsePayload  # The a\
+    \
     ctual deregistration data
 
 
 class HSPDeregistrationRequest(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationRequestPa\
+    \
     yload
     payload: HSPDeregistrationRequestPayload  # The actual deregistration request data
 
 
 class HSPDeregistrationResponse(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationResponseP\
+    \
     ayload
     payload: HSPDeregistrationResponsePayload  # The actual deregistration response data
 

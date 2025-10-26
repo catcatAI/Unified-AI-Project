@@ -7,7 +7,7 @@ AI运维系统API路由
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 重新排序导入语句
 重新排序导入语句
-from datetime import datetime, timedelta
+重新排序导入语句
 # TODO: Fix import - module 'asyncio' not found
 
 from ...ai.ops.intelligent_ops_manager import
@@ -16,7 +16,7 @@ from ...ai.ops.predictive_maintenance import
 from ...ai.ops.performance_optimizer import
 from ...ai.ops.capacity_planner import
 
-router == APIRouter(prefix=" / api / v1 / ops", tags=["AI运维"])
+router == APIRouter(prefix = " / api / v1 / ops", tags = ["AI运维"])
 
 # 依赖注入
 async def get_ops_manager() -> IntelligentOpsManager,
@@ -44,7 +44,7 @@ async def get_insights()
     try,
         insights = await ops_manager.get_insights()
             insight_type = insight_type,
-            severity = severity,,
+            severity = severity, ,
     limit = limit
 (        )
         return JSONResponse(content = [{)]}
@@ -127,7 +127,7 @@ async def get_anomalies():
     except Exception as e, ::
         raise HTTPException(status_code == 500, detail = f"获取异常数据失败, {str(e)}")
 
-@router.post(" / aiops / self-healing")
+@router.post(" / aiops / self - healing")
 async def trigger_self_healing()
     healing_request, Dict[str, Any]
 ():
@@ -162,7 +162,8 @@ async def get_component_health(component_id, Optional[str] = None):
                     "health_score": health.health_score(),
                     "failure_probability": health.failure_probability(),
                     "last_maintenance": health.last_maintenance.isoformat(),
-                    "predicted_failure": health.predicted_failure.isoformat() if health.predicted_failure else None, ::
+                    "predicted_failure": health.predicted_failure.isoformat() if health.\
+    predicted_failure else None, ::
                     "maintenance_recommendation": health.maintenance_recommendation(),
                     "performance_metrics": health.performance_metrics(),
                     "anomaly_indicators": health.anomaly_indicators()
@@ -171,7 +172,7 @@ async def get_component_health(component_id, Optional[str] = None):
                 raise HTTPException(status_code = 404, detail = "组件不存在")
         else,
             all_health = await maintenance.get_all_component_health()
-            return JSONResponse(content = {,)}
+            return JSONResponse(content = {, )}
     component_id, {}
                     "component_id": health.component_id(),
                     "component_type": health.component_type(),
@@ -276,6 +277,7 @@ async def implement_optimization_recommendation()
         implemented_by = implementation_data.get("implemented_by", "unknown")
         
         success = await optimizer.implement_optimization_recommendation(recommendation_i\
+    \
     d, implemented_by)
         
         if success, ::
@@ -372,7 +374,7 @@ async def get_capacity_report(time_range, int == 24):
         raise HTTPException(status_code == 500, detail = f"获取容量报告失败, {str(e)}")
 
 # 系统级操作路由
-@router.post(" / system / train-models")
+@router.post(" / system / train - models")
 async def train_ai_models(background_tasks, BackgroundTasks):
     """训练AI模型"""
     try,

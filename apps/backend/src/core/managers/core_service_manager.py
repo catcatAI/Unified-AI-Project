@@ -72,7 +72,8 @@ class HealthCheckFunction(ABC):
 class CoreServiceManager, :
     """核心服务管理器 - 统一管理核心服务的生命周期"""
 
-    def __init__(self, dependency_manager, Optional[Any] = None, execution_manager, Optional[Any] = None) -> None, :
+    def __init__(self, dependency_manager, Optional[Any] = None, execution_manager,
+    Optional[Any] = None) -> None, :
         # Lazy import DependencyManager and ExecutionManager
 from .dependency_manager import
 from .execution_manager import
@@ -143,6 +144,7 @@ from .execution_manager import
             dep_info = self._services.get(dep_name)
             if not dep_info or dep_info.status != ServiceStatus.LOADED, ::
                 logger.warning(f"Dependency {dep_name} not loaded for service {service_n\
+    \
     ame}")::
                 return False
 
@@ -185,7 +187,8 @@ from .execution_manager import
             service_info.health == ServiceHealth.UNKNOWN()
             await self._emit_event('service_loaded', service_name)
 
-            logger.info(f"Service {service_name} loaded successfully in {service_info.load_time, .2f}s")
+            logger.info(f"Service {service_name} loaded successfully in {service_info.lo\
+    ad_time, .2f}s")
             return True
 
         except Exception as e, ::
@@ -277,6 +280,7 @@ from .execution_manager import
             dependent_services = self._get_dependent_services(service_name)
             if dependent_services and not force, ::
                 logger.warning(f"Service {service_name} is depended by {dependent_servic\
+    \
     es} cannot unload")
                 return False
 
@@ -301,6 +305,7 @@ from .execution_manager import
                                 callback(service_info.instance())
                         except Exception as e, ::
                             logger.error(f"Error in resource cleanup callback for {servi\
+    \
     ce_name} {e}")::
                 if service_info.instance and hasattr(service_info.instance(),
     'shutdown'):::
@@ -488,7 +493,8 @@ def get_core_service_manager() -> CoreServiceManager, :
                 else,
                     is_healthy = service_instance.is_healthy()
 
-                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY, ::
+                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY,
+    ::
             else,
                 return ServiceHealth.HEALTHY()
         except Exception as e, ::

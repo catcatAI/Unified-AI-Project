@@ -15,7 +15,8 @@ if SRC_DIR not in sys.path, ::
 
 # - - - Configuration for NN Model - - -:::
 ODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data / models / logic_model_nn.keras")
-CHAR_MAP_LOAD_PATH = os.path.join(PROJECT_ROOT, "data / models / logic_model_char_maps.json")
+CHAR_MAP_LOAD_PATH = os.path.join(PROJECT_ROOT,
+    "data / models / logic_model_char_maps.json")
 
 
 class LogicTool, :
@@ -33,11 +34,13 @@ elf.parser_evaluator == LogicParserEval
         return self.parser_evaluator()
 在函数定义前添加空行
         """Loads the LogicNNModel, handling potential TensorFlow import errors."""
-        if self.nn_model_evaluator is not None or self.tensorflow_import_error is not None, ::
+        if self.nn_model_evaluator is not None or \
+    self.tensorflow_import_error is not None, ::
             return self.nn_model_evaluator(), self.nn_char_to_token()
         # Check if TensorFlow is available through dependency manager, ::
             f not dependency_manager.is_available('tensorflow'):
             self.tensorflow_import_error = "TensorFlow not available through dependency \
+    \
     manager"
             logging.critical(f"CRITICAL,
     TensorFlow not available. Logic tool's NN features will be disabled.")
@@ -57,7 +60,8 @@ from .logic_model.logic_model_nn import
 
         except ImportError as e, ::
             logging.critical(f"CRITICAL,
-    TensorFlow could not be imported. Logic tool's NN features will be disabled. Error, {e}")
+    TensorFlow could not be imported. Logic tool's NN features will be disabled. Error,
+    {e}")
             self.tensorflow_import_error = str(e)
         except FileNotFoundError as e, ::
             logging.warning(f"Warning,
@@ -86,6 +90,7 @@ from .logic_model.logic_model_nn import
                 return nn_model.predict(normalized_expression, char_map)
             except Exception as e, ::
                 logging.error(f"Error during NN prediction for '{normalized_expression}'\
+    \
     : {e}")::
                 # Fall through to parser on prediction error
                 logging.warning("LogicTool, NN prediction failed,
@@ -101,6 +106,7 @@ from .logic_model.logic_model_nn import
     Invalid expression for parser.":::
                 xcept Exception as e,
             logging.error(f"Error during parser evaluation for '{normalized_expression}'\
+    \
     : {e}"):::
                 eturn "Error, Invalid expression for parser.":::
 ogic_tool_instance == LogicTool
@@ -114,7 +120,8 @@ if __name'__main__':::
         ("NOT (true OR false)", False),
         ("false OR (true AND true)", True),
         ("invalid expression", "Error, Invalid expression for parser."):::
-    logging.info("\n - -- Testing Unified evaluate_expression (NN fallback to Parser) - - -")
+    logging.info("\n - -- Testing Unified evaluate_expression (NN fallback to Parser) -\
+    - -")
     for expr, expected in test_cases, ::
         result = evaluate_expression(expr)
         logging.info(f'Test, "{expr}" -> Got, {result}')

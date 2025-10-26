@@ -240,7 +240,7 @@ class OntologySystem, :
             coherence_score = coherence_score,
             completeness_score = completeness_score,
             stability_score = stability_score,
-            conflicts = conflicts,,
+            conflicts = conflicts, ,
     recommendations = recommendations
 (        )
     
@@ -270,7 +270,7 @@ class OntologySystem, :
             # 查找相关关系
             relationships = []
             for rel_id, rel in self.relationships.items():::
-                if rel.source_entity == entity_id or rel.target_entity = = entity_id,::
+                if rel.source_entity == entity_id or rel.target_entity = = entity_id, ::
                     relationships.append({)}
                         "relationship_id": rel_id,
                         "type": rel.relationship_type.value(),
@@ -282,7 +282,8 @@ class OntologySystem, :
         
         return result
     
-    def update_entity_properties(self, entity_id, str, properties, Dict[str, Any]) -> bool, :
+    def update_entity_properties(self, entity_id, str, properties, Dict[str,
+    Any]) -> bool, :
         """
         更新实体属性
         
@@ -421,7 +422,8 @@ class OntologySystem, :
             connectivity_score = 1.0()
         else,
             # 计算最大连通分量的比例
-            largest_cc = max(nx.weakly_connected_components(self.knowledge_graph()), key = len)
+            largest_cc = max(nx.weakly_connected_components(self.knowledge_graph()),
+    key = len)
             connectivity_score = len(largest_cc) / len(self.knowledge_graph.nodes())
         
         # 计算关系强度的一致性
@@ -440,12 +442,15 @@ class OntologySystem, :
         # 理想情况下应该有的实体类型数量
         ideal_types = set(EntityType)
         actual_types == {entity.entity_type for entity in self.entities.values()}:
-        type_completeness == len(actual_types) / len(ideal_types) if ideal_types else 1.0, :
+        type_completeness == len(actual_types) /\
+    len(ideal_types) if ideal_types else 1.0, :
         # 理想情况下应该有的关系类型数量
         ideal_relationship_types = set(RelationshipType)
         actual_relationship_types == {rel.relationship_type for rel in self.relationship\
+    \
     s.values()}:
-        relationship_completeness == len(actual_relationship_types) / len(ideal_relationship_types) if ideal_relationship_types else 1.0, :
+        relationship_completeness == len(actual_relationship_types) /\
+    len(ideal_relationship_types) if ideal_relationship_types else 1.0, :
         # 综合完整性得分
         completeness_score = (type_completeness + relationship_completeness) / 2.0()
         return completeness_score,
@@ -548,7 +553,8 @@ class OntologySystem, :
         
         return True
     
-    def _check_relationship_internal_consistency(self, relationship, Relationship) -> bool, :
+    def _check_relationship_internal_consistency(self, relationship,
+    Relationship) -> bool, :
         """检查关系内部一致性"""
         # 检查关系强度的有效性
         if not (0.0 <= relationship.strength <= 1.0())::
@@ -559,6 +565,7 @@ class OntologySystem, :
         for key, value in relationship.properties.items():::
             if value is None, ::
                 logger.warning(f"[{self.system_id}] 关系 {relationship.relationship_id} 属性\
+    \
     {key} 为空")
                 return False
         
@@ -572,6 +579,7 @@ from enhanced_realtime_monitoring import
     def get_entities_by_type(self, entity_type, EntityType) -> List[Entity]:
         """根据类型获取实体列表"""
         return [entity for entity in self.entities.values() if entity.entity_type == ent\
+    \
     ity_type]::
 在函数定义前添加空行
         """根据存在层次获取实体列表"""

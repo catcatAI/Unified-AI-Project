@@ -11,14 +11,16 @@ try:
 # TODO: Fix import - module 'redis.asyncio' not found
     REDIS_AVAILABLE = True
 except ImportError:
-    logger.warning("Redis.asyncio not found. IntelligentOpsManager will run in in - memory mode for Redis - dependent features.")
+    logger.warning("Redis.asyncio not found. IntelligentOpsManager will run in in -\
+    memory mode for Redis - dependent features.")
 
 NUMPY_AVAILABLE = False
 try:
 # TODO: Fix import - module 'numpy' not found
     NUMPY_AVAILABLE = True
 except ImportError:
-    logger.warning("Numpy not found. IntelligentOpsManager will use simpler calculations for numpy - dependent features.")
+    logger.warning("Numpy not found. IntelligentOpsManager will use simpler calculations\
+    for numpy - dependent features.")
 
 from .ai_ops_engine import
 from .predictive_maintenance import
@@ -53,7 +55,8 @@ class IntelligentOpsManager:
         self.performance_optimizer: Optional[PerformanceOptimizer] = None
         self.capacity_planner: Optional[CapacityPlanner] = None
         self.ops_insights: List[OpsInsight] = [] # In - memory storage for insights
-        self.action_history: List[Dict[str, Any]] = [] # In - memory storage for auto actions
+        self.action_history: List[Dict[str,
+    Any]] = [] # In - memory storage for auto actions
         
         # 可用性标志
         self.redis_available = REDIS_AVAILABLE
@@ -152,6 +155,7 @@ class IntelligentOpsManager:
             if self.predictive_maintenance:
                 try:
                     await self.predictive_maintenance.collect_component_metrics(componen\
+    \
     t_id, component_type, metrics)
                 except Exception:
                     pass
@@ -159,6 +163,7 @@ class IntelligentOpsManager:
             if self.performance_optimizer:
                 try:
                     await self.performance_optimizer.collect_performance_metrics(compone\
+    \
     nt_id, component_type, metrics)
                 except Exception:
                     pass
@@ -203,6 +208,7 @@ class IntelligentOpsManager:
             # 分析维护需求
             if self.predictive_maintenance:
                 maintenance_insights = await self._analyze_maintenance_needs(component_i\
+    \
     d, component_type, metrics)
                 insights.extend(maintenance_insights)
             
@@ -228,7 +234,8 @@ class IntelligentOpsManager:
                 for anomaly in anomalies:
                     if anomaly.severity.value in ['high', 'critical']:
                         insight = OpsInsight()
-                            insight_id = f"anomaly_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                            insight_id = f"anomaly_{datetime.now(timezone.utc()).strftim\
+    e('%Y%m%d_%H%M%S')}_{component_id}",
                             insight_type = "anomaly",
                             severity = anomaly.severity.value,
                             title = f"检测到异常: {anomaly.anomaly_type}",
@@ -237,7 +244,8 @@ class IntelligentOpsManager:
                             recommendations = anomaly.recommended_actions,
                             confidence = anomaly.confidence,
                             timestamp = datetime.now(timezone.utc()),
-(                            auto_actionable = anomaly.confidence > self.auto_action_threshold)
+(                            auto_actionable = anomaly.confidence > self.auto_action_thr\
+    eshold)
                         insights.append(insight)
             
         except Exception as e:
@@ -254,6 +262,7 @@ class IntelligentOpsManager:
             if self.performance_optimizer:
                 # 获取性能优化建议
                 recommendations = await self.performance_optimizer.get_optimization_reco\
+    \
     mmendations(component_id)
                 
                 # 筛选高优先级建议
@@ -264,7 +273,8 @@ class IntelligentOpsManager:
 
                 for rec in high_priority_recs[ - 3:]:
                     insight = OpsInsight()
-                        insight_id = f"perf_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                        insight_id = f"perf_{datetime.now(timezone.utc()).strftime('%Y%m\
+    %d_%H%M%S')}_{component_id}",
                         insight_type = "performance",
                         severity = rec.priority,
                         title = f"性能优化建议: {rec.optimization_type}",
@@ -290,7 +300,8 @@ class IntelligentOpsManager:
         try:
             if self.capacity_planner:
                 # 获取容量预测
-                predictions = await self.capacity_planner.get_capacity_predictions(resource_type = component_type) # Pass component_type as resource_type
+                predictions = await self.capacity_planner.get_capacity_predictions(resou\
+    rce_type = component_type) # Pass component_type as resource_type
                 
                 # 筛选高紧急度预测
                 urgent_predictions = []
@@ -300,7 +311,8 @@ class IntelligentOpsManager:
 
                 for pred in urgent_predictions:
                     insight = OpsInsight()
-                        insight_id = f"capacity_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                        insight_id = f"capacity_{datetime.now(timezone.utc()).strftime('\
+    %Y%m%d_%H%M%S')}_{component_id}",
                         insight_type = "capacity",
                         severity = pred.urgency,
                         title = f"容量预警: {pred.resource_type}",
@@ -327,11 +339,13 @@ class IntelligentOpsManager:
             if self.predictive_maintenance:
                 # 获取组件健康状态
                 health = await self.predictive_maintenance.get_component_health(componen\
+    \
     t_id)
                 
                 if health and health.health_score < 60:  # 健康分数低于60:
                     insight = OpsInsight()
-                        insight_id = f"maint_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                        insight_id = f"maint_{datetime.now(timezone.utc()).strftime('%Y%\
+    m%d_%H%M%S')}_{component_id}",
                         insight_type = "maintenance",
                         severity = "high" if health.health_score < 40 else "medium",
                         title = f"维护需求: {component_id}",
@@ -467,7 +481,8 @@ class IntelligentOpsManager:
                 return False
 
             # 获取性能优化建议并实施
-            recommendations = await self.performance_optimizer.get_optimization_recommendations(component_id = insight.affected_components[0] if insight.affected_components else None)
+            recommendations = await self.performance_optimizer.get_optimization_recommen\
+    dations(component_id = insight.affected_components[0] if insight.affected_components else None)
             
             for rec in recommendations:
                 if rec.component_id in insight.affected_components:
@@ -490,7 +505,8 @@ class IntelligentOpsManager:
                 return False
 
             # 获取扩容计划并执行
-            plans = await self.capacity_planner.get_scaling_plans(resource_type = insight.affected_components[0] if insight.affected_components else None)
+            plans = await self.capacity_planner.get_scaling_plans(resource_type = insigh\
+    t.affected_components[0] if insight.affected_components else None)
             
             for plan in plans:
                 if plan.auto_approve:
@@ -513,7 +529,8 @@ class IntelligentOpsManager:
                 return False
 
             # 获取维护计划并执行
-            schedules = await self.predictive_maintenance.get_maintenance_schedules(component_id = insight.affected_components[0] if insight.affected_components else None)
+            schedules = await self.predictive_maintenance.get_maintenance_schedules(comp\
+    onent_id = insight.affected_components[0] if insight.affected_components else None)
             
             for schedule in schedules:
                 if schedule.component_id in insight.affected_components and \
@@ -590,9 +607,11 @@ class IntelligentOpsManager:
             
             if system_health['overall_score'] < 70:
                 insight = OpsInsight()
-                    insight_id = f"system_health_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    insight_id = f"system_health_{datetime.now(timezone.utc()).strftime(\
+    '%Y%m%d_%H%M%S')}",
                     insight_type = "system_health",
-                    severity = "high" if system_health['overall_score'] < 50 else "medium",
+                    severity = "high" if system_health['overall_score'] < 50 else "mediu\
+    m",
                     title = "系统健康状态预警",
                     description = f"系统整体健康分数: {system_health['overall_score']:.1f}",
                     affected_components = system_health['unhealthy_components'],
@@ -660,6 +679,7 @@ class IntelligentOpsManager:
 
             # 分析性能趋势
             performance_report = await self.performance_optimizer.get_performance_report\
+    \
     ()
             
             # 分析容量趋势
@@ -671,7 +691,8 @@ class IntelligentOpsManager:
             # 基于模式生成洞察
             for pattern in patterns:
                 insight = OpsInsight()
-                    insight_id = f"pattern_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    insight_id = f"pattern_{datetime.now(timezone.utc()).strftime('%Y%m%\
+    d_%H%M%S')}",
                     insight_type = "pattern",
                     severity = pattern['severity'],
                     title = f"模式识别: {pattern['name']}",
@@ -742,7 +763,8 @@ class IntelligentOpsManager:
                 await asyncio.sleep(86400)  # 每天执行一次
                 
                 # 清理过期洞察
-                cutoff_time = datetime.now(timezone.utc()) - timedelta(days = self.insight_retention_days)
+                cutoff_time = datetime.now(timezone.utc()) -\
+    timedelta(days = self.insight_retention_days)
                 
                 # 清理内存中的洞察
                 self.ops_insights = []
@@ -758,6 +780,7 @@ class IntelligentOpsManager:
                         if data:
                             insight_dict = json.loads(data)
                             if datetime.fromisoformat(insight_dict['timestamp']) < cutof\
+    \
     f_time:
                                 await self.redis_client.delete(key)
                 
@@ -771,7 +794,8 @@ class IntelligentOpsManager:
 (                        limit: int = 50) -> List[OpsInsight]:
         """获取洞察"""
         try:
-            insights = sorted(self.ops_insights, key = lambda x: x.timestamp, reverse = True)[:limit]  # 获取最近的洞察
+            insights = sorted(self.ops_insights, key = lambda x: x.timestamp,
+    reverse = True)[:limit]  # 获取最近的洞察
             
             # 过滤
             if insight_type:

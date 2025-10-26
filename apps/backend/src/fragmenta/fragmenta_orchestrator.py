@@ -19,9 +19,10 @@ class FragmentaOrchestrator, :
 (    )
 
     processed_results == for memory in candidate_memories, ::
-            # Simple summarization for text - based gists,::
+            # Simple summarization for text - based gists, ::
                 ist = memory.get('rehydrated_gist', '')
-            summary == ' '.join(gist.split[:10]) + '...' if len(gist.split()) > 10 else gist, ::
+            summary == ' '.join(gist.split[:10]) +\
+    '...' if len(gist.split()) > 10 else gist, ::
     processed_results.append({)}
                 "memory_id": memory.get('id'),
                 "summary": summary

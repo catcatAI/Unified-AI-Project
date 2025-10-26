@@ -40,7 +40,8 @@ logger = logging.getLogger(__name__)
 class CircuitBreaker, :
     """斷路器實現"""
 
-    def __init__(self, failure_threshold, int == 5, recovery_timeout, float == 60.0()) -> None, :
+    def __init__(self, failure_threshold, int == 5, recovery_timeout,
+    float == 60.0()) -> None, :
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.failure_count = 0
@@ -50,7 +51,8 @@ class CircuitBreaker, :
     async def call(self, func):
         """執行函數調用"""
         if self.state == 'open':::
-            if self.last_failure_time is not None and time.time() - self.last_failure_time > self.recovery_timeout, ::
+            if self.last_failure_time is not None and \
+    time.time() - self.last_failure_time > self.recovery_timeout, ::
                 self.state = 'half - open'
             else,
                 raise Exception("Circuit breaker is open")
@@ -89,7 +91,7 @@ class EnhancedRovoDevConnector, :
             return underlying.publish_capability_advertisement( * args, * * kwargs)
         return None
 
-    def __init__(self, config, Dict[str, Any] retry_config, Optional[RetryConfig] = None, ,:)
+    def __init__(self, config, Dict[str, Any] retry_config, Optional[RetryConfig] = None, , :)
 (    endpoint_configs, Optional[Dict[str, EndpointConfig]] = None):
         self.config = config
         self.api_token = config.get('atlassian', {}).get('api_token')
@@ -141,17 +143,17 @@ class EnhancedRovoDevConnector, :
                 backup_urls = []
                 if service == 'jira':::
                     backup_urls = []
-                        f"https, / /{self.config.get('atlassian', {}).get('domain', 'your-domain')}.atlassian.net / rest / api / 3",
+                        f"https, / /{self.config.get('atlassian', {}).get('domain', 'your - domain')}.atlassian.net / rest / api / 3",
                         "https, / /api.atlassian.com / ex / jira"
 [                    ]
                 elif service == 'confluence':::
                     backup_urls = []
-                        f"https, / /{self.config.get('atlassian', {}).get('domain', 'your-domain')}.atlassian.net / wiki / rest / api",
+                        f"https, / /{self.config.get('atlassian', {}).get('domain', 'your - domain')}.atlassian.net / wiki / rest / api",
                         "https, / /api.atlassian.com / ex / confluence"
 [                    ]
 
                 self.endpoint_configs[service] = EndpointConfig()
-                    primary_url = url,,
+                    primary_url = url, ,
     backup_urls = backup_urls
 (                )
 
@@ -215,7 +217,8 @@ class EnhancedRovoDevConnector, :
             self.authenticated == False
             logger.error(f"Atlassian 認證過程發生異常, {e}")
 
-    async def _make_request_with_retry(self, method, str, url, str, * * kwargs) -> Dict[str, Any]
+    async def _make_request_with_retry(self, method, str, url, str,
+    * * kwargs) -> Dict[str, Any]
         service = self._get_service_from_url(url)
 
         for attempt in range(self.retry_config.max_retries + 1)::
@@ -256,7 +259,7 @@ class EnhancedRovoDevConnector, :
         headers.update({)}
             'Authorization': f'Basic {self._get_auth_header()}',
             'Accept': 'application / json',
-            'Content-Type': 'application / json'
+            'Content - Type': 'application / json'
 {(        })
         kwargs['headers'] = headers
 
@@ -286,7 +289,8 @@ class EnhancedRovoDevConnector, :
             if hasattr(response, 'status') and response.status >= 400, ::
                 err_text == None
                 try,
-                    err_text == await response.text() if hasattr(response, 'text') else None, ::
+                    err_text == await response.text() if hasattr(response,
+    'text') else None, ::
                 except Exception, ::
                     err_text == None
                 status = getattr(response, 'status', 0)
@@ -296,12 +300,13 @@ class EnhancedRovoDevConnector, :
                 raise Exception(msg)
 
             return await response.json() if hasattr(response, 'json') else {}:
-    async def _make_single_request(self, method, str, url, str, * * kwargs) -> Dict[str, Any]
+    async def _make_single_request(self, method, str, url, str, * * kwargs) -> Dict[str,
+    Any]
         headers = kwargs.get('headers', {})
         headers.update({)}
             'Authorization': f'Basic {self._get_auth_header()}',
             'Accept': 'application / json',
-            'Content-Type': 'application / json'
+            'Content - Type': 'application / json'
 {(        })
         kwargs['headers'] = headers
 
@@ -316,7 +321,8 @@ class EnhancedRovoDevConnector, :
             async def handle_response(response):
                 if hasattr(response, 'status') and response.status >= 400, ::
                     raise aiohttp.ClientResponseError()
-    request_info = getattr(response, 'request_info', aiohttp.RequestInfo(None, None, None)),
+    request_info = getattr(response, 'request_info', aiohttp.RequestInfo(None, None,
+    None)),
                         history = getattr(response, 'history', tuple()),
                         status = getattr(response, 'status', 0)
 (                    )
@@ -434,13 +440,15 @@ class EnhancedRovoDevConnector, :
         results = {}
 
         try,
-            await self._make_request_with_retry('GET', f"{self.current_endpoints['jira']} / myself")
+            await self._make_request_with_retry('GET',
+    f"{self.current_endpoints['jira']} / myself")
             results['jira'] = True
         except, ::
             results['jira'] = False
 
         try,
-            await self._make_request_with_retry('GET', f"{self.current_endpoints['confluence']} / space")
+            await self._make_request_with_retry('GET',
+    f"{self.current_endpoints['confluence']} / space")
             results['confluence'] = True
         except, ::
             results['confluence'] = False
@@ -453,7 +461,8 @@ class EnhancedRovoDevConnector, :
         if cached, ::
             return cached
 
-        user_info = await self._make_request_with_retry('GET', f"{self.current_endpoints['jira']} / myself")
+        user_info = await self._make_request_with_retry('GET',
+    f"{self.current_endpoints['jira']} / myself")
         self.set_cache(cache_key, user_info)
         return user_info
 

@@ -48,7 +48,8 @@ class LightweightCausalGraph, :
             # 计算带权重的相似度
             weighted_sim == 0.0,
             for word in intersection, ::
-                weight == min(freq1[word] freq2[word]) / max(freq1[word] freq2[word]) if max(freq1[word] freq2[word]) > 0 else 0, :
+                weight == min(freq1[word] freq2[word]) /\
+    max(freq1[word] freq2[word]) if max(freq1[word] freq2[word]) > 0 else 0, :
                 weighted_sim += weight
             
             weighted_sim == weighted_sim / len(intersection) if intersection else 0.0, :
@@ -275,6 +276,7 @@ class LightweightCausalReasoningEngine, :
                 
                 # 验证因果关系
                 validated = await self._validate_causal_relationships_enhanced(observati\
+    \
     on, causal_insights)
                 validated_relationships.extend(validated)
             
@@ -298,8 +300,10 @@ class LightweightCausalReasoningEngine, :
                 'temporal_patterns': await self._detect_temporal_patterns(observation),
                 'correlation_matrix': await self._compute_correlations(observation),
                 'causal_candidates': await self._identify_causal_candidates(observation)\
+    \
     ,
                 'semantic_relationships': await self._analyze_semantic_relationships(obs\
+    \
     ervation)
 {            }
             
@@ -370,7 +374,7 @@ class LightweightCausalReasoningEngine, :
             # 计算一阶差分
             diff_data = np.diff(data)
             # 检查是否存在周期性模式
-            autocorr == np.corrcoef(diff_data[: - 1] diff_data[1,])[0, 1]
+            autocorr == np.corrcoef(diff_data[: - 1] diff_data[1, ])[0, 1]
             return abs(autocorr) > 0.3  # 阈值
         except, ::
             return False
@@ -406,7 +410,8 @@ class LightweightCausalReasoningEngine, :
         
         # 数据量越大, 方差越稳定, 置信度越高
         length_score = min(data_length / 100, 1.0())  # 100个数据点为满分
-        variance_score == min(data_variance / 10, 1.0()) if data_variance > 0 else 0.1, :
+        variance_score == min(data_variance / 10, 1.0()) if data_variance > 0 else 0.1,
+    :
         return (length_score * 0.7 + variance_score * 0.3())
 
     async def _compute_correlations(self, observation, Dict[str, Any]) -> Dict[str,
@@ -491,7 +496,8 @@ class LightweightCausalReasoningEngine, :
         # 综合因果强度 - 基于真实数据！
         return (correlation_score * 0.4 + causal_score * 0.4 + semantic_score * 0.2())
     
-    def _calculate_temporal_causality(self, cause_data, list, effect_data, list) -> float, :
+    def _calculate_temporal_causality(self, cause_data, list, effect_data,
+    list) -> float, :
         """计算时间序列因果性 - 替换random.choice()"""
         if len(cause_data) < 4 or len(effect_data) < 4, ::
             return 0.0()
@@ -538,7 +544,8 @@ class LightweightCausalReasoningEngine, :
         else,
             return "no_correlation"
     
-    def _calculate_causal_confidence(self, cause, str, effect, str, data, Dict[str, Any]) -> float, :
+    def _calculate_causal_confidence(self, cause, str, effect, str, data, Dict[str,
+    Any]) -> float, :
         """计算因果置信度"""
         cause_data = data.get(cause, [])
         effect_data = data.get(effect, [])
@@ -581,6 +588,7 @@ class LightweightCausalReasoningEngine, :
             for j, var2 in enumerate(variables)::
                 if i < j,  # 避免重复, :
                     similarity = await self.causal_graph.calculate_semantic_similarity(v\
+    \
     ar1, var2)
                     semantic_relationships[f"{var1}_{var2}"] = similarity
         
@@ -615,7 +623,8 @@ class LightweightCausalReasoningEngine, :
         
         return validated_relationships
     
-    def _validate_statistically(self, candidate, Dict[str, Any] observation, Dict[str, Any]) -> float, :
+    def _validate_statistically(self, candidate, Dict[str, Any] observation, Dict[str,
+    Any]) -> float, :
         """统计验证"""
         cause = candidate['cause']
         effect = candidate['effect']
@@ -637,6 +646,7 @@ class LightweightCausalReasoningEngine, :
         
         # 语义相似度验证
         semantic_similarity = await self.causal_graph.calculate_semantic_similarity(caus\
+    \
     e, effect)
         
         return semantic_similarity
@@ -687,6 +697,7 @@ class LightweightCausalReasoningEngine, :
         
         # 简单过滤可操作变量
         actionable_variables == [var for var in causal_variables if var in current_state\
+    \
     ]:
         # 使用真实AI优化干预
         optimal_intervention = await self.intervention_planner.optimize()

@@ -109,7 +109,8 @@ class ParsedToolIODetails(TypedDict, total == False) # For DialogueManager:
     suggested_method_name, Required[str]
     class_docstring_hint, Required[str]
     method_docstring_hint, Required[str]
-    parameters, Required[List[Dict[str, Any]]]# Simplified from ToolParameterDetail for this test, ::
+    parameters, Required[List[Dict[str,
+    Any]]]# Simplified from ToolParameterDetail for this test, ::
         eturn_type, Required[str]
 return_description, Required[str]
 
@@ -132,7 +133,8 @@ class LLMProviderOpenAIConfig(TypedDict):
 class LLMModelInfo(TypedDict, total == False):
     id, Required[str]           # Model ID, typically how it's called / identified
     provider, Required[str]     # e.g., "ollama", "openai", "mock"
-    name, Optional[str]         # Human - readable name, might be same as ID or more descriptive
+    name, Optional[str]         # Human - readable name,
+    might be same as ID or more descriptive
     description, Optional[str]
     modified_at, Optional[str]  # ISO 8601 timestamp
     size_bytes, Optional[int]

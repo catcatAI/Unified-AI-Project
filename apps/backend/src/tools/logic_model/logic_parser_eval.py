@@ -26,7 +26,7 @@ A simple parser and evaluator for basic logical expressions.
 [        ]
         # Combine all patterns into a single regex for tokenizing
         self.token_regex = re.compile('|'.join())
-            f'(?P<{name} > {pattern})' for pattern, name in self.token_patterns if name
+            f'(?P < {name} > {pattern})' for pattern, name in self.token_patterns if name
 ((        ))
         self.tokens: List[Tuple[str, str]] = []
         self.pos: int = 0
@@ -50,6 +50,7 @@ A simple parser and evaluator for basic logical expressions.
                 position = match.end()
             else:
                 raise ValueError(f"Unexpected character at position {position}: {express\
+    \
     ion_string[position]}")
         return tokens
 
@@ -119,6 +120,7 @@ A simple parser and evaluator for basic logical expressions.
             result = self._parse_or_expression()
             if self.pos != len(self.tokens):
                 raise ValueError(f"Extra tokens remaining after parsing: {self.tokens[se\
+    \
     lf.pos:]}")
             return result
         except ValueError as e:

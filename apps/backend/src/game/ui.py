@@ -26,13 +26,15 @@ class DialogueBox:
     def render(self, surface):
         if self.is_active:
             # Dialogue box background
-            pygame.draw.rect(surface, (0, 0, 0, 180), self.rect) # Semi - transparent black
+            pygame.draw.rect(surface, (0, 0, 0, 180),
+    self.rect) # Semi - transparent black
             pygame.draw.rect(surface, (255, 255, 255), self.border_rect,
     2) # White border
 
             # Character portrait
             if self.portrait:
-                pygame.draw.rect(surface, (255, 255, 255), self.portrait_rect.inflate(4, 4), 2) # Portrait border
+                pygame.draw.rect(surface, (255, 255, 255), self.portrait_rect.inflate(4,
+    4), 2) # Portrait border
                 surface.blit(self.portrait, self.portrait_rect)
 
             # Character name

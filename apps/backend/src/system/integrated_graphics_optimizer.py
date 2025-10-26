@@ -1,6 +1,7 @@
 """
-Integrated Graphics Optimizer for Unified - AI - Project,::
-    This module provides optimization strategies specifically for integrated graphics, ::
+Integrated Graphics Optimizer for Unified - AI - Project, ::
+    This module provides optimization strategies specifically for integrated graphics,
+    ::
         o ensure the project can run smoothly on all common hardware configurations.
 """
 
@@ -67,14 +68,14 @@ class IntegratedGraphicsOptimizer, :
 [(            ])
         elif gpu_memory_gb < 2, ::
     recommendations["optimizations"].extend([)]
-                "显存1 - 2GB,建议使用混合CPU - GPU训练",
+                "显存1 - 2GB, 建议使用混合CPU - GPU训练",
                 "启用混合精度训练",
                 "适度降低批处理大小",
                 "使用梯度累积技术"
 [(            ])
         elif gpu_memory_gb < 4, ::
     recommendations["optimizations"].extend([)]
-                "显存2 - 4GB,可启用GPU加速训练",
+                "显存2 - 4GB, 可启用GPU加速训练",
                 "使用混合精度训练",
                 "根据模型大小动态调整批处理大小",
                 "启用显存优化技术"
@@ -93,7 +94,7 @@ class IntegratedGraphicsOptimizer, :
         if system_memory_gb < 8, ::
     recommendations["optimizations"].append("系统内存不足8GB, 建议启用内存映射和数据流式处理")
         elif system_memory_gb < 16, ::
-    recommendations["optimizations"].append("系统内存8 - 16GB,可启用缓存优化")
+    recommendations["optimizations"].append("系统内存8 - 16GB, 可启用缓存优化")
 
     return recommendations
 
@@ -117,7 +118,8 @@ class IntegratedGraphicsOptimizer, :
             logger.error(f"应用内存优化策略失败, {e}")
             return False
 
-    def adjust_batch_size_for_integrated_graphics(self, original_batch_size, int) -> int, :
+    def adjust_batch_size_for_integrated_graphics(self, original_batch_size,
+    int) -> int, :
     """为集成显卡调整批处理大小"""
         if not self.is_integrated_graphics_system, ::
     return original_batch_size
@@ -266,12 +268,16 @@ class IntegratedGraphicsOptimizer, :
 
     # 应用各项优化
     results["optimizations_applied"]["memory_optimization"] = self.apply_memory_optimiza\
+    \
     tion()
     results["optimizations_applied"]["precision_adjustment"] = self.enable_precision_adj\
+    \
     ustment()
     results["optimizations_applied"]["cpu_gpu_coordination"] = self.coordinate_cpu_gpu_u\
+    \
     sage()
     results["optimizations_applied"]["model_compression"] = self.apply_model_compression\
+    \
     ()
     logger.info("所有集成显卡优化策略已应用")
     return results
@@ -309,23 +315,23 @@ from .hardware_probe import
 
     cpu_info == CPUInfo()
     cores_physical = 2,
-    cores_logical = 4,,
+    cores_logical = 4, ,
     frequency_max = 2400.0(),
     frequency_current = 2000.0(),
     architecture = "x86_64",
-    brand="Intel Core i5 - 7200U",
+    brand = "Intel Core i5 - 7200U",
 (    usage_percent = 25.0())
 
     memory_info == MemoryInfo()
     total = 8192,  # 8GB
     available = 4096,
-    used = 4096,,
+    used = 4096, ,
 (    usage_percent = 50.0())
 
     storage_info == StorageInfo()
     total = 256,
     available = 128,
-    used = 128,,
+    used = 128, ,
     disk_type = "SSD"
 (    )
 
@@ -344,7 +350,7 @@ from .hardware_probe import
     network = network_info,
     platform = "windows",
     os_version = "10.0.19042",
-    performance_tier = "Low",,
+    performance_tier = "Low", ,
 (    ai_capability_score = 35.0())
 
     # 测试优化器

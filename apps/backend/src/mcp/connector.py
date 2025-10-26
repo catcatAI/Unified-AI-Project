@@ -14,7 +14,7 @@ class MCPConnector, :
 (    enable_fallback, bool == True, fallback_config, Optional[Dict[str, Any]] = None,
     loop, Optional[asyncio.AbstractEventLoop] = None):
     self.ai_id = ai_id
-    self.client == mqtt.Client(client_id ==f"mcp - client - {ai_id} - {uuid.uuid4}")
+    self.client == mqtt.Client(client_id = = f"mcp - client - {ai_id} - {uuid.uuid4}")
     self.broker_address = mqtt_broker_address
     self.broker_port = mqtt_broker_port
     self.client.on_connect = self._on_connect()
@@ -32,11 +32,13 @@ class MCPConnector, :
         self.loop == loop if loop else asyncio.get_event_loop # Store the event loop, ::
     async def connect(self):
     print(f"MCPConnector for {self.ai_id} connecting to {self.broker_address}{self.broke\
+    \
     r_port}"):::
         try,
             # Connect and \
     start the loop in a separate thread to avoid blocking the event loop
-            # For testing purposes, we might mock this or ensure it runs in a dedicated thread / process
+            # For testing purposes,
+    we might mock this or ensure it runs in a dedicated thread / process
             # In a real application, you'd typically use an async MQTT client library
             self.client.connect(self.broker_address(), self.broker_port(), 60)
             self.client.loop_start()
@@ -45,7 +47,8 @@ class MCPConnector, :
             if self.enable_fallback, ::
     await self._initialize_fallback_protocols()
         except Exception as e, ::
-            project_error_handler(ProjectError(f"MCP MQTT connection failed, {e}", code = 503))
+            project_error_handler(ProjectError(f"MCP MQTT connection failed, {e}",
+    code = 503))
             self.is_connected == False
             self.mcp_available == False
             if self.enable_fallback, ::
@@ -88,9 +91,11 @@ class MCPConnector, :
 
                         handler(data.get('args'))
         except json.JSONDecodeError, ::
-            project_error_handler(ProjectError("Failed to decode MCP message payload as JSON.", code = 400))
+            project_error_handler(ProjectError("Failed to decode MCP message payload as \
+    JSON.", code = 400))
         except Exception as e, ::
-            project_error_handler(ProjectError(f"Error processing MCP message, {e}", code = 500))
+            project_error_handler(ProjectError(f"Error processing MCP message, {e}",
+    code = 500))
 
 
     async def send_command(self, target_id, str, command_name, str, parameters,
@@ -118,6 +123,7 @@ class MCPConnector, :
                 topic = f"mcp / cmd / {target_id} / {command_name}"
                 self.client.publish(topic, json.dumps(envelope))
                 print(f"Sent MCP command '{command_name}' to {target_id} via MQTT with r\
+    \
     equest_id {request_id}"):
     return request_id
             except Exception as e, ::
@@ -125,11 +131,13 @@ class MCPConnector, :
                 self.mcp_available == False
 
     # 使用fallback協議發送
-        if self.enable_fallback and self.fallback_initialized and self.fallback_manager, ::
+        if self.enable_fallback and self.fallback_initialized and self.fallback_manager,
+    ::
     try,
                 await self._send_via_fallback(target_id, command_name, parameters,
     request_id)
                 print(f"Sent MCP command '{command_name}' to {target_id} via fallback wi\
+    \
     th request_id {request_id}"):
     return request_id
             except Exception as e, ::
@@ -152,7 +160,8 @@ from .fallback.mcp_fallback_protocols import
             # 這裡我們使用一個簡單的標誌, 實際應用中可能需要更複雜的檢測
             is_multiprocess = self.fallback_config.get("is_multiprocess", False)
 
-            success = await initialize_mcp_fallback_protocols(is_multiprocess = is_multiprocess)
+            success = await initialize_mcp_fallback_protocols(is_multiprocess = is_multi\
+    process)
 
             if success, ::
     self.fallback_initialized == True
@@ -166,7 +175,8 @@ from .fallback.mcp_fallback_protocols import
                 self.logger.error("Failed to initialize MCP fallback protocols")
                 self.fallback_initialized == False
         except Exception as e, ::
-            project_error_handler(ProjectError(f"Error initializing MCP fallback protocols, {e}", code = 500))
+            project_error_handler(ProjectError(f"Error initializing MCP fallback protoco\
+    ls, {e}", code = 500))
             self.fallback_initialized == False
 
     async def _send_via_fallback(self, target_id, str, command_name, str, parameters,
@@ -208,6 +218,7 @@ from .fallback.mcp_fallback_protocols import
     topic = f"mcp / cmd / {self.ai_id} / {command_name}"
             self.client.subscribe(topic)
             print(f"Registered handler for command '{command_name}' on topic '{topic}'")\
+    \
     :::
     # 註冊到fallback
         if self.fallback_manager, ::
@@ -249,6 +260,7 @@ from .fallback.mcp_fallback_protocols import
     try,
                 fallback_status = self.fallback_manager.get_status()
                 health["fallback_healthy"] = fallback_status.get("active_protocol") is n\
+    \
     ot None
             except, ::
                 health["fallback_healthy"] = False

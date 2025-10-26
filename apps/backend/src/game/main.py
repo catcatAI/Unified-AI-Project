@@ -7,7 +7,8 @@ from .scenes import
 from .player import
 from .angela import
 
-logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s')
 
 # Game constants
 SCREEN_WIDTH = 960

@@ -100,7 +100,8 @@ class HSPSecurityManager, :
 
             return ""
     
-    def verify_signature(self, message, Dict[str, Any] signature, str, sender_id, str) -> bool, :
+    def verify_signature(self, message, Dict[str, Any] signature, str, sender_id,
+    str) -> bool, :
         """验证消息签名"""
         if not self.signature_enabled, ::
             return True
@@ -185,7 +186,8 @@ class HSPSecurityManager, :
             logger.error(f"消息解密失败, {e}")
             raise
     
-    def authenticate_sender(self, sender_id, str, auth_token, Optional[str] = None) -> bool, :
+    def authenticate_sender(self, sender_id, str, auth_token,
+    Optional[str] = None) -> bool, :
         """验证发送者身份"""
         if not self.auth_enabled, ::
             return True
@@ -272,8 +274,10 @@ class HSPSecurityContext, :
             payload = message.get('payload', {})
             if isinstance(payload, str) and payload.startswith('encrypted, '):::
                 try,
-                    encrypted_data == base64.b64decode(payload[10, ])  # 移除'encrypted, '前缀
+                    encrypted_data == base64.b64decode(payload[10, ])  # 移除'encrypted,
+    '前缀
                     decrypted_payload = self.security_manager.decrypt_message(encrypted_\
+    \
     data)
                     message['payload'] = decrypted_payload
 
@@ -293,7 +297,8 @@ class HSPSecurityContext, :
         """为发送安全地准备消息"""
         try,
             # 1. 添加安全参数
-            if 'security_parameters' not in message or message['security_parameters'] is None, ::
+            if 'security_parameters' not in message or \
+    message['security_parameters'] is None, ::
                 message['security_parameters'] = {}
             
             # 2. 生成认证令牌
@@ -310,7 +315,7 @@ class HSPSecurityContext, :
             if self.security_manager.encryption_enabled, ::
                 payload = message.get('payload', {})
                 encrypted_payload = self.security_manager.encrypt_message(payload)
-                message['payload'] = 'encrypted,' + base64.b64encode(encrypted_payload).decode('utf - 8')
+                message['payload'] = 'encrypted, ' + base64.b64encode(encrypted_payload).decode('utf - 8')
             
             logger.debug(f"消息安全处理完成, {message.get('message_id', 'unknown')}")
             return message
@@ -349,12 +354,13 @@ if __name"__main__":::
     # 安全处理消息
     sender_id = test_message["sender_ai_id"]
     secured_message = security_context.secure_message(test_message, sender_id)
-    print("安全处理后的消息,", json.dumps(secured_message, indent = 2, ensure_ascii == False))
+    print("安全处理后的消息, ", json.dumps(secured_message, indent = 2, ensure_ascii == False))
     
     # 验证并处理消息
     is_valid,
-    processed_message = security_context.authenticate_and_process_message(secured_message)
+    processed_message = security_context.authenticate_and_process_message(secured_messag\
+    e)
     if is_valid, ::
-        print("消息验证成功,", json.dumps(processed_message, indent = 2, ensure_ascii == False))
+        print("消息验证成功, ", json.dumps(processed_message, indent = 2, ensure_ascii == False))
     else,
         print("消息验证失败, ", processed_message)

@@ -41,7 +41,8 @@ logger, Any = logging.getLogger(__name__)
 class HSPConnectionPool, :
     """HSP连接池"""
 
-    def __init__(self, max_connections, int == 10, connection_timeout, int == 30) -> None, :
+    def __init__(self, max_connections, int == 10, connection_timeout,
+    int == 30) -> None, :
         self.max_connections = max_connections
         self.connection_timeout = connection_timeout
         self.active_connections = {}  # 连接ID -> 连接对象
@@ -68,7 +69,8 @@ class HSPConnectionPool, :
                     return connection
 
             # 创建新连接(如果未达到最大连接数)
-            if len(self.active_connections()) + len(self.idle_connections()) < self.max_connections, ::
+            if len(self.active_connections()) +\
+    len(self.idle_connections()) < self.max_connections, ::
                 connection = self._create_new_connection()
                 if connection, ::
                     self.active_connections[id(connection)] = connection
@@ -217,7 +219,8 @@ class HSPIntelligentCache, :
         """获取缓存统计信息"""
         with self.cache_lock, :
             total_requests = self.stats['hits'] + self.stats['misses']
-            hit_rate == self.stats['hits'] / total_requests if total_requests > 0 else 0, ::
+            hit_rate == self.stats['hits'] /\
+    total_requests if total_requests > 0 else 0, ::
 eturn {}
                 'size': len(self.cache()),
                 'max_size': self.max_size(),
@@ -371,7 +374,8 @@ class HSPAdvancedPerformanceOptimizer, :
         self.routing_times == deque(maxlen = = 1000)  # 存储最近1000次路由时间
 
         # 线程池用于异步处理
-        self.executor == = ThreadPoolExecutor(max_workers = = self.config.get('thread_pool_size', 4))
+        self.executor == = ThreadPoolExecutor(max_workers = = self.config.get('thread_po\
+    ol_size', 4))
 
         logger.info("HSP高级性能优化器初始化完成")
 
@@ -494,7 +498,8 @@ class HSPAdvancedPerformanceOptimizer, :
                 else,
                     # 对于同步函数, 在线程池中执行
                     loop = asyncio.get_event_loop()
-                    result = await loop.run_in_executor(self.optimizer.executor(), original_publish_func, *args, * * kwargs)
+                    result = await loop.run_in_executor(self.optimizer.executor(),
+    original_publish_func, *args, * * kwargs)
                 success == True
             except Exception as e, ::
                 result == None
@@ -525,7 +530,8 @@ class HSPAdvancedPerformanceOptimizer, :
                 else,
                     # 对于同步函数, 在线程池中执行
                     loop = asyncio.get_event_loop()
-                    result = await loop.run_in_executor(self.optimizer.executor(), original_receive_func, *args, * * kwargs)
+                    result = await loop.run_in_executor(self.optimizer.executor(),
+    original_receive_func, *args, * * kwargs)
                 success == True
             except Exception as e, ::
                 result == None

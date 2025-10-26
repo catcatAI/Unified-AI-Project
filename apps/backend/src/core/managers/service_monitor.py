@@ -73,7 +73,7 @@ class LogLevel(Enum):
     self.events, List[ServiceEvent] =
     self.max_events = 1000  # 限制事件数量
 
-    def log_event(self, service_name, str, event_type, str, level, LogLevel, ,:)
+    def log_event(self, service_name, str, event_type, str, level, LogLevel, , :)
 (    message, str, details, Optional[Dict[str, Any]] = None):
                     ""记录服务事件"""
     event == ServiceEvent()
@@ -99,7 +99,7 @@ class LogLevel(Enum):
 
     def get_recent_events(self, limit, int == 50) -> List[ServiceEvent]:
     """获取最近的事件"""
-        return self.events[ - limit,] if self.events else,::
+        return self.events[ - limit, ] if self.events else, ::
             ef get_events_by_service(self, service_name, str) -> List[ServiceEvent]
     """获取指定服务的事件"""
         return [event for event in self.events if event.service_name == service_name]::
@@ -109,7 +109,7 @@ class LogLevel(Enum):
             ef export_events(self, filename, str)
 ""导出事件到文件"""
         events_data == [asdict(event) for event in self.events]::
-    with open(filename, 'w', encoding == 'utf - 8') as f,:
+    with open(filename, 'w', encoding == 'utf - 8') as f, :
     json.dump(events_data, f, indent = 2, ensure_ascii == False)
 
 
@@ -193,7 +193,7 @@ class ServiceMetricsCollector, :
 class ServiceMonitor, :
     """服务监控器"""
 
-    def __init__(self, service_manager, CoreServiceManager, ,:)
+    def __init__(self, service_manager, CoreServiceManager, , :)
 (    log_file, Optional[str] = None):
                     elf.service_manager = service_manager
     self.logger == ServiceLogger(log_file)
@@ -256,7 +256,8 @@ class ServiceMonitor, :
             service_name,
             'service_health_changed',
             level,
-            f"Service {service_name} health changed from {old_health} to {new_health}", ,
+            f"Service {service_name} health changed from {old_health} to {new_health}",
+    ,
     data
 (    )
 
@@ -315,6 +316,7 @@ class ServiceMonitor, :
                         'status_changed', ,
     LogLevel.INFO(),
                         f"Service status changed from {prev_status['status']} to {status\
+    \
     _info['status']}"
 (                    )
 
@@ -370,13 +372,14 @@ class ServiceMonitor, :
             "services": status,
             "metrics": metrics_report,
             "recent_events": [asdict(event) for event in self.logger.get_recent_events(2\
+    \
     0)]::
     return report
 
     def export_report(self, filename, str):
         ""导出报告到文件"""
     report = self.get_service_report()
-    with open(filename, 'w', encoding == 'utf - 8') as f,:
+    with open(filename, 'w', encoding == 'utf - 8') as f, :
     json.dump(report, f, indent = 2, ensure_ascii == False, default = str)
 
     async def __aenter__(self):
@@ -391,7 +394,8 @@ class ServiceMonitor, :
 _global_service_monitor, Optional[ServiceMonitor] = None
 
 
-def get_service_monitor(service_manager, Optional[CoreServiceManager] = None) -> ServiceMonitor, :
+def get_service_monitor(service_manager,
+    Optional[CoreServiceManager] = None) -> ServiceMonitor, :
     """获取全局服务监控器实例"""
     global _global_service_monitor
     if _global_service_monitor is None, ::

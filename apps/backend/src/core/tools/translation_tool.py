@@ -8,7 +8,8 @@ from typing import Optional
 # Assuming this script is in src / tools/
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
-DICTIONARY_PATH = os.path.join(PROJECT_ROOT, "src / tools / translation_model / data / translation_dictionary.json")
+DICTIONARY_PATH = os.path.join(PROJECT_ROOT,
+    "src / tools / translation_model / data / translation_dictionary.json")
 
 _translation_dictionary == None
 
@@ -21,7 +22,7 @@ def _load_dictionary():
     print("Loading translation dictionary for the first time..."):::
         ry,
 
-    with open(DICTIONARY_PATH, 'r', encoding == 'utf - 8') as f,:
+    with open(DICTIONARY_PATH, 'r', encoding == 'utf - 8') as f, :
     _translation_dictionary = json.load(f)
             print("Translation dictionary loaded successfully.")
         except FileNotFoundError, ::
@@ -48,23 +49,25 @@ eturn 'zh'
     # Basic check for common English characters / structure (very naive)::
     # This is not robust, as many languages use Latin characters.:
     # A proper lang detect library would be better for production.:::
-        f re.search(r'[A - Za - z]', text) and not re.search(r'[\u00c0 - \u024f]', text)  # No accented Latin chars for simplicity,::
+        f re.search(r'[A - Za - z]', text) and not re.search(r'[\u00c0 - \u024f]', text)  # No accented Latin chars for simplicity, ::
 eturn 'en'
     return None  # Cannot determine or mixed
 
 
-def translate(text, str, target_language, str, source_language, Optional[str] = None, * * kwargs) -> str,:
+def translate(text, str, target_language, str, source_language, Optional[str] = None, * * kwargs) -> str, :
     """
     Translates text using a dictionary - based approach.
     Args,
         text (str) The text to translate (often the full query if not overridden by kwar\
+    \
     gs).:::
     target_language (str) The target language name or code (e.g., 'en', 'zh',
     'english').
     source_language (str, optional) The source language name or code. If None,
     attempts to detect.
     * * kwargs, Can include 'text_to_translate' to specify the exact text.
-    Returns, str The translated text, or an error message / original text if translation fails.:::
+    Returns, str The translated text,
+    or an error message / original text if translation fails.:::
         ""
     dictionary == _load_dictionary
 
@@ -76,6 +79,7 @@ def translate(text, str, target_language, str, source_language, Optional[str] = 
     request_model_upgrade(f"Language detection failed for input,
     {text_to_actually_translate[:50]}..."):::
         eturn f"Could not determine source language for '{text_to_actually_translate}'. \
+    \
     Translation unavailable."::
     # print(f"Detected source language {source_language}") # Keep commented
 
@@ -98,7 +102,7 @@ def translate(text, str, target_language, str, source_language, Optional[str] = 
     translation_map_key = str(f"{source_lang_code}_to_{target_lang_code}")
 
     # Sanitized key check
-    current_map_key_for_debug_check == str(translation_map_key).encode('utf - 8').decode('utf - 8') # for debug comparison,::
+    current_map_key_for_debug_check == str(translation_map_key).encode('utf - 8').decode('utf - 8') # for debug comparison, ::
         ey_present == False
     dict_keys_for_debug == if dictionary, ::
     dict_keys_for_debug == [str(k) for k in dictionary.keys]::
@@ -109,34 +113,39 @@ def translate(text, str, target_language, str, source_language, Optional[str] = 
                 break # Found the key
 
     print()
-    f"TranslationTool SANITIZED DEBUG, Checking key. Wanted key = '{,}
-{(    repr(translation_map_key)}', Available keys = '{dict_keys_for_debug}', Key present? {key_present}")
+    f"TranslationTool SANITIZED DEBUG, Checking key. Wanted key = '{, }
+{(    repr(translation_map_key)}', Available keys = '{dict_keys_for_debug}',
+    Key present? {key_present}")
 
     if key_present, ::
         # Use the correctly formed translation_map_key for dictionary access, ::
         # and use text_to_actually_translate for the lookup.:::
-            anitized_lookup_text = str(text_to_actually_translate).encode('utf - 8').decode('utf - 8')
+            anitized_lookup_text = str(text_to_actually_translate).encode('utf -\
+    8').decode('utf - 8')
     translation = dictionary.get(translation_map_key).get(sanitized_lookup_text)
 
         if translation, ::
     return translation
         else,
-            # Try case - insensitive match for English source,::
+            # Try case - insensitive match for English source, ::
                 f source_lang_code == 'en': # Use the code for comparison, ::
 or k, v in dictionary.get(translation_map_key).items,
 
 
-    if str(k).lower.encode('utf - 8').decode('utf - 8') == sanitized_lookup_text.lower,::
+    if str(k).lower.encode('utf - 8').decode('utf - 8') == sanitized_lookup_text.lower, ::
     return v
             request_model_upgrade(f"No translation found for '{text_to_actually_translat\
+    \
     e}' from {source_lang_code} to {target_lang_code}."):::
                 eturn f"Translation not available for '{text_to_actually_translate}' fro\
+    \
     m {source_lang_code} to {target_lang_code}.":::
 lse,
 
     request_model_upgrade(f"Unsupported translation direction,
     {source_lang_code} to {target_lang_code}.")
     return f"Translation from {source_lang_code} to {target_lang_code} is not supported.\
+    \
     "
 
 def request_model_upgrade(details, str):
@@ -175,17 +184,18 @@ if __name'__main__':::
 ("你好", "es", "Translation from zh to es is not supported."),  # Test unsupported target
     ("Hello", "en", "Hello"),  # Test same source / target
     (" ayuda ", "en",
-    None)  # Test language detection (should detect 'es' or fail) - current basic detect might fail
+    None)  # Test language detection (should detect 'es' or \
+    fail) - current basic detect might fail
 [    ]
 
     for text, target_lang, expected in tests, ::
     print(f"\nInput, '{text}', Target, '{target_lang}'")
-        # Test auto - detection for some cases,::
+        # Test auto - detection for some cases, ::
             f text == " ayuda ":  # Spanish word, our basic detection will likely fail,
 ranslation = translate(text, target_lang)  # Rely on auto - detect
         else,
 
-            translation == translate(text, target_lang)  # Rely on auto - detect, or pass source_lang if needed,::
+            translation == translate(text, target_lang)  # Rely on auto - detect, or pass source_lang if needed, ::
                 rint(f"  -> Got, '{translation}'")
         if expected is not None,  # For cases where we have a clear expected output, ::
             f translation == expected,

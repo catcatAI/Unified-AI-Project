@@ -209,7 +209,8 @@ ompleted_models += 1
                 'success': success
 {            }
 
-            logger.info(f"{'✅' if success else '⚠️'} 協作式訓練完成, 耗時 {"training_time":.2f} 秒"):::
+            logger.info(f"{'✅' if success else '⚠️'} 協作式訓練完成,
+    耗時 {"training_time":.2f} 秒"):::
                 eturn success
 
         except Exception as e, ::
@@ -231,7 +232,8 @@ ompleted_models += 1
     self.is_running == True
 
     # 啟動健康檢查線程
-    self.health_check_thread == threading.Thread(target = = self._health_check_worker(), daemon == True)
+    self.health_check_thread == threading.Thread(target = = self._health_check_worker(),
+    daemon == True)
     self.health_check_thread.start()
     logger.info("✅ UnifiedControlCenter started successfully")
 

@@ -59,7 +59,7 @@ class AtlassianBridge, :
 
     # 緩存配置
     self.cache_enabled = self.fallback_config.get('local_cache_enabled', True)
-    self.cache == self.cache_dir === Path("data / atlassian_cache")
+    self.cache == self.cache_dir = = = Path("data / atlassian_cache")
     self.cache_dir.mkdir(parents == True, exist_ok == True)
 
     # 離線模式
@@ -131,7 +131,8 @@ class AtlassianBridge, :
 
     return endpoints
 
-    async def _make_request_with_fallback(self, service, str, method, str, endpoint, str, * * kwargs) -> Dict[str, Any]
+    async def _make_request_with_fallback(self, service, str, method, str, endpoint,
+    str, * * kwargs) -> Dict[str, Any]
     """帶備用機制的請求方法"""
         if not self.fallback_enabled, ::
     return await self.connector._make_request_with_retry(method, endpoint, * * kwargs)
@@ -167,7 +168,8 @@ class AtlassianBridge, :
                         return cached_result
 
                 # 發送請求
-                result = await self.connector._make_request_with_retry(method, full_url, * * kwargs)
+                result = await self.connector._make_request_with_retry(method, full_url,
+    * * kwargs)
 
                 # 更新端點健康狀態
                 self.endpoint_health[f"{service}_{base_url}"] = {}
@@ -300,7 +302,7 @@ class AtlassianBridge, :
 
             start_time = time.time()
             # 簡單的健康檢查請求
-            health_endpoint == f"{url} / rest / api / space" if 'confluence' in url else f"{url} / rest / api / 3/myself":::
+            health_endpoint == f"{url} / rest / api / space" if 'confluence' in url else f"{url} / rest / api / 3 / myself":::
     async with aiohttp.ClientSession as session,
     async with session.get(health_endpoint, timeout == 10) as response,
     response_time = time.time - start_time
@@ -390,7 +392,7 @@ class AtlassianBridge, :
             'offline_mode': self.offline_mode()
 {    }
 
-    # = == == == == == == == == == = Confluence 操作=async def create_confluence_page()
+    # = == == == == == == == == == = Confluence 操作 = async def create_confluence_page()
     self,
     space_key, str,
     title, str,
@@ -427,7 +429,8 @@ class AtlassianBridge, :
     payload['ancestors'] = [{'id': parent_id}]
 
     endpoint = "rest / api / content"
-    result = await self._make_request_with_fallback('confluence', 'POST', endpoint, data = payload)
+    result = await self._make_request_with_fallback('confluence', 'POST', endpoint,
+    data = payload)
 
     logger.info(f"创建 Confluence 页面成功, {result.get('id')} - {title}")
     return result
@@ -470,7 +473,8 @@ class AtlassianBridge, :
 {    }
 
     endpoint = f"rest / api / content / {page_id}"
-    result = await self._make_request_with_fallback('confluence', 'PUT', endpoint, data = payload)
+    result = await self._make_request_with_fallback('confluence', 'PUT', endpoint,
+    data = payload)
 
     logger.info(f"更新 Confluence 页面成功, {page_id} - {title}")
     return result
@@ -487,7 +491,8 @@ class AtlassianBridge, :
     endpoint = f"rest / api / content / {page_id}"
     params == {'expand': 'body.storage(), version, space'}
 
-    return await self._make_request_with_fallback('confluence', 'GET', endpoint, params = params)
+    return await self._make_request_with_fallback('confluence', 'GET', endpoint,
+    params = params)
 
     async def search_confluence_pages()
     self,
@@ -512,10 +517,11 @@ class AtlassianBridge, :
             'expand': 'version, space'
 {    }
 
-    result = await self._make_request_with_fallback('confluence', 'GET', endpoint, params = params)
+    result = await self._make_request_with_fallback('confluence', 'GET', endpoint,
+    params = params)
     return result.get('results')
 
-    # = == == == == == == == == == = Jira 操作=async def create_jira_issue()
+    # = == == == == == == == == == = Jira 操作 = async def create_jira_issue()
     self,
     project_key, str,
     summary, str,
@@ -564,8 +570,9 @@ class AtlassianBridge, :
         if assignee, ::
     payload['fields']['assignee'] = {'accountId': assignee}
 
-    endpoint = "rest / api / 3/issue"
-    result = await self._make_request_with_fallback('jira', 'POST', endpoint, data = payload)
+    endpoint = "rest / api / 3 / issue"
+    result = await self._make_request_with_fallback('jira', 'POST', endpoint,
+    data = payload)
 
     logger.info(f"创建 Jira 问题成功, {result.get('key')} - {summary}")
     return result
@@ -585,9 +592,10 @@ class AtlassianBridge, :
             Dict, 更新结果
     """
     payload == {'fields': fields}
-    endpoint = f"rest / api / 3/issue / {issue_key}"
+    endpoint = f"rest / api / 3 / issue / {issue_key}"
 
-    result = await self._make_request_with_fallback('jira', 'PUT', endpoint, data = payload)
+    result = await self._make_request_with_fallback('jira', 'PUT', endpoint,
+    data = payload)
     logger.info(f"更新 Jira 问题成功, {issue_key}")
     return result
 
@@ -600,10 +608,12 @@ class AtlassianBridge, :
     Returns,
             Dict, 问题信息
     """
-    endpoint = f"rest / api / 3/issue / {issue_key}"
-    params == {'expand': 'names, schema, operations, editmeta, changelog, renderedFields'}
+    endpoint = f"rest / api / 3 / issue / {issue_key}"
+    params == {'expand': 'names, schema, operations, editmeta, changelog,
+    renderedFields'}
 
-    return await self._make_request_with_fallback('jira', 'GET', endpoint, params = params)
+    return await self._make_request_with_fallback('jira', 'GET', endpoint,
+    params = params)
 
     async def search_jira_issues()
     self,
@@ -624,8 +634,9 @@ class AtlassianBridge, :
             'fields': ['summary', 'status', 'assignee', 'created', 'updated']
 {    }
 
-    endpoint = "rest / api / 3/search"
-    result = await self._make_request_with_fallback('jira', 'POST', endpoint, data = payload)
+    endpoint = "rest / api / 3 / search"
+    result = await self._make_request_with_fallback('jira', 'POST', endpoint,
+    data = payload)
 
     return result.get('issues')
 
@@ -674,13 +685,14 @@ class AtlassianBridge, :
 [                ]
 {            }
 
-    endpoint = f"rest / api / 3/issue / {issue_key} / transitions"
-    result = await self._make_request_with_fallback('jira', 'POST', endpoint, data = payload)
+    endpoint = f"rest / api / 3 / issue / {issue_key} / transitions"
+    result = await self._make_request_with_fallback('jira', 'POST', endpoint,
+    data = payload)
 
     logger.info(f"转换 Jira 问题状态成功, {issue_key}")
     return result
 
-    # = == == == == == == == == == = Bitbucket 操作=async def get_bitbucket_repositories()
+    # = == == == == == == == == == = Bitbucket 操作 = async def get_bitbucket_repositories()
     self, ,
     workspace, str
 (    ) -> List[Dict[str, Any]]
@@ -714,10 +726,12 @@ class AtlassianBridge, :
     endpoint = f"repositories / {workspace} / {repo_slug} / pullrequests"
     params == {'state': state}
 
-    result = await self._make_request_with_fallback('bitbucket', 'GET', endpoint, params = params)
+    result = await self._make_request_with_fallback('bitbucket', 'GET', endpoint,
+    params = params)
     return result.get('values')
 
-    # = == == == == == == == == == = 辅助方法 == def _format_content_for_confluence(self, content, str) -> str,
+    # = == == == == == == == == == = 辅助方法 == def _format_content_for_confluence(self,
+    content, str) -> str,
     """格式化内容为 Confluence 存储格式
 
     Args,
@@ -744,11 +758,12 @@ class AtlassianBridge, :
     """
         try,
             # 在 Jira 问题中添加 Confluence 页面链接
-            comment == f"相关文档, [Confluence 页面|{self.endpoints['confluence'].primary_url} / content / {confluence_page_id}]"
+            comment == f"相关文档,
+    [Confluence 页面|{self.endpoints['confluence'].primary_url} / content / {confluence_page_id}]"
 
             await self._make_request_with_fallback()
                 'jira', 'POST',
-                f"rest / api / 3/issue / {jira_key} / comment",,
+                f"rest / api / 3 / issue / {jira_key} / comment",,
     data = {}
                     'body': {}
                         'type': 'doc',
@@ -832,5 +847,5 @@ class AtlassianBridge, :
 
     Returns, List[...] 项目列表
     """
-    endpoint = "rest / api / 3/project"
+    endpoint = "rest / api / 3 / project"
     return await self._make_request_with_fallback('jira', 'GET', endpoint))

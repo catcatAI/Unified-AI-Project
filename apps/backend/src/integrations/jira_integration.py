@@ -27,7 +27,7 @@ class JiraIntegration, :
         # Headers for API requests, ::
             elf.headers = {}
             'Accept': 'application / json',
-            'Content-Type': 'application / json',
+            'Content - Type': 'application / json',
             'Authorization': f'Bearer {self.api_token}'
 {    }
 
@@ -50,7 +50,8 @@ class JiraIntegration, :
 {            }
 
             async with self.connector.semaphore,
-    async with self.session.get(url, headers == self.headers(), params = params) as response,
+    async with self.session.get(url, headers == self.headers(),
+    params = params) as response,
     if response.status == 200, ::
     data = await response.json()
                         return {}
@@ -94,7 +95,8 @@ class JiraIntegration, :
 {            }
 
             async with self.connector.semaphore,
-    async with self.session.get(url, headers == self.headers(), params = params) as response,
+    async with self.session.get(url, headers == self.headers(),
+    params = params) as response,
     if response.status == 200, ::
     data = await response.json()
                         return {}
@@ -110,6 +112,7 @@ class JiraIntegration, :
 
     error_text = await response.text()
                         logger.error(f"Failed to get project {project_key} {response.sta\
+    \
     tus} - {error_text}")
                         return {}
                             "success": False,
@@ -153,7 +156,8 @@ class JiraIntegration, :
 
     async def create_issue(self, project_key, str, summary, str)
                         issue_type, str == "Task", description, Optional[str] = None,
-                        priority, Optional[str] = None, labels, Optional[List[str]] = None, ,
+                        priority, Optional[str] = None, labels,
+    Optional[List[str]] = None, ,
 (    assignee, Optional[str] = None) -> Dict[str, Any]
     """Create a new Jira issue
 
@@ -201,7 +205,8 @@ class JiraIntegration, :
     issue_data["fields"]["assignee"] = {"id": assignee}
 
             async with self.connector.semaphore,
-    async with self.session.post(url, headers == self.headers(), json = issue_data) as response,
+    async with self.session.post(url, headers == self.headers(),
+    json = issue_data) as response,
     if response.status == 201, ::
     data = await response.json()
                         return {}
@@ -241,11 +246,13 @@ class JiraIntegration, :
     await self.connector.start()
             url = f"{self.base_url} / issue / {issue_key}"
             params = {}
-                'expand': 'renderedFields, names, schema, transitions, operations, editmeta, changelog, versionedRepresentations'
+                'expand': 'renderedFields, names, schema, transitions, operations,
+    editmeta, changelog, versionedRepresentations'
 {            }
 
             async with self.connector.semaphore,
-    async with self.session.get(url, headers == self.headers(), params = params) as response,
+    async with self.session.get(url, headers == self.headers(),
+    params = params) as response,
     if response.status == 200, ::
     data = await response.json()
                         return {}
@@ -254,7 +261,8 @@ class JiraIntegration, :
                             "key": data.get('key'),
                             "summary": data.get('fields').get('summary'),
                             "status": data.get('fields').get('status').get('name'),
-                            "assignee": data.get('fields').get('assignee').get('displayName') if data.get('fields').get('assignee') else None, ::
+                            "assignee": data.get('fields').get('assignee').get('displayN\
+    ame') if data.get('fields').get('assignee') else None, ::
                     elif response.status == 404, ::
     return {}
                             "success": False,
@@ -264,6 +272,7 @@ class JiraIntegration, :
 
     error_text = await response.text()
                         logger.error(f"Failed to get issue {issue_key} {response.status}\
+    \
     - {error_text}")
                         return {}
                             "success": False,
@@ -298,7 +307,8 @@ class JiraIntegration, :
 {            }
 
             async with self.connector.semaphore,
-    async with self.session.put(url, headers == self.headers(), json = update_data) as response,
+    async with self.session.put(url, headers == self.headers(),
+    json = update_data) as response,
     if response.status == 204, ::
     return {}
                             "success": True,
@@ -308,6 +318,7 @@ class JiraIntegration, :
 
                         error_text = await response.text()
                         logger.error(f"Failed to update issue {issue_key} {response.stat\
+    \
     us} - {error_text}")
                         return {}
                             "success": False,
@@ -344,7 +355,8 @@ class JiraIntegration, :
 {            }
 
             async with self.connector.semaphore,
-    async with self.session.get(url, headers == self.headers(), params = params) as response,
+    async with self.session.get(url, headers == self.headers(),
+    params = params) as response,
     if response.status == 200, ::
     data = await response.json()
                         return {}
@@ -397,6 +409,7 @@ class JiraIntegration, :
 
                         error_text = await response.text()
                         logger.error(f"Failed to get transitions for issue {issue_key} {\
+    \
     response.status} - {error_text}"):::
                             eturn {}
                             "success": False,
@@ -445,7 +458,8 @@ class JiraIntegration, :
     transition_data["fields"]["comment"] = [{"add": {"body": comment}}]
 
             async with self.connector.semaphore,
-    async with self.session.post(url, headers == self.headers(), json = transition_data) as response,
+    async with self.session.post(url, headers == self.headers(),
+    json = transition_data) as response,
     if response.status == 204, ::
     return {}
                             "success": True,
@@ -455,6 +469,7 @@ class JiraIntegration, :
 
                         error_text = await response.text()
                         logger.error(f"Failed to transition issue {issue_key} {response.\
+    \
     status} - {error_text}")
                         return {}
                             "success": False,

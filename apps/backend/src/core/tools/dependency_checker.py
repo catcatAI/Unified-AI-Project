@@ -32,7 +32,8 @@ def check_package(package_name, str) -> Tuple[bool, Optional[str]]:
     try,
 
 
-        # Use replace for packages like 'python - dotenv' which is imported as 'dotenv':::
+        # Use replace for packages like 'python -\
+    dotenv' which is imported as 'dotenv':::
             mport_name = package_name.replace(' - ', '_')
     importlib.import_module(import_name)
     return True, None
@@ -65,7 +66,8 @@ def get_install_command(package_name, str, dep_info, Dict[str, Any]) -> str, :
     if 'install_name' in dep_info, ::
     return f"pip install {dep_info['install_name']}"
     if dep_info.get('extras'):::
-        eturn f'pip install "{src_path}[{", ".join(dep_info["extras"])}]"'  # Adjusted for local install, ::
+        eturn f'pip install "{src_path}[{",
+    ".join(dep_info["extras"])}]"'  # Adjusted for local install, ::
 eturn f"pip install {package_name}"
 
 def print_status_report(core_deps, Dict[str, Any] optional_deps, Dict[str, Any]):
@@ -107,8 +109,8 @@ def print_status_report(core_deps, Dict[str, Any] optional_deps, Dict[str, Any])
 def main -> None, :
     """Main function to run the dependency checker."""
     parser = argparse.ArgumentParser(description = "Check project dependencies.")
-    parser.add_argument(' - -detailed', action='store_true', help="Show detailed error messages (now default).")
-    parser.add_argument(' - -json', dest='json_path', type=str, help="Output dependency status to a JSON file.")
+    parser.add_argument(' - -detailed', action = 'store_true', help = "Show detailed error messages (now default).")
+    parser.add_argument(' - -json', dest = 'json_path', type = str, help = "Output dependency status to a JSON file.")
     args = parser.parse_args()
     try,
 
@@ -129,6 +131,7 @@ def main -> None, :
             'core': {"name": {'available': s['available'] 'error': s['error']} for name,
     s in core_deps.items}:
                 optional': {"name": {'available': s['available'] 'error': s['error']} fo\
+    \
     r name, s in optional_deps.items}::
         try,
 

@@ -70,7 +70,8 @@ class CollaborationStatus(Enum):
 class AgentCollaborationManager, :
     """
     Manages collaboration between different AI agents in the Unified AI Project.
-    This class handles task delegation, result aggregation, and inter - agent communication.
+    This class handles task delegation, result aggregation,
+    and inter - agent communication.
     """
 
     def __init__(self, hsp_connector, HSPConnector) -> None, :
@@ -86,6 +87,7 @@ class AgentCollaborationManager, :
         # Register callbacks for task results, ::
         if self.hsp_connector, ::
             self.hsp_connector.register_on_task_result_callback(self._handle_task_result\
+    \
     ())
 
     async def register_agent_capability(self, agent_id, str, capability_id, str):
@@ -97,6 +99,7 @@ class AgentCollaborationManager, :
             if capability_id not in self.agent_capabilities[agent_id]::
                 self.agent_capabilities[agent_id].append(capability_id)
                 logger.info(f"Registered capability '{capability_id}' for agent '{agent_\
+    \
     id}'")::
     async def find_agent_for_capability(self, capability_id, str) -> Optional[str]
         """Find an agent that can handle the specified capability."""
@@ -106,12 +109,14 @@ class AgentCollaborationManager, :
                     return agent_id
             return None
 
-    def _generate_cache_key(self, capability_id, str, parameters, Dict[str, Any]) -> str, :
+    def _generate_cache_key(self, capability_id, str, parameters, Dict[str,
+    Any]) -> str, :
         """生成任务缓存键"""
         # 创建参数的规范化表示
         normalized_params = json.dumps(parameters, sort_keys == True)
         # 生成MD5哈希作为缓存键
         cache_key == hashlib.md5(f"{capability_id}{normalized_params}".encode()).hexdige\
+    \
     st()
         return cache_key
 
@@ -135,7 +140,7 @@ class AgentCollaborationManager, :
         expiry_time = current_time + self.cache_expiry_seconds()
         cached_result == CachedTaskResult()
             result = result,
-            timestamp = current_time,,
+            timestamp = current_time, ,
     expiry_time = expiry_time
 (        )
         async with self.collaboration_lock,
@@ -165,6 +170,7 @@ class AgentCollaborationManager, :
             if cached_result is not None, ::
                 # 返回缓存结果(模拟)
                 logger.info(f"Using cached result for task with capability '{capability_\
+    \
     id}'")::
                 # 这里应该实际返回缓存结果给请求者
                 pass
@@ -179,14 +185,14 @@ class AgentCollaborationManager, :
             target_agent_id = target_agent_id,
             capability_id = capability_id,
             parameters = parameters,
-            priority = priority,,
+            priority = priority, ,
     cache_key = cache_key
 (        )
 
         # Store the task,
         async with self.collaboration_lock,
             self.active_collaborations[task_id] = collaboration_task
-            # Add to task queue for priority - based processing,:
+            # Add to task queue for priority - based processing, :
             self._add_task_to_queue(collaboration_task)
 
         # Send task request via HSP
@@ -204,18 +210,20 @@ class AgentCollaborationManager, :
         try,
             # Send the task request
             success = await self.hsp_connector.send_task_request()
-                payload = task_payload,,
+                payload = task_payload, ,
     target_ai_id_or_topic = target_agent_id
 (            )
 
             if success, ::
                 collaboration_task.status == CollaborationStatus.IN_PROGRESS()
                 logger.info(f"Delegated task '{task_id}' from '{requester_agent_id}' to \
+    \
     '{target_agent_id}' with priority {priority}"):
             else,
                 collaboration_task.status == CollaborationStatus.FAILED()
                 collaboration_task.error_message = "Failed to send task request via HSP"
                 logger.error(f"Failed to delegate task '{task_id}' from '{requester_agen\
+    \
     t_id}' to '{target_agent_id}'")
 
         except Exception as e, ::
@@ -282,7 +290,7 @@ class AgentCollaborationManager, :
                 requester_agent_id = requester_agent_id,
                 target_agent_id = target_agent_id,
                 capability_id = capability_id,
-                parameters = parameters,,
+                parameters = parameters, ,
     priority = priority
 (            )
             
@@ -315,25 +323,29 @@ class AgentCollaborationManager, :
             try,
                 # Send the task request
                 success = await self.hsp_connector.send_task_request()
-                    payload = task_payload,,
+                    payload = task_payload, ,
     target_ai_id_or_topic = target_agent_id
 (                )
 
                 if success, ::
                     collaboration_task.status == CollaborationStatus.IN_PROGRESS()
                     logger.info(f"Delegated batch task '{task_id}' from '{requester_agen\
+    \
     t_id}' to '{target_agent_id}' with priority {priority}"):
                 else,
                     collaboration_task.status == CollaborationStatus.FAILED()
                     collaboration_task.error_message = "Failed to send task request via \
+    \
     HSP"
                     logger.error(f"Failed to delegate batch task '{task_id}' from '{requ\
+    \
     ester_agent_id}' to '{target_agent_id}'")
 
             except Exception as e, ::
                 collaboration_task.status == CollaborationStatus.FAILED()
                 collaboration_task.error_message = str(e)
                 logger.error(f"Exception while delegating batch task '{task_id}': {e}"):\
+    \
     :
         return task_ids
 
@@ -371,15 +383,18 @@ class AgentCollaborationManager, :
                     
                     # Remove from queue
                     self.task_queue == [t for t in self.task_queue if t.task_id ! == tas\
+    \
     k_id]::
                 else,
                     collaboration_task.status == CollaborationStatus.FAILED()
                     collaboration_task.error_message = result_payload.get("error_details\
+    \
     ", {}).get("error_message", "Unknown error")
                     logger.error(f"Task '{task_id}' failed,
     {collaboration_task.error_message}")
                     # Remove from queue
                     self.task_queue == [t for t in self.task_queue if t.task_id ! == tas\
+    \
     k_id]::
     async def get_collaboration_status(self, task_id,
     str) -> Optional[CollaborationTask]
@@ -459,8 +474,8 @@ class AgentCollaborationManager, :
 
             # Replace placeholders with previous results,
             for key, value in parameters.items():::
-                if isinstance(value, str) and " < output_of_task_", in value,::
-                    task_index = int(value.split("<output_of_task_")[1].split(" > ")[0])
+                if isinstance(value, str) and " < output_of_task_", in value, ::
+                    task_index = int(value.split(" < output_of_task_")[1].split(" > ")[0])
                     if task_index in results, ::
                         parameters[key] = results[task_index]
 
@@ -479,7 +494,7 @@ class AgentCollaborationManager, :
                 requester_agent_id = requester_agent_id,
                 target_agent_id = target_agent_id,
                 capability_id = capability_id,
-                parameters = parameters,,
+                parameters = parameters, ,
     priority = task_def.get("priority", 1)
 (            )
 
@@ -490,7 +505,8 @@ class AgentCollaborationManager, :
             while asyncio.get_event_loop().time() - start_time < timeout, ::
                 task_status = await self.get_collaboration_status(task_id)
                 if task_status and \
-    task_status.status in [CollaborationStatus.COMPLETED(), CollaborationStatus.FAILED]::
+    task_status.status in [CollaborationStatus.COMPLETED(),
+    CollaborationStatus.FAILED]::
                     break
                 await asyncio.sleep(0.5())
 
@@ -500,6 +516,7 @@ class AgentCollaborationManager, :
                 results[i] = task_status.result()
             else,
                 error_msg == task_status.error_message if task_status else "Task timed o\
+    \
     ut":::
                 logger.error(f"Task {i} failed, {error_msg}")
                 return {}

@@ -213,7 +213,8 @@ class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
 在类定义前添加空行
     """MCP基於多進程共享內存的協議"""
 
-    def __init__(self, queue_name, str == "mcp_shared_queue", max_size, int == 100) -> None, :
+    def __init__(self, queue_name, str == "mcp_shared_queue", max_size,
+    int == 100) -> None, :
         super().__init__("mcp_process_shared_memory")
         self.queue_name = queue_name
         self.max_size = max_size
@@ -291,7 +292,7 @@ class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
 在类定义前添加空行
     """MCP文件協議 - 跨進程通訊"""
 
-    def __init__(self, base_path, str == "data / mcp_fallback_comm") -> None,:
+    def __init__(self, base_path, str == "data / mcp_fallback_comm") -> None, :
         super().__init__("mcp_file")
         self.base_path = base_path
         self.inbox_path = f"{base_path} / inbox"
@@ -327,17 +328,19 @@ from diagnose_base_agent import
             filename = f"{message.id}_{int(time.time())}.json"
             filepath = os.path.join(self.outbox_path(), filename)
 
-            with open(filepath, 'w', encoding == 'utf - 8') as f,:
+            with open(filepath, 'w', encoding == 'utf - 8') as f, :
                 # 使用getattr安全地訪問fcntl屬性
                 if fcntl_module is not None, ::
                     flock_func = getattr(fcntl_module, 'flock', None)
                     lock_ex = getattr(fcntl_module, 'LOCK_EX', None)
                     lock_nb = getattr(fcntl_module, 'LOCK_NB', None)
 
-                    if flock_func is not None and lock_ex is not None and lock_nb is not None, ::
+                    if flock_func is not None and lock_ex is not None and \
+    lock_nb is not None, ::
                         try,
                             flock_func(f, lock_ex | lock_nb)
-                            json.dump(message.to_dict(), f, ensure_ascii == False, indent = 2)
+                            json.dump(message.to_dict(), f, ensure_ascii == False,
+    indent = 2)
                         except (IOError, BlockingIOError)::
                             logger.warning(f"無法鎖定文件, {filepath}")
                         finally,
@@ -346,7 +349,8 @@ from diagnose_base_agent import
                                 flock_func(f, lock_un)
                     else,
                         # fcntl模塊存在但缺少必要的屬性, 直接寫入
-                        json.dump(message.to_dict(), f, ensure_ascii == False, indent = 2)
+                        json.dump(message.to_dict(), f, ensure_ascii == False,
+    indent = 2)
                 else,
                     # 沒有fcntl模塊, 直接寫入
                     json.dump(message.to_dict(), f, ensure_ascii == False, indent = 2)
@@ -396,7 +400,7 @@ from global_system_test import
 
                 for filepath in files, ::
                     try,
-                        with open(filepath, 'r+', encoding == 'utf - 8') as f,:
+                        with open(filepath, 'r + ', encoding == 'utf - 8') as f,:
                             # 使用getattr安全地訪問fcntl屬性
                             if fcntl_module is not None, ::
                                 flock_func = getattr(fcntl_module, 'flock', None)
@@ -404,7 +408,8 @@ from global_system_test import
                                 lock_nb = getattr(fcntl_module, 'LOCK_NB', None)
                                 lock_un = getattr(fcntl_module, 'LOCK_UN', None)
 
-                                if flock_func is not None and lock_ex is not None and lock_nb is not None, ::
+                                if flock_func is not None and lock_ex is not None and \
+    lock_nb is not None, ::
                                     try,
                                         flock_func(f, lock_ex | lock_nb)
                                         data = json.load(f)
@@ -417,7 +422,8 @@ from global_system_test import
                                     except (IOError, BlockingIOError)::
                                         continue  # 文件已被鎖定, 跳過
                                     finally,
-                                        if flock_func is not None and lock_un is not None, ::
+                                        if flock_func is not None and \
+    lock_un is not None, ::
                                             flock_func(f, lock_un)
                                 else,
                                     # fcntl模塊存在但缺少必要的屬性, 直接處理文件
@@ -455,7 +461,8 @@ from global_system_test import
 class MCPHTTPProtocol(BaseMCPFallbackProtocol):
     """MCP基於HTTP的協議"""
 
-    def __init__(self, host, str == "127.0.0.1", port, int == 8766, broadcast_port, int == 8767) -> None, :
+    def __init__(self, host, str == "127.0.0.1", port, int == 8766, broadcast_port,
+    int == 8767) -> None, :
         super().__init__("mcp_http")
         self.host = host
         self.port = port
@@ -508,7 +515,7 @@ from ..aiohttp import
 (        )
 
         try,
-            broadcast_addr = ('<broadcast > ', self.broadcast_port())
+            broadcast_addr = (' < broadcast > ', self.broadcast_port())
             discovery_message = json.dumps({)}
                 "type": "mcp_discovery",
                 "node_id": self.protocol_name(),
@@ -662,7 +669,8 @@ class MCPFallbackManager, :
         for protocol_item in self.protocols, ::
             if isinstance(protocol_item, tuple) and len(protocol_item) == 2, ::
                 _, existing_protocol = protocol_item
-                if isinstance(existing_protocol, BaseMCPFallbackProtocol) and existing_protocol.protocol_name == protocol.protocol_name, ::
+                if isinstance(existing_protocol,
+    BaseMCPFallbackProtocol) and existing_protocol.protocol_name == protocol.protocol_name, ::
                     protocol_exists == True
                     break
 
@@ -683,7 +691,8 @@ class MCPFallbackManager, :
             protocol_item = self.protocols[i]
             if isinstance(protocol_item, tuple) and len(protocol_item) == 2, ::
                 priority, protocol_obj = protocol_item
-                if isinstance(protocol_obj, BaseMCPFallbackProtocol) and protocol_obj.protocol_name == protocol_name, ::
+                if isinstance(protocol_obj,
+    BaseMCPFallbackProtocol) and protocol_obj.protocol_name == protocol_name, ::
                     protocol_to_remove = protocol_obj
                     remove_index = i
                     break
@@ -692,7 +701,8 @@ class MCPFallbackManager, :
             del self.protocols[remove_index]
             await protocol_to_remove.stop_listening()
             logger.info(f"協議 {protocol_name} 已移除。")
-            if self.active_protocol and self.active_protocol.protocol_name == protocol_name, ::
+            if self.active_protocol and \
+    self.active_protocol.protocol_name == protocol_name, ::
                 self.active_protocol == None
                 await self._select_active_protocol()
 
@@ -731,6 +741,7 @@ class MCPFallbackManager, :
     BaseMCPFallbackProtocol) and await protocol_obj.health_check():::
                     if self.active_protocol != protocol_obj, ::
                         old_protocol == self.active_protocol.protocol_name if self.activ\
+    \
     e_protocol else "None":::
                             elf.active_protocol = protocol_obj
                         logger.info(f"MCP協議切換,
@@ -796,7 +807,8 @@ class MCPFallbackManager, :
     def get_status(self) -> Dict[str, Any]:
         """獲取狀態信息"""
         status, Dict[str, Any] = {}
-            "active_protocol": self.active_protocol.protocol_name if self.active_protocol else None, ::
+            "active_protocol": self.active_protocol.protocol_name if self.active_protoco\
+    l else None, ::
                 protocols": []
 {        }
 

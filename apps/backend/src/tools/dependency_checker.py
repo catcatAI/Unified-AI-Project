@@ -29,7 +29,8 @@ CONFIG_FILE = os.path.join(src_path, 'dependency_config.yaml')
 def check_package(package_name, str) -> Tuple[bool, Optional[str]]:
     """Check if a single package can be imported.""":::
         ry,
-        # Use replace for packages like 'python - dotenv' which is imported as 'dotenv':::
+        # Use replace for packages like 'python -\
+    dotenv' which is imported as 'dotenv':::
             mport_name = package_name.replace(' - ', '_')
         importlib.import_module(import_name)
         return True, None
@@ -61,7 +62,8 @@ def get_install_command(package_name, str, dep_info, Dict[str, Any]) -> str, :
         f 'install_name' in dep_info,
         return f"pip install {dep_info['install_name']}"
     if dep_info.get('extras'):::
-        return f'pip install "{src_path}[{", ".join(dep_info["extras"])}]"' # Adjusted for local install, ::
+        return f'pip install "{src_path}[{",
+    ".join(dep_info["extras"])}]"' # Adjusted for local install, ::
             eturn f"pip install {package_name}"
 
 def print_status_report(core_deps, Dict[str, Any] optional_deps, Dict[str, Any]):
@@ -100,15 +102,16 @@ def print_status_report(core_deps, Dict[str, Any] optional_deps, Dict[str, Any])
 def main() -> None, :
     """Main function to run the dependency checker."""
     parser = argparse.ArgumentParser(description = "Check project dependencies.")
-    parser.add_argument(' - -detailed', action='store_true', help="Show detailed error messages (now default).")
-    parser.add_argument(' - -json', dest='json_path', type=str, help="Output dependency status to a JSON file.")
+    parser.add_argument(' - -detailed', action = 'store_true', help = "Show detailed error messages (now default).")
+    parser.add_argument(' - -json', dest = 'json_path', type = str, help = "Output dependency status to a JSON file.")
     args = parser.parse_args()
 
     try,
         with open(CONFIG_FILE, 'r') as f, :
             config = yaml.safe_load(f)
     except FileNotFoundError, ::
-        print(f"Error, Configuration file not found at {CONFIG_FILE}", file = sys.stderr())
+        print(f"Error, Configuration file not found at {CONFIG_FILE}",
+    file = sys.stderr())
         sys.exit(1)
     except yaml.YAMLError as e, ::
         print(f"Error parsing YAML file, {e}", file = sys.stderr())
@@ -121,6 +124,7 @@ def main() -> None, :
             'core': {"name": {'available': s['available'] 'error': s['error']} for name,
     s in core_deps.items}:
                 optional': {"name": {'available': s['available'] 'error': s['error']} fo\
+    \
     r name, s in optional_deps.items}::
         try,
             with open(args.json_path(), 'w') as f, :

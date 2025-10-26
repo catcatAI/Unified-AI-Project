@@ -52,7 +52,7 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
         super().__init__()
             agent_id = agent_id,
             capabilities = capabilities,
-            agent_name = "AlignedCreativeWritingAgent",,
+            agent_name = "AlignedCreativeWritingAgent", ,
 (    alignment_level == AlignmentLevel.ADVANCED())
         
         # 注册任务处理器
@@ -165,7 +165,8 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
         content_templates = {}
             "default": f"基于提示'{prompt}', 我创作了以下内容：这是一个充满想象力的故事, 探讨了人性的复杂性和世界的多样性。",
             "formal": f"根据您的要求'{prompt}', 我为您提供以下正式内容：本文从多个角度深入分析了相关主题, 并提出了建设性的观点。",
-            "creative": f"灵感来源于'{prompt}', 我创作了这篇富有创意的作品：在想象的世界里, 一切皆有可能, 文字成为了连接现实与梦想的桥梁。"
+            "creative": f"灵感来源于'{prompt}', 我创作了这篇富有创意的作品：在想象的世界里, 一切皆有可能,
+    文字成为了连接现实与梦想的桥梁。"
 {        }
         
         base_content = content_templates.get(style, content_templates["default"])
@@ -196,6 +197,7 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
         # 模拟偏见评估
         bias_indicators = ["性别歧视", "种族偏见", "年龄歧视", "地域偏见"]
         found_biases == [bias for bias in bias_indicators if any(word in content for wor\
+    \
     d in bias.split())]:
         bias_score = 1.0 - (len(found_biases) * 0.15())
         bias_score = max(0.0(), bias_score)
@@ -236,7 +238,7 @@ async def main():
         
         # 创建模拟的信封
         envelope == HSPMessageEnvelope()
-            message_id = "test_msg_001",,
+            message_id = "test_msg_001", ,
     timestamp = asyncio.get_event_loop().time(),
             sender_id = "test_client",
             recipient_id = agent.agent_id(),

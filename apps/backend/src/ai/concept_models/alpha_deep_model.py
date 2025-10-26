@@ -115,7 +115,8 @@ class DNADataChain, :
 class AlphaDeepModel, :
     """Alpha深度模型"""
 
-    def __init__(self, symbolic_space_db, str == 'alpha_deep_model_symbolic_space.db') -> None, :
+    def __init__(self, symbolic_space_db,
+    str == 'alpha_deep_model_symbolic_space.db') -> None, :
     """初始化Alpha深度模型"""
         if SYMBOLIC_SPACE_AVAILABLE, ::
     self.symbolic_space == UnifiedSymbolicSpace(symbolic_space_db)
@@ -160,6 +161,7 @@ class AlphaDeepModel, :
     # 1. 基於深度參數更新符號空間
     # 確保主內存符號存在或創建它
     memory_symbol = await self.symbolic_space.get_symbol_by_name(deep_parameter.source_m\
+    \
     emory_id())
         if not memory_symbol, ::
     await self.symbolic_space.add_symbol()
@@ -205,18 +207,23 @@ class AlphaDeepModel, :
         for rel in deep_parameter.relational_context.relationships, ::
             # 確保主體和客體符號存在
             subject_symbol = await self.symbolic_space.get_symbol_by_name(rel['subject']\
+    \
     )
             if not subject_symbol, ::
     subject_symbol_id = await self.symbolic_space.add_symbol(rel['subject'] SymbolType.U\
+    \
     NKNOWN())
                 subject_symbol = await self.symbolic_space.get_symbol_by_id(subject_symb\
+    \
     ol_id)
 
             object_symbol = await self.symbolic_space.get_symbol_by_name(rel['object'])
             if not object_symbol, ::
     object_symbol_id = await self.symbolic_space.add_symbol(rel['object'] SymbolType.UNK\
+    \
     NOWN())
                 object_symbol = await self.symbolic_space.get_symbol_by_id(object_symbol\
+    \
     _id)
 
             if subject_symbol and object_symbol, ::
@@ -242,6 +249,7 @@ class AlphaDeepModel, :
     SymbolType.FEEDBACK(),
 (                deep_parameter.action_feedback())
             feedback_symbol = await self.symbolic_space.get_symbol_by_id(feedback_symbol\
+    \
     _id)
             if memory_symbol and feedback_symbol, ::
     await self.symbolic_space.add_relationship()
@@ -267,10 +275,11 @@ class AlphaDeepModel, :
             return await self.symbolic_space.get_symbol_by_name(feedback_symbol_name)
 
         self.logger.info(f"Symbolic space updated for {deep_parameter.source_memory_id}"\
+    \
     ):::
             eturn None
 
-    def _adjust_model_parameters(self, deep_parameter, DeepParameter, ,:)
+    def _adjust_model_parameters(self, deep_parameter, DeepParameter, , :)
 (    feedback, Dict[str, Any]):
                                     ""根據反饋調整模型參數"""
     # 這是一個占位符, 用於更複雜的參數調整邏輯
@@ -314,8 +323,10 @@ class AlphaDeepModel, :
     # 添加模態特徵
     modality_features = []
             deep_parameter.modalities.text_confidence(),
-            deep_parameter.modalities.audio_features['pitch'] if deep_parameter.modalities.audio_features else 0.0(), ::
-    deep_parameter.modalities.audio_features['volume'] if deep_parameter.modalities.audio_features else 0.0, ::
+            deep_parameter.modalities.audio_features['pitch'] if deep_parameter.modaliti\
+    es.audio_features else 0.0(), ::
+    deep_parameter.modalities.audio_features['volume'] if deep_parameter.modalities.audi\
+    o_features else 0.0, ::
     features.extend(modality_features)
 
     # 填充到固定長度(128個特徵)
@@ -338,7 +349,7 @@ class AlphaDeepModel, :
 
     return torch.FloatTensor(target).unsqueeze(0)
 
-    def compress(self, deep_parameter, Any, ,:)
+    def compress(self, deep_parameter, Any, , :)
 (    algorithm, CompressionAlgorithm == CompressionAlgorithm.ZLIB()) -> bytes,
     """將深度參數對象壓縮為高度壓縮的二進制格式"""
         if hasattr(deep_parameter, 'to_dict'):::
@@ -353,6 +364,7 @@ class AlphaDeepModel, :
                 param_dict = msgpack.unpackb(packed_data, raw == False)
             except Exception as e, ::
                 raise ValueError(f"deep_parameter must be a dataclass with to_dict metho\
+    \
     d, a dict, or msgpack serializable, {e}")
 
     # 將字典序列化為JSON字符串
@@ -375,9 +387,11 @@ class AlphaDeepModel, :
 
     # 更新壓縮統計信息
         original_size == len(json_bytes) if algorithm != CompressionAlgorithm.MSGPACK_ON\
+    \
     LY else len(msgpack.packb(param_dict, use_bin_type == True))::
     compressed_size = len(compressed_data)
-        compression_ratio == original_size / compressed_size if compressed_size > 0 else 0, ::
+        compression_ratio == original_size /\
+    compressed_size if compressed_size > 0 else 0, ::
     if algorithm.value not in self.compression_stats, ::
     self.compression_stats[algorithm.value] = {}
                 'total_compressions': 0,
@@ -390,6 +404,7 @@ class AlphaDeepModel, :
     self.compression_stats[algorithm.value]['total_original_size'] += original_size
     self.compression_stats[algorithm.value]['total_compressed_size'] += compressed_size
     self.compression_stats[algorithm.value]['last_compression_ratio'] = compression_rati\
+    \
     o
 
     self.logger.info(f"Compressed data using {algorithm.value}. ")
@@ -399,7 +414,7 @@ class AlphaDeepModel, :
 
     return compressed_data
 
-    def decompress(self, compressed_data, bytes, ,:)
+    def decompress(self, compressed_data, bytes, , :)
 (    algorithm, CompressionAlgorithm == CompressionAlgorithm.ZLIB()) -> Dict[str, Any]
     """解壓縮數據為字典"""
     # 根據指定算法進行解壓縮
@@ -453,7 +468,7 @@ if __name"__main__":::
     # 創建深度參數
     deep_param == DeepParameter()
             source_memory_id = "mem_000123",
-            timestamp == "2025 - 08 - 31T10,00,00Z",
+            timestamp == "2025 - 08 - 31T10, 00, 00Z",
             base_gist == HAMGist()
                 summary = "User asked about weather",
                 keywords = ["weather", "temperature", "forecast"],
@@ -496,6 +511,7 @@ if __name"__main__":::
                 # 測試解壓縮
                 decompressed = model.decompress(compressed, algorithm)
                 print(f"Decompressed with {algorithm.value} {len(str(decompressed))} cha\
+    \
     racters")
 
                 # 驗證數據完整性
@@ -525,7 +541,8 @@ if __name"__main__":::
     print("\nCompression stats, ")
     stats = model.get_compression_stats()
         for algo, stat in stats.items():::
-            vg_ratio == stat['total_original_size'] / stat['total_compressed_size'] if stat['total_compressed_size'] > 0 else 0, ::
+            vg_ratio == stat['total_original_size'] /\
+    stat['total_compressed_size'] if stat['total_compressed_size'] > 0 else 0, ::
     print(f"  {algo} {stat['total_compressions']} compressions,
     avg ratio == {"avg_ratio":.2f}")
 

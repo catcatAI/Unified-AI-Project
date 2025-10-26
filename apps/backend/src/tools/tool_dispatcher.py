@@ -42,7 +42,8 @@ class ToolDispatcher:
 
     def _safe_params_hash(self, params: Dict[str, Any]) -> str:
         try:
-            s = json.dumps(params or {}, sort_keys = True, ensure_ascii = False, default = str)
+            s = json.dumps(params or {}, sort_keys = True, ensure_ascii = False,
+    default = str)
             return hashlib.sha256(s.encode("utf - 8")).hexdigest()[:16]
         except Exception:
             return ""
@@ -61,7 +62,8 @@ class ToolDispatcher:
 {            }
             # Use a distinct data_type for action policy events
             if hasattr(ham, 'store_experience'):
-                ham.store_experience(raw_data, "action_policy_v0.1", metadata)  # type: ignore[attr - defined]
+                ham.store_experience(raw_data, "action_policy_v0.1",
+    metadata)  # type: ignore[attr - defined]
         except Exception as e:
             logging.debug(f"ToolDispatcher: failed to log action policy: {e}")
 
@@ -74,6 +76,7 @@ class ToolDispatcher:
             # Fallback re - instantiate the wrapper with the new LLM service
             try:
                 from ai.language_models.daily_language_model import DailyLanguageModel a\
+    \
     s DLModel
                 if DLModel is not None:
                     self.dlm = DLModel(llm_service = llm_service)
@@ -122,15 +125,20 @@ class ToolDispatcher:
             "translate_text": "Translates text between Chinese and \
     English. Example: 'translate 你好 to English'",
             "inspect_code": "Describes the structure of available tools. Query examples:\
+    \
     'list_tools', or 'describe_tool math_tool'",
-            "analyze_csv": "Analyzes CSV data. Requires 'csv_content' and 'query' in parameters. Example: 'analyze_csv with query \"summarize\" and csv_content \"a, b\\n1, 2\"'",
+            "analyze_csv": "Analyzes CSV data. Requires 'csv_content' and \
+    'query' in parameters. Example: 'analyze_csv with query \"summarize\" and csv_content \"a, b\\n1, 2\"'",
             "create_image": "Creates an image from a text prompt. Requires 'prompt' and \
-    optional 'style'. Example: 'create_image with prompt \"a cat wearing a hat\" and style \"cartoon\"'",
+    \
+    optional 'style'. Example: 'create_image with prompt \"a cat wearing a hat\" and \
+    style \"cartoon\"'",
 {        }
 
         # Add RAG query description if available
         if rag_available_flag and self.rag_manager:
-            self.tool_descriptions["rag_query"] = "Performs a retrieval - augmented generation query. Example: 'rag_query what is the main purpose of HAM?'"
+            self.tool_descriptions["rag_query"] = "Performs a retrieval -\
+    augmented generation query. Example: 'rag_query what is the main purpose of HAM?'"
         self.models: List[Any] = []
         logging.info("ToolDispatcher initialized.")
         logging.info(f"Available tools: {list(self.tools.keys())}")
@@ -146,6 +154,7 @@ class ToolDispatcher:
                 return {}
                     "status": "error",
                     "error_message": f"Tool '{tool_name}' not found. Available tools: {l\
+    \
     ist(self.tools.keys())}"
 {                }
 
@@ -173,11 +182,13 @@ class ToolDispatcher:
                 text = parameters.get("text_to_translate", parameters.get("text", ""))
                 target_lang = parameters.get("target_language", "English")
                 source_lang = parameters.get("source_language", "auto")
-                result = tool_function(text, target_language = target_lang, source_language = source_lang)
+                result = tool_function(text, target_language = target_lang,
+    source_language = source_lang)
             else:
                 # Standard tools (calculate, evaluate_logic) expect a query parameter
                 query = parameters.get("query", parameters.get("code", ""))
-                result = tool_function(query, * * {k: v for k, v in parameters.items() if k not in ["query", "code"]})
+                result = tool_function(query, * * {k: v for k,
+    v in parameters.items() if k not in ["query", "code"]})
             # Handle both sync and async results
             if hasattr(result, '__await__'):
                 result = await result
@@ -233,7 +244,8 @@ class ToolDispatcher:
                 "tool_name": tool_name
 {            }
 
-    async def dispatch(self, query: str, explicit_tool_name: Optional[str] = None, * * kwargs) -> ToolDispatcherResponse:
+    async def dispatch(self, query: str, explicit_tool_name: Optional[str] = None,
+    * * kwargs) -> ToolDispatcherResponse:
         """
         Dispatches a query to the appropriate tool.
         If explicit_tool_name is provided, it uses that tool.
@@ -243,6 +255,7 @@ class ToolDispatcher:
         if explicit_tool_name:
             if explicit_tool_name in self.tools:
                 logging.info(f"Dispatching to explicitly named tool: {explicit_tool_name\
+    \
     }")
                 kwargs_with_orig_query = {"original_query": query, * * kwargs}
                 # Explicit calls to translation need kwargs passed differently
@@ -262,7 +275,8 @@ class ToolDispatcher:
         # Use DLM for intent recognition
         available_tools_dict = self.get_available_tools()
         if hasattr(self.dlm, 'recognize_intent'):
-            intent = await self.dlm.recognize_intent(query, available_tools = available_tools_dict)
+            intent = await self.dlm.recognize_intent(query,
+    available_tools = available_tools_dict)
         else:
             intent = None
 
@@ -275,6 +289,7 @@ class ToolDispatcher:
             tool_specific_query = tool_params.get("query", query)
 
             logging.info(f"Dispatching to '{tool_name_from_dlm}' tool based on DLM inten\
+    \
     t. Effective query for tool: '{tool_specific_query}'")
             if "original_query" not in tool_params:
                 tool_params["original_query"] = query
@@ -282,6 +297,7 @@ class ToolDispatcher:
             # Special parameter mapping for translation
             if tool_name_from_dlm == 'translate_text':
                 # The _execute_translation method expects the text to translate as the f\
+    \
     irst argument,
                 # and other details in kwargs. The DLM provides these in tool_params.
                 text_to_translate = tool_params.get('text_to_translate',
@@ -294,7 +310,8 @@ class ToolDispatcher:
             if isinstance(tool_params, dict):
                 tool_params.pop('query', None)
                 tool_params.pop('original_query', None)
-                return self.tools[tool_name_from_dlm](tool_specific_query, * * tool_params)
+                return self.tools[tool_name_from_dlm](tool_specific_query,
+    * * tool_params)
             else:
                 return self.tools[tool_name_from_dlm](tool_specific_query)
         # If no tool was dispatched by explicit name or DLM intent
@@ -311,7 +328,8 @@ class ToolDispatcher:
 
     def reload_tools(self, only: Optional[str] = None) -> Dict[str, Any]:
         """
-        Hot - reload tool implementations by re - importing known modules and updating bindings.
+        Hot - reload tool implementations by re - importing known modules and \
+    updating bindings.
         If 'only' is provided, reload only that tool key (e.g., 'calculate').
         Returns a summary dict with reloaded / updated / failed keys.
         """
@@ -335,14 +353,17 @@ class ToolDispatcher:
                 continue
             module_path, symbol_name, wrapper = mapping[key]
             try:
-                module = importlib.import_module(module_path, package = "apps.backend.src.tools")
+                module = importlib.import_module(module_path,
+    package = "apps.backend.src.tools")
                 importlib.reload(module)
                 new_symbol = getattr(module, symbol_name)
                 # Bind function - based tools directly
                 if callable(new_symbol) and wrapper is not None:
                     # Keep dispatcher wrapper; underlying function called by wrapper pic\
+    \
     ks up new impl implicitly
-                    # Re - bind the wrapper to the new function if it's a direct function call
+                    # Re -\
+    bind the wrapper to the new function if it's a direct function call
                     if key == "calculate":
                         self.tools[key] = self._execute_math_calculation
                     elif key == "evaluate_logic":
@@ -351,18 +372,21 @@ class ToolDispatcher:
                         self.tools[key] = self._execute_translation
                     summary["updated"].append(key)
                 else:
-                    # Class - based tools re - instantiate stored instances and update tool map
+                    # Class - based tools re - instantiate stored instances and \
+    update tool map
                     if key == "inspect_code":
                         self.code_understanding_tool_instance = new_symbol()
                     elif key == "analyze_csv":
                         self.csv_tool_instance = new_symbol()
                     elif key == "create_image":
                         self.image_generation_tool_instance = new_symbol()
-                    self.tools[key] = getattr(self, f"_execute_{key.replace(' ', '_')}") # Re - bind the wrapper method
+                    self.tools[key] = getattr(self, f"_execute_{key.replace(' ',
+    '_')}") # Re - bind the wrapper method
                     summary["updated"].append(key)
                 summary["reloaded"].append(key)
             except Exception as e:
                 logging.error(f"ToolDispatcher.reload_tools: failed to reload {key}: {e}\
+    \
     ")
                 summary["failed"].append({"key": key, "error": str(e)})
         return summary
@@ -389,7 +413,8 @@ class ToolDispatcher:
             tool_name = match.group(1)
             self.tools[tool_name] = global_scope[tool_name]
 
-    def _execute_math_calculation(self, query: str, * * kwargs) -> ToolDispatcherResponse:
+    def _execute_math_calculation(self, query: str,
+    * * kwargs) -> ToolDispatcherResponse:
         """
         Wrapper for the math_tool.calculate function.
         'query' is expected to be the direct arithmetic expression.
@@ -400,7 +425,8 @@ class ToolDispatcher:
         # or a direct expression. If DLM provides a clean expression in `query`,
         # it should work. If DLM provides the original text,
     `math_calculate` will parse.
-        logging.info(f"ToolDispatcher._execute_math_calculation: query = '{query}', kwargs = {kwargs}")
+        logging.info(f"ToolDispatcher._execute_math_calculation: query = '{query}',
+    kwargs = {kwargs}")
         try:
             response = math_calculate(query)
             return response
@@ -437,7 +463,8 @@ class ToolDispatcher:
             # Call the analyze method directly on the instance
             # Create an instance of the tool
             csv_tool_instance = self.csv_tool_instance # Use the pre - instantiated tool
-            result = csv_tool_instance.analyze(csv_content = csv_content, query = analysis_query)
+            result = csv_tool_instance.analyze(csv_content = csv_content,
+    query = analysis_query)
             return ToolDispatcherResponse()
                 status = result["status"],
                 payload = result.get("result"),
@@ -475,7 +502,8 @@ class ToolDispatcher:
 
         try:
             # Call the create_image method directly on the instance
-            image_tool_instance = self.image_generation_tool_instance # Use the pre - instantiated tool
+            image_tool_instance = self.image_generation_tool_instance # Use the pre -\
+    instantiated tool
             result = image_tool_instance.create_image(prompt = prompt, style = style)
             return ToolDispatcherResponse()
                 status = result["status"],
@@ -495,7 +523,8 @@ class ToolDispatcher:
                 error_message = error_msg
 (            )
 
-    def _execute_code_inspection(self, query: str, * * kwargs) -> ToolDispatcherResponse:
+    def _execute_code_inspection(self, query: str,
+    * * kwargs) -> ToolDispatcherResponse:
         """
         Wrapper for the CodeUnderstandingTool.
         Returns ToolDispatcherResponse.
@@ -515,13 +544,15 @@ class ToolDispatcher:
                 payload = None,
                 tool_name_attempted = "inspect_code",
                 original_query_for_tool = query,
-                error_message="No action specified for code inspection. Use 'list_tools' or 'describe_tool <tool_name > '."
+                error_message = "No action specified for code inspection. Use 'list_tools' or 'describe_tool <tool_name > '."
 (            )
 
         try:
             # Call the execute method directly on the instance
-            code_tool_instance = self.code_understanding_tool_instance # Use the pre - instantiated tool
-            result_payload = code_tool_instance.execute(action = action, tool_name = tool_name_param)
+            code_tool_instance = self.code_understanding_tool_instance # Use the pre -\
+    instantiated tool
+            result_payload = code_tool_instance.execute(action = action,
+    tool_name = tool_name_param)
             return ToolDispatcherResponse()
                 status = "success",
                 payload = result_payload,
@@ -573,7 +604,8 @@ class ToolDispatcher:
                 error_message = error_msg
 (            )
 
-    def _execute_logic_evaluation(self, query: str, * * kwargs) -> ToolDispatcherResponse:
+    def _execute_logic_evaluation(self, query: str,
+    * * kwargs) -> ToolDispatcherResponse:
         """
         Wrapper for the logic_tool.evaluate_expression function.
         The query should be the logical expression string itself.
@@ -581,6 +613,7 @@ class ToolDispatcher:
         try:
             # logic_evaluate expects the expression string directly.
             # More advanced parsing to extract expression from natural language could be\
+    \
     added here or in logic_tool.
             # For now, assume query IS the expression or pre - extracted.
             # If the query is "evaluate true AND false",
@@ -589,16 +622,19 @@ class ToolDispatcher:
             # Attempt to extract the core logical expression if prefixed,
             # e.g., "evaluate true AND false" -> "true AND false"
             # e.g., "logic (true OR false)" -> "(true OR false)"
-            match_evaluate = re.match(r"(?:evaluate|logic)\s * (. * )", query, re.IGNORECASE)
+            match_evaluate = re.match(r"(?:evaluate|logic)\s * (. * )", query,
+    re.IGNORECASE)
             if match_evaluate:
                 expression_to_evaluate = match_evaluate.group(1).strip()
             else:
                 expression_to_evaluate = query  # Assume the query is the expression
 
-            logging.debug(f"ToolDispatcher DEBUG (_execute_logic_evaluation) expression_to_evaluate = '{expression_to_evaluate}'")
+            logging.debug(f"ToolDispatcher DEBUG (_execute_logic_evaluation) expression_\
+    to_evaluate = '{expression_to_evaluate}'")
             # Create an instance of the logic tool
             logic_tool_instance = LogicTool()
-            result = logic_tool_instance.evaluate_expression(expression_string = expression_to_evaluate)
+            result = logic_tool_instance.evaluate_expression(expression_string = express\
+    ion_to_evaluate)
 
             # The logic_evaluate tool returns a boolean, or a string error message.
             if isinstance(result, bool):
@@ -642,7 +678,7 @@ class ToolDispatcher:
 
     #         # Try to extract text and target language from the query string
     #         # Pattern: "translate 'TEXT' to LANGUAGE" or "translate TEXT to LANGUAGE"
-    #         match_to_lang = re.search(r"translate\s+['"]?(.+?)['"]?\s+to\s+([a - zA - Z\ - ]+)", query, re.IGNORECASE)
+    #         match_to_lang = re.search(r"translate\s + ['"]?(. + ?)['"]?\s + to\s + ([a - zA - Z\ - ] + )", query, re.IGNORECASE)
     #         if match_to_lang:
     #             text_to_translate = match_to_lang.group(1).strip()
     #             lang_name_or_code = match_to_lang.group(2).lower()
@@ -654,7 +690,7 @@ class ToolDispatcher:
     #                 resolved_target_lang = lang_name_or_code
     #         else:
     #             # Fallback: "TEXT in LANGUAGE"
-    #             match_in_lang = re.search(r"['"]?(.+?)['"]?\s+in\s+([a - zA - Z\ - ]+)", query, re.IGNORECASE)
+    #             match_in_lang = re.search(r"['"]?(. + ?)['"]?\s + in\s + ([a - zA - Z\ - ] + )", query, re.IGNORECASE)
     #             if match_in_lang:
     #                 text_to_translate = match_in_lang.group(1).strip()
     #                 lang_name_or_code = match_in_lang.group(2).lower()
@@ -666,8 +702,10 @@ class ToolDispatcher:
     #                     resolved_target_lang = lang_name_or_code
     #             else:
     #                 # Final Fallback: just "translate TEXT" (assume target is default \
+    \
     English)
-    #                 match_simple_translate = re.search(r"translate\s + (. + )", query, re.IGNORECASE)
+    #                 match_simple_translate = re.search(r"translate\s + (. + )", query,
+    re.IGNORECASE)
     #                 if match_simple_translate:
     #                     text_to_translate = match_simple_translate.group(1).strip()
     #                 # If still no text, use the original query as text_to_translate.
@@ -682,8 +720,10 @@ class ToolDispatcher:
     #                 error_message = "Sorry, no text to translate was found."
 (    #             )
 
-    #         # Use source_lang_from_kwarg if provided, otherwise it's None (for auto - detect)
-    #         result_payload = translate_text(text_to_translate, resolved_target_lang, source_language = source_lang_from_kwarg or "auto")
+    #         # Use source_lang_from_kwarg if provided,
+    otherwise it's None (for auto - detect)
+    #         result_payload = translate_text(text_to_translate, resolved_target_lang,
+    source_language = source_lang_from_kwarg or "auto")
     #
     #         if "Translation not available", in result_payload or "error",
     in result_payload.lower() or "not supported", in result_payload.lower():
@@ -748,7 +788,8 @@ if __name__ == "__main__":
         logging.info("\nTesting explicit tool dispatch:")
         explicit_query = "what is 50 + 50"
         logging.info(f"Query: \"{explicit_query}\", Tool: calculate")
-        result = await dispatcher.dispatch(explicit_query, explicit_tool_name = "calculate")
+        result = await dispatcher.dispatch(explicit_query,
+    explicit_tool_name = "calculate")
         logging.info(f"Tool Dispatcher Result: {result}")
 
         non_tool_query = "hello world"

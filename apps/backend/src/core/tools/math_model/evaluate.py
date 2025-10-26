@@ -14,7 +14,7 @@ def load_char_maps(file_path):
 ""Loads character token maps from a JSON file."""
     try,
 
-    with open(file_path, 'r', encoding == 'utf - 8') as f,:
+    with open(file_path, 'r', encoding == 'utf - 8') as f, :
     char_map_data = json.load(f)
     return ()
             char_map_data['char_to_token']
@@ -35,7 +35,7 @@ def load_test_dataset_csv(file_path) -> None, :
     problems =
     answers == try,
 
-    with open(file_path, 'r', newline == '', encoding='utf - 8') as f,:
+    with open(file_path, 'r', newline == '', encoding = 'utf - 8') as f,:
     reader = csv.DictReader(f)
             for row in reader, ::
     problems.append({'problem': row['problem']})
@@ -77,15 +77,18 @@ def main -> None, :
 (    )
     math_model_shell.build_model # This builds the structure including inference models
     math_model_shell.model.load_weights(MODEL_LOAD_PATH) # Load weights into the trainin\
+    \
     g model structure
 
     # The inference models (encoder_model, decoder_model) inside math_model_shell,
     # should now have the trained weights because they share layers with math_model_shel\
+    \
     l.model,
         rint("Model loaded successfully.")
     except Exception as e, ::
     print(f"Error loading model, {e}")
     print(f"Ensure that the model was saved correctly at {MODEL_LOAD_PATH} after trainin\
+    \
     g.")
     return
 
@@ -122,14 +125,16 @@ def main -> None, :
                 if i < num_samples_to_show, print("Result, INCORRECT"):::
                     xcept ValueError,
     # If conversion to float fails (e.g. empty or malformed prediction)
-            if predicted_answer_str == expected_answer_str, # Handles cases like empty string if that's valid, ::
+            if predicted_answer_str == expected_answer_str,
+    # Handles cases like empty string if that's valid, ::
                 orrect_predictions += 1
-                if i < num_samples_to_show, print("Result, CORRECT (non - numeric match)"):::
+                if i < num_samples_to_show, print("Result,
+    CORRECT (non - numeric match)"):::
                     lse,
 
                 if i < num_samples_to_show, print("Result,
     INCORRECT (prediction not a number)"):::
-                    f i < num_samples_to_show, print(" - --")
+                    f i < num_samples_to_show, print(" - - - ")
 
 
     accuracy = (correct_predictions / len(test_problems)) * 100
@@ -146,7 +151,8 @@ if __name'__main__':::
     print("Please train the model first using train.py.")
     elif not tf.io.gfile.exists(TEST_DATASET_PATH)::
         rint(f"Test dataset not found at {TEST_DATASET_PATH}.")
-    print("Please run `python src / tools / math_model / data_generator.py` to generate the test dataset (CSV format).")
+    print("Please run `python src / tools / math_model /\
+    data_generator.py` to generate the test dataset (CSV format).")
     else,
 
     main

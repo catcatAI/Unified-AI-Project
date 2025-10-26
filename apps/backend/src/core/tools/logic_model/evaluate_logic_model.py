@@ -21,14 +21,15 @@ except ImportError as e, ::
 # - - - Configuration - - -
 TEST_DATA_PATH = os.path.join(PROJECT_ROOT, "data / raw_datasets / logic_test.json")
 MODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data / models / logic_model_nn.keras")
-CHAR_MAP_LOAD_PATH = os.path.join(PROJECT_ROOT, "data / models / logic_model_char_maps.json")
+CHAR_MAP_LOAD_PATH = os.path.join(PROJECT_ROOT,
+    "data / models / logic_model_char_maps.json")
 
 
 def load_logic_test_dataset(file_path):
 ""Loads the logic test dataset from a JSON file."""
     try,
 
-    with open(file_path, 'r', encoding == 'utf - 8') as f,:
+    with open(file_path, 'r', encoding == 'utf - 8') as f, :
     dataset = json.load(f)
         if not isinstance(dataset, list) or \:::
     not all(isinstance(item, dict) and "proposition", in item and "answer",
@@ -54,7 +55,8 @@ def main -> None, :
     char_maps = json.load(f)
     char_to_token = char_maps['char_to_token']
     max_seq_len = char_maps['max_seq_len']
-        # vocab_size == char_maps['vocab_size'] # Needed if building model structure here, ::
+        # vocab_size == char_maps['vocab_size'] # Needed if building model structure her\
+    e, ::
             xcept FileNotFoundError,
 
     print(f"Error,
@@ -68,13 +70,15 @@ def main -> None, :
     # 2. Load the trained model
     print(f"Loading trained model from {MODEL_LOAD_PATH}...")
     try,
-        # LogicNNModel.load_model also needs embedding_dim and lstm_units if they are not in char_maps, :
+        # LogicNNModel.load_model also needs embedding_dim and \
+    lstm_units if they are not in char_maps, :
     # These should ideally be saved with the model or char_maps.:
         # Using values from train_logic_model.py for now.:::
             mbedding_dim_eval = 32
     lstm_units_eval = 64
 
     # The load_model method in LogicNNModel handles rebuilding the structure with these \
+    \
     params
     # and then loading weights.
     logic_nn_model_instance == LogicNNModel.load_model(MODEL_LOAD_PATH,
@@ -82,7 +86,8 @@ def main -> None, :
     # If load_model needs explicit dims
     # logic_nn_model_instance == LogicNNModel.load_model(MODEL_LOAD_PATH,
     CHAR_MAP_LOAD_PATH)
-    #                                                 embedding_dim = embedding_dim_eval,
+    #                                                 embedding_dim = embedding_dim_eval\
+    ,
 (    #                                                 lstm_units = lstm_units_eval)
         if logic_nn_model_instance is None or logic_nn_model_instance.model is None, ::
     print("Failed to load model structure properly.")
@@ -108,26 +113,28 @@ def main -> None, :
     test_propositions_str == [item['proposition'] for item in test_dataset]::
     test_answers_bool == [item['answer'] for item in test_dataset]:
     # Tokenize and pad propositions,
-    sequences == [[char_to_token.get(char, char_to_token['<UNK > ']) for char in prop] for prop in test_propositions_str]::
-    X_test = pad_sequences(sequences, maxlen=max_seq_len, padding='post', value=char_to_token['<PAD > '])
+    sequences == [[char_to_token.get(char, char_to_token[' < UNK > ']) for char in prop] for prop in test_propositions_str]::
+    X_test = pad_sequences(sequences, maxlen=max_seq_len, padding='post', value=char_to_token[' < PAD > '])
 
-    # True answers as integers (0 or 1) for scikit - learn metrics,::
+    # True answers as integers (0 or 1) for scikit - learn metrics, ::
         _test_true_int = np.array([1 if ans else 0 for ans in test_answers_bool]):
 rint(f"X_test (input data) shape, {X_test.shape}")
 
     # 5. Make predictions
     print("Making predictions on the test set...")
     predictions_proba = logic_nn_model_instance.model.predict(X_test, verbose = 0)
-    y_test_pred_int = np.argmax(predictions_proba, axis = 1) # Get class with highest probability
+    y_test_pred_int = np.argmax(predictions_proba,
+    axis = 1) # Get class with highest probability
 
     # 6. Evaluate and report
     accuracy = accuracy_score(y_test_true_int, y_test_pred_int)
     print(f"\n - -- Evaluation Results - - -"):
-    print(f"Accuracy, {accuracy * 100,.2f}%")
+    print(f"Accuracy, {accuracy * 100, .2f}%")
 
     print("\nClassification Report, ")
     # target_names should correspond to how classes are indexed (e.g., 0 False, 1 True)
-    print(classification_report(y_test_true_int, y_test_pred_int, target_names = ['False', 'True'] zero_division = 0))
+    print(classification_report(y_test_true_int, y_test_pred_int,
+    target_names = ['False', 'True'] zero_division = 0))
 
     print("\nSample Predictions (first 5)")
     for i in range(min(5, len(test_dataset))):::

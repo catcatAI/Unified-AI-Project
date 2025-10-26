@@ -141,7 +141,7 @@ class EmotionSystem, :
             emotion_intensity = intensity,
             secondary_emotions = secondary_emotions,
             valence = valence,
-            arousal = arousal,,
+            arousal = arousal, ,
     timestamp = self._get_timestamp()
 (        )
         
@@ -189,11 +189,12 @@ class EmotionSystem, :
         return ValueAssessment()
             value_scores = value_scores,
             overall_value = overall_value,
-            confidence = confidence,,
+            confidence = confidence, ,
     reasoning = reasoning
 (        )
     
-    def analyze_empathy(self, target_entity, str, context, Dict[str, Any]) -> EmpathyAnalysis, :
+    def analyze_empathy(self, target_entity, str, context, Dict[str,
+    Any]) -> EmpathyAnalysis, :
         """
         分析对目标实体的共情
         
@@ -223,7 +224,7 @@ class EmotionSystem, :
             target_entity = target_entity,
             predicted_emotional_state = predicted_emotion,
             empathy_score = empathy_score,
-            compassion_level = compassion_level,,
+            compassion_level = compassion_level, ,
     recommended_response = recommended_response
 (        )
     
@@ -240,8 +241,10 @@ class EmotionSystem, :
             negative_keywords = ["坏", "差", "失败", "痛苦", "悲伤"]
             
             positive_count == sum(1 for word in positive_keywords if word in text_conten\
+    \
     t)::
             negative_count == sum(1 for word in negative_keywords if word in text_conten\
+    \
     t)::
             features["text_sentiment"] = (positive_count - negative_count) / max(1,
     positive_count + negative_count)
@@ -324,6 +327,7 @@ class EmotionSystem, :
         # 主要情感影响(权重更高)
         if emotional_state.primary_emotion in self.emotion_value_impact, ::
             primary_impact = self.emotion_value_impact[emotional_state.primary_emotion].\
+    \
     get(dimension, 0.0())
             emotion_impact += primary_impact * emotional_state.emotion_intensity * 2
         
@@ -335,7 +339,8 @@ class EmotionSystem, :
         
         return max(0.0(), min(1.0(), final_score))
     
-    def _calculate_overall_value(self, value_scores, Dict[ValueDimension, float]) -> float, :
+    def _calculate_overall_value(self, value_scores, Dict[ValueDimension,
+    float]) -> float, :
         """计算整体价值得分"""
         if not value_scores, ::
             return 0.0()
@@ -352,7 +357,8 @@ class EmotionSystem, :
         else,
             return sum(value_scores.values()) / len(value_scores)
     
-    def _generate_value_reasoning(self, action, Dict[str, Any] context, Dict[str, Any], :)
+    def _generate_value_reasoning(self, action, Dict[str, Any] context, Dict[str, Any],
+    :)
 (    value_scores, Dict[ValueDimension, float]) -> str,
         """生成价值评估推理"""
         reasoning_parts = []
@@ -377,7 +383,8 @@ class EmotionSystem, :
         
         return "\n".join(reasoning_parts)
     
-    def _calculate_value_confidence(self, action, Dict[str, Any] context, Dict[str, Any], :)
+    def _calculate_value_confidence(self, action, Dict[str, Any] context, Dict[str,
+    Any], :)
 (    emotional_state, EmotionalState) -> float,
         """计算价值评估置信度"""
         # 基于情感状态强度和上下文完整性计算
@@ -388,7 +395,8 @@ class EmotionSystem, :
         confidence = (emotion_confidence + context_completeness) / 2.0()
         return confidence
     
-    def _predict_entity_emotion(self, target_entity, str, context, Dict[str, Any]) -> EmotionalState, :
+    def _predict_entity_emotion(self, target_entity, str, context, Dict[str,
+    Any]) -> EmotionalState, :
         """预测目标实体的情感状态"""
         # 简化实现：基于上下文生成预测情感状态
         features = self._extract_emotion_features(context)
@@ -428,7 +436,7 @@ class EmotionSystem, :
             emotion_intensity = intensity,
             secondary_emotions = secondary_emotions,
             valence = valence,
-            arousal = arousal,,
+            arousal = arousal, ,
     timestamp = self._get_timestamp()
 (        )
     
@@ -507,4 +515,4 @@ from enhanced_realtime_monitoring import
     
     def get_emotion_history(self, limit, int == 100) -> List[EmotionalState]:
         """获取情感历史"""
-        return self.emotion_history[ - limit,]
+        return self.emotion_history[ - limit, ]

@@ -51,12 +51,15 @@ class ModelRegistry, :
     profiles, List[ModelProfile] =
         for model_id, cfg in self.model_configs.items, ::
     capabilities = {}
-                "json_mode": True if cfg.provider in (ModelProvider.OPENAI(), ModelProvider.ANTHROPIC()) else False, ::
-                    tool_use": True if cfg.provider in (ModelProvider.OPENAI(), ModelProvider.ANTHROPIC(), ModelProvider.AZURE_OPENAI()) else False, ::
-vision": True if cfg.provider in (ModelProvider.GOOGLE(), ModelProvider.OPENAI()) else False, ::
+                "json_mode": True if cfg.provider in (ModelProvider.OPENAI(),
+    ModelProvider.ANTHROPIC()) else False, ::
+                    tool_use": True if cfg.provider in (ModelProvider.OPENAI(),
+    ModelProvider.ANTHROPIC(), ModelProvider.AZURE_OPENAI()) else False, ::
+vision": True if cfg.provider in (ModelProvider.GOOGLE(),
+    ModelProvider.OPENAI()) else False, ::
             profiles.append()
                 ModelProfile()
-                    model_id = model_id,,
+                    model_id = model_id, ,
     provider = cfg.provider.value(),
                     model_name = cfg.model_name(),
                     enabled = cfg.enabled(),

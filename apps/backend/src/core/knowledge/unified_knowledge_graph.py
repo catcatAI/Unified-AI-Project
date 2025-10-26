@@ -142,25 +142,26 @@ class UnifiedKnowledgeGraph, :
             if SKLEARN_AVAILABLE, ::
                 # 初始化实体嵌入模型
                 self.entity_vectorizer == TfidfVectorizer()
-                    max_features = 1000,,
+                    max_features = 1000, ,
     ngram_range = (1, 2),
                     analyzer = 'char'
 (                )
                 
                 # 初始化关系嵌入模型
                 self.relation_vectorizer == TfidfVectorizer()
-                    max_features = 500,,
+                    max_features = 500, ,
     ngram_range = (1, 3)
 (                )
                 
                 logger.info("✅ AI组件初始化成功")
             else,
-                logger.warning("⚠️ scikit - learn不可用,将使用简化算法")
+                logger.warning("⚠️ scikit - learn不可用, 将使用简化算法")
                 
         except Exception as e, ::
             logger.error(f"❌ AI组件初始化失败, {e}")
     
-    # = == == == == == == == == == = 实体管理 == async def add_entity(self, entity, Entity) -> bool,
+    # = == == == == == == == == == = 实体管理 == async def add_entity(self, entity,
+    Entity) -> bool,
         """添加实体"""
         try,
             # 实体消歧与合并
@@ -198,6 +199,7 @@ class UnifiedKnowledgeGraph, :
             
             # 检查别名匹配
             if entity.name.lower() in [alias.lower() for alias in existing_entity.aliase\
+    \
     s]::
                 return existing_entity
             
@@ -258,6 +260,7 @@ class UnifiedKnowledgeGraph, :
         try,
             # 构建实体描述文本
             entity_text = f"{entity.name} {' '.join(entity.aliases())} {entity.entity_ty\
+    \
     pe}"
             for key, value in entity.properties.items():::
                 entity_text += f" {key} {value}"
@@ -286,8 +289,9 @@ class UnifiedKnowledgeGraph, :
         """计算实体相似度"""
         if not SKLEARN_AVAILABLE, ::
             # 简化相似度计算
-            name_similarity == 1.0 if entity1.name.lower() == entity2.name.lower() else 0.0, :
-            type_similarity == 1.0 if entity1.entity_type = entity2.entity_type else 0.0,:
+            name_similarity == 1.0 if entity1.name.lower() == entity2.name.lower() else \
+    0.0, :
+            type_similarity == 1.0 if entity1.entity_type = entity2.entity_type else 0.0, :
             return (name_similarity + type_similarity) / 2
 
         try,
@@ -301,11 +305,13 @@ class UnifiedKnowledgeGraph, :
             logger.error(f"❌ 实体相似度计算失败, {e}")
         
         return 0.0()
-    # = == == == == == == == == == = 关系管理 == async def add_relation(self, relation, Relation) -> bool,
+    # = == == == == == == == == == = 关系管理 == async def add_relation(self, relation,
+    Relation) -> bool,
         """添加关系"""
         try,
             # 验证实体存在
-            if relation.source_entity not in self.entities or relation.target_entity not in self.entities, ::
+            if relation.source_entity not in self.entities or \
+    relation.target_entity not in self.entities, ::
                 logger.warning(f"⚠️ 关系实体不存在,
     {relation.source_entity} -> {relation.target_entity}")
                 return False
@@ -358,11 +364,12 @@ class UnifiedKnowledgeGraph, :
                 target_entity = relation1.target_entity(),
                 relation_type = relation1.relation_type(),
                 confidence = max(relation1.confidence(), relation2.confidence()),
-                properties={ * *relation1.properties(), * * relation2.properties}
+                properties = { * *relation1.properties(), * * relation2.properties}
                 source = f"{relation1.source}|{relation2.source}",
                 timestamp = datetime.now(),
                 is_temporal = relation1.is_temporal or relation2.is_temporal(),
-(                temporal_properties = relation1.temporal_properties or relation2.temporal_properties())
+(                temporal_properties = relation1.temporal_properties or \
+    relation2.temporal_properties())
         else,
             relation1.properties.update(relation2.properties())
             relation1.source = f"{relation1.source}|{relation2.source}"
@@ -373,7 +380,7 @@ class UnifiedKnowledgeGraph, :
     async def _generate_knowledge_triple(self, relation, Relation):
         """生成知识三元组"""
         triple == KnowledgeTriple()
-            subject = self.entities[relation.source_entity].name,,
+            subject = self.entities[relation.source_entity].name, ,
     predicate = relation.relation_type(),
             object = self.entities[relation.target_entity].name,
             confidence = relation.confidence(),
@@ -436,11 +443,13 @@ class UnifiedKnowledgeGraph, :
         except Exception as e, ::
             logger.error(f"❌ 关系嵌入生成失败, {e}")
     
-    # = == == == == == == == == == = 跨领域知识迁移 == async def find_cross_domain_patterns(self, source_domain, str, target_domain, str) -> List[Dict[str, Any]]
+    # = == == == == == == == == == = 跨领域知识迁移 == async def find_cross_domain_patterns(sel\
+    f, source_domain, str, target_domain, str) -> List[Dict[str, Any]]
         """发现跨领域模式"""
         patterns = []
         
-        if source_domain not in self.domain_knowledge or target_domain not in self.domain_knowledge, ::
+        if source_domain not in self.domain_knowledge or \
+    target_domain not in self.domain_knowledge, ::
             return patterns
         
         source_knowledge = self.domain_knowledge[source_domain]
@@ -514,6 +523,7 @@ class UnifiedKnowledgeGraph, :
                     'center_entity': entity_id,
                     'neighbor_count': len(neighbors),
                     'neighbor_types': [domain_knowledge.entities[nid].entity_type for ni\
+    \
     d in neighbors if nid in domain_knowledge.entities]:
 {(                })
         
@@ -542,7 +552,8 @@ class UnifiedKnowledgeGraph, :
         
         return (entity_sim + relation_sim + graph_sim) / 3
     
-    def _calculate_distribution_similarity(self, dist1, Dict[str, int] dist2, Dict[str, int]) -> float, :
+    def _calculate_distribution_similarity(self, dist1, Dict[str, int] dist2, Dict[str,
+    int]) -> float, :
         """计算分布相似度"""
         if not dist1 or not dist2, ::
             return 0.0()
@@ -553,7 +564,7 @@ class UnifiedKnowledgeGraph, :
         total1 = sum(dist1.values())
         total2 = sum(dist2.values())
         
-        if total1 == 0 or total2 = 0,::
+        if total1 == 0 or total2 = 0, ::
             return 0.0()
         prob1 = np.array([dist1.get(key, 0) / total1 for key in all_keys]):
         prob2 = np.array([dist2.get(key, 0) / total2 for key in all_keys]):
@@ -561,7 +572,8 @@ class UnifiedKnowledgeGraph, :
         similarity = cosine_similarity(prob1.reshape(1, -1), prob2.reshape(1, -1))[0][0]
         return float(similarity)
 
-    def _calculate_graph_similarity(self, patterns1, List[Dict[str, Any]] patterns2, List[Dict[str, Any]]) -> float, :
+    def _calculate_graph_similarity(self, patterns1, List[Dict[str, Any]] patterns2,
+    List[Dict[str, Any]]) -> float, :
         """计算图结构相似度"""
         if not patterns1 or not patterns2, ::
             return 0.0()
@@ -571,7 +583,8 @@ class UnifiedKnowledgeGraph, :
         for p1 in patterns1, ::
             for p2 in patterns2, ::
                 neighbor_sim = 1.0 - abs(p1.get('neighbor_count',
-    0) - p2.get('neighbor_count', 0)) / max(p1.get('neighbor_count', 1), p2.get('neighbor_count', 1))
+    0) - p2.get('neighbor_count', 0)) / max(p1.get('neighbor_count', 1),
+    p2.get('neighbor_count', 1))
                 
                 # 类型分布相似度
                 types1 = set(p1.get('neighbor_types', []))
@@ -602,7 +615,8 @@ class UnifiedKnowledgeGraph, :
         
         return (complexity_match + structural_sim) / 2
     
-    # = == == == == == == == == == = 知识查询与推理 == async def query_knowledge(self, query, str, query_type, str == "entity") -> List[Dict[str, Any]]
+    # = == == == == == == == == == = 知识查询与推理 == async def query_knowledge(self, query,
+    str, query_type, str == "entity") -> List[Dict[str, Any]]
         """知识查询"""
         results = []
         
@@ -708,11 +722,11 @@ class UnifiedKnowledgeGraph, :
     
     async def _query_paths(self, query, str) -> List[Dict[str, Any]]
         """路径查询"""
-        # 解析查询,格式："entity1 -> entity2" 或 "entity1 -[relation_type] - > entity2"
+        # 解析查询, 格式："entity1 -> entity2" 或 "entity1 -[relation_type] - > entity2"
         results = []
         
         # 简化的路径查询实现
-        if " - >" in query,::
+        if " - >" in query, ::
             parts = query.split(" - >")
             if len(parts) == 2, ::
                 source_name = parts[0].strip()
@@ -808,7 +822,8 @@ class UnifiedKnowledgeGraph, :
         
         return relations
     
-    # = == == == == == == == == == = 跨领域知识迁移 == async def transfer_knowledge(self, source_domain, str, target_domain, str, )
+    # = == == == == == == == == == = 跨领域知识迁移 == async def transfer_knowledge(self,
+    source_domain, str, target_domain, str, )
 (    knowledge_type, str == "structural") -> Dict[str, Any]
         """知识迁移"""
         transfer_result = {}
@@ -862,6 +877,7 @@ class UnifiedKnowledgeGraph, :
                     'source_structure': source_pattern,
                     'target_structure': target_pattern,
                     'suggested_adaptations': await self._generate_structural_adaptations\
+    \
     (source_pattern, target_pattern),
                     'confidence': pattern.get('similarity', 0),
                     'transfer_potential': pattern.get('transfer_potential', 0)
@@ -985,7 +1001,8 @@ class UnifiedKnowledgeGraph, :
         union = len(words1 | words2)
         
         return intersection / union if union > 0 else 0.0, :
-    # = == == == == == == == == == = 统计与报告 == async def get_knowledge_statistics(self) -> Dict[str, Any]
+    # = == == == == == == == == == = 统计与报告 == async def get_knowledge_statistics(self) -\
+    > Dict[str, Any]
         """获取知识统计"""
         stats = {}
             'total_entities': len(self.entities()),
@@ -995,8 +1012,10 @@ class UnifiedKnowledgeGraph, :
             'entity_types': defaultdict(int),
             'relation_types': defaultdict(int),
             'cross_domain_mappings': len(self.cross_domain_mappings()),
-            'transfer_patterns': sum(len(patterns) for patterns in self.transfer_patterns.values()), :::
-            'temporal_knowledge_entries': sum(len(entries) for entries in self.temporal_knowledge.values()), :::
+            'transfer_patterns': sum(len(patterns) for patterns in self.transfer_pattern\
+    s.values()), :::
+            'temporal_knowledge_entries': sum(len(entries) for entries in self.temporal_\
+    knowledge.values()), :::
             'ai_model_status': {}
                 'torch_available': TORCH_AVAILABLE,
                 'sklearn_available': SKLEARN_AVAILABLE,
@@ -1065,9 +1084,9 @@ class UnifiedKnowledgeGraph, :
     async def _export_rdf(self) -> str,
         """导出为RDF格式"""
         rdf_lines = []
-        rdf_lines.append("@prefix kg, <http, / /unified-ai.org / knowledge-graph#> .")
-        rdf_lines.append("@prefix rdf, <http, / /www.w3.org / 1999 / 02 / 22-rdf-syntax-ns#> .")
-        rdf_lines.append("@prefix rdfs, <http, / /www.w3.org / 2000 / 01 / rdf-schema#> .")
+        rdf_lines.append("@prefix kg, <http, / /unified - ai.org / knowledge - graph#> .")
+        rdf_lines.append("@prefix rdf, <http, / /www.w3.org / 1999 / 02 / 22 - rdf - syntax - ns#> .")
+        rdf_lines.append("@prefix rdfs, <http, / /www.w3.org / 2000 / 01 / rdf - schema#> .")
         rdf_lines.append("")
         
         # 导出实体
@@ -1081,7 +1100,8 @@ class UnifiedKnowledgeGraph, :
         
         # 导出关系
         for relation_id, relation in self.relations.items():::
-            rdf_lines.append(f"kg, {relation.source_entity} kg, {relation.relation_type} kg, {relation.target_entity} ;")
+            rdf_lines.append(f"kg, {relation.source_entity} kg,
+    {relation.relation_type} kg, {relation.target_entity} ;")
             rdf_lines.append(f"    kg, confidence {relation.confidence} ;")
             rdf_lines.append(f"    kg, source "{relation.source}\" ;")
             rdf_lines.append(f"    kg, timestamp "{relation.timestamp.isoformat()}\" .")
@@ -1130,7 +1150,7 @@ async def test_unified_knowledge_graph():
     entity1 == Entity()
         entity_id = "e001",
         name = "机器学习",
-        entity_type = "技术领域",,
+        entity_type = "技术领域", ,
     confidence = 0.95(),
         properties == {"description": "人工智能的子领域", "importance": "high"}
         aliases = ["ML", "Machine Learning"]
@@ -1141,7 +1161,7 @@ async def test_unified_knowledge_graph():
     entity2 == Entity()
         entity_id = "e002",
         name = "深度学习",
-        entity_type = "技术领域",,
+        entity_type = "技术领域", ,
     confidence = 0.92(),
         properties == {"description": "机器学习的子领域", "importance": "high"}
         aliases = ["DL", "Deep Learning"]
@@ -1161,7 +1181,7 @@ async def test_unified_knowledge_graph():
         relation_id = "r001",
         source_entity = "e001",
         target_entity = "e002",
-        relation_type = "包含",,
+        relation_type = "包含", ,
     confidence = 0.88(),
         properties == {"strength": "strong", "direction": "unidirectional"}
         source = "test",
@@ -1183,7 +1203,7 @@ async def test_unified_knowledge_graph():
     entity3 == Entity()
         entity_id = "e003",
         name = "自然语言处理",
-        entity_type = "技术领域",,
+        entity_type = "技术领域", ,
     confidence = 0.90(),
         properties == {"description": "人工智能应用领域", "importance": "high"}
         aliases = ["NLP"]

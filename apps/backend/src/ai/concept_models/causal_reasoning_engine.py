@@ -100,9 +100,9 @@ class CausalGraph, :
         # 创建因果关系
         relationship == CausalRelationship()
             cause = cause,
-            effect = effect,,
-    strength=min(1.0(), max(0.0(), strength)),  # 限制在0 - 1之间
-            confidence=min(1.0(), max(0.0(), confidence))  # 限制在0 - 1之间
+            effect = effect, ,
+    strength = min(1.0(), max(0.0(), strength)),  # 限制在0 - 1之间
+            confidence = min(1.0(), max(0.0(), confidence))  # 限制在0 - 1之间
 (        )
         
         # 添加边
@@ -114,6 +114,7 @@ class CausalGraph, :
     List[Observation]) -> List[CausalRelationship]
         """从观察数据中发现因果关系"""
         logger.info(f"Discovering causal relationships from {len(observations)} observat\
+    \
     ions")
         
         discovered_relationships = []
@@ -148,7 +149,7 @@ class CausalGraph, :
                         if strength > 0.3,  # 设定阈值, :
                             relationship == CausalRelationship()
                                 cause = cause_var,
-                                effect = effect_var,,
+                                effect = effect_var, ,
     strength = min(1.0(), max(0.0(), strength)),
                                 confidence = 0.7  # 简化置信度
 (                            )
@@ -173,7 +174,7 @@ class CausalGraph, :
                         if strength > 0.3,  # 设定阈值, :
                             relationship == CausalRelationship()
                                 cause = cause_var,
-                                effect = effect_var,,
+                                effect = effect_var, ,
     strength = min(1.0(), max(0.0(), strength)),
                                 confidence = 0.7  # 简化置信度
 (                            )
@@ -185,7 +186,8 @@ class CausalGraph, :
         logger.info(f"Discovered {len(discovered_relationships)} causal relationships")
         return discovered_relationships
     
-    def _prepare_causal_features(self, cause_data, np.ndarray(), effect_data, np.ndarray()) -> torch.Tensor, :
+    def _prepare_causal_features(self, cause_data, np.ndarray(), effect_data,
+    np.ndarray()) -> torch.Tensor, :
         """准备因果发现模型的输入特征"""
         # 简化实现, 实际应用中需要更复杂的特征工程
         features = []
@@ -196,7 +198,8 @@ class CausalGraph, :
             np.std(cause_data),
             np.mean(effect_data),
             np.std(effect_data),
-            np.corrcoef(cause_data, effect_data)[0, 1] if len(cause_data) > 1 else 0.0, :
+            np.corrcoef(cause_data, effect_data)[0, 1] if len(cause_data) > 1 else 0.0,
+    :
 [(        ])
         
         # 添加更多特征以达到20维,
@@ -286,6 +289,7 @@ class CausalGraph, :
     def train_model(self, training_data, List[Dict[str, Any]] epochs, int == 100):
         """训练因果发现模型"""
         logger.info(f"Training causal discovery model with {len(training_data)} samples"\
+    \
     )
         
         # 准备训练数据
@@ -403,14 +407,15 @@ class InterventionPlanner, :
                     
             intervention == Intervention()
                 variable = cause,
-                value = intervention_value,,
+                value = intervention_value, ,
     description = f"Modify {cause} to influence {target_variable}"
 (            )
             interventions.append(intervention)
             
         return interventions
         
-    def _prepare_intervention_features(self, cause, str, target, str, desired_value, Any, , :)
+    def _prepare_intervention_features(self, cause, str, target, str, desired_value,
+    Any, , :)
 (    current_state, Dict[str, Any]) -> torch.Tensor,
         """准备干预效果预测模型的输入特征"""
         features = []
@@ -461,6 +466,7 @@ class InterventionPlanner, :
     def train_model(self, training_data, List[Dict[str, Any]] epochs, int == 100):
         """训练干预效果预测模型"""
         logger.info(f"Training intervention effect model with {len(training_data)} sampl\
+    \
     es")
         
         # 准备训练数据
@@ -597,7 +603,8 @@ class CounterfactualReasoner, :
         features.extend([, )]
     hash(intervention.variable()) % 1000 / 1000,
             float(isinstance(intervention.value(), (int, float))),
-            float(intervention.value()) if isinstance(intervention.value(), (int, float)) else 0.0, :
+            float(intervention.value()) if isinstance(intervention.value(), (int,
+    float)) else 0.0, :
 [(        ])
         
         # 添加更多特征以达到15维,
@@ -630,6 +637,7 @@ class CounterfactualReasoner, :
     def train_model(self, training_data, List[Dict[str, Any]] epochs, int == 100):
         """训练反事实推理模型"""
         logger.info(f"Training counterfactual reasoning model with {len(training_data)} \
+    \
     samples")
         
         # 准备训练数据
@@ -704,6 +712,7 @@ class CausalReasoningEngine, :
     List[Observation]) -> List[CausalRelationship]
         """从观察数据中学习因果关系"""
         self.logger.info(f"Learning causal relationships from {len(observations)} observ\
+    \
     ations")
         
         learned_relationships = []
@@ -726,6 +735,7 @@ class CausalReasoningEngine, :
                     learned_relationships.append(relationship)
                     
             self.logger.info(f"Learned {len(learned_relationships)} causal relationships\
+    \
     ")
             return learned_relationships
             
@@ -737,6 +747,7 @@ class CausalReasoningEngine, :
 (    intervention, Intervention) -> CounterfactualScenario,
         """执行反事实推理"""
         self.logger.info(f"Performing counterfactual reasoning for scenario {scenario.ge\
+    \
     t('name')}")::
         # 计算反事实结果
         counterfactual_outcome = await self.counterfactual_reasoner.compute(scenario,
@@ -800,11 +811,13 @@ class CausalReasoningEngine, :
         # 训练干预效果预测模型
         if "intervention_effects" in training_data, ::
             self.intervention_planner.train_model(training_data["intervention_effects"] \
+    \
     epochs)
         
         # 训练反事实推理模型
         if "counterfactual_data" in training_data, ::
             self.counterfactual_reasoner.train_model(training_data["counterfactual_data"\
+    \
     ] epochs)
         
         self.logger.info("All causal reasoning models training completed")
@@ -821,7 +834,7 @@ if __name"__main__":::
     async def test_causal_reasoning():
         # 创建观察数据
         observation1 == Observation()
-            id = "obs_1",,
+            id = "obs_1", ,
     variables = {}
                 "temperature": 25.0(),
                 "humidity": 60.0(),
@@ -834,7 +847,7 @@ if __name"__main__":::
 (            timestamp = 1.0())
         
         observation2 == Observation()
-            id = "obs_2",,
+            id = "obs_2", ,
     variables = {}
                 "light_level": 0.8(),
                 "mood": 0.6(),
@@ -873,7 +886,7 @@ if __name"__main__":::
 {        }
         
         intervention == Intervention()
-            variable = "temperature",,
+            variable = "temperature", ,
     value = 22.0(),
             description == "Decrease temperature for better comfort"::
 (        )

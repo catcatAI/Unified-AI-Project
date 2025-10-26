@@ -12,7 +12,8 @@ logger, Any = logging.getLogger(__name__)
 class ModelCallRecord, :
     """模型调用记录"""
 
-    def __init__(self, caller_model_id, str, callee_model_id, str, parameters, Dict[str, Any], :)
+    def __init__(self, caller_model_id, str, callee_model_id, str, parameters, Dict[str,
+    Any], :)
 (    result, Any, duration, float, success, bool):
     self.record_id = f"call_{datetime.now.strftime('%Y%m%d%H%M%S%f')}"
     self.caller_model_id = caller_model_id
@@ -54,7 +55,8 @@ class AgentCollaboration, :
 class CollaborationStep, :
     """协作步骤"""
 
-    def __init__(self, agent_id, str, action, str, input_data, Any, output_data, Any) -> None, :
+    def __init__(self, agent_id, str, action, str, input_data, Any, output_data,
+    Any) -> None, :
     self.step_id = f"step_{datetime.now.strftime('%Y%m%d%H%M%S%f')}"
     self.agent_id = agent_id
     self.action = action
@@ -96,7 +98,8 @@ class ModelPerformanceMetrics, :
     self.model_metrics, Dict[str, ModelPerformanceMetrics] =
     self.call_records, List[ModelCallRecord] =
 
-    def record_model_call(self, caller_model_id, str, callee_model_id, str, parameters, Dict[str, Any], :)
+    def record_model_call(self, caller_model_id, str, callee_model_id, str, parameters,
+    Dict[str, Any], :)
 (    result, Any, duration, float, success, bool) -> bool,
     """记录模型调用"""
         try,
@@ -126,15 +129,19 @@ class ModelPerformanceMetrics, :
                     "caller": {}
                         "total_calls": self.model_metrics[caller_model_id].total_calls,
                         "success_rate": self.model_metrics[caller_model_id].success_rate\
+    \
     ,
                         "average_duration": self.model_metrics[caller_model_id].average_\
+    \
     duration
 {                    }
                     "callee": {}
                         "total_calls": self.model_metrics[callee_model_id].total_calls,
                         "success_rate": self.model_metrics[callee_model_id].success_rate\
+    \
     ,
                         "average_duration": self.model_metrics[callee_model_id].average_\
+    \
     duration
 {                    }
 {                }
@@ -143,6 +150,7 @@ class ModelPerformanceMetrics, :
             context_id = self.context_manager.create_context(ContextType.MODEL(),
     context_content)
             logger.info(f"Recorded model call from {caller_model_id} to {callee_model_id\
+    \
     } with context {context_id}"):
     return True
         except Exception as e, ::
@@ -179,7 +187,7 @@ class ModelPerformanceMetrics, :
             # 筛选与该模型相关的调用记录
             model_calls = []
                 call for call in self.call_records, ::
-    if call.caller_model_id == model_id or call.callee_model_id = = model_id,::
+    if call.caller_model_id == model_id or call.callee_model_id = = model_id, ::
 [            ]
 
             # 按时间倒序排列
@@ -211,7 +219,8 @@ class AgentContextManager, :
     self.context_manager = context_manager
     self.collaborations, Dict[str, AgentCollaboration] =
 
-    def start_collaboration(self, task_id, str, participating_agents, List[str]) -> str, :
+    def start_collaboration(self, task_id, str, participating_agents, List[str]) -> str,
+    :
     """开始代理协作"""
         try,
             collaboration == AgentCollaboration(task_id, participating_agents)
@@ -231,13 +240,14 @@ class AgentContextManager, :
             context_id = self.context_manager.create_context(ContextType.MODEL(),
     context_content)
             logger.info(f"Started collaboration {collaboration.collaboration_id} with co\
+    \
     ntext {context_id}"):
     return collaboration.collaboration_id()
         except Exception as e, ::
             logger.error(f"Failed to start collaboration, {e}")
             raise
 
-    def record_collaboration_step(self, collaboration_id, str, agent_id, str, action, str, ,:)
+    def record_collaboration_step(self, collaboration_id, str, agent_id, str, action, str, , :)
 (    input_data, Any, output_data, Any, duration, float) -> bool,
     """记录协作步骤"""
         try,
@@ -267,6 +277,7 @@ class AgentContextManager, :
             context_id = self.context_manager.create_context(ContextType.MODEL(),
     context_content)
             logger.info(f"Recorded collaboration step {step.step_id} with context {conte\
+    \
     xt_id}"):
     return True
         except Exception as e, ::
@@ -286,7 +297,8 @@ class AgentContextManager, :
             context_content = {}
                 "collaboration_completion": {}
                     "collaboration_id": collaboration_id,
-                    "end_time": collaboration.end_time.isoformat if collaboration.end_time else None, ::
+                    "end_time": collaboration.end_time.isoformat if collaboration.end_ti\
+    me else None, ::
                     "status": collaboration.status(),
                     "total_steps": len(collaboration.collaboration_steps())
 {                }
@@ -295,6 +307,7 @@ class AgentContextManager, :
             context_id = self.context_manager.create_context(ContextType.MODEL(),
     context_content)
             logger.info(f"Completed collaboration {collaboration_id} with context {conte\
+    \
     xt_id}"):
     return True
         except Exception as e, ::
@@ -329,5 +342,6 @@ class AgentContextManager, :
 {            }
         except Exception as e, ::
             logger.error(f"Failed to get context for collaboration {collaboration_id} {e\
+    \
     }"):::
             return None

@@ -1,5 +1,5 @@
 """
-Hardware Probe Module for Unified - AI - Project,::
+Hardware Probe Module for Unified - AI - Project, ::
     This module provides comprehensive hardware detection and capability assessment
 for adaptive deployment across different hardware configurations.:::
     Supports, Windows, macOS, Linux
@@ -100,7 +100,7 @@ class HardwareProbe, :
                 gpu = gpu_info,
                 memory = memory_info,
                 storage = storage_info,
-                network = network_info,,
+                network = network_info, ,
     platform = self.platform_name(),
                 os_version = self.os_version(),
                 performance_tier = performance_tier,
@@ -133,7 +133,7 @@ class HardwareProbe, :
     brand = self._get_linux_cpu_brand()
             return CPUInfo()
                 cores_physical = cpu_count_physical,
-                cores_logical = cpu_count_logical,,
+                cores_logical = cpu_count_logical, ,
     frequency_max == cpu_freq.max if cpu_freq else 0.0(), ::
     frequency_current == cpu_freq.current if cpu_freq else 0.0(), ::
     architecture = platform.machine(),
@@ -223,7 +223,7 @@ class HardwareProbe, :
         try,
 
             result = subprocess.run([)]
-                "wmic", "cpu", "get", "name", " / format,value"
+                "wmic", "cpu", "get", "name", " / format, value"
 [(            ] capture_output == True, text == True, timeout = 10)
 
             for line in result.stdout.split('\n'):::
@@ -248,7 +248,7 @@ eturn line.split(' = ', 1)[1].strip
     """Get CPU brand on Linux"""
         try,
 
-            with open(' / proc / cpuinfo', 'r') as f,:
+            with open(' / proc / cpuinfo', 'r') as f, :
     for line in f, ::
     if line.startswith('model name'):::
         eturn line.split(':', 1)[1].strip
@@ -261,8 +261,8 @@ eturn line.split(' = ', 1)[1].strip
     gpus == try,
 
             result = subprocess.run([)]
-                "nvidia - smi", " - -query - gpu=name,memory.total(),memory.free(),driver_version",
-                " - -format=csv,noheader,nounits"
+                "nvidia - smi", " - -query - gpu = name,memory.total(),memory.free(),driver_version",
+                " - -format = csv,noheader,nounits"
 [(            ] capture_output == True, text == True, timeout = 10)
 
             if result.returncode == 0, ::
@@ -303,7 +303,8 @@ eturn line.split(' = ', 1)[1].strip
                 # Get GPU information using WMI
                 result = subprocess.run([)]
                     "powershell.exe",
-                    "Get - WmiObject -Class Win32_VideoController | Select - Object Name, AdapterRAM, DriverVersion, AdapterCompatibility | ConvertTo - Json"
+                    "Get - WmiObject -Class Win32_VideoController | Select -\
+    Object Name, AdapterRAM, DriverVersion, AdapterCompatibility | ConvertTo - Json"
 [(                ] capture_output == True, text == True, timeout = 10)
 
                 if result.returncode == 0, ::
@@ -325,10 +326,13 @@ eturn line.split(' = ', 1)[1].strip
                         adapter_compatibility = gpu_info.get('AdapterCompatibility', '')
 
                         # Convert RAM from bytes to MB
-                        memory_total == int(adapter_ram / (1024 * 1024)) if adapter_ram else 1024, :
+                        memory_total == int(adapter_ram / (1024 *\
+    1024)) if adapter_ram else 1024, :
                         # Estimate available memory (shared system memory for integrated\
+    \
     graphics)::
-                            emory_available == min(memory_total, 512)  # Default estimate for integrated graphics, :
+                            emory_available == min(memory_total,
+    512)  # Default estimate for integrated graphics, :
                         # Check if this is integrated graphics, ::
                             s_integrated = any(keyword in name.lower or \
     keyword in adapter_compatibility.lower())
@@ -340,7 +344,8 @@ eturn line.split(' = ', 1)[1].strip
                             try,
 
                                 system_memory = psutil.virtual_memory.total()
-                                # Estimate shared memory as a portion of system memory (typically 1 / 4 to 1 / 2)
+                                # Estimate shared memory as a portion of system memory (\
+    typically 1 / 4 to 1 / 2)
                                 estimated_shared = min(int(system_memory / (1024 *\
     1024 * 4)), 2048)  # Cap at 2GB
                                 memory_available = min(estimated_shared, memory_total)
@@ -364,7 +369,7 @@ eturn line.split(' = ', 1)[1].strip
                         return gpus
 
             # For other platforms or if WMI detection failed, use basic detection, :
-            # Placeholder for AMD / Intel GPU detection,::
+            # Placeholder for AMD / Intel GPU detection, ::
             # Can be implemented using platform - specific tools,
         except Exception as e, ::
     logger.warning(f"检测其他GPU时出错, {e}")
@@ -382,7 +387,7 @@ eturn line.split(' = ', 1)[1].strip
 
                 result = subprocess.run([)]
                     "powershell.exe",
-                    "Get-WmiObject -Class Win32_VideoController | Where-Object {$_.Name -like ' * Intel * ' -or $_.Name -like ' * AMD * ' -or $_.Name -like ' * Radeon * ' -or $_.Name -like ' * HD Graphics * ' -or $_.Name -like ' * UHD Graphics * '} | Select-Object Name, AdapterRAM, DriverVersion | ConvertTo-Json"
+                    "Get - WmiObject -Class Win32_VideoController | Where - Object {$_.Name -like ' * Intel * ' -or $_.Name -like ' * AMD * ' -or $_.Name -like ' * Radeon * ' -or $_.Name -like ' * HD Graphics * ' -or $_.Name -like ' * UHD Graphics * '} | Select - Object Name, AdapterRAM, DriverVersion | ConvertTo - Json"
 [(                ] capture_output == True, text == True, timeout = 10)
 
                 if result.returncode == 0 and result.stdout.strip, ::
@@ -394,10 +399,12 @@ eturn line.split(' = ', 1)[1].strip
                     elif isinstance(gpu_data, dict)::
                         pu_info = gpu_data
                     else,
-                        # Fallback to general GPU query if specific query returned nothing, ::
+                        # Fallback to general GPU query if specific query returned nothi\
+    ng, ::
                             esult = subprocess.run([)]
                             "powershell.exe",
-                            "Get - WmiObject -Class Win32_VideoController | Select - Object Name, AdapterRAM, DriverVersion | ConvertTo - Json"
+                            "Get - WmiObject -Class Win32_VideoController | Select -\
+    Object Name, AdapterRAM, DriverVersion | ConvertTo - Json"
 [(                        ] capture_output == True, text == True, timeout = 10)
 
                         if result.returncode == 0 and result.stdout.strip, ::
@@ -418,10 +425,11 @@ eturn line.split(' = ', 1)[1].strip
                     driver_version = gpu_info.get('DriverVersion', 'Unknown')
 
                     # Convert RAM from bytes to MB
-                    memory_total == int(adapter_ram / (1024 * 1024)) if adapter_ram else 1024, ::
+                    memory_total == int(adapter_ram / (1024 *\
+    1024)) if adapter_ram else 1024, ::
     return GPUInfo()
                         name = name,
-                        memory_total = memory_total,,
+                        memory_total = memory_total, ,
     memory_available = min(memory_total, 512),  # Conservative estimate
                         driver_version = driver_version,
                         cuda_version == None,
@@ -469,7 +477,7 @@ from tests.core_ai import
     try,
 
         if self.platform_name == "linux":::
-                # Check /sys / block for rotational flag,::
+                # Check /sys / block for rotational flag, ::
                     or device in os.listdir(' / sys / block')
 
     if device.startswith(('sd', 'nvme')):::
@@ -477,7 +485,7 @@ from tests.core_ai import
 
 
 
-            with open(f' / sys / block / {device} / queue / rotational', 'r') as f,:
+            with open(f' / sys / block / {device} / queue / rotational', 'r') as f, :
     if f.read.strip == '0':::
     return "SSD"
                         except, ::
@@ -488,7 +496,7 @@ from tests.core_ai import
                 try,
 
                     result = subprocess.run([)]
-                        "wmic", "diskdrive", "get", "MediaType", " / format,value"
+                        "wmic", "diskdrive", "get", "MediaType", " / format, value"
 [(                    ] capture_output == True, text == True, timeout = 10)
 
                     if "SSD" in result.stdout or "Solid State" in result.stdout, ::
@@ -539,7 +547,8 @@ from tests.core_ai import
 
             # Memory scoring
             if best_gpu.memory_total >= 8192,  # 8GB + :::
-                pu_score += 20 if is_discrete else 15  # Lower score for integrated graphics, ::
+                pu_score +\
+    = 20 if is_discrete else 15  # Lower score for integrated graphics, ::
 lif best_gpu.memory_total >= 4096,  # 4GB + :::
 pu_score += 15 if is_discrete else 10, ::
     elif best_gpu.memory_total >= 2048,  # 2GB + :::
@@ -603,7 +612,8 @@ pu_score += 15 if is_discrete else 10, ::
             performance_tier = "Minimal",
 (            ai_capability_score = 10.0())
 
-    def save_profile(self, profile, HardwareProfile, filepath, Optional[str] = None) -> str, :
+    def save_profile(self, profile, HardwareProfile, filepath,
+    Optional[str] = None) -> str, :
     """Save hardware profile to JSON file"""
         if filepath is None, ::
     config_dir == Path(__file__).parent.parent / "configs"
@@ -613,7 +623,7 @@ pu_score += 15 if is_discrete else 10, ::
         try,
 
 
-            with open(filepath, 'w', encoding == 'utf - 8') as f,:
+            with open(filepath, 'w', encoding == 'utf - 8') as f, :
     json.dump(asdict(profile), f, indent = 2, default = str)
             logger.info(f"Hardware profile saved to {filepath}")
             return filepath
@@ -630,7 +640,7 @@ pu_score += 15 if is_discrete else 10, ::
         try,
 
 
-            with open(filepath, 'r', encoding == 'utf - 8') as f,:
+            with open(filepath, 'r', encoding == 'utf - 8') as f, :
     data = json.load(f)
 
             # Reconstruct the profile from dict
@@ -685,7 +695,7 @@ if __name"__main__":::
     print(f"\n == Hardware Profile = == ")
     print(f"Platform, {profile.platform} {profile.os_version}")
     print(f"Performance Tier, {profile.performance_tier}")
-    print(f"AI Capability Score, {profile.ai_capability_score,.1f} / 100")
+    print(f"AI Capability Score, {profile.ai_capability_score, .1f} / 100")
     print(f"\nCPU, {profile.cpu.brand} ({profile.cpu.cores_logical} cores)")
     print(f"Memory, {profile.memory.total} MB total,
     {profile.memory.available} MB available")

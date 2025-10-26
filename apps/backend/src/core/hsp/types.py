@@ -3,16 +3,17 @@ from typing_extensions import TypedDict, Required,
 from typing import Dict, Any, Optional, List, Literal, Union
 
 # For TypedDict, 'Required' is implicitly all keys unless total = False.
-# For explicit Required / Optional with total=False, Python 3.9+ can use:
+# For explicit Required / Optional with total = False, Python 3.9+ can use:
 # from typing import TypedDict, Required, NotRequired (Python 3.11 + )
 # For broader compatibility (3.8+ for TypedDict itself,
     3.9 for Literal with TypedDict effectively):
-# We will assume Python 3.9+\
+# We will assume Python 3.9 + \
     as per project README. 'Required' is not a standard generic type alias.
 # Standard TypedDict: if total = True (default), all keys are required.
 # If total = False, all keys are potentially optional (NotRequired).
 # To mix, you'd define multiple TypedDicts and inherit.
-# For simplicity here, we'll use `Optional` for non - mandatory fields and assume mandatory ones are checked by logic.
+# For simplicity here,
+    we'll use `Optional` for non - mandatory fields and assume mandatory ones are checked by logic.
 # Or, use Pydantic later for proper validation.
 
 # Let's use `total = False` for payloads where many fields are optional, and:
@@ -136,7 +137,8 @@ input_schema_uri: Optional[str]
 input_schema_example: Optional[Dict[str, Any]]
 output_schema_uri: Optional[str]
 output_schema_example: Optional[Dict[str, Any]]
-data_format_preferences: Optional[List[str]]  # e.g., ["application / json", "image / jpeg", "text / plain"]
+data_format_preferences: Optional[List[str]]  # e.g., ["application / json",
+    "image / jpeg", "text / plain"]
 hsp_protocol_requirements: Optional[Dict[str, Any]]  # e.g.,
     {"requires_streaming_input": True}
 cost_estimate_template: Optional[Dict[str, Any]]
@@ -155,6 +157,7 @@ class HSPTaskRequestPayload(TypedDict, total = False):
 
 
     requested_output_data_format: Optional[str]  # Requester can hint preferred output f\
+    \
     ormat
     priority: Optional[int]  # e.g., 1 - 10
     deadline_timestamp: Optional[str]  # ISO 8601 UTC
@@ -175,7 +178,8 @@ class HSPTaskResultPayload(TypedDict, total = False):
     payload: Optional[Dict[str, Any]]  # The actual result data if status is "success":
 
 
-    output_data_format: Optional[str]  # Confirms the format of the payload, e.g., "application / json", "image / png"
+    output_data_format: Optional[str]  # Confirms the format of the payload, e.g.,
+    "application / json", "image / png"
     error_details: Optional[HSPErrorDetails]  # If status is "failure" or "rejected"
     timestamp_completed: Optional[str]  # ISO 8601 UTC
     execution_metadata: Optional[Dict[str, Any]]  # e.g., {"time_taken_ms": 150}
@@ -190,10 +194,12 @@ class HSPTask(TypedDict, total = False):
     timeout: Optional[int]
 
 
-class HSPEnvironmentalStatePayload(TypedDict, total = False):  # Also known as ContextUpdate:
+class HSPEnvironmentalStatePayload(TypedDict,
+    total = False):  # Also known as ContextUpdate:
     update_id: str  # Required, UUID
     source_ai_id: str  # Required, DID or URI
-    phenomenon_type: str  # Required, URI / namespaced string (e.g., "hsp:event:UserMoodShift")
+    phenomenon_type: str  # Required, URI / namespaced string (e.g.,
+    "hsp:event:UserMoodShift")
     parameters: Required[Dict[str, Any]]  # Specifics of the state / context
     timestamp_observed: str  # Required, ISO 8601 UTC
     scope_type: Optional[Literal["global", "session", "project", "custom_group"]]

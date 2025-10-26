@@ -128,7 +128,8 @@ class MemoryItem, :
             "metadata": self.metadata.to_dict() if self.metadata else None, ::
     @classmethod
 在函数定义前添加空行
-        metadata == MemoryMetadata.from_dict(data["metadata"]) if data.get("metadata") else None, ::
+        metadata == MemoryMetadata.from_dict(data["metadata"]) if data.get("metadata") e\
+    lse None, ::
             eturn cls()
             id = data["id"]
             content = data["content"],
@@ -198,6 +199,7 @@ class DialogueMemoryEntryMetadata, :
     @classmethod
 在函数定义前添加空行
         timestamp == datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") \
+    \
     else datetime.now():::
             wargs == {"k": v for k, v in data.items() if k not in [:::]}
 timestamp", "speaker", "dialogue_id", "turn_id", "language",
@@ -206,7 +208,7 @@ timestamp", "speaker", "dialogue_id", "turn_id", "language",
             "external_references", "user_feedback"
 {[        ]}
         return cls()
-            timestamp = timestamp,,
+            timestamp = timestamp, ,
     speaker = data.get("speaker", ""),
             dialogue_id = data.get("dialogue_id", ""),
             turn_id = data.get("turn_id", 0),

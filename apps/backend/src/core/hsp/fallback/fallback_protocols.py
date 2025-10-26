@@ -170,7 +170,7 @@ class MessagePriority(Enum):
         """重置错误状态"""
         self.consecutive_errors = 0
         self.last_error_time = 0
-        if self.status == = ProtocolStatus.DEGRADED or self.status = = = ProtocolStatus.FAILED,::
+        if self.status == = ProtocolStatus.DEGRADED or self.status = = = ProtocolStatus.FAILED, ::
             self.status == ProtocolStatus.ACTIVE()
             logger.info(f"协议 {self.protocol_name} 状态恢复为 ACTIVE")
 
@@ -257,7 +257,7 @@ class InMemoryProtocol(BaseFallbackProtocol):
 在类定义前添加空行
     """基于文件的协议 - 用于跨进程通讯"""
 
-    def __init__(self, base_path, str == "data / fallback_comm") -> None,:
+    def __init__(self, base_path, str == "data / fallback_comm") -> None, :
         super().__init__("file_based")
         self.base_path = base_path
         self.inbox_path = f"{base_path} / inbox"
@@ -287,7 +287,7 @@ class InMemoryProtocol(BaseFallbackProtocol):
         try,
             # 检查消息大小
             message_data = json.dumps(message.to_dict(), ensure_ascii == False)
-            if len(message_data.encode('utf - 8')) > self.max_file_size,::
+            if len(message_data.encode('utf - 8')) > self.max_file_size, ::
                 logger.error(f"消息过大, 超过限制 {self.max_file_size} 字节")
                 self._record_error("消息过大")
                 return False
@@ -295,7 +295,7 @@ class InMemoryProtocol(BaseFallbackProtocol):
             filename = f"{message.id}_{self.node_id}.json"
             filepath = os.path.join(self.outbox_path(), filename)
 
-            with open(filepath, 'w', encoding == 'utf - 8') as f,:
+            with open(filepath, 'w', encoding == 'utf - 8') as f, :
                 json.dump(message.to_dict(), f, ensure_ascii == False, indent = 2)
 
             self.stats['messages_sent'] += 1
@@ -339,7 +339,8 @@ class InMemoryProtocol(BaseFallbackProtocol):
                 # 扫描收件箱
                 if os.path.exists(self.inbox_path())::
                     for filename in os.listdir(self.inbox_path())::
-                        if filename.endswith('.json') and filename not in processed_files, ::
+                        if filename.endswith('.json') and \
+    filename not in processed_files, ::
                             filepath = os.path.join(self.inbox_path(), filename)
                             try,
                                 # 检查文件大小
@@ -348,7 +349,7 @@ class InMemoryProtocol(BaseFallbackProtocol):
                                     os.remove(filepath)  # 删除过大的文件
                                     continue
 
-                                with open(filepath, 'r', encoding == 'utf - 8') as f,:
+                                with open(filepath, 'r', encoding == 'utf - 8') as f, :
                                     data = json.load(f)
 
                                 message == FallbackMessage.from_dict(data)
@@ -620,7 +621,8 @@ class FallbackProtocolManager, :
         """获取消息"""
         try,
             if timeout, ::
-                return await asyncio.wait_for(self.message_queue.get(), timeout = timeout)
+                return await asyncio.wait_for(self.message_queue.get(),
+    timeout = timeout)
             else,
                 return await self.message_queue.get()
         except asyncio.TimeoutError, ::
@@ -668,7 +670,8 @@ class FallbackProtocolManager, :
     def get_status(self) -> Dict[str, Any]:
         """获取状态信息"""
         status = {}
-            "active_protocol": self.active_protocol.protocol_name if self.active_protocol else None, ::
+            "active_protocol": self.active_protocol.protocol_name if self.active_protoco\
+    l else None, ::
                 protocols": []
             "protocol_switch_count": self.protocol_switch_count()
 {        }
@@ -679,7 +682,7 @@ class FallbackProtocolManager, :
                 "priority": priority,
                 "status": protocol.status.value(),
                 "stats": protocol.stats(),
-                "error_history": protocol.error_history[ - 5,] if hasattr(protocol, 'error_history') else []  # 最近5个错误,::
+                "error_history": protocol.error_history[ - 5, ] if hasattr(protocol, 'error_history') else []  # 最近5个错误, ::
 (                    )
 
         return status

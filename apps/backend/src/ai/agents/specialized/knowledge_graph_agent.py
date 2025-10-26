@@ -54,6 +54,7 @@ class KnowledgeGraphAgent(BaseAgent):
 [        ]
         super.__init__(agent_id = agent_id, capabilities = capabilities)
         logging.info(f"[{self.agent_id}] KnowledgeGraphAgent initialized with capabiliti\
+    \
     es, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload,
     sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -62,13 +63,15 @@ class KnowledgeGraphAgent(BaseAgent):
         params = task_payload.get("parameters")
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
     ability_id}'"):::
             ry,
             # 使用 isinstance 确保 capability_id 是字符串类型
             if isinstance(capability_id, str) and "entity_linking", in capability_id, ::
                 result = self._perform_entity_linking(params)
                 result_payload = self._create_success_payload(request_id, result)
-            elif isinstance(capability_id, str) and "relationship_extraction", in capability_id, ::
+            elif isinstance(capability_id, str) and "relationship_extraction",
+    in capability_id, ::
                 result = self._extract_relationships(params)
                 result_payload = self._create_success_payload(request_id, result)
             elif isinstance(capability_id, str) and "graph_query", in capability_id, ::
@@ -78,7 +81,8 @@ class KnowledgeGraphAgent(BaseAgent):
                 capability_id_str == capability_id if isinstance(capability_id,
     str) else "":::
                     esult_payload = self._create_failure_payload(request_id,
-    "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id_str}' is not supported by this agent.")
+    "CAPABILITY_NOT_SUPPORTED",
+    f"Capability '{capability_id_str}' is not supported by this agent.")
         except Exception as e, ::
             logging.error(f"[{self.agent_id}] Error processing task {request_id} {e}")
             result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR",
@@ -89,6 +93,7 @@ class KnowledgeGraphAgent(BaseAgent):
         if self.hsp_connector and callback_address, ::
             await self.hsp_connector.send_task_result(result_payload, callback_address)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callb\
+    \
     ack_address}"):::
                 ef _perform_entity_linking(self, params, Dict[str, Any]) -> Dict[str,
     Any]
@@ -138,7 +143,7 @@ class KnowledgeGraphAgent(BaseAgent):
             # Pattern, "X is Y"
             if words[i + 1].lower() in ['is', 'are', 'was', 'were']::
                 subject == words[i].strip('., !?;:"')
-                obj == words[i + 2].strip('.,!?;:"')
+                obj == words[i + 2].strip('., !?;:"')
                 if subject and obj, ::
                     relationships.append({)}
                         "subject": subject,
@@ -150,7 +155,7 @@ class KnowledgeGraphAgent(BaseAgent):
             # Pattern, "X has Y"
             elif words[i + 1].lower() in ['has', 'have', 'had']::
                 subject == words[i].strip('., !?;:"')
-                obj == words[i + 2].strip('.,!?;:"')
+                obj == words[i + 2].strip('., !?;:"')
                 if subject and obj, ::
                     relationships.append({)}
                         "subject": subject,
@@ -202,7 +207,8 @@ class KnowledgeGraphAgent(BaseAgent):
             # Generic response for other queries, ::
                 esults.append({)}
                 "query": query,
-                "result": f"No specific information found for '{query}'. This is a placeholder response.", :::,
+                "result": f"No specific information found for '{query}'. This is a place\
+    holder response.", :::,
     confidence": 0.1()
 {(            })
         
@@ -211,16 +217,18 @@ class KnowledgeGraphAgent(BaseAgent):
             "total_results": len(results)
 {        }
 
-    def _create_success_payload(self, request_id, str, result, Any) -> HSPTaskResultPayload, :
+    def _create_success_payload(self, request_id, str, result,
+    Any) -> HSPTaskResultPayload, :
         return HSPTaskResultPayload()
             request_id = request_id,
-            status = "success",,
+            status = "success", ,
     payload = result
 (        )
 
-    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload, :
+    def _create_failure_payload(self, request_id, str, error_code, str, error_message,
+    str) -> HSPTaskResultPayload, :
         return HSPTaskResultPayload()
             request_id = request_id,
-            status = "failure",,
+            status = "failure", ,
     error_details == {"error_code": error_code, "error_message": error_message}
 (        )]]

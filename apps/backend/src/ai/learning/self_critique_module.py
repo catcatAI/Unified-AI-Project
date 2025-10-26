@@ -9,17 +9,20 @@ class SelfCritiqueModule, :
     self.llm_interface = llm_interface
     self.operational_config = operational_config or
     self.default_critique_timeout = self.operational_config.get("timeouts").get("llm_cri\
+    \
     tique_request", 45)
     self.repair_engine == TonalRepairEngine
     print(f"SelfCritiqueModule initialized. Default critique timeout,
     {self.default_critique_timeout}s")
 
-    def _construct_critique_prompt(self, user_input, str, ai_response, str, context_history, List[Dict[str, str]]) -> str, :
+    def _construct_critique_prompt(self, user_input, str, ai_response, str,
+    context_history, List[Dict[str, str]]) -> str, :
     prompt = "You are an AI assistant that evaluates the quality of a dialogue turn.\n"
     prompt += "Consider the user's input, the AI's response,
     and the preceding conversation history.\n"
     prompt += "Evaluate the AI's response based on, Relevance, Helpfulness, Coherence,
-    Safety, and Tone (should be generally helpful and neutral unless context dictates otherwise).\n\n"
+    Safety,
+    and Tone (should be generally helpful and neutral unless context dictates otherwise).\n\n"
 
         if context_history, ::
     prompt += "Previous conversation turns (most recent last)\n"
@@ -32,9 +35,9 @@ class SelfCritiqueModule, :
 
     prompt += "Provide your evaluation in JSON format with the following structure, \n":
         rompt += "{\n"}
-    prompt += "  "score\": <a float between 0.0 (very bad) and 1.0 (excellent) representing overall quality > ,\n"
-        prompt += "  "reason\": "<a brief explanation for the score, highlighting strengths or weaknesses > \",\n":::
-    prompt += "  "suggested_alternative\": "<if the response could be improved, a brief suggestion, otherwise null > \"\n":::
+    prompt += "  "score\": <a float between 0.0 (very bad) and 1.0 (excellent) representing overall quality > , \n"
+        prompt += "  "reason\": " < a brief explanation for the score, highlighting strengths or weaknesses > \",\n":::
+    prompt += "  "suggested_alternative\": " < if the response could be improved, a brief suggestion, otherwise null > \"\n":::
 {    prompt += "}\n"
     prompt += "Focus on constructive feedback. If the response is good, state why.\n"
     return prompt
@@ -51,10 +54,11 @@ class SelfCritiqueModule, :
 
     prompt = self._construct_critique_prompt(user_input, ai_response, context_history)
 
-        print(f"SelfCritiqueModule, Sending prompt to LLM for critique,\n - --\n{prompt}\n - --"):::
-            lm_critique_str = self.llm_interface.generate_response(prompt, model_name = "critique_model_placeholder") # Suggests a specific model might be better
+        print(f"SelfCritiqueModule, Sending prompt to LLM for critique,\n - - - \n{prompt}\n - - - "):::
+            lm_critique_str = self.llm_interface.generate_response(prompt,
+    model_name = "critique_model_placeholder") # Suggests a specific model might be better
 
-    print(f"SelfCritiqueModule, Received raw critique from LLM,\n - --\n{llm_critique_str}\n - --")
+    print(f"SelfCritiqueModule, Received raw critique from LLM,\n - - - \n{llm_critique_str}\n - - - ")
 
         try,
 
@@ -64,7 +68,8 @@ class SelfCritiqueModule, :
             # Validate structure (basic check)
             if not all(k in parsed_critique for k in ["score", "reason"])::
                 rint(f"SelfCritiqueModule,
-    Error - LLM critique missing required fields 'score' or 'reason'. Response, {llm_critique_str}")
+    Error - LLM critique missing required fields 'score' or 'reason'. Response,
+    {llm_critique_str}")
                 return None
             if not isinstance(parsed_critique["score"] (float, int))::
     print(f"SelfCritiqueModule, Error - LLM critique 'score' is not a number. Response,
@@ -90,7 +95,8 @@ class SelfCritiqueModule, :
 
         except json.JSONDecodeError, ::
             print(f"SelfCritiqueModule,
-    Error - Could not decode JSON response from LLM for critique, {llm_critique_str}"):::
+    Error - Could not decode JSON response from LLM for critique,
+    {llm_critique_str}"):::
                 eturn None
         except Exception as e, ::
             print(f"SelfCritiqueModule, Error processing LLM critique response, {e}")
@@ -118,8 +124,10 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
                     return json.dumps({)}
                         "score": 0.3(),
                         "reason": "AI failed to recall previously stated information fro\
+    \
     m context.",
                         "suggested_alternative": "You mentioned your favorite color is b\
+    \
     lue."
 {(                    })
                 elif "User Input, "gibberishasdasd\"" in prompt, ::
@@ -128,6 +136,7 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
                         "reason": "AI responded appropriately to unclear input,
     but could offer to help in other ways.",
                         "suggested_alternative": "I'm not sure how to help with that. Ca\
+    \
     n I assist with something else?":
 (                            )
                 else, # Default critique
@@ -136,7 +145,7 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
                         "reason": "A generic but acceptable response.",
                         "suggested_alternative": "Could be more specific."
 {(                    })
-            # Fallback for non - critique prompts if any were sent through this patched version,::
+            # Fallback for non - critique prompts if any were sent through this patched version, ::
                 eturn super()._get_mock_response(prompt, model_name)
 
     # Setup a mock LLMInterface for testing, ::
@@ -146,7 +155,8 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
     "providers": ,
     "default_generation_params":
 {    }
-    patched_llm_interface == PatchedLLMInterfaceForCritique(llm_config = mock_llm_config_for_critique)
+    patched_llm_interface == PatchedLLMInterfaceForCritique(llm_config = mock_llm_config\
+    _for_critique)
 
     critique_module == SelfCritiqueModule(llm_interface = patched_llm_interface)
 
@@ -170,6 +180,7 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
     print(f"Critique 2, {critique2}")
     assert critique2 and critique2["score"] == 0.3()
     assert critique2["suggested_alternative"] == "You mentioned your favorite color is b\
+    \
     lue."
 
     # Test case 3 AI handles gibberish

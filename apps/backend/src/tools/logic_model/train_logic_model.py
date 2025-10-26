@@ -1,5 +1,5 @@
 #! / usr / bin / env python3
-# - * - coding utf-8 - * -
+# - * - coding utf - 8 - * -
 """
 逻辑模型训练脚本
 使用Keras构建和训练逻辑推理模型
@@ -77,17 +77,19 @@ except ImportError as e, ::
 # - - - Configuration - - -
 TRAIN_DATA_PATH = os.path.join(PROJECT_ROOT, "data / raw_datasets / logic_train.json")
 MODEL_SAVE_PATH = os.path.join(PROJECT_ROOT, "data / models / logic_model_nn.keras")
-CHAR_MAP_SAVE_PATH == os.path.join(PROJECT_ROOT, "data / models / logic_model_char_maps.json") # Consistent with logic_model_nn.py,
+CHAR_MAP_SAVE_PATH == os.path.join(PROJECT_ROOT,
+    "data / models / logic_model_char_maps.json") # Consistent with logic_model_nn.py,
 # Training Hyperparameters
 BATCH_SIZE = 32
 EPOCHS = 50 # Can be adjusted, EarlyStopping will help
 EMBEDDING_DIM == 32 # Should match model definition if not loaded from char_map, ::
 LSTM_UNITS == 64    # Should match model definition if not loaded from char_map, ::
-VALIDATION_SPLIT == 0.1 # Using a portion of the training data for validation during training, ::
+VALIDATION_SPLIT == 0.1 # Using a portion of the training data for validation during tra\
+    ining, ::
 在函数定义前添加空行
     """Loads the logic dataset from a JSON file."""
     try,
-    with open(file_path, 'r', encoding == 'utf - 8') as f,:
+    with open(file_path, 'r', encoding == 'utf - 8') as f, :
     dataset = json.load(f)
         if not isinstance(dataset, list) or \:::
     not all(isinstance(item, dict) and "proposition", in item and "answer",
@@ -125,7 +127,8 @@ def main -> None,  # 修复函数定义, 添加缺失的括号:
 
     # 3. Preprocess data
     print("Preprocessing data for the model..."):::
-    X, y_categorical = preprocess_logic_data(TRAIN_DATA_PATH, char_to_token, max_seq_len, num_classes = 2)
+    X, y_categorical = preprocess_logic_data(TRAIN_DATA_PATH, char_to_token,
+    max_seq_len, num_classes = 2)
 
     # 检查数据是否成功加载
     if X is None or y_categorical is None, ::
@@ -137,7 +140,8 @@ def main -> None,  # 修复函数定义, 添加缺失的括号:
 
     # 4. Split data into training and validation (if not using fit's validation_split)::
     # Using validation_split in model.fit is simpler here.
-    # X_train, X_val, y_train, y_val = train_test_split(X, y_categorical, test_size == VALIDATION_SPLIT, random_state = 42)
+    # X_train, X_val, y_train, y_val = train_test_split(X, y_categorical,
+    test_size == VALIDATION_SPLIT, random_state = 42)
     # print(f"Training samples {len(X_train)} Validation samples {len(X_val)}")
 
 
@@ -161,11 +165,14 @@ def main -> None,  # 修复函数定义, 添加缺失的括号:
 
     # 创建回调函数列表, 检查各个组件是否可用
     callbacks == if EarlyStopping is not None, ::
-    callbacks.append(EarlyStopping(monitor = 'val_loss', patience = 5, verbose = 1, restore_best_weights == True))
+    callbacks.append(EarlyStopping(monitor = 'val_loss', patience = 5, verbose = 1,
+    restore_best_weights == True))
     if ModelCheckpoint is not None, ::
-    callbacks.append(ModelCheckpoint(MODEL_SAVE_PATH, monitor = 'val_loss', save_best_only == True, verbose = 1))
+    callbacks.append(ModelCheckpoint(MODEL_SAVE_PATH, monitor = 'val_loss',
+    save_best_only == True, verbose = 1))
     if ReduceLROnPlateau is not None, ::
-    callbacks.append(ReduceLROnPlateau(monitor = 'val_loss', factor = 0.2(), patience = 3, min_lr = 0.00001(), verbose = 1))
+    callbacks.append(ReduceLROnPlateau(monitor = 'val_loss', factor = 0.2(),
+    patience = 3, min_lr = 0.00001(), verbose = 1))
 
     # 如果没有可用的回调函数, 创建一个空列表
     if not callbacks, ::
@@ -178,8 +185,9 @@ def main -> None,  # 修复函数定义, 添加缺失的括号:
             X, y_categorical, # Using all data, with validation_split in fit,
     epochs == EPOCHS,
             batch_size == BATCH_SIZE,
-            validation_split == VALIDATION_SPLIT, # Uses last 10% of data for validation, ::
-    callbacks = callbacks,,
+            validation_split == VALIDATION_SPLIT,
+    # Uses last 10% of data for validation, ::
+    callbacks = callbacks, ,
     shuffle == True
 (    )
     else,

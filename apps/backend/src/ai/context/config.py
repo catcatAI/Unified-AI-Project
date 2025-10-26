@@ -13,6 +13,7 @@ class ContextConfig:
         self.disk_storage_enabled = os.environ.get("CONTEXT_DISK_STORAGE_ENABLED",
     "true").lower() == "true"
         self.database_storage_enabled = os.environ.get("CONTEXT_DATABASE_STORAGE_ENABLED\
+    \
     ", "false").lower() == "true"
         
         # 缓存配置
@@ -24,6 +25,7 @@ class ContextConfig:
         self.compression_enabled = os.environ.get("CONTEXT_COMPRESSION_ENABLED",
     "false").lower() == "true"
         self.async_processing_enabled = os.environ.get("CONTEXT_ASYNC_PROCESSING_ENABLED\
+    \
     ", "true").lower() == "true"
         
         # 安全配置
@@ -97,7 +99,7 @@ CONFIGURATION_DOCS = """
 ## 环境变量配置
 
 ### 存储配置
-- CONTEXT_STORAGE_DIR: 磁盘存储目录,默认为". / context_storage"
+- CONTEXT_STORAGE_DIR: 磁盘存储目录, 默认为". / context_storage"
 - CONTEXT_MEMORY_MAX_SIZE: 内存存储最大大小, 默认为1000
 - CONTEXT_DISK_STORAGE_ENABLED: 是否启用磁盘存储, 默认为true
 - CONTEXT_DATABASE_STORAGE_ENABLED: 是否启用数据库存储, 默认为false

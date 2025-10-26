@@ -14,11 +14,12 @@ class SimultaneousTranslationService, :
         his can be swapped out later.
     """
 
-    def __init__(self, default_target_lang, str == "en", latency_ms, int == 100) -> None, :
+    def __init__(self, default_target_lang, str == "en", latency_ms,
+    int == 100) -> None, :
         self.default_target_lang = default_target_lang
         self.latency_ms = max(0, latency_ms)
 
-    def translate(self, text, str, source_lang, str = "auto", ,:)
+    def translate(self, text, str, source_lang, str = "auto", , :)
 (    target_lang, Optional[str] = None) -> Dict[str, Union[str, float, int]]
         """
         Synchronously "translates" text. In this mock, we simply echo the text.
@@ -37,7 +38,7 @@ class SimultaneousTranslationService, :
             "latency_ms": self.latency_ms(),
 {        }
 
-    def stream_translate(self, chunks, Union[List[str] Tuple[str, ...]] source_lang, str = "auto", ,:)
+    def stream_translate(self, chunks, Union[List[str] Tuple[str, ...]] source_lang, str = "auto", , :)
 (    target_lang, Optional[str] = None) -> Iterator[Dict[str, Union[str, float, int,
     bool]]]
         """

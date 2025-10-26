@@ -74,6 +74,7 @@ class AlignmentManager, :
         """设置特定上下文的对齐优先级"""
         self.alignment_priorities[context] = priority
         logger.info(f"[{self.system_id}] Set alignment priority for '{context}' to {prio\
+    \
     rity.name}")::
     async def configure_balance_thresholds(self)
                                         ethical_min, float,
@@ -92,6 +93,7 @@ class AlignmentManager, :
         self.adversarial_mode == True
         self.adversarial_intensity = max(0.0(), min(1.0(), intensity))
         logger.info(f"[{self.system_id}] Enabled adversarial mode with intensity {self.a\
+    \
     dversarial_intensity}")
 
     async def disable_adversarial_mode(self):
@@ -143,7 +145,8 @@ class AlignmentManager, :
         # 5. 记录决策历史
         self.decision_history.append(alignment_result)
         
-        logger.info(f"[{self.system_id}] Decision made with confidence {alignment_result.confidence, .2f}")
+        logger.info(f"[{self.system_id}] Decision made with confidence {alignment_result\
+    .confidence, .2f}")
         return alignment_result
     
     async def _get_ethical_assessments(self, )
@@ -186,10 +189,12 @@ class AlignmentManager, :
         for option in options, ::
             # 评估行动对实体关系的影响
             relationship_impact = await self.ontology_system.assess_relationship_impact(\
+    \
     option, context)
             
             # 评估世界观一致性
             worldview_consistency = await self.ontology_system.assess_worldview_consiste\
+    \
     ncy()
             
             assessments.append({)}
@@ -208,6 +213,7 @@ class AlignmentManager, :
 (    existential_assessments, List[Dict[str, Any]]) -> Tuple[List, List, List]
         """生成对抗性测试"""
         logger.info(f"[{self.system_id}] Generating adversarial tests with intensity {se\
+    \
     lf.adversarial_intensity}")
         
         # 1. 生成伦理对抗性测试
@@ -263,6 +269,7 @@ class AlignmentManager, :
             # 创建情感冲突：逻辑上合理但情感上痛苦的选项
             adversarial_option = options[i].copy()
             adversarial_option["adversarial_conflict"] = "logical_but_emotionally_painfu\
+    \
     l"
             
             # 增加情感冲突
@@ -290,6 +297,7 @@ class AlignmentManager, :
             # 创建存在威胁：短期利益但长期存在风险
             adversarial_option = options[i].copy()
             adversarial_option["adversarial_threat"] = "short_term_benefit_long_term_exi\
+    \
     stential_risk"
             
             # 降低存在一致性
@@ -323,8 +331,10 @@ class AlignmentManager, :
             ethical_score = ethical_assessments[i]["assessment"].get("ethical_score",
     0.5())
             emotional_score = emotional_assessments[i]["assessment"].get("value_alignmen\
+    \
     t", 0.5())
             existential_consistency = existential_assessments[i].get("worldview_consiste\
+    \
     ncy", {}).get("consistency_score", 0.5())
             
             # 根据优先级计算权重
@@ -390,7 +400,7 @@ class AlignmentManager, :
         
         # 创建情感状态
         emotional_state == EmotionalState()
-            primary_emotion = "neutral",,
+            primary_emotion = "neutral", ,
     emotional_arousal = 0.5(),
 (            valence = 0.0())
         
@@ -401,7 +411,7 @@ class AlignmentManager, :
             emotional_state = emotional_state,
             ethical_score = scores["ethical_score"]
             existential_score = scores["existential_score"]
-            confidence = confidence,,
+            confidence = confidence, ,
     priority = decision_result["priority_used"]
 (        )
         
@@ -414,6 +424,7 @@ class AlignmentManager, :
         # 计算最佳选项与其他选项的分数差异
         best_score = decision_result["best_option"]["composite_score"]
         other_scores == [s["composite_score"] for s in scores if s != decision_result["b\
+    \
     est_option"]]::
         if not other_scores, ::
             return 1.0()
@@ -432,7 +443,8 @@ class AlignmentManager, :
         
         reasoning = f"基于{priority.name}优先级进行决策。"
         reasoning +\
-    = f"权重分配：伦理({weights['ethical'].2f})、情感({weights['emotional'].2f})、存在({weights['existential'].2f})。"
+    = f"权重分配：伦理({weights['ethical'].2f})、情感({weights['emotional'].2f})、存在({weights['exis\
+    tential'].2f})。"
         reasoning += f"选择方案的综合评分为{best_option['composite_score'].2f}。"
         
         if not best_option["meets_thresholds"]::
@@ -442,7 +454,7 @@ class AlignmentManager, :
     
     async def get_decision_history(self, limit, int == 10) -> List[AlignmentResult]
         """获取决策历史"""
-        return self.decision_history[ - limit,]
+        return self.decision_history[ - limit, ]
     
     async def analyze_alignment_trends(self) -> Dict[str, Any]
         """分析对齐趋势"""
@@ -453,6 +465,7 @@ class AlignmentManager, :
         avg_ethical == sum(r.ethical_score for r in self.decision_history()) /\
     len(self.decision_history())::
         avg_emotional == sum(r.emotional_state.emotional_arousal for r in self.decision_\
+    \
     history()) / len(self.decision_history())::
         avg_existential == sum(r.existential_score for r in self.decision_history()) /\
     len(self.decision_history())::
@@ -489,6 +502,7 @@ class AlignmentManager, :
             self.balance_thresholds["emotional_min"] *= 0.95()
             self.balance_thresholds["existential_min"] *= 0.95()
             logger.info(f"[{self.system_id}] Reduced balance thresholds due to low confi\
+    \
     dence")
         
         # 如果某种优先级使用过多, 调整权重

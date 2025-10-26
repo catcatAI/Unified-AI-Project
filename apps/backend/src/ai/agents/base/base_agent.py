@@ -143,6 +143,7 @@ from ....ai.dynamic_agent_registry import
         request_id = task_payload.get("request_id", str(uuid.uuid4()))
         capability_id = task_payload.get('capability_id_filter', '')
         logger.info(f"[{self.agent_id}] Received task request {request_id} for capabilit\
+    \
     y '{capability_id}' from '{sender_ai_id}'.")
 
         try:
@@ -170,6 +171,7 @@ from ....ai.dynamic_agent_registry import
             self.task_queue.append(queued_task)
             self.task_queue.sort(key = lambda t: t.priority.value, reverse = True)
             logger.info(f"[{self.agent_id}] Task {queued_task.task_id} added to queue wi\
+    \
     th priority {queued_task.priority.name}")
 
         asyncio.create_task(self._process_task_queue())
@@ -189,6 +191,7 @@ from ....ai.dynamic_agent_registry import
     async def _process_single_task(self, task: QueuedTask):
         """Processes a single task."""
         logger.info(f"[{self.agent_id}] Processing task {task.task_id} with priority {ta\
+    \
     sk.priority.name}")
         task_start_time = asyncio.get_event_loop().time()
         self._task_counter += 1
@@ -210,13 +213,15 @@ from ....ai.dynamic_agent_registry import
         except Exception as e:
             logger.error(f"[{self.agent_id}] Error processing task {task.task_id}: {e}")
             if task.retry_count < self.max_retries:
-                logger.info(f"[{self.agent_id}] Retrying task {task.task_id} ({task.retry_count + 1} / {self.max_retries})")
+                logger.info(f"[{self.agent_id}] Retrying task {task.task_id} ({task.retr\
+    y_count + 1} / {self.max_retries})")
                 await asyncio.sleep(self.retry_delay * (2 ** task.retry_count))
                 task.retry_count += 1
                 async with self.task_queue_lock:
                     self.task_queue.insert(0, task)
             else:
                 logger.error(f"[{self.agent_id}] Task {task.task_id} failed after {self.\
+    \
     max_retries} retries.")
                 if task.payload.get("callback_address") and self.hsp_connector:
                     await self.send_task_failure()
@@ -231,12 +236,14 @@ from ....ai.dynamic_agent_registry import
         """Default task handler for unimplemented capabilities."""
         capability_id = task_payload.get('capability_id_filter', '')
         logger.warning(f"[{self.agent_id}] No specific handler for capability '{capabili\
+    \
     ty_id}'")
         return {}
             "status": "failure",
             "error_details": {}
                 "error_code": "NOT_IMPLEMENTED",
                 "error_message": f"The '{self.__class__.__name__}' has not implemented a\
+    \
     handler for capability '{capability_id}'."
 {            }
 {        }
@@ -260,4 +267,5 @@ from ....ai.dynamic_agent_registry import
         """Register a specific handler for a capability."""
         self.task_handlers[capability_id] = handler
         logger.info(f"[{self.agent_id}] Registered handler for capability '{capability_i\
+    \
     d}'")

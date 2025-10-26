@@ -30,10 +30,10 @@ class SecurityAudit, :
         self.security_rules = {}
             "hardcoded_secrets": {}
                 "patterns": []
-                    r'password\s * =\s * ["'][^"\']+["']',
-                    r'api_key\s * =\s * ["'][^"\']+["']',
-                    r'secret_key\s * =\s * ["'][^"\']+["']',
-                    r'token\s * =\s * ["'][^"\']+["']',
+                    r'password\s * =\s * ["'][^"\'] + ["']',
+                    r'api_key\s * =\s * ["'][^"\'] + ["']',
+                    r'secret_key\s * =\s * ["'][^"\'] + ["']',
+                    r'token\s * =\s * ["'][^"\'] + ["']',
                     r'AKIA[0 - 9A - Z]{16}',  # AWS Access Key
                     r'[a - zA - Z0 - 9]{40}',  # Possible API key
 [                ]
@@ -42,17 +42,17 @@ class SecurityAudit, :
 {            }
             "sql_injection": {}
                 "patterns": []
-                    r'execute\s * \(\s * ["']. * ?\+. * ?["\']')
+                    r'execute\s * \(\s * ["']. * ?\ + . * ?["\']')
                     r'query\s * =\s * ["']. * ?\%s. * ?["\']',
-                    r'format. * ?=. * ?["']. * ?\{. * ?\}. * ?["\']',
+                    r'format. * ? = . * ?["']. * ?\{. * ?\}. * ?["\']',
 [                ]
                 "severity": "critical",
                 "description": "潜在的SQL注入漏洞"
 {            }
             "xss_vulnerability": {}
                 "patterns": []
-                    r'innerHTML\s * =. * ?\+. * ?',
-                    r'outerHTML\s * =. * ?\+. * ?',
+                    r'innerHTML\s * =. * ?\ + . * ?',
+                    r'outerHTML\s * =. * ?\ + . * ?',
                     r'document\.write\s * \(')
                     r'eval\s * \(')
 [                ]
@@ -97,7 +97,7 @@ class SecurityAudit, :
         vulnerabilities = []
         
         try,
-            with open(file_path, 'r', encoding == 'utf - 8', errors='ignore') as f,:
+            with open(file_path, 'r', encoding == 'utf - 8', errors = 'ignore') as f,:
                 content = f.read()
             
             # 检查每个安全规则
@@ -180,7 +180,7 @@ class SecurityAudit, :
         vulnerabilities = []
         
         try,
-            with open(requirements_file, 'r', encoding == 'utf - 8') as f,:
+            with open(requirements_file, 'r', encoding == 'utf - 8') as f, :
                 content = f.read()
             
             # 已知有漏洞的包(示例)
@@ -199,9 +199,9 @@ class SecurityAudit, :
                     continue
                 
                 # 解析包名和版本
-                if ' == ' in line,::
+                if ' == ' in line, ::
                     package, version = line.split(' == ', 1)
-                elif ' >= ' in line,::
+                elif ' >= ' in line, ::
                     package, version = line.split(' >= ', 1)
                 else,
                     package = line
@@ -218,6 +218,7 @@ class SecurityAudit, :
                         vulnerabilities.append({)}
                             "type": "dependency_vulnerability",
                             "file": str(requirements_file.relative_to(self.project_root(\
+    \
     ))),
                             "line": line_num,
                             "package": package,
@@ -237,7 +238,7 @@ class SecurityAudit, :
         vulnerabilities = []
         
         try,
-            with open(package_file, 'r', encoding == 'utf - 8') as f,:
+            with open(package_file, 'r', encoding == 'utf - 8') as f, :
                 package_data = json.load(f)
             
             # 检查dependencies和devDependencies
@@ -248,13 +249,13 @@ class SecurityAudit, :
                         vulnerable_packages = {}
                             'lodash': ' < 4.17.21',
                             'axios': ' < 0.21.1',
-                            'node - forge': '<1.0.0',
-                            'node - fetch': '<2.6.1',
+                            'node - forge': ' < 1.0.0',
+                            'node - fetch': ' < 2.6.1',
 {                        }
                         
                         if package in vulnerable_packages, ::
                             # 移除版本符号
-                            clean_version = version.replace('^', '').replace('~', '').replace(' >= ', '').replace('<=', '')
+                            clean_version = version.replace('^', '').replace('~', '').replace(' >= ', '').replace(' <= ', '')
                             vulnerable_version = vulnerable_packages[package]
                             
                             if self._version_compare(clean_version,
@@ -262,6 +263,7 @@ class SecurityAudit, :
                                 vulnerabilities.append({)}
                                     "type": "dependency_vulnerability",
                                     "file": str(package_file.relative_to(self.project_ro\
+    \
     ot())),
                                     "package": package,
                                     "version": version,
@@ -310,6 +312,7 @@ class SecurityAudit, :
                                 vulnerabilities.append({)}
                                     "type": "permission_issue",
                                     "file": str(file_path.relative_to(self.project_root(\
+    \
     ))),
                                     "severity": "medium",
                                     "description": f"敏感文件 {file_path.name} 权限过于宽松"
@@ -340,8 +343,10 @@ class SecurityAudit, :
         # 计算安全评分
         self.audit_results["vulnerabilities"] = all_vulnerabilities
         self.audit_results["score"] = self._calculate_security_score(all_vulnerabilities\
+    \
     )
         self.audit_results["recommendations"] = self._generate_recommendations(all_vulne\
+    \
     rabilities)
         
         logger.info(f"安全审计完成, 发现 {len(all_vulnerabilities)} 个安全问题")
@@ -395,11 +400,13 @@ class SecurityAudit, :
         
         # 特定建议
         hard_secrets == [v for v in vulnerabilities if v.get("rule") == "hardcoded_secre\
+    \
     ts"]::
         if hard_secrets, ::
             recommendations.append("移除所有硬编码的敏感信息, 使用环境变量或密钥管理系统")
         
         sql_injection == [v for v in vulnerabilities if v.get("rule") == "sql_injection"\
+    \
     ]::
         if sql_injection, ::
             recommendations.append("使用参数化查询防止SQL注入攻击")
@@ -451,7 +458,7 @@ class SecurityAudit, :
             report += f"{i}. {rec}\n"
         
         if output_file, ::
-            with open(output_file, 'w', encoding == 'utf - 8') as f,:
+            with open(output_file, 'w', encoding == 'utf - 8') as f, :
                 f.write(report)
             logger.info(f"安全审计报告已保存到, {output_file}")
         
@@ -462,9 +469,9 @@ def main():
 # TODO: Fix import - module 'argparse' not found
     
     parser = argparse.ArgumentParser(description = '安全审计工具')
-    parser.add_argument(' - -project - root', default='.', help='项目根目录')
-    parser.add_argument(' - -output', help='输出报告文件')
-    parser.add_argument(' - -json', action='store_true', help='输出JSON格式')
+    parser.add_argument(' - -project - root', default = '.', help = '项目根目录')
+    parser.add_argument(' - -output', help = '输出报告文件')
+    parser.add_argument(' - -json', action = 'store_true', help = '输出JSON格式')
     
     args = parser.parse_args()
     
@@ -477,7 +484,7 @@ def main():
     # 输出结果
     if args.json, ::
         output_file = args.output or 'security_audit.json'
-        with open(output_file, 'w', encoding == 'utf - 8') as f,:
+        with open(output_file, 'w', encoding == 'utf - 8') as f, :
             json.dump(results, f, ensure_ascii == False, indent = 2)
         print(f"审计结果已保存到, {output_file}")
     else,

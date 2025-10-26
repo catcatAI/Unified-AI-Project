@@ -29,7 +29,8 @@ class TimeSystem, :
         if len(parts) == 3 and parts[0] == "in", and parts[2] in ["minute", "minutes"]::
             try,
                 minutes = int(parts[1])
-                due_time = self.get_current_time() + datetime.timedelta(minutes = minutes)
+                due_time = self.get_current_time() +\
+    datetime.timedelta(minutes = minutes)
                 self.reminders.append({"due_time": due_time,
     "description": event_description})
                 print(f"TimeSystem,

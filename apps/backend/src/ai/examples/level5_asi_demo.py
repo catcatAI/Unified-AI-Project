@@ -107,7 +107,8 @@ async def main():
         
         # 处理未对齐请求
         unaligned_response = await asi_system.process_request(unaligned_request)
-        logger.info(f"未对齐请求处理结果, {json.dumps(unaligned_response, indent = 2, default = str)}")
+        logger.info(f"未对齐请求处理结果, {json.dumps(unaligned_response, indent = 2,
+    default = str)}")
         
         # 7. 演示伦理分析
         logger.info("\n7. 演示伦理分析...")
@@ -159,13 +160,16 @@ async def main():
 {            }
             
             feedback_result = await asi_system.autonomous_alignment.incorporate_human_fe\
+    \
     edback(feedback)
             logger.info(f"反馈整合结果, {feedback_result}")
             
             # 获取自主对齐状态
             autonomous_status = await asi_system.autonomous_alignment.get_alignment_stat\
+    \
     us()
-            logger.info(f"自主对齐状态, {json.dumps(autonomous_status, indent = 2, default = str)}")
+            logger.info(f"自主对齐状态, {json.dumps(autonomous_status, indent = 2,
+    default = str)}")
         
         # 10. 演示分布式计算(如果启用)
         if asi_system.distributed_coordinator, ::
@@ -173,8 +177,10 @@ async def main():
             
             # 获取分布式状态
             distributed_status = await asi_system.distributed_coordinator.get_cluster_st\
+    \
     atus()
-            logger.info(f"分布式系统状态, {json.dumps(distributed_status, indent = 2, default = str)}")
+            logger.info(f"分布式系统状态, {json.dumps(distributed_status, indent = 2,
+    default = str)}")
         
         # 11. 演示参数集群(如果启用)
         if asi_system.parameter_cluster, ::
@@ -184,7 +190,7 @@ async def main():
 from ..distributed.hyperlinked_parameters import
             
             param_success = await asi_system.parameter_cluster.register_parameter()
-                parameter_id = "demo_parameter_001",,
+                parameter_id = "demo_parameter_001", ,
     parameter_data == {"model_weights": [0.1(), 0.2(), 0.3(), 0.4]}
                 parameter_type == ParameterType.MODEL_WEIGHT(),
                 name = "演示模型权重",
@@ -194,12 +200,14 @@ from ..distributed.hyperlinked_parameters import
             
             # 获取参数
             retrieved_param = await asi_system.parameter_cluster.get_parameter("demo_par\
+    \
     ameter_001")
             logger.info(f"检索到的参数, {retrieved_param}")
             
             # 获取集群状态
             cluster_status = await asi_system.parameter_cluster.get_cluster_status()
-            logger.info(f"参数集群状态, {json.dumps(cluster_status, indent = 2, default = str)}")
+            logger.info(f"参数集群状态, {json.dumps(cluster_status, indent = 2,
+    default = str)}")
         
         logger.info("\n" + " = " * 60)
         logger.info("Level 5 ASI 系统演示完成")

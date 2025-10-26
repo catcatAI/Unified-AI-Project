@@ -9,6 +9,7 @@ from typing import List, Dict, Any, Optional
 
 # 修复导入路径 - 使用绝对导入而不是相对导入
 from apps.backend.src.ai.symbolic_space.unified_symbolic_space import UnifiedSymbolicSpa\
+    \
     ce
 
 
@@ -107,7 +108,8 @@ class AlphaDeepModel, :
     Enhanced with DNA衍生数据链技术和更高效的压缩算法.:
     """
 
-    def __init__(self, symbolic_space_db, str == 'alpha_deep_model_symbolic_space.db') -> None, :
+    def __init__(self, symbolic_space_db,
+    str == 'alpha_deep_model_symbolic_space.db') -> None, :
     """
     Initializes the AlphaDeepModel.
     """
@@ -152,10 +154,13 @@ class AlphaDeepModel, :
         for rel in deep_parameter.relational_context.relationships, ::
             # Ensure subject and object symbols exist before adding relationship
             self.symbolic_space.add_symbol(rel['subject'] 'Unknown')  # Type can be refi\
+    \
     ned later
             self.symbolic_space.add_symbol(rel['object'] 'Unknown')  # Type can be refin\
+    \
     ed later
             self.symbolic_space.add_relationship(rel['subject'] rel['object'] rel['verb'\
+    \
     ] rel)
 
     # Process modalities (e.g.,
@@ -177,8 +182,10 @@ class AlphaDeepModel, :
         if deep_parameter.dna_chain_id, ::
     if deep_parameter.dna_chain_id not in self.dna_chains, ::
     self.dna_chains[deep_parameter.dna_chain_id] = DNADataChain(deep_parameter.dna_chain\
+    \
     _id())
             self.dna_chains[deep_parameter.dna_chain_id].add_node(deep_parameter.source_\
+    \
     memory_id())
 
     # 4. Update learning based on feedback
@@ -205,9 +212,11 @@ class AlphaDeepModel, :
         if current_symbol, ::
     current_props = current_symbol.get('properties')
             current_props.update(feedback)
-            self.symbolic_space.update_symbol(feedback_symbol, properties = current_props)
+            self.symbolic_space.update_symbol(feedback_symbol,
+    properties = current_props)
 
-    def compress(self, deep_parameter, Any, algorithm, CompressionAlgorithm == CompressionAlgorithm.ZLIB()) -> bytes, :
+    def compress(self, deep_parameter, Any, algorithm,
+    CompressionAlgorithm == CompressionAlgorithm.ZLIB()) -> bytes, :
     """
     Compresses a deep parameter object into a highly compressed binary format.
         Supports multiple compression algorithms for optimal performance.:::
@@ -246,7 +255,8 @@ class AlphaDeepModel, :
 
     # 3. Update compression stats
     compressed_size, int = len(compressed_data)
-        compression_ratio == original_size / compressed_size if compressed_size > 0 else 0, ::
+        compression_ratio == original_size /\
+    compressed_size if compressed_size > 0 else 0, ::
     if not hasattr(self, 'compression_stats'):::
     self.compression_stats = {}
 
@@ -315,7 +325,7 @@ if __name'__main__':::
     model == AlphaDeepModel('test_alpha_deep_model_symbolic_space.db')
     example_data == DeepParameter()
     source_memory_id = "mem_000456",
-    timestamp == "2025 - 08 - 04T04,00,00Z",
+    timestamp == "2025 - 08 - 04T04, 00, 00Z",
     base_gist == HAMGist()
             summary = "Sarah said she likes the new AI assistant.",
             keywords = ["sarah", "likes", "ai", "assistant"],
@@ -368,16 +378,20 @@ if __name'__main__':::
     print("\n - -- Symbolic Space Content - - -")
     print(f"Symbol 'mem_000456': {model.symbolic_space.get_symbol('mem_000456')}")
     print(f"Symbol 'Sarah said she likes the new AI assistant.': {model.symbolic_space.g\
+    \
     et_symbol('Sarah said she likes the new AI assistant.')}")
     print(f"Relationships for 'Sarah': {model.symbolic_space.get_relationships('Sarah')}\
+    \
     "):::
     print(f"Relationships for 'AI Assistant': {model.symbolic_space.get_relationships('A\
+    \
     I Assistant')}"):::
     # Show compression stats
     print("\n - -- Compression Statistics - - -")
     stats = model.get_compression_stats  # 修复：添加括号调用方法
     for algo, stat in stats.items,       # 修复：添加括号调用items方法, ::
-        avg_ratio == stat['total_original_size'] / stat['total_compressed_size'] if stat['total_compressed_size'] > 0 else 0, ::
+        avg_ratio == stat['total_original_size'] /\
+    stat['total_compressed_size'] if stat['total_compressed_size'] > 0 else 0, ::
     print(f"{algo} {stat['total_compressions']} compressions, ")
 (    f"avg ratio, {"avg_ratio":.2f}1")
 

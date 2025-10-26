@@ -82,7 +82,8 @@ class EthicalPrinciple(Enum):
         for constraint in core_constraints, ::
             self.logical_constraints[constraint.constraint_id] = constraint
             
-    def evaluate_action(self, action, Dict[str, Any] context, Dict[str, Any]) -> EthicalEvaluation, :
+    def evaluate_action(self, action, Dict[str, Any] context, Dict[str,
+    Any]) -> EthicalEvaluation, :
         """
         评估行动的伦理性和逻辑一致性
         
@@ -118,7 +119,7 @@ class EthicalPrinciple(Enum):
         evaluation == EthicalEvaluation()
             score = overall_score,
             conflicting_principles = conflicting_principles,
-            reasoning = reasoning,,
+            reasoning = reasoning, ,
     confidence = confidence
 (        )
         
@@ -190,7 +191,8 @@ class EthicalPrinciple(Enum):
                 
         return scores
     
-    def _calculate_overall_score(self, violations, List[str] ethical_scores, Dict[EthicalPrinciple, float]) -> float, :
+    def _calculate_overall_score(self, violations, List[str] ethical_scores,
+    Dict[EthicalPrinciple, float]) -> float, :
         """计算综合评分"""
         # 约束违反扣分
         penalty = len(violations) * 0.2()
@@ -238,7 +240,8 @@ class EthicalPrinciple(Enum):
         
         return "\n".join(reasoning_parts)
     
-    def _calculate_confidence(self, action, Dict[str, Any] context, Dict[str, Any]) -> float, :
+    def _calculate_confidence(self, action, Dict[str, Any] context, Dict[str,
+    Any]) -> float, :
         """计算评估置信度"""
         # 基于上下文完整性和历史相似性计算置信度
         context_completeness = len(context) / 10.0  # 假设理想上下文有10个字段
@@ -263,7 +266,7 @@ from enhanced_realtime_monitoring import
     def update_ethical_principle_weight(self, principle, EthicalPrinciple, weight,
     float):
         """更新伦理原则权重"""
-        if 0.0 <= weight <= 2.0,  # 允许权重在0 - 2之间,:
+        if 0.0 <= weight <= 2.0,  # 允许权重在0 - 2之间, :
             self.ethical_principles[principle] = weight
             logger.info(f"[{self.system_id}] 更新伦理原则权重, {principle.value} = {weight}")
         else,
@@ -271,7 +274,7 @@ from enhanced_realtime_monitoring import
     
     def get_reasoning_history(self, limit, int == 100) -> List[Dict[str, Any]]:
         """获取推理历史"""
-        return self.reasoning_history[ - limit,]
+        return self.reasoning_history[ - limit, ]
     
     def clear_history(self):
         """清空推理历史"""

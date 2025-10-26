@@ -1,5 +1,6 @@
 # Placeholder for Fragmenta Element Layer processing, :
-# This module might handle the decomposition of input / output into fundamental "elements"
+# This module might handle the decomposition of input /\
+    output into fundamental "elements"
 # or apply transformations at an elemental level based on Fragmenta architecture.
 
 from typing import List, Any, Dict, Optional
@@ -23,7 +24,8 @@ class ElementLayer, :
             processed_elements.append(transformed_element)
     return processed_elements
 
-    def _transform_element(self, element, Any, context, Optional[Dict[str, Any]] = None) -> Any, :
+    def _transform_element(self, element, Any, context, Optional[Dict[str,
+    Any]] = None) -> Any, :
         """Mock for transforming a single element.""":::
     if isinstance(element, dict)::
         lement['processed_by_element_layer'] = True

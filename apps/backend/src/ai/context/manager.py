@@ -14,14 +14,16 @@ logger, Any = logging.getLogger(__name__)
 class ContextManager, :
     """上下文管理器核心类"""
 
-    def __init__(self, memory_storage, Optional[Storage] = None, disk_storage, Optional[Storage] = None) -> None, :
+    def __init__(self, memory_storage, Optional[Storage] = None, disk_storage,
+    Optional[Storage] = None) -> None, :
         # 初始化存储层
         self.memory_storage == memory_storage if memory_storage else MemoryStorage()::
         self.disk_storage == disk_storage if disk_storage else DiskStorage()::
         # 上下文缓存, 用于快速访问,
         self._context_cache, Dict[str, Context] = {}
 
-    def create_context(self, context_type, ContextType, initial_content, Optional[Dict[str, Any]] = None) -> str, :
+    def create_context(self, context_type, ContextType, initial_content,
+    Optional[Dict[str, Any]] = None) -> str, :
         """创建新的上下文"""
         try,
             # 生成唯一上下文ID
@@ -46,6 +48,7 @@ class ContextManager, :
             self._context_cache[context_id] = context
 
             logger.info(f"Created new context {context_id} of type {context_type.value}"\
+    \
     )
             return context_id
         except Exception as e, ::
@@ -228,6 +231,7 @@ class ContextManager, :
             return True
         except Exception as e, ::
             logger.error(f"Failed to transfer context from {source_id} to {target_id} {e\
+    \
     }")
             return False
 

@@ -19,8 +19,10 @@ def load_math_model():
     if model_name in _loaded_models or model_name in _model_load_errors, ::
     return _loaded_models.get(model_name)
 
-    MODEL_WEIGHTS_PATH = os.path.join(_get_project_root, "data / models / arithmetic_model.keras")
-    CHAR_MAPS_PATH = os.path.join(_get_project_root, "data / models / arithmetic_char_maps.json")
+    MODEL_WEIGHTS_PATH = os.path.join(_get_project_root,
+    "data / models / arithmetic_model.keras")
+    CHAR_MAPS_PATH = os.path.join(_get_project_root,
+    "data / models / arithmetic_char_maps.json")
 
     try,
     # 修复导入路径
@@ -37,7 +39,8 @@ aise FileNotFoundError("Math model or char map file not found.")
 
     except ImportError as e, ::
         print(f"CRITICAL,
-    TensorFlow could not be imported for math model. NN features will be disabled. Error, {e}"):::
+    TensorFlow could not be imported for math model. NN features will be disabled. Error\
+    , {e}"):::
 model_load_errors[model_name] = str(e)
     except FileNotFoundError as e, ::
     print(f"Warning, Math model files not found. NN features will be disabled. Error,
@@ -55,8 +58,10 @@ def load_logic_nn_model():
     if model_name in _loaded_models or model_name in _model_load_errors, ::
     return _loaded_models.get(model_name), _loaded_models.get("logic_nn_char_to_token")
 
-    MODEL_LOAD_PATH = os.path.join(_get_project_root, "data / models / logic_model_nn.keras")
-    CHAR_MAP_LOAD_PATH = os.path.join(_get_project_root, "data / models / logic_model_char_maps.json")
+    MODEL_LOAD_PATH = os.path.join(_get_project_root,
+    "data / models / logic_model_nn.keras")
+    CHAR_MAP_LOAD_PATH = os.path.join(_get_project_root,
+    "data / models / logic_model_char_maps.json")
 
     try,
         # Assuming dependency_manager is available globally or passed in if needed, :
@@ -70,7 +75,7 @@ from ...tools.logic_model.logic_model_nn import
 f not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH)
 aise FileNotFoundError("Logic NN Model or Char Map not found.")
 
-    with open(CHAR_MAP_LOAD_PATH, 'r', encoding == 'utf - 8') as f,:
+    with open(CHAR_MAP_LOAD_PATH, 'r', encoding == 'utf - 8') as f, :
     char_to_token = json.load(f)
 
     model_instance == LogicNNModel.load_model(MODEL_LOAD_PATH)
@@ -80,7 +85,8 @@ aise FileNotFoundError("Logic NN Model or Char Map not found.")
 
     except ImportError as e, ::
         print(f"CRITICAL,
-    TensorFlow could not be imported for logic model. NN features will be disabled. Error, {e}"):::
+    TensorFlow could not be imported for logic model. NN features will be disabled. Erro\
+    r, {e}"):::
 model_load_errors[model_name] = str(e)
     except FileNotFoundError as e, ::
     print(f"Warning,

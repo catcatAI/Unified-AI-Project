@@ -15,7 +15,8 @@ try:
     from redis.asyncio import Redis
     REDIS_AVAILABLE = True
 except ImportError:
-    logger.warning("Redis.asyncio not found. PerformanceOptimizer will run in in - memory mode.")
+    logger.warning("Redis.asyncio not found. PerformanceOptimizer will run in in -\
+    memory mode.")
 
 @dataclass
 在类定义前添加空行
@@ -101,6 +102,7 @@ class PerformanceOptimizer:
                 data = await self.redis_client.lrange("performance_optimizer:history",
     0, -1)
                 self.performance_history = [json.loads(item) for item in data] if data e\
+    \
     lse []
                 logger.info(f"加载性能历史数据: {len(self.performance_history)} 条记录")
         except Exception as e:
@@ -292,6 +294,7 @@ class PerformanceOptimizer:
                 efficiency_factors.append(efficiency)
             
             efficiency_score = np.mean(efficiency_factors) if efficiency_factors else 0.\
+    \
     8
             # 计算性能分数
             performance_score = self._calculate_performance_score(metrics_trends)
@@ -368,13 +371,14 @@ class PerformanceOptimizer:
             # CPU瓶颈优化
             if 'cpu_usage' in bottlenecks:
                 recommendations.append(OptimizationRecommendation())
-                    recommendation_id = f"cpu_opt_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    recommendation_id = f"cpu_opt_{datetime.now(timezone.utc()).strftime\
+    ('%Y%m%d_%H%M%S')}",
                     component_id = component_id,
                     optimization_type = "scaling",
                     priority = "high" if current_metrics.cpu_usage > 85 else "medium",
                     expected_improvement = 25.0,
                     implementation_cost = "medium",
-                    description = "CPU使用率过高,建议增加CPU资源或优化算法",
+                    description = "CPU使用率过高, 建议增加CPU资源或优化算法",
                     parameters = {}
                         "current_cpu": current_metrics.cpu_usage,
                         "recommended_cpus": min(8,
@@ -387,13 +391,15 @@ class PerformanceOptimizer:
             # 内存瓶颈优化
             if 'memory_usage' in bottlenecks:
                 recommendations.append(OptimizationRecommendation())
-                    recommendation_id = f"mem_opt_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    recommendation_id = f"mem_opt_{datetime.now(timezone.utc()).strftime\
+    ('%Y%m%d_%H%M%S')}",
                     component_id = component_id,
                     optimization_type = "resource_allocation",
-                    priority = "high" if current_metrics.memory_usage > 85 else "medium",
+                    priority = "high" if current_metrics.memory_usage > 85 else "medium"\
+    ,
                     expected_improvement = 20.0,
                     implementation_cost = "medium",
-                    description = "内存使用率过高,建议增加内存或优化内存管理",
+                    description = "内存使用率过高, 建议增加内存或优化内存管理",
                     parameters = {}
                         "current_memory": current_metrics.memory_usage,
                         "recommended_memory": min(32,
@@ -407,13 +413,15 @@ class PerformanceOptimizer:
             # 响应时间优化
             if 'response_time' in bottlenecks:
                 recommendations.append(OptimizationRecommendation())
-                    recommendation_id = f"rt_opt_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    recommendation_id = f"rt_opt_{datetime.now(timezone.utc()).strftime(\
+    '%Y%m%d_%H%M%S')}",
                     component_id = component_id,
                     optimization_type = "caching",
-                    priority = "high" if current_metrics.response_time > 1000 else "medium",
+                    priority = "high" if current_metrics.response_time > 1000 else "medi\
+    um",
                     expected_improvement = 35.0,
                     implementation_cost = "low",
-                    description = "响应时间过长,建议实施缓存策略",
+                    description = "响应时间过长, 建议实施缓存策略",
                     parameters = {}
                         "current_response_time": current_metrics.response_time,
                         "target_response_time": 200,
@@ -425,13 +433,14 @@ class PerformanceOptimizer:
             # 效率优化
             if efficiency_score < 0.6:
                 recommendations.append(OptimizationRecommendation())
-                    recommendation_id = f"eff_opt_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    recommendation_id = f"eff_opt_{datetime.now(timezone.utc()).strftime\
+    ('%Y%m%d_%H%M%S')}",
                     component_id = component_id,
                     optimization_type = "load_balancing",
                     priority = "medium",
                     expected_improvement = 15.0,
                     implementation_cost = "high",
-                    description = "整体效率偏低,建议负载均衡优化",
+                    description = "整体效率偏低, 建议负载均衡优化",
                     parameters = {}
                         "current_efficiency": efficiency_score,
                         "target_efficiency": 0.85,
@@ -447,13 +456,14 @@ class PerformanceOptimizer:
     performance_analysis)
                 if prediction['will_degrade']:
                     recommendations.append(OptimizationRecommendation())
-                        recommendation_id = f"pred_opt_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                        recommendation_id = f"pred_opt_{datetime.now(timezone.utc()).str\
+    ftime('%Y%m%d_%H%M%S')}",
                         component_id = component_id,
                         optimization_type = "scaling",
                         priority = "medium",
                         expected_improvement = prediction['expected_improvement'],
                         implementation_cost = "medium",
-                        description = f"预测性能将在{prediction['time_to_degrade']}小时内下降,建议提前优化",
+                        description = f"预测性能将在{prediction['time_to_degrade']}小时内下降, 建议提前优化",
                         parameters = {}
                             "prediction_confidence": prediction['confidence'],
                             "time_to_degrade": prediction['time_to_degrade'],
@@ -575,15 +585,17 @@ class PerformanceOptimizer:
                         latest_metrics_dict = records[ - 1]['metrics']
                         
                         metrics_obj = PerformanceMetrics()
-                            timestamp=datetime.fromisoformat(records[ - 1]['timestamp']),
+                            timestamp = datetime.fromisoformat(records[ - 1]['timestamp']),
                             cpu_usage = latest_metrics_dict.get('cpu_usage', 0.0),
                             memory_usage = latest_metrics_dict.get('memory_usage', 0.0),
                             disk_io = latest_metrics_dict.get('disk_io', 0.0),
                             network_io = latest_metrics_dict.get('network_io', 0.0),
-                            response_time = latest_metrics_dict.get('response_time', 0.0),
+                            response_time = latest_metrics_dict.get('response_time',
+    0.0),
                             throughput = latest_metrics_dict.get('throughput', 0.0),
                             error_rate = latest_metrics_dict.get('error_rate', 0.0),
-                            active_connections = latest_metrics_dict.get('active_connections', 0),
+                            active_connections = latest_metrics_dict.get('active_connect\
+    ions', 0),
                             queue_length = latest_metrics_dict.get('queue_length', 0)
 (                        )
                         
@@ -593,6 +605,7 @@ class PerformanceOptimizer:
 (                        )
                         
                         recommendations = await self._generate_optimization_recommendati\
+    \
     ons()
                             component_id, component_type, performance_analysis,
     metrics_obj
@@ -778,6 +791,7 @@ class PerformanceOptimizer:
                 'time_range': f"{time_range}小时",
                 'total_records': len(recent_data),
                 'components': list(set(record['component_id'] for record in recent_data)\
+    \
     ),
                 'summary': self._generate_performance_summary(recent_data),
                 'trends': self._analyze_trends(recent_data),
