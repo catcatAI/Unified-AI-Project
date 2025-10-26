@@ -27,6 +27,7 @@ def test_enhanced_collaborative_training() -> None, :
     \
     \
     \
+    \
     , ModelTrainingTask
         
         # 创建协作式训练管理器

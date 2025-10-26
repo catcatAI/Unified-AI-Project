@@ -77,6 +77,7 @@ class KnowledgeFusionEngine, :
     \
     \
     \
+    \
     ge_group)
 
     # 创建融合后的知识表示
@@ -184,6 +185,7 @@ class KnowledgeTransferMechanism, :
             else,
 
                 logger.warning(f"⚠️ 知识从 {source_knowledge.source_model} 传递到 {target_mode\
+    \
     \
     \
     \
@@ -352,6 +354,7 @@ class ModelKnowledgeSharing, :
             for knowledge in knowledge_list, ::
     knowledge_type = knowledge.knowledge_type()
                 stats["knowledge_by_type"][knowledge_type] = stats["knowledge_by_type"].\
+    \
     \
     \
     \

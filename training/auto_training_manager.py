@@ -361,6 +361,7 @@ class AutoTrainingManager, :
     \
     \
     \
+    \
     ty_data[t]) > 10]::
     if len(high_quality_types) > 3, ::
     training_scenarios.append('comprehensive_training')
@@ -370,6 +371,7 @@ class AutoTrainingManager, :
             # 根据数据量选择训练场景
             total_files = data_analysis['total_files']
             high_quality_file_count == sum(len(files) for files in high_quality_data.val\
+    \
     \
     \
     \
@@ -403,6 +405,7 @@ class AutoTrainingManager, :
                 'selected_scenarios': training_scenarios,
                 'data_mapping': self._map_data_to_models(available_data_types),
                 'resource_requirements': self._estimate_resource_requirements(data_analy\
+    \
     \
     \
     \
@@ -475,6 +478,7 @@ class AutoTrainingManager, :
     \
     \
     \
+    \
     .values())::
             # 获取高质量数据信息
             high_quality_data = data_analysis.get('high_quality_data', {})
@@ -485,6 +489,7 @@ class AutoTrainingManager, :
 
             # 基于数据量和质量估算资源需求
             effective_files = len([file for files in high_quality_data.values() for file\
+    \
     \
     \
     \
@@ -542,9 +547,11 @@ class AutoTrainingManager, :
     \
     \
     \
+    \
     )::
             # 基于高质量数据量估算训练时间(小时)
             effective_files == high_quality_files if high_quality_files > 0 else total_f\
+    \
     \
     \
     iles, ::
@@ -606,6 +613,7 @@ class AutoTrainingManager, :
             # 获取高质量数据信息
             high_quality_data = data_analysis.get('high_quality_data', {})
             high_quality_files == sum(len(files) for files in high_quality_data.values()\
+    \
     \
     \
     \
@@ -743,6 +751,7 @@ class AutoTrainingManager, :
     \
     \
     \
+    \
     _name)
 {                    }
 
@@ -761,6 +770,7 @@ class AutoTrainingManager, :
                         'completed_at': datetime.now().isoformat(),
                         'scenario_type': scenario_name,
                         'training_progress': self.training_monitor.get_progress(scenario\
+    \
     \
     \
     \
@@ -789,6 +799,7 @@ class AutoTrainingManager, :
     \
     \
     \
+    \
     ve_training({)}
                         'target_models': target_models,
                         'task_priorities': task_priorities
@@ -797,6 +808,7 @@ class AutoTrainingManager, :
                         'success': collaborative_success,
                         'completed_at': datetime.now().isoformat(),
                         'training_progress': self.training_monitor.get_progress('collabo\
+    \
     \
     \
     \
@@ -814,6 +826,7 @@ class AutoTrainingManager, :
                         'error': str(e),
                         'completed_at': datetime.now().isoformat(),
                         'training_progress': self.training_monitor.get_progress('collabo\
+    \
     \
     \
     \
@@ -920,6 +933,7 @@ class AutoTrainingManager, :
     \
     \
     \
+    \
     ive_config)
             return success
         except Exception as e, ::
@@ -973,6 +987,7 @@ class AutoTrainingManager, :
 
             logger.debug(f"📊 场景 {scenario_name} 优先级计算, 基础 = {base_priority} ")
                         f"数据质量加成 == {"data_quality_bonus":.1f} 数据量加成 == {"data_volume_bo\
+    \
     \
     \
     \
@@ -1052,8 +1067,10 @@ class AutoTrainingManager, :
                     'successful_scenarios': len([r for r in training_results.values() if\
     \
     \
+    \
     r.get('success', False)]), :::
                         failed_scenarios': len([r for r in training_results.values() if \
+    \
     \
     \
     not r.get('success', True)]), :::

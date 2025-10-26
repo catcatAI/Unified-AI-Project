@@ -261,8 +261,10 @@ class FaultDetector, :
                 'healthy_nodes': len([n for n in self.nodes_status.values() if n.status \
     \
     \
+    \
     == 'healthy']), :::
                     warning_nodes': len([n for n in self.nodes_status.values() if n.stat\
+    \
     \
     \
     us == 'warning']), :::
