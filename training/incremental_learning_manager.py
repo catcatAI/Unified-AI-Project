@@ -63,6 +63,7 @@ class DataTracker, :
     \
     \
     \
+    \
     "performance_config.json":::
     self.processed_files = {}
     self.new_files = set()
@@ -91,8 +92,10 @@ class DataTracker, :
     \
     \
     \
+    \
     , [])
                     self.enable_file_type_filtering = data_scanning_config.get('enable_f\
+    \
     \
     \
     \
@@ -101,9 +104,11 @@ class DataTracker, :
     \
     \
     \
+    \
     interval', 5000)
                     self.max_workers = data_scanning_config.get('max_workers', 8)
                     self.enable_parallel_scanning = data_scanning_config.get('enable_par\
+    \
     \
     \
     \
@@ -174,6 +179,7 @@ class DataTracker, :
     \
     \
     \
+    \
     taScanner
                 scanner == ParallelOptimizedDataScanner(self.data_dir(),
     self.tracking_file(), self.config_file())
@@ -187,6 +193,7 @@ class DataTracker, :
 
             # 获取要扫描的文件类型
             file_types == self.scan_file_types if self.enable_file_type_filtering else N\
+    \
     \
     \
     one, :
@@ -398,6 +405,7 @@ class ModelManager, :
     \
     \
     \
+    \
     ()
 
                 # 保存版本信息
@@ -444,6 +452,7 @@ class ModelManager, :
 
                     # 更新版本列表
                     self.model_versions[model_name]['versions'] = versions[:keep_version\
+    \
     \
     \
     \
@@ -959,6 +968,7 @@ class IncrementalLearningManager, :
             self.monitoring_thread == threading.Thread(target = = self._monitoring_loop(\
     \
     \
+    \
     ), daemon == True)
             self.monitoring_thread.start()
             logger.info("👀 启动数据监控...")
@@ -1046,6 +1056,7 @@ class IncrementalLearningManager, :
             for model_name, data_files in data_by_model.items():::
                 ask = {}
                     'task_id': f"task_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(se\
+    \
     \
     \
     \

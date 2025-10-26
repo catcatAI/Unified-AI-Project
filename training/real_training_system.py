@@ -290,9 +290,11 @@ class RealModelTrainer, :
     \
     \
     \
+    \
     wer()]::
             if env_data, ::
                 results['environment_simulator'] = self.train_environment_simulator(env_\
+    \
     \
     \
     \
@@ -303,9 +305,11 @@ class RealModelTrainer, :
     \
     \
     \
+    \
     r()]::
             if causal_data, ::
                 results['causal_reasoning_engine'] = self.train_causal_reasoning_engine(\
+    \
     \
     \
     \
@@ -316,9 +320,11 @@ class RealModelTrainer, :
     \
     \
     \
+    \
     lower()]::
             if adaptive_data, ::
                 results['adaptive_learning_controller'] = self.train_adaptive_learning_c\
+    \
     \
     \
     \
@@ -326,6 +332,7 @@ class RealModelTrainer, :
             
             # 训练Alpha深度模型(复杂回归任务)
             alpha_data == [item for item in training_data if 'alpha' in str(item).lower(\
+    \
     \
     \
     \
@@ -929,6 +936,7 @@ class RealTrainingManager, :
     \
     \
     \
+    \
     t_data)
             
             # 4. 代码模型训练
@@ -1124,6 +1132,7 @@ class RealTrainingManager, :
     \
     \
     \
+    \
     eline(preset_config)
             
             # 将训练的模型转移到兼容的存储位置
@@ -1147,6 +1156,7 @@ class RealTrainingManager, :
             
             # 运行真实训练并存储结果
             self.last_training_report = self.real_training_manager.run_real_training_pip\
+    \
     \
     \
     \
@@ -1179,6 +1189,7 @@ class RealTrainingManager, :
 {            }
             
             training_report = self.real_training_manager.run_real_training_pipeline(defa\
+    \
     \
     \
     \

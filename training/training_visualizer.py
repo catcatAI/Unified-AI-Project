@@ -478,6 +478,7 @@ class TrainingVisualizer, :
     \
     \
     \
+    \
     raining_metrics']::
     if not metrics_data, ::
     return
@@ -511,6 +512,7 @@ class TrainingVisualizer, :
         try,
 
             resources_data == [entry for entry in training_data if entry.get('type') == \
+    \
     \
     \
     \
@@ -553,6 +555,7 @@ class TrainingVisualizer, :
     \
     \
     \
+    \
     raining_metrics']::
     if not metrics_data, ::
     return
@@ -590,8 +593,10 @@ class TrainingVisualizer, :
     \
     \
     \
+    \
     raining_metrics']::
     resources_data == [entry for entry in training_data if entry.get('type') == 'system_\
+    \
     \
     \
     \
@@ -775,6 +780,7 @@ def load_training_data(log_file == "logs / training_monitor.log"):
 def create_progress_plot(training_data, output_file == "progress_visualization.png"):
 ""创建训练进度图"""
     metrics_data == [entry for entry in training_data if entry.get('type') == 'training_\
+    \
     \
     \
     \

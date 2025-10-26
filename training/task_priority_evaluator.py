@@ -184,6 +184,7 @@ class TaskPriorityEvaluator, :
             gpu_ratio == required_gpu /\
     self.resource_baselines['gpu_memory_gb'] if self.resource_baselines['gpu_memory_gb']\
     \
+    \
     > 0 else 0, ::
     disk_ratio = required_disk / self.resource_baselines['disk_space_gb']
 

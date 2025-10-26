@@ -409,6 +409,7 @@ class TrainingStateManager, :
     \
     \
     \
+    \
     _time()).isoformat()
 {                    }
                 else,
@@ -428,6 +429,7 @@ class TrainingStateManager, :
                     'total_epochs': training_state.total_epochs(),
                     'progress': training_state.progress(),
                     'last_update': datetime.fromtimestamp(training_state.last_update_tim\
+    \
     \
     \
     \

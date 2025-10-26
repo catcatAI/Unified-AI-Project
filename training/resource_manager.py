@@ -45,6 +45,7 @@ try,
     integrated_graphics_optimizer == IntegratedGraphicsOptimizer(hardware_profile) if ha\
     \
     \
+    \
     rdware_profile else None, ::
         xcept ImportError,
     hardware_profile == None
@@ -169,8 +170,10 @@ from tests.test_json_fix import
     \
     \
     \
+    \
     ity with existing code)::
                                 emory_total == adapter_ram if adapter_ram else 107374182\
+    \
     \
     \
     4  # Default 1GB, ::
@@ -381,6 +384,7 @@ pu_info = {}
     \
     \
     \
+    \
     m():
         f is_integrated_graphics,
 
@@ -388,6 +392,7 @@ pu_info = {}
     logger.info(f"为集成显卡系统调整资源需求, {model_name}")
             # 应用集成显卡优化建议
             recommendations = integrated_graphics_optimizer.get_optimization_recommendat\
+    \
     \
     \
     \
@@ -403,6 +408,7 @@ pu_info = {}
     \
     \
     \
+    \
     hics_performance_tier()
                     if performance_tier == "minimal":::
     requirements['gpu_memory_gb'] = min(requirements['gpu_memory_gb'] 0.5())
@@ -414,6 +420,7 @@ pu_info = {}
     \
     \
     \
+    \
     u_memory_gb']}GB")
 
                 # 调整CPU核心数需求
@@ -421,6 +428,7 @@ pu_info = {}
     original_cpu_cores = requirements.get('cpu_cores', 1)
                     requirements['cpu_cores'] = min(requirements.get('cpu_cores', 1), 2)
                     logger.info(f"CPU核心数需求从 {original_cpu_cores} 调整为 {requirements['cpu_\
+    \
     \
     \
     \

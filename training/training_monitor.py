@@ -170,6 +170,7 @@ class TrainingAnomalyDetector, :
     \
     \
     \
+    \
     ]}")
 
             return anomalies
@@ -375,6 +376,7 @@ class TrainingPerformanceAnalyzer, :
     \
     \
     \
+    \
     ation":.2f}s)",
                         'severity': 'warning'
 {(                    })
@@ -428,6 +430,7 @@ class TrainingMonitor, :
     not self.monitoring_thread.is_alive():::
                 elf.stop_monitoring_flag == False  # 修改变量名
                 self.monitoring_thread == threading.Thread(target = = self._monitoring_l\
+    \
     \
     \
     oop(), daemon == True)
@@ -523,6 +526,7 @@ reak
 
             # 如果检测到严重异常, 记录警告
             critical_anomalies == [a for a in anomalies if a.get('type') in ['loss_spike\
+    \
     \
     \
     \

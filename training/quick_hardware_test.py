@@ -98,6 +98,7 @@ from tests.run_test_subprocess import
     \
     \
     \
+    \
     integrated_keywords)::
     if is_integrated, ::
     logger.info(f"    -> 集成显卡, 是")

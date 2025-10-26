@@ -360,16 +360,20 @@ in_load = float('inf')
                 'pending_migrations': len([t for t in self.migration_tasks.values() if t\
     \
     \
+    \
     .status == 'pending']), :::
                     migrating_tasks': len([t for t in self.migration_tasks.values() if t\
+    \
     \
     \
     .status == 'migrating']), :::
 completed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'com\
     \
     \
+    \
     pleted']), :::
 failed_migrations': len([t for t in self.migration_tasks.values() if t.status == 'failed\
+    \
     \
     \
     ']), :::

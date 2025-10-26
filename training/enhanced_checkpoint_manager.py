@@ -123,6 +123,7 @@ class EnhancedCheckpointManager, :
     \
     \
     \
+    \
     到")
                     elif epoch_checkpoint, ::
     checkpoint_type = "epoch"
@@ -157,6 +158,7 @@ class EnhancedCheckpointManager, :
         try,
             # 获取该任务的最新检查点
             task_checkpoints == [cp for cp in self.checkpoint_history if cp.task_id = ta\
+    \
     \
     sk_id] if task_id else self.checkpoint_history, ::
     if not task_checkpoints, ::
@@ -268,6 +270,7 @@ class EnhancedCheckpointManager, :
             elif task_id, ::
                 # 加载指定任务的最新检查点
                 task_checkpoints == [cp for cp in self.checkpoint_history if cp.task_id \
+    \
     \
     \
     = task_id]::

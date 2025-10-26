@@ -37,6 +37,7 @@ def create_progress_plot(training_data, output_file == "progress_visualization.p
     \
     \
     \
+    \
     metrics']::
         f not metrics_data,
         print("没有找到训练指标数据")
