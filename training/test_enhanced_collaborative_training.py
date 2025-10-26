@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 增强协作式训练测试脚本
 """
@@ -14,15 +14,16 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
-logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
-def test_enhanced_collaborative_training() -> None,:
+def test_enhanced_collaborative_training() -> None, :
     """测试增强的协作式训练功能"""
-    logger.info("=== 测试增强的协作式训练功能 ===")
+    logger.info(" == = 测试增强的协作式训练功能 = == ")
     
     try,
-        from training.collaborative_training_manager import CollaborativeTrainingManager, ModelTrainingTask
+        from training.collaborative_training_manager import CollaborativeTrainingManager\
+    , ModelTrainingTask
         
         # 创建协作式训练管理器
         manager == CollaborativeTrainingManager()
@@ -32,15 +33,16 @@ def test_enhanced_collaborative_training() -> None,:
         manager.register_model("concept_models", "ConceptModelsInstance")
         manager.register_model("environment_simulator", "EnvironmentSimulatorInstance")
         manager.register_model("causal_reasoning_engine", "CausalReasoningInstance")
-        manager.register_model("adaptive_learning_controller", "AdaptiveLearningInstance")
+        manager.register_model("adaptive_learning_controller",
+    "AdaptiveLearningInstance")
         
         logger.info(f"✅ 已注册 {len(manager.models())} 个模型")
         
         # 测试ModelTrainingTask的增强功能
         logger.info("\n🧪 测试ModelTrainingTask增强功能...")
         task == ModelTrainingTask()
-            model_name="test_model",
-            model_instance="TestModelInstance",
+            model_name = "test_model",
+            model_instance = "TestModelInstance",
             data = [],
     resources = {}
 (        )
@@ -48,14 +50,14 @@ def test_enhanced_collaborative_training() -> None,:
         # 测试知识共享功能
         knowledge == {"accuracy": 0.95(), "loss": 0.05}
         task.add_shared_knowledge(knowledge)
-        logger.info(f"✅ 添加共享知识成功,当前知识数量, {len(task.shared_knowledge())}")
-        logger.info(f"   协作分数, {task.collaboration_score,.2f}")
+        logger.info(f"✅ 添加共享知识成功, 当前知识数量, {len(task.shared_knowledge())}")
+        logger.info(f"   协作分数, {task.collaboration_score, .2f}")
         logger.info(f"   接收知识计数, {task.received_knowledge_count}")
         
         # 测试发送知识计数
         task.increment_sent_knowledge()
-        logger.info(f"✅ 增加发送知识计数,当前计数, {task.sent_knowledge_count}")
-        logger.info(f"   协作分数, {task.collaboration_score,.2f}")
+        logger.info(f"✅ 增加发送知识计数, 当前计数, {task.sent_knowledge_count}")
+        logger.info(f"   协作分数, {task.collaboration_score, .2f}")
         
         # 测试指标更新
         task.update_metrics({"accuracy": 0.92(), "loss": 0.08})
@@ -64,17 +66,17 @@ def test_enhanced_collaborative_training() -> None,:
         # 测试准备训练数据
         logger.info("\n📦 测试准备训练数据...")
         model_data = manager.prepare_training_data()
-        logger.info(f"✅ 准备训练数据完成,涉及 {len(model_data)} 个模型")
+        logger.info(f"✅ 准备训练数据完成, 涉及 {len(model_data)} 个模型")
         
         # 测试资源分配
         logger.info("\n🖥️  测试资源分配...")
         model_resources = manager.allocate_resources_for_models()
-        logger.info(f"✅ 资源分配完成,涉及 {len(model_resources)} 个模型")
+        logger.info(f"✅ 资源分配完成, 涉及 {len(model_resources)} 个模型")
         
         # 测试创建训练任务
         logger.info("\n🎯 测试创建训练任务...")
         tasks = manager.create_training_tasks(model_data, model_resources)
-        logger.info(f"✅ 创建训练任务完成,共 {len(tasks)} 个任务")
+        logger.info(f"✅ 创建训练任务完成, 共 {len(tasks)} 个任务")
         
         # 测试知识提取
         logger.info("\n🧠 测试知识提取...")
@@ -92,7 +94,7 @@ def test_enhanced_collaborative_training() -> None,:
         # 测试知识图谱构建
         logger.info("\n🕸️  测试知识图谱构建...")
         knowledge_graph = manager._build_knowledge_graph()
-        logger.info(f"✅ 知识图谱构建完成,包含 {len(knowledge_graph['models'])} 个模型")
+        logger.info(f"✅ 知识图谱构建完成, 包含 {len(knowledge_graph['models'])} 个模型")
         
         # 测试高级知识共享
         logger.info("\n🧠 测试高级知识共享...")
@@ -112,15 +114,15 @@ def test_enhanced_collaborative_training() -> None,:
         logger.info("\n🎉 所有增强协作式训练功能测试通过!")
         return True
         
-    except Exception as e,::
+    except Exception as e, ::
         logger.error(f"❌ 测试过程中发生错误, {e}")
 # TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
-def test_training_integration() -> None,:
+def test_training_integration() -> None, :
     """测试训练集成"""
-    logger.info("\n=测试训练集成 ===")
+    logger.info("\n=测试训练集成 = == ")
     
     try,
         from training.collaborative_training_manager import CollaborativeTrainingManager
@@ -142,13 +144,13 @@ def test_training_integration() -> None,:
         tasks = manager.create_training_tasks(model_data, model_resources)
         
         # 模拟训练完成时的协作
-        if tasks,::
+        if tasks, ::
             task = tasks[0]
             task.status = "completed"
             task.metrics == {"accuracy": 0.9(), "loss": 0.1}
             task.start_time = manager._get_current_time()
             from datetime import timedelta
-            task.end_time == task.start_time + timedelta(seconds ==30)
+            task.end_time == task.start_time + timedelta(seconds = = 30)
             
             # 测试训练完成时的协作启用
             manager._enable_model_collaboration_on_completion(task)
@@ -161,13 +163,13 @@ def test_training_integration() -> None,:
         logger.info("🎉 训练集成测试通过!")
         return True
         
-    except Exception as e,::
+    except Exception as e, ::
         logger.error(f"❌ 训练集成测试过程中发生错误, {e}")
 # TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     logger.info("开始测试增强的协作式训练功能...")
     

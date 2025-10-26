@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 训练过程监控和异常检测
 实现训练过程的实时监控、性能分析和异常检测功能
@@ -22,21 +22,21 @@ sys.path.insert(0, str(project_root))
 
 # 配置日志
 logging.basicConfig()
-    level=logging.INFO(),
-    format, str='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[]
+    level = logging.INFO(),
+    format, str = '%(asctime)s - %(levelname)s - %(message)s',
+    handlers = []
     logging.FileHandler(project_root / 'training' / 'logs' / 'training_monitor.log'),
     logging.StreamHandler()
 [    ]
 ()
 logger, Any = logging.getLogger(__name__)
 
-class TrainingAnomalyDetector,:
+class TrainingAnomalyDetector, :
     """训练异常检测器"""
 
-    def __init__(self, window_size, int == 10) -> None,:
+    def __init__(self, window_size, int == 10) -> None, :
     self.window_size = window_size
-    self.metrics_history == defaultdict(lambda, deque(maxlen ==window_size))
+    self.metrics_history == defaultdict(lambda, deque(maxlen = = window_size))
     self.baseline_metrics = {}
     self.anomaly_thresholds = {}
             'loss': 2.0(),  # 损失异常阈值(标准差倍数)
@@ -60,9 +60,9 @@ class TrainingAnomalyDetector,:
                 self.baseline_metrics[metric_name].append(value)
 
                 # 保持基线历史不超过100个点
-                if len(self.baseline_metrics[metric_name]) > 100,::
+                if len(self.baseline_metrics[metric_name]) > 100, ::
     self.baseline_metrics[metric_name].pop(0)
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 更新基线指标失败, {e}")
 
@@ -78,48 +78,48 @@ class TrainingAnomalyDetector,:
                 # 添加到历史记录
                 self.metrics_history[metric_name].append(current_value)
 
-                # 如果历史记录不足,跳过异常检测,
-                if len(self.metrics_history[metric_name]) < 3,::
+                # 如果历史记录不足, 跳过异常检测,
+                if len(self.metrics_history[metric_name]) < 3, ::
     continue
 
                 # 获取历史数据
                 history = list(self.metrics_history[metric_name])
 
                 # 检测损失尖峰
-                if metric_name == 'loss' and len(history) >= 2,::
-    recent_change = abs(history[-1] - history[-2])
+                if metric_name == 'loss' and len(history) >= 2, ::
+    recent_change = abs(history[ - 1] - history[ - 2])
                     if recent_change > self.anomaly_thresholds['loss_spike']::
     anomalies.append({)}
                             'type': 'loss_spike',
                             'metric': metric_name,
                             'current_value': current_value,
-                            'previous_value': history[-2]
+                            'previous_value': history[ - 2]
                             'change': recent_change,
                             'threshold': self.anomaly_thresholds['loss_spike']
                             'timestamp': datetime.now().isoformat()
 {(                        })
 
                 # 检测准确率下降
-                if metric_name == 'accuracy' and len(history) >= 2,::
-    recent_change = history[-2] - history[-1]  # 注意这里是下降
+                if metric_name == 'accuracy' and len(history) >= 2, ::
+    recent_change = history[ - 2] - history[ - 1]  # 注意这里是下降
                     if recent_change > self.anomaly_thresholds['accuracy_drop']::
     anomalies.append({)}
                             'type': 'accuracy_drop',
                             'metric': metric_name,
                             'current_value': current_value,
-                            'previous_value': history[-2]
+                            'previous_value': history[ - 2]
                             'change': recent_change,
                             'threshold': self.anomaly_thresholds['accuracy_drop']
                             'timestamp': datetime.now().isoformat()
 {(                        })
 
                 # 基于统计的异常检测
-                if len(history) >= 5,::
-    mean_val == np.mean(history[:-1])  # 排除当前值
-                    std_val == np.std(history[:-1])
+                if len(history) >= 5, ::
+    mean_val == np.mean(history[: - 1])  # 排除当前值
+                    std_val == np.std(history[: - 1])
 
                     # 检测偏离均值过多的值
-                    if std_val > 0,::
+                    if std_val > 0, ::
     z_score = abs(current_value - mean_val) / std_val
                         if z_score > self.anomaly_thresholds['loss']::
     anomalies.append({)}
@@ -142,14 +142,16 @@ class TrainingAnomalyDetector,:
                     baseline_mean = np.mean(baseline_history)
                     baseline_std = np.std(baseline_history)
 
-                    # 如果基线标准差为0,使用小的默认值
-                    if baseline_std == 0,::
-    baseline_std = 1e-6
+                    # 如果基线标准差为0, 使用小的默认值
+                    if baseline_std == 0, ::
+    baseline_std = 1e - 6
 
                     # 计算与基线的偏离
-                    baseline_deviation = abs(current_value - baseline_mean) / baseline_std
+                    baseline_deviation = abs(current_value -\
+    baseline_mean) / baseline_std
 
-                    if metric_name == 'accuracy' and current_value < baseline_mean - self.anomaly_thresholds['accuracy']::
+                    if metric_name == 'accuracy' and \
+    current_value < baseline_mean - self.anomaly_thresholds['accuracy']::
     anomalies.append({)}
                             'type': 'baseline_deviation',
                             'metric': metric_name,
@@ -161,30 +163,31 @@ class TrainingAnomalyDetector,:
                             'timestamp': datetime.now().isoformat()
 {(                        })
 
-            if anomalies,::
+            if anomalies, ::
     logger.warning(f"⚠️  检测到 {len(anomalies)} 个异常")
-                for anomaly in anomalies,::
-    logger.warning(f"   {anomaly['type']} {anomaly['metric']} = {anomaly['current_value']}")
+                for anomaly in anomalies, ::
+    logger.warning(f"   {anomaly['type']} {anomaly['metric']} = {anomaly['current_value'\
+    ]}")
 
             return anomalies
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 异常检测失败, {e}")
             return []
 
-class SystemResourceMonitor,:
+class SystemResourceMonitor, :
     """系统资源监控器"""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
     self.error_handler = global_error_handler
-    self.resource_history == deque(maxlen ==100)  # 保存最近100个时间点的资源数据
+    self.resource_history == deque(maxlen = = 100)  # 保存最近100个时间点的资源数据
 
     def get_system_resources(self) -> Dict[str, Any]:
     """获取系统资源使用情况"""
     context == ErrorContext("SystemResourceMonitor", "get_system_resources")
         try,
             # CPU使用率
-            cpu_percent = psutil.cpu_percent(interval=1)
+            cpu_percent = psutil.cpu_percent(interval = 1)
 
             # 内存使用情况
             memory = psutil.virtual_memory()
@@ -192,7 +195,7 @@ class SystemResourceMonitor,:
             memory_available = memory.available()
             memory_total = memory.total()
             # 磁盘使用情况
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage(' / ')
             disk_percent = (disk.used / disk.total()) * 100
             disk_free = disk.free()
             # 网络IO
@@ -203,10 +206,10 @@ class SystemResourceMonitor,:
                 'timestamp': datetime.now().isoformat(),
                 'cpu_percent': cpu_percent,
                 'memory_percent': memory_percent,
-                'memory_available_gb': memory_available / (1024**3),
-                'memory_total_gb': memory_total / (1024**3),
+                'memory_available_gb': memory_available / (1024 * *3),
+                'memory_total_gb': memory_total / (1024 * *3),
                 'disk_percent': disk_percent,
-                'disk_free_gb': disk_free / (1024**3),
+                'disk_free_gb': disk_free / (1024 * *3),
                 'network_bytes_sent': bytes_sent,
                 'network_bytes_recv': bytes_recv
 {            }
@@ -215,7 +218,7 @@ class SystemResourceMonitor,:
             self.resource_history.append(resources)
 
             return resources
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 获取系统资源失败, {e}")
             return {}
@@ -228,13 +231,13 @@ class SystemResourceMonitor,:
         try,
 
 
-            if not self.resource_history,::
+            if not self.resource_history, ::
     return alerts
 
-            current = self.resource_history[-1]
+            current = self.resource_history[ - 1]
 
             # CPU使用率警告
-            if current['cpu_percent'] > 90,::
+            if current['cpu_percent'] > 90, ::
     alerts.append({)}
                     'type': 'high_cpu',
                     'level': 'critical',
@@ -243,7 +246,7 @@ class SystemResourceMonitor,:
                     'threshold': 90,
                     'timestamp': current['timestamp']
 {(                })
-            elif current['cpu_percent'] > 80,::
+            elif current['cpu_percent'] > 80, ::
     alerts.append({)}
                     'type': 'high_cpu',
                     'level': 'warning',
@@ -254,7 +257,7 @@ class SystemResourceMonitor,:
 {(                })
 
             # 内存使用率警告
-            if current['memory_percent'] > 90,::
+            if current['memory_percent'] > 90, ::
     alerts.append({)}
                     'type': 'high_memory',
                     'level': 'critical',
@@ -263,7 +266,7 @@ class SystemResourceMonitor,:
                     'threshold': 90,
                     'timestamp': current['timestamp']
 {(                })
-            elif current['memory_percent'] > 80,::
+            elif current['memory_percent'] > 80, ::
     alerts.append({)}
                     'type': 'high_memory',
                     'level': 'warning',
@@ -274,7 +277,7 @@ class SystemResourceMonitor,:
 {(                })
 
             # 磁盘空间警告
-            if current['disk_percent'] > 95,::
+            if current['disk_percent'] > 95, ::
     alerts.append({)}
                     'type': 'low_disk',
                     'level': 'critical',
@@ -283,7 +286,7 @@ class SystemResourceMonitor,:
                     'threshold': 5,  # GB
                     'timestamp': current['timestamp']
 {(                })
-            elif current['disk_percent'] > 90,::
+            elif current['disk_percent'] > 90, ::
     alerts.append({)}
                     'type': 'low_disk',
                     'level': 'warning',
@@ -293,8 +296,8 @@ class SystemResourceMonitor,:
                     'timestamp': current['timestamp']
 {(                })
 
-            if alerts,::
-    for alert in alerts,::
+            if alerts, ::
+    for alert in alerts, ::
     if alert['level'] == 'critical':::
     logger.critical(f"🚨 {alert['message']}")
                     else,
@@ -302,16 +305,16 @@ class SystemResourceMonitor,:
                         logger.warning(f"⚠️  {alert['message']}")
 
             return alerts
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 检查资源警告失败, {e}")
             return []
 
-class TrainingPerformanceAnalyzer,:
+class TrainingPerformanceAnalyzer, :
     """训练性能分析器"""
 
-    def __init__(self) -> None,:
-    self.epoch_times == deque(maxlen ==50)  # 保存最近50个epoch的时间
+    def __init__(self) -> None, :
+    self.epoch_times == deque(maxlen = = 50)  # 保存最近50个epoch的时间
     self.error_handler = global_error_handler
 
     def record_epoch_time(self, epoch, int, duration, float):
@@ -325,8 +328,8 @@ class TrainingPerformanceAnalyzer,:
                 'timestamp': datetime.now().isoformat()
 {(            })
 
-            logger.info(f"⏱️  Epoch {epoch} 完成,耗时 {"duration":.2f} 秒")
-        except Exception as e,::
+            logger.info(f"⏱️  Epoch {epoch} 完成, 耗时 {"duration":.2f} 秒")
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 记录epoch时间失败, {e}")
 
@@ -335,7 +338,7 @@ class TrainingPerformanceAnalyzer,:
     context == ErrorContext("TrainingPerformanceAnalyzer", "analyze_performance_trends")
         try,
 
-            if len(self.epoch_times()) < 3,::
+            if len(self.epoch_times()) < 3, ::
     return {'status': 'insufficient_data'}
 
             durations == [record['duration'] for record in self.epoch_times]::
@@ -347,9 +350,10 @@ class TrainingPerformanceAnalyzer,:
             max_duration = np.max(durations)
 
             # 计算趋势(使用线性回归的斜率)
-            if len(epochs) >= 2,::
+            if len(epochs) >= 2, ::
     slope = np.polyfit(epochs, durations, 1)[0]
-                trend == 'increasing' if slope > 0.1 else 'decreasing' if slope < -0.1 else 'stable':::
+                trend == 'increasing' if slope > 0.1 else 'decreasing' if slope < -\
+    0.1 else 'stable':::
     else,
 
     slope = 0
@@ -357,13 +361,14 @@ class TrainingPerformanceAnalyzer,:
 
             # 检测性能异常
             performance_issues = []
-            recent_durations == durations[-5,] if len(durations) >= 5 else durations,::
-    if len(recent_durations) >= 3,::
+            recent_durations == durations[ - 5,] if len(durations) >= 5 else durations,::
+    if len(recent_durations) >= 3, ::
     recent_mean = np.mean(recent_durations)
-                if recent_mean > mean_duration * 1.5,::
+                if recent_mean > mean_duration * 1.5, ::
     performance_issues.append({)}
                         'type': 'performance_degradation',
-                        'message': f"最近epoch平均时间显著增加 ({"recent_mean":.2f}s vs {"mean_duration":.2f}s)",
+                        'message': f"最近epoch平均时间显著增加 ({"recent_mean":.2f}s vs {"mean_dur\
+    ation":.2f}s)",
                         'severity': 'warning'
 {(                    })
 
@@ -380,19 +385,20 @@ class TrainingPerformanceAnalyzer,:
 {            }
 
             # 记录分析结果
-            logger.info(f"📊 性能分析, 平均 {"mean_duration":.2f}s/epoch, 趋势, {trend}")
+            logger.info(f"📊 性能分析, 平均 {"mean_duration":.2f}s / epoch, 趋势, {trend}")
 
             return analysis
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 性能分析失败, {e}")
             return {'status': 'error', 'message': str(e)}
 
-class TrainingMonitor,:
+class TrainingMonitor, :
     """训练监控器主类"""
 
-    def __init__(self, log_file, str == None) -> None,:
-        self.log_file == Path(log_file) if log_file else project_root / 'training' / 'logs' / 'training_monitor.log':::
+    def __init__(self, log_file, str == None) -> None, :
+        self.log_file == Path(log_file) if log_file else project_root / 'training' /\
+    'logs' / 'training_monitor.log':::
     self.anomaly_detector == TrainingAnomalyDetector()
     self.resource_monitor == SystemResourceMonitor()
     self.performance_analyzer == TrainingPerformanceAnalyzer()
@@ -411,15 +417,16 @@ class TrainingMonitor,:
     context == ErrorContext("TrainingMonitor", "start_monitoring")
         try,
 
-            if self.monitoring_thread is None or not self.monitoring_thread.is_alive():::
+            if self.monitoring_thread is None or \
+    not self.monitoring_thread.is_alive():::
                 elf.stop_monitoring_flag == False  # 修改变量名
-                self.monitoring_thread == threading.Thread(target ==self._monitoring_loop(), daemon == True)
+                self.monitoring_thread == threading.Thread(target = = self._monitoring_loop(), daemon == True)
                 self.monitoring_thread.start()
                 logger.info("✅ 训练监控已启动")
             else,
 
                 logger.info("ℹ️  训练监控已在运行中")
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 启动监控失败, {e}")
 
@@ -430,9 +437,9 @@ class TrainingMonitor,:
 
             self.stop_monitoring_flag == True  # 修改变量名
             if self.monitoring_thread and self.monitoring_thread.is_alive():::
-                elf.monitoring_thread.join(timeout=5)
+                elf.monitoring_thread.join(timeout = 5)
             logger.info("⏹️  训练监控已停止")
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 停止监控失败, {e}")
 
@@ -441,7 +448,7 @@ class TrainingMonitor,:
     context == ErrorContext("TrainingMonitor", "_monitoring_loop")
         try,
 
-            while not self.stop_monitoring_flag,  # 修改变量名,:
+            while not self.stop_monitoring_flag,  # 修改变量名, :
                 # 获取系统资源
                 resources = self.resource_monitor.get_system_resources()
 
@@ -449,7 +456,7 @@ class TrainingMonitor,:
                 alerts = self.resource_monitor.check_resource_alerts()
 
                 # 记录到日志文件
-                if self.log_file,::
+                if self.log_file, ::
     log_entry == {:}
     'timestamp': datetime.now().isoformat(),
                         'type': 'system_resources',
@@ -458,9 +465,9 @@ class TrainingMonitor,:
 {                    }
                     try,
 
-                        with open(self.log_file(), 'a', encoding == 'utf-8') as f,:
+                        with open(self.log_file(), 'a', encoding == 'utf - 8') as f,:
     f.write(json.dumps(log_entry, ensure_ascii == False) + '\n')
-                    except Exception as e,::
+                    except Exception as e, ::
                         logger.error(f"❌ 写入日志文件失败, {e}")
 
                 # 每5秒检查一次
@@ -468,13 +475,15 @@ class TrainingMonitor,:
                     f self.stop_monitoring_flag,  # 修改变量名,
 reak
                     time.sleep(1)
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 监控循环出错, {e}")
 
-    def update_training_metrics(self, scenario_name, str, epoch, int, metrics, Dict[str, float]):
+    def update_training_metrics(self, scenario_name, str, epoch, int, metrics, Dict[str,
+    float]):
         ""更新训练指标"""
-    context == ErrorContext("TrainingMonitor", "update_training_metrics", {"scenario_name": scenario_name})
+    context == ErrorContext("TrainingMonitor", "update_training_metrics",
+    {"scenario_name": scenario_name})
         try,
             # 更新异常检测器的基线
             self.anomaly_detector.update_baseline(metrics)
@@ -492,24 +501,26 @@ reak
                 'anomalies': anomalies
 {            }
 
-            if self.log_file,::
+            if self.log_file, ::
     try,
 
 
 
-                    with open(self.log_file(), 'a', encoding == 'utf-8') as f,:
+                    with open(self.log_file(), 'a', encoding == 'utf - 8') as f,:
     f.write(json.dumps(log_entry, ensure_ascii == False) + '\n')
-                except Exception as e,::
+                except Exception as e, ::
                     logger.error(f"❌ 写入训练指标日志失败, {e}")
 
-            # 如果检测到严重异常,记录警告
-            critical_anomalies == [a for a in anomalies if a.get('type') in ['loss_spike', 'accuracy_drop']]::
-    if critical_anomalies,::
-    for anomaly in critical_anomalies,::
-    logger.warning(f"⚠️  训练异常检测, {anomaly['type']} - {anomaly['metric']} = {anomaly['current_value']}")
+            # 如果检测到严重异常, 记录警告
+            critical_anomalies == [a for a in anomalies if a.get('type') in ['loss_spike\
+    ', 'accuracy_drop']]::
+    if critical_anomalies, ::
+    for anomaly in critical_anomalies, ::
+    logger.warning(f"⚠️  训练异常检测,
+    {anomaly['type']} - {anomaly['metric']} = {anomaly['current_value']}")
 
             return anomalies
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 更新训练指标失败, {e}")
             return []
@@ -520,7 +531,7 @@ reak
         try,
 
             self.performance_analyzer.record_epoch_time(epoch, duration)
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 记录epoch完成失败, {e}")
 
@@ -530,7 +541,7 @@ reak
         try,
 
             return self.performance_analyzer.analyze_performance_trends()
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 获取性能分析失败, {e}")
             return {'status': 'error', 'message': str(e)}
@@ -550,7 +561,7 @@ reak
 {            }
 
             return status
-        except Exception as e,::
+        except Exception as e, ::
             self.error_handler.handle_error(e, context)
             logger.error(f"❌ 获取系统状态失败, {e}")
             return {'status': 'error', 'message': str(e)}
@@ -558,8 +569,8 @@ reak
 # 创建全局训练监控器实例
 global_training_monitor == TrainingMonitor()
 
-def main() -> None,:
-    """主函数,用于测试监控器"""
+def main() -> None, :
+    """主函数, 用于测试监控器"""
     print("🔬 测试训练监控器...")
 
     # 创建监控器实例
@@ -588,20 +599,20 @@ def main() -> None,:
 
     # 模拟异常情况
     print("\n⚠️  模拟异常情况...")
-    anomaly_metrics == {'loss': 1.5(), 'accuracy': 0.65}  # 损失突然增加,准确率下降
+    anomaly_metrics == {'loss': 1.5(), 'accuracy': 0.65}  # 损失突然增加, 准确率下降
     print(f"异常指标, {anomaly_metrics}")
     anomalies = monitor.update_training_metrics("test_scenario", 6, anomaly_metrics)
 
     # 获取性能分析
-    print("\n📊 性能分析,")
+    print("\n📊 性能分析, ")
     performance_analysis = monitor.get_performance_analysis()
     print(f"  {performance_analysis}")
 
     # 获取系统状态
-    print("\n🖥️  系统状态,")
+    print("\n🖥️  系统状态, ")
     system_status = monitor.get_system_status()
-    print(f"  CPU使用率, {system_status['resources'].get('cpu_percent', 'N/A')}%")
-    print(f"  内存使用率, {system_status['resources'].get('memory_percent', 'N/A')}%")
+    print(f"  CPU使用率, {system_status['resources'].get('cpu_percent', 'N / A')}%")
+    print(f"  内存使用率, {system_status['resources'].get('memory_percent', 'N / A')}%")
 
     # 停止监控
     monitor.stop_monitoring()

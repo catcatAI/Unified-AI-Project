@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 简单验证增强后的自动训练系统核心功能
 """
@@ -21,8 +21,8 @@ def verify_data_manager_enhancements():
         # 验证新添加的数据类型
         supported_formats = dm.supported_formats()
         expected_types = ['model', 'archive', 'binary']
-        for data_type in expected_types,::
-            if data_type in supported_formats,::
+        for data_type in expected_types, ::
+            if data_type in supported_formats, ::
                 print(f"  ✅ 新数据类型 '{data_type}' 已添加")
             else,
                 print(f"  ❌ 新数据类型 '{data_type}' 未找到")
@@ -38,15 +38,15 @@ def verify_data_manager_enhancements():
         for filename, expected_type in test_files.items():::
             file_path == Path(filename)
             classified_type = dm._classify_file(file_path)
-            if classified_type == expected_type,::
+            if classified_type == expected_type, ::
                 print(f"  ✅ 文件 {filename} 正确分类为 {classified_type}")
             else,
-                print(f"  ❌ 文件 {filename} 分类错误,期望 {expected_type}实际 {classified_type}")
+                print(f"  ❌ 文件 {filename} 分类错误, 期望 {expected_type}实际 {classified_type}")
                 return False
         
         print("✅ 数据管理器增强功能验证通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 数据管理器增强功能验证失败, {e}")
         return False
 
@@ -65,7 +65,7 @@ def verify_auto_training_enhancements():
             # 验证日志记录功能
             monitor.log_event("test_scenario", "INFO", "测试日志记录", {"test": "data"})
             logs = monitor.get_logs("test_scenario")
-            if len(logs.get("test_scenario", [])) > 0,::
+            if len(logs.get("test_scenario", [])) > 0, ::
                 print("  ✅ 日志记录功能正常")
             else,
                 print("  ❌ 日志记录功能异常")
@@ -76,7 +76,7 @@ def verify_auto_training_enhancements():
         
         print("✅ 自动训练管理器增强功能验证通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 自动训练管理器增强功能验证失败, {e}")
         return False
 
@@ -86,9 +86,9 @@ def verify_code_changes():
     
     try,
         # 检查auto_training_manager.py中的新增方法()
-        auto_training_path == Path("training/auto_training_manager.py")
+        auto_training_path == Path("training / auto_training_manager.py")
         if auto_training_path.exists():::
-            with open(auto_training_path, 'r', encoding == 'utf-8') as f,:
+            with open(auto_training_path, 'r', encoding == 'utf - 8') as f,:
                 content = f.read()
                 
             required_methods = []
@@ -97,8 +97,8 @@ def verify_code_changes():
                 '_train_collaborative_model'
 [            ]
             
-            for method in required_methods,::
-                if method in content,::
+            for method in required_methods, ::
+                if method in content, ::
                     print(f"  ✅ 方法 {method} 已添加到自动训练管理器")
                 else,
                     print(f"  ❌ 方法 {method} 未找到")
@@ -108,9 +108,9 @@ def verify_code_changes():
             return False
         
         # 检查data_manager.py中的新增方法()
-        data_manager_path == Path("training/data_manager.py")
+        data_manager_path == Path("training / data_manager.py")
         if data_manager_path.exists():::
-            with open(data_manager_path, 'r', encoding == 'utf-8') as f,:
+            with open(data_manager_path, 'r', encoding == 'utf - 8') as f,:
                 content = f.read()
                 
             required_methods = []
@@ -119,8 +119,8 @@ def verify_code_changes():
                 '_assess_archive_quality'
 [            ]
             
-            for method in required_methods,::
-                if method in content,::
+            for method in required_methods, ::
+                if method in content, ::
                     print(f"  ✅ 方法 {method} 已添加到数据管理器")
                 else,
                     print(f"  ❌ 方法 {method} 未找到")
@@ -131,14 +131,14 @@ def verify_code_changes():
         
         print("✅ 代码修改验证通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 代码修改验证失败, {e}")
         return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     print("🚀 简单验证增强后的自动训练系统")
-    print("=" * 40)
+    print(" = " * 40)
     
     tests = []
         verify_data_manager_enhancements,
@@ -147,13 +147,13 @@ def main() -> None,:
 [    ]
     
     passed = 0
-    for test in tests,::
+    for test in tests, ::
         if test():::
             passed += 1
         print()
     
-    print("=" * 40)
-    print(f"验证结果, {passed}/{len(tests)} 通过")
+    print(" = " * 40)
+    print(f"验证结果, {passed} / {len(tests)} 通过")
     
     if passed == len(tests)::
         print("🎉 所有验证通过! 增强功能已正确实现。")

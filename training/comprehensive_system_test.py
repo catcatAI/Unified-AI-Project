@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 综合系统测试
-验证整个训练系统的功能,包括错误处理、监控和增量学习
+验证整个训练系统的功能, 包括错误处理、监控和增量学习
 """
 
 from system_test import
@@ -15,12 +15,12 @@ sys.path.insert(0, str(project_root))
 
 # 配置日志
 logging.basicConfig()
-    level=logging.INFO(),
-    format, str='%(asctime)s - %(levelname)s - %(message)s'
+    level = logging.INFO(),
+    format, str = '%(asctime)s - %(levelname)s - %(message)s'
 ()
 logger, Any = logging.getLogger(__name__)
 
-def test_error_handling_system() -> None,:
+def test_error_handling_system() -> None, :
     """测试错误处理系统"""
     logger.info("🧪 测试错误处理系统...")
 
@@ -35,11 +35,11 @@ def test_error_handling_system() -> None,:
     logger.info("✅ 恢复策略测试通过")
 
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 错误处理系统测试失败, {e}")
     return False
 
-def test_training_monitoring_system() -> None,:
+def test_training_monitoring_system() -> None, :
     """测试训练监控系统"""
     logger.info("🔬 测试训练监控系统...")
 
@@ -75,11 +75,11 @@ def test_training_monitoring_system() -> None,:
 
     logger.info("✅ 训练监控系统测试通过")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 训练监控系统测试失败, {e}")
     return False
 
-def test_incremental_learning_system() -> None,:
+def test_incremental_learning_system() -> None, :
     """测试增量学习系统"""
     logger.info("📈 测试增量学习系统...")
 
@@ -111,11 +111,11 @@ def test_incremental_learning_system() -> None,:
 
     logger.info("✅ 增量学习系统测试通过")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 增量学习系统测试失败, {e}")
     return False
 
-def test_data_management_system() -> None,:
+def test_data_management_system() -> None, :
     """测试数据管理系统"""
     logger.info("📂 测试数据管理系统...")
 
@@ -142,11 +142,11 @@ def test_data_management_system() -> None,:
 
     logger.info("✅ 数据管理系统测试通过")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 数据管理系统测试失败, {e}")
     return False
 
-def test_model_training_system() -> None,:
+def test_model_training_system() -> None, :
     """测试模型训练系统"""
     logger.info("⚙️  测试模型训练系统...")
 
@@ -159,7 +159,8 @@ def test_model_training_system() -> None,:
     trainer == ModelTrainer()
 
     # 测试配置加载
-        config_name == trainer.config.get('name', 'Unknown') if hasattr(trainer, 'config') else 'Unknown':::
+        config_name == trainer.config.get('name', 'Unknown') if hasattr(trainer,
+    'config') else 'Unknown':::
     logger.info(f"训练器配置, {config_name}")
 
     # 测试磁盘空间检查
@@ -175,16 +176,16 @@ def test_model_training_system() -> None,:
 
     logger.info("✅ 模型训练系统测试通过")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 模型训练系统测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     logger.info("🚀 开始综合系统测试")
-    print("=" * 60)
+    print(" = " * 60)
 
     # 运行各项测试
     tests = []
@@ -198,7 +199,7 @@ def main() -> None,:
     passed = 0
     total = len(tests)
 
-    for test_name, test_func in tests,::
+    for test_name, test_func in tests, ::
     print(f"\n🔍 测试 {test_name}...")
         try,
 
@@ -208,20 +209,20 @@ def main() -> None,:
             else,
 
                 print(f"❌ {test_name} 测试失败")
-        except Exception as e,::
+        except Exception as e, ::
             print(f"❌ {test_name} 测试执行出错, {e}")
     time.sleep(1)  # 短暂延迟
 
-    print("\n" + "=" * 60)
-    print(f"📊 测试总结, {passed}/{total} 个系统测试通过")
+    print("\n" + " = " * 60)
+    print(f"📊 测试总结, {passed} / {total} 个系统测试通过")
 
-    if passed == total,::
+    if passed == total, ::
     print("🎉 所有综合系统测试通过!")
-    print("✅ 训练系统功能完整,可以正常运行")
+    print("✅ 训练系统功能完整, 可以正常运行")
     return 0
     else,
 
-    print("⚠️  部分系统测试未通过,请检查相关组件")
+    print("⚠️  部分系统测试未通过, 请检查相关组件")
     return 1
 
 if __name"__main__":::

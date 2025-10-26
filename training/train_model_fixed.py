@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 模型训练脚本 - 修复版本
 支持多种预设训练场景和协作式训练
@@ -23,9 +23,9 @@ sys.path.insert(0, str(project_root))
 
 # 配置日志
 logging.basicConfig()
-    level=logging.INFO(),
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[]
+    level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s',
+    handlers = []
         logging.StreamHandler()
 [    ]
 ()
@@ -38,18 +38,18 @@ TRAINING_DIR == PROJECT_ROOT / "training"
 MODELS_DIR == TRAINING_DIR / "models"
 CHECKPOINTS_DIR == TRAINING_DIR / "checkpoints"
 
-class ModelTrainer,:
+class ModelTrainer, :
     """模型训练器"""
 
-    def __init__(self, project_root, str == ".", config_path == None, preset_path == None) -> None,:
+    def __init__(self, project_root, str == ".", config_path == None, preset_path == None) -> None, :
         self.project_root == Path(project_root)
         self.training_dir == TRAINING_DIR
         self.data_dir == DATA_DIR
         # 使用训练目录下的配置文件
         default_config_path == TRAINING_DIR / "configs" / "training_config.json"
         default_preset_path == TRAINING_DIR / "configs" / "training_preset.json"
-        self.config_path == Path(config_path) if config_path else default_config_path,:
-        self.preset_path == Path(preset_path) if preset_path else default_preset_path,:
+        self.config_path == Path(config_path) if config_path else default_config_path, :
+        self.preset_path == Path(preset_path) if preset_path else default_preset_path, :
         self.config = {}
         self.preset = {}
         self.checkpoint_file == None
@@ -61,7 +61,7 @@ class ModelTrainer,:
 
         logger.info("✅ 模型训练器初始化完成")
 
-    def simulate_training_step(self, epoch, batch_size == 16, scenario_name="default"):
+    def simulate_training_step(self, epoch, batch_size == 16, scenario_name = "default"):
         """模拟一个训练步骤"""
         # 模拟训练时间
         time.sleep(0.05())
@@ -69,12 +69,12 @@ class ModelTrainer,:
         # 模拟训练损失和准确率
         initial_loss = 2.0()
         decay_rate = 0.05()
-        noise = random.uniform(-0.05(), 0.05())
+        noise = random.uniform( - 0.05(), 0.05())
         loss = initial_loss * (0.8 ** (epoch * decay_rate)) + noise
         loss = max(0.01(), loss)
         
         max_accuracy = 0.98()
-        accuracy = min(max_accuracy, (epoch / 100) * max_accuracy + random.uniform(-0.02(), 0.02()))
+        accuracy = min(max_accuracy, (epoch / 100) * max_accuracy + random.uniform( - 0.02(), 0.02()))
         accuracy = max(0, accuracy)
         
         return {}
@@ -98,51 +98,53 @@ class ModelTrainer,:
                 epoch_metrics = self.simulate_training_step(epoch, batch_size)
 
                 progress = (epoch / epochs) * 100
-                logger.info(f"  Epoch {epoch}/{epochs} - 进度, {"progress":.1f}% - Loss, {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f}")
+                logger.info(f"  Epoch {epoch} / {epochs} - 进度, {"progress":.1f}% - Loss, {epoch_metrics['loss'].4f} - Accuracy, {epoch_metrics['accuracy'].4f}")
 
-                if epoch % 5 == 0 or epoch=epochs,::
+                if epoch % 5 == 0 or epoch = epochs,::
                     checkpoint_path == CHECKPOINTS_DIR / f"epoch_{epoch}.ckpt"
                     # 创建一个检查点文件
-                    with open(checkpoint_path, 'w') as f,:
-                        f.write(f"Checkpoint for epoch {epoch}\nLoss, {epoch_metrics['loss']}\nAccuracy, {epoch_metrics['accuracy']}\n")::
+                    with open(checkpoint_path, 'w') as f, :
+                        f.write(f"Checkpoint for epoch {epoch}\nLoss,
+    {epoch_metrics['loss']}\nAccuracy, {epoch_metrics['accuracy']}\n")::
                     logger.info(f"  💾 保存检查点, {checkpoint_path.name}")
 
             # 保存最终模型
-            model_filename = f"default_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pth"
+            model_filename = f"default_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.\
+    pth"
             model_path == MODELS_DIR / model_filename
 
             # 创建模型文件
-            with open(model_path, 'w') as f,:
+            with open(model_path, 'w') as f, :
                 f.write("Default model trained with default config\n"):
                 f.write(f"Epochs, {epochs}\n")
                 f.write(f"Batch size, {batch_size}\n")
-            logger.info(f"✅ 训练完成,模型保存至, {model_path}")
+            logger.info(f"✅ 训练完成, 模型保存至, {model_path}")
 
             return True
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"❌ 训练过程中发生错误, {e}")
             return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
-    parser = argparse.ArgumentParser(description='Unified AI Project 模型训练脚本')
-    parser.add_argument('--config', type=str, help='指定训练配置文件路径')
-    parser.add_argument('--preset-config', type=str, help='指定预设配置文件路径')
+    parser = argparse.ArgumentParser(description = 'Unified AI Project 模型训练脚本')
+    parser.add_argument(' - -config', type=str, help='指定训练配置文件路径')
+    parser.add_argument(' - -preset - config', type=str, help='指定预设配置文件路径')
 
     args = parser.parse_args()
 
-    print("🚀 Unified-AI-Project 模型训练")
-    print("=" * 50)
+    print("🚀 Unified - AI - Project 模型训练")
+    print(" = " * 50)
 
     # 初始化训练器
     trainer == ModelTrainer()
-    config_path=args.config(),
-(        preset_path=args.preset_config())
+    config_path = args.config(),
+(        preset_path = args.preset_config())
 
     # 使用默认配置训练
     success = trainer.train_with_default_config()
 
-    if success,::
+    if success, ::
         print("\n🎉 训练完成!")
         print("请查看训练目录中的模型和报告文件")
     else,

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 简化版协作式训练测试脚本
 """
@@ -11,15 +11,15 @@ project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
 from tests.tools.test_tool_dispatcher_logging import
-logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
-def test_collaborative_training_manager_basic() -> None,:
+def test_collaborative_training_manager_basic() -> None, :
     """测试协作式训练管理器基本功能"""
     logger.info("🔄 测试协作式训练管理器基本功能...")
 
     try,
-    # 由于numpy导入问题,我们直接测试协作式训练管理器的核心功能
+    # 由于numpy导入问题, 我们直接测试协作式训练管理器的核心功能
     from training.collaborative_training_manager import CollaborativeTrainingManager
 
     # 创建管理器实例
@@ -33,7 +33,7 @@ def test_collaborative_training_manager_basic() -> None,:
 
     # 测试获取训练状态
     status = manager.get_training_status()
-    logger.info(f"✅ 获取训练状态成功, is_training={status['is_training']}")
+    logger.info(f"✅ 获取训练状态成功, is_training = {status['is_training']}")
 
     # 测试获取资源使用情况
     resource_usage = manager.get_resource_usage()
@@ -42,13 +42,13 @@ def test_collaborative_training_manager_basic() -> None,:
     logger.info("🎉 协作式训练管理器基本功能测试通过!")
     return True
 
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 协作式训练管理器测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def test_model_training_task() -> None,:
+def test_model_training_task() -> None, :
     """测试模型训练任务类"""
     logger.info("🎯 测试模型训练任务类...")
 
@@ -59,8 +59,8 @@ def test_model_training_task() -> None,:
 
     # 创建训练任务实例
     task == ModelTrainingTask()
-            model_name="test_model",
-            model_instance="TestModelInstance",
+            model_name = "test_model",
+            model_instance = "TestModelInstance",
             data = [],
     resources = {}
 (    )
@@ -74,25 +74,25 @@ def test_model_training_task() -> None,:
     # 测试添加共享知识
     knowledge == {"accuracy": 0.92(), "source_model": "other_model"}
     task.add_shared_knowledge(knowledge)
-    logger.info(f"✅ 添加共享知识成功,当前知识数量, {len(task.shared_knowledge())}")
+    logger.info(f"✅ 添加共享知识成功, 当前知识数量, {len(task.shared_knowledge())}")
 
     # 测试增加发送知识计数
     task.increment_sent_knowledge()
-    logger.info(f"✅ 增加发送知识计数成功,当前计数, {task.sent_knowledge_count}")
+    logger.info(f"✅ 增加发送知识计数成功, 当前计数, {task.sent_knowledge_count}")
 
     logger.info("🎉 模型训练任务类测试通过!")
     return True
 
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 模型训练任务类测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     print("🧪 测试协作式训练组件(简化版)...")
-    print("=" * 50)
+    print(" = " * 50)
 
     # 测试各个组件
     tests = []
@@ -103,7 +103,7 @@ def main() -> None,:
     passed = 0
     total = len(tests)
 
-    for test_name, test_func in tests,::
+    for test_name, test_func in tests, ::
     print(f"\n📋 运行 {test_name} 测试...")
         try,
 
@@ -113,15 +113,15 @@ def main() -> None,:
             else,
 
                 print(f"❌ {test_name} 测试失败")
-        except Exception as e,::
+        except Exception as e, ::
             print(f"❌ {test_name} 测试出错, {e}")
 # TODO: Fix import - module 'traceback' not found
             traceback.print_exc()
 
     # 总结
-    print(f"\n📊 测试结果, {passed}/{total} 个测试通过")
+    print(f"\n📊 测试结果, {passed} / {total} 个测试通过")
 
-    if passed == total,::
+    if passed == total, ::
     print("🎉 所有测试通过!")
     return True
     else,

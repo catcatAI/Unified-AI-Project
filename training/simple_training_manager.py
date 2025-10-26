@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 简化训练管理器
 基本的训练系统管理
@@ -11,12 +11,12 @@ from datetime import datetime
 
 # 基本配置
 logging.basicConfig()
-    level=logging.INFO(),
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level = logging.INFO(),
+    format = '%(asctime)s - %(levelname)s - %(message)s'
 ()
 logger = logging.getLogger(__name__)
 
-class SimpleTrainingManager,:
+class SimpleTrainingManager, :
     """简化训练管理器"""
     
     def __init__(self):
@@ -53,21 +53,22 @@ class SimpleTrainingManager,:
         # 检查概念模型数据
         concept_dir = self.data_dir / "concept_models_training_data"
         if concept_dir.exists():::
-            concept_files = list(concept_dir.glob("*.json"))
-            if concept_files,::
+            concept_files = list(concept_dir.glob(" * .json"))
+            if concept_files, ::
                 data_status["concept_data"] = True
                 data_status["total_datasets"] += len(concept_files)
                 logger.info(f"✅ 概念模型数据, {len(concept_files)} 个文件")
         
         # 检查模拟数据
-        mock_dirs = ["vision_samples", "audio_samples", "reasoning_samples", "multimodal_samples"]
+        mock_dirs = ["vision_samples", "audio_samples", "reasoning_samples",
+    "multimodal_samples"]
         mock_count = 0
-        for mock_dir in mock_dirs,::
+        for mock_dir in mock_dirs, ::
             mock_path = self.data_dir / mock_dir
             if mock_path.exists():::
                 mock_count += 1
         
-        if mock_count > 0,::
+        if mock_count > 0, ::
             data_status["mock_data"] = True
             data_status["total_datasets"] += mock_count
             logger.info(f"✅ 模拟数据, {mock_count} 个目录")
@@ -82,8 +83,8 @@ class SimpleTrainingManager,:
         # 检查数据
         data_status = self.check_training_data()
         
-        if data_status["total_datasets"] == 0,::
-            logger.warning("⚠️ 没有找到训练数据,请先运行数据生成器")
+        if data_status["total_datasets"] == 0, ::
+            logger.warning("⚠️ 没有找到训练数据, 请先运行数据生成器")
             return False
         
         # 创建训练配置
@@ -100,8 +101,8 @@ class SimpleTrainingManager,:
         
         # 保存训练配置
         config_path = self.training_dir / "current_training_config.json"
-        with open(config_path, 'w', encoding == 'utf-8') as f,:
-            json.dump(training_config, f, indent=2, ensure_ascii == False)
+        with open(config_path, 'w', encoding == 'utf - 8') as f,:
+            json.dump(training_config, f, indent = 2, ensure_ascii == False)
         
         logger.info(f"✅ 基础训练配置已保存, {config_path}")
         logger.info("🎯 基础训练启动完成")
@@ -112,7 +113,7 @@ class SimpleTrainingManager,:
         config_path = self.training_dir / "current_training_config.json"
         
         if config_path.exists():::
-            with open(config_path, 'r', encoding == 'utf-8') as f,:
+            with open(config_path, 'r', encoding == 'utf - 8') as f,:
                 config = json.load(f)
             return config
         else,
@@ -123,22 +124,22 @@ def main():
     """主函数"""
 # TODO: Fix import - module 'argparse' not found
     
-    parser = argparse.ArgumentParser(description='简化训练管理器')
-    parser.add_argument('--check-data', action='store_true', help='检查训练数据')
-    parser.add_argument('--start-training', action='store_true', help='开始基础训练')
-    parser.add_argument('--status', action='store_true', help='获取训练状态')
+    parser = argparse.ArgumentParser(description = '简化训练管理器')
+    parser.add_argument(' - -check - data', action='store_true', help='检查训练数据')
+    parser.add_argument(' - -start - training', action='store_true', help='开始基础训练')
+    parser.add_argument(' - -status', action='store_true', help='获取训练状态')
     
     args = parser.parse_args()
     
     manager == SimpleTrainingManager()
     
-    if args.check_data,::
+    if args.check_data, ::
         manager.check_training_data()
-    elif args.start_training,::
+    elif args.start_training, ::
         manager.start_basic_training()
-    elif args.status,::
+    elif args.status, ::
         status = manager.get_training_status()
-        print(json.dumps(status, indent=2, ensure_ascii == False))
+        print(json.dumps(status, indent = 2, ensure_ascii == False))
     else,
         parser.print_help()
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 简化系统健康检查脚本
 验证核心训练系统的健康状态
@@ -17,22 +17,22 @@ def check_core_components():
 
     # 检查必要的文件是否存在
     required_files = []
-    "training/auto_training_manager.py",
-    "training/data_manager.py",
-    "training/train_model.py",
-    "training/collaborative_training_manager.py",
-    "training/incremental_learning_manager.py",
-    "training/error_handling_framework.py",
-    "training/training_monitor.py"
+    "training / auto_training_manager.py",
+    "training / data_manager.py",
+    "training / train_model.py",
+    "training / collaborative_training_manager.py",
+    "training / incremental_learning_manager.py",
+    "training / error_handling_framework.py",
+    "training / training_monitor.py"
 [    ]
 
     missing_files = []
-    for file_path in required_files,::
+    for file_path in required_files, ::
     full_path = project_root / file_path
         if not full_path.exists():::
 = missing_files.append(file_path)
 
-    if missing_files,::
+    if missing_files, ::
     print(f"❌ 缺少文件, {missing_files}")
     return False
     else,
@@ -57,12 +57,12 @@ def check_config_files():
 [    ]
 
     missing_configs = []
-    for config_file in required_configs,::
+    for config_file in required_configs, ::
     full_path = config_dir / config_file
         if not full_path.exists():::
 = missing_configs.append(config_file)
 
-    if missing_configs,::
+    if missing_configs, ::
     print(f"⚠️  缺少配置文件, {missing_configs}")
     else,
 
@@ -76,12 +76,12 @@ def check_model_directory():
 
     models_dir = project_root / "training" / "models"
     if not models_dir.exists():::
-= print("ℹ️  模型目录不存在,将创建...")
+= print("ℹ️  模型目录不存在, 将创建...")
         try,
 
             models_dir.mkdir(parents == True, exist_ok == True)
             print("✅ 模型目录创建成功")
-        except Exception as e,::
+        except Exception as e, ::
             print(f"❌ 创建模型目录失败, {e}")
             return False
     else,
@@ -102,12 +102,12 @@ def check_training_scripts():
 [    ]
 
     missing_scripts = []
-    for script in training_scripts,::
+    for script in training_scripts, ::
     full_path = project_root / "training" / script
         if not full_path.exists():::
 = missing_scripts.append(script)
 
-    if missing_scripts,::
+    if missing_scripts, ::
     print(f"⚠️  缺少训练脚本, {missing_scripts}")
     else,
 
@@ -124,17 +124,17 @@ def check_imports():
 
     print("✅ 所有核心模块导入成功")
     return True
-    except ImportError as e,::
+    except ImportError as e, ::
     print(f"❌ 模块导入失败, {e}")
     return False
-    except Exception as e,::
+    except Exception as e, ::
     print(f"❌ 导入检查出错, {e}")
     return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     print("🚀 开始简化系统健康检查")
-    print("=" * 50)
+    print(" = " * 50)
 
     # 运行各项检查
     checks = []
@@ -148,7 +148,7 @@ def main() -> None,:
     passed = 0
     total = len(checks)
 
-    for check_name, check_func in checks,::
+    for check_name, check_func in checks, ::
     print(f"\n🔍 检查 {check_name}...")
         try,
 
@@ -158,19 +158,19 @@ def main() -> None,:
             else,
 
                 print(f"❌ {check_name} 异常")
-        except Exception as e,::
+        except Exception as e, ::
             print(f"❌ {check_name} 检查执行出错, {e}")
 
-    print("\n" + "=" * 50)
-    print(f"📊 健康检查总结, {passed}/{total} 项检查通过")
+    print("\n" + " = " * 50)
+    print(f"📊 健康检查总结, {passed} / {total} 项检查通过")
 
-    if passed == total,::
+    if passed == total, ::
     print("🎉 简化系统健康检查通过!")
-    print("✅ 训练系统核心组件完整,可以正常运行")
+    print("✅ 训练系统核心组件完整, 可以正常运行")
     return 0
     else,
 
-    print("⚠️  部分检查未通过,请检查相关组件")
+    print("⚠️  部分检查未通过, 请检查相关组件")
     return 1
 
 if __name"__main__":::
