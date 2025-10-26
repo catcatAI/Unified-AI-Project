@@ -543,6 +543,7 @@ class UnifiedExecutor, :
                 "progress": context.progress(),
                 "metrics": context.metrics(),
                 "start_time": context.start_time.isoformat() if context.start_time else \
+    \
     None, ::
                     current_epoch": context.current_epoch()
 {            }
@@ -560,6 +561,7 @@ class UnifiedExecutor, :
                 "progress": context.progress(),
                 "metrics": context.metrics(),
                 "start_time": context.start_time.isoformat() if context.start_time else \
+    \
     None, ::
                     current_epoch": context.current_epoch()
 {            }
@@ -715,11 +717,14 @@ class ResourceManager, :
     """获取资源使用情况"""
         cpu_cores == sum(info["cores"] for info in self.allocated_resources.values() if \
     \
+    \
     info["type"] == "cpu"):::
     memory_gb == sum(info["memory_gb"] for info in self.allocated_resources.values() if \
     \
+    \
     info["type"] == "memory"):::
     gpus == sum(info["gpus"] for info in self.allocated_resources.values() if info["type\
+    \
     \
     "] == "gpu"):::
     return {}

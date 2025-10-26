@@ -115,7 +115,8 @@ def test_resource_manager_integration() -> None, :
 
             # 检查资源管理器是否正确初始化了优化器
             if hasattr(resource_manager,
-    'integrated_graphics_optimizer') and resource_manager.integrated_graphics_optimizer, ::
+    'integrated_graphics_optimizer') and resource_manager.integrated_graphics_optimizer,
+    ::
     logger.info("资源管理器已正确初始化集成显卡优化器")
 
                 # 测试资源分配中的集成显卡优化
