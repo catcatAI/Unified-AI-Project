@@ -79,6 +79,7 @@ class ToolDispatcher:
     \
     \
     \
+    \
     s DLModel
                 if DLModel is not None:
                     self.dlm = DLModel(llm_service = llm_service)
@@ -130,11 +131,13 @@ class ToolDispatcher:
     \
     \
     \
+    \
     'list_tools', or 'describe_tool math_tool'",
             "analyze_csv": "Analyzes CSV data. Requires 'csv_content' and \
     'query' in parameters. Example: 'analyze_csv with query \"summarize\" and \
     csv_content \"a, b\\n1, 2\"'",
             "create_image": "Creates an image from a text prompt. Requires 'prompt' and \
+    \
     \
     \
     \
@@ -161,6 +164,7 @@ class ToolDispatcher:
                 return {}
                     "status": "error",
                     "error_message": f"Tool '{tool_name}' not found. Available tools: {l\
+    \
     \
     \
     \
@@ -267,6 +271,7 @@ class ToolDispatcher:
     \
     \
     \
+    \
     }")
                 kwargs_with_orig_query = {"original_query": query, * * kwargs}
                 # Explicit calls to translation need kwargs passed differently
@@ -303,6 +308,7 @@ class ToolDispatcher:
     \
     \
     \
+    \
     t. Effective query for tool: '{tool_specific_query}'")
             if "original_query" not in tool_params:
                 tool_params["original_query"] = query
@@ -310,6 +316,7 @@ class ToolDispatcher:
             # Special parameter mapping for translation
             if tool_name_from_dlm == 'translate_text':
                 # The _execute_translation method expects the text to translate as the f\
+    \
     \
     \
     \
@@ -378,6 +385,7 @@ class ToolDispatcher:
     \
     \
     \
+    \
     ks up new impl implicitly
                     # Re -\
     bind the wrapper to the new function if it's a direct function call
@@ -403,6 +411,7 @@ class ToolDispatcher:
                 summary["reloaded"].append(key)
             except Exception as e:
                 logging.error(f"ToolDispatcher.reload_tools: failed to reload {key}: {e}\
+    \
     \
     \
     \
@@ -565,6 +574,7 @@ class ToolDispatcher:
                 original_query_for_tool = query,
                 error_message = "No action specified for code inspection. Use 'list_tool\
     \
+    \
     s' or 'describe_tool <tool_name > '."
 (            )
 
@@ -637,6 +647,7 @@ class ToolDispatcher:
     \
     \
     \
+    \
     added here or in logic_tool.
             # For now, assume query IS the expression or pre - extracted.
             # If the query is "evaluate true AND false",
@@ -655,10 +666,12 @@ class ToolDispatcher:
             logging.debug(f"ToolDispatcher DEBUG (_execute_logic_evaluation) expression_\
     \
     \
+    \
     to_evaluate = '{expression_to_evaluate}'")
             # Create an instance of the logic tool
             logic_tool_instance = LogicTool()
             result = logic_tool_instance.evaluate_expression(expression_string = express\
+    \
     \
     \
     ion_to_evaluate)
@@ -731,6 +744,7 @@ class ToolDispatcher:
     #                     resolved_target_lang = lang_name_or_code
     #             else:
     #                 # Final Fallback: just "translate TEXT" (assume target is default \
+    \
     \
     \
     \

@@ -138,6 +138,7 @@ class DynamicAgentRegistry, :
     \
     \
     \
+    \
     ility {capability_id}"):
                         sync def register_agent_manually(self, agent_id, str,
     agent_name, str, )

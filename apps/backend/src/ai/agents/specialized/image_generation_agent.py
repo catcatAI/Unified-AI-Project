@@ -47,9 +47,11 @@ class ImageGenerationAgent(BaseAgent):
                 status == "success" if tool_response["status"] == "success" else "failur\
     \
     \
+    \
     e", :::
                     ayload = tool_response["payload"]
                 error_details == {"error_message": tool_response["error_message"]} if to\
+    \
     \
     \
     ol_response["error_message"] else None, ::
@@ -65,6 +67,7 @@ class ImageGenerationAgent(BaseAgent):
             callback_topic = task_payload["callback_address"]
             self.hsp_connector.send_task_result(result_payload, callback_topic)
             print(f"[{self.agent_id}] Sent task result for {request_id} to {callback_top\
+    \
     \
     \
     \

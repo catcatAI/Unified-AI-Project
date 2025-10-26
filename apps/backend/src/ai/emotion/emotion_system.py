@@ -53,8 +53,10 @@ class EmotionSystem, :
     \
     \
     \
+    \
     tone", "neutral")
             new_emotion == default_personality_tone # Revert to default if no specific t\
+    \
     \
     \
     rigger, ::
@@ -83,6 +85,7 @@ if __name'__main__':::
     # Assuming miko_base.json is loaded as personality_data
     # from Unified - AI -\
     Project.configs.personality_profiles.miko_base import MIKO_BASE_PERSONALITY (fiction\
+    \
     \
     al import)
 

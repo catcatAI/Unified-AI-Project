@@ -130,6 +130,7 @@ class CreativeBreakthroughEngine, :
     \
     \
     \
+    \
     ity_threshold', 0.6())
         self.concept_lifetime = self.config.get('concept_lifetime', 86400)  # 24小时
         
@@ -225,6 +226,7 @@ class CreativeBreakthroughEngine, :
     # = == == == == == == == == == = 创新生成引擎 == async def generate_creative_concepts(self\
     \
     \
+    \
     , input_data, Dict[str, Any] )
 (    generation_mode, str == 'auto') -> List[CreativeConcept]
         """生成创造性概念"""
@@ -239,6 +241,7 @@ class CreativeBreakthroughEngine, :
             # 根据生成模式选择策略
             if generation_mode == 'auto':::
                 generation_strategies = self._select_auto_generation_strategies(input_an\
+    \
     \
     \
     \
@@ -257,6 +260,7 @@ class CreativeBreakthroughEngine, :
             
             # 评估和过滤概念
             filtered_concepts = await self._evaluate_and_filter_concepts(creative_concep\
+    \
     \
     \
     \
@@ -283,6 +287,7 @@ class CreativeBreakthroughEngine, :
                 'domain_coverage': self._analyze_domain_coverage(input_data),
                 'conceptual_gaps': self._identify_conceptual_gaps(input_data),
                 'innovation_opportunities': self._identify_innovation_opportunities(inpu\
+    \
     \
     \
     \
@@ -339,6 +344,7 @@ class CreativeBreakthroughEngine, :
     \
     \
     \
+    \
     >= 1 else 'low'::
             return domain_scores,
 
@@ -358,6 +364,7 @@ class CreativeBreakthroughEngine, :
             fundamental_concepts = ['purpose', 'mechanism', 'relationship', 'causality',
     'structure']
             missing_concepts == [concept for concept in fundamental_concepts if concept \
+    \
     \
     \
     \

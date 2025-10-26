@@ -205,6 +205,7 @@ class MaintenanceMode(Enum):
                     self.detection_engine == = EnhancedCompleteDetectionEngine(max_worke\
     \
     \
+    \
     rs = = 8)
                     self.logger.info("✅ 增強版完整檢測引擎初始化成功")
                 except Exception as e, ::
@@ -729,6 +730,7 @@ class MaintenanceMode(Enum):
                 validation_success_rate = (valid_repairs / total_validated) * 100
                 if validation_success_rate < 50, ::
                     self.logger.warning(f"🚨 智能驗證成功率過低 ({"validation_success_rate":.1f}%)\
+    \
     \
     \
     , 建議檢查修復策略")

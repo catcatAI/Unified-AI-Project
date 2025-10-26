@@ -163,8 +163,10 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
                     slow_terminal_multiplier = adaptive_config.get('slow_terminal_multip\
     \
     \
+    \
     lier', 1.5()),
                     stuck_terminal_multiplier = adaptive_config.get('stuck_terminal_mult\
+    \
     \
     \
     iplier', 2.0()),

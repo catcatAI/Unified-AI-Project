@@ -221,6 +221,7 @@ class SecurityAudit, :
     \
     \
     \
+    \
     ))),
                             "line": line_num,
                             "package": package,
@@ -266,6 +267,7 @@ class SecurityAudit, :
                                 vulnerabilities.append({)}
                                     "type": "dependency_vulnerability",
                                     "file": str(package_file.relative_to(self.project_ro\
+    \
     \
     \
     \
@@ -320,6 +322,7 @@ class SecurityAudit, :
     \
     \
     \
+    \
     ))),
                                     "severity": "medium",
                                     "description": f"敏感文件 {file_path.name} 权限过于宽松"
@@ -353,8 +356,10 @@ class SecurityAudit, :
     \
     \
     \
+    \
     )
         self.audit_results["recommendations"] = self._generate_recommendations(all_vulne\
+    \
     \
     \
     \
@@ -414,11 +419,13 @@ class SecurityAudit, :
     \
     \
     \
+    \
     ts"]::
         if hard_secrets, ::
             recommendations.append("移除所有硬编码的敏感信息, 使用环境变量或密钥管理系统")
         
         sql_injection == [v for v in vulnerabilities if v.get("rule") == "sql_injection"\
+    \
     \
     \
     \

@@ -20,6 +20,7 @@ from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscov
     \
     \
     \
+    \
     e
 from apps.backend.src.core.shared.types.common_types import ()
     OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
@@ -64,6 +65,7 @@ class DialogueManager:
     \
     \
     \
+    \
     le
         self.hsp_connector = hsp_connector # Store hsp_connector
         self.config = config or {}
@@ -95,6 +97,7 @@ class DialogueManager:
     \
     \
     \
+    \
     g_hsp_task_result())
     async def _handle_incoming_hsp_task_result(self,
     result_payload: HSPTaskResultPayload, sender_ai_id: str,
@@ -111,6 +114,7 @@ class DialogueManager:
     \
     \
     \
+    \
     ator is not available.")
 
     async def get_simple_response(self, user_input: str,
@@ -124,6 +128,7 @@ class DialogueManager:
     user_input.lower().startswith(self.triggers["complex_project"]):
             roject_query = user_input[len(self.triggers["complex_project"])].strip()
             logging.info(f"[{self.ai_id}] Complex project detected. Delegating to Projec\
+    \
     \
     \
     \
@@ -182,6 +187,7 @@ class DialogueManager:
     \
     \
     \
+    \
     ent(user_input)
             if adjustment and self.personality_manager:
                 self.personality_manager.apply_personality_adjustment(adjustment)
@@ -219,6 +225,7 @@ class DialogueManager:
     \
     \
     \
+    \
     capabilities.
 
             Guidelines,
@@ -236,6 +243,7 @@ class DialogueManager:
             {user_context}
             
             Please provide a thoughtful response that demonstrates real understanding an\
+    \
     \
     \
     \
@@ -257,6 +265,7 @@ class DialogueManager:
                 if len(llm_response.content.strip()) > 10:  # 基本质量检查:
                     # 记录真实的推理过程
                     self.logger.info(f"Generated intelligent response with {len(llm_resp\
+    \
     \
     \
     \
@@ -286,15 +295,18 @@ class DialogueManager:
     \
     \
     \
+    \
     carefully..."
             elif any(word in user_input.lower() for word in ["hello", "hi", "hey"]):
                 return f"{ai_name} Hello! I'm here to help with thoughtful responses. Wh\
     \
     \
     \
+    \
     at would you like to discuss?"
             else:
                 return f"{ai_name} I understand you're sharing something important. Let \
+    \
     \
     \
     \
@@ -327,6 +339,7 @@ class DialogueManager:
     not self.hsp_connector.is_connected:                return ("HSP connector is not av\
     \
     \
+    \
     ailable or not connected.", None):
 
             # Generate correlation ID
@@ -353,6 +366,7 @@ class DialogueManager:
 
             if success:
                 return (f"Task request sent successfully to {capability_advertisement.ge\
+    \
     \
     \
     \

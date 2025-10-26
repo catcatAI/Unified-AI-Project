@@ -377,6 +377,7 @@ class HSPAdvancedPerformanceOptimizer, :
         self.executor == = ThreadPoolExecutor(max_workers = = self.config.get('thread_po\
     \
     \
+    \
     ol_size', 4))
 
         logger.info("HSP高级性能优化器初始化完成")

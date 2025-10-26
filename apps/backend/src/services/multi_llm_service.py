@@ -168,6 +168,7 @@ class OpenAIProvider(BaseLLMProvider):
     \
     \
     \
+    \
     ]})
                 else,
                     openai_messages.append({"role": msg.role(), "content": msg.content})
@@ -1187,6 +1188,7 @@ class MultiLLMService, :
     \
     \
     \
+    \
     ])
 
         provider = self.providers[model_id]
@@ -1264,6 +1266,7 @@ class MultiLLMService, :
     \
     \
     \
+    \
     ])
 
         provider = self.providers[model_id]
@@ -1323,8 +1326,10 @@ class MultiLLMService, :
     \
     \
     \
+    \
     es()):::
             otal_tokens == sum(stats['total_tokens'] for stats in self.usage_stats.value\
+    \
     \
     \
     \

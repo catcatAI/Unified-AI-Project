@@ -43,6 +43,7 @@ class RetryPolicy, :
     \
     \
     \
+    \
     )
                     raise  # Re - raise non - retryable errors immediately
                 except Exception as e, ::
@@ -50,10 +51,12 @@ class RetryPolicy, :
     \
     \
     \
+    \
     ying.")
                     raise
             logger.error(f"Max retries exceeded for {func.__name__}."):::
 aise NetworkError(f"Operation failed after {self.max_attempts} attempts due to network i\
+    \
     \
     \
     \
@@ -82,6 +85,7 @@ class CircuitBreaker, :
     State changed to HALF_OPEN. Probing service...")
                 else,
                     raise CircuitBreakerOpenError(f"Circuit breaker is OPEN. Service {fu\
+    \
     \
     \
     \

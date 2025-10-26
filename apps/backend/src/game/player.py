@@ -12,6 +12,7 @@ class Player, :
     \
     \
     \
+    \
     need to be animated
         self.rect = self.image.get_rect()
         self.rect.x = 100

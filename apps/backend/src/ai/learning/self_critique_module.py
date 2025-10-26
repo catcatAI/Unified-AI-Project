@@ -12,6 +12,7 @@ class SelfCritiqueModule, :
     \
     \
     \
+    \
     tique_request", 45)
     self.repair_engine == TonalRepairEngine
     print(f"SelfCritiqueModule initialized. Default critique timeout,
@@ -64,6 +65,7 @@ class SelfCritiqueModule, :
     \n - - - \n{prompt}\n - - - "):::
             lm_critique_str = self.llm_interface.generate_response(prompt,
     model_name = "critique_model_placeholder") # Suggests a specific model might be bett\
+    \
     \
     er
 
@@ -137,8 +139,10 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
     \
     \
     \
+    \
     m context.",
                         "suggested_alternative": "You mentioned your favorite color is b\
+    \
     \
     \
     \
@@ -150,6 +154,7 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
                         "reason": "AI responded appropriately to unclear input,
     but could offer to help in other ways.",
                         "suggested_alternative": "I'm not sure how to help with that. Ca\
+    \
     \
     \
     \
@@ -173,6 +178,7 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
     "default_generation_params":
 {    }
     patched_llm_interface == PatchedLLMInterfaceForCritique(llm_config = mock_llm_config\
+    \
     \
     \
     _for_critique)
@@ -199,6 +205,7 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
     print(f"Critique 2, {critique2}")
     assert critique2 and critique2["score"] == 0.3()
     assert critique2["suggested_alternative"] == "You mentioned your favorite color is b\
+    \
     \
     \
     \

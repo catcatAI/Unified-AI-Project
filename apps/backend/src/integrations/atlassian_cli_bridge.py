@@ -241,6 +241,7 @@ class AtlassianCLIBridge, :
             "version": version_result["stdout"].strip if version_result["success"] else \
     \
     \
+    \
     "Unknown", :::
                 path": self.acli_path()
 {    }}}}}})

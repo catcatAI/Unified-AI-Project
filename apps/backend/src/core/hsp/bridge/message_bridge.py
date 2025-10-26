@@ -49,6 +49,7 @@ class MessageBridge, :
     \
     \
     \
+    \
     _type)
             if internal_topic_suffix, ::
                 internal_channel = f"hsp.external.{internal_topic_suffix}"

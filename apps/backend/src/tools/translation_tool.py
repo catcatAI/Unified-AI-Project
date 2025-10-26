@@ -66,6 +66,7 @@ def translate(text: str, target_language: str, source_language: str = None,
     \
     \
     \
+    \
     rgs).
         target_language (str): The target language name or code (e.g., 'en', 'zh',
     'english').
@@ -86,8 +87,10 @@ def translate(text: str, target_language: str, source_language: str = None,
     \
     \
     \
+    \
     ally_translate[:50]}...") # Removed for now to avoid circular dependency
             return f"Could not determine source language for '{text_to_actually_translat\
+    \
     \
     \
     \
@@ -123,6 +126,7 @@ def translate(text: str, target_language: str, source_language: str = None,
     # print(f"TranslationTool SANITIZED DEBUG: Checking key. Wanted key = '{repr(transla\
     \
     \
+    \
     tion_map_key)}', Available keys = '{dict_keys_for_debug}',
     Key present? {key_present}")
 
@@ -143,8 +147,10 @@ def translate(text: str, target_language: str, source_language: str = None,
     \
     \
     \
+    \
     ate}' from {source_lang_code} to {target_lang_code}.") # Removed for now
             return f"Translation not available for '{text_to_actually_translate}' from {\
+    \
     \
     \
     \
@@ -154,8 +160,10 @@ def translate(text: str, target_language: str, source_language: str = None,
     \
     \
     \
+    \
     to {target_lang_code}.") # Removed for now
         return f"Translation from {source_lang_code} to {target_lang_code} is not suppor\
+    \
     \
     \
     \
@@ -199,6 +207,7 @@ if __name__ == "__main__":
         ("Hello", "en", "Hello"),  # Test same source / target
         ("ayuda", "en",
     "Could not determine source language for 'ayuda'. Translation unavailable.")  # Test\
+    \
     \
     \
     language detection failure

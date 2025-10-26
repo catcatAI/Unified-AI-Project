@@ -75,6 +75,7 @@ class PlanningAgent(BaseAgent):
     \
     \
     \
+    \
     ability_id}'"):::
             ry,
             if "task_planning" in capability_id, ::
@@ -99,6 +100,7 @@ class PlanningAgent(BaseAgent):
             callback_topic = task_payload["callback_address"]
             await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callb\
+    \
     \
     \
     \
@@ -212,6 +214,7 @@ class PlanningAgent(BaseAgent):
                 critical_path_length_days": sum(task['duration'] for task in tasks)  # S\
     \
     \
+    \
     implified, ::
 在函数定义前添加空行
         """Optimizes a task schedule."""
@@ -249,6 +252,7 @@ class PlanningAgent(BaseAgent):
             if assigned_resource, ::
                 task['assigned_resource'] = assigned_resource
                 resource_assignments[assigned_resource]['assigned_tasks'].append(task['n\
+    \
     \
     \
     \
@@ -294,6 +298,7 @@ class PlanningAgent(BaseAgent):
             "deadline": deadline,
             "resource_utilization": resource_assignments,
             "critical_path_length_days": sum(t['duration_days'] for t in timeline)  # Si\
+    \
     \
     \
     mplified, ::

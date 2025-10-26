@@ -162,6 +162,7 @@ class IOIntelligenceOrchestrator, :
     \
     \
     \
+    \
     ()
                 logger.info("✅ AI模型初始化完成")
             except Exception as e, ::
@@ -551,6 +552,7 @@ class IOIntelligenceOrchestrator, :
     \
     \
     \
+    \
     time')]:
         success_rates == [h['success'] for h in history]::
         if completion_times, ::
@@ -624,6 +626,7 @@ class IOIntelligenceOrchestrator, :
     \
     \
     \
+    \
     usters[i] == cluster_id]::
                         if cluster_data, ::
                             avg_completion = np.mean([d[0] for d in cluster_data]):
@@ -633,6 +636,7 @@ class IOIntelligenceOrchestrator, :
                                     'type': 'ai_behavior_clustering',
                                     'cluster_id': cluster_id,
                                     'issue': f"聚类{cluster_id}平均完成时间{"avg_completion":.1f\
+    \
     \
     \
     \
@@ -740,6 +744,7 @@ class IOIntelligenceOrchestrator, :
     \
     \
     \
+    \
     values())::
 {                }
         
@@ -748,8 +753,10 @@ class IOIntelligenceOrchestrator, :
             'behavior_clustering': 'available' if 'behavior_clustering' in self.ml_model\
     \
     \
+    \
     s else 'unavailable', :::
             'performance_prediction': 'available' if 'performance_predictor' in self.ml_\
+    \
     \
     \
     \
@@ -761,6 +768,7 @@ class IOIntelligenceOrchestrator, :
             'adaptive_thresholds_configured': len(self.adaptive_thresholds()),
             'behavior_patterns_detected': len(self.behavior_patterns()),
             'ml_models_active': len([m for m in self.ml_models.values() if m is not None\
+    \
     \
     \
     \
@@ -798,6 +806,7 @@ class IOIntelligenceOrchestrator, :
     \
     \
     \
+    \
     ppend({)}
                         'form_id': form_id,
                         'form_name': form.name(),
@@ -821,8 +830,10 @@ class IOIntelligenceOrchestrator, :
                 'behavior_clustering': 'active' if 'behavior_clustering' in self.ml_mode\
     \
     \
+    \
     ls else 'inactive', :::
                 'performance_prediction': 'active' if 'performance_predictor' in self.ml\
+    \
     \
     \
     _models else 'inactive', :::

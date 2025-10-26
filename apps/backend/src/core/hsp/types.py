@@ -161,6 +161,7 @@ class HSPTaskRequestPayload(TypedDict, total = False):
     \
     \
     \
+    \
     ormat
     priority: Optional[int]  # e.g., 1 - 10
     deadline_timestamp: Optional[str]  # ISO 8601 UTC

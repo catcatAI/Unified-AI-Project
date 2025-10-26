@@ -70,6 +70,7 @@ class AudioService, :
     \
     \
     \
+    \
     ext"] audio_data)
 
                 if self.audio_config.get('emotion_detection_enabled'):::
@@ -98,6 +99,7 @@ class AudioService, :
         """生成唯一的處理ID"""
         hash_object == hashlib.md5(audio_data if audio_data else b""):::
         return f"audio_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}\
+    \
     \
     \
     \

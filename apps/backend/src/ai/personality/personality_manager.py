@@ -17,6 +17,7 @@ class PersonalityManager, :
     \
     \
     \
+    \
     ng directory.
             default_profile_name (str): Name of the default personality profile to load.
         """
@@ -51,6 +52,7 @@ class PersonalityManager, :
             else, # If default also not found
                 print(f"PersonalityManager,
     Default profile '{self.default_profile_name}' also not found. No personality loaded.\
+    \
     \
     \
     ")
@@ -150,6 +152,7 @@ if __name'__main__':::
     pm.default_profile_name in pm.available_profiles,
 
     pm.load_personality(pm.default_profile_name()) # Explicitly reload default if needed\
+    \
     \
     \
     , ::

@@ -19,7 +19,7 @@ class LightweightMathModel, :
                 * * ': lambda x, y, x ** y,
             '%': lambda x, y, x % y if y != 0 else 0, ::
         # Simple patterns for arithmetic expressions, ::
-            elf.arithmetic_pattern = re.compile(r'([+ - ]?\d * \.?\d+)\s * ([+\ - * / ]|\ * \ * )\s * ([+ - ]?\d * \.?\d+)')
+            elf.arithmetic_pattern = re.compile(r'([+ - ]?\d * \.?\d + )\s * ([ + \ - * / ]|\ * \ * )\s * ([+ - ]?\d * \.?\d + )')
 
     def evaluate_expression(self, expression, str) -> Optional[float]:
     """

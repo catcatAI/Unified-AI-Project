@@ -123,6 +123,7 @@ class ToolPerformanceMetrics, :
     \
     \
     \
+    \
     ):
 
 
@@ -189,6 +190,7 @@ eturn True
                     "last_used": tool.performance_metrics.last_used.isoformat if tool.pe\
     \
     \
+    \
     rformance_metrics.last_used else None, ::
 {            }
 
@@ -196,6 +198,7 @@ eturn True
             context_id = self.context_manager.create_context(ContextType.TOOL(),
     context_content)
             logger.info(f"Recorded usage for tool {tool_id} with context {context_id}"):\
+    \
     \
     \
     \

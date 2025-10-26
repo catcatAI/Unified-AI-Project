@@ -50,6 +50,7 @@ def cleanup_cache_data(retention_days, int, project_root, Path == Path(".")):
     \
     \
     \
+    \
     ate)
                         file_path.unlink()
                         logger.debug(f"刪除過期緩存, {file_path}")

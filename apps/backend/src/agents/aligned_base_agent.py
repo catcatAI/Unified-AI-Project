@@ -160,6 +160,7 @@ class AlignedBaseAgent(BaseAgent):
     \
     \
     \
+    \
     ]}")
                 await self._send_alignment_rejection(task_payload, sender_ai_id,
     alignment_result)
@@ -348,6 +349,7 @@ class AlignedBaseAgent(BaseAgent):
     \
     \
     \
+    \
     ']}")
         
         logger.info(f"[{self.agent_id}] 对齐参数已更新: {parameters}")
@@ -361,6 +363,7 @@ class AlignedBaseAgent(BaseAgent):
         try:
             # 使用推理系统进行伦理评估
             ethical_assessment = await self.reasoning_system.assess_ethical_implications\
+    \
     \
     \
     \
@@ -389,6 +392,7 @@ class AlignedBaseAgent(BaseAgent):
         try:
             # 处理人类反馈
             alignment_update = await self.alignment_manager.process_human_feedback(human\
+    \
     \
     \
     \

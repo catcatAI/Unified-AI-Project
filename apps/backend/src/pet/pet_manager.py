@@ -79,6 +79,7 @@ class PetManager, :
     \
     \
     \
+    \
     s} to {new_behaviors}")::
         # Add validation for new behaviors.:::
         for key, value in new_behaviors.items():::

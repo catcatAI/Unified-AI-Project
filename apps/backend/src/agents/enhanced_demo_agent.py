@@ -84,6 +84,7 @@ class EnhancedDemoAgent(BaseAgent):
     \
     \
     \
+    \
     ")::
             # Simulate work
             await asyncio.sleep(duration)
@@ -174,6 +175,7 @@ class EnhancedDemoAgent(BaseAgent):
                 "registry_stats": await self.get_agent_registry_stats(),
                 "active_agents": active_agents,
                 "capabilities": [cap.get("capability_id") for cap in self.capabilities]:\
+    \
     \
     \
     \

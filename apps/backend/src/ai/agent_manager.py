@@ -40,6 +40,7 @@ class AgentManager:
     \
     \
     \
+    \
     ript_map.keys())}")
 
     def register_agent_factory(self, agent_type: str, factory: Any):
@@ -126,6 +127,7 @@ class AgentManager:
     \
     \
     \
+    \
     ")
                 return agent_map
 
@@ -165,6 +167,7 @@ class AgentManager:
     \
     \
     \
+    \
     ng with PID {self.active_agents[agent_name].pid}.")
                 return str(self.active_agents[agent_name].pid)
 
@@ -178,6 +181,7 @@ class AgentManager:
     \
     \
     \
+    \
     .join(command)}")
                 process = subprocess.Popen(command)
                 self.active_agents[agent_name] = process
@@ -185,10 +189,12 @@ class AgentManager:
     \
     \
     \
+    \
     ID {process.pid}.")
                 return str(process.pid)
             except Exception as e:
                 logger.error(f"[AgentManager] Failed to launch agent '{agent_name}': {e}\
+    \
     \
     \
     \
@@ -221,6 +227,7 @@ class AgentManager:
     \
     \
     \
+    \
     })...")
             process.terminate()  # Sends SIGTERM
             try:
@@ -228,6 +235,7 @@ class AgentManager:
                 logger.info(f"[AgentManager] Agent '{agent_name}' terminated.")
             except subprocess.TimeoutExpired:
                 logger.warning(f"[AgentManager] Agent '{agent_name}' did not terminate g\
+    \
     \
     \
     \
@@ -258,9 +266,11 @@ class AgentManager:
     \
     \
     \
+    \
     ep as no service_discovery provided.")
             await asyncio.sleep(2)
             logger.info(f"[AgentManager] Assuming agent '{agent_name}' is ready after wa\
+    \
     \
     \
     \
@@ -273,10 +283,12 @@ class AgentManager:
     \
     \
     \
+    \
     ility '{expected_capability_id}'")
         max_retries = timeout * 2  # Check every 0.5s
         for i in range(max_retries):
             found_caps = await service_discovery.find_capabilities(capability_id_filter \
+    \
     \
     \
     = expected_capability_id)
@@ -285,15 +297,18 @@ class AgentManager:
     \
     \
     \
+    \
     lity: {expected_capability_id}")
                 return
             logger.debug(f"[AgentManager] Still waiting for agent '{agent_name}'. Retry \
+    \
     \
     \
     {i + 1} / {max_retries}")
             await asyncio.sleep(0.5)
 
         logger.warning(f"[AgentManager] Agent '{agent_name}' not ready within {timeout} \
+    \
     \
     \
     \

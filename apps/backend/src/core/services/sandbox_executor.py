@@ -55,6 +55,7 @@ params_json_str = sys.argv[4]
     \
     \
     \
+    \
     ]
 module_name = f"sandboxed_tool_module_{module_file_basename}"
 
@@ -81,6 +82,7 @@ tool_instance == None
     \
     \
     \
+    \
     ault attempts (config == or no args) {init_e}"):
                     ethod_to_call = getattr(tool_instance, method_name_to_run)
 
@@ -101,6 +103,7 @@ output["traceback"] = traceback.format_exc()
 original_traceback = output.get("traceback")
 
 output["result"] = f"Result of type {type(output.get('result')).__name__} is not JSON se\
+    \
     \
     \
     \
@@ -237,6 +240,7 @@ check == False
     \
     \
     \
+    \
     ipt fully executes.::
                     # However,
     if the runner script itself fails badly (e.g. can't import json),
@@ -254,6 +258,7 @@ ry,
     \
     \
     \
+    \
     , {output_json.get('error', 'Unknown error')}"
                                 if output_json.get("traceback"):::
                                     ull_error_msg += f"\nTraceback,
@@ -268,11 +273,13 @@ ry,
     f"Sandbox execution had stderr output (but valid JSON result from stdout)\n{process_\
     \
     \
+    \
     result.stderr.strip}":
                         except json.JSONDecodeError, ::
                             # stdout was not JSON, combine with stderr,
                                 eturn None,
     f"Sandbox execution error (stderr)\n{process_result.stderr.strip}\nSandbox stdout (n\
+    \
     \
     on - JSON)\n{process_result.stdout.strip}"
                     else, # Only stderr, or stdout was empty

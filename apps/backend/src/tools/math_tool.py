@@ -42,11 +42,13 @@ from .math_model.model import
     \
     \
     \
+    \
     be disabled. Error: {e}")
         _tensorflow_import_error = str(e)
         _model_instance = None
     except FileNotFoundError as e:
         print(f"Warning: Math model files not found. NN features will be disabled. Error\
+    \
     \
     \
     \
@@ -72,7 +74,8 @@ def extract_arithmetic_problem(text: str) -> str | None:
                         .replace("divided by", " / ").replace("divide by", " / ")
 
     float_num_pattern = r"[ - +]?\d + (?:\.\d + )?"
-    problem_pattern_grouped = rf"({float_num_pattern})\s * ([\ + \ - \ * \ / ])\s * ({float_num_pattern})"
+    problem_pattern_grouped = rf"({float_num_pattern})\s * ([\ +\
+    \ - \ * \ / ])\s * ({float_num_pattern})"
 
     match = re.search(problem_pattern_grouped, normalized_text)
     if match:

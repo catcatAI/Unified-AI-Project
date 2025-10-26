@@ -172,12 +172,14 @@ async def get_detailed_system_metrics():
     \
     \
     \
+    \
     critical"::
 {        }
         "memory": {}
             "value": memory.percent(),
             "max": 100,
             "status": "normal" if memory.percent < 70 else "warning" if memory.percent <\
+    \
     \
     \
     \

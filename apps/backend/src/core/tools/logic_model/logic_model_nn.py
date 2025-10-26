@@ -110,6 +110,7 @@ def _tensorflow_is_available():
     \
     \
     \
+    \
     d.:::
         eturn tf is not None
 
@@ -217,6 +218,7 @@ class LogicNNModel, :
     if dna_chain_id not in self.dna_chains, ::
     self.dna_chains[dna_chain_id] = DNADataChain(dna_chain_id)
             self.dna_chains[dna_chain_id].add_node(f"logic_prediction_{len(self.predicti\
+    \
     \
     \
     \

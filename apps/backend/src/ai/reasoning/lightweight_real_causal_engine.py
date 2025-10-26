@@ -279,6 +279,7 @@ class LightweightCausalReasoningEngine, :
     \
     \
     \
+    \
     on, causal_insights)
                 validated_relationships.extend(validated)
             
@@ -305,8 +306,10 @@ class LightweightCausalReasoningEngine, :
     \
     \
     \
+    \
     ,
                 'semantic_relationships': await self._analyze_semantic_relationships(obs\
+    \
     \
     \
     \
@@ -597,6 +600,7 @@ class LightweightCausalReasoningEngine, :
     \
     \
     \
+    \
     ar1, var2)
                     semantic_relationships[f"{var1}_{var2}"] = similarity
         
@@ -657,6 +661,7 @@ class LightweightCausalReasoningEngine, :
     \
     \
     \
+    \
     e, effect)
         
         return semantic_similarity
@@ -707,6 +712,7 @@ class LightweightCausalReasoningEngine, :
         
         # 简单过滤可操作变量
         actionable_variables == [var for var in causal_variables if var in current_state\
+    \
     \
     \
     \

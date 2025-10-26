@@ -165,6 +165,7 @@ async def get_component_health(component_id, Optional[str] = None):
                     "predicted_failure": health.predicted_failure.isoformat() if health.\
     \
     \
+    \
     predicted_failure else None, ::
                     "maintenance_recommendation": health.maintenance_recommendation(),
                     "performance_metrics": health.performance_metrics(),
@@ -279,6 +280,7 @@ async def implement_optimization_recommendation()
         implemented_by = implementation_data.get("implemented_by", "unknown")
         
         success = await optimizer.implement_optimization_recommendation(recommendation_i\
+    \
     \
     \
     \

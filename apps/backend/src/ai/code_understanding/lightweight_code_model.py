@@ -88,6 +88,7 @@ class LightweightCodeModel:
     \
     \
     \
+    \
     st, 'unparse') else "TypeHint"
             # Determine default value
             if i >= pos_defaults_start_idx and \
@@ -97,8 +98,10 @@ class LightweightCodeModel:
     \
     \
     \
+    \
     ly:
                     param_info["default"] = ast.unparse(default_val_node) if hasattr(ast\
+    \
     \
     \
     \
@@ -117,6 +120,7 @@ class LightweightCodeModel:
     \
     \
     \
+    \
     (ast, 'unparse') else "DefaultValue"
                 except ValueError:
                     pass  # Should not happen if arg_node is from args.kwonlyargs
@@ -130,6 +134,7 @@ class LightweightCodeModel:
     \
     \
     \
+    \
     tr(ast, 'unparse') else "TypeHint"
             params_details.append(vararg_info)
 
@@ -138,6 +143,7 @@ class LightweightCodeModel:
     "default": None}
             if args.kwarg.annotation:
                 kwarg_info["annotation"] = ast.unparse(args.kwarg.annotation) if hasattr\
+    \
     \
     \
     \
@@ -226,6 +232,7 @@ class LightweightCodeModel:
     \
     \
     \
+    \
     r(ast, 'unparse') else "TypeHint (unparse unavailable)"
                         class_info["methods"].append(method_info)
                 file_structure["classes"].append(class_info)
@@ -292,6 +299,7 @@ class LightweightCodeModel:
     \
     \
     \
+    \
     ch
         # If input is a direct path, tools_directory might not be used.
 
@@ -308,12 +316,14 @@ class LightweightCodeModel:
     \
     \
     \
+    \
     t was not found or is not a file.")
                 return None
         else:
             # Input is a name.
             if not os.path.isdir(self.tools_directory):
                 logger.warning(f"Tools directory '{self.tools_directory}' is not valid. \
+    \
     \
     \
     \
@@ -331,6 +341,7 @@ class LightweightCodeModel:
             if os.path.isfile(potential_path_direct):
                 resolved_path = potential_path_direct
                 logger.info(f"Tool name '{tool_name_input}' resolved to '{resolved_path}\
+    \
     \
     \
     \
@@ -355,6 +366,7 @@ class LightweightCodeModel:
                     logger.error(f"Error listing tools directory '{self.tools_directory}\
     \
     \
+    \
     ': {e}", exc_info = True)
                     return None
 
@@ -364,13 +376,16 @@ class LightweightCodeModel:
     \
     \
     \
+    \
     solved to '{resolved_path}' by pattern search in {self.tools_directory}.")
                 elif len(found_pattern_matches) > 1:
                     logger.warning(f"Ambiguous tool name '{tool_name_input}' (base: '{ba\
     \
     \
     \
+    \
     se_name}'). Found multiple pattern matches in {self.tools_directory} {found_pattern_\
+    \
     \
     \
     matches}. Please provide a more specific name or direct path.")
@@ -384,6 +399,7 @@ class LightweightCodeModel:
                 return self.analyze_tool_file(resolved_path)
         else:
             logger.warning(f"Could not resolve tool '{tool_name_or_filepath}' to a Pytho\
+    \
     \
     \
     \
@@ -451,6 +467,7 @@ if __name__ == '__main__':
     \
     \
     \
+    \
     ng directory.")
 
     # # Example for a non - existent tool
@@ -459,6 +476,7 @@ if __name__ == '__main__':
     # if not non_existent_structure:
     #     print("Correctly returned None for non - existent tool (enhanced).")
     # Note: The __main__ block is primarily for very basic smoke testing of the class st\
+    \
     \
     \
     \

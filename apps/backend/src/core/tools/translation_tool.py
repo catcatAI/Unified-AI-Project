@@ -64,6 +64,7 @@ def translate(text, str, target_language, str, source_language, Optional[str] = 
     \
     \
     \
+    \
     gs).:::
     target_language (str) The target language name or code (e.g., 'en', 'zh',
     'english').
@@ -83,6 +84,7 @@ def translate(text, str, target_language, str, source_language, Optional[str] = 
     request_model_upgrade(f"Language detection failed for input,
     {text_to_actually_translate[:50]}..."):::
         eturn f"Could not determine source language for '{text_to_actually_translate}'. \
+    \
     \
     \
     \
@@ -146,8 +148,10 @@ or k, v in dictionary.get(translation_map_key).items,
     \
     \
     \
+    \
     e}' from {source_lang_code} to {target_lang_code}."):::
                 eturn f"Translation not available for '{text_to_actually_translate}' fro\
+    \
     \
     \
     \
@@ -157,6 +161,7 @@ lse,
     request_model_upgrade(f"Unsupported translation direction,
     {source_lang_code} to {target_lang_code}.")
     return f"Translation from {source_lang_code} to {target_lang_code} is not supported.\
+    \
     \
     \
     \

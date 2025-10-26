@@ -39,6 +39,7 @@ class CodeUnderstandingTool:
     \
     \
     \
+    \
     iles]
         
         if not tool_names:
@@ -65,6 +66,7 @@ class CodeUnderstandingTool:
     \
     \
     \
+    \
     plex cases.
         return str(structure)
 
@@ -81,10 +83,12 @@ class CodeUnderstandingTool:
     \
     \
     \
+    \
     action."
             return self.describe_tool(tool_name)
         else:
             return f"Error: Unknown action '{action}' for CodeUnderstandingTool. Availab\
+    \
     \
     \
     \

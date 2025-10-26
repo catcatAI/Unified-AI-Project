@@ -450,6 +450,7 @@ class OntologySystem, :
     \
     \
     \
+    \
     s.values()}:
         relationship_completeness == len(actual_relationship_types) /\
     len(ideal_relationship_types) if ideal_relationship_types else 1.0, :
@@ -570,6 +571,7 @@ class OntologySystem, :
     \
     \
     \
+    \
     {key} 为空")
                 return False
         
@@ -583,6 +585,7 @@ from enhanced_realtime_monitoring import
     def get_entities_by_type(self, entity_type, EntityType) -> List[Entity]:
         """根据类型获取实体列表"""
         return [entity for entity in self.entities.values() if entity.entity_type == ent\
+    \
     \
     \
     \
