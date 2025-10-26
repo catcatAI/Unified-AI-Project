@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 综合测试增强后的自动训练系统
 """
@@ -10,7 +10,7 @@ from pathlib import Path
 project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
-def test_data_manager_enhancements() -> None,:
+def test_data_manager_enhancements() -> None, :
     """测试数据管理器增强功能"""
     print("🧪 测试数据管理器增强功能...")
     
@@ -21,8 +21,8 @@ def test_data_manager_enhancements() -> None,:
         # 测试新添加的数据类型
         supported_formats = dm.supported_formats()
         expected_types = ['model', 'archive', 'binary']
-        for data_type in expected_types,::
-            if data_type in supported_formats,::
+        for data_type in expected_types, ::
+            if data_type in supported_formats, ::
                 print(f"  ✅ 新数据类型 '{data_type}' 已添加")
             else,
                 print(f"  ❌ 新数据类型 '{data_type}' 未找到")
@@ -40,20 +40,20 @@ def test_data_manager_enhancements() -> None,:
         for filename, expected_type in test_files.items():::
             file_path == Path(filename)
             classified_type = dm._classify_file(file_path)
-            if classified_type == expected_type,::
+            if classified_type == expected_type, ::
                 print(f"  ✅ 文件 {filename} 正确分类为 {classified_type}")
             else,
-                print(f"  ❌ 文件 {filename} 分类错误,期望 {expected_type}实际 {classified_type}")
+                print(f"  ❌ 文件 {filename} 分类错误, 期望 {expected_type}实际 {classified_type}")
                 return False
         
         # 测试新增的质量评估方法
         required_methods = []
             '_assess_model_quality',
-            '_assess_data_quality', 
+            '_assess_data_quality',
             '_assess_archive_quality'
 [        ]
         
-        for method_name in required_methods,::
+        for method_name in required_methods, ::
             if hasattr(dm, method_name)::
                 print(f"  ✅ 质量评估方法 {method_name} 已实现")
             else,
@@ -62,13 +62,13 @@ def test_data_manager_enhancements() -> None,:
         
         print("✅ 数据管理器增强功能测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 数据管理器增强功能测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
-def test_auto_training_manager_enhancements() -> None,:
+def test_auto_training_manager_enhancements() -> None, :
     """测试自动训练管理器增强功能"""
     print("🤖 测试自动训练管理器增强功能...")
     
@@ -83,7 +83,7 @@ def test_auto_training_manager_enhancements() -> None,:
             # 测试日志记录功能
             monitor.log_event("test_scenario", "INFO", "测试日志记录", {"test": "data"})
             logs = monitor.get_logs("test_scenario")
-            if len(logs.get("test_scenario", [])) > 0,::
+            if len(logs.get("test_scenario", [])) > 0, ::
                 print("  ✅ 日志记录功能正常")
             else,
                 print("  ❌ 日志记录功能异常")
@@ -114,11 +114,12 @@ def test_auto_training_manager_enhancements() -> None,:
             mock_scenarios = ['comprehensive_training']
             
             # 测试参数优化
-            optimized_params = atm._optimize_training_parameters(mock_data_analysis, mock_scenarios)
+            optimized_params = atm._optimize_training_parameters(mock_data_analysis,
+    mock_scenarios)
             required_params = ['batch_size', 'learning_rate', 'epochs', 'gpu_available']
             
-            for param in required_params,::
-                if param in optimized_params,::
+            for param in required_params, ::
+                if param in optimized_params, ::
                     print(f"  ✅ 优化参数 {param} {optimized_params[param]}")
                 else,
                     print(f"  ❌ 缺少优化参数 {param}")
@@ -133,7 +134,7 @@ def test_auto_training_manager_enhancements() -> None,:
             '_train_collaborative_model'
 [        ]
         
-        for method_name in required_methods,::
+        for method_name in required_methods, ::
             if hasattr(atm, method_name)::
                 print(f"  ✅ 训练方法 {method_name} 已实现")
             else,
@@ -142,13 +143,13 @@ def test_auto_training_manager_enhancements() -> None,:
         
         print("✅ 自动训练管理器增强功能测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 自动训练管理器增强功能测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
-def test_result_analysis_enhancements() -> None,:
+def test_result_analysis_enhancements() -> None, :
     """测试结果分析增强功能"""
     print("📊 测试结果分析增强功能...")
     
@@ -191,16 +192,16 @@ def test_result_analysis_enhancements() -> None,:
             
             # 检查分析结果
             required_keys = []
-                'total_scenarios', 
-                'successful_scenarios', 
-                'failed_scenarios', 
+                'total_scenarios',
+                'successful_scenarios',
+                'failed_scenarios',
                 'overall_success_rate',
                 'model_performance',
                 'best_model'
 [            ]
             
-            for key in required_keys,::
-                if key in analysis,::
+            for key in required_keys, ::
+                if key in analysis, ::
                     print(f"  ✅ 分析结果包含 {key} {analysis[key]}")
                 else,
                     print(f"  ❌ 分析结果缺少 {key}")
@@ -219,16 +220,16 @@ def test_result_analysis_enhancements() -> None,:
         
         print("✅ 结果分析增强功能测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 结果分析增强功能测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     print("🚀 综合测试增强后的自动训练系统")
-    print("=" * 50)
+    print(" = " * 50)
     
     tests = []
         test_data_manager_enhancements,
@@ -237,13 +238,13 @@ def main() -> None,:
 [    ]
     
     passed = 0
-    for test in tests,::
+    for test in tests, ::
         if test():::
             passed += 1
         print()
     
-    print("=" * 50)
-    print(f"测试结果, {passed}/{len(tests)} 通过")
+    print(" = " * 50)
+    print(f"测试结果, {passed} / {len(tests)} 通过")
     
     if passed == len(tests)::
         print("🎉 所有测试通过! 增强功能已正确实现。")

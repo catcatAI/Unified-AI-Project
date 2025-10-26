@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 系统健康检查脚本
 验证整个训练系统的健康状态和功能完整性
@@ -14,8 +14,8 @@ sys.path.insert(0, str(project_root))
 
 # 配置日志
 logging.basicConfig()
-    level=logging.INFO(),
-    format, str='%(asctime)s - %(levelname)s - %(message)s'
+    level = logging.INFO(),
+    format, str = '%(asctime)s - %(levelname)s - %(message)s'
 ()
 logger, Any = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def check_error_handling_system():
         try,
 
             raise ValueError("健康检查测试错误")
-        except Exception as e,::
+        except Exception as e, ::
             result = error_handler.handle_error(e, context)
             if not result.get('error_handled'):::
 = logger.error("❌ 错误处理失败")
@@ -43,7 +43,7 @@ def check_error_handling_system():
 
     logger.info("✅ 错误处理系统正常")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 错误处理系统检查失败, {e}")
     return False
 
@@ -69,7 +69,7 @@ def check_training_monitoring_system():
 
     logger.info("✅ 训练监控系统正常")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 训练监控系统检查失败, {e}")
     return False
 
@@ -93,7 +93,7 @@ def check_incremental_learning_system():
 
     logger.info("✅ 增量学习系统正常")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 增量学习系统检查失败, {e}")
     return False
 
@@ -117,7 +117,7 @@ def check_data_management_system():
 
     logger.info("✅ 数据管理系统正常")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 数据管理系统检查失败, {e}")
     return False
 
@@ -141,7 +141,7 @@ def check_model_training_system():
 
     logger.info("✅ 模型训练系统正常")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 模型训练系统检查失败, {e}")
     return False
 
@@ -159,26 +159,26 @@ def check_collaborative_training_system():
 
     # 测试模型注册
     manager.register_model("health_check_model", "TestModelInstance")
-        if "health_check_model" not in manager.models,::
+        if "health_check_model" not in manager.models, ::
     logger.error("❌ 模型注册失败")
             return False
 
     # 测试模型注销
     manager.unregister_model("health_check_model")
-        if "health_check_model" in manager.models,::
+        if "health_check_model" in manager.models, ::
     logger.error("❌ 模型注销失败")
             return False
 
     logger.info("✅ 协作式训练系统正常")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 协作式训练系统检查失败, {e}")
     return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     logger.info("🚀 开始系统健康检查")
-    print("=" * 60)
+    print(" = " * 60)
 
     # 运行各项检查
     checks = []
@@ -193,7 +193,7 @@ def main() -> None,:
     passed = 0
     total = len(checks)
 
-    for check_name, check_func in checks,::
+    for check_name, check_func in checks, ::
     print(f"\n🔍 检查 {check_name}...")
         try,
 
@@ -203,19 +203,19 @@ def main() -> None,:
             else,
 
                 print(f"❌ {check_name} 异常")
-        except Exception as e,::
+        except Exception as e, ::
             print(f"❌ {check_name} 检查执行出错, {e}")
 
-    print("\n" + "=" * 60)
-    print(f"📊 健康检查总结, {passed}/{total} 个系统正常")
+    print("\n" + " = " * 60)
+    print(f"📊 健康检查总结, {passed} / {total} 个系统正常")
 
-    if passed == total,::
+    if passed == total, ::
     print("🎉 所有系统健康检查通过!")
-    print("✅ 训练系统功能完整,可以正常运行")
+    print("✅ 训练系统功能完整, 可以正常运行")
     return 0
     else,
 
-    print("⚠️  部分系统存在异常,请检查相关组件")
+    print("⚠️  部分系统存在异常, 请检查相关组件")
     return 1
 
 if __name"__main__":::

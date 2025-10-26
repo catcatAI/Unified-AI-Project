@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 快速硬件测试脚本
 用于验证集成显卡支持和硬件兼容性改进
@@ -20,25 +20,26 @@ sys.path.insert(0, str(backend_path / "src"))
 
 # 配置日志
 logging.basicConfig()
-    level=logging.INFO(),
-    format, str='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[]
+    level = logging.INFO(),
+    format, str = '%(asctime)s - %(levelname)s - %(message)s',
+    handlers = []
     logging.StreamHandler()
 [    ]
 ()
 logger, Any = logging.getLogger(__name__)
 
-def test_system_info() -> None,:
+def test_system_info() -> None, :
     """测试系统基本信息"""
-    logger.info("=== 系统基本信息 ===")
+    logger.info(" == = 系统基本信息 = == ")
 
     # CPU信息
-    logger.info(f"CPU核心数, {psutil.cpu_count()} (逻辑), {psutil.cpu_count(logical == False)} (物理)")
+    logger.info(f"CPU核心数, {psutil.cpu_count()} (逻辑),
+    {psutil.cpu_count(logical == False)} (物理)")
 
     # 内存信息
     memory = psutil.virtual_memory()
-    logger.info(f"总内存, {memory.total / (1024**3).2f} GB")
-    logger.info(f"可用内存, {memory.available / (1024**3).2f} GB")
+    logger.info(f"总内存, {memory.total / (1024 * *3).2f} GB")
+    logger.info(f"可用内存, {memory.available / (1024 * *3).2f} GB")
 
     # 系统信息
     logger.info(f"操作系统, {platform.system()} {platform.release()}")
@@ -46,9 +47,9 @@ def test_system_info() -> None,:
 
     return True
 
-def test_integrated_graphics_detection() -> None,:
+def test_integrated_graphics_detection() -> None, :
     """测试集成显卡检测"""
-    logger.info("=== 集成显卡检测 ===")
+    logger.info(" == = 集成显卡检测 = == ")
 
     try,
 
@@ -56,7 +57,7 @@ def test_integrated_graphics_detection() -> None,:
     system = platform.system().lower()
 
         if system == "windows":::
-    logger.info("Windows系统,尝试检测集成显卡...")
+    logger.info("Windows系统, 尝试检测集成显卡...")
 
             # 使用更简单的命令
 from tests.run_test_subprocess import
@@ -64,34 +65,37 @@ from tests.run_test_subprocess import
             # 先测试是否有nvidia gpu
             try,
 
-                result = subprocess.run(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"])
-(    capture_output == True, text == True, timeout=5)
-                if result.returncode == 0,::
-    logger.info("检测到NVIDIA GPU,")
+                result = subprocess.run(["nvidia - smi", " - -query - gpu=name", " - -format=csv,noheader"])
+(    capture_output == True, text == True, timeout = 5)
+                if result.returncode == 0, ::
+    logger.info("检测到NVIDIA GPU, ")
                     for line in result.stdout.strip().split('\n'):::
 = logger.info(f"  NVIDIA, {line.strip()}")
-            except,::
-                logger.info("未检测到NVIDIA GPU或nvidia-smi不可用")
+            except, ::
+                logger.info("未检测到NVIDIA GPU或nvidia - smi不可用")
 
             # 检测所有显卡
             try,
 
                 result = subprocess.run([)]
                     "wmic", "path", "win32_VideoController", "get", "name"
-[(                ] capture_output == True, text == True, timeout=10)
+[(                ] capture_output == True, text == True, timeout = 10)
 
-                if result.returncode == 0,::
+                if result.returncode == 0, ::
     lines = result.stdout.strip().split('\n')
                     # 过滤掉空行和标题行
-                    gpu_names == [line.strip() for line in lines if line.strip() and not line.startswith('Name')]::
-    logger.info(f"检测到 {len(gpu_names)} 个GPU,")
-                    for gpu_name in gpu_names,::
+                    gpu_names == [line.strip() for line in lines if line.strip() and \
+    not line.startswith('Name')]::
+    logger.info(f"检测到 {len(gpu_names)} 个GPU, ")
+                    for gpu_name in gpu_names, ::
     logger.info(f"  GPU, {gpu_name}")
 
                         # 检查是否为集成显卡
-                        integrated_keywords = ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated']
-                        is_integrated == any(keyword in gpu_name.lower() for keyword in integrated_keywords)::
-    if is_integrated,::
+                        integrated_keywords = ['intel', 'amd', 'radeon', 'hd graphics',
+    'uhd graphics', 'integrated']
+                        is_integrated == any(keyword in gpu_name.lower() for keyword in \
+    integrated_keywords)::
+    if is_integrated, ::
     logger.info(f"    -> 集成显卡, 是")
                         else,
 
@@ -99,20 +103,20 @@ from tests.run_test_subprocess import
                 else,
 
                     logger.warning("无法通过wmic获取GPU信息")
-            except Exception as e,::
+            except Exception as e, ::
                 logger.error(f"检测GPU时出错, {e}")
         else,
 
-            logger.info(f"非Windows系统 ({system}),跳过集成显卡检测")
+            logger.info(f"非Windows系统 ({system}), 跳过集成显卡检测")
 
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"集成显卡检测失败, {e}")
     return False
 
-def test_imports() -> None,:
+def test_imports() -> None, :
     """测试关键模块导入"""
-    logger.info("=== 模块导入测试 ===")
+    logger.info(" == = 模块导入测试 = == ")
 
     modules_to_test = []
     ("硬件探测模块", "apps.backend.src.system.hardware_probe"),
@@ -125,24 +129,24 @@ def test_imports() -> None,:
 [    ]
 
     results = []
-    for name, module in modules_to_test,::
+    for name, module in modules_to_test, ::
     try,
 
 
             __import__(module)
             logger.info(f"  {name} ✅ 导入成功")
             results.append(True)
-        except ImportError as e,::
+        except ImportError as e, ::
             logger.warning(f"  {name} ❌ 导入失败 - {e}")
             results.append(False)
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"  {name} ❌ 导入出错 - {e}")
             results.append(False)
 
-    return all(results) if results else False,::
+    return all(results) if results else False, ::
         ef test_integrated_graphics_optimizer() -> None,
     """测试集成显卡优化器功能"""
-    logger.info("=== 集成显卡优化器测试 ===")
+    logger.info(" == = 集成显卡优化器测试 = == ")
 
     try,
     # 测试导入
@@ -158,54 +162,54 @@ def test_imports() -> None,:
 
     # 模拟集成显卡硬件配置
     gpu_info = [GPUInfo()]
-            name="Intel HD Graphics 620",
-            memory_total=1024,  # 1GB
-            memory_available=512,
-            driver_version="Unknown",
+            name = "Intel HD Graphics 620",
+            memory_total = 1024,  # 1GB
+            memory_available = 512,
+            driver_version = "Unknown",
             cuda_version == None,
-            opencl_support == True,,
+            opencl_support == True, ,
     vulkan_support == True
 [(    )]
 
     cpu_info == CPUInfo()
-            cores_physical=2,
-            cores_logical=4,,
-    frequency_max=2400.0(),
-            frequency_current=2000.0(),
-            architecture="x86_64",
-            brand="Intel Core i5-7200U",
-(            usage_percent=25.0())
+            cores_physical = 2,
+            cores_logical = 4,,
+    frequency_max = 2400.0(),
+            frequency_current = 2000.0(),
+            architecture = "x86_64",
+            brand="Intel Core i5 - 7200U",
+(            usage_percent = 25.0())
 
     memory_info == MemoryInfo()
-            total=8192,  # 8GB
-            available=4096,
-            used=4096,,
-(    usage_percent=50.0())
+            total = 8192,  # 8GB
+            available = 4096,
+            used = 4096,,
+(    usage_percent = 50.0())
 
     storage_info == StorageInfo()
-            total=256,
-            available=128,
-            used=128,,
-    disk_type="SSD"
+            total = 256,
+            available = 128,
+            used = 128,,
+    disk_type = "SSD"
 (    )
 
     network_info == NetworkInfo()
-    bandwidth_download=50.0(),
-            bandwidth_upload=25.0(),
-            latency=30.0(),
-            connection_type="WiFi"
+    bandwidth_download = 50.0(),
+            bandwidth_upload = 25.0(),
+            latency = 30.0(),
+            connection_type = "WiFi"
 (    )
 
     hardware_profile == HardwareProfile()
-            cpu=cpu_info,
-            gpu=gpu_info,
-            memory=memory_info,
-            storage=storage_info,
-            network=network_info,
-            platform="windows",
-            os_version="10.0.19042",
-            performance_tier="Low",,
-(    ai_capability_score=35.0())
+            cpu = cpu_info,
+            gpu = gpu_info,
+            memory = memory_info,
+            storage = storage_info,
+            network = network_info,
+            platform = "windows",
+            os_version = "10.0.19042",
+            performance_tier = "Low",,
+(    ai_capability_score = 35.0())
 
     # 测试优化器
     optimizer == IntegratedGraphicsOptimizer(hardware_profile)
@@ -213,7 +217,7 @@ def test_imports() -> None,:
     logger.info(f"是否为集成显卡系统, {optimizer.is_integrated_graphics_system()}")
 
     recommendations = optimizer.get_optimization_recommendations()
-    logger.info(f"优化建议, {json.dumps(recommendations, ensure_ascii == False, indent=2)}")
+    logger.info(f"优化建议, {json.dumps(recommendations, ensure_ascii == False, indent = 2)}")
 
     batch_size = optimizer.adjust_batch_size_for_integrated_graphics(32)
     logger.info(f"调整后的批处理大小, {batch_size}")
@@ -222,7 +226,7 @@ def test_imports() -> None,:
     logger.info(f"精度配置, {precision_config}")
 
     coordination_config = optimizer.coordinate_cpu_gpu_usage()
-    logger.info(f"CPU-GPU协调配置, {coordination_config}")
+    logger.info(f"CPU - GPU协调配置, {coordination_config}")
 
     compression_config = optimizer.apply_model_compression()
     logger.info(f"模型压缩配置, {compression_config}")
@@ -231,13 +235,13 @@ def test_imports() -> None,:
     logger.info("所有优化测试通过")
 
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"集成显卡优化器测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
     logger.error(f"详细错误信息, {traceback.format_exc()}")
     return False
 
-def main() -> None,:
+def main() -> None, :
     """主测试函数"""
     logger.info("开始快速硬件兼容性测试")
 
@@ -250,42 +254,42 @@ def main() -> None,:
 [    ]
 
     results = []
-    for test_name, test_func in tests,::
+    for test_name, test_func in tests, ::
     try,
 
 
-            logger.info(f"\n--- 运行 {test_name} 测试 ---")
+            logger.info(f"\n - -- 运行 {test_name} 测试 - - -")
             result = test_func()
             results.append((test_name, result))
-        except Exception as e,::
+        except Exception as e, ::
             logger.error(f"{test_name} 测试出错, {e}")
             results.append((test_name, False))
 
     # 输出测试结果摘要
-    logger.info("\n=测试结果摘要 ===")
+    logger.info("\n=测试结果摘要 = == ")
     passed = 0
     failed = 0
 
-    for test_name, result in results,::
+    for test_name, result in results, ::
     status == "✅ 通过" if result else "❌ 失败":::
     logger.info(f"{test_name} {status}")
-        if result,::
+        if result, ::
     passed += 1
         else,
 
             failed += 1
 
-    logger.info(f"\n=测试完成 ===")
+    logger.info(f"\n=测试完成 = == ")
     logger.info(f"总测试数, {len(results)}")
     logger.info(f"通过, {passed}")
     logger.info(f"失败, {failed}")
 
-    if failed == 0,::
+    if failed == 0, ::
     logger.info("\n🎉 所有测试通过！硬件兼容性改进已正确实现。")
     return 0
     else,
 
-    logger.error(f"\n⚠️  {failed} 个测试失败,请检查相关功能。")
+    logger.error(f"\n⚠️  {failed} 个测试失败, 请检查相关功能。")
     return 1
 
 if __name"__main__":::

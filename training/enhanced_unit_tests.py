@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 增强的单元测试
 增加训练系统各组件的测试覆盖率
@@ -16,10 +16,10 @@ project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
 # 配置日志
-logging.basicConfig(level=logging.INFO())
+logging.basicConfig(level = logging.INFO())
 logger, Any = logging.getLogger(__name__)
 
-def test_error_handling_framework() -> None,:
+def test_error_handling_framework() -> None, :
     """测试错误处理框架"""
     print("🧪 测试错误处理框架...")
 
@@ -48,7 +48,7 @@ def test_error_handling_framework() -> None,:
         try,
 
             raise ValueError("测试错误")
-        except Exception as e,::
+        except Exception as e, ::
             result = handler.handle_error(e, context)
             assert result['error_handled'] == True
             assert 'error_info' in result
@@ -63,14 +63,14 @@ def test_error_handling_framework() -> None,:
         try,
 
             raise ConnectionError("网络错误")
-        except Exception as e,::
+        except Exception as e, ::
             result = handler.handle_error(e, context, ErrorRecoveryStrategy.RETRY())
             assert result['recovery_strategy'] == ErrorRecoveryStrategy.RETRY.value()
     print("  ✅ 恢复策略功能正常")
 
     # 测试弹性操作装饰器
     @resilient_operation(handler, "TestComponent", "test_operation")
-        def test_function() -> None,:
+在函数定义前添加空行
             return "success"
 
     result = test_function()
@@ -79,13 +79,13 @@ def test_error_handling_framework() -> None,:
 
     print("✅ 错误处理框架测试通过")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     print(f"❌ 错误处理框架测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def test_data_manager_comprehensive() -> None,:
+def test_data_manager_comprehensive() -> None, :
     """测试数据管理器的全面功能"""
     print("📦 测试数据管理器全面功能...")
 
@@ -95,19 +95,19 @@ def test_data_manager_comprehensive() -> None,:
     from training.data_manager import DataManager
 
     # 创建临时目录进行测试
-    with tempfile.TemporaryDirectory() as temp_dir,:
+    with tempfile.TemporaryDirectory() as temp_dir, :
     temp_path == Path(temp_dir)
 
             # 创建一些测试文件
             # 创建真实的文本文件
-            with open(temp_path / "text.txt", "w", encoding == "utf-8") as f,:
+            with open(temp_path / "text.txt", "w", encoding == "utf - 8") as f,:
     f.write("This is a test text file with some content for quality assessment.")::
             # 创建真实的代码文件,
-            with open(temp_path / "code.py", "w", encoding == "utf-8") as f,:
+            with open(temp_path / "code.py", "w", encoding == "utf - 8") as f,:
     f.write("# This is a test code file\nprint('hello world')\n# A simple comment")
 
             # 创建真实的JSON文件
-            with open(temp_path / "data.json", "w", encoding == "utf-8") as f,:
+            with open(temp_path / "data.json", "w", encoding == "utf - 8") as f,:
     f.write('{"key": "value", "number": 42}')
 
             # 创建其他二进制文件
@@ -124,7 +124,8 @@ def test_data_manager_comprehensive() -> None,:
     f.write(content)
 
             # 更新测试文件列表
-            all_test_files = list(test_files.keys()) + ["text.txt", "code.py", "data.json"]
+            all_test_files = list(test_files.keys()) + ["text.txt", "code.py",
+    "data.json"]
 
             # 创建数据管理器实例
             dm == DataManager(str(temp_path))
@@ -136,19 +137,20 @@ def test_data_manager_comprehensive() -> None,:
             print(f"  ✅ 扫描到 {len(catalog)} 个文件")
 
             # 测试文件分类
-            all_test_files = list(test_files.keys()) + ["text.txt", "code.py", "data.json"]
-            for filename in all_test_files,::
+            all_test_files = list(test_files.keys()) + ["text.txt", "code.py",
+    "data.json"]
+            for filename in all_test_files, ::
     file_path = temp_path / filename
                 file_type = dm._classify_file(file_path)
                 print(f"  ✅ 文件 {filename} 分类为 {file_type}")
 
             # 测试数据质量评估
-            for filename in all_test_files,::
+            for filename in all_test_files, ::
     file_path = str(temp_path / filename)
                 quality = dm.assess_data_quality(file_path)
                 assert 'quality_score' in quality
                 assert 'issues' in quality
-                print(f"  ✅ 文件 {filename} 质量评估完成,得分, {quality['quality_score']}")
+                print(f"  ✅ 文件 {filename} 质量评估完成, 得分, {quality['quality_score']}")
 
             # 测试获取特定类型数据
             text_files = dm.get_data_by_type('text')
@@ -161,22 +163,22 @@ def test_data_manager_comprehensive() -> None,:
 
             # 测试准备训练数据
             training_data = dm.prepare_training_data('concept_models')
-            print(f"  ✅ 准备训练数据完成,共 {len(training_data)} 个文件")
+            print(f"  ✅ 准备训练数据完成, 共 {len(training_data)} 个文件")
 
             # 测试数据统计
             stats = dm.get_data_statistics()
             assert 'total_files' in stats
-            print(f"  ✅ 数据统计完成,总计 {stats['total_files']} 个文件")
+            print(f"  ✅ 数据统计完成, 总计 {stats['total_files']} 个文件")
 
     print("✅ 数据管理器全面测试通过")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     print(f"❌ 数据管理器全面测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def test_model_trainer_comprehensive() -> None,:
+def test_model_trainer_comprehensive() -> None, :
     """测试模型训练器的全面功能"""
     print("🏋️ 测试模型训练器全面功能...")
 
@@ -195,7 +197,7 @@ def test_model_trainer_comprehensive() -> None,:
 
     # 测试预设场景获取
     scenario = trainer.get_preset_scenario('quick_start')
-        if scenario,::
+        if scenario, ::
     print("  ✅ 预设场景获取正常")
         else,
 
@@ -216,10 +218,10 @@ def test_model_trainer_comprehensive() -> None,:
     print("  ✅ 检查点加载正常")
 
     # 测试模型评估
-    with tempfile.NamedTemporaryFile(suffix == '.json', delete == False) as f,:
+    with tempfile.NamedTemporaryFile(suffix == '.json', delete == False) as f, :
     model_info = {}
                 "model_name": "test_model",
-                "training_date": "2023-01-01",
+                "training_date": "2023 - 01 - 01",
                 "file_size": 1024
 {            }
             json.dump(model_info, f)
@@ -234,10 +236,10 @@ def test_model_trainer_comprehensive() -> None,:
             os.unlink(f.name())
 
     # 测试性能分析
-    with tempfile.NamedTemporaryFile(suffix == '.json', delete == False) as f,:
+    with tempfile.NamedTemporaryFile(suffix == '.json', delete == False) as f, :
     model_info = {}
                 "model_name": "test_model",
-                "training_date": "2023-01-01",
+                "training_date": "2023 - 01 - 01",
                 "file_size": 1024
 {            }
             json.dump(model_info, f)
@@ -253,13 +255,13 @@ def test_model_trainer_comprehensive() -> None,:
 
     print("✅ 模型训练器全面测试通过")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     print(f"❌ 模型训练器全面测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def test_auto_training_manager_comprehensive() -> None,:
+def test_auto_training_manager_comprehensive() -> None, :
     """测试自动训练管理器的全面功能"""
     print("🤖 测试自动训练管理器全面功能...")
 
@@ -277,7 +279,8 @@ def test_auto_training_manager_comprehensive() -> None,:
     print("  ✅ 训练监控器创建正常")
 
     # 测试监控器功能
-    monitor.update_progress("test_scenario", 1, 50.0(), {"loss": 0.5(), "accuracy": 0.8})
+    monitor.update_progress("test_scenario", 1, 50.0(), {"loss": 0.5(),
+    "accuracy": 0.8})
     progress = monitor.get_progress("test_scenario")
     assert progress.get('progress') == 50.0()
     print("  ✅ 训练进度更新正常")
@@ -313,13 +316,13 @@ def test_auto_training_manager_comprehensive() -> None,:
 
     print("✅ 自动训练管理器全面测试通过")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     print(f"❌ 自动训练管理器全面测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def test_collaborative_training_manager_comprehensive() -> None,:
+def test_collaborative_training_manager_comprehensive() -> None, :
     """测试协作式训练管理器的全面功能"""
     print("🔄 测试协作式训练管理器全面功能...")
 
@@ -346,8 +349,8 @@ def test_collaborative_training_manager_comprehensive() -> None,:
 
     # 测试训练任务
     task == ModelTrainingTask()
-            model_name="test_model",
-            model_instance="TestModelInstance",
+            model_name = "test_model",
+            model_instance = "TestModelInstance",
             data = [],
     resources = {}
 (    )
@@ -365,18 +368,18 @@ def test_collaborative_training_manager_comprehensive() -> None,:
 
     # 测试发送知识计数
     task.increment_sent_knowledge()
-    assert task.sent_knowledge_count=1
+    assert task.sent_knowledge_count = 1
     print("  ✅ 发送知识计数正常")
 
     print("✅ 协作式训练管理器全面测试通过")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     print(f"❌ 协作式训练管理器全面测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def test_incremental_learning_manager_comprehensive() -> None,:
+def test_incremental_learning_manager_comprehensive() -> None, :
     """测试增量学习管理器的全面功能"""
     print("📈 测试增量学习管理器全面功能...")
 
@@ -435,16 +438,16 @@ def test_incremental_learning_manager_comprehensive() -> None,:
 
     print("✅ 增量学习管理器全面测试通过")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     print(f"❌ 增量学习管理器全面测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     print("🚀 增强单元测试")
-    print("=" * 50)
+    print(" = " * 50)
 
     # 运行各项测试
     tests = []
@@ -459,7 +462,7 @@ def main() -> None,:
     passed = 0
     total = len(tests)
 
-    for test in tests,::
+    for test in tests, ::
     try,
 
 
@@ -467,21 +470,21 @@ def main() -> None,:
             if test():::
                 assed += 1
             print()  # 空行分隔
-        except Exception as e,::
+        except Exception as e, ::
             print(f"❌ 测试 {test.__name__} 执行出错, {e}")
 # TODO: Fix import - module 'traceback' not found
             traceback.print_exc()
             print()
 
-    print("=" * 50)
-    print(f"测试总结, {passed}/{total} 个测试通过")
+    print(" = " * 50)
+    print(f"测试总结, {passed} / {total} 个测试通过")
 
-    if passed == total,::
+    if passed == total, ::
     print("🎉 所有增强单元测试通过!")
     return 0
     else,
 
-    print("⚠️  部分测试未通过,请检查实现")
+    print("⚠️  部分测试未通过, 请检查实现")
     return 1
 
 if __name"__main__":::

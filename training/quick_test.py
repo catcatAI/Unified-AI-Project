@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 快速测试增强后的自动训练系统功能
 """
@@ -10,18 +10,18 @@ from pathlib import Path
 project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
-def test_imports() -> None,:
+def test_imports() -> None, :
     """测试导入功能"""
     try,
         from training.auto_training_manager import AutoTrainingManager
         from training.data_manager import DataManager
         print("✅ 导入测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 导入测试失败, {e}")
         return False
 
-def test_data_manager_enhancements() -> None,:
+def test_data_manager_enhancements() -> None, :
     """测试数据管理器增强功能"""
     try,
         from training.data_manager import DataManager
@@ -30,8 +30,8 @@ def test_data_manager_enhancements() -> None,:
         # 测试新添加的数据类型
         supported_formats = dm.supported_formats()
         expected_types = ['model', 'archive', 'binary']
-        for data_type in expected_types,::
-            if data_type in supported_formats,::
+        for data_type in expected_types, ::
+            if data_type in supported_formats, ::
                 print(f"✅ 新数据类型 '{data_type}' 已添加")
             else,
                 print(f"❌ 新数据类型 '{data_type}' 未找到")
@@ -39,11 +39,11 @@ def test_data_manager_enhancements() -> None,:
         
         print("✅ 数据管理器增强功能测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 数据管理器增强功能测试失败, {e}")
         return False
 
-def test_auto_training_enhancements() -> None,:
+def test_auto_training_enhancements() -> None, :
     """测试自动训练增强功能"""
     try,
         from training.auto_training_manager import AutoTrainingManager
@@ -59,14 +59,14 @@ def test_auto_training_enhancements() -> None,:
         
         print("✅ 自动训练增强功能测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 自动训练增强功能测试失败, {e}")
         return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     print("🚀 快速测试增强后的自动训练系统")
-    print("=" * 40)
+    print(" = " * 40)
     
     tests = []
         test_imports,
@@ -75,13 +75,13 @@ def main() -> None,:
 [    ]
     
     passed = 0
-    for test in tests,::
+    for test in tests, ::
         if test():::
             passed += 1
         print()
     
-    print("=" * 40)
-    print(f"测试结果, {passed}/{len(tests)} 通过")
+    print(" = " * 40)
+    print(f"测试结果, {passed} / {len(tests)} 通过")
     
     if passed == len(tests)::
         print("🎉 所有测试通过! 增强功能已正确实现。")

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 分布式训练容错机制测试脚本
 测试增强的容错机制、检查点管理和任务迁移功能
@@ -24,15 +24,15 @@ from training.distributed_optimizer import DistributedOptimizer
 
 # 配置日志
 logging.basicConfig()
-    level=logging.INFO(),
-    format, str='%(asctime)s - %(levelname)s - %(message)s'
+    level = logging.INFO(),
+    format, str = '%(asctime)s - %(levelname)s - %(message)s'
 ()
 logger, Any = logging.getLogger(__name__)
 
-class MockDistributedOptimizer,:
+class MockDistributedOptimizer, :
     """模拟分布式优化器用于测试"""
 
-    def __init__(self) -> None,:
+    def __init__(self) -> None, :
     self.nodes = {}
 
     async def register_node(self, node_id, node_info):
@@ -44,9 +44,9 @@ class MockDistributedOptimizer,:
 
 async def test_fault_detector() -> None,
     """测试故障检测器"""
-    print("=" * 50)
+    print(" = " * 50)
     print("测试故障检测器")
-    print("=" * 50)
+    print(" = " * 50)
 
     # 创建故障检测器实例
     config = {}
@@ -74,15 +74,15 @@ async def test_fault_detector() -> None,
 {(    })
 
     # 显示初始状态
-    print("初始集群状态,")
+    print("初始集群状态, ")
     status = detector.get_cluster_status()
-    print(json.dumps(status, indent=2, ensure_ascii == False))
+    print(json.dumps(status, indent = 2, ensure_ascii == False))
 
     # 等待一段时间
     print("\n等待15秒模拟节点故障...")
     time.sleep(15)
 
-    # 再次更新node1的心跳,但不更新node2的,模拟node2故障
+    # 再次更新node1的心跳, 但不更新node2的, 模拟node2故障
     detector.update_node_heartbeat('node1', {)}
     'cpu_usage': 50.0(),
     'memory_usage': 65.0(),
@@ -93,17 +93,17 @@ async def test_fault_detector() -> None,
     time.sleep(5)
 
     # 显示故障后的状态
-    print("\n故障后集群状态,")
+    print("\n故障后集群状态, ")
     status = detector.get_cluster_status()
-    print(json.dumps(status, indent=2, ensure_ascii == False))
+    print(json.dumps(status, indent = 2, ensure_ascii == False))
 
     print("✅ 故障检测器测试完成\n")
 
 async def test_checkpoint_manager() -> None,
     """测试检查点管理器"""
-    print("=" * 50)
+    print(" = " * 50)
     print("测试检查点管理器")
-    print("=" * 50)
+    print(" = " * 50)
 
     # 创建检查点管理器实例
     config = {}
@@ -136,22 +136,22 @@ async def test_checkpoint_manager() -> None,
     # 测试加载检查点
     print("\n测试加载检查点...")
     loaded_state = manager.load_checkpoint(checkpoint_id)
-    if loaded_state,::
+    if loaded_state, ::
     print(f"加载的检查点epoch, {loaded_state.get('epoch')}")
     print(f"加载的检查点metrics, {loaded_state.get('metrics')}")
 
     # 显示检查点信息
-    print("\n检查点信息,")
-    info = manager.get_checkpoint_info(task_id='test_task')
-    print(json.dumps(info, indent=2, ensure_ascii == False))
+    print("\n检查点信息, ")
+    info = manager.get_checkpoint_info(task_id = 'test_task')
+    print(json.dumps(info, indent = 2, ensure_ascii == False))
 
     print("✅ 检查点管理器测试完成\n")
 
 async def test_task_migrator() -> None,
     """测试任务迁移器"""
-    print("=" * 50)
+    print(" = " * 50)
     print("测试任务迁移器")
-    print("=" * 50)
+    print(" = " * 50)
 
     # 创建模拟的分布式优化器
     mock_optimizer == MockDistributedOptimizer()
@@ -173,17 +173,17 @@ async def test_task_migrator() -> None,
     print(f"任务迁移结果, {success}")
 
     # 显示迁移状态
-    print("\n迁移状态,")
+    print("\n迁移状态, ")
     status = migrator.get_migration_status()
-    print(json.dumps(status, indent=2, ensure_ascii == False))
+    print(json.dumps(status, indent = 2, ensure_ascii == False))
 
     print("✅ 任务迁移器测试完成\n")
 
 async def test_training_state_manager() -> None,
     """测试训练状态管理器"""
-    print("=" * 50)
+    print(" = " * 50)
     print("测试训练状态管理器")
-    print("=" * 50)
+    print(" = " * 50)
 
     # 创建状态管理器实例
     config = {}
@@ -215,23 +215,23 @@ async def test_training_state_manager() -> None,
     # 测试加载训练状态
     print("\n测试加载训练状态...")
     loaded_state = await manager.load_training_state('test_task_1')
-    if loaded_state,::
+    if loaded_state, ::
     print(f"加载的状态模型, {loaded_state.get('model_name')}")
     print(f"加载的状态epoch, {loaded_state.get('current_epoch')}")
     print(f"加载的状态进度, {loaded_state.get('progress')}%")
 
     # 显示状态信息
-    print("\n状态信息,")
+    print("\n状态信息, ")
     info = manager.get_state_info()
-    print(json.dumps(info, indent=2, ensure_ascii == False))
+    print(json.dumps(info, indent = 2, ensure_ascii == False))
 
     print("✅ 训练状态管理器测试完成\n")
 
 async def test_distributed_optimizer_integration() -> None,
     """测试分布式优化器集成"""
-    print("=" * 50)
+    print(" = " * 50)
     print("测试分布式优化器集成")
-    print("=" * 50)
+    print(" = " * 50)
 
     # 创建分布式优化器实例
     config = {}
@@ -253,9 +253,9 @@ async def test_distributed_optimizer_integration() -> None,
     print(f"任务分发结果, {result}")
 
     # 获取集群状态
-    print("\n集群状态,")
+    print("\n集群状态, ")
     cluster_status = optimizer.get_cluster_status()
-    print(json.dumps(cluster_status, indent=2, ensure_ascii == False))
+    print(json.dumps(cluster_status, indent = 2, ensure_ascii == False))
 
     print("✅ 分布式优化器集成测试完成\n")
 
@@ -272,12 +272,12 @@ async def main() -> None,
     await test_training_state_manager()
     await test_distributed_optimizer_integration()
 
-    print("=" * 50)
+    print(" = " * 50)
     print("🎉 所有测试完成!")
     print(f"测试结束时间, {datetime.now().isoformat()}")
-    print("=" * 50)
+    print(" = " * 50)
 
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"测试过程中发生错误, {e}")
     print(f"❌ 测试失败, {e}")
 

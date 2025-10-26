@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 测试增量学习系统功能
 """
@@ -11,14 +11,14 @@ project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
 from training.incremental_learning_manager import ()
-    DataTracker, 
-    ModelManager, 
-    TrainingScheduler, 
+    DataTracker,
+    ModelManager,
+    TrainingScheduler,
     MemoryBuffer,
     IncrementalLearningManager
 ()
 
-def test_data_tracker() -> None,:
+def test_data_tracker() -> None, :
     """测试数据跟踪器"""
     print("🧪 测试数据跟踪器...")
     
@@ -28,21 +28,21 @@ def test_data_tracker() -> None,:
         
         # 测试扫描新增数据
         new_data = tracker.scan_for_new_data()
-        print(f"  ✅ 扫描新增数据功能正常,发现 {len(new_data)} 个文件")
+        print(f"  ✅ 扫描新增数据功能正常, 发现 {len(new_data)} 个文件")
         
         # 测试标记文件为已处理
-        if new_data,::
+        if new_data, ::
             sample_file = new_data[0]
             tracker.mark_as_processed(sample_file['hash'])
             print(f"  ✅ 标记文件为已处理功能正常")
         
         print("✅ 数据跟踪器测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 数据跟踪器测试失败, {e}")
         return False
 
-def test_model_manager() -> None,:
+def test_model_manager() -> None, :
     """测试模型管理器"""
     print("🤖 测试模型管理器...")
     
@@ -63,11 +63,11 @@ def test_model_manager() -> None,:
         
         print("✅ 模型管理器测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 模型管理器测试失败, {e}")
         return False
 
-def test_training_scheduler() -> None,:
+def test_training_scheduler() -> None, :
     """测试训练调度器"""
     print("⏰ 测试训练调度器...")
     
@@ -77,7 +77,7 @@ def test_training_scheduler() -> None,:
         
         # 测试系统空闲检测
         is_idle = scheduler.is_system_idle()
-        print(f"  ✅ 系统空闲检测功能正常,当前状态, {'空闲' if is_idle else '忙碌'}")::
+        print(f"  ✅ 系统空闲检测功能正常, 当前状态, {'空闲' if is_idle else '忙碌'}")::
         # 测试调度训练任务
         test_task == {:}
             'model_name': 'concept_models',
@@ -88,21 +88,21 @@ def test_training_scheduler() -> None,:
         
         # 测试失败任务处理
         failed_tasks = scheduler.get_failed_tasks()
-        print(f"  ✅ 获取失败任务功能正常,当前失败任务数, {len(failed_tasks)}")
+        print(f"  ✅ 获取失败任务功能正常, 当前失败任务数, {len(failed_tasks)}")
         
         print("✅ 训练调度器测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 训练调度器测试失败, {e}")
         return False
 
-def test_memory_buffer() -> None,:
+def test_memory_buffer() -> None, :
     """测试内存缓冲区"""
     print("📦 测试内存缓冲区...")
     
     try,
         # 创建内存缓冲区
-        buffer == MemoryBuffer(max_size=5)
+        buffer == MemoryBuffer(max_size = 5)
         
         # 测试添加数据
         test_data == {'file': 'test.txt', 'hash': 'abc123'}
@@ -111,15 +111,15 @@ def test_memory_buffer() -> None,:
         
         # 测试获取缓冲区数据
         buffered_data = buffer.get_buffered_data()
-        print(f"  ✅ 获取缓冲区数据功能正常,获取到 {len(buffered_data)} 个数据项")
+        print(f"  ✅ 获取缓冲区数据功能正常, 获取到 {len(buffered_data)} 个数据项")
         
         print("✅ 内存缓冲区测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 内存缓冲区测试失败, {e}")
         return False
 
-def test_incremental_learning_manager() -> None,:
+def test_incremental_learning_manager() -> None, :
     """测试增量学习管理器"""
     print("🚀 测试增量学习管理器...")
     
@@ -141,14 +141,14 @@ def test_incremental_learning_manager() -> None,:
         
         print("✅ 增量学习管理器测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 增量学习管理器测试失败, {e}")
         return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     print("🚀 测试增量学习系统功能")
-    print("=" * 40)
+    print(" = " * 40)
     
     tests = []
         test_data_tracker,
@@ -159,13 +159,13 @@ def main() -> None,:
 [    ]
     
     passed = 0
-    for test in tests,::
+    for test in tests, ::
         if test():::
             passed += 1
         print()
     
-    print("=" * 40)
-    print(f"测试结果, {passed}/{len(tests)} 通过")
+    print(" = " * 40)
+    print(f"测试结果, {passed} / {len(tests)} 通过")
     
     if passed == len(tests)::
         print("🎉 所有测试通过! 增量学习系统功能正常。")

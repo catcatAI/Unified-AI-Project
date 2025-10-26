@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 协作式训练测试脚本
 """
@@ -19,10 +19,10 @@ from training.collaborative_training_manager import CollaborativeTrainingManager
 from training.data_manager import DataManager
 from training.resource_manager import ResourceManager
 
-logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO(), format = '%(asctime)s - %(levelname)s - %(message)s')
 logger, Any = logging.getLogger(__name__)
 
-def test_data_manager() -> None,:
+def test_data_manager() -> None, :
     """测试数据管理器"""
     logger.info("🔍 测试数据管理器...")
 
@@ -38,7 +38,7 @@ def test_data_manager() -> None,:
     # 获取数据统计
     stats = data_manager.get_data_statistics()
     logger.info(f"   总文件数, {stats['total_files']}")
-    logger.info(f"   总大小, {stats['total_size'] / (1024*1024).2f} MB")
+    logger.info(f"   总大小, {stats['total_size'] / (1024 * 1024).2f} MB")
 
     # 为概念模型准备数据
     concept_data = data_manager.prepare_training_data("concept_models")
@@ -46,11 +46,11 @@ def test_data_manager() -> None,:
 
     logger.info("✅ 数据管理器测试通过")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 数据管理器测试失败, {e}")
     return False
 
-def test_resource_manager() -> None,:
+def test_resource_manager() -> None, :
     """测试资源管理器"""
     logger.info("🖥️  测试资源管理器...")
 
@@ -71,7 +71,7 @@ def test_resource_manager() -> None,:
 
     # 尝试分配资源
     allocation = resource_manager.allocate_resources(requirements, "concept_models")
-        if allocation,::
+        if allocation, ::
     logger.info("✅ 资源分配成功")
         else,
 
@@ -79,11 +79,11 @@ def test_resource_manager() -> None,:
 
     logger.info("✅ 资源管理器测试完成")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 资源管理器测试失败, {e}")
     return False
 
-def test_collaborative_training_manager() -> None,:
+def test_collaborative_training_manager() -> None, :
     """测试协作式训练管理器"""
     logger.info("🔄 测试协作式训练管理器...")
 
@@ -113,16 +113,16 @@ def test_collaborative_training_manager() -> None,:
 
     logger.info("✅ 协作式训练管理器测试完成")
     return True
-    except Exception as e,::
+    except Exception as e, ::
     logger.error(f"❌ 协作式训练管理器测试失败, {e}")
 # TODO: Fix import - module 'traceback' not found
     traceback.print_exc()
     return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     print("🧪 测试协作式训练组件...")
-    print("=" * 50)
+    print(" = " * 50)
 
     # 测试各个组件
     tests = []
@@ -134,7 +134,7 @@ def main() -> None,:
     passed = 0
     total = len(tests)
 
-    for test_name, test_func in tests,::
+    for test_name, test_func in tests, ::
     print(f"\n📋 运行 {test_name} 测试...")
         try,
 
@@ -144,15 +144,15 @@ def main() -> None,:
             else,
 
                 print(f"❌ {test_name} 测试失败")
-        except Exception as e,::
+        except Exception as e, ::
             print(f"❌ {test_name} 测试出错, {e}")
 # TODO: Fix import - module 'traceback' not found
             traceback.print_exc()
 
     # 总结
-    print(f"\n📊 测试结果, {passed}/{total} 个测试通过")
+    print(f"\n📊 测试结果, {passed} / {total} 个测试通过")
 
-    if passed == total,::
+    if passed == total, ::
     print("🎉 所有测试通过!")
     return True
     else,

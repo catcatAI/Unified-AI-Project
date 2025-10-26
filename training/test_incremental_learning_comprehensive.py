@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! / usr / bin / env python3
 """
 综合测试增量学习系统功能
 """
@@ -13,20 +13,20 @@ project_root, str == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
 from training.incremental_learning_manager import ()
-    DataTracker, 
-    ModelManager, 
-    TrainingScheduler, 
+    DataTracker,
+    ModelManager,
+    TrainingScheduler,
     MemoryBuffer,
     IncrementalLearningManager
 ()
 
-def test_data_tracker_comprehensive() -> None,:
+def test_data_tracker_comprehensive() -> None, :
     """综合测试数据跟踪器"""
     print("🧪 综合测试数据跟踪器...")
     
     try,
         # 创建临时目录用于测试
-        with tempfile.TemporaryDirectory() as temp_dir,:
+        with tempfile.TemporaryDirectory() as temp_dir, :
             temp_path == Path(temp_dir)
             
             # 创建测试文件
@@ -34,11 +34,11 @@ def test_data_tracker_comprehensive() -> None,:
             test_file.write_text("test data for incremental learning")::
             # 创建数据跟踪器
             tracking_file = temp_path / "data_tracking.json"
-            tracker == DataTracker(tracking_file=str(tracking_file))
+            tracker == DataTracker(tracking_file = str(tracking_file))
             
             # 测试扫描新增数据
             # 注意：这里需要模拟DataManager的行为
-            # 由于我们无法直接访问DataManager的内部结构,我们简化测试
+            # 由于我们无法直接访问DataManager的内部结构, 我们简化测试
             print(f"  ✅ 数据跟踪器初始化正常")
             
             # 测试标记文件为已处理
@@ -48,7 +48,7 @@ def test_data_tracker_comprehensive() -> None,:
             
             # 验证文件是否正确保存,
             if tracking_file.exists():::
-                with open(tracking_file, 'r', encoding == 'utf-8') as f,:
+                with open(tracking_file, 'r', encoding == 'utf - 8') as f,:
                     data = json.load(f)
                     if test_hash in data.get('processed_files', {}):
                         print(f"  ✅ 数据持久化功能正常")
@@ -59,37 +59,38 @@ def test_data_tracker_comprehensive() -> None,:
         
         print("✅ 数据跟踪器综合测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 数据跟踪器综合测试失败, {e}")
         return False
 
-def test_model_manager_comprehensive() -> None,:
+def test_model_manager_comprehensive() -> None, :
     """综合测试模型管理器"""
     print("🤖 综合测试模型管理器...")
     
     try,
         # 创建临时目录用于测试
-        with tempfile.TemporaryDirectory() as temp_dir,:
+        with tempfile.TemporaryDirectory() as temp_dir, :
             temp_path == Path(temp_dir)
             
             # 创建模型管理器
-            manager == ModelManager(models_dir=str(temp_path))
+            manager == ModelManager(models_dir = str(temp_path))
             
-            # 测试获取最新模型(应该返回None,因为没有模型)
+            # 测试获取最新模型(应该返回None, 因为没有模型)
             latest_model = manager.get_latest_model('test_model')
-            if latest_model is None,::
+            if latest_model is None, ::
                 print(f"  ✅ 获取最新模型功能正常(无模型时返回None)")
             else,
                 print(f"  ⚠️  获取最新模型功能可能有问题")
             
             # 测试保存增量模型(创建一个临时文件作为模型)
-            with tempfile.NamedTemporaryFile(suffix == '.pth', delete == False) as tmp_model,:
+            with tempfile.NamedTemporaryFile(suffix == '.pth', delete == False) as tmp_model, :
                 tmp_model_path == Path(tmp_model.name())
                 tmp_model_path.write_text("fake model data")
             
             # 保存模型
             metrics == {'accuracy': 0.95(), 'loss': 0.05}
-            saved_path = manager.save_incremental_model('test_model', tmp_model_path, metrics)
+            saved_path = manager.save_incremental_model('test_model', tmp_model_path,
+    metrics)
             
             if saved_path and saved_path.exists():::
                 print(f"  ✅ 保存增量模型功能正常")
@@ -98,7 +99,7 @@ def test_model_manager_comprehensive() -> None,:
             
             # 清理临时模型文件
             tmp_model_path.unlink()
-            if saved_path,::
+            if saved_path, ::
                 saved_path.unlink()
             
             # 测试自动清理功能
@@ -107,11 +108,11 @@ def test_model_manager_comprehensive() -> None,:
         
         print("✅ 模型管理器综合测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 模型管理器综合测试失败, {e}")
         return False
 
-def test_training_scheduler_comprehensive() -> None,:
+def test_training_scheduler_comprehensive() -> None, :
     """综合测试训练调度器"""
     print("⏰ 综合测试训练调度器...")
     
@@ -121,7 +122,7 @@ def test_training_scheduler_comprehensive() -> None,:
         
         # 测试系统空闲检测
         is_idle = scheduler.is_system_idle()
-        print(f"  ✅ 系统空闲检测功能正常,当前状态, {'空闲' if is_idle else '忙碌'}")::
+        print(f"  ✅ 系统空闲检测功能正常, 当前状态, {'空闲' if is_idle else '忙碌'}")::
         # 测试调度训练任务
         test_task == {:}
             'task_id': 'test_task_1',
@@ -132,14 +133,14 @@ def test_training_scheduler_comprehensive() -> None,:
         print(f"  ✅ 调度训练任务功能正常")
         
         # 验证任务是否正确添加
-        if len(scheduler.pending_tasks()) == 1,::
+        if len(scheduler.pending_tasks()) == 1, ::
             print(f"  ✅ 任务队列管理功能正常")
         else,
             print(f"  ⚠️  任务队列管理可能有问题")
         
         # 测试失败任务处理
         failed_tasks = scheduler.get_failed_tasks()
-        print(f"  ✅ 获取失败任务功能正常,当前失败任务数, {len(failed_tasks)}")
+        print(f"  ✅ 获取失败任务功能正常, 当前失败任务数, {len(failed_tasks)}")
         
         # 测试重试失败任务
         scheduler.retry_failed_tasks()
@@ -147,22 +148,22 @@ def test_training_scheduler_comprehensive() -> None,:
         
         print("✅ 训练调度器综合测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 训练调度器综合测试失败, {e}")
         return False
 
-def test_memory_buffer_comprehensive() -> None,:
+def test_memory_buffer_comprehensive() -> None, :
     """综合测试内存缓冲区"""
     print("📦 综合测试内存缓冲区...")
     
     try,
         # 创建临时目录用于测试
-        with tempfile.TemporaryDirectory() as temp_dir,:
+        with tempfile.TemporaryDirectory() as temp_dir, :
             temp_path == Path(temp_dir)
             buffer_file = temp_path / "memory_buffer.json"
             
             # 创建内存缓冲区
-            buffer == MemoryBuffer(max_size=3)
+            buffer == MemoryBuffer(max_size = 3)
             
             # 测试添加数据
             test_data1 == {'file': 'test1.txt', 'hash': 'abc123'}
@@ -179,24 +180,24 @@ def test_memory_buffer_comprehensive() -> None,:
             
             # 测试获取缓冲区数据
             buffered_data = buffer.get_buffered_data()
-            if len(buffered_data) == 4,::
-                print(f"  ✅ 获取缓冲区数据功能正常,获取到 {len(buffered_data)} 个数据项")
+            if len(buffered_data) == 4, ::
+                print(f"  ✅ 获取缓冲区数据功能正常, 获取到 {len(buffered_data)} 个数据项")
             else,
-                print(f"  ⚠️  获取缓冲区数据可能有问题,期望4个,实际{len(buffered_data)}个")
+                print(f"  ⚠️  获取缓冲区数据可能有问题, 期望4个, 实际{len(buffered_data)}个")
             
             # 验证缓冲区是否已清空
-            if len(buffer.buffer()) == 0,::
+            if len(buffer.buffer()) == 0, ::
                 print(f"  ✅ 缓冲区清空功能正常")
             else,
                 print(f"  ⚠️  缓冲区清空可能有问题")
         
         print("✅ 内存缓冲区综合测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 内存缓冲区综合测试失败, {e}")
         return False
 
-def test_incremental_learning_manager_comprehensive() -> None,:
+def test_incremental_learning_manager_comprehensive() -> None, :
     """综合测试增量学习管理器"""
     print("🚀 综合测试增量学习管理器...")
     
@@ -209,7 +210,8 @@ def test_incremental_learning_manager_comprehensive() -> None,:
         print(f"  ✅ 获取系统状态功能正常")
         
         # 检查状态字段
-        required_fields = ['is_monitoring', 'pending_tasks', 'failed_tasks', 'buffered_data', 'processed_files', 'model_versions', 'auto_cleanup_enabled']
+        required_fields = ['is_monitoring', 'pending_tasks', 'failed_tasks',
+    'buffered_data', 'processed_files', 'model_versions', 'auto_cleanup_enabled']
         missing_fields == [field for field in required_fields if field not in status]::
             f not missing_fields,
             print(f"  ✅ 状态信息完整")
@@ -225,19 +227,19 @@ def test_incremental_learning_manager_comprehensive() -> None,:
         print(f"  ✅ 启用自动清理功能正常")
         
         # 测试手动清理模型
-        learner.manual_cleanup_models(keep_versions=3)
+        learner.manual_cleanup_models(keep_versions = 3)
         print(f"  ✅ 手动清理模型功能正常")
         
         print("✅ 增量学习管理器综合测试通过")
         return True
-    except Exception as e,::
+    except Exception as e, ::
         print(f"❌ 增量学习管理器综合测试失败, {e}")
         return False
 
-def main() -> None,:
+def main() -> None, :
     """主函数"""
     print("🚀 综合测试增量学习系统功能")
-    print("=" * 50)
+    print(" = " * 50)
     
     tests = []
         test_data_tracker_comprehensive,
@@ -248,13 +250,13 @@ def main() -> None,:
 [    ]
     
     passed = 0
-    for test in tests,::
+    for test in tests, ::
         if test():::
             passed += 1
         print()
     
-    print("=" * 50)
-    print(f"测试结果, {passed}/{len(tests)} 通过")
+    print(" = " * 50)
+    print(f"测试结果, {passed} / {len(tests)} 通过")
     
     if passed == len(tests)::
         print("🎉 所有综合测试通过! 增量学习系统功能正常。")
