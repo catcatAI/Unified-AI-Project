@@ -314,6 +314,7 @@ class PerformanceOptimizer, :
                 'max_cache_size': self.config['performance']['caching']['max_cache_size'\
     \
     \
+    \
     ]
 {            }
 {    }

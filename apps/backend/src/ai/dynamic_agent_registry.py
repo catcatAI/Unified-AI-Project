@@ -137,6 +137,7 @@ class DynamicAgentRegistry, :
                     logger.info(f"Updated agent {agent_name} ({agent_id}) with new capab\
     \
     \
+    \
     ility {capability_id}"):
                         sync def register_agent_manually(self, agent_id, str,
     agent_name, str, )

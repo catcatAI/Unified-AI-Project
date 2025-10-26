@@ -28,6 +28,7 @@ class LogicTool:
         self.nn_model_evaluator: Optional[Any] = None # Type hint as Any due to external\
     \
     \
+    \
     library
         self.nn_char_to_token: Optional[Dict[str, int]] = None
         self.tensorflow_import_error: Optional[str] = None
@@ -50,8 +51,10 @@ class LogicTool:
             self.tensorflow_import_error = "TensorFlow not available through dependency \
     \
     \
+    \
     manager"
             logger.critical(f"CRITICAL: TensorFlow not available. Logic tool's NN featur\
+    \
     \
     \
     es will be disabled.")
@@ -74,16 +77,19 @@ from .logic_model.logic_model_nn import
             logger.critical(f"CRITICAL: TensorFlow could not be imported. Logic tool's N\
     \
     \
+    \
     N features will be disabled. Error: {e}")
             self.tensorflow_import_error = str(e)
         except FileNotFoundError as e:
             logger.warning(f"Warning: Logic NN model files not found. NN features will b\
     \
     \
+    \
     e disabled. Error: {e}")
             self.tensorflow_import_error = str(e)
         except Exception as e:
             logger.error(f"An unexpected error occurred while loading the LogicNNModel: \
+    \
     \
     \
     {e}")
@@ -105,11 +111,13 @@ from .logic_model.logic_model_nn import
             logger.info(f"LogicTool: Evaluating '{normalized_expression}' using 'nn' met\
     \
     \
+    \
     hod.")
             try:
                 return nn_model.predict(normalized_expression, char_map)
             except Exception as e:
                 logger.critical(f"Error during NN prediction for '{normalized_expression\
+    \
     \
     \
     }': {e}")
@@ -121,6 +129,7 @@ from .logic_model.logic_model_nn import
         logger.info(f"LogicTool: Evaluating '{normalized_expression}' using 'parser' met\
     \
     \
+    \
     hod.")
         try:
             parser = self._get_parser_evaluator()
@@ -128,9 +137,11 @@ from .logic_model.logic_model_nn import
             return result if result is not None else "Error: Invalid expression for pars\
     \
     \
+    \
     er."
         except Exception as e:
             logger.critical(f"Error during parser evaluation for '{normalized_expression\
+    \
     \
     \
     }': {e}")
@@ -152,9 +163,11 @@ if __name__ == "__main__":
 
     logger.info("\n - -- Testing Unified evaluate_expression (NN fallback to Parser) - -\
     \
+    \
     -")
     for expr, expected in test_cases:
         result = logic_tool_instance.evaluate_expression(expr) # Corrected to use instan\
+    \
     \
     \
     ce method

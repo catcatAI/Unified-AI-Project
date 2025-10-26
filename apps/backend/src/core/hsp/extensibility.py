@@ -154,6 +154,7 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
                 decrypted_payload = self.security_manager.decrypt_message(encrypted_data\
     \
     \
+    \
     )
                 message['payload'] = decrypted_payload
             except Exception as e, ::

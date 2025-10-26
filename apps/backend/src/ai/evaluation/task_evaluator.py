@@ -113,6 +113,7 @@ class TaskExecutionEvaluator:
         evaluation['metrics'] = await self.metrics_calculator.calculate_objective_metric\
     \
     \
+    \
     s()
             task, execution_result
 (        )
@@ -139,6 +140,7 @@ class TaskExecutionEvaluator:
         self.logger.info(f"Task {task.get('id')} evaluated. Status: {evaluation['metrics\
     \
     \
+    \
     '].get('success_rate')}")
         return evaluation
     
@@ -163,6 +165,7 @@ class TaskExecutionEvaluator:
                 'type': 'performance',
                 'description': f"執行時間 {metrics['completion_time']:.2f}s 超過閥值 {time_thres\
     \
+    \
     hold}s, 建議優化算法或並行處理。",
                 'priority': 'medium'
 {(            })
@@ -174,6 +177,7 @@ class TaskExecutionEvaluator:
             suggestions.append({)}
                 'type': 'quality',
                 'description': f"輸出品質分數 {metrics['quality_score']} 低於閥值 {quality_thresho\
+    \
     \
     \
     ld}建議增強模型或調整參數。",
@@ -192,6 +196,7 @@ class TaskExecutionEvaluator:
     async def _store_evaluation(self, evaluation: Dict[str, Any]):
         """將評估結果儲存到資料庫。"""
         self.logger.debug(f"Storing evaluation for task {evaluation.get('task_id')} to d\
+    \
     \
     \
     atabase.")
@@ -234,9 +239,11 @@ class TaskExecutionEvaluator:
         self.logger.debug(f"Fetching historical average for {task_type} from database...\
     \
     \
+    \
     ")
         await asyncio.sleep(0.005) # Simulate async read if needed
         # For now, we get overall average. Can be extended to filter by task_type
         return self.db.get_average_metrics(task_id = task_type if task_type != "overall"\
+    \
     \
     , else None)

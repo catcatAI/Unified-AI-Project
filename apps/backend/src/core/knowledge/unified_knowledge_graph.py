@@ -201,6 +201,7 @@ class UnifiedKnowledgeGraph, :
             if entity.name.lower() in [alias.lower() for alias in existing_entity.aliase\
     \
     \
+    \
     s]::
                 return existing_entity
             
@@ -263,6 +264,7 @@ class UnifiedKnowledgeGraph, :
             entity_text = f"{entity.name} {' '.join(entity.aliases())} {entity.entity_ty\
     \
     \
+    \
     pe}"
             for key, value in entity.properties.items():::
                 entity_text += f" {key} {value}"
@@ -293,8 +295,10 @@ class UnifiedKnowledgeGraph, :
             # 简化相似度计算
             name_similarity == 1.0 if entity1.name.lower() == entity2.name.lower() else \
     \
+    \
     0.0, :
             type_similarity == 1.0 if entity1.entity_type = entity2.entity_type else 0.0\
+    \
     , :
             return (name_similarity + type_similarity) / 2
 
@@ -449,6 +453,7 @@ class UnifiedKnowledgeGraph, :
     
     # = == == == == == == == == == = 跨领域知识迁移 == async def find_cross_domain_patterns(sel\
     \
+    \
     f, source_domain, str, target_domain, str) -> List[Dict[str, Any]]
         """发现跨领域模式"""
         patterns = []
@@ -528,6 +533,7 @@ class UnifiedKnowledgeGraph, :
                     'center_entity': entity_id,
                     'neighbor_count': len(neighbors),
                     'neighbor_types': [domain_knowledge.entities[nid].entity_type for ni\
+    \
     \
     \
     d in neighbors if nid in domain_knowledge.entities]:
@@ -885,6 +891,7 @@ class UnifiedKnowledgeGraph, :
                     'suggested_adaptations': await self._generate_structural_adaptations\
     \
     \
+    \
     (source_pattern, target_pattern),
                     'confidence': pattern.get('similarity', 0),
                     'transfer_potential': pattern.get('transfer_potential', 0)
@@ -1010,6 +1017,7 @@ class UnifiedKnowledgeGraph, :
         return intersection / union if union > 0 else 0.0, :
     # = == == == == == == == == == = 统计与报告 == async def get_knowledge_statistics(self) -\
     \
+    \
     > Dict[str, Any]
         """获取知识统计"""
         stats = {}
@@ -1022,8 +1030,10 @@ class UnifiedKnowledgeGraph, :
             'cross_domain_mappings': len(self.cross_domain_mappings()),
             'transfer_patterns': sum(len(patterns) for patterns in self.transfer_pattern\
     \
+    \
     s.values()), :::
             'temporal_knowledge_entries': sum(len(entries) for entries in self.temporal_\
+    \
     \
     knowledge.values()), :::
             'ai_model_status': {}

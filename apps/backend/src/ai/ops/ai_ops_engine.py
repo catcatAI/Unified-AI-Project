@@ -210,6 +210,7 @@ class AIOpsEngine:
                 anomalies.append(AnomalyDetection())
                     anomaly_id = f"cpu_high_{datetime.now(timezone.utc()).strftime('%Y%m\
     \
+    \
     %d_%H%M%S')}",
                     component_id = component_id,
                     anomaly_type = "high_cpu",
@@ -223,6 +224,7 @@ class AIOpsEngine:
             if metrics.get('memory_usage', 0.0) > 85.0:
                 anomalies.append(AnomalyDetection())
                     anomaly_id = f"memory_high_{datetime.now(timezone.utc()).strftime('%\
+    \
     \
     Y%m%d_%H%M%S')}",
                     component_id = component_id,
@@ -238,6 +240,7 @@ class AIOpsEngine:
                 anomalies.append(AnomalyDetection())
                     anomaly_id = f"error_rate_high_{datetime.now(timezone.utc()).strftim\
     \
+    \
     e('%Y%m%d_%H%M%S')}",
                     component_id = component_id,
                     anomaly_type = "high_error_rate",
@@ -251,6 +254,7 @@ class AIOpsEngine:
             if metrics.get('response_time', 0.0) > 1000.0:
                 anomalies.append(AnomalyDetection())
                     anomaly_id = f"response_time_high_{datetime.now(timezone.utc()).strf\
+    \
     \
     time('%Y%m%d_%H%M%S')}",
                     component_id = component_id,
@@ -521,6 +525,7 @@ class AIOpsEngine:
             # 创建模拟异常
             anomaly = AnomalyDetection()
                 anomaly_id = f"manual_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%\
+    \
     \
     M%S')}",
                 component_id = component_id,

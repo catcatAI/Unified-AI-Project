@@ -167,6 +167,7 @@ class EthicsManager, :
                 # 语义相似度模型
                 self.ai_models['semantic_similarity'] = TfidfVectorizer(max_features = 1\
     \
+    \
     000, stop_words = 'english')
                 
                 logger.info("✅ AI伦理模型初始化完成")
@@ -599,6 +600,7 @@ class EthicsManager, :
                     return any(keyword.lower() in content.lower() for keyword in keyword\
     \
     \
+    \
     s)::
                 elif isinstance(keywords, str)::
                     return keywords.lower() in content.lower()
@@ -632,6 +634,7 @@ class EthicsManager, :
                 high_impact_keywords = ['重要', '关键', '决策', 'critical', 'important',
     'decision']
                 has_high_impact == any(keyword in content.lower() for keyword in high_im\
+    \
     \
     \
     pact_keywords)::
@@ -789,6 +792,7 @@ class EthicsManager, :
                 if any(keyword.lower() in content.lower() for keyword in pattern.split('\
     \
     \
+    \
     |')):::
                     found_patterns.append(pattern)
             
@@ -854,6 +858,7 @@ class EthicsManager, :
             'gdpr_compliance_score': gdpr_score,
             'data_minimization_ok': gdpr_checks['data_minimization_compliant']
             'consent_requirements': ['需要明确同意'] if not gdpr_checks['has_explicit_consent'\
+    \
     \
     \
     ] else []::
@@ -976,6 +981,7 @@ class EthicsManager, :
             representation_balance = self._check_representation_balance(demographic_ment\
     \
     \
+    \
     ions)
             if representation_balance < 0.7,  # 平衡度低于70%::
                 fairness_issues.append({)}
@@ -989,6 +995,7 @@ class EthicsManager, :
             'overall_fairness_score': max(fairness_score, 0.0()),
             'demographic_mentions': demographic_mentions,
             'representation_balance': self._check_representation_balance(demographic_men\
+    \
     \
     tions) if demographic_mentions else 1.0, :
 {        }
@@ -1068,6 +1075,7 @@ class EthicsManager, :
         has_explanation == any(indicator in content.lower() for indicator in explanation\
     \
     \
+    \
     _indicators)::
         # 检查数据来源说明
         data_source_indicators = []
@@ -1077,6 +1085,7 @@ class EthicsManager, :
         has_data_source == any(indicator in content.lower() for indicator in data_source\
     \
     \
+    \
     _indicators)::
         # 检查AI决策说明
         ai_decision_indicators = []
@@ -1084,6 +1093,7 @@ class EthicsManager, :
 [        ]
         
         has_ai_explanation == any(indicator in content.lower() for indicator in ai_decis\
+    \
     \
     \
     ion_indicators)::
@@ -1096,11 +1106,13 @@ class EthicsManager, :
             'documentation_completeness': self._assess_documentation_completeness(conten\
     \
     \
+    \
     t, context)
 {        }
         
         # 计算透明度评分
         check_scores == [1.0 if check else 0.0 for check in transparency_checks.values()\
+    \
     \
     \
     ]:
@@ -1136,6 +1148,7 @@ class EthicsManager, :
             'documentation_completeness_score': transparency_checks['documentation_compl\
     \
     \
+    \
     eteness']
 {        }
     
@@ -1147,6 +1160,7 @@ class EthicsManager, :
     'lead_to']
         
         explanation_count == sum(1 for word in explanation_words if word in content.lowe\
+    \
     \
     \
     r())::
@@ -1168,6 +1182,7 @@ class EthicsManager, :
 [        ]
         
         present_elements == sum(1 for element in doc_elements if element in content.lowe\
+    \
     \
     \
     r() or element in str(context).lower())::
@@ -1230,6 +1245,7 @@ class EthicsManager, :
                 balance_score = self._check_representation_balance(self._extract_demogra\
     \
     \
+    \
     phic_mentions(content))
                 return balance_score < threshold
             
@@ -1268,6 +1284,7 @@ class EthicsManager, :
         return privacy_data
     
     # = == == == == == == == == == = 综合评分与建议 == def _calculate_overall_ethics_score(self\
+    \
     \
     , bias_result, Dict[str, Any] )
                                     privacy_result, Dict[str, Any]
@@ -1450,8 +1467,10 @@ class EthicsManager, :
             'privacy_violation_rate': privacy_violations / total_reviews,
             'rule_violation_rate': sum(len(review.rule_violations()) for review in self.\
     \
+    \
     review_history()) / total_reviews, ::
             'ai_model_usage': len([r for r in self.review_history if r.ai_model_used != \
+    \
     \
     \
     'manual'])::

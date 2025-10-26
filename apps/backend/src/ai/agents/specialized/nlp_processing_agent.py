@@ -73,6 +73,7 @@ class NLPProcessingAgent(BaseAgent):
         logging.info(f"[{self.agent_id}] NLPProcessingAgent initialized with capabilitie\
     \
     \
+    \
     s, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload,
     sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -81,6 +82,7 @@ class NLPProcessingAgent(BaseAgent):
         params = task_payload.get("parameters", {})
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
     \
     \
     ability_id}'"):::
@@ -110,6 +112,7 @@ class NLPProcessingAgent(BaseAgent):
             callback_topic = task_payload["callback_address"]
             await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callb\
+    \
     \
     \
     ack_topic}"):::

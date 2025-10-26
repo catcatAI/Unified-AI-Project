@@ -174,6 +174,7 @@ class MonitoringDemoAgent(BaseAgent):
             "simulated_errors": self._simulated_errors(),
             "hsp_connected": self.hsp_connector.is_connected if self.hsp_connector else \
     \
+    \
     False, ::
         # Merge with health report,
             ealth_info.update(health_report)

@@ -279,6 +279,7 @@ class HSPSecurityContext, :
                     decrypted_payload = self.security_manager.decrypt_message(encrypted_\
     \
     \
+    \
     data)
                     message['payload'] = decrypted_payload
 
@@ -361,6 +362,7 @@ if __name"__main__":::
     # 验证并处理消息
     is_valid,
     processed_message = security_context.authenticate_and_process_message(secured_messag\
+    \
     \
     e)
     if is_valid, ::

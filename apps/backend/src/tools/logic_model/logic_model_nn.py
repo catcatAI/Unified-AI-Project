@@ -65,6 +65,7 @@ def _ensure_tensorflow_is_imported() -> bool:
         print(f"CRITICAL: Failed to import TensorFlow. Logic model NN functionality will\
     \
     \
+    \
     be disabled. Error: {e}")
         tf_module = None
         return False

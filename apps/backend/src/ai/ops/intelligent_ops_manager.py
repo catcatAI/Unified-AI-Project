@@ -21,6 +21,7 @@ try:
 except ImportError:
     logger.warning("Numpy not found. IntelligentOpsManager will use simpler calculations\
     \
+    \
     for numpy - dependent features.")
 
 from .ai_ops_engine import
@@ -158,6 +159,7 @@ class IntelligentOpsManager:
                     await self.predictive_maintenance.collect_component_metrics(componen\
     \
     \
+    \
     t_id, component_type, metrics)
                 except Exception:
                     pass
@@ -165,6 +167,7 @@ class IntelligentOpsManager:
             if self.performance_optimizer:
                 try:
                     await self.performance_optimizer.collect_performance_metrics(compone\
+    \
     \
     \
     nt_id, component_type, metrics)
@@ -213,6 +216,7 @@ class IntelligentOpsManager:
                 maintenance_insights = await self._analyze_maintenance_needs(component_i\
     \
     \
+    \
     d, component_type, metrics)
                 insights.extend(maintenance_insights)
             
@@ -240,6 +244,7 @@ class IntelligentOpsManager:
                         insight = OpsInsight()
                             insight_id = f"anomaly_{datetime.now(timezone.utc()).strftim\
     \
+    \
     e('%Y%m%d_%H%M%S')}_{component_id}",
                             insight_type = "anomaly",
                             severity = anomaly.severity.value,
@@ -250,6 +255,7 @@ class IntelligentOpsManager:
                             confidence = anomaly.confidence,
                             timestamp = datetime.now(timezone.utc()),
 (                            auto_actionable = anomaly.confidence > self.auto_action_thr\
+    \
     \
     eshold)
                         insights.append(insight)
@@ -270,6 +276,7 @@ class IntelligentOpsManager:
                 recommendations = await self.performance_optimizer.get_optimization_reco\
     \
     \
+    \
     mmendations(component_id)
                 
                 # 筛选高优先级建议
@@ -281,6 +288,7 @@ class IntelligentOpsManager:
                 for rec in high_priority_recs[ - 3:]:
                     insight = OpsInsight()
                         insight_id = f"perf_{datetime.now(timezone.utc()).strftime('%Y%m\
+    \
     \
     %d_%H%M%S')}_{component_id}",
                         insight_type = "performance",
@@ -310,6 +318,7 @@ class IntelligentOpsManager:
                 # 获取容量预测
                 predictions = await self.capacity_planner.get_capacity_predictions(resou\
     \
+    \
     rce_type = component_type) # Pass component_type as resource_type
                 
                 # 筛选高紧急度预测
@@ -321,6 +330,7 @@ class IntelligentOpsManager:
                 for pred in urgent_predictions:
                     insight = OpsInsight()
                         insight_id = f"capacity_{datetime.now(timezone.utc()).strftime('\
+    \
     \
     %Y%m%d_%H%M%S')}_{component_id}",
                         insight_type = "capacity",
@@ -351,11 +361,13 @@ class IntelligentOpsManager:
                 health = await self.predictive_maintenance.get_component_health(componen\
     \
     \
+    \
     t_id)
                 
                 if health and health.health_score < 60:  # 健康分数低于60:
                     insight = OpsInsight()
                         insight_id = f"maint_{datetime.now(timezone.utc()).strftime('%Y%\
+    \
     \
     m%d_%H%M%S')}_{component_id}",
                         insight_type = "maintenance",
@@ -495,7 +507,9 @@ class IntelligentOpsManager:
             # 获取性能优化建议并实施
             recommendations = await self.performance_optimizer.get_optimization_recommen\
     \
+    \
     dations(component_id = insight.affected_components[0] if insight.affected_components\
+    \
     else None)
             
             for rec in recommendations:
@@ -521,6 +535,7 @@ class IntelligentOpsManager:
             # 获取扩容计划并执行
             plans = await self.capacity_planner.get_scaling_plans(resource_type = insigh\
     \
+    \
     t.affected_components[0] if insight.affected_components else None)
             
             for plan in plans:
@@ -545,6 +560,7 @@ class IntelligentOpsManager:
 
             # 获取维护计划并执行
             schedules = await self.predictive_maintenance.get_maintenance_schedules(comp\
+    \
     \
     onent_id = insight.affected_components[0] if insight.affected_components else None)
             
@@ -625,9 +641,11 @@ class IntelligentOpsManager:
                 insight = OpsInsight()
                     insight_id = f"system_health_{datetime.now(timezone.utc()).strftime(\
     \
+    \
     '%Y%m%d_%H%M%S')}",
                     insight_type = "system_health",
                     severity = "high" if system_health['overall_score'] < 50 else "mediu\
+    \
     \
     m",
                     title = "系统健康状态预警",
@@ -699,6 +717,7 @@ class IntelligentOpsManager:
             performance_report = await self.performance_optimizer.get_performance_report\
     \
     \
+    \
     ()
             
             # 分析容量趋势
@@ -711,6 +730,7 @@ class IntelligentOpsManager:
             for pattern in patterns:
                 insight = OpsInsight()
                     insight_id = f"pattern_{datetime.now(timezone.utc()).strftime('%Y%m%\
+    \
     \
     d_%H%M%S')}",
                     insight_type = "pattern",
@@ -800,6 +820,7 @@ class IntelligentOpsManager:
                         if data:
                             insight_dict = json.loads(data)
                             if datetime.fromisoformat(insight_dict['timestamp']) < cutof\
+    \
     \
     \
     f_time:

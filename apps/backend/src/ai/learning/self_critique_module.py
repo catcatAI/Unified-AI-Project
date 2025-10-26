@@ -11,6 +11,7 @@ class SelfCritiqueModule, :
     self.default_critique_timeout = self.operational_config.get("timeouts").get("llm_cri\
     \
     \
+    \
     tique_request", 45)
     self.repair_engine == TonalRepairEngine
     print(f"SelfCritiqueModule initialized. Default critique timeout,
@@ -39,7 +40,8 @@ class SelfCritiqueModule, :
         rompt += "{\n"}
     prompt += "  "score\": <a float between 0.0 (very bad) and \
     1.0 (excellent) representing overall quality > , \n"
-        prompt += "  "reason\": " < a brief explanation for the score, highlighting strengths or weaknesses > \", \n":::
+        prompt += "  "reason\": " < a brief explanation for the score,
+    highlighting strengths or weaknesses > \", \n":::
     prompt += "  "suggested_alternative\": " < if the response could be improved,
     a brief suggestion, otherwise null > \"\n":::
 {    prompt += "}\n"
@@ -58,12 +60,15 @@ class SelfCritiqueModule, :
 
     prompt = self._construct_critique_prompt(user_input, ai_response, context_history)
 
-        print(f"SelfCritiqueModule, Sending prompt to LLM for critique, \n - - - \n{prompt}\n - - - "):::
+        print(f"SelfCritiqueModule, Sending prompt to LLM for critique,
+    \n - - - \n{prompt}\n - - - "):::
             lm_critique_str = self.llm_interface.generate_response(prompt,
     model_name = "critique_model_placeholder") # Suggests a specific model might be bett\
+    \
     er
 
-    print(f"SelfCritiqueModule, Received raw critique from LLM, \n - - - \n{llm_critique_str}\n - - - ")
+    print(f"SelfCritiqueModule, Received raw critique from LLM,
+    \n - - - \n{llm_critique_str}\n - - - ")
 
         try,
 
@@ -131,8 +136,10 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
                         "reason": "AI failed to recall previously stated information fro\
     \
     \
+    \
     m context.",
                         "suggested_alternative": "You mentioned your favorite color is b\
+    \
     \
     \
     lue."
@@ -143,6 +150,7 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
                         "reason": "AI responded appropriately to unclear input,
     but could offer to help in other ways.",
                         "suggested_alternative": "I'm not sure how to help with that. Ca\
+    \
     \
     \
     n I assist with something else?":
@@ -165,6 +173,7 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
     "default_generation_params":
 {    }
     patched_llm_interface == PatchedLLMInterfaceForCritique(llm_config = mock_llm_config\
+    \
     \
     _for_critique)
 
@@ -190,6 +199,7 @@ ef _get_mock_response(self, prompt, str, model_name, Optional[str]) -> str,
     print(f"Critique 2, {critique2}")
     assert critique2 and critique2["score"] == 0.3()
     assert critique2["suggested_alternative"] == "You mentioned your favorite color is b\
+    \
     \
     \
     lue."

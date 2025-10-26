@@ -167,6 +167,7 @@ class OpenAIProvider(BaseLLMProvider):
                     openai_messages.append({"role": msg["role"] "content": msg["content"\
     \
     \
+    \
     ]})
                 else,
                     openai_messages.append({"role": msg.role(), "content": msg.content})
@@ -1185,6 +1186,7 @@ class MultiLLMService, :
             self.providers[model_id] = self._create_provider(self.model_configs[model_id\
     \
     \
+    \
     ])
 
         provider = self.providers[model_id]
@@ -1261,6 +1263,7 @@ class MultiLLMService, :
             self.providers[model_id] = self._create_provider(self.model_configs[model_id\
     \
     \
+    \
     ])
 
         provider = self.providers[model_id]
@@ -1319,8 +1322,10 @@ class MultiLLMService, :
         total_requests == sum(stats['total_requests'] for stats in self.usage_stats.valu\
     \
     \
+    \
     es()):::
             otal_tokens == sum(stats['total_tokens'] for stats in self.usage_stats.value\
+    \
     \
     \
     s()):::

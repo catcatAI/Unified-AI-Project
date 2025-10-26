@@ -104,6 +104,7 @@ class PerformanceOptimizer:
                 self.performance_history = [json.loads(item) for item in data] if data e\
     \
     \
+    \
     lse []
                 logger.info(f"加载性能历史数据: {len(self.performance_history)} 条记录")
         except Exception as e:
@@ -297,6 +298,7 @@ class PerformanceOptimizer:
             efficiency_score = np.mean(efficiency_factors) if efficiency_factors else 0.\
     \
     \
+    \
     8
             # 计算性能分数
             performance_score = self._calculate_performance_score(metrics_trends)
@@ -375,6 +377,7 @@ class PerformanceOptimizer:
                 recommendations.append(OptimizationRecommendation())
                     recommendation_id = f"cpu_opt_{datetime.now(timezone.utc()).strftime\
     \
+    \
     ('%Y%m%d_%H%M%S')}",
                     component_id = component_id,
                     optimization_type = "scaling",
@@ -396,10 +399,12 @@ class PerformanceOptimizer:
                 recommendations.append(OptimizationRecommendation())
                     recommendation_id = f"mem_opt_{datetime.now(timezone.utc()).strftime\
     \
+    \
     ('%Y%m%d_%H%M%S')}",
                     component_id = component_id,
                     optimization_type = "resource_allocation",
                     priority = "high" if current_metrics.memory_usage > 85 else "medium"\
+    \
     \
     ,
                     expected_improvement = 20.0,
@@ -420,10 +425,12 @@ class PerformanceOptimizer:
                 recommendations.append(OptimizationRecommendation())
                     recommendation_id = f"rt_opt_{datetime.now(timezone.utc()).strftime(\
     \
+    \
     '%Y%m%d_%H%M%S')}",
                     component_id = component_id,
                     optimization_type = "caching",
                     priority = "high" if current_metrics.response_time > 1000 else "medi\
+    \
     \
     um",
                     expected_improvement = 35.0,
@@ -441,6 +448,7 @@ class PerformanceOptimizer:
             if efficiency_score < 0.6:
                 recommendations.append(OptimizationRecommendation())
                     recommendation_id = f"eff_opt_{datetime.now(timezone.utc()).strftime\
+    \
     \
     ('%Y%m%d_%H%M%S')}",
                     component_id = component_id,
@@ -465,6 +473,7 @@ class PerformanceOptimizer:
                 if prediction['will_degrade']:
                     recommendations.append(OptimizationRecommendation())
                         recommendation_id = f"pred_opt_{datetime.now(timezone.utc()).str\
+    \
     \
     ftime('%Y%m%d_%H%M%S')}",
                         component_id = component_id,
@@ -607,6 +616,7 @@ class PerformanceOptimizer:
                             error_rate = latest_metrics_dict.get('error_rate', 0.0),
                             active_connections = latest_metrics_dict.get('active_connect\
     \
+    \
     ions', 0),
                             queue_length = latest_metrics_dict.get('queue_length', 0)
 (                        )
@@ -617,6 +627,7 @@ class PerformanceOptimizer:
 (                        )
                         
                         recommendations = await self._generate_optimization_recommendati\
+    \
     \
     \
     ons()
@@ -804,6 +815,7 @@ class PerformanceOptimizer:
                 'time_range': f"{time_range}小时",
                 'total_records': len(recent_data),
                 'components': list(set(record['component_id'] for record in recent_data)\
+    \
     \
     \
     ),

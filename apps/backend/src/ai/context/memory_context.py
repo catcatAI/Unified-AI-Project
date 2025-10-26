@@ -124,6 +124,7 @@ class MemoryContextManager, :
             logger.info(f"Updated embedding for memory {memory_id} with context {context\
     \
     \
+    \
     _id}"):::
                 eturn True
         except Exception as e, ::
@@ -220,6 +221,7 @@ class MemoryContextManager, :
                 logger.info(f"Cleaned up old memory {mem_id} with context {context_id}")\
     \
     \
+    \
     :
                     ogger.info(f"Cleaned up {deleted_count} old memories")
             return deleted_count
@@ -244,6 +246,7 @@ class MemoryContextManager, :
                 memory_type = target_memory_type,
                 metadata == source_memory.metadata.copy if source_memory.metadata else N\
     \
+    \
     one, ::
             # 如果源记忆有向量表示, 也复制过去
             if source_memory.embedding, ::
@@ -263,6 +266,7 @@ class MemoryContextManager, :
             context_id = self.context_manager.create_context(ContextType.MEMORY(),
     context_content)
             logger.info(f"Transferred memory from {source_memory_id} to {new_memory_id} \
+    \
     \
     \
     with context {context_id}"):

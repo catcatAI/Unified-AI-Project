@@ -60,6 +60,7 @@ class UnifiedSymbolicSpace, :
                 current_props == current_symbol['properties'] if current_symbol else {}:\
     \
     \
+    \
     :
     if current_props is None, ::
     current_props = {}
@@ -197,6 +198,7 @@ class UnifiedSymbolicSpace, :
 
     # Delete associated relationships first
     cursor.execute("DELETE FROM relationships WHERE source_symbol_id = ? OR target_symbo\
+    \
     \
     \
     l_id = ?", (symbol['id'] symbol['id']))

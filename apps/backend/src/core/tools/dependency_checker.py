@@ -135,6 +135,7 @@ def main -> None, :
                 optional': {"name": {'available': s['available'] 'error': s['error']} fo\
     \
     \
+    \
     r name, s in optional_deps.items}::
         try,
 

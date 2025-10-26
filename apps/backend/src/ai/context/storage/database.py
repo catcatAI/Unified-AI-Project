@@ -46,6 +46,7 @@ class DatabaseStorage(Storage):
             logger.error(f"Failed to save context {context.context_id} to database stora\
     \
     \
+    \
     ge, {e}")
             return False
 
@@ -65,8 +66,10 @@ class DatabaseStorage(Storage):
                     context.created_at = datetime.fromisoformat(context_data["created_at\
     \
     \
+    \
     "])
                     context.updated_at = datetime.fromisoformat(context_data["updated_at\
+    \
     \
     \
     "])
@@ -78,11 +81,13 @@ class DatabaseStorage(Storage):
                     logger.debug(f"Context {context_id} loaded from mock database storag\
     \
     \
+    \
     e")
                     return context
                 else,
 
                     logger.debug(f"Context {context_id} not found in mock database stora\
+    \
     \
     \
     ge")
@@ -108,11 +113,13 @@ class DatabaseStorage(Storage):
                     logger.debug(f"Context {context_id} deleted from mock database stora\
     \
     \
+    \
     ge")
                     return True
                 else,
 
                     logger.debug(f"Context {context_id} not found in mock database stora\
+    \
     \
     \
     ge for deletion"):::
@@ -143,6 +150,7 @@ class DatabaseStorage(Storage):
                 logger.debug(f"Listed {len(context_ids)} contexts from mock database sto\
     \
     \
+    \
     rage")
                 return context_ids
             else,
@@ -167,11 +175,13 @@ class DatabaseStorage(Storage):
                     logger.debug(f"Context {context_id} metadata updated in mock databas\
     \
     \
+    \
     e storage")
                     return True
                 else,
 
                     logger.debug(f"Context {context_id} not found in mock database stora\
+    \
     \
     \
     ge for metadata update"):::
@@ -182,6 +192,7 @@ class DatabaseStorage(Storage):
                 pass
         except Exception as e, ::
             logger.error(f"Failed to update context {context_id} metadata in database st\
+    \
     \
     \
     orage, {e}")

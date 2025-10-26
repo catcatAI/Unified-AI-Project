@@ -318,6 +318,7 @@ class ServiceMonitor, :
                         f"Service status changed from {prev_status['status']} to {status\
     \
     \
+    \
     _info['status']}"
 (                    )
 
@@ -373,6 +374,7 @@ class ServiceMonitor, :
             "services": status,
             "metrics": metrics_report,
             "recent_events": [asdict(event) for event in self.logger.get_recent_events(2\
+    \
     \
     \
     0)]::

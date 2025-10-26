@@ -542,6 +542,7 @@ if __name"__main__":::
     sample_text == "This is a sample text for processing. It contains multiple sentences\
     \
     \
+    \
     . This is the third sentence."::
     text_result = editor.process_text_content(sample_text)
     print("Text processing result, ", json.dumps(text_result, indent = 2,

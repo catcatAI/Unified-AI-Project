@@ -80,6 +80,7 @@ class Conversation, :
             logger.info(f"Started conversation {conversation_id} with context {context_i\
     \
     \
+    \
     d}"):
 
 
@@ -118,6 +119,7 @@ eturn True
             logger.info(f"Added message to conversation {conversation_id} with context {\
     \
     \
+    \
     context_id}"):
                 eturn True
         except Exception as e, ::
@@ -147,11 +149,12 @@ eturn True
 
     # 简单的模式匹配
     # 匹配邮箱
-    emails = re.findall(r'\b[A - Za - z0 - 9._%+ - ] + @[A - Za - z0 - 9. - ] + \.[A - Z|a - z]{2, }\b', text)
+    emails = re.findall(r'\b[A - Za - z0 - 9._%+ - ] + @[A - Za - z0 - 9. - ] +\
+    \.[A - Z|a - z]{2, }\b', text)
     entities.extend(emails)
 
     # 匹配URL
-    urls == re.findall(r'http[s]?: / /(?:[a - zA - Z]|[0 - 9]|[$ - _@.&+]|[! * \\(\\),]|(?:%[0 - 9a - fA - F][0 - 9a - fA - F]))+', text)
+    urls == re.findall(r'http[s]?: / /(?:[a - zA - Z]|[0 - 9]|[$ - _@.& + ]|[! * \\(\\),]|(?:%[0 - 9a - fA - F][0 - 9a - fA - F])) + ', text)
     entities.extend(urls)
 
     # 匹配日期
@@ -231,10 +234,12 @@ f positive_count > negative_count,
             logger.info(f"Generated context summary for conversation {conversation_id} w\
     \
     \
+    \
     ith context {context_id}"):::
                 eturn summary
         except Exception as e, ::
             logger.error(f"Failed to generate context summary for conversation {conversa\
+    \
     \
     \
     tion_id} {e}"):::
@@ -269,6 +274,7 @@ f positive_count > negative_count,
 {            }
         except Exception as e, ::
             logger.error(f"Failed to get context for conversation {conversation_id} {e}"\
+    \
     \
     \
     ):::
@@ -346,16 +352,19 @@ f positive_count > negative_count,
                 logger.info(f"Transferred context from {source_conversation_id} to {targ\
     \
     \
+    \
     et_conversation_id} with context {context_id}"):
                     eturn True
 
             logger.debug(f"No context summary to transfer from {source_conversation_id}"\
     \
     \
+    \
     )
             return False
         except Exception as e, ::
             logger.error(f"Failed to transfer context from {source_conversation_id} to {\
+    \
     \
     \
     target_conversation_id} {e}")

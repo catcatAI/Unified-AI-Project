@@ -161,6 +161,7 @@ class IOIntelligenceOrchestrator, :
                 self.ml_models['performance_predictor'] = self._create_performance_model\
     \
     \
+    \
     ()
                 logger.info("✅ AI模型初始化完成")
             except Exception as e, ::
@@ -549,6 +550,7 @@ class IOIntelligenceOrchestrator, :
         completion_times == [h['completion_time'] for h in history if h.get('completion_\
     \
     \
+    \
     time')]:
         success_rates == [h['success'] for h in history]::
         if completion_times, ::
@@ -563,7 +565,8 @@ class IOIntelligenceOrchestrator, :
                     'type': 'performance_bottleneck',
                     'issue': f"{len(slow_instances)}个实例完成时间超过正常范围",
                     'recommendation': '分析慢实例的共同特征并针对性优化',
-                    'potential_improvement': f"减少{len(slow_instances) / len(history) * 100, .1f}%的慢实例"
+                    'potential_improvement': f"减少{len(slow_instances) / len(history) *\
+    100, .1f}%的慢实例"
 {(                })
         
         if success_rates, ::
@@ -620,6 +623,7 @@ class IOIntelligenceOrchestrator, :
                         cluster_data == [features[i] for i in range(len(features)) if cl\
     \
     \
+    \
     usters[i] == cluster_id]::
                         if cluster_data, ::
                             avg_completion = np.mean([d[0] for d in cluster_data]):
@@ -629,6 +633,7 @@ class IOIntelligenceOrchestrator, :
                                     'type': 'ai_behavior_clustering',
                                     'cluster_id': cluster_id,
                                     'issue': f"聚类{cluster_id}平均完成时间{"avg_completion":.1f\
+    \
     \
     \
     }秒",
@@ -734,6 +739,7 @@ class IOIntelligenceOrchestrator, :
                     'total_usage': sum(form.usage_count for form in self.forms_registry.\
     \
     \
+    \
     values())::
 {                }
         
@@ -741,8 +747,10 @@ class IOIntelligenceOrchestrator, :
         health_data['ai_models_status'] = {:}
             'behavior_clustering': 'available' if 'behavior_clustering' in self.ml_model\
     \
+    \
     s else 'unavailable', :::
             'performance_prediction': 'available' if 'performance_predictor' in self.ml_\
+    \
     \
     \
     models else 'unavailable'::
@@ -753,6 +761,7 @@ class IOIntelligenceOrchestrator, :
             'adaptive_thresholds_configured': len(self.adaptive_thresholds()),
             'behavior_patterns_detected': len(self.behavior_patterns()),
             'ml_models_active': len([m for m in self.ml_models.values() if m is not None\
+    \
     \
     \
     ]):
@@ -788,6 +797,7 @@ class IOIntelligenceOrchestrator, :
                     report['intelligence_insights']['form_optimization_opportunities'].a\
     \
     \
+    \
     ppend({)}
                         'form_id': form_id,
                         'form_name': form.name(),
@@ -810,8 +820,10 @@ class IOIntelligenceOrchestrator, :
             report['intelligence_insights']['ai_model_effectiveness'] = {}
                 'behavior_clustering': 'active' if 'behavior_clustering' in self.ml_mode\
     \
+    \
     ls else 'inactive', :::
                 'performance_prediction': 'active' if 'performance_predictor' in self.ml\
+    \
     \
     _models else 'inactive', :::
                 'total_patterns_learned': len(self.behavior_patterns())

@@ -235,6 +235,7 @@ class TokenValidator, :
         avg_generation_time = np.mean([record.generation_time for record in self.trace_r\
     \
     \
+    \
     ecords]):
         avg_tokens = np.mean([record.total_tokens for record in self.trace_records]):
         # 统计token级别的验证结果

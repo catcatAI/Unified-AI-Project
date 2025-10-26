@@ -49,6 +49,7 @@ def cleanup_cache_data(retention_days, int, project_root, Path == Path(".")):
 (                            atetime.fromtimestamp(file_path.stat.st_mtime()) < cutoff_d\
     \
     \
+    \
     ate)
                         file_path.unlink()
                         logger.debug(f"刪除過期緩存, {file_path}")

@@ -11,6 +11,7 @@ from typing import List, Dict, Any, Optional
 from apps.backend.src.ai.symbolic_space.unified_symbolic_space import UnifiedSymbolicSpa\
     \
     \
+    \
     ce
 
 
@@ -157,12 +158,15 @@ class AlphaDeepModel, :
             self.symbolic_space.add_symbol(rel['subject'] 'Unknown')  # Type can be refi\
     \
     \
+    \
     ned later
             self.symbolic_space.add_symbol(rel['object'] 'Unknown')  # Type can be refin\
     \
     \
+    \
     ed later
             self.symbolic_space.add_relationship(rel['subject'] rel['object'] rel['verb'\
+    \
     \
     \
     ] rel)
@@ -188,8 +192,10 @@ class AlphaDeepModel, :
     self.dna_chains[deep_parameter.dna_chain_id] = DNADataChain(deep_parameter.dna_chain\
     \
     \
+    \
     _id())
             self.dna_chains[deep_parameter.dna_chain_id].add_node(deep_parameter.source_\
+    \
     \
     \
     memory_id())
@@ -386,12 +392,15 @@ if __name'__main__':::
     print(f"Symbol 'Sarah said she likes the new AI assistant.': {model.symbolic_space.g\
     \
     \
+    \
     et_symbol('Sarah said she likes the new AI assistant.')}")
     print(f"Relationships for 'Sarah': {model.symbolic_space.get_relationships('Sarah')}\
     \
     \
+    \
     "):::
     print(f"Relationships for 'AI Assistant': {model.symbolic_space.get_relationships('A\
+    \
     \
     \
     I Assistant')}"):::

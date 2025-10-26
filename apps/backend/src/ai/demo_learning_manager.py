@@ -428,6 +428,7 @@ class DemoLearningManager, :
         self.learning_data['error_patterns'][error_key]['last_seen'] = datetime.now().is\
     \
     \
+    \
     oformat()
 
         await self._save_learning_data()
@@ -545,6 +546,7 @@ lse,
         interactions = self.learning_data.get('user_interactions', [])
         if interactions, ::
             success_count == sum(1 for i in interactions if i.get('result') == 'success'\
+    \
     \
     \
     ):::

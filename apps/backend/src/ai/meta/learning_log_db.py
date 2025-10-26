@@ -40,6 +40,7 @@ class LearningLogDB:
         """Adds a new log entry record to the database. Returns the ID of the new record\
     \
     \
+    \
     ."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -89,6 +90,7 @@ class LearningLogDB:
 
     def close(self):
         """Closes the database connection. (Not strictly necessary for sqlite3.connect()\
+    \
     \
     \
     , but good practice)."""

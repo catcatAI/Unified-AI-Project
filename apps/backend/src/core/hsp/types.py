@@ -160,6 +160,7 @@ class HSPTaskRequestPayload(TypedDict, total = False):
     requested_output_data_format: Optional[str]  # Requester can hint preferred output f\
     \
     \
+    \
     ormat
     priority: Optional[int]  # e.g., 1 - 10
     deadline_timestamp: Optional[str]  # ISO 8601 UTC

@@ -33,6 +33,7 @@ class MemoryStorage(Storage):
             logger.error(f"Failed to save context {context.context_id} to memory storage\
     \
     \
+    \
     , {e}")
             return False
     
@@ -62,6 +63,7 @@ class MemoryStorage(Storage):
                 return True
             else,
                 logger.debug(f"Context {context_id} not found in memory storage for dele\
+    \
     \
     \
     tion"):::
@@ -104,10 +106,12 @@ class MemoryStorage(Storage):
                 logger.debug(f"Context {context_id} not found in memory storage for meta\
     \
     \
+    \
     data update"):::
                     eturn False
         except Exception as e, ::
             logger.error(f"Failed to update context {context_id} metadata in memory stor\
+    \
     \
     \
     age, {e}")

@@ -45,6 +45,7 @@ class AgentCollaborationManager, :
     logger.info(f"[Collaboration] Starting collaborative task {task_id} with {len(subtas\
     \
     \
+    \
     ks)} subtasks")
 
     # Initialize task tracking
@@ -157,6 +158,7 @@ class AgentCollaborationManager, :
         logger.info(f"[Collaboration] Received result for task {request_id} from agent {\
     \
     \
+    \
     sender_ai_id}")::
     # Store result
     self.task_results[request_id] = result_payload
@@ -172,6 +174,7 @@ class AgentCollaborationManager, :
                     f task_info["completed_subtasks"] >= task_info["total_subtasks"]
 
     logger.info(f"[Collaboration] All subtasks for collaborative task {task_id} complete\
+    \
     \
     \
     d")::
@@ -293,6 +296,7 @@ class AgentCollaborationManager, :
             logger.warning(f"[Collaboration] Task {task_id} not found for cancellation")\
     \
     \
+    \
     :::
                 eturn False
 
@@ -326,6 +330,7 @@ if __name"__main__":::
                     "style": "technical"
 {                }
                 "task_description": "Generate technical marketing copy for AI project ma\
+    \
     \
     \
     nagement tool":::
