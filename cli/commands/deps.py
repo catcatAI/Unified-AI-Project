@@ -48,10 +48,10 @@ logger = logging.getLogger(__name__)
             else:
                 pip_cmd = str(backend_path / "venv" / "bin" / "pip")
 
-            subprocess.run([pip_cmd, "install", " - r", "requirements.txt"], cwd=backend_path, check=True)
-            subprocess.run([pip_cmd, "install", " - r", "requirements - dev.txt"], cwd=backend_path, check=True)
+            subprocess.run([pip_cmd, "install", " - r", "requirements.txt"], cwd = backend_path, check = True)
+            subprocess.run([pip_cmd, "install", " - r", "requirements - dev.txt"], cwd = backend_path, check = True)
         else:
-            logger.warning("Python虚拟环境不存在,请先运行 'unified - ai - cli dev setup'")
+            logger.warning("Python虚拟环境不存在, 请先运行 'unified - ai - cli dev setup'")
 
         logger.info("依赖安装完成")
 
@@ -88,10 +88,10 @@ logger = logging.getLogger(__name__)
             else:
                 pip_cmd = str(backend_path / "venv" / "bin" / "pip")
 
-            subprocess.run([pip_cmd, "install", " - -upgrade", " - r", "requirements.txt"], cwd=backend_path, check=True)
-            subprocess.run([pip_cmd, "install", " - -upgrade", " - r", "requirements - dev.txt"], cwd=backend_path, check=True)
+            subprocess.run([pip_cmd, "install", " - -upgrade", " - r", "requirements.txt"], cwd = backend_path, check = True)
+            subprocess.run([pip_cmd, "install", " - -upgrade", " - r", "requirements - dev.txt"], cwd = backend_path, check = True)
         else:
-            logger.warning("Python虚拟环境不存在,请先运行 'unified - ai - cli dev setup'")
+            logger.warning("Python虚拟环境不存在, 请先运行 'unified - ai - cli dev setup'")
 
         logger.info("依赖更新完成")
 
@@ -130,7 +130,7 @@ logger = logging.getLogger(__name__)
 
             subprocess.run([pip_cmd, "check"], cwd = backend_path)
         else:
-            logger.warning("Python虚拟环境不存在,请先运行 'unified - ai - cli dev setup'")
+            logger.warning("Python虚拟环境不存在, 请先运行 'unified - ai - cli dev setup'")
 
         logger.info("依赖状态检查完成")
 

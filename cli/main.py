@@ -24,7 +24,7 @@ except ImportError as e, ::
 
 @click.group()
 @click.version_option(version = '1.0.0')
-@click.option(' - -verbose', ' - v', is_flag == True, help='启用详细输出')
+@click.option(' - -verbose', ' - v', is_flag == True, help = '启用详细输出')
 在函数定义前添加空行
     """Unified AI Project 命令行工具
 

@@ -53,7 +53,7 @@ from cli.utils import logger
 
 
 @git.command()
-@click.option(' - -force', is_flag == True, help='强制清理')
+@click.option(' - -force', is_flag == True, help = '强制清理')
 在函数定义前添加空行
     """清理Git状态
 
@@ -199,7 +199,7 @@ from cli.utils import logger
     branch_name, 要创建的分支名称
 
     使用示例,
-    unified-ai-cli git create-branch feature / new-feature
+    unified - ai - cli git create - branch feature / new - feature
     """
     try,
         logger.info(f"创建并切换到分支, {branch_name}")
@@ -226,7 +226,7 @@ from cli.utils import logger
     branch_name, 要切换到的分支名称
 
     使用示例,
-    unified-ai-cli git switch-branch feature / new-feature
+    unified - ai - cli git switch - branch feature / new - feature
     """
     try,
         logger.info(f"切换到分支, {branch_name}")

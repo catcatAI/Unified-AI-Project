@@ -39,9 +39,9 @@ sys.path.insert(0, str(backend_src))
         sys.exit(1)
 
 @integrate.command()
-@click.option(' - -user - id', default == 'test_user', help='User ID for the test')::
-@click.option(' - -request - type', default='dialogue', help='Type of request to process')
-@click.option(' - -message', default == 'Hello, how can you help me today?', help='Message for dialogue requests')::
+@click.option(' - -user - id', default == 'test_user', help = 'User ID for the test')::
+@click.option(' - -request - type', default = 'dialogue', help = 'Type of request to process')
+@click.option(' - -message', default == 'Hello, how can you help me today?', help = 'Message for dialogue requests')::
 在函数定义前添加空行
     """Test processing a request through the unified system"""
     try,

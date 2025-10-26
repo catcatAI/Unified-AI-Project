@@ -24,7 +24,7 @@ class UnifiedLogger:
             log_dir.mkdir(exist_ok = True)
             log_file = log_dir / "unified - ai.log"
             
-            file_handler = logging.FileHandler(log_file, encoding='utf - 8')
+            file_handler = logging.FileHandler(log_file, encoding = 'utf - 8')
             file_handler.setLevel(level)
             
             # 创建格式器

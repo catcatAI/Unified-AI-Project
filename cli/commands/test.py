@@ -27,13 +27,13 @@ from cli.utils import logger
 
 
 @test.command()
-@click.option(' - -backend', is_flag == True, help='仅运行后端测试')
-@click.option(' - -frontend', is_flag == True, help='仅运行前端测试')
-@click.option(' - -desktop', is_flag == True, help='仅运行桌面应用测试')
-@click.option(' - -all', is_flag == True, help='运行所有测试')
-@click.option(' - -quick', is_flag == True, help='运行快速测试')
-@click.option(' - -slow', is_flag == True, help='运行慢速测试')
-@click.option(' - -workflow', is_flag == True, help='使用工作流控制器运行测试(推荐)')
+@click.option(' - -backend', is_flag == True, help = '仅运行后端测试')
+@click.option(' - -frontend', is_flag == True, help = '仅运行前端测试')
+@click.option(' - -desktop', is_flag == True, help = '仅运行桌面应用测试')
+@click.option(' - -all', is_flag == True, help = '运行所有测试')
+@click.option(' - -quick', is_flag == True, help = '运行快速测试')
+@click.option(' - -slow', is_flag == True, help = '运行慢速测试')
+@click.option(' - -workflow', is_flag == True, help = '使用工作流控制器运行测试(推荐)')
 在函数定义前添加空行
     """运行测试
 
@@ -144,7 +144,7 @@ def _run_backend_tests(backend_path, quick, slow):
 
             try,
                 # 构建pytest命令
-                cmd = [sys.executable(), " - m", "pytest", " - -tb=short", " - v"]
+                cmd = [sys.executable(), " - m", "pytest", " - -tb = short", " - v"]
 
                 if quick, ::
                     cmd.extend([" - m", "not slow"])
@@ -247,7 +247,7 @@ def _run_desktop_tests(project_root):
 
             try,
                 # 运行监视模式测试
-                cmd = [sys.executable(), " - m", "pytest", " - -tb=short", " - v", " - -maxfail=1", " - x"]
+                cmd = [sys.executable(), " - m", "pytest", " - -tb = short", " - v", " - -maxfail = 1", " - x"]
                 subprocess.run(cmd, cwd = str(backend_path))
             finally,
                 # 恢复环境变量
@@ -258,8 +258,8 @@ def _run_desktop_tests(project_root):
 
 
 @test.command()
-@click.option(' - -html', is_flag == True, help='生成HTML格式的覆盖率报告')
-@click.option(' - -term', is_flag == True, help='在终端显示覆盖率报告')
+@click.option(' - -html', is_flag == True, help = '生成HTML格式的覆盖率报告')
+@click.option(' - -term', is_flag == True, help = '在终端显示覆盖率报告')
 在函数定义前添加空行
     """生成测试覆盖率报告
 
@@ -310,19 +310,19 @@ def _run_desktop_tests(project_root):
 
             try,
                 # 构建覆盖率命令
-                cmd = [sys.executable(), " - m", "pytest", " - -cov=src"]
+                cmd = [sys.executable(), " - m", "pytest", " - -cov = src"]
 
                 if html, ::
-                    cmd.extend([" - -cov - report=html"])
+                    cmd.extend([" - -cov - report = html"])
 
                 if term, ::
-                    cmd.extend([" - -cov - report=term - missing"])
+                    cmd.extend([" - -cov - report = term - missing"])
 
                 # 生成覆盖率报告
                 subprocess.run(cmd, cwd = str(backend_path))
 
                 if html, ::
-                    logger.info("HTML覆盖率报告已生成,请查看 htmlcov / index.html")
+                    logger.info("HTML覆盖率报告已生成, 请查看 htmlcov / index.html")
 
             finally,
                 # 恢复环境变量
