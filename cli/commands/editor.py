@@ -44,7 +44,7 @@ def get_config():
     pass
 
 @editor.command()
-@click.option(' - -text', prompt='Enter text to process', help='Text content to process')
+@click.option(' - -text', prompt = 'Enter text to process', help = 'Text content to process')
 在函数定义前添加空行
     """Process text content"""
     try,
@@ -62,7 +62,7 @@ def get_config():
         sys.exit(1)
 
 @editor.command()
-@click.option(' - -code', prompt='Enter code to process', help='Code content to process')
+@click.option(' - -code', prompt = 'Enter code to process', help = 'Code content to process')
 在函数定义前添加空行
     """Process code content"""
     try,
@@ -80,14 +80,14 @@ def get_config():
         sys.exit(1)
 
 @editor.command()
-@click.option(' - -file', type=click.Path(exists == True), help='File containing data to process')
-@click.option(' - -type', 'data_type', type=click.Choice(['text', 'code', 'json']))
+@click.option(' - -file', type = click.Path(exists == True), help = 'File containing data to process')
+@click.option(' - -type', 'data_type', type = click.Choice(['text', 'code', 'json']))
 (            default = 'text', help = 'Type of data in the file')
 在函数定义前添加空行
     """Process data from a file"""
     try,
         # Read the file
-        with open(file, 'r', encoding == 'utf - 8') as f,:
+        with open(file, 'r', encoding == 'utf - 8') as f, :
             content = f.read()
 
         # Create the AI editor service
@@ -123,14 +123,19 @@ def get_config():
             "log_level": config.log_level(),
             "data_processing": {}
                 "text_summarization_enabled": config.data_processing.text_summarization_\
+    \
     enabled(),
                 "text_keyword_extraction_enabled": config.data_processing.text_keyword_e\
+    \
     xtraction_enabled(),
                 "code_function_extraction_enabled": config.data_processing.code_function\
+    \
     _extraction_enabled(),
                 "code_class_extraction_enabled": config.data_processing.code_class_extra\
+    \
     ction_enabled(),
                 "code_complexity_analysis_enabled": config.data_processing.code_complexi\
+    \
     ty_analysis_enabled()
 {            }
             "sandbox": {}

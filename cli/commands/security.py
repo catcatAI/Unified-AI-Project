@@ -19,10 +19,10 @@ sys.path.insert(0, str(backend_src))
     pass
 
 @security.command()
-@click.option(' - -user - id', prompt='User ID', help='User ID to check permissions for')
-@click.option(' - -operation', prompt='Operation', help='Operation to check')
-@click.option(' - -resource', prompt='Resource', help='Resource to check')
-@click.option(' - -action', prompt='Action', help='Action to check')
+@click.option(' - -user - id', prompt = 'User ID', help = 'User ID to check permissions for')
+@click.option(' - -operation', prompt = 'Operation', help = 'Operation to check')
+@click.option(' - -resource', prompt = 'Resource', help = 'Resource to check')
+@click.option(' - -action', prompt = 'Action', help = 'Action to check')
 在函数定义前添加空行
     """Check if a user has permission for an operation""":::
     try,
@@ -33,7 +33,7 @@ sys.path.insert(0, str(backend_src))
         context == PermissionContext()
             user_id = user_id,
             operation = operation,
-            resource = resource,,
+            resource = resource, ,
     action = action
 (        )
 
@@ -54,8 +54,8 @@ sys.path.insert(0, str(backend_src))
         sys.exit(1)
 
 @security.command()
-@click.option(' - -user - id', default == 'test_user', help='User ID for the test')::
-@click.option(' - -limit', default=10, help='Number of recent events to show')
+@click.option(' - -user - id', default == 'test_user', help = 'User ID for the test')::
+@click.option(' - -limit', default = 10, help = 'Number of recent events to show')
 在函数定义前添加空行
     """Show recent audit log events"""
     try,
@@ -85,8 +85,8 @@ sys.path.insert(0, str(backend_src))
         sys.exit(1)
 
 @security.command()
-@click.option(' - -user - id', prompt == 'User ID', help='User ID for sandbox execution')::
-@click.option(' - -code', prompt='Code to execute', help='Python code to execute in sandbox')
+@click.option(' - -user - id', prompt == 'User ID', help = 'User ID for sandbox execution')::
+@click.option(' - -code', prompt = 'Code to execute', help = 'Python code to execute in sandbox')
 在函数定义前添加空行
     """Test sandbox execution"""
     try,
@@ -109,7 +109,7 @@ sys.path.insert(0, str(backend_src))
             user_id = user_id,
             code_string = test_code,
             class_name = "TestExecutor",
-            method_name = "execute",,
+            method_name = "execute", ,
     method_params == {"input_data": code}
 (        )
 

@@ -119,7 +119,8 @@ from cli.utils import logger
         # 清理Node.js缓存()
         logger.info("清理Node.js缓存...")
         try,
-            subprocess.run(["pnpm", "store", "prune"] cwd = str(project_root), check == True)  # 转换为字符串
+            subprocess.run(["pnpm", "store", "prune"] cwd = str(project_root),
+    check == True)  # 转换为字符串
             logger.info("  Node.js缓存已清理")
         except subprocess.CalledProcessError as e, ::
             logger.warning(f"  清理Node.js缓存时出错, {e}")
