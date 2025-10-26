@@ -114,15 +114,21 @@ def system_monitor() -> Dict[str, Any]:
             self.metacognition_efficiency = base_efficiency * cpu_factor * memory_factor
             
             return {}
-                "knowledge_processing": f"{self.knowledge_processing_rate, .1f} entities / sec",
-                "multimodal_fusion": f"{self.multimodal_fusion_rate, .1f} modalities / sec",
-                "cognitive_constraints": f"{self.cognitive_constraint_rate, .1f} targets / sec",
-                "autonomous_evolution": f"{self.autonomous_evolution_rate, .1f} cycles / sec",
-                "creative_breakthrough": f"{self.creative_breakthrough_rate, .1f} concepts / sec",
+                "knowledge_processing": f"{self.knowledge_processing_rate,
+    .1f} entities / sec",
+                "multimodal_fusion": f"{self.multimodal_fusion_rate,
+    .1f} modalities / sec",
+                "cognitive_constraints": f"{self.cognitive_constraint_rate,
+    .1f} targets / sec",
+                "autonomous_evolution": f"{self.autonomous_evolution_rate,
+    .1f} cycles / sec",
+                "creative_breakthrough": f"{self.creative_breakthrough_rate,
+    .1f} concepts / sec",
                 "system_resources": {}
                     "cpu_usage": f"{self.cpu_usage, .1f}%",
                     "memory_usage": f"{self.memory_usage, .1f}%",
-                    "gpu_usage": f"{self.gpu_usage, .1f}%" if self.gpu_usage is not None else "N / A"::
+                    "gpu_usage": f"{self.gpu_usage,
+    .1f}%" if self.gpu_usage is not None else "N / A"::
 {                }
                 "metacognition_efficiency": f"{self.metacognition_efficiency, .3f}",
                 "timestamp": datetime.now().isoformat()

@@ -15,6 +15,7 @@ class AudioService, :
         self.demo_mode = is_demo_mode
         logger.info(f"AudioService initialized in {'demo' if self.demo_mode else 'normal\
     \
+    \
     '} mode"):::
 sync def initialize(self):
         """初始化音频服务"""

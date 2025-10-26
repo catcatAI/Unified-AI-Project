@@ -97,7 +97,7 @@ class SecurityAudit, :
         vulnerabilities = []
         
         try,
-            with open(file_path, 'r', encoding == 'utf - 8', errors = 'ignore') as f,:
+            with open(file_path, 'r', encoding == 'utf - 8', errors = 'ignore') as f, :
                 content = f.read()
             
             # 检查每个安全规则
@@ -219,6 +219,7 @@ class SecurityAudit, :
                             "type": "dependency_vulnerability",
                             "file": str(requirements_file.relative_to(self.project_root(\
     \
+    \
     ))),
                             "line": line_num,
                             "package": package,
@@ -255,7 +256,8 @@ class SecurityAudit, :
                         
                         if package in vulnerable_packages, ::
                             # 移除版本符号
-                            clean_version = version.replace('^', '').replace('~', '').replace(' >= ', '').replace(' <= ', '')
+                            clean_version = version.replace('^', '').replace('~',
+    '').replace(' >= ', '').replace(' <= ', '')
                             vulnerable_version = vulnerable_packages[package]
                             
                             if self._version_compare(clean_version,
@@ -263,6 +265,7 @@ class SecurityAudit, :
                                 vulnerabilities.append({)}
                                     "type": "dependency_vulnerability",
                                     "file": str(package_file.relative_to(self.project_ro\
+    \
     \
     ot())),
                                     "package": package,
@@ -313,6 +316,7 @@ class SecurityAudit, :
                                     "type": "permission_issue",
                                     "file": str(file_path.relative_to(self.project_root(\
     \
+    \
     ))),
                                     "severity": "medium",
                                     "description": f"敏感文件 {file_path.name} 权限过于宽松"
@@ -344,8 +348,10 @@ class SecurityAudit, :
         self.audit_results["vulnerabilities"] = all_vulnerabilities
         self.audit_results["score"] = self._calculate_security_score(all_vulnerabilities\
     \
+    \
     )
         self.audit_results["recommendations"] = self._generate_recommendations(all_vulne\
+    \
     \
     rabilities)
         
@@ -401,11 +407,13 @@ class SecurityAudit, :
         # 特定建议
         hard_secrets == [v for v in vulnerabilities if v.get("rule") == "hardcoded_secre\
     \
+    \
     ts"]::
         if hard_secrets, ::
             recommendations.append("移除所有硬编码的敏感信息, 使用环境变量或密钥管理系统")
         
         sql_injection == [v for v in vulnerabilities if v.get("rule") == "sql_injection"\
+    \
     \
     ]::
         if sql_injection, ::

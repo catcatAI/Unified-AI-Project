@@ -91,7 +91,8 @@ class EnhancedRovoDevConnector, :
             return underlying.publish_capability_advertisement( * args, * * kwargs)
         return None
 
-    def __init__(self, config, Dict[str, Any] retry_config, Optional[RetryConfig] = None, , :)
+    def __init__(self, config, Dict[str, Any] retry_config,
+    Optional[RetryConfig] = None, , :)
 (    endpoint_configs, Optional[Dict[str, EndpointConfig]] = None):
         self.config = config
         self.api_token = config.get('atlassian', {}).get('api_token')
@@ -143,12 +144,14 @@ class EnhancedRovoDevConnector, :
                 backup_urls = []
                 if service == 'jira':::
                     backup_urls = []
-                        f"https, / /{self.config.get('atlassian', {}).get('domain', 'your - domain')}.atlassian.net / rest / api / 3",
+                        f"https, / /{self.config.get('atlassian', {}).get('domain',
+    'your - domain')}.atlassian.net / rest / api / 3",
                         "https, / /api.atlassian.com / ex / jira"
 [                    ]
                 elif service == 'confluence':::
                     backup_urls = []
-                        f"https, / /{self.config.get('atlassian', {}).get('domain', 'your - domain')}.atlassian.net / wiki / rest / api",
+                        f"https, / /{self.config.get('atlassian', {}).get('domain',
+    'your - domain')}.atlassian.net / wiki / rest / api",
                         "https, / /api.atlassian.com / ex / confluence"
 [                    ]
 

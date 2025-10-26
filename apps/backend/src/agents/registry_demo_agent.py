@@ -182,6 +182,7 @@ class RegistryDemoAgent(BaseAgent):
                 "agent_count": len(agents),
                 "message": f"Found {len(agents)} agents with capability '{capability_id}\
     \
+    \
     '":
 
 

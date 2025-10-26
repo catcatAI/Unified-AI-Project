@@ -18,7 +18,8 @@ logging.basicConfig(level = logging.INFO())
 class DependencyStatus, :
     """Tracks the status of a dependency."""
 
-    def __init__(self, name, str, is_available, bool == False, error, Optional[str] = None, , :)
+    def __init__(self, name, str, is_available, bool == False, error,
+    Optional[str] = None, , :)
 (    fallback_available, bool == False, fallback_name, Optional[str] = None):
         self.name = name
         self.is_available = is_available

@@ -59,6 +59,7 @@ class UnifiedSymbolicSpace, :
                 current_symbol = self.get_symbol(symbol_name)
                 current_props == current_symbol['properties'] if current_symbol else {}:\
     \
+    \
     :
     if current_props is None, ::
     current_props = {}
@@ -93,7 +94,8 @@ class UnifiedSymbolicSpace, :
                 'properties': json.loads(row[3]) if row[3] else {}::
     return None
 
-    def update_symbol(self, symbol_name, str, new_symbol_name, Optional[str] = None, , :)
+    def update_symbol(self, symbol_name, str, new_symbol_name, Optional[str] = None, ,
+    :)
 (    new_type, Optional[str] = None, properties, Optional[Dict[str, Any]] = None):
     # Get current properties first to avoid connection issues
     current_props = {}
@@ -195,6 +197,7 @@ class UnifiedSymbolicSpace, :
 
     # Delete associated relationships first
     cursor.execute("DELETE FROM relationships WHERE source_symbol_id = ? OR target_symbo\
+    \
     \
     l_id = ?", (symbol['id'] symbol['id']))
     cursor.execute("DELETE FROM symbols WHERE id = ?", (symbol['id']))

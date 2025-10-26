@@ -73,6 +73,7 @@ class VectorMemoryStore, :
         if not self.collection, ::
             logger.warning("VectorMemoryStore not initialized. Cannot perform semantic s\
     \
+    \
     earch.")
             return {}
             

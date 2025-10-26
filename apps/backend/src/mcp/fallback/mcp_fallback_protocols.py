@@ -400,7 +400,7 @@ from global_system_test import
 
                 for filepath in files, ::
                     try,
-                        with open(filepath, 'r + ', encoding == 'utf - 8') as f,:
+                        with open(filepath, 'r + ', encoding == 'utf - 8') as f, :
                             # 使用getattr安全地訪問fcntl屬性
                             if fcntl_module is not None, ::
                                 flock_func = getattr(fcntl_module, 'flock', None)
@@ -670,7 +670,8 @@ class MCPFallbackManager, :
             if isinstance(protocol_item, tuple) and len(protocol_item) == 2, ::
                 _, existing_protocol = protocol_item
                 if isinstance(existing_protocol,
-    BaseMCPFallbackProtocol) and existing_protocol.protocol_name == protocol.protocol_name, ::
+    BaseMCPFallbackProtocol) and \
+    existing_protocol.protocol_name == protocol.protocol_name, ::
                     protocol_exists == True
                     break
 
@@ -742,6 +743,7 @@ class MCPFallbackManager, :
                     if self.active_protocol != protocol_obj, ::
                         old_protocol == self.active_protocol.protocol_name if self.activ\
     \
+    \
     e_protocol else "None":::
                             elf.active_protocol = protocol_obj
                         logger.info(f"MCP協議切換,
@@ -808,6 +810,7 @@ class MCPFallbackManager, :
         """獲取狀態信息"""
         status, Dict[str, Any] = {}
             "active_protocol": self.active_protocol.protocol_name if self.active_protoco\
+    \
     l else None, ::
                 protocols": []
 {        }

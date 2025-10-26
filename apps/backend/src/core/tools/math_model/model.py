@@ -331,6 +331,7 @@ class ArithmeticSeq2Seq, :
     self.dna_chains[dna_chain_id] = DNADataChain(dna_chain_id)
             self.dna_chains[dna_chain_id].add_node(f"math_prediction_{len(self.predictio\
     \
+    \
     n_history())}")
 
     return decoded_sentence
@@ -365,8 +366,10 @@ eturn None
             instance.char_to_token = char_to_token
             instance.token_to_char = token_to_char  # Note variable name swap in saved f\
     \
+    \
     ile
             instance.max_encoder_seq_length == max(len(k) for k in char_to_token.keys())\
+    \
     \
     ::
     instance.max_decoder_seq_length == max(len(k) for k in token_to_char.keys())::

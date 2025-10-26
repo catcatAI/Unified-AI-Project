@@ -37,6 +37,7 @@ class CodeUnderstandingTool:
 
         tool_names = [os.path.splitext(os.path.basename(f_path))[0] for f_path in tool_f\
     \
+    \
     iles]
         
         if not tool_names:
@@ -61,6 +62,7 @@ class CodeUnderstandingTool:
 
         # This is a simplified formatting. A more robust version would be needed for com\
     \
+    \
     plex cases.
         return str(structure)
 
@@ -75,9 +77,11 @@ class CodeUnderstandingTool:
             if not tool_name:
                 return "Error: 'tool_name' parameter is required for the 'describe_tool'\
     \
+    \
     action."
             return self.describe_tool(tool_name)
         else:
             return f"Error: Unknown action '{action}' for CodeUnderstandingTool. Availab\
+    \
     \
     le actions: list_tools, describe_tool."

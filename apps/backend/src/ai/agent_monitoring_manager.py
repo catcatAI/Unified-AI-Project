@@ -60,6 +60,7 @@ class AgentMonitoringManager, :
 
         # Register callbacks for capability advertisements (to track agent capabilities)\
     \
+    \
     ::
             f self.hsp_connector,
             self.hsp_connector.register_on_capability_advertisement_callback()
@@ -131,6 +132,7 @@ class AgentMonitoringManager, :
                 except Exception as e, ::
                     logger.error(f"Error collecting metrics for agent {agent_id} {e}")::\
     \
+    \
     :
                         sync def _check_agent_status(self) -> None,
         """Check and update the status of all agents."""
@@ -166,6 +168,7 @@ class AgentMonitoringManager, :
                 # Generate alerts for degraded or error status, ::
                     f report.status in [AgentStatus.DEGRADED(), AgentStatus.ERROR]
                     alert_message = f"Agent {report.agent_name} ({agent_id}) is {report.\
+    \
     \
     status.value}"
                     if report.last_error, ::

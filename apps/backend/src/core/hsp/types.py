@@ -13,7 +13,8 @@ from typing import Dict, Any, Optional, List, Literal, Union
 # If total = False, all keys are potentially optional (NotRequired).
 # To mix, you'd define multiple TypedDicts and inherit.
 # For simplicity here,
-    we'll use `Optional` for non - mandatory fields and assume mandatory ones are checked by logic.
+    we'll use `Optional` for non - mandatory fields and \
+    assume mandatory ones are checked by logic.
 # Or, use Pydantic later for proper validation.
 
 # Let's use `total = False` for payloads where many fields are optional, and:
@@ -157,6 +158,7 @@ class HSPTaskRequestPayload(TypedDict, total = False):
 
 
     requested_output_data_format: Optional[str]  # Requester can hint preferred output f\
+    \
     \
     ormat
     priority: Optional[int]  # e.g., 1 - 10

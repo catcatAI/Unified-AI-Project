@@ -24,7 +24,8 @@ class HotReloadService, :
     - Start / stop draining (pause new work acceptance – advisory flag)
     - Reload LLM service and rewire dependent components (ToolDispatcher,
     DialogueManager)
-    - Reload HSP connector (blue / green style) bring up a new connection, re - subscribe,
+    - Reload HSP connector (blue / green style) bring up a new connection,
+    re - subscribe,
     swap references, then tear down the old connector
 
     Notes,
@@ -97,6 +98,7 @@ class HotReloadService, :
             if ham is not None and hasattr(ham, "query_core_memory"):::
                 # Query recent action policy events
                 events == ham.query_core_memory(metadata_filters = {"ham_meta_action_pol\
+    \
     icy": True} data_type_filter = "action_policy_v0.1", limit = 200)  # type ignore
                 total == len(events) if isinstance(events, list) else 0, ::
     successes = 0
@@ -148,6 +150,7 @@ class HotReloadService, :
                 # Local import of constants to avoid cycles
                 try,
                     from apps.backend.src.core_ai.lis.lis_cache_interface import LIS_INC\
+    \
     \
     IDENT_DATA_TYPE_PREFIX, LIS_ANTIBODY_DATA_TYPE_PREFIX  # type ignore
                 except Exception, ::
@@ -306,6 +309,7 @@ class HotReloadService, :
                 # Wire callbacks again if ServiceDiscovery is present, ::
     if sdm is not None, ::
     new_hsp.register_on_capability_advertisement_callback(sdm.process_capability_adverti\
+    \
     sement())  # type ignore[arg - type]
 
                 # Disconnect old connector last

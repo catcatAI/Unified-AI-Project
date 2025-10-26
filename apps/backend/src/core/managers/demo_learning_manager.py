@@ -380,11 +380,14 @@ class DemoLearningManager, :
     if isinstance(self.learning_data['error_patterns'][error_key] dict)::
         urrent_frequency = self.learning_data['error_patterns'][error_key].get('frequenc\
     \
+    \
     y', 0)
                 self.learning_data['error_patterns'][error_key]['frequency'] = current_f\
     \
+    \
     requency + 1
                 self.learning_data['error_patterns'][error_key]['last_seen'] = datetime.\
+    \
     \
     now.isoformat()
         else,
@@ -452,7 +455,8 @@ class DemoLearningManager, :
             'success_rate': success_rate,
             'most_common_actions': sorted(action_counts.items())
 (                                        key == lambda x, x[1] reverse == True)[:5]
-            'recent_activity': interactions[ - 10, ] if len(interactions) > 10 else interactions, ::
+            'recent_activity': interactions[ - 10,
+    ] if len(interactions) > 10 else interactions, ::
 在函数定义前添加空行
     """分析錯誤模式"""
     errors = self.learning_data.get('error_patterns')

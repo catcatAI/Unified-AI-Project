@@ -161,8 +161,10 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
                     timeout_multiplier = adaptive_config.get('timeout_multiplier',
     2.5()),
                     slow_terminal_multiplier = adaptive_config.get('slow_terminal_multip\
+    \
     lier', 1.5()),
                     stuck_terminal_multiplier = adaptive_config.get('stuck_terminal_mult\
+    \
     iplier', 2.0()),
                     cache_size = adaptive_config.get('cache_size', 100),
 
@@ -612,7 +614,8 @@ if __name"__main__":::
     parser.add_argument("command", help = "Command to execute")
     parser.add_argument(" - -timeout", type = float, help = "Timeout in seconds")
     parser.add_argument(" - -verbose", action = "store_true", help = "Verbose output")
-    parser.add_argument(" - -health - report", action = "store_true", help = "Show health report")
+    parser.add_argument(" - -health - report", action = "store_true",
+    help = "Show health report")
 
     args = parser.parse_args()
 

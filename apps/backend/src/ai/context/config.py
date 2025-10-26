@@ -14,6 +14,7 @@ class ContextConfig:
     "true").lower() == "true"
         self.database_storage_enabled = os.environ.get("CONTEXT_DATABASE_STORAGE_ENABLED\
     \
+    \
     ", "false").lower() == "true"
         
         # 缓存配置
@@ -25,6 +26,7 @@ class ContextConfig:
         self.compression_enabled = os.environ.get("CONTEXT_COMPRESSION_ENABLED",
     "false").lower() == "true"
         self.async_processing_enabled = os.environ.get("CONTEXT_ASYNC_PROCESSING_ENABLED\
+    \
     \
     ", "true").lower() == "true"
         

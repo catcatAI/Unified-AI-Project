@@ -64,6 +64,7 @@ def _ensure_tensorflow_is_imported() -> bool:
     except Exception as e:
         print(f"CRITICAL: Failed to import TensorFlow. Logic model NN functionality will\
     \
+    \
     be disabled. Error: {e}")
         tf_module = None
         return False
@@ -86,7 +87,8 @@ class LogicNNModel:
         if not tf_module:
             return None
         
-        input_layer = Input_cls(shape = (self.max_seq_len, ), name = "input_proposition")
+        input_layer = Input_cls(shape = (self.max_seq_len, ),
+    name = "input_proposition")
         embedding_layer = Embedding_cls(input_dim = self.vocab_size,
     output_dim = self.embedding_dim)(input_layer)
         lstm_layer = LSTM_cls(self.lstm_units)(embedding_layer)

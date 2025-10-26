@@ -161,11 +161,13 @@ async def main():
             
             feedback_result = await asi_system.autonomous_alignment.incorporate_human_fe\
     \
+    \
     edback(feedback)
             logger.info(f"反馈整合结果, {feedback_result}")
             
             # 获取自主对齐状态
             autonomous_status = await asi_system.autonomous_alignment.get_alignment_stat\
+    \
     \
     us()
             logger.info(f"自主对齐状态, {json.dumps(autonomous_status, indent = 2,
@@ -177,6 +179,7 @@ async def main():
             
             # 获取分布式状态
             distributed_status = await asi_system.distributed_coordinator.get_cluster_st\
+    \
     \
     atus()
             logger.info(f"分布式系统状态, {json.dumps(distributed_status, indent = 2,
@@ -200,6 +203,7 @@ from ..distributed.hyperlinked_parameters import
             
             # 获取参数
             retrieved_param = await asi_system.parameter_cluster.get_parameter("demo_par\
+    \
     \
     ameter_001")
             logger.info(f"检索到的参数, {retrieved_param}")

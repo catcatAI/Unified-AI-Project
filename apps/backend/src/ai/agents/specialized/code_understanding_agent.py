@@ -65,6 +65,7 @@ class CodeUnderstandingAgent(BaseAgent):
                 "name": "fix_code",
                 "description": "Automatically fixes common code issues like syntax error\
     \
+    \
     s, style issues, etc.",
                 "version": "1.0",
                 "parameters": []
@@ -81,6 +82,7 @@ class CodeUnderstandingAgent(BaseAgent):
         super().__init__(agent_id = agent_id, capabilities = capabilities)
         logger.info(f"[{self.agent_id}] CodeUnderstandingAgent initialized with capabili\
     \
+    \
     ties, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload,
     sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -89,6 +91,7 @@ class CodeUnderstandingAgent(BaseAgent):
         params = task_payload.get("parameters", {})
 
         logger.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capa\
+    \
     \
     bility_id}'"):::
             ry,
@@ -119,9 +122,11 @@ class CodeUnderstandingAgent(BaseAgent):
         if self.hsp_connector and callback_address, ::
             callback_topic == str(callback_address) if callback_address is not None else\
     \
+    \
     "":::
 = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logger.info(f"[{self.agent_id}] Sent task result for {request_id} to {callba\
+    \
     \
     ck_topic}"):::
                 ef _analyze_code(self, params, Dict[str, Any]) -> Dict[str, Any]
@@ -145,8 +150,10 @@ class CodeUnderstandingAgent(BaseAgent):
                 analysis["syntax_valid"] = True
                 analysis["function_count"] = len([node for node in ast.walk(tree) if isi\
     \
+    \
     nstance(node, ast.FunctionDef())])::
                     nalysis["class_count"] = len([node for node in ast.walk(tree) if isi\
+    \
     \
     nstance(node, ast.ClassDef())])::
 nalysis["import_count"] = len([node for node in ast.walk(tree) if isinstance(node,
@@ -182,6 +189,7 @@ nalysis["import_from_count"] = len([node for node in ast.walk(tree) if isinstanc
         
         # Add header
         doc_lines.append(f"# {'Technical' if style == 'technical' else 'User'} Documenta\
+    \
     \
     tion"):::
             oc_lines.append("")
@@ -268,7 +276,8 @@ nalysis["import_from_count"] = len([node for node in ast.walk(tree) if isinstanc
                 review["score"] = int(review["score"]) - 1
             
             # Check for commented out code, ::
-                f line_strip.startswith("#") and any(c.isalnum() for c in line_strip[1, ]) and " = ", in line_strip, ::
+                f line_strip.startswith("#") and any(c.isalnum() for c in line_strip[1,
+    ]) and " = ", in line_strip, ::
                 cast(List[Dict[str, Any]] review["findings"]).append({)}
                     "line": i,
                     "issue": "Possibly commented out code",
@@ -325,7 +334,7 @@ nalysis["import_from_count"] = len([node for node in ast.walk(tree) if isinstanc
         
         # Fix missing colons in control structures
         patterns = []
-            (r'^(\s * (if|elif|else|for|while|try|except|finally|with|def|class)\s + .+?)(?<!:)$', r'\1,'),::
+            (r'^(\s * (if|elif|else|for|while|try|except|finally|with|def|class)\s + . + ?)(?<!:)$', r'\1,'),::
 [        ]
         
         lines = fixed_code.split('\n')

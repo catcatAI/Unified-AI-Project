@@ -36,6 +36,7 @@ class EconomyManager, :
         if current_balance < amount, ::
             logger.warning(f"Transaction failed for {sender_id} Insufficient funds. Curr\
     \
+    \
     ent, {current_balance} Attempted, {amount}")::
             return False
 

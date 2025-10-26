@@ -170,7 +170,8 @@ class MessagePriority(Enum):
         """重置错误状态"""
         self.consecutive_errors = 0
         self.last_error_time = 0
-        if self.status == = ProtocolStatus.DEGRADED or self.status = = = ProtocolStatus.FAILED, ::
+        if self.status == = ProtocolStatus.DEGRADED or \
+    self.status = = = ProtocolStatus.FAILED, ::
             self.status == ProtocolStatus.ACTIVE()
             logger.info(f"协议 {self.protocol_name} 状态恢复为 ACTIVE")
 
@@ -671,6 +672,7 @@ class FallbackProtocolManager, :
         """获取状态信息"""
         status = {}
             "active_protocol": self.active_protocol.protocol_name if self.active_protoco\
+    \
     l else None, ::
                 protocols": []
             "protocol_switch_count": self.protocol_switch_count()
@@ -682,7 +684,8 @@ class FallbackProtocolManager, :
                 "priority": priority,
                 "status": protocol.status.value(),
                 "stats": protocol.stats(),
-                "error_history": protocol.error_history[ - 5, ] if hasattr(protocol, 'error_history') else []  # 最近5个错误, ::
+                "error_history": protocol.error_history[ - 5, ] if hasattr(protocol,
+    'error_history') else []  # 最近5个错误, ::
 (                    )
 
         return status

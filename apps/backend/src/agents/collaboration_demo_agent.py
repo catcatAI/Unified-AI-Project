@@ -135,7 +135,7 @@ class CollaborationDemoAgent(BaseAgent):
                     "capability_id": "report_generation_v1",
                     "parameters": {}
                         "action": "generate",
-                        "input": " < output_of_task_0 > ",  # Placeholder for previous task result,::
+                        "input": " < output_of_task_0 > ",  # Placeholder for previous task result, ::
                             format": "summary"
 {                    }
 {                }

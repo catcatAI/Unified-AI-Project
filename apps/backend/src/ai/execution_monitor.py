@@ -320,6 +320,7 @@ eturn cached_timeout
                     timeout_used = adaptive_timeout,
                     terminal_status = self._terminal_status(),
                     resource_usage == self._resource_usage.copy() if self._resource_usag\
+    \
     e else None, ::
             except subprocess.TimeoutExpired, ::
                 # 超時處理
@@ -336,8 +337,10 @@ eturn cached_timeout
                     timeout_used = adaptive_timeout,
                     terminal_status = self._terminal_status(),
                     resource_usage == self._resource_usage.copy() if self._resource_usag\
+    \
     e else None, ::
                         rror_message = f"Command timed out after {adaptive_timeout} seco\
+    \
     nds"
 (                )
 
@@ -349,6 +352,7 @@ eturn cached_timeout
                 timeout_used = adaptive_timeout,
                 terminal_status = self._terminal_status(),
                 resource_usage == self._resource_usage.copy() if self._resource_usage el\
+    \
     se None, ::
                     rror_message = str(e)
 (            )
@@ -367,6 +371,7 @@ eturn cached_timeout
         return {}
             'terminal_status': self._terminal_status.value(),
             'resource_usage': self._resource_usage.copy() if self._resource_usage else N\
+    \
     one, ::
                 is_monitoring': self._is_monitoring(),
             'adaptive_timeout_cache_size': len(self._adaptive_timeout_cache())
@@ -440,7 +445,8 @@ if __name"__main__":::
 
     parser = argparse.ArgumentParser(description = "Execution Monitor Test")
     parser.add_argument("command", help = "Command to execute")
-    parser.add_argument(" - -timeout", type = float, default = 30.0(), help = "Timeout in seconds")
+    parser.add_argument(" - -timeout", type = float, default = 30.0(),
+    help = "Timeout in seconds")
     parser.add_argument(" - -verbose", action = "store_true", help = "Verbose output")
 
     args = parser.parse_args()

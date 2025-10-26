@@ -2,6 +2,7 @@
 Deployment Manager for Unified - AI - Project, ::
     This module provides intelligent deployment configuration based on hardware capabili\
     \
+    \
     ties.
 It automatically adjusts model parameters, memory usage,
     and processing modes to optimize
@@ -135,6 +136,7 @@ class DeploymentManager, :
             best_gpu_memory_gb = best_gpu.memory_total / 1024  # Convert MB to GB
             gpu_available = best_gpu_memory_gb > 1.0  # More than 1GB likely indicates u\
     \
+    \
     sable GPU
 
             # Check if this is integrated graphics, ::
@@ -149,6 +151,7 @@ class DeploymentManager, :
 from .integrated_graphics_optimizer import
                 ig_optimizer == IntegratedGraphicsOptimizer(self.hardware_profile())
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier\
+    \
     \
     ()
                 # 根据集成显卡性能等级调整配置
@@ -275,7 +278,8 @@ from .integrated_graphics_optimizer import
                 "timeout_seconds": 60
 {            }
             DeploymentMode.PERFORMANCE, {}
-                "enable_multimodal": gpu_memory_gb >= 4.0 or cpu_cores >= 8,  # Enable for good GPUs or high - core CPUs, ::
+                "enable_multimodal": gpu_memory_gb >= 4.0 or cpu_cores >= 8,
+    # Enable for good GPUs or high - core CPUs, ::
                 "enable_real_time": True,
                 "enable_background_learning": True,
                 "max_concurrent_tasks": min(8, cpu_cores),
@@ -331,7 +335,8 @@ from .integrated_graphics_optimizer import
                     disabled.append(feature)
             elif feature == "real_time_inference":::
                 # Real -\
-    time inference benefits from GPU but can work on integrated graphics with reduced performance,
+    time inference benefits from GPU but can work on integrated graphics with reduced pe\
+    rformance,
     if score >= min_score and \
     (gpu_available or self.hardware_profile.cpu.cores_logical >= 4)::
     enabled.append(feature)
@@ -348,6 +353,7 @@ from .integrated_graphics_optimizer import
                     disabled.append(feature)
             elif feature == "background_learning":::
                 # Background learning can work on integrated graphics with reduced perfo\
+    \
     \
     rmance,
     if score >= min_score and \
@@ -421,6 +427,7 @@ from .integrated_graphics_optimizer import
             try,
                 ig_optimizer == IntegratedGraphicsOptimizer(self.hardware_profile())
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier\
+    \
     \
     ()
                 # 根据集成显卡性能等级确定部署模式
@@ -526,6 +533,7 @@ from .integrated_graphics_optimizer import
             "ENABLE_REAL_TIME": config.processing_config.enable_real_time(),
             "ENABLE_BACKGROUND_LEARNING": config.processing_config.enable_background_lea\
     \
+    \
     rning(),
             "MAX_CONCURRENT_TASKS": config.processing_config.max_concurrent_tasks(),
             "TIMEOUT_SECONDS": config.processing_config.timeout_seconds(),
@@ -608,6 +616,7 @@ from diagnose_base_agent import
                 enable_multimodal = processing_data['enable_multimodal']
                 enable_real_time = processing_data['enable_real_time']
                 enable_background_learning = processing_data['enable_background_learning\
+    \
     ']
                 max_concurrent_tasks = processing_data['max_concurrent_tasks'],
     timeout_seconds = processing_data['timeout_seconds']
@@ -646,6 +655,7 @@ from diagnose_base_agent import
         if score < 30, ::
     recommendations.append("Consider upgrading to at least 8GB RAM for better performanc\
     \
+    \
     e"):::
     if profile.memory.total < 8192, ::
     recommendations.append("RAM upgrade to 16GB + \
@@ -655,7 +665,7 @@ from diagnose_base_agent import
     if profile.storage.disk_type == "HDD":::
     recommendations.append("SSD upgrade recommended for faster model loading"):::
     if profile.cpu.cores_logical < 4, ::
-    recommendations.append("Multi - core CPU (4+\
+    recommendations.append("Multi - core CPU (4 + \
     cores) recommended for concurrent processing"):::
     if score >= 80, ::
     recommendations.append("Hardware is excellent for AI workloads!"):::

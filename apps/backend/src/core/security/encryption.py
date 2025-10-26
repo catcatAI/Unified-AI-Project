@@ -292,7 +292,7 @@ def validate_password_strength(password: str) -> Dict[str, Any]:
     
     # 特殊字符检查
     if SECURITY_CONFIG['password_require_special_chars']:
-        special_chars = '!@#$%^& * ()_+ - =[]{}|;:,.<>?'
+        special_chars = '!@#$%^& * ()_+ - =[]{}|;:,.< > ?'
         if not any(char in special_chars for char in password):
             result['valid'] = False
             result['errors'].append('密码必须包含特殊字符')

@@ -82,6 +82,7 @@ class EnvironmentSimulator, :
 
         self.logger.info(f"Simulated action consequences for action {proposed_action.get\
     \
+    \
     ('name')}. Predicted state, {predicted_state.get('time_step')}"):::
             eturn {}
             'predicted_state': predicted_state,

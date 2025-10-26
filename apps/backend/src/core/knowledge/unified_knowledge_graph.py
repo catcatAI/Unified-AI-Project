@@ -200,6 +200,7 @@ class UnifiedKnowledgeGraph, :
             # 检查别名匹配
             if entity.name.lower() in [alias.lower() for alias in existing_entity.aliase\
     \
+    \
     s]::
                 return existing_entity
             
@@ -261,6 +262,7 @@ class UnifiedKnowledgeGraph, :
             # 构建实体描述文本
             entity_text = f"{entity.name} {' '.join(entity.aliases())} {entity.entity_ty\
     \
+    \
     pe}"
             for key, value in entity.properties.items():::
                 entity_text += f" {key} {value}"
@@ -290,8 +292,10 @@ class UnifiedKnowledgeGraph, :
         if not SKLEARN_AVAILABLE, ::
             # 简化相似度计算
             name_similarity == 1.0 if entity1.name.lower() == entity2.name.lower() else \
+    \
     0.0, :
-            type_similarity == 1.0 if entity1.entity_type = entity2.entity_type else 0.0, :
+            type_similarity == 1.0 if entity1.entity_type = entity2.entity_type else 0.0\
+    , :
             return (name_similarity + type_similarity) / 2
 
         try,
@@ -444,6 +448,7 @@ class UnifiedKnowledgeGraph, :
             logger.error(f"❌ 关系嵌入生成失败, {e}")
     
     # = == == == == == == == == == = 跨领域知识迁移 == async def find_cross_domain_patterns(sel\
+    \
     f, source_domain, str, target_domain, str) -> List[Dict[str, Any]]
         """发现跨领域模式"""
         patterns = []
@@ -523,6 +528,7 @@ class UnifiedKnowledgeGraph, :
                     'center_entity': entity_id,
                     'neighbor_count': len(neighbors),
                     'neighbor_types': [domain_knowledge.entities[nid].entity_type for ni\
+    \
     \
     d in neighbors if nid in domain_knowledge.entities]:
 {(                })
@@ -878,6 +884,7 @@ class UnifiedKnowledgeGraph, :
                     'target_structure': target_pattern,
                     'suggested_adaptations': await self._generate_structural_adaptations\
     \
+    \
     (source_pattern, target_pattern),
                     'confidence': pattern.get('similarity', 0),
                     'transfer_potential': pattern.get('transfer_potential', 0)
@@ -1002,6 +1009,7 @@ class UnifiedKnowledgeGraph, :
         
         return intersection / union if union > 0 else 0.0, :
     # = == == == == == == == == == = 统计与报告 == async def get_knowledge_statistics(self) -\
+    \
     > Dict[str, Any]
         """获取知识统计"""
         stats = {}
@@ -1013,8 +1021,10 @@ class UnifiedKnowledgeGraph, :
             'relation_types': defaultdict(int),
             'cross_domain_mappings': len(self.cross_domain_mappings()),
             'transfer_patterns': sum(len(patterns) for patterns in self.transfer_pattern\
+    \
     s.values()), :::
             'temporal_knowledge_entries': sum(len(entries) for entries in self.temporal_\
+    \
     knowledge.values()), :::
             'ai_model_status': {}
                 'torch_available': TORCH_AVAILABLE,
@@ -1084,9 +1094,12 @@ class UnifiedKnowledgeGraph, :
     async def _export_rdf(self) -> str,
         """导出为RDF格式"""
         rdf_lines = []
-        rdf_lines.append("@prefix kg, <http, / /unified - ai.org / knowledge - graph#> .")
-        rdf_lines.append("@prefix rdf, <http, / /www.w3.org / 1999 / 02 / 22 - rdf - syntax - ns#> .")
-        rdf_lines.append("@prefix rdfs, <http, / /www.w3.org / 2000 / 01 / rdf - schema#> .")
+        rdf_lines.append("@prefix kg, <http,
+    / /unified - ai.org / knowledge - graph#> .")
+        rdf_lines.append("@prefix rdf, <http,
+    / /www.w3.org / 1999 / 02 / 22 - rdf - syntax - ns#> .")
+        rdf_lines.append("@prefix rdfs, <http,
+    / /www.w3.org / 2000 / 01 / rdf - schema#> .")
         rdf_lines.append("")
         
         # 导出实体

@@ -25,6 +25,7 @@ class AuthMiddleware, :
         self.algorithm = self.config.get('algorithm', 'HS256')
         self.access_token_expire_minutes = self.config.get('access_token_expire_minutes'\
     \
+    \
     , 30)
         self.refresh_token_expire_days = self.config.get('refresh_token_expire_days', 7)
         

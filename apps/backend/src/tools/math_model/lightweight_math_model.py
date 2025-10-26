@@ -21,7 +21,7 @@ class LightweightMathModel, :
                 * * ': lambda x, y, x ** y,
             '%': lambda x, y, x % y if y != 0 else 0, ::
         # Simple patterns for arithmetic expressions, ::
-            elf.arithmetic_pattern = re.compile(r'([+-]?\d * \.?\d+)\s * ([+\-* / ]|\ * \*)\s * ([+-]?\d * \.?\d+)')
+            elf.arithmetic_pattern = re.compile(r'([+-]?\d * \.?\d+)\s * ([+\-* / ]|\ * \ * )\s * ([+-]?\d * \.?\d+)')
         
     def evaluate_expression(self, expression, str) -> Optional[float]:
         """
@@ -177,7 +177,7 @@ class LightweightMathModel, :
             return match.group(0)
         
         # Look for "what is X" patterns, ::
-            hat_is_pattern = re.compile(r'what is\s+([0 - 9+\ - * / .\s]+)', re.IGNORECASE())
+            hat_is_pattern = re.compile(r'what is\s + ([0 - 9 + \ - * / .\s] + )', re.IGNORECASE())
         match = what_is_pattern.search(problem)
         if match, ::
             return match.group(1).strip()

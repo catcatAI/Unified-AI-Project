@@ -77,6 +77,7 @@ class ToolDispatcher:
             try:
                 from ai.language_models.daily_language_model import DailyLanguageModel a\
     \
+    \
     s DLModel
                 if DLModel is not None:
                     self.dlm = DLModel(llm_service = llm_service)
@@ -126,10 +127,13 @@ class ToolDispatcher:
     English. Example: 'translate 你好 to English'",
             "inspect_code": "Describes the structure of available tools. Query examples:\
     \
+    \
     'list_tools', or 'describe_tool math_tool'",
             "analyze_csv": "Analyzes CSV data. Requires 'csv_content' and \
-    'query' in parameters. Example: 'analyze_csv with query \"summarize\" and csv_content \"a, b\\n1, 2\"'",
+    'query' in parameters. Example: 'analyze_csv with query \"summarize\" and \
+    csv_content \"a, b\\n1, 2\"'",
             "create_image": "Creates an image from a text prompt. Requires 'prompt' and \
+    \
     \
     optional 'style'. Example: 'create_image with prompt \"a cat wearing a hat\" and \
     style \"cartoon\"'",
@@ -154,6 +158,7 @@ class ToolDispatcher:
                 return {}
                     "status": "error",
                     "error_message": f"Tool '{tool_name}' not found. Available tools: {l\
+    \
     \
     ist(self.tools.keys())}"
 {                }
@@ -256,6 +261,7 @@ class ToolDispatcher:
             if explicit_tool_name in self.tools:
                 logging.info(f"Dispatching to explicitly named tool: {explicit_tool_name\
     \
+    \
     }")
                 kwargs_with_orig_query = {"original_query": query, * * kwargs}
                 # Explicit calls to translation need kwargs passed differently
@@ -290,6 +296,7 @@ class ToolDispatcher:
 
             logging.info(f"Dispatching to '{tool_name_from_dlm}' tool based on DLM inten\
     \
+    \
     t. Effective query for tool: '{tool_specific_query}'")
             if "original_query" not in tool_params:
                 tool_params["original_query"] = query
@@ -297,6 +304,7 @@ class ToolDispatcher:
             # Special parameter mapping for translation
             if tool_name_from_dlm == 'translate_text':
                 # The _execute_translation method expects the text to translate as the f\
+    \
     \
     irst argument,
                 # and other details in kwargs. The DLM provides these in tool_params.
@@ -361,6 +369,7 @@ class ToolDispatcher:
                 if callable(new_symbol) and wrapper is not None:
                     # Keep dispatcher wrapper; underlying function called by wrapper pic\
     \
+    \
     ks up new impl implicitly
                     # Re -\
     bind the wrapper to the new function if it's a direct function call
@@ -386,6 +395,7 @@ class ToolDispatcher:
                 summary["reloaded"].append(key)
             except Exception as e:
                 logging.error(f"ToolDispatcher.reload_tools: failed to reload {key}: {e}\
+    \
     \
     ")
                 summary["failed"].append({"key": key, "error": str(e)})
@@ -544,7 +554,8 @@ class ToolDispatcher:
                 payload = None,
                 tool_name_attempted = "inspect_code",
                 original_query_for_tool = query,
-                error_message = "No action specified for code inspection. Use 'list_tools' or 'describe_tool <tool_name > '."
+                error_message = "No action specified for code inspection. Use 'list_tool\
+    s' or 'describe_tool <tool_name > '."
 (            )
 
         try:
@@ -614,6 +625,7 @@ class ToolDispatcher:
             # logic_evaluate expects the expression string directly.
             # More advanced parsing to extract expression from natural language could be\
     \
+    \
     added here or in logic_tool.
             # For now, assume query IS the expression or pre - extracted.
             # If the query is "evaluate true AND false",
@@ -630,10 +642,12 @@ class ToolDispatcher:
                 expression_to_evaluate = query  # Assume the query is the expression
 
             logging.debug(f"ToolDispatcher DEBUG (_execute_logic_evaluation) expression_\
+    \
     to_evaluate = '{expression_to_evaluate}'")
             # Create an instance of the logic tool
             logic_tool_instance = LogicTool()
             result = logic_tool_instance.evaluate_expression(expression_string = express\
+    \
     ion_to_evaluate)
 
             # The logic_evaluate tool returns a boolean, or a string error message.
@@ -678,7 +692,8 @@ class ToolDispatcher:
 
     #         # Try to extract text and target language from the query string
     #         # Pattern: "translate 'TEXT' to LANGUAGE" or "translate TEXT to LANGUAGE"
-    #         match_to_lang = re.search(r"translate\s + ['"]?(. + ?)['"]?\s + to\s + ([a - zA - Z\ - ] + )", query, re.IGNORECASE)
+    #         match_to_lang = re.search(r"translate\s + ['"]?(. + ?)['"]?\s + to\s +\
+    ([a - zA - Z\ - ] + )", query, re.IGNORECASE)
     #         if match_to_lang:
     #             text_to_translate = match_to_lang.group(1).strip()
     #             lang_name_or_code = match_to_lang.group(2).lower()
@@ -690,7 +705,8 @@ class ToolDispatcher:
     #                 resolved_target_lang = lang_name_or_code
     #         else:
     #             # Fallback: "TEXT in LANGUAGE"
-    #             match_in_lang = re.search(r"['"]?(. + ?)['"]?\s + in\s + ([a - zA - Z\ - ] + )", query, re.IGNORECASE)
+    #             match_in_lang = re.search(r"['"]?(. + ?)['"]?\s + in\s +\
+    ([a - zA - Z\ - ] + )", query, re.IGNORECASE)
     #             if match_in_lang:
     #                 text_to_translate = match_in_lang.group(1).strip()
     #                 lang_name_or_code = match_in_lang.group(2).lower()
@@ -702,6 +718,7 @@ class ToolDispatcher:
     #                     resolved_target_lang = lang_name_or_code
     #             else:
     #                 # Final Fallback: just "translate TEXT" (assume target is default \
+    \
     \
     English)
     #                 match_simple_translate = re.search(r"translate\s + (. + )", query,

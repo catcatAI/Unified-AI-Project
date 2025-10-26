@@ -170,12 +170,14 @@ async def get_detailed_system_metrics():
             "max": 100,
             "status": "normal" if cpu_usage < 70 else "warning" if cpu_usage < 90 else "\
     \
+    \
     critical"::
 {        }
         "memory": {}
             "value": memory.percent(),
             "max": 100,
             "status": "normal" if memory.percent < 70 else "warning" if memory.percent <\
+    \
     \
     90 else "critical"::
 {        }
@@ -242,7 +244,8 @@ async def generate_image(request, Dict[str, Any]):
     prompt = request.get("prompt", "")
     return {}
         "id": f"img - {random.randint(1000, 9999)}",
-        "url": f"https, / /picsum.photos / 512 / 512?random = {random.randint(1, 1000)}",
+        "url": f"https, / /picsum.photos / 512 / 512?random = {random.randint(1,
+    1000)}",
         "prompt": prompt,
         "size": "512x512",
         "created_at": datetime.now().isoformat()
@@ -256,7 +259,8 @@ async def get_image_history(page, int == 1, limit, int == 20):
         images.append({)}
             "id": f"img - {random.randint(1000, 9999)}",
             "prompt": f"示例提示词 {i + 1}",
-            "url": f"https, / /picsum.photos / 512 / 512?random = {random.randint(1, 1000)}",
+            "url": f"https, / /picsum.photos / 512 / 512?random = {random.randint(1,
+    1000)}",
             "size": "512x512",
             "created_at": datetime.now().isoformat()
 {(        })
@@ -293,7 +297,8 @@ async def generate_image_v2(request, Dict[str, Any]):
     size = request.get("size", "1024x1024")
     return {}
         "id": f"img - {random.randint(1000, 9999)}",
-        "url": f"https, / /picsum.photos / {size.replace('x', ' / ')}?random = {random.randint(1, 1000)}",
+        "url": f"https, / /picsum.photos / {size.replace('x',
+    ' / ')}?random = {random.randint(1, 1000)}",
         "prompt": prompt,
         "size": size,
         "created_at": datetime.now().isoformat()

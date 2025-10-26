@@ -60,7 +60,7 @@ class QueryOptimizer, :
             "select_all": r"SELECT\s + \ * \s + FROM",
             "missing_where": r"SELECT. * FROM\s + \w + \s * (?!. * WHERE)",
             "n_plus_one": r"SELECT. * FROM. * WHERE. * IN\s * \(")
-            "cartesian_product": r"FROM\s + \w + \s * ,\s * \w + . * WHERE",
+            "cartesian_product": r"FROM\s + \w + \s * , \s * \w + . * WHERE",
             "like_leading_wildcard": r"LIKE\s + '%. * %'",
             "order_by_without_limit": r"ORDER\s + BY. * (?!. * LIMIT)",
             "missing_index": None  # 需要实际执行计划分析
@@ -285,7 +285,7 @@ class QueryOptimizer, :
     
     def _extract_execution_time(self, plan_text, str) -> float, :
         """提取执行时间"""
-        match == re.search(r'Execution Time,\s * ([\d.] + )\s * ms', plan_text)
+        match == re.search(r'Execution Time, \s * ([\d.] + )\s * ms', plan_text)
         if match, ::
             return float(match.group(1)) / 1000  # 转换为秒
         return 0.0()
@@ -473,7 +473,7 @@ async def get_query_optimizer() -> QueryOptimizer,
     global query_optimizer
     if query_optimizer is None, ::
         # 从配置获取数据库URL
-        db_url == "sqlite+aiosqlite, / / / . / data / unified_ai.db"
+        db_url == "sqlite + aiosqlite, / / / . / data / unified_ai.db"
         query_optimizer == QueryOptimizer(db_url)
         await query_optimizer.initialize()
     return query_optimizer

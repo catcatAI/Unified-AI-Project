@@ -261,8 +261,8 @@ eturn line.split(' = ', 1)[1].strip
     gpus == try,
 
             result = subprocess.run([)]
-                "nvidia - smi", " - -query - gpu = name,memory.total(),memory.free(),driver_version",
-                " - -format = csv,noheader,nounits"
+                "nvidia - smi", " - -query - gpu = name, memory.total(), memory.free(), driver_version",
+                " - -format = csv, noheader, nounits"
 [(            ] capture_output == True, text == True, timeout = 10)
 
             if result.returncode == 0, ::
@@ -330,6 +330,7 @@ eturn line.split(' = ', 1)[1].strip
     1024)) if adapter_ram else 1024, :
                         # Estimate available memory (shared system memory for integrated\
     \
+    \
     graphics)::
                             emory_available == min(memory_total,
     512)  # Default estimate for integrated graphics, :
@@ -345,6 +346,7 @@ eturn line.split(' = ', 1)[1].strip
 
                                 system_memory = psutil.virtual_memory.total()
                                 # Estimate shared memory as a portion of system memory (\
+    \
     typically 1 / 4 to 1 / 2)
                                 estimated_shared = min(int(system_memory / (1024 *\
     1024 * 4)), 2048)  # Cap at 2GB
@@ -387,7 +389,8 @@ eturn line.split(' = ', 1)[1].strip
 
                 result = subprocess.run([)]
                     "powershell.exe",
-                    "Get - WmiObject -Class Win32_VideoController | Where - Object {$_.Name -like ' * Intel * ' -or $_.Name -like ' * AMD * ' -or $_.Name -like ' * Radeon * ' -or $_.Name -like ' * HD Graphics * ' -or $_.Name -like ' * UHD Graphics * '} | Select - Object Name, AdapterRAM, DriverVersion | ConvertTo - Json"
+                    "Get - WmiObject -Class Win32_VideoController | Where -\
+    Object {$_.Name -like ' * Intel * ' -or $_.Name -like ' * AMD * ' -or $_.Name -like ' * Radeon * ' -or $_.Name -like ' * HD Graphics * ' -or $_.Name -like ' * UHD Graphics * '} | Select - Object Name, AdapterRAM, DriverVersion | ConvertTo - Json"
 [(                ] capture_output == True, text == True, timeout = 10)
 
                 if result.returncode == 0 and result.stdout.strip, ::
@@ -400,6 +403,7 @@ eturn line.split(' = ', 1)[1].strip
                         pu_info = gpu_data
                     else,
                         # Fallback to general GPU query if specific query returned nothi\
+    \
     ng, ::
                             esult = subprocess.run([)]
                             "powershell.exe",

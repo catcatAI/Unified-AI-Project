@@ -70,7 +70,7 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
 
         # If parsing and validation pass, use Python's eval on the normalized string.
         # This is safe because we've validated the AST structure.
-        return bool(eval(compile(tree, filename=" < string > ", mode="eval")))
+        return bool(eval(compile(tree, filename = " < string > ", mode = "eval")))
 
     except (SyntaxError, ValueError, TypeError) as e:
         # print(f"Could not evaluate '{prop_str}' - Error: {e}")

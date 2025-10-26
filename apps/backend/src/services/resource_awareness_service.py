@@ -89,6 +89,7 @@ self.profile = self._get_safe_default_profile()
 
             # Basic validation against TypedDict structure (runtime check for key fields\
     \
+    \
     )::
             # A more robust solution might use Pydantic for parsing and \
     validation here.:::
@@ -168,13 +169,16 @@ print(f"  Disk Warning Threshold (%) {disk_conf.get('warning_threshold_percent')
 
     # Test with a non - existent config file path,
         rint("\n2. Testing with non - existent config file, "):
-ervice_non_existent == ResourceAwarenessService(config_filepath = "configs / non_existent_resources.yaml")
+ervice_non_existent == ResourceAwarenessService(config_filepath = "configs /\
+    non_existent_resources.yaml")
     if service_non_existent.profile and \
     service_non_existent.profile.get('profile_name') == "SafeDefaultProfile_ErrorLoading\
+    \
     ":::
     print(f"  Correctly fell back to safe default,
     {service_non_existent.profile.get('profile_name')}")
-print(f"  Default Disk Space (GB) {service_non_existent.get_simulated_disk_config.get('space_gb') if service_non_existent.get_simulated_disk_config else 'N / A'}") # type ignore, ::
+print(f"  Default Disk Space (GB) {service_non_existent.get_simulated_disk_config.get('s\
+    pace_gb') if service_non_existent.get_simulated_disk_config else 'N / A'}") # type ignore, ::
 lse,
 
     print(f"  Test failed or profile was unexpectedly loaded,
@@ -190,6 +194,7 @@ alformed_yaml_path = "configs / temp_malformed_resources.yaml"
 service_malformed == ResourceAwarenessService(config_filepath = malformed_yaml_path)
     if service_malformed.profile and \
     service_malformed.profile.get('profile_name') == "SafeDefaultProfile_ErrorLoading"::\
+    \
     :
     print(f"  Correctly fell back to safe default for malformed YAML,
     {service_malformed.profile.get('profile_name')}"):::

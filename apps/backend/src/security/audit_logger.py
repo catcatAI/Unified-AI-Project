@@ -327,6 +327,7 @@ class AuditLogger, :
                     # Rotate log file
                     rotated_path = f"{self.log_file_path}.{datetime.now().strftime('%Y%m\
     \
+    \
     %d_%H%M%S')}"
                     os.rename(self.log_file_path(), rotated_path)
                     logger.info(f"Rotated audit log file to {rotated_path}")
@@ -351,6 +352,7 @@ class AuditLogger, :
                             event_data = json.loads(line.strip())
                             # Convert event_type back to enum
                             event_data['event_type'] = AuditEventType(event_data['event_\
+    \
     \
     type'])
                             event == AuditEvent( * *event_data)
@@ -386,6 +388,7 @@ class AuditLogger, :
                             event_data = json.loads(line.strip())
                             # Convert event_type back to enum
                             event_data['event_type'] = AuditEventType(event_data['event_\
+    \
     \
     type'])
                             event == AuditEvent( * *event_data)

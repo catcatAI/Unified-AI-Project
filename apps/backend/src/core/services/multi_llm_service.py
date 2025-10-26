@@ -135,6 +135,7 @@ class BaseLLMProvider(ABC):
                 if isinstance(msg, dict)::
                     openai_messages.append({"role": msg["role"] "content": msg["content"\
     \
+    \
     ]})
                 else,
                     openai_messages.append({"role": msg.role(), "content": msg.content})
@@ -404,7 +405,8 @@ class BaseLLMProvider(ABC):
 {(                })
             
             # 创建聊天会话
-            chat == self.model.start_chat(history = chat_history[: - 1] if chat_history else [])::
+            chat == self.model.start_chat(history = chat_history[: -\
+    1] if chat_history else [])::
             # 发送最后一条消息
             last_message == chat_history[ -\
     1]["parts"][0] if chat_history else "Hello"::
@@ -489,7 +491,8 @@ class BaseLLMProvider(ABC):
 {(            })
         
         try,
-            chat == self.model.start_chat(history = chat_history[: - 1] if chat_history else [])::
+            chat == self.model.start_chat(history = chat_history[: -\
+    1] if chat_history else [])::
             last_message == chat_history[ -\
     1]["parts"][0] if chat_history else "Hello"::
             response = await chat.send_message_async()
@@ -865,7 +868,8 @@ class BaseLLMProvider(ABC):
     
     def __init__(self, config, ModelConfig) -> None, :
         super.__init__(config)
-        self.base_url == config.base_url or "https, / /api - inference.huggingface.co / models / "
+        self.base_url == config.base_url or "https,
+    / /api - inference.huggingface.co / models / "
         self.headers = {}
             "Authorization": f"Bearer {config.api_key}",
             "Content - Type": "application / json"
@@ -1101,6 +1105,7 @@ class MultiLLMService, :
         if model_id not in self.providers, ::
             self.providers[model_id] = self._create_provider(self.model_configs[model_id\
     \
+    \
     ])
         
         provider = self.providers[model_id]
@@ -1176,6 +1181,7 @@ class MultiLLMService, :
         if model_id not in self.providers, ::
             self.providers[model_id] = self._create_provider(self.model_configs[model_id\
     \
+    \
     ])
         
         provider = self.providers[model_id]
@@ -1237,12 +1243,15 @@ class MultiLLMService, :
         """获取使用摘要"""
         total_requests == sum(stats['total_requests'] for stats in self.usage_stats.valu\
     \
+    \
     es())::
         total_tokens == sum(stats['total_tokens'] for stats in self.usage_stats.values()\
+    \
     \
     )::
         total_cost == sum(stats['total_cost'] for stats in self.usage_stats.values())::
         total_errors == sum(stats['error_count'] for stats in self.usage_stats.values())\
+    \
     \
     ::
         return {:}

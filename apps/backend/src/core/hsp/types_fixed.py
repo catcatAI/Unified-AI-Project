@@ -13,7 +13,8 @@ from typing import Dict, Any, Optional, List, Literal, Union
 # If total = False, all keys are potentially optional (NotRequired).
 # To mix, you'd define multiple TypedDicts and inherit.
 # For simplicity here,
-    we'll use `Optional` for non - mandatory fields and assume mandatory ones are checked by logic.
+    we'll use `Optional` for non - mandatory fields and \
+    assume mandatory ones are checked by logic.
 # Or, use Pydantic later for proper validation.
 
 # Let's use `total = False` for payloads where many fields are optional, and:
@@ -219,14 +220,17 @@ class HSPDiscoveryRequest(TypedDict):
 class HSPRegistration(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationRequestPayl\
     \
+    \
     oad or HSPRegistrationResponsePayload
     payload: HSPRegistrationRequestPayload | HSPRegistrationResponsePayload  # The actua\
+    \
     \
     l registration data
 
 
 class HSPRegistrationRequest(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationRequestPayl\
+    \
     \
     oad
     payload: HSPRegistrationRequestPayload  # The actual registration request data
@@ -235,6 +239,7 @@ class HSPRegistrationRequest(TypedDict):
 class HSPRegistrationResponse(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationResponsePay\
     \
+    \
     load
     payload: HSPRegistrationResponsePayload  # The actual registration response data
 
@@ -242,8 +247,10 @@ class HSPRegistrationResponse(TypedDict):
 class HSPDeregistration(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationRequestPa\
     \
+    \
     yload or HSPDeregistrationResponsePayload
     payload: HSPDeregistrationRequestPayload | HSPDeregistrationResponsePayload  # The a\
+    \
     \
     ctual deregistration data
 
@@ -251,12 +258,14 @@ class HSPDeregistration(TypedDict):
 class HSPDeregistrationRequest(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationRequestPa\
     \
+    \
     yload
     payload: HSPDeregistrationRequestPayload  # The actual deregistration request data
 
 
 class HSPDeregistrationResponse(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationResponseP\
+    \
     \
     ayload
     payload: HSPDeregistrationResponsePayload  # The actual deregistration response data

@@ -50,6 +50,7 @@ class ContextManager, :
 
             logger.info(f"Created new context {context_id} of type {context_type.value}"\
     \
+    \
     )
             return context_id
         except Exception as e, ::
@@ -225,11 +226,13 @@ class ContextManager, :
             if not self.memory_storage.save_context(target_context)::
                 logger.error(f"Failed to save target context {target_id} to memory stora\
     \
+    \
     ge")
                 return False
 
             if not self.disk_storage.save_context(target_context)::
                 logger.error(f"Failed to save target context {target_id} to disk storage\
+    \
     \
     ")
                 return False
@@ -241,6 +244,7 @@ class ContextManager, :
             return True
         except Exception as e, ::
             logger.error(f"Failed to transfer context from {source_id} to {target_id} {e\
+    \
     \
     }")
             return False

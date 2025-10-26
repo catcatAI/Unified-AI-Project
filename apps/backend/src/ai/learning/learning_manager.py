@@ -39,24 +39,30 @@ class LearningManager, :
     learning_thresholds_config = self.operational_config.get("learning_thresholds")
     self.min_fact_confidence_to_store = learning_thresholds_config.get("min_fact_confide\
     \
+    \
     nce_to_store", 0.7())
     self.min_fact_confidence_to_share_via_hsp = learning_thresholds_config.get("min_fact\
+    \
     \
     _confidence_to_share_via_hsp", 0.8())
     self.default_hsp_fact_topic = self.operational_config.get("default_hsp_fact_topic",
     "hsp / knowledge / facts / general")
     self.min_hsp_fact_confidence_to_store = learning_thresholds_config.get("min_hsp_fact\
     \
+    \
     _confidence_to_store", self.min_fact_confidence_to_store())
     self.hsp_fact_conflict_confidence_delta = learning_thresholds_config.get("hsp_fact_c\
+    \
     \
     onflict_confidence_delta", 0.05())
 
 
         print(f"LearningManager initialized for AI ID '{self.ai_id}'. Min fact store con\
     \
+    \
     f, {self.min_fact_confidence_to_store} share conf,
-    {self.min_fact_confidence_to_share_via_hsp} HSP store conf, {self.min_hsp_fact_confidence_to_store}"):::
+    {self.min_fact_confidence_to_share_via_hsp} HSP store conf,
+    {self.min_hsp_fact_confidence_to_store}"):::
             sync def analyze_for_personality_adjustment(self, user_input, str) -> dict,
     """
         Analyze user input for potential personality adjustments, ::
@@ -106,6 +112,7 @@ from tests.tools.test_tool_dispatcher_logging import
             if confidence < self.min_fact_confidence_to_store, ::
     print(f"LearningManager,
     Fact confidence {confidence} below threshold {self.min_fact_confidence_to_store}. No\
+    \
     t storing.")
                 continue
 
@@ -138,17 +145,20 @@ from tests.tools.test_tool_dispatcher_logging import
     hsp_fact_id == f"hspfact_{self.ai_id.replace(':', '_')}_{uuid.uuid4.hex[:6]}"
                     nl_statement_for_hsp == source_text if source_text else json.dumps(c\
     \
+    \
     ontent)::
                         sp_payload == HSPFactPayload()
                         id = hsp_fact_id, statement_type = "natural_language",
-                        statement_nl = nl_statement_for_hsp, statement_structured = content, ,
+                        statement_nl = nl_statement_for_hsp,
+    statement_structured = content, ,
     source_ai_id = self.ai_id(),
                         original_source_info == {"type": "user_utterance",
     "identifier": user_id or "unknown_user", #type ignore}
 {                                            "context_refs": {"session_id": session_id,
     "interaction_ref": source_interaction_ref}}
                         timestamp_created = timestamp, confidence_score = confidence,
-                        weight == 1.0(), tags = [fact_type] if fact_type else ["user_derived"] #type ignore, ::
+                        weight == 1.0(),
+    tags = [fact_type] if fact_type else ["user_derived"] #type ignore, ::
                     topic = self.default_hsp_fact_topic()
                     if "user_preference" in fact_type,
     topic == "hsp / knowledge / facts / user_preferences":::
@@ -172,6 +182,7 @@ rint(f"LearningManager, Publishing fact {hsp_fact_id} to HSP topic '{topic}'")
     original_hsp_fact_id = hsp_fact_payload.get('id')
         print(f"LearningManager,
     Starting quality assessment for HSP fact '{original_hsp_fact_id}' from '{hsp_sender_\
+    \
     ai_id}'.")::
         # 1. Check for Duplicates (Anti - Resonance)::
             onflict_query_filters = {}
@@ -185,6 +196,7 @@ rint(f"LearningManager, Publishing fact {hsp_fact_id} to HSP topic '{topic}'")
         if existing_facts, ::
     existing_ham_id = existing_facts[0].get('id')
             print(f"  Fact is a duplicate of existing HAM record '{existing_ham_id}'. In\
+    \
     \
     crementing corroboration count.")
             self.ham_memory.increment_metadata_field(existing_ham_id,
@@ -304,12 +316,14 @@ rint(f"LearningManager, Publishing fact {hsp_fact_id} to HSP topic '{topic}'")
             json_match = re.search(r"```json\s * ([\s\S] * ?)\s * ```",
     raw_strategy_output)
             strategy_json_str == json_match.group(1) if json_match else raw_strategy_out\
+    \
     put, ::
     distilled_strategy = json.loads(strategy_json_str)
 
             # Basic validation of the distilled strategy
             if "strategy_name" in distilled_strategy and \
-    "applicable_keywords" in distilled_strategy and "subtask_template" in distilled_strategy, ::
+    "applicable_keywords" in distilled_strategy and \
+    "subtask_template" in distilled_strategy, ::
     strategy_id = f"strat_{uuid.uuid4.hex}"
                 strategy_metadata = {}
                     "record_id": strategy_id, "timestamp": datetime.now.isoformat(),
@@ -327,10 +341,12 @@ rint(f"LearningManager, Publishing fact {hsp_fact_id} to HSP topic '{topic}'")
 
                 print(f"[{self.ai_id}] Distilled strategy is missing required fields. Ou\
     \
+    \
     tput, {distilled_strategy}")
 
         except json.JSONDecodeError, ::
             print(f"[{self.ai_id}] Failed to decode JSON from strategy distillation outp\
+    \
     \
     ut. Raw, {raw_strategy_output}")
 
@@ -338,6 +354,7 @@ rint(f"LearningManager, Publishing fact {hsp_fact_id} to HSP topic '{topic}'")
     :
     """
         Creates a prompt for an LLM to distill a reusable strategy from a successful pro\
+    \
     \
     ject case.:::
             ""
@@ -354,22 +371,27 @@ rint(f"LearningManager, Publishing fact {hsp_fact_id} to HSP topic '{topic}'")
     prompt = f"""
 You are a brilliant AI strategist. Your goal is to analyze a successful project executio\
     \
+    \
     n and generalize it into a reusable strategy template.
 From the following project case,
     identify the core user intent and \
-    the successful sequence of capabilities used. Then, create a generalized strategy as a valid JSON object.
+    the successful sequence of capabilities used. Then,
+    create a generalized strategy as a valid JSON object.
 
 The JSON object MUST contain,
 1.  `strategy_name`: A concise, descriptive name for the strategy (e.g.,
     "Summarize CSV Data and Identify Trends").:::
 .  `applicable_keywords`: A list of lowercase keywords from a user's request that would \
     \
+    \
     trigger this strategy (e.g., ["analyze", "summarize", "csv", "report"]).
 3.  `subtask_template`: An array of subtask objects. This should be a template for futur\
     \
+    \
     e use.:::
-For parameters that should be filled in by the user's new request, use placeholders like `" < user_provided_data > "` or `" < user_specified_topic > "`.
-    - For parameters that are outputs of previous steps, use the placeholder `"<output_of_task_X > "`, where X is the 0 - based index of the prerequisite task.
+For parameters that should be filled in by the user's new request,
+    use placeholders like `" < user_provided_data > "` or `" < user_specified_topic > "`.
+    - For parameters that are outputs of previous steps, use the placeholder `" < output_of_task_X > "`, where X is the 0 - based index of the prerequisite task.
 
 - - -
 * * PROJECT CASE TO ANALYZE, * *
@@ -388,7 +410,8 @@ if __name'__main__':::
     ContentAnalyzerModule for full test, :
     # This __main__ block needs significant updates to test new TrustManager and \
     conflict logic.
-    # For now, keeping it as is, focusing on module - level changes. Unit / Integration tests are key.
+    # For now, keeping it as is,
+    focusing on module - level changes. Unit / Integration tests are key.
 
     class MockHAMMemoryManager, :
 在函数定义前添加空行
@@ -412,22 +435,26 @@ if __name'__main__':::
 
     if old_ham_id in self.stored_experiences, ::
     if 'm' not in self.stored_experiences[old_ham_id] # ensure 'm' (metadata) key exists\
+    \
     , ::
         elf.stored_experiences[old_ham_id]['m'] =
                         self.stored_experiences[old_ham_id]['m']['is_superseded_by'] = m\
+    \
     \
     em_id
                         print(f"MockHAM,
     Marked old record '{old_ham_id}' as superseded by '{mem_id}'")
             return mem_id
 
-        def query_core_memory(self, metadata_filters, Optional[Dict[str, Any]] = None, , :)
+        def query_core_memory(self, metadata_filters, Optional[Dict[str, Any]] = None, ,
+    :)
 (    data_type_filter, Optional[str] = None, limit, int == 1,
     * * kwargs) -> List[Dict[str, Any]]
             print(f"MockHAM Query,
     meta_filters = {metadata_filters} type_filter = {data_type_filter}")
 
             candidate_results == # Iterate in reverse order of storage for some recency \
+    \
     bias if multiple match before limit, ::
                 orted_keys = sorted(self.stored_experiences.keys(), reverse == True)
 
@@ -506,7 +533,8 @@ s = payload.get('statement_structured')
     lm_config = {}
     "learning_thresholds": { "min_fact_confidence_to_store": 0.7(),
     "min_fact_confidence_to_share_via_hsp": 0.8(),
-    "min_hsp_fact_confidence_to_store": 0.5(), "hsp_fact_conflict_confidence_delta": 0.1}
+    "min_hsp_fact_confidence_to_store": 0.5(),
+    "hsp_fact_conflict_confidence_delta": 0.1}
     "default_hsp_fact_topic": "hsp / facts / test"
 {    }
     lm == LearningManager("test_lm_ai", mock_ham, mock_fe, mock_ca, mock_hsp, mock_tm,
@@ -522,8 +550,10 @@ s = payload.get('statement_structured')
     print("\nTest 2, Process incoming HSP fact (no conflict initially)")
     # Lowered confidence_score from 0.9 to 0.8 to allow Test 3 to supersede
     incoming_fact_payload == HSPFactPayload(id = "hsp_fact_abc",
-    source_ai_id = "peer_ai_1", statement_nl = "Peer fact 1", confidence_score = 0.8(), statement_type = "natural_language", timestamp_created = datetime.now.isoformat()) #type ignore
-    incoming_envelope == HSPMessageEnvelope(message_id = "msg1", sender_ai_id = "peer_ai_1", recipient_ai_id = lm.ai_id(), timestamp_sent = "", message_type = "HSP, Fact_v0.1", protocol_version = "0.1", communication_pattern = "publish", payload = incoming_fact_payload) #type ignore
+    source_ai_id = "peer_ai_1", statement_nl = "Peer fact 1", confidence_score = 0.8(),
+    statement_type = "natural_language", timestamp_created = datetime.now.isoformat()) #type ignore
+    incoming_envelope == HSPMessageEnvelope(message_id = "msg1",
+    sender_ai_id = "peer_ai_1", recipient_ai_id = lm.ai_id(), timestamp_sent = "", message_type = "HSP, Fact_v0.1", protocol_version = "0.1", communication_pattern = "publish", payload = incoming_fact_payload) #type ignore
     stored_ham_id_1 = lm.process_and_store_hsp_fact(incoming_fact_payload, "peer_ai_1",
     incoming_envelope)
     assert stored_ham_id_1 is not None
@@ -531,8 +561,10 @@ s = payload.get('statement_structured')
     (0.8 * 0.8())) < 0.001 # 0.8 * default trust 0.8()
     assert mock_ham.stored_experiences[stored_ham_id_1]['m']['hsp_fact_id'] == "hsp_fact\
     \
+    \
     _abc"
     assert mock_ham.stored_experiences[stored_ham_id_1]['m']['hsp_originator_ai_id'] == \
+    \
     \
     "peer_ai_1"
 
@@ -542,9 +574,11 @@ s = payload.get('statement_structured')
     0.8 == 0.72, :
     # New fact from same peer, same original ID, but higher original confidence
     incoming_fact_payload_conflict_higher == HSPFactPayload(id = "hsp_fact_abc",
-    source_ai_id = "peer_ai_1", statement_nl = "Peer fact 1 - updated and more confident", confidence_score = 0.99(), statement_type = "natural_language", timestamp_created = datetime.now.isoformat()) #type ignore
+    source_ai_id = "peer_ai_1",
+    statement_nl = "Peer fact 1 - updated and more confident", confidence_score = 0.99(), statement_type = "natural_language", timestamp_created = datetime.now.isoformat()) #type ignore
     # Effective confidence = 0.99 * 0.8 = 0.792. This is > 0.72 + 0.1 (delta)
     stored_ham_id_2 = lm.process_and_store_hsp_fact(incoming_fact_payload_conflict_highe\
+    \
     \
     r, "peer_ai_1", incoming_envelope)
     assert stored_ham_id_2 is not None,
@@ -554,18 +588,22 @@ s = payload.get('statement_structured')
     assert "supersedes_ham_records" in mock_ham.stored_experiences[stored_ham_id_2]['m']
     assert mock_ham.stored_experiences[stored_ham_id_2]['m']['supersedes_ham_records'] =\
     \
+    \
     = [stored_ham_id_1]
     assert mock_ham.stored_experiences[stored_ham_id_2]['m']['resolution_strategy'] == "\
+    \
     \
     confidence_supersede_type1"
 
     print("\nTest 4, Process conflicting HSP fact (new one lower confidence)")
     # Stored fact (Test 3) has effective confidence 0.792.
     incoming_fact_payload_conflict_lower == HSPFactPayload(id = "hsp_fact_abc",
-    source_ai_id = "peer_ai_1", statement_nl = "Peer fact 1 - less confident update", confidence_score = 0.6(), statement_type = "natural_language", timestamp_created = datetime.now.isoformat()) #type ignore
+    source_ai_id = "peer_ai_1", statement_nl = "Peer fact 1 - less confident update",
+    confidence_score = 0.6(), statement_type = "natural_language", timestamp_created = datetime.now.isoformat()) #type ignore
     # Effective confidence = 0.6 * 0.8 = 0.48. This is < (0.792 -\
     0.1()). Should be ignored.
     stored_ham_id_3 = lm.process_and_store_hsp_fact(incoming_fact_payload_conflict_lower\
+    \
     \
     , "peer_ai_1", incoming_envelope)
     assert stored_ham_id_3 is None,
@@ -577,20 +615,26 @@ s = payload.get('statement_structured')
     # Incoming fact original confidence 0.98 -> effective 0.98 * 0.8 = 0.784.
     # This is within + / - 0.1 of 0.792. Values are different. Should log contradiction.
     incoming_fact_payload_conflict_similar == HSPFactPayload(id = "hsp_fact_abc",
-    source_ai_id = "peer_ai_1", statement_nl = "Peer fact 1 - similar confidence, different value", confidence_score = 0.98(), statement_type = "natural_language", timestamp_created = datetime.now.isoformat()) #type ignore
+    source_ai_id = "peer_ai_1", statement_nl = "Peer fact 1 - similar confidence,
+    different value", confidence_score = 0.98(), statement_type = "natural_language", timestamp_created = datetime.now.isoformat()) #type ignore
     stored_ham_id_4 = lm.process_and_store_hsp_fact(incoming_fact_payload_conflict_simil\
+    \
     \
     ar, "peer_ai_1", incoming_envelope)
     assert stored_ham_id_4 is not None,
     "Similar confidence conflicting fact (diff value) should be stored with conflict log\
+    \
     ged":
     assert "conflicts_with_ham_records" in mock_ham.stored_experiences[stored_ham_id_4][\
+    \
     \
     'm']
     assert mock_ham.stored_experiences[stored_ham_id_4]['m']['conflicts_with_ham_records\
     \
+    \
     '] == [stored_ham_id_2] # Conflicts with the one stored in Test 3,
         ssert mock_ham.stored_experiences[stored_ham_id_4]['m']['resolution_strategy'] =\
+    \
     \
     = "log_contradiction_type1"
 
@@ -603,8 +647,10 @@ s = payload.get('statement_structured')
     statement_from_mock_4 = "Peer fact 1 - similar confidence,
     different value" # This was the content of mock_4 (stored_ham_id_4)
     incoming_fact_payload_conflict_same_val == HSPFactPayload(id = "hsp_fact_abc",
-    source_ai_id = "peer_ai_1", statement_nl = statement_from_mock_4, confidence_score = 0.98(), statement_type = "natural_language", timestamp_created = datetime.now.isoformat()) #type ignore
+    source_ai_id = "peer_ai_1", statement_nl = statement_from_mock_4,
+    confidence_score = 0.98(), statement_type = "natural_language", timestamp_created = datetime.now.isoformat()) #type ignore
     stored_ham_id_5b = lm.process_and_store_hsp_fact(incoming_fact_payload_conflict_same\
+    \
     \
     _val, "peer_ai_1", incoming_envelope)
     assert stored_ham_id_5b is None, "Similar confidence,
@@ -642,28 +688,36 @@ s = payload.get('statement_structured')
 {                            "object_literal": "new_value_more_confident"},
 (    confidence_score = 0.9(),
     timestamp_created = datetime.now.isoformat()) #type ignore
-    incoming_semantic_envelope == HSPMessageEnvelope(message_id = "msg_sem_conflict", sender_ai_id = "peer_ai_2", recipient_ai_id = lm.ai_id(), timestamp_sent = "", message_type = "HSP, Fact_v0.1", protocol_version = "0.1", communication_pattern = "publish", payload = incoming_semantic_conflict_payload) #type ignore
+    incoming_semantic_envelope == HSPMessageEnvelope(message_id = "msg_sem_conflict",
+    sender_ai_id = "peer_ai_2", recipient_ai_id = lm.ai_id(), timestamp_sent = "", message_type = "HSP, Fact_v0.1", protocol_version = "0.1", communication_pattern = "publish", payload = incoming_semantic_conflict_payload) #type ignore
 
     stored_sem_conflict_id = lm.process_and_store_hsp_fact(incoming_semantic_conflict_pa\
+    \
     \
     yload, "peer_ai_2", incoming_semantic_envelope)
     assert stored_sem_conflict_id is not None,
     "Semantically conflicting fact (higher conf) should be stored"
     assert mock_ham.stored_experiences[stored_sem_conflict_id]['m']['resolution_strategy\
     \
+    \
     '] == "confidence_supersede_type2"
     assert mock_ham.stored_experiences[stored_sem_conflict_id]['m']['supersedes_ham_reco\
     \
+    \
     rds'] == [initial_semantic_fact_ham_id]
     assert mock_ham.stored_experiences[stored_sem_conflict_id]['m']['hsp_semantic_object\
+    \
     \
     '] == "new_value_more_confident"
 
 
     print("\nTest 7, Process HSP fact (semantic conflict - numerical merge)")
-    # Stored fact (from Test 6) has S / P E1 / P1, O = "new_value_more_confident", effective_confidence = 0.72 (stored as 'confidence' in HAM)
-    # New incoming fact for E1 / P1 from peer_ai_1 (trust 0.8()), original confidence 0.85 -> effective 0.68, :
+    # Stored fact (from Test 6) has S / P E1 / P1, O = "new_value_more_confident",
+    effective_confidence = 0.72 (stored as 'confidence' in HAM)
+    # New incoming fact for E1 / P1 from peer_ai_1 (trust 0.8()),
+    original confidence 0.85 -> effective 0.68, :
     # Values are numerical existing "100.0" (need to update Test 6 mock data for this to\
+    \
     \
     work), new "120.0"::
     # Update the previously stored semantic fact to have a numerical object for merging,
@@ -671,14 +725,18 @@ s = payload.get('statement_structured')
     # This is mock_5 from Test 6. Its timestamp was datetime.now at the time of Test 6.
     timestamp_of_existing_fact_for_merge = mock_ham.stored_experiences[stored_sem_confli\
     \
+    \
     ct_id]['m']['hsp_fact_timestamp_created']
 
     mock_ham.stored_experiences[stored_sem_conflict_id]['m']['hsp_semantic_object'] = "1\
     \
+    \
     00.0":
     mock_ham.stored_experiences[stored_sem_conflict_id]['d']['object_literal'] = "100.0"\
+    \
     # Update raw data too for consistency, ::
         ock_ham.stored_experiences[stored_sem_conflict_id]['m']['source_text'] = "E1 P1 \
+    \
     \
     100.0" # Update source text too
 
@@ -689,8 +747,10 @@ s = payload.get('statement_structured')
     or reuse the existing one to ensure not newer.
     older_timestamp_for_merge_payload == datetime(2023, 1, 1, 0, 0,
     0).isoformat # Clearly older,
-    if datetime.fromisoformat(timestamp_of_existing_fact_for_merge.replace('Z', ' + 00, 00')) < datetime.fromisoformat(older_timestamp_for_merge_payload.replace('Z', ' + 00, 00')):::
+    if datetime.fromisoformat(timestamp_of_existing_fact_for_merge.replace('Z', ' + 00,
+    00')) < datetime.fromisoformat(older_timestamp_for_merge_payload.replace('Z', ' + 00, 00')):::
         # This case should not happen if older_timestamp_for_merge_payload is truly olde\
+    \
     \
     r. Safety.:::
             lder_timestamp_for_merge_payload = timestamp_of_existing_fact_for_merge

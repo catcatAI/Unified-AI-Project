@@ -95,7 +95,8 @@ class ToolPerformanceMetrics, :
     self.categories, Dict[str, ToolCategory] =
     self.tools, Dict[str, Tool] =
 
-    def create_tool_category(self, category_id, str, name, str, description, str = "", , :)
+    def create_tool_category(self, category_id, str, name, str, description, str = "", ,
+    :)
 (    parent_id, Optional[str] = None) -> bool,
     """创建工具分类"""
         try,
@@ -119,6 +120,7 @@ class ToolPerformanceMetrics, :
             context_id = self.context_manager.create_context(ContextType.TOOL(),
     context_content)
             logger.info(f"Created tool category {category_id} with context {context_id}"\
+    \
     \
     ):
 
@@ -184,6 +186,7 @@ eturn True
                     "success_rate": tool.performance_metrics.success_rate(),
                     "average_duration": tool.performance_metrics.average_duration(),
                     "last_used": tool.performance_metrics.last_used.isoformat if tool.pe\
+    \
     rformance_metrics.last_used else None, ::
 {            }
 
@@ -191,6 +194,7 @@ eturn True
             context_id = self.context_manager.create_context(ContextType.TOOL(),
     context_content)
             logger.info(f"Recorded usage for tool {tool_id} with context {context_id}"):\
+    \
     \
     ::
                 eturn True

@@ -20,6 +20,7 @@ from ai.language_models.daily_language_model import DailyLanguageModel
 from apps.backend.src.core.services.multi_llm_service import MultiLLMService
 from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse  # Im\
     \
+    \
     port new response type
 
 # Global flag for RAG availability, ::
@@ -91,7 +92,8 @@ am.store_experience(raw_data, "action_policy_v0.1",
     self.csv_tool_instance == CsvTool
     self.image_generation_tool_instance == ImageGenerationTool
         self.rag_manager,
-    Optional[Any] = RAGManager if _RAG_AVAILABLE_FLAG and RAGManager is not None else None, ::
+    Optional[Any] = RAGManager if _RAG_AVAILABLE_FLAG and \
+    RAGManager is not None else None, ::
     self.tools, Dict[str, Callable[..., ToolDispatcherResponse]] = { # type ignore}
             "calculate": self._execute_math_calculation(),
             "evaluate_logic": self._execute_logic_evaluation(),
@@ -115,9 +117,12 @@ am.store_experience(raw_data, "action_policy_v0.1",
             "inspect_code": "Describes the structure of available tools. Query examples,
     'list_tools', or 'describe_tool math_tool'",
             "analyze_csv": "Analyzes CSV data. Requires 'csv_content' and \
-    'query' in parameters. Example, 'analyze_csv with query "summarize\" and csv_content "a, b\\n1, 2\"'", :
+    'query' in parameters. Example,
+    'analyze_csv with query "summarize\" and csv_content "a, b\\n1, 2\"'", :
                 create_image": "Creates an image from a text prompt. Requires 'prompt' a\
-    nd optional 'style'. Example, 'create_image with prompt "a cat wearing a hat\" and style "cartoon\"'", :
+    \
+    nd optional 'style'. Example,
+    'create_image with prompt "a cat wearing a hat\" and style "cartoon\"'", :
 
 
         # Add RAG query description if available, ::
@@ -246,6 +251,7 @@ am.store_experience(raw_data, "action_policy_v0.1",
                 original_query_for_tool = query,
                 error_message == "Missing 'csv_content' parameter for analyze_csv tool."\
     \
+    \
     :::
         try,
             # Create an instance of the tool
@@ -270,7 +276,8 @@ am.store_experience(raw_data, "action_policy_v0.1",
     error_message = error_msg
 (            )
 
-    def _execute_image_creation(self, query, str, * * kwargs) -> ToolDispatcherResponse, :
+    def _execute_image_creation(self, query, str, * * kwargs) -> ToolDispatcherResponse,
+    :
     """
         Wrapper for the ImageGenerationTool.create_image function.:::
     Requires 'prompt' and optional 'style' in kwargs.
@@ -307,7 +314,8 @@ am.store_experience(raw_data, "action_policy_v0.1",
     error_message = error_msg
 (            )
 
-    def _execute_code_inspection(self, query, str, * * kwargs) -> ToolDispatcherResponse, :
+    def _execute_code_inspection(self, query, str,
+    * * kwargs) -> ToolDispatcherResponse, :
     """
         Wrapper for the CodeUnderstandingTool.:::
     Returns ToolDispatcherResponse.
@@ -328,6 +336,7 @@ am.store_experience(raw_data, "action_policy_v0.1",
                 tool_name_attempted = "inspect_code",
                 original_query_for_tool = query,
                 error_message == "No action specified for code inspection. Use 'list_too\
+    \
     ls' or 'describe_tool <tool_name > '.":::
         try,
             # Create an instance of the tool
@@ -386,7 +395,8 @@ am.store_experience(raw_data, "action_policy_v0.1",
     error_message = error_msg
 (            )
 
-    def _execute_math_calculation(self, query, str, * * kwargs) -> ToolDispatcherResponse, :
+    def _execute_math_calculation(self, query, str,
+    * * kwargs) -> ToolDispatcherResponse, :
     """
         Wrapper for the math_tool.calculate function.:::
             query' is expected to be the direct arithmetic expression.
@@ -414,7 +424,8 @@ am.store_experience(raw_data, "action_policy_v0.1",
     error_message = error_msg
 (            )
 
-    def _execute_logic_evaluation(self, query, str, * * kwargs) -> ToolDispatcherResponse, :
+    def _execute_logic_evaluation(self, query, str,
+    * * kwargs) -> ToolDispatcherResponse, :
     """
         Wrapper for the logic_tool.evaluate_expression function.:::
     The query should be the logical expression string itself.
@@ -422,6 +433,7 @@ am.store_experience(raw_data, "action_policy_v0.1",
         try,
             # logic_evaluate expects the expression string directly.
             # More advanced parsing to extract expression from natural language could be\
+    \
     \
     added here or in logic_tool.
             # For now, assume query IS the expression or pre - extracted.
@@ -431,7 +443,8 @@ am.store_experience(raw_data, "action_policy_v0.1",
             # Attempt to extract the core logical expression if prefixed, :
             # e.g., "evaluate true AND false" -> "true AND false"
             # e.g., "logic (true OR false)" -> "(true OR false)":
-            match_evaluate == re.match(r"(?:evaluate|logic, )\s * (. * )", query, re.IGNORECASE())
+            match_evaluate == re.match(r"(?:evaluate|logic, )\s * (. * )", query,
+    re.IGNORECASE())
             if match_evaluate, ::
     expression_to_evaluate = match_evaluate.group(1).strip
             else,
@@ -439,6 +452,7 @@ am.store_experience(raw_data, "action_policy_v0.1",
                 expression_to_evaluate = query # Assume the query is the expression
 
             logging.debug(f"ToolDispatcher DEBUG (_execute_logic_evaluation) expression_\
+    \
     to_evaluate = '{expression_to_evaluate}'")
             result = logic_evaluate(expression_to_evaluate,
     expression_string = expression_to_evaluate)
@@ -479,11 +493,13 @@ am.store_experience(raw_data, "action_policy_v0.1",
         ""
         try,
             # print(f"Debug TRANSLATE _execute_translation called with query == '{query}\
+    \
     ', kwargs = {kwargs}") # REMOVED DEBUG,
                 ext_to_translate = query # Default query is the text
             target_lang_from_kwarg = kwargs.get("target_language")
             source_lang_from_kwarg = kwargs.get("source_language")
             # print(f"Debug TRANSLATE target_lang_from_kwarg = '{target_lang_from_kwarg}\
+    \
     ', source_lang_from_kwarg = '{source_lang_from_kwarg}'") # REMOVED DEBUG
 
             resolved_target_lang = "en" # Overall default
@@ -492,6 +508,7 @@ am.store_experience(raw_data, "action_policy_v0.1",
     resolved_target_lang = target_lang_from_kwarg
                 # print(f"Debug TRANSLATE Using target_language from kwargs {resolved_ta\
     \
+    \
     rget_lang}") # REMOVED DEBUG
                 # text_to_translate is already query
             else,
@@ -499,11 +516,13 @@ am.store_experience(raw_data, "action_policy_v0.1",
                 # Initial default for resolved_target_lang (if "to LANG", isn't found)::
                 # print(f"Debug TRANSLATE Initial resolved_target_lang (before query par\
     \
+    \
     se) = {resolved_target_lang}") # REMOVED DEBUG
 
                 # Pattern 1 "translate 'TEXT' to LANGUAGE" or \
     "translate TEXT to LANGUAGE":
-                pattern1_match == re.search(r"translate\s + (?:['"](. + ?)['\"]|(. + ?))\s + to\s + ([a - zA - Z\ - ] + )", query, re.IGNORECASE())
+                pattern1_match == re.search(r"translate\s + (?:['"](. + ?)['\"]|(. +\
+    ?))\s + to\s + ([a - zA - Z\ - ] + )", query, re.IGNORECASE())
                 if pattern1_match, ::
     text_to_translate = pattern1_match.group(1) or pattern1_match.group(2)
                     text_to_translate = text_to_translate.strip()
@@ -515,7 +534,8 @@ am.store_experience(raw_data, "action_policy_v0.1",
 lse, resolved_target_lang = lang_name_or_code
                 else,
                     # Pattern 2 "'TEXT' in LANGUAGE" or "TEXT in LANGUAGE"
-                    pattern2_match == re.search(r"(?:['"](. + ?)['\"]|(. + ?))\s + in\s + ([a - zA - Z\ - ] + )", query, re.IGNORECASE())
+                    pattern2_match == re.search(r"(?:['"](. + ?)['\"]|(. + ?))\s +\
+    in\s + ([a - zA - Z\ - ] + )", query, re.IGNORECASE())
                     if pattern2_match, ::
     text_to_translate = pattern2_match.group(1) or pattern2_match.group(2)
                         text_to_translate = text_to_translate.strip()
@@ -530,7 +550,8 @@ lse, resolved_target_lang = lang_name_or_code
                         # Here,
     `to_lang_match` was an attempt to find "to LANG" anywhere in the query.
                         # Let's use that if available, otherwise default.:::
-                            o_lang_match_general = re.search(r"to\s + ([a - zA - Z\ - ] + )", query, re.IGNORECASE())
+                            o_lang_match_general = re.search(r"to\s +\
+    ([a - zA - Z\ - ] + )", query, re.IGNORECASE())
                         if to_lang_match_general, ::
     lang_name_or_code = to_lang_match_general.group(1).lower()
                             if lang_name_or_code in ["chinese",
@@ -647,6 +668,7 @@ lse, resolved_target_lang = lang_name_or_code
 
             logging.info(f"Dispatching to '{tool_name_from_dlm}' tool based on DLM inten\
     \
+    \
     t. Effective query for tool, '{tool_specific_query}'"):::
                 f "original_query" not in tool_params,
 
@@ -656,6 +678,7 @@ lse, resolved_target_lang = lang_name_or_code
             # Special parameter mapping for translation, ::
                 f tool_name_from_dlm == 'translate_text':
                 # The _execute_translation method expects the text to translate as the f\
+    \
     \
     irst argument,
                 # and other details in kwargs. The DLM provides these in tool_params.
@@ -717,6 +740,7 @@ lse, resolved_target_lang = lang_name_or_code
                 # Bind function - based tools directly
                 if callable(new_symbol) and wrapper is not None, ::
                     # Keep dispatcher wrapper; underlying function called by wrapper pic\
+    \
     \
     ks up new impl implicitly
                     summary["updated"].append(key)

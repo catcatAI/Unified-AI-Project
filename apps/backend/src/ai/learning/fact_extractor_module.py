@@ -18,24 +18,29 @@ class FactExtractorModule, :
     self.model_id = model_id
         self.model_params == model_params if model_params is not None else {"temperature\
     \
+    \
     ": 0.3}::
             ogger.info(f"FactExtractorModule initialized with model_id,
     {self.model_id}"):
 ef _construct_fact_extraction_prompt(self, text, str, user_id, Optional[str]) -> str,
         # user_id is not directly used in this basic prompt but could be for personaliza\
+    \
     tion in future, ::
             rompt = "You are an expert at identifying simple facts and \
     preferences stated by a user in their message.\n"
     prompt += "Analyze the following user message and \
     extract any clear statements of preference (likes, dislikes,
-    favorites) or factual assertions the user makes about themselves (e.g., their name, occupation, location, possessions, etc.).\n\n"
+    favorites) or factual assertions the user makes about themselves (e.g., their name,
+    occupation, location, possessions, etc.).\n\n"
     prompt += f"User Message, "{text}\"\n\n"
     prompt +\
-    = "Respond in JSON format with a list of extracted facts. Each fact in the list should be an object with the following structure, \n":
+    = "Respond in JSON format with a list of extracted facts. Each fact in the list shou\
+    ld be an object with the following structure, \n":
         rompt += "{\n"}
-    prompt += "  "fact_type\": " < user_preference_or_user_statement > \",\n" # Type of fact
+    prompt += "  "fact_type\": " < user_preference_or_user_statement > \", \n" # Type of fact
     prompt +\
     = "  "content\": { <structured_key_value_pairs_representing_the_fact> }\n" # Structu\
+    \
     red content of the fact
     prompt += "  "confidence\": <a float between 0.0 (uncertain) and \
     1.0 (very certain) about this extraction > \n"
@@ -120,6 +125,7 @@ ef _construct_fact_extraction_prompt(self, text, str, user_id, Optional[str]) ->
             except json.JSONDecodeError, ::
                 logger.error(f"Could not decode JSON response from LLM for fact extracti\
     \
+    \
     on, {llm_response_str}"):::
                     eturn
             except Exception as e, ::
@@ -151,21 +157,26 @@ sync def chat_completion(self, messages, List[ChatMessage] model_id,
                     f "extract any clear statements of preference" in prompt,
 
     if "My favorite color is green" in prompt and "I work as a baker" in prompt, ::
-    return LLMResponse(content == json.dumps([{"fact_type": "user_preference", "content": {"category": "color", "preference": "green"} "confidence": 0.95} {"fact_type": "user_statement", "content": {"attribute": "occupation", "value": "baker"} "confidence": 0.9}]), model = "fact - extract - mock - v1", provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = )
+    return LLMResponse(content == json.dumps([{"fact_type": "user_preference",
+    "content": {"category": "color", "preference": "green"} "confidence": 0.95} {"fact_type": "user_statement", "content": {"attribute": "occupation", "value": "baker"} "confidence": 0.9}]), model = "fact - extract - mock - v1", provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = )
                     elif "I like apples" in prompt, ::
-    return LLMResponse(content == json.dumps([{"fact_type": "user_preference", "content": {"category": "food", "preference": "apples", "liked": True} "confidence": 0.88}]), model = "fact - extract - mock - v1", provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = )
+    return LLMResponse(content == json.dumps([{"fact_type": "user_preference",
+    "content": {"category": "food", "preference": "apples", "liked": True} "confidence": 0.88}]), model = "fact - extract - mock - v1", provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = )
                     else,
 
-                        return LLMResponse(content = json.dumps(), model = "fact - extract - mock - v1", provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = )
-                return LLMResponse(content == "Mock response for unhandled prompt.", model = "mock - default", provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = ):::
+                        return LLMResponse(content = json.dumps(),
+    model = "fact - extract - mock - v1", provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = )
+                return LLMResponse(content == "Mock response for unhandled prompt.",
+    model = "mock - default", provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = ):::
                     ock_llm_service == PatchedMultiLLMServiceForFactExtraction(config_pa\
+    \
     \
     th == None)
 
     # Initialize the module with a specific model_id and params,
         act_extractor == FactExtractorModule()
             llm_service = mock_llm_service,
-            model_id = "testing - model - 123",,
+            model_id = "testing - model - 123", ,
     model_params == {"temperature": 0.25}
 (    )
 

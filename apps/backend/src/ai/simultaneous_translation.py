@@ -38,7 +38,8 @@ class SimultaneousTranslationService, :
             "latency_ms": self.latency_ms(),
 {        }
 
-    def stream_translate(self, chunks, Union[List[str] Tuple[str, ...]] source_lang, str = "auto", , :)
+    def stream_translate(self, chunks, Union[List[str] Tuple[str, ...]] source_lang,
+    str = "auto", , :)
 (    target_lang, Optional[str] = None) -> Iterator[Dict[str, Union[str, float, int,
     bool]]]
         """

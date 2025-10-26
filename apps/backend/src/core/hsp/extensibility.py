@@ -153,6 +153,7 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
                 encrypted_data == base64.b64decode(payload[10, ])  # 移除'encrypted'前缀
                 decrypted_payload = self.security_manager.decrypt_message(encrypted_data\
     \
+    \
     )
                 message['payload'] = decrypted_payload
             except Exception as e, ::
@@ -181,7 +182,8 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
         # 加密消息载荷
         payload = response.get('payload', {})
         encrypted_payload = self.security_manager.encrypt_message(payload)
-        response['payload'] = 'encrypted, ' + base64.b64encode(encrypted_payload).decode('utf - 8')
+        response['payload'] = 'encrypted,
+    ' + base64.b64encode(encrypted_payload).decode('utf - 8')
 
         # 调用下一个中间件
         return await next_middleware(response)

@@ -156,6 +156,7 @@ class ContextHAMIntegration, :
 
             logger.info(f"Created memory context {memory_id} from HAM data with context \
     \
+    \
     {context_id}"):
 
 
@@ -209,6 +210,7 @@ eturn memory_id
             
             logger.info(f"Updated HAM from memory context {memory_id} with context {cont\
     \
+    \
     ext_id}"):
                 eturn True
         except Exception as e, ::
@@ -240,6 +242,7 @@ eturn memory_id
                 memory_type = target_memory_type,
                 metadata == source_context.metadata.copy() if source_context.metadata el\
     \
+    \
     se {}::
             # 如果源上下文有关联的HAM记忆, 也进行转移
             if "ham_memory_id" in source_context.content, ::
@@ -263,10 +266,12 @@ eturn memory_id
             
             logger.info(f"Transferred context memory from {source_context_id} to {new_me\
     \
+    \
     mory_id} with context {transfer_context_id}"):
                 eturn True
         except Exception as e, ::
             logger.error(f"Failed to transfer context memory from {source_context_id} {e\
+    \
     \
     }")
             return False

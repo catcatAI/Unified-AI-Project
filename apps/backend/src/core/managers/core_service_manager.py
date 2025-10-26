@@ -145,6 +145,7 @@ from .execution_manager import
             if not dep_info or dep_info.status != ServiceStatus.LOADED, ::
                 logger.warning(f"Dependency {dep_name} not loaded for service {service_n\
     \
+    \
     ame}")::
                 return False
 
@@ -188,6 +189,7 @@ from .execution_manager import
             await self._emit_event('service_loaded', service_name)
 
             logger.info(f"Service {service_name} loaded successfully in {service_info.lo\
+    \
     ad_time, .2f}s")
             return True
 
@@ -281,6 +283,7 @@ from .execution_manager import
             if dependent_services and not force, ::
                 logger.warning(f"Service {service_name} is depended by {dependent_servic\
     \
+    \
     es} cannot unload")
                 return False
 
@@ -305,6 +308,7 @@ from .execution_manager import
                                 callback(service_info.instance())
                         except Exception as e, ::
                             logger.error(f"Error in resource cleanup callback for {servi\
+    \
     \
     ce_name} {e}")::
                 if service_info.instance and hasattr(service_info.instance(),

@@ -33,6 +33,7 @@ class MCPConnector, :
     async def connect(self):
     print(f"MCPConnector for {self.ai_id} connecting to {self.broker_address}{self.broke\
     \
+    \
     r_port}"):::
         try,
             # Connect and \
@@ -92,6 +93,7 @@ class MCPConnector, :
                         handler(data.get('args'))
         except json.JSONDecodeError, ::
             project_error_handler(ProjectError("Failed to decode MCP message payload as \
+    \
     JSON.", code = 400))
         except Exception as e, ::
             project_error_handler(ProjectError(f"Error processing MCP message, {e}",
@@ -124,6 +126,7 @@ class MCPConnector, :
                 self.client.publish(topic, json.dumps(envelope))
                 print(f"Sent MCP command '{command_name}' to {target_id} via MQTT with r\
     \
+    \
     equest_id {request_id}"):
     return request_id
             except Exception as e, ::
@@ -137,6 +140,7 @@ class MCPConnector, :
                 await self._send_via_fallback(target_id, command_name, parameters,
     request_id)
                 print(f"Sent MCP command '{command_name}' to {target_id} via fallback wi\
+    \
     \
     th request_id {request_id}"):
     return request_id
@@ -161,6 +165,7 @@ from .fallback.mcp_fallback_protocols import
             is_multiprocess = self.fallback_config.get("is_multiprocess", False)
 
             success = await initialize_mcp_fallback_protocols(is_multiprocess = is_multi\
+    \
     process)
 
             if success, ::
@@ -176,6 +181,7 @@ from .fallback.mcp_fallback_protocols import
                 self.fallback_initialized == False
         except Exception as e, ::
             project_error_handler(ProjectError(f"Error initializing MCP fallback protoco\
+    \
     ls, {e}", code = 500))
             self.fallback_initialized == False
 
@@ -219,6 +225,7 @@ from .fallback.mcp_fallback_protocols import
             self.client.subscribe(topic)
             print(f"Registered handler for command '{command_name}' on topic '{topic}'")\
     \
+    \
     :::
     # 註冊到fallback
         if self.fallback_manager, ::
@@ -260,6 +267,7 @@ from .fallback.mcp_fallback_protocols import
     try,
                 fallback_status = self.fallback_manager.get_status()
                 health["fallback_healthy"] = fallback_status.get("active_protocol") is n\
+    \
     \
     ot None
             except, ::

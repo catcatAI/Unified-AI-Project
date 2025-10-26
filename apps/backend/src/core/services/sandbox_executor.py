@@ -53,6 +53,7 @@ params_json_str = sys.argv[4]
     ::
             odule_file_basename = os.path.splitext(os.path.basename(tool_module_path))[0\
     \
+    \
     ]
 module_name = f"sandboxed_tool_module_{module_file_basename}"
 
@@ -77,6 +78,7 @@ tool_instance == None
             except Exception as init_e, ::
                 raise type(init_e)(f"Failed to initialize '{class_name_to_run}' with def\
     \
+    \
     ault attempts (config == or no args) {init_e}"):
                     ethod_to_call = getattr(tool_instance, method_name_to_run)
 
@@ -97,6 +99,7 @@ output["traceback"] = traceback.format_exc()
 original_traceback = output.get("traceback")
 
 output["result"] = f"Result of type {type(output.get('result')).__name__} is not JSON se\
+    \
     \
     rializable."
 output["error"] = f"Non - serializable result. Serialization error, {te}"
@@ -176,7 +179,8 @@ runner_script_filepath = os.path.join(temp_dir, runner_script_filename)
                 with open(tool_module_filepath, "w", encoding == "utf - 8") as f_tool, :
                     f_tool.write(code_string)
 
-                with open(runner_script_filepath, "w", encoding == "utf - 8") as f_runner, :
+                with open(runner_script_filepath, "w",
+    encoding == "utf - 8") as f_runner, :
                     f_runner.write(SANDBOX_RUNNER_SCRIPT_TEMPLATE)
 
 params_json_string = json.dumps(method_params)
@@ -228,6 +232,7 @@ check == False
                     # The runner script now tries to put all errors into JSON on stdout.
                     # So stderr might be for Python interpreter issues before runner scr\
     \
+    \
     ipt fully executes.::
                     # However,
     if the runner script itself fails badly (e.g. can't import json),
@@ -243,6 +248,7 @@ ry,
     output_json.get("traceback") # If JSON indicates error, ::
                                 ull_error_msg == f"Error during sandboxed tool execution\
     \
+    \
     , {output_json.get('error', 'Unknown error')}"
                                 if output_json.get("traceback"):::
                                     ull_error_msg += f"\nTraceback,
@@ -255,11 +261,13 @@ ry,
                             # And append stderr as a warning.
                             return output_json.get("result"),
     f"Sandbox execution had stderr output (but valid JSON result from stdout)\n{process_\
+    \
     result.stderr.strip}":
                         except json.JSONDecodeError, ::
                             # stdout was not JSON, combine with stderr,
                                 eturn None,
-    f"Sandbox execution error (stderr)\n{process_result.stderr.strip}\nSandbox stdout (non - JSON)\n{process_result.stdout.strip}"
+    f"Sandbox execution error (stderr)\n{process_result.stderr.strip}\nSandbox stdout (n\
+    on - JSON)\n{process_result.stdout.strip}"
                     else, # Only stderr, or stdout was empty
                         return None,
     f"Sandbox execution error (stderr)\n{process_result.stderr.strip}"
