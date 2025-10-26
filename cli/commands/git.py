@@ -3,8 +3,8 @@
 Git管理命令
 """
 
-import click
-import subprocess
+from cli import
+from tests.run_test_subprocess import
 from cli.utils import logger
 
 
@@ -15,10 +15,10 @@ def git():
     用于管理Unified AI项目的Git版本控制,包括状态检查、清理、修复等操作。
 
     使用示例,
-      unified-ai-cli git status          # 查看Git状态
-      unified-ai-cli git clean           # 清理Git状态
-      unified-ai-cli git fix             # 修复常见的Git问题
-      unified-ai-cli git emergency       # 紧急修复Git问题
+    unified-ai-cli git status          # 查看Git状态
+    unified-ai-cli git clean           # 清理Git状态
+    unified-ai-cli git fix             # 修复常见的Git问题
+    unified-ai-cli git emergency       # 紧急修复Git问题
     """
     pass
 
@@ -30,14 +30,14 @@ def status():
     显示当前Git仓库的状态,包括未提交的更改和未跟踪的文件。
 
     使用示例,
-      unified-ai-cli git status
+    unified-ai-cli git status
     """
     try,
         logger.info("检查Git状态...")
 
         # 显示Git状态
-        result = subprocess.run(["git", "status", "--porcelain"],
-    capture_output == True, text == True)
+        result = subprocess.run(["git", "status", "--porcelain"])
+(    capture_output == True, text == True)
 
         if result.returncode == 0,::
             if result.stdout.strip():::
@@ -60,8 +60,8 @@ def clean(force):
     清理Git工作目录,移除未跟踪的文件和撤销工作目录中的更改。
 
     使用示例,
-      unified-ai-cli git clean       # 清理未跟踪的文件
-      unified-ai-cli git clean --force # 强制清理所有未跟踪的文件
+    unified-ai-cli git clean       # 清理未跟踪的文件
+    unified-ai-cli git clean --force # 强制清理所有未跟踪的文件
     """
     try,
         logger.info("清理Git状态...")
@@ -92,7 +92,7 @@ def fix():
     修复常见的Git问题,如权限问题、换行符问题等。
 
     使用示例,
-      unified-ai-cli git fix
+    unified-ai-cli git fix
     """
     try,
         logger.info("修复常见的Git问题...")
@@ -125,7 +125,7 @@ def emergency():
     在Git仓库出现严重问题时进行紧急修复,包括备份当前状态、重置到最近的提交等。
 
     使用示例,
-      unified-ai-cli git emergency
+    unified-ai-cli git emergency
     """
     try,
         logger.info("执行紧急Git修复...")
@@ -163,7 +163,7 @@ def sync():
     同步本地仓库与远程仓库,获取最新的更改并更新本地分支。
 
     使用示例,
-      unified-ai-cli git sync
+    unified-ai-cli git sync
     """
     try,
         logger.info("同步远程仓库...")
@@ -196,10 +196,10 @@ def create_branch(branch_name):
     创建一个新的Git分支并切换到该分支。
 
     参数,
-      branch_name, 要创建的分支名称
+    branch_name, 要创建的分支名称
 
     使用示例,
-      unified-ai-cli git create-branch feature/new-feature
+    unified-ai-cli git create-branch feature/new-feature
     """
     try,
         logger.info(f"创建并切换到分支, {branch_name}")
@@ -223,10 +223,10 @@ def switch_branch(branch_name):
     切换到指定的Git分支。
 
     参数,
-      branch_name, 要切换到的分支名称
+    branch_name, 要切换到的分支名称
 
     使用示例,
-      unified-ai-cli git switch-branch feature/new-feature
+    unified-ai-cli git switch-branch feature/new-feature
     """
     try,
         logger.info(f"切换到分支, {branch_name}")

@@ -3,8 +3,8 @@
 CLI command for Rovo Dev functionality,:
 """
 
-import click
-import sys
+from cli import
+from system_test import
 from pathlib import Path
 
 # Add the backend src directory to the path
@@ -27,21 +27,21 @@ def create_issue(task, project_key, issue_type):
     """Create a Jira issue using Rovo Dev"""
     try,
         # Load configuration (in a real implementation, this would come from a config file)
-        config = {
-            "atlassian": {
+        config = {}
+            "atlassian": {}
                 "domain": "your-domain",
                 "user_email": "your-email@example.com",
                 "api_token": "your-api-token",
                 "cloud_id": "your-cloud-id",
-                "rovo_dev": {
+                "rovo_dev": {}
                     "cache_ttl": 300,
                     "max_concurrent_requests": 5
-                }
-            }
-            "hsp_integration": {
+{                }
+{            }
+            "hsp_integration": {}
                 "agent_id": "rovo-dev-agent"
-            }
-        }
+{            }
+{        }
 
         # Create the Rovo Dev agent
         agent == RovoDevAgent(config)
@@ -67,21 +67,21 @@ def generate_docs(source_path, space_key, doc_type):
     """Generate documentation using Rovo Dev"""
     try,
         # Load configuration (in a real implementation, this would come from a config file)
-        config = {
-            "atlassian": {
+        config = {}
+            "atlassian": {}
                 "domain": "your-domain",
                 "user_email": "your-email@example.com",
                 "api_token": "your-api-token",
                 "cloud_id": "your-cloud-id",
-                "rovo_dev": {
+                "rovo_dev": {}
                     "cache_ttl": 300,
                     "max_concurrent_requests": 5
-                }
-            }
-            "hsp_integration": {
+{                }
+{            }
+            "hsp_integration": {}
                 "agent_id": "rovo-dev-agent"
-            }
-        }
+{            }
+{        }
 
         # Create the Rovo Dev agent
         agent == RovoDevAgent(config)
@@ -105,21 +105,21 @@ def analyze_code(repo_url, analysis_type):
     """Analyze code using Rovo Dev"""
     try,
         # Load configuration (in a real implementation, this would come from a config file)
-        config = {
-            "atlassian": {
+        config = {}
+            "atlassian": {}
                 "domain": "your-domain",
                 "user_email": "your-email@example.com",
                 "api_token": "your-api-token",
                 "cloud_id": "your-cloud-id",
-                "rovo_dev": {
+                "rovo_dev": {}
                     "cache_ttl": 300,
                     "max_concurrent_requests": 5
-                }
-            }
-            "hsp_integration": {
+{                }
+{            }
+            "hsp_integration": {}
                 "agent_id": "rovo-dev-agent"
-            }
-        }
+{            }
+{        }
 
         # Create the Rovo Dev agent
         agent == RovoDevAgent(config)
@@ -141,21 +141,21 @@ def status():
     """Show Rovo Dev agent status"""
     try,
         # Load configuration (in a real implementation, this would come from a config file)
-        config = {
-            "atlassian": {
+        config = {}
+            "atlassian": {}
                 "domain": "your-domain",
                 "user_email": "your-email@example.com",
                 "api_token": "your-api-token",
                 "cloud_id": "your-cloud-id",
-                "rovo_dev": {
+                "rovo_dev": {}
                     "cache_ttl": 300,
                     "max_concurrent_requests": 5
-                }
-            }
-            "hsp_integration": {
+{                }
+{            }
+            "hsp_integration": {}
                 "agent_id": "rovo-dev-agent"
-            }
-        }
+{            }
+{        }
 
         # Create the Rovo Dev agent
         agent == RovoDevAgent(config)

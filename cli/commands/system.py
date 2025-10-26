@@ -3,11 +3,11 @@
 系统管理命令
 """
 
-import click
-import subprocess
-import sys
-import platform
-import psutil
+from cli import
+from tests.run_test_subprocess import
+from system_test import
+# TODO: Fix import - module 'platform' not found
+# TODO: Fix import - module 'psutil' not found
 from pathlib import Path
 from cli.utils import logger
 
@@ -19,9 +19,9 @@ def system():
     用于管理系统级别的操作,包括查看系统信息、维护操作等。
 
     使用示例,
-      unified-ai-cli system info      # 查看系统信息
-      unified-ai-cli system status    # 查看系统状态
-      unified-ai-cli system clean     # 清理系统缓存
+    unified-ai-cli system info      # 查看系统信息
+    unified-ai-cli system status    # 查看系统状态
+    unified-ai-cli system clean     # 清理系统缓存
     """
     pass
 
@@ -33,7 +33,7 @@ def info():
     显示当前系统的详细信息,包括操作系统、CPU、内存等。
 
     使用示例,
-      unified-ai-cli system info
+    unified-ai-cli system info
     """
     try,
         logger.info("系统信息,")
@@ -63,7 +63,7 @@ def status():
     检查系统运行状态,包括磁盘空间、进程等。
 
     使用示例,
-      unified-ai-cli system status
+    unified-ai-cli system status
     """
     try,
         logger.info("检查系统状态...")
@@ -97,7 +97,7 @@ def clean():
     清理项目相关的缓存文件和临时文件。
 
     使用示例,
-      unified-ai-cli system clean
+    unified-ai-cli system clean
     """
     try,
         logger.info("清理系统缓存...")
@@ -106,7 +106,7 @@ def clean():
         # 清理Python缓存
         logger.info("清理Python缓存...")
         for cache_dir in project_root.rglob('__pycache__'):::
-            import shutil
+# TODO: Fix import - module 'shutil' not found
             try,
                 shutil.rmtree(str(cache_dir))  # 转换为字符串
                 logger.info(f"  已删除, {cache_dir}")
@@ -145,7 +145,7 @@ def backup():
     创建项目当前状态的备份。
 
     使用示例,
-      unified-ai-cli system backup
+    unified-ai-cli system backup
     """
     try,
         logger.info("创建项目备份...")
@@ -154,20 +154,20 @@ def backup():
         backup_dir = project_root / "backups"
         backup_dir.mkdir(exist_ok == True)
 
-        import datetime
+# TODO: Fix import - module 'datetime' not found
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_name = f"backup_{timestamp}"
         backup_path = backup_dir / backup_name
 
         # 创建备份
-        import shutil
-        shutil.copytree(,
+# TODO: Fix import - module 'shutil' not found
+        shutil.copytree()
     str(project_root),  # 转换为字符串
             str(backup_path),   # 转换为字符串
-            ignore=shutil.ignore_patterns(
+            ignore=shutil.ignore_patterns()
                 "node_modules", "venv", "__pycache__", "logs", "backups", ".git"
-            )
-        )
+(            )
+(        )
 
         logger.info(f"项目备份已创建, {backup_path}")
 

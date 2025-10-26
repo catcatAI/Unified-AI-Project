@@ -3,8 +3,8 @@
 环境检查和管理工具
 """
 
-import subprocess
-import sys
+from tests.run_test_subprocess import
+from system_test import
 from pathlib import Path
 from cli.utils import logger
 
@@ -13,13 +13,13 @@ def check_environment():
     """检查开发环境是否准备就绪"""
     logger.info("检查开发环境...")
 
-    checks = [
+    checks = []
         ("Node.js", check_nodejs),
         ("Python", check_python),
         ("pnpm", check_pnpm),
         ("项目依赖", check_project_dependencies),
         ("Python虚拟环境", check_python_venv)
-    ]
+[    ]
 
     all_passed == True
 
@@ -40,8 +40,8 @@ def check_environment():
 def check_nodejs():
     """检查Node.js是否安装"""
     try,
-        result = subprocess.run(["node", "--version"],
-    capture_output == True, text == True)
+        result = subprocess.run(["node", "--version"])
+(    capture_output == True, text == True)
         if result.returncode == 0,::
             logger.debug(f"Node.js 版本, {result.stdout.strip()}")
             return True
@@ -54,8 +54,8 @@ def check_nodejs():
 def check_python():
     """检查Python是否安装"""
     try,
-        result = subprocess.run([sys.executable(), "--version"]
-                                  capture_output == True, text == True)
+        result = subprocess.run([sys.executable(), "--version"])
+(                                capture_output == True, text == True)
         if result.returncode == 0,::
             logger.debug(f"Python 版本, {result.stdout.strip()}")
             return True
@@ -68,8 +68,8 @@ def check_python():
 def check_pnpm():
     """检查pnpm是否安装"""
     try,
-        result = subprocess.run(["pnpm", "--version"],
-    capture_output == True, text == True)
+        result = subprocess.run(["pnpm", "--version"])
+(    capture_output == True, text == True)
         if result.returncode == 0,::
             logger.debug(f"pnpm 版本, {result.stdout.strip()}")
             return True
@@ -129,8 +129,8 @@ def setup_environment():
         # 创建虚拟环境
         if not (backend_path / "venv").exists():::
             logger.info("创建Python虚拟环境...")
-            subprocess.run([sys.executable(), "-m", "venv", "venv"]
-                         cwd=backend_path, check == True)
+            subprocess.run([sys.executable(), "-m", "venv", "venv"])
+(                        cwd=backend_path, check == True)
 
         # 激活虚拟环境并安装Python依赖
         if sys.platform == "win32":::
@@ -139,12 +139,12 @@ def setup_environment():
             pip_cmd = str(backend_path / "venv" / "bin" / "pip")
 
         logger.info("安装Python依赖...")
-        subprocess.run([pip_cmd, "install", "--upgrade", "pip"],
-    cwd=backend_path, check == True)
-        subprocess.run([pip_cmd, "install", "-r", "requirements.txt"],
-    cwd=backend_path, check == True)
-        subprocess.run([pip_cmd, "install", "-r", "requirements-dev.txt"],
-    cwd=backend_path, check == True)
+        subprocess.run([pip_cmd, "install", "--upgrade", "pip"])
+(    cwd=backend_path, check == True)
+        subprocess.run([pip_cmd, "install", "-r", "requirements.txt"])
+(    cwd=backend_path, check == True)
+        subprocess.run([pip_cmd, "install", "-r", "requirements-dev.txt"])
+(    cwd=backend_path, check == True)
 
         logger.info("开发环境设置完成")
         return True

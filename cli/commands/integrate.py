@@ -3,9 +3,9 @@
 CLI command for system integration testing,:
 """
 
-import click
-import json
-import sys
+from cli import
+from tests.test_json_fix import
+from system_test import
 from pathlib import Path
 
 # Add the backend src directory to the path
@@ -42,15 +42,15 @@ def start():
 @click.option('--user-id', default == 'test_user', help='User ID for the test')::
 @click.option('--request-type', default='dialogue', help='Type of request to process')
 @click.option('--message', default == 'Hello, how can you help me today?', help='Message for dialogue requests')::
-def test_request(user_id, request_type, message) -> None,
+def test_request(user_id, request_type, message) -> None,:
     """Test processing a request through the unified system"""
     try,
         # Create a test request
-        request = {
+        request = {}
             "type": request_type,
             "message": message,
             "context": {}
-        }
+{        }
 
         # Output the result
         click.echo("Request processing result,")

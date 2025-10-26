@@ -1,8 +1,8 @@
-import click
-import subprocess
-import sys
-from pathlib import Path
-import logging
+from cli import
+from tests.run_test_subprocess import
+from system_test import
+# TODO: Fix import - module 'pathlib' not found
+from tests.tools.test_tool_dispatcher_logging import
 
 logger = logging.getLogger(__name__)
 
@@ -13,10 +13,10 @@ def deps():
     用于管理Unified AI项目的依赖,包括Node.js依赖和Python依赖。
 
     使用示例:
-      unified-ai-cli deps install      # 安装所有依赖
-      unified-ai-cli deps update       # 更新依赖
-      unified-ai-cli deps check        # 检查依赖状态
-      unified-ai-cli deps clean        # 清理依赖
+    unified-ai-cli deps install      # 安装所有依赖
+    unified-ai-cli deps update       # 更新依赖
+    unified-ai-cli deps check        # 检查依赖状态
+    unified-ai-cli deps clean        # 清理依赖
     """
     pass
 
@@ -28,7 +28,7 @@ def install():
     安装项目所需的所有依赖,包括Node.js依赖和Python依赖。
 
     使用示例:
-      unified-ai-cli deps install
+    unified-ai-cli deps install
     """
     try:
         logger.info("正在安装依赖...")
@@ -68,7 +68,7 @@ def update():
     更新项目中的所有依赖到最新版本。
 
     使用示例:
-      unified-ai-cli deps update
+    unified-ai-cli deps update
     """
     try:
         logger.info("正在更新依赖...")
@@ -108,7 +108,7 @@ def check():
     检查项目依赖的状态,包括版本冲突和缺失的依赖。
 
     使用示例:
-      unified-ai-cli deps check
+    unified-ai-cli deps check
     """
     try:
         logger.info("检查依赖状态...")
@@ -147,7 +147,7 @@ def clean():
     清理项目中的依赖,包括删除node_modules目录和Python虚拟环境。
 
     使用示例:
-      unified-ai-cli deps clean
+    unified-ai-cli deps clean
     """
     try:
         logger.info("清理依赖...")
@@ -162,7 +162,7 @@ def clean():
         backend_path = project_root / "apps" / "backend"
         if (backend_path / "venv").exists():
             logger.info("清理Python虚拟环境...")
-            import shutil
+# TODO: Fix import - module 'shutil' not found
             shutil.rmtree(backend_path / "venv")
             logger.info("Python虚拟环境已删除")
         else:
