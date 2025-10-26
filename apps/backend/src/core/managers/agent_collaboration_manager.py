@@ -17,7 +17,8 @@ class AgentCollaborationManager, :
     and result integration.
     """
 
-    def __init__(self, agent_manager, AgentManager, hsp_connector, HSPConnector) -> None, :
+    def __init__(self, agent_manager, AgentManager, hsp_connector,
+    HSPConnector) -> None, :
     self.agent_manager = agent_manager
     self.hsp_connector = hsp_connector
     self.collaboration_tasks =   # Track ongoing collaborative tasks
@@ -43,6 +44,7 @@ class AgentCollaborationManager, :
     Returns, Dict[...] Integrated results from all subtasks
     """
     logger.info(f"[Collaboration] Starting collaborative task {task_id} with {len(subtas\
+    \
     ks)} subtasks")
 
     # Initialize task tracking
@@ -109,8 +111,8 @@ class AgentCollaborationManager, :
     task_request == HSPTaskRequestPayload()
             request_id = subtask_id,
             capability_id_filter = capability_needed,
-            parameters = task_parameters,,
-    callback_address=f"collaboration_manager / results / {subtask_id}"
+            parameters = task_parameters, ,
+    callback_address = f"collaboration_manager / results / {subtask_id}"
 (    )
 
     # Send task to appropriate agent
@@ -153,6 +155,7 @@ class AgentCollaborationManager, :
     status = result_payload.get("status")
 
         logger.info(f"[Collaboration] Received result for task {request_id} from agent {\
+    \
     sender_ai_id}")::
     # Store result
     self.task_results[request_id] = result_payload
@@ -168,6 +171,7 @@ class AgentCollaborationManager, :
                     f task_info["completed_subtasks"] >= task_info["total_subtasks"]
 
     logger.info(f"[Collaboration] All subtasks for collaborative task {task_id} complete\
+    \
     d")::
                     # In a real implementation, this would trigger result integration
 
@@ -285,6 +289,7 @@ class AgentCollaborationManager, :
         else,
 
             logger.warning(f"[Collaboration] Task {task_id} not found for cancellation")\
+    \
     :::
                 eturn False
 
@@ -318,6 +323,7 @@ if __name"__main__":::
                     "style": "technical"
 {                }
                 "task_description": "Generate technical marketing copy for AI project ma\
+    \
     nagement tool":::
                     ,
             {}

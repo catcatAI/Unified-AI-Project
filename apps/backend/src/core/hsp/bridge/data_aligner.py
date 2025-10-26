@@ -63,24 +63,28 @@ ef _align_fact_payload(self, payload, Dict[str,
     Any]) -> (Optional[HSPTaskRequestPayload] Optional[HSPErrorDetails]):
         if "request_id" not in payload, ::
             return None,
-    self._create_error_details("Missing 'request_id' in TaskRequest payload", "payload.request_id")
+    self._create_error_details("Missing 'request_id' in TaskRequest payload",
+    "payload.request_id")
         return payload, None
 
     def _align_task_result_payload(self, payload, Dict[str,
     Any]) -> (Optional[HSPTaskResultPayload] Optional[HSPErrorDetails]):
         if "result_id" not in payload, ::
             return None,
-    self._create_error_details("Missing 'result_id' in TaskResult payload", "payload.result_id")
+    self._create_error_details("Missing 'result_id' in TaskResult payload",
+    "payload.result_id")
         return payload, None
 
     def _align_capability_advertisement_payload(self, payload, Dict[str,
     Any]) -> (Optional[HSPCapabilityAdvertisementPayload] Optional[HSPErrorDetails]):
         if "capability_id" not in payload, ::
             return None,
-    self._create_error_details("Missing 'capability_id' in CapabilityAdvertisement payload", "payload.capability_id")
+    self._create_error_details("Missing 'capability_id' in CapabilityAdvertisement paylo\
+    ad", "payload.capability_id")
         return payload, None
 
-    def _create_error_details(self, message, str, location, str, error_type, str == "ValidationError") -> HSPErrorDetails, :
+    def _create_error_details(self, message, str, location, str, error_type,
+    str == "ValidationError") -> HSPErrorDetails, :
         return {}
             "error_code": error_type,
             "error_message": message,

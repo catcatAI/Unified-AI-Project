@@ -85,13 +85,17 @@ class LightweightCodeModel:
             param_info = {"name": arg_node.arg, "annotation": None, "default": None}
             if arg_node.annotation:
                 param_info["annotation"] = ast.unparse(arg_node.annotation) if hasattr(a\
+    \
     st, 'unparse') else "TypeHint"
             # Determine default value
-            if i >= pos_defaults_start_idx and i < num_pos_args:  # Positional / regular arg with default:
+            if i >= pos_defaults_start_idx and \
+    i < num_pos_args:  # Positional / regular arg with default:
                 default_val_node = args.defaults[i - pos_defaults_start_idx]
                 if default_val_node:  # Can be None if there's a default of None literal\
+    \
     ly:
                     param_info["default"] = ast.unparse(default_val_node) if hasattr(ast\
+    \
     , 'unparse') else "DefaultValue"
             elif arg_node in args.kwonlyargs:
                 # For kwonlyargs, kw_defaults is a list of default values,
@@ -104,22 +108,27 @@ class LightweightCodeModel:
                         default_val_node = args.kw_defaults[kwonly_idx]
                         # type ignore
                         param_info["default"] = ast.unparse(default_val_node) if hasattr\
+    \
     (ast, 'unparse') else "DefaultValue"
                 except ValueError:
                     pass  # Should not happen if arg_node is from args.kwonlyargs
             params_details.append(param_info)
 
         if args.vararg:
-            vararg_info = {"name": f" * {args.vararg.arg}", "annotation": None, "default": None}
+            vararg_info = {"name": f" * {args.vararg.arg}", "annotation": None,
+    "default": None}
             if args.vararg.annotation:
                 vararg_info["annotation"] = ast.unparse(args.vararg.annotation) if hasat\
+    \
     tr(ast, 'unparse') else "TypeHint"
             params_details.append(vararg_info)
 
         if args.kwarg:
-            kwarg_info = {"name": f" * *{args.kwarg.arg}", "annotation": None, "default": None}
+            kwarg_info = {"name": f" * *{args.kwarg.arg}", "annotation": None,
+    "default": None}
             if args.kwarg.annotation:
                 kwarg_info["annotation"] = ast.unparse(args.kwarg.annotation) if hasattr\
+    \
     (ast, 'unparse') else "TypeHint"
             params_details.append(kwarg_info)
 
@@ -156,11 +165,12 @@ class LightweightCodeModel:
             return None
 
         try:
-            with open(filepath, "r", encoding="utf - 8") as source_file:
+            with open(filepath, "r", encoding = "utf - 8") as source_file:
                 source_code = source_file.read()
             tree = ast.parse(source_code, filename = filepath)
         except Exception as e:
-            logger.error(f"Error parsing Python file '{filepath}': {e}", exc_info = True)
+            logger.error(f"Error parsing Python file '{filepath}': {e}",
+    exc_info = True)
             return None
 
         # Calculate complexity
@@ -201,11 +211,13 @@ class LightweightCodeModel:
                         # Basic return type hint
                         if item.returns:
                             method_info["returns"] = ast.unparse(item.returns) if hasatt\
+    \
     r(ast, 'unparse') else "TypeHint (unparse unavailable)"
                         class_info["methods"].append(method_info)
                 file_structure["classes"].append(class_info)
 
-            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):  # Module - level functions:
+            elif isinstance(node, (ast.FunctionDef,
+    ast.AsyncFunctionDef)):  # Module - level functions:
                 func_info = {}
                     "name": node.name,
                     "docstring": ast.get_docstring(node),
@@ -263,6 +275,7 @@ class LightweightCodeModel:
 
         # 1. Check if tools_directory is valid for name resolution
         # This check is more critical if we are about to list its contents for name sear\
+    \
     ch
         # If input is a direct path, tools_directory might not be used.
 
@@ -276,12 +289,14 @@ class LightweightCodeModel:
                 logger.debug(f"Input '{tool_name_or_filepath}' is a direct file path.")
             else:
                 logger.warning(f"Input '{tool_name_or_filepath}' appears to be a path bu\
+    \
     t was not found or is not a file.")
                 return None
         else:
             # Input is a name.
             if not os.path.isdir(self.tools_directory):
                 logger.warning(f"Tools directory '{self.tools_directory}' is not valid. \
+    \
     Cannot resolve tool by name: {tool_name_or_filepath}")
                 return None
 
@@ -296,6 +311,7 @@ class LightweightCodeModel:
             if os.path.isfile(potential_path_direct):
                 resolved_path = potential_path_direct
                 logger.info(f"Tool name '{tool_name_input}' resolved to '{resolved_path}\
+    \
     ' by direct match in {self.tools_directory}.")
             else:
                 base_name = os.path.splitext(tool_name_input)[0]
@@ -314,16 +330,20 @@ class LightweightCodeModel:
                         module_part == f"{base_name}_tool":
                             found_pattern_matches.append(full_candidate_path)
                 except OSError as e:
-                    logger.error(f"Error listing tools directory '{self.tools_directory}': {e}", exc_info = True)
+                    logger.error(f"Error listing tools directory '{self.tools_directory}\
+    ': {e}", exc_info = True)
                     return None
 
                 if len(found_pattern_matches) == 1:
                     resolved_path = found_pattern_matches[0]
                     logger.info(f"Tool name '{tool_name_input}' (base: '{base_name}') re\
+    \
     solved to '{resolved_path}' by pattern search in {self.tools_directory}.")
                 elif len(found_pattern_matches) > 1:
                     logger.warning(f"Ambiguous tool name '{tool_name_input}' (base: '{ba\
-    se_name}'). Found multiple pattern matches in {self.tools_directory} {found_pattern_matches}. Please provide a more specific name or direct path.")
+    \
+    se_name}'). Found multiple pattern matches in {self.tools_directory} {found_pattern_\
+    matches}. Please provide a more specific name or direct path.")
                     return None
 
         if resolved_path:
@@ -334,7 +354,9 @@ class LightweightCodeModel:
                 return self.analyze_tool_file(resolved_path)
         else:
             logger.warning(f"Could not resolve tool '{tool_name_or_filepath}' to a Pytho\
-    n file in '{self.tools_directory}' using supported conventions, nor as a direct path.")
+    \
+    n file in '{self.tools_directory}' using supported conventions,
+    nor as a direct path.")
             return None
 
     def get_analysis_history(self) -> List[CodeAnalysisResult]:
@@ -361,13 +383,15 @@ if __name__ == '__main__':
     # Ensure this runs from the project root or PYTHONPATH is set for src.
     # Assuming this file is in src / core_ai / code_understanding/
 
-    # Construct path to 'src / tools / ' relative to this file's location for standalone testing
+    # Construct path to 'src / tools /\
+    ' relative to this file's location for standalone testing
     # This is a bit fragile and depends on script location vs. project structure.
     # For proper usage,
     the module should be imported and used from a context aware of the project root.
 
     # current_dir = os.path.dirname(os.path.abspath(__file__))
-    # project_root_guess = os.path.abspath(os.path.join(current_dir, "..", "..", "..")) # Up three levels from src / core_ai / code_understanding
+    # project_root_guess = os.path.abspath(os.path.join(current_dir, "..", "..",
+    "..")) # Up three levels from src / core_ai / code_understanding
     # tools_dir_test = os.path.join(project_root_guess, "src", "tools")
 
     # print(f"Attempting to use tools directory {tools_dir_test}")
@@ -392,6 +416,7 @@ if __name__ == '__main__':
     #         print("Could not analyze tool structure (enhanced).")
     # else:
     #     print(f"Test math_tool.py not found at {math_tool_path_rel} from current worki\
+    \
     ng directory.")
 
     # # Example for a non - existent tool
@@ -400,6 +425,7 @@ if __name__ == '__main__':
     # if not non_existent_structure:
     #     print("Correctly returned None for non - existent tool (enhanced).")
     # Note: The __main__ block is primarily for very basic smoke testing of the class st\
+    \
     ructure.
     # Proper testing will be done with unittest.
     pass  # Placeholder to avoid syntax error on empty __main__

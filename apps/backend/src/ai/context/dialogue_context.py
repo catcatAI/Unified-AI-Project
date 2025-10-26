@@ -13,7 +13,8 @@ logger, Any = logging.getLogger(__name__)
 class Message, :
     """消息"""
 
-    def __init__(self, sender, str, content, str, message_type, str == "text") -> None, :
+    def __init__(self, sender, str, content, str, message_type, str == "text") -> None,
+    :
     self.message_id = f"msg_{datetime.now.strftime('%Y%m%d%H%M%S%f')}"
     self.sender = sender
     self.content = content
@@ -56,7 +57,8 @@ class Conversation, :
     self.context_manager = context_manager
     self.conversations, Dict[str, Conversation] =
 
-    def start_conversation(self, conversation_id, str, participants, List[str]) -> bool, :
+    def start_conversation(self, conversation_id, str, participants, List[str]) -> bool,
+    :
     """开始对话"""
         try,
 
@@ -76,6 +78,7 @@ class Conversation, :
             context_id = self.context_manager.create_context(ContextType.DIALOGUE(),
     context_content)
             logger.info(f"Started conversation {conversation_id} with context {context_i\
+    \
     d}"):
 
 
@@ -84,7 +87,8 @@ eturn True
             logger.error(f"Failed to start conversation {conversation_id} {e}")
             return False
 
-    def add_message(self, conversation_id, str, sender, str, content, str, message_type, str == "text") -> bool, :
+    def add_message(self, conversation_id, str, sender, str, content, str, message_type,
+    str == "text") -> bool, :
     """添加消息"""
         try,
 
@@ -111,6 +115,7 @@ eturn True
             context_id = self.context_manager.create_context(ContextType.DIALOGUE(),
     context_content)
             logger.info(f"Added message to conversation {conversation_id} with context {\
+    \
     context_id}"):
                 eturn True
         except Exception as e, ::
@@ -140,15 +145,15 @@ eturn True
 
     # 简单的模式匹配
     # 匹配邮箱
-    emails = re.findall(r'\b[A - Za - z0 - 9._%+ - ]+@[A - Za - z0 - 9. - ]+\.[A - Z|a - z]{2,}\b', text)
+    emails = re.findall(r'\b[A - Za - z0 - 9._%+ - ] + @[A - Za - z0 - 9. - ] + \.[A - Z|a - z]{2,}\b', text)
     entities.extend(emails)
 
     # 匹配URL
-    urls == re.findall(r'http[s]?: / /(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text)
+    urls == re.findall(r'http[s]?: / /(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[! * \\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text)
     entities.extend(urls)
 
     # 匹配日期
-    dates = re.findall(r'\d{4}-\d{2}-\d{2}|\d{2} / \d{2} / \d{4}', text)
+    dates = re.findall(r'\d{4} - \d{2} - \d{2}|\d{2} / \d{2} / \d{4}', text)
     entities.extend(dates)
 
     return list(set(entities))  # 去重
@@ -222,10 +227,12 @@ f positive_count > negative_count,
             context_id = self.context_manager.create_context(ContextType.DIALOGUE(),
     context_content)
             logger.info(f"Generated context summary for conversation {conversation_id} w\
+    \
     ith context {context_id}"):::
                 eturn summary
         except Exception as e, ::
             logger.error(f"Failed to generate context summary for conversation {conversa\
+    \
     tion_id} {e}"):::
                 eturn None
 
@@ -258,6 +265,7 @@ f positive_count > negative_count,
 {            }
         except Exception as e, ::
             logger.error(f"Failed to get context for conversation {conversation_id} {e}"\
+    \
     ):::
                 eturn None
 
@@ -331,13 +339,16 @@ f positive_count > negative_count,
                 context_id = self.context_manager.create_context(ContextType.DIALOGUE(),
     context_content)
                 logger.info(f"Transferred context from {source_conversation_id} to {targ\
+    \
     et_conversation_id} with context {context_id}"):
                     eturn True
 
             logger.debug(f"No context summary to transfer from {source_conversation_id}"\
+    \
     )
             return False
         except Exception as e, ::
             logger.error(f"Failed to transfer context from {source_conversation_id} to {\
+    \
     target_conversation_id} {e}")
             return False

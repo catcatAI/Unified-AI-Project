@@ -12,7 +12,8 @@ logger, Any = logging.getLogger(__name__)
 class ToolCategory, :
     """工具分类"""
 
-    def __init__(self, category_id, str, name, str, description, str == "", parent_id, Optional[str] = None) -> None, :
+    def __init__(self, category_id, str, name, str, description, str == "", parent_id,
+    Optional[str] = None) -> None, :
     self.category_id = category_id
     self.name = name
     self.description = description
@@ -34,7 +35,8 @@ class ToolCategory, :
 class Tool, :
     """工具定义"""
 
-    def __init__(self, tool_id, str, name, str, description, str == "", category_id, str == "") -> None, :
+    def __init__(self, tool_id, str, name, str, description, str == "", category_id,
+    str == "") -> None, :
     self.tool_id = tool_id
     self.name = name
     self.description = description
@@ -53,7 +55,8 @@ class Tool, :
 class ToolUsageRecord, :
     """工具使用记录"""
 
-    def __init__(self, parameters, Dict[str, Any] result, Any, duration, float, success, bool) -> None, :
+    def __init__(self, parameters, Dict[str, Any] result, Any, duration, float, success,
+    bool) -> None, :
     self.timestamp = datetime.now()
     self.parameters = parameters
     self.result = result
@@ -92,7 +95,7 @@ class ToolPerformanceMetrics, :
     self.categories, Dict[str, ToolCategory] =
     self.tools, Dict[str, Tool] =
 
-    def create_tool_category(self, category_id, str, name, str, description, str = "", ,:)
+    def create_tool_category(self, category_id, str, name, str, description, str = "", , :)
 (    parent_id, Optional[str] = None) -> bool,
     """创建工具分类"""
         try,
@@ -116,6 +119,7 @@ class ToolPerformanceMetrics, :
             context_id = self.context_manager.create_context(ContextType.TOOL(),
     context_content)
             logger.info(f"Created tool category {category_id} with context {context_id}"\
+    \
     ):
 
 
@@ -124,7 +128,8 @@ eturn True
             logger.error(f"Failed to create tool category {category_id} {e}")
             return False
 
-    def register_tool(self, tool_id, str, name, str, description, str == "", category_id, str == "") -> bool, :
+    def register_tool(self, tool_id, str, name, str, description, str == "",
+    category_id, str == "") -> bool, :
     """注册工具"""
         try,
 
@@ -152,7 +157,8 @@ eturn True
             logger.error(f"Failed to register tool {tool_id} {e}")
             return False
 
-    def record_tool_usage(self, tool_id, str, parameters, Dict[str, Any] result, Any, duration, float, success, bool) -> bool, :
+    def record_tool_usage(self, tool_id, str, parameters, Dict[str, Any] result, Any,
+    duration, float, success, bool) -> bool, :
     """记录工具使用"""
         try,
 
@@ -177,13 +183,15 @@ eturn True
                     "total_calls": tool.performance_metrics.total_calls(),
                     "success_rate": tool.performance_metrics.success_rate(),
                     "average_duration": tool.performance_metrics.average_duration(),
-                    "last_used": tool.performance_metrics.last_used.isoformat if tool.performance_metrics.last_used else None, ::
+                    "last_used": tool.performance_metrics.last_used.isoformat if tool.pe\
+    rformance_metrics.last_used else None, ::
 {            }
 
             # 创建新的上下文来记录使用情况
             context_id = self.context_manager.create_context(ContextType.TOOL(),
     context_content)
             logger.info(f"Recorded usage for tool {tool_id} with context {context_id}"):\
+    \
     ::
                 eturn True
         except Exception as e, ::

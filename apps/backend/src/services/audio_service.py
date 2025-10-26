@@ -35,7 +35,7 @@ class AudioService, :
         logger.debug(f"Audio Service connected to peer services,
     {list(peer_services.keys())}")
 
-    async def speech_to_text(self, audio_data, bytes, language, str = "en - US",)
+    async def speech_to_text(self, audio_data, bytes, language, str = "en - US", )
 (    enhanced_features, bool == False) -> Dict[str, Any]
         """
         將語音音頻數據轉換為文本。增強版本支持更多特徵。
@@ -67,6 +67,7 @@ class AudioService, :
             if enhanced_features, ::
                 if self.audio_config.get('sentiment_analysis_enabled'):::
                     result["sentiment"] = await self._analyze_sentiment(transcription["t\
+    \
     ext"] audio_data)
 
                 if self.audio_config.get('emotion_detection_enabled'):::
@@ -95,6 +96,7 @@ class AudioService, :
         """生成唯一的處理ID"""
         hash_object == hashlib.md5(audio_data if audio_data else b""):::
         return f"audio_{hash_object.hexdigest()[:8]}_{datetime.now().strftime('%H%M%S')}\
+    \
     "
 
     async def _perform_speech_recognition(self, audio_data, bytes, language,
@@ -105,9 +107,10 @@ class AudioService, :
         # 檢查是否為演示模式
         if is_demo_mode, ::
             mock_texts = {}
-                'en - US': ["Hello, how are you today?", "Thank you for using our service."]::
-                'zh - CN': ["你好,今天怎麼樣？", "謝謝您使用我們的服務。"]
-                'zh - TW': ["你好,今天怎麼樣？", "謝謝您使用我們的服務。"]
+                'en - US': ["Hello, how are you today?",
+    "Thank you for using our service."]::
+                'zh - CN': ["你好, 今天怎麼樣？", "謝謝您使用我們的服務。"]
+                'zh - TW': ["你好, 今天怎麼樣？", "謝謝您使用我們的服務。"]
                 'ja - JP': ["こんにちは、今日はどうですか？", "私たちのサービスをご利用いただきありがとうございます。"]
 {            }
 
@@ -184,7 +187,8 @@ class AudioService, :
             logger.error(f"Error in text to speech conversion, {e}")
             return None
 
-    def _generate_demo_speech_audio(self, text, str, voice, Optional[str] = None) -> bytes, :
+    def _generate_demo_speech_audio(self, text, str, voice,
+    Optional[str] = None) -> bytes, :
         """生成演示用的語音音頻數據"""
         logger.info(f"Generating demo audio for text, '{text[:20]}...'")::
         # 使用簡單的正弦波生成音頻數據

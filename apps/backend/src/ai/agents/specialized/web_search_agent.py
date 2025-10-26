@@ -39,6 +39,7 @@ class WebSearchAgent(BaseAgent):
         params = task_payload.get("parameters", {})
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
     ability_id}'")::
         try,
             if "web_search" in capability_id, ::
@@ -47,7 +48,8 @@ class WebSearchAgent(BaseAgent):
     task_payload.get("callback_address", ""), result)
             else,
                 await self.send_task_failure(request_id, sender_ai_id,
-    task_payload.get("callback_address", ""), f"Capability '{capability_id}' is not supported by this agent.")
+    task_payload.get("callback_address", ""),
+    f"Capability '{capability_id}' is not supported by this agent.")
         except Exception as e, ::
             logging.error(f"[{self.agent_id}] Error processing task {request_id} {e}")
             await self.send_task_failure(request_id, sender_ai_id,
@@ -66,21 +68,24 @@ class WebSearchAgent(BaseAgent):
         return {:}
             "query": query,
             "results": search_results,
-            "total_results": len(search_results) if isinstance(search_results, list) else 0, ::
+            "total_results": len(search_results) if isinstance(search_results,
+    list) else 0, ::
             "max_results": max_results
 {        }
 
-    def _create_success_payload(self, request_id, str, result, Any) -> HSPTaskResultPayload, :
+    def _create_success_payload(self, request_id, str, result,
+    Any) -> HSPTaskResultPayload, :
         return HSPTaskResultPayload()
-            request_id = request_id,,
+            request_id = request_id, ,
     executing_ai_id = self.agent_id(),
             status = "success",
             payload = result
 (        )
 
-    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload, :
+    def _create_failure_payload(self, request_id, str, error_code, str, error_message,
+    str) -> HSPTaskResultPayload, :
         return HSPTaskResultPayload()
-            request_id = request_id,,
+            request_id = request_id, ,
     executing_ai_id = self.agent_id(),
             status = "failure",
             error_details == {"error_code": error_code, "error_message": error_message}

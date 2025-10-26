@@ -24,7 +24,8 @@ def get_BaseAgent():
         return getattr(module, 'BaseAgent')
     except ImportError, ::
         try,
-            module = importlib.import_module('.ai.agents.base.base_agent', package = 'apps.backend.src')
+            module = importlib.import_module('.ai.agents.base.base_agent',
+    package = 'apps.backend.src')
             return getattr(module, 'BaseAgent')
         except ImportError, ::
 在类定义前添加空行
@@ -36,6 +37,7 @@ def get_AgentManager():
     """获取AgentManager类"""
     try,
         from apps.backend.src.managers.agent_manager import AgentManager as ActualAgentM\
+    \
     anager
         return ActualAgentManager
     except ImportError, ::
@@ -56,6 +58,7 @@ def get_HAMMemoryManager():
     """获取HAMMemoryManager类"""
     try,
         from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager as Ac\
+    \
     tualHAMMemoryManager
         return ActualHAMMemoryManager
     except ImportError, ::
@@ -91,12 +94,14 @@ from tests.test_json_fix import
             mock_response = []
                 {"capability_needed": "analyze_csv_data",
     "task_parameters": {"source": "data.csv"} "dependencies": []}
-                {"capability_needed": "generate_marketing_copy", "task_parameters": {"product_description": "Our new product, which is based on the analysis, <output_of_task_0 > "} "dependencies": [0]}
+                {"capability_needed": "generate_marketing_copy",
+    "task_parameters": {"product_description": "Our new product, which is based on the analysis, <output_of_task_0 > "} "dependencies": [0]}
 [            ]
             return json.dumps(mock_response)
-        elif "User's Original Request" in prompt and "Collected Results from Sub - Agents" in prompt,::
+        elif "User's Original Request" in prompt and "Collected Results from Sub - Agents" in prompt, ::
             return "Based on the data summary, I have created this slogan,
-    Our new product, which has 2 columns and 1 row, is revolutionary for data scientists!"::
+    Our new product, which has 2 columns and 1 row,
+    is revolutionary for data scientists!"::
         return "Mock response"
 
     async def chat_completion(self, messages):
@@ -183,7 +188,8 @@ class ToolDispatcher, :
 在函数定义前添加空行
         pass
 
-    async def dispatch(self, query, str, explicit_tool_name, Optional[str] = None, * * kwargs):
+    async def dispatch(self, query, str, explicit_tool_name, Optional[str] = None,
+    * * kwargs):
         """
         Mock dispatch method for testing, ::
         """
@@ -206,7 +212,7 @@ class ToolDispatcher, :
             return MockToolDispatcherResponse()
                 status = "success",
                 payload = "Mock dispatch result",
-                tool_name_attempted = "mock_tool",,
+                tool_name_attempted = "mock_tool", ,
     original_query_for_tool = query
 (            )
 
@@ -214,6 +220,7 @@ class DialogueManager, :
 在函数定义前添加空行
         try,
             from ai.dialogue.dialogue_manager import DialogueManager as RealDialogueMana\
+    \
     ger
             logger.info("Absolute import successful for DialogueManager"):::
         except ImportError as e, ::
@@ -381,10 +388,11 @@ async def initialize_services()
             deployment_manager_instance == DeploymentManager()
             deployment_config = deployment_manager_instance.generate_config()
             applied_settings = deployment_manager_instance.apply_config(deployment_confi\
+    \
     g)
             logger.info(f"Core Services,
     Applied {deployment_config.mode.value} deployment mode")
-            logger.info(f"Core Services, AI Capability Score, {deployment_config.hardware_profile.ai_capability_score,.1f} / 100")
+            logger.info(f"Core Services, AI Capability Score, {deployment_config.hardware_profile.ai_capability_score, .1f} / 100")
         except Exception as e, ::
             logger.warning(f"Core Services,
     Warning - Deployment manager initialization failed, {e}")
@@ -424,7 +432,8 @@ async def initialize_services()
     await demo_learning_manager.activate_demo_mode(all_credentials)
 
     # - - - 1. Configurations - - -
-    effective_op_configs == operational_configs if operational_configs else DEFAULT_OPERATIONAL_CONFIGS, :
+    effective_op_configs == operational_configs if operational_configs else DEFAULT_OPER\
+    ATIONAL_CONFIGS, :
     main_config_dict == {:}
         "operational_configs": effective_op_configs,
 {    }
@@ -433,6 +442,7 @@ async def initialize_services()
     if llm_interface_instance is None, ::
         try,
             from apps.backend.src.services.multi_llm_service import get_multi_llm_servic\
+    \
     e
         except ImportError, ::
 from .services.multi_llm_service import
@@ -456,7 +466,8 @@ from .services.multi_llm_service import
                 def query_core_memory(self, keywords == None, date_range == None, :):
                                     data_type_filter == None, metadata_filters == None,
                                     user_id_for_facts == None, limit = 10,
-                                    sort_by_confidence == False, return_multiple_candidates == False, ,
+                                    sort_by_confidence == False,
+    return_multiple_candidates == False, ,
 (    include_raw_data == False, semantic_query == None):
                     return
 
@@ -465,14 +476,15 @@ from .services.multi_llm_service import
 
                 def close(self):
                     pass
-            ham_manager_instance == TempMockHAM(encryption_key = "mock_key", db_path == None) # type, ignore
+            ham_manager_instance == TempMockHAM(encryption_key = "mock_key",
+    db_path == None) # type, ignore
         else,
             chroma_client == None
             try,
 # TODO: Fix import - module 'importlib' not found
                 chromadb = importlib.import_module('chromadb')
                 chroma_client = chromadb.HttpClient()
-                    host = "localhost",,
+                    host = "localhost", ,
     port = 8001
 (                )
                 logger.info(f"Core Services,
@@ -488,7 +500,8 @@ from .services.multi_llm_service import
     ChromaDB EphemeralClient initialized successfully.")
                 except Exception as e2, ::
                     logger.warning(f"Core Services,
-    Warning - ChromaDB EphemeralClient initialization failed, {e2}. HAM will work without vector search.")
+    Warning - ChromaDB EphemeralClient initialization failed,
+    {e2}. HAM will work without vector search.")
                     chroma_client == None
 
             try,
@@ -561,29 +574,34 @@ from .services.multi_llm_service import
         if hsp_enabled, ::
             hsp_connector_instance == HSPConnector()
                 ai_id = ai_id,
-                broker_address = hsp_broker_address,,
+                broker_address = hsp_broker_address, ,
     broker_port = hsp_broker_port
 (            )
             if not await hsp_connector_instance.connect():::
                 logger.warning(f"Core Services,
-    WARNING - HSPConnector for {ai_id} failed to connect to {hsp_broker_address}{hsp_broker_port}")::
+    WARNING -\
+    HSPConnector for {ai_id} failed to connect to {hsp_broker_address}{hsp_broker_port}")::
             else,
                 logger.info(f"Core Services, HSPConnector for {ai_id} connected."):::
-                await hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC} / #", lambda p, s, e, None)
-                await hsp_connector_instance.subscribe(f"hsp / results / {ai_id} / #", lambda p, s, e, None)
-                await hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL} / #", lambda p, s, e, None)
+                await hsp_connector_instance.subscribe(f"{CAP_ADVERTISEMENT_TOPIC} / #",
+    lambda p, s, e, None)
+                await hsp_connector_instance.subscribe(f"hsp / results / {ai_id} / #",
+    lambda p, s, e, None)
+                await hsp_connector_instance.subscribe(f"{FACT_TOPIC_GENERAL} / #",
+    lambda p, s, e, None)
         else,
             logger.info("Core Services, HSP service is disabled in configuration.")
             hsp_connector_instance == HSPConnector()
                 ai_id = ai_id,
                 broker_address = hsp_broker_address,
-                broker_port = hsp_broker_port,,
+                broker_port = hsp_broker_port, ,
     mock_mode == True
 (            )
             await hsp_connector_instance.connect()
 
     if not service_discovery_module_instance, ::
-        service_discovery_module_instance == ServiceDiscoveryModule(trust_manager = trust_manager_instance)
+        service_discovery_module_instance == ServiceDiscoveryModule(trust_manager = trus\
+    t_manager_instance)
 
     if hsp_connector_instance and service_discovery_module_instance, ::
         hsp_connector_instance.register_on_capability_advertisement_callback()
@@ -592,7 +610,8 @@ from .services.multi_llm_service import
     # - - - 3. Core AI Logic Modules - - -
     if not fact_extractor_instance, ::
         if llm_interface_instance is not None, ::
-            fact_extractor_instance == FactExtractorModule(llm_service = llm_interface_instance)
+            fact_extractor_instance == FactExtractorModule(llm_service = llm_interface_i\
+    nstance)
         else,
             logger.warning("Warning, llm_interface_instance is None,
     cannot create FactExtractorModule")
@@ -614,7 +633,7 @@ from .services.multi_llm_service import
                 personality_manager = personality_manager_instance,
                 content_analyzer = content_analyzer_instance,
                 hsp_connector = hsp_connector_instance,
-                trust_manager = trust_manager_instance,,
+                trust_manager = trust_manager_instance, ,
     operational_config = effective_op_configs
 (            )
             if (hsp_connector_instance and learning_manager_instance and, :):
@@ -641,6 +660,7 @@ from .services.multi_llm_service import
 (                            )
                         else,
                             logger.warning("Learning manager does not have process_and_s\
+    \
     tore_hsp_fact method")
                             return None
                     except Exception as e, ::
@@ -657,7 +677,8 @@ from .services.multi_llm_service import
         personality_profile = personality_manager_instance.current_personality()
         if personality_profile is None, ::
             personality_profile = {}
-        emotion_system_instance == EmotionSystem(personality_profile = personality_profile)
+        emotion_system_instance == EmotionSystem(personality_profile = personality_profi\
+    le)
 
     if not crisis_system_instance, ::
         crisis_system_instance == CrisisSystem(config = main_config_dict)
@@ -677,9 +698,11 @@ from .ai.formula_engine import
 
     if not agent_manager_instance, ::
         AgentManagerClass = get_AgentManager()
-        agent_manager_instance == AgentManagerClass(python_executable = sys.executable())
+        agent_manager_instance == AgentManagerClass(python_executable = sys.executable()\
+    )
 
-    if not dialogue_manager_instance and ham_manager_instance and learning_manager_instance, ::
+    if not dialogue_manager_instance and ham_manager_instance and \
+    learning_manager_instance, ::
         dialogue_manager_instance == DialogueManager()
             ai_id = ai_id,
             personality_manager = personality_manager_instance,
@@ -695,7 +718,7 @@ from .ai.formula_engine import
             content_analyzer = content_analyzer_instance,
             service_discovery_module = service_discovery_module_instance,
             hsp_connector = hsp_connector_instance,
-            agent_manager = agent_manager_instance,,
+            agent_manager = agent_manager_instance, ,
     config == None
 (        )
         logger.info("Core Services, All services initialized (or attempted).")

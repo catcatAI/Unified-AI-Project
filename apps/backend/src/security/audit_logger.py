@@ -47,7 +47,8 @@ class AuditEventType(Enum):
 class AuditLogger, :
     """Main audit logging system"""
 
-    def __init__(self, log_file_path, Optional[str] = None, max_log_size, int == 10000) -> None, :
+    def __init__(self, log_file_path, Optional[str] = None, max_log_size,
+    int == 10000) -> None, :
         self.log_file_path = log_file_path or "logs / audit.log"
         self.max_log_size = max_log_size
         self.log_buffer, List[AuditEvent] = []
@@ -76,7 +77,8 @@ class AuditLogger, :
     def log_operation(self, user_id, str, operation, str, resource, str, :)
                     action, str, success, bool, details, Optional[Dict[str,
     Any]] = None,
-                    session_id, Optional[str] = None, ip_address, Optional[str] = None, ,
+                    session_id, Optional[str] = None, ip_address, Optional[str] = None,
+    ,
 (    user_agent, Optional[str] = None):
         """Log a general operation"""
         event == AuditEvent()
@@ -96,7 +98,8 @@ class AuditLogger, :
 
     def log_file_access(self, user_id, str, file_path, str, action, str, :)
                     success, bool, details, Optional[Dict[str, Any]] = None,
-                    session_id, Optional[str] = None, ip_address, Optional[str] = None, ,
+                    session_id, Optional[str] = None, ip_address, Optional[str] = None,
+    ,
 (    user_agent, Optional[str] = None):
         """Log file access"""
         event == AuditEvent()
@@ -116,7 +119,8 @@ class AuditLogger, :
 
     def log_network_access(self, user_id, str, url, str, action, str, :)
                         success, bool, details, Optional[Dict[str, Any]] = None,
-                        session_id, Optional[str] = None, ip_address, Optional[str] = None, ,
+                        session_id, Optional[str] = None, ip_address,
+    Optional[str] = None, ,
 (    user_agent, Optional[str] = None):
         """Log network access"""
         event == AuditEvent()
@@ -136,7 +140,8 @@ class AuditLogger, :
 
     def log_system_command(self, user_id, str, command, str, success, bool, :)
                         details, Optional[Dict[str, Any]] = None,
-                        session_id, Optional[str] = None, ip_address, Optional[str] = None, ,
+                        session_id, Optional[str] = None, ip_address,
+    Optional[str] = None, ,
 (    user_agent, Optional[str] = None):
         """Log system command execution"""
         event == AuditEvent()
@@ -156,7 +161,8 @@ class AuditLogger, :
 
     def log_application_control(self, user_id, str, app_name, str, action, str, :)
                             success, bool, details, Optional[Dict[str, Any]] = None,
-                            session_id, Optional[str] = None, ip_address, Optional[str] = None, ,
+                            session_id, Optional[str] = None, ip_address,
+    Optional[str] = None, ,
 (    user_agent, Optional[str] = None):
         """Log application control"""
         event == AuditEvent()
@@ -176,7 +182,8 @@ class AuditLogger, :
 
     def log_data_processing(self, user_id, str, data_type, str, action, str, :)
                         success, bool, details, Optional[Dict[str, Any]] = None,
-                        session_id, Optional[str] = None, ip_address, Optional[str] = None, ,
+                        session_id, Optional[str] = None, ip_address,
+    Optional[str] = None, ,
 (    user_agent, Optional[str] = None):
         """Log data processing"""
         event == AuditEvent()
@@ -196,7 +203,8 @@ class AuditLogger, :
 
     def log_sandbox_execution(self, user_id, str, script_hash, str, success, bool, :)
                             details, Optional[Dict[str, Any]] = None,
-                            session_id, Optional[str] = None, ip_address, Optional[str] = None, ,
+                            session_id, Optional[str] = None, ip_address,
+    Optional[str] = None, ,
 (    user_agent, Optional[str] = None):
         """Log sandbox execution"""
         event == AuditEvent()
@@ -217,7 +225,8 @@ class AuditLogger, :
     def log_permission_check(self, user_id, str, permission_type, str, :)
                             resource, str, action, str, granted, bool,
                             details, Optional[Dict[str, Any]] = None,
-                            session_id, Optional[str] = None, ip_address, Optional[str] = None, ,
+                            session_id, Optional[str] = None, ip_address,
+    Optional[str] = None, ,
 (    user_agent, Optional[str] = None):
         """Log permission check"""
         event == AuditEvent()
@@ -241,7 +250,8 @@ class AuditLogger, :
 
     def log_security_violation(self, user_id, str, violation_type, str, :)
                             resource, str, details, Optional[Dict[str, Any]] = None,
-                            session_id, Optional[str] = None, ip_address, Optional[str] = None, ,
+                            session_id, Optional[str] = None, ip_address,
+    Optional[str] = None, ,
 (    user_agent, Optional[str] = None):
         """Log security violation"""
         event == AuditEvent()
@@ -298,7 +308,7 @@ class AuditLogger, :
                     elf._rotate_log_if_needed()
 
                 # Append events to log file
-                with open(self.log_file_path(), 'a', encoding == 'utf - 8') as f,:
+                with open(self.log_file_path(), 'a', encoding == 'utf - 8') as f, :
                     for event in events_to_write, ::
                         # Convert AuditEvent to dictionary and handle enum serialization
                         event_dict = asdict(event)
@@ -316,6 +326,7 @@ class AuditLogger, :
                 if file_size > self.max_log_size, ::
                     # Rotate log file
                     rotated_path = f"{self.log_file_path}.{datetime.now().strftime('%Y%m\
+    \
     %d_%H%M%S')}"
                     os.rename(self.log_file_path(), rotated_path)
                     logger.info(f"Rotated audit log file to {rotated_path}")
@@ -329,29 +340,31 @@ class AuditLogger, :
 
             # Get events from buffer
             with self.buffer_lock, :
-                events.extend(self.log_buffer[ - limit,])
+                events.extend(self.log_buffer[ - limit, ])
 
             # Get events from file
             if os.path.exists(self.log_file_path())::
-                with open(self.log_file_path(), 'r', encoding == 'utf - 8') as f,:
+                with open(self.log_file_path(), 'r', encoding == 'utf - 8') as f, :
                     lines = f.readlines()
                     for line in reversed(lines[ - (limit - len(events))])::
                         try,
                             event_data = json.loads(line.strip())
                             # Convert event_type back to enum
                             event_data['event_type'] = AuditEventType(event_data['event_\
+    \
     type'])
                             event == AuditEvent( * *event_data)
                             events.append(event)
                         except Exception as e, ::
                             logger.error(f"Error parsing audit log line, {e}")
 
-            return events[ - limit,]
+            return events[ - limit, ]
         except Exception as e, ::
             logger.error(f"Error getting recent audit events, {e}")
             return []
 
-    def search_events(self, user_id, Optional[str] = None, event_type, Optional[AuditEventType] = None, :)
+    def search_events(self, user_id, Optional[str] = None, event_type,
+    Optional[AuditEventType] = None, :)
                     resource, Optional[str] = None, start_time, Optional[str] = None, ,
 (    end_time, Optional[str] = None) -> List[AuditEvent]
         """Search audit events based on criteria"""
@@ -367,12 +380,13 @@ class AuditLogger, :
 
             # Search in file
             if os.path.exists(self.log_file_path())::
-                with open(self.log_file_path(), 'r', encoding == 'utf - 8') as f,:
+                with open(self.log_file_path(), 'r', encoding == 'utf - 8') as f, :
                     for line in f, ::
                         try,
                             event_data = json.loads(line.strip())
                             # Convert event_type back to enum
                             event_data['event_type'] = AuditEventType(event_data['event_\
+    \
     type'])
                             event == AuditEvent( * *event_data)
                             if self._event_matches_criteria(event, user_id, event_type,
@@ -386,8 +400,10 @@ class AuditLogger, :
             logger.error(f"Error searching audit events, {e}")
             return []
 
-    def _event_matches_criteria(self, event, AuditEvent, user_id, Optional[str] = None, :)
-                            event_type, Optional[AuditEventType] = None, resource, Optional[str] = None, ,
+    def _event_matches_criteria(self, event, AuditEvent, user_id, Optional[str] = None,
+    :)
+                            event_type, Optional[AuditEventType] = None, resource,
+    Optional[str] = None, ,
 (    start_time, Optional[str] = None, end_time, Optional[str] = None) -> bool,
         """Check if an event matches search criteria"""::
         # Check user_id,

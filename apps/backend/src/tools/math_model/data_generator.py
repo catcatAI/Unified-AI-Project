@@ -72,7 +72,7 @@ def _safe_eval(expression: str) -> Union[int, float]:
 def generate_problem(max_digits: int = 3, operations: List[str] = None):
     """Generates a random arithmetic problem."""
     if operations is None:
-        operations = ['+', '-', '*', ' / ']
+        operations = ['+', '-', ' * ', ' / ']
 
     num1 = random.randint(0, 10 * *max_digits - 1)
     num2 = random.randint(1, 10 * *max_digits - 1) # Avoid division by zero for /
@@ -109,14 +109,14 @@ def generate_dataset(num_samples: int, output_dir: str,
 
     if file_format == "csv":
         filepath = os.path.join(output_dir, f"{filename_prefix}.csv")
-        with open(filepath, 'w', newline='', encoding='utf - 8') as f:
+        with open(filepath, 'w', newline = '', encoding = 'utf - 8') as f:
             writer = csv.DictWriter(f, fieldnames = ["problem", "answer"])
             writer.writeheader()
             writer.writerows(problems)
         print(f"Generated {num_samples} samples in {filepath}")
     elif file_format == "json":
         filepath = os.path.join(output_dir, f"{filename_prefix}.json")
-        with open(filepath, 'w', encoding='utf - 8') as f:
+        with open(filepath, 'w', encoding = 'utf - 8') as f:
             json.dump(problems, f, indent = 2)
         print(f"Generated {num_samples} samples in {filepath}")
     else:

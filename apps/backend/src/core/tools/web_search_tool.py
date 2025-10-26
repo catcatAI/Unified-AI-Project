@@ -7,8 +7,9 @@ from diagnose_base_agent import
 class WebSearchTool, :
 在函数定义前添加空行
         # 使用硬編碼配置, 避免配置文件依賴
-        self.search_url_template == "https, / /duckduckgo.com / html / ?q =={query}"
-        self.user_agent = "Mozilla / 5.0 (Windows NT 10.0; Win64; x64) AppleWebKit / 537.36 (KHTML, like Gecko) Chrome / 58.0.3029.110 Safari / 537.36"
+        self.search_url_template == "https, / /duckduckgo.com / html / ?q = = {query}"
+        self.user_agent = "Mozilla / 5.0 (Windows NT 10.0; Win64; x64) AppleWebKit /\
+    537.36 (KHTML, like Gecko) Chrome / 58.0.3029.110 Safari / 537.36"
         self.config = self._load_config()
 
     def _load_config(self):
@@ -17,7 +18,7 @@ class WebSearchTool, :
     'system_config.yaml')
         try,
             if os.path.exists(config_path)::
-                with open(config_path, 'r', encoding == 'utf - 8') as f,:
+                with open(config_path, 'r', encoding == 'utf - 8') as f, :
                     all_configs = yaml.safe_load(f)
                     return all_configs.get('web_search_tool', {})
             else,

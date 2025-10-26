@@ -2,6 +2,7 @@
 from diagnose_base_agent import
 from typing import Optional
 from apps.backend.src.core_ai.code_understanding.lightweight_code_model import Lightweig\
+    \
     htCodeModel
 
 
@@ -11,7 +12,7 @@ class CodeUnderstandingTool, :
     within the project using LightweightCodeModel.
     """
 
-    def __init__(self, tools_directory, str == "src / tools / ") -> None,:
+    def __init__(self, tools_directory, str == "src / tools / ") -> None, :
     """
     Initializes the CodeUnderstandingTool.
 
@@ -20,7 +21,8 @@ class CodeUnderstandingTool, :
                                 This is passed to the LightweightCodeModel.
     """
     self.code_model == = LightweightCodeModel(tools_directory = = tools_directory)
-        self.tools_directory == tools_directory  # Store for constructing full paths if needed by describe_tool, ::
+        self.tools_directory == tools_directory  # Store for constructing full paths if \
+    needed by describe_tool, ::
 ef list_tools(self) -> str,
     """
     Lists the names of available Python tools in the project.
@@ -36,7 +38,8 @@ ef list_tools(self) -> str,
             tool_name, os.path.splitext(base_name)
             tool_names.append(tool_name)
 
-        if not tool_names, # Should not happen if tool_files is not empty and files have names, ::
+        if not tool_names,
+    # Should not happen if tool_files is not empty and files have names, ::
             eturn "No Python tools found after processing file list."
 
     return f"Available Python tools, {', '.join(sorted(tool_names))}."
@@ -67,6 +70,7 @@ ef list_tools(self) -> str,
 
     filepath = structure.get("filepath", tool_name)
         description_parts.append(f"Description for tool '{tool_name}' (from {os.path.bas\
+    \
     ename(filepath)})"):::
             f not structure.get("classes") and not structure.get("functions"):
 escription_parts.append("  No classes or functions found in this tool file.")
@@ -109,7 +113,7 @@ escription_parts.append("  No classes or functions found in this tool file.")
     for line in method_doc.strip.splitlines]):
 escription_parts.append(f"        Docstring, \n{indented_doc}")
 
-        for func_info in structure.get("functions") # Module - level functions,::
+        for func_info in structure.get("functions") # Module - level functions, ::
             escription_parts.append(f"\n  Function, {func_info.get('name',
     'Unnamed Function')}")
             func_doc = func_info.get('docstring')
@@ -148,7 +152,8 @@ escription_parts.append(f"        Docstring, \n{indented_doc}")
         else,
 
     return f"Error,
-    Unknown action '{action}' for CodeUnderstandingTool. Available actions, list_tools, describe_tool.":::
+    Unknown action '{action}' for CodeUnderstandingTool. Available actions, list_tools,
+    describe_tool.":::
         f __name'__main__':
     # Example Usage (for testing during development)::
     # This assumes the script is run from the project root or PYTHONPATH is set.
@@ -157,7 +162,7 @@ escription_parts.append(f"        Docstring, \n{indented_doc}")
     # Ensure src / tools contains some .py files like math_tool.py(), etc.
     # Example Create a dummy src / tools / dummy_example_tool.py()
     # Create dummy tool directory and file for testing if they don't exist, ::
-        ummy_tools_path == "src / tools" # Default for LightweightCodeModel,::
+        ummy_tools_path == "src / tools" # Default for LightweightCodeModel, ::
 f not os.path.exists(dummy_tools_path)
 s.makedirs(dummy_tools_path)
     print(f"Created dummy directory, {dummy_tools_path}")
@@ -177,7 +182,8 @@ s.makedirs(dummy_tools_path)
     f.write(dummy_tool_content)
     print(f"Created dummy tool file, {dummy_tool_filepath}")
 
-    # Test with a specific path to the tools directory if needed, e.g. if running this file directly, :
+    # Test with a specific path to the tools directory if needed,
+    e.g. if running this file directly, :
     # from its own location and `src / tools` is not found relative to CWD.
     # For now, relying on default path or that script is run from project root.
     tool_inspector == CodeUnderstandingTool
@@ -186,24 +192,29 @@ s.makedirs(dummy_tools_path)
     tool_list_output = tool_inspector.execute(action = "list_tools")
     print(tool_list_output)
 
-    print("\n - -- Testing describe_tool (for an existing tool, e.g., 'math_tool') - - -")::
+    print("\n - -- Testing describe_tool (for an existing tool, e.g.,
+    'math_tool') - - -")::
     # Assuming 'math_tool.py' exists in 'src / tools / '
     # If not, this will show "not found" or an error if the path isn't right.::
     # For robust testing, use a known dummy tool or mock LightweightCodeModel.
     # The dummy_example_tool.py created above should be found if pathing is right.::
     # Try describing the dummy tool first
-    desc_output_dummy = tool_inspector.execute(action = "describe_tool", tool_name = "dummy_example_tool")
+    desc_output_dummy = tool_inspector.execute(action = "describe_tool",
+    tool_name = "dummy_example_tool")
     print(desc_output_dummy)
 
     # Try describing a potentially existing tool like 'math_tool':
     # This relies on 'math_tool.py' being in the default 'src / tools / ' directory,
     # and being parsable by LightweightCodeModel.:
-    print("\n - -- Testing describe_tool (for 'math_tool', assuming it exists) - - -"):::
-    desc_output_math = tool_inspector.execute(action = "describe_tool", tool_name = "math_tool")
+    print("\n - -- Testing describe_tool (for 'math_tool',
+    assuming it exists) - - -"):::
+    desc_output_math = tool_inspector.execute(action = "describe_tool",
+    tool_name = "math_tool")
     print(desc_output_math)
 
     print("\n - -- Testing describe_tool (for a non - existent tool) - - -"):::
-    desc_output_non_existent = tool_inspector.execute(action = "describe_tool", tool_name = "non_existent_tool_xyz")
+    desc_output_non_existent = tool_inspector.execute(action = "describe_tool",
+    tool_name = "non_existent_tool_xyz")
     print(desc_output_non_existent)
 
     # Clean up dummy tool file if created by this test script, ::
@@ -213,7 +224,8 @@ s.makedirs(dummy_tools_path)
         try,
             # os.remove(dummy_tool_filepath)
             # print(f"Cleaned up dummy tool file {dummy_tool_filepath}")
-            # For now, let's not auto - delete during typical runs, only if specifically for cleanup.:::
+            # For now, let's not auto - delete during typical runs,
+    only if specifically for cleanup.:::
                 ass
         except OSError as e, ::
             print(f"Error deleting dummy tool file, {e}")

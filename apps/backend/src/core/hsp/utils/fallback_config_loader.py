@@ -80,7 +80,7 @@ class FallbackConfigLoader:
         """查找配置文件"""
         possible_paths = []
             "configs / hsp_fallback_config.yaml",
-            "Unified-AI-Project / configs / hsp_fallback_config.yaml",
+            "Unified - AI - Project / configs / hsp_fallback_config.yaml",
             ".. / configs / hsp_fallback_config.yaml",
             "hsp_fallback_config.yaml"
 [        ]
@@ -99,7 +99,7 @@ class FallbackConfigLoader:
         
         if self.config_path and os.path.exists(self.config_path):
             try:
-                with open(self.config_path, 'r', encoding='utf - 8') as f:
+                with open(self.config_path, 'r', encoding = 'utf - 8') as f:
                     file_config = yaml.safe_load(f)
                 
                 # 合併配置(文件配置覆蓋默認配置)
@@ -168,7 +168,7 @@ class FallbackConfigLoader:
             # 確保目錄存在
             os.makedirs(os.path.dirname(save_path), exist_ok = True)
             
-            with open(save_path, 'w', encoding='utf - 8') as f:
+            with open(save_path, 'w', encoding = 'utf - 8') as f:
                 yaml.dump(config, f, default_flow_style = False, allow_unicode = True)
             
             logger.info(f"配置已保存到: {save_path}")

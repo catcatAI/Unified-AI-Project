@@ -1,5 +1,5 @@
 #! / usr / bin / env python3
-# - * - coding utf-8 - * -
+# - * - coding utf - 8 - * -
 
 # 使用我们的兼容性模块
 try,
@@ -18,7 +18,8 @@ from typing import List, Tuple, Dict
 
 class RAGManager, :
     """
-    Manages Retrieval - Augmented Generation by handling vector embeddings and similarity search.
+    Manages Retrieval - Augmented Generation by handling vector embeddings and \
+    similarity search.
     """
 在函数定义前添加空行
     self.model == SentenceTransformer(model_name)

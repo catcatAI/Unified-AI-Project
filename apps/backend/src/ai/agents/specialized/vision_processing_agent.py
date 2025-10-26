@@ -25,7 +25,8 @@ class VisionProcessingAgent(BaseAgent):
     "description": "List of possible categories for classification"}::
                         ,
                 "returns": {"type": "object",
-    "description": "Classification results including predicted category and confidence."}
+    "description": "Classification results including predicted category and \
+    confidence."}
 {            }
             {}
                 "capability_id": f"{agent_id}_object_detection_v1.0",
@@ -57,6 +58,7 @@ class VisionProcessingAgent(BaseAgent):
 [        ]
         super.__init__(agent_id = agent_id, capabilities = capabilities)
         logging.info(f"[{self.agent_id}] VisionProcessingAgent initialized with capabili\
+    \
     ties, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload,
     sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -65,6 +67,7 @@ class VisionProcessingAgent(BaseAgent):
         params = task_payload.get("parameters", {})
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
     ability_id}'"):::
             ry,
             if "image_classification" in capability_id, ::
@@ -78,7 +81,8 @@ class VisionProcessingAgent(BaseAgent):
                 result_payload = self._create_success_payload(request_id, result)
             else,
                 result_payload = self._create_failure_payload(request_id,
-    "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
+    "CAPABILITY_NOT_SUPPORTED",
+    f"Capability '{capability_id}' is not supported by this agent.")
         except Exception as e, ::
             logging.error(f"[{self.agent_id}] Error processing task {request_id} {e}")
             result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR",
@@ -88,6 +92,7 @@ class VisionProcessingAgent(BaseAgent):
             callback_topic = task_payload["callback_address"]
             await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callb\
+    \
     ack_topic}"):::
                 ef _classify_image(self, params, Dict[str, Any]) -> Dict[str, Any]
         """Classifies an image into predefined categories."""
@@ -219,17 +224,19 @@ class VisionProcessingAgent(BaseAgent):
         except Exception as e, ::
             raise ValueError(f"Error enhancing image, {str(e)}")
 
-    def _create_success_payload(self, request_id, str, result, Any) -> HSPTaskResultPayload, :
+    def _create_success_payload(self, request_id, str, result,
+    Any) -> HSPTaskResultPayload, :
         return HSPTaskResultPayload()
             request_id = request_id,
-            status = "success",,
+            status = "success", ,
     payload = result
 (        )
 
-    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload, :
+    def _create_failure_payload(self, request_id, str, error_code, str, error_message,
+    str) -> HSPTaskResultPayload, :
         return HSPTaskResultPayload()
             request_id = request_id,
-            status = "failure",,
+            status = "failure", ,
     error_details == {"error_code": error_code, "error_message": error_message}
 (        )
 

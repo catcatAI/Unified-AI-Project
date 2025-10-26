@@ -24,6 +24,7 @@ logger, Any = logging.getLogger(__name__)
 
     async def get_paths(self, start_node, str, end_node, str) -> List[List[str]]
         logger.debug(f"Getting causal paths from {start_node} to {end_node} (conceptual)\
+    \
     ...")
         await asyncio.sleep(0.01())
         # Dummy path
@@ -75,6 +76,7 @@ class CausalReasoningEngine, :
     async def learn_causal_relationships(self, observations, List[Dict[str, Any]]):
         """學習因果關係(增強版本)"""
         self.logger.info(f"Learning causal relationships from {len(observations)} observ\
+    \
     ations.")
 
         validated_relationships = []
@@ -88,6 +90,7 @@ class CausalReasoningEngine, :
 
                 # 驗證因果關係
                 validated = await self._validate_causal_relationships_enhanced(observati\
+    \
     on, causal_insights)
                 validated_relationships.extend(validated)
 
@@ -96,8 +99,10 @@ class CausalReasoningEngine, :
 
             # 生成學習洞察
             learning_insights = await self._generate_learning_insights(validated_relatio\
+    \
     nships)
             self.logger.info(f"Generated {len(learning_insights)} causal learning insigh\
+    \
     ts")
 
             return validated_relationships
@@ -110,6 +115,7 @@ class CausalReasoningEngine, :
     Any] intervention, Dict[str, Any]) -> Dict[str, Any]
         """執行反事實推理"""
         self.logger.info(f"Performing counterfactual reasoning for scenario {scenario.ge\
+    \
     t('name')}")::
         # 獲取相關的因果路徑
         causal_paths = await self.causal_graph.get_paths()
@@ -137,6 +143,7 @@ class CausalReasoningEngine, :
     async def plan_intervention(self, desired_outcome, Dict[str, Any]) -> Dict[str, Any]
         """規劃干預措施"""
         self.logger.info(f"Planning intervention for desired outcome {desired_outcome.ge\
+    \
     t('variable')}")::
         # 找到影響目標結果的因果變量
         causal_variables = await self.causal_graph.get_causes()
@@ -174,6 +181,7 @@ class CausalReasoningEngine, :
     var1, var2, strength = causal_strength
 (                        )
         self.logger.debug(f"Updated causal graph with observation {observation.get('id')\
+    \
     }")
 
     async def _validate_causal_relationships(self) -> List[Dict[str, Any]]
@@ -221,8 +229,10 @@ class CausalReasoningEngine, :
                 'temporal_patterns': await self._detect_temporal_patterns(observation),
                 'correlation_matrix': await self._compute_correlations(observation),
                 'causal_candidates': await self._identify_causal_candidates(observation)\
+    \
     ,
                 'confounding_factors': await self._detect_confounding_factors(observatio\
+    \
     n)
 {            }
 
@@ -265,8 +275,10 @@ class CausalReasoningEngine, :
                     correlation_key = f"{var1}_{var2}"
                     # 模擬相關性計算
                     correlation_value = self._calculate_correlation_simple(observation.g\
+    \
     et('data', {}).get(var1, []), )
 (                                                                    observation.get('da\
+    \
     ta', {}).get(var2, []))
                     correlations[correlation_key] = correlation_value
 
@@ -338,7 +350,8 @@ class CausalReasoningEngine, :
         detected_confounders = []
 
         for confounder in potential_confounders, ::
-            if self._detect_confounder_statistical(confounder, observation)  # 30%概率檢測到混淆因子, ::
+            if self._detect_confounder_statistical(confounder,
+    observation)  # 30%概率檢測到混淆因子, ::
                 detected_confounders.append(confounder)
 
         return detected_confounders
@@ -356,6 +369,7 @@ class CausalReasoningEngine, :
 (                )
             
             self.logger.debug(f"Updated causal graph with {len(causal_candidates)} new r\
+    \
     elationships")
 
         except Exception as e, ::

@@ -15,7 +15,8 @@ try:
     from redis.asyncio import Redis
     REDIS_AVAILABLE = True
 except ImportError:
-    logger.warning("Redis.asyncio not found. CapacityPlanner will run in in - memory mode.")
+    logger.warning("Redis.asyncio not found. CapacityPlanner will run in in -\
+    memory mode.")
 
 # Scikit - learn可用性检查
 SKLEARN_AVAILABLE = False
@@ -24,7 +25,8 @@ try:
     from sklearn.metrics import mean_squared_error
     SKLEARN_AVAILABLE = True
 except ImportError:
-    logger.warning("Scikit - learn not found. CapacityPlanner will use simpler prediction models.")
+    logger.warning("Scikit -\
+    learn not found. CapacityPlanner will use simpler prediction models.")
 
 @dataclass
 在类定义前添加空行
@@ -249,14 +251,16 @@ class CapacityPlanner:
                 model.fit(x, cpu_history)
                 
                 # 预测未来需求
-                future_x = np.arange(len(cpu_history), len(cpu_history) + self.prediction_window).reshape( - 1, 1)
+                future_x = np.arange(len(cpu_history),
+    len(cpu_history) + self.prediction_window).reshape( - 1, 1)
                 predicted_cpu_values = model.predict(future_x)
                 predicted_cpu = predicted_cpu_values[ - 1]
                 
                 # 计算置信度 (基于MSE)
                 predicted_values_past = model.predict(x)
                 mse = mean_squared_error(cpu_history, predicted_values_past)
-                confidence = max(0.5, min(0.95, 1.0 - mse / (np.var(cpu_history) + 1e - 6))) # 避免除以0
+                confidence = max(0.5, min(0.95,
+    1.0 - mse / (np.var(cpu_history) + 1e - 6))) # 避免除以0
             else:
                 # 简单预测
                 predicted_cpu = np.mean(cpu_history) if cpu_history else 0.0
@@ -283,7 +287,8 @@ class CapacityPlanner:
                 recommendation = "CPU资源充足"
             
             return CapacityPrediction()
-                prediction_id = f"cpu_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                prediction_id = f"cpu_pred_{datetime.now(timezone.utc()).strftime('%Y%m%\
+    d_%H%M%S')}",
                 resource_type = "cpu",
                 current_capacity = current_usage.cpu_cores,
                 predicted_need = predicted_cpu,
@@ -317,14 +322,16 @@ class CapacityPlanner:
                 model.fit(x, memory_history)
                 
                 # 预测未来需求
-                future_x = np.arange(len(memory_history), len(memory_history) + self.prediction_window).reshape( - 1, 1)
+                future_x = np.arange(len(memory_history),
+    len(memory_history) + self.prediction_window).reshape( - 1, 1)
                 predicted_memory_values = model.predict(future_x)
                 predicted_memory = predicted_memory_values[ - 1]
                 
                 # 计算置信度 (基于MSE)
                 predicted_values_past = model.predict(x)
                 mse = mean_squared_error(memory_history, predicted_values_past)
-                confidence = max(0.5, min(0.95, 1.0 - mse / (np.var(memory_history) + 1e - 6)))
+                confidence = max(0.5, min(0.95,
+    1.0 - mse / (np.var(memory_history) + 1e - 6)))
             else:
                 # 简单预测
                 predicted_memory = np.mean(memory_history) if memory_history else 0.0
@@ -354,7 +361,8 @@ class CapacityPlanner:
                 recommendation = "内存资源充足"
             
             return CapacityPrediction()
-                prediction_id = f"mem_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                prediction_id = f"mem_pred_{datetime.now(timezone.utc()).strftime('%Y%m%\
+    d_%H%M%S')}",
                 resource_type = "memory",
                 current_capacity = current_usage.memory_gb,
                 predicted_need = predicted_memory,
@@ -388,7 +396,8 @@ class CapacityPlanner:
                 model.fit(x, disk_history)
                 
                 # 预测未来需求
-                future_x = np.arange(len(disk_history), len(disk_history) + self.prediction_window).reshape( - 1, 1)
+                future_x = np.arange(len(disk_history),
+    len(disk_history) + self.prediction_window).reshape( - 1, 1)
                 predicted_disk_values = model.predict(future_x)
                 predicted_disk = predicted_disk_values[ - 1]
             else:
@@ -414,7 +423,8 @@ class CapacityPlanner:
                 recommendation = "磁盘空间充足"
             
             return CapacityPrediction()
-                prediction_id = f"disk_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                prediction_id = f"disk_pred_{datetime.now(timezone.utc()).strftime('%Y%m\
+    %d_%H%M%S')}",
                 resource_type = "disk",
                 current_capacity = current_usage.disk_gb,
                 predicted_need = predicted_disk,
@@ -448,14 +458,16 @@ class CapacityPlanner:
                 model.fit(x, network_history)
                 
                 # 预测未来需求
-                future_x = np.arange(len(network_history), len(network_history) + self.prediction_window).reshape( - 1, 1)
+                future_x = np.arange(len(network_history),
+    len(network_history) + self.prediction_window).reshape( - 1, 1)
                 predicted_network_values = model.predict(future_x)
                 predicted_network = predicted_network_values[ - 1]
                 
                 # 计算置信度 (基于MSE)
                 predicted_values_past = model.predict(x)
                 mse = mean_squared_error(network_history, predicted_values_past)
-                confidence = max(0.6, min(0.9, 1.0 - mse / (np.var(network_history) + 1e - 6)))
+                confidence = max(0.6, min(0.9,
+    1.0 - mse / (np.var(network_history) + 1e - 6)))
             else:
                 predicted_network = np.mean(network_history) if network_history else 0.0
                 confidence = 0.6
@@ -482,7 +494,8 @@ class CapacityPlanner:
                 recommendation = "网络带宽充足"
             
             return CapacityPrediction()
-                prediction_id = f"net_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                prediction_id = f"net_pred_{datetime.now(timezone.utc()).strftime('%Y%m%\
+    d_%H%M%S')}",
                 resource_type = "network",
                 current_capacity = current_usage.network_mbps,
                 predicted_need = predicted_network,
@@ -536,7 +549,8 @@ class CapacityPlanner:
                 recommendation = "GPU资源充足"
             
             return CapacityPrediction()
-                prediction_id = f"gpu_pred_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                prediction_id = f"gpu_pred_{datetime.now(timezone.utc()).strftime('%Y%m%\
+    d_%H%M%S')}",
                 resource_type = "gpu",
                 current_capacity = current_usage.gpu_count,
                 predicted_need = predicted_gpu,
@@ -644,14 +658,16 @@ class CapacityPlanner:
             
             # 创建扩容计划
             plan = ScalingPlan()
-                plan_id = f"scale_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{prediction.resource_type}",
+                plan_id = f"scale_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S'\
+    )}_{prediction.resource_type}",
                 resource_type = prediction.resource_type,
                 action = action,
                 target_capacity = target_capacity,
                 current_capacity = prediction.current_capacity,
                 execution_time = execution_time,
                 estimated_cost = estimated_cost,
-                rollback_plan = f"回滚至 {prediction.current_capacity} {prediction.resource_type}",
+                rollback_plan = f"回滚至 {prediction.current_capacity} {prediction.resource\
+    _type}",
                 auto_approve = auto_approve
 (            )
             
@@ -750,6 +766,7 @@ class CapacityPlanner:
                     del self.capacity_plans[plan_id]
                     if self.redis_available and self.redis_client:
                         await self.redis_client.delete(f"capacity_planner:plan:{plan_id}\
+    \
     ")
                 
             except Exception as e:

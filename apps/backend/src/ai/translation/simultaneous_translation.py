@@ -10,7 +10,8 @@ class SimultaneousTranslation, :
     be swapped out later.
     """
 
-    def __init__(self, default_target_lang, str == "en", latency_ms, int == 100) -> None, :
+    def __init__(self, default_target_lang, str == "en", latency_ms,
+    int == 100) -> None, :
     self.default_target_lang = default_target_lang
     self.latency_ms = max(0, latency_ms)
 

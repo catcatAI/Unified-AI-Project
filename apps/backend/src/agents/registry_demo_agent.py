@@ -135,7 +135,7 @@ class RegistryDemoAgent(BaseAgent):
             if self.agent_registry, ::
                 await self.agent_registry.register_agent_manually()
                     agent_id = test_agent_id,
-                    agent_name = test_agent_name,,
+                    agent_name = test_agent_name, ,
     capabilities = test_capabilities
 (                )
 
@@ -181,6 +181,7 @@ class RegistryDemoAgent(BaseAgent):
                 "matching_agents": agents,
                 "agent_count": len(agents),
                 "message": f"Found {len(agents)} agents with capability '{capability_id}\
+    \
     '":
 
 

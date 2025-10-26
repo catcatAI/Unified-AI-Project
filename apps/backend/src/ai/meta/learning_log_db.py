@@ -38,6 +38,7 @@ class LearningLogDB:
 
     def add_log_entry(self, log_entry: Dict[str, Any]) -> int:
         """Adds a new log entry record to the database. Returns the ID of the new record\
+    \
     ."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -87,6 +88,7 @@ class LearningLogDB:
 
     def close(self):
         """Closes the database connection. (Not strictly necessary for sqlite3.connect()\
+    \
     , but good practice)."""
         pass
 
@@ -96,4 +98,5 @@ class LearningLogDB:
             os.remove(self.db_path)
             logger.info(f"LearningLogDB file deleted: {self.db_path}")
         else:
-            logger.warning(f"Attempted to delete non - existent LearningLogDB file: {self.db_path}")
+            logger.warning(f"Attempted to delete non -\
+    existent LearningLogDB file: {self.db_path}")

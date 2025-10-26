@@ -16,7 +16,7 @@ try:
     KERAS_AVAILABLE = True
 except ImportError:
     try:
-        # 如果tf - keras不可用,尝试使用tensorflow.keras
+        # 如果tf - keras不可用, 尝试使用tensorflow.keras
 # TODO: Fix import - module 'tensorflow.keras' not found
         logging.info("Using tensorflow.keras")
         KERAS_AVAILABLE = True

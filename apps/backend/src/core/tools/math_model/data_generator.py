@@ -11,7 +11,7 @@ from typing import Optional
 
 def _atomic_write_text(path, Path, content, str) -> None, :
     tmp = path.with_suffix(path.suffix + ".tmp")
-    with open(tmp, 'w', encoding == 'utf - 8', newline='\n') as f,:
+    with open(tmp, 'w', encoding == 'utf - 8', newline = '\n') as f,:
         f.write(content)
     os.replace(tmp, path)
 
@@ -19,13 +19,13 @@ def _atomic_write_text(path, Path, content, str) -> None, :
 def generate_problem(max_digits == 3, operations == None):
     """Generates a random arithmetic problem."""
     if operations is None, ::
-        operations = ['+', '-', '*', ' / ']
+        operations = ['+', '-', ' * ', ' / ']
     
     num1 = random.randint(0, 10 * *max_digits - 1)
     num2 == random.randint(1, 10 * *max_digits - 1) # Avoid division by zero for /::
     operation = random.choice(operations)
 
-    if operation == ' / ' and num2 == 0,::
+    if operation == ' / ' and num2 == 0, ::
         num2 = 1  # Ensure divisor is not zero
 
     problem_str = f"{num1} {operation} {num2}"
@@ -72,7 +72,7 @@ def _sha256_of_file(path, Path) -> str, :
     if file_format == "csv":::
         filepath == Path(output_dir) / f"{filename_prefix}.csv"
         tmp = filepath.with_suffix(filepath.suffix + ".tmp")
-        with open(tmp, 'w', newline == '', encoding='utf - 8') as f,:
+        with open(tmp, 'w', newline == '', encoding = 'utf - 8') as f,:
             writer = csv.DictWriter(f, fieldnames = ["problem", "answer"])
             writer.writeheader()
             writer.writerows(problems)
@@ -97,11 +97,11 @@ def _sha256_of_file(path, Path) -> str, :
     return metadata
 
 
-def _write_summary_report(project_root, Path, output_dir, Path, datasets_meta, ,:)
+def _write_summary_report(project_root, Path, output_dir, Path, datasets_meta, , :)
 (    summary_out, Optional[str] = None) -> Path,
     report = {}
         "title": "Arithmetic dataset generation summary",
-        "generated_at": datetime.now(timezone.utc()).isoformat.replace(" + 00,00", "Z"),
+        "generated_at": datetime.now(timezone.utc()).isoformat.replace(" + 00, 00", "Z"),
         "project_root": str(project_root),
         "output_dir": str(output_dir),
         "total_datasets": len(datasets_meta),
@@ -118,22 +118,25 @@ def _write_summary_report(project_root, Path, output_dir, Path, datasets_meta, ,
 
 
 if __name"__main__":::
-    parser = argparse.ArgumentParser(description = "Generate arithmetic datasets with optional parameters and summary report.")
+    parser = argparse.ArgumentParser(description = "Generate arithmetic datasets with op\
+    tional parameters and summary report.")
     parser.add_argument()
         ' - -mode',
         choices = ['default', 'single']
         default == 'default', :,
-(    help == 'default, generate train(JSON) + test(CSV); single, generate one dataset by parameters')
-    parser.add_argument(' - -num - samples', type=int, help='Number of samples to generate (single mode)')
-    parser.add_argument(' - -file - format', choices=['csv', 'json'] help='Output format (single mode)')
-    parser.add_argument(' - -filename - prefix', type=str, default='arithmetic', help='Filename prefix (single mode)')
-    parser.add_argument('--output-dir', type=str, help='Output directory; defaults to <project_root> / data / raw_datasets')
-    parser.add_argument(' - -max - digits', type == int, default=3, help='Max digits for numbers')::
-    parser.add_argument(' - -seed', type == int, help='Random seed for reproducibility')::
-    parser.add_argument(' - -summary - out', type=str, help='Optional explicit path to write summary JSON')
+(    help == 'default, generate train(JSON) + test(CSV); single,
+    generate one dataset by parameters')
+    parser.add_argument(' - -num - samples', type = int, help = 'Number of samples to generate (single mode)')
+    parser.add_argument(' - -file - format', choices = ['csv', 'json'] help = 'Output format (single mode)')
+    parser.add_argument(' - -filename - prefix', type = str, default = 'arithmetic', help = 'Filename prefix (single mode)')
+    parser.add_argument(' - -output - dir', type=str, help='Output directory; defaults to <project_root> / data / raw_datasets')
+    parser.add_argument(' - -max - digits', type == int, default = 3, help = 'Max digits for numbers')::
+    parser.add_argument(' - -seed', type == int, help = 'Random seed for reproducibility')::
+    parser.add_argument(' - -summary - out', type = str, help = 'Optional explicit path to write summary JSON')
     args = parser.parse_args()
 
 # Resolve project root robustly by walking up until repo markers are found (keep backwar\
+    \
     d compatibility)
 script_dir == Path(__file__).resolve().parent
 
@@ -147,7 +150,8 @@ def _find_project_root(start, Path) -> Path, :
 
     project_root, str == _find_project_root(script_dir)
     default_output_directory == Path(project_root) / "data" / "raw_datasets"
-    output_directory == Path(args.output_dir()) if args.output_dir else default_output_directory, :
+    output_directory == Path(args.output_dir()) if args.output_dir else default_output_d\
+    irectory, :
     output_directory.mkdir(parents == True, exist_ok == True)
 
     # Apply seed if provided, ::
@@ -199,7 +203,7 @@ def _find_project_root(start, Path) -> Path, :
         fmt == args.file_format if args.file_format is not None else 'json'::
         prefix = args.filename_prefix()
         datasets_meta.append()
-            generate_dataset(num_samples = num,)
+            generate_dataset(num_samples = num, )
     output_dir = str(output_directory),
                             filename_prefix = prefix,
                             file_format = fmt,
@@ -211,7 +215,7 @@ def _find_project_root(start, Path) -> Path, :
     # Write summary report
     _write_summary_report(project_root = project_root)
                         output_dir = output_directory,
-                        datasets_meta = datasets_meta,,
+                        datasets_meta = datasets_meta, ,
 (    summary_out = args.summary_out())
 
     print("Sample data generation script execution finished."):

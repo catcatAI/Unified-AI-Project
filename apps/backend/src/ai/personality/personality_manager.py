@@ -14,6 +14,7 @@ class PersonalityManager, :
             profiles_dir (Path,
     optional): Directory containing personality profile JSON files.
                                         Defaults to "personalities" in the current worki\
+    \
     ng directory.
             default_profile_name (str): Name of the default personality profile to load.
         """
@@ -29,7 +30,7 @@ class PersonalityManager, :
         profiles: Dict[str, Dict[str, str]] = {}
         for file_path in self.profiles_dir.glob(" * .json"):
             try:
-                with open(file_path, 'r', encoding='utf - 8') as f:
+                with open(file_path, 'r', encoding = 'utf - 8') as f:
                     data = json.load(f)
                     profile_name = data.get("profile_name")
                     if profile_name:
@@ -47,14 +48,15 @@ class PersonalityManager, :
     profile_name = self.default_profile_name()
             else, # If default also not found
                 print(f"PersonalityManager,
-    Default profile '{self.default_profile_name}' also not found. No personality loaded.")
+    Default profile '{self.default_profile_name}' also not found. No personality loaded.\
+    ")
                 self.current_personality == None
                 return False
 
     profile_info = self.available_profiles[profile_name]
         try,
 
-            with open(profile_info["path"] 'r', encoding == 'utf - 8') as f,:
+            with open(profile_info["path"] 'r', encoding == 'utf - 8') as f, :
     self.current_personality = json.load(f)
             print(f"PersonalityManager,
     Successfully loaded personality '{profile_name}'.")
@@ -65,7 +67,8 @@ class PersonalityManager, :
             self.current_personality == None
             return False
 
-    def get_current_personality_trait(self, trait_name, str, default_value == None) -> Any, :
+    def get_current_personality_trait(self, trait_name, str,
+    default_value == None) -> Any, :
     """Gets a specific trait from the current personality."""
         if not self.current_personality, ::
     return default_value
@@ -114,8 +117,10 @@ if __name'__main__':::
     print(f"\nLoaded personality, {pm.current_personality.get('profile_name')}")
     print(f"Initial prompt, {pm.get_initial_prompt}")
     print(f"Default tone,
-    {pm.get_current_personality_trait('communication_style.tone_presets.default', 'neutral')}")
-    print(f"A non - existent trait, {pm.get_current_personality_trait('fictional.trait', 'not set')}")
+    {pm.get_current_personality_trait('communication_style.tone_presets.default',
+    'neutral')}")
+    print(f"A non - existent trait, {pm.get_current_personality_trait('fictional.trait',
+    'not set')}")
     else,
 
         print("\nNo personality loaded for testing.")::
@@ -133,13 +138,15 @@ if __name'__main__':::
     success == pm.load_personality("non_existent_profile_abc123"):
     print(f"Loading non_existent_profile_abc123 success, {success}")
     if pm.current_personality, ::
-    print(f"Current profile after trying to load non - existent, {pm.current_personality.get('profile_name')}")
+    print(f"Current profile after trying to load non - existent,
+    {pm.current_personality.get('profile_name')}")
 
     # Ensure it falls back to default if current was None or failed to load, ::
         f not pm.current_personality and \
     pm.default_profile_name in pm.available_profiles,
 
-    pm.load_personality(pm.default_profile_name()) # Explicitly reload default if needed, ::
+    pm.load_personality(pm.default_profile_name()) # Explicitly reload default if needed\
+    , ::
         f pm.current_personality,
 
     print(f"Reverted to default profile, {pm.current_personality.get('profile_name')}")]

@@ -27,7 +27,7 @@ class ConfluenceIntegration, :
         # Headers for API requests, ::
         self.headers = {}
             'Accept': 'application / json',
-            'Content-Type': 'application / json',
+            'Content - Type': 'application / json',
             'Authorization': f'Bearer {self.api_token}'
 {        }
 
@@ -47,7 +47,8 @@ class ConfluenceIntegration, :
 {            }
 
             async with self.connector.semaphore,
-                async with self.session.get(url, headers == self.headers(), params = params) as response,
+                async with self.session.get(url, headers == self.headers(),
+    params = params) as response,
                     if response.status == 200, ::
                         data = await response.json()
                         return {}
@@ -83,7 +84,8 @@ class ConfluenceIntegration, :
 {            }
 
             async with self.connector.semaphore,
-                async with self.session.get(url, headers == self.headers(), params = params) as response,
+                async with self.session.get(url, headers == self.headers(),
+    params = params) as response,
                     if response.status == 200, ::
                         data = await response.json()
                         return {}
@@ -98,6 +100,7 @@ class ConfluenceIntegration, :
                     else,
                         error_text = await response.text()
                         logger.error(f"Failed to get space {space_key} {response.status}\
+    \
     - {error_text}")
                         return {}
                             "success": False,
@@ -140,7 +143,8 @@ class ConfluenceIntegration, :
                 page_data["ancestors"] = [{"id": parent_page_id}]
 
             async with self.connector.semaphore,
-                async with self.session.post(url, headers == self.headers(), json = page_data) as response,
+                async with self.session.post(url, headers == self.headers(),
+    json = page_data) as response,
                     if response.status == 200, ::
                         data = await response.json()
                         return {}
@@ -191,7 +195,8 @@ class ConfluenceIntegration, :
 {            }
 
             async with self.connector.semaphore,
-                async with self.session.put(url, headers == self.headers(), json = update_data) as response,
+                async with self.session.put(url, headers == self.headers(),
+    json = update_data) as response,
                     if response.status == 200, ::
                         data = await response.json()
                         return {}
@@ -203,6 +208,7 @@ class ConfluenceIntegration, :
                     else,
                         error_text = await response.text()
                         logger.error(f"Failed to update page {page_id} {response.status}\
+    \
     - {error_text}")
                         return {}
                             "success": False,
@@ -228,7 +234,8 @@ class ConfluenceIntegration, :
 {            }
 
             async with self.connector.semaphore,
-                async with self.session.get(url, headers == self.headers(), params = params) as response,
+                async with self.session.get(url, headers == self.headers(),
+    params = params) as response,
                     if response.status == 200, ::
                         data = await response.json()
                         return {}
@@ -274,7 +281,8 @@ class ConfluenceIntegration, :
 {            }
 
             async with self.connector.semaphore,
-                async with self.session.get(url, headers == self.headers(), params = params) as response,
+                async with self.session.get(url, headers == self.headers(),
+    params = params) as response,
                     if response.status == 200, ::
                         data = await response.json()
                         return {}
@@ -312,7 +320,8 @@ class ConfluenceIntegration, :
 {            }
 
             async with self.connector.semaphore,
-                async with self.session.get(url, headers == self.headers(), params = params) as response,
+                async with self.session.get(url, headers == self.headers(),
+    params = params) as response,
                     if response.status == 200, ::
                         data = await response.json()
                         return {}
@@ -323,6 +332,7 @@ class ConfluenceIntegration, :
                     else,
                         error_text = await response.text()
                         logger.error(f"Failed to get page children for {page_id} {respon\
+    \
     se.status} - {error_text}")::
                         return {}
                             "success": False,

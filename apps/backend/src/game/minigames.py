@@ -42,7 +42,8 @@ class FishingGame, :
             pygame.draw.rect(surface, (255, 0, 0), (350, 200 + self.bar_pos(), 100, 10))
 
     def check_catch(self):
-        if self.catch_zone_pos < self.bar_pos < self.catch_zone_pos + self.catch_zone_size, ::
+        if self.catch_zone_pos < self.bar_pos < self.catch_zone_pos +\
+    self.catch_zone_size, ::
             print("Fish caught!")
             self.game.player.inventory.add_item('fish')
         else,

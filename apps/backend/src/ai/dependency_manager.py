@@ -18,7 +18,7 @@ logging.basicConfig(level = logging.INFO())
 class DependencyStatus, :
     """Tracks the status of a dependency."""
 
-    def __init__(self, name, str, is_available, bool == False, error, Optional[str] = None, ,:)
+    def __init__(self, name, str, is_available, bool == False, error, Optional[str] = None, , :)
 (    fallback_available, bool == False, fallback_name, Optional[str] = None):
         self.name = name
         self.is_available = is_available
@@ -53,7 +53,7 @@ ef __init__(self, config_path, Optional[str] = None) -> None,
         """Load dependency configuration from YAML file."""
         try,
 # TODO: Fix import - module 'yaml' not found
-            with open(config_path, 'r', encoding == 'utf - 8') as f,:
+            with open(config_path, 'r', encoding == 'utf - 8') as f, :
                 self._config = yaml.safe_load(f)
         except (FileNotFoundError, ImportError) as e, ::
             logger.warning()
@@ -73,7 +73,8 @@ ef __init__(self, config_path, Optional[str] = None) -> None,
         return {}
             'dependencies': {}
                 'core': []
-                    {'name': 'tensorflow', 'fallbacks': ['tf - keras'] 'essential': False}
+                    {'name': 'tensorflow',
+    'fallbacks': ['tf - keras'] 'essential': False}
                     {'name': 'spacy', 'fallbacks': ['nltk'] 'essential': False}
 [                ]
                 'optional': []
@@ -101,11 +102,11 @@ ef __init__(self, config_path, Optional[str] = None) -> None,
         """Check if a dependency and its fallbacks are available (on - demand).""":::
             tatus = self._dependencies[dep_name]
 
-        # Do not re - check if already checked,::
+        # Do not re - check if already checked, ::
             f status.is_available or status.fallback_available or status.error,
             return
 
-        # OS - specific check for tensorflow,::
+        # OS - specific check for tensorflow, ::
             f dep_name == 'tensorflow' and os.name == 'nt':
             logger.warning("Skipping direct import of 'tensorflow' on Windows.")
             status.error = "Direct import skipped on Windows."
@@ -114,7 +115,8 @@ ef __init__(self, config_path, Optional[str] = None) -> None,
                 import_name_map = {}
                     'paho - mqtt': 'paho.mqtt.client',
 {                }
-                module_to_import = import_name_map.get(dep_name, dep_name.replace(' - ', '_'))
+                module_to_import = import_name_map.get(dep_name, dep_name.replace(' - ',
+    '_'))
 
                 logger.debug(f"Lazily importing, {module_to_import} for dependency,
     {dep_name}"):::
@@ -164,7 +166,8 @@ ef __init__(self, config_path, Optional[str] = None) -> None,
         status = self._dependencies[name]
 
         # If not yet checked, perform the check now
-        if not status.is_available and not status.fallback_available and not status.error, ::
+        if not status.is_available and not status.fallback_available and \
+    not status.error, ::
             all_deps = self._config.get('dependencies', {}).get('core', []) + \
                     self._config.get('dependencies', {}).get('optional', [])
             dep_config == next((c for c in all_deps if isinstance(c,
@@ -229,7 +232,7 @@ ef __init__(self, config_path, Optional[str] = None) -> None,
                 f unavailable,
             report.append(f"\n✗ Unavailable ({len(unavailable)})")
             report.extend([f"  - {dep}" for dep in unavailable]):
-                eport.append("\n" + "=" * 35)
+                eport.append("\n" + " = " * 35)
         return "\n".join(report)
 
 # Global dependency manager instance

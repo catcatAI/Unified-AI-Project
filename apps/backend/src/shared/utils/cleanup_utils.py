@@ -57,7 +57,7 @@ def cleanup_log_files(retention_days, int, project_root, Path == Path(".")):
     log_patterns = []
         "logs / *.log",
         " * .log",
-        "logs / *.log.*"
+        "logs / *.log. * "
 [    ]
     
     for pattern in log_patterns, ::

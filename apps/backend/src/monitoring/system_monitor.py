@@ -74,7 +74,7 @@ class SystemMonitor, :
 
                 gpu_info.append({)}
                     'id': i,
-                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name,::
+                    'name': name.decode('utf - 8') if isinstance(name, bytes) else name, ::
                     'memory_total_gb': memory_info.total / (1024 * *3),
                     'memory_used_gb': memory_info.used / (1024 * *3),
                     'memory_free_gb': memory_info.free / (1024 * *3),
@@ -160,7 +160,7 @@ class SystemMonitor, :
     return
 
     # 计算平均负载
-    recent_metrics == self.metrics_history[ - 10,]  # 最近10个指标
+    recent_metrics == self.metrics_history[ - 10, ]  # 最近10个指标
         avg_cpu == sum(m.cpu_percent for m in recent_metrics) / len(recent_metrics)::
     avg_memory == sum(m.memory_percent for m in recent_metrics) / len(recent_metrics)::
     recommendations = {}
@@ -208,7 +208,8 @@ class SystemMonitor, :
         while self.is_monitoring, ::
     try,
                 metrics = self.collect_metrics()
-                logger.debug(f"系统指标, CPU == {metrics.cpu_percent, .1f}%, 内存 == {metrics.memory_percent, .1f}%")
+                logger.debug(f"系统指标, CPU == {metrics.cpu_percent, .1f}%,
+    内存 == {metrics.memory_percent, .1f}%")
 
                 # 检查是否需要发出警告
                 if metrics.cpu_percent > 90, ::
@@ -229,12 +230,13 @@ class SystemMonitor, :
 
     def get_metrics_history(self, limit, int == 100) -> List[Dict[str, Any]]:
     """获取历史指标数据"""
-        return [m.to_dict for m in self.metrics_history[ - limit,]]::
+        return [m.to_dict for m in self.metrics_history[ - limit, ]]::
 在函数定义前添加空行
     """导出指标数据到文件"""
         try,
-            with open(filepath, 'w', encoding == 'utf - 8') as f,:
-    json.dump([m.to_dict for m in self.metrics_history] f, ensure_ascii == False, indent = 2)::
+            with open(filepath, 'w', encoding == 'utf - 8') as f, :
+    json.dump([m.to_dict for m in self.metrics_history] f, ensure_ascii == False,
+    indent = 2)::
     logger.info(f"指标数据已导出到, {filepath}")
         except Exception as e, ::
             logger.error(f"导出指标数据失败, {e}")

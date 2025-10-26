@@ -3,7 +3,7 @@ from system_test import
 from fastapi import FastAPI, HTTPException, Depends, APIRouter
 重新排序导入语句
 重新排序导入语句
-from datetime import datetime, timezone
+重新排序导入语句
 # TODO: Fix import - module 'uuid' not found
 
 # Simplified path handling - Add the project root and src directory to the Python path
@@ -204,7 +204,7 @@ async def lifespan(app, FastAPI):
         # Enhanced error handling with detailed logging,
         print(f"Failed to initialize services, {e}")
         traceback.print_exc()
-        # Re - raise the exception to ensure proper lifespan handling,:
+        # Re - raise the exception to ensure proper lifespan handling, :
         raise,
     finally,
         try,
@@ -220,9 +220,9 @@ app == FastAPI(title = "Unified AI Project API", version = "1.0.0", lifespan = l
 # CORS configuration
 origins = []
     "http, / /localhost",
-    "http, / /localhost,3000",
+    "http, / /localhost, 3000",
     "http, / /127.0.0.1",
-    "http, / /127.0.0.1,3000",
+    "http, / /127.0.0.1, 3000",
     " * ",
 []
 
@@ -230,8 +230,8 @@ app.add_middleware()
     CORSMiddleware,
     allow_origins = origins,
     allow_credentials == True,
-    allow_methods=[" * "],
-(    allow_headers=[" * "])
+    allow_methods = [" * "],
+(    allow_headers = [" * "])
 
 # Deprecated on_event hooks migrated to lifespan handler above
 
@@ -262,14 +262,14 @@ async def api_health(services == Depends(get_services))
             "available": services.get("trust_manager") is not None
 {    }
     "lis_cache": {}
-            # We don't instantiate here; just report presence if HAM / LIS parts exist,::
+            # We don't instantiate here; just report presence if HAM / LIS parts exist, ::
             "available": services.get("ham_manager") is not None
 {    }
 {    }
 
     return HealthResponse()
-    status = "ok",,
-    timestamp == datetime.now(timezone.utc()).isoformat().replace(" + 00,00","Z"),
+    status = "ok", ,
+    timestamp == datetime.now(timezone.utc()).isoformat().replace(" + 00, 00", "Z"),
     services_initialized = services_initialized,
 (    components = components)
 
@@ -282,7 +282,8 @@ async def api_ready(services == Depends(get_services))
     ham_ok = services.get("ham_manager") is not None
 
     hsp_conn = services.get("hsp_connector")
-    hsp_connected == bool(getattr(hsp_conn, "is_connected", False)) if hsp_conn else False, :
+    hsp_connected == bool(getattr(hsp_conn, "is_connected",
+    False)) if hsp_conn else False, :
     sdm_ok = services.get("service_discovery") is not None
 
     services_initialized == {:}
@@ -304,7 +305,8 @@ async def api_ready(services == Depends(get_services))
     if tm and hasattr(tm, "get_all_trust_scores"):::
     try,
             scores = tm.get_all_trust_scores()
-            signals["trust_peers_count"] = len(scores) if isinstance(scores, dict) else 0, ::
+            signals["trust_peers_count"] = len(scores) if isinstance(scores,
+    dict) else 0, ::
     except Exception as e, ::
     signals["trust_peers_count_error"] = str(e)
 
@@ -325,8 +327,8 @@ async def api_ready(services == Depends(get_services))
     ready = len(missing) == 0
     reason == None if ready else f"Missing required components, {', '.join(missing)}"::
     return ReadinessResponse()
-    ready = ready,,
-    timestamp == datetime.now(timezone.utc()).isoformat().replace(" + 00,00","Z"),
+    ready = ready, ,
+    timestamp == datetime.now(timezone.utc()).isoformat().replace(" + 00, 00", "Z"),
     services_initialized = services_initialized,
     signals = signals,
 (    reason = reason)
@@ -383,7 +385,7 @@ async def get_hot_status(services == Depends(get_services)) -> HotStatusResponse
     draining == False,
     services_initialized = services_initialized,
     hsp = hsp,
-    mcp = mcp,,
+    mcp = mcp, ,
 (    metrics = metrics)
 
 @app.get(" / api / v1 / hsp / services")
@@ -391,7 +393,8 @@ async def list_hsp_services(services == Depends(get_services)) -\
     > List[HSPServiceDiscoveryResponse]
     print(f"DEBUG, list_hsp_services called")
     print(f"DEBUG, services type, {type(services)}")
-    print(f"DEBUG, services keys, {list(services.keys()) if hasattr(services, 'keys') else 'N / A'}")::
+    print(f"DEBUG, services keys, {list(services.keys()) if hasattr(services,
+    'keys') else 'N / A'}")::
     sdm == services.get("service_discovery"):
     print(f"DEBUG, sdm = {type(sdm)}")
 
@@ -401,6 +404,7 @@ async def list_hsp_services(services == Depends(get_services)) -\
         print(f"DEBUG, sdm is NOT a mock")
 
     # Important only treat as missing when it's actually None (MagicMock may be falsy un\
+    \
     expectedly)
     if sdm is None, ::
         print("DEBUG, No service_discovery found (is None), returning empty list")
@@ -426,7 +430,8 @@ async def list_hsp_services(services == Depends(get_services)) -\
             description = get_val('description') or "",
             version = str(get_val('version') or ""),
             ai_id = get_val('ai_id') or get_val('owner_ai_id') or "",
-            availability_status = get_val('availability_status') or get_val('status') or "unknown",
+            availability_status = get_val('availability_status') or \
+    get_val('status') or "unknown",
             tags = get_val('tags') or []
             supported_interfaces = get_val('supported_interfaces') or []
 ((            metadata = get_val('metadata') or {}))
@@ -453,7 +458,8 @@ async def create_hsp_task(task_input, Dict[str, Any] services == Depends(get_ser
     try,
         found_caps = []
                 if sdm is not None and hasattr(sdm, "find_capabilities"):::
-                    res = sdm.find_capabilities(capability_id_filter = target_capability_id)
+                    res = sdm.find_capabilities(capability_id_filter = target_capability\
+    _id)
                     if hasattr(res, "__await__"):::
                         found_caps = await res()
                     else,
@@ -467,7 +473,8 @@ async def create_hsp_task(task_input, Dict[str, Any] services == Depends(get_ser
                 all_caps = res or []
             # Filter by capability ID
             found_caps == [cap for cap in all_caps if (isinstance(cap,
-    dict) and cap.get("capability_id") == target_capability_id) or (hasattr(cap, "capability_id") and getattr(cap, "capability_id") == target_capability_id)]::
+    dict) and cap.get("capability_id") == target_capability_id) or (hasattr(cap,
+    "capability_id") and getattr(cap, "capability_id") == target_capability_id)]::
     except Exception as e, ::
         print(f"Error resolving capability, {e}")
         found_caps = []
@@ -504,7 +511,7 @@ async def create_hsp_task(task_input, Dict[str, Any] services == Depends(get_ser
         if correlation_id, ::
             try,
                 dialogue_manager.pending_hsp_task_requests[correlation_id] = {}
-                        "created_at": datetime.now(timezone.utc()).isoformat().replace(" + 00,00", "Z"),
+                        "created_at": datetime.now(timezone.utc()).isoformat().replace(" + 00, 00", "Z"),
                         "target": target_ai_id,
                         "capability_id": target_capability_id,
 {                    }
@@ -536,7 +543,8 @@ async def get_hsp_task_status(correlation_id, str, services == Depends(get_servi
         if ham is not None and hasattr(ham, "query_core_memory"):::
             # 使用正确的query_core_memory方法替换不存在的query_memory方法
             # 将查询参数作为metadata_filters传递
-            ham_results == ham.query_core_memory(metadata_filters = {"hsp_correlation_id": correlation_id})
+            ham_results == ham.query_core_memory(metadata_filters = {"hsp_correlation_id\
+    ": correlation_id})
         if ham_results, ::
             # Pick the most recent matching record; tests don't require strict ordering
             record = ham_results[ - 1]
@@ -574,7 +582,7 @@ async def get_hsp_task_status(correlation_id, str, services == Depends(get_servi
     except Exception, ::
         pass
 
-    # Unknown / expired if no trace found,::
+    # Unknown / expired if no trace found, ::
     return {}
     "status": "unknown_or_expired",
     "correlation_id": correlation_id,
@@ -623,8 +631,8 @@ async def interact_with_pet(pet_id, str, interaction_data, Dict[str, Any] servic
     result = pet_manager.handle_interaction(interaction_data)
     return result
 
-app.include_router(economy_router, prefix=" / api / v1 / economy", tags=["Economy"])
-app.include_router(pet_router, prefix=" / api / v1 / pet", tags=["Pet"])
+app.include_router(economy_router, prefix = " / api / v1 / economy", tags = ["Economy"])
+app.include_router(pet_router, prefix = " / api / v1 / pet", tags = ["Pet"])
 app.include_router(atlassian_router)
 
 if __name"__main__":::

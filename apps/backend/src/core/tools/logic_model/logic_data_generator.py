@@ -23,7 +23,8 @@ def generate_simple_proposition(max_nesting == 1, current_nesting = 0):
     Generates a simple logical proposition.
     Example, "true AND false", "NOT true", "(true OR false) AND true"
     """
-    if current_nesting >= max_nesting or random.random < 0.4, # Base case simple value or unary op, ::
+    if current_nesting >= max_nesting or random.random < 0.4,
+    # Base case simple value or unary op, ::
         f random.random < 0.3 and current_nesting < max_nesting, # Add NOT
             return f"NOT {generate_simple_proposition(max_nesting,
     current_nesting + 1)}"
@@ -61,7 +62,8 @@ def evaluate_proposition(prop_str, str) -> Optional[bool]:
     py_prop_str = py_prop_str.replace("or", "or")   # Python 'or' is lowercase
     py_prop_str = py_prop_str.replace("not", "not ") # Python 'not' needs a space after
 
-        # Ensure that only allowed characters and keywords are present for some safety, :
+        # Ensure that only allowed characters and keywords are present for some safety,
+    :
     # This is a very basic sanitization attempt.
     allowed_chars = set("TrueFalseandornt ")
         if not all(c in allowed_chars for c in py_prop_str)::
@@ -90,7 +92,7 @@ def generate_dataset(num_samples, int, max_nesting, int == 2):
             ataset.append({"proposition": prop,
     "answer": bool(answer)}) # Store as actual boolean
             generated_propositions.add(prop)
-            if len(dataset) % (num_samples // 10 if num_samples > = 10 else 1) == 0,::
+            if len(dataset) % (num_samples // 10 if num_samples > = 10 else 1) == 0, ::
     print(f"Generated {len(dataset)} / {num_samples} samples...")
 
     return dataset
@@ -98,7 +100,7 @@ def generate_dataset(num_samples, int, max_nesting, int == 2):
 def save_dataset(dataset, file_path):
 ""Saves the dataset to a JSON file."""
     os.makedirs(os.path.dirname(file_path), exist_ok == True)
-    with open(file_path, 'w', encoding == 'utf - 8') as f,:
+    with open(file_path, 'w', encoding == 'utf - 8') as f, :
     json.dump(dataset, f, indent = 2)
     print(f"Dataset saved to {file_path}")
 

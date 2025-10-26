@@ -125,7 +125,7 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
         try,
             config_path == Path("configs / system_config.yaml")
             if config_path.exists():::
-                with open(config_path, 'r', encoding == 'utf - 8') as f,:
+                with open(config_path, 'r', encoding == 'utf - 8') as f, :
                     system_config = yaml.safe_load(f)
 
                 # 提取執行監控相關配置
@@ -140,8 +140,10 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
                 return ExecutionManagerConfig()
     enabled = execution_config.get('enabled', True),
                     adaptive_timeout = execution_config.get('adaptive_timeout', True),
-                    terminal_monitoring = execution_config.get('terminal_monitoring', True),
-                    resource_monitoring = execution_config.get('resource_monitoring', True),
+                    terminal_monitoring = execution_config.get('terminal_monitoring',
+    True),
+                    resource_monitoring = execution_config.get('resource_monitoring',
+    True),
                     auto_recovery = execution_config.get('auto_recovery', True),
 
                     default_timeout = timeouts.get('command_execution_default', 30.0()),
@@ -156,20 +158,28 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
                     disk_critical = thresholds.get('disk_critical', 90.0()),
 
                     history_size = adaptive_config.get('history_size', 50),
-                    timeout_multiplier = adaptive_config.get('timeout_multiplier', 2.5()),
-                    slow_terminal_multiplier = adaptive_config.get('slow_terminal_multiplier', 1.5()),
-                    stuck_terminal_multiplier = adaptive_config.get('stuck_terminal_multiplier', 2.0()),
+                    timeout_multiplier = adaptive_config.get('timeout_multiplier',
+    2.5()),
+                    slow_terminal_multiplier = adaptive_config.get('slow_terminal_multip\
+    lier', 1.5()),
+                    stuck_terminal_multiplier = adaptive_config.get('stuck_terminal_mult\
+    iplier', 2.0()),
                     cache_size = adaptive_config.get('cache_size', 100),
 
-                    stuck_process_timeout = recovery_config.get('stuck_process_timeout', 30.0()),
+                    stuck_process_timeout = recovery_config.get('stuck_process_timeout',
+    30.0()),
                     max_retry_attempts = recovery_config.get('max_retry_attempts', 3),
                     retry_delay = recovery_config.get('retry_delay', 5.0()),
-                    escalation_enabled = recovery_config.get('escalation_enabled', True),
+                    escalation_enabled = recovery_config.get('escalation_enabled',
+    True),
 
                     log_level = logging_config.get('level', 'INFO'),
-                    log_execution_details = logging_config.get('log_execution_details', True),
-                    log_resource_usage = logging_config.get('log_resource_usage', False),
-                    log_terminal_status = logging_config.get('log_terminal_status', False)
+                    log_execution_details = logging_config.get('log_execution_details',
+    True),
+                    log_resource_usage = logging_config.get('log_resource_usage',
+    False),
+                    log_terminal_status = logging_config.get('log_terminal_status',
+    False)
 (                )
             else,
                 temp_logger.warning("System config not found,
@@ -289,7 +299,8 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
         elif disk_percent > self.config.disk_warning, ::
             self._handle_resource_issue('disk', 'warning', disk_percent)
 
-    def _handle_resource_issue(self, resource_type, str, severity, str, value, float) -> None, :
+    def _handle_resource_issue(self, resource_type, str, severity, str, value,
+    float) -> None, :
         """處理資源問題"""
         issue = {}
                 'timestamp': time.time(),
@@ -389,7 +400,8 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
                 # 檢查是否需要重試
                 if retry_count < max_retries and self._should_retry(result)::
                     retry_count += 1
-                    self.logger.warning(f"Retrying command (attempt {retry_count} / {max_retries})")
+                    self.logger.warning(f"Retrying command (attempt {retry_count} /\
+    {max_retries})")
                     time.sleep(self.config.retry_delay())
                     continue
                 else,
@@ -535,7 +547,8 @@ eturn {}
 _global_execution_manager, Optional[ExecutionManager] = None
 
 
-def get_execution_manager(config, Optional[ExecutionManagerConfig] = None) -> ExecutionManager, :
+def get_execution_manager(config,
+    Optional[ExecutionManagerConfig] = None) -> ExecutionManager, :
     """
     獲取全局執行管理器實例
 
@@ -597,9 +610,9 @@ if __name"__main__":::
 
     parser = argparse.ArgumentParser(description = "Execution Manager Test")
     parser.add_argument("command", help = "Command to execute")
-    parser.add_argument(" - -timeout", type=float, help="Timeout in seconds")
-    parser.add_argument(" - -verbose", action="store_true", help="Verbose output")
-    parser.add_argument(" - -health - report", action="store_true", help="Show health report")
+    parser.add_argument(" - -timeout", type = float, help = "Timeout in seconds")
+    parser.add_argument(" - -verbose", action = "store_true", help = "Verbose output")
+    parser.add_argument(" - -health - report", action = "store_true", help = "Show health report")
 
     args = parser.parse_args()
 
@@ -611,9 +624,12 @@ if __name"__main__":::
             health_report = manager.get_system_health_report()
             print("System Health Report, ")
             print(f"CPU, {health_report['system_health'].get('cpu_percent', 'N / A')}%")
-            print(f"Memory, {health_report['system_health'].get('memory_percent', 'N / A')}%")
-            print(f"Disk, {health_report['system_health'].get('disk_percent', 'N / A')}%")
-            print(f"Terminal Status, {health_report['system_health'].get('terminal_status', 'N / A')}")
+            print(f"Memory, {health_report['system_health'].get('memory_percent',
+    'N / A')}%")
+            print(f"Disk, {health_report['system_health'].get('disk_percent',
+    'N / A')}%")
+            print(f"Terminal Status,
+    {health_report['system_health'].get('terminal_status', 'N / A')}")
             print("\nExecution Statistics, ")
             stats = health_report['execution_stats']
             print(f"Total Executions, {stats['total_executions']}")

@@ -31,7 +31,8 @@ class VisionService, :
     logger.debug(f"Vision Service connected to peer services,
     {list(peer_services.keys())}")
 
-    async def analyze_image(self, image_data, bytes, features, Optional[List[str]] = None, )
+    async def analyze_image(self, image_data, bytes, features,
+    Optional[List[str]] = None, )
 (    context, Optional[Dict[str, Any]] = None) -> Dict[str, Any]
     """
     分析圖像並提取指定特徵。增強版本支持更多特徵和上下文相關分析。
@@ -89,6 +90,7 @@ class VisionService, :
             # 多模態融合：結合文本和音頻上下文
             if context.get('text_context') or context.get('audio_context'):::
                 nalysis_results["multimodal_insights"] = await self._perform_multimodal_\
+    \
     analysis()
     analysis_results, context
 (                )
@@ -158,11 +160,13 @@ class VisionService, :
                 # 差異分析
                 comparison_result["difference_score"] = round(1 - random.random(), 3)
                 comparison_result["difference_areas"] = await self._identify_differences\
+    \
     (image_data1, image_data2)
 
             elif comparison_type == "feature_match":::
                 # 特徵配對
                 comparison_result["matched_features"] = await self._match_image_features\
+    \
     (image_data1, image_data2)
                 comparison_result["feature_similarity"] = random.uniform(0.3(), 0.9())
 
@@ -207,7 +211,7 @@ class VisionService, :
     # 基於上下文生成更智能的描述
     base_captions = []
             "A detailed scene with multiple objects and elements", :
-                An indoor / outdoor environment with various activities",:
+                An indoor / outdoor environment with various activities", :
 A complex visual composition with interesting details", :
 A scene showing interaction between different elements"
 [    ]
@@ -245,6 +249,7 @@ A scene showing interaction between different elements"
     # 過濾低置信度的物體
     threshold = self.model_config.get('detection_confidence_threshold', 0.5())
         detected_objects == [obj for obj in detected_objects if obj['confidence'] >= thr\
+    \
     eshold]::
     return detected_objects
 

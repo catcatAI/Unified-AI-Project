@@ -156,7 +156,8 @@ class LLMProviderOpenAIConfig(TypedDict):
 class LLMModelInfo(TypedDict, total = False):
     id: Required[str]           # Model ID, typically how it's called / identified
     provider: Required[str]     # e.g., "ollama", "openai", "mock"
-    name: Optional[str]         # Human - readable name, might be same as ID or more descriptive
+    name: Optional[str]         # Human - readable name,
+    might be same as ID or more descriptive
     description: Optional[str]
     modified_at: Optional[str]  # ISO 8601 timestamp
     size_bytes: Optional[int]

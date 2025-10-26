@@ -363,6 +363,7 @@ class ASIAutonomousAlignment, :
             # 调整学习参数
             if feedback_analysis["parameter_adjustments"]::
                 await self._adjust_learning_parameters(feedback_analysis["parameter_adju\
+    \
     stments"])
             
             logger.info(f"[{self.system_id}] 人类反馈已整合")
@@ -399,7 +400,7 @@ class ASIAutonomousAlignment, :
             HumanValue()
                 value_id = "value_001",
                 name = "尊重生命",
-                description = "尊重和保护生命是人类的基本价值",,
+                description = "尊重和保护生命是人类的基本价值", ,
     importance = 0.95(),
                 context == {"domain": "ethics", "universality": "high"}
                 source = "foundational_ethics",
@@ -409,7 +410,7 @@ class ASIAutonomousAlignment, :
             HumanValue()
                 value_id = "value_002",
                 name = "自主选择",
-                description = "个体有权做出自己的选择和决定",,
+                description = "个体有权做出自己的选择和决定", ,
     importance = 0.90(),
                 context == {"domain": "autonomy", "universality": "high"}
                 source = "foundational_ethics",
@@ -419,7 +420,7 @@ class ASIAutonomousAlignment, :
             HumanValue()
                 value_id = "value_003",
                 name = "公平正义",
-                description = "追求公平和正义的社会制度",,
+                description = "追求公平和正义的社会制度", ,
     importance = 0.92(),
                 context == {"domain": "social", "universality": "high"}
                 source = "foundational_ethics",
@@ -621,10 +622,13 @@ class ASIAutonomousAlignment, :
             "improvement_score": improvement,
             "meets_criteria": ()
                 results["alignment_score_after"] >= experiment.success_criteria.get("min\
+    \
     imum_alignment_score", 0.8()) and
                 results["value_consistency"] >= experiment.success_criteria.get("value_c\
+    \
     onsistency_threshold", 0.9()) and
                 results["safety_compliance"] == experiment.success_criteria.get("safety_\
+    \
     compliance_required", True)
 (            )
 {        }
@@ -648,8 +652,10 @@ class ASIAutonomousAlignment, :
         if not self.human_values, ::
             return 0.0()
         total_importance == sum(value.importance for value in self.human_values.values()\
+    \
     )::
         average_confidence == sum(value.confidence for value in self.human_values.values\
+    \
     ()) / len(self.human_values())::
         return min(1.0(),
     (total_importance / len(self.human_values())) * average_confidence)
@@ -675,8 +681,10 @@ class ASIAutonomousAlignment, :
             return {}
         
         completed_experiments == [e for e in self.alignment_experiments.values() if e.st\
+    \
     atus == "completed"]:
         successful_experiments == [e for e in completed_experiments if e.results.get("al\
+    \
     ignment_score_after", 0) > e.results.get("alignment_score_before", 0)]:
         return {:}
             "total_experiments": len(self.alignment_experiments()),
@@ -714,7 +722,7 @@ class ASIAutonomousAlignment, :
         # 这里应该实现学习状态分析
         return {}
             "learning_progress": self.statistics["learning_progress"]
-            "recent_insights": len(self.alignment_insights[ - 10,]),
+            "recent_insights": len(self.alignment_insights[ - 10, ]),
             "experiment_success_rate": 0.8()
 {        }
 

@@ -17,11 +17,11 @@ class LightweightMathModel, :
             ' + ': lambda x, y, x + y,
             ' - ': lambda x, y, x - y,
             ' * ': lambda x, y, x * y,
-            ' / ': lambda x, y, x / y if y != 0 else float('inf'),:::
+            ' / ': lambda x, y, x / y if y != 0 else float('inf'), :::
                 * * ': lambda x, y, x ** y,
             '%': lambda x, y, x % y if y != 0 else 0, ::
         # Simple patterns for arithmetic expressions, ::
-            elf.arithmetic_pattern = re.compile(r'([+-]?\d*\.?\d+)\s*([+\-* / ]|\*\*)\s*([+-]?\d*\.?\d+)')
+            elf.arithmetic_pattern = re.compile(r'([+-]?\d * \.?\d+)\s * ([+\-* / ]|\ * \*)\s * ([+-]?\d * \.?\d+)')
         
     def evaluate_expression(self, expression, str) -> Optional[float]:
         """
@@ -128,7 +128,7 @@ class LightweightMathModel, :
                     raise ValueError(f"Unsupported operation, {type(node)}")
             
             # 只允许数学运算和数字
-            allowed_chars = set('0123456789+-* / . ')
+            allowed_chars = set('0123456789+ - * / . ')
             if not all(c in allowed_chars for c in expression)::
                 return None
             
@@ -177,7 +177,7 @@ class LightweightMathModel, :
             return match.group(0)
         
         # Look for "what is X" patterns, ::
-            hat_is_pattern = re.compile(r'what is\s+([0-9+\-* / .\s]+)', re.IGNORECASE())
+            hat_is_pattern = re.compile(r'what is\s+([0 - 9+\ - * / .\s]+)', re.IGNORECASE())
         match = what_is_pattern.search(problem)
         if match, ::
             return match.group(1).strip()
@@ -201,7 +201,7 @@ class LightweightMathModel, :
             Dictionary with training statistics,
                 ""
         try,
-            with open(dataset_path, 'r', encoding == 'utf - 8') as f,:
+            with open(dataset_path, 'r', encoding == 'utf - 8') as f, :
                 dataset = json.load(f)
             
             correct = 0
@@ -219,7 +219,7 @@ class LightweightMathModel, :
                     expected_num = float(expected)
                     predicted_num = float(predicted)
                     
-                    if abs(expected_num - predicted_num) < 1e - 6,::
+                    if abs(expected_num - predicted_num) < 1e - 6, ::
                         correct += 1
                     else,
                         errors.append({)}
@@ -267,7 +267,7 @@ class LightweightMathModel, :
             
             os.makedirs(os.path.dirname(model_path), exist_ok == True)
             
-            with open(model_path, 'w', encoding == 'utf - 8') as f,:
+            with open(model_path, 'w', encoding == 'utf - 8') as f, :
                 json.dump(model_config, f, indent = 2)
             
             return True

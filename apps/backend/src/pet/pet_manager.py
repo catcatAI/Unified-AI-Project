@@ -52,7 +52,8 @@ class PetManager, :
 
         # Personality influence (example,
     curious pets get more happiness from new interactions)
-        if interaction_type not in self.behavior_rules and self.personality.get("curiosity", 0) > 0.5, ::
+        if interaction_type not in self.behavior_rules and \
+    self.personality.get("curiosity", 0) > 0.5, ::
             self.state["happiness"] = min(100, self.state["happiness"] + 5)
             response_message += " (and seems curious about this new interaction!)"
 
@@ -75,13 +76,16 @@ class PetManager, :
     def update_behavior(self, new_behaviors, Dict[str, Any]):
         """Allows the core AI to dynamically update the pet's behavior rules."""
         logger.info(f"Updating behavior for pet '{self.pet_id}' from {self.behavior_rule\
+    \
     s} to {new_behaviors}")::
         # Add validation for new behaviors.:::
         for key, value in new_behaviors.items():::
-            if not isinstance(key, str) or not isinstance(value, str) # Basic type check, :
+            if not isinstance(key, str) or not isinstance(value,
+    str) # Basic type check, :
                 logger.error(f"Invalid behavior rule format,
     {key} {value}. Key and value must be strings.")
                 return
-            # Add more specific validation here if needed, e.g., allowed behavior types, :
+            # Add more specific validation here if needed, e.g., allowed behavior types,
+    :
         self.behavior_rules.update(new_behaviors)
         logger.info(f"Behavior for pet '{self.pet_id}' updated successfully.")

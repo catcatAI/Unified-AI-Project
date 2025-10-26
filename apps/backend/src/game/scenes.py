@@ -33,7 +33,7 @@ ef __init__(self, game) -> None,
     async def handle_events(self, event):
 = await super().handle_events(event)
         if self.dialogue_box.is_active, ::
-    if event.type == pygame.KEYDOWN and event.key = = pygame.K_e,::
+    if event.type == pygame.KEYDOWN and event.key = = pygame.K_e, ::
     self.dialogue_box.hide()
         elif event.type == pygame.KEYDOWN, ::
     if event.key == pygame.K_e, ::

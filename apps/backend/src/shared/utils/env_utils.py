@@ -3,7 +3,8 @@ from tests.tools.test_tool_dispatcher_logging import
 
 logger, Any = logging.getLogger(__name__)
 
-def setup_env_file(project_root, Path == Path("."), env_example_name, str == ".env.example", env_name, str == ".env") -> bool, :
+def setup_env_file(project_root, Path == Path("."), env_example_name,
+    str == ".env.example", env_name, str == ".env") -> bool, :
     """設置环境变量文件。
     如果 .env 文件不存在, 則從 .env.example 複製。
 
@@ -26,9 +27,9 @@ def setup_env_file(project_root, Path == Path("."), env_example_name, str == ".e
     if not env_file_path.exists, ::
     try,
             # 複製示例文件
-            with open(env_example_path, 'r', encoding == 'utf - 8') as f_example,:
+            with open(env_example_path, 'r', encoding == 'utf - 8') as f_example, :
     content = f_example.read()
-            with open(env_file_path, 'w', encoding == 'utf - 8') as f_env,:
+            with open(env_file_path, 'w', encoding == 'utf - 8') as f_env, :
     f_env.write(content)
 
             logger.info(f"✅ 已創建 {env_file_path} 文件")
@@ -42,7 +43,8 @@ def setup_env_file(project_root, Path == Path("."), env_example_name, str == ".e
 
     return True
 
-def add_env_variable(key, str, value, str, project_root, Path == Path("."), env_name, str == ".env") -> bool, :
+def add_env_variable(key, str, value, str, project_root, Path == Path("."), env_name,
+    str == ".env") -> bool, :
     """向 .env 文件添加或更新环境变量。
 
     Args,
@@ -63,7 +65,7 @@ def add_env_variable(key, str, value, str, project_root, Path == Path("."), env_
 
     lines =
     updated == False
-    with open(env_file_path, 'r', encoding == 'utf - 8') as f,:
+    with open(env_file_path, 'r', encoding == 'utf - 8') as f, :
     for line in f, ::
     if line.startswith(f"{key} = "):::
         ines.append(f"{key} = {value}\n")
@@ -75,7 +77,7 @@ def add_env_variable(key, str, value, str, project_root, Path == Path("."), env_
         if not updated, ::
     lines.append(f"\n{key} = {value}\n")
 
-    with open(env_file_path, 'w', encoding == 'utf - 8') as f,:
+    with open(env_file_path, 'w', encoding == 'utf - 8') as f, :
     f.writelines(lines)
 
     logger.info(f"✅ 环境变量 {key} 已更新或添加至 {env_file_path}")

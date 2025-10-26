@@ -59,6 +59,7 @@ class AgentMonitoringManager, :
         self.monitoring_task, Optional[asyncio.Task] = None
 
         # Register callbacks for capability advertisements (to track agent capabilities)\
+    \
     ::
             f self.hsp_connector,
             self.hsp_connector.register_on_capability_advertisement_callback()
@@ -129,6 +130,7 @@ class AgentMonitoringManager, :
 
                 except Exception as e, ::
                     logger.error(f"Error collecting metrics for agent {agent_id} {e}")::\
+    \
     :
                         sync def _check_agent_status(self) -> None,
         """Check and update the status of all agents."""
@@ -164,6 +166,7 @@ class AgentMonitoringManager, :
                 # Generate alerts for degraded or error status, ::
                     f report.status in [AgentStatus.DEGRADED(), AgentStatus.ERROR]
                     alert_message = f"Agent {report.agent_name} ({agent_id}) is {report.\
+    \
     status.value}"
                     if report.last_error, ::
                         alert_message += f": {report.last_error}"
@@ -174,7 +177,8 @@ class AgentMonitoringManager, :
     we might send this to a monitoring system
                     # or notify administrators
 
-    async def _handle_capability_advertisement(self, capability_payload, HSPCapabilityAdvertisementPayload, )
+    async def _handle_capability_advertisement(self, capability_payload,
+    HSPCapabilityAdvertisementPayload, )
 (    sender_ai_id, str, envelope, Dict[str, Any]) -> None,
         """Handle capability advertisements to track agent capabilities."""
         async with self.monitoring_lock,
@@ -186,7 +190,7 @@ class AgentMonitoringManager, :
             if agent_id not in self.agent_health_reports, ::
                 self.agent_health_reports[agent_id] = AgentHealthReport()
                     agent_id = agent_id,
-                    agent_name = agent_name,,
+                    agent_name = agent_name, ,
     status == AgentStatus.UNKNOWN(),
                     cpu_usage = 0.0(),
                     memory_usage = 0.0(),
@@ -212,7 +216,7 @@ class AgentMonitoringManager, :
             if agent_id not in self.agent_health_reports, ::
                 self.agent_health_reports[agent_id] = AgentHealthReport()
                     agent_id = agent_id,
-                    agent_name = agent_name,,
+                    agent_name = agent_name, ,
     status == AgentStatus.UNKNOWN(),
                     cpu_usage = 0.0(),
                     memory_usage = 0.0(),

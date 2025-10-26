@@ -13,7 +13,7 @@ from ..core_services import
 logger, Any = logging.getLogger(__name__)
 
 # 创建路由器
-atlassian_router == APIRouter(prefix=" / api / v1 / atlassian", tags=["Atlassian"])
+atlassian_router == APIRouter(prefix = " / api / v1 / atlassian", tags = ["Atlassian"])
 
 class AtlassianConfig(BaseModel):
     domain, str
@@ -97,9 +97,11 @@ async def get_atlassian_status():
         # 构建服务状态
         services = []
             {"name": "Confluence",
-    "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 95}:
+    "status": "connected" if status["acli_available"] else "disconnected",
+    "lastSync": "Just now", "health": 95}:
 {                "name": "Jira",
-    "status": "connected" if status["acli_available"] else "disconnected", "lastSync": "Just now", "health": 90}:
+    "status": "connected" if status["acli_available"] else "disconnected",
+    "lastSync": "Just now", "health": 90}:
 {"name": "Bitbucket", "status": "disconnected", "lastSync": "Never", "health": 0}
 [        ]
         
@@ -124,7 +126,8 @@ async def get_atlassian_status():
 async def get_atlassian_health():
     """获取Atlassian系统健康状态"""
     if not atlassian_bridge, ::
-        raise HTTPException(status_code = 400, detail = "Atlassian integration not configured")
+        raise HTTPException(status_code = 400,
+    detail = "Atlassian integration not configured")
     
     try,
         # 这里可以实现更详细的健康检查逻辑
@@ -142,14 +145,16 @@ async def get_atlassian_health():
 async def get_confluence_spaces():
     """获取Confluence空间列表"""
     if not atlassian_bridge, ::
-        raise HTTPException(status_code = 400, detail = "Atlassian integration not configured")
+        raise HTTPException(status_code = 400,
+    detail = "Atlassian integration not configured")
     
     try,
         result = atlassian_bridge.get_confluence_spaces()
         if result["success"]::
             return {"spaces": result["spaces"] "count": result["count"]}
         else,
-            raise HTTPException(status_code = 500, detail = result.get("error", "Failed to get Confluence spaces"))
+            raise HTTPException(status_code = 500, detail = result.get("error",
+    "Failed to get Confluence spaces"))
     except Exception as e, ::
         logger.error(f"Failed to get Confluence spaces, {e}")
         raise HTTPException(status_code = 500, detail = str(e))
@@ -158,7 +163,8 @@ async def get_confluence_spaces():
 async def create_confluence_page(page_data, ConfluencePageCreate):
     """创建Confluence页面"""
     if not enhanced_bridge, ::
-        raise HTTPException(status_code = 400, detail = "Enhanced Atlassian integration not configured")
+        raise HTTPException(status_code = 400,
+    detail = "Enhanced Atlassian integration not configured")
     
     try,
         # 注意：在实际实现中, 这里需要调用增强桥接器的相应方法
@@ -179,7 +185,8 @@ async def create_confluence_page(page_data, ConfluencePageCreate):
 async def search_confluence_content(q, str):
     """搜索Confluence内容"""
     if not atlassian_bridge, ::
-        raise HTTPException(status_code = 400, detail = "Atlassian integration not configured")
+        raise HTTPException(status_code = 400,
+    detail = "Atlassian integration not configured")
     
     try,
         # 注意：AtlassianCLIBridge可能没有直接的搜索方法
@@ -188,7 +195,8 @@ async def search_confluence_content(q, str):
         if result["success"]::
             return {"results": result["content"] "count": result["count"]}
         else,
-            raise HTTPException(status_code = 500, detail = result.get("error", "Failed to search Confluence content"))
+            raise HTTPException(status_code = 500, detail = result.get("error",
+    "Failed to search Confluence content"))
     except Exception as e, ::
         logger.error(f"Failed to search Confluence content, {e}")
         raise HTTPException(status_code = 500, detail = str(e))
@@ -198,14 +206,16 @@ async def search_confluence_content(q, str):
 async def get_jira_projects():
     """获取Jira项目列表"""
     if not atlassian_bridge, ::
-        raise HTTPException(status_code = 400, detail = "Atlassian integration not configured")
+        raise HTTPException(status_code = 400,
+    detail = "Atlassian integration not configured")
     
     try,
         result = atlassian_bridge.get_jira_projects()
         if result["success"]::
             return {"projects": result["projects"] "count": result["count"]}
         else,
-            raise HTTPException(status_code = 500, detail = result.get("error", "Failed to get Jira projects"))
+            raise HTTPException(status_code = 500, detail = result.get("error",
+    "Failed to get Jira projects"))
     except Exception as e, ::
         logger.error(f"Failed to get Jira projects, {e}")
         raise HTTPException(status_code = 500, detail = str(e))
@@ -214,14 +224,16 @@ async def get_jira_projects():
 async def get_jira_issues(jql, Optional[str] = None, limit, int == 50):
     """获取Jira问题列表"""
     if not atlassian_bridge, ::
-        raise HTTPException(status_code = 400, detail = "Atlassian integration not configured")
+        raise HTTPException(status_code = 400,
+    detail = "Atlassian integration not configured")
     
     try,
         result = atlassian_bridge.get_jira_issues(jql = jql, limit = limit)
         if result["success"]::
             return {"issues": result["issues"] "count": result["count"]}
         else,
-            raise HTTPException(status_code = 500, detail = result.get("error", "Failed to get Jira issues"))
+            raise HTTPException(status_code = 500, detail = result.get("error",
+    "Failed to get Jira issues"))
     except Exception as e, ::
         logger.error(f"Failed to get Jira issues, {e}")
         raise HTTPException(status_code = 500, detail = str(e))
@@ -230,7 +242,8 @@ async def get_jira_issues(jql, Optional[str] = None, limit, int == 50):
 async def create_jira_issue(issue_data, JiraIssueCreate):
     """创建Jira问题"""
     if not atlassian_bridge, ::
-        raise HTTPException(status_code = 400, detail = "Atlassian integration not configured")
+        raise HTTPException(status_code = 400,
+    detail = "Atlassian integration not configured")
     
     try,
         result = atlassian_bridge.create_jira_issue()
@@ -241,7 +254,8 @@ async def create_jira_issue(issue_data, JiraIssueCreate):
         if result["success"]::
             return {"success": True, "issue": result["issue"] "key": result["key"]}
         else,
-            raise HTTPException(status_code = 500, detail = result.get("error", "Failed to create Jira issue"))
+            raise HTTPException(status_code = 500, detail = result.get("error",
+    "Failed to create Jira issue"))
     except Exception as e, ::
         logger.error(f"Failed to create Jira issue, {e}")
         raise HTTPException(status_code = 500, detail = str(e))
@@ -272,9 +286,9 @@ async def get_rovo_tasks():
     try,
         # 模拟任务数据
         tasks = []
-            {"id": "task_1", "agentId": "agent_1", "title": "Analyze login module", "status": "completed", "createdAt": "2023 - 01 - 01T10,00,00Z", "updatedAt": "2023 - 01 - 01T10,30,00Z"}
-            {"id": "task_2", "agentId": "agent_2", "title": "Generate API documentation", "status": "in_progress", "createdAt": "2023 - 01 - 01T11,00,00Z", "updatedAt": "2023 - 01 - 01T11,15,00Z"}
-            {"id": "task_3", "agentId": "agent_3", "title": "Plan sprint tasks", "status": "pending", "createdAt": "2023 - 01 - 01T12,00,00Z", "updatedAt": "2023 - 01 - 01T12,00,00Z"}
+            {"id": "task_1", "agentId": "agent_1", "title": "Analyze login module", "status": "completed", "createdAt": "2023 - 01 - 01T10, 00, 00Z", "updatedAt": "2023 - 01 - 01T10, 30, 00Z"}
+            {"id": "task_2", "agentId": "agent_2", "title": "Generate API documentation", "status": "in_progress", "createdAt": "2023 - 01 - 01T11, 00, 00Z", "updatedAt": "2023 - 01 - 01T11, 15, 00Z"}
+            {"id": "task_3", "agentId": "agent_3", "title": "Plan sprint tasks", "status": "pending", "createdAt": "2023 - 01 - 01T12, 00, 00Z", "updatedAt": "2023 - 01 - 01T12, 00, 00Z"}
 [        ]
         return {"tasks": tasks}
     except Exception as e, ::

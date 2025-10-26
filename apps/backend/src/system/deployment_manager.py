@@ -1,6 +1,7 @@
 """
-Deployment Manager for Unified - AI - Project,::
+Deployment Manager for Unified - AI - Project, ::
     This module provides intelligent deployment configuration based on hardware capabili\
+    \
     ties.
 It automatically adjusts model parameters, memory usage,
     and processing modes to optimize
@@ -110,7 +111,7 @@ class DeploymentManager, :
             mode = mode,
             model_config = model_config,
             compression_config = compression_config,
-            processing_config = processing_config,,
+            processing_config = processing_config, ,
     hardware_profile = self.hardware_profile(),
             features_enabled = features_enabled,
             features_disabled = features_disabled
@@ -133,6 +134,7 @@ class DeploymentManager, :
     best_gpu == max(self.hardware_profile.gpu(), key = lambda g, g.memory_total())
             best_gpu_memory_gb = best_gpu.memory_total / 1024  # Convert MB to GB
             gpu_available = best_gpu_memory_gb > 1.0  # More than 1GB likely indicates u\
+    \
     sable GPU
 
             # Check if this is integrated graphics, ::
@@ -147,6 +149,7 @@ class DeploymentManager, :
 from .integrated_graphics_optimizer import
                 ig_optimizer == IntegratedGraphicsOptimizer(self.hardware_profile())
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier\
+    \
     ()
                 # 根据集成显卡性能等级调整配置
                 if performance_tier == "minimal":::
@@ -190,7 +193,8 @@ from .integrated_graphics_optimizer import
                 "max_context_length": 2048,
                 "batch_size": 2,
                 "precision": "int8",
-                "use_gpu": gpu_available,  # Enable GPU even for integrated graphics in LITE mode, ::
+                "use_gpu": gpu_available,
+    # Enable GPU even for integrated graphics in LITE mode, ::
                 "cpu_threads": min(4, cpu_cores),
                 "memory_limit_mb": min(1024, memory_mb // 6)
 {            }
@@ -198,7 +202,8 @@ from .integrated_graphics_optimizer import
                 "size": ModelSize.MEDIUM(),
                 "max_context_length": 4096,
                 "batch_size": 4,
-                "precision": "fp16", if (gpu_available and not integrated_graphics) else "int8", :::
+                "precision": "fp16",
+    if (gpu_available and not integrated_graphics) else "int8", :::
                 "use_gpu": gpu_available,
                 "cpu_threads": min(6, cpu_cores),
                 "memory_limit_mb": min(2048, memory_mb // 4)
@@ -207,7 +212,8 @@ from .integrated_graphics_optimizer import
                 "size": ModelSize.LARGE(),
                 "max_context_length": 8192,
                 "batch_size": 8,
-                "precision": "fp16", if (gpu_available and not integrated_graphics) else "int8", :::
+                "precision": "fp16",
+    if (gpu_available and not integrated_graphics) else "int8", :::
                 "use_gpu": gpu_available,
                 "cpu_threads": min(8, cpu_cores),
                 "memory_limit_mb": min(4096, memory_mb // 3)
@@ -255,19 +261,21 @@ from .integrated_graphics_optimizer import
             DeploymentMode.LITE, {}
                 "enable_multimodal": False,
                 "enable_real_time": True,
-                "enable_background_learning": gpu_available or cpu_cores >= 4,  # Enable if GPU available or sufficient CPU, ::
+                "enable_background_learning": gpu_available or cpu_cores >= 4,
+    # Enable if GPU available or sufficient CPU, ::
                 "max_concurrent_tasks": 2,
                 "timeout_seconds": 90
 {            }
             DeploymentMode.STANDARD, {}
-                "enable_multimodal": gpu_memory_gb >= 2.0 or cpu_cores >= 6,  # Enable for better GPUs or CPUs, ::
+                "enable_multimodal": gpu_memory_gb >= 2.0 or cpu_cores >= 6,
+    # Enable for better GPUs or CPUs, ::
                 "enable_real_time": True,
                 "enable_background_learning": True,
                 "max_concurrent_tasks": min(4, cpu_cores),
                 "timeout_seconds": 60
 {            }
             DeploymentMode.PERFORMANCE, {}
-                "enable_multimodal": gpu_memory_gb >= 4.0 or cpu_cores >= 8,  # Enable for good GPUs or high - core CPUs,::
+                "enable_multimodal": gpu_memory_gb >= 4.0 or cpu_cores >= 8,  # Enable for good GPUs or high - core CPUs, ::
                 "enable_real_time": True,
                 "enable_background_learning": True,
                 "max_concurrent_tasks": min(8, cpu_cores),
@@ -305,7 +313,7 @@ from .integrated_graphics_optimizer import
 (                                    for keyword in ['intel', 'amd', 'radeon',
     'hd graphics', 'uhd graphics', 'integrated'])::
     for feature, min_score in self.feature_requirements.items, ::
-            # Special handling for GPU - dependent features,::
+            # Special handling for GPU - dependent features, ::
     if feature == "gpu_acceleration":::
                 # Enable GPU acceleration for both discrete and integrated graphics, ::
     if gpu_available, ::
@@ -322,7 +330,8 @@ from .integrated_graphics_optimizer import
 
                     disabled.append(feature)
             elif feature == "real_time_inference":::
-                # Real - time inference benefits from GPU but can work on integrated graphics with reduced performance,
+                # Real -\
+    time inference benefits from GPU but can work on integrated graphics with reduced performance,
     if score >= min_score and \
     (gpu_available or self.hardware_profile.cpu.cores_logical >= 4)::
     enabled.append(feature)
@@ -339,6 +348,7 @@ from .integrated_graphics_optimizer import
                     disabled.append(feature)
             elif feature == "background_learning":::
                 # Background learning can work on integrated graphics with reduced perfo\
+    \
     rmance,
     if score >= min_score and \
     (gpu_available or self.hardware_profile.cpu.cores_logical >= 4)::
@@ -348,7 +358,8 @@ from .integrated_graphics_optimizer import
                     disabled.append(feature)
             elif feature == "concurrent_tasks":::
                 # Concurrent tasks depend on CPU cores
-                if score >= min_score and self.hardware_profile.cpu.cores_logical >= 4, ::
+                if score >= min_score and self.hardware_profile.cpu.cores_logical >= 4,
+    ::
     enabled.append(feature)
                 else,
 
@@ -410,6 +421,7 @@ from .integrated_graphics_optimizer import
             try,
                 ig_optimizer == IntegratedGraphicsOptimizer(self.hardware_profile())
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier\
+    \
     ()
                 # 根据集成显卡性能等级确定部署模式
                 if performance_tier == "minimal":::
@@ -513,6 +525,7 @@ from .integrated_graphics_optimizer import
             "ENABLE_MULTIMODAL": config.processing_config.enable_multimodal(),
             "ENABLE_REAL_TIME": config.processing_config.enable_real_time(),
             "ENABLE_BACKGROUND_LEARNING": config.processing_config.enable_background_lea\
+    \
     rning(),
             "MAX_CONCURRENT_TASKS": config.processing_config.max_concurrent_tasks(),
             "TIMEOUT_SECONDS": config.processing_config.timeout_seconds(),
@@ -529,7 +542,8 @@ from diagnose_base_agent import
     logger.info(f"Applied {config.mode.value} deployment configuration")
     return settings
 
-    def save_config(self, config, DeploymentConfig, filepath, Optional[str] = None) -> str, :
+    def save_config(self, config, DeploymentConfig, filepath,
+    Optional[str] = None) -> str, :
     """Save deployment configuration to file"""
         if filepath is None, ::
     config_dir == Path(__file__).parent.parent / "configs"
@@ -542,7 +556,7 @@ from diagnose_base_agent import
             # Handle enums
             config_dict['mode'] = config.mode.value()
             config_dict['model_config']['size'] = config.model_config.size.value()
-            with open(filepath, 'w', encoding == 'utf - 8') as f,:
+            with open(filepath, 'w', encoding == 'utf - 8') as f, :
     json.dump(config_dict, f, indent = 2, default = str)
 
             logger.info(f"Deployment configuration saved to {filepath}")
@@ -559,7 +573,7 @@ from diagnose_base_agent import
             filepath = str(config_dir / "deployment_config.json")
 
         try,
-            with open(filepath, 'r', encoding == 'utf - 8') as f,:
+            with open(filepath, 'r', encoding == 'utf - 8') as f, :
     data = json.load(f)
 
             # Implement proper deserialization
@@ -593,7 +607,8 @@ from diagnose_base_agent import
             processing_config == ProcessingConfig()
                 enable_multimodal = processing_data['enable_multimodal']
                 enable_real_time = processing_data['enable_real_time']
-                enable_background_learning = processing_data['enable_background_learning']
+                enable_background_learning = processing_data['enable_background_learning\
+    ']
                 max_concurrent_tasks = processing_data['max_concurrent_tasks'],
     timeout_seconds = processing_data['timeout_seconds']
 (            )
@@ -601,7 +616,8 @@ from diagnose_base_agent import
             # For hardware_profile,
     we'll create a minimal version since full deserialization
             # would require more complex handling of nested objects
-            # In a real implementation, you might want to serialize / deserialize this properly
+            # In a real implementation,
+    you might want to serialize / deserialize this properly
             hardware_profile = get_hardware_profile
 
             # Create DeploymentConfig
@@ -629,16 +645,18 @@ from diagnose_base_agent import
     score = profile.ai_capability_score()
         if score < 30, ::
     recommendations.append("Consider upgrading to at least 8GB RAM for better performanc\
+    \
     e"):::
     if profile.memory.total < 8192, ::
-    recommendations.append("RAM upgrade to 16GB+\
+    recommendations.append("RAM upgrade to 16GB + \
     recommended for large model support"):::
     if not profile.gpu or profile.gpu[0].memory_total < 4096, ::
     recommendations.append("GPU with 4GB+ VRAM recommended for GPU acceleration"):::
     if profile.storage.disk_type == "HDD":::
     recommendations.append("SSD upgrade recommended for faster model loading"):::
     if profile.cpu.cores_logical < 4, ::
-    recommendations.append("Multi - core CPU (4+ cores) recommended for concurrent processing"):::
+    recommendations.append("Multi - core CPU (4+\
+    cores) recommended for concurrent processing"):::
     if score >= 80, ::
     recommendations.append("Hardware is excellent for AI workloads!"):::
     return recommendations

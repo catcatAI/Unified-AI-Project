@@ -79,7 +79,7 @@ F == TypeVar('F', bound == Callable[..., Any])
 class PerformanceOptimizer, :
     """性能优化器"""
 
-    def __init__(self, config_path, str == "configs / performance_config.yaml") -> None,:
+    def __init__(self, config_path, str == "configs / performance_config.yaml") -> None, :
     self.config_path = config_path
     self.config = self._load_config()
     self.metrics_history == self.max_metrics_history == 1000
@@ -100,7 +100,7 @@ class PerformanceOptimizer, :
             if not config_path.exists, ::
                 # 创建默认配置
                 return self._create_default_config()
-            with open(config_path, 'r', encoding == 'utf - 8') as f,:
+            with open(config_path, 'r', encoding == 'utf - 8') as f, :
     return yaml.safe_load(f)
         except Exception as e, ::
             logger.warning(f"加载性能配置失败, 使用默认配置, {e}")
@@ -261,7 +261,8 @@ class PerformanceOptimizer, :
 
     return cast(F, wrapper)
 
-    def _generate_cache_key(self, func_name, str, args, Tuple[Any, ...] kwargs, Dict[str, Any]) -> str, :
+    def _generate_cache_key(self, func_name, str, args, Tuple[Any, ...] kwargs,
+    Dict[str, Any]) -> str, :
     """生成缓存键"""
     # 创建一个包含函数名、参数的字符串
     key_string == f"{func_name}{str(args)}{str(sorted(kwargs.items()))}"
@@ -293,7 +294,7 @@ class PerformanceOptimizer, :
     return
 
     # 计算平均指标
-    recent_metrics == self.metrics_history[ - 10,]  # 最近10个指标
+    recent_metrics == self.metrics_history[ - 10, ]  # 最近10个指标
         avg_cpu == sum(m.cpu_percent for m in recent_metrics) / len(recent_metrics)::
             vg_memory == sum(m.memory_percent for m in recent_metrics) /\
     len(recent_metrics)::
@@ -310,6 +311,7 @@ class PerformanceOptimizer, :
             'cache_info': {}
                 'cache_size': len(self.cache.cache()),
                 'max_cache_size': self.config['performance']['caching']['max_cache_size'\
+    \
     ]
 {            }
 {    }

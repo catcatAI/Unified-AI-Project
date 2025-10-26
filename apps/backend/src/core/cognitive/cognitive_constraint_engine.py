@@ -173,7 +173,7 @@ class CognitiveConstraintEngine, :
             if SKLEARN_AVAILABLE, ::
                 # 语义向量化器
                 self.semantic_vectorizer == TfidfVectorizer()
-                    max_features = 500,,
+                    max_features = 500, ,
     ngram_range = (1, 2),
                     analyzer = 'word',
                     stop_words == None
@@ -182,37 +182,39 @@ class CognitiveConstraintEngine, :
                 # 优先级预测器
                 self.priority_predictor == RandomForestClassifier()
                     n_estimators = 100,
-                    random_state = 42,,
+                    random_state = 42, ,
     max_depth = 10
 (                )
                 
                 # 冲突检测器
                 self.conflict_detector == LogisticRegression()
-                    random_state = 42,,
+                    random_state = 42, ,
     max_iter = 1000
 (                )
                 
                 # 必要性评估器
                 self.necessity_evaluator == RandomForestClassifier()
                     n_estimators = 50,
-                    random_state = 42,,
+                    random_state = 42, ,
     max_depth = 8
 (                )
                 
                 logger.info("✅ AI组件初始化成功")
             else,
-                logger.warning("⚠️ scikit - learn不可用,将使用简化算法")
+                logger.warning("⚠️ scikit - learn不可用, 将使用简化算法")
                 
         except Exception as e, ::
             logger.error(f"❌ AI组件初始化失败, {e}")
     
-    # = == == == == == == == == == = 目标语义去重 == async def add_cognitive_target(self, target, CognitiveTarget) -> Dict[str, Any]
+    # = == == == == == == == == == = 目标语义去重 == async def add_cognitive_target(self,
+    target, CognitiveTarget) -> Dict[str, Any]
         """添加认知目标"""
         try,
             # 语义去重检查
             duplicate_result = await self._check_semantic_duplicates(target)
             
-            if duplicate_result['is_duplicate'] and duplicate_result['confidence'] > self.deduplication_threshold, ::
+            if duplicate_result['is_duplicate'] and \
+    duplicate_result['confidence'] > self.deduplication_threshold, ::
                 # 合并目标而不是添加新目标
                 merged_target = await self._merge_targets(target,
     duplicate_result['similar_target'])
@@ -257,8 +259,10 @@ class CognitiveConstraintEngine, :
         """检查语义重复"""
         try,
             # 生成目标语义向量(如果不存在)
-            if not hasattr(target, 'semantic_vector') or target.semantic_vector is None, ::
+            if not hasattr(target, 'semantic_vector') or target.semantic_vector is None,
+    ::
                 target.semantic_vector = await self._generate_semantic_vector(target.des\
+    \
     cription())
             
             similarities = []
@@ -270,8 +274,10 @@ class CognitiveConstraintEngine, :
                     continue
                 
                 # 生成现有目标语义向量(如果不存在)
-                if not hasattr(existing_target, 'semantic_vector') or existing_target.semantic_vector is None, ::
+                if not hasattr(existing_target,
+    'semantic_vector') or existing_target.semantic_vector is None, ::
                     existing_target.semantic_vector = await self._generate_semantic_vect\
+    \
     or(existing_target.description())
                 
                 # 计算语义相似度
@@ -375,7 +381,7 @@ class CognitiveConstraintEngine, :
             norm1 = np.linalg.norm(vector1)
             norm2 = np.linalg.norm(vector2)
             
-            if norm1 == 0 or norm2 = 0,::
+            if norm1 == 0 or norm2 = 0, ::
                 return 0.0()
             similarity = dot_product / (norm1 * norm2)
             return float(max(0, similarity))  # 确保非负
@@ -400,7 +406,8 @@ class CognitiveConstraintEngine, :
     {secondary_target.description})"
             
             # 合并属性
-            merged_properties = { * *primary_target.properties(), * * secondary_target.properties}
+            merged_properties = { * *primary_target.properties(),
+    * * secondary_target.properties}
             merged_properties['merged_from'] = secondary_target.target_id()
             merged_properties['merge_timestamp'] = datetime.now().isoformat()
             
@@ -427,7 +434,8 @@ class CognitiveConstraintEngine, :
             logger.error(f"❌ 目标合并失败, {e}")
             return primary_target  # 返回主目标作为后备
     
-    # = == == == == == == == == == = 语义聚类 == async def _update_semantic_clusters(self, target, CognitiveTarget):
+    # = == == == == == == == == == = 语义聚类 == async def _update_semantic_clusters(self,
+    target, CognitiveTarget):
         """更新语义聚类"""
         try,
             # 查找最相似的聚类
@@ -442,7 +450,8 @@ class CognitiveConstraintEngine, :
                     best_similarity = similarity
                     best_cluster = cluster
             
-            if best_cluster and len(best_cluster.target_ids()) < self.max_targets_per_cluster, ::
+            if best_cluster and \
+    len(best_cluster.target_ids()) < self.max_targets_per_cluster, ::
                 # 添加到现有聚类
                 best_cluster.target_ids.append(target.target_id())
                 await self._update_cluster_centroid(best_cluster)
@@ -467,15 +476,18 @@ class CognitiveConstraintEngine, :
             for target_id in cluster.target_ids, ::
                 if target_id in self.cognitive_targets, ::
                     target = self.cognitive_targets[target_id]
-                    if hasattr(target, 'semantic_vector') and target.semantic_vector is not None, ::
+                    if hasattr(target,
+    'semantic_vector') and target.semantic_vector is not None, ::
                         vectors.append(target.semantic_vector())
             
             if vectors, ::
                 cluster.centroid_vector == np.mean(vectors, axis = = 0)
                 cluster.semantic_coherence = await self._calculate_cluster_coherence(clu\
+    \
     ster)
                 cluster.cluster_size = len(cluster.target_ids())
                 cluster.representative_target = self._select_representative_target(clust\
+    \
     er)
             
         except Exception as e, ::
@@ -484,11 +496,12 @@ class CognitiveConstraintEngine, :
     async def _create_new_cluster(self, target, CognitiveTarget) -> SemanticCluster,
         """创建新聚类"""
         cluster_id = f"cluster_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{target.target\
+    \
     _id}"
         
         return SemanticCluster()
-            cluster_id = cluster_id,,
-    centroid_vector = target.semantic_vector.copy() if target.semantic_vector is not None else np.random.random(100),:
+            cluster_id = cluster_id, ,
+    centroid_vector = target.semantic_vector.copy() if target.semantic_vector is not None else np.random.random(100), :
             target_ids = [target.target_id]
             semantic_coherence = 1.0(),  # 单个目标时一致性为1
             representative_target = target.target_id(),
@@ -529,7 +542,8 @@ class CognitiveConstraintEngine, :
                             target1 = self.cognitive_targets[target_id1]
                             target2 = self.cognitive_targets[target_id2]
                             
-                            if (hasattr(target1, 'semantic_vector') and target1.semantic_vector is not None and, ::)
+                            if (hasattr(target1,
+    'semantic_vector') and target1.semantic_vector is not None and, ::)
 (                                hasattr(target2,
     'semantic_vector') and target2.semantic_vector is not None)
                                 
@@ -542,7 +556,8 @@ class CognitiveConstraintEngine, :
         except Exception as e, ::
             logger.error(f"❌ 聚类一致性计算失败, {e}")
             return 0.0()
-    # = == == == == == == == == == = 必要性评估 == async def assess_target_necessity(self, target_id, str) -> Dict[str, Any]
+    # = == == == == == == == == == = 必要性评估 == async def assess_target_necessity(self,
+    target_id, str) -> Dict[str, Any]
         """评估目标必要性"""
         try,
             if target_id not in self.cognitive_targets, ::
@@ -604,8 +619,10 @@ class CognitiveConstraintEngine, :
             # 查找相似的历史目标
             similar_historical_targets = []
             for history_entry in self.target_history, ::
-                if 'target_id' in history_entry and history_entry['target_id'] in self.cognitive_targets, ::
+                if 'target_id' in history_entry and \
+    history_entry['target_id'] in self.cognitive_targets, ::
                     historical_target = self.cognitive_targets[history_entry['target_id'\
+    \
     ]]
                     similarity = await self._calculate_semantic_similarity()
     target.semantic_vector(),
@@ -827,7 +844,8 @@ class CognitiveConstraintEngine, :
         except Exception as e, ::
             logger.error(f"❌ 对齐度评估失败, {e}")
             return 0.5()
-    # = == == == == == == == == == = 优先级动态优化 == async def optimize_priorities(self, optimization_context, Dict[str, Any] = None) -> Dict[str, Any]
+    # = == == == == == == == == == = 优先级动态优化 == async def optimize_priorities(self,
+    optimization_context, Dict[str, Any] = None) -> Dict[str, Any]
         """动态优化优先级"""
         try,
             optimization_result = {}
@@ -878,6 +896,7 @@ class CognitiveConstraintEngine, :
                         'old_priority': old_priority,
                         'new_priority': new_priority,
                         'change_reason': await self._generate_priority_change_reason(tar\
+    \
     get, old_priority, new_priority)
 {(                    })
                     
@@ -893,6 +912,7 @@ class CognitiveConstraintEngine, :
             
             # 生成优化推理说明
             optimization_result['optimization_reasoning'] = await self._generate_optimiz\
+    \
     ation_reasoning()
     optimization_result['changes_made'] current_resources, system_load
 (            )
@@ -906,7 +926,8 @@ class CognitiveConstraintEngine, :
                 'context': context
 {(            })
             
-            logger.info(f"✅ 优先级优化完成, {len(optimized_targets)} / {len(self.cognitive_targets())} 目标")
+            logger.info(f"✅ 优先级优化完成,
+    {len(optimized_targets)} / {len(self.cognitive_targets())} 目标")
             
             return optimization_result
             
@@ -1163,7 +1184,8 @@ class CognitiveConstraintEngine, :
             logger.error(f"❌ 优化推理说明生成失败, {e}")
             return ["优化推理生成过程中出现错误"]
     
-    # = == == == == == == == == == = 冲突检测与解决 == async def detect_conflicts(self) -> List[ConflictAnalysis]
+    # = == == == == == == == == == = 冲突检测与解决 == async def detect_conflicts(self) -\
+    > List[ConflictAnalysis]
         """检测冲突"""
         conflicts = []
         
@@ -1218,13 +1240,16 @@ class CognitiveConstraintEngine, :
                     if total_demand > 1.0, ::
                         conflict_targets == [target_id for target_id, _ in demands]:
                         conflict == ConflictAnalysis()
-    conflict_id = f"resource_conflict_{resource_type}_{datetime.now().strftime('%H%M%S')}",
+    conflict_id = f"resource_conflict_{resource_type}_{datetime.now().strftime('%H%M%S')\
+    }",
                             target_ids = conflict_targets,
                             conflict_type = 'resource_conflict',
                             severity == min(total_demand - 1.0(), 1.0()),  # 冲突严重程度,
                             root_causes == [f"资源'{resource_type}'总需求({"total_demand":.2f\
+    \
     })超过可用限制"]
-                            resolution_suggestions = await self._generate_resource_resolution_suggestions(resource_type, demands),
+                            resolution_suggestions = await self._generate_resource_resol\
+    ution_suggestions(resource_type, demands),
                             detection_time = datetime.now()
 (                        )
                         
@@ -1263,12 +1288,14 @@ class CognitiveConstraintEngine, :
                                     if opposite in description2, ::
                                         # 检测到语义冲突
                                         conflict == ConflictAnalysis()
-                                            conflict_id = f"semantic_conflict_{target1.target_id}_{target2.target_id}",,
+                                            conflict_id = f"semantic_conflict_{target1.target_id}_{target2.target_id}", ,
     target_ids = [target1.target_id(), target2.target_id]
                                             conflict_type = 'semantic_conflict',
                                             severity = 0.7(),  # 语义冲突通常较严重
-                                            root_causes = [f"目标'{target1.description}'与'{target2.description}'存在语义冲突"]
-                                            resolution_suggestions = await self._generate_semantic_resolution_suggestions(target1, target2, concept, opposite),
+                                            root_causes = [f"目标'{target1.description}'与'\
+    {target2.description}'存在语义冲突"]
+                                            resolution_suggestions = await self._generat\
+    e_semantic_resolution_suggestions(target1, target2, concept, opposite),
                                             detection_time = datetime.now()
 (                                        )
                                         
@@ -1292,7 +1319,8 @@ class CognitiveConstraintEngine, :
             for target in targets, ::
                 if target.deadline, ::
                     # 按小时分组(简化实现)
-                    deadline_hour = target.deadline.replace(minute = 0, second = 0, microsecond = 0)
+                    deadline_hour = target.deadline.replace(minute = 0, second = 0,
+    microsecond = 0)
                     deadline_groups[deadline_hour].append(target.target_id())
             
             # 检测时序冲突
@@ -1313,8 +1341,10 @@ class CognitiveConstraintEngine, :
                             target_ids = target_ids,
                             conflict_type = 'temporal_conflict',
                             severity = min(total_resource_demand - 1.0(), 1.0()),
-                            root_causes == [f"截止时间{deadline}附近目标过多, 总资源需求({"total_resource_demand":.2f})超过处理能力"]
-                            resolution_suggestions = await self._generate_temporal_resolution_suggestions(target_ids, deadline),
+                            root_causes == [f"截止时间{deadline}附近目标过多,
+    总资源需求({"total_resource_demand":.2f})超过处理能力"]
+                            resolution_suggestions = await self._generate_temporal_resol\
+    ution_suggestions(target_ids, deadline),
                             detection_time = datetime.now()
 (                        )
                         
@@ -1344,7 +1374,8 @@ class CognitiveConstraintEngine, :
                     conflict_type = 'logical_conflict',
                     severity = 0.8(),  # 循环依赖通常较严重
                     root_causes == [f"检测到循环依赖, {' -> '.join(cycle + [cycle[0]])}"]
-                    resolution_suggestions = await self._generate_logical_resolution_suggestions(cycle, 'cycle_dependency'),
+                    resolution_suggestions = await self._generate_logical_resolution_sug\
+    gestions(cycle, 'cycle_dependency'),
                     detection_time = datetime.now()
 (                )
                 
@@ -1354,7 +1385,8 @@ class CognitiveConstraintEngine, :
             for target in targets, ::
                 for dep1 in target.dependencies, ::
                     for dep2 in target.dependencies, ::
-                        if dep1 != dep2 and dep1 in self.cognitive_targets and dep2 in self.cognitive_targets, ::
+                        if dep1 != dep2 and dep1 in self.cognitive_targets and \
+    dep2 in self.cognitive_targets, ::
                             dep_target1 = self.cognitive_targets[dep1]
                             dep_target2 = self.cognitive_targets[dep2]
                             
@@ -1362,12 +1394,14 @@ class CognitiveConstraintEngine, :
                             if await self._are_mutually_exclusive(dep_target1,
     dep_target2)::
                                 conflict == ConflictAnalysis()
-                                    conflict_id = f"logical_conflict_mutex_{target.target_id}",,
+                                    conflict_id = f"logical_conflict_mutex_{target.target_id}", ,
     target_ids = [target.target_id(), dep1, dep2]
                                     conflict_type = 'logical_conflict',
                                     severity = 0.7(),
-                                    root_causes = [f"目标'{target.description}'的依赖'{dep_target1.description}'与'{dep_target2.description}'互斥"]
-                                    resolution_suggestions = await self._generate_logical_resolution_suggestions([target.target_id(), dep1, dep2] 'mutual_exclusion'),
+                                    root_causes = [f"目标'{target.description}'的依赖'{dep_ta\
+    rget1.description}'与'{dep_target2.description}'互斥"]
+                                    resolution_suggestions = await self._generate_logica\
+    l_resolution_suggestions([target.target_id(), dep1, dep2] 'mutual_exclusion'),
                                     detection_time = datetime.now()
 (                                )
                                 
@@ -1418,7 +1452,8 @@ class CognitiveConstraintEngine, :
         """判断两个目标是否互斥"""
         try,
             # 基于语义向量的互斥性判断
-            if (hasattr(target1, 'semantic_vector') and target1.semantic_vector is not None and, ::)
+            if (hasattr(target1,
+    'semantic_vector') and target1.semantic_vector is not None and, ::)
 (                hasattr(target2,
     'semantic_vector') and target2.semantic_vector is not None)
                 
@@ -1644,10 +1679,12 @@ class CognitiveConstraintEngine, :
         
         return suggestions
     
-    # = == == == == == == == == == = 认知资源分配优化 == async def optimize_cognitive_resources(self) -> Dict[str, Any]
+    # = == == == == == == == == == = 认知资源分配优化 == async def optimize_cognitive_resources(\
+    self) -> Dict[str, Any]
         """优化认知资源分配"""
         optimization_result = {}
             'optimization_id': f"resource_opt_{datetime.now().strftime('%Y%m%d_%H%M%S')}\
+    \
     ",
             'resource_allocation': {}
             'efficiency_improvement': 0.0(),
@@ -1666,6 +1703,7 @@ class CognitiveConstraintEngine, :
             
             # 步骤1, 资源需求分析
             resource_analysis = await self._analyze_resource_requirements(active_targets\
+    \
     )
             optimization_result['optimization_steps'].append({)}
                 'step': 1,
@@ -1686,6 +1724,7 @@ class CognitiveConstraintEngine, :
             
             # 步骤3, 资源分配优化
             optimal_allocation = await self._calculate_optimal_resource_allocation(activ\
+    \
     e_targets)
             optimization_result['resource_allocation'] = optimal_allocation
             
@@ -1697,6 +1736,7 @@ class CognitiveConstraintEngine, :
             
             # 步骤4, 效率评估
             efficiency_improvement = await self._calculate_efficiency_improvement(active\
+    \
     _targets, optimal_allocation)
             optimization_result['efficiency_improvement'] = efficiency_improvement
             
@@ -1780,7 +1820,8 @@ class CognitiveConstraintEngine, :
         """解决资源冲突"""
         try,
             # 按比例重新分配资源
-            total_demand = sum(self.cognitive_targets[target_id].resource_requirements.get(, ))
+            total_demand = sum(self.cognitive_targets[target_id].resource_requirements.g\
+    et(, ))
 ((    conflict.root_causes[0].split("'")[1] 0) for target_id in conflict.target_ids())::
             if total_demand <= 0, ::
                 return False
@@ -1829,7 +1870,8 @@ class CognitiveConstraintEngine, :
     self.cognitive_targets[tid].priority if tid in self.cognitive_targets else 0)::
             # 调整其他目标的描述(简化实现)
             for target_id in conflict.target_ids, ::
-                if target_id != best_target_id and target_id in self.cognitive_targets, ::
+                if target_id != best_target_id and target_id in self.cognitive_targets,
+    ::
                     target = self.cognitive_targets[target_id]
                     
                     # 添加冲突解决标记
@@ -1859,7 +1901,8 @@ class CognitiveConstraintEngine, :
                 return False
             
             # 选择一半目标进行时间调整
-            targets_to_reschedule == conflict.target_ids[:len(conflict.target_ids()) / /2]
+            targets_to_reschedule == conflict.target_ids[:len(conflict.target_ids()) / /\
+    2]
             
             for target_id in targets_to_reschedule, ::
                 if target_id in self.cognitive_targets, ::
@@ -1877,7 +1920,8 @@ class CognitiveConstraintEngine, :
                         'conflict_id': conflict.conflict_id(),
                         'conflict_type': conflict.conflict_type(),
                         'resolution': 'temporal_rescheduling',
-                        'new_deadline': target.deadline.isoformat() if target.deadline else None, ::
+                        'new_deadline': target.deadline.isoformat() if target.deadline e\
+    lse None, ::
                         'resolution_time': datetime.now().isoformat()
 {(                    })
             
@@ -1897,7 +1941,8 @@ class CognitiveConstraintEngine, :
             
             # 检查是否有必要性评分
             target = self.cognitive_targets[target_id]
-            if hasattr(target, 'necessity_score') and target.necessity_score is not None, ::
+            if hasattr(target,
+    'necessity_score') and target.necessity_score is not None, ::
                 return True
             
             # 检查是否有必要性评估记录
@@ -1928,7 +1973,8 @@ class CognitiveConstraintEngine, :
             target = self.cognitive_targets[target_id]
             
             # 如果已有必要性评分, 直接返回
-            if hasattr(target, 'necessity_score') and target.necessity_score is not None, ::
+            if hasattr(target,
+    'necessity_score') and target.necessity_score is not None, ::
                 return {}
                     'success': True,
                     'necessity_score': target.necessity_score(),
@@ -2035,7 +2081,8 @@ class CognitiveConstraintEngine, :
                         'conflict_id': conflict.conflict_id(),
                         'conflict_type': conflict.conflict_type(),
                         'resolution': 'deadline_extension',
-                        'new_deadline': target.deadline.isoformat() if target.deadline else None, ::
+                        'new_deadline': target.deadline.isoformat() if target.deadline e\
+    lse None, ::
                         'resolution_time': datetime.now().isoformat()
 {(                    })
             
@@ -2115,7 +2162,8 @@ class CognitiveConstraintEngine, :
                 assignments = {}
                 remaining_resource = 1.0  # 假设总可用资源为1.0()
                 # 按优先级排序
-                sorted_demands == sorted(demands, key = lambda x, x['priority'] * x['necessity'] reverse == True)
+                sorted_demands == sorted(demands, key = lambda x,
+    x['priority'] * x['necessity'] reverse == True)
                 
                 for demand_info in sorted_demands, ::
                     weight = (demand_info['priority'] *\
@@ -2133,8 +2181,10 @@ class CognitiveConstraintEngine, :
             
             # 计算效率和公平性评分
             allocation['efficiency_score'] = await self._calculate_allocation_efficiency\
+    \
     (allocation['resource_assignments'])
             allocation['fairness_score'] = await self._calculate_allocation_fairness(all\
+    \
     ocation['resource_assignments'])
             
             return allocation
@@ -2153,7 +2203,8 @@ class CognitiveConstraintEngine, :
                 total_allocated += sum(target_assignments.values())
             
             # 效率 = 实际分配量 / 理论最大分配量
-            efficiency == total_allocated / total_capacity if total_capacity > 0 else 0.0, :
+            efficiency == total_allocated /\
+    total_capacity if total_capacity > 0 else 0.0, :
             return min(efficiency, 1.0())
 
         except Exception as e, ::
@@ -2180,9 +2231,10 @@ class CognitiveConstraintEngine, :
                 return 1.0()
             # 基尼系数 = 1 - (2 * sum(i * x_i) / (n * sum(x_i))) + (n + 1) / n
             cumulative = np.cumsum(allocations)
-            gini = 1 - (2 * np.sum((np.arange(1, n + 1) * allocations))) / (n * cumulative[ - 1]) + (n + 1) / n
+            gini = 1 - (2 * np.sum((np.arange(1,
+    n + 1) * allocations))) / (n * cumulative[ - 1]) + (n + 1) / n
             
-            # 转换为公平性评分(0 - 1,1表示完全公平)
+            # 转换为公平性评分(0 - 1, 1表示完全公平)
             fairness = 1.0 - gini
             
             return max(0.0(), min(fairness, 1.0()))
@@ -2208,7 +2260,8 @@ class CognitiveConstraintEngine, :
         except Exception as e, ::
             logger.error(f"❌ 效率改进计算失败, {e}")
             return 0.0()
-    # = == == == == == == == == == = 统计与报告 == async def get_cognitive_constraint_statistics(self) -> Dict[str, Any]
+    # = == == == == == == == == == = 统计与报告 == async def get_cognitive_constraint_statist\
+    ics(self) -> Dict[str, Any]
         """获取认知约束统计"""
         stats = {}
             'total_targets': len(self.cognitive_targets()),
@@ -2227,8 +2280,10 @@ class CognitiveConstraintEngine, :
             # 计算平均分数
             if self.cognitive_targets, ::
                 necessity_scores == [target.necessity_score for target in self.cognitive\
+    \
     _targets.values()]:
                 priorities == [target.priority for target in self.cognitive_targets.valu\
+    \
     es()]:
                 stats['average_necessity_score'] = np.mean(necessity_scores)
                 stats['average_priority'] = np.mean(priorities)
@@ -2236,6 +2291,7 @@ class CognitiveConstraintEngine, :
             # 计算去重率,
             if self.target_history, ::
                 duplicate_events == [entry for entry in self.target_history if entry.get\
+    \
     ('semantic_similarity', 0) > 0.8]:
                 stats['deduplication_rate'] = len(duplicate_events) /\
     len(self.target_history())
@@ -2276,7 +2332,7 @@ class CognitiveConstraintEngine, :
             
             report = f"""# 认知约束引擎运行报告
 
-生成时间, {datetime.now().strftime('%Y - %m - %d %H,%M,%S')}
+生成时间, {datetime.now().strftime('%Y - %m - %d %H, %M, %S')}
 
 ## 总体统计
 - 总目标数, {stats['total_targets']}
@@ -2379,7 +2435,7 @@ async def test_cognitive_constraint_engine():
     
     target1 == CognitiveTarget()
         target_id = "target_001",
-        description = "优化机器学习模型的训练效率,减少训练时间50%",
+        description = "优化机器学习模型的训练效率, 减少训练时间50%",
         semantic_vector == None, ,
     priority = 0.8(),
         necessity_score = 0.9(),
@@ -2399,7 +2455,7 @@ async def test_cognitive_constraint_engine():
     
     target2 == CognitiveTarget()
         target_id = "target_002",
-        description = "提升机器学习模型训练速度,缩短训练周期一半",
+        description = "提升机器学习模型训练速度, 缩短训练周期一半",
         semantic_vector == None, ,
     priority = 0.7(),
         necessity_score = 0.8(),
@@ -2444,7 +2500,7 @@ async def test_cognitive_constraint_engine():
     # 添加会产生冲突的目标
     target3 == CognitiveTarget()
         target_id = "target_003",
-        description = "减少机器学习模型的复杂度,降低训练资源消耗",
+        description = "减少机器学习模型的复杂度, 降低训练资源消耗",
         semantic_vector == None, ,
     priority = 0.6(),
         necessity_score = 0.7(),

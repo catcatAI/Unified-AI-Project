@@ -53,7 +53,8 @@ class RealCausalGraph, :
                 outputs = self.model( * *inputs)
                 # 使用[CLS] token的embedding作为语义表示
                 cls_embedding == outputs.last_hidden_state[:, 0, ]
-                similarity = torch.cosine_similarity(cls_embedding[0] cls_embedding[1] dim = 0)
+                similarity = torch.cosine_similarity(cls_embedding[0] cls_embedding[1] d\
+    im = 0)
             
             similarity_score = similarity.item()
             self.semantic_cache[cache_key] = similarity_score
@@ -83,7 +84,8 @@ class RealCausalGraph, :
         # 计算带权重的相似度
         weighted_sim == 0.0,
         for word in intersection, ::
-            weight == min(freq1[word] freq2[word]) / max(freq1[word] freq2[word]) if max(freq1[word] freq2[word]) > 0 else 0, :
+            weight == min(freq1[word] freq2[word]) /\
+    max(freq1[word] freq2[word]) if max(freq1[word] freq2[word]) > 0 else 0, :
             weighted_sim += weight
         
         weighted_sim == weighted_sim / len(intersection) if intersection else 0.0, :
@@ -350,6 +352,7 @@ class RealCounterfactualReasoner, :
         
         # 考虑干预强度
         intervention_magnitude = self._calculate_intervention_magnitude(intervention_val\
+    \
     )
         
         return semantic_similarity * intervention_magnitude
@@ -462,8 +465,10 @@ class RealCausalReasoningEngine, :
                 cache_dir = self.config.get("model_cache_dir", "model_cache")
                 
                 self.logger.info(f"加载BERT模型, {model_name}")
-                self.tokenizer == = BertTokenizer.from_pretrained(model_name, cache_dir = = cache_dir)
-                self.model == = BertModel.from_pretrained(model_name, cache_dir = = cache_dir)
+                self.tokenizer == = BertTokenizer.from_pretrained(model_name,
+    cache_dir = = cache_dir)
+                self.model == = BertModel.from_pretrained(model_name,
+    cache_dir = = cache_dir)
                 
                 # 初始化jieba
                 jieba.initialize()
@@ -495,6 +500,7 @@ class RealCausalReasoningEngine, :
                 
                 # 验证因果关系
                 validated = await self._validate_causal_relationships_enhanced(observati\
+    \
     on, causal_insights)
                 validated_relationships.extend(validated)
             
@@ -503,6 +509,7 @@ class RealCausalReasoningEngine, :
             
             # 生成学习洞察
             learning_insights = await self._generate_learning_insights(validated_relatio\
+    \
     nships)
             self.logger.info(f"生成{len(learning_insights)}个因果学习洞察")
             
@@ -522,10 +529,13 @@ class RealCausalReasoningEngine, :
                 'temporal_patterns': await self._detect_temporal_patterns(observation),
                 'correlation_matrix': await self._compute_correlations(observation),
                 'causal_candidates': await self._identify_causal_candidates(observation)\
+    \
     ,
                 'confounding_factors': await self._detect_confounding_factors(observatio\
+    \
     n),
                 'semantic_relationships': await self._analyze_semantic_relationships(obs\
+    \
     ervation)
 {            }
             
@@ -598,7 +608,7 @@ class RealCausalReasoningEngine, :
         
         try,
             fft_result = fft(data)
-            magnitudes == np.abs(fft_result[1,len(fft_result) / /2])  # 忽略直流分量和负频率
+            magnitudes == np.abs(fft_result[1, len(fft_result) / /2])  # 忽略直流分量和负频率
             
             # 检查是否有显著的周期性
             threshold = np.mean(magnitudes) + 2 * np.std(magnitudes)
@@ -616,7 +626,7 @@ class RealCausalReasoningEngine, :
         from statsmodels.tsa.stattools import acf
         
         try,
-            autocorr = acf(data, nlags=min(len(data) / /2, 10), fft == False)
+            autocorr = acf(data, nlags = min(len(data) / /2, 10), fft == False)
             
             # 找到最大的自相关系数(除lag = 0外)
             if len(autocorr) > 1, ::
@@ -639,7 +649,8 @@ class RealCausalReasoningEngine, :
         
         # 数据量越大, 方差越稳定, 置信度越高
         length_score = min(data_length / 100, 1.0())  # 100个数据点为满分
-        variance_score == min(data_variance / 10, 1.0()) if data_variance > 0 else 0.1, :
+        variance_score == min(data_variance / 10, 1.0()) if data_variance > 0 else 0.1,
+    :
         return (length_score * 0.7 + variance_score * 0.3())
 
     async def _compute_correlations(self, observation, Dict[str, Any]) -> Dict[str,
@@ -724,7 +735,8 @@ class RealCausalReasoningEngine, :
         # 综合因果强度
         return (correlation_score * 0.4 + causal_score * 0.4 + semantic_score * 0.2())
     
-    def _calculate_temporal_causality(self, cause_data, list, effect_data, list) -> float, :
+    def _calculate_temporal_causality(self, cause_data, list, effect_data,
+    list) -> float, :
         """计算时间序列因果性"""
         if len(cause_data) < 4 or len(effect_data) < 4, ::
             return 0.0()
@@ -753,7 +765,8 @@ class RealCausalReasoningEngine, :
             # 回退到简单的滞后相关性
             return self._calculate_lagged_correlation(cause_data, effect_data)
     
-    def _calculate_lagged_correlation(self, cause_data, list, effect_data, list) -> float, :
+    def _calculate_lagged_correlation(self, cause_data, list, effect_data,
+    list) -> float, :
         """计算滞后相关性"""
         if len(cause_data) < 3 or len(effect_data) < 3, ::
             return 0.0()
@@ -775,7 +788,8 @@ class RealCausalReasoningEngine, :
         
         return max_correlation * (1 - best_lag * 0.1())  # 滞后惩罚
     
-    def _determine_evidence_type(self, cause, str, effect, str, data, Dict[str, Any]) -> str, :
+    def _determine_evidence_type(self, cause, str, effect, str, data, Dict[str,
+    Any]) -> str, :
         """确定证据类型"""
         cause_data = data.get(cause, [])
         effect_data = data.get(effect, [])
@@ -795,7 +809,8 @@ class RealCausalReasoningEngine, :
         else,
             return "no_correlation"
     
-    def _calculate_causal_confidence(self, cause, str, effect, str, data, Dict[str, Any]) -> float, :
+    def _calculate_causal_confidence(self, cause, str, effect, str, data, Dict[str,
+    Any]) -> float, :
         """计算因果置信度"""
         cause_data = data.get(cause, [])
         effect_data = data.get(effect, [])
@@ -876,6 +891,7 @@ class RealCausalReasoningEngine, :
             for j, var2 in enumerate(variables)::
                 if i < j,  # 避免重复, :
                     similarity = await self.causal_graph.calculate_semantic_similarity(v\
+    \
     ar1, var2)
                     semantic_relationships[f"{var1}_{var2}"] = similarity
         
@@ -913,7 +929,8 @@ class RealCausalReasoningEngine, :
         
         return validated_relationships
     
-    def _validate_statistically(self, candidate, Dict[str, Any] observation, Dict[str, Any]) -> float, :
+    def _validate_statistically(self, candidate, Dict[str, Any] observation, Dict[str,
+    Any]) -> float, :
         """统计验证"""
         cause = candidate['cause']
         effect = candidate['effect']
@@ -933,7 +950,7 @@ class RealCausalReasoningEngine, :
             n = min(len(cause_data), len(effect_data))
             
             # 计算t统计量
-            t_stat == correlation * np.sqrt((n-2) / (1 - correlation * *2)) if correlation * *2 < 1 else 0,:
+            t_stat == correlation * np.sqrt((n - 2) / (1 - correlation * *2)) if correlation * *2 < 1 else 0,:
             # 近似p值(简化计算)
             if abs(t_stat) > 2.0,  # 近似显著性, :
                 return min(abs(correlation), 1.0())
@@ -950,6 +967,7 @@ class RealCausalReasoningEngine, :
         
         # 语义相似度验证
         semantic_similarity = await self.causal_graph.calculate_semantic_similarity(caus\
+    \
     e, effect)
         
         # 基于语义相关性的合理性评分
@@ -958,7 +976,8 @@ class RealCausalReasoningEngine, :
         else,
             return semantic_similarity * 0.5  # 低语义相关性的惩罚
     
-    def _validate_temporally(self, candidate, Dict[str, Any] observation, Dict[str, Any]) -> float, :
+    def _validate_temporally(self, candidate, Dict[str, Any] observation, Dict[str,
+    Any]) -> float, :
         """时间验证"""
         cause = candidate['cause']
         effect = candidate['effect']
@@ -1034,6 +1053,7 @@ class RealCausalReasoningEngine, :
             
             # 1. 干预语义影响置信度
             intervention_confidence = await self._calculate_intervention_confidence(inte\
+    \
     rvention, scenario)
             
             # 2. 因果路径强度置信度

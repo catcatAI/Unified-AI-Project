@@ -114,11 +114,11 @@ def main():
     
     # 保存数据
     print(f"\n💾 保存训练数据到, {TRAIN_FILE}")
-    with open(TRAIN_FILE, 'w', encoding == 'utf - 8') as f,:
+    with open(TRAIN_FILE, 'w', encoding == 'utf - 8') as f, :
         json.dump(train_data, f, indent = 2, ensure_ascii == False)
     
     print(f"💾 保存测试数据到, {TEST_FILE}")
-    with open(TEST_FILE, 'w', encoding == 'utf - 8') as f,:
+    with open(TEST_FILE, 'w', encoding == 'utf - 8') as f, :
         json.dump(test_data, f, indent = 2, ensure_ascii == False)
     
     print("\n🎉 逻辑模型数据生成完成！")

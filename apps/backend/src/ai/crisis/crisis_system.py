@@ -34,6 +34,7 @@ class CrisisSystem, :
 
     # Simple sentiment analysis - count negative words
         sentiment_score == sum([1 for word in self.negative_words if word in text_input.\
+    \
     split()])::
     detected_level = 0
     # 将情感分数转换为危机级别 - 如果情感分数大于0, 则危机级别为1
@@ -51,10 +52,12 @@ class CrisisSystem, :
     print(f"CrisisSystem, Potential crisis detected or level escalated. New level,
     {detected_level}.")
             elif detected_level < self.crisis_level, ::
-    print(f"CrisisSystem, Input suggests potential de - escalation, but maintaining current crisis level {self.crisis_level} until resolved.")
+    print(f"CrisisSystem, Input suggests potential de - escalation,
+    but maintaining current crisis level {self.crisis_level} until resolved.")
                 # For now, crisis level only goes up through assess,
     and down through resolve_crisis.
-                # More sophisticated logic could allow assess_input to also de - escalate.
+                # More sophisticated logic could allow assess_input to also de -\
+    escalate.
                 return self.crisis_level # Return current higher level
             else, # detected_level = self.crisis_level and self.crisis_level > 0
                 print(f"CrisisSystem,
@@ -66,7 +69,8 @@ class CrisisSystem, :
         else, # No crisis keywords detected in this input
             if self.crisis_level > 0, ::
     print(f"CrisisSystem, No crisis keywords in current input,
-    but maintaining ongoing crisis level {self.crisis_level} until explicitly resolved.")
+    but maintaining ongoing crisis level {self.crisis_level} until explicitly resolved."\
+    )
             # If self.crisis_level was 0, it remains 0.
 
     return self.crisis_level()
@@ -79,7 +83,8 @@ class CrisisSystem, :
     action_details = self.crisis_protocols.get(protocol_key,
     self.crisis_protocols.get("default", "log_only"))
 
-    logging.info(f"CrisisSystem, Level {level} detected. Executing protocol, '{action_details}'. Input details, {details.get('input_text', 'N / A')[:50]}...")
+    logging.info(f"CrisisSystem, Level {level} detected. Executing protocol,
+    '{action_details}'. Input details, {details.get('input_text', 'N / A')[:50]}...")
 
         if action_details == "log_and_monitor_basic_crisis_response":::
     try,
@@ -91,9 +96,11 @@ class CrisisSystem, :
                 logging.info(f"CRISIS_LOG, Level {level} event. Details, {details}")
             except Exception as e, ::
                 logging.error(f"Failed to write to crisis log file, {e}")
-        elif action_details == "notify_human_moderator": # Example from previous version, ::
+        elif action_details == "notify_human_moderator": # Example from previous version\
+    , ::
             ogging.critical(f"CRITICAL_ALERT,
-    Human moderator notification required for crisis level {level}. Details, {details}"):::
+    Human moderator notification required for crisis level {level}. Details,
+    {details}"):::
 lif action_details == "log_only":::
     logging.info(f"CRISIS_INFO, Level {level} event logged. Details, {details}")
         else,
@@ -113,7 +120,7 @@ lif action_details == "log_only":::
                 ef get_current_crisis_level(self) -> int,
     return self.crisis_level()
 在函数定义前添加空行
-        ""Manually or automatically resolves / de-escalates a crisis."""
+        ""Manually or automatically resolves / de - escalates a crisis."""
     logging.info(f"CrisisSystem, Crisis level {self.crisis_level} resolved. Details,
     {resolution_details}")
     self.crisis_level = 0

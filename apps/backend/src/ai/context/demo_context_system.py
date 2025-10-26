@@ -126,9 +126,11 @@ def demo_dialogue_context(context_manager, ContextManager):
     
     # 添加消息
     dialogue_manager.add_message(conversation_id, "user", "你好, 我想了解AI技术")
-    dialogue_manager.add_message(conversation_id, "ai", "您好！AI技术是一个很广泛的领域, 包括机器学习、深度学习等")
+    dialogue_manager.add_message(conversation_id, "ai", "您好！AI技术是一个很广泛的领域,
+    包括机器学习、深度学习等")
     dialogue_manager.add_message(conversation_id, "user", "能详细介绍一下机器学习吗？")
-    dialogue_manager.add_message(conversation_id, "ai", "机器学习是AI的一个分支, 它让计算机能够从数据中学习...")
+    dialogue_manager.add_message(conversation_id, "ai", "机器学习是AI的一个分支,
+    它让计算机能够从数据中学习...")
     
     # 生成上下文摘要
     summary = dialogue_manager.generate_context_summary(conversation_id)

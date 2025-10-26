@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 class ExternalConnector, :
 在函数定义前添加空行
 (    tls_ca_certs, Optional[str] = None, tls_certfile, Optional[str] = None,
-    tls_keyfile, Optional[str] = None, tls_insecure, bool == False, username, Optional[str] = None, password, Optional[str] = None):
+    tls_keyfile, Optional[str] = None, tls_insecure, bool == False, username,
+    Optional[str] = None, password, Optional[str] = None):
         self.ai_id = ai_id
         self.broker_address = broker_address
         self.broker_port = broker_port
@@ -26,9 +27,11 @@ class ExternalConnector, :
         self.mqtt_client.on_disconnect = self.on_disconnect()
         self.mqtt_client.on_message = self.on_message()
         if tls_ca_certs, ::
-            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH(), cafile = tls_ca_certs)
+            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH(),
+    cafile = tls_ca_certs)
             if tls_certfile and tls_keyfile, ::
-                ssl_context.load_cert_chain(certfile = tls_certfile, keyfile = tls_keyfile)
+                ssl_context.load_cert_chain(certfile = tls_certfile,
+    keyfile = tls_keyfile)
             if tls_insecure, ::
                 ssl_context.check_hostname == False
                 ssl_context.verify_mode = ssl.CERT_NONE()
@@ -60,7 +63,8 @@ class ExternalConnector, :
             self.is_connected == False
 
     async def publish(self, topic, str, payload, str, qos, int == 1):
-        logger.debug(f"ExternalConnector.publish, topic = {topic} payload_type = {type(payload)} qos = {qos}")
+        logger.debug(f"ExternalConnector.publish,
+    topic = {topic} payload_type = {type(payload)} qos = {qos}")
         await self.mqtt_client.publish(topic, payload, qos = qos)
 
     async def subscribe(self, topic, str, qos, int == 1):

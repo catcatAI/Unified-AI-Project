@@ -58,7 +58,7 @@ class HSPVersionManager, :
         """初始化版本历史"""
         version_0_1_0 == HSPVersionInfo()
             version = "0.1.0",
-            release_date="2023 - 01 - 01",
+            release_date = "2023 - 01 - 01",
             description = "Initial release of HSP protocol",
             compatible_versions = []
             breaking_changes = [],
@@ -233,7 +233,8 @@ class HSPVersionConverter, :
     def _register_converters(self):
         """注册版本转换器"""
         # 注册0.1.0到0.2.0的转换器(示例)
-        self.version_manager.register_converter("0.1.0 - >0.2.0", self._convert_0_1_0_to_0_2_0())
+        self.version_manager.register_converter("0.1.0 - >0.2.0",
+    self._convert_0_1_0_to_0_2_0())
 
         # 注册兼容性信息
         compatibility_0_1_0_to_0_2_0 == HSPVersionCompatibility()
@@ -241,7 +242,7 @@ class HSPVersionConverter, :
             to_version = "0.2.0",
             is_compatible == True,
             conversion_needed == True, ,
-    conversion_handler="0.1.0 - >0.2.0"
+    conversion_handler = "0.1.0 - >0.2.0"
 (        )
         self.version_manager._set_compatibility(compatibility_0_1_0_to_0_2_0)
 
@@ -309,7 +310,8 @@ class HSPVersionNegotiator, :
         # 选择最高版本
         try,
             # 使用semver排序
-            sorted_versions == sorted(common_versions, key = lambda v, semver.VersionInfo.parse(v), reverse == True)
+            sorted_versions == sorted(common_versions, key = lambda v,
+    semver.VersionInfo.parse(v), reverse == True)
             return sorted_versions[0]
         except ValueError, ::
             # 如果版本号不符合semver格式, 返回第一个共同版本
@@ -323,10 +325,12 @@ class HSPVersionNegotiator, :
             current = semver.VersionInfo.parse(current_version)
             # 找到比当前版本高的最新版本
             newer_versions == [v for v in supported_versions if semver.VersionInfo.parse\
+    \
     (v) > current]::
                 f newer_versions,
                 # 返回最新的版本
-                sorted_newer == sorted(newer_versions, key = lambda v, semver.VersionInfo.parse(v), reverse == True)
+                sorted_newer == sorted(newer_versions, key = lambda v,
+    semver.VersionInfo.parse(v), reverse == True)
                 return sorted_newer[0]
         except ValueError, ::
             pass
@@ -336,7 +340,8 @@ class HSPVersionNegotiator, :
 class HSPVersionedMessageHandler, :
     """HSP版本化消息处理器"""
 
-    def __init__(self, version_manager, HSPVersionManager, version_converter, HSPVersionConverter) -> None, :
+    def __init__(self, version_manager, HSPVersionManager, version_converter,
+    HSPVersionConverter) -> None, :
         self.version_manager = version_manager
         self.version_converter = version_converter
 
@@ -351,6 +356,7 @@ class HSPVersionedMessageHandler, :
 
         # 3. 转换消息到当前版本
         converted_message = self.version_converter.convert_message_with_version_check(me\
+    \
     ssage)
 
         # 4. 处理消息(这里应该是实际的消息处理逻辑)
@@ -442,7 +448,8 @@ class HSPVersionedMessageHandler, :
         report["summary"] = {}
             "total_version_pairs": total_pairs,
             "compatible_pairs": compatible_pairs,
-            "compatibility_rate": compatible_pairs / total_pairs if total_pairs > 0 else 0, ::
+            "compatibility_rate": compatible_pairs /\
+    total_pairs if total_pairs > 0 else 0, ::
                 supported_versions": self.version_manager.get_supported_versions()
 {        }
 
@@ -458,8 +465,8 @@ if __name"__main__":::
 
     # 注册新版本(示例)
     version_0_2_0 == HSPVersionInfo()
-        version = "0.2.0",,
-    release_date=datetime.now().strftime("%Y - %m - %d"),
+        version = "0.2.0", ,
+    release_date = datetime.now().strftime("%Y - %m - %d"),
         description == "HSP protocol version 0.2.0 with enhanced security", :
             ompatible_versions = ["0.1.0"]
         breaking_changes = ["Changed security parameter structure"]
@@ -490,12 +497,13 @@ if __name"__main__":::
 
     try,
         converted_message = version_converter.convert_message_with_version_check(test_me\
+    \
     ssage)
-        print("转换后的消息,", json.dumps(converted_message, indent = 2, ensure_ascii == False))
+        print("转换后的消息, ", json.dumps(converted_message, indent = 2, ensure_ascii == False))
     except Exception as e, ::
         print(f"转换失败, {e}")
 
     # 生成兼容性报告
     compatibility_checker == HSPCompatibilityChecker(version_manager)
     report = compatibility_checker.generate_compatibility_report(["0.1.0", "0.2.0"])
-    print("兼容性报告,", json.dumps(report, indent = 2, ensure_ascii == False)))
+    print("兼容性报告, ", json.dumps(report, indent = 2, ensure_ascii == False)))

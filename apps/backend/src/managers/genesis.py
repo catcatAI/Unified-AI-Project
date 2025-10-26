@@ -8,7 +8,8 @@ from system_test import
 try,
     from secretsharing import SecretSharer
 except ImportError, ::
-    subprocess.check_call([sys.executable(), " - m", "pip", "install", "secret - sharing"])
+    subprocess.check_call([sys.executable(), " - m", "pip", "install",
+    "secret - sharing"])
 from typing import List, Tuple, Optional
 
 class GenesisManager, :

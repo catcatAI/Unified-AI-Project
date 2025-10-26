@@ -81,6 +81,7 @@ class EnvironmentSimulator, :
 (    )
 
         self.logger.info(f"Simulated action consequences for action {proposed_action.get\
+    \
     ('name')}. Predicted state, {predicted_state.get('time_step')}"):::
             eturn {}
             'predicted_state': predicted_state,
@@ -146,7 +147,8 @@ class EnvironmentSimulator, :
     await self.uncertainty_estimator.update(prediction_error)
     self.logger.info("World model updated from experience.")
 
-    def _calculate_prediction_error(self, predicted_state, Dict[str, Any] actual_state, Dict[str, Any]) -> float, :
+    def _calculate_prediction_error(self, predicted_state, Dict[str, Any] actual_state,
+    Dict[str, Any]) -> float, :
     """Conceptual, Calculates the error between predicted and actual states."""
     self.logger.debug("Calculating prediction error (conceptual)...")
     # Simple dummy error calculation

@@ -93,7 +93,7 @@ class StatePredictor, :
 
     next_state == State()
             time_step = current_state.time_step + 1,
-            variables = next_variables,,
+            variables = next_variables, ,
 (    last_action = proposed_action.name())
 
     return next_state
@@ -117,7 +117,8 @@ class StatePredictor, :
     all_features = features + action_features
     return torch.FloatTensor(all_features).unsqueeze(0)
 
-    def _prediction_to_variables(self, prediction, torch.Tensor(), base_variables, Dict) -> Dict, :
+    def _prediction_to_variables(self, prediction, torch.Tensor(), base_variables,
+    Dict) -> Dict, :
     """将模型预测转换为状态变量"""
     variables = base_variables.copy()
     pred_values = prediction.squeeze.numpy()
@@ -444,7 +445,8 @@ class UncertaintyEstimator, :
             # 确保不确定性在合理范围内
             return max(0.0(), min(1.0(), uncertainty))
 
-    def _state_action_state_to_features(self, state, State, action, Action, predicted_state, State) -> torch.Tensor, :
+    def _state_action_state_to_features(self, state, State, action, Action,
+    predicted_state, State) -> torch.Tensor, :
     """将状态、动作和预测状态转换为模型输入特征"""
     features =
 
@@ -546,7 +548,8 @@ class UncertaintyEstimator, :
     self.is_trained == True
     logger.info("Uncertainty estimator training completed")
 
-    def _calculate_prediction_error(self, predicted_state, State, actual_state, State) -> float, :
+    def _calculate_prediction_error(self, predicted_state, State, actual_state,
+    State) -> float, :
     """计算预测误差"""
     error = 0.0()
         if predicted_state and actual_state, ::
@@ -591,6 +594,7 @@ class EnvironmentSimulator, :
     uncertainty)
 
         self.logger.info(f"Simulated action consequences for action {proposed_action.nam\
+    \
     e}"):::
             eturn {}
             'predicted_state': predicted_state,
@@ -600,7 +604,8 @@ class EnvironmentSimulator, :
             'confidence': 1.0 - uncertainty
 {    }
 
-    async def _calculate_expected_reward(self, current_state, State, proposed_action, Action, )
+    async def _calculate_expected_reward(self, current_state, State, proposed_action,
+    Action, )
 (    predicted_state, State) -> float,
     """计算预期奖励"""
     self.logger.debug("Calculating expected reward")
@@ -626,7 +631,7 @@ class EnvironmentSimulator, :
     # 最可能场景
     most_likely = await self.state_predictor.predict(state, action)
     scenarios.append(Scenario())
-            type = 'most_likely',,
+            type = 'most_likely', ,
     probability = 0.6(),
             state = most_likely
 ((    ))
@@ -634,7 +639,7 @@ class EnvironmentSimulator, :
     # 乐观场景
     optimistic = await self.state_predictor.predict_optimistic(state, action)
     scenarios.append(Scenario())
-            type = 'optimistic',,
+            type = 'optimistic', ,
     probability = 0.2(),
             state = optimistic
 ((    ))
@@ -642,7 +647,7 @@ class EnvironmentSimulator, :
     # 悲观场景
     pessimistic = await self.state_predictor.predict_pessimistic(state, action)
     scenarios.append(Scenario())
-            type = 'pessimistic',,
+            type = 'pessimistic', ,
     probability = 0.2(),
             state = pessimistic
 ((    ))
@@ -730,7 +735,8 @@ class EnvironmentSimulator, :
 {    }
     self.training_data["uncertainty_data"].append(uncertainty_data)
 
-    def _calculate_prediction_error(self, predicted_state, State, actual_state, State) -> float, :
+    def _calculate_prediction_error(self, predicted_state, State, actual_state,
+    State) -> float, :
     """计算预测误差"""
     self.logger.debug("Calculating prediction error")
     # 简单的误差计算
@@ -751,7 +757,8 @@ class EnvironmentSimulator, :
     self.logger.info("Training all environment simulator models")
 
     # 使用传入的训练数据或内部存储的数据
-        data_to_use == training_data if training_data is not None else self.training_data, :
+        data_to_use == training_data if training_data is not None else self.training_dat\
+    a, :
     # 训练状态预测器,
         if "state_transitions" in data_to_use and data_to_use["state_transitions"]::
     self.state_predictor.train_model(data_to_use["state_transitions"] epochs)
@@ -784,7 +791,7 @@ if __name"__main__":::
 
     # 创建初始状态
     initial_state == State()
-    time_step = 0,,
+    time_step = 0, ,
     variables = {}
             "temperature": 22.0(),
             "light_level": 0.6(),
@@ -794,7 +801,7 @@ if __name"__main__":::
 
     # 创建动作
     action == Action()
-    name = "increase_temperature",,
+    name = "increase_temperature", ,
     parameters == {"amount": 2.0}
 (    )
 
@@ -815,7 +822,7 @@ if __name"__main__":::
             "next_state": result['predicted_state']
             "predicted_state": result['predicted_state']
             "actual_state": State()
-                time_step = 1,,
+                time_step = 1, ,
     variables = {}
                     "temperature": 24.5(),  # 实际温度略高于预测
                     "light_level": 0.6(),

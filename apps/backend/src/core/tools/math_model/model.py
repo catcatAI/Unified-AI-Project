@@ -150,7 +150,8 @@ def get_char_token_maps(problems, answers):
 class ArithmeticSeq2Seq, :
 在函数定义前添加空行
         if not dependency_manager.is_available('tensorflow'):::
-            rint("ArithmeticSeq2Seq, TensorFlow not available. This instance will be non - functional.")
+            rint("ArithmeticSeq2Seq,
+    TensorFlow not available. This instance will be non - functional.")
             self.char_to_token = char_to_token
             self.token_to_char = token_to_char
             self.max_encoder_seq_length = max_encoder_seq_length
@@ -190,19 +191,25 @@ class ArithmeticSeq2Seq, :
 
     # Encoder
     encoder_inputs == Input(shape = (None), name = "encoder_inputs")
-    encoder_embedding == Embedding(self.n_token(), self.embedding_dim(), name = "encoder_embedding")(encoder_inputs)
-    encoder_lstm_layer == LSTM(self.latent_dim(), return_state == True, name = "encoder_lstm")
+    encoder_embedding == Embedding(self.n_token(), self.embedding_dim(),
+    name = "encoder_embedding")(encoder_inputs)
+    encoder_lstm_layer == LSTM(self.latent_dim(), return_state == True,
+    name = "encoder_lstm")
     _, state_h, state_c = encoder_lstm_layer(encoder_embedding)
     encoder_states = [state_h, state_c]
 
     # Decoder
     decoder_inputs == Input(shape = (None), name = "decoder_inputs")
-    decoder_embedding_layer_instance == Embedding(self.n_token(), self.embedding_dim(), name = "decoder_embedding")
+    decoder_embedding_layer_instance == Embedding(self.n_token(), self.embedding_dim(),
+    name = "decoder_embedding")
     decoder_embedding = decoder_embedding_layer_instance(decoder_inputs)
-    decoder_lstm_layer == LSTM(self.latent_dim(), return_sequences == True, return_state == True, name = "decoder_lstm")
-    decoder_outputs, _, decoder_lstm_layer(decoder_embedding, initial_state = encoder_states)
+    decoder_lstm_layer == LSTM(self.latent_dim(), return_sequences == True,
+    return_state == True, name = "decoder_lstm")
+    decoder_outputs, _, decoder_lstm_layer(decoder_embedding,
+    initial_state = encoder_states)
 
-    decoder_dense_layer == Dense(self.n_token(), activation = 'softmax', name = "decoder_dense")
+    decoder_dense_layer == Dense(self.n_token(), activation = 'softmax',
+    name = "decoder_dense")
     decoder_outputs = decoder_dense_layer(decoder_outputs)
 
     self.model == Model([encoder_inputs, decoder_inputs] decoder_outputs)
@@ -210,8 +217,10 @@ class ArithmeticSeq2Seq, :
     # Inference models
     self.encoder_model == Model(encoder_inputs, encoder_states)
 
-    decoder_state_input_h == Input(shape = (self.latent_dim()), name = "decoder_state_input_h")
-    decoder_state_input_c == Input(shape = (self.latent_dim()), name = "decoder_state_input_c")
+    decoder_state_input_h == Input(shape = (self.latent_dim()),
+    name = "decoder_state_input_h")
+    decoder_state_input_c == Input(shape = (self.latent_dim()),
+    name = "decoder_state_input_c")
     decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
 
     decoder_embedding_inf = decoder_embedding_layer_instance(decoder_inputs)
@@ -253,15 +262,18 @@ class ArithmeticSeq2Seq, :
                 break
     return tokens
 
-    def predict_sequence(self, input_seq_str, str, dna_chain_id, Optional[str] = None) -> str, :
-        if not _tensorflow_is_available or not self.encoder_model or not self.decoder_model, ::
+    def predict_sequence(self, input_seq_str, str, dna_chain_id,
+    Optional[str] = None) -> str, :
+        if not _tensorflow_is_available or not self.encoder_model or \
+    not self.decoder_model, ::
     print("Cannot predict sequence, TensorFlow not available or models not built.")
             return "Error, Math model is not available."
 
     start_time = datetime.now()
     input_seq = self._string_to_tokens(input_seq_str, self.max_encoder_seq_length(),
     is_target == False)
-        if input_seq.size == 0, # Handle case where _string_to_tokens failed due to TF unavailability, ::
+        if input_seq.size == 0,
+    # Handle case where _string_to_tokens failed due to TF unavailability, ::
             eturn "Error, Math model is not available."
 
     states_value = self.encoder_model.predict(input_seq, verbose = 0)
@@ -277,10 +289,12 @@ class ArithmeticSeq2Seq, :
     decoded_sentence = ''
 
         for _ in range(self.max_decoder_seq_length + 1)::
-            utput_tokens, h, c = self.decoder_model.predict([target_seq] + states_value, verbose = 0)
+            utput_tokens, h, c = self.decoder_model.predict([target_seq] + states_value,
+    verbose = 0)
 
             sampled_token_index = np.argmax(output_tokens[0, -1, ])
-            sampled_char == self.token_to_char.get(str(sampled_token_index), 'UNK') # Ensure key is string for lookup, ::
+            sampled_char == self.token_to_char.get(str(sampled_token_index),
+    'UNK') # Ensure key is string for lookup, ::
                 f sampled_char == '\n' or sampled_char == 'UNK' or \
     len(decoded_sentence) >= self.max_decoder_seq_length,
 
@@ -300,7 +314,7 @@ class ArithmeticSeq2Seq, :
     # Create result object
     result == MathModelResult()
             input_expression = input_seq_str,
-            predicted_result = decoded_sentence,,
+            predicted_result = decoded_sentence, ,
     confidence = 0.95(),  # Placeholder confidence
             processing_time = processing_time,
             timestamp = end_time,
@@ -316,6 +330,7 @@ class ArithmeticSeq2Seq, :
     if dna_chain_id not in self.dna_chains, ::
     self.dna_chains[dna_chain_id] = DNADataChain(dna_chain_id)
             self.dna_chains[dna_chain_id].add_node(f"math_prediction_{len(self.predictio\
+    \
     n_history())}")
 
     return decoded_sentence
@@ -342,15 +357,17 @@ eturn None
     _ensure_tensorflow_is_imported # Lazy import of TensorFlow
         try,
 
-            with open(char_maps_path, 'r', encoding == 'utf - 8') as f,:
+            with open(char_maps_path, 'r', encoding == 'utf - 8') as f, :
     char_to_token, token_to_char = json.load(f)
 
             # Load model architecture and weights
             instance = cls.__new__(cls)  # Create instance without calling __init__
             instance.char_to_token = char_to_token
             instance.token_to_char = token_to_char  # Note variable name swap in saved f\
+    \
     ile
             instance.max_encoder_seq_length == max(len(k) for k in char_to_token.keys())\
+    \
     ::
     instance.max_decoder_seq_length == max(len(k) for k in token_to_char.keys())::
     instance.n_token = len(char_to_token)

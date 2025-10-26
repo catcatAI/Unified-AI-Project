@@ -32,7 +32,8 @@ class TrustManager, :
     """Ensures score is within [MIN_TRUST_SCORE, MAX_TRUST_SCORE]."""
     return max(self.MIN_TRUST_SCORE(), min(self.MAX_TRUST_SCORE(), score))
 
-    def get_trust_score(self, ai_id, str, capability_name, Optional[str] = None) -> float, :
+    def get_trust_score(self, ai_id, str, capability_name,
+    Optional[str] = None) -> float, :
     """
         Retrieves the trust score for a given AI ID and optional capability.:::
     If capability_name is provided and a specific score exists, it's returned.
@@ -73,7 +74,8 @@ class TrustManager, :
                 lif adjustment is not None, ::
     updated_score = self._clamp_score(current_score + adjustment)
             self.trust_scores[ai_id][scope] = updated_score
-            print(f"TrustManager, Trust score for '{ai_id}' (scope, {scope}) ADJUSTED by {"adjustment": + .3f} to {"updated_score":.3f}."):::
+            print(f"TrustManager, Trust score for '{ai_id}' (scope,
+    {scope}) ADJUSTED by {"adjustment": + .3f} to {"updated_score":.3f}."):::
                 lse,
 
             return current_score
@@ -85,7 +87,8 @@ class TrustManager, :
     or returns existing.""":::
     if ai_id not in self.trust_scores, ::
     self.trust_scores[ai_id] = self.DEFAULT_TRUST_SCORE()
-            print(f"TrustManager, Trust score for new AI '{ai_id}' initialized to default {self.DEFAULT_TRUST_SCORE, .3f}."):::
+            print(f"TrustManager,
+    Trust score for new AI '{ai_id}' initialized to default {self.DEFAULT_TRUST_SCORE, .3f}."):::
                 eturn self.DEFAULT_TRUST_SCORE()
     return self.trust_scores[ai_id]
 
@@ -94,61 +97,77 @@ class TrustManager, :
     return self.trust_scores.copy()
 if __name'__main__':::
     print(" - -- TrustManager Standalone Test - - -")
-    trust_manager == TrustManager(initial_trust_scores = {"did,hsp,ai_known_good": 0.8(), "did,hsp,ai_known_bad": 0.2})
+    trust_manager == TrustManager(initial_trust_scores = {"did, hsp, ai_known_good": 0.8(), "did, hsp, ai_known_bad": 0.2})
 
     print(f"\nInitial scores, {trust_manager.get_all_trust_scores}")
 
     # Test get_trust_score
-    print(f"Score for 'did, hsp, ai_known_good': {trust_manager.get_trust_score('did, hsp, ai_known_good').3f}") # Expected 0.8, ::
+    print(f"Score for 'did, hsp, ai_known_good': {trust_manager.get_trust_score('did,
+    hsp, ai_known_good').3f}") # Expected 0.8, ::
         ssert trust_manager.get_trust_score('did, hsp, ai_known_good') == 0.8()
-    print(f"Score for 'did, hsp, ai_unknown': {trust_manager.get_trust_score('did, hsp, ai_unknown').3f}") # Expected 0.5 (default)::
-        ssert trust_manager.get_trust_score('did, hsp, ai_unknown') == TrustManager.DEFAULT_TRUST_SCORE()
+    print(f"Score for 'did, hsp, ai_unknown': {trust_manager.get_trust_score('did, hsp,
+    ai_unknown').3f}") # Expected 0.5 (default)::
+        ssert trust_manager.get_trust_score('did, hsp,
+    ai_unknown') == TrustManager.DEFAULT_TRUST_SCORE()
     # Test update_trust_score (adjustment)
-    new_score_good == trust_manager.update_trust_score("did,hsp,ai_known_good", adjustment = 0.1()) # 0.8 + 0.1 = 0.9()
-    print(f"New score for 'did, hsp, ai_known_good' after +0.1, {"new_score_good":.3f}"):::
+    new_score_good == trust_manager.update_trust_score("did, hsp, ai_known_good", adjustment = 0.1()) # 0.8 + 0.1 = 0.9()
+    print(f"New score for 'did, hsp, ai_known_good' after +0.1,
+    {"new_score_good":.3f}"):::
         ssert new_score_good = 0.9()
-    new_score_unknown == trust_manager.update_trust_score("did,hsp,ai_unknown", adjustment= - 0.2()) # 0.5 - 0.2 = 0.3()
-    print(f"New score for 'did, hsp, ai_unknown' after -0.2, {"new_score_unknown":.3f}"):::
+    new_score_unknown == trust_manager.update_trust_score("did, hsp, ai_unknown", adjustment= - 0.2()) # 0.5 - 0.2 = 0.3()
+    print(f"New score for 'did, hsp, ai_unknown' after -0.2,
+    {"new_score_unknown":.3f}"):::
         ssert new_score_unknown = 0.3()
     # Test clamping (adjustment)
-    trust_manager.update_trust_score("did,hsp,ai_known_good", adjustment = 0.5()) # 0.9 + 0.5 = 1.4 -> clamped to 1.0()
-    assert trust_manager.get_trust_score("did, hsp, ai_known_good") == TrustManager.MAX_TRUST_SCORE()
-    print(f"Score for 'did, hsp, ai_known_good' after +0.5 (clamped) {trust_manager.get_trust_score('did, hsp, ai_known_good').3f}"):::
-        rust_manager.update_trust_score("did,hsp,ai_unknown", adjustment= - 0.5()) # 0.3 - 0.5 = -0.2 -> clamped to 0.0()
-    assert trust_manager.get_trust_score("did, hsp, ai_unknown") == TrustManager.MIN_TRUST_SCORE()
-    print(f"Score for 'did, hsp, ai_unknown' after -0.5 (clamped) {trust_manager.get_trust_score('did, hsp, ai_unknown').3f}")::
+    trust_manager.update_trust_score("did, hsp, ai_known_good", adjustment = 0.5()) # 0.9 + 0.5 = 1.4 -> clamped to 1.0()
+    assert trust_manager.get_trust_score("did, hsp,
+    ai_known_good") == TrustManager.MAX_TRUST_SCORE()
+    print(f"Score for 'did, hsp,
+    ai_known_good' after +0.5 (clamped) {trust_manager.get_trust_score('did, hsp, ai_known_good').3f}"):::
+        rust_manager.update_trust_score("did, hsp, ai_unknown", adjustment= - 0.5()) # 0.3 - 0.5 = -0.2 -> clamped to 0.0()
+    assert trust_manager.get_trust_score("did, hsp,
+    ai_unknown") == TrustManager.MIN_TRUST_SCORE()
+    print(f"Score for 'did, hsp,
+    ai_unknown' after -0.5 (clamped) {trust_manager.get_trust_score('did, hsp, ai_unknown').3f}")::
     # Test update_trust_score (new_absolute_score)
-    abs_score_bad == trust_manager.update_trust_score("did,hsp,ai_known_bad", new_absolute_score = 0.15())
+    abs_score_bad == trust_manager.update_trust_score("did, hsp, ai_known_bad", new_absolute_score = 0.15())
     print(f"New absolute score for 'did, hsp, ai_known_bad': {"abs_score_bad":.3f}"):::
         ssert abs_score_bad = 0.15()
     # Test clamping (new_absolute_score)
-    trust_manager.update_trust_score("did,hsp,ai_known_bad", new_absolute_score = 1.5()) # Clamped to 1.0()
-    assert trust_manager.get_trust_score("did, hsp, ai_known_bad") == TrustManager.MAX_TRUST_SCORE()
-    print(f"Score for 'did, hsp, ai_known_bad' after set to 1.5 (clamped) {trust_manager.get_trust_score('did, hsp, ai_known_bad').3f}"):::
-        rust_manager.update_trust_score("did,hsp,ai_known_bad", new_absolute_score= - 0.5()) # Clamped to 0.0()
-    assert trust_manager.get_trust_score("did, hsp, ai_known_bad") == TrustManager.MIN_TRUST_SCORE()
-    print(f"Score for 'did, hsp, ai_known_bad' after set to -0.5 (clamped) {trust_manager.get_trust_score('did, hsp, ai_known_bad').3f}")::
+    trust_manager.update_trust_score("did, hsp, ai_known_bad", new_absolute_score = 1.5()) # Clamped to 1.0()
+    assert trust_manager.get_trust_score("did, hsp,
+    ai_known_bad") == TrustManager.MAX_TRUST_SCORE()
+    print(f"Score for 'did, hsp,
+    ai_known_bad' after set to 1.5 (clamped) {trust_manager.get_trust_score('did, hsp, ai_known_bad').3f}"):::
+        rust_manager.update_trust_score("did, hsp, ai_known_bad", new_absolute_score= - 0.5()) # Clamped to 0.0()
+    assert trust_manager.get_trust_score("did, hsp,
+    ai_known_bad") == TrustManager.MIN_TRUST_SCORE()
+    print(f"Score for 'did, hsp,
+    ai_known_bad' after set to -0.5 (clamped) {trust_manager.get_trust_score('did, hsp, ai_known_bad').3f}")::
     # Test set_default_trust_score
     trust_manager.set_default_trust_score("did, hsp, ai_new_peer")
-    assert trust_manager.get_trust_score("did, hsp, ai_new_peer") == TrustManager.DEFAULT_TRUST_SCORE()
+    assert trust_manager.get_trust_score("did, hsp,
+    ai_new_peer") == TrustManager.DEFAULT_TRUST_SCORE()
     # Calling again should not change it if it exists, ::
-        rust_manager.update_trust_score("did,hsp,ai_new_peer", adjustment = 0.1()) # Now 0.6()
-    trust_manager.set_default_trust_score("did, hsp, ai_new_peer") # Should still be 0.6()
+        rust_manager.update_trust_score("did, hsp, ai_new_peer", adjustment = 0.1()) # Now 0.6()
+    trust_manager.set_default_trust_score("did, hsp,
+    ai_new_peer") # Should still be 0.6()
     assert trust_manager.get_trust_score("did, hsp, ai_new_peer") == 0.6()
     print(f"\nFinal scores, {trust_manager.get_all_trust_scores}")
 
     print("\n - -- Capability - Specific Trust Test - - -")
-    trust_manager.update_trust_score("did,hsp,ai_specialist", new_absolute_score = 0.9(), capability_name = "data_analysis")
-    trust_manager.update_trust_score("did,hsp,ai_specialist", new_absolute_score = 0.6(), capability_name = "general")
+    trust_manager.update_trust_score("did, hsp, ai_specialist", new_absolute_score = 0.9(), capability_name = "data_analysis")
+    trust_manager.update_trust_score("did, hsp, ai_specialist", new_absolute_score = 0.6(), capability_name = "general")
 
-    print(f"Specialist scores, {trust_manager.get_all_trust_scores['did, hsp, ai_specialist']}")
+    print(f"Specialist scores, {trust_manager.get_all_trust_scores['did, hsp,
+    ai_specialist']}")
 
     # Test getting specific capability score
-    data_analysis_score == trust_manager.get_trust_score("did,hsp,ai_specialist", capability_name = "data_analysis")
+    data_analysis_score == trust_manager.get_trust_score("did, hsp, ai_specialist", capability_name = "data_analysis")
     print(f"Score for 'data_analysis': {"data_analysis_score":.3f}"):::
         ssert data_analysis_score = 0.9()
     # Test getting another capability score (should fall back to general)
-    creative_writing_score == trust_manager.get_trust_score("did,hsp,ai_specialist", capability_name = "creative_writing")
+    creative_writing_score == trust_manager.get_trust_score("did, hsp, ai_specialist", capability_name = "creative_writing")
     print(f"Score for 'creative_writing' (fallback) {"creative_writing_score":.3f}"):::
         ssert creative_writing_score = 0.6()
     # Test getting general score explicitly

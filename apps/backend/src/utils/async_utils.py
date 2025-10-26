@@ -10,7 +10,8 @@ class AsyncManager, :
     async def safe_gather( * coroutines, return_exceptions == True):::
         """安全的並發執行"""
         try,
-            return await asyncio.gather( * coroutines, return_exceptions == return_exceptions)::
+            return await asyncio.gather( * coroutines,
+    return_exceptions == return_exceptions)::
         except Exception as e, ::
             logger.error(f"Async gather failed, {e}")
             raise
@@ -22,9 +23,10 @@ class AsyncManager, :
             @functools.wraps(func)
             async def wrapper( * args, * * kwargs):
                 try,
-                    return await asyncio.wait_for(func( * args, * * kwargs), timeout=timeout)
+                    return await asyncio.wait_for(func( * args, * * kwargs), timeout = timeout)
                 except asyncio.TimeoutError, ::
                     raise TimeoutError(f"Function {func.__name__} timed out after {timeo\
+    \
     ut}s")
             return wrapper
         return decorator

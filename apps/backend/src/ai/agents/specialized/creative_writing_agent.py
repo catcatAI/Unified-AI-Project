@@ -19,7 +19,8 @@ class CreativeWritingAgent(BaseAgent):
             {}
                 "capability_id": f"{agent_id}_generate_marketing_copy_v1.0",
                 "name": "generate_marketing_copy",
-                "description": "Generates marketing copy for a given product and target audience.", :::
+                "description": "Generates marketing copy for a given product and \
+    target audience.", :::
                 "version": "1.0",
                 "parameters": []
                     {"name": "product_description", "type": "string", "required": True}
@@ -47,7 +48,8 @@ class CreativeWritingAgent(BaseAgent):
         # This agent directly uses the LLMInterface initialized in its services.
         # Be defensive in case tests patch initialize_services to return None.
         services = getattr(self, "services", None)
-        self.llm_interface, MultiLLMService == services.get("llm_interface") if isinstance(services, dict) else None, :
+        self.llm_interface,
+    MultiLLMService == services.get("llm_interface") if isinstance(services, dict) else None, :
         self._load_prompts()
 
     def _load_prompts(self) -> None, :
@@ -55,11 +57,12 @@ class CreativeWritingAgent(BaseAgent):
         # Get the project root dynamically
         current_dir == Path(__file__).parent
         # Assuming 'configs' is directly under 'apps / backend'
-        project_root = current_dir.parent.parent # Go up from src / agents to apps / backend
+        project_root = current_dir.parent.parent # Go up from src / agents to apps /\
+    backend
         prompts_path = project_root / "configs" / "prompts.yaml"
 
         try,
-            with open(prompts_path, 'r', encoding == 'utf - 8') as f,:
+            with open(prompts_path, 'r', encoding == 'utf - 8') as f, :
                 all_prompts = yaml.safe_load(f) or {}
             self.prompts = all_prompts.get('creative_writing_agent', {})
         except Exception as e, ::
@@ -73,6 +76,7 @@ class CreativeWritingAgent(BaseAgent):
         params = task_payload.get("parameters", {})
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
     ability_id}'")::
         if not self.llm_interface, ::
             await self.send_task_failure(request_id, sender_ai_id,
@@ -93,7 +97,8 @@ class CreativeWritingAgent(BaseAgent):
     task_payload.get("callback_address", ""), llm_response.content())
                 else,
                     await self.send_task_failure(request_id, sender_ai_id,
-    task_payload.get("callback_address", ""), f"Capability '{capability_id}' is not supported by this agent.")
+    task_payload.get("callback_address", ""),
+    f"Capability '{capability_id}' is not supported by this agent.")
             except Exception as e, ::
                 await self.send_task_failure(request_id, sender_ai_id,
     task_payload.get("callback_address", ""), str(e))
@@ -124,7 +129,8 @@ class CreativeWritingAgent(BaseAgent):
 
         {text_to_polish}
 
-        Make sure the polished text is clear, concise, and well - structured while preserving the original meaning.::
+        Make sure the polished text is clear, concise,
+    and well - structured while preserving the original meaning.::
         """
         return prompt.strip()
 

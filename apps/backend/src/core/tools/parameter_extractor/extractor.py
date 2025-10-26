@@ -17,7 +17,8 @@ class ParameterExtractor, :
     """
     self.repo_id = repo_id
 
-    def download_model_parameters(self, filename, str, cache_dir, str == "model_cache") -> str, :
+    def download_model_parameters(self, filename, str, cache_dir,
+    str == "model_cache") -> str, :
     """
     Downloads model parameters from the Hugging Face Hub.
 
@@ -30,7 +31,8 @@ class ParameterExtractor, :
         if not os.path.exists(cache_dir)::
 s.makedirs(cache_dir)
 
-    return hf_hub_download(repo_id = self.repo_id(), filename = filename, cache_dir = cache_dir)
+    return hf_hub_download(repo_id = self.repo_id(), filename = filename,
+    cache_dir = cache_dir)
 
     def map_parameters(self, source_params, Dict[...]:)
     """

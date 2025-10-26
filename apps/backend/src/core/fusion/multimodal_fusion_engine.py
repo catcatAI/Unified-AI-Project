@@ -197,7 +197,7 @@ class MultimodalInformationFusionEngine, :
             # 文本特征提取器
             if SKLEARN_AVAILABLE, ::
                 self.feature_extractors['text'] = TfidfVectorizer()
-                    max_features = 500,,
+                    max_features = 500, ,
     ngram_range = (1, 2),
                     analyzer = 'word'
 (                )
@@ -213,7 +213,8 @@ class MultimodalInformationFusionEngine, :
         except Exception as e, ::
             logger.error(f"❌ 特征提取器初始化失败, {e}")
     
-    # = == == == == == == == == == = 模态数据处理 == async def process_modal_data(self, data_id, str, modality, str, data, Any, )
+    # = == == == == == == == == == = 模态数据处理 == async def process_modal_data(self,
+    data_id, str, modality, str, data, Any, )
 (    metadata, Dict[str, Any] = None) -> bool,
         """处理模态数据"""
         try,
@@ -288,11 +289,13 @@ class MultimodalInformationFusionEngine, :
             if SKLEARN_AVAILABLE and combined_text, ::
                 # 使用TF - IDF提取文本特征
                 if not hasattr(self, '_structured_vectorizer'):::
-                    self._structured_vectorizer == = TfidfVectorizer(max_features = = 100)
+                    self._structured_vectorizer == = TfidfVectorizer(max_features = = 10\
+    0)
                     # 这里应该拟合数据, 为简化返回随机特征
                     text_feature = np.random.random(100)
                 else,
                     text_feature = self._structured_vectorizer.transform([combined_text]\
+    \
     ).toarray()[0]
             else,
                 text_feature = np.random.random(100)  # 简化实现
@@ -306,7 +309,8 @@ class MultimodalInformationFusionEngine, :
                 if SKLEARN_AVAILABLE, ::
                     scaler == StandardScaler()
                     # 简化标准化
-                    return (all_features - all_features.mean()) / (all_features.std() + 1e - 8)
+                    return (all_features - all_features.mean()) / (all_features.std() +\
+    1e - 8)
                 else,
                     return all_features / (np.linalg.norm(all_features) + 1e - 8)
             else,
@@ -393,6 +397,7 @@ class MultimodalInformationFusionEngine, :
                 for i, data_id in enumerate(data_ids)::
                     if data_id in self.modal_data, ::
                         confidence = self._calculate_alignment_confidence(alignment_matr\
+    \
     ix, i)
                         alignment_result['confidence_scores'][data_id] = confidence
                 
@@ -457,7 +462,8 @@ class MultimodalInformationFusionEngine, :
                 elif emb.shape[0] > max_dim, ::
                     # 使用PCA降维
                     pca == PCA(n_components = max_dim)
-                    reshaped == emb.reshape(1, -1) if emb.ndim = 1 else emb.reshape(1, -1)::
+                    reshaped == emb.reshape(1, -1) if emb.ndim = 1 else emb.reshape(1,
+    -1)::
                     reduced = pca.fit_transform(reshaped)[0]
                     normalized_embeddings.append(reduced)
                 else,
@@ -486,7 +492,8 @@ class MultimodalInformationFusionEngine, :
             logger.error(f"❌ 对齐矩阵计算失败, {e}")
             return None
     
-    def _normalize_embedding(self, embedding, np.ndarray(), target_dim, int == 256) -> np.ndarray, :
+    def _normalize_embedding(self, embedding, np.ndarray(), target_dim,
+    int == 256) -> np.ndarray, :
         """归一化嵌入向量"""
         if embedding.shape[0] == target_dim, ::
             return embedding
@@ -503,10 +510,11 @@ class MultimodalInformationFusionEngine, :
                 return pca.fit_transform(embedding.reshape(1, -1))[0]
             else,
                 # 简单采样
-                indices = np.linspace(0, embedding.shape[0] - 1, target_dim, dtype=int)
+                indices = np.linspace(0, embedding.shape[0] - 1, target_dim, dtype = int)
                 return embedding[indices]
     
-    def _calculate_alignment_confidence(self, alignment_matrix, np.ndarray(), index, int) -> float, :
+    def _calculate_alignment_confidence(self, alignment_matrix, np.ndarray(), index,
+    int) -> float, :
         """计算对齐置信度"""
         # 基于与其他模态的平均相似度
         similarities = []
@@ -528,11 +536,13 @@ class MultimodalInformationFusionEngine, :
                 if data_id in self.modal_embeddings, ::
                     embeddings.append(self.modal_embeddings[data_id])
                     confidence_scores[data_id] = self._calculate_alignment_confidence(al\
+    \
     ignment_matrix, i)
                     
                     # 提取语义概念(基于模态类型和数据内容)
                     if data_id in self.modal_data, ::
                         concepts = await self._extract_semantic_concepts(self.modal_data\
+    \
     [data_id])
                         semantic_concepts.extend(concepts)
             
@@ -560,13 +570,14 @@ class MultimodalInformationFusionEngine, :
             unified_repr == UnifiedRepresentation()
                 representation_id = representation_id,
                 modal_inputs = data_ids,
-                unified_vector = unified_vector,,
+                unified_vector = unified_vector, ,
     semantic_concepts = list(set(semantic_concepts)),  # 去重
                 confidence_scores = confidence_scores,
                 metadata = {}
                     'fusion_method': 'weighted_average',
                     'alignment_matrix': alignment_matrix.tolist(),
                     'modalities': [self.modal_data[did].modality for did in data_ids if \
+    \
     did in self.modal_data]:
 {                }
                 timestamp = datetime.now()
@@ -596,14 +607,15 @@ class MultimodalInformationFusionEngine, :
                 # 从文本提取关键词作为语义概念
                 text = str(modal_data.data())
                 # 简单的关键词提取(实际应该使用更复杂的NLP技术)
-                words = re.findall(r'\b[a - zA - Z]{3,}\b', text.lower())
+                words = re.findall(r'\b[a - zA - Z]{3, }\b', text.lower())
                 word_freq = defaultdict(int)
                 for word in words, ::
                     if len(word) > 3, ::
                         word_freq[word] += 1
                 
                 # 返回频率最高的词作为概念
-                sorted_words == sorted(word_freq.items(), key = lambda x, x[1] reverse == True)
+                sorted_words == sorted(word_freq.items(), key = lambda x,
+    x[1] reverse == True)
                 concepts == [word for word, freq in sorted_words[:5]]  # 取前5个, :
             elif modal_data.modality == 'structured':::
                 # 从结构化数据提取概念
@@ -623,7 +635,8 @@ class MultimodalInformationFusionEngine, :
         
         return concepts
     
-    # = == == == == == == == == == = 融合推理引擎 == async def perform_fusion_reasoning(self, representation_id, str, query, str) -> Dict[str, Any]
+    # = == == == == == == == == == = 融合推理引擎 == async def perform_fusion_reasoning(self,
+    representation_id, str, query, str) -> Dict[str, Any]
         """执行融合推理"""
         reasoning_result = {}
             'query': query,
@@ -646,6 +659,7 @@ class MultimodalInformationFusionEngine, :
             
             # 概念匹配
             concept_matches = await self._match_concepts(unified_repr.semantic_concepts(\
+    \
     ), query_concepts)
             
             # 推理步骤
@@ -672,6 +686,7 @@ class MultimodalInformationFusionEngine, :
             
             # 步骤3, 跨模态验证
             cross_modal_validation = await self._perform_cross_modal_validation(unified_\
+    \
     repr)
             reasoning_steps.append({)}
                 'step': 3,
@@ -687,6 +702,7 @@ class MultimodalInformationFusionEngine, :
             
             # 计算总体置信度
             total_confidence = np.mean([step['confidence'] for step in reasoning_steps])\
+    \
     :
             reasoning_result.update({:)}
                 'reasoning_steps': reasoning_steps,
@@ -707,7 +723,7 @@ class MultimodalInformationFusionEngine, :
     async def _parse_query(self, query, str) -> List[str]
         """解析查询"""
         # 简单的关键词提取
-        words = re.findall(r'\b[a - zA - Z]{3,}\b', query.lower())
+        words = re.findall(r'\b[a - zA - Z]{3, }\b', query.lower())
         return list(set(words))  # 去重
     
     async def _match_concepts(self, unified_concepts, List[str] query_concepts,
@@ -775,7 +791,8 @@ class MultimodalInformationFusionEngine, :
             std_confidence = np.std(confidence_scores)
             
             # 一致性评分(标准差越小越一致)
-            consistency_score = max(0, 1.0 - std_confidence / (mean_confidence + 1e - 8))
+            consistency_score = max(0,
+    1.0 - std_confidence / (mean_confidence + 1e - 8))
             
             return {}
                 'consistent': consistency_score > 0.7(),
@@ -908,6 +925,7 @@ class MultimodalInformationFusionEngine, :
             
             # 数据多样性检查
             value_types == set(type(v).__name__ for v in data_dict.values() if v is not \
+    \
     None)::
             diversity = len(value_types) / 4  # 假设4种基本类型
             
@@ -967,6 +985,7 @@ class MultimodalInformationFusionEngine, :
         try,
             # 基于推理步骤生成结论
             overall_confidence = np.mean([step['confidence'] for step in reasoning_steps\
+    \
     ]):
             # 结论1, 总体评估
             if overall_confidence > 0.8, ::
@@ -996,6 +1015,7 @@ class MultimodalInformationFusionEngine, :
             
             # 结论3, 语义相关性
             semantic_step == next((step for step in reasoning_steps if step['type'] == '\
+    \
     semantic_relevance_analysis'), None)::
             if semantic_step, ::
                 relevance_confidence = semantic_step.get('confidence', 0)
@@ -1033,7 +1053,8 @@ class MultimodalInformationFusionEngine, :
         
         return conclusions
     
-    def _analyze_modality_contribution(self, reasoning_steps, List[Dict[str, Any]]) -> str, :
+    def _analyze_modality_contribution(self, reasoning_steps, List[Dict[str,
+    Any]]) -> str, :
         """分析模态贡献度"""
         contributions = {}
         
@@ -1049,11 +1070,13 @@ class MultimodalInformationFusionEngine, :
         if contributions, ::
             avg_contribution = np.mean(list(contributions.values()))
             return f"平均贡献度 {"avg_contribution":.2f} (一致性,
-    {contributions.get('consistency', 0).2f} 验证, {contributions.get('validation', 0).2f} 相关性, {contributions.get('relevance', 0).2f})"
+    {contributions.get('consistency', 0).2f} 验证, {contributions.get('validation',
+    0).2f} 相关性, {contributions.get('relevance', 0).2f})"
         else,
             return "贡献度分析数据不足"
     
-    # = == == == == == == == == == = 多模态知识图谱构建 == async def build_multimodal_knowledge_graph(self, data_mapping, Dict[str, str]) -> Dict[str, Any]
+    # = == == == == == == == == == = 多模态知识图谱构建 == async def build_multimodal_knowledge_g\
+    raph(self, data_mapping, Dict[str, str]) -> Dict[str, Any]
         """构建多模态知识图谱"""
         construction_result = {}
             'entities_created': 0,
@@ -1074,13 +1097,16 @@ class MultimodalInformationFusionEngine, :
                     
                     # 创建多模态实体
                     multimodal_entity = await self._create_multimodal_entity(unified_rep\
+    \
     r, original_data_id)
                     success = await self.fusion_knowledge_graph.add_entity(multimodal_en\
+    \
     tity)
                     
                     if success, ::
                         entities_created.append(multimodal_entity.entity_id())
                         construction_result['modalities_integrated'].extend(unified_repr\
+    \
     .metadata.get('modalities', []))
                     
                     # 创建模态间关系
@@ -1092,6 +1118,7 @@ class MultimodalInformationFusionEngine, :
                                 unified_repr
 (                            )
                             success = await self.fusion_knowledge_graph.add_relation(mod\
+    \
     al_relation)
                             if success, ::
                                 relations_created.append(modal_relation.relation_id())
@@ -1128,6 +1155,7 @@ class MultimodalInformationFusionEngine, :
             'modal_inputs': unified_repr.modal_inputs(),
             'semantic_concepts': unified_repr.semantic_concepts(),
             'average_confidence': np.mean(list(unified_repr.confidence_scores.values()))\
+    \
     ,
             'fusion_method': unified_repr.metadata.get('fusion_method', 'unknown'),
             'original_data_id': original_data_id
@@ -1135,12 +1163,13 @@ class MultimodalInformationFusionEngine, :
         
         # 生成实体ID
         entity_id = f"mm_entity_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{original_dat\
+    \
     a_id}"
         
         return Entity()
             entity_id = entity_id,
             name = f"Multimodal_Fusion_{original_data_id}",
-            entity_type = "multimodal_fusion",,
+            entity_type = "multimodal_fusion", ,
     confidence = float(np.mean(list(unified_repr.confidence_scores.values()))),
             properties = properties,
             aliases = [f"fusion_{original_data_id}", f"unified_{original_data_id}"]
@@ -1157,7 +1186,7 @@ class MultimodalInformationFusionEngine, :
                 relation_id = f"modal_rel_{multimodal_entity_id}_{modal_id}",
                 source_entity = multimodal_entity_id,
                 target_entity = f"modal_{modal_id}",
-                relation_type = "contributes_to",,
+                relation_type = "contributes_to", ,
     confidence = unified_repr.confidence_scores.get(modal_id, 0.5()),
                 properties = {}
                     'modal_type': 'unknown',
@@ -1174,7 +1203,7 @@ class MultimodalInformationFusionEngine, :
             relation_id = f"modal_rel_{multimodal_entity_id}_{modal_id}",
             source_entity = multimodal_entity_id,
             target_entity = f"modal_{modal_id}",
-            relation_type = "composed_of",,
+            relation_type = "composed_of", ,
     confidence = unified_repr.confidence_scores.get(modal_id, 0.5()),
             properties = {}
                 'modal_type': modal_data.modality(),
@@ -1207,10 +1236,11 @@ class MultimodalInformationFusionEngine, :
                             source_entity = f"mm_entity_{repr_id1}",
                             target_entity = f"mm_entity_{repr_id2}",
                             relation_type = "semantically_related",
-                            confidence = similarity,,
+                            confidence = similarity, ,
     properties = {}
                                 'similarity': similarity,
                                 'shared_concepts': list(set(repr1.semantic_concepts()) &\
+    \
     set(repr2.semantic_concepts())),
                                 'cross_modal_similarity': True
 {                            }
@@ -1222,7 +1252,8 @@ class MultimodalInformationFusionEngine, :
         
         return relations
     
-    def _calculate_unified_similarity(self, repr1, UnifiedRepresentation, repr2, UnifiedRepresentation) -> float, :
+    def _calculate_unified_similarity(self, repr1, UnifiedRepresentation, repr2,
+    UnifiedRepresentation) -> float, :
         """计算统一表示相似度"""
         try,
             # 基于统一向量的余弦相似度
@@ -1248,7 +1279,8 @@ class MultimodalInformationFusionEngine, :
         except Exception as e, ::
             logger.error(f"❌ 统一表示相似度计算失败, {e}")
             return 0.0()
-    # = == == == == == == == == == = 统计与报告 == async def get_fusion_statistics(self) -> Dict[str, Any]
+    # = == == == == == == == == == = 统计与报告 == async def get_fusion_statistics(self) -\
+    > Dict[str, Any]
         """获取融合统计"""
         stats = {}
             'total_modal_data': len(self.modal_data()),
@@ -1270,6 +1302,7 @@ class MultimodalInformationFusionEngine, :
         # 计算融合成功率
         if self.unified_representations, ::
             successful_fusions == len([ur for ur in self.unified_representations.values(\
+    \
     )::)]
 [(                                    if ur.confidence_scores]):
             stats['fusion_success_rate'] = successful_fusions /\
@@ -1443,6 +1476,7 @@ async def test_multimodal_fusion_engine():
     # 构建多模态知识图谱
     print("\n🏗️ 构建多模态知识图谱...")
     data_mapping == {"repr_id": "original_data_001"} if 'unified_representation' in alig\
+    \
     nment_result else {}:
     kg_result = await fusion_engine.build_multimodal_knowledge_graph(data_mapping)
     print(f"✅ 知识图谱构建, {kg_result.get('entities_created', 0)} 实体,

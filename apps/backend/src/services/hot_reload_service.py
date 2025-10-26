@@ -24,7 +24,7 @@ class HotReloadService, :
     - Start / stop draining (pause new work acceptance – advisory flag)
     - Reload LLM service and rewire dependent components (ToolDispatcher,
     DialogueManager)
-    - Reload HSP connector (blue / green style) bring up a new connection, re-subscribe,
+    - Reload HSP connector (blue / green style) bring up a new connection, re - subscribe,
     swap references, then tear down the old connector
 
     Notes,
@@ -64,14 +64,16 @@ class HotReloadService, :
     mcp_status = mcp.get_communication_status()
         except Exception, ::
             mcp_status == {"error": "failed to get MCP status"}
-    # Build best-effort metrics (safe access with hasattr / try)
+    # Build best - effort metrics (safe access with hasattr / try)
     metrics, Dict[str, Any] = {"hsp": , "mcp": , "learning": , "memory": , "lis": }
     # HSP metrics
         try,
             if hsp is not None, ::
     metrics["hsp"]["is_connected"] = getattr(hsp, "is_connected", None)
-                metrics["hsp"]["pending_acks_count"] = len(getattr(hsp, "_pending_acks")) if hasattr(hsp, "_pending_acks") else None, ::
-    metrics["hsp"]["retry_counts_active"] = len(getattr(hsp, "_message_retry_counts")) if hasattr(hsp, "_message_retry_counts") else None, ::
+                metrics["hsp"]["pending_acks_count"] = len(getattr(hsp,
+    "_pending_acks")) if hasattr(hsp, "_pending_acks") else None, ::
+    metrics["hsp"]["retry_counts_active"] = len(getattr(hsp,
+    "_message_retry_counts")) if hasattr(hsp, "_message_retry_counts") else None, ::
     except Exception, ::
     pass
     # MCP metrics
@@ -94,7 +96,8 @@ class HotReloadService, :
             ham = services.get("ham_manager")
             if ham is not None and hasattr(ham, "query_core_memory"):::
                 # Query recent action policy events
-                events == ham.query_core_memory(metadata_filters = {"ham_meta_action_policy": True} data_type_filter = "action_policy_v0.1", limit = 200)  # type ignore
+                events == ham.query_core_memory(metadata_filters = {"ham_meta_action_pol\
+    icy": True} data_type_filter = "action_policy_v0.1", limit = 200)  # type ignore
                 total == len(events) if isinstance(events, list) else 0, ::
     successes = 0
                 latencies =
@@ -119,7 +122,8 @@ class HotReloadService, :
     latencies.append(float(rec.get("latency_ms")))
                     except Exception, ::
                         continue
-                avg_latency == (sum(latencies) / len(latencies)) if latencies else None, ::
+                avg_latency == (sum(latencies) / len(latencies)) if latencies else None,
+    ::
     success_rate == (successes / total) if total else 0.0, ::
     metrics["learning"]["tools"] = {}
                     "total_invocations": total,
@@ -144,13 +148,17 @@ class HotReloadService, :
                 # Local import of constants to avoid cycles
                 try,
                     from apps.backend.src.core_ai.lis.lis_cache_interface import LIS_INC\
+    \
     IDENT_DATA_TYPE_PREFIX, LIS_ANTIBODY_DATA_TYPE_PREFIX  # type ignore
                 except Exception, ::
                     LIS_INCIDENT_DATA_TYPE_PREFIX = "lis_incident_v0.1_"  # fallback
                     LIS_ANTIBODY_DATA_TYPE_PREFIX = "lis_antibody_v0.1_"
-                inc = ham.query_core_memory(metadata_filters = , data_type_filter == LIS_INCIDENT_DATA_TYPE_PREFIX, limit = 50)  # type ignore
-                ab = ham.query_core_memory(metadata_filters = , data_type_filter == LIS_ANTIBODY_DATA_TYPE_PREFIX, limit = 50)  # type ignore
-                metrics["lis"]["incidents_recent"] = len(inc) if isinstance(inc, list) else None, ::
+                inc = ham.query_core_memory(metadata_filters = ,
+    data_type_filter == LIS_INCIDENT_DATA_TYPE_PREFIX, limit = 50)  # type ignore
+                ab = ham.query_core_memory(metadata_filters = ,
+    data_type_filter == LIS_ANTIBODY_DATA_TYPE_PREFIX, limit = 50)  # type ignore
+                metrics["lis"]["incidents_recent"] = len(inc) if isinstance(inc,
+    list) else None, ::
     metrics["lis"]["antibodies_recent"] = len(ab) if isinstance(ab, list) else None, ::
     except Exception, ::
     pass
@@ -196,7 +204,8 @@ class HotReloadService, :
     td = core_services.tool_dispatcher_instance()
             if td is not None, ::
     try,
-                    # Prefer an explicit method if exists, else set attribute directly, ::
+                    # Prefer an explicit method if exists, else set attribute directly,
+    ::
     if hasattr(td, "set_llm_service"):::
     td.set_llm_service(new_llm)  # type ignore[attr - defined]
                     else,
@@ -276,22 +285,28 @@ class HotReloadService, :
 
             try,
                 from apps.backend.src.core.hsp.connector import HSPConnector
-                new_hsp == HSPConnector(ai_id = old_hsp.ai_id(), broker_address = broker_address, broker_port = broker_port)
+                new_hsp == HSPConnector(ai_id = old_hsp.ai_id(),
+    broker_address = broker_address, broker_port = broker_port)
                 connected = await new_hsp.connect()
                 if not connected, ::
     return {"reloaded": False, "error": "New HSP connector failed to connect."}
 
-                # Re - subscribe minimal topics used in core_services.initialize_services()
-                await new_hsp.subscribe(f"hsp / capabilities / advertisements / general / #", lambda p, s, e None)
-                await new_hsp.subscribe(f"hsp / results / {old_hsp.ai_id} / #", lambda p, s, e None)
-                await new_hsp.subscribe(f"hsp / knowledge / facts / general / #", lambda p, s, e None)
+                # Re -\
+    subscribe minimal topics used in core_services.initialize_services()
+                await new_hsp.subscribe(f"hsp / capabilities / advertisements /\
+    general / #", lambda p, s, e None)
+                await new_hsp.subscribe(f"hsp / results / {old_hsp.ai_id} / #",
+    lambda p, s, e None)
+                await new_hsp.subscribe(f"hsp / knowledge / facts / general / #",
+    lambda p, s, e None)
 
                 # Swap global reference
                 core_services.hsp_connector_instance = new_hsp
 
                 # Wire callbacks again if ServiceDiscovery is present, ::
     if sdm is not None, ::
-    new_hsp.register_on_capability_advertisement_callback(sdm.process_capability_advertisement())  # type ignore[arg - type]
+    new_hsp.register_on_capability_advertisement_callback(sdm.process_capability_adverti\
+    sement())  # type ignore[arg - type]
 
                 # Disconnect old connector last
                 try,

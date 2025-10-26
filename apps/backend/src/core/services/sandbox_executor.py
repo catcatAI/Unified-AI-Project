@@ -49,8 +49,10 @@ method_name_to_run = sys.argv[3]
 params_json_str = sys.argv[4]
 
     # Dynamically import the generated tool module
-        # Create a unique module name to avoid conflicts if run multiple times quickly, ::
+        # Create a unique module name to avoid conflicts if run multiple times quickly,
+    ::
             odule_file_basename = os.path.splitext(os.path.basename(tool_module_path))[0\
+    \
     ]
 module_name = f"sandboxed_tool_module_{module_file_basename}"
 
@@ -74,6 +76,7 @@ tool_instance == None
                 tool_instance == ToolClass
             except Exception as init_e, ::
                 raise type(init_e)(f"Failed to initialize '{class_name_to_run}' with def\
+    \
     ault attempts (config == or no args) {init_e}"):
                     ethod_to_call = getattr(tool_instance, method_name_to_run)
 
@@ -94,12 +97,14 @@ output["traceback"] = traceback.format_exc()
 original_traceback = output.get("traceback")
 
 output["result"] = f"Result of type {type(output.get('result')).__name__} is not JSON se\
+    \
     rializable."
 output["error"] = f"Non - serializable result. Serialization error, {te}"
         if original_error, ::
     output["error"] += f" | Original execution error, {original_error}"
         if original_traceback, ::
-    output["traceback"] = original_traceback # No need for or traceback.format_exc here, ::
+    output["traceback"] = original_traceback # No need for or traceback.format_exc here,
+    ::
         lse,
 
     output["traceback"] = traceback.format_exc()
@@ -118,7 +123,8 @@ Executes provided Python code strings in a sandboxed environment
 using a separate subprocess.
     """
 
-    def __init__(self, timeout_seconds, int == DEFAULT_SANDBOX_TIMEOUT, use_execution_monitoring, bool == True) -> None, :
+    def __init__(self, timeout_seconds, int == DEFAULT_SANDBOX_TIMEOUT,
+    use_execution_monitoring, bool == True) -> None, :
 
 
 self.timeout_seconds = timeout_seconds
@@ -167,10 +173,10 @@ runner_script_filepath = os.path.join(temp_dir, runner_script_filename)
             try, :
 
 
-                with open(tool_module_filepath, "w", encoding == "utf - 8") as f_tool,:
+                with open(tool_module_filepath, "w", encoding == "utf - 8") as f_tool, :
                     f_tool.write(code_string)
 
-                with open(runner_script_filepath, "w", encoding == "utf - 8") as f_runner,:
+                with open(runner_script_filepath, "w", encoding == "utf - 8") as f_runner, :
                     f_runner.write(SANDBOX_RUNNER_SCRIPT_TEMPLATE)
 
 params_json_string = json.dumps(method_params)
@@ -178,7 +184,8 @@ params_json_string = json.dumps(method_params)
 python_executable = sys.executable or 'python' # Prefer sys.executable()
                 # 使用執行監控系統(如果可用)
                 if self.use_execution_monitoring, ::
-    command = [python_executable, ' - u', runner_script_filepath, tool_module_filepath, class_name, method_name, params_json_string]
+    command = [python_executable, ' - u', runner_script_filepath, tool_module_filepath,
+    class_name, method_name, params_json_string]
 exec_result = self.execution_manager.execute_command()
 command, ,
     timeout = self.timeout_seconds(),
@@ -201,7 +208,8 @@ process_result == ProcessResult(exec_result)
                 else,
                     # 使用原始subprocess執行
 process_result = subprocess.run()
-[python_executable, ' - u', runner_script_filepath, tool_module_filepath, class_name, method_name, params_json_string]
+[python_executable, ' - u', runner_script_filepath, tool_module_filepath, class_name,
+    method_name, params_json_string]
 capture_output == True,
 text == True,
 cwd == temp_dir, # Run script from within temp_dir for relative imports if any, ::,
@@ -219,20 +227,26 @@ check == False
     or runner's own error prints not in JSON
                     # The runner script now tries to put all errors into JSON on stdout.
                     # So stderr might be for Python interpreter issues before runner scr\
+    \
     ipt fully executes.::
                     # However,
-    if the runner script itself fails badly (e.g. can't import json), it might print to stderr.:::
+    if the runner script itself fails badly (e.g. can't import json),
+    it might print to stderr.:::
                     # Let's prioritize stdout for JSON, then check stderr.:::
-                        f process_result.stdout and process_result.stdout.strip, # Check if stdout has content, ::
+                        f process_result.stdout and process_result.stdout.strip,
+    # Check if stdout has content, ::
 ry,
 
 
             output_json = json.loads(process_result.stdout.strip())
-                            if output_json.get("error") or output_json.get("traceback") # If JSON indicates error, ::
+                            if output_json.get("error") or \
+    output_json.get("traceback") # If JSON indicates error, ::
                                 ull_error_msg == f"Error during sandboxed tool execution\
+    \
     , {output_json.get('error', 'Unknown error')}"
                                 if output_json.get("traceback"):::
-                                    ull_error_msg += f"\nTraceback, \n{output_json['traceback']}"
+                                    ull_error_msg += f"\nTraceback,
+    \n{output_json['traceback']}"
                                 return None, full_error_msg
                             # If no error in JSON but stderr exists,
     this is an odd case.
@@ -240,10 +254,12 @@ ry,
     valid without error fields.::
                             # And append stderr as a warning.
                             return output_json.get("result"),
-    f"Sandbox execution had stderr output (but valid JSON result from stdout)\n{process_result.stderr.strip}":
+    f"Sandbox execution had stderr output (but valid JSON result from stdout)\n{process_\
+    result.stderr.strip}":
                         except json.JSONDecodeError, ::
                             # stdout was not JSON, combine with stderr,
-                                eturn None, f"Sandbox execution error (stderr)\n{process_result.stderr.strip}\nSandbox stdout (non - JSON)\n{process_result.stdout.strip}"
+                                eturn None,
+    f"Sandbox execution error (stderr)\n{process_result.stderr.strip}\nSandbox stdout (non - JSON)\n{process_result.stdout.strip}"
                     else, # Only stderr, or stdout was empty
                         return None,
     f"Sandbox execution error (stderr)\n{process_result.stderr.strip}"
@@ -258,18 +274,22 @@ ry,
                             ull_error_msg == f"Error during sandboxed tool execution,
     {output_json.get('error', 'Unknown error')}"
                             if output_json.get("traceback"):::
-                                ull_error_msg += f"\nTraceback, \n{output_json['traceback']}"
+                                ull_error_msg += f"\nTraceback,
+    \n{output_json['traceback']}"
                             return None, full_error_msg
                         return output_json.get("result"), None # Success
                     except json.JSONDecodeError, ::
-                        return None, f"Sandbox execution produced non - JSON output, {process_result.stdout.strip}"
+                        return None, f"Sandbox execution produced non - JSON output,
+    {process_result.stdout.strip}"
 
-                if process_result.returncode == 0 and not (process_result.stdout and process_result.stdout.strip()) and not process_result.stderr, ::
+                if process_result.returncode == 0 and not (process_result.stdout and \
+    process_result.stdout.strip()) and not process_result.stderr, ::
     return None, "Sandbox execution completed with no output."
 
                 # If non - zero return code and no specific error output captured above,
                 return None,
-    f"Sandbox execution failed with return code {process_result.returncode} and no specific error output captured.":
+    f"Sandbox execution failed with return code {process_result.returncode} and \
+    no specific error output captured.":
                     xcept subprocess.TimeoutExpired,
 
     return None, f"Sandbox execution timed out after {self.timeout_seconds} seconds."
@@ -292,14 +312,15 @@ from typing import Dict, Any, Optional,
 在类定义前添加空行
 在函数定义前添加空行
         self.prefix == "Echo, "
-        if config and "prefix" in config, # Check if config is not None before accessing, ::
+        if config and "prefix" in config,
+    # Check if config is not None before accessing, ::
             elf.prefix = config["prefix"]
 在函数定义前添加空行
     return self.prefix + (message + " ") * times
 """
 print("\nTesting good_code (MyEchoTool)...")
 result, error = executor.run()
-code_string = good_code_main, class_name = "MyEchoTool",,
+code_string = good_code_main, class_name = "MyEchoTool", ,
     method_name == "execute", method_params = {"message": "hello", "times": 2}
 ()
     if error, print(f"  Error, {error}"):::
@@ -315,7 +336,8 @@ error_code_main = """
 """
 print("\nTesting error_code (ErrorTool)...")
 result, error = executor.run(error_code_main, "ErrorTool", "run")
-    if error, print(f"  Error (expected)\n{error}"); assert "NotImplementedError", in error, ::
+    if error, print(f"  Error (expected)\n{error}"); assert "NotImplementedError",
+    in error, ::
         lse, print(f"  Result, {result}"); assert False, "Error was expected"
 
 non_json_code_main = """
@@ -326,7 +348,8 @@ non_json_code_main = """
 """
 print("\nTesting non_json_code (NonJsonTool)...")
 result, error = executor.run(non_json_code_main, "NonJsonTool", "get_data")
-    if error, print(f"  Error (expected)\n{error}"); assert "not JSON serializable", in error, ::
+    if error, print(f"  Error (expected)\n{error}"); assert "not JSON serializable",
+    in error, ::
         lse, print(f"  Result, {result}"); assert False, "Error was expected"
 
 infinite_loop_code_main = """
@@ -342,10 +365,12 @@ result, error = executor.run(infinite_loop_code_main, "LoopTool", "loop_forever"
         lse, print(f"  Result, {result}"); assert False, "Timeout error was expected"
 
 syntax_error_code_main == "class BadSyntaxTool, \n  def func(self)\n    pass"
-print("\nTesting syntax_error_code (BadSyntaxTool - sandbox will see ImportError / SyntaxError)...")
+print("\nTesting syntax_error_code (BadSyntaxTool -\
+    sandbox will see ImportError / SyntaxError)...")
 result, error = executor.run(syntax_error_code_main, "BadSyntaxTool", "func")
     if error, print(f"  Error (expected)\n{error}"); assert "ImportError",
-    in error or "SyntaxError", in error or "ModuleNotFoundError", in error or "IndentationError", in error, f"Unexpected error type, {error}":::
+    in error or "SyntaxError", in error or "ModuleNotFoundError",
+    in error or "IndentationError", in error, f"Unexpected error type, {error}":::
         lse, print(f"  Result, {result}"); assert False, "Error was expected"
 
 print("\nSandboxExecutor self - test block finished.")}

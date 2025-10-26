@@ -30,7 +30,8 @@ logger, Any = logging.getLogger(__name__)
 class EnhancedAtlassianBridge(AtlassianBridge):
 ""增強版 Atlassian Bridge, 支持演示學習功能"""
 
-    def __init__(self, connector, RovoDevConnector, demo_learning_manager, Optional[DemoLearningManager] = None) -> None, :
+    def __init__(self, connector, RovoDevConnector, demo_learning_manager,
+    Optional[DemoLearningManager] = None) -> None, :
     """初始化增強版 Atlassian 橋接器
 
     Args,
@@ -109,6 +110,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
     try,
         emo_config = self.demo_manager.config.get('demo_credentials')
     spaces_config = demo_config.get('auto_initialization').get('demo_data').get('conflue\
+    \
     nce_spaces')
 
             for space_config in spaces_config, ::
@@ -118,14 +120,14 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                 # 記錄學習數據
                 await self.demo_manager.record_user_interaction()
                     action = "create_demo_space",
-                    context = space_config,,
+                    context = space_config, ,
     result = "success"
 (                )
 
         except Exception as e, ::
             logger.error(f"創建演示空間失敗, {e}")
             await self.demo_manager.record_error_pattern()
-                error_type = "demo_initialization",,
+                error_type = "demo_initialization", ,
     error_message = str(e),
                 context == {"step": "create_demo_spaces"}
                 resolution = "logged_for_analysis"
@@ -139,6 +141,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
     try,
         emo_config = self.demo_manager.config.get('demo_credentials')
     projects_config = demo_config.get('auto_initialization').get('demo_data').get('jira_\
+    \
     projects')
 
             for project_config in projects_config, ::
@@ -147,14 +150,14 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                 # 記錄學習數據
                 await self.demo_manager.record_user_interaction()
                     action = "create_demo_project",
-                    context = project_config,,
+                    context = project_config, ,
     result = "success"
 (                )
 
         except Exception as e, ::
             logger.error(f"設置測試項目失敗, {e}")
             await self.demo_manager.record_error_pattern()
-                error_type = "demo_initialization",,
+                error_type = "demo_initialization", ,
     error_message = str(e),
                 context == {"step": "setup_test_projects"}
                 resolution = "logged_for_analysis"
@@ -195,7 +198,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
             # 記錄成功的用戶交互
             if self.demo_mode_active, ::
     await self.demo_manager.record_user_interaction()
-                    action = "create_confluence_page",,
+                    action = "create_confluence_page", ,
     context = {}
                         "space_key": space_key,
                         "title": title,
@@ -211,7 +214,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
             # 記錄錯誤
             if self.demo_mode_active, ::
     await self.demo_manager.record_error_pattern()
-                    error_type = "confluence_operation",,
+                    error_type = "confluence_operation", ,
     error_message = str(e),
                     context = {}
                         "operation": "create_page",
@@ -222,7 +225,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
 (                )
 
                 await self.demo_manager.record_user_interaction()
-                    action = "create_confluence_page",,
+                    action = "create_confluence_page", ,
     context = {}
                         "space_key": space_key,
                         "title": title,
@@ -247,6 +250,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                     'timestamp': asyncio.get_event_loop.time()
 {                }
                 self.demo_manager.learning_data.setdefault('performance_metrics').append\
+    \
     (performance_metric)
 
     async def create_jira_issue()
@@ -269,7 +273,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
             # 記錄成功的用戶交互
             if self.demo_mode_active, ::
     await self.demo_manager.record_user_interaction()
-                    action = "create_jira_issue",,
+                    action = "create_jira_issue", ,
     context = {}
                         "project_key": project_key,
                         "issue_type": issue_type,
@@ -286,7 +290,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
             # 記錄錯誤
             if self.demo_mode_active, ::
     await self.demo_manager.record_error_pattern()
-                    error_type = "jira_operation",,
+                    error_type = "jira_operation", ,
     error_message = str(e),
                     context = {}
                         "operation": "create_issue",
@@ -297,7 +301,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
 (                )
 
                 await self.demo_manager.record_user_interaction()
-                    action = "create_jira_issue",,
+                    action = "create_jira_issue", ,
     context = {}
                         "project_key": project_key,
                         "error": str(e)
@@ -321,6 +325,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                     'timestamp': asyncio.get_event_loop.time()
 {                }
                 self.demo_manager.learning_data.setdefault('performance_metrics').append\
+    \
     (performance_metric)
 
     async def get_learning_insights(self) -> Dict[str, Any]

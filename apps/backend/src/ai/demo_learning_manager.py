@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class DemoLearningManager, :
     """演示學習管理器"""
 
-    def __init__(self, config_path, str == "configs / demo_credentials.yaml") -> None,:
+    def __init__(self, config_path, str == "configs / demo_credentials.yaml") -> None, :
         """初始化演示學習管理器
 
         Args,
@@ -103,7 +103,7 @@ class DemoLearningManager, :
         """加載配置文件"""
         try,
             if self.config_path.exists():::
-                with open(self.config_path(), 'r', encoding == 'utf - 8') as f,:
+                with open(self.config_path(), 'r', encoding == 'utf - 8') as f, :
                     return yaml.safe_load(f) or {}
             else,
                 logger.warning(f"配置文件不存在, {self.config_path}")
@@ -278,7 +278,7 @@ class DemoLearningManager, :
             # 限制數據大小
             if len(self.learning_data['performance_metrics']) > 1000, ::
                 self.learning_data['performance_metrics'] = \
-                    self.learning_data['performance_metrics'][ - 500,]
+                    self.learning_data['performance_metrics'][ - 500, ]
 
             await self._save_learning_data()
 
@@ -353,7 +353,7 @@ class DemoLearningManager, :
         """保存學習數據"""
         try,
             learning_file = self.storage_path / "learning_data.json"
-            with open(learning_file, 'w', encoding == 'utf - 8') as f,:
+            with open(learning_file, 'w', encoding == 'utf - 8') as f, :
                 json.dump(self.learning_data(), f, indent = 2, ensure_ascii == False)
         except Exception as e, ::
             logger.error(f"保存學習數據失敗, {e}")
@@ -388,7 +388,7 @@ class DemoLearningManager, :
         # 限制數據大小
         if len(self.learning_data['user_interactions']) > 1000, ::
             self.learning_data['user_interactions'] = \
-                self.learning_data['user_interactions'][ - 500,]
+                self.learning_data['user_interactions'][ - 500, ]
 
         await self._save_learning_data()
 
@@ -426,6 +426,7 @@ class DemoLearningManager, :
         # 更新频率和最后看到时间
         self.learning_data['error_patterns'][error_key]['frequency'] += 1
         self.learning_data['error_patterns'][error_key]['last_seen'] = datetime.now().is\
+    \
     oformat()
 
         await self._save_learning_data()
@@ -483,7 +484,7 @@ eturn {}
             'success_rate': success_rate,
             'most_common_actions': sorted(action_counts.items())
 (                                        key == lambda x, x[1] reverse == True)[:5]
-            'recent_activity': interactions[ - 10,] if len(interactions) > 10 else interactions,::
+            'recent_activity': interactions[ - 10, ] if len(interactions) > 10 else interactions, ::
 在函数定义前添加空行
         """分析錯誤模式"""
         errors = self.learning_data.get('error_patterns', {})
@@ -520,7 +521,7 @@ lse,
             'samples': len(metrics),
             'avg_memory_percent': avg_memory,
             'avg_storage_mb': avg_storage,
-            'latest_metrics': metrics[ - 1] if metrics else None,::
+            'latest_metrics': metrics[ - 1] if metrics else None, ::
 在函数定义前添加空行
         """生成建議"""
         recommendations = []
@@ -542,6 +543,7 @@ lse,
         interactions = self.learning_data.get('user_interactions', [])
         if interactions, ::
             success_count == sum(1 for i in interactions if i.get('result') == 'success'\
+    \
     ):::
                 uccess_rate = success_count / len(interactions)
             if success_rate < 0.8, ::
@@ -584,7 +586,7 @@ lse,
             insights = await self.get_learning_insights()
             report_file = self.storage_path /\
     f"learning_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(report_file, 'w', encoding == 'utf - 8') as f,:
+            with open(report_file, 'w', encoding == 'utf - 8') as f, :
                 json.dump(insights, f, indent = 2, ensure_ascii == False)
 
             self.demo_mode == False

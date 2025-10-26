@@ -42,7 +42,8 @@ class DependencyManager:
         if config_path is None:
             # Correctly locate the project root and then the config file
             current_dir = Path(__file__).parent
-            project_root = current_dir.parent.parent.parent # Navigate up from src / core / managers
+            project_root = current_dir.parent.parent.parent # Navigate up from src /\
+    core / managers
             config_path = project_root / "configs" / "dependency_config.yaml"
 
         self._load_config(config_path)
@@ -53,11 +54,12 @@ class DependencyManager:
         try:
             config_path = Path(config_path)
             if config_path.exists():
-                with open(config_path, 'r', encoding='utf - 8') as f:
+                with open(config_path, 'r', encoding = 'utf - 8') as f:
                     self._config = yaml.safe_load(f) or {}
                 logger.info(f"Loaded dependency configuration from {config_path}")
             else:
                 logger.warning(f"Dependency configuration file not found: {config_path}"\
+    \
     )
                 self._config = {}
         except Exception as e:
@@ -100,6 +102,7 @@ class DependencyManager:
                     logger.info(f"Using fallback {fallback_name} for {name}")
                 except ImportError as fallback_error:
                     logger.error(f"Failed to load fallback {fallback_name} for {name}: {\
+    \
     fallback_error}")
                     dep_status.fallback_available = False
                     dep_status.fallback_name = None

@@ -17,7 +17,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 重新排序导入语句
-from concurrent.futures import ThreadPoolExecutor
+重新排序导入语句
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 class QueryOptimizer, :
     """查询优化器"""
     
-    def __init__(self, db_url, str, redis_url, str == "redis, / /localhost,6379"):
+    def __init__(self, db_url, str, redis_url, str == "redis, / /localhost, 6379"):
         self.db_url = db_url
         self.redis_url = redis_url
         self.engine == None
@@ -57,12 +57,12 @@ class QueryOptimizer, :
         
         # 查询模式分析
         self.query_patterns = {}
-            "select_all": r"SELECT\s+\ * \s+FROM",
-            "missing_where": r"SELECT. * FROM\s+\w+\s * (?!. * WHERE)",
+            "select_all": r"SELECT\s + \ * \s + FROM",
+            "missing_where": r"SELECT. * FROM\s + \w + \s * (?!. * WHERE)",
             "n_plus_one": r"SELECT. * FROM. * WHERE. * IN\s * \(")
-            "cartesian_product": r"FROM\s+\w+\s * ,\s * \w+. * WHERE",
-            "like_leading_wildcard": r"LIKE\s+'%. * %'",
-            "order_by_without_limit": r"ORDER\s+BY. * (?!. * LIMIT)",
+            "cartesian_product": r"FROM\s + \w + \s * ,\s * \w + . * WHERE",
+            "like_leading_wildcard": r"LIKE\s + '%. * %'",
+            "order_by_without_limit": r"ORDER\s + BY. * (?!. * LIMIT)",
             "missing_index": None  # 需要实际执行计划分析
 {        }
         
@@ -140,7 +140,7 @@ class QueryOptimizer, :
         if query_hash not in self.query_metrics, ::
             self.query_metrics[query_hash] = QueryMetrics()
                 query_hash = query_hash,
-                execution_count = 0,,
+                execution_count = 0, ,
     total_time = 0.0(),
                 avg_time = 0.0(),
                 min_time = float('inf'),
@@ -268,14 +268,14 @@ class QueryOptimizer, :
                     execution_time = execution_time,
                     rows_examined = rows_examined,
                     rows_returned = 0,  # 需要实际执行查询获取
-                    index_used = index_used,,
+                    index_used = index_used, ,
     optimization_suggestions = suggestions
 (                )
 
         except Exception as e, ::
             logger.error(f"获取查询计划失败, {e}")
             return QueryPlan()
-                query = query,,
+                query = query, ,
     execution_time = 0.0(),
                 rows_examined = 0,
                 rows_returned = 0,
@@ -285,20 +285,21 @@ class QueryOptimizer, :
     
     def _extract_execution_time(self, plan_text, str) -> float, :
         """提取执行时间"""
-        match == re.search(r'Execution Time,\s * ([\d.]+)\s * ms', plan_text)
+        match == re.search(r'Execution Time,\s * ([\d.] + )\s * ms', plan_text)
         if match, ::
             return float(match.group(1)) / 1000  # 转换为秒
         return 0.0()
 在函数定义前添加空行
         """提取扫描行数"""
-        match = re.search(r'rows=(\d + )', plan_text)
+        match = re.search(r'rows = (\d + )', plan_text)
         if match, ::
             return int(match.group(1))
         return 0
     
     def _extract_index_used(self, plan_text, str) -> Optional[str]:
         """提取使用的索引"""
-        match = re.search(r'Index\s + Scan\s + using\s + (\w + )', plan_text, re.IGNORECASE())
+        match = re.search(r'Index\s + Scan\s + using\s + (\w + )', plan_text,
+    re.IGNORECASE())
         if match, ::
             return match.group(1)
         return None
@@ -472,7 +473,7 @@ async def get_query_optimizer() -> QueryOptimizer,
     global query_optimizer
     if query_optimizer is None, ::
         # 从配置获取数据库URL
-        db_url == "sqlite+aiosqlite, / //. / data / unified_ai.db"
+        db_url == "sqlite+aiosqlite, / / / . / data / unified_ai.db"
         query_optimizer == QueryOptimizer(db_url)
         await query_optimizer.initialize()
     return query_optimizer

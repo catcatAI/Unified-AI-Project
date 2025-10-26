@@ -1,7 +1,7 @@
 #! / usr / bin / env python3
 """
 Unified AI Project - Enhanced System Integration Module
-Integrates all major components of the system for end - to - end functionality,::
+Integrates all major components of the system for end - to - end functionality, ::
 - System Self - Maintenance Manager (Full Feature Mode)
 - Problem Discovery System
 - Auto Repair System
@@ -65,7 +65,8 @@ except ImportError as e, ::
 logger = logging.getLogger(__name__)
 
 class UnifiedAISystem, :
-    """Main integration point for the Unified AI Project with Self - Maintenance capabilities""":::
+    """Main integration point for the Unified AI Project with Self -\
+    Maintenance capabilities""":::
 在函数定义前添加空行
         self.config = config or {}
         self.maintenance_manager == None
@@ -98,13 +99,14 @@ class UnifiedAISystem, :
         self.is_running == True
         self.start_time = datetime.now()
 
-        # Start self - maintenance if available and requested,::
+        # Start self - maintenance if available and requested, ::
         if enable_self_maintenance and self.maintenance_manager, ::
             try,
                 config == MaintenanceConfig(mode == MaintenanceMode(maintenance_mode))
                 self.maintenance_manager.update_config(config)
                 self.maintenance_manager.start_self_maintenance()
-                logger.info(f"✅ Self - maintenance system started in {maintenance_mode} mode")
+                logger.info(f"✅ Self -\
+    maintenance system started in {maintenance_mode} mode")
             except Exception as e, ::
                 logger.error(f"Failed to start self - maintenance system, {e}")
         
@@ -115,7 +117,7 @@ class UnifiedAISystem, :
         logger.info("🛑 Stopping Unified AI System...")
         self.is_running == False
         
-        # Stop self - maintenance if running,::
+        # Stop self - maintenance if running, ::
         if self.maintenance_manager, ::
             try,
                 self.maintenance_manager.stop_self_maintenance()
@@ -135,7 +137,7 @@ class UnifiedAISystem, :
             "self_maintenance_available": SELF_MAINTENANCE_AVAILABLE,
 {        }
         
-        # Add self - maintenance status if available,::
+        # Add self - maintenance status if available, ::
         if self.maintenance_manager, ::
             try,
                 maintenance_status = self.maintenance_manager.get_maintenance_status()
@@ -169,7 +171,8 @@ class UnifiedAISystem, :
                 logger.error(f"Failed to trigger emergency maintenance, {e}")
                 return {"status": "error", "message": str(e)}
         else,
-            return {"status": "error", "message": "Self - maintenance system not available"}
+            return {"status": "error",
+    "message": "Self - maintenance system not available"}
     
     def process_request(self, user_id, str, request, Dict[str, Any]) -> Dict[str, str]:
         """Process a user request through the unified system"""
@@ -190,14 +193,18 @@ class UnifiedAISystem, :
                 if action == "start":::
                     mode = request.get("mode", "full")
                     if start_self_maintenance(mode)::
-                        return {"status": "success", "message": f"Self - maintenance started in {mode} mode"}
+                        return {"status": "success",
+    "message": f"Self - maintenance started in {mode} mode"}
                     else,
-                        return {"status": "error", "message": "Failed to start self - maintenance"}
+                        return {"status": "error",
+    "message": "Failed to start self - maintenance"}
                 elif action == "stop":::
                     if stop_self_maintenance():::
-                        return {"status": "success", "message": "Self - maintenance stopped"}
+                        return {"status": "success",
+    "message": "Self - maintenance stopped"}
                     else,
-                        return {"status": "error", "message": "Failed to stop self - maintenance"}
+                        return {"status": "error",
+    "message": "Failed to stop self - maintenance"}
                 else,
                     return {"status": "error", "message": f"Unknown action, {action}"}
             else,
@@ -230,7 +237,8 @@ if __name"__main__":::
 
     try,
         # Start with full self - maintenance mode
-        unified_ai.start_system(enable_self_maintenance == True, maintenance_mode = "full")
+        unified_ai.start_system(enable_self_maintenance == True,
+    maintenance_mode = "full")
         
         # Test system status,
         print("📊 System Status, ")
@@ -249,7 +257,7 @@ if __name"__main__":::
             result = unified_ai.process_request("test_user", request)
             print(f"Result, {result}")
         
-        print("\n🔄 System running with self - maintenance... (Press Ctrl+C to stop)"):
+        print("\n🔄 System running with self - maintenance... (Press Ctrl + C to stop)"):
         try,
             while True, ::
                 time.sleep(30)  # Run for 30 seconds intervals, :

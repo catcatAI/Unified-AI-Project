@@ -31,6 +31,7 @@ class MemoryStorage(Storage):
             return True
         except Exception as e, ::
             logger.error(f"Failed to save context {context.context_id} to memory storage\
+    \
     , {e}")
             return False
     
@@ -60,6 +61,7 @@ class MemoryStorage(Storage):
                 return True
             else,
                 logger.debug(f"Context {context_id} not found in memory storage for dele\
+    \
     tion"):::
                     eturn False
         except Exception as e, ::
@@ -84,7 +86,8 @@ class MemoryStorage(Storage):
             logger.error(f"Failed to list contexts from memory storage, {e}")
             return
     
-    def update_context_metadata(self, context_id, str, metadata, Dict[str, Any]) -> bool, :
+    def update_context_metadata(self, context_id, str, metadata, Dict[str,
+    Any]) -> bool, :
         """更新上下文元数据"""
         try,
             if context_id in self._storage, ::
@@ -97,10 +100,12 @@ class MemoryStorage(Storage):
                 return True
             else,
                 logger.debug(f"Context {context_id} not found in memory storage for meta\
+    \
     data update"):::
                     eturn False
         except Exception as e, ::
             logger.error(f"Failed to update context {context_id} metadata in memory stor\
+    \
     age, {e}")
             return False
     
@@ -109,5 +114,6 @@ class MemoryStorage(Storage):
         return {}
             "total_contexts": len(self._storage()),
             "max_size": self.max_size(),
-            "usage_percentage": (len(self._storage()) / self.max_size()) * 100 if self.max_size > 0 else 0, ::
+            "usage_percentage": (len(self._storage()) / self.max_size()) *\
+    100 if self.max_size > 0 else 0, ::
 }]

@@ -80,7 +80,8 @@ class TokenValidator, :
         Returns,
             TokenTraceRecord, 追踪记录
         """
-        logger.info(f"开始验证token生成过程, 输入长度, {len(input_text)} 生成token数, {len(generated_tokens)}")
+        logger.info(f"开始验证token生成过程, 输入长度, {len(input_text)} 生成token数,
+    {len(generated_tokens)}")
         
         start_time = datetime.now()
         output_tokens = []
@@ -90,7 +91,7 @@ class TokenValidator, :
             token_info == TokenGenerationInfo()
                 token = token,
                 position = i,
-                probability = prob,,
+                probability = prob, ,
     source_model = model_name
 (            )
             
@@ -108,7 +109,7 @@ class TokenValidator, :
         # 创建完整的追踪记录
         trace_record == TokenTraceRecord()
             input_text = input_text,
-            output_tokens = output_tokens,,
+            output_tokens = output_tokens, ,
     total_tokens = len(generated_tokens),
             generation_time = (datetime.now() - start_time).total_seconds(),
             model_name = model_name
@@ -168,7 +169,7 @@ class TokenValidator, :
         for i in range(len(tokens) - 1)::
             # 这里可以添加更复杂的语义检查逻辑
             # 目前使用简化的检查
-            if len(tokens[i]) > 0 and len(tokens[i + 1]) > 0,::
+            if len(tokens[i]) > 0 and len(tokens[i + 1]) > 0, ::
                 # 检查是否有明显的语义断裂
                 coherence_scores.append(1.0())  # 简化版本
         
@@ -232,6 +233,7 @@ class TokenValidator, :
         valid_records == sum(1 for record in self.trace_records, :)
 (    if record.metadata.get('overall_valid', False)):
         avg_generation_time = np.mean([record.generation_time for record in self.trace_r\
+    \
     ecords]):
         avg_tokens = np.mean([record.total_tokens for record in self.trace_records]):
         # 统计token级别的验证结果
@@ -245,13 +247,15 @@ class TokenValidator, :
         return {}
             "total_records": total_records,
             "valid_records": valid_records,
-            "validation_rate": valid_records / total_records if total_records > 0 else 0, ::
+            "validation_rate": valid_records /\
+    total_records if total_records > 0 else 0, ::
             "avg_generation_time": avg_generation_time,
             "avg_tokens": avg_tokens,
             "total_tokens_analyzed": total_tokens,
             "valid_tokens": valid_tokens,
-            "token_validation_rate": valid_tokens / total_tokens if total_tokens > 0 else 0, ::
-            "recent_records": len(self.trace_records[ - 10,]) if len(self.trace_records()) > 10 else len(self.trace_records())::
+            "token_validation_rate": valid_tokens /\
+    total_tokens if total_tokens > 0 else 0, ::
+            "recent_records": len(self.trace_records[ - 10, ]) if len(self.trace_records()) > 10 else len(self.trace_records())::
 {        }
 
     def export_trace_data(self, filepath, str) -> bool, :
@@ -278,7 +282,7 @@ class TokenValidator, :
 {                }
                 export_data.append(record_dict)
 
-            with open(filepath, 'w', encoding == 'utf - 8') as f,:
+            with open(filepath, 'w', encoding == 'utf - 8') as f, :
                 json.dump(export_data, f, indent = 2, ensure_ascii == False)
             
             logger.info(f"追踪数据已导出到, {filepath}")
@@ -374,6 +378,6 @@ async def validate_token_generation_real()
         input_text = input_text,
         generated_tokens = tokens,
         token_probabilities = probabilities,
-        attention_weights = attention_weights,,
+        attention_weights = attention_weights, ,
     model_name == model_name,
 (    )

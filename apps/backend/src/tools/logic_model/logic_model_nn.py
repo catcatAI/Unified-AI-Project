@@ -63,6 +63,7 @@ def _ensure_tensorflow_is_imported() -> bool:
         return True
     except Exception as e:
         print(f"CRITICAL: Failed to import TensorFlow. Logic model NN functionality will\
+    \
     be disabled. Error: {e}")
         tf_module = None
         return False
@@ -85,13 +86,15 @@ class LogicNNModel:
         if not tf_module:
             return None
         
-        input_layer = Input_cls(shape = (self.max_seq_len,), name = "input_proposition")
-        embedding_layer = Embedding_cls(input_dim = self.vocab_size, output_dim = self.embedding_dim)(input_layer)
+        input_layer = Input_cls(shape = (self.max_seq_len, ), name = "input_proposition")
+        embedding_layer = Embedding_cls(input_dim = self.vocab_size,
+    output_dim = self.embedding_dim)(input_layer)
         lstm_layer = LSTM_cls(self.lstm_units)(embedding_layer)
         output_layer = Dense_cls(2, activation = 'softmax')(lstm_layer)
 
         model = Model_cls(inputs = input_layer, outputs = output_layer)
-        model.compile(optimizer = 'adam', loss = 'categorical_crossentropy', metrics = ['accuracy'])
+        model.compile(optimizer = 'adam', loss = 'categorical_crossentropy',
+    metrics = ['accuracy'])
         return model
 
     def train(self, X_train, y_train, X_val, y_val, epochs = 20, batch_size = 32):
@@ -117,7 +120,8 @@ class LogicNNModel:
 
         start_time = datetime.now()
         tokens = [char_to_token.get(char, 0) for char in proposition_str]
-        padded_sequence = pad_sequences_func([tokens], maxlen = self.max_seq_len, padding = 'post')
+        padded_sequence = pad_sequences_func([tokens], maxlen = self.max_seq_len,
+    padding = 'post')
         
         prediction = self.model.predict(padded_sequence, verbose = 0)
         predicted_class = np.argmax(prediction, axis = 1)[0]

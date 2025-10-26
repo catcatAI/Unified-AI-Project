@@ -155,6 +155,7 @@ class ContextHAMIntegration, :
 (            )
 
             logger.info(f"Created memory context {memory_id} from HAM data with context \
+    \
     {context_id}"):
 
 
@@ -163,7 +164,8 @@ eturn memory_id
             logger.error(f"Failed to create memory context from HAM data, {e}")
             raise
 
-    def update_ham_from_memory_context(self, memory_id, str, updates, Dict[str, Any]) -> bool, :
+    def update_ham_from_memory_context(self, memory_id, str, updates, Dict[str,
+    Any]) -> bool, :
         """
         基于记忆上下文更新HAM记忆
         
@@ -206,13 +208,15 @@ eturn memory_id
 (            )
             
             logger.info(f"Updated HAM from memory context {memory_id} with context {cont\
+    \
     ext_id}"):
                 eturn True
         except Exception as e, ::
             logger.error(f"Failed to update HAM from memory context {memory_id} {e}")
             return False
     
-    def transfer_context_memory(self, source_context_id, str, target_memory_type, str) -> bool, :
+    def transfer_context_memory(self, source_context_id, str, target_memory_type,
+    str) -> bool, :
         """
         转移上下文记忆(例如从短期转移到长期)
         
@@ -235,6 +239,7 @@ eturn memory_id
     content = str(source_context.content()),
                 memory_type = target_memory_type,
                 metadata == source_context.metadata.copy() if source_context.metadata el\
+    \
     se {}::
             # 如果源上下文有关联的HAM记忆, 也进行转移
             if "ham_memory_id" in source_context.content, ::
@@ -257,10 +262,12 @@ eturn memory_id
 (            )
             
             logger.info(f"Transferred context memory from {source_context_id} to {new_me\
+    \
     mory_id} with context {transfer_context_id}"):
                 eturn True
         except Exception as e, ::
             logger.error(f"Failed to transfer context memory from {source_context_id} {e\
+    \
     }")
             return False
 

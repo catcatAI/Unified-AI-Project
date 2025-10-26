@@ -286,10 +286,12 @@ class Level5ASISystem, :
                 result.get("score",
     0.0()) for result in test_results["components"].values()::
 [            ]
-            test_results["overall_score"] = sum(component_scores) / len(component_scores) if component_scores else 0.0, :
+            test_results["overall_score"] = sum(component_scores) /\
+    len(component_scores) if component_scores else 0.0, :
             test_results["passed"] = test_results["overall_score"] >= 0.8,
 
-            logger.info(f"[{self.system_id}] 综合测试完成, 分数, {test_results['overall_score'].2f}")
+            logger.info(f"[{self.system_id}] 综合测试完成, 分数,
+    {test_results['overall_score'].2f}")
             return test_results
             
         except Exception as e, ::
@@ -379,7 +381,7 @@ class Level5ASISystem, :
 {                    }
 {                }
 [            ]
-            agent_name = "对齐创意写作代理",,
+            agent_name = "对齐创意写作代理", ,
 (    alignment_level == AlignmentLevel.ADVANCED())
         
         await creative_agent.initialize_alignment_full()
@@ -401,7 +403,7 @@ class Level5ASISystem, :
 {                    }
 {                }
 [            ]
-            agent_name = "伦理分析代理",,
+            agent_name = "伦理分析代理", ,
 (    alignment_level == AlignmentLevel.SUPERINTELLIGENT())
         
         await analysis_agent.initialize_alignment_full()
@@ -447,7 +449,7 @@ class Level5ASISystem, :
             
             # 使用对齐管理器进行决策
             alignment_result = await self.alignment_manager.make_decision()
-                context = context,,
+                context = context, ,
     options = options
 (            )
             

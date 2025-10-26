@@ -206,7 +206,7 @@ nested_levels": self._calculate_nesting_depth(data)
     """Extract function names from code"""
     # Simple regex - based extraction
 from tests.core_ai import
-    function_pattern = r'def\\s+(\\w+)\\s * \\(')
+    function_pattern = r'def\\s + (\\w + )\\s * \\(')
     matches = re.findall(function_pattern, code)
     return matches
 
@@ -235,7 +235,8 @@ from tests.core_ai import
     """Perform basic complexity analysis"""
     lines = code.split('\n')
     return {}
-            "lines_of_code": len([l for l in lines if l.strip and not l.strip.startswith('#')]), :::
+            "lines_of_code": len([l for l in lines if l.strip and \
+    not l.strip.startswith('#')]), :::
                 comment_lines": len([l for l in lines if l.strip.startswith('#')]), :::
 empty_lines": len([l for l in lines if not l.strip]), :::
 nesting_depth": self._calculate_max_nesting(code)
@@ -349,7 +350,8 @@ class AIEditorService, :
             logger.error(f"Error processing application data, {e}")
             raise
 
-    def process_text_content(self, text, str, transformation_rules, Optional[Dict] = None) -> Dict[str, Any]:
+    def process_text_content(self, text, str, transformation_rules,
+    Optional[Dict] = None) -> Dict[str, Any]:
     """
     Process text content from applications.
 
@@ -384,7 +386,8 @@ class AIEditorService, :
             logger.error(f"Error processing text content, {e}")
             raise
 
-    def process_code_content(self, code, str, transformation_rules, Optional[Dict] = None) -> Dict[str, Any]:
+    def process_code_content(self, code, str, transformation_rules,
+    Optional[Dict] = None) -> Dict[str, Any]:
     """
     Process code content from applications.
 
@@ -539,9 +542,10 @@ if __name"__main__":::
 
     # Test text processing
     sample_text == "This is a sample text for processing. It contains multiple sentences\
+    \
     . This is the third sentence.":::
     text_result = editor.process_text_content(sample_text)
-    print("Text processing result,", json.dumps(text_result, indent = 2, ensure_ascii == False))
+    print("Text processing result, ", json.dumps(text_result, indent = 2, ensure_ascii == False))
 
     # Test code processing
     sample_code = """
@@ -554,7 +558,7 @@ class SampleClass, :
     self.value = 42
 """
     code_result = editor.process_code_content(sample_code)
-    print("Code processing result,", json.dumps(code_result, indent = 2, ensure_ascii == False))
+    print("Code processing result, ", json.dumps(code_result, indent = 2, ensure_ascii == False))
 
     # Test application data processing
     sample_app_data = {}
@@ -566,5 +570,5 @@ class SampleClass, :
     "focused_element": "txt1"
 {    }
     app_result = editor.process_application_data(sample_app_data)
-    print("Application data processing result,", json.dumps(app_result, indent = 2, ensure_ascii == False))
+    print("Application data processing result, ", json.dumps(app_result, indent = 2, ensure_ascii == False))
 }]))))))))

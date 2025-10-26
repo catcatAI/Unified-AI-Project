@@ -87,14 +87,16 @@ class FeedbackAnalyzer:
 class TaskExecutionEvaluator:
     """任務執行評估器"""
     
-    def __init__(self, config: Dict[str, Any], storage_path: str = "logs / evaluations") -> None:
+    def __init__(self, config: Dict[str, Any],
+    storage_path: str = "logs / evaluations") -> None:
         self.config = config
         self.metrics_calculator = MetricsCalculator()
         self.feedback_analyzer = FeedbackAnalyzer()
         self.logger = logging.getLogger(__name__)
         self.storage_path = storage_path
         os.makedirs(self.storage_path, exist_ok = True)
-        self.db = EvaluationDB(db_path = os.path.join(self.storage_path, "evaluations.db"))
+        self.db = EvaluationDB(db_path = os.path.join(self.storage_path,
+    "evaluations.db"))
 
     async def evaluate_task_execution(self, task: Any, execution_result: Dict[str,
     Any]) -> Dict[str, Any]:
@@ -109,6 +111,7 @@ class TaskExecutionEvaluator:
         
         # 計算客觀指標
         evaluation['metrics'] = await self.metrics_calculator.calculate_objective_metric\
+    \
     s()
             task, execution_result
 (        )
@@ -133,6 +136,7 @@ class TaskExecutionEvaluator:
         await self._store_evaluation(evaluation)
         
         self.logger.info(f"Task {task.get('id')} evaluated. Status: {evaluation['metrics\
+    \
     '].get('success_rate')}")
         return evaluation
     
@@ -155,7 +159,8 @@ class TaskExecutionEvaluator:
         if metrics['completion_time'] > time_threshold:
             suggestions.append({)}
                 'type': 'performance',
-                'description': f"執行時間 {metrics['completion_time']:.2f}s 超過閥值 {time_threshold}s, 建議優化算法或並行處理。",
+                'description': f"執行時間 {metrics['completion_time']:.2f}s 超過閥值 {time_thres\
+    hold}s, 建議優化算法或並行處理。",
                 'priority': 'medium'
 {(            })
         
@@ -166,6 +171,7 @@ class TaskExecutionEvaluator:
             suggestions.append({)}
                 'type': 'quality',
                 'description': f"輸出品質分數 {metrics['quality_score']} 低於閥值 {quality_thresho\
+    \
     ld}建議增強模型或調整參數。",
                 'priority': 'high'
 {(            })
@@ -182,6 +188,7 @@ class TaskExecutionEvaluator:
     async def _store_evaluation(self, evaluation: Dict[str, Any]):
         """將評估結果儲存到資料庫。"""
         self.logger.debug(f"Storing evaluation for task {evaluation.get('task_id')} to d\
+    \
     atabase.")
         try:
             self.db.add_evaluation(evaluation)
@@ -208,7 +215,8 @@ class TaskExecutionEvaluator:
                 # Partial match or semantic similarity could be added here
                 return 0.5 # Mismatch
 
-        # Fallback to success / error heuristic if no expected_output or output is missing
+        # Fallback to success / error heuristic if no expected_output or \
+    output is missing
         if success and not errors:
             return 0.95 # High quality if successful and no errors
         elif success and errors:
@@ -219,7 +227,9 @@ class TaskExecutionEvaluator:
     async def _get_historical_average(self, task_type: str) -> Dict[str, float]:
         """Fetches historical average performance from the database."""
         self.logger.debug(f"Fetching historical average for {task_type} from database...\
+    \
     ")
         await asyncio.sleep(0.005) # Simulate async read if needed
         # For now, we get overall average. Can be extended to filter by task_type
-        return self.db.get_average_metrics(task_id = task_type if task_type != "overall", else None)
+        return self.db.get_average_metrics(task_id = task_type if task_type != "overall"\
+    , else None)

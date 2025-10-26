@@ -85,7 +85,8 @@ class DynamicAgentRegistry, :
                 agent = self.registered_agents[agent_id]
                 logger.info(f"Agent {agent.agent_name} ({agent_id}) marked as inactive")
 
-    async def _handle_capability_advertisement(self, capability_payload, HSPCapabilityAdvertisementPayload, )
+    async def _handle_capability_advertisement(self, capability_payload,
+    HSPCapabilityAdvertisementPayload, )
 (    sender_ai_id, str, envelope, Dict[str, Any]) -> None,
         """Handle capability advertisements to register agents."""
         async with self.registry_lock,
@@ -134,8 +135,10 @@ class DynamicAgentRegistry, :
                     agent.capabilities.append(capability_payload)
                     agent.metadata["capability_count"] = len(agent.capabilities())
                     logger.info(f"Updated agent {agent_name} ({agent_id}) with new capab\
+    \
     ility {capability_id}"):
-                        sync def register_agent_manually(self, agent_id, str, agent_name, str, )
+                        sync def register_agent_manually(self, agent_id, str,
+    agent_name, str, )
 (    capabilities, List[Dict[str, Any]] metadata, Optional[Dict[str,
     Any]] = None) -> None,
         """
@@ -151,7 +154,7 @@ class DynamicAgentRegistry, :
             self.registered_agents[agent_id] = RegisteredAgent()
                 agent_id = agent_id,
                 agent_name = agent_name,
-                capabilities = capabilities,,
+                capabilities = capabilities, ,
     registration_time = time.time(),
                 last_seen = time.time(),
                 status = "active",
@@ -214,7 +217,8 @@ eturns, ::
         async with self.registry_lock,
             return list(self.registered_agents.values())
 
-    def register_discovery_callback(self, callback, Callable[[RegisteredAgent] None]) -> None, :
+    def register_discovery_callback(self, callback,
+    Callable[[RegisteredAgent] None]) -> None, :
         """
         Register a callback to be notified when new agents are discovered.
 

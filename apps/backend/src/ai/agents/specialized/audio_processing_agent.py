@@ -57,6 +57,7 @@ class AudioProcessingAgent(BaseAgent):
 [        ]
         super.__init__(agent_id = agent_id, capabilities = capabilities)
         logging.info(f"[{self.agent_id}] AudioProcessingAgent initialized with capabilit\
+    \
     ies, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload,
     sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -65,6 +66,7 @@ class AudioProcessingAgent(BaseAgent):
         params = task_payload.get("parameters")
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
     ability_id}'"):::
             ry,
             # Convert capability_id to string to avoid type issues
@@ -80,7 +82,8 @@ class AudioProcessingAgent(BaseAgent):
                 result_payload = self._create_success_payload(request_id, result)
             else,
                 result_payload = self._create_failure_payload(request_id,
-    "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
+    "CAPABILITY_NOT_SUPPORTED",
+    f"Capability '{capability_id}' is not supported by this agent.")
         except Exception as e, ::
             logging.error(f"[{self.agent_id}] Error processing task {request_id} {e}")
             result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR",
@@ -89,9 +92,11 @@ class AudioProcessingAgent(BaseAgent):
         callback_address = task_payload.get("callback_address")
         if self.hsp_connector and callback_address, ::
             callback_topic == str(callback_address) if callback_address is not None else\
+    \
     "":::
 = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callb\
+    \
     ack_topic}"):::
                 ef _perform_speech_recognition(self, params, Dict[str,
     Any]) -> Dict[str, Any]
@@ -150,7 +155,8 @@ class AudioProcessingAgent(BaseAgent):
         # Simple audio enhancement implementation
         # In a real implementation, this would use proper audio processing techniques
         # For now, we'll return a placeholder result,
-        enhanced_file == f"{audio_file.split('.')[0]}_enhanced.{audio_file.split('.')[ - 1] if '.' in audio_file else 'wav'}":::
+        enhanced_file == f"{audio_file.split('.')[0]}_enhanced.{audio_file.split('.')[ -\
+    1] if '.' in audio_file else 'wav'}":::
             eturn {}
             "original_file": audio_file,
             "enhanced_file": enhanced_file,
@@ -159,17 +165,19 @@ class AudioProcessingAgent(BaseAgent):
             "processing_time": "00, 00, 02"  # Placeholder processing time
 {        }
 
-    def _create_success_payload(self, request_id, str, result, Any) -> HSPTaskResultPayload, :
+    def _create_success_payload(self, request_id, str, result,
+    Any) -> HSPTaskResultPayload, :
         return HSPTaskResultPayload()
             request_id = request_id,
-            status = "success",,
+            status = "success", ,
     payload = result
 (        )
 
-    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload, :
+    def _create_failure_payload(self, request_id, str, error_code, str, error_message,
+    str) -> HSPTaskResultPayload, :
         return HSPTaskResultPayload()
             request_id = request_id,
-            status = "failure",,
+            status = "failure", ,
     error_details == {"error_code": error_code, "error_message": error_message}
 (        )
 

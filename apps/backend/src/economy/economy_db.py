@@ -35,7 +35,8 @@ class EconomyDB, :
 
     def add_balance(self, user_id, str, amount, float) -> None, :
         self.cursor.execute("INSERT OR REPLACE INTO balances (user_id,
-    balance) VALUES (?, COALESCE((SELECT balance FROM balances WHERE user_id = ?), 0) + ?)", (user_id, user_id, amount))
+    balance) VALUES (?, COALESCE((SELECT balance FROM balances WHERE user_id = ?),
+    0) + ?)", (user_id, user_id, amount))
         self.conn.commit()
 
     def get_balance(self, user_id, str) -> float, :
@@ -53,7 +54,8 @@ class EconomyDB, :
         self.cursor.execute("UPDATE balances SET balance = balance -\
     ? WHERE user_id = ?", (amount, from_user_id))
         self.cursor.execute("INSERT OR REPLACE INTO balances (user_id,
-    balance) VALUES (?, COALESCE((SELECT balance FROM balances WHERE user_id = ?), 0) + ?)", (to_user_id, to_user_id, amount))
+    balance) VALUES (?, COALESCE((SELECT balance FROM balances WHERE user_id = ?),
+    0) + ?)", (to_user_id, to_user_id, amount))
         self.conn.commit()
         return True
 

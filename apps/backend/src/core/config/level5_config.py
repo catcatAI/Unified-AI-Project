@@ -59,7 +59,7 @@ def system_monitor() -> Dict[str, Any]:
 在类定义前添加空行
     """Level 5 AGI 性能指标"""
     knowledge_processing_rate, float = 0.0  # entities / sec
-    multimodal_fusion_rate, float = 0.0     # modalities/sec
+    multimodal_fusion_rate, float = 0.0     # modalities / sec
     cognitive_constraint_rate, float = 0.0  # targets / sec
     autonomous_evolution_rate, float = 0.0  # cycles / sec
     creative_breakthrough_rate, float = 0.0 # concepts / sec
@@ -114,15 +114,15 @@ def system_monitor() -> Dict[str, Any]:
             self.metacognition_efficiency = base_efficiency * cpu_factor * memory_factor
             
             return {}
-                "knowledge_processing": f"{self.knowledge_processing_rate,.1f} entities / sec",
-                "multimodal_fusion": f"{self.multimodal_fusion_rate,.1f} modalities / sec",
-                "cognitive_constraints": f"{self.cognitive_constraint_rate,.1f} targets / sec",
-                "autonomous_evolution": f"{self.autonomous_evolution_rate,.1f} cycles / sec",
-                "creative_breakthrough": f"{self.creative_breakthrough_rate,.1f} concepts / sec",
+                "knowledge_processing": f"{self.knowledge_processing_rate, .1f} entities / sec",
+                "multimodal_fusion": f"{self.multimodal_fusion_rate, .1f} modalities / sec",
+                "cognitive_constraints": f"{self.cognitive_constraint_rate, .1f} targets / sec",
+                "autonomous_evolution": f"{self.autonomous_evolution_rate, .1f} cycles / sec",
+                "creative_breakthrough": f"{self.creative_breakthrough_rate, .1f} concepts / sec",
                 "system_resources": {}
                     "cpu_usage": f"{self.cpu_usage, .1f}%",
                     "memory_usage": f"{self.memory_usage, .1f}%",
-                    "gpu_usage": f"{self.gpu_usage,.1f}%" if self.gpu_usage is not None else "N / A"::
+                    "gpu_usage": f"{self.gpu_usage, .1f}%" if self.gpu_usage is not None else "N / A"::
 {                }
                 "metacognition_efficiency": f"{self.metacognition_efficiency, .3f}",
                 "timestamp": datetime.now().isoformat()
@@ -133,7 +133,7 @@ def system_monitor() -> Dict[str, Any]:
             # 返回基础指标
             return {}
                 "knowledge_processing": "85.2 entities / sec",
-                "multimodal_fusion": "42.8 modalities/sec",
+                "multimodal_fusion": "42.8 modalities / sec",
                 "cognitive_constraints": "67.3 targets / sec",
                 "autonomous_evolution": "156.7 cycles / sec",
                 "creative_breakthrough": "312.4 concepts / sec",
@@ -262,7 +262,7 @@ def get_static_level5_capabilities() -> Dict[str, Any]:
 {        }
         "specifications": {}
             "knowledge_processing": "up to 1000 entities / sec",
-            "multimodal_fusion": "up to 500 modalities/sec",
+            "multimodal_fusion": "up to 500 modalities / sec",
             "cognitive_constraints": "up to 800 targets / sec",
             "autonomous_evolution": "up to 2000 cycles / sec",
             "creative_breakthrough": "up to 3000 concepts / sec"

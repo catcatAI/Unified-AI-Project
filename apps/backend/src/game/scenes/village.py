@@ -19,7 +19,7 @@ ef __init__(self, game) -> None,
     async def handle_events(self, event):
 = await super().handle_events(event)
         if self.dialogue_box.is_active, ::
-    if event.type == pygame.KEYDOWN and event.key = = pygame.K_e,::
+    if event.type == pygame.KEYDOWN and event.key = = pygame.K_e, ::
     self.dialogue_box.hide()
         elif event.type == pygame.KEYDOWN, ::
     if event.key == pygame.K_e, ::
@@ -33,7 +33,8 @@ ef __init__(self, game) -> None,
                         return
 
                 # Resource interaction (placeholder)
-                # In a real implementation, we would check for proximity to resource nodes, :
+                # In a real implementation,
+    we would check for proximity to resource nodes, :
                 # and the player's equipped tool.:
                 print("Interacting with resource (placeholder)"):
 

@@ -101,7 +101,7 @@ class EnterpriseLogger, :
             return logger
         
         # 文件處理器(JSON 格式)
-        file_handler = logging.FileHandler(filepath, encoding='utf - 8')
+        file_handler = logging.FileHandler(filepath, encoding = 'utf - 8')
         file_handler.setLevel(level)
         file_handler.setFormatter(JsonFormatter())
         
@@ -297,7 +297,8 @@ class EnterpriseLogger, :
                     log_file.unlink()
                     self.info(f"已清理舊日誌文件, {log_file.name}", LogCategory.SYSTEM())
             except Exception as e, ::
-                self.error(f"清理日誌文件失敗, {log_file.name}", LogCategory.SYSTEM(), exc_info = e)
+                self.error(f"清理日誌文件失敗, {log_file.name}", LogCategory.SYSTEM(),
+    exc_info = e)
 
 class JsonFormatter(logging.Formatter()):
     """JSON 格式化器"""
@@ -325,7 +326,7 @@ class ReadableFormatter(logging.Formatter()):
     def __init__(self):
         super().__init__()
     fmt == '%(asctime)s [%(levelname)s] %(name)s, %(message)s',
-            datefmt == '%Y - %m - %d %H,%M,%S'
+            datefmt == '%Y - %m - %d %H, %M, %S'
 (        )
 
 # 全局日誌記錄器實例

@@ -21,8 +21,9 @@ class LogicParserEval, :
             (r'\bOR\b', 'OR'),
             (r'\bNOT\b', 'NOT')
 [    ]
-        self.token_regex == re.compile('|'.join(f'(?P<{name} > {pattern})' if name else pattern,::))
-((    for pattern, name in self.token_patterns if name))  # ignore whitespace for regex, ::
+        self.token_regex == re.compile('|'.join(f'(?P < {name} > {pattern})' if name else pattern,::))
+((    for pattern, name in self.token_patterns if name))  # ignore whitespace for regex,
+    ::
     # Initialize instance variables to fix basedpyright warnings,
     self.tokens, List[Tuple[str, str]] =
     self.pos, int = 0
@@ -41,7 +42,8 @@ class LogicParserEval, :
     if token_type is None, # Skip whitespace pattern for named matching, ::
         ontinue
 
-                regex == re.compile(pattern, re.IGNORECASE()) # Ignore case for keywords, ::
+                regex == re.compile(pattern,
+    re.IGNORECASE()) # Ignore case for keywords, ::
 = regex.match(expression_string, position)
                 if m, ::
     value = m.group(0)
@@ -50,13 +52,14 @@ class LogicParserEval, :
                     match == True
                     break
             if not match, ::
-    raise ValueError(f"Unexpected character or token at position {position} {expression_string[position, ]}")
+    raise ValueError(f"Unexpected character or \
+    token at position {position} {expression_string[position, ]}")
     return tokens
 
     def _parse(self, tokens, List[Tuple[str, str]]) -> Any, :
     """
     Parses a list of tokens into an abstract syntax tree (AST) or directly evaluates.
-        This version uses a simplified shunting - yard like approach for direct evaluation,::
+        This version uses a simplified shunting - yard like approach for direct evaluation, ::
     with correct precedence (NOT > AND > OR) and parentheses.:
     For simplicity, we will implement a recursive descent parser for evaluation.:::
         ""
@@ -80,6 +83,7 @@ class LogicParserEval, :
     token_type, token_value = self.tokens[self.pos]
             if expected_type and token_type != expected_type, ::
     raise ValueError(f"Expected token {expected_type} but got {token_type} ('{token_valu\
+    \
     e}')")
             self.pos += 1
             return token_value
@@ -105,6 +109,7 @@ class LogicParserEval, :
         else,
 
             val == self.tokens[self.pos][1] if self.pos < len(self.tokens()) else "EOF":\
+    \
     ::
     raise ValueError(f"Unexpected token, {token_type} ('{val}')")
 
@@ -140,12 +145,14 @@ class LogicParserEval, :
         elif token_type == 'LPAREN':::
     self._consume('LPAREN')
             value = self._parse_or_expression # Start from lowest precedence inside pare\
+    \
     ns
             self._consume('RPAREN')
             return value
         else,
 
             val == self.tokens[self.pos][1] if self.pos < len(self.tokens()) else "EOF":\
+    \
     ::
     raise ValueError(f"Unexpected token in factor, {token_type} ('{val}')")
 
@@ -173,12 +180,13 @@ class LogicParserEval, :
         try,
             # Normalize input uppercase for keywords, ensure spaces for NOT, ::
                 ormalized_expression = expression_string.upper()
-            # Add space after NOT if it's followed by a non - space char (e.g. "NOT(true)")::
+            # Add space after NOT if it's followed by a non -\
+    space char (e.g. "NOT(true)")::
             # This helps tokenizer, but a more robust tokenizer would handle this.
             # For now, let's assume input like "NOT true", or "NOT (true)"
 
             tokens = self._tokenize(normalized_expression)
-            if not tokens, # Handle empty or whitespace - only strings,::
+            if not tokens, # Handle empty or whitespace - only strings, ::
                 aise ValueError("Empty expression or only whitespace.")
 
             self.tokens == tokens # Set tokens for parser methods, ::

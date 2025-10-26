@@ -5,7 +5,8 @@ from typing import Dict, Any
 logger, Any = logging.getLogger(__name__)
 
 class EconomyManager, :
-    """Manages the in - game economy, including currency, transactions, and market dynamics.
+    """Manages the in - game economy, including currency, transactions,
+    and market dynamics.
     Designed to be adaptable, allowing rules to be updated dynamically by the core AI.
     """
 
@@ -34,6 +35,7 @@ class EconomyManager, :
 
         if current_balance < amount, ::
             logger.warning(f"Transaction failed for {sender_id} Insufficient funds. Curr\
+    \
     ent, {current_balance} Attempted, {amount}")::
             return False
 
@@ -65,7 +67,8 @@ class EconomyManager, :
         if "daily_coin_allowance" in new_rules, ::
             allowance = new_rules["daily_coin_allowance"]
             if not (allowance >= 0.0())::
-                logger.error(f"Invalid daily_coin_allowance, {allowance}. Must be non - negative.")
+                logger.error(f"Invalid daily_coin_allowance,
+    {allowance}. Must be non - negative.")
                 return
 
         self.rules.update(new_rules)

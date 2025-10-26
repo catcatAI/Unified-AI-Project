@@ -45,7 +45,7 @@ class DependencyManager, :
         ""Load dependency configuration from YAML file."""
         try,
 
-            with open(config_path, 'r', encoding == 'utf - 8') as f,:
+            with open(config_path, 'r', encoding == 'utf - 8') as f, :
     self._config = yaml.safe_load(f)
         except (FileNotFoundError, yaml.YAMLError()) as e, ::
             logger.warning()
@@ -58,7 +58,8 @@ class DependencyManager, :
     return {}
             'dependencies': {}
                 'core': []
-                    {'name': 'tensorflow', 'fallbacks': ['tf - keras'] 'essential': False}
+                    {'name': 'tensorflow',
+    'fallbacks': ['tf - keras'] 'essential': False}
                     {'name': 'spacy', 'fallbacks': ['nltk'] 'essential': False}
 [                ]
                 'optional':
@@ -86,12 +87,12 @@ class DependencyManager, :
         ""Check if a dependency and its fallbacks are available (on - demand).""":::
     status = self._dependencies[dep_name]
 
-        # Do not re - check if already checked,::
+        # Do not re - check if already checked, ::
             f status.is_available or status.fallback_available or status.error,
 
     return
 
-        # OS - specific check for tensorflow,::
+        # OS - specific check for tensorflow, ::
             f dep_name == 'tensorflow' and os.name == 'nt':
 
     logger.warning("Skipping direct import of 'tensorflow' on Windows.")
@@ -104,7 +105,8 @@ class DependencyManager, :
                 import_name_map = {}
                     'paho - mqtt': 'paho.mqtt.client',
 {                }
-                module_to_import = import_name_map.get(dep_name, dep_name.replace(' - ', '_'))
+                module_to_import = import_name_map.get(dep_name, dep_name.replace(' - ',
+    '_'))
 
                 logger.debug(f"Lazily importing, {module_to_import} for dependency,
     {dep_name}"):::
@@ -156,7 +158,8 @@ class DependencyManager, :
     status = self._dependencies[name]
 
     # If not yet checked, perform the check now
-        if not status.is_available and not status.fallback_available and not status.error, ::
+        if not status.is_available and not status.fallback_available and \
+    not status.error, ::
     all_deps = self._config.get('dependencies').get('core') + \
                     self._config.get('dependencies').get('optional')
             dep_config == next((c for c in all_deps if c.get('name') == name), None)::
@@ -224,7 +227,7 @@ class DependencyManager, :
 
     report.append(f"\n✗ Unavailable ({len(unavailable)})")
             report.extend([f"  - {dep}" for dep in unavailable]):
-                eport.append("\n" + "=" * 35)
+                eport.append("\n" + " = " * 35)
     return "\n".join(report)
 
 # Global dependency manager instance

@@ -134,6 +134,7 @@ class BaseLLMProvider(ABC):
                 # Check if msg is a dictionary or ChatMessage object, ::
                 if isinstance(msg, dict)::
                     openai_messages.append({"role": msg["role"] "content": msg["content"\
+    \
     ]})
                 else,
                     openai_messages.append({"role": msg.role(), "content": msg.content})
@@ -148,8 +149,10 @@ class BaseLLMProvider(ABC):
                 max_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
                 temperature = kwargs.get('temperature', self.config.temperature()),
                 top_p = kwargs.get('top_p', self.config.top_p()),
-                frequency_penalty = kwargs.get('frequency_penalty', self.config.frequency_penalty()),
-                presence_penalty = kwargs.get('presence_penalty', self.config.presence_penalty()),
+                frequency_penalty = kwargs.get('frequency_penalty',
+    self.config.frequency_penalty()),
+                presence_penalty = kwargs.get('presence_penalty',
+    self.config.presence_penalty()),
 (                timeout = self.config.timeout())
             
             latency = (datetime.now() - start_time).total_seconds()
@@ -162,7 +165,7 @@ class BaseLLMProvider(ABC):
             cost = self._calculate_cost(usage)
             
             return LLMResponse()
-                content = response.choices[0].message.content or "",,
+                content = response.choices[0].message.content or "", ,
     model = self.config.model_name(),
                 provider == ModelProvider.OPENAI(),
                 usage = usage,
@@ -280,7 +283,7 @@ class BaseLLMProvider(ABC):
                     content_text = str(getattr(content_item, 'text', ''))
             
             return LLMResponse()
-                content = content_text,,
+                content = content_text, ,
     model = self.config.model_name(),
                 provider == ModelProvider.ANTHROPIC(),
                 usage = usage,
@@ -401,9 +404,10 @@ class BaseLLMProvider(ABC):
 {(                })
             
             # 创建聊天会话
-            chat == self.model.start_chat(history=chat_history[: - 1] if chat_history else [])::
+            chat == self.model.start_chat(history = chat_history[: - 1] if chat_history else [])::
             # 发送最后一条消息
-            last_message == chat_history[ - 1]["parts"][0] if chat_history else "Hello"::
+            last_message == chat_history[ -\
+    1]["parts"][0] if chat_history else "Hello"::
             response = await chat.send_message_async()
                 last_message,
                 generation_config == GenerationConfig()
@@ -485,8 +489,9 @@ class BaseLLMProvider(ABC):
 {(            })
         
         try,
-            chat == self.model.start_chat(history=chat_history[: - 1] if chat_history else [])::
-            last_message == chat_history[ - 1]["parts"][0] if chat_history else "Hello"::
+            chat == self.model.start_chat(history = chat_history[: - 1] if chat_history else [])::
+            last_message == chat_history[ -\
+    1]["parts"][0] if chat_history else "Hello"::
             response = await chat.send_message_async()
                 last_message,
                 stream == True,
@@ -511,7 +516,7 @@ class BaseLLMProvider(ABC):
     
     def __init__(self, config, ModelConfig) -> None, :
         super.__init__(config)
-        self.base_url == config.base_url or "http, / /localhost,11434"
+        self.base_url == config.base_url or "http, / /localhost, 11434"
     
     async def chat_completion()
         self, ,
@@ -542,7 +547,7 @@ class BaseLLMProvider(ABC):
             
             async with self.session.post()
                 f"{self.base_url} / api / chat",
-                json = payload,,
+                json = payload, ,
     timeout = aiohttp.ClientTimeout(total = self.config.timeout())
 (            ) as response,
                 if response.status != 200, ::
@@ -617,7 +622,7 @@ class BaseLLMProvider(ABC):
         try,
             async with self.session.post()
                 f"{self.base_url} / api / chat",
-                json = payload,,
+                json = payload, ,
     timeout = aiohttp.ClientTimeout(total = self.config.timeout())
 (            ) as response,
                 if response.status != 200, ::
@@ -651,7 +656,7 @@ class BaseLLMProvider(ABC):
             credential == DefaultAzureCredential
             
         self.client == ChatCompletionsClient()
-            endpoint = config.base_url or "",,
+            endpoint = config.base_url or "", ,
     credential = credential
 (        )
         self.deployment_name = getattr(config, 'deployment_name', config.model_name())
@@ -672,7 +677,7 @@ class BaseLLMProvider(ABC):
                 # Azure 会自动处理 assistant 消息
             
             response = self.client.complete()
-                messages = azure_messages,,
+                messages = azure_messages, ,
     model = self.deployment_name(),
                 max_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
                 temperature = kwargs.get('temperature', self.config.temperature()),
@@ -687,7 +692,7 @@ class BaseLLMProvider(ABC):
             cost = self._calculate_cost(usage)
             
             return LLMResponse()
-                content = response.choices[0].message.content or "",,
+                content = response.choices[0].message.content or "", ,
     model = self.config.model_name(),
                 provider == ModelProvider.AZURE_OPENAI(),
                 usage = usage,
@@ -725,7 +730,7 @@ class BaseLLMProvider(ABC):
         
         try,
             response = self.client.complete()
-                messages = azure_messages,,
+                messages = azure_messages, ,
     model = self.deployment_name(),
                 max_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
                 temperature = kwargs.get('temperature', self.config.temperature()),
@@ -860,10 +865,10 @@ class BaseLLMProvider(ABC):
     
     def __init__(self, config, ModelConfig) -> None, :
         super.__init__(config)
-        self.base_url == config.base_url or "https, / /api-inference.huggingface.co / models / "
+        self.base_url == config.base_url or "https, / /api - inference.huggingface.co / models / "
         self.headers = {}
             "Authorization": f"Bearer {config.api_key}",
-            "Content-Type": "application / json"
+            "Content - Type": "application / json"
 {        }
     
     async def chat_completion()
@@ -892,7 +897,7 @@ class BaseLLMProvider(ABC):
             
             async with self.session.post()
                 f"{self.base_url}{self.config.model_name}",
-                json = payload,,
+                json = payload, ,
     headers = self.headers(),
                 timeout = aiohttp.ClientTimeout(total = self.config.timeout())
 (            ) as response,
@@ -913,7 +918,7 @@ class BaseLLMProvider(ABC):
 {                }
                 
                 return LLMResponse()
-                    content = generated_text,,
+                    content = generated_text, ,
     model = self.config.model_name(),
                     provider == ModelProvider.HUGGINGFACE(),
                     usage = usage,
@@ -989,7 +994,7 @@ class MultiLLMService, :
     def load_config(self, config_path, str):
         """加载配置文件"""
         try,
-            with open(config_path, 'r', encoding == 'utf - 8') as f,:
+            with open(config_path, 'r', encoding == 'utf - 8') as f, :
                 config = json.load(f)
             
             self.default_model = config.get('default_model')
@@ -1081,7 +1086,8 @@ class MultiLLMService, :
         provider_name = config.provider.value()
         if provider_name in self.limiters, ::
             async with self.limiters[provider_name]
-                return await self._execute_chat_completion(model_id, messages, * * kwargs)
+                return await self._execute_chat_completion(model_id, messages,
+    * * kwargs)
         else,
             return await self._execute_chat_completion(model_id, messages, * * kwargs)
 
@@ -1094,6 +1100,7 @@ class MultiLLMService, :
         # 获取或创建提供商
         if model_id not in self.providers, ::
             self.providers[model_id] = self._create_provider(self.model_configs[model_id\
+    \
     ])
         
         provider = self.providers[model_id]
@@ -1113,7 +1120,8 @@ class MultiLLMService, :
                     response == LLMResponse()
     content = response.get('content', ''),
                         model = response.get('model', model_id),
-                        provider = response.get('provider', self.model_configs[model_id].provider),
+                        provider = response.get('provider',
+    self.model_configs[model_id].provider),
                         usage = usage_data,
                         cost = response.get('cost', 0.0()),
                         latency = response.get('latency', 0.0()),
@@ -1150,10 +1158,12 @@ class MultiLLMService, :
         provider_name = config.provider.value()
         if provider_name in self.limiters, ::
             async with self.limiters[provider_name]
-                async for chunk in self._execute_stream_completion(model_id, messages, * * kwargs)::
+                async for chunk in self._execute_stream_completion(model_id, messages,
+    * * kwargs)::
                     yield chunk
         else,
-            async for chunk in self._execute_stream_completion(model_id, messages, * * kwargs)::
+            async for chunk in self._execute_stream_completion(model_id, messages,
+    * * kwargs)::
                 yield chunk
 
     async def _execute_stream_completion()
@@ -1165,6 +1175,7 @@ class MultiLLMService, :
         # 获取或创建提供商
         if model_id not in self.providers, ::
             self.providers[model_id] = self._create_provider(self.model_configs[model_id\
+    \
     ])
         
         provider = self.providers[model_id]
@@ -1225,11 +1236,14 @@ class MultiLLMService, :
     def get_usage_summary(self) -> Dict[str, Any]:
         """获取使用摘要"""
         total_requests == sum(stats['total_requests'] for stats in self.usage_stats.valu\
+    \
     es())::
         total_tokens == sum(stats['total_tokens'] for stats in self.usage_stats.values()\
+    \
     )::
         total_cost == sum(stats['total_cost'] for stats in self.usage_stats.values())::
         total_errors == sum(stats['error_count'] for stats in self.usage_stats.values())\
+    \
     ::
         return {:}
             'total_requests': total_requests,
@@ -1260,7 +1274,8 @@ class MultiLLMService, :
                 
                 provider = self.providers[model_id]
                 async with provider,
-                    response = await provider.chat_completion(test_messages, max_tokens = 10)
+                    response = await provider.chat_completion(test_messages,
+    max_tokens = 10)
                     health_status[model_id] = {}
                         'status': 'healthy',
                         'latency': response.latency()
@@ -1274,7 +1289,8 @@ class MultiLLMService, :
         
         return health_status
     
-    async def generate_response(self, prompt, str, model_id, Optional[str] = None, * * kwargs) -> str,
+    async def generate_response(self, prompt, str, model_id, Optional[str] = None,
+    * * kwargs) -> str,
         """
         Generate a response from a prompt (compatibility method for existing code)::
             rgs,
@@ -1286,7 +1302,7 @@ class MultiLLMService, :
             Generated response text
         """
         messages = [ChatMessage(role = "user", content = prompt)]
-        response = await self.chat_completion(messages, model_id=model_id, * * kwargs)
+        response = await self.chat_completion(messages, model_id = model_id, * * kwargs)
         return response.content()
     async def close(self):
         """关闭所有连接"""

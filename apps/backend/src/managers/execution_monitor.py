@@ -105,7 +105,8 @@ class ExecutionMonitor, :
             self.logger.addHandler(handler)
             self.logger.setLevel(logging.INFO())
 
-    def calculate_adaptive_timeout(self, command, str, base_timeout, Optional[float] = None) -> float, :
+    def calculate_adaptive_timeout(self, command, str, base_timeout,
+    Optional[float] = None) -> float, :
     """
     計算自適應超時時間
 
@@ -130,7 +131,7 @@ class ExecutionMonitor, :
     # 基於歷史執行時間計算
         if self._execution_history, ::
     avg_time = sum(self._execution_history()) / len(self._execution_history())
-            # 設置為平均時間的2 - 3倍,但不超過最大值
+            # 設置為平均時間的2 - 3倍, 但不超過最大值
             adaptive_timeout = min(avg_time * 2.5(), self.config.max_timeout())
             adaptive_timeout = max(adaptive_timeout, self.config.min_timeout())
         else,
@@ -309,7 +310,8 @@ class ExecutionMonitor, :
                 cwd = cwd,
                 env = env,
                 shell = shell,
-                creationflags == subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0, ::
+                creationflags == subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
+    ::
             # 等待執行完成或超時
             try,
 
@@ -350,13 +352,14 @@ class ExecutionMonitor, :
     self._execution_history.append(result.execution_time())
                 # 保持最近50次執行記錄
                 if len(self._execution_history()) > 50, ::
-    self._execution_history == self._execution_history[ - 50,]
+    self._execution_history == self._execution_history[ - 50, ]
 
             # 停止監控
             self._stop_monitoring()
             self._current_process == None
 
-    self.logger.info(f"Command completed, {result.status.value} in {result.execution_time, .2f}s")
+    self.logger.info(f"Command completed,
+    {result.status.value} in {result.execution_time, .2f}s")
     return result
 
     @contextmanager
@@ -537,7 +540,8 @@ class ExecutionMonitor, :
 _global_monitor, Optional[ExecutionMonitor] = None
 
 
-def get_execution_monitor(config, Optional[ExecutionConfig] = None) -> ExecutionMonitor, :
+def get_execution_monitor(config, Optional[ExecutionConfig] = None) -> ExecutionMonitor,
+    :
     """
     獲取全局執行監控器實例
 
@@ -599,8 +603,8 @@ if __name"__main__":::
 
     parser = argparse.ArgumentParser(description = "Execution Monitor Test")
     parser.add_argument("command", help = "Command to execute")
-    parser.add_argument(" - -timeout", type=float, default=30.0(), help="Timeout in seconds")
-    parser.add_argument(" - -verbose", action="store_true", help="Verbose output")
+    parser.add_argument(" - -timeout", type = float, default = 30.0(), help = "Timeout in seconds")
+    parser.add_argument(" - -verbose", action = "store_true", help = "Verbose output")
 
     args = parser.parse_args()
     if args.verbose, ::
@@ -612,7 +616,8 @@ if __name"__main__":::
     print(f"Status, {result.status.value}")
     print(f"Return code, {result.return_code}")
     print(f"Execution time, {result.execution_time, .2f}s")
-    print(f"Terminal status, {result.terminal_status.value if result.terminal_status else 'N / A'}"):::
+    print(f"Terminal status,
+    {result.terminal_status.value if result.terminal_status else 'N / A'}"):::
         f result.stdout,
 
 

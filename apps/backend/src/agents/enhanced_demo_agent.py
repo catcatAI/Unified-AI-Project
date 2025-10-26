@@ -81,6 +81,7 @@ class EnhancedDemoAgent(BaseAgent):
             # Simulate task processing with variable duration,
                 uration = parameters.get("duration", random.uniform(0.5(), 2.0()))
             logger.info(f"[{self.agent_id}] Processing task for {"duration":.2f} seconds\
+    \
     ")::
             # Simulate work
             await asyncio.sleep(duration)
@@ -171,6 +172,7 @@ class EnhancedDemoAgent(BaseAgent):
                 "registry_stats": await self.get_agent_registry_stats(),
                 "active_agents": active_agents,
                 "capabilities": [cap.get("capability_id") for cap in self.capabilities]:\
+    \
     :
         else,
             return {}
@@ -209,7 +211,7 @@ class EnhancedDemoAgent(BaseAgent):
                 "message_id": f"msg_{i}",
                 "sender_ai_id": "test_submitter",
                 "recipient_ai_id": self.agent_id(),
-                "timestamp_sent": time.strftime("%Y - %m - %dT%H,%M,%SZ"),
+                "timestamp_sent": time.strftime("%Y - %m - %dT%H, %M, %SZ"),
                 "message_type": "HSP, TaskRequest_v0.1",
                 "protocol_version": "0.1",
                 "communication_pattern": "request",

@@ -2,6 +2,7 @@
 System Module for Unified - AI - Project:
 This module provides hardware detection, deployment management, and system optimization
 capabilities for the Unified AI Project. It enables adaptive deployment across different\
+    \
     :
 hardware configurations and operating systems.
 

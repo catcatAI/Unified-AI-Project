@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
         # Use last N entries for trend analysis
         N = min(len(performance_history),
     10) # Analyze last 10 entries or fewer if not enough
-        recent_success_rates = np.array([entry.get("success_rate", 0.0) for entry in performance_history[ - N:]])
+        recent_success_rates = np.array([entry.get("success_rate",
+    0.0) for entry in performance_history[ - N:]])
 
         # Simple linear regression to find the slope
         x = np.arange(N)
@@ -96,7 +97,8 @@ class StrategySelector:
 class AdaptiveLearningController:
     """自適應學習控制器"""
     
-    def __init__(self, config: Dict[str, Any], storage_path: str = "logs / learning_controller") -> None:
+    def __init__(self, config: Dict[str, Any],
+    storage_path: str = "logs / learning_controller") -> None:
         self.config = config
         self.learning_strategies = self._initialize_strategies() # Conceptual method
         self.performance_tracker = PerformanceTracker()
@@ -104,7 +106,8 @@ class AdaptiveLearningController:
         self.logger = logging.getLogger(__name__)
         self.storage_path = storage_path
         os.makedirs(self.storage_path, exist_ok = True)
-        self.db = LearningLogDB(db_path = os.path.join(self.storage_path, "learning_logs.db"))
+        self.db = LearningLogDB(db_path = os.path.join(self.storage_path,
+    "learning_logs.db"))
 
     async def adapt_learning_strategy(self, task_context: Dict[str, Any],
     performance_history: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -121,6 +124,7 @@ class AdaptiveLearningController:
         
         # 獲取實際的策略對象 (conceptual lookup)
         optimal_strategy = self.learning_strategies.get(optimal_strategy_name) # type: i\
+    \
     gnore
 
         # 調整學習參數
@@ -148,7 +152,8 @@ class AdaptiveLearningController:
         # 基於歷史表現調整
         historical_performance = await self._get_historical_performance(strategy_id)
         if historical_performance < 0.7:  # 表現不佳:
-            base_params['exploration_rate'] = min(0.5, base_params['exploration_rate'] * 1.5)  # 增加探索, 設定上限
+            base_params['exploration_rate'] = min(0.5,
+    base_params['exploration_rate'] * 1.5)  # 增加探索, 設定上限
         else:
             base_params['exploration_rate'] *= 0.9 # 表現良好, 減少探索
         
@@ -169,6 +174,7 @@ class AdaptiveLearningController:
     current_effectiveness - 0.05) # type: ignore
 
             self.logger.info(f"Strategy {strategy_id} effectiveness updated to {strategy\
+    \
     ['effectiveness']}") # type: ignore
 
             # 如果策略表現持續不佳, 標記為需要改進
@@ -176,6 +182,7 @@ class AdaptiveLearningController:
                 await self._schedule_strategy_improvement(strategy_id, strategy)
         else:
             self.logger.warning(f"Strategy {strategy_id} not found for effectiveness upd\
+    \
     ate.")
 
     def _initialize_strategies(self) -> Dict[str, Dict[str, Any]]:
@@ -191,7 +198,8 @@ class AdaptiveLearningController:
     async def _assess_task_complexity(self, context: Dict[str, Any]) -> float:
         """Assesses the complexity of a task based on its context.
         For MVP,
-    it checks for keywords in the task description or uses a complexity_level from context.
+    it checks for keywords in the task description or \
+    uses a complexity_level from context.
         """
         self.logger.debug("Assessing task complexity...")
         await asyncio.sleep(0.005) # Simulate work
@@ -214,6 +222,7 @@ class AdaptiveLearningController:
     async def _get_historical_performance(self, strategy_id: str) -> float:
         """Fetches historical performance for a given strategy from the database."""
         self.logger.debug(f"Fetching historical performance for strategy {strategy_id} f\
+    \
     rom database...")
         await asyncio.sleep(0.005) # Simulate async read if needed
         all_logs = self.db.get_all_log_entries(strategy_id = strategy_id)
@@ -239,4 +248,5 @@ class AdaptiveLearningController:
             await asyncio.sleep(0.005) # Simulate async write if needed
         except Exception as e:
             self.logger.error(f"Failed to log strategy for improvement to database: {e}"\
+    \
     )

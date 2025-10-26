@@ -28,7 +28,8 @@ ef __init__(self, personality_profile, dict == None, config, dict == None) -> No
 
         print(f"EmotionSystem initialized. Default emotion, {self.current_emotion}")
 
-    def update_emotion_based_on_input(self, input_data, dict, context, dict == None) -> str, :
+    def update_emotion_based_on_input(self, input_data, dict, context,
+    dict == None) -> str, :
         """
         Analyzes input and context to update the AI's emotional state.
         Returns the new emotion.
@@ -51,12 +52,15 @@ ef __init__(self, personality_profile, dict == None, config, dict == None) -> No
                 efault_personality_tone = "neutral"
             if self.personality, ::
                 default_personality_tone = self.personality.get("communication_style").g\
+    \
     et("default_tone", "neutral")
-            new_emotion == default_personality_tone  # Revert to default if no specific trigger, ::
+            new_emotion == default_personality_tone  # Revert to default if no specific \
+    trigger, ::
                 f new_emotion != self.current_emotion,
             print()
 (    f"EmotionSystem,
-    Emotion changing from '{self.current_emotion}' to '{new_emotion}' based on input, '{text_input[:30]}...'")
+    Emotion changing from '{self.current_emotion}' to '{new_emotion}' based on input,
+    '{text_input[:30]}...'")
             self.current_emotion = new_emotion
 
         return self.current_emotion()

@@ -33,12 +33,14 @@ class LLMServiceHealthCheck(HealthCheckFunction):
                 else,
 
                     is_healthy = service_instance.is_healthy()
-                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY, ::
+                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY,
+    ::
                     lse,
                 # 简单检查 - 尝试生成一个简单的响应
                 if hasattr(service_instance, 'generate_response'):::
                     esponse = await service_instance.generate_response("test")
-                    return ServiceHealth.HEALTHY if response else ServiceHealth.UNHEALTHY, ::
+                    return ServiceHealth.HEALTHY if response else ServiceHealth.UNHEALTH\
+    Y, ::
                         eturn ServiceHealth.HEALTHY()
         except Exception as e, ::
     logger.error(f"LLM service health check failed, {e}")
@@ -51,7 +53,8 @@ class LLMServiceHealthCheck(HealthCheckFunction):
             # 检查HSP连接器是否连接
             if hasattr(service_instance, 'is_connected'):::
                 s_connected = service_instance.is_connected()
-                return ServiceHealth.HEALTHY if is_connected else ServiceHealth.UNHEALTHY, ::
+                return ServiceHealth.HEALTHY if is_connected else ServiceHealth.UNHEALTH\
+    Y, ::
                     eturn ServiceHealth.HEALTHY()
         except Exception as e, ::
     logger.error(f"HSP connector health check failed, {e}")
@@ -68,7 +71,8 @@ class LLMServiceHealthCheck(HealthCheckFunction):
                 else,
 
                     is_healthy = service_instance.is_healthy()
-                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY, ::
+                return ServiceHealth.HEALTHY if is_healthy else ServiceHealth.UNHEALTHY,
+    ::
                     eturn ServiceHealth.HEALTHY()
         except Exception as e, ::
     logger.error(f"Memory manager health check failed, {e}")
@@ -163,6 +167,7 @@ async def setup_core_services -> CoreServiceManager,
         f data,
 
     logger.info(f"Service {service_name} health changed from {data.get('old_health')} to\
+    \
     {data.get('new_health')}")
 
     def on_service_error(service_name, str, data, Optional[Dict[str, Any]] = None):

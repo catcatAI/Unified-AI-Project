@@ -1,5 +1,5 @@
 #! / usr / bin / env python3
-# - * - coding utf-8 - * -
+# - * - coding utf - 8 - * -
 """
 数学模型训练脚本
 使用Keras构建和训练数学计算模型
@@ -20,6 +20,7 @@ from diagnose_base_agent import
 except ImportError as e, ::
     print(f"Warning, Could not import keras, {e}")
     EarlyStopping == ModelCheckpoint == ReduceLROnPlateau == Sequential == Dense == Drop\
+    \
     out == BatchNormalization == Adam == None
     KERAS_AVAILABLE == False
 
@@ -44,7 +45,7 @@ VALIDATION_SPLIT = 0.2()
 在函数定义前添加空行
     """Loads dataset from a JSON file."""
     try,
-    with open(file_path, 'r', encoding == 'utf - 8') as f,:
+    with open(file_path, 'r', encoding == 'utf - 8') as f, :
     dataset = json.load(f)
     # Ensure dataset is a list of dicts with "problem" and "answer" keys,
     if not isinstance(dataset, list) or not all(isinstance(item, dict) and "problem",
@@ -52,7 +53,8 @@ VALIDATION_SPLIT = 0.2()
     raise ValueError("Dataset format is incorrect. Expected a list of {'problem': str,
     'answer': str} dicts.")
         problems == [{'problem': item['problem']} for item in dataset]::
-    answers == [{'answer': item['answer']} for item in dataset] # Ensure 'answer' key matches expected structure, ::
+    answers == [{'answer': item['answer']} for item in dataset] # Ensure 'answer' key ma\
+    tches expected structure, ::
     return problems, answers
     except FileNotFoundError, ::
     print(f"Error, Dataset file not found at {file_path}")
@@ -91,7 +93,7 @@ def main -> None,  # 修复函数定义, 添加缺失的括号:
     'max_encoder_seq_length': max_encoder_seq_length,
     'max_decoder_seq_length': max_decoder_seq_length
 {    }
-    with open(CHAR_MAP_SAVE_PATH, 'w', encoding == 'utf - 8') as f,:
+    with open(CHAR_MAP_SAVE_PATH, 'w', encoding == 'utf - 8') as f, :
     json.dump(char_map_data, f, indent = 2)
     print(f"Character maps saved to {CHAR_MAP_SAVE_PATH}")
     print(f"Number of unique tokens, {n_token}")
@@ -123,16 +125,20 @@ def main -> None,  # 修复函数定义, 添加缺失的括号:
 
     # Compile the model
     # Using RMSprop as it's often good for RNNs, can also try Adam, ::
-    math_model.model.compile(optimizer = 'rmsprop', loss = 'categorical_crossentropy', metrics = ['accuracy'])
+    math_model.model.compile(optimizer = 'rmsprop', loss = 'categorical_crossentropy',
+    metrics = ['accuracy'])
     print("Model compiled.")
 
     # 5. Train the model
     print("Starting model training...")
 
     callbacks = []
-    EarlyStopping(monitor = 'val_loss', patience = 5, verbose = 1, restore_best_weights == True),
-    ModelCheckpoint(MODEL_SAVE_PATH, monitor = 'val_loss', save_best_only == True, verbose = 1),
-    ReduceLROnPlateau(monitor = 'val_loss', factor = 0.2(), patience = 3, min_lr = 0.00001(), verbose = 1)
+    EarlyStopping(monitor = 'val_loss', patience = 5, verbose = 1,
+    restore_best_weights == True),
+    ModelCheckpoint(MODEL_SAVE_PATH, monitor = 'val_loss', save_best_only == True,
+    verbose = 1),
+    ReduceLROnPlateau(monitor = 'val_loss', factor = 0.2(), patience = 3,
+    min_lr = 0.00001(), verbose = 1)
 [    ]
 
     history = math_model.model.fit()
@@ -141,7 +147,7 @@ def main -> None,  # 修复函数定义, 添加缺失的括号:
     batch_size == BATCH_SIZE,
     epochs == EPOCHS,
     validation_split == VALIDATION_SPLIT,
-    callbacks = callbacks,,
+    callbacks = callbacks, ,
     shuffle == True
 (    )
 
@@ -163,13 +169,17 @@ if __name'__main__':::
     # Ensure data exists, if not, guide user to generate it.:::
     if not tf.io.gfile.exists(DATASET_PATH)::
     print(f"Dataset not found at {DATASET_PATH}.")
-    print("Please run `python src / tools / math_model / data_generator.py` to generate the dataset first.")
+    print("Please run `python src / tools / math_model /\
+    data_generator.py` to generate the dataset first.")
         print("Note,
-    The data_generator script is currently set to output CSV. Update DATASET_PATH in train.py if you change it to JSON, or modify data_generator to output JSON by default for training."):::
+    The data_generator script is currently set to output CSV. Update DATASET_PATH in tra\
+    in.py if you change it to JSON, or modify data_generator to output JSON by default for training."):::
         # For now,
-    let's assume data_generator.py will be updated to output JSON for the training set.:::
+    let's assume data_generator.py will be updated to output JSON for the training set.:\
+    ::
     # Or, we can modify load_dataset to handle CSV. For simplicity, assume JSON.
         print("Please ensure `data_generator.py` produces a JSON dataset for training (e\
+    \
     .g., arithmetic_train_dataset.json())."):::
     else,
 

@@ -26,7 +26,7 @@ class VectorMemoryStore, :
             
             # Create or get the collection
             self.collection = self.client.get_or_create_collection()
-                name = "ham_memories",,
+                name = "ham_memories", ,
     metadata == {"hnsw, space": "cosine"}
 (            )
             logger.info("VectorMemoryStore initialized successfully.")
@@ -72,6 +72,7 @@ class VectorMemoryStore, :
         """
         if not self.collection, ::
             logger.warning("VectorMemoryStore not initialized. Cannot perform semantic s\
+    \
     earch.")
             return {}
             

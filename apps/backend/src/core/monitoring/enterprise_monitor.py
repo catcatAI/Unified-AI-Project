@@ -115,7 +115,7 @@ class MetricsCollector, :
         
         metric == Metric()
             name = name,
-            value = value,,
+            value = value, ,
     metric_type == MetricType.GAUGE(),
             labels = labels or {}
             timestamp = datetime.now(),
@@ -132,11 +132,11 @@ class MetricsCollector, :
         # 保留最近1000个值
         self.histograms[key].append(value)
         if len(self.histograms[key]) > 1000, ::
-            self.histograms[key] = self.histograms[key][ - 1000,]
+            self.histograms[key] = self.histograms[key][ - 1000, ]
         
         metric == Metric()
             name = name,
-            value = value,,
+            value = value, ,
     metric_type == MetricType.HISTOGRAM(),
             labels = labels or {}
             timestamp = datetime.now(),
@@ -154,7 +154,7 @@ class MetricsCollector, :
         
         metric == Metric()
             name = name,
-            value = value,,
+            value = value, ,
     metric_type == MetricType.SUMMARY(),
             labels = labels or {}
             timestamp = datetime.now(),
@@ -166,7 +166,7 @@ class MetricsCollector, :
         """生成指标键"""
         if not labels, ::
             return name
-        label_str == ",".join(f"{k} = {v}", for k, v in sorted(labels.items()))::
+        label_str == ", ".join(f"{k} = {v}", for k, v in sorted(labels.items()))::
         return f"{name}[{label_str}]"
 
     def _store_metric(self, metric, Metric):
@@ -319,7 +319,7 @@ class AlertManager, :
                 "text": alert.message(),
                 "fields": []
                     {"title": "级别", "value": alert.level.value(), "short": True}
-                    {"title": "时间", "value": alert.timestamp.strftime("%Y - %m - %d %H,%M,%S"), "short": True}
+                    {"title": "时间", "value": alert.timestamp.strftime("%Y - %m - %d %H, %M, %S"), "short": True}
                     {"title": "源", "value": alert.source(), "short": True}
 [                ]
 {[            }]
@@ -468,7 +468,7 @@ class SystemMonitor, :
             disk_percent = disk_percent,
             network_io = network_io,
             process_count = process_count,
-            load_average = load_avg,,
+            load_average = load_avg, ,
     timestamp = datetime.now()
 (        )
     
@@ -538,6 +538,7 @@ class SystemMonitor, :
             "system": asdict(system_metrics),
             "application": asdict(app_metrics),
             "alerts": [asdict(alert) for alert in self.alert_manager.get_active_alerts()\
+    \
     ]::
             "metrics_summary": {}
                 name, self.metrics_collector.get_metric_summary(name)

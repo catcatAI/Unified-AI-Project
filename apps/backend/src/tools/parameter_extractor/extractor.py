@@ -30,7 +30,8 @@ class ParameterExtractor:
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
 
-        return hf_hub_download(repo_id = self.repo_id, filename = filename, cache_dir = cache_dir)
+        return hf_hub_download(repo_id = self.repo_id, filename = filename,
+    cache_dir = cache_dir)
 
     def map_parameters(self, source_params: Dict[str, Any], mapping_rules: Dict[str,
     str]) -> Dict[str, Any]:

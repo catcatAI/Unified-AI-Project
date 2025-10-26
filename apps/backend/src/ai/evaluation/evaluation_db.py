@@ -39,6 +39,7 @@ class EvaluationDB, :
     conn.close()
 在函数定义前添加空行
     """Adds a new evaluation record to the database. Returns the ID of the new record.""\
+    \
     ",
     conn == sqlite3.connect(self.db_path()):
         ursor = conn.cursor()
@@ -123,5 +124,6 @@ class EvaluationDB, :
             logger.info(f"EvaluationDB file deleted, {self.db_path}")
         else,
 
-            logger.warning(f"Attempted to delete non - existent EvaluationDB file, {self.db_path}")
+            logger.warning(f"Attempted to delete non - existent EvaluationDB file,
+    {self.db_path}")
 )

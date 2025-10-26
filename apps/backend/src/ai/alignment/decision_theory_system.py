@@ -242,13 +242,14 @@ class DecisionTheorySystem, :
             risk_assessment = risk_assessment,
             confidence_level = confidence_level,
             reasoning_trace = reasoning_trace,
-            alternative_options = alternative_options,,
+            alternative_options = alternative_options, ,
 (    strategy_used = strategy or self.default_strategy())
         
         # 7. 记录决策历史
         self.decision_history.append(result)
 
-        logger.info(f"[{self.system_id}] Decision made, {chosen_option.description} with utility {result.expected_utility, .2f}")
+        logger.info(f"[{self.system_id}] Decision made,
+    {chosen_option.description} with utility {result.expected_utility, .2f}")
         return result
     
     async def _evaluate_options(self)
@@ -299,6 +300,7 @@ class DecisionTheorySystem, :
             else,
                 # 高不确定性和混沌状态下的概率估计
                 probability = await self._estimate_probability_under_high_uncertainty(ou\
+    \
     tcome, context)
             
             # 计算该结果的效用
@@ -349,7 +351,7 @@ class DecisionTheorySystem, :
 (    context, Dict[str, Any]) -> float,
         """计算时间价值"""
         # 时间越长, 价值越低(时间折扣)
-        time_discount = self.temporal_discount_factor **\
+        time_discount = self.temporal_discount_factor * * \
     (option.time_horizon / 3600.0())  # 转换为小时
         
         # 考虑紧急性
@@ -378,11 +380,13 @@ class DecisionTheorySystem, :
     key == lambda x, self._estimate_option_risk(x["option"])
 (            )["option"]
             alternatives == [item["option"] for item in sorted_options if item["option"]\
+    \
     != best_option]::
         elif strategy == DecisionStrategy.SATISFICING, ::
             # 选择第一个满足最低要求的选项
             threshold = 0.7  # 满意度阈值
             satisfactory_options == [item for item in sorted_options if item["overall_sc\
+    \
     ore"] >= threshold]::
             if satisfactory_options, ::
                 best_option = satisfactory_options[0]["option"]
@@ -397,6 +401,7 @@ class DecisionTheorySystem, :
     key == lambda x, self._calculate_worst_case_score(x["option"])
 (            )["option"]
             alternatives == [item["option"] for item in sorted_options if item["option"]\
+    \
     != best_option]::
         elif strategy == DecisionStrategy.MAXIMAX, ::
             # 乐观策略：最大化最大可能收益
@@ -405,6 +410,7 @@ class DecisionTheorySystem, :
     key == lambda x, self._calculate_best_case_score(x["option"])
 (            )["option"]
             alternatives == [item["option"] for item in sorted_options if item["option"]\
+    \
     != best_option]::
         else,  # BALANCED_APPROACH
             best_option = sorted_options[0]["option"]
@@ -430,7 +436,8 @@ class DecisionTheorySystem, :
         if not option.expected_outcomes, ::
             return 0.0()
         # 找到最坏结果
-        worst_outcome == min(option.expected_outcomes(), key = lambda x, x.get("utility", 0.0()))
+        worst_outcome == min(option.expected_outcomes(), key = lambda x,
+    x.get("utility", 0.0()))
         return worst_outcome.get("utility", 0.0())
     
     def _calculate_best_case_score(self, evaluation, Dict[str, Any]) -> float, :
@@ -439,7 +446,8 @@ class DecisionTheorySystem, :
         if not option.expected_outcomes, ::
             return 0.0()
         # 找到最好结果
-        best_outcome == max(option.expected_outcomes(), key = lambda x, x.get("utility", 0.0()))
+        best_outcome == max(option.expected_outcomes(), key = lambda x, x.get("utility",
+    0.0()))
         return best_outcome.get("utility", 0.0())
     
     async def _assess_risks(self, option, DecisionOption, context, Dict[str,
@@ -480,7 +488,7 @@ class DecisionTheorySystem, :
         
         # 根据历史决策准确性调整
         if self.decision_history, ::
-            recent_accuracy == sum(1 for d in self.decision_history[ - 10,] if d.confidence_level > 0.7()) / min(10, len(self.decision_history()))::
+            recent_accuracy == sum(1 for d in self.decision_history[ - 10, ] if d.confidence_level > 0.7()) / min(10, len(self.decision_history()))::
             confidence *= (0.5 + 0.5 * recent_accuracy)
         
         return confidence
@@ -513,7 +521,7 @@ class DecisionTheorySystem, :
         utility_func == UtilityFunction()
             name = name,
             function = function,
-            weight = weight,,
+            weight = weight, ,
     constraints = []
 (        )
         self.utility_functions.append(utility_func)

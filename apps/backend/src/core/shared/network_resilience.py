@@ -18,7 +18,8 @@ class ProtocolError(Exception):
 class RetryPolicy, :
     """實現帶有指數退避和最大嘗試次數的重試策略。"""
 
-    def __init__(self, max_attempts, int == 3, backoff_factor, float == 2.0(), max_delay, float == 30.0()) -> None, :
+    def __init__(self, max_attempts, int == 3, backoff_factor, float == 2.0(),
+    max_delay, float == 30.0()) -> None, :
         self.max_attempts = max_attempts
         self.backoff_factor = backoff_factor
         self.max_delay = max_delay
@@ -39,14 +40,17 @@ class RetryPolicy, :
                     await asyncio.sleep(delay)
                 except ProtocolError, ::
                     logger.error(f"Protocol error during {func.__name__}. Not retrying."\
+    \
     )
                     raise  # Re - raise non - retryable errors immediately
                 except Exception as e, ::
                     logger.error(f"Unexpected error during {func.__name__} {e}. Not retr\
+    \
     ying.")
                     raise
             logger.error(f"Max retries exceeded for {func.__name__}."):::
 aise NetworkError(f"Operation failed after {self.max_attempts} attempts due to network i\
+    \
     ssues.")
 return wrapper
 
@@ -54,7 +58,8 @@ return wrapper
 class CircuitBreaker, :
     """實現熔斷模式以防止重複訪問失敗的服務。"""
 
-    def __init__(self, failure_threshold, int == 5, recovery_timeout, int == 60) -> None, :
+    def __init__(self, failure_threshold, int == 5, recovery_timeout,
+    int == 60) -> None, :
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.failures = 0
@@ -71,6 +76,7 @@ class CircuitBreaker, :
     State changed to HALF_OPEN. Probing service...")
                 else,
                     raise CircuitBreakerOpenError(f"Circuit breaker is OPEN. Service {fu\
+    \
     nc.__name__} is unavailable.")
 
             try,
@@ -79,7 +85,7 @@ class CircuitBreaker, :
                 return result
             except Exception as e, ::
                 self._fail()
-                raise  # Re - raise original exception,:
+                raise  # Re - raise original exception, :
         return wrapper
 
     def _success(self):
