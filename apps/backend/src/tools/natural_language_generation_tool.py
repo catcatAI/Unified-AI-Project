@@ -1,7 +1,7 @@
 # 添加兼容性导入
 try:
     # 设置环境变量以解决Keras兼容性问题
-    import os
+from diagnose_base_agent import
     os.environ['TF_USE_LEGACY_KERAS'] = '1'
     
     # 使用我们的兼容性模块

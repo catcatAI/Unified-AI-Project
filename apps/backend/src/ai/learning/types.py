@@ -1,4 +1,4 @@
-from typing import TypedDict, Required, Optional, List, Any, Union, Dict
+# TODO: Fix import - module 'typing' not found
 
 # Fact Extractor Types
 class UserPreferenceContent(TypedDict, total=False):

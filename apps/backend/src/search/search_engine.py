@@ -1,9 +1,9 @@
-class SearchEngine,
+class SearchEngine,:
     """
     A class for searching for models and tools.:::
         ""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
     pass
 
     def search(self, query):

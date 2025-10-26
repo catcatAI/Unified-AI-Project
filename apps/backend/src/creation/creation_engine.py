@@ -1,9 +1,9 @@
-class CreationEngine,
+class CreationEngine,:
     """
     A class for creating models and tools.:::
         ""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
         pass
 
     def create(self, query):
@@ -35,12 +35,12 @@ class CreationEngine,
         """
         model_name = query.replace("create", "").replace("model", "").strip
         model_code = f"""
-class {model_name}
+class {model_name}:
     \""\"
     A class for the {model_name} model.:::
         ""\"
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
         \""\"
         Initializes the {model_name} model.
         \""\"
@@ -80,9 +80,9 @@ class {model_name}
         Returns,
             A tool that matches the query.
         """
-        tool_name = query.replace("create ", "").replace(" tool", "").strip
+        tool_name = query.replace("create ", "").replace(", tool", "").strip
         tool_code = f"""
-def {tool_name}(input)
+def {tool_name}(input):
     \""\"
     A tool for {tool_name}.:::
         rgs,

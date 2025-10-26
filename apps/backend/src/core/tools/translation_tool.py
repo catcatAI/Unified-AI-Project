@@ -1,6 +1,6 @@
-import json
-import os
-import re
+from tests.test_json_fix import
+from diagnose_base_agent import
+from tests.core_ai import
 from datetime import datetime
 from typing import Optional
 
@@ -21,7 +21,7 @@ def _load_dictionary():
     print("Loading translation dictionary for the first time..."):::
         ry,
 
-    with open(DICTIONARY_PATH, 'r', encoding == 'utf-8') as f,
+    with open(DICTIONARY_PATH, 'r', encoding == 'utf-8') as f,:
     _translation_dictionary = json.load(f)
             print("Translation dictionary loaded successfully.")
         except FileNotFoundError,::
@@ -35,7 +35,7 @@ def _load_dictionary():
             _translation_dictionary == {"zh_to_en": , "en_to_zh": }
     return _translation_dictionary
 
-def _detect_language(text, str) -> Optional[str]
+def _detect_language(text, str) -> Optional[str]:
     """
     Very basic language detection.
     Returns 'zh' for Chinese(if Chinese characters are found), 'en' for English.:::
@@ -52,7 +52,7 @@ eturn 'en'
     return None  # Cannot determine or mixed
 
 
-def translate(text, str, target_language, str, source_language, Optional[str] = None, **kwargs) -> str,
+def translate(text, str, target_language, str, source_language, Optional[str] = None, **kwargs) -> str,:
     """
     Translates text using a dictionary-based approach.
     Args,
@@ -78,11 +78,11 @@ def translate(text, str, target_language, str, source_language, Optional[str] = 
     norm_target_language = target_language.lower()
 
     # Map common names to codes
-    lang_code_map == {:
+    lang_code_map == {:}
     "english": "en", "chinese": "zh", "spanish": "es", "french": "fr",
     "german": "de", "japanese": "ja", "korean": "ko"
     # Add more as needed
-    }
+{    }
     source_lang_code = lang_code_map.get(norm_source_language, norm_source_language)
     target_lang_code = lang_code_map.get(norm_target_language, norm_target_language)
 
@@ -102,9 +102,9 @@ def translate(text, str, target_language, str, source_language, Optional[str] = 
     key_present == True
                 break # Found the key
 
-    print(
-    f"TranslationTool SANITIZED DEBUG, Checking key. Wanted key='{,
-    repr(translation_map_key)}', Available keys='{dict_keys_for_debug}', Key present? {key_present}")
+    print()
+    f"TranslationTool SANITIZED DEBUG, Checking key. Wanted key='{,}
+{(    repr(translation_map_key)}', Available keys='{dict_keys_for_debug}', Key present? {key_present}")
 
     if key_present,::
         # Use the correctly formed translation_map_key for dictionary access,::
@@ -150,7 +150,7 @@ if __name'__main__':::
     if not _translation_dictionary or not _translation_dictionary.get("zh_to_en"):::
         rint("Dictionary seems empty or not loaded correctly. Test results might be inaccurate.")
 
-    tests = [
+    tests = []
     ("你好", "en", "Hello"),
     ("Hello", "zh", "你好"),
     ("谢谢", "en", "Thank you"),
@@ -158,11 +158,11 @@ if __name'__main__':::
     ("猫", "en", "Cat"),
     ("Dog", "zh", "狗"),
         ("未知词", "en", "Translation not available for '未知词' from zh to en."), :::
-            "Unknown word", "zh", "Translation not available for 'Unknown word' from en to zh."), :::
-"你好", "es", "Translation from zh to es is not supported."),  # Test unsupported target
+(            "Unknown word", "zh", "Translation not available for 'Unknown word' from en to zh."), :::
+("你好", "es", "Translation from zh to es is not supported."),  # Test unsupported target
     ("Hello", "en", "Hello"),  # Test same source/target
     (" ayuda ", "en", None)  # Test language detection (should detect 'es' or fail) - current basic detect might fail
-    ]
+[    ]
 
     for text, target_lang, expected in tests,::
     print(f"\nInput, '{text}', Target, '{target_lang}'")

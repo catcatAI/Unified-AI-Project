@@ -1,9 +1,9 @@
-import pygame
-from .ui import DialogueBox
-from .npcs import create_npc
+# TODO: Fix import - module 'pygame' not found
+from .ui import
+from .npcs import
 
-class Scene,
-    def __init__(self, game) -> None,
+class Scene,:
+    def __init__(self, game) -> None,:
     self.game = game
 
     async def handle_events(self, event):
@@ -31,7 +31,7 @@ ef __init__(self, game) -> None,
     self.npcs.append(create_npc(self.game(), "hibiki"))
 
     async def handle_events(self, event):
- = await super().handle_events(event)
+= await super().handle_events(event)
         if self.dialogue_box.is_active,::
     if event.type == pygame.KEYDOWN and event.key ==pygame.K_e,::
     self.dialogue_box.hide()
@@ -45,7 +45,7 @@ ef __init__(self, game) -> None,
                         break
 
     async def update(self):
- = await super().update
+= await super().update
     self.player.update()
         for npc in self.npcs,::
             # NPCs will just stand still for now,::
@@ -67,19 +67,19 @@ ef __init__(self, game) -> None,
     super().render(surface)
 
 
-class GameStateManager,
-    def __init__(self, game) -> None,
+class GameStateManager,:
+    def __init__(self, game) -> None,:
     self.game = game
-    self.states = {
+    self.states = {}
             'village': VillageScene(game),
-    }
+{    }
     self.current_state = 'village'
 
     async def handle_events(self, event):
- = await self.states[self.current_state].handle_events(event)
+= await self.states[self.current_state].handle_events(event)
 
     async def update(self):
- = await self.states[self.current_state].update
+= await self.states[self.current_state].update
 
     def render(self, surface):
         elf.states[self.current_state].render(surface)

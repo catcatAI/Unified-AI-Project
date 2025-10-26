@@ -1,20 +1,20 @@
-import json
-from .data_aligner import DataAligner
-from ..external.external_connector import ExternalConnector
-from ..internal.internal_bus import InternalBus
+from tests.test_json_fix import
+from .data_aligner import
+from ..external.external_connector import
+from ..internal.internal_bus import
 
 
-class MessageBridge,
-    _message_type_to_internal_topic_map = {
+class MessageBridge,:
+    _message_type_to_internal_topic_map = {}
         "HSP,Fact_v0.1": "fact",
         "HSP,CapabilityAdvertisement_v0.1": "capability_advertisement",
         "HSP,TaskRequest_v0.1": "task_request",
         "HSP,TaskResult_v0.1": "task_result",
         "HSP,Acknowledgement_v0.1": "acknowledgement",
-    }
+{    }
 
-    def __init__(self, external_connector, ExternalConnector,,
-    internal_bus, InternalBus, data_aligner, DataAligner) -> None,
+    def __init__(self, external_connector, ExternalConnector,,:)
+(    internal_bus, InternalBus, data_aligner, DataAligner) -> None,
         self.external_connector = external_connector
         self.internal_bus = internal_bus
         self.data_aligner = data_aligner
@@ -45,8 +45,8 @@ class MessageBridge,
             internal_topic_suffix = self._message_type_to_internal_topic_map.get(message_type)
             if internal_topic_suffix,::
                 internal_channel = f"hsp.external.{internal_topic_suffix}"
-                print(,
-    f"DEBUG, MessageBridge.handle_external_message - Publishing to internal bus channel, {internal_channel} with aligned_message, {aligned_message}")
+                print()
+(    f"DEBUG, MessageBridge.handle_external_message - Publishing to internal bus channel, {internal_channel} with aligned_message, {aligned_message}")
 
                 # Await the async publish to ensure downstream async handlers complete
                 # (important for tests like ACK sending)::

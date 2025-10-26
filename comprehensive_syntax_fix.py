@@ -302,7 +302,7 @@ def fix_syntax_errors_in_file(file_path, dry_run=False, verbose=False):
                 logger.info("修复了元组语法错误")
         
         # 修复25: 修复重复关键字参数错误
-        content = re.sub(r'(\w+\.[\w\(\)\.'\"_,\[\]]+)', r'\1', content)
+        content = re.sub(r'(\w+\.[\w\(\)\.\'\",\[\]]+)', r'\1', content)
         if content != original_content:
             fixes_applied += 1
             if verbose:

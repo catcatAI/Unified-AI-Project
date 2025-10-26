@@ -1,9 +1,9 @@
-import pygame
-import json
-import os
+# TODO: Fix import - module 'pygame' not found
+from tests.test_json_fix import
+from diagnose_base_agent import
 
-class NPC,
-    def __init__(self, game, npc_data, portrait == None, sprite == None) -> None,
+class NPC,:
+    def __init__(self, game, npc_data, portrait == None, sprite == None) -> None,:
     self.game = game
     self.id = npc_data['id']
     self.name = npc_data['name']
@@ -31,7 +31,7 @@ lobal _NPC_DATA
     path = os.path.join('data', 'game_data', 'npcs.json')
     try,
 
-    with open(path, 'r', encoding == 'utf-8') as f,
+    with open(path, 'r', encoding == 'utf-8') as f,:
     _NPC_DATA = json.load(f)
     except FileNotFoundError,::
     print(f"Warning, npcs.json not found at {path}. Initializing with empty data."):

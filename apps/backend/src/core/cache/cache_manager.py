@@ -4,18 +4,18 @@
 支持多级缓存、分布式缓存和智能缓存策略
 """
 
-import json
-import time
-import hashlib
-import asyncio
-import logging
+from tests.test_json_fix import
+from enhanced_realtime_monitoring import
+# TODO: Fix import - module 'hashlib' not found
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Any, Dict, Optional, Union, List
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-import threading
+# TODO: Fix import - module 'threading' not found
 from collections import OrderedDict
-import pickle
-import redis.asyncio as redis
+# TODO: Fix import - module 'pickle' not found
+# TODO: Fix import - module 'redis.asyncio' not found
 from dataclasses import dataclass
 from enum import Enum
 
@@ -28,7 +28,7 @@ class CacheLevel(Enum):
     DISTRIBUTED = "distributed"
 
 @dataclass
-class CacheConfig,
+class CacheConfig,:
     """缓存配置"""
     default_ttl, int = 3600  # 默认TTL(秒)
     max_memory_size, int = 1000  # 内存缓存最大条目数
@@ -75,7 +75,7 @@ class MemoryCache(CacheBackend):
         self.lock = threading.Lock()
     
     async def get(self, key, str) -> Optional[Any]
-        with self.lock,
+        with self.lock,:
             if key in self.cache,::
                 value, timestamp, ttl = self.cache[key]
                 if ttl and time.time() - timestamp > ttl,::
@@ -87,7 +87,7 @@ class MemoryCache(CacheBackend):
             return None
     
     async def set(self, key, str, value, Any, ttl, Optional[int] = None) -> bool,
-        with self.lock,
+        with self.lock,:
             if key in self.cache,::
                 self.cache.move_to_end(key)
             else,
@@ -99,19 +99,19 @@ class MemoryCache(CacheBackend):
             return True
     
     async def delete(self, key, str) -> bool,
-        with self.lock,
+        with self.lock,:
             if key in self.cache,::
                 del self.cache[key]
                 return True
             return False
     
     async def clear(self) -> bool,
-        with self.lock,
+        with self.lock,:
             self.cache.clear()
             return True
     
     async def exists(self, key, str) -> bool,
-        with self.lock,
+        with self.lock,:
             return key in self.cache()
 class RedisCache(CacheBackend):
     """Redis缓存实现"""
@@ -173,18 +173,18 @@ class RedisCache(CacheBackend):
             logger.error(f"Redis exists error, {e}")
             return False
 
-class CacheManager,
+class CacheManager,:
     """多级缓存管理器"""
     
     def __init__(self, config, CacheConfig == None):
         self.config = config or CacheConfig()
         self.backends = {}
-        self.stats = {
+        self.stats = {}
             "hits": 0,
             "misses": 0,
             "sets": 0,
             "deletes": 0
-        }
+{        }
         
         # 初始化缓存后端
         self._init_backends()
@@ -198,9 +198,9 @@ class CacheManager,
         
         # Redis缓存
         try,
-            self.backends[CacheLevel.REDIS] = RedisCache(,
+            self.backends[CacheLevel.REDIS] = RedisCache()
     self.config.redis_url(), 
-                self.config.redis_db())
+(                self.config.redis_db())
             logger.info("Redis缓存后端初始化成功")
         except Exception as e,::
             logger.warning(f"Redis缓存初始化失败, {e}")
@@ -272,26 +272,26 @@ class CacheManager,
             return await self.backends[level].exists(key)
         return False
     
-    def get_stats(self) -> Dict[str, Any]
+    def get_stats(self) -> Dict[str, Any]:
         """获取缓存统计"""
         total_requests = self.stats["hits"] + self.stats["misses"]
         hit_rate == (self.stats["hits"] / total_requests * 100) if total_requests > 0 else 0,:
-        return {
+        return {}
             **self.stats(),
             "hit_rate": hit_rate,
             "total_requests": total_requests
-        }
+{        }
     
     def reset_stats(self):
         """重置统计"""
-        self.stats = {
+        self.stats = {}
             "hits": 0,
             "misses": 0,
             "sets": 0,
             "deletes": 0
-        }
+{        }
 
-class CacheDecorator,
+class CacheDecorator,:
     """缓存装饰器"""
     
     def __init__(self, cache_manager, CacheManager, ttl, int == 3600, level, CacheLevel == CacheLevel.MEMORY()):
@@ -323,13 +323,13 @@ class CacheDecorator,
             return wrapper
         return decorator
     
-    def _generate_key(self, func_name, str, args, tuple, kwargs, dict) -> str,
+    def _generate_key(self, func_name, str, args, tuple, kwargs, dict) -> str,:
         """生成缓存键"""
-        key_data = {
+        key_data = {}
             "func": func_name,
             "args": args,
             "kwargs": kwargs
-        }
+{        }
         key_str = json.dumps(key_data, sort_keys == True, default=str)
         return hashlib.md5(key_str.encode()).hexdigest()
 
@@ -341,7 +341,7 @@ def cached(ttl, int == 3600, level, CacheLevel == CacheLevel.MEMORY(), key_func 
     """缓存装饰器"""
     return CacheDecorator(cache_manager, ttl, level)(key_func)
 
-class CacheWarmer,
+class CacheWarmer,:
     """缓存预热器"""
     
     def __init__(self, cache_manager, CacheManager):
@@ -368,13 +368,13 @@ class CacheWarmer,
             except Exception as e,::
                 logger.error(f"预热函数缓存失败, {e}")
     
-    def _generate_func_key(self, func_name, str, args, tuple) -> str,
+    def _generate_func_key(self, func_name, str, args, tuple) -> str,:
         """生成函数缓存键"""
         key_data == {"func": func_name, "args": args}
         key_str = json.dumps(key_data, sort_keys == True, default=str)
         return hashlib.md5(key_str.encode()).hexdigest()
 
-class CacheInvalidation,
+class CacheInvalidation,:
     """缓存失效管理"""
     
     def __init__(self, cache_manager, CacheManager):

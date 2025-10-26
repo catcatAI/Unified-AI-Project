@@ -1,29 +1,29 @@
 """磁盘存储实现"""
 
-import os
-import json
-import logging
+from diagnose_base_agent import
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-from .base import Storage, Context, ContextType
+from .base import
 
 logger, Any = logging.getLogger(__name__)
 
 class DiskStorage(Storage):
 ""磁盘存储实现"""
 
-    def __init__(self, storage_dir, str == "./context_storage") -> None,
+    def __init__(self, storage_dir, str == "./context_storage") -> None,:
     self.storage_dir = storage_dir
     # 确保存储目录存在
     os.makedirs(self.storage_dir(), exist_ok == True)
 
-    def _get_context_file_path(self, context_id, str) -> str,
+    def _get_context_file_path(self, context_id, str) -> str,:
     """获取上下文文件路径"""
     return os.path.join(self.storage_dir(), f"{context_id}.json")
 
-    def _context_to_dict(self, context, Context) -> Dict[str, Any]
+    def _context_to_dict(self, context, Context) -> Dict[str, Any]:
     """将Context对象转换为字典"""
-    return {
+    return {}
             "context_id": context.context_id(),
             "context_type": context.context_type.value(),
             "created_at": context.created_at.isoformat(),
@@ -33,14 +33,14 @@ class DiskStorage(Storage):
             "content": context.content(),
             "version": context.version(),
             "tags": context.tags()
-    }
+{    }
 
-    def _dict_to_context(self, data, Dict[str, Any]) -> Context,
+    def _dict_to_context(self, data, Dict[str, Any]) -> Context,:
     """将字典转换为Context对象"""
-    context == Context(
+    context == Context()
             context_id=data["context_id"],
     context_type == ContextType(data["context_type"])
-    )
+(    )
     context.created_at = datetime.fromisoformat(data["created_at"])
     context.updated_at = datetime.fromisoformat(data["updated_at"])
     context.status == ContextType(data["status"])
@@ -50,7 +50,7 @@ class DiskStorage(Storage):
     context.tags = data["tags"]
     return context
 
-    def save_context(self, context, Context) -> bool,
+    def save_context(self, context, Context) -> bool,:
     """保存上下文到磁盘"""
         try,
 
@@ -59,7 +59,7 @@ class DiskStorage(Storage):
             # 将上下文转换为字典并保存为JSON文件
             context_data = self._context_to_dict(context)
 
-            with open(file_path, 'w', encoding == 'utf-8') as f,
+            with open(file_path, 'w', encoding == 'utf-8') as f,:
     json.dump(context_data, f, ensure_ascii == False, indent=2)
 
             logger.debug(f"Context {context.context_id} saved to disk storage at {file_path}")
@@ -68,7 +68,7 @@ class DiskStorage(Storage):
             logger.error(f"Failed to save context {context.context_id} to disk storage, {e}")
             return False
 
-    def load_context(self, context_id, str) -> Optional[Context]
+    def load_context(self, context_id, str) -> Optional[Context]:
     """从磁盘加载上下文"""
         try,
 
@@ -78,7 +78,7 @@ class DiskStorage(Storage):
                 ogger.debug(f"Context {context_id} not found in disk storage")
                 return None
 
-            with open(file_path, 'r', encoding == 'utf-8') as f,
+            with open(file_path, 'r', encoding == 'utf-8') as f,:
     context_data = json.load(f)
 
             context = self._dict_to_context(context_data)
@@ -88,7 +88,7 @@ class DiskStorage(Storage):
             logger.error(f"Failed to load context {context_id} from disk storage, {e}")
             return None
 
-    def delete_context(self, context_id, str) -> bool,
+    def delete_context(self, context_id, str) -> bool,:
     """从磁盘删除上下文"""
         try,
 
@@ -106,7 +106,7 @@ class DiskStorage(Storage):
             logger.error(f"Failed to delete context {context_id} from disk storage, {e}")
             return False
 
-    def list_contexts(self, context_type, Optional[ContextType] = None) -> List[str]
+    def list_contexts(self, context_type, Optional[ContextType] = None) -> List[str]:
     """列出磁盘中的上下文ID"""
         try,
 
@@ -128,7 +128,7 @@ ontext_id == filename[:-5]  # 移除.json后缀()
             logger.error(f"Failed to list contexts from disk storage, {e}")
             return
 
-    def update_context_metadata(self, context_id, str, metadata, Dict[str, Any]) -> bool
+    def update_context_metadata(self, context_id, str, metadata, Dict[str, Any]) -> bool:
     """更新上下文元数据"""
         try,
 
@@ -145,7 +145,7 @@ ontext_id == filename[:-5]  # 移除.json后缀()
             logger.error(f"Failed to update context {context_id} metadata in disk storage, {e}")
             return False
 
-    def get_storage_info(self) -> Dict[str, Any]
+    def get_storage_info(self) -> Dict[str, Any]:
     """获取存储信息"""
         try,
 
@@ -158,11 +158,11 @@ ile_path = os.path.join(self.storage_dir(), filename)
                     total_size += os.path.getsize(file_path)
                     file_count += 1
 
-            return {
+            return {}
                 "total_contexts": file_count,
                 "total_size_bytes": total_size,
                 "storage_dir": self.storage_dir()
-            }
+{            }
         except Exception as e,::
             logger.error(f"Failed to get storage info, {e}")
             return

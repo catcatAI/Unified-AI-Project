@@ -3,21 +3,21 @@ Transformers库兼容性模块
 解决Transformers与Keras 3的兼容性问题
 """
 
-import os
-import logging
+from diagnose_base_agent import
+from tests.tools.test_tool_dispatcher_logging import
 
 # 设置环境变量以解决Keras兼容性问题
 os.environ['TF_USE_LEGACY_KERAS'] = '1'
 
 # 尝试导入tf-keras
 try:
-    import tf_keras as keras
+# TODO: Fix import - module 'tf_keras' not found
     logging.info("Successfully imported tf-keras")
     KERAS_AVAILABLE = True
 except ImportError:
     try:
         # 如果tf-keras不可用,尝试使用tensorflow.keras
-        import tensorflow.keras as keras
+# TODO: Fix import - module 'tensorflow.keras' not found
         logging.info("Using tensorflow.keras")
         KERAS_AVAILABLE = True
     except ImportError:
@@ -32,7 +32,7 @@ def ensure_transformers_compatibility():
     """
     try:
         # 尝试导入Transformers相关模块
-        from transformers import __version__ as transformers_version
+from  import
         logging.info(f"Transformers version: {transformers_version}")
         
         # 检查是否需要特殊处理
@@ -53,7 +53,7 @@ def import_sentence_transformers():
     try:
         # 先确保环境变量已设置
         os.environ['TF_USE_LEGACY_KERAS'] = '1'
-        from sentence_transformers import SentenceTransformer
+# TODO: Fix import - module 'sentence_transformers' not found
         return SentenceTransformer, True
     except (ImportError, ValueError) as e:
         logging.error(f"Could not import SentenceTransformer: {e}")
@@ -65,7 +65,7 @@ def import_transformers_pipeline():
     try:
         # 先确保环境变量已设置
         os.environ['TF_USE_LEGACY_KERAS'] = '1'
-        from transformers import pipeline
+from  import
         return pipeline, True
     except (ImportError, ValueError) as e:
         logging.error(f"Could not import transformers pipeline: {e}")

@@ -55,7 +55,7 @@ class Context:
     
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        return {}
             'context_id': self.context_id,
             'context_type': self.context_type.value,
             'created_at': self.created_at.isoformat(),
@@ -65,14 +65,14 @@ class Context:
             'content': self.content,
             'version': self.version,
             'tags': self.tags
-        }
+{        }
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Context':
         """从字典创建上下文"""
         # 这里可以实现从字典恢复上下文的逻辑
         # 为了简化,暂时返回一个新的上下文实例
-        from .base import ContextType
+from .base import
         context = cls(data['context_id'], ContextType(data['context_type']))
         context.created_at = datetime.fromisoformat(data['created_at'])
         context.updated_at = datetime.fromisoformat(data['updated_at'])

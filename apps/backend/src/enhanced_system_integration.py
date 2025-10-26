@@ -9,10 +9,10 @@ Integrates all major components of the system for end-to-end functionality,::
 - Real-time Monitoring
 """
 
-import logging
-import sys
-import threading
-import time
+from tests.tools.test_tool_dispatcher_logging import
+from system_test import
+# TODO: Fix import - module 'threading' not found
+from enhanced_realtime_monitoring import
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -30,7 +30,7 @@ try,
         stop_self_maintenance,
         get_maintenance_status,
         trigger_emergency_maintenance
-    )
+(    )
     SELF_MAINTENANCE_AVAILABLE == True
 except ImportError as e,::
     logging.warning(f"Self-maintenance system not available, {e}")
@@ -132,7 +132,7 @@ class UnifiedAISystem,:
             "uptime": self._get_uptime(),
             "system_health_score": self.system_health_score(),
             "self_maintenance_available": SELF_MAINTENANCE_AVAILABLE,
-        }
+{        }
         
         # Add self-maintenance status if available,::
         if self.maintenance_manager,::
@@ -180,7 +180,7 @@ class UnifiedAISystem,:
                 return {}
                     "status": "success",
                     "data": self.get_system_status()
-                }
+{                }
             elif request_type == "trigger_maintenance":::
                 return self.trigger_system_maintenance()
             elif request_type == "maintenance_control":::
@@ -204,22 +204,22 @@ class UnifiedAISystem,:
                     "status": "success",
                     "message": "Request processed successfully",
                     "system_status": self.get_system_status()
-                }
+{                }
                 
         except Exception as e,::
             logger.error(f"Error processing request, {e}")
             return {}
                 "status": "error",
                 "message": f"Error processing request, {str(e)}"
-            }
+{            }
 
 # Example usage and testing
 if __name"__main__":::
     # Configure logging
-    logging.basicConfig(,)
+    logging.basicConfig()
     level=logging.INFO(),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+(    )
     
     print("🚀 Testing Enhanced Unified AI System with Self-Maintenance...")
     
@@ -240,7 +240,7 @@ if __name"__main__":::
             {"type": "system_status"}
             {"type": "trigger_maintenance"}
             {"type": "maintenance_control", "action": "status"}
-        ]
+[        ]
         
         for request in test_requests,::
             print(f"\n🧪 Testing request, {request}")

@@ -4,12 +4,12 @@ Unified AI Project - 系統自維護管理器
 整合問題發現、自動修復、測試系統,實現完整的自維護循環
 """
 
-import os
-import sys
-import json
-import time
-import logging
-import threading
+from diagnose_base_agent import
+from system_test import
+from tests.test_json_fix import
+from enhanced_realtime_monitoring import
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'threading' not found
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
@@ -116,7 +116,7 @@ class SystemSelfMaintenanceManager,:
             'tests_passed': 0,
             'last_maintenance_time': None,
             'system_health_score': 1.0()
-        }
+{        }
         
         # 添加問題快取機制
         self.last_discovery_results == None
@@ -154,7 +154,7 @@ class SystemSelfMaintenanceManager,:
         # 日誌格式
         formatter = logging.Formatter()
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
+(        )
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
         
@@ -226,7 +226,7 @@ class SystemSelfMaintenanceManager,:
                     'status': 'simplified',
                     'issues_found': []
                     'system_health': 'unknown'
-                }
+{                }
         return SimplifiedDiscovery(self.logger())
     
     def _create_simplified_fix_system(self):
@@ -241,7 +241,7 @@ class SystemSelfMaintenanceManager,:
                     'status': 'simplified',
                     'repairs_completed': 0,
                     'repairs_failed': 0
-                }
+{                }
         return SimplifiedFix(self.logger())
     
     def _create_simplified_test_system(self):
@@ -257,7 +257,7 @@ class SystemSelfMaintenanceManager,:
                     'tests_run': 0,
                     'tests_passed': 0,
                     'tests_failed': 0
-                }
+{                }
         return SimplifiedTest(self.logger())
     
     def start_self_maintenance(self) -> bool,:
@@ -343,7 +343,7 @@ class SystemSelfMaintenanceManager,:
             # 優先使用增強版檢測引擎
             if hasattr(self, 'detection_engine') and self.detection_engine,::
                 self.logger.info("使用增強版完整檢測引擎...")
-                import asyncio
+# TODO: Fix import - module 'asyncio' not found
                 
                 # 創建新的事件循環(如果在線程中)
                 try,
@@ -353,9 +353,9 @@ class SystemSelfMaintenanceManager,:
                     asyncio.set_event_loop(loop)
                 
                 # 運行異步檢測
-                detection_result = loop.run_until_complete(,)
+                detection_result = loop.run_until_complete()
     self.detection_engine.run_enhanced_complete_detection('.')
-                )
+(                )
                 
                 # 提取問題列表並快取
                 issues = detection_result.get('detection_results', {}).get('issues', [])
@@ -389,7 +389,7 @@ class SystemSelfMaintenanceManager,:
                 
         except Exception as e,::
             self.logger.error(f"問題發現循環錯誤, {e}")
-            import traceback
+# TODO: Fix import - module 'traceback' not found
             self.logger.error(f"詳細錯誤, {traceback.format_exc()}")
         finally,
             self.maintenance_cycle_active == False
@@ -574,9 +574,9 @@ class SystemSelfMaintenanceManager,:
                         loop = asyncio.new_event_loop()
                         asyncio.set_event_loop(loop)
                     
-                    discovery_result = loop.run_until_complete(,)
+                    discovery_result = loop.run_until_complete()
     self.detection_engine.run_enhanced_complete_detection('.')
-                    )
+(                    )
                     
                     issues = discovery_result.get('detection_results', {}).get('issues', [])
                     self.logger.info(f"新發現 {len(issues)} 個問題")
@@ -612,7 +612,7 @@ class SystemSelfMaintenanceManager,:
             'last_maintenance_time': self.last_maintenance_time(),
             'cycle_active': self.maintenance_cycle_active(),
             'emergency_needed': self.emergency_repair_needed()
-        }
+{        }
     
     def trigger_emergency_maintenance(self):
         """手動觸發緊急維護"""
@@ -653,17 +653,17 @@ class SystemSelfMaintenanceManager,:
                             repaired_lines=repaired_lines,
                             issue_type=issue_type,,
     confidence=confidence
-                        )
+(                        )
                         
                         validation_results.append({)}
                             'file': file_path,
                             'validation_result': validation_result,
                             'original_repair': result
-                        })
+{(                        })
             
             # 分析驗證結果
-            valid_repairs == sum(1 for vr in validation_results,:,)
-    if vr['validation_result'].get('overall_success', False)):
+            valid_repairs == sum(1 for vr in validation_results,:)
+(    if vr['validation_result'].get('overall_success', False)):
             total_validated = len(validation_results)
 
             self.logger.info(f"📊 智能驗證完成, {valid_repairs}/{total_validated} 個修復通過二次驗證")
@@ -772,8 +772,8 @@ if __name"__main__":::
             while True,::
                 status = get_maintenance_status()
                 print(f"狀態, 運行中={status['is_running']} ")
-                      f"週期={status['stats']['total_maintenance_cycles']} ",
-    f"修復成功={status['stats']['successful_repairs']}")
+                    f"週期={status['stats']['total_maintenance_cycles']} ",
+(    f"修復成功={status['stats']['successful_repairs']}")
                 time.sleep(30)  # 每30秒報告一次狀態
         except KeyboardInterrupt,::
             print("\n🛑 用戶中斷,停止自維護系統...")

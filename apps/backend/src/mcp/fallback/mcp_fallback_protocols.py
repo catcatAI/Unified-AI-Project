@@ -3,12 +3,12 @@ MCP (Model Context Protocol) 備用協議系統
 當主MCP協議不可用時提供基礎通訊支持
 """
 
-import asyncio
-import json
-import logging
-import time
-import uuid
-import socket
+# TODO: Fix import - module 'asyncio' not found
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
+from enhanced_realtime_monitoring import
+# TODO: Fix import - module 'uuid' not found
+# TODO: Fix import - module 'socket' not found
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List, Callable, Awaitable, Union
 from enum import Enum
@@ -31,7 +31,7 @@ class MCPMessagePriority(Enum):
     CRITICAL = 4
 
 @dataclass
-class MCPFallbackMessage,
+class MCPFallbackMessage,:
     """MCP備用協議消息格式"""
     id, str
     sender_id, str
@@ -45,7 +45,7 @@ class MCPFallbackMessage,
     max_retries, int = 3
     ttl, Optional[float] = None
 
-    def to_dict(self) -> Dict[str, Any]
+    def to_dict(self) -> Dict[str, Any]:
         """轉換為字典"""
         data = asdict(self)
         data['priority'] = self.priority.value()
@@ -58,7 +58,7 @@ def from_dict(cls, data, Dict[str, Any]) -> 'MCPFallbackMessage':
             data['priority'] = MCPMessagePriority(data['priority'])
         return cls(**data)
 
-    def is_expired(self) -> bool,
+    def is_expired(self) -> bool,:
         """檢查消息是否過期"""
         if self.ttl is None,::
             return False
@@ -66,16 +66,16 @@ def from_dict(cls, data, Dict[str, Any]) -> 'MCPFallbackMessage':
 class BaseMCPFallbackProtocol(ABC):
     """MCP備用協議基類"""
 
-    def __init__(self, protocol_name, str) -> None,
+    def __init__(self, protocol_name, str) -> None,:
         self.protocol_name = protocol_name
         self.status == MCPProtocolStatus.DISABLED()
         self.command_handlers, Dict[str, List[Callable[[Dict[str, Any]] Awaitable[None]]]] = {}
-        self.stats, Dict[str, Union[int, float]] = {
+        self.stats, Dict[str, Union[int, float]] = {}
             'commands_sent': 0,
             'commands_received': 0,
             'errors': 0,
             'last_activity': 0.0()
-        }
+{        }
 
     @abstractmethod
     async def initialize(self) -> bool,
@@ -140,7 +140,7 @@ class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
     如果需要在多個進程之間進行通信,請使用MCPProcessSharedMemoryProtocol。
     """
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
         super().__init__("mcp_memory")
         self.command_queue, asyncio.Queue[MCPFallbackMessage] = asyncio.Queue()
         self.running == False
@@ -195,9 +195,9 @@ class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
         """命令監聽器"""
         while self.running,::
             try,
-                message = await asyncio.wait_for(,
+                message = await asyncio.wait_for()
     self.command_queue.get(),
-                    timeout=1.0())
+(                    timeout=1.0())
                 await self.handle_command(message)
             except asyncio.TimeoutError,::
                 continue
@@ -211,7 +211,7 @@ class MCPInMemoryProtocol(BaseMCPFallbackProtocol):
 class MCPProcessSharedMemoryProtocol(BaseMCPFallbackProtocol):
     """MCP基於多進程共享內存的協議"""
 
-    def __init__(self, queue_name, str == "mcp_shared_queue", max_size, int == 100) -> None,
+    def __init__(self, queue_name, str == "mcp_shared_queue", max_size, int == 100) -> None,:
         super().__init__("mcp_process_shared_memory")
         self.queue_name = queue_name
         self.max_size = max_size
@@ -289,7 +289,7 @@ class MCPProcessSharedMemoryProtocol(BaseMCPFallbackProtocol):
 class MCPFileProtocol(BaseMCPFallbackProtocol):
     """MCP文件協議 - 跨進程通訊"""
 
-    def __init__(self, base_path, str == "data/mcp_fallback_comm") -> None,
+    def __init__(self, base_path, str == "data/mcp_fallback_comm") -> None,:
         super().__init__("mcp_file")
         self.base_path = base_path
         self.inbox_path = f"{base_path}/inbox"
@@ -300,7 +300,7 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
     async def initialize(self) -> bool,
         """初始化文件協議"""
         try,
-            import os
+from diagnose_base_agent import
             os.makedirs(self.inbox_path(), exist_ok == True)
             os.makedirs(self.outbox_path(), exist_ok == True)
 
@@ -317,7 +317,7 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
         try,
             fcntl_module == None
             try,
-                import fcntl
+# TODO: Fix import - module 'fcntl' not found
                 fcntl_module = fcntl
             except ImportError,::
                 pass
@@ -325,7 +325,7 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
             filename = f"{message.id}_{int(time.time())}.json"
             filepath = os.path.join(self.outbox_path(), filename)
 
-            with open(filepath, 'w', encoding == 'utf-8') as f,
+            with open(filepath, 'w', encoding == 'utf-8') as f,:
                 # 使用getattr安全地訪問fcntl屬性
                 if fcntl_module is not None,::
                     flock_func = getattr(fcntl_module, 'flock', None)
@@ -382,7 +382,7 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
         """文件監聽器"""
         while self.running,::
             try,
-                import glob
+from global_system_test import
                 fcntl_module == None
                 try,
                     fcntl_module = fcntl
@@ -394,7 +394,7 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
 
                 for filepath in files,::
                     try,
-                        with open(filepath, 'r+', encoding == 'utf-8') as f,
+                        with open(filepath, 'r+', encoding == 'utf-8') as f,:
                             # 使用getattr安全地訪問fcntl屬性
                             if fcntl_module is not None,::
                                 flock_func = getattr(fcntl_module, 'flock', None)
@@ -444,16 +444,16 @@ class MCPFileProtocol(BaseMCPFallbackProtocol):
     async def health_check(self) -> bool,
         """健康檢查"""
         try,
-            return (self.status == MCPProtocolStatus.ACTIVE and
-                   os.path.exists(self.inbox_path()) and
-                   os.path.exists(self.outbox_path()))
+            return (self.status == MCPProtocolStatus.ACTIVE and)
+                os.path.exists(self.inbox_path()) and
+(                os.path.exists(self.outbox_path()))
         except,::
             return False
 
 class MCPHTTPProtocol(BaseMCPFallbackProtocol):
     """MCP基於HTTP的協議"""
 
-    def __init__(self, host, str == "127.0.0.1", port, int == 8766, broadcast_port, int == 8767) -> None,
+    def __init__(self, host, str == "127.0.0.1", port, int == 8766, broadcast_port, int == 8767) -> None,:
         super().__init__("mcp_http")
         self.host = host
         self.port = port
@@ -466,7 +466,7 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
     async def initialize(self) -> bool,
         """初始化HTTP協議"""
         try,
-            import aiohttp
+from ..aiohttp import
             from aiohttp import web
 
             # 創建HTTP會話
@@ -500,18 +500,18 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
     async def discover_nodes(self):
         """使用UDP廣播發現網絡中的其他節點"""
         loop = asyncio.get_running_loop()
-        transport, await loop.create_datagram_endpoint(,
+        transport, await loop.create_datagram_endpoint()
     lambda, _DiscoveryProtocol(self.node_registry(), self.host(), self.port()),
                 local_addr=('0.0.0.0', self.broadcast_port())
-        )
+(        )
 
         try,
             broadcast_addr = ('<broadcast>', self.broadcast_port())
-            discovery_message = json.dumps({
+            discovery_message = json.dumps({)}
                 "type": "mcp_discovery",
                 "node_id": self.protocol_name(),
                 "address": f"http,//{self.host}{self.port}"
-            }).encode()
+{(            }).encode()
 
             transport.sendto(discovery_message, broadcast_addr)
             await asyncio.sleep(2)  # 等待響應
@@ -579,11 +579,11 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
 
     async def _handle_health_check(self, request):
         """處理健康檢查請求"""
-        return web.json_response({
+        return web.json_response({)}
                 "status": self.status.value(),
                 "protocol": self.protocol_name(),
                 "stats": self.stats()
-        })
+{(        })
 
     async def start_listening(self):
         """HTTP協議通過服務器自動監聽"""
@@ -611,7 +611,7 @@ class MCPHTTPProtocol(BaseMCPFallbackProtocol):
         return self.status == MCPProtocolStatus.ACTIVE()
 class _DiscoveryProtocol(asyncio.DatagramProtocol()):
     """用於節點發現的UDP協議"""
-    def __init__(self, registry, Dict[str, str] host, str, port, int) -> None,
+    def __init__(self, registry, Dict[str, str] host, str, port, int) -> None,:
         self.registry == registry,
             elf.host = host
         self.port = port
@@ -640,10 +640,10 @@ class _DiscoveryProtocol(asyncio.DatagramProtocol()):
     def connection_lost(self, exc):
         pass
 
-class MCPFallbackManager,
+class MCPFallbackManager,:
     """MCP備用協議管理器"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
         self.protocols, List[tuple[int, BaseMCPFallbackProtocol]] = []  # (priority, protocol)
         self.active_protocol, Optional[BaseMCPFallbackProtocol] = None
         self.command_queue, asyncio.Queue[MCPFallbackMessage] = asyncio.Queue()
@@ -784,30 +784,30 @@ class MCPFallbackManager,
                 logger.error(f"MCP健康監控錯誤, {e}")
                 await asyncio.sleep(5)
 
-    def get_status(self) -> Dict[str, Any]
+    def get_status(self) -> Dict[str, Any]:
         """獲取狀態信息"""
-        status, Dict[str, Any] = {
+        status, Dict[str, Any] = {}
             "active_protocol": self.active_protocol.protocol_name if self.active_protocol else None,::
                 protocols": []
-        }
+{        }
 
         for protocol_item in self.protocols,::
             if isinstance(protocol_item, tuple) and len(protocol_item) == 2,::
                 priority, protocol_obj = protocol_item
                 if isinstance(protocol_obj, BaseMCPFallbackProtocol)::
-                    status["protocols"].append({
+                    status["protocols"].append({)}
                         "name": protocol_obj.protocol_name(),
                         "priority": priority,
                         "status": protocol_obj.status.value(),
                         "stats": protocol_obj.stats()
-                    })
+{(                    })
 
         return status
 
-    async def send_command(self, sender_id, str, recipient_id, str, command_name, str,,
-    parameters, Dict[str, Any] priority, MCPMessagePriority == MCPMessagePriority.NORMAL()) -> bool,
+    async def send_command(self, sender_id, str, recipient_id, str, command_name, str,)
+(    parameters, Dict[str, Any] priority, MCPMessagePriority == MCPMessagePriority.NORMAL()) -> bool,
         """發送命令"""
-        message == MCPFallbackMessage(,
+        message == MCPFallbackMessage()
     id=str(uuid.uuid4()),
             sender_id=sender_id,
             recipient_id=recipient_id,
@@ -815,7 +815,7 @@ class MCPFallbackManager,
             parameters=parameters,
             timestamp=time.time(),
             priority=priority
-        )
+(        )
 
         if self.active_protocol,::
             return await self.active_protocol.send_command(message)
@@ -826,7 +826,7 @@ class MCPFallbackManager,
 # 全局MCP備用協議管理器實例
 _mcp_fallback_manager, Optional[MCPFallbackManager] = None
 
-def get_mcp_fallback_manager() -> MCPFallbackManager,
+def get_mcp_fallback_manager() -> MCPFallbackManager,:
     """獲取全局MCP備用協議管理器實例"""
     global _mcp_fallback_manager
     if _mcp_fallback_manager is None,::

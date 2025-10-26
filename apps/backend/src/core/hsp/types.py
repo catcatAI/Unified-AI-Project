@@ -71,7 +71,7 @@ class HSPRoutingInfo(TypedDict, total=False):
     final_destination_ai_id: str
 
 
-class HSPMessageEnvelope(TypedDict):  # total=True by default, all keys are required
+class HSPMessageEnvelope(TypedDict):  # total=True by default, all keys are required:
     hsp_envelope_version: str
     message_id: str  # UUID
     correlation_id: Optional[str]  # UUID
@@ -80,14 +80,14 @@ class HSPMessageEnvelope(TypedDict):  # total=True by default, all keys are requ
     timestamp_sent: str  # ISO 8601 UTC
     message_type: str  # e.g., "HSP::Fact_v0.1"
     protocol_version: str  # HSP specification version
-    communication_pattern: Literal[
+    communication_pattern: Literal[]
         "publish", "request", "response",
         "stream_data", "stream_ack",
         "acknowledgement", "negative_acknowledgement",
         "broadcast", "multicast", "unicast",
         "notification", "event", "command",
         "query", "reply"
-    ]
+[    ]
     security_parameters: Optional[HSPSecurityParameters]
     qos_parameters: Optional[HSPQoSParameters]
     routing_info: Optional[HSPRoutingInfo]
@@ -102,7 +102,7 @@ class HSPMessageEnvelope(TypedDict):  # total=True by default, all keys are requ
 # Other payload types from HSP_SPECIFICATION.md would be defined here similarly:
 # HSPBeliefPayload, HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, etc.
 # For now, HSPFactPayload is the primary one for Step 1.2.:
-class HSPBeliefPayload(HSPFactPayload, total=False):  # Inherits from HSPFactPayload, most fields are similar
+class HSPBeliefPayload(HSPFactPayload, total=False):  # Inherits from HSPFactPayload, most fields are similar:
     belief_holder_ai_id: str  # Required, defaults to source_ai_id if not specified by sender:
     justification_type: Optional[Literal["text", "inference_chain_id", "evidence_ids_list"]]
     justification: Optional[str | List[str]]  # Text, or ID, or list of IDs
@@ -178,7 +178,7 @@ class HSPTask(TypedDict, total=False):
     timeout: Optional[int]
 
 
-class HSPEnvironmentalStatePayload(TypedDict, total=False):  # Also known as ContextUpdate
+class HSPEnvironmentalStatePayload(TypedDict, total=False):  # Also known as ContextUpdate:
     update_id: str  # Required, UUID
     source_ai_id: str  # Required, DID or URI
     phenomenon_type: str  # Required, URI/namespaced string (e.g., "hsp:event:UserMoodShift")

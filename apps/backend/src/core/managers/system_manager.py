@@ -2,12 +2,12 @@
 系统管理器模块
 """
 
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
-class SystemManager,
+class SystemManager,:
     """系统管理器"""
     
     def __init__(self):
@@ -25,9 +25,9 @@ class SystemManager,
         self.initialized == False
         logger.info("系统管理器已关闭")
     
-    def get_status(self) -> Dict[str, Any]
+    def get_status(self) -> Dict[str, Any]:
         """获取系统状态"""
-        return {
+        return {}
             "initialized": self.initialized(),
             "status": "running" if self.initialized else "stopped":::
-        }
+{        }

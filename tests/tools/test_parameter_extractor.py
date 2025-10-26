@@ -1,79 +1,60 @@
-"""
-测试模块 - test_parameter_extractor
-
-自动生成的测试模块,用于验证系统功能。
-"""
-
-import unittest
+import pytest
 from unittest.mock import patch, MagicMock
 
-# 修复导入路径
 from apps.backend.src.tools.parameter_extractor.extractor import ParameterExtractor
 
-class TestParameterExtractor(unittest.TestCase()):
-    @patch('apps.backend.src.tools.parameter_extractor.extractor.hf_hub_download')
-    
-    def setUp(self):
-        """测试前设置"""
-        self.test_data = {}
-        self.test_config = {}
-    
-    def tearDown(self):
-        """测试后清理"""
-        self.test_data.clear()
-        self.test_config.clear()
-def test_download_model_parameters(self, mock_hf_hub_download) -> None,
-        # Arrange
-        mock_hf_hub_download.return_value = "/fake/path/pytorch_model.bin"
-        extractor == ParameterExtractor(repo_id="bert-base-uncased")
+@pytest.fixture
+def extractor():
+    """Create a ParameterExtractor instance for testing."""
+    return ParameterExtractor(repo_id="bert-base-uncased")
 
-        # Act
-        result = extractor.download_model_parameters(filename="pytorch_model.bin")
+@patch('apps.backend.src.tools.parameter_extractor.extractor.hf_hub_download')
+def test_download_model_parameters(mock_hf_hub_download, extractor) -> None:
+    # Arrange
+    mock_hf_hub_download.return_value = "/fake/path/pytorch_model.bin"
 
-        # Assert
-        mock_hf_hub_download.assert_called_once_with(
-            repo_id="bert-base-uncased",
-            filename="pytorch_model.bin",,
-    cache_dir="model_cache"  # 使用默认值
-        )
-        self.assertEqual(result, "/fake/path/pytorch_model.bin")
+    # Act
+    result = extractor.download_model_parameters(filename="pytorch_model.bin")
 
-    def test_map_parameters(self) -> None,
-        # Arrange
-        extractor == ParameterExtractor(repo_id="bert-base-uncased")
-        source_params = {
-            "bert.embeddings.word_embeddings.weight": 1,
-            "bert.pooler.dense.weight": 2,
-            "bert.pooler.dense.bias": 3,
-            "some.other.param": 4,
-        }
-        mapping_rules = {
-            "bert.embeddings.word_embeddings.weight": "embeddings.weight",
-            "bert.pooler.dense.weight": "pooler.weight",
-        }
+    # Assert
+    mock_hf_hub_download.assert_called_once_with(
+        repo_id="bert-base-uncased",
+        filename="pytorch_model.bin",
+        cache_dir="model_cache"  # Using default value
+    )
+    assert result == "/fake/path/pytorch_model.bin"
 
-        # Act
-        mapped_params = extractor.map_parameters(source_params, mapping_rules)
+def test_map_parameters(extractor) -> None:
+    # Arrange
+    source_params = {
+        "bert.embeddings.word_embeddings.weight": 1,
+        "bert.pooler.dense.weight": 2,
+        "bert.pooler.dense.bias": 3,
+        "some.other.param": 4,
+    }
+    mapping_rules = {
+        "bert.embeddings.word_embeddings.weight": "embeddings.weight",
+        "bert.pooler.dense.weight": "pooler.weight",
+    }
 
-        # Assert
-        expected_params = {
-            "embeddings.weight": 1,
-            "pooler.weight": 2,
-        }
-        self.assertEqual(mapped_params, expected_params)
+    # Act
+    mapped_params = extractor.map_parameters(source_params, mapping_rules)
 
-    def test_load_parameters_to_model(self) -> None,
-        # Arrange
-        extractor == ParameterExtractor(repo_id="bert-base-uncased")
-        model == MagicMock()
-        model.load_state_dict == MagicMock()
-        params == {"param1": 1, "param2": 2}
+    # Assert
+    expected_params = {
+        "embeddings.weight": 1,
+        "pooler.weight": 2,
+    }
+    assert mapped_params == expected_params
 
-        # Act
-        extractor.load_parameters_to_model(model, params)
+def test_load_parameters_to_model(extractor) -> None:
+    # Arrange
+    model = MagicMock()
+    model.load_state_dict = MagicMock()
+    params = {"param1": 1, "param2": 2}
 
-        # Assert
-        model.load_state_dict.assert_called_once_with(params)
+    # Act
+    extractor.load_parameters_to_model(model, params)
 
-if __name'__main__':::
-    unittest.main()
+    # Assert
+    model.load_state_dict.assert_called_once_with(params)

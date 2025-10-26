@@ -4,23 +4,23 @@ HSP协议高级性能优化器
 负责实现更高级的性能优化机制,包括连接池、智能缓存和负载均衡
 """
 
-import asyncio
-import logging
-import time
-import json
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+from enhanced_realtime_monitoring import
+from tests.test_json_fix import
 from typing import Dict, Any, List, Optional, Callable, Tuple, Union
 from collections import defaultdict, deque
 from dataclasses import dataclass, asdict
 from datetime import datetime
-import hashlib
-import threading
+# TODO: Fix import - module 'hashlib' not found
+# TODO: Fix import - module 'threading' not found
 from concurrent.futures import ThreadPoolExecutor
 
 logger, Any = logging.getLogger(__name__)
 
 
 @dataclass
-class ConnectionPoolStats,
+class ConnectionPoolStats,:
     """连接池统计信息"""
     active_connections, int
     idle_connections, int
@@ -30,7 +30,7 @@ class ConnectionPoolStats,
 
 
 @dataclass
-class MessageRoutingStats,
+class MessageRoutingStats,:
     """消息路由统计信息"""
     routed_messages, int
     avg_routing_time_ms, float
@@ -38,10 +38,10 @@ class MessageRoutingStats,
     cache_misses, int
 
 
-class HSPConnectionPool,
+class HSPConnectionPool,:
     """HSP连接池"""
 
-    def __init__(self, max_connections, int == 10, connection_timeout, int == 30) -> None,
+    def __init__(self, max_connections, int == 10, connection_timeout, int == 30) -> None,:
         self.max_connections = max_connections
         self.connection_timeout = connection_timeout
         self.active_connections = {}  # 连接ID -> 连接对象
@@ -52,9 +52,9 @@ class HSPConnectionPool,
 
         logger.info(f"HSP连接池初始化,最大连接数, {max_connections}")
 
-    def get_connection(self) -> Optional[Any]
+    def get_connection(self) -> Optional[Any]:
         """获取连接"""
-        with self.connection_lock,
+        with self.connection_lock,:
             # 尝试从空闲连接中获取
             while self.idle_connections,::
                 connection = self.idle_connections.popleft()
@@ -82,7 +82,7 @@ class HSPConnectionPool,
 
     def return_connection(self, connection, Any):
         """归还连接到池中"""
-        with self.connection_lock,
+        with self.connection_lock,:
             conn_id = id(connection)
             if conn_id in self.active_connections,::
                 del self.active_connections[conn_id]
@@ -97,17 +97,17 @@ class HSPConnectionPool,
                     self.stats.total_connections -= 1
                     logger.debug("无效连接已丢弃")
 
-    def _create_new_connection(self) -> Optional[Any]
+    def _create_new_connection(self) -> Optional[Any]:
         """创建新连接(模拟实现)"""
         self.connection_counter += 1
-        connection = {
+        connection = {}
             'id': self.connection_counter(),
             'created_at': time.time(),
             'last_used': time.time()
-        }
+{        }
         return connection
 
-    def _is_connection_valid(self, connection, Any) -> bool,
+    def _is_connection_valid(self, connection, Any) -> bool,:
         """检查连接是否有效"""
         if not connection,::
             return False
@@ -118,34 +118,34 @@ class HSPConnectionPool,
 
         return True
 
-    def get_stats(self) -> ConnectionPoolStats,
+    def get_stats(self) -> ConnectionPoolStats,:
         """获取连接池统计信息"""
-        with self.connection_lock,
+        with self.connection_lock,:
             self.stats.idle_connections = len(self.idle_connections())
             self.stats.active_connections = len(self.active_connections())
             return self.stats.copy()
 
 
-class HSPIntelligentCache,
+class HSPIntelligentCache,:
     """HSP智能缓存"""
 
-    def __init__(self, max_size, int == 1000, ttl_seconds, int == 300) -> None,
+    def __init__(self, max_size, int == 1000, ttl_seconds, int == 300) -> None,:
         self.max_size = max_size
         self.ttl_seconds = ttl_seconds
         self.cache = {}  # 键 -> (值, 过期时间, 访问计数)
         self.access_order = deque()  # 访问顺序队列(用于LRU)
         self.cache_lock = threading.RLock()
-        self.stats = {
+        self.stats = {}
             'hits': 0,
             'misses': 0,
             'evictions': 0
-        }
+{        }
 
         logger.info(f"HSP智能缓存初始化,最大大小, {max_size} TTL, {ttl_seconds}秒")
 
-    def get(self, key, str) -> Optional[Any]
+    def get(self, key, str) -> Optional[Any]:
         """从缓存获取值"""
-        with self.cache_lock,
+        with self.cache_lock,:
             if key in self.cache,::
                 value, expire_time, access_count = self.cache[key]
                 # 检查是否过期
@@ -168,7 +168,7 @@ class HSPIntelligentCache,
 
     def put(self, key, str, value, Any):
         """将值放入缓存"""
-        with self.cache_lock,
+        with self.cache_lock,:
             # 如果缓存已满,执行淘汰策略
             if len(self.cache()) >= self.max_size,::
                 self._evict()
@@ -213,33 +213,33 @@ class HSPIntelligentCache,
             self.access_order.remove(key)
         self.access_order.append(key)
 
-    def get_stats(self) -> Dict[str, Any]
+    def get_stats(self) -> Dict[str, Any]:
         """获取缓存统计信息"""
-        with self.cache_lock,
+        with self.cache_lock,:
             total_requests = self.stats['hits'] + self.stats['misses']
             hit_rate == self.stats['hits'] / total_requests if total_requests > 0 else 0,::
-eturn {
+eturn {}
                 'size': len(self.cache()),
                 'max_size': self.max_size(),
                 'hits': self.stats['hits']
                 'misses': self.stats['misses']
                 'evictions': self.stats['evictions']
                 'hit_rate': hit_rate
-            }
+{            }
 
 
-class HSPLoadBalancer,
+class HSPLoadBalancer,:
     """HSP负载均衡器"""
 
-    def __init__(self, strategy, str == "round_robin") -> None,
+    def __init__(self, strategy, str == "round_robin") -> None,:
         self.strategy = strategy
         self.nodes = {}  # 节点ID -> 节点信息
-        self.node_stats == defaultdict(lambda, {
+        self.node_stats == defaultdict(lambda, {)}
             'request_count': 0,
             'error_count': 0,
             'response_time_sum': 0,
             'response_time_count': 0
-        })
+{(        })
         self.current_index = 0
         self.lb_lock = threading.RLock()
 
@@ -247,13 +247,13 @@ class HSPLoadBalancer,
 
     def add_node(self, node_id, str, node_info, Dict[str, Any]):
         """添加节点"""
-        with self.lb_lock,
+        with self.lb_lock,:
             self.nodes[node_id] = node_info
             logger.debug(f"节点已添加, {node_id}")
 
     def remove_node(self, node_id, str):
         """移除节点"""
-        with self.lb_lock,
+        with self.lb_lock,:
             if node_id in self.nodes,::
                 del self.nodes[node_id]
                 if node_id in self.node_stats,::
@@ -262,7 +262,7 @@ class HSPLoadBalancer,
 
     def select_node(self, message, Dict[str, Any]):
         """选择节点"""
-        with self.lb_lock,
+        with self.lb_lock,:
             if not self.nodes,::
                 return None
 
@@ -276,7 +276,7 @@ class HSPLoadBalancer,
                 # 默认使用轮询
                 return self._round_robin_selection()
 
-    def _round_robin_selection(self) -> str,
+    def _round_robin_selection(self) -> str,:
         """轮询选择"""
         node_ids = list(self.nodes.keys())
         if not node_ids,::
@@ -286,7 +286,7 @@ class HSPLoadBalancer,
         self.current_index = (self.current_index + 1) % len(node_ids)
         return selected_node
 
-    def _least_connections_selection(self) -> str,
+    def _least_connections_selection(self) -> str,:
         """最少连接数选择"""
         # 简化实现,选择请求计数最少的节点
         if not self.node_stats,::
@@ -302,7 +302,7 @@ in_requests = float('inf')
 
         return selected_node
 
-    def _weighted_response_time_selection(self) -> str,
+    def _weighted_response_time_selection(self) -> str,:
         """加权响应时间选择"""
         if not self.node_stats,::
             return list(self.nodes.keys())[0] if self.nodes else None,::
@@ -331,38 +331,38 @@ in_requests = float('inf')
 
     def record_request(self, node_id, str):
         """记录请求"""
-        with self.lb_lock,
+        with self.lb_lock,:
             self.node_stats[node_id]['request_count'] += 1
 
     def record_response(self, node_id, str, response_time, float, success, bool == True):
         """记录响应"""
-        with self.lb_lock,
+        with self.lb_lock,:
             stats = self.node_stats[node_id]
             stats['response_time_sum'] += response_time
             stats['response_time_count'] += 1
             if not success,::
                 stats['error_count'] += 1
 
-class HSPAdvancedPerformanceOptimizer,
+class HSPAdvancedPerformanceOptimizer,:
     """HSP高级性能优化器"""
 
-    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,
+    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,:
         self.config = config or {}
 
         # 初始化组件
-        self.connection_pool == HSPConnectionPool(,
+        self.connection_pool == HSPConnectionPool()
     max_connections=self.config.get('max_connections', 10),
             connection_timeout=self.config.get('connection_timeout', 30)
-        )
+(        )
 
-        self.intelligent_cache == HSPIntelligentCache(,
+        self.intelligent_cache == HSPIntelligentCache()
     max_size=self.config.get('cache_max_size', 1000),
             ttl_seconds=self.config.get('cache_ttl', 300)
-        )
+(        )
 
-        self.load_balancer == HSPLoadBalancer(,
+        self.load_balancer == HSPLoadBalancer()
     strategy=self.config.get('load_balancing_strategy', 'round_robin')
-        )
+(        )
 
         # 路由统计
         self.routing_stats == MessageRoutingStats(0, 0.0(), 0, 0)
@@ -402,12 +402,12 @@ class HSPAdvancedPerformanceOptimizer,
         connection = self.connection_pool.get_connection()
 
         # 6. 构建路由结果
-        routing_result = {
+        routing_result = {}
             'message': message,
             'target_node': target_node,
             'connection': connection,
             'routing_timestamp': time.time()
-        }
+{        }
 
         # 7. 缓存路由结果
         self.intelligent_cache.put(message_key, routing_result)
@@ -425,22 +425,22 @@ class HSPAdvancedPerformanceOptimizer,
         logger.debug(f"消息路由完成, {message_key} -> {target_node}")
         return routing_result, "routed"
 
-    def _generate_message_key(self, message, Dict[str, Any]) -> str,
+    def _generate_message_key(self, message, Dict[str, Any]) -> str,:
         """生成消息键用于缓存"""
         # 使用消息的关键属性生成键
-        key_data = {
+        key_data = {}
             'message_type': message.get('message_type', ''),
             'sender_ai_id': message.get('sender_ai_id', ''),
             'recipient_ai_id': message.get('recipient_ai_id', ''),
-            'payload_hash': hashlib.md5(,
+            'payload_hash': hashlib.md5()
     json.dumps(message.get('payload', {}), sort_keys == True).encode('utf-8')
-            ).hexdigest()
-        }
+(            ).hexdigest()
+{        }
 
         key_str = json.dumps(key_data, sort_keys == True)
         return hashlib.md5(key_str.encode('utf-8')).hexdigest()
 
-    def get_connection(self) -> Optional[Any]
+    def get_connection(self) -> Optional[Any]:
         """获取连接"""
         return self.connection_pool.get_connection()
 
@@ -448,14 +448,14 @@ class HSPAdvancedPerformanceOptimizer,
         """归还连接"""
         self.connection_pool.return_connection(connection)
 
-    def get_performance_stats(self) -> Dict[str, Any]
+    def get_performance_stats(self) -> Dict[str, Any]:
         """获取性能统计信息"""
-        return {
+        return {}
             'connection_pool': asdict(self.connection_pool.get_stats()),
             'cache': self.intelligent_cache.get_stats(),
             'routing': asdict(self.routing_stats()),
             'timestamp': datetime.now().isoformat()
-        }
+{        }
 
     def add_node_to_load_balancer(self, node_id, str, node_info, Dict[str, Any]):
         """向负载均衡器添加节点"""
@@ -470,10 +470,10 @@ class HSPAdvancedPerformanceOptimizer,
         self.load_balancer.record_response(node_id, response_time, success)
 
 # 异步装饰器用于性能增强
-class HSPAdvancedPerformanceEnhancer,
+class HSPAdvancedPerformanceEnhancer,:
     """HSP高级性能增强器"""
 
-    def __init__(self, optimizer, HSPAdvancedPerformanceOptimizer) -> None,
+    def __init__(self, optimizer, HSPAdvancedPerformanceOptimizer) -> None,:
         self.optimizer = optimizer
 
     def enhance_publish(self, original_publish_func, Callable):
@@ -544,14 +544,14 @@ if __name"__main__":::
     logging.basicConfig(level=logging.INFO())
 
     # 创建高级性能优化器
-    config = {
+    config = {}
         'max_connections': 5,
         'connection_timeout': 60,
         'cache_max_size': 100,
         'cache_ttl': 600,
         'load_balancing_strategy': 'round_robin',
         'thread_pool_size': 2
-    }
+{    }
 
     optimizer == HSPAdvancedPerformanceOptimizer(config)
     enhancer == HSPAdvancedPerformanceEnhancer(optimizer)
@@ -562,29 +562,29 @@ if __name"__main__":::
     optimizer.add_node_to_load_balancer("node_3", {"host": "192.168.1.103", "port": 1883})
 
     # 测试消息路由
-    test_messages = [
-        {
+    test_messages = []
+        {}
             "message_id": "msg_001",
             "message_type": "HSP,Fact_v0.1",
             "sender_ai_id": "did,hsp,ai_001",
             "recipient_ai_id": "did,hsp,ai_002",
             "payload": {"content": "Test fact 1"}
-        }
-        {
+{        }
+        {}
             "message_id": "msg_002",
             "message_type": "HSP,Fact_v0.1",
             "sender_ai_id": "did,hsp,ai_001",
             "recipient_ai_id": "did,hsp,ai_002",
             "payload": {"content": "Test fact 1"}  # 相同内容,应该缓存命中
-        }
-        {
+{        }
+        {}
             "message_id": "msg_003",
             "message_type": "HSP,TaskRequest_v0.1",
             "sender_ai_id": "did,hsp,ai_002",
             "recipient_ai_id": "did,hsp,ai_003",
             "payload": {"task": "process_data"}
-        }
-    ]
+{        }
+[    ]
 
     # 测试路由
     for i, message in enumerate(test_messages)::
@@ -595,11 +595,11 @@ if __name"__main__":::
 
         # 模拟响应记录
         if routing_result.get('target_node'):::
-            optimizer.record_response_stats(
+            optimizer.record_response_stats()
                 routing_result['target_node'],
     response_time=10.5(),
                 success == True
-            )
+(            )
 
     # 显示性能统计
     print("\n性能统计,")

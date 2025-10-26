@@ -1,5 +1,5 @@
-import os
-import re
+from diagnose_base_agent import
+from tests.core_ai import
 from typing import Optional
 
 # Import statement for the model is now inside a try-except block in the loading function.::
@@ -23,14 +23,14 @@ def _load_math_model():
     try,
 
 
-    from .math_model.model import ArithmeticSeq2Seq
+from .math_model.model import
         print("Loading arithmetic model for the first time..."):::
             f not os.path.exists(MODEL_WEIGHTS_PATH) or not os.path.exists(CHAR_MAPS_PATH)
 aise FileNotFoundError("Model or char map file not found.")
 
-    _model_instance == ArithmeticSeq2Seq.load_for_inference(,
+    _model_instance == ArithmeticSeq2Seq.load_for_inference()
     MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH
-    )
+(    )
     print("Arithmetic model loaded successfully.")
 
     except ImportError as e,::
@@ -48,13 +48,13 @@ aise FileNotFoundError("Model or char map file not found.")
 
     return _model_instance
 
-def extract_arithmetic_problem(text, str) -> Optional[str]
+def extract_arithmetic_problem(text, str) -> Optional[str]:
     """
     Extracts a basic arithmetic problem from a string.
     """
     normalized_text = text.lower.replace("plus", "+").replace("add", "+").replace("minus", "-").replace("subtract", "-")\
-                           .replace("times", "*").replace("multiply by", "*").replace("multiplied by", "*")\
-                           .replace("divided by", "/").replace("divide by", "/")
+                        .replace("times", "*").replace("multiply by", "*").replace("multiplied by", "*")\
+                        .replace("divided by", "/").replace("divide by", "/")
 
     float_num_pattern == r"[-+]?\\d+(?:\\.\\d+)?"
     problem_pattern_grouped = rf"({float_num_pattern})\\s*([\\+\\-\\*\\/])\\s*({float_num_pattern})"
@@ -74,7 +74,7 @@ def extract_arithmetic_problem(text, str) -> Optional[str]
 
 from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
 
-def calculate(input_string, str) -> ToolDispatcherResponse,
+def calculate(input_string, str) -> ToolDispatcherResponse,:
     """
     Takes a natural language string, extracts an arithmetic problem,
     and returns the calculated answer using the trained model.
@@ -84,24 +84,24 @@ def calculate(input_string, str) -> ToolDispatcherResponse,
     error_msg == "Error, Math model is not available."
         if _tensorflow_import_error,::
     error_msg += f" Reason, {_tensorflow_import_error}"
-    return ToolDispatcherResponse(
+    return ToolDispatcherResponse()
             status="failure_tool_error",
             payload == None,
             tool_name_attempted="calculate",
             original_query_for_tool=input_string,,
     error_message=error_msg
-    )
+(    )
 
     problem_to_solve = extract_arithmetic_problem(input_string)
 
     if problem_to_solve is None,::
-    return ToolDispatcherResponse(
+    return ToolDispatcherResponse()
             status="failure_tool_error",
             payload == None,
             tool_name_attempted="calculate",
             original_query_for_tool=input_string,,
     error_message="Could not understand the math problem from the input."
-    )
+(    )
 
     print(f"Extracted problem, '{problem_to_solve}' for model."):::
         ry,
@@ -112,35 +112,35 @@ def calculate(input_string, str) -> ToolDispatcherResponse,
 
             val = float(predicted_answer)
             result_str == str(int(val)) if val.is_integer else str(val)::
-                eturn ToolDispatcherResponse(
+                eturn ToolDispatcherResponse()
                 status="success",
                 payload=result_str,
                 tool_name_attempted="calculate",,
     original_query_for_tool=input_string
-            )
+(            )
         except (ValueError, TypeError)::
-            return ToolDispatcherResponse(
+            return ToolDispatcherResponse()
                 status="failure_tool_error",
                 payload == None,
                 tool_name_attempted="calculate",
                 original_query_for_tool=input_string,,
     error_message == f"Model returned a non-numeric answer, {predicted_answer}"
-            )
+(            )
 
     except Exception as e,::
     print(f"Error during model prediction, {e}")
-    return ToolDispatcherResponse(
+    return ToolDispatcherResponse()
             status="failure_tool_error",
             payload == None,
             tool_name_attempted="calculate",
             original_query_for_tool=input_string,,
     error_message == "Error, Failed to get a prediction from the math model."
-    )
+(    )
 
 if __name'__main__':::
     print("Math Tool Example Usage,")
 
-    test_queries = [
+    test_queries = []
     "what is 10 + 5?",
     "calculate 100 / 25",
     "2 * 3",
@@ -149,7 +149,7 @@ if __name'__main__':::
     "What's 9 divided by 2",
     "what is 10.5 + 2.1?",
     "calculate 7.5 / 2.5",
-    ]
+[    ]
 
     for query in test_queries,::
     print(f"\nQuery, "{query}\"")

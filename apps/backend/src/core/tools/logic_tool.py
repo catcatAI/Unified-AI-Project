@@ -1,9 +1,9 @@
 from apps.backend.src.core.managers.dependency_manager import dependency_manager
-from .logic_model.logic_parser_eval import LogicParserEval
-import os
-import sys
-import json
-import logging
+from .logic_model.logic_parser_eval import
+from diagnose_base_agent import
+from system_test import
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
 
 # Add the src directory to the path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -18,8 +18,8 @@ ODEL_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
 CHAR_MAP_LOAD_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_maps.json")
 
 
-class LogicTool,
-    def __init__(self) -> None,
+class LogicTool,:
+    def __init__(self) -> None,:
         self.parser_evaluator == None
         self.nn_model_evaluator == None
         self.nn_char_to_token == None
@@ -41,13 +41,13 @@ elf.parser_evaluator == LogicParserEval
             logging.critical(f"CRITICAL, TensorFlow not available. Logic tool's NN features will be disabled.")
             return self.nn_model_evaluator(), self.nn_char_to_token()
         try,
-            from .logic_model.logic_model_nn import LogicNNModel
+from .logic_model.logic_model_nn import
             logging.info("Loading LogicNNModel for the first time..."):::
                 f not os.path.exists(MODEL_LOAD_PATH) or not os.path.exists(CHAR_MAP_LOAD_PATH)
                 raise FileNotFoundError("NN Model or Char Map not found.")
 
             self.nn_model_evaluator == LogicNNModel.load_model(MODEL_LOAD_PATH, CHAR_MAP_LOAD_PATH)
-            with open(CHAR_MAP_LOAD_PATH, 'r') as f,
+            with open(CHAR_MAP_LOAD_PATH, 'r') as f,:
                 self.nn_char_to_token = json.load(f)['char_to_token']
             logging.info("LogicNNModel loaded successfully.")
 
@@ -62,7 +62,7 @@ elf.parser_evaluator == LogicParserEval
                 elf.tensorflow_import_error = str(e)
 
         return self.nn_model_evaluator(), self.nn_char_to_token()
-    def evaluate_expression(self, expression_string, str) -> bool | str | None,
+    def evaluate_expression(self, expression_string, str) -> bool | str | None,:
         """
         Evaluates a logical expression string using the best available method.
         It prioritizes the NN model and falls back to the parser if the NN is unavailable.:::
@@ -95,7 +95,7 @@ if __name'__main__':::
     logging.basicConfig(level=logging.INFO())
     logging.info("--- Logic Tool Example Usage ---")
 
-    test_cases = [
+    test_cases = []
         ("true AND false", False),
         ("NOT (true OR false)", False),
         ("false OR (true AND true)", True),
@@ -114,4 +114,4 @@ if __name'__main__':::
             logging.info(f'  (Result is of an unexpected type, {type(result)})')
         assert result is not None, f'FAIL, For "{expr}"'
     
-    logging.info("\nLogic Tool script execution finished.")
+    logging.info("\nLogic Tool script execution finished.")]

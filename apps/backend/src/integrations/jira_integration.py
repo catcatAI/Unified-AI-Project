@@ -4,15 +4,15 @@ Jira Integration Module
 Handles Jira API interactions for the AI system,::
 ""
 
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any, Optional, List
-from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+from .enhanced_rovo_dev_connector import
 
 logger, Any = logging.getLogger(__name__)
 
-class JiraIntegration,
+class JiraIntegration,:
     """Jira Integration for AI system""":::
-    def __init__(self, connector, EnhancedRovoDevConnector) -> None,
+    def __init__(self, connector, EnhancedRovoDevConnector) -> None,:
     """Initialize Jira integration
 
     Args,
@@ -25,11 +25,11 @@ class JiraIntegration,
     self.user_email = connector.user_email()
     self.cloud_id = connector.cloud_id()
         # Headers for API requests,::
-            elf.headers = {
+            elf.headers = {}
             'Accept': 'application/json',
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.api_token}'
-    }
+{    }
 
     logger.info("JiraIntegration initialized")
 
@@ -44,35 +44,35 @@ class JiraIntegration,
             if not self.session,::
     await self.connector.start()
             url = f"{self.base_url}/project/search"
-            params = {
+            params = {}
                 'maxResults': 100,
                 'expand': 'description,lead,issueTypes'
-            }
+{            }
 
             async with self.connector.semaphore,
     async with self.session.get(url, headers == self.headers(), params=params) as response,
     if response.status == 200,::
     data = await response.json()
-                        return {
+                        return {}
                             "success": True,
                             "projects": data.get('values'),
                             "count": len(data.get('values')),
                             "total": data.get('total', 0)
-                        }
+{                        }
                     else,
 
                         error_text = await response.text()
                         logger.error(f"Failed to get projects, {response.status} - {error_text}")
-                        return {
+                        return {}
                             "success": False,
                             "error": f"HTTP {response.status} {error_text}"
-                        }
+{                        }
         except Exception as e,::
             logger.error(f"Error getting Jira projects, {e}")
-            return {
+            return {}
                 "success": False,
                 "error": str(e)
-            }
+{            }
 
     async def get_project_by_key(self, project_key, str) -> Dict[str, Any]
     """Get a specific Jira project by key
@@ -88,20 +88,20 @@ class JiraIntegration,
             if not self.session,::
     await self.connector.start()
             url = f"{self.base_url}/project/{project_key}"
-            params = {
+            params = {}
                 'expand': 'description,lead,issueTypes'
-            }
+{            }
 
             async with self.connector.semaphore,
     async with self.session.get(url, headers == self.headers(), params=params) as response,
     if response.status == 200,::
     data = await response.json()
-                        return {
+                        return {}
                             "success": True,
                             "project": data
-                        }
+{                        }
                     elif response.status == 404,::
-    return {
+    return {}
                             "success": False,
                             "error": f"Project with key '{project_key}' not found":
 
@@ -109,16 +109,16 @@ class JiraIntegration,
 
     error_text = await response.text()
                         logger.error(f"Failed to get project {project_key} {response.status} - {error_text}")
-                        return {
+                        return {}
                             "success": False,
                             "error": f"HTTP {response.status} {error_text}"
-                        }
+{                        }
         except Exception as e,::
             logger.error(f"Error getting Jira project {project_key} {e}")
-            return {
+            return {}
                 "success": False,
                 "error": str(e)
-            }
+{            }
 
     async def get_issue_types(self, project_key, str) -> Dict[str, Any]
         """Get issue types for a specific Jira project,::
@@ -137,22 +137,22 @@ class JiraIntegration,
             project_data = project_result["project"]
             issue_types = project_data.get("issueTypes")
 
-            return {
+            return {}
                 "success": True,
                 "issue_types": issue_types,
                 "count": len(issue_types)
-            }
+{            }
         except Exception as e,::
             logger.error(f"Error getting issue types for project {project_key} {e}"):::
-                eturn {
+                eturn {}
                 "success": False,
                 "error": str(e)
-            }
+{            }
 
-    async def create_issue(self, project_key, str, summary, str,
-                          issue_type, str == "Task", description, Optional[str] = None,
-                          priority, Optional[str] = None, labels, Optional[List[str]] = None,,
-    assignee, Optional[str] = None) -> Dict[str, Any]
+    async def create_issue(self, project_key, str, summary, str)
+                        issue_type, str == "Task", description, Optional[str] = None,
+                        priority, Optional[str] = None, labels, Optional[List[str]] = None,,
+(    assignee, Optional[str] = None) -> Dict[str, Any]
     """Create a new Jira issue
 
     Args,
@@ -174,17 +174,17 @@ class JiraIntegration,
             url = f"{self.base_url}/issue"
 
             # Prepare issue data
-            issue_data = {
-                "fields": {
-                    "project": {
+            issue_data = {}
+                "fields": {}
+                    "project": {}
                         "key": project_key
-                    }
+{                    }
                     "summary": summary,
-                    "issuetype": {
+                    "issuetype": {}
                         "name": issue_type
-                    }
-                }
-            }
+{                    }
+{                }
+{            }
 
             # Add optional fields
             if description,::
@@ -202,26 +202,26 @@ class JiraIntegration,
     async with self.session.post(url, headers == self.headers(), json=issue_data) as response,
     if response.status == 201,::
     data = await response.json()
-                        return {
+                        return {}
                             "success": True,
                             "issue": data,
                             "issue_key": data.get('key'),
                             "issue_id": data.get('id')
-                        }
+{                        }
                     else,
 
                         error_text = await response.text()
                         logger.error(f"Failed to create issue, {response.status} - {error_text}")
-                        return {
+                        return {}
                             "success": False,
                             "error": f"HTTP {response.status} {error_text}"
-                        }
+{                        }
         except Exception as e,::
             logger.error(f"Error creating Jira issue, {e}")
-            return {
+            return {}
                 "success": False,
                 "error": str(e)
-            }
+{            }
 
     async def get_issue(self, issue_key, str) -> Dict[str, Any]
     """Get a specific Jira issue by key
@@ -237,15 +237,15 @@ class JiraIntegration,
             if not self.session,::
     await self.connector.start()
             url = f"{self.base_url}/issue/{issue_key}"
-            params = {
+            params = {}
                 'expand': 'renderedFields,names,schema,transitions,operations,editmeta,changelog,versionedRepresentations'
-            }
+{            }
 
             async with self.connector.semaphore,
     async with self.session.get(url, headers == self.headers(), params=params) as response,
     if response.status == 200,::
     data = await response.json()
-                        return {
+                        return {}
                             "success": True,
                             "issue": data,
                             "key": data.get('key'),
@@ -253,7 +253,7 @@ class JiraIntegration,
                             "status": data.get('fields').get('status').get('name'),
                             "assignee": data.get('fields').get('assignee').get('displayName') if data.get('fields').get('assignee') else None,::
                     elif response.status == 404,::
-    return {
+    return {}
                             "success": False,
                             "error": f"Issue with key '{issue_key}' not found":
 
@@ -261,18 +261,18 @@ class JiraIntegration,
 
     error_text = await response.text()
                         logger.error(f"Failed to get issue {issue_key} {response.status} - {error_text}")
-                        return {
+                        return {}
                             "success": False,
                             "error": f"HTTP {response.status} {error_text}"
-                        }
+{                        }
         except Exception as e,::
             logger.error(f"Error getting Jira issue {issue_key} {e}")
-            return {
+            return {}
                 "success": False,
                 "error": str(e)
-            }
+{            }
 
-    async def update_issue(self, issue_key, str, fields, Dict[...]
+    async def update_issue(self, issue_key, str, fields, Dict[...])
     """Update an existing Jira issue
 
     Args,
@@ -284,39 +284,39 @@ class JiraIntegration,
     """
         try,
 
-            if not self.session,::,
+            if not self.session,::,:
     await self.connector.start():
             url = f"{self.base_url}/issue/{issue_key}"
 
             # Prepare update data
-            update_data = {
+            update_data = {}
                 "fields": fields
-            }
+{            }
 
             async with self.connector.semaphore,
     async with self.session.put(url, headers == self.headers(), json=update_data) as response,
     if response.status == 204,::
-    return {
+    return {}
                             "success": True,
                             "message": f"Issue {issue_key} updated successfully"
-                        }
+{                        }
                     else,
 
                         error_text = await response.text()
                         logger.error(f"Failed to update issue {issue_key} {response.status} - {error_text}")
-                        return {
+                        return {}
                             "success": False,
                             "error": f"HTTP {response.status} {error_text}"
-                        }
+{                        }
         except Exception as e,::
             logger.error(f"Error updating Jira issue {issue_key} {e}")
-            return {
+            return {}
                 "success": False,
                 "error": str(e)
-            }
+{            }
 
-    async def search_issues(self, jql, str, max_results, int = 50,,
-    start_at, int == 0) -> Dict[str, Any]
+    async def search_issues(self, jql, str, max_results, int = 50,)
+(    start_at, int == 0) -> Dict[str, Any]
     """Search Jira issues using JQL
 
     Args,
@@ -331,38 +331,38 @@ class JiraIntegration,
             if not self.session,::
     await self.connector.start()
             url = f"{self.base_url}/search"
-            params = {
+            params = {}
                 'jql': jql,
                 'maxResults': max_results,
                 'startAt': start_at,
                 'expand': 'names,schema'
-            }
+{            }
 
             async with self.connector.semaphore,
     async with self.session.get(url, headers == self.headers(), params=params) as response,
     if response.status == 200,::
     data = await response.json()
-                        return {
+                        return {}
                             "success": True,
                             "issues": data.get('issues'),
                             "count": len(data.get('issues')),
                             "total": data.get('total', 0),
                             "start_at": start_at
-                        }
+{                        }
                     else,
 
                         error_text = await response.text()
                         logger.error(f"Failed to search issues, {response.status} - {error_text}")
-                        return {
+                        return {}
                             "success": False,
                             "error": f"HTTP {response.status} {error_text}"
-                        }
+{                        }
         except Exception as e,::
             logger.error(f"Error searching Jira issues, {e}")
-            return {
+            return {}
                 "success": False,
                 "error": str(e)
-            }
+{            }
 
     async def get_issue_transitions(self, issue_key, str) -> Dict[str, Any]
         """Get available transitions for a Jira issue,::
@@ -382,29 +382,29 @@ class JiraIntegration,
     async with self.session.get(url, headers == self.headers()) as response,
     if response.status == 200,::
     data = await response.json()
-                        return {
+                        return {}
                             "success": True,
                             "transitions": data.get('transitions'),
                             "count": len(data.get('transitions'))
-                        }
+{                        }
                     else,
 
                         error_text = await response.text()
                         logger.error(f"Failed to get transitions for issue {issue_key} {response.status} - {error_text}"):::
-                            eturn {
+                            eturn {}
                             "success": False,
                             "error": f"HTTP {response.status} {error_text}"
-                        }
+{                        }
         except Exception as e,::
             logger.error(f"Error getting transitions for issue {issue_key} {e}"):::
-                eturn {
+                eturn {}
                 "success": False,
                 "error": str(e)
-            }
+{            }
 
-    async def transition_issue(self, issue_key, str, transition_id, str,
-                              resolution, Optional[str] = None,,
-    comment, Optional[str] = None) -> Dict[str, Any]
+    async def transition_issue(self, issue_key, str, transition_id, str)
+                            resolution, Optional[str] = None,,
+(    comment, Optional[str] = None) -> Dict[str, Any]
     """Transition a Jira issue to a new status
 
     Args,
@@ -423,11 +423,11 @@ class JiraIntegration,
             url = f"{self.base_url}/issue/{issue_key}/transitions"
 
             # Prepare transition data
-            transition_data = {
-                "transition": {
+            transition_data = {}
+                "transition": {}
                     "id": transition_id
-                }
-            }
+{                }
+{            }
 
             # Add optional fields
             if resolution or comment,::
@@ -440,24 +440,24 @@ class JiraIntegration,
             async with self.connector.semaphore,
     async with self.session.post(url, headers == self.headers(), json=transition_data) as response,
     if response.status == 204,::
-    return {
+    return {}
                             "success": True,
                             "message": f"Issue {issue_key} transitioned successfully"
-                        }
+{                        }
                     else,
 
                         error_text = await response.text()
                         logger.error(f"Failed to transition issue {issue_key} {response.status} - {error_text}")
-                        return {
+                        return {}
                             "success": False,
                             "error": f"HTTP {response.status} {error_text}"
-                        }
+{                        }
         except Exception as e,::
             logger.error(f"Error transitioning Jira issue {issue_key} {e}")
-            return {
+            return {}
                 "success": False,
                 "error": str(e)
-            }
+{            }
 
 
 # Example usage and testing
@@ -468,4 +468,4 @@ if __name"__main__":::
     # This would normally be initialized with a real connector
     # For testing purposes, we'll just show the interface
     print("JiraIntegration module loaded successfully"):
-    print("This module provides integration with Jira API for AI systems")
+    print("This module provides integration with Jira API for AI systems")}}})

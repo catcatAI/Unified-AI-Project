@@ -1,14 +1,14 @@
-import pygame
-import random
+# TODO: Fix import - module 'pygame' not found
+# TODO: Fix import - module 'random' not found
 
-class Rock,
-    def __init__(self, x, y) -> None,
+class Rock,:
+    def __init__(self, x, y) -> None,:
         self.x = x
         self.y = y
         self.health = 100
 
-class Tile,
-    def __init__(self, x, y, tile_type == 'grass') -> None,
+class Tile,:
+    def __init__(self, x, y, tile_type == 'grass') -> None,:
         self.x = x
         self.y = y
         self.tile_type = tile_type # 'grass', 'tilled', 'planted', 'rock'
@@ -18,8 +18,8 @@ class Tile,
         if self.tile_type == 'rock':::
             self.rock == Rock(x, y)
 
-class TileMap,
-    def __init__(self, game, width, height) -> None,
+class TileMap,:
+    def __init__(self, game, width, height) -> None,:
         self.game = game
         self.width = width
         self.height = height

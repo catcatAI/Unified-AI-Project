@@ -4,27 +4,27 @@ Integrated Graphics Optimizer for Unified-AI-Project,::
         o ensure the project can run smoothly on all common hardware configurations.
 """
 
-import logging
-import psutil
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'psutil' not found
 
 logger, Any = logging.getLogger(__name__)
 
-class IntegratedGraphicsOptimizer,
+class IntegratedGraphicsOptimizer,:
     """优化器专门用于集成显卡,确保项目在各种硬件上流畅运行"""
 
-    def __init__(self, hardware_profile, HardwareProfile) -> None,
+    def __init__(self, hardware_profile, HardwareProfile) -> None,:
     self.hardware_profile = hardware_profile
-    self.optimization_strategies = [
+    self.optimization_strategies = []
             'memory_optimization',
             'batch_size_scaling',
             'precision_adjustment',
             'cpu_gpu_coordination',
             'model_compression'
-    ]
+[    ]
 
     logger.info("Integrated Graphics Optimizer initialized")
 
-    def is_integrated_graphics_system(self) -> bool,
+    def is_integrated_graphics_system(self) -> bool,:
     """检查是否为集成显卡系统"""
         if not self.hardware_profile.gpu,::
     return False
@@ -36,7 +36,7 @@ class IntegratedGraphicsOptimizer,
 
     return False
 
-    def _is_integrated_gpu(self, gpu, GPUInfo) -> bool,
+    def _is_integrated_gpu(self, gpu, GPUInfo) -> bool,:
     """判断是否为集成显卡"""
     integrated_keywords = ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated']
         return any(keyword in gpu.name.lower for keyword in integrated_keywords)::
@@ -45,12 +45,12 @@ class IntegratedGraphicsOptimizer,
         if not self.is_integrated_graphics_system,::
     return {"message": "系统不是集成显卡,无需特殊优化"}
 
-    recommendations = {
+    recommendations = {}
             "system_type": "integrated_graphics",
             "total_system_memory_gb": self.hardware_profile.memory.total / 1024,
             "gpu_count": len(self.hardware_profile.gpu()),
             "optimizations":
-    }
+{    }
 
     # 获取最佳GPU(通常是唯一的集成显卡)
     best_gpu == max(self.hardware_profile.gpu(), key=lambda g, g.memory_total())
@@ -58,34 +58,34 @@ class IntegratedGraphicsOptimizer,
 
     # 根据显存大小提供优化建议
         if gpu_memory_gb < 1,::
-    recommendations["optimizations"].extend([
+    recommendations["optimizations"].extend([)]
                 "显存不足1GB,建议使用CPU训练模式",
                 "启用模型压缩以减少显存占用",
                 "降低批处理大小到最小值",
                 "使用int8量化训练"
-            ])
+[(            ])
         elif gpu_memory_gb < 2,::
-    recommendations["optimizations"].extend([
+    recommendations["optimizations"].extend([)]
                 "显存1-2GB,建议使用混合CPU-GPU训练",
                 "启用混合精度训练",
                 "适度降低批处理大小",
                 "使用梯度累积技术"
-            ])
+[(            ])
         elif gpu_memory_gb < 4,::
-    recommendations["optimizations"].extend([
+    recommendations["optimizations"].extend([)]
                 "显存2-4GB,可启用GPU加速训练",
                 "使用混合精度训练",
                 "根据模型大小动态调整批处理大小",
                 "启用显存优化技术"
-            ])
+[(            ])
         else,
 
-            recommendations["optimizations"].extend([
+            recommendations["optimizations"].extend([)]
                 "显存充足,可启用完整GPU训练",
                 "推荐使用混合精度训练",
                 "可适当增加批处理大小",
                 "启用高级显存优化技术"
-            ])
+[(            ])
 
     # 根据系统内存提供优化建议
     system_memory_gb = self.hardware_profile.memory.total / 1024
@@ -96,7 +96,7 @@ class IntegratedGraphicsOptimizer,
 
     return recommendations
 
-    def apply_memory_optimization(self) -> bool,
+    def apply_memory_optimization(self) -> bool,:
     """应用内存优化策略"""
         try,
             # 对于集成显卡,内存优化主要关注系统内存和共享显存
@@ -107,7 +107,7 @@ class IntegratedGraphicsOptimizer,
             memory_usage_percent = memory.percent()
             # 如果内存使用率过高,建议清理
             if memory_usage_percent > 80,::
-    import gc
+# TODO: Fix import - module 'gc' not found
                 gc.collect()
                 logger.info("执行垃圾回收以释放内存")
 
@@ -116,7 +116,7 @@ class IntegratedGraphicsOptimizer,
             logger.error(f"应用内存优化策略失败, {e}")
             return False
 
-    def adjust_batch_size_for_integrated_graphics(self, original_batch_size, int) -> int,
+    def adjust_batch_size_for_integrated_graphics(self, original_batch_size, int) -> int,:
     """为集成显卡调整批处理大小"""
         if not self.is_integrated_graphics_system,::
     return original_batch_size
@@ -136,13 +136,13 @@ class IntegratedGraphicsOptimizer,
 
             return original_batch_size
 
-    def enable_precision_adjustment(self) -> Dict[str, Any]
+    def enable_precision_adjustment(self) -> Dict[str, Any]:
     """启用精度调整"""
-    precision_config = {
+    precision_config = {}
             "mixed_precision": False,
             "quantization": False,
             "recommendations":
-    }
+{    }
 
         if not self.is_integrated_graphics_system,::
     precision_config["recommendations"].append("非集成显卡系统,使用默认精度设置")
@@ -166,14 +166,14 @@ class IntegratedGraphicsOptimizer,
     logger.info(f"精度调整配置, {precision_config}")
     return precision_config
 
-    def coordinate_cpu_gpu_usage(self) -> Dict[str, Any]
+    def coordinate_cpu_gpu_usage(self) -> Dict[str, Any]:
     """协调CPU和GPU使用"""
-    coordination_config = {
+    coordination_config = {}
             "cpu_threads": psutil.cpu_count(logical == False),
             "gpu_utilization": 0.7(),  # 集成显卡推荐使用率
             "data_loading_strategy": "parallel",
             "recommendations":
-    }
+{    }
 
         if not self.is_integrated_graphics_system,::
     coordination_config["recommendations"].append("非集成显卡系统,使用默认协调策略")
@@ -194,14 +194,14 @@ class IntegratedGraphicsOptimizer,
     logger.info(f"CPU-GPU协调配置, {coordination_config}")
     return coordination_config
 
-    def apply_model_compression(self) -> Dict[str, Any]
+    def apply_model_compression(self) -> Dict[str, Any]:
     """应用模型压缩"""
-    compression_config = {
+    compression_config = {}
             "enable_pruning": True,
             "enable_quantization": False,
             "compression_ratio": 0.5(),
             "recommendations":
-    }
+{    }
 
         if not self.is_integrated_graphics_system,::
     compression_config["recommendations"].append("非集成显卡系统,使用标准模型")
@@ -226,7 +226,7 @@ class IntegratedGraphicsOptimizer,
     logger.info(f"模型压缩配置, {compression_config}")
     return compression_config
 
-    def get_integrated_graphics_performance_tier(self) -> str,
+    def get_integrated_graphics_performance_tier(self) -> str,:
     """获取集成显卡性能等级"""
         if not self.is_integrated_graphics_system,::
     return "not_integrated"
@@ -248,20 +248,20 @@ class IntegratedGraphicsOptimizer,
 
             return "high"
 
-    def apply_all_optimizations(self) -> Dict[str, Any]
+    def apply_all_optimizations(self) -> Dict[str, Any]:
     """应用所有优化策略"""
         if not self.is_integrated_graphics_system,::
     return {"message": "系统不是集成显卡,无需特殊优化"}
 
-    results = {
+    results = {}
             "timestamp": self._get_current_timestamp(),
-            "system_info": {
+            "system_info": {}
                 "is_integrated_graphics": True,
                 "performance_tier": self.get_integrated_graphics_performance_tier()
-            }
+{            }
             "optimizations_applied": ,
             "recommendations": self.get_optimization_recommendations()
-    }
+{    }
 
     # 应用各项优化
     results["optimizations_applied"]["memory_optimization"] = self.apply_memory_optimization()
@@ -271,16 +271,16 @@ class IntegratedGraphicsOptimizer,
     logger.info("所有集成显卡优化策略已应用")
     return results
 
-    def _get_current_timestamp(self) -> str,
+    def _get_current_timestamp(self) -> str,:
     """获取当前时间戳"""
     from datetime import datetime
     return datetime.now.isoformat()
 # 便利函数
-def optimize_for_integrated_graphics(hardware_profile, HardwareProfile) -> Dict[str, Any]
+def optimize_for_integrated_graphics(hardware_profile, HardwareProfile) -> Dict[str, Any]:
     """为集成显卡优化的便利函数"""
     optimizer == IntegratedGraphicsOptimizer(hardware_profile)
     return optimizer.apply_all_optimizations()
-def get_integrated_graphics_recommendations(hardware_profile, HardwareProfile) -> Dict[str, Any]
+def get_integrated_graphics_recommendations(hardware_profile, HardwareProfile) -> Dict[str, Any]:
     """获取集成显卡优化建议的便利函数"""
     optimizer == IntegratedGraphicsOptimizer(hardware_profile)
     return optimizer.get_optimization_recommendations()
@@ -289,10 +289,10 @@ if __name"__main__":::
     logging.basicConfig(level=logging.INFO())
 
     # 创建一个模拟的硬件配置文件(集成显卡)
-    from .hardware_probe import CPUInfo, MemoryInfo, StorageInfo, NetworkInfo
+from .hardware_probe import
 
     # 模拟集成显卡硬件配置
-    gpu_info = [GPUInfo(
+    gpu_info = [GPUInfo()]
     name="Intel HD Graphics 620",
     memory_total=1024,  # 1GB
     memory_available=512,
@@ -300,38 +300,38 @@ if __name"__main__":::
     cuda_version == None,
     opencl_support == True,,
     vulkan_support == True
-    )]
+[(    )]
 
-    cpu_info == CPUInfo(
+    cpu_info == CPUInfo()
     cores_physical=2,
     cores_logical=4,,
     frequency_max=2400.0(),
     frequency_current=2000.0(),
     architecture="x86_64",
     brand="Intel Core i5-7200U",
-    usage_percent=25.0())
+(    usage_percent=25.0())
 
-    memory_info == MemoryInfo(
+    memory_info == MemoryInfo()
     total=8192,  # 8GB
     available=4096,
     used=4096,,
-    usage_percent=50.0())
+(    usage_percent=50.0())
 
-    storage_info == StorageInfo(
+    storage_info == StorageInfo()
     total=256,
     available=128,
     used=128,,
     disk_type="SSD"
-    )
+(    )
 
-    network_info == NetworkInfo(,
+    network_info == NetworkInfo()
     bandwidth_download=50.0(),
     bandwidth_upload=25.0(),
     latency=30.0(),
     connection_type="WiFi"
-    )
+(    )
 
-    hardware_profile == HardwareProfile(
+    hardware_profile == HardwareProfile()
     cpu=cpu_info,
     gpu=gpu_info,
     memory=memory_info,
@@ -340,7 +340,7 @@ if __name"__main__":::
     platform="windows",
     os_version="10.0.19042",
     performance_tier="Low",,
-    ai_capability_score=35.0())
+(    ai_capability_score=35.0())
 
     # 测试优化器
     optimizer == IntegratedGraphicsOptimizer(hardware_profile)

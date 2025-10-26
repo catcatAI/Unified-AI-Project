@@ -1,7 +1,7 @@
-import asyncio
-import logging
-import sys
-import os
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+from system_test import
+from diagnose_base_agent import
 from typing import Any, Dict
 
 # Add the project root to the Python path
@@ -58,14 +58,14 @@ class CollaborationDemoAgent(BaseAgent):
                 "name": "Collaboration Demo",
                 "description": "Demonstrates agent collaboration features",
                 "version": "1.0"
-            }
+{            }
             {}
                 "capability_id": "data_processing_v1",
                 "name": "Data Processing",
                 "description": "Processes data from other agents",
                 "version": "1.0"
-            }
-        ]
+{            }
+[        ]
 
         super().__init__(agent_id, capabilities, "CollaborationDemoAgent")
 
@@ -92,7 +92,7 @@ class CollaborationDemoAgent(BaseAgent):
                     sender_ai_id,,
     task_payload.get("callback_address", ""),
                     f"Unsupported capability, {capability_id}"
-                )
+(                )
                 return
 
             # Send success response
@@ -101,7 +101,7 @@ class CollaborationDemoAgent(BaseAgent):
                 sender_ai_id,,
     task_payload.get("callback_address", ""),
                 result
-            )
+(            )
 
         except Exception as e,::
             logger.error(f"[{self.agent_id}] Error handling task, {e}")
@@ -110,7 +110,7 @@ class CollaborationDemoAgent(BaseAgent):
                 sender_ai_id,,
     task_payload.get("callback_address", ""),
                 str(e)
-            )
+(            )
 
     async def _handle_collaboration_demo(self, parameters, Dict[str, Any]):
         """
@@ -126,17 +126,17 @@ class CollaborationDemoAgent(BaseAgent):
                     "parameters": {}
                         "action": "analyze",
                         "data": parameters.get("data", [])
-                    }
-                }
+{                    }
+{                }
                 {}
                     "capability_id": "report_generation_v1",
                     "parameters": {}
                         "action": "generate",
                         "input": "<output_of_task_0>",  # Placeholder for previous task result,::
                             format": "summary"
-                    }
-                }
-            ]
+{                    }
+{                }
+[            ]
 
             # Try to orchestrate the task sequence
             try,
@@ -145,12 +145,12 @@ class CollaborationDemoAgent(BaseAgent):
                     "status": "success",
                     "result": result,
                     "message": "Multi-agent task orchestration completed"
-                }
+{                }
             except Exception as e,::
                 return {}
                     "status": "error",
                     "message": f"Failed to orchestrate tasks, {str(e)}"
-                }
+{                }
 
         # Simple collaboration example
         elif parameters.get("delegate_task"):::
@@ -163,25 +163,25 @@ class CollaborationDemoAgent(BaseAgent):
                         target_agent_id=target_agent,,
     capability_id=task_params.get("capability_id", ""),
                         parameters=task_params
-                    )
+(                    )
 
                     return {}
                         "status": "delegated",
                         "task_id": task_id,
                         "message": f"Task delegated to {target_agent}"
-                    }
+{                    }
                 except Exception as e,::
                     return {}
                         "status": "error",
                         "message": f"Failed to delegate task, {str(e)}"
-                    }
+{                    }
 
         # Default response
         return {}
             "status": "success",
             "message": "Collaboration demo agent is working",
             "agent_id": self.agent_id()
-        }
+{        }
 
     async def _handle_data_processing(self, parameters, Dict[str, Any]):
         """
@@ -206,13 +206,13 @@ class CollaborationDemoAgent(BaseAgent):
             "status": "success",
             "result": result,
             "operation": operation
-        }
+{        }
 
 async def main() -> None,
     """
     Main function to run the collaboration demo agent.
     """
-    import uuid
+# TODO: Fix import - module 'uuid' not found
 
     # Create agent with a unique ID,
         gent_id == f"did,hsp,collaboration_demo_agent_{uuid.uuid4().hex[:8]}"
@@ -238,10 +238,10 @@ async def main() -> None,
 
 if __name"__main__":::
     # Set up logging
-    logging.basicConfig(,)
+    logging.basicConfig()
     level=logging.INFO(),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+(    )
 
     # Run the agent
     asyncio.run(main())

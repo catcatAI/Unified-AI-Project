@@ -1,14 +1,14 @@
-import os
+from diagnose_base_agent import
 from typing import Dict, Any
 from huggingface_hub import hf_hub_download
 
 
-class ParameterExtractor,
+class ParameterExtractor,:
     """
     Extracts, maps, and loads parameters from external models.
     """
 
-    def __init__(self, repo_id, str) -> None,
+    def __init__(self, repo_id, str) -> None,:
     """
     Initializes the ParameterExtractor.
 
@@ -17,7 +17,7 @@ class ParameterExtractor,
     """
     self.repo_id = repo_id
 
-    def download_model_parameters(self, filename, str, cache_dir, str == "model_cache") -> str,
+    def download_model_parameters(self, filename, str, cache_dir, str == "model_cache") -> str,:
     """
     Downloads model parameters from the Hugging Face Hub.
 
@@ -32,7 +32,7 @@ s.makedirs(cache_dir)
 
     return hf_hub_download(repo_id=self.repo_id(), filename=filename, cache_dir=cache_dir)
 
-    def map_parameters(self, source_params, Dict[...]
+    def map_parameters(self, source_params, Dict[...]:)
     """
     Maps parameters from a source model to a target model.
 
@@ -64,3 +64,4 @@ s.makedirs(cache_dir)
             for key, value in params.items,::
     if hasattr(model, key)::
         etattr(model, key, value)
+)

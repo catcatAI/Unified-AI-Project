@@ -1,60 +1,60 @@
-"""
-测试模块 - test_code_understanding_agent
-
-自动生成的测试模块,用于验证系统功能。
-"""
-
 import pytest
+from unittest.mock import MagicMock, AsyncMock
 
-@pytest.fixture()
+# Correct import path for CodeUnderstandingAgent
+from apps.backend.src.ai.agents.specialized.code_understanding_agent import CodeUnderstandingAgent
+from apps.backend.src.core.hsp.types_fixed import HSPTaskRequestPayload, HSPMessageEnvelope
+
+@pytest.fixture
 def code_agent():
-    """Create a CodeUnderstandingAgent instance for testing."""::
+    """Create a CodeUnderstandingAgent instance for testing."""
     agent_id = "test_code_agent_123"
     return CodeUnderstandingAgent(agent_id=agent_id)
 
-    def setUp(self):
-        """测试前设置"""
-        self.test_data = {}
-        self.test_config = {}
-    
-    def tearDown(self):
-        """测试后清理"""
-        self.test_data.clear()
-        self.test_config.clear()
-def test_code_agent_initialization(code_agent) -> None,
+def test_code_agent_initialization(code_agent) -> None:
     """Test CodeUnderstandingAgent initialization."""
     assert code_agent.agent_id == "test_code_agent_123"
-    assert len(code_agent.capabilities()) == 3
+    assert len(code_agent.capabilities) == 3
     
     # Check that all expected capabilities are present
-    capability_names == [cap["name"] for cap in code_agent.capabilities]:
+    capability_names = [cap["name"] for cap in code_agent.capabilities]
     assert "analyze_code" in capability_names
     assert "generate_documentation" in capability_names
     assert "code_review" in capability_names
 
-@pytest.mark.asyncio()
-async def test_code_agent_handle_task_request_analyze_code(code_agent) -> None,
+@pytest.mark.asyncio
+async def test_code_agent_handle_task_request_analyze_code(code_agent) -> None:
     """Test CodeUnderstandingAgent handling analyze_code task."""
     # Mock the HSP connector
-    code_agent.hsp_connector == AsyncMock()
+    code_agent.hsp_connector = AsyncMock()
     
-    # Create a test task payload for code analysis,:
-    task_payload == {:
-        "request_id": "test_request_123",
-        "capability_id_filter": "analyze_code",
-        "parameters": {
+    # Create a test task payload for code analysis
+    task_payload = HSPTaskRequestPayload(
+        request_id="test_request_123",
+        capability_id_filter="analyze_code",
+        parameters={
             "code": "def hello():\n    print('Hello, World!')",
             "language": "python"
-        }
-        "callback_address": "test/callback/topic"
-    }
+        },
+        callback_address="test/callback/topic"
+    )
     
+    # Create a mock envelope (assuming it's needed by handle_task_request)
+    envelope = HSPMessageEnvelope(
+        message_id="test_msg_001",
+        sender_ai_id="test_sender",
+        recipient_ai_id=code_agent.agent_id,
+        timestamp_sent="2023-01-01T00:00:00Z",
+        message_type="task_request",
+        protocol_version="1.0"
+    )
+
     # Call the handler
-    await code_agent.handle_task_request(task_payload, "sender_456", {})
+    await code_agent.handle_task_request(task_payload, "sender_456", envelope)
     
     # Verify that a response was sent
     code_agent.hsp_connector.send_task_result.assert_called_once()
-    args, kwargs = code_agent.hsp_connector.send_task_result.call_args()
+    args, kwargs = code_agent.hsp_connector.send_task_result.call_args
     result_payload = args[0]
     
     assert result_payload["status"] == "success"
@@ -63,60 +63,80 @@ async def test_code_agent_handle_task_request_analyze_code(code_agent) -> None,
     assert "language" in result_payload["payload"]
     assert "lines_of_code" in result_payload["payload"]
 
-@pytest.mark.asyncio()
-async def test_code_agent_handle_task_request_generate_documentation(code_agent) -> None,
+@pytest.mark.asyncio
+async def test_code_agent_handle_task_request_generate_documentation(code_agent) -> None:
     """Test CodeUnderstandingAgent handling generate_documentation task."""
     # Mock the HSP connector
-    code_agent.hsp_connector == AsyncMock()
+    code_agent.hsp_connector = AsyncMock()
     
-    # Create a test task payload for documentation generation,:
-    task_payload == {:
-        "request_id": "test_request_456",
-        "capability_id_filter": "generate_documentation",
-        "parameters": {
+    # Create a test task payload for documentation generation
+    task_payload = HSPTaskRequestPayload(
+        request_id="test_request_456",
+        capability_id_filter="generate_documentation",
+        parameters={
             "code": "def hello():\n    print('Hello, World!')",
             "style": "technical"
-        }
-        "callback_address": "test/callback/topic"
-    }
+        },
+        callback_address="test/callback/topic"
+    )
+
+    # Create a mock envelope
+    envelope = HSPMessageEnvelope(
+        message_id="test_msg_002",
+        sender_ai_id="test_sender",
+        recipient_ai_id=code_agent.agent_id,
+        timestamp_sent="2023-01-01T00:00:00Z",
+        message_type="task_request",
+        protocol_version="1.0"
+    )
     
     # Call the handler
-    await code_agent.handle_task_request(task_payload, "sender_789", {})
+    await code_agent.handle_task_request(task_payload, "sender_789", envelope)
     
     # Verify that a response was sent
     code_agent.hsp_connector.send_task_result.assert_called_once()
-    args, kwargs = code_agent.hsp_connector.send_task_result.call_args()
+    args, kwargs = code_agent.hsp_connector.send_task_result.call_args
     result_payload = args[0]
     
     assert result_payload["status"] == "success"
     assert result_payload["request_id"] == "test_request_456"
     assert "payload" in result_payload
-    assert isinstance(result_payload["payload"] str)
+    assert isinstance(result_payload["payload"], str)
     assert "# Technical Documentation" in result_payload["payload"]
 
-@pytest.mark.asyncio()
-async def test_code_agent_handle_task_request_code_review(code_agent) -> None,
+@pytest.mark.asyncio
+async def test_code_agent_handle_task_request_code_review(code_agent) -> None:
     """Test CodeUnderstandingAgent handling code_review task."""
     # Mock the HSP connector
-    code_agent.hsp_connector == AsyncMock()
+    code_agent.hsp_connector = AsyncMock()
     
-    # Create a test task payload for code review,:
-    task_payload == {:
-        "request_id": "test_request_789",
-        "capability_id_filter": "code_review",
-        "parameters": {
-            "code": "def hello():\n    print('Hello, World!')\n    # TODO, Add more functionality",
+    # Create a test task payload for code review
+    task_payload = HSPTaskRequestPayload(
+        request_id="test_request_789",
+        capability_id_filter="code_review",
+        parameters={
+            "code": "def hello():\n    print('Hello, World!')\n    # TODO: Add more functionality",
             "review_criteria": []
-        }
-        "callback_address": "test/callback/topic"
-    }
+        },
+        callback_address="test/callback/topic"
+    )
+
+    # Create a mock envelope
+    envelope = HSPMessageEnvelope(
+        message_id="test_msg_003",
+        sender_ai_id="test_sender",
+        recipient_ai_id=code_agent.agent_id,
+        timestamp_sent="2023-01-01T00:00:00Z",
+        message_type="task_request",
+        protocol_version="1.0"
+    )
     
     # Call the handler
-    await code_agent.handle_task_request(task_payload, "sender_101", {})
+    await code agent.handle_task_request(task_payload, "sender_101", envelope)
     
     # Verify that a response was sent
     code_agent.hsp_connector.send_task_result.assert_called_once()
-    args, kwargs = code_agent.hsp_connector.send_task_result.call_args()
+    args, kwargs = code_agent.hsp_connector.send_task_result.call_args
     result_payload = args[0]
     
     assert result_payload["status"] == "success"
@@ -125,35 +145,45 @@ async def test_code_agent_handle_task_request_code_review(code_agent) -> None,
     assert "findings" in result_payload["payload"]
     assert "score" in result_payload["payload"]
 
-@pytest.mark.asyncio()
-async def test_code_agent_handle_task_request_unsupported_capability(code_agent) -> None,
+@pytest.mark.asyncio
+async def test_code_agent_handle_task_request_unsupported_capability(code_agent) -> None:
     """Test CodeUnderstandingAgent handling unsupported capability."""
     # Mock the HSP connector
-    code_agent.hsp_connector == AsyncMock()
+    code_agent.hsp_connector = AsyncMock()
     
-    # Create a test task payload for unsupported capability,:
-    task_payload == {:
-        "request_id": "test_request_999",
-        "capability_id_filter": "unsupported_capability",
-        "parameters": {}
-        "callback_address": "test/callback/topic"
-    }
+    # Create a test task payload for unsupported capability
+    task_payload = HSPTaskRequestPayload(
+        request_id="test_request_999",
+        capability_id_filter="unsupported_capability",
+        parameters = {},
+        callback_address="test/callback/topic"
+    )
+
+    # Create a mock envelope
+    envelope = HSPMessageEnvelope(
+        message_id="test_msg_004",
+        sender_ai_id="test_sender",
+        recipient_ai_id=code_agent.agent_id,
+        timestamp_sent="2023-01-01T00:00:00Z",
+        message_type="task_request",
+        protocol_version="1.0"
+    )
     
     # Call the handler
-    await code_agent.handle_task_request(task_payload, "sender_202", {})
+    await code_agent.handle_task_request(task_payload, "sender_202", envelope)
     
     # Verify that a failure response was sent
     code_agent.hsp_connector.send_task_result.assert_called_once()
-    args, kwargs = code_agent.hsp_connector.send_task_result.call_args()
+    args, kwargs = code_agent.hsp_connector.send_task_result.call_args
     result_payload = args[0]
     
     assert result_payload["status"] == "failure"
     assert result_payload["request_id"] == "test_request_999"
     assert result_payload["error_details"]["error_code"] == "CAPABILITY_NOT_SUPPORTED"
 
-def test_analyze_code_python(code_agent) -> None,
+def test_analyze_code_python(code_agent) -> None:
     """Test the _analyze_code method with Python code."""
-    params == {:
+    params = {
         "code": "def hello():\n    print('Hello, World!')",
         "language": "python"
     }
@@ -165,7 +195,7 @@ def test_analyze_code_python(code_agent) -> None,
     assert result["syntax_valid"] is True
     assert result["function_count"] == 1
 
-def test_generate_documentation(code_agent) -> None,
+def test_generate_documentation(code_agent) -> None:
     """Test the _generate_documentation method."""
     params = {
         "code": "def hello():\n    print('Hello, World!')",
@@ -179,10 +209,10 @@ def test_generate_documentation(code_agent) -> None,
     assert "## Functions" in result
     assert "`hello`" in result
 
-def test_perform_code_review(code_agent) -> None,
+def test_perform_code_review(code_agent) -> None:
     """Test the _perform_code_review method."""
     params = {
-        "code": "def hello():\n    print('Hello, World!')\n    # TODO, Add more functionality",
+        "code": "def hello():\n    print('Hello, World!')\n    # TODO: Add more functionality",
         "review_criteria": []
     }
     

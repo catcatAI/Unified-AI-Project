@@ -7,13 +7,13 @@ t integrates with the AI Virtual Input Service and Sandbox Executor to provide a
 diting environment for the AI system.:::
 ""
 
-import json
-import logging
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
 
-from .ai_virtual_input_service import AIVirtualInputService
-from .sandbox_executor import SandboxExecutor
+from .ai_virtual_input_service import
+from .sandbox_executor import
 # from memory.ham_memory_manager import HAMMemoryManager
 # Temporarily disable HAMMemoryManager import due to import issues
 
@@ -21,17 +21,17 @@ from .sandbox_executor import SandboxExecutor
 logger, Any = logging.getLogger(__name__)
 logger.setLevel(logging.INFO())
 
-class DataProcessor,
+class DataProcessor,:
     """Handles data processing and transformation for the AI editor""":::
-    def __init__(self) -> None,
-    self.processors = {
+    def __init__(self) -> None,:
+    self.processors = {}
             'text': self._process_text_data(),
             'code': self._process_code_data(),
             'structured': self._process_structured_data(),
             'application': self._process_application_data()
-    }
+{    }
 
-    def process_data(self, data, Any, data_type, str, transformation_rules, Optional[Dict] = None) -> Dict[str, Any]
+    def process_data(self, data, Any, data_type, str, transformation_rules, Optional[Dict] = None) -> Dict[str, Any]:
     """
     Process and transform data based on its type and transformation rules.
 
@@ -53,22 +53,22 @@ class DataProcessor,
     processed_data = processor(data, transformation_rules)
 
     # Add metadata
-    result = {
+    result = {}
             "processed_data": processed_data,
             "data_type": data_type,
             "processing_timestamp": datetime.now.isoformat(),
             "transformation_rules_applied": transformation_rules or
-    }
+{    }
 
         logger.info(f"Data processing completed for {data_type}"):::
             eturn result
 
-    def _process_text_data(self, data, str, transformation_rules, Optional[Dict] = None) -> Dict[str, Any]
+    def _process_text_data(self, data, str, transformation_rules, Optional[Dict] = None) -> Dict[str, Any]:
     """Process text data"""
     logger.debug("Processing text data")
 
     # Basic text processing
-    processed = {
+    processed = {}
             "raw_text": data,
             "word_count": len(data.split()),
             "char_count": len(data),
@@ -81,19 +81,19 @@ class DataProcessor,
 
     return processed
 
-    def _process_code_data(self, data, str, transformation_rules, Optional[Dict] = None) -> Dict[str, Any]
+    def _process_code_data(self, data, str, transformation_rules, Optional[Dict] = None) -> Dict[str, Any]:
     """Process code data"""
     logger.debug("Processing code data")
 
     # Basic code analysis
-    processed = {
+    processed = {}
             "raw_code": data,
             "line_count": len(data.splitlines()),
             "char_count": len(data),
             "functions": self._extract_functions(data),
             "classes": self._extract_classes(data),
             "comments": self._extract_comments(data)
-    }
+{    }
 
         # Apply transformation rules if provided,::
             f transformation_rules,
@@ -102,8 +102,8 @@ class DataProcessor,
 
     return processed
 
-    def _process_structured_data(self, data, Union[Dict, List],
-    transformation_rules, Optional[Dict] = None) -> Dict[str, Any]
+    def _process_structured_data(self, data, Union[Dict, List],:)
+(    transformation_rules, Optional[Dict] = None) -> Dict[str, Any]
     """Process structured data(JSON, XML, etc.)"""
     logger.debug("Processing structured data")
 
@@ -112,12 +112,12 @@ class DataProcessor,
 
     data == {"items": data}
 
-    processed = {
+    processed = {}
             "raw_structure": data,
             "keys": list(data.keys()) if isinstance(data, dict) else,::
                 size": len(data) if isinstance(data, (dict, list)) else 0,::
 nested_levels": self._calculate_nesting_depth(data)
-    }
+{    }
 
         # Apply transformation rules if provided,::
             f transformation_rules,
@@ -126,17 +126,17 @@ nested_levels": self._calculate_nesting_depth(data)
 
     return processed
 
-    def _process_application_data(self, data, Dict[...]
+    def _process_application_data(self, data, Dict[...]:)
     """Process application data(UI elements, etc.)"""
     logger.debug("Processing application data")
 
-    processed = {
+    processed = {}
             "ui_elements": data.get("ui_elements"),
             "screen_size": data.get("screen_size", {"width": 0, "height": 0}),
             "focused_element": data.get("focused_element"),
             "active_window": data.get("active_window"),
             "element_count": len(data.get("ui_elements"))
-    }
+{    }
 
         # Apply transformation rules if provided,::
             f transformation_rules,
@@ -145,7 +145,7 @@ nested_levels": self._calculate_nesting_depth(data)
 
     return processed
 
-    def _apply_text_transformations(self, data, Dict[...]
+    def _apply_text_transformations(self, data, Dict[...]:)
     """Apply text - specific transformations"""
     # Example transformations,
     if rules.get("summarize"):::
@@ -156,7 +156,7 @@ nested_levels": self._calculate_nesting_depth(data)
 
     return data
 
-    def _apply_code_transformations(self, data, Dict[...]
+    def _apply_code_transformations(self, data, Dict[...]:)
     """Apply code - specific transformations"""
     # Example transformations,
     if rules.get("extract_docstrings"):::
@@ -167,7 +167,7 @@ nested_levels": self._calculate_nesting_depth(data)
 
     return data
 
-    def _apply_structured_transformations(self, data, Dict[...]
+    def _apply_structured_transformations(self, data, Dict[...]:)
     """Apply structured data transformations"""
     # Example transformations,
     if rules.get("flatten"):::
@@ -175,17 +175,17 @@ nested_levels": self._calculate_nesting_depth(data)
 
     return data
 
-    def _apply_application_transformations(self, data, Dict[...]
+    def _apply_application_transformations(self, data, Dict[...]:)
     """Apply application data transformations"""
     # Example transformations,
     if rules.get("filter_elements"):::
             lement_type = rules.get("element_type", "button")
-            data["filtered_elements"] = [
+            data["filtered_elements"] = []
                 el for el in data["ui_elements"]::
     if el.get("type") == element_type,::
     return data
 
-    def _generate_summary(self, text, str) -> str,
+    def _generate_summary(self, text, str) -> str,:
     """Generate a simple summary of the text"""
     sentences = text.split('.')
     # Return first 2 sentences as summary
@@ -196,59 +196,59 @@ nested_levels": self._calculate_nesting_depth(data)
     words = text.split()
     return words[:10]
 
-    def _extract_functions(self, code, str) -> List[str]
+    def _extract_functions(self, code, str) -> List[str]:
     """Extract function names from code"""
     # Simple regex-based extraction
-    import re
-    function_pattern = r'def\\s+(\\w+)\\s*\\('
+from tests.core_ai import
+    function_pattern = r'def\\s+(\\w+)\\s*\\(')
     matches = re.findall(function_pattern, code)
     return matches
 
-    def _extract_classes(self, code, str) -> List[str]
+    def _extract_classes(self, code, str) -> List[str]:
         """Extract class names from code"""
     # Simple regex-based extraction
     class_pattern = r'class\\s+(\\w+)'
     matches = re.findall(class_pattern, code)
     return matches
 
-    def _extract_comments(self, code, str) -> List[str]
+    def _extract_comments(self, code, str) -> List[str]:
     """Extract comments from code"""
     # Simple extraction of # comments
     lines = code.split('\n')
         comments == [line.strip for line in lines if line.strip.startswith('#')]::
             eturn comments
 
-    def _extract_docstrings(self, code, str) -> List[str]
+    def _extract_docstrings(self, code, str) -> List[str]:
     """Extract docstrings from code"""
     # Simple extraction
     docstring_pattern = r'["']{3}(.*?)["\']{3}'
     matches = re.findall(docstring_pattern, code, re.DOTALL())
     return matches
 
-    def _analyze_complexity(self, code, str) -> Dict[str, Any]
+    def _analyze_complexity(self, code, str) -> Dict[str, Any]:
     """Perform basic complexity analysis"""
     lines = code.split('\n')
-    return {
+    return {}
             "lines_of_code": len([l for l in lines if l.strip and not l.strip.startswith('#')]),:::
                 comment_lines": len([l for l in lines if l.strip.startswith('#')]),:::
 empty_lines": len([l for l in lines if not l.strip]),:::
 nesting_depth": self._calculate_max_nesting(code)
-    }
+{    }
 
-    def _calculate_max_nesting(self, code, str) -> int,
+    def _calculate_max_nesting(self, code, str) -> int,:
     """Calculate maximum nesting depth"""
     # Simple implementation
     max_depth = 0
     current_depth = 0
         for char in code,::
-    if char in '{[(':::
+    if char in '{[(':::)]}
     current_depth += 1
                 max_depth = max(max_depth, current_depth)
-            elif char in '}])':::
+{[(            elif char in '}])':::
     current_depth = max(0, current_depth - 1)
     return max_depth
 
-    def _calculate_nesting_depth(self, data, Any) -> int,
+    def _calculate_nesting_depth(self, data, Any) -> int,:
     """Calculate nesting depth of structured data"""
         if isinstance(data, dict)::
             f not data,
@@ -264,7 +264,7 @@ f not data,
 
     return 0
 
-    def _flatten_structure(self, data, Any) -> Dict[str, Any]
+    def _flatten_structure(self, data, Any) -> Dict[str, Any]:
     """Flatten nested structure"""
     result == def _flatten(obj, prefix=''):
             f isinstance(obj, dict)
@@ -286,12 +286,12 @@ f not data,
     return result
 
 
-class AIEditorService,
+class AIEditorService,:
     """
     Main AI Editor Service that integrates data processing, virtual input, and sandbox execution.
     """
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
     self.virtual_input_service == AIVirtualInputService
     self.sandbox_executor == SandboxExecutor
     self.data_processor == DataProcessor
@@ -306,7 +306,7 @@ class AIEditorService,
         logger.info("Memory manager set for AIEditorService")::
     # Temporarily disable HAMMemoryManager due to import issues
 
-    def process_application_data(self, app_data, Dict[...]
+    def process_application_data(self, app_data, Dict[...]:)
     """
     Process data received from an application.
 
@@ -319,20 +319,20 @@ class AIEditorService,
     logger.info("Processing application data"):
         ry,
             # Process the application data
-            result = self.data_processor.process_data(,
+            result = self.data_processor.process_data()
     app_data,
                 'application',
                 {"filter_elements": True, "element_type": "button"}
-            )
+(            )
 
             # Store in memory if available,::
                 f self.memory_manager,
 
-    memory_id = self.memory_manager.store_experience(,
+    memory_id = self.memory_manager.store_experience()
     result,
                     "ai_editor_processed_data",
                     {"source": "application", "processing_type": "application_data"}
-                )
+(                )
                 result["memory_id"] = memory_id
 
             return result
@@ -340,7 +340,7 @@ class AIEditorService,
             logger.error(f"Error processing application data, {e}")
             raise
 
-    def process_text_content(self, text, str, transformation_rules, Optional[Dict]=None) -> Dict[str, Any]
+    def process_text_content(self, text, str, transformation_rules, Optional[Dict]=None) -> Dict[str, Any]:
     """
     Process text content from applications.
 
@@ -354,20 +354,20 @@ class AIEditorService,
 
         try,
             # Process the text data
-            result = self.data_processor.process_data(
+            result = self.data_processor.process_data()
                 text,
                 'text',,
     transformation_rules or {"summarize": True, "extract_keywords": True}
-            )
+(            )
 
             # Store in memory if available,::
                 f self.memory_manager,
 
-    memory_id = self.memory_manager.store_experience(,
+    memory_id = self.memory_manager.store_experience()
     result,
                     "ai_editor_processed_data",
                     {"source": "text", "processing_type": "text_content"}
-                )
+(                )
                 result["memory_id"] = memory_id
 
             return result
@@ -375,7 +375,7 @@ class AIEditorService,
             logger.error(f"Error processing text content, {e}")
             raise
 
-    def process_code_content(self, code, str, transformation_rules, Optional[Dict]=None) -> Dict[str, Any]
+    def process_code_content(self, code, str, transformation_rules, Optional[Dict]=None) -> Dict[str, Any]:
     """
     Process code content from applications.
 
@@ -389,20 +389,20 @@ class AIEditorService,
 
         try,
             # Process the code data
-            result = self.data_processor.process_data(
+            result = self.data_processor.process_data()
                 code,
                 'code',,
     transformation_rules or {"extract_docstrings": True, "complexity_analysis": True}
-            )
+(            )
 
             # Store in memory if available,::
                 f self.memory_manager,
 
-    memory_id = self.memory_manager.store_experience(,
+    memory_id = self.memory_manager.store_experience()
     result,
                     "ai_editor_processed_data",
                     {"source": "code", "processing_type": "code_content"}
-                )
+(                )
                 result["memory_id"] = memory_id
 
             return result
@@ -410,8 +410,8 @@ class AIEditorService,
             logger.error(f"Error processing code content, {e}")
             raise
 
-    def process_structured_data(self, data, Union[Dict, List],
-    transformation_rules, Optional[Dict]=None) -> Dict[str, Any]
+    def process_structured_data(self, data, Union[Dict, List],:)
+(    transformation_rules, Optional[Dict]=None) -> Dict[str, Any]
     """
     Process structured data from applications.
 
@@ -425,20 +425,20 @@ class AIEditorService,
 
         try,
             # Process the structured data
-            result = self.data_processor.process_data(
+            result = self.data_processor.process_data()
                 data,
                 'structured',,
     transformation_rules or {"flatten": True}
-            )
+(            )
 
             # Store in memory if available,::
                 f self.memory_manager,
 
-    memory_id = self.memory_manager.store_experience(,
+    memory_id = self.memory_manager.store_experience()
     result,
                     "ai_editor_processed_data",
                     {"source": "structured", "processing_type": "structured_data"}
-                )
+(                )
                 result["memory_id"] = memory_id
 
             return result
@@ -446,7 +446,7 @@ class AIEditorService,
             logger.error(f"Error processing structured data, {e}")
             raise
 
-    def execute_data_transformation_script(self, script, str, params, Dict[...]
+    def execute_data_transformation_script(self, script, str, params, Dict[...]:)
     """
     Execute a data transformation script in a sandbox environment.
 
@@ -460,32 +460,32 @@ class AIEditorService,
     logger.info("Executing data transformation script in sandbox"):
         ry,
             # Execute in sandbox
-            result, error=self.sandbox_executor.run(
+            result, error=self.sandbox_executor.run()
                 script,
                 "DataTransformer",
                 "transform",,
     params
-            )
+(            )
 
             if error,::
     logger.error(f"Sandbox execution error, {error}")
                 raise Exception(f"Sandbox execution failed, {error}")
 
             # Process the result
-            processed_result={
+            processed_result={}
                 "execution_result": result,
                 "execution_timestamp": datetime.now.isoformat(),
                 "script_parameters": params
-            }
+{            }
 
             # Store in memory if available,::
                 f self.memory_manager,
 
-    memory_id=self.memory_manager.store_experience(,
+    memory_id=self.memory_manager.store_experience()
     processed_result,
                     "ai_editor_script_execution",
                     {"source": "sandbox", "processing_type": "script_execution"}
-                )
+(                )
                 processed_result["memory_id"]=memory_id
 
             return processed_result
@@ -493,7 +493,7 @@ class AIEditorService,
             logger.error(f"Error executing data transformation script, {e}")
             raise
 
-    def get_processed_data_from_memory(self, memory_id, str) -> Optional[Dict[str, Any]]
+    def get_processed_data_from_memory(self, memory_id, str) -> Optional[Dict[str, Any]]:
     """
     Retrieve processed data from memory.
 
@@ -538,21 +538,22 @@ def hello_world():
     # This is a simple function
     print("Hello, World!")
 
-class SampleClass,
-    def __init__(self) -> None,
+class SampleClass,:
+    def __init__(self) -> None,:
     self.value=42
 """
     code_result = editor.process_code_content(sample_code)
     print("Code processing result,", json.dumps(code_result, indent=2, ensure_ascii == False))
 
     # Test application data processing
-    sample_app_data = {
-    "ui_elements": [
+    sample_app_data = {}
+    "ui_elements": []
             {"id": "btn1", "type": "button", "text": "Click me"}
             {"id": "txt1", "type": "textbox", "value": "Sample text"}
-    ]
+[    ]
     "screen_size": {"width": 1920, "height": 1080}
     "focused_element": "txt1"
-    }
+{    }
     app_result = editor.process_application_data(sample_app_data)
     print("Application data processing result,", json.dumps(app_result, indent=2, ensure_ascii == False))
+}]))))))))

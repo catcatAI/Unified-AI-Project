@@ -17,8 +17,8 @@ class ContextStatus(Enum):
     INACTIVE = "inactive"
     ARCHIVED = "archived"
 
-class Context,
-    def __init__(self, context_id, str, context_type, ContextType) -> None,
+class Context,:
+    def __init__(self, context_id, str, context_type, ContextType) -> None,:
     self.context_id = context_id
     self.context_type = context_type
     self.created_at = datetime.now()
@@ -42,26 +42,26 @@ class Context,
 
 class Storage(ABC):
     @abstractmethod
-def save_context(self, context, Context) -> bool,
+def save_context(self, context, Context) -> bool,:
     """保存上下文"""
     pass
 
     @abstractmethod
-def load_context(self, context_id, str) -> Optional[Context]
+def load_context(self, context_id, str) -> Optional[Context]:
     """加载上下文"""
     pass
 
     @abstractmethod
-def delete_context(self, context_id, str) -> bool,
+def delete_context(self, context_id, str) -> bool,:
     """删除上下文"""
     pass
 
     @abstractmethod
-def list_contexts(self, context_type, Optional[ContextType] = None) -> List[str]
+def list_contexts(self, context_type, Optional[ContextType] = None) -> List[str]:
     """列出上下文"""
     pass
 
     @abstractmethod
-def update_context_metadata(self, context_id, str, metadata, Dict[str, Any]) -> bool,
+def update_context_metadata(self, context_id, str, metadata, Dict[str, Any]) -> bool,:
     """更新上下文元数据"""
     pass

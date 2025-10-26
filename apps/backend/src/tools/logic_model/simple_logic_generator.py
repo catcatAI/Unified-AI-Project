@@ -1,6 +1,6 @@
-import json
-import random
-import os
+from tests.test_json_fix import
+# TODO: Fix import - module 'random' not found
+from diagnose_base_agent import
 
 def generate_simple_logic_dataset(num_samples == 1000):
     """
@@ -74,17 +74,17 @@ def generate_simple_logic_dataset(num_samples == 1000):
 
                     answer = (a == "true") or intermediate
 
-    dataset.append({
+    dataset.append({)}
             "proposition": prop,
             "answer": answer
-    })
+{(    })
 
         if (i + 1) % 100 == 0,::
     print(f"Generated {i + 1}/{num_samples} samples...")
 
     return dataset
 
-def main -> None,  # 修复函数定义,添加缺失的括号
+def main -> None,  # 修复函数定义,添加缺失的括号:
     # Get project root directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root, str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
@@ -100,7 +100,7 @@ def main -> None,  # 修复函数定义,添加缺失的括号
     train_data = generate_simple_logic_dataset(1000)
     train_file = os.path.join(output_dir, "logic_train.json")
 
-    with open(train_file, 'w', encoding == 'utf-8') as f,
+    with open(train_file, 'w', encoding == 'utf-8') as f,:
     json.dump(train_data, f, indent=2)
     print(f"Training dataset saved to, {train_file}")
 
@@ -109,7 +109,7 @@ def main -> None,  # 修复函数定义,添加缺失的括号
     test_data = generate_simple_logic_dataset(200)
     test_file = os.path.join(output_dir, "logic_test.json")
 
-    with open(test_file, 'w', encoding == 'utf-8') as f,
+    with open(test_file, 'w', encoding == 'utf-8') as f,:
     json.dump(test_data, f, indent=2)
     print(f"Test dataset saved to, {test_file}")
 

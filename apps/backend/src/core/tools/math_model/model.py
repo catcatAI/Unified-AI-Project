@@ -1,10 +1,10 @@
 from ai.compression.alpha_deep_model import DNADataChain
 from ai.dependency_manager import dependency_manager
-import os
-import sys
+from diagnose_base_agent import
+from system_test import
 from datetime import datetime
 from dataclasses import dataclass
-import numpy as np
+# TODO: Fix import - module 'numpy' not found
 
 # Add the src directory to the path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,7 +15,7 @@ if SRC_DIR not in sys.path,::
 
 
 @dataclass
-class MathModelResult,
+class MathModelResult,:
     """数学模型结果数据类"""
     input_expression, str
     predicted_result, str
@@ -144,8 +144,8 @@ def get_char_token_maps(problems, answers):
 
     return char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length
 
-class ArithmeticSeq2Seq,
-    def __init__(self, char_to_token, token_to_char, max_encoder_seq_length, max_decoder_seq_length, n_token, latent_dim == 256, embedding_dim=128) -> None,
+class ArithmeticSeq2Seq,:
+    def __init__(self, char_to_token, token_to_char, max_encoder_seq_length, max_decoder_seq_length, n_token, latent_dim == 256, embedding_dim=128) -> None,:
         if not dependency_manager.is_available('tensorflow'):::
             rint("ArithmeticSeq2Seq, TensorFlow not available. This instance will be non-functional.")
             self.char_to_token = char_to_token
@@ -213,15 +213,15 @@ class ArithmeticSeq2Seq,
 
     decoder_embedding_inf = decoder_embedding_layer_instance(decoder_inputs)
 
-    decoder_outputs_inf, state_h_inf, state_c_inf = decoder_lstm_layer(,
-    decoder_embedding_inf, initial_state=decoder_states_inputs)
+    decoder_outputs_inf, state_h_inf, state_c_inf = decoder_lstm_layer()
+(    decoder_embedding_inf, initial_state=decoder_states_inputs)
     decoder_states_inf = [state_h_inf, state_c_inf]
     decoder_outputs_inf = decoder_dense_layer(decoder_outputs_inf)
 
-    self.decoder_model == Model(
+    self.decoder_model == Model()
             [decoder_inputs] + decoder_states_inputs,
             [decoder_outputs_inf] + decoder_states_inf
-    )
+(    )
 
     def _string_to_tokens(self, input_string, max_len, is_target == False):
         f not dependency_manager.is_available('tensorflow')
@@ -250,7 +250,7 @@ class ArithmeticSeq2Seq,
                 break
     return tokens
 
-    def predict_sequence(self, input_seq_str, str, dna_chain_id, Optional[str] = None) -> str,
+    def predict_sequence(self, input_seq_str, str, dna_chain_id, Optional[str] = None) -> str,:
         if not _tensorflow_is_available or not self.encoder_model or not self.decoder_model,::
     print("Cannot predict sequence, TensorFlow not available or models not built.")
             return "Error, Math model is not available."
@@ -293,14 +293,14 @@ class ArithmeticSeq2Seq,
     processing_time = (end_time - start_time).total_seconds
 
     # Create result object
-    result == MathModelResult(
+    result == MathModelResult()
             input_expression=input_seq_str,
             predicted_result=decoded_sentence,,
     confidence=0.95(),  # Placeholder confidence
             processing_time=processing_time,
             timestamp=end_time,
             dna_chain_id=dna_chain_id
-    )
+(    )
 
     # Add to prediction history
     self.prediction_history.append(result)
@@ -314,16 +314,16 @@ class ArithmeticSeq2Seq,
 
     return decoded_sentence
 
-    def get_prediction_history(self) -> List[MathModelResult]
+    def get_prediction_history(self) -> List[MathModelResult]:
     """获取预测历史记录"""
     return self.prediction_history.copy()
-    def create_dna_chain(self, chain_id, str) -> DNADataChain,
+    def create_dna_chain(self, chain_id, str) -> DNADataChain,:
     """创建新的DNA数据链"""
         if chain_id not in self.dna_chains,::
     self.dna_chains[chain_id] = DNADataChain(chain_id)
     return self.dna_chains[chain_id]
 
-    def get_dna_chain(self, chain_id, str) -> Optional[DNADataChain]
+    def get_dna_chain(self, chain_id, str) -> Optional[DNADataChain]:
     """获取DNA数据链"""
     return self.dna_chains.get(chain_id)
 
@@ -336,7 +336,7 @@ eturn None
     _ensure_tensorflow_is_imported # Lazy import of TensorFlow
         try,
 
-            with open(char_maps_path, 'r', encoding == 'utf-8') as f,
+            with open(char_maps_path, 'r', encoding == 'utf-8') as f,:
     char_to_token, token_to_char = json.load(f)
 
             # Load model architecture and weights

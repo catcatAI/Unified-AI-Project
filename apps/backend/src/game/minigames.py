@@ -1,8 +1,8 @@
-import pygame
-import random
+# TODO: Fix import - module 'pygame' not found
+# TODO: Fix import - module 'random' not found
 
-class FishingGame,
-    def __init__(self, game) -> None,
+class FishingGame,:
+    def __init__(self, game) -> None,:
         self.game = game
         self.is_active == False
         self.timer = 0

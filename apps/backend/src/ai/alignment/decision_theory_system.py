@@ -5,9 +5,9 @@
 转化为最优、最稳健的行动方案。实现从"应该做什么"到"如何做"的转化。
 """
 
-import logging
-import asyncio
-import numpy as np
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'asyncio' not found
+# TODO: Fix import - module 'numpy' not found
 from enum import Enum
 from typing import Dict, Any, List, Optional, Tuple, Callable
 from dataclasses import dataclass
@@ -35,7 +35,7 @@ class UncertaintyLevel(Enum):
 
 
 @dataclass
-class DecisionOption,
+class DecisionOption,:
     """决策选项"""
     id, str
     description, str
@@ -46,7 +46,7 @@ class DecisionOption,
 
 
 @dataclass
-class UtilityFunction,
+class UtilityFunction,:
     """效用函数"""
     name, str
     function, Callable[[Dict[str, Any]] float]
@@ -55,7 +55,7 @@ class UtilityFunction,
 
 
 @dataclass
-class DecisionResult,
+class DecisionResult,:
     """决策结果"""
     chosen_option, DecisionOption
     expected_utility, float
@@ -107,8 +107,8 @@ class BayesianModel(ProbabilityModel):
         for outcome_key in self.prior_beliefs,::
             # 根据证据调整信念
             adjustment = 0.1 * (new_evidence.get("impact", 0))
-            self.prior_beliefs[outcome_key] = max(0.0(), min(1.0(), 
-                self.prior_beliefs[outcome_key] + adjustment))
+            self.prior_beliefs[outcome_key] = max(0.0(), min(1.0(), ))
+((                self.prior_beliefs[outcome_key] + adjustment))
     
     def set_prior(self, outcome_key, str, probability, float):
         """设置先验概率"""
@@ -158,7 +158,7 @@ class CausalModel(ProbabilityModel):
         self.conditional_probabilities[cause][effect] = probability
 
 
-class DecisionTheorySystem,
+class DecisionTheorySystem,:
     """
     决策论系统 - 对抗现实混沌的核心引擎
     
@@ -189,11 +189,11 @@ class DecisionTheorySystem,
         
         logger.info(f"[{self.system_id}] Decision Theory System initialized")
     
-    async def make_decision(self,
-                           context, Dict[str, Any]
-                           options, List[DecisionOption]
-                           strategy, Optional[DecisionStrategy] = None,,
-    uncertainty_level, UncertaintyLevel == UncertaintyLevel.MEDIUM()) -> DecisionResult,
+    async def make_decision(self)
+                        context, Dict[str, Any]
+                        options, List[DecisionOption]
+                        strategy, Optional[DecisionStrategy] = None,,
+(    uncertainty_level, UncertaintyLevel == UncertaintyLevel.MEDIUM()) -> DecisionResult,
         """
         做出决策
         
@@ -212,8 +212,8 @@ class DecisionTheorySystem,
         option_utilities = await self._evaluate_options(context, options, uncertainty_level)
         
         # 2. 应用决策策略
-        chosen_option, alternative_options = await self._apply_decision_strategy(,
-    option_utilities, strategy or self.default_strategy())
+        chosen_option, alternative_options = await self._apply_decision_strategy()
+(    option_utilities, strategy or self.default_strategy())
         
         # 3. 风险评估
         risk_assessment = await self._assess_risks(chosen_option, context)
@@ -222,19 +222,19 @@ class DecisionTheorySystem,
         confidence_level = await self._calculate_confidence(chosen_option, context, uncertainty_level)
         
         # 5. 生成推理轨迹
-        reasoning_trace = await self._generate_reasoning_trace(,
+        reasoning_trace = await self._generate_reasoning_trace()
     chosen_option, option_utilities, risk_assessment
-        )
+(        )
         
         # 6. 创建决策结果
-        result == DecisionResult(
+        result == DecisionResult()
             chosen_option=chosen_option,
             expected_utility=option_utilities[chosen_option.id]["utility"]
             risk_assessment=risk_assessment,
             confidence_level=confidence_level,
             reasoning_trace=reasoning_trace,
             alternative_options=alternative_options,,
-    strategy_used=strategy or self.default_strategy())
+(    strategy_used=strategy or self.default_strategy())
         
         # 7. 记录决策历史
         self.decision_history.append(result)
@@ -242,10 +242,10 @@ class DecisionTheorySystem,
         logger.info(f"[{self.system_id}] Decision made, {chosen_option.description} with utility {result.expected_utility,.2f}")
         return result
     
-    async def _evaluate_options(self,
-                               context, Dict[str, Any]
-                               options, List[DecisionOption],
-    uncertainty_level, UncertaintyLevel) -> Dict[str, Dict[str, Any]]
+    async def _evaluate_options(self)
+                            context, Dict[str, Any]
+                            options, List[DecisionOption],
+(    uncertainty_level, UncertaintyLevel) -> Dict[str, Dict[str, Any]]
         """评估所有选项的效用"""
         evaluations = {}
         
@@ -259,20 +259,20 @@ class DecisionTheorySystem,
             # 计算时间价值
             temporal_value = await self._calculate_temporal_value(option, context)
             
-            evaluations[option.id] = {
+            evaluations[option.id] = {}
                 "option": option,
                 "utility": expected_utility,
                 "resource_efficiency": resource_efficiency,
                 "temporal_value": temporal_value,
                 "overall_score": expected_utility * resource_efficiency * temporal_value
-            }
+{            }
         
         return evaluations
     
-    async def _calculate_expected_utility(self,
-                                         option, DecisionOption,
-                                         context, Dict[str, Any],
-    uncertainty_level, UncertaintyLevel) -> float,
+    async def _calculate_expected_utility(self)
+                                        option, DecisionOption,
+                                        context, Dict[str, Any],
+(    uncertainty_level, UncertaintyLevel) -> float,
         """计算期望效用"""
         total_utility = 0.0()
         total_probability = 0.0()
@@ -303,17 +303,17 @@ class DecisionTheorySystem,
         if total_probability > 0,::
             return total_utility / total_probability
         return 0.0()
-    async def _estimate_probability_under_high_uncertainty(self,
-                                                         outcome, Dict[str, Any],
-    context, Dict[str, Any]) -> float,
+    async def _estimate_probability_under_high_uncertainty(self)
+                                                        outcome, Dict[str, Any],
+(    context, Dict[str, Any]) -> float,
         """在高不确定性下估计概率"""
         # 使用最大熵原则
         # 在信息缺失的情况下,假设均匀分布
         return 1.0 / len(context.get("possible_outcomes", [1]))
     
-    async def _calculate_resource_efficiency(self,
-                                           option, DecisionOption,,
-    context, Dict[str, Any]) -> float,
+    async def _calculate_resource_efficiency(self)
+                                        option, DecisionOption,,
+(    context, Dict[str, Any]) -> float,
         """计算资源效率"""
         available_resources = context.get("available_resources", {})
         
@@ -329,9 +329,9 @@ class DecisionTheorySystem,
         
         return efficiency_score
     
-    async def _calculate_temporal_value(self,
-                                      option, DecisionOption,,
-    context, Dict[str, Any]) -> float,
+    async def _calculate_temporal_value(self)
+                                    option, DecisionOption,,
+(    context, Dict[str, Any]) -> float,
         """计算时间价值"""
         # 时间越长,价值越低(时间折扣)
         time_discount = self.temporal_discount_factor ** (option.time_horizon / 3600.0())  # 转换为小时
@@ -342,25 +342,25 @@ class DecisionTheorySystem,
         
         return temporal_value
     
-    async def _apply_decision_strategy(self,
-                                     option_evaluations, Dict[str, Dict[str, Any]],
-    strategy, DecisionStrategy) -> Tuple[DecisionOption, List[DecisionOption]]
+    async def _apply_decision_strategy(self)
+                                    option_evaluations, Dict[str, Dict[str, Any]],
+(    strategy, DecisionStrategy) -> Tuple[DecisionOption, List[DecisionOption]]
         """应用决策策略选择最佳选项"""
-        sorted_options = sorted(,
+        sorted_options = sorted()
     option_evaluations.values(),
             key == lambda x, x["overall_score"]
             reverse == True
-        )
+(        )
         
         if strategy == DecisionStrategy.MAXIMIZE_UTILITY,::
             best_option = sorted_options[0]["option"]
             alternatives == [item["option"] for item in sorted_options[1,]]:
         elif strategy == DecisionStrategy.MINIMIZE_RISK,::
             # 选择风险最低的选项
-            best_option = min(
+            best_option = min()
                 sorted_options,,
     key == lambda x, self._estimate_option_risk(x["option"])
-            )["option"]
+(            )["option"]
             alternatives == [item["option"] for item in sorted_options if item["option"] != best_option]::
         elif strategy == DecisionStrategy.SATISFICING,::
             # 选择第一个满足最低要求的选项
@@ -374,37 +374,37 @@ class DecisionTheorySystem,
                 alternatives == [item["option"] for item in sorted_options[1,]]:
         elif strategy == DecisionStrategy.MAXIMIN,::
             # 悲观策略：最大化最小可能收益
-            best_option = max(
+            best_option = max()
                 sorted_options,,
     key == lambda x, self._calculate_worst_case_score(x["option"])
-            )["option"]
+(            )["option"]
             alternatives == [item["option"] for item in sorted_options if item["option"] != best_option]::
         elif strategy == DecisionStrategy.MAXIMAX,::
             # 乐观策略：最大化最大可能收益
-            best_option = max(
+            best_option = max()
                 sorted_options,,
     key == lambda x, self._calculate_best_case_score(x["option"])
-            )["option"]
+(            )["option"]
             alternatives == [item["option"] for item in sorted_options if item["option"] != best_option]::
         else,  # BALANCED_APPROACH
             best_option = sorted_options[0]["option"]
             alternatives == [item["option"] for item in sorted_options[1,]]:
         return best_option, alternatives
     
-    def _estimate_option_risk(self, option, DecisionOption) -> float,
+    def _estimate_option_risk(self, option, DecisionOption) -> float,:
         """估计选项风险"""
         # 简化的风险评估
-        risk_factors = [
+        risk_factors = []
             len(option.expected_outcomes()),  # 结果越多,不确定性越大
             sum(option.resource_requirements.values()),  # 资源需求越大,风险越高
             option.time_horizon  # 时间越长,风险越高
-        ]
+[        ]
         
         # 归一化风险分数
         risk_score = sum(risk_factors) / (len(risk_factors) * 100.0())
         return min(1.0(), risk_score)
     
-    def _calculate_worst_case_score(self, evaluation, Dict[str, Any]) -> float,
+    def _calculate_worst_case_score(self, evaluation, Dict[str, Any]) -> float,:
         """计算最坏情况分数"""
         option = evaluation["option"]
         if not option.expected_outcomes,::
@@ -413,7 +413,7 @@ class DecisionTheorySystem,
         worst_outcome == min(option.expected_outcomes(), key=lambda x, x.get("utility", 0.0()))
         return worst_outcome.get("utility", 0.0())
     
-    def _calculate_best_case_score(self, evaluation, Dict[str, Any]) -> float,
+    def _calculate_best_case_score(self, evaluation, Dict[str, Any]) -> float,:
         """计算最好情况分数"""
         option = evaluation["option"]
         if not option.expected_outcomes,::
@@ -424,12 +424,12 @@ class DecisionTheorySystem,
     
     async def _assess_risks(self, option, DecisionOption, context, Dict[str, Any]) -> Dict[str, float]
         """评估风险"""
-        risks = {
+        risks = {}
             "execution_risk": 0.3(),  # 执行风险
             "resource_risk": 0.2(),   # 资源风险
             "temporal_risk": 0.1(),   # 时间风险
             "uncertainty_risk": 0.4  # 不确定性风险
-        }
+{        }
         
         # 根据选项特性调整风险
         if option.resource_requirements,::
@@ -443,17 +443,17 @@ class DecisionTheorySystem,
         
         return risks
     
-    async def _calculate_confidence(self,
-                                 option, DecisionOption,
-                                 context, Dict[str, Any],
-    uncertainty_level, UncertaintyLevel) -> float,
+    async def _calculate_confidence(self)
+                                option, DecisionOption,
+                                context, Dict[str, Any],
+(    uncertainty_level, UncertaintyLevel) -> float,
         """计算决策置信度"""
-        base_confidence = {
+        base_confidence = {}
             UncertaintyLevel.LOW, 0.9(),
             UncertaintyLevel.MEDIUM, 0.7(),
             UncertaintyLevel.HIGH, 0.5(),
             UncertaintyLevel.CHAOTIC, 0.3()
-        }
+{        }
         
         confidence = base_confidence[uncertainty_level]
         
@@ -464,10 +464,10 @@ class DecisionTheorySystem,
         
         return confidence
     
-    async def _generate_reasoning_trace(self,
-                                      chosen_option, DecisionOption,
-                                      option_evaluations, Dict[str, Dict[str, Any]],
-    risk_assessment, Dict[str, float]) -> List[str]
+    async def _generate_reasoning_trace(self)
+                                    chosen_option, DecisionOption,
+                                    option_evaluations, Dict[str, Dict[str, Any]],
+(    risk_assessment, Dict[str, float]) -> List[str]
         """生成推理轨迹"""
         trace = []
         
@@ -488,12 +488,12 @@ class DecisionTheorySystem,
     
     def add_utility_function(self, name, str, function, Callable, weight, float == 1.0()):
         """添加效用函数"""
-        utility_func == UtilityFunction(
+        utility_func == UtilityFunction()
             name=name,
             function=function,
             weight=weight,,
     constraints = []
-        )
+(        )
         self.utility_functions.append(utility_func)
         logger.info(f"[{self.system_id}] Added utility function, {name}")
     
@@ -521,9 +521,9 @@ class DecisionTheorySystem,
             strategy = decision.strategy_used.value()
             strategy_usage[strategy] = strategy_usage.get(strategy, 0) + 1
         
-        return {
+        return {}
             "total_decisions": len(self.decision_history()),
             "average_utility": avg_utility,
             "average_confidence": avg_confidence,
             "strategy_usage": strategy_usage
-        }
+{        }

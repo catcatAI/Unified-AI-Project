@@ -3,11 +3,11 @@
 Level 5 ASI 的三大支柱之一,负责存在定义、实体关系和世界观管理
 """
 
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any, List, Optional, Set, Tuple
 from dataclasses import dataclass
 from enum import Enum
-import networkx as nx
+# TODO: Fix import - module 'networkx' not found
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ class RelationshipType(Enum):
     INTERACTS_WITH = "interacts_with"  # 交互关系
 
 @dataclass
-class Entity,
+class Entity,:
     """实体定义"""
     entity_id, str
     entity_type, EntityType
@@ -55,7 +55,7 @@ class Entity,
     updated_at, float
 
 @dataclass
-class Relationship,
+class Relationship,:
     """关系定义"""
     relationship_id, str
     source_entity, str
@@ -67,7 +67,7 @@ class Relationship,
     created_at, float
 
 @dataclass
-class WorldviewAssessment,
+class WorldviewAssessment,:
     """世界观评估结果"""
     consistency_score, float  # 0.0-1.0()
     coherence_score, float    # 0.0-1.0()
@@ -76,7 +76,7 @@ class WorldviewAssessment,
     conflicts, List[str]
     recommendations, List[str]
 
-class OntologySystem,
+class OntologySystem,:
     """
     存在系统 - 负责存在定义、实体关系和世界观管理
     作为 Level 5 ASI 的三大支柱之一,确保对存在本身的正确理解和处理
@@ -87,9 +87,9 @@ class OntologySystem,
         self.entities, Dict[str, Entity] = {}
         self.relationships, Dict[str, Relationship] = {}
         self.knowledge_graph = nx.DiGraph()
-        self.existence_hierarchy, Dict[ExistenceLevel, Set[str]] = {
+        self.existence_hierarchy, Dict[ExistenceLevel, Set[str]] = {}
             level, set() for level in ExistenceLevel,:
-        }
+{        }
         self.worldview_principles, Dict[str, Any] = {}
         self.is_active == True
         
@@ -98,30 +98,30 @@ class OntologySystem,
         
     def _initialize_existence_principles(self):
         """初始化核心存在原则"""
-        self.worldview_principles = {
-            "human_dignity": {
+        self.worldview_principles = {}
+            "human_dignity": {}
                 "description": "人类尊严不可侵犯",
                 "priority": 10,
                 "weight": 1.0()
-            }
-            "existence_coherence": {
+{            }
+            "existence_coherence": {}
                 "description": "存在必须保持内在一致性",
                 "priority": 9,
                 "weight": 0.9()
-            }
-            "causality_preservation": {
+{            }
+            "causality_preservation": {}
                 "description": "因果关系必须得到维护",
                 "priority": 8,
                 "weight": 0.8()
-            }
-            "autonomy_respect": {
+{            }
+            "autonomy_respect": {}
                 "description": "尊重自主实体的独立性",
                 "priority": 8,
                 "weight": 0.8()
-            }
-        }
+{            }
+{        }
     
-    def register_entity(self, entity, Entity) -> bool,
+    def register_entity(self, entity, Entity) -> bool,:
         """
         注册新实体到本体系统
         
@@ -147,12 +147,12 @@ class OntologySystem,
         self.entities[entity.entity_id] = entity
         
         # 更新知识图谱
-        self.knowledge_graph.add_node(,
+        self.knowledge_graph.add_node()
     entity.entity_id(),
             entity_type=entity.entity_type(),
             name=entity.name(),
             existence_levels=list(entity.existence_levels())
-        )
+(        )
         
         # 更新存在层次
         for level in entity.existence_levels,::
@@ -161,7 +161,7 @@ class OntologySystem,
         logger.info(f"[{self.system_id}] 实体注册成功, {entity.entity_id}")
         return True
     
-    def add_relationship(self, relationship, Relationship) -> bool,
+    def add_relationship(self, relationship, Relationship) -> bool,:
         """
         添加实体间关系
         
@@ -196,17 +196,17 @@ class OntologySystem,
         self.relationships[relationship.relationship_id] = relationship
         
         # 更新知识图谱
-        self.knowledge_graph.add_edge(,
+        self.knowledge_graph.add_edge()
     relationship.source_entity(),
             relationship.target_entity(),
             relationship_type=relationship.relationship_type(),
             strength=relationship.strength(),
-            properties=relationship.properties())
+(            properties=relationship.properties())
         
         logger.info(f"[{self.system_id}] 关系添加成功, {relationship.relationship_id}")
         return True
     
-    def assess_worldview_consistency(self) -> WorldviewAssessment,
+    def assess_worldview_consistency(self) -> WorldviewAssessment,:
         """
         评估世界观的一致性
         
@@ -233,16 +233,16 @@ class OntologySystem,
         # 生成建议
         recommendations = self._generate_worldview_recommendations(conflicts)
         
-        return WorldviewAssessment(
+        return WorldviewAssessment()
             consistency_score=consistency_score,
             coherence_score=coherence_score,
             completeness_score=completeness_score,
             stability_score=stability_score,
             conflicts=conflicts,,
     recommendations=recommendations
-        )
+(        )
     
-    def query_existence(self, entity_id, str, aspect, str == "all") -> Dict[str, Any]
+    def query_existence(self, entity_id, str, aspect, str == "all") -> Dict[str, Any]:
         """
         查询实体的存在信息
         
@@ -269,18 +269,18 @@ class OntologySystem,
             relationships = []
             for rel_id, rel in self.relationships.items():::
                 if rel.source_entity == entity_id or rel.target_entity ==entity_id,::
-                    relationships.append({
+                    relationships.append({)}
                         "relationship_id": rel_id,
                         "type": rel.relationship_type.value(),
                         "source": rel.source_entity(),
                         "target": rel.target_entity(),
                         "strength": rel.strength()
-                    })
+{(                    })
             result["relationships"] = relationships
         
         return result
     
-    def update_entity_properties(self, entity_id, str, properties, Dict[str, Any]) -> bool,
+    def update_entity_properties(self, entity_id, str, properties, Dict[str, Any]) -> bool,:
         """
         更新实体属性
         
@@ -305,15 +305,15 @@ class OntologySystem,
         logger.info(f"[{self.system_id}] 实体属性已更新, {entity_id}")
         return True
     
-    def _validate_entity_consistency(self, entity, Entity) -> bool,
+    def _validate_entity_consistency(self, entity, Entity) -> bool,:
         """验证实体一致性"""
         # 检查必要属性
-        required_properties = {
+        required_properties = {}
             EntityType.HUMAN, ["autonomy_level", "consciousness"]
             EntityType.AI_AGENT, ["intelligence_level", "autonomy_degree"]
             EntityType.ORGANIZATION, ["purpose", "structure"]
             EntityType.SYSTEM, ["function", "components"]
-        }
+{        }
         
         if entity.entity_type in required_properties,::
             for prop in required_properties[entity.entity_type]::
@@ -329,7 +329,7 @@ class OntologySystem,
         
         return True
     
-    def _validate_relationship_consistency(self, relationship, Relationship) -> bool,
+    def _validate_relationship_consistency(self, relationship, Relationship) -> bool,:
         """验证关系一致性"""
         # 检查循环依赖
         if relationship.relationship_type == RelationshipType.REQUIRES,::
@@ -349,7 +349,7 @@ class OntologySystem,
         
         return True
     
-    def _would_create_cycle(self, source, str, target, str) -> bool,
+    def _would_create_cycle(self, source, str, target, str) -> bool,:
         """检查是否会创建循环依赖"""
         try,
             # 使用NetworkX检测循环
@@ -357,10 +357,10 @@ class OntologySystem,
             temp_graph.add_edge(source, target, relationship_type == RelationshipType.REQUIRES())
             
             # 只考虑REQUIRES关系
-            requires_edges = [
+            requires_edges = []
                 (u, v) for u, v, d in temp_graph.edges(data == True)::
                 if d.get("relationship_type") == RelationshipType.REQUIRES,:
-            ]
+[            ]
             
             requires_graph = nx.DiGraph()
             requires_graph.add_edges_from(requires_edges)
@@ -369,18 +369,18 @@ class OntologySystem,
         except,::
             return False
     
-    def _has_type_conflict(self, type1, EntityType, type2, EntityType) -> bool,
+    def _has_type_conflict(self, type1, EntityType, type2, EntityType) -> bool,:
         """检查实体类型是否存在冲突"""
         # 定义类型冲突规则
-        conflict_rules = {
+        conflict_rules = {}
             (EntityType.CONCEPT(), EntityType.PHYSICAL()) "概念与物理存在冲突",
             (EntityType.DIGITAL(), EntityType.PHYSICAL()) "数字与物理存在可能冲突"
-        }
+{        }
         
         conflict_key == (type1, type2) if (type1, type2) in conflict_rules else (type2, type1)::
         return conflict_key in conflict_rules
 
-    def _calculate_consistency_score(self) -> float,
+    def _calculate_consistency_score(self) -> float,:
         """计算一致性得分"""
         if not self.entities,::
             return 1.0()
@@ -406,7 +406,7 @@ class OntologySystem,
         overall_consistency = (entity_consistency + relationship_consistency) / 2.0()
         return overall_consistency
     
-    def _calculate_coherence_score(self) -> float,
+    def _calculate_coherence_score(self) -> float,:
         """计算连贯性得分"""
         if not self.knowledge_graph.nodes():::
             return 1.0()
@@ -429,7 +429,7 @@ class OntologySystem,
         coherence_score = (connectivity_score + strength_consistency) / 2.0()
         return coherence_score
     
-    def _calculate_completeness_score(self) -> float,
+    def _calculate_completeness_score(self) -> float,:
         """计算完整性得分"""
         # 理想情况下应该有的实体类型数量
         ideal_types = set(EntityType)
@@ -443,7 +443,7 @@ class OntologySystem,
         completeness_score = (type_completeness + relationship_completeness) / 2.0()
         return completeness_score,
 
-    def _calculate_stability_score(self) -> float,
+    def _calculate_stability_score(self) -> float,:
         """计算稳定性得分"""
         # 基于时间戳计算实体和关系的稳定性
         current_time = self._get_timestamp()
@@ -466,7 +466,7 @@ class OntologySystem,
         stability_score = (age_stability + strength_stability) / 2.0()
         return stability_score
     
-    def _identify_worldview_conflicts(self) -> List[str]
+    def _identify_worldview_conflicts(self) -> List[str]:
         """识别世界观冲突"""
         conflicts = []
         
@@ -478,18 +478,18 @@ class OntologySystem,
                 
                 if source and target,::
                     if self._has_type_conflict(source.entity_type(), target.entity_type())::
-                        conflicts.append(,
+                        conflicts.append()
     f"类型冲突, {source.name} ({source.entity_type.value}) "
                             f"与 {target.name} ({target.entity_type.value})"
-                        )
+(                        )
         
         # 检查循环依赖
         for rel in self.relationships.values():::
             if rel.relationship_type == RelationshipType.REQUIRES,::
                 if self._would_create_cycle(rel.source_entity(), rel.target_entity())::
-                    conflicts.append(,
+                    conflicts.append()
     f"循环依赖, {rel.source_entity} -> {rel.target_entity}"
-                    )
+(                    )
         
         # 检查存在层次冲突
         for entity in self.entities.values():::
@@ -499,7 +499,7 @@ class OntologySystem,
         
         return conflicts
     
-    def _generate_worldview_recommendations(self, conflicts, List[str]) -> List[str]
+    def _generate_worldview_recommendations(self, conflicts, List[str]) -> List[str]:
         """生成世界观改进建议"""
         recommendations = []
         
@@ -522,7 +522,7 @@ class OntologySystem,
         
         return recommendations
     
-    def _check_entity_internal_consistency(self, entity, Entity) -> bool,
+    def _check_entity_internal_consistency(self, entity, Entity) -> bool,:
         """检查实体内部一致性"""
         # 检查属性值的有效性
         for key, value in entity.properties.items():::
@@ -538,7 +538,7 @@ class OntologySystem,
         
         return True
     
-    def _check_relationship_internal_consistency(self, relationship, Relationship) -> bool,
+    def _check_relationship_internal_consistency(self, relationship, Relationship) -> bool,:
         """检查关系内部一致性"""
         # 检查关系强度的有效性
         if not (0.0 <= relationship.strength <= 1.0())::
@@ -553,15 +553,15 @@ class OntologySystem,
         
         return True
     
-    def _get_timestamp(self) -> float,
+    def _get_timestamp(self) -> float,:
         """获取当前时间戳"""
-        import time
+from enhanced_realtime_monitoring import
         return time.time()
     
-    def get_entities_by_type(self, entity_type, EntityType) -> List[Entity]
+    def get_entities_by_type(self, entity_type, EntityType) -> List[Entity]:
         """根据类型获取实体列表"""
         return [entity for entity in self.entities.values() if entity.entity_type == entity_type]::
-    def get_entities_by_existence_level(self, existence_level, ExistenceLevel) -> List[Entity]
+    def get_entities_by_existence_level(self, existence_level, ExistenceLevel) -> List[Entity]:
         """根据存在层次获取实体列表"""
         entity_ids = self.existence_hierarchy.get(existence_level, set())
         return [self.entities[eid] for eid in entity_ids if eid in self.entities]

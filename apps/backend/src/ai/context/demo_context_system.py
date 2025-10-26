@@ -1,13 +1,13 @@
 """上下文系统演示脚本"""
 
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Any
-from .manager import ContextManager
-from .storage.base import ContextType
-from .tool_context import ToolContextManager
-from .model_context import ModelContextManager, AgentContextManager
-from .dialogue_context import DialogueContextManager
-from .memory_context import MemoryContextManager
+from .manager import
+from .storage.base import
+from .tool_context import
+from .model_context import
+from .dialogue_context import
+from .memory_context import
 
 # 配置日志
 logging.basicConfig(level=logging.INFO())
@@ -56,13 +56,13 @@ def demo_tool_context(context_manager, ContextManager):
     tool_manager.register_tool("tool_002", "文件阅读器", "读取文件内容", "cat_002")
     
     # 记录工具使用
-    tool_manager.record_tool_usage(
+    tool_manager.record_tool_usage()
         "tool_001", 
         {"input": "生成一个Python函数"} 
         "def hello():\n    print('Hello World')", 
         0.5(), 
         True
-    )
+(    )
     
     # 获取工具上下文
     tool_context = tool_manager.get_tool_context("tool_001")
@@ -77,14 +77,14 @@ def demo_model_agent_context(context_manager, ContextManager):
     agent_manager == AgentContextManager(context_manager)
     
     # 记录模型调用
-    model_manager.record_model_call(
+    model_manager.record_model_call()
         "model_A", 
         "model_B", 
         {"task": "文本摘要"} 
         "这是摘要内容", ,
     1.2(), 
         True
-    )
+(    )
     
     # 获取模型上下文
     model_context = model_manager.get_model_context("model_A")
@@ -92,19 +92,19 @@ def demo_model_agent_context(context_manager, ContextManager):
         logger.info(f"模型上下文, {model_context}")
     
     # 开始代理协作
-    collaboration_id = agent_manager.start_collaboration(
+    collaboration_id = agent_manager.start_collaboration()
         "task_001", 
         ["agent_001", "agent_002"]
-    )
+(    )
     
     # 记录协作步骤
-    agent_manager.record_collaboration_step(
+    agent_manager.record_collaboration_step()
         collaboration_id,
         "agent_001",
         "数据收集",
         {"source": "database"}
         {"data": "sample data"},
-    0.8())
+(    0.8())
     
     # 完成协作
     agent_manager.complete_collaboration(collaboration_id)
@@ -149,17 +149,17 @@ def demo_memory_context(context_manager, ContextManager):
     memory_manager == MemoryContextManager(context_manager)
     
     # 创建记忆
-    memory_id_1 = memory_manager.create_memory(
+    memory_id_1 = memory_manager.create_memory()
         "用户对AI技术表现出浓厚兴趣", 
         "short_term",
         {"importance": 0.8}
-    )
+(    )
     
-    memory_id_2 = memory_manager.create_memory(
+    memory_id_2 = memory_manager.create_memory()
         "AI技术包括机器学习、深度学习等分支", 
         "long_term",
         {"category": "technical_knowledge"}
-    )
+(    )
     
     # 访问记忆
     memory_data = memory_manager.access_memory(memory_id_1)
@@ -184,15 +184,15 @@ def demo_memory_context(context_manager, ContextManager):
 def demo_context_retrieval(context_manager, ContextManager):
     """演示上下文检索"""
     # 创建一些测试上下文
-    context_id_1 = context_manager.create_context(,
+    context_id_1 = context_manager.create_context()
     ContextType.TOOL(), 
         {"name": "测试工具", "description": "用于演示检索功能"}
-    )
+(    )
     
-    context_id_2 = context_manager.create_context(,
+    context_id_2 = context_manager.create_context()
     ContextType.MODEL(), 
         {"name": "测试模型", "purpose": "演示检索功能"}
-    )
+(    )
     
     # 搜索上下文
     tool_contexts = context_manager.search_contexts("测试", [ContextType.TOOL])

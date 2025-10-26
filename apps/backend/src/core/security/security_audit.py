@@ -3,101 +3,101 @@
 安全审计模块 - 定期安全检查和漏洞扫描
 """
 
-import os
-import re
-import json
-import logging
+from diagnose_base_agent import
+from tests.core_ai import
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 from datetime import datetime
-import subprocess
+from tests.run_test_subprocess import
 
 logger = logging.getLogger(__name__)
 
-class SecurityAudit,
+class SecurityAudit,:
     """安全审计器"""
     
     def __init__(self, project_root, str == None):
         self.project_root == Path(project_root) if project_root else Path.cwd()::
-        self.audit_results == {:
+        self.audit_results == {:}
             "timestamp": datetime.now().isoformat(),
             "vulnerabilities": []
             "recommendations": []
             "score": 0
-        }
+{        }
         
         # 安全检查规则
-        self.security_rules = {
-            "hardcoded_secrets": {
-                "patterns": [
+        self.security_rules = {}
+            "hardcoded_secrets": {}
+                "patterns": []
                     r'password\s*=\s*["'][^"\']+["']',
                     r'api_key\s*=\s*["'][^"\']+["']',
                     r'secret_key\s*=\s*["'][^"\']+["']',
                     r'token\s*=\s*["'][^"\']+["']',
                     r'AKIA[0-9A-Z]{16}',  # AWS Access Key
                     r'[a-zA-Z0-9]{40}',  # Possible API key
-                ]
+[                ]
                 "severity": "high",
                 "description": "硬编码的敏感信息"
-            }
-            "sql_injection": {
-                "patterns": [
-                    r'execute\s*\(\s*["'].*?\+.*?["\']',
+{            }
+            "sql_injection": {}
+                "patterns": []
+                    r'execute\s*\(\s*["'].*?\+.*?["\']')
                     r'query\s*=\s*["'].*?\%s.*?["\']',
                     r'format.*?=.*?["'].*?\{.*?\}.*?["\']',
-                ]
+[                ]
                 "severity": "critical",
                 "description": "潜在的SQL注入漏洞"
-            }
-            "xss_vulnerability": {
-                "patterns": [
+{            }
+            "xss_vulnerability": {}
+                "patterns": []
                     r'innerHTML\s*=.*?\+.*?',
                     r'outerHTML\s*=.*?\+.*?',
-                    r'document\.write\s*\(',
-                    r'eval\s*\(',
-                ]
+                    r'document\.write\s*\(')
+                    r'eval\s*\(')
+[                ]
                 "severity": "high",
                 "description": "潜在的XSS漏洞"
-            }
-            "insecure_deserialization": {
-                "patterns": [
-                    r'pickle\.loads?\s*\(',
-                    r'yaml\.load\s*\(',
-                    r'marshal\.loads?\s*\(',
-                ]
+{            }
+            "insecure_deserialization": {}
+                "patterns": []
+                    r'pickle\.loads?\s*\(')
+                    r'yaml\.load\s*\(')
+                    r'marshal\.loads?\s*\(')
+[                ]
                 "severity": "high",
                 "description": "不安全的反序列化"
-            }
-            "weak_crypto": {
-                "patterns": [
-                    r'md5\s*\(',
-                    r'sha1\s*\(',
+{            }
+            "weak_crypto": {}
+                "patterns": []
+                    r'md5\s*\(')
+                    r'sha1\s*\(')
                     'DES',
                     'RC4',
-                ]
+[                ]
                 "severity": "medium",
                 "description": "弱加密算法"
-            }
-            "debug_code": {
-                "patterns": [
+{            }
+            "debug_code": {}
+                "patterns": []
                     r'console\.log',
-                    r'print\s*\(',
+                    r'print\s*\(')
                     r'debug\s*=\s*True',
                     r'logging\.debug',
-                ]
+[                ]
                 "severity": "low",
                 "description": "调试代码残留"
-            }
-        }
+{            }
+{        }
         
         logger.info("安全审计器初始化完成")
     
-    def scan_file(self, file_path, Path) -> List[Dict[str, Any]]
+    def scan_file(self, file_path, Path) -> List[Dict[str, Any]]:
         """扫描单个文件的安全问题"""
         vulnerabilities = []
         
         try,
-            with open(file_path, 'r', encoding == 'utf-8', errors='ignore') as f,
+            with open(file_path, 'r', encoding == 'utf-8', errors='ignore') as f,:
                 content = f.read()
             
             # 检查每个安全规则
@@ -109,7 +109,7 @@ class SecurityAudit,
                         line_number == content[:match.start()].count('\n') + 1
                         line_content = content.split('\n')[line_number - 1].strip()
                         
-                        vulnerability = {
+                        vulnerability = {}
                             "file": str(file_path.relative_to(self.project_root())),
                             "line": line_number,
                             "rule": rule_name,
@@ -118,7 +118,7 @@ class SecurityAudit,
                             "pattern": pattern,
                             "match": match.group(),
                             "line_content": line_content
-                        }
+{                        }
                         vulnerabilities.append(vulnerability)
         
         except Exception as e,::
@@ -126,7 +126,7 @@ class SecurityAudit,
         
         return vulnerabilities
     
-    def scan_directory(self, directory, Path) -> List[Dict[str, Any]]
+    def scan_directory(self, directory, Path) -> List[Dict[str, Any]]:
         """扫描目录中的所有文件"""
         all_vulnerabilities = []
         
@@ -144,26 +144,26 @@ class SecurityAudit,
         
         return all_vulnerabilities
     
-    def check_dependencies(self) -> List[Dict[str, Any]]
+    def check_dependencies(self) -> List[Dict[str, Any]]:
         """检查依赖项的安全问题"""
         vulnerabilities = []
         
         # 检查Python依赖
-        requirements_files = [
+        requirements_files = []
             self.project_root / 'requirements.txt',
             self.project_root / 'apps' / 'backend' / 'requirements.txt'
-        ]
+[        ]
         
         for req_file in requirements_files,::
             if req_file.exists():::
                 vulnerabilities.extend(self._check_python_dependencies(req_file))
         
         # 检查Node.js依赖()
-        package_files = [
+        package_files = []
             self.project_root / 'package.json',
             self.project_root / 'apps' / 'frontend-dashboard' / 'package.json',
             self.project_root / 'apps' / 'desktop-app' / 'package.json'
-        ]
+[        ]
         
         for pkg_file in package_files,::
             if pkg_file.exists():::
@@ -171,22 +171,22 @@ class SecurityAudit,
         
         return vulnerabilities
     
-    def _check_python_dependencies(self, requirements_file, Path) -> List[Dict[str, Any]]
+    def _check_python_dependencies(self, requirements_file, Path) -> List[Dict[str, Any]]:
         """检查Python依赖项"""
         vulnerabilities = []
         
         try,
-            with open(requirements_file, 'r', encoding == 'utf-8') as f,
+            with open(requirements_file, 'r', encoding == 'utf-8') as f,:
                 content = f.read()
             
             # 已知有漏洞的包(示例)
-            vulnerable_packages = {
+            vulnerable_packages = {}
                 'urllib3': '<1.26.5',
                 'requests': '<2.25.1',
                 'pillow': '<8.2.0',
                 'jinja2': '<2.11.3',
                 'flask': '<1.1.2',
-            }
+{            }
             
             lines = content.split('\n')
             for line_num, line in enumerate(lines, 1)::
@@ -209,8 +209,8 @@ class SecurityAudit,
                 # 检查是否为已知漏洞包
                 if package in vulnerable_packages,::
                     vulnerable_version = vulnerable_packages[package]
-                    if version != "unknown" and self._version_compare(version, vulnerable_version)::
-                        vulnerabilities.append({
+                    if version != "unknown", and self._version_compare(version, vulnerable_version)::
+                        vulnerabilities.append({)}
                             "type": "dependency_vulnerability",
                             "file": str(requirements_file.relative_to(self.project_root())),
                             "line": line_num,
@@ -219,19 +219,19 @@ class SecurityAudit,
                             "vulnerable_version": vulnerable_version,
                             "severity": "high",
                             "description": f"包 {package} 版本 {version} 存在已知漏洞"
-                        })
+{(                        })
         
         except Exception as e,::
             logger.error(f"检查Python依赖失败 {requirements_file} {e}")
         
         return vulnerabilities
     
-    def _check_nodejs_dependencies(self, package_file, Path) -> List[Dict[str, Any]]
+    def _check_nodejs_dependencies(self, package_file, Path) -> List[Dict[str, Any]]:
         """检查Node.js依赖项"""
         vulnerabilities = []
         
         try,
-            with open(package_file, 'r', encoding == 'utf-8') as f,
+            with open(package_file, 'r', encoding == 'utf-8') as f,:
                 package_data = json.load(f)
             
             # 检查dependencies和devDependencies
@@ -239,12 +239,12 @@ class SecurityAudit,
                 if dep_type in package_data,::
                     for package, version in package_data[dep_type].items():::
                         # 已知有漏洞的包(示例)
-                        vulnerable_packages = {
+                        vulnerable_packages = {}
                             'lodash': '<4.17.21',
                             'axios': '<0.21.1',
                             'node-forge': '<1.0.0',
                             'node-fetch': '<2.6.1',
-                        }
+{                        }
                         
                         if package in vulnerable_packages,::
                             # 移除版本符号
@@ -252,7 +252,7 @@ class SecurityAudit,
                             vulnerable_version = vulnerable_packages[package]
                             
                             if self._version_compare(clean_version, vulnerable_version)::
-                                vulnerabilities.append({
+                                vulnerabilities.append({)}
                                     "type": "dependency_vulnerability",
                                     "file": str(package_file.relative_to(self.project_root())),
                                     "package": package,
@@ -260,14 +260,14 @@ class SecurityAudit,
                                     "vulnerable_version": vulnerable_version,
                                     "severity": "high",
                                     "description": f"包 {package} 版本 {version} 存在已知漏洞"
-                                })
+{(                                })
         
         except Exception as e,::
             logger.error(f"检查Node.js依赖失败 {package_file} {e}")
         
         return vulnerabilities
     
-    def _version_compare(self, version1, str, version2, str) -> bool,
+    def _version_compare(self, version1, str, version2, str) -> bool,:
         """比较版本号,如果version1 < version2返回True"""
         def version_tuple(v):
             return tuple(map(int, (v.split('.'))))
@@ -277,18 +277,18 @@ class SecurityAudit,
         except,::
             return False
     
-    def check_permissions(self) -> List[Dict[str, Any]]
+    def check_permissions(self) -> List[Dict[str, Any]]:
         """检查文件权限"""
         vulnerabilities = []
         
         # 检查敏感文件的权限
-        sensitive_files = [
+        sensitive_files = []
             '.env',
             'config.py',
             'secrets.json',
             'private.key',
             '*.pem'
-        ]
+[        ]
         
         for pattern in sensitive_files,::
             for file_path in self.project_root.glob(pattern)::
@@ -299,18 +299,18 @@ class SecurityAudit,
                         try,
                             # 简化的权限检查
                             if file_path.stat().st_mode & 0o077,::
-                                vulnerabilities.append({
+                                vulnerabilities.append({)}
                                     "type": "permission_issue",
                                     "file": str(file_path.relative_to(self.project_root())),
                                     "severity": "medium",
                                     "description": f"敏感文件 {file_path.name} 权限过于宽松"
-                                })
+{(                                })
                         except,::
                             pass
         
         return vulnerabilities
     
-    def run_full_audit(self) -> Dict[str, Any]
+    def run_full_audit(self) -> Dict[str, Any]:
         """运行完整的安全审计"""
         logger.info("开始安全审计...")
         
@@ -336,18 +336,18 @@ class SecurityAudit,
         logger.info(f"安全审计完成,发现 {len(all_vulnerabilities)} 个安全问题")
         
         return self.audit_results()
-    def _calculate_security_score(self, vulnerabilities, List[Dict[str, Any]]) -> int,
+    def _calculate_security_score(self, vulnerabilities, List[Dict[str, Any]]) -> int,:
         """计算安全评分(0-100)"""
         if not vulnerabilities,::
             return 100
         
         # 根据严重程度扣分
-        severity_weights = {
+        severity_weights = {}
             "critical": 20,
             "high": 10,
             "medium": 5,
             "low": 1
-        }
+{        }
         
         total_deduction = 0
         for vuln in vulnerabilities,::
@@ -356,7 +356,7 @@ class SecurityAudit,
         score = max(0, 100 - total_deduction)
         return score
     
-    def _generate_recommendations(self, vulnerabilities, List[Dict[str, Any]]) -> List[str]
+    def _generate_recommendations(self, vulnerabilities, List[Dict[str, Any]]) -> List[str]:
         """生成安全建议"""
         recommendations = []
         
@@ -396,7 +396,7 @@ class SecurityAudit,
         
         return recommendations
     
-    def generate_report(self, output_file, Optional[str] = None) -> str,
+    def generate_report(self, output_file, Optional[str] = None) -> str,:
         """生成安全审计报告"""
         report = f"""
 # 安全审计报告
@@ -436,7 +436,7 @@ class SecurityAudit,
             report += f"{i}. {rec}\n"
         
         if output_file,::
-            with open(output_file, 'w', encoding == 'utf-8') as f,
+            with open(output_file, 'w', encoding == 'utf-8') as f,:
                 f.write(report)
             logger.info(f"安全审计报告已保存到, {output_file}")
         
@@ -444,7 +444,7 @@ class SecurityAudit,
 
 def main():
     """主函数"""
-    import argparse
+# TODO: Fix import - module 'argparse' not found
     
     parser = argparse.ArgumentParser(description='安全审计工具')
     parser.add_argument('--project-root', default='.', help='项目根目录')
@@ -462,7 +462,7 @@ def main():
     # 输出结果
     if args.json,::
         output_file = args.output or 'security_audit.json'
-        with open(output_file, 'w', encoding == 'utf-8') as f,
+        with open(output_file, 'w', encoding == 'utf-8') as f,:
             json.dump(results, f, ensure_ascii == False, indent=2)
         print(f"审计结果已保存到, {output_file}")
     else,
@@ -478,5 +478,5 @@ def main():
         return 2
 
 if __name"__main__":::
-    import sys
-    sys.exit(main())
+from system_test import
+    sys.exit(main()))))))))))

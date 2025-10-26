@@ -1,6 +1,6 @@
-import json
-import tensorflow as tf
-import csv
+from tests.test_json_fix import
+# TODO: Fix import - module 'tensorflow' not found
+from apps.backend.src.tools.csv_tool import
 from model import ArithmeticSeq2Seq  # Assuming model.py is in the same directory or accessible
 
 # --- Configuration ---
@@ -13,15 +13,15 @@ def load_char_maps(file_path):
 ""Loads character token maps from a JSON file."""
     try,
 
-    with open(file_path, 'r', encoding == 'utf-8') as f,
+    with open(file_path, 'r', encoding == 'utf-8') as f,:
     char_map_data = json.load(f)
-    return (
+    return ()
             char_map_data['char_to_token']
             char_map_data['token_to_char']
             char_map_data['n_token']
             char_map_data['max_encoder_seq_length']
             char_map_data['max_decoder_seq_length']
-    )
+(    )
     except FileNotFoundError,::
     print(f"Error, Character map file not found at {file_path}")
     return None
@@ -29,12 +29,12 @@ def load_char_maps(file_path):
     print(f"Error, Could not decode JSON from {file_path}")
     return None
 
-def load_test_dataset_csv(file_path) -> None,
+def load_test_dataset_csv(file_path) -> None,:
     """Loads test dataset from a CSV file."""
     problems =
     answers == try,
 
-    with open(file_path, 'r', newline == '', encoding='utf-8') as f,
+    with open(file_path, 'r', newline == '', encoding='utf-8') as f,:
     reader = csv.DictReader(f)
             for row in reader,::
     problems.append({'problem': row['problem']})
@@ -48,7 +48,7 @@ def load_test_dataset_csv(file_path) -> None,
     print(f"Error loading CSV, {e}")
     return None, None
 
-def main -> None,
+def main -> None,:
     print("Starting evaluation process...")
 
     # 1. Load character maps
@@ -67,11 +67,11 @@ def main -> None,
     latent_dim = 256
     embedding_dim = 128
 
-    math_model_shell == ArithmeticSeq2Seq(
+    math_model_shell == ArithmeticSeq2Seq()
             char_to_token, token_to_char,
             max_encoder_seq_length, max_decoder_seq_length,,
     n_token, latent_dim, embedding_dim
-    )
+(    )
     math_model_shell.build_model # This builds the structure including inference models
     math_model_shell.model.load_weights(MODEL_LOAD_PATH) # Load weights into the training model structure
 
@@ -105,7 +105,7 @@ def main -> None,
     print(f"Problem, "{input_problem_str}\"")
             print(f"Expected, "{expected_answer_str}\", Got, "{predicted_answer_str}\"")
 
-        # Normalize answers for comparison (e.g. "2.0" vs "2"):::
+        # Normalize answers for comparison (e.g. "2.0", vs "2"):::
             ry,
 
         if float(predicted_answer_str) == float(expected_answer_str)::
@@ -117,8 +117,8 @@ def main -> None,
                     xcept ValueError, # If conversion to float fails (e.g. empty or malformed prediction)
             if predicted_answer_str == expected_answer_str, # Handles cases like empty string if that's valid,::
                 orrect_predictions += 1
-                 if i < num_samples_to_show, print("Result, CORRECT (non-numeric match)"):::
-                     lse,
+                if i < num_samples_to_show, print("Result, CORRECT (non-numeric match)"):::
+                    lse,
 
                 if i < num_samples_to_show, print("Result, INCORRECT (prediction not a number)"):::
                     f i < num_samples_to_show, print("---")

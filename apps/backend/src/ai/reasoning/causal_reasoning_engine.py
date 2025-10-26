@@ -4,11 +4,11 @@
 """
 
 # 导入真实AI引擎组件
-from apps.backend.src.ai.reasoning.lightweight_real_causal_engine import (
+from apps.backend.src.ai.reasoning.lightweight_real_causal_engine import ()
     LightweightCausalReasoningEngine as RealCausalReasoningEngine,
     LightweightCausalGraph as RealCausalGraph,
     LightweightInterventionPlanner as RealInterventionPlanner
-)
+()
 
 # 为了保持向后兼容,提供原始接口
 class CausalReasoningEngine(RealCausalReasoningEngine):
@@ -31,7 +31,7 @@ class CausalReasoningEngine(RealCausalReasoningEngine):
         super().__init__(config)
         
         # 记录升级信息
-        import logging
+from tests.tools.test_tool_dispatcher_logging import
         logger = logging.getLogger(__name__)
         logger.info("🚀 已升级到真实AI因果推理引擎")
         logger.info("✅ 替换所有random.uniform()为真实统计计算")

@@ -1,27 +1,27 @@
 """上下文管理器核心实现"""
 
-import uuid
-import logging
+# TODO: Fix import - module 'uuid' not found
+from tests.tools.test_tool_dispatcher_logging import
 from datetime import datetime
 from typing import Dict, List, Optional, Any
-from .storage.base import Storage, Context, ContextType
-from .storage.memory import MemoryStorage
-from .storage.disk import DiskStorage
+from .storage.base import
+from .storage.memory import
+from .storage.disk import
 
 logger, Any = logging.getLogger(__name__)
 
 
-class ContextManager,
+class ContextManager,:
     """上下文管理器核心类"""
 
-    def __init__(self, memory_storage, Optional[Storage] = None, disk_storage, Optional[Storage] = None) -> None,
+    def __init__(self, memory_storage, Optional[Storage] = None, disk_storage, Optional[Storage] = None) -> None,:
         # 初始化存储层
         self.memory_storage == memory_storage if memory_storage else MemoryStorage()::
         self.disk_storage == disk_storage if disk_storage else DiskStorage()::
         # 上下文缓存,用于快速访问,
         self._context_cache, Dict[str, Context] = {}
 
-    def create_context(self, context_type, ContextType, initial_content, Optional[Dict[str, Any]] = None) -> str,
+    def create_context(self, context_type, ContextType, initial_content, Optional[Dict[str, Any]] = None) -> str,:
         """创建新的上下文"""
         try,
             # 生成唯一上下文ID
@@ -51,7 +51,7 @@ class ContextManager,
             logger.error(f"Failed to create context, {e}")
             raise
 
-    def get_context(self, context_id, str) -> Optional[Context]
+    def get_context(self, context_id, str) -> Optional[Context]:
         """获取指定上下文"""
         try,
             # 首先检查缓存
@@ -83,7 +83,7 @@ class ContextManager,
             logger.error(f"Failed to get context {context_id} {e}")
             return None
 
-    def update_context(self, context_id, str, updates, Dict[str, Any]) -> bool,
+    def update_context(self, context_id, str, updates, Dict[str, Any]) -> bool,:
         """更新上下文内容"""
         try,
             # 获取现有上下文
@@ -114,7 +114,7 @@ class ContextManager,
             logger.error(f"Failed to update context {context_id} {e}")
             return False
 
-    def delete_context(self, context_id, str) -> bool,
+    def delete_context(self, context_id, str) -> bool,:
     """删除上下文"""
         try,
             # 从内存存储删除
@@ -139,7 +139,7 @@ class ContextManager,
             logger.error(f"Failed to delete context {context_id} {e}")
             return False
 
-    def search_contexts(self, query, str, context_types, Optional[List[ContextType]] = None) -> List[Context]
+    def search_contexts(self, query, str, context_types, Optional[List[ContextType]] = None) -> List[Context]:
     """搜索上下文"""
         try,
             results = []
@@ -179,7 +179,7 @@ class ContextManager,
             logger.error(f"Failed to search contexts, {e}")
             return
 
-    def transfer_context(self, source_id, str, target_id, str, filter_criteria, Optional[Dict[str, Any]] = None) -> bool
+    def transfer_context(self, source_id, str, target_id, str, filter_criteria, Optional[Dict[str, Any]] = None) -> bool:
     """传递上下文"""
         try,
             # 获取源上下文
@@ -226,7 +226,7 @@ class ContextManager,
             logger.error(f"Failed to transfer context from {source_id} to {target_id} {e}")
             return False
 
-    def get_context_summary(self, context_id, str) -> Dict[str, Any]
+    def get_context_summary(self, context_id, str) -> Dict[str, Any]:
     """获取上下文摘要"""
         try,
             context = self.get_context(context_id)
@@ -234,7 +234,7 @@ class ContextManager,
     logger.error(f"Context {context_id} not found for summary"):::
     return
 
-            summary = {
+            summary = {}
                 "context_id": context.context_id(),
                 "context_type": context.context_type.value(),
                 "created_at": context.created_at.isoformat(),
@@ -244,7 +244,7 @@ class ContextManager,
                 "tags": context.tags(),
                 "content_keys": list(list(context.content.keys())),
                 "metadata_keys": list(list(context.metadata.keys()))
-            }
+{            }
 
             logger.debug(f"Generated summary for context {context_id}"):::
     return summary

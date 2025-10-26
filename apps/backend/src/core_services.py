@@ -1,10 +1,10 @@
 # src/core_services.py()
-import asyncio
+# TODO: Fix import - module 'asyncio' not found
 from typing import Optional, Dict, Any, List
-import uuid
-import sys
-import os
-import logging
+# TODO: Fix import - module 'uuid' not found
+from system_test import
+from diagnose_base_agent import
+from tests.tools.test_tool_dispatcher_logging import
 
 # Add the project root to the Python path
 project_root, str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 def get_BaseAgent():
     """获取BaseAgent类"""
     try,
-        import importlib
+# TODO: Fix import - module 'importlib' not found
         module = importlib.import_module('apps.backend.src.ai.agents.base.base_agent')
         return getattr(module, 'BaseAgent')
     except ImportError,::
@@ -39,11 +39,11 @@ def get_AgentManager():
         return ActualAgentManager
     except ImportError,::
         try,
-            from .managers.agent_manager import AgentManager as ActualAgentManager
+from .managers.agent_manager import
             return ActualAgentManager
         except ImportError,::
             try,
-                from .ai.agent_manager import AgentManager as ActualAgentManager
+from .ai.agent_manager import
                 return ActualAgentManager
             except ImportError,::
                 class AgentManagerImpl,:
@@ -58,7 +58,7 @@ def get_HAMMemoryManager():
         return ActualHAMMemoryManager
     except ImportError,::
         try,
-            from .ai.memory.ham_memory_manager import HAMMemoryManager as ActualHAMMemoryManager
+from .ai.memory.ham_memory_manager import
             return ActualHAMMemoryManager
         except ImportError,::
             class HAMMemoryManagerImpl,:
@@ -84,12 +84,12 @@ class MultiLLMService,:
         pass
 
     async def generate_response(self, prompt):
-        import json
+from tests.test_json_fix import
         if "project," in prompt and "analyze" in prompt,::
             mock_response = []
                 {"capability_needed": "analyze_csv_data", "task_parameters": {"source": "data.csv"} "dependencies": []}
                 {"capability_needed": "generate_marketing_copy", "task_parameters": {"product_description": "Our new product, which is based on the analysis, <output_of_task_0>"} "dependencies": [0]}
-            ]
+[            ]
             return json.dumps(mock_response)
         elif "User's Original Request" in prompt and "Collected Results from Sub-Agents" in prompt,::
             return "Based on the data summary, I have created this slogan, Our new product, which has 2 columns and 1 row, is revolutionary for data scientists!"::
@@ -120,7 +120,7 @@ class PersonalityManager,:
     def __init__(self, *args, **kwargs) -> None,:
         self.current_personality = {}
             "display_name": "Test AI"
-        }
+{        }
 
     def get_personality(self):
         return self.current_personality()
@@ -189,7 +189,7 @@ class ToolDispatcher,:
                 "payload": "Mock dispatch result",
                 "tool_name_attempted": "mock_tool",
                 "original_query_for_tool": query
-            }
+{            }
             MockResponse = type('ToolDispatcherResponse', (), response_data)
             return MockResponse
         except ImportError,::
@@ -204,7 +204,7 @@ class ToolDispatcher,:
                 payload="Mock dispatch result",
                 tool_name_attempted="mock_tool",,
     original_query_for_tool=query
-            )
+(            )
 
 class DialogueManager,:
     def __init__(self, *args, **kwargs) -> None,:
@@ -214,7 +214,7 @@ class DialogueManager,:
         except ImportError as e,::
             logger.warning(f"Absolute import failed for DialogueManager, {e}")::
             try,
-                from .ai.dialogue.dialogue_manager import DialogueManager as RealDialogueManager
+from .ai.dialogue.dialogue_manager import
                 logger.info("Relative import successful for DialogueManager"):::
             except ImportError as e2,::
                 logger.error(f"Relative import also failed for DialogueManager, {e2}")::
@@ -332,7 +332,7 @@ DEFAULT_OPERATIONAL_CONFIGS = {}
     "max_concurrent_tasks": 5,
     "task_timeout_seconds": 300,
     "memory_cleanup_interval_minutes": 60,
-}
+{}
 
 async def initialize_services()
     config, Optional[Dict[str, Any]] = None,
@@ -342,7 +342,7 @@ async def initialize_services()
     operational_configs, Optional[Dict[str, Any]] = None,
     use_mock_ham, bool == False,,
     llm_config, Optional[Dict[str, Any]] = None
-):
+():
     """
     Initializes and holds singleton instances of all core services and modules.
     This function should be called once at application startup.
@@ -383,9 +383,9 @@ async def initialize_services()
                 "mqtt_broker_port": DEFAULT_MQTT_PORT,
                 "enable_fallback": True,
                 "fallback_config": {}
-            }
+{            }
             "is_multiprocess": False
-        }
+{        }
 
     all_credentials = {}
     env_vars_to_check = []
@@ -393,7 +393,7 @@ async def initialize_services()
         "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "AZURE_OPENAI_API_KEY",
         "AZURE_OPENAI_ENDPOINT", "COHERE_API_KEY", "HUGGINGFACE_API_KEY", "OLLAMA_BASE_URL",
         "FIREBASE_CREDENTIALS_PATH", "MIKO_HAM_KEY", "BASE_URL"
-    ]
+[    ]
     for env_var in env_vars_to_check,::
         if os.getenv(env_var)::
             all_credentials[env_var] = os.getenv(env_var)
@@ -402,7 +402,7 @@ async def initialize_services()
         for provider, provider_config in llm_config.get("providers", {}).items():::
             if isinstance(provider_config, dict)::
                 for key, value in provider_config.items():::
-                    if "PLACEHOLDER" not in str(value)::
+                    if "PLACEHOLDER", not in str(value)::
                         all_credentials[f"{provider.upper()}_{key.upper()}"] = value
 
     await demo_learning_manager.activate_demo_mode(all_credentials)
@@ -411,14 +411,14 @@ async def initialize_services()
     effective_op_configs == operational_configs if operational_configs else DEFAULT_OPERATIONAL_CONFIGS,:
     main_config_dict == {:}
         "operational_configs": effective_op_configs,
-    }
+{    }
 
     # --- 1. Foundational Services ---
     if llm_interface_instance is None,::
         try,
             from apps.backend.src.services.multi_llm_service import get_multi_llm_service
         except ImportError,::
-            from .services.multi_llm_service import get_multi_llm_service
+from .services.multi_llm_service import
         llm_interface_instance = get_multi_llm_service()
 
     if not ham_manager_instance,::
@@ -440,7 +440,7 @@ async def initialize_services()
                                     data_type_filter == None, metadata_filters == None,
                                     user_id_for_facts == None, limit=10,
                                     sort_by_confidence == False, return_multiple_candidates == False,,
-    include_raw_data == False, semantic_query == None):
+(    include_raw_data == False, semantic_query == None):
                     return
 
                 def recall_gist(self, memory_id):
@@ -452,17 +452,17 @@ async def initialize_services()
         else,
             chroma_client == None
             try,
-                import importlib
+# TODO: Fix import - module 'importlib' not found
                 chromadb = importlib.import_module('chromadb')
                 chroma_client = chromadb.HttpClient()
                     host="localhost",,
     port=8001
-                )
+(                )
                 logger.info(f"Core Services, ChromaDB HttpClient initialized successfully.")
             except Exception as e,::
                 logger.warning(f"Core Services, Warning - ChromaDB HttpClient initialization failed, {e}. Trying EphemeralClient.")
                 try,
-                    import importlib
+# TODO: Fix import - module 'importlib' not found
                     chromadb = importlib.import_module('chromadb')
                     chroma_client = chromadb.EphemeralClient()
                     logger.info(f"Core Services, ChromaDB EphemeralClient initialized successfully.")
@@ -472,13 +472,13 @@ async def initialize_services()
 
             try,
                 HAMMemoryManagerClass = get_HAMMemoryManager()
-                ham_manager_instance == HAMMemoryManagerClass(,)
+                ham_manager_instance == HAMMemoryManagerClass()
     core_storage_filename == f"ham_core_{ai_id.replace(':', '_')}.json",
                     chroma_client=chroma_client,
                     resource_awareness_service=resource_awareness_service_instance,
                     personality_manager=personality_manager_instance,
                     storage_dir == None
-                )
+(                )
             except Exception as e,::
                 logger.error(f"Core Services, Error initializing HAMMemoryManager, {e}")
                 class SimpleMockHAM,:
@@ -518,7 +518,7 @@ async def initialize_services()
             mqtt_broker_port=config['mcp']['mqtt_broker_port'],
     enable_fallback=config['mcp'].get('enable_fallback', True),
             fallback_config=fallback_config
-        )
+(        )
         await mcp_connector_instance.connect()
 
     if not ai_virtual_input_service_instance,::
@@ -541,7 +541,7 @@ async def initialize_services()
                 ai_id=ai_id,
                 broker_address=hsp_broker_address,,
     broker_port=hsp_broker_port
-            )
+(            )
             if not await hsp_connector_instance.connect():::
                 logger.warning(f"Core Services, WARNING - HSPConnector for {ai_id} failed to connect to {hsp_broker_address}{hsp_broker_port}")::
             else,
@@ -556,15 +556,15 @@ async def initialize_services()
                 broker_address=hsp_broker_address,
                 broker_port=hsp_broker_port,,
     mock_mode == True
-            )
+(            )
             await hsp_connector_instance.connect()
 
     if not service_discovery_module_instance,::
         service_discovery_module_instance == ServiceDiscoveryModule(trust_manager=trust_manager_instance)
 
     if hsp_connector_instance and service_discovery_module_instance,::
-        hsp_connector_instance.register_on_capability_advertisement_callback(,)
-    service_discovery_module_instance.process_capability_advertisement())
+        hsp_connector_instance.register_on_capability_advertisement_callback()
+(    service_discovery_module_instance.process_capability_advertisement())
 
     # --- 3. Core AI Logic Modules ---
     if not fact_extractor_instance,::
@@ -592,10 +592,10 @@ async def initialize_services()
                 hsp_connector=hsp_connector_instance,
                 trust_manager=trust_manager_instance,,
     operational_config=effective_op_configs
-            )
+(            )
             if (hsp_connector_instance and learning_manager_instance and,:):
                 hasattr(learning_manager_instance, 'process_and_store_hsp_fact') and,
-                callable(getattr(learning_manager_instance, 'process_and_store_hsp_fact', None))):
+(                callable(getattr(learning_manager_instance, 'process_and_store_hsp_fact', None))):
 
                 def sync_fact_callback(hsp_fact_payload, hsp_sender_ai_id, hsp_envelope):
                     current_learning_manager = learning_manager_instance
@@ -605,12 +605,12 @@ async def initialize_services()
 
                     try,
                         if hasattr(current_learning_manager, 'process_and_store_hsp_fact') and \:::
-                           callable(getattr(current_learning_manager, 'process_and_store_hsp_fact', None))
+                        callable(getattr(current_learning_manager, 'process_and_store_hsp_fact', None))
                             asyncio.create_task()
-                                current_learning_manager.process_and_store_hsp_fact(,)
+                                current_learning_manager.process_and_store_hsp_fact()
     hsp_fact_payload, hsp_sender_ai_id, hsp_envelope
-                                )
-                            )
+(                                )
+(                            )
                         else,
                             logger.warning("Learning manager does not have process_and_store_hsp_fact method")
                             return None
@@ -639,7 +639,7 @@ async def initialize_services()
         try,
             from apps.backend.src.ai.formula_engine import FormulaEngine
         except ImportError,::
-            from .ai.formula_engine import FormulaEngine
+from .ai.formula_engine import
         formula_engine_instance == FormulaEngine()
 
     if not tool_dispatcher_instance,::
@@ -667,7 +667,7 @@ async def initialize_services()
             hsp_connector=hsp_connector_instance,
             agent_manager=agent_manager_instance,,
     config == None
-        )
+(        )
         logger.info("Core Services, All services initialized (or attempted).")
 
 
@@ -696,7 +696,7 @@ def get_services() -> Dict[str, Any]:
         "resource_awareness_service": resource_awareness_service_instance,
         "economy_manager": economy_manager_instance,
         "pet_manager": pet_manager_instance,
-    }
+{    }
 
 async def shutdown_services():
     """Gracefully shuts down services, e.g., AgentManager and HSPConnector."""

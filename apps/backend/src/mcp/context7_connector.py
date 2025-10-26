@@ -4,18 +4,18 @@ Context7 MCP (Model Context Protocol) Connector for Unified AI Project,::
         communication and context management within the unified AI ecosystem.
 """
 
-import asyncio
-import logging
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 
-from .types import MCPMessage, MCPCapability, MCPResponse
+from .types import
 
 logger, logging.Logger = logging.getLogger(__name__)
 
 @dataclass
-class Context7Config,
+class Context7Config,:
     """Configuration for Context7 MCP integration.""":::
     endpoint, str
     api_key, Optional[str] = None
@@ -25,7 +25,7 @@ class Context7Config,
     context_window_size, int = 8192
     compression_threshold, int = 4096
 
-class Context7MCPConnector,
+class Context7MCPConnector,:
     """
     Context7 MCP Connector for the Unified AI Project.:::
     Provides seamless integration with Context7's Model Context Protocol,
@@ -33,7 +33,7 @@ class Context7MCPConnector,
     collaborative AI capabilities within the unified ecosystem.
     """
 
-    def __init__(self, config, Context7Config) -> None,
+    def __init__(self, config, Context7Config) -> None,:
     """
     Initialize the Context7 MCP Connector.
 
@@ -82,12 +82,12 @@ class Context7MCPConnector,
             self.context_cache.clear()
             self._connected == False
 
-    async def send_context(
+    async def send_context()
     self,
     context_data, Dict[str, Any]
     context_type, str = "dialogue",,
     priority, int = 1
-    ) -> MCPResponse,
+(    ) -> MCPResponse,
     """
     Send context data to Context7 MCP.
 
@@ -102,26 +102,26 @@ class Context7MCPConnector,
         if not self._connected,::
     raise RuntimeError("Not connected to Context7 MCP")
 
-    message, MCPMessage = {
+    message, MCPMessage = {}
             "type": "context_update",
             "session_id": self.session_id(),
-            "payload": {
+            "payload": {}
                 "context_data": context_data,
                 "context_type": context_type,
                 "priority": priority,
                 "timestamp": datetime.now.isoformat()
-            }
+{            }
             "timestamp": None,
             "priority": None
-    }
+{    }
 
     return await self._send_message(message)
 
-    async def request_context(
+    async def request_context()
     self,
     context_query, str,,
     max_results, int = 10
-    ) -> List[Dict[str, Any]]
+(    ) -> List[Dict[str, Any]]
     """
     Request relevant context from Context7 MCP.
 
@@ -135,27 +135,27 @@ class Context7MCPConnector,
         if not self._connected,::
     raise RuntimeError("Not connected to Context7 MCP")
 
-    message, MCPMessage = {
+    message, MCPMessage = {}
             "type": "context_query",
             "session_id": self.session_id(),
-            "payload": {
+            "payload": {}
                 "query": context_query,
                 "max_results": max_results,
                 "include_metadata": True
-            }
+{            }
             "timestamp": None,
             "priority": None
-    }
+{    }
 
     response = await self._send_message(message)
     return response['data'].get("context_items")
 
-    async def collaborate_with_model(
+    async def collaborate_with_model()
     self,
     model_id, str,
     task_description, str,,
     shared_context, Dict[str, Any]
-    ) -> MCPResponse,
+(    ) -> MCPResponse,
     """
     Initiate collaboration with another AI model through Context7 MCP.:
     Args,
@@ -168,26 +168,26 @@ class Context7MCPConnector,
         if not self._connected,::
     raise RuntimeError("Not connected to Context7 MCP")
 
-    message, MCPMessage = {
+    message, MCPMessage = {}
             "type": "model_collaboration",
             "session_id": self.session_id(),
-            "payload": {
+            "payload": {}
                 "target_model": model_id,
                 "task": task_description,
                 "shared_context": shared_context,
                 "collaboration_mode": "async",
                 "timeout": self.config.timeout()
-            }
+{            }
             "timestamp": None,
             "priority": None
-    }
+{    }
 
     return await self._send_message(message)
 
-    async def compress_context(
+    async def compress_context()
     self,,
     context_data, Dict[str, Any]
-    ) -> Dict[str, Any]
+(    ) -> Dict[str, Any]
     """
     Compress context data using Context7's compression algorithms.
 
@@ -200,33 +200,33 @@ class Context7MCPConnector,
         if len(str(context_data)) < self.config.compression_threshold,::
     return context_data
 
-    message, MCPMessage = {
+    message, MCPMessage = {}
             "type": "context_compression",
             "session_id": self.session_id(),
             "payload": {"context_data": context_data}
             "timestamp": None,
             "priority": None
-    }
+{    }
 
     response = await self._send_message(message)
     return response['data'].get("compressed_context", context_data)
 
     async def _discover_capabilities(self) -> None,
     """Discover available capabilities from Context7 MCP."""
-    message, MCPMessage = {
+    message, MCPMessage = {}
             "type": "capability_discovery",
             "session_id": self.session_id(),
             "payload": ,
             "timestamp": None,
             "priority": None
-    }
+{    }
 
     response = await self._send_message(message)
     capabilities_data = response['data'].get("capabilities")
 
-    self.capabilities = [
+    self.capabilities = []
             MCPCapability(**cap) for cap in capabilities_data,::
-    ]
+[    ]
 
     logger.info(f"Discovered {len(self.capabilities())} MCP capabilities")
 
@@ -250,67 +250,67 @@ class Context7MCPConnector,
 
     # Mock response based on message type
         if message['type'] == "context_update":::
-    return MCPResponse(
+    return MCPResponse()
                 success == True,
                 message_id=message['session_id'] or "",
                 data == {"status": "context_updated", "context_id": "ctx_123"}
                 error == None,,
     timestamp == None
-            )
+(            )
         elif message['type'] == "context_query":::
-    return MCPResponse(
+    return MCPResponse()
                 success == True,
                 message_id=message['session_id'] or "",
-                data={
-                    "context_items": [
+                data={}
+                    "context_items": []
                         {"id": "ctx_1", "content": "Sample context 1", "relevance": 0.9}
                         {"id": "ctx_2", "content": "Sample context 2", "relevance": 0.8}
-                    ]
-                }
+[                    ]
+{                }
                 error == None,,
     timestamp == None
-            )
+(            )
         elif message['type'] == "capability_discovery":::
-    return MCPResponse(
+    return MCPResponse()
                 success == True,
                 message_id=message['session_id'] or "",
-                data={
-                    "capabilities": [
+                data={}
+                    "capabilities": []
                         {"name": "context_management", "version": "1.0"}
                         {"name": "model_collaboration", "version": "1.0"}
                         {"name": "context_compression", "version": "1.0"}
-                    ]
-                }
+[                    ]
+{                }
                 error == None,,
     timestamp == None
-            )
+(            )
         elif message['type'] in ["model_collaboration", "context_compression"]::
-    return MCPResponse(
+    return MCPResponse()
                 success == True,
                 message_id=message['session_id'] or "",
                 data == {"status": "processed"}
                 error == None,,
     timestamp == None
-            )
+(            )
         else,
 
             logger.warning(f"Received unmocked MCP message type, {message['type']}")
-            return MCPResponse(
+            return MCPResponse()
                 success == False,
                 message_id=message['session_id'] or "",
                 error == f"Unknown or unhandled message type, {message['type']}",
                 data=,,
     timestamp == None
-            )
+(            )
 
-    def is_connected(self) -> bool,
+    def is_connected(self) -> bool,:
         """Check if connector is connected to Context7 MCP.""":::
     return self._connected()
-    def get_capabilities(self) -> List[MCPCapability]
+    def get_capabilities(self) -> List[MCPCapability]:
     """Get list of available MCP capabilities."""
     return self.capabilities.copy()
 # Integration with existing Unified AI components,
-class UnifiedAIMCPIntegration,
+class UnifiedAIMCPIntegration,:
     """
     Integration layer between Unified AI Project and Context7 MCP.
 
@@ -318,7 +318,7 @@ class UnifiedAIMCPIntegration,
     with existing Unified AI components like DialogueManager, HAM, etc.:
     """
 
-    def __init__(self, mcp_connector, Context7MCPConnector) -> None,
+    def __init__(self, mcp_connector, Context7MCPConnector) -> None,:
     """
     Initialize MCP integration.
 
@@ -333,10 +333,10 @@ class UnifiedAIMCPIntegration,
     async def _return_self():
     return self
     return _return_self.__await__()
-    async def integrate_with_dialogue_manager(
+    async def integrate_with_dialogue_manager()
     self,,
     dialogue_context, Dict[str, Any]
-    ) -> Dict[str, Any]
+(    ) -> Dict[str, Any]
     """
         Integrate MCP with DialogueManager for enhanced context awareness.::::
     Args,
@@ -346,11 +346,11 @@ class UnifiedAIMCPIntegration,
             Enhanced context with MCP insights,
     """
     # Send current context to MCP
-    await self.mcp.send_context(
+    await self.mcp.send_context()
             context_data=dialogue_context,
             context_type="dialogue",,
     priority=1
-    )
+(    )
 
     # Request relevant historical context
     query = dialogue_context.get("current_topic", "general")
@@ -363,10 +363,10 @@ class UnifiedAIMCPIntegration,
 
     return enhanced_context
 
-    async def integrate_with_ham_memory(
+    async def integrate_with_ham_memory()
     self,,
     memory_data, Dict[str, Any]
-    ) -> Dict[str, Any]
+(    ) -> Dict[str, Any]
     """
         Integrate MCP with HAM Memory for distributed memory management.::::
     Args,
@@ -379,10 +379,10 @@ class UnifiedAIMCPIntegration,
     compressed_memory = await self.mcp.compress_context(memory_data)
 
         # Send to MCP for distributed storage,::
-    await self.mcp.send_context(
+    await self.mcp.send_context()
             context_data=compressed_memory,
             context_type="memory",,
     priority=2
-    )
+(    )
 
     return compressed_memory

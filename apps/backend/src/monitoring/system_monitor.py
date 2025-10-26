@@ -4,18 +4,18 @@
 负责监控系统资源使用情况,包括CPU、内存、GPU和网络使用情况
 """
 
-import psutil
-import logging
-import asyncio
+# TODO: Fix import - module 'psutil' not found
+from tests.tools.test_tool_dispatcher_logging import
+# TODO: Fix import - module 'asyncio' not found
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from dataclasses import dataclass, asdict
-import json
+from tests.test_json_fix import
 
 logger, Any = logging.getLogger(__name__)
 
 @dataclass
-class SystemMetrics,
+class SystemMetrics,:
     """系统指标数据类"""
     timestamp, str
     cpu_percent, float
@@ -29,10 +29,10 @@ class SystemMetrics,
     def to_dict(self):
     return asdict(self)
 
-class SystemMonitor,
+class SystemMonitor,:
     """系统监控器"""
 
-    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,
+    def __init__(self, config, Optional[Dict[str, Any]] = None) -> None,:
     self.config = config or
     self.metrics_history, List[SystemMetrics] =
     self.max_history_size = self.config.get('max_history_size', 1000)
@@ -43,10 +43,10 @@ class SystemMonitor,
     self.gpu_available = self._init_gpu_monitoring()
     logger.info("系统监控器初始化完成")
 
-    def _init_gpu_monitoring(self) -> bool,
+    def _init_gpu_monitoring(self) -> bool,:
     """初始化GPU监控"""
         try,
-            import pynvml
+# TODO: Fix import - module 'pynvml' not found
             pynvml.nvmlInit()
             logger.info("GPU监控初始化成功")
             return True
@@ -57,13 +57,13 @@ class SystemMonitor,
             logger.warning(f"GPU监控初始化失败, {e}")
             return False
 
-    def get_gpu_info(self) -> List[Dict[str, Any]]
+    def get_gpu_info(self) -> List[Dict[str, Any]]:
     """获取GPU信息"""
         if not self.gpu_available,::
     return
 
     try,
-            import pynvml,
+# TODO: Fix import - module 'pynvml' not found
     gpu_info =
             device_count = pynvml.nvmlDeviceGetCount()
             for i in range(device_count)::
@@ -72,7 +72,7 @@ class SystemMonitor,
                 memory_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 utilization = pynvml.nvmlDeviceGetUtilizationRates(handle)
 
-                gpu_info.append({
+                gpu_info.append({)}
                     'id': i,
                     'name': name.decode('utf-8') if isinstance(name, bytes) else name,::
                     'memory_total_gb': memory_info.total / (1024**3),
@@ -81,14 +81,14 @@ class SystemMonitor,
                     'memory_utilization': memory_info.used / memory_info.total * 100,
                     'gpu_utilization': utilization.gpu(),
                     'memory_utilization_rate': utilization.memory()
-                })
+{(                })
 
             return gpu_info
         except Exception as e,::
             logger.warning(f"获取GPU信息失败, {e}")
             return
 
-    def collect_metrics(self) -> SystemMetrics
+    def collect_metrics(self) -> SystemMetrics:
     """收集系统指标"""
     # CPU使用率
     cpu_percent = psutil.cpu_percent(interval=1)
@@ -110,7 +110,7 @@ class SystemMonitor,
 
     # GPU信息
     gpu_info = self.get_gpu_info()
-    metrics == SystemMetrics(,
+    metrics == SystemMetrics()
     timestamp=datetime.now.isoformat(),
             cpu_percent=cpu_percent,
             memory_percent=memory_percent,
@@ -119,7 +119,7 @@ class SystemMonitor,
             network_bytes_sent=bytes_sent,
             network_bytes_recv=bytes_recv,
             gpu_info=gpu_info
-    )
+(    )
 
     # 添加到历史记录
     self.metrics_history.append(metrics)
@@ -128,31 +128,31 @@ class SystemMonitor,
 
     return metrics
 
-    def get_current_load(self) -> Dict[str, Any]
+    def get_current_load(self) -> Dict[str, Any]:
     """获取当前系统负载"""
     metrics = self.collect_metrics()
-    load_info = {
+    load_info = {}
             'cpu_load': metrics.cpu_percent(),
             'memory_load': metrics.memory_percent(),
             'disk_load': metrics.disk_usage_percent(),
-            'network_bandwidth_usage': {
+            'network_bandwidth_usage': {}
                 'bytes_sent_per_sec': metrics.network_bytes_sent / self.monitoring_interval(),
                 'bytes_recv_per_sec': metrics.network_bytes_recv / self.monitoring_interval()
-            }
-            'gpu_load': [
-                {
+{            }
+            'gpu_load': []
+                {}
                     'id': gpu['id']
                     'name': gpu['name']
                     'gpu_utilization': gpu['gpu_utilization']
                     'memory_utilization': gpu['memory_utilization']
-                }
+{                }
                 for gpu in metrics.gpu_info,::
-            ] if metrics.gpu_info else,::
-    }
+[            ] if metrics.gpu_info else,::
+{    }
 
     return load_info
 
-    def get_resource_recommendations(self) -> Dict[str, Any]
+    def get_resource_recommendations(self) -> Dict[str, Any]:
     """获取资源使用建议"""
         if not self.metrics_history,::
     return
@@ -161,40 +161,40 @@ class SystemMonitor,
     recent_metrics == self.metrics_history[-10,]  # 最近10个指标
         avg_cpu == sum(m.cpu_percent for m in recent_metrics) / len(recent_metrics)::
     avg_memory == sum(m.memory_percent for m in recent_metrics) / len(recent_metrics)::
-    recommendations = {
+    recommendations = {}
             'timestamp': datetime.now.isoformat(),
             'avg_cpu_load': avg_cpu,
             'avg_memory_load': avg_memory,
             'recommendations':
-    }
+{    }
 
     # CPU负载建议
         if avg_cpu > 80,::
-    recommendations['recommendations'].append({
+    recommendations['recommendations'].append({)}
                 'type': 'cpu',
                 'severity': 'high',
                 'message': 'CPU负载过高,建议减少并行任务或优化算法'
-            })
+{(            })
         elif avg_cpu > 60,::
-    recommendations['recommendations'].append({
+    recommendations['recommendations'].append({)}
                 'type': 'cpu',
                 'severity': 'medium',
                 'message': 'CPU负载中等,可以适当增加任务'
-            })
+{(            })
 
     # 内存负载建议
         if avg_memory > 85,::
-    recommendations['recommendations'].append({
+    recommendations['recommendations'].append({)}
                 'type': 'memory',
                 'severity': 'high',
                 'message': '内存使用率过高,建议释放不必要的内存或增加内存资源'
-            })
+{(            })
         elif avg_memory > 70,::
-    recommendations['recommendations'].append({
+    recommendations['recommendations'].append({)}
                 'type': 'memory',
                 'severity': 'medium',
                 'message': '内存使用率中等,注意内存管理'
-            })
+{(            })
 
     return recommendations
 
@@ -225,13 +225,13 @@ class SystemMonitor,
     self.is_monitoring == False
     logger.info("停止系统监控")
 
-    def get_metrics_history(self, limit, int == 100) -> List[Dict[str, Any]]
+    def get_metrics_history(self, limit, int == 100) -> List[Dict[str, Any]]:
     """获取历史指标数据"""
         return [m.to_dict for m in self.metrics_history[-limit,]]::
     def export_metrics_to_file(self, filepath, str):
     """导出指标数据到文件"""
         try,
-            with open(filepath, 'w', encoding == 'utf-8') as f,
+            with open(filepath, 'w', encoding == 'utf-8') as f,:
     json.dump([m.to_dict for m in self.metrics_history] f, ensure_ascii == False, indent=2)::
     logger.info(f"指标数据已导出到, {filepath}")
         except Exception as e,::

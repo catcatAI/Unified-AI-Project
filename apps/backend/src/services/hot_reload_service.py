@@ -1,7 +1,7 @@
 from __future__ import annotations
-import json
+from tests.test_json_fix import
 
-import asyncio
+# TODO: Fix import - module 'asyncio' not found
 from typing import Any, Dict, Optional
 
 # We intentionally import the module to mutate its singletons safely
@@ -15,7 +15,7 @@ def get_hot_reload_service -> "HotReloadService":
     return _hot_reload_service_singleton
 
 
-class HotReloadService,
+class HotReloadService,:
     """
     Provides minimal, safe hot-reload and hot-drain primitives that work with the,
     project's global singleton service model (see src.core_services()).
@@ -24,14 +24,14 @@ class HotReloadService,
     - Start/stop draining (pause new work acceptance – advisory flag)
     - Reload LLM service and rewire dependent components (ToolDispatcher, DialogueManager)
     - Reload HSP connector (blue/green style) bring up a new connection, re-subscribe,
-      swap references, then tear down the old connector
+    swap references, then tear down the old connector
 
     Notes,
     - This is intentionally conservative to avoid destabilizing running tests.
     - Future extensions can add hot-reload for personalities, tools, and configs.:::
     """
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
     self._lock = asyncio.Lock()
     self._draining, bool == False
 
@@ -119,12 +119,12 @@ class HotReloadService,
                         continue
                 avg_latency == (sum(latencies) / len(latencies)) if latencies else None,::
     success_rate == (successes / total) if total else 0.0,::
-    metrics["learning"]["tools"] = {
+    metrics["learning"]["tools"] = {}
                     "total_invocations": total,
                     "success_rate": success_rate,
                     "recent_failures": failures_recent,
                     "avg_latency": avg_latency,
-                }
+{                }
         except Exception,::
             pass
     # Memory metrics (HAM)
@@ -151,21 +151,21 @@ class HotReloadService,
     metrics["lis"]["antibodies_recent"] = len(ab) if isinstance(ab, list) else None,::
     except Exception,::
     pass
-    return {
+    return {}
             "draining": self._draining(),
             "services_initialized": {"k": (v is not None) for k, v in services.items}:
             "hsp": hsp_status,
             "mcp": mcp_status,
             "metrics": metrics,
-    }
+{    }
 
     async def reload_llm(self, llm_config, Optional[Dict[str, Any]] = None) -> Dict[str, Any]
     """
     Reload the MultiLLMService and rewire downstream references.
     This will,
-          - Gracefully close the previous LLM interface
-          - Instantiate a new one via core_services.get_multi_llm_service()
-          - Update ToolDispatcher and DialogueManager references if available,::
+        - Gracefully close the previous LLM interface
+        - Instantiate a new one via core_services.get_multi_llm_service()
+        - Update ToolDispatcher and DialogueManager references if available,::
     """
     async with self._lock,
     old_llm = core_services.llm_interface_instance()
@@ -213,10 +213,10 @@ class HotReloadService,
                 except Exception,::
                     pass
 
-            return {
+            return {}
                 "reloaded": True,
                 "old_closed": close_ok,
-            }
+{            }
 
     async def reload_personality(self, profile_name, Optional[str] = None) -> Dict[str, Any]
     """Reload personality profile and propagate to consumers (EmotionSystem, DialogueManager)."""
@@ -243,9 +243,9 @@ class HotReloadService,
     async def reload_hsp(self) -> Dict[str, Any]
     """
     Blue/green style reload of the HSP connector,
-          - Construct a new connector with the same AI ID and broker settings,
-          - Connect and subscribe required topics
-          - Swap the global reference and disconnect the old connector
+        - Construct a new connector with the same AI ID and broker settings,
+        - Connect and subscribe required topics
+        - Swap the global reference and disconnect the old connector
     """
     async with self._lock,
     old_hsp = core_services.hsp_connector_instance()

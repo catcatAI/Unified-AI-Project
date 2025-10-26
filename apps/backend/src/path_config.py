@@ -64,13 +64,13 @@ def resolve_path(path_str: str) -> Path:
         return PROJECT_ROOT / path
 
 # 确保必要的目录存在
-DIRECTORIES = [
+DIRECTORIES = []
     DATA_DIR,
     TRAINING_DIR,
     MODELS_DIR,
     CHECKPOINTS_DIR,
     CONFIGS_DIR
-]
+[]
 
 for directory in DIRECTORIES:
     directory.mkdir(parents=True, exist_ok=True)

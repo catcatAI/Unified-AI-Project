@@ -757,9 +757,19 @@ class UnifiedSystemManager:
             content = kwargs.get('content')
             priority = kwargs.get('priority', 1)
             
-            # 检查必需参数
-            if not all([source_system, target_system, content_type, content]):
+            # 检查必需参数并确保类型正确
+            if source_system is None or target_system is None or content_type is None or content is None:
                 raise ValueError("缺少必需参数")
+            
+            # 确保所有参数都是正确的类型
+            if not isinstance(source_system, str):
+                raise ValueError("source_system 必须是字符串类型")
+            if not isinstance(target_system, str):
+                raise ValueError("target_system 必须是字符串类型")
+            if not isinstance(content_type, str):
+                raise ValueError("content_type 必须是字符串类型")
+            if not isinstance(content, dict):
+                raise ValueError("content 必须是字典类型")
                 
             return self.create_transfer_block(
                 source_system,
@@ -777,8 +787,16 @@ class UnifiedSystemManager:
             transfer_block = kwargs.get('transfer_block')
             
             # 检查必需参数
-            if not all([source_system, target_system, transfer_block]):
+            if source_system is None or target_system is None or transfer_block is None:
                 raise ValueError("缺少必需参数")
+            
+            # 确保参数类型正确
+            if not isinstance(source_system, str):
+                raise ValueError("source_system 必须是字符串类型")
+            if not isinstance(target_system, str):
+                raise ValueError("target_system 必须是字符串类型")
+            if not isinstance(transfer_block, (TransferBlock, dict)):
+                raise ValueError("transfer_block 必须是TransferBlock或字典类型")
                 
             return self.queue_sync_request(
                 source_system,

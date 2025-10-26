@@ -1,7 +1,7 @@
-import pygame
+# TODO: Fix import - module 'pygame' not found
 
-class Item,
-    def __init__(self, name, description, icon) -> None,
+class Item,:
+    def __init__(self, name, description, icon) -> None,:
         self.name = name
         self.description = description
         self.icon = icon
@@ -9,43 +9,43 @@ class Item,
 # --- Item Definitions ---
 
 # This could be loaded from a JSON or YAML file in the future
-ITEM_DATA = {
-    "shizuku": {
+ITEM_DATA = {}
+    "shizuku": {}
         "name": "雫 (Shizuku)",
         "description": "點滴的努力與智慧的結晶。",
         "type": "currency",
-    }
-    "wood": {
+{    }
+    "wood": {}
         "name": "木材",
         "description": "普通的木材,是建築和製作工具的基礎材料。",
         "type": "material",
-    }
-    "stone": {
+{    }
+    "stone": {}
         "name": "石材",
         "description": "普通的石材,可用於建築和製作工具。",
         "type": "material",
-    }
-    "copper_ore": {
+{    }
+    "copper_ore": {}
         "name": "銅礦石",
         "description": "未經提煉的銅礦石。",
         "type": "material",
-    }
-    "iron_ore": {
+{    }
+    "iron_ore": {}
         "name": "鐵礦石",
         "description": "未經提煉的鐵礦石。",
         "type": "material",
-    }
-    "turnip_seeds": {
+{    }
+    "turnip_seeds": {}
         "name": "蕪菁種子",
         "description": "種下後可以長出蕪菁。",
         "type": "seed",
-    }
-    "turnip": {
+{    }
+    "turnip": {}
         "name": "蕪菁",
         "description": "一種常見的根莖類蔬菜。",
         "type": "crop",
-    }
-}
+{    }
+{}
 
 def create_item(item_id):
     item_data == ITEM_DATA.get(item_id)

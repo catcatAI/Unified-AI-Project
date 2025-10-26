@@ -1,9 +1,9 @@
-import asyncio
-import functools
-import logging
+# TODO: Fix import - module 'asyncio' not found
+# TODO: Fix import - module 'functools' not found
+from tests.tools.test_tool_dispatcher_logging import
 logger, Any = logging.getLogger(__name__)
 
-class AsyncManager,
+class AsyncManager,:
     """統一異步操作管理器"""
     
     @staticmethod
@@ -18,7 +18,7 @@ class AsyncManager,
     @staticmethod
 def timeout_wrapper(timeout, float):
         """超時裝飾器"""
-        def decorator(func, Callable) -> Callable,
+        def decorator(func, Callable) -> Callable,:
             @functools.wraps(func)
             async def wrapper(*args, **kwargs):
                 try,

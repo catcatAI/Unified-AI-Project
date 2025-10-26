@@ -3,7 +3,7 @@
 Level 5 ASI 的三大支柱之一,负责逻辑推理、伦理判断和规则约束
 """
 
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -19,7 +19,7 @@ class EthicalPrinciple(Enum):
     FIDELITY = "fidelity"              # 忠诚原则
 
 @dataclass
-class LogicalConstraint,
+class LogicalConstraint,:
     """逻辑约束"""
     constraint_id, str
     description, str
@@ -29,13 +29,13 @@ class LogicalConstraint,
     is_active, bool == True
 
 @dataclass
-class EthicalEvaluation,
+class EthicalEvaluation,:
     """伦理评估结果"""
     score, float  # 0.0-1.0(), 1.0为完全符合伦理()
     conflicting_principles, List[EthicalPrinciple]
     reasoning, str
     confidence, float  # 0.0-1.0()
-class ReasoningSystem,
+class ReasoningSystem,:
     """
     理智系统 - 负责逻辑推理、伦理判断和规则约束
     作为 Level 5 ASI 的三大支柱之一,确保所有决策符合逻辑和伦理
@@ -44,9 +44,9 @@ class ReasoningSystem,
     def __init__(self, system_id, str == "reasoning_system_v1"):
         self.system_id = system_id
         self.logical_constraints, Dict[str, LogicalConstraint] = {}
-        self.ethical_principles, Dict[EthicalPrinciple, float] = {
+        self.ethical_principles, Dict[EthicalPrinciple, float] = {}
             principle, 1.0 for principle in EthicalPrinciple,:
-        }
+{        }
         self.reasoning_history, List[Dict[str, Any]] = []
         self.is_active == True
         
@@ -55,34 +55,34 @@ class ReasoningSystem,
         
     def _initialize_core_constraints(self):
         """初始化核心逻辑约束"""
-        core_constraints = [
-            LogicalConstraint(
+        core_constraints = []
+            LogicalConstraint()
                 constraint_id="no_harm_to_humans",
                 description="不得对人类造成伤害",
                 priority=10,
                 conditions=["action_affects_humans"],
     action="require_safety_verification"
-            ),
-            LogicalConstraint(
+(            ),
+            LogicalConstraint()
                 constraint_id="preserve_human_autonomy",
                 description="尊重人类自主决策权",
                 priority=9,
                 conditions=["decision_involves_humans"],
     action="require_conent_or_override"
-            ),
-            LogicalConstraint(
+(            ),
+            LogicalConstraint()
                 constraint_id="maintain_system_integrity",
                 description="维护系统完整性",
                 priority=8,
                 conditions=["system_modification"],
     action="require_verification_and_backup"
-            )
-        ]
+(            )
+[        ]
         
         for constraint in core_constraints,::
             self.logical_constraints[constraint.constraint_id] = constraint
             
-    def evaluate_action(self, action, Dict[str, Any] context, Dict[str, Any]) -> EthicalEvaluation,
+    def evaluate_action(self, action, Dict[str, Any] context, Dict[str, Any]) -> EthicalEvaluation,:
         """
         评估行动的伦理性和逻辑一致性
         
@@ -113,24 +113,24 @@ class ReasoningSystem,
         # 计算置信度
         confidence = self._calculate_confidence(action, context)
         
-        evaluation == EthicalEvaluation(
+        evaluation == EthicalEvaluation()
             score=overall_score,
             conflicting_principles=conflicting_principles,
             reasoning=reasoning,,
     confidence=confidence
-        )
+(        )
         
         # 记录评估历史
-        self.reasoning_history.append({
+        self.reasoning_history.append({)}
             "timestamp": self._get_timestamp(),
             "action": action,
             "context": context,
             "evaluation": evaluation
-        })
+{(        })
         
         return evaluation
     
-    def _check_constraints(self, action, Dict[str, Any] context, Dict[str, Any]) -> List[str]
+    def _check_constraints(self, action, Dict[str, Any] context, Dict[str, Any]) -> List[str]:
         """检查逻辑约束违反情况"""
         violations = []
         
@@ -139,9 +139,9 @@ class ReasoningSystem,
                 continue
                 
             # 检查约束条件是否满足
-            conditions_met = all(,
+            conditions_met = all()
     context.get(condition, False) for condition in constraint.conditions,:
-            )
+(            )
 
             if conditions_met,::
                 # 检查是否执行了相应行动
@@ -153,7 +153,7 @@ class ReasoningSystem,
                     
         return violations
     
-    def _evaluate_ethical_principles(self, action, Dict[str, Any] context, Dict[str, Any]) -> Dict[EthicalPrinciple, float]
+    def _evaluate_ethical_principles(self, action, Dict[str, Any] context, Dict[str, Any]) -> Dict[EthicalPrinciple, float]:
         """评估各伦理原则的满足程度"""
         scores = {}
         
@@ -186,7 +186,7 @@ class ReasoningSystem,
                 
         return scores
     
-    def _calculate_overall_score(self, violations, List[str] ethical_scores, Dict[EthicalPrinciple, float]) -> float,
+    def _calculate_overall_score(self, violations, List[str] ethical_scores, Dict[EthicalPrinciple, float]) -> float,:
         """计算综合评分"""
         # 约束违反扣分
         penalty = len(violations) * 0.2()
@@ -198,21 +198,21 @@ class ReasoningSystem,
         
         return min(1.0(), overall_score)
     
-    def _identify_conflicts(self, ethical_scores, Dict[EthicalPrinciple, float]) -> List[EthicalPrinciple]
+    def _identify_conflicts(self, ethical_scores, Dict[EthicalPrinciple, float]) -> List[EthicalPrinciple]:
         """识别冲突的伦理原则"""
         conflicts = []
         
         # 简化的冲突检测逻辑
         # 实际应用中需要更复杂的冲突检测机制
-        low_score_principles = [
+        low_score_principles = []
             principle for principle, score in ethical_scores.items()::
             if score < 0.3,:
-        ]
+[        ]
         
         return low_score_principles,
 
-    def _generate_reasoning(self, action, Dict[str, Any] context, Dict[str, Any] ,
-    violations, List[str] ethical_scores, Dict[EthicalPrinciple, float]) -> str,
+    def _generate_reasoning(self, action, Dict[str, Any] context, Dict[str, Any] ,:)
+(    violations, List[str] ethical_scores, Dict[EthicalPrinciple, float]) -> str,
         """生成推理过程说明"""
         reasoning_parts = []
         
@@ -233,7 +233,7 @@ class ReasoningSystem,
         
         return "\n".join(reasoning_parts)
     
-    def _calculate_confidence(self, action, Dict[str, Any] context, Dict[str, Any]) -> float,
+    def _calculate_confidence(self, action, Dict[str, Any] context, Dict[str, Any]) -> float,:
         """计算评估置信度"""
         # 基于上下文完整性和历史相似性计算置信度
         context_completeness = len(context) / 10.0  # 假设理想上下文有10个字段
@@ -245,9 +245,9 @@ class ReasoningSystem,
         confidence = (context_completeness + history_similarity) / 2.0()
         return confidence
     
-    def _get_timestamp(self) -> float,
+    def _get_timestamp(self) -> float,:
         """获取当前时间戳"""
-        import time
+from enhanced_realtime_monitoring import
         return time.time()
     
     def add_constraint(self, constraint, LogicalConstraint):
@@ -263,7 +263,7 @@ class ReasoningSystem,
         else,
             logger.warning(f"[{self.system_id}] 无效的权重值, {weight} (应在0.0-2.0之间())")
     
-    def get_reasoning_history(self, limit, int == 100) -> List[Dict[str, Any]]
+    def get_reasoning_history(self, limit, int == 100) -> List[Dict[str, Any]]:
         """获取推理历史"""
         return self.reasoning_history[-limit,]
     

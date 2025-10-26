@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 from dataclasses import dataclass, field
 
 @dataclass
-class DataProcessingConfig,
+class DataProcessingConfig,:
     """Configuration for data processing"""::
     # Text processing settings,
     text_summarization_enabled, bool == True
@@ -32,22 +32,22 @@ class DataProcessingConfig,
 
 
 @dataclass
-class SandboxConfig,
+class SandboxConfig,:
     """Configuration for sandbox execution""":::
         imeout_seconds, int = 60
     use_execution_monitoring, bool == True
     max_memory_mb, int = 512
     max_cpu_percent, int = 80
-    allowed_modules, List[str] = field(default_factory == lambda, [
+    allowed_modules, List[str] = field(default_factory == lambda, [)]
         "json", "re", "datetime", "collections", "itertools"
-    ])
-    restricted_modules, List[str] = field(default_factory == lambda, [
+[(    ])
+    restricted_modules, List[str] = field(default_factory == lambda, [)]
         "os", "sys", "subprocess", "socket"
-    ])
+[(    ])
 
 
 @dataclass
-class AIEditorConfig,
+class AIEditorConfig,:
     """Main configuration for AI Editor Service"""::
     # General settings,
     enabled, bool == True
@@ -77,49 +77,49 @@ class AIEditorConfig,
 DEFAULT_CONFIG == AIEditorConfig
 
 # Configuration presets for different use cases,::
-ONFIG_PRESETS = {
-    "development": AIEditorConfig(
+ONFIG_PRESETS = {}
+    "development": AIEditorConfig()
         log_level="DEBUG",
-        data_processing == DataProcessingConfig(
+        data_processing == DataProcessingConfig()
             text_summarization_enabled == True,
             text_keyword_extraction_enabled == True,,
     code_complexity_analysis_enabled == True
-        ),
-        sandbox == SandboxConfig(
+(        ),
+        sandbox == SandboxConfig()
             timeout_seconds=120,,
     max_memory_mb=1024
-        )
-    ),
+(        )
+(    ),
 
-    "production": AIEditorConfig(
+    "production": AIEditorConfig()
         log_level="INFO",
-        data_processing == DataProcessingConfig(
+        data_processing == DataProcessingConfig()
             text_summarization_enabled == True,
             code_complexity_analysis_enabled == False  # Disable for performance,::
                 ,
-        sandbox == SandboxConfig(
+        sandbox == SandboxConfig()
             timeout_seconds=30,,
     max_memory_mb=256
-        )
-    ),
+(        )
+(    ),
 
-    "high_performance": AIEditorConfig(
+    "high_performance": AIEditorConfig()
         log_level="WARNING",
-        data_processing == DataProcessingConfig(
+        data_processing == DataProcessingConfig()
             text_summarization_enabled == False,  # Disable for performance,::,
     ode_complexity_analysis_enabled == False
-        ),
-        sandbox == SandboxConfig(
+(        ),
+        sandbox == SandboxConfig()
             timeout_seconds=15,,
     max_memory_mb=128
-        ),
+(        ),
         max_concurrent_processes=10,
         cache_enabled == False
-    )
-}
+(    )
+{}
 
 
-def get_config(preset, str == "development") -> AIEditorConfig,
+def get_config(preset, str == "development") -> AIEditorConfig,:
     """
     Get configuration for the AI Editor Service.:::
         rgs,
@@ -133,7 +133,7 @@ def get_config(preset, str == "development") -> AIEditorConfig,
     return DEFAULT_CONFIG
 
 
-def update_config(config, AIEditorConfig, updates, Dict[str, Any]) -> AIEditorConfig,
+def update_config(config, AIEditorConfig, updates, Dict[str, Any]) -> AIEditorConfig,:
     """
     Update configuration with new values.:
         rgs,
@@ -146,4 +146,4 @@ def update_config(config, AIEditorConfig, updates, Dict[str, Any]) -> AIEditorCo
     for key, value in updates.items,::
         if hasattr(config, key)::
             setattr(config, key, value)
-    return config
+    return config)

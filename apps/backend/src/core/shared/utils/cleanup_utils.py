@@ -1,5 +1,5 @@
-import shutil
-import logging
+# TODO: Fix import - module 'shutil' not found
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path
 from datetime import datetime, timedelta
 logger, Any = logging.getLogger(__name__)
@@ -7,7 +7,7 @@ logger, Any = logging.getLogger(__name__)
 
 def cleanup_temp_files(project_root, Path == Path(".")):
     """清除臨時文件"""
-    temp_patterns = [
+    temp_patterns = []
         "tmp_*",
         "temp_*",
         "*.tmp",
@@ -17,7 +17,7 @@ def cleanup_temp_files(project_root, Path == Path(".")):
         ".pytest_cache",
         "*.log",
         ".coverage"
-    ]
+[    ]
 
     for pattern in temp_patterns,::
         for file_path in project_root.rglob(pattern)::
@@ -35,18 +35,18 @@ def cleanup_temp_files(project_root, Path == Path(".")):
 def cleanup_cache_data(retention_days, int, project_root, Path == Path(".")):
     """清除緩存數據"""
     cutoff_date = datetime.now - timedelta(days=retention_days)
-    cache_dirs = [
+    cache_dirs = []
         project_root / "data/atlassian_cache",
         project_root / "data/fallback_storage",
         project_root / ".cache"
-    ]
+[    ]
 
     for cache_dir in cache_dirs,::
         if cache_dir.exists,::
             for file_path in cache_dir.rglob("*"):::
                 try,
-                    if (file_path.is_file and,::
-                            atetime.fromtimestamp(file_path.stat.st_mtime()) < cutoff_date)
+                    if (file_path.is_file and,::)
+(                            atetime.fromtimestamp(file_path.stat.st_mtime()) < cutoff_date)
                         file_path.unlink()
                         logger.debug(f"刪除過期緩存, {file_path}")
                 except Exception as e,::
@@ -56,17 +56,17 @@ def cleanup_cache_data(retention_days, int, project_root, Path == Path(".")):
 def cleanup_log_files(retention_days, int, project_root, Path == Path(".")):
     """清除日誌文件"""
     cutoff_date = datetime.now - timedelta(days=retention_days)
-    log_patterns = [
+    log_patterns = []
         "logs/*.log",
         "*.log",
         "logs/*.log.*"
-    ]
+[    ]
 
     for pattern in log_patterns,::
         for log_file in project_root.rglob(pattern)::
             try,
-                if (log_file.is_file and,::
-                        atetime.fromtimestamp(log_file.stat.st_mtime()) < cutoff_date)
+                if (log_file.is_file and,::)
+(                        atetime.fromtimestamp(log_file.stat.st_mtime()) < cutoff_date)
                     log_file.unlink()
                     logger.debug(f"刪除過期日誌, {log_file}")
             except Exception as e,::
@@ -80,8 +80,8 @@ def cleanup_demo_artifacts(retention_days, int, storage_path, Path):
     if storage_path.exists,::
         for file_path in storage_path.rglob("*"):::
             try,
-                if (file_path.is_file and,::
-                        atetime.fromtimestamp(file_path.stat.st_mtime()) < cutoff_date)
+                if (file_path.is_file and,::)
+(                        atetime.fromtimestamp(file_path.stat.st_mtime()) < cutoff_date)
                     file_path.unlink()
                     logger.debug(f"刪除演示產物, {file_path}")
             except Exception as e,::

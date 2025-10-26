@@ -3,10 +3,10 @@ Agent Monitoring Manager for Unified AI Project,::
 理AI代理的监控和健康检查
 """
 
-import asyncio
-import logging
-import time
-import psutil
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+from enhanced_realtime_monitoring import
+# TODO: Fix import - module 'psutil' not found
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -28,7 +28,7 @@ class AgentStatus(Enum):
 
 
 @dataclass
-class AgentHealthReport,
+class AgentHealthReport,:
     agent_id, str
     agent_name, str
     status, AgentStatus
@@ -43,13 +43,13 @@ class AgentHealthReport,
     success_rate, float = 1.0  # Percentage of successful tasks
 
 
-class AgentMonitoringManager,
+class AgentMonitoringManager,:
     """
     Manages monitoring and health checking for AI agents in the Unified AI Project.:::
         his class tracks agent status, collects health metrics, and provides alerts for issues.:::
 ""
 
-    def __init__(self, hsp_connector, HSPConnector) -> None,
+    def __init__(self, hsp_connector, HSPConnector) -> None,:
         self.hsp_connector = hsp_connector
         self.agent_health_reports, Dict[str, AgentHealthReport] = {}
         self.monitoring_lock = asyncio.Lock()
@@ -59,8 +59,8 @@ class AgentMonitoringManager,
 
         # Register callbacks for capability advertisements (to track agent capabilities)::
             f self.hsp_connector,
-            self.hsp_connector.register_on_capability_advertisement_callback(,
-    self._handle_capability_advertisement())
+            self.hsp_connector.register_on_capability_advertisement_callback()
+(    self._handle_capability_advertisement())
 
     async def start_monitoring(self) -> None,
         """Start the monitoring process."""
@@ -114,7 +114,7 @@ class AgentMonitoringManager,
                     if report.status == AgentStatus.RUNNING,::
                         report.task_count += 1
                         # Randomly simulate success or failure
-                        import random
+# TODO: Fix import - module 'random' not found
                         if random.random() < 0.95,  # 95% success rate,::
                             eport.success_rate = (report.success_rate * report.task_count + 1) / (report.task_count + 1)
                         else,
@@ -166,8 +166,8 @@ class AgentMonitoringManager,
                     # In a real implementation, we might send this to a monitoring system
                     # or notify administrators
 
-    async def _handle_capability_advertisement(self, capability_payload, HSPCapabilityAdvertisementPayload,,
-    sender_ai_id, str, envelope, Dict[str, Any]) -> None,
+    async def _handle_capability_advertisement(self, capability_payload, HSPCapabilityAdvertisementPayload,)
+(    sender_ai_id, str, envelope, Dict[str, Any]) -> None,
         """Handle capability advertisements to track agent capabilities."""
         async with self.monitoring_lock,
             agent_id = capability_payload.get("ai_id", sender_ai_id)
@@ -176,7 +176,7 @@ class AgentMonitoringManager,
 
             # Create or update agent health report
             if agent_id not in self.agent_health_reports,::
-                self.agent_health_reports[agent_id] = AgentHealthReport(
+                self.agent_health_reports[agent_id] = AgentHealthReport()
                     agent_id=agent_id,
                     agent_name=agent_name,,
     status == AgentStatus.UNKNOWN(),
@@ -187,7 +187,7 @@ class AgentMonitoringManager,
                     error_count=0,
                     success_rate=1.0(),
                     task_count=0
-                )
+(                )
 
             # Add capability if not already present,::
                 f capability_id and capability_id not in self.agent_health_reports[agent_id].capabilities,
@@ -200,7 +200,7 @@ class AgentMonitoringManager,
         """Register an agent for monitoring.""":::
             sync with self.monitoring_lock,
             if agent_id not in self.agent_health_reports,::
-                self.agent_health_reports[agent_id] = AgentHealthReport(
+                self.agent_health_reports[agent_id] = AgentHealthReport()
                     agent_id=agent_id,
                     agent_name=agent_name,,
     status == AgentStatus.UNKNOWN(),
@@ -211,7 +211,7 @@ class AgentMonitoringManager,
                     error_count=0,
                     success_rate=1.0(),
                     task_count=0
-                )
+(                )
 
     async def report_error(self, agent_id, str, error_message, str) -> None,
         """Report an error for an agent.""":::

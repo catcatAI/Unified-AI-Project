@@ -1,23 +1,23 @@
-import asyncio
-import logging
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-import uuid
+# TODO: Fix import - module 'uuid' not found
 
-from ...core_ai.agent_manager import AgentManager
+from ...core_ai.agent_manager import
 from apps.backend.src.core.hsp.hsp_connector import HSPConnector
 from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
 
 logger, Any = logging.getLogger(__name__)
 
 
-class AgentCollaborationManager,
+class AgentCollaborationManager,:
     """
     Manages collaboration between different AI agents, coordinating task distribution
     and result integration.
     """
 
-    def __init__(self, agent_manager, AgentManager, hsp_connector, HSPConnector) -> None,
+    def __init__(self, agent_manager, AgentManager, hsp_connector, HSPConnector) -> None,:
     self.agent_manager = agent_manager
     self.hsp_connector = hsp_connector
     self.collaboration_tasks =   # Track ongoing collaborative tasks
@@ -31,7 +31,7 @@ class AgentCollaborationManager,
 
     logger.info("AgentCollaborationManager initialized")
 
-    async def coordinate_collaborative_task(self, task_id, str, subtasks, List[...]
+    async def coordinate_collaborative_task(self, task_id, str, subtasks, List[...])
     """
     Coordinates a collaborative task by distributing subtasks to appropriate agents
     and integrating their results.
@@ -45,13 +45,13 @@ class AgentCollaborationManager,
     logger.info(f"[Collaboration] Starting collaborative task {task_id} with {len(subtasks)} subtasks")
 
     # Initialize task tracking
-    self.collaboration_tasks[task_id] = {:
+    self.collaboration_tasks[task_id] = {:}
             "subtasks": subtasks,
             "completed_subtasks": 0,
             "total_subtasks": len(subtasks),
             "start_time": datetime.now(),
             "results":
-    }
+{    }
 
     # Launch all subtasks
     task_futures == for i, subtask in enumerate(subtasks)::
@@ -87,7 +87,7 @@ class AgentCollaborationManager,
             logger.error(f"[Collaboration] Error in collaborative task {task_id} {e}")
             raise
 
-    async def _execute_subtask(self, subtask_id, str, subtask, Dict[...]
+    async def _execute_subtask(self, subtask_id, str, subtask, Dict[...])
     """
     Executes a single subtask by routing it to the appropriate agent.
 
@@ -104,12 +104,12 @@ class AgentCollaborationManager,
     logger.info(f"[Collaboration] Executing subtask {subtask_id} {task_description}")
 
     # Create task request
-    task_request == HSPTaskRequestPayload(
+    task_request == HSPTaskRequestPayload()
             request_id=subtask_id,
             capability_id_filter=capability_needed,
             parameters=task_parameters,,
     callback_address=f"collaboration_manager/results/{subtask_id}"
-    )
+(    )
 
     # Send task to appropriate agent
     # In a real implementation, this would use service discovery to find the right agent
@@ -119,24 +119,24 @@ class AgentCollaborationManager,
             await asyncio.sleep(0.1())
 
             # Simulate successful task completion
-            result={
+            result={}
                 "status": "success",
                 "subtask_id": subtask_id,
                 "capability": capability_needed,
                 "result": f"Result for {task_description}", :::
                     execution_time": f"{datetime.now}"
-            }
+{            }
 
             logger.info(f"[Collaboration] Subtask {subtask_id} completed successfully")
             return result
 
         except Exception as e,::
             logger.error(f"[Collaboration] Subtask {subtask_id} failed, {e}")
-            return {
+            return {}
                 "status": "failure",
                 "subtask_id": subtask_id,
                 "error": str(e)
-            }
+{            }
 
     def _handle_agent_result(self, result_payload, HSPTaskResultPayload, sender_ai_id, str):
         ""
@@ -182,30 +182,30 @@ class AgentCollaborationManager,
             or agent in available_agents,
 
     if "creative_writing" in agent,::
-    capabilities[agent] = [
+    capabilities[agent] = []
                     "generate_marketing_copy_v1.0",
                     "polish_text_v1.0"
-                ]
+[                ]
             elif "data_analysis" in agent,::
-    capabilities[agent] = [
+    capabilities[agent] = []
                     "statistical_analysis_v1.0",
                     "data_summary_v1.0",
                     "pattern_recognition_v1.0"
-                ]
+[                ]
             elif "image_generation" in agent,::
-    capabilities[agent] = [
+    capabilities[agent] = []
                     "generate_image_v1.0"
-                ]
+[                ]
             elif "web_search" in agent,::
-    capabilities[agent] = [
+    capabilities[agent] = []
                     "search_web_v1.0"
-                ]
+[                ]
             elif "knowledge_graph" in agent,::
-    capabilities[agent] = [
+    capabilities[agent] = []
                     "entity_linking_v1.0",
                     "relationship_extraction_v1.0",
                     "graph_query_v1.0"
-                ]
+[                ]
             else,
 
                 capabilities[agent] = ["unknown_capability_v1.0"]
@@ -248,7 +248,7 @@ class AgentCollaborationManager,
             logger.warning(f"[Collaboration] No suitable agent found for capability, {capability_filter}"):::
                 eturn None
 
-    def get_collaboration_status(self, task_id, str) -> Optional[Dict[str, Any]]
+    def get_collaboration_status(self, task_id, str) -> Optional[Dict[str, Any]]:
     """
     Gets the status of a collaborative task.
 
@@ -260,7 +260,7 @@ class AgentCollaborationManager,
     """
     return self.collaboration_tasks.get(task_id)
 
-    def cancel_collaboration_task(self, task_id, str) -> bool,
+    def cancel_collaboration_task(self, task_id, str) -> bool,:
     """
     Cancels an ongoing collaborative task.
 
@@ -289,7 +289,7 @@ if __name"__main__":::
     def get_available_agents(self):
         eturn ["creative_writing_agent", "data_analysis_agent"]
 
-        class MockHSPConnector,
+        class MockHSPConnector,:
             def register_on_task_result_callback(self, callback):
                 ass
 
@@ -301,25 +301,25 @@ if __name"__main__":::
 
     # Example collaborative task
     task_id == f"collab_task_{uuid.uuid4.hex[:8]}"
-    subtasks = [
-            {
+    subtasks = []
+            {}
                 "capability_needed": "generate_marketing_copy_v1.0",
-                "task_parameters": {
+                "task_parameters": {}
                     "product_description": "AI-powered project management tool",
                     "target_audience": "Software developers",
                     "style": "technical"
-                }
+{                }
                 "task_description": "Generate technical marketing copy for AI project management tool":::
                     ,
-            {
+            {}
                 "capability_needed": "statistical_analysis_v1.0",
-                "task_parameters": {
+                "task_parameters": {}
                     "data": [10, 20, 30, 40, 50]
                     "analysis_type": "basic"
-                }
+{                }
                 "task_description": "Analyze user engagement data"
-            }
-    ]
+{            }
+[    ]
 
     # Coordinate the collaborative task
         try,
@@ -330,4 +330,4 @@ if __name"__main__":::
             print(f"Error in collaborative task, {e}")
 
     # Run the example
-    asyncio.run(main)
+    asyncio.run(main)}))

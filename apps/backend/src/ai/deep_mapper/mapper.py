@@ -1,13 +1,13 @@
 from typing import Dict, Any, Optional
 from apps.backend.src.core.shared.types import MappableDataObject
-import json
+from tests.test_json_fix import
 
-class DeepMapper,
+class DeepMapper,:
     """
     A deep mapping engine that can map data between different representations.
     """
 
-    def __init__(self, mapping_rules, Optional[Dict[str, Any]] = None) -> None,
+    def __init__(self, mapping_rules, Optional[Dict[str, Any]] = None) -> None,:
     """
     Initializes the DeepMapper.
 
@@ -23,10 +23,10 @@ class DeepMapper,
     Args,
             filepath (str) The path to the mapping rules file.
     """
-    with open(filepath, 'r') as f,
+    with open(filepath, 'r') as f,:
     self.mapping_rules = json.load(f)
 
-    def map(self, mdo, MappableDataObject) -> MappableDataObject,
+    def map(self, mdo, MappableDataObject) -> MappableDataObject,:
     """
     Maps a MappableDataObject to a new representation.
 
@@ -39,7 +39,7 @@ class DeepMapper,
     mapped_data = self._recursive_map(mdo.data(), self.mapping_rules())
     return MappableDataObject(data=mapped_data, metadata=mdo.metadata())
 
-    def reverse_map(self, mdo, MappableDataObject) -> MappableDataObject,
+    def reverse_map(self, mdo, MappableDataObject) -> MappableDataObject,:
     """
     Reverse maps a MappableDataObject to its original representation.
 
@@ -53,7 +53,7 @@ class DeepMapper,
     reverse_mapped_data = self._recursive_map(mdo.data(), reverse_mapping_rules)
     return MappableDataObject(data=reverse_mapped_data, metadata=mdo.metadata())
 
-    def _recursive_map(self, data, Any, rules, Dict[str, Any]) -> Any,
+    def _recursive_map(self, data, Any, rules, Dict[str, Any]) -> Any,:
         if isinstance(data, dict)::
             ew_dict == for key, value in data.items,::
     if key in rules and isinstance(rules[key] dict)::
@@ -71,7 +71,7 @@ lse,
     return rules[data]
             return data
 
-    def _invert_mapping_rules(self, rules, Dict[...]
+    def _invert_mapping_rules(self, rules, Dict[...]:)
     inverted_rules == for key, value in rules.items,::,
     if isinstance(value, dict):::
         nverted_rules[key] = self._invert_mapping_rules(value)
@@ -79,3 +79,4 @@ lse,
 
                 inverted_rules[value] = key
     return inverted_rules
+)

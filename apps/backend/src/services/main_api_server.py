@@ -1,10 +1,10 @@
-import os
-import sys
+from diagnose_base_agent import
+from system_test import
 from fastapi import FastAPI, HTTPException, Depends, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-import uuid
+# TODO: Fix import - module 'uuid' not found
 
 # Simplified path handling - Add the project root and src directory to the Python path
 project_root, str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -23,26 +23,26 @@ print(f"Sys path, {sys.path}")
 # Use absolute imports with correct module paths,
 try,
     # Try absolute imports with correct module paths,
-    from ..economy.economy_manager import EconomyManager
-    from ..pet.pet_manager import PetManager
-    from ..core_services import initialize_services, shutdown_services, get_services
-    from ..core.services.multi_llm_service import get_multi_llm_service
-    from ..ai.language_models.registry import ModelRegistry,
-    from ..ai.language_models.router import PolicyRouter, RoutingPolicy
-    from .api_models import HotStatusResponse, HSPServiceDiscoveryResponse, HealthResponse, ReadinessResponse
-    from ..hsp.connector import HSPConnector
+from ..economy.economy_manager import
+from ..pet.pet_manager import
+from ..core_services import
+from ..core.services.multi_llm_service import
+from ..ai.language_models.registry import
+from ..ai.language_models.router import
+from .api_models import
+from ..hsp.connector import
     # 修复导入路径 - 使用正确的模块路径
-    from ..ai.dialogue.dialogue_manager import DialogueManager
-    from ..ai.memory.ham_memory_manager import HAMMemoryManager
-    from ..core.services.atlassian_api import atlassian_router
+from ..ai.dialogue.dialogue_manager import
+from ..ai.memory.ham_memory_manager import
+from ..core.services.atlassian_api import
     # 修复导入路径 - 使用DialogueManager期望的模块路径
-    from ..ai.discovery.service_discovery_module import ServiceDiscoveryModule
+from ..ai.discovery.service_discovery_module import
     print("Absolute imports with correct paths successful"):
         except ImportError as e,::
     print(f"Absolute import with correct paths failed, {e}")
     # Fall back to relative imports (for when running with uvicorn)::
     try,
-        from ..ai.language_models.router import PolicyRouter, RoutingPolicy
+from ..ai.language_models.router import
     # 修复导入路径 - 使用正确的模块路径
     # 修复导入路径 - 使用DialogueManager期望的模块路径
     print("Relative imports successful")
@@ -68,13 +68,13 @@ async def initialize_services_layered():
         print("✅ LLM服务初始化完成")
 
         # 初始化服务发现 - 使用与DialogueManager兼容的模块路径
-        from ..ai.trust.trust_manager_module import TrustManager
+from ..ai.trust.trust_manager_module import
         trust_manager == TrustManager()
         service_discovery == ServiceDiscoveryModule(trust_manager=trust_manager)
         print("✅ 服务发现初始化完成")
     except Exception as e,::
         print(f"❌ 核心服务初始化失败, {e}")
-        import traceback
+# TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 
@@ -82,21 +82,21 @@ async def initialize_services_layered():
     print("⚙️ 第2层, 核心组件启动")
     try,
         # 初始化HSP连接器
-        hsp_connector == HSPConnector(,
+        hsp_connector == HSPConnector()
     ai_id == os.getenv("API_AI_ID", "did,hsp,api_server_ai"),
                 broker_address="localhost",
                 broker_port=1883
-        )
+(        )
         print("✅ HSP连接器初始化完成")
 
         # 初始化对话管理器
         # 首先初始化所有依赖组件
-        from ..ai.personality.personality_manager import PersonalityManager
-        from ..ai.emotion.emotion_system import EmotionSystem
-        from ..ai.crisis.crisis_system import CrisisSystem
-        from ..ai.time.time_system import TimeSystem
-        from ..tools.tool_dispatcher import ToolDispatcher
-        from ..ai.learning.learning_manager import LearningManager
+from ..ai.personality.personality_manager import
+from ..ai.emotion.emotion_system import
+from ..ai.crisis.crisis_system import
+from ..ai.time.time_system import
+from ..tools.tool_dispatcher import
+from ..ai.learning.learning_manager import
         # 使用与DialogueManager兼容的模块路径
 
         # 创建所有必需的依赖实例
@@ -110,7 +110,7 @@ async def initialize_services_layered():
         try,
             tool_dispatcher == ToolDispatcher(llm_service=llm_interface)
         except RuntimeError as e,::
-            if "SentenceTransformer" in str(e)::
+            if "SentenceTransformer", in str(e)::
                 print("⚠️  Warning, SentenceTransformer not available, RAG functionality disabled")
                 # 创建一个没有RAG功能的ToolDispatcher
                 tool_dispatcher == ToolDispatcher(llm_service == None)
@@ -120,8 +120,8 @@ async def initialize_services_layered():
                 raise e
 
         # 初始化LearningManager所需的依赖组件
-        from ..ai.learning.fact_extractor_module import FactExtractorModule
-        from ..ai.learning.content_analyzer_module import ContentAnalyzerModule
+from ..ai.learning.fact_extractor_module import
+from ..ai.learning.content_analyzer_module import
 
         fact_extractor == FactExtractorModule(llm_service=llm_interface)
         content_analyzer == ContentAnalyzerModule()
@@ -131,21 +131,21 @@ async def initialize_services_layered():
         service_discovery == ServiceDiscoveryModule(trust_manager=trust_manager)
 
         # 初始化LearningManager
-        learning_manager == LearningManager(,
+        learning_manager == LearningManager()
     ai_id == os.getenv("API_AI_ID", "did,hsp,api_server_ai"),
                 ham_memory_manager=memory_manager,
                 fact_extractor=fact_extractor,
                 personality_manager=personality_manager,
                 content_analyzer=content_analyzer,
                 hsp_connector=hsp_connector
-        )
+(        )
 
         # 初始化FormulaEngine
-        from ..ai.formula_engine import FormulaEngine
+from ..ai.formula_engine import
         formula_engine == FormulaEngine()
 
         # 现在可以正确初始化DialogueManager
-        dialogue_manager == DialogueManager(,
+        dialogue_manager == DialogueManager()
     ai_id == os.getenv("API_AI_ID", "did,hsp,api_server_ai"),
                 personality_manager=personality_manager,
                 memory_manager=memory_manager,
@@ -160,7 +160,7 @@ async def initialize_services_layered():
                 hsp_connector=hsp_connector,
                 agent_manager == None,
                 config == None
-        )
+(        )
         print("✅ 对话管理器初始化完成")
     except Exception as e,::
         print(f"❌ 核心组件启动失败, {e}")
@@ -216,20 +216,20 @@ async def lifespan(app, FastAPI):
 app == FastAPI(title="Unified AI Project API", version="1.0.0", lifespan=lifespan)
 
 # CORS configuration
-origins = [
+origins = []
     "http,//localhost",
     "http,//localhost,3000",
     "http,//127.0.0.1",
     "http,//127.0.0.1,3000",
     "*",
-]
+[]
 
-app.add_middleware(
+app.add_middleware()
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials == True,
     allow_methods=["*"],
-    allow_headers=["*"])
+(    allow_headers=["*"])
 
 # Deprecated on_event hooks migrated to lifespan handler above
 
@@ -246,30 +246,30 @@ async def get_status():
 @app.get("/api/v1/health", response_model == HealthResponse)
 async def api_health(services == Depends(get_services))
     # Derive initialized services snapshot similar to /api/v1/hot/status
-    services_initialized = {
+    services_initialized = {}
     "ham": services.get("ham_manager") is not None,
     "llm": services.get("llm_interface") is not None,
     "service_discovery": services.get("service_discovery") is not None,
     "hsp": services.get("hsp_connector") is not None,
     "dialogue_manager": services.get("dialogue_manager") is not None,
-    }
+{    }
 
     # Basic components readiness signals (best-effort, non-failing)
     components, Dict[str, Any] = {}
-    "trust_manager": {
+    "trust_manager": {}
             "available": services.get("trust_manager") is not None
-    }
-    "lis_cache": {
+{    }
+    "lis_cache": {}
             # We don't instantiate here; just report presence if HAM/LIS parts exist,::
             "available": services.get("ham_manager") is not None
-    }
-    }
+{    }
+{    }
 
-    return HealthResponse(
+    return HealthResponse()
     status="ok",,
     timestamp == datetime.now(timezone.utc()).isoformat().replace("+00,00","Z"),
     services_initialized=services_initialized,
-    components=components)
+(    components=components)
 
 # --- Readiness endpoint (v1) ---
 @app.get("/api/v1/ready", response_model == ReadinessResponse)
@@ -283,19 +283,19 @@ async def api_ready(services == Depends(get_services))
     hsp_connected == bool(getattr(hsp_conn, "is_connected", False)) if hsp_conn else False,:
     sdm_ok = services.get("service_discovery") is not None
 
-    services_initialized == {:
+    services_initialized == {:}
     "ham": ham_ok,
     "llm": llm_ok,
     "service_discovery": sdm_ok,
     "hsp": hsp_connected,
     "dialogue_manager": dm_ok,
-    }
+{    }
 
     # Signals (best-effort; no failures thrown)
-    signals, Dict[str, Any] = {
+    signals, Dict[str, Any] = {}
     "hsp_connected": hsp_connected,
     "lis_available": ham_ok,
-    }
+{    }
 
     # Trust peers count if available,::
     tm = services.get("trust_manager")
@@ -321,12 +321,12 @@ async def api_ready(services == Depends(get_services))
     if not dm_ok, missing.append("dialogue_manager")::
     ready = len(missing) == 0
     reason == None if ready else f"Missing required components, {', '.join(missing)}"::
-    return ReadinessResponse(
+    return ReadinessResponse()
     ready=ready,,
     timestamp == datetime.now(timezone.utc()).isoformat().replace("+00,00","Z"),
     services_initialized=services_initialized,
     signals=signals,
-    reason=reason)
+(    reason=reason)
 
 @app.get("/api/v1/models/available")
 async def get_models_available():
@@ -339,49 +339,49 @@ async def models_route(body, dict):
     m = get_multi_llm_service()
     registry == ModelRegistry(m.model_configs())  # type ignore
     router == PolicyRouter(registry)
-    policy == RoutingPolicy(,
+    policy == RoutingPolicy()
     task_type=body.get('task_type', 'general'),
     input_chars=body.get('input_chars', 0),
     needs_tools=body.get('needs_tools', False),
     needs_vision=body.get('needs_vision', False),
     latency_target=body.get('latency_target'),
     cost_ceiling=body.get('cost_ceiling')
-    )
+(    )
     return router.route(policy)
 
 @app.get("/api/v1/hot/status")
 async def get_hot_status(services == Depends(get_services)) -> HotStatusResponse,
     # services = get_services
     # services_initialized derive booleans from presence
-    services_initialized = {
+    services_initialized = {}
     "ham": services.get("ham_manager") is not None,
     "llm": services.get("llm_interface") is not None,
     "service_discovery": services.get("service_discovery") is not None,
     "hsp": services.get("hsp_connector") is not None,
     "dialogue_manager": services.get("dialogue_manager") is not None,
-    }
+{    }
     hsp = {}
     hsp_connector = services.get("hsp_connector")
     if hsp_connector,::
-        hsp = {
+        hsp = {}
             "ai_id": getattr(hsp_connector, "ai_id", None),
             "connected": getattr(hsp_connector, "is_connected", False),
-    }
+{    }
     mcp == {"connected": False}
     # Basic metrics skeleton to satisfy test expectations
-    metrics = {
+    metrics = {}
     "hsp": {}
     "mcp": {}
     "learning": {}
     "memory": {}
     "lis": {}
-    }
-    return HotStatusResponse(
+{    }
+    return HotStatusResponse()
     draining == False,
     services_initialized=services_initialized,
     hsp=hsp,
     mcp=mcp,,
-    metrics=metrics)
+(    metrics=metrics)
 
 @app.get("/api/v1/hsp/services")
 async def list_hsp_services(services == Depends(get_services)) -> List[HSPServiceDiscoveryResponse]
@@ -414,7 +414,7 @@ async def list_hsp_services(services == Depends(get_services)) -> List[HSPServic
     for cap in caps or []::
     # cap could be dict-like; use get attr or item
         get_val == (lambda k, cap.get(k) if isinstance(cap, dict) else getattr(cap, k, None)):
-        normalized.append(HSPServiceDiscoveryResponse(,
+        normalized.append(HSPServiceDiscoveryResponse(,))
     capability_id=get_val('capability_id') or get_val('id') or "",
             name=get_val('name') or "",
             description=get_val('description') or "",
@@ -423,7 +423,7 @@ async def list_hsp_services(services == Depends(get_services)) -> List[HSPServic
             availability_status=get_val('availability_status') or get_val('status') or "unknown",
             tags=get_val('tags') or []
             supported_interfaces=get_val('supported_interfaces') or []
-            metadata=get_val('metadata') or {}))
+((            metadata=get_val('metadata') or {}))
 
     return normalized
 
@@ -465,11 +465,11 @@ async def create_hsp_task(task_input, Dict[str, Any] services == Depends(get_ser
         found_caps = []
 
     if not found_caps,::
-        return {
+        return {}
             "status_message": f"Error, Capability ID {target_capability_id} not found.",
             "correlation_id": None,
             "error": "Capability not discovered.",
-    }
+{    }
 
     target_ai_id == None
     first_cap = found_caps[0]
@@ -481,37 +481,37 @@ async def create_hsp_task(task_input, Dict[str, Any] services == Depends(get_ser
 
     # Build HSPTaskRequestPayload
     # HSPTaskRequestPayload is not defined, assuming it's a dict for now,::
-    payload, Dict[str, Any] = {
+    payload, Dict[str, Any] = {}
     "request_id": str(uuid.uuid4()),
     "requester_ai_id": getattr(hsp_connector, "ai_id", None) or "",
     "target_ai_id": target_ai_id,
     "capability_id_filter": target_capability_id,
     "parameters": parameters,
-    }
+{    }
 
     try,
         correlation_id = await hsp_connector.send_task_request(payload, target_ai_id or "")
         # Track pending in DialogueManager for status checks,::
         if correlation_id,::
             try,
-                dialogue_manager.pending_hsp_task_requests[correlation_id] = {
+                dialogue_manager.pending_hsp_task_requests[correlation_id] = {}
                         "created_at": datetime.now(timezone.utc()).isoformat().replace("+00,00", "Z"),
                         "target": target_ai_id,
                         "capability_id": target_capability_id,
-                    }
+{                    }
             except Exception,::
                 pass
-            return {
+            return {}
                 "status_message": "HSP Task request sent successfully.",
                 "correlation_id": correlation_id,
                 "target_capability_id": target_capability_id,
-            }
+{            }
     except Exception as e,::
-        return {
+        return {}
             "status_message": "error",
             "error": str(e),
             "target_capability_id": target_capability_id,
-    }
+{    }
 
 @app.get("/api/v1/hsp/tasks/{correlation_id}")
 async def get_hsp_task_status(correlation_id, str, services == Depends(get_services))
@@ -533,19 +533,19 @@ async def get_hsp_task_status(correlation_id, str, services == Depends(get_servi
             record = ham_results[-1]
             data_type = record.get("data_type")
             metadata = record.get("metadata", {})
-            if isinstance(data_type, str) and "success" in data_type,::
-                return {
+            if isinstance(data_type, str) and "success", in data_type,::
+                return {}
                     "status": "completed",
                     "correlation_id": correlation_id,
                     "result_payload": metadata.get("hsp_task_service_payload"),
                     "message": "Task completed successfully.",
-                }
-            if isinstance(data_type, str) and ("error" in data_type or "failure" in data_type)::
-                return {
+{                }
+            if isinstance(data_type, str) and ("error", in data_type or "failure", in data_type)::
+                return {}
                     "status": "failed",
                     "correlation_id": correlation_id,
                     "error_details": metadata.get("error_details"),
-                }
+{                }
     except Exception,::
         # Ignore HAM errors for status endpoint robustness,::
         pass
@@ -554,19 +554,19 @@ async def get_hsp_task_status(correlation_id, str, services == Depends(get_servi
     try,
         if dialogue_manager is not None and hasattr(dialogue_manager, "pending_hsp_task_requests"):::
             if correlation_id in getattr(dialogue_manager, "pending_hsp_task_requests", {}):
-                return {
+                return {}
                     "status": "pending",
                     "correlation_id": correlation_id,
                     "message": "Task is pending; awaiting result.",
-                }
+{                }
     except Exception,::
         pass
 
     # Unknown/expired if no trace found,::
-    return {
+    return {}
     "status": "unknown_or_expired",
     "correlation_id": correlation_id,
-    }
+{    }
 
 # --- Economy Router ---
 economy_router == APIRouter()
@@ -613,5 +613,5 @@ app.include_router(pet_router, prefix="/api/v1/pet", tags=["Pet"])
 app.include_router(atlassian_router)
 
 if __name"__main__":::
-    import uvicorn
+# TODO: Fix import - module 'uvicorn' not found
     uvicorn.run(app, host="127.0.0.1", port=8000)  # 改回端口为8000

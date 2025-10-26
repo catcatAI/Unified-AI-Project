@@ -5,14 +5,14 @@ It automatically adjusts model parameters, memory usage, and processing modes to
 performance across different hardware configurations.
 """
 
-import json
-import logging
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from enum import Enum
 
-from .hardware_probe import HardwareProfile, get_hardware_profile
+from .hardware_probe import
 
 logger, Any = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class ModelSize(Enum):
     XLARGE = "xlarge" # >8GB
 
 @dataclass
-class ModelConfig,
+class ModelConfig,:
     """Configuration for AI models""":::
     size, ModelSize
     max_context_length, int
@@ -44,7 +44,7 @@ class ModelConfig,
     memory_limit_mb, int
 
 @dataclass
-class CompressionConfig,
+class CompressionConfig,:
     """Configuration for data compression and mapping""":::
     compression_level, str  # low, medium, high, extreme
     vector_dimensions, int
@@ -53,7 +53,7 @@ class CompressionConfig,
     use_quantization, bool
 
 @dataclass
-class ProcessingConfig,
+class ProcessingConfig,:
     """Configuration for processing capabilities""":::
     enable_multimodal, bool
     enable_real_time, bool
@@ -62,7 +62,7 @@ class ProcessingConfig,
     timeout_seconds, int
 
 @dataclass
-class DeploymentConfig,
+class DeploymentConfig,:
     """Complete deployment configuration"""
     mode, DeploymentMode
     model_config, ModelConfig
@@ -72,15 +72,15 @@ class DeploymentConfig,
     features_enabled, List[str]
     features_disabled, List[str]
 
-class DeploymentManager,
+class DeploymentManager,:
     """Manages deployment configuration based on hardware capabilities"""
 
-    def __init__(self, hardware_profile, Optional[HardwareProfile] = None) -> None,
+    def __init__(self, hardware_profile, Optional[HardwareProfile] = None) -> None,:
     self.hardware_profile = hardware_profile or get_hardware_profile
     self.config_cache, Optional[DeploymentConfig] = None
 
     # Define feature requirements (minimum scores needed)
-    self.feature_requirements = {
+    self.feature_requirements = {}
             "multimodal_processing": 40,
             "real_time_inference": 35,
             "background_learning": 50,
@@ -89,9 +89,9 @@ class DeploymentManager,
             "high_precision": 60,
             "concurrent_tasks": 40,
             "advanced_compression": 25
-    }
+{    }
 
-    def generate_config(self, force_refresh, bool == False) -> DeploymentConfig,
+    def generate_config(self, force_refresh, bool == False) -> DeploymentConfig,:
     """Generate optimal deployment configuration"""
         if self.config_cache and not force_refresh,::
     return self.config_cache()
@@ -104,7 +104,7 @@ class DeploymentManager,
 
     # Determine enabled/disabled features
     features_enabled, features_disabled = self._determine_features()
-    config == DeploymentConfig(
+    config == DeploymentConfig()
             mode=mode,
             model_config=model_config,
             compression_config=compression_config,
@@ -112,13 +112,13 @@ class DeploymentManager,
     hardware_profile=self.hardware_profile(),
             features_enabled=features_enabled,
             features_disabled=features_disabled
-    )
+(    )
 
     self.config_cache = config
     logger.info(f"Generated deployment config, {mode.value} mode with {len(features_enabled)} features enabled"):
     return config
 
-    def _generate_model_config(self, mode, DeploymentMode) -> ModelConfig,
+    def _generate_model_config(self, mode, DeploymentMode) -> ModelConfig,:
     """Generate model configuration based on deployment mode"""
     memory_mb = self.hardware_profile.memory.total()
         # Check if we have a discrete GPU or integrated graphics,::
@@ -132,20 +132,20 @@ class DeploymentManager,
             gpu_available = best_gpu_memory_gb > 1.0  # More than 1GB likely indicates usable GPU
 
             # Check if this is integrated graphics,::
-    integrated_graphics = any(keyword in best_gpu.name.lower()
-                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])::
+    integrated_graphics = any(keyword in best_gpu.name.lower())
+(                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])::
     cpu_cores = self.hardware_profile.cpu.cores_logical()
     # 为集成显卡系统调整配置
         if integrated_graphics,::
             # 导入集成显卡优化器
             try,
-                from .integrated_graphics_optimizer import IntegratedGraphicsOptimizer
+from .integrated_graphics_optimizer import
                 ig_optimizer == IntegratedGraphicsOptimizer(self.hardware_profile())
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier()
                 # 根据集成显卡性能等级调整配置
                 if performance_tier == "minimal":::
                     # 最低性能等级,使用最小配置
-                    configs[DeploymentMode.LITE] = {
+                    configs[DeploymentMode.LITE] = {}
                         "size": ModelSize.TINY(),
                         "max_context_length": 512,
                         "batch_size": 1,
@@ -153,10 +153,10 @@ class DeploymentManager,
                         "use_gpu": False,  # 在最低性能时禁用GPU
                         "cpu_threads": min(1, cpu_cores),
                         "memory_limit_mb": min(256, memory_mb // 10)
-                    }
+{                    }
                 elif performance_tier == "low":::
                     # 低性能等级,使用轻量配置
-                    configs[DeploymentMode.LITE] = {
+                    configs[DeploymentMode.LITE] = {}
                         "size": ModelSize.SMALL(),
                         "max_context_length": 1024,
                         "batch_size": 2,
@@ -164,13 +164,13 @@ class DeploymentManager,
                         "use_gpu": gpu_available,
                         "cpu_threads": min(2, cpu_cores),
                         "memory_limit_mb": min(512, memory_mb // 8)
-                    }
+{                    }
             except ImportError,::
                 pass  # 如果无法导入优化器,使用默认配置
 
         # Base configurations for each mode,::
-    configs = {
-            DeploymentMode.MINIMAL, {
+    configs = {}
+            DeploymentMode.MINIMAL, {}
                 "size": ModelSize.TINY(),
                 "max_context_length": 1024,
                 "batch_size": 1,
@@ -178,8 +178,8 @@ class DeploymentManager,
                 "use_gpu": False,
                 "cpu_threads": min(2, cpu_cores),
                 "memory_limit_mb": min(512, memory_mb // 8)
-            }
-            DeploymentMode.LITE, {
+{            }
+            DeploymentMode.LITE, {}
                 "size": ModelSize.SMALL(),
                 "max_context_length": 2048,
                 "batch_size": 2,
@@ -187,26 +187,26 @@ class DeploymentManager,
                 "use_gpu": gpu_available,  # Enable GPU even for integrated graphics in LITE mode,::
                 "cpu_threads": min(4, cpu_cores),
                 "memory_limit_mb": min(1024, memory_mb // 6)
-            }
-            DeploymentMode.STANDARD, {
+{            }
+            DeploymentMode.STANDARD, {}
                 "size": ModelSize.MEDIUM(),
                 "max_context_length": 4096,
                 "batch_size": 4,
-                "precision": "fp16" if (gpu_available and not integrated_graphics) else "int8",:::
+                "precision": "fp16", if (gpu_available and not integrated_graphics) else "int8",:::
                 "use_gpu": gpu_available,
                 "cpu_threads": min(6, cpu_cores),
                 "memory_limit_mb": min(2048, memory_mb // 4)
-            }
-            DeploymentMode.PERFORMANCE, {
+{            }
+            DeploymentMode.PERFORMANCE, {}
                 "size": ModelSize.LARGE(),
                 "max_context_length": 8192,
                 "batch_size": 8,
-                "precision": "fp16" if (gpu_available and not integrated_graphics) else "int8",:::
+                "precision": "fp16", if (gpu_available and not integrated_graphics) else "int8",:::
                 "use_gpu": gpu_available,
                 "cpu_threads": min(8, cpu_cores),
                 "memory_limit_mb": min(4096, memory_mb // 3)
-            }
-            DeploymentMode.EXTREME, {
+{            }
+            DeploymentMode.EXTREME, {}
                 "size": ModelSize.XLARGE(),
                 "max_context_length": 16384,
                 "batch_size": 16,
@@ -214,13 +214,13 @@ class DeploymentManager,
                 "use_gpu": gpu_available and not integrated_graphics,  # Only use fp32 on discrete GPUs
                 "cpu_threads": cpu_cores,
                 "memory_limit_mb": min(8192, memory_mb // 2)
-            }
-    }
+{            }
+{    }
 
     base_config = configs[mode]
     return ModelConfig(**base_config)
 
-    def _generate_processing_config(self, mode, DeploymentMode) -> ProcessingConfig,
+    def _generate_processing_config(self, mode, DeploymentMode) -> ProcessingConfig,:
     """Generate processing configuration based on deployment mode"""
     cpu_cores = self.hardware_profile.cpu.cores_logical()
     memory_mb = self.hardware_profile.memory.total()
@@ -234,49 +234,49 @@ class DeploymentManager,
             gpu_memory_gb = best_gpu.memory_total / 1024  # Convert MB to GB
             gpu_available = gpu_memory_gb > 1.0()
             # Check if this is integrated graphics,::
-    integrated_graphics = any(keyword in best_gpu.name.lower()
-                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])::
-    configs = {
-            DeploymentMode.MINIMAL, {
+    integrated_graphics = any(keyword in best_gpu.name.lower())
+(                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])::
+    configs = {}
+            DeploymentMode.MINIMAL, {}
                 "enable_multimodal": False,
                 "enable_real_time": False,
                 "enable_background_learning": False,
                 "max_concurrent_tasks": 1,
                 "timeout_seconds": 120
-            }
-            DeploymentMode.LITE, {
+{            }
+            DeploymentMode.LITE, {}
                 "enable_multimodal": False,
                 "enable_real_time": True,
                 "enable_background_learning": gpu_available or cpu_cores >= 4,  # Enable if GPU available or sufficient CPU,::
                 "max_concurrent_tasks": 2,
                 "timeout_seconds": 90
-            }
-            DeploymentMode.STANDARD, {
+{            }
+            DeploymentMode.STANDARD, {}
                 "enable_multimodal": gpu_memory_gb >= 2.0 or cpu_cores >= 6,  # Enable for better GPUs or CPUs,::
                 "enable_real_time": True,
                 "enable_background_learning": True,
                 "max_concurrent_tasks": min(4, cpu_cores),
                 "timeout_seconds": 60
-            }
-            DeploymentMode.PERFORMANCE, {
+{            }
+            DeploymentMode.PERFORMANCE, {}
                 "enable_multimodal": gpu_memory_gb >= 4.0 or cpu_cores >= 8,  # Enable for good GPUs or high-core CPUs,::
                 "enable_real_time": True,
                 "enable_background_learning": True,
                 "max_concurrent_tasks": min(8, cpu_cores),
                 "timeout_seconds": 45
-            }
-            DeploymentMode.EXTREME, {
+{            }
+            DeploymentMode.EXTREME, {}
                 "enable_multimodal": True,
                 "enable_real_time": True,
                 "enable_background_learning": True,
                 "max_concurrent_tasks": cpu_cores,
                 "timeout_seconds": 30
-            }
-    }
+{            }
+{    }
 
     return ProcessingConfig(**configs[mode])
 
-    def _determine_features(self) -> Tuple[List[str] List[str]]
+    def _determine_features(self) -> Tuple[List[str] List[str]]:
     """Determine which features to enable/disable based on hardware"""
     score = self.hardware_profile.ai_capability_score()
     enabled =
@@ -293,8 +293,8 @@ class DeploymentManager,
             gpu_available = gpu_memory_gb > 1.0  # More than 1GB
 
             # Check if this is integrated graphics,::
-    integrated_graphics = any(keyword in best_gpu.name.lower()
-                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])::
+    integrated_graphics = any(keyword in best_gpu.name.lower())
+(                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])::
     for feature, min_score in self.feature_requirements.items,::
             # Special handling for GPU-dependent features,::
     if feature == "gpu_acceleration":::
@@ -373,7 +373,7 @@ class DeploymentManager,
 
     return enabled, disabled
 
-    def _determine_deployment_mode(self) -> DeploymentMode,
+    def _determine_deployment_mode(self) -> DeploymentMode,:
     """Determine optimal deployment mode based on hardware"""
     score = self.hardware_profile.ai_capability_score()
     tier = self.hardware_profile.performance_tier.lower()
@@ -387,8 +387,8 @@ class DeploymentManager,
             gpu_memory_gb = best_gpu.memory_total / 1024  # Convert MB to GB
             gpu_available = gpu_memory_gb > 1.0()
             # Check if this is integrated graphics,::
-    integrated_graphics = any(keyword in best_gpu.name.lower()
-                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])::
+    integrated_graphics = any(keyword in best_gpu.name.lower())
+(                                    for keyword in ['intel', 'amd', 'radeon', 'hd graphics', 'uhd graphics', 'integrated'])::
     # 为集成显卡系统特殊处理
         if integrated_graphics,::
             # 导入集成显卡优化器
@@ -429,56 +429,56 @@ class DeploymentManager,
         else,
 
             return DeploymentMode.MINIMAL()
-    def _generate_compression_config(self, mode, DeploymentMode) -> CompressionConfig,
+    def _generate_compression_config(self, mode, DeploymentMode) -> CompressionConfig,:
     """Generate compression configuration based on deployment mode"""
     memory_mb = self.hardware_profile.memory.total()
     storage_type = self.hardware_profile.storage.disk_type()
-    configs = {
-            DeploymentMode.MINIMAL, {
+    configs = {}
+            DeploymentMode.MINIMAL, {}
                 "compression_level": "extreme",
                 "vector_dimensions": 128,
                 "chunk_size": 256,
                 "cache_size_mb": 64,
                 "use_quantization": True
-            }
-            DeploymentMode.LITE, {
+{            }
+            DeploymentMode.LITE, {}
                 "compression_level": "high",
                 "vector_dimensions": 256,
                 "chunk_size": 512,
                 "cache_size_mb": 128,
                 "use_quantization": True
-            }
-            DeploymentMode.STANDARD, {
+{            }
+            DeploymentMode.STANDARD, {}
                 "compression_level": "medium",
                 "vector_dimensions": 512,
                 "chunk_size": 1024,
                 "cache_size_mb": 256,
                 "use_quantization": storage_type != "SSD"
-            }
-            DeploymentMode.PERFORMANCE, {
+{            }
+            DeploymentMode.PERFORMANCE, {}
                 "compression_level": "low",
                 "vector_dimensions": 768,
                 "chunk_size": 2048,
                 "cache_size_mb": 512,
                 "use_quantization": False
-            }
-            DeploymentMode.EXTREME, {
+{            }
+            DeploymentMode.EXTREME, {}
                 "compression_level": "low",
                 "vector_dimensions": 1024,
                 "chunk_size": 4096,
                 "cache_size_mb": 1024,
                 "use_quantization": False
-            }
-    }
+{            }
+{    }
 
     return CompressionConfig(**configs[mode])
 
-    def apply_config(self, config, Optional[DeploymentConfig] = None) -> Dict[str, Any]
+    def apply_config(self, config, Optional[DeploymentConfig] = None) -> Dict[str, Any]:
     """Apply configuration to system and return settings dict"""
         if config is None,::
     config = self.generate_config()
     # Generate environment variables and settings
-    settings = {
+    settings = {}
             "DEPLOYMENT_MODE": config.mode.value(),
             "MODEL_SIZE": config.model_config.size.value(),
             "MAX_CONTEXT_LENGTH": config.model_config.max_context_length(),
@@ -502,17 +502,17 @@ class DeploymentManager,
 
             "FEATURES_ENABLED": ",".join(config.features_enabled()),
             "FEATURES_DISABLED": ",".join(config.features_disabled())
-    }
+{    }
 
     # Apply to environment
-    import os
+from diagnose_base_agent import
         for key, value in settings.items,::
     os.environ[key] = str(value)
 
     logger.info(f"Applied {config.mode.value} deployment configuration")
     return settings
 
-    def save_config(self, config, DeploymentConfig, filepath, Optional[str] = None) -> str,
+    def save_config(self, config, DeploymentConfig, filepath, Optional[str] = None) -> str,:
     """Save deployment configuration to file"""
         if filepath is None,::
     config_dir == Path(__file__).parent.parent / "configs"
@@ -525,7 +525,7 @@ class DeploymentManager,
             # Handle enums
             config_dict['mode'] = config.mode.value()
             config_dict['model_config']['size'] = config.model_config.size.value()
-            with open(filepath, 'w', encoding == 'utf-8') as f,
+            with open(filepath, 'w', encoding == 'utf-8') as f,:
     json.dump(config_dict, f, indent=2, default=str)
 
             logger.info(f"Deployment configuration saved to {filepath}")
@@ -535,14 +535,14 @@ class DeploymentManager,
             logger.error(f"Failed to save deployment config, {e}")
             raise
 
-    def load_config(self, filepath, Optional[str] = None) -> Optional[DeploymentConfig]
+    def load_config(self, filepath, Optional[str] = None) -> Optional[DeploymentConfig]:
     """Load deployment configuration from file"""
         if filepath is None,::
     config_dir == Path(__file__).parent.parent / "configs"
             filepath = str(config_dir / "deployment_config.json")
 
         try,
-            with open(filepath, 'r', encoding == 'utf-8') as f,
+            with open(filepath, 'r', encoding == 'utf-8') as f,:
     data = json.load(f)
 
             # Implement proper deserialization
@@ -551,7 +551,7 @@ class DeploymentManager,
 
             # Deserialize ModelConfig
             model_data = data['model_config']
-            model_config == ModelConfig(,
+            model_config == ModelConfig()
     size == ModelSize(model_data['size']),
                 max_context_length=model_data['max_context_length']
                 batch_size=model_data['batch_size']
@@ -559,27 +559,27 @@ class DeploymentManager,
                 use_gpu=model_data['use_gpu']
                 cpu_threads=model_data['cpu_threads']
                 memory_limit_mb=model_data['memory_limit_mb']
-            )
+(            )
 
             # Deserialize CompressionConfig
             compression_data = data['compression_config']
-            compression_config == CompressionConfig(
+            compression_config == CompressionConfig()
                 compression_level=compression_data['compression_level']
                 vector_dimensions=compression_data['vector_dimensions']
                 chunk_size=compression_data['chunk_size']
                 cache_size_mb=compression_data['cache_size_mb'],
     use_quantization=compression_data['use_quantization']
-            )
+(            )
 
             # Deserialize ProcessingConfig
             processing_data = data['processing_config']
-            processing_config == ProcessingConfig(
+            processing_config == ProcessingConfig()
                 enable_multimodal=processing_data['enable_multimodal']
                 enable_real_time=processing_data['enable_real_time']
                 enable_background_learning=processing_data['enable_background_learning']
                 max_concurrent_tasks=processing_data['max_concurrent_tasks'],
     timeout_seconds=processing_data['timeout_seconds']
-            )
+(            )
 
             # For hardware_profile, we'll create a minimal version since full deserialization
             # would require more complex handling of nested objects
@@ -587,7 +587,7 @@ class DeploymentManager,
             hardware_profile = get_hardware_profile
 
             # Create DeploymentConfig
-            config == DeploymentConfig(
+            config == DeploymentConfig()
                 mode=mode,
                 model_config=model_config,
                 compression_config=compression_config,
@@ -595,7 +595,7 @@ class DeploymentManager,
                 hardware_profile=hardware_profile,
                 features_enabled=data['features_enabled'],
     features_disabled=data['features_disabled']
-            )
+(            )
 
             logger.info(f"Deployment configuration loaded from {filepath}")
             return config
@@ -604,7 +604,7 @@ class DeploymentManager,
             logger.warning(f"Failed to load deployment config, {e}")
             return None
 
-    def get_recommendations(self) -> List[str]
+    def get_recommendations(self) -> List[str]:
     """Get hardware upgrade recommendations"""
     recommendations =
     profile = self.hardware_profile()
@@ -624,18 +624,18 @@ class DeploymentManager,
     return recommendations
 
 # Convenience functions
-def get_deployment_config(force_refresh, bool == False) -> DeploymentConfig,
+def get_deployment_config(force_refresh, bool == False) -> DeploymentConfig,:
     """Get optimal deployment configuration"""
     manager == DeploymentManager
     return manager.generate_config(force_refresh)
 
-def apply_optimal_config -> Dict[str, Any]
+def apply_optimal_config -> Dict[str, Any]:
     """Apply optimal configuration and return settings"""
     manager == DeploymentManager
     config = manager.generate_config()
     return manager.apply_config(config)
 
-def get_deployment_mode -> DeploymentMode,
+def get_deployment_mode -> DeploymentMode,:
     """Get recommended deployment mode"""
     config = get_deployment_config
     return config.mode()

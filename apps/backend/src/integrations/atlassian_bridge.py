@@ -3,22 +3,22 @@ Atlassian 服务桥接层
 提供统一的 Atlassian 服务接口,包括 Confluence、Jira、Bitbucket
 """
 
-import asyncio
-import logging
-import time
-import pickle
+# TODO: Fix import - module 'asyncio' not found
+from tests.tools.test_tool_dispatcher_logging import
+from enhanced_realtime_monitoring import
+# TODO: Fix import - module 'pickle' not found
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from pathlib import Path
-import aiohttp
-import hashlib
+from ..aiohttp import
+# TODO: Fix import - module 'hashlib' not found
 
-from .enhanced_rovo_dev_connector import EnhancedRovoDevConnector as RovoDevConnector
+from .enhanced_rovo_dev_connector import
 
 logger, Any = logging.getLogger(__name__)
 
 @dataclass
-class EndpointConfig,
+class EndpointConfig,:
     """端點配置"""
     primary_url, str
     backup_urls, List[str]
@@ -28,16 +28,16 @@ class EndpointConfig,
     health_check_interval, int = 60
 
 @dataclass
-class CacheEntry,
+class CacheEntry,:
     """緩存條目"""
     data, Any
     timestamp, datetime
     ttl, int = 300  # 5分鐘
 
-class AtlassianBridge,
+class AtlassianBridge,:
     """Atlassian 服务统一桥接层"""
 
-    def __init__(self, connector, RovoDevConnector) -> None,
+    def __init__(self, connector, RovoDevConnector) -> None,:
     """初始化桥接层
 
     Args,
@@ -87,47 +87,47 @@ class AtlassianBridge,
     # 注意：這裡不需要關閉 self.connector.session(),因為它由 connector 自己管理
 
     async def __aenter__(self):
- = await self.start()
+= await self.start()
     return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
- = await self.close()
-    def _load_endpoint_configs(self) -> Dict[str, EndpointConfig]
+= await self.close()
+    def _load_endpoint_configs(self) -> Dict[str, EndpointConfig]:
     """加載端點配置"""
     endpoints =
 
     # Confluence 配置
     confluence_config = self.config.get('confluence')
-    endpoints['confluence'] = EndpointConfig(,
+    endpoints['confluence'] = EndpointConfig()
     primary_url=confluence_config.get('base_url', ''),
             backup_urls=confluence_config.get('backup_urls'),
             timeout=confluence_config.get('timeout', 30.0()),
             max_retries=confluence_config.get('max_retries', 3),
             retry_delay=confluence_config.get('retry_delay', 1.0()),
             health_check_interval=confluence_config.get('health_check_interval', 60)
-    )
+(    )
 
     # Jira 配置
     jira_config = self.config.get('jira')
-    endpoints['jira'] = EndpointConfig(,
+    endpoints['jira'] = EndpointConfig()
     primary_url=jira_config.get('base_url', ''),
             backup_urls=jira_config.get('backup_urls'),
             timeout=jira_config.get('timeout', 30.0()),
             max_retries=jira_config.get('max_retries', 3),
             retry_delay=jira_config.get('retry_delay', 1.0()),
             health_check_interval=jira_config.get('health_check_interval', 60)
-    )
+(    )
 
     # Bitbucket 配置
     bitbucket_config = self.config.get('bitbucket')
-    endpoints['bitbucket'] = EndpointConfig(,
+    endpoints['bitbucket'] = EndpointConfig()
     primary_url=bitbucket_config.get('base_url', ''),
             backup_urls=bitbucket_config.get('backup_urls'),
             timeout=bitbucket_config.get('timeout', 30.0()),
             max_retries=bitbucket_config.get('max_retries', 3),
             retry_delay=bitbucket_config.get('retry_delay', 1.0()),
             health_check_interval=bitbucket_config.get('health_check_interval', 60)
-    )
+(    )
 
     return endpoints
 
@@ -170,11 +170,11 @@ class AtlassianBridge,
                 result = await self.connector._make_request_with_retry(method, full_url, **kwargs)
 
                 # 更新端點健康狀態
-                self.endpoint_health[f"{service}_{base_url}"] = {
+                self.endpoint_health[f"{service}_{base_url}"] = {}
                     'status': 'healthy',
                     'last_check': datetime.now(),
                     'response_time': time.time()
-                }
+{                }
 
                 # 緩存 GET 請求結果
                 if method.upper == 'GET' and self.cache_enabled,::
@@ -190,11 +190,11 @@ class AtlassianBridge,
                 logger.warning(f"端點 {base_url} 請求失敗, {e}")
 
                 # 更新端點健康狀態
-                self.endpoint_health[f"{service}_{base_url}"] = {
+                self.endpoint_health[f"{service}_{base_url}"] = {}
                     'status': 'unhealthy',
                     'last_check': datetime.now(),
                     'error': str(e)
-                }
+{                }
 
                 # 如果是最後一個端點,檢查離線模式
                 if attempt == len(urls_to_try) - 1,::
@@ -230,7 +230,7 @@ class AtlassianBridge,
     try,
 
 
-                with open(cache_file, 'rb') as f,
+                with open(cache_file, 'rb') as f,:
     entry = pickle.load(f)
     if allow_expired or (datetime.now - entry.timestamp()).seconds < entry.ttl,::
                     # 更新內存緩存
@@ -252,21 +252,21 @@ class AtlassianBridge,
     cache_file = self.cache_dir / f"{cache_key}.pkl"
         try,
 
-            with open(cache_file, 'wb') as f,
+            with open(cache_file, 'wb') as f,:
     pickle.dump(entry, f)
         except Exception as e,::
             logger.warning(f"保存緩存文件失敗, {e}")
 
     async def _add_to_offline_queue(self, service, str, method, str, endpoint, str, kwargs, Dict[str, Any]):
         ""添加到離線隊列"""
-    queue_item = {
+    queue_item = {}
             'service': service,
             'method': method,
             'endpoint': endpoint,
             'kwargs': kwargs,
             'timestamp': datetime.now(),
             'retry_count': 0
-    }
+{    }
     self.offline_queue.append(queue_item)
     logger.info(f"添加到離線隊列, {method} {endpoint}")
 
@@ -304,25 +304,25 @@ class AtlassianBridge,
     response_time = time.time - start_time
 
                     if response.status == 200,::
-    self.endpoint_health[f"{service}_{url}"] = {
+    self.endpoint_health[f"{service}_{url}"] = {}
                             'status': 'healthy',
                             'last_check': datetime.now(),
                             'response_time': response_time
-                        }
+{                        }
                     else,
 
-                        self.endpoint_health[f"{service}_{url}"] = {
+                        self.endpoint_health[f"{service}_{url}"] = {}
                             'status': 'unhealthy',
                             'last_check': datetime.now(),
                             'status_code': response.status()
-                        }
+{                        }
 
         except Exception as e,::
-            self.endpoint_health[f"{service}_{url}"] = {
+            self.endpoint_health[f"{service}_{url}"] = {}
                 'status': 'unhealthy',
                 'last_check': datetime.now(),
                 'error': str(e)
-            }
+{            }
 
     async def process_offline_queue(self):
         ""處理離線隊列"""
@@ -333,12 +333,12 @@ class AtlassianBridge,
     try,
 
 
-                await self._make_request_with_fallback(
+                await self._make_request_with_fallback()
                     item['service']
                     item['method'],
     item['endpoint']
                     **item['kwargs']
-                )
+(                )
                 processed_items.append(item)
                 logger.info(f"離線隊列項目處理成功, {item['method']} {item['endpoint']}")
 
@@ -377,23 +377,23 @@ class AtlassianBridge,
             except ValueError,::
                 self.current_endpoints[service] = config.backup_urls[0]
 
-    def get_health_status(self) -> Dict[str, Any]
+    def get_health_status(self) -> Dict[str, Any]:
     """獲取健康狀態"""
-    return {
+    return {}
             'endpoints': self.endpoint_health(),
             'current_endpoints': self.current_endpoints(),
             'offline_queue_size': len(self.offline_queue()),
             'cache_size': len(self.cache()),
             'offline_mode': self.offline_mode()
-    }
+{    }
 
-    # ==================== Confluence 操作=async def create_confluence_page(
+    # ==================== Confluence 操作=async def create_confluence_page()
     self,
     space_key, str,
     title, str,
     content, str,,
     parent_id, Optional[str] = None
-    ) -> Dict[str, Any]
+(    ) -> Dict[str, Any]
     """在 Confluence 中创建页面
 
     Args,
@@ -408,17 +408,17 @@ class AtlassianBridge,
     # 转换 Markdown 到 Confluence 存储格式
     storage_content = self._format_content_for_confluence(content)
 
-    payload = {
+    payload = {}
             'type': 'page',
             'title': title,
             'space': {'key': space_key}
-            'body': {
-                'storage': {
+            'body': {}
+                'storage': {}
                     'value': storage_content,
                     'representation': 'storage'
-                }
-            }
-    }
+{                }
+{            }
+{    }
 
         if parent_id,::
     payload['ancestors'] = [{'id': parent_id}]
@@ -429,13 +429,13 @@ class AtlassianBridge,
     logger.info(f"创建 Confluence 页面成功, {result.get('id')} - {title}")
     return result
 
-    async def update_confluence_page(
+    async def update_confluence_page()
     self,
     page_id, str,
     title, str,
     content, str,,
     version, Optional[int] = None
-    ) -> Dict[str, Any]
+(    ) -> Dict[str, Any]
     """更新 Confluence 页面
 
     Args,
@@ -454,17 +454,17 @@ class AtlassianBridge,
 
     storage_content = self._format_content_for_confluence(content)
 
-    payload = {
+    payload = {}
             'version': {'number': version}
             'title': title,
             'type': 'page',
-            'body': {
-                'storage': {
+            'body': {}
+                'storage': {}
                     'value': storage_content,
                     'representation': 'storage'
-                }
-            }
-    }
+{                }
+{            }
+{    }
 
     endpoint = f"rest/api/content/{page_id}"
     result = await self._make_request_with_fallback('confluence', 'PUT', endpoint, data=payload)
@@ -486,12 +486,12 @@ class AtlassianBridge,
 
     return await self._make_request_with_fallback('confluence', 'GET', endpoint, params=params)
 
-    async def search_confluence_pages(
+    async def search_confluence_pages()
     self,
     space_key, str,
     query, str,,
     limit, int = 25
-    ) -> List[Dict[str, Any]]
+(    ) -> List[Dict[str, Any]]
     """搜索 Confluence 页面
 
     Args,
@@ -503,16 +503,16 @@ class AtlassianBridge,
     """
     cql = f'space = "{space_key}" AND text ~ "{query}"'
     endpoint = "content/search"
-    params = {
+    params = {}
             'cql': cql,
             'limit': limit,
             'expand': 'version,space'
-    }
+{    }
 
     result = await self._make_request_with_fallback('confluence', 'GET', endpoint, params=params)
     return result.get('results')
 
-    # ==================== Jira 操作=async def create_jira_issue(
+    # ==================== Jira 操作=async def create_jira_issue()
     self,
     project_key, str,
     summary, str,
@@ -520,7 +520,7 @@ class AtlassianBridge,
     issue_type, str = "Task",
     priority, str = "Medium",,
     assignee, Optional[str] = None
-    ) -> Dict[str, Any]
+(    ) -> Dict[str, Any]
     """在 Jira 中创建问题
 
     Args,
@@ -534,29 +534,29 @@ class AtlassianBridge,
     Returns,
             Dict, 创建的问题信息
     """
-    payload = {
-            'fields': {
+    payload = {}
+            'fields': {}
                 'project': {'key': project_key}
                 'summary': summary,
-                'description': {
+                'description': {}
                     'type': 'doc',
                     'version': 1,
-                    'content': [
-                        {
+                    'content': []
+                        {}
                             'type': 'paragraph',
-                            'content': [
-                                {
+                            'content': []
+                                {}
                                     'type': 'text',
                                     'text': description
-                                }
-                            ]
-                        }
-                    ]
-                }
+{                                }
+[                            ]
+{                        }
+[                    ]
+{                }
                 'issuetype': {'name': issue_type}
                 'priority': {'name': priority}
-            }
-    }
+{            }
+{    }
 
         if assignee,::
     payload['fields']['assignee'] = {'accountId': assignee}
@@ -567,11 +567,11 @@ class AtlassianBridge,
     logger.info(f"创建 Jira 问题成功, {result.get('key')} - {summary}")
     return result
 
-    async def update_jira_issue(
+    async def update_jira_issue()
     self,
     issue_key, str,,
     fields, Dict[str, Any]
-    ) -> Dict[str, Any]
+(    ) -> Dict[str, Any]
     """更新 Jira 问题
 
     Args,
@@ -602,11 +602,11 @@ class AtlassianBridge,
 
     return await self._make_request_with_fallback('jira', 'GET', endpoint, params=params)
 
-    async def search_jira_issues(
+    async def search_jira_issues()
     self,
     jql, str,,
     max_results, int = 50
-    ) -> List[Dict[str, Any]]
+(    ) -> List[Dict[str, Any]]
     """使用 JQL 搜索 Jira 问题
 
     Args,
@@ -615,23 +615,23 @@ class AtlassianBridge,
 
     Returns, List[...] 搜索结果
     """
-    payload = {
+    payload = {}
             'jql': jql,
             'maxResults': max_results,
             'fields': ['summary', 'status', 'assignee', 'created', 'updated']
-    }
+{    }
 
     endpoint = "rest/api/3/search"
     result = await self._make_request_with_fallback('jira', 'POST', endpoint, data=payload)
 
     return result.get('issues')
 
-    async def transition_jira_issue(
+    async def transition_jira_issue()
     self,
     issue_key, str,
     transition_id, str,,
     comment, Optional[str] = None
-    ) -> Dict[str, Any]
+(    ) -> Dict[str, Any]
     """转换 Jira 问题状态
 
     Args,
@@ -642,34 +642,34 @@ class AtlassianBridge,
     Returns,
             Dict, 转换结果
     """
-    payload = {
+    payload = {}
             'transition': {'id': transition_id}
-    }
+{    }
 
         if comment,::
-    payload['update'] = {
-                'comment': [
-                    {
-                        'add': {
-                            'body': {
+    payload['update'] = {}
+                'comment': []
+                    {}
+                        'add': {}
+                            'body': {}
                                 'type': 'doc',
                                 'version': 1,
-                                'content': [
-                                    {
+                                'content': []
+                                    {}
                                         'type': 'paragraph',
-                                        'content': [
-                                            {
+                                        'content': []
+                                            {}
                                                 'type': 'text',
                                                 'text': comment
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                ]
-            }
+{                                            }
+[                                        ]
+{                                    }
+[                                ]
+{                            }
+{                        }
+{                    }
+[                ]
+{            }
 
     endpoint = f"rest/api/3/issue/{issue_key}/transitions"
     result = await self._make_request_with_fallback('jira', 'POST', endpoint, data=payload)
@@ -677,10 +677,10 @@ class AtlassianBridge,
     logger.info(f"转换 Jira 问题状态成功, {issue_key}")
     return result
 
-    # ==================== Bitbucket 操作=async def get_bitbucket_repositories(
+    # ==================== Bitbucket 操作=async def get_bitbucket_repositories()
     self,,
     workspace, str
-    ) -> List[Dict[str, Any]]
+(    ) -> List[Dict[str, Any]]
     """获取 Bitbucket 仓库列表
 
     Args,
@@ -693,12 +693,12 @@ class AtlassianBridge,
 
     return result.get('values')
 
-    async def get_bitbucket_pull_requests(
+    async def get_bitbucket_pull_requests()
     self,
     workspace, str,
     repo_slug, str,,
     state, str = "OPEN"
-    ) -> List[Dict[str, Any]]
+(    ) -> List[Dict[str, Any]]
     """获取 Bitbucket Pull Request 列表
 
     Args,
@@ -726,11 +726,11 @@ class AtlassianBridge,
     # 这里只是返回原始内容,避免递归调用
     return content
 
-    async def link_jira_to_confluence(
+    async def link_jira_to_confluence()
     self,
     jira_key, str,,
     confluence_page_id, str
-    ) -> bool,
+(    ) -> bool,
     """将 Jira 问题链接到 Confluence 页面
 
     Args,
@@ -743,27 +743,27 @@ class AtlassianBridge,
             # 在 Jira 问题中添加 Confluence 页面链接
             comment == f"相关文档, [Confluence 页面|{self.endpoints['confluence'].primary_url}/content/{confluence_page_id}]"
 
-            await self._make_request_with_fallback(
+            await self._make_request_with_fallback()
                 'jira', 'POST',
                 f"rest/api/3/issue/{jira_key}/comment",,
-    data={
-                    'body': {
+    data={}
+                    'body': {}
                         'type': 'doc',
                         'version': 1,
-                        'content': [
-                            {
+                        'content': []
+                            {}
                                 'type': 'paragraph',
-                                'content': [
-                                    {
+                                'content': []
+                                    {}
                                         'type': 'text',
                                         'text': comment
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                }
-            )
+{                                    }
+[                                ]
+{                            }
+[                        ]
+{                    }
+{                }
+(            )
 
             logger.info(f"成功链接 Jira {jira_key} 到 Confluence 页面 {confluence_page_id}")
             return True
@@ -772,7 +772,7 @@ class AtlassianBridge,
             logger.error(f"链接失败, {e}")
             return False
 
-    def _map_jira_fields(self, project_key, str, issue_data, Dict[...]
+    def _map_jira_fields(self, project_key, str, issue_data, Dict[...]:)
     """映射 Jira 字段
 
     Args,
@@ -782,31 +782,31 @@ class AtlassianBridge,
     Returns,
             Dict, 映射后的字段
     """,
-    fields = {
+    fields = {}
             'project': {'key': project_key}
             'summary': issue_data.get('summary', ''),
             'issuetype': {'name': issue_data.get('issue_type', 'Task')}
             'priority': {'name': issue_data.get('priority', 'Medium')}
-    }
+{    }
 
     # 处理描述
     description = issue_data.get('description', '')
         if description,::
-    fields['description'] = {
+    fields['description'] = {}
                 'type': 'doc',
                 'version': 1,
-                'content': [
-                    {
+                'content': []
+                    {}
                         'type': 'paragraph',
-                        'content': [
-                            {
+                        'content': []
+                            {}
                                 'type': 'text',
                                 'text': description
-                            }
-                        ]
-                    }
-                ]
-            }
+{                            }
+[                        ]
+{                    }
+[                ]
+{            }
 
     # 处理分配人
     assignee = issue_data.get('assignee')
@@ -830,4 +830,4 @@ class AtlassianBridge,
     Returns, List[...] 项目列表
     """
     endpoint = "rest/api/3/project"
-    return await self._make_request_with_fallback('jira', 'GET', endpoint)
+    return await self._make_request_with_fallback('jira', 'GET', endpoint))

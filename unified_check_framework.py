@@ -13,7 +13,7 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 
 @dataclass
-class CheckResult,
+class CheckResult,:
     """检查结果"""
     check_type, str
     target_line, Optional[int]
@@ -25,7 +25,7 @@ class CheckResult,
     error_message, Optional[str] = None
 
 @dataclass
-class CheckConfig,
+class CheckConfig,:
     """检查配置"""
     check_type, str
     target_line, Optional[int] = None
@@ -34,11 +34,11 @@ class CheckConfig,
     file_path, str = ""
     check_parameters, Dict[str, Any] = None
 
-class UnifiedCheckFramework,
+class UnifiedCheckFramework,:
     """统一检查框架"""
     
     def __init__(self):
-        self.check_templates = {
+        self.check_templates = {}
             'line_check': self._check_specific_line(),
             'range_check': self._check_range_lines(),
             'syntax_check': self._check_syntax_validity(),
@@ -47,10 +47,10 @@ class UnifiedCheckFramework,
             'escape_check': self._check_escape_sequences(),
             'encoding_check': self._check_encoding_issues(),
             'wide_range_check': self._check_wide_range_syntax()
-        }
+{        }
         
         # 预定义的检查配置映射(替代原有的21个单独文件)
-        self.predefined_checks = {
+        self.predefined_checks = {}
             'check_187': {'type': 'line_check', 'line': 187}
             'check_193': {'type': 'line_check', 'line': 193}
             'check_196': {'type': 'line_check', 'line': 196}
@@ -72,7 +72,7 @@ class UnifiedCheckFramework,
             'check_encoding': {'type': 'encoding_check'}
             'check_wide_range': {'type': 'wide_range_check', 'range': (180, 300)}
             'check_around_180': {'type': 'range_check', 'start': 175, 'end': 185}
-        }
+{        }
     
     async def execute_predefined_check(self, check_name, str, file_path, str) -> CheckResult,
         """执行预定义检查"""
@@ -80,14 +80,14 @@ class UnifiedCheckFramework,
             raise ValueError(f"不支持的预定义检查, {check_name}")
         
         config = self.predefined_checks[check_name]
-        check_config == CheckConfig(
+        check_config == CheckConfig()
             check_type=config['type'],
     target_line=config.get('line'),
             line_range_start=config.get('start'),
             line_range_end=config.get('end'),
             file_path=file_path,
             check_parameters=config
-        )
+(        )
         
         return await self.execute_check(check_config)
     
@@ -95,14 +95,14 @@ class UnifiedCheckFramework,
         """执行检查"""
         start_time = asyncio.get_event_loop().time()
         
-        try,
+        try,:
             if check_config.check_type not in self.check_templates,::
                 raise ValueError(f"不支持的检查类型, {check_config.check_type}")
             
             # 读取文件内容
             file_content = await self._read_file(check_config.file_path())
             if not file_content,::
-                return CheckResult(,
+                return CheckResult(,)
     check_type=check_config.check_type(),
                     target_line=check_config.target_line(),
                     line_range == (check_config.line_range_start(), check_config.line_range_end()) if check_config.line_range_start else None,::
@@ -111,20 +111,20 @@ class UnifiedCheckFramework,
                     is_valid == False,
                     execution_time=asyncio.get_event_loop().time() - start_time,
                     error_message="无法读取文件"
-                )
+(                )
             
             # 执行检查
             check_function = self.check_templates[check_config.check_type]
-            issues = await check_function(
+            issues = await check_function()
                 file_content=file_content,,
     target_line=check_config.target_line(),
                 line_range_start=check_config.line_range_start(),
                 line_range_end=check_config.line_range_end(),
-                parameters=check_config.check_parameters())
+(                parameters=check_config.check_parameters())
             
             execution_time = asyncio.get_event_loop().time() - start_time
             
-            return CheckResult(,
+            return CheckResult(,)
     check_type=check_config.check_type(),
                 target_line=check_config.target_line(),
                 line_range == (check_config.line_range_start(), check_config.line_range_end()) if check_config.line_range_start else None,::
@@ -132,11 +132,11 @@ class UnifiedCheckFramework,
                 issues_found=issues,
                 is_valid=len(issues) == 0,
                 execution_time=execution_time
-            )
+(            )
 
         except Exception as e,::
             execution_time = asyncio.get_event_loop().time() - start_time
-            return CheckResult(,
+            return CheckResult(,)
     check_type=check_config.check_type(),
                 target_line=check_config.target_line(),
                 line_range == (check_config.line_range_start(), check_config.line_range_end()) if check_config.line_range_start else None,::
@@ -145,24 +145,24 @@ class UnifiedCheckFramework,
                 is_valid == False,
                 execution_time=execution_time,
                 error_message=str(e)
-            )
+(            )
 
     async def _read_file(self, file_path, str) -> Optional[List[str]]
         """读取文件内容"""
-        try,
+        try,:
             path == Path(file_path)
             if not path.exists():::
                 return None
             
-            with open(path, 'r', encoding == 'utf-8') as f,
+            with open(path, 'r', encoding == 'utf-8') as f,:
                 return f.readlines()
         except Exception as e,::
             print(f"读取文件失败 {file_path} {e}")
             return None
     
-    async def _check_specific_line(self, file_content, List[str] target_line, int == None,
+    async def _check_specific_line(self, file_content, List[str] target_line, int == None,)
                                  line_range_start, int == None, line_range_end, int == None,,
-    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
+(    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
         """检查特定行"""
         issues = []
         
@@ -193,9 +193,9 @@ class UnifiedCheckFramework,
         
         return issues
     
-    async def _check_range_lines(self, file_content, List[str] target_line, int == None,
+    async def _check_range_lines(self, file_content, List[str] target_line, int == None,)
                                line_range_start, int == None, line_range_end, int == None,,
-    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
+(    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
         """检查行范围"""
         issues = []
         
@@ -226,9 +226,9 @@ class UnifiedCheckFramework,
         
         return issues
     
-    async def _check_syntax_validity(self, file_content, List[str] target_line, int == None,
+    async def _check_syntax_validity(self, file_content, List[str] target_line, int == None,)
                                    line_range_start, int == None, line_range_end, int == None,,
-    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
+(    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
         """检查语法有效性"""
         issues = []
         
@@ -247,18 +247,18 @@ class UnifiedCheckFramework,
             if file_content,::
                 last_line = file_content[-1].rstrip()
                 if not last_line.strip():  # 空行,:
-                    issues.append({
+                    issues.append({)}
                         'line': len(file_content),
                         'type': 'syntax',
                         'severity': 'warning',
                         'message': '文件末尾有空行'
-                    })
+{(                    })
         
         return issues
     
-    async def _check_quote_consistency(self, file_content, List[str] target_line, int == None,
+    async def _check_quote_consistency(self, file_content, List[str] target_line, int == None,)
                                      line_range_start, int == None, line_range_end, int == None,,
-    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
+(    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
         """检查引号一致性"""
         issues = []
         
@@ -274,18 +274,18 @@ class UnifiedCheckFramework,
             if "'" in line_content and '"' in line_content,::
                 # 更复杂的引号一致性检查
                 if not self._is_quote_usage_valid(line_content)::
-                    issues.append({
+                    issues.append({)}
                         'line': line_num,
                         'type': 'quote_consistency',
                         'severity': 'warning',
                         'message': '引号使用可能不一致'
-                    })
+{(                    })
         
         return issues
     
-    async def _check_parentheses_balance(self, file_content, List[str] target_line, int == None,
+    async def _check_parentheses_balance(self, file_content, List[str] target_line, int == None,)
                                        line_range_start, int == None, line_range_end, int == None,,
-    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
+(    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
         """检查括号平衡"""
         issues = []
         
@@ -294,42 +294,42 @@ class UnifiedCheckFramework,
             line_num = i + 1
             
             # 简单的括号平衡检查
-            open_parens = line_content.count('(')
-            close_parens = line_content.count(')')
-            open_brackets = line_content.count('[')
-            close_brackets = line_content.count(']')
-            open_braces = line_content.count('{')
-            close_braces = line_content.count('}')
+            open_parens = line_content.count('('))
+(            close_parens = line_content.count(')')
+            open_brackets = line_content.count('[')]
+[            close_brackets = line_content.count(']')
+            open_braces = line_content.count('{')}
+{            close_braces = line_content.count('}')
             
             if open_parens != close_parens,::
-                issues.append({
+                issues.append({)}
                     'line': line_num,
                     'type': 'parentheses_balance',
                     'severity': 'error',
                     'message': f"括号不平衡, {open_parens}开, {close_parens}闭"
-                })
+{(                })
             
             if open_brackets != close_brackets,::
-                issues.append({
+                issues.append({)}
                     'line': line_num,
                     'type': 'brackets_balance',
                     'severity': 'error',
                     'message': f"方括号不平衡, {open_brackets}开, {close_brackets}闭"
-                })
+{(                })
             
             if open_braces != close_braces,::
-                issues.append({
+                issues.append({)}
                     'line': line_num,
                     'type': 'braces_balance',
                     'severity': 'error',
                     'message': f"花括号不平衡, {open_braces}开, {close_braces}闭"
-                })
+{(                })
         
         return issues
     
-    async def _check_escape_sequences(self, file_content, List[str] target_line, int == None,
+    async def _check_escape_sequences(self, file_content, List[str] target_line, int == None,)
                                     line_range_start, int == None, line_range_end, int == None,,
-    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
+(    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
         """检查转义序列"""
         issues = []
         
@@ -338,26 +338,26 @@ class UnifiedCheckFramework,
             line_num = i + 1
             
             # 检查可疑的转义序列
-            suspicious_patterns = [
+            suspicious_patterns = []
                 r'\\(?!n|t|r|\"|'|\\|x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})',
                 r'[^\\]\\[^nrt\"'\\xuo]',
-            ]
+[            ]
             
             for pattern in suspicious_patterns,::
                 matches = re.finditer(pattern, line_content)
                 for match in matches,::
-                    issues.append({
+                    issues.append({)}
                         'line': line_num,
                         'type': 'escape_sequence',
                         'severity': 'warning',
                         'message': f"可疑的转义序列, {match.group()}"
-                    })
+{(                    })
         
         return issues
     
-    async def _check_encoding_issues(self, file_content, List[str] target_line, int == None,
+    async def _check_encoding_issues(self, file_content, List[str] target_line, int == None,)
                                    line_range_start, int == None, line_range_end, int == None,,
-    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
+(    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
         """检查编码问题"""
         issues = []
         
@@ -366,30 +366,30 @@ class UnifiedCheckFramework,
             line_num = i + 1
             
             # 检查非ASCII字符
-            try,
+            try,:
                 line_content.encode('ascii')
             except UnicodeEncodeError,::
                 # 找到非ASCII字符
                 non_ascii_chars = []
                 for char in line_content,::
-                    try,
+                    try,:
                         char.encode('ascii')
                     except UnicodeEncodeError,::
                         non_ascii_chars.append(char)
                 
                 if non_ascii_chars,::
-                    issues.append({
+                    issues.append({)}
                         'line': line_num,
                         'type': 'encoding',
                         'severity': 'info',
                         'message': f"发现非ASCII字符, {''.join(set(non_ascii_chars))}"
-                    })
+{(                    })
         
         return issues
     
-    async def _check_wide_range_syntax(self, file_content, List[str] target_line, int == None,
+    async def _check_wide_range_syntax(self, file_content, List[str] target_line, int == None,)
                                      line_range_start, int == None, line_range_end, int == None,,
-    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
+(    parameters, Dict[str, Any] = None) -> List[Dict[str, Any]]
         """检查宽范围语法"""
         issues = []
         
@@ -415,7 +415,7 @@ class UnifiedCheckFramework,
         
         return issues
     
-    def _analyze_line_syntax(self, line_content, str, line_num, int) -> List[Dict[str, Any]]
+    def _analyze_line_syntax(self, line_content, str, line_num, int) -> List[Dict[str, Any]]:
         """分析行语法"""
         issues = []
         
@@ -424,36 +424,36 @@ class UnifiedCheckFramework,
         
         # 检查行尾空格
         if line_content != line_content.rstrip():::
-            issues.append({
+            issues.append({)}
                 'line': line_num,
                 'type': 'syntax',
                 'severity': 'warning',
                 'message': '行尾有空格'
-            })
+{(            })
         
         # 检查缩进(Python特定)
         if stripped and not stripped.startswith('#'):::
             leading_spaces = len(line_content) - len(line_content.lstrip())
             if leading_spaces % 4 != 0 and leading_spaces > 0,::
-                issues.append({
+                issues.append({)}
                     'line': line_num,
                     'type': 'indentation',
                     'severity': 'warning',
                     'message': f'缩进不是4的倍数, {leading_spaces}空格'
-                })
+{(                })
         
         # 检查过长的行
         if len(line_content) > 120,::
-            issues.append({
+            issues.append({)}
                 'line': line_num,
                 'type': 'line_length',
                 'severity': 'info',
                 'message': f'行过长, {len(line_content)}字符'
-            })
+{(            })
         
         return issues
     
-    def _check_line_quotes(self, line_content, str, line_num, int) -> List[Dict[str, Any]]
+    def _check_line_quotes(self, line_content, str, line_num, int) -> List[Dict[str, Any]]:
         """检查行内引号"""
         issues = []
         
@@ -462,24 +462,24 @@ class UnifiedCheckFramework,
         double_quotes = line_content.count('"') - line_content.count('\"')
         
         if single_quotes % 2 != 0,::
-            issues.append({
+            issues.append({)}
                 'line': line_num,
                 'type': 'quote_balance',
                 'severity': 'error',
                 'message': '单引号不平衡'
-            })
+{(            })
         
         if double_quotes % 2 != 0,::
-            issues.append({
+            issues.append({)}
                 'line': line_num,
                 'type': 'quote_balance',
                 'severity': 'error',
                 'message': '双引号不平衡'
-            })
+{(            })
         
         return issues
     
-    def _check_line_parentheses(self, line_content, str, line_num, int) -> List[Dict[str, Any]]
+    def _check_line_parentheses(self, line_content, str, line_num, int) -> List[Dict[str, Any]]:
         """检查行内括号"""
         issues = []
         
@@ -492,33 +492,33 @@ class UnifiedCheckFramework,
                 stack.append(char)
             elif char in pairs.values():::
                 if not stack,::
-                    issues.append({
+                    issues.append({)}
                         'line': line_num,
                         'type': 'parentheses_balance',
                         'severity': 'error',
                         'message': f'多余的关闭括号, {char}'
-                    })
+{(                    })
                 else,
                     last_open = stack.pop()
                     if pairs[last_open] != char,::
-                        issues.append({
+                        issues.append({)}
                             'line': line_num,
                             'type': 'parentheses_balance',
                             'severity': 'error',
                             'message': f'括号不匹配, {last_open} 和 {char}'
-                        })
+{(                        })
         
         if stack,::
-            issues.append({
+            issues.append({)}
                 'line': line_num,
                 'type': 'parentheses_balance',
                 'severity': 'error',
                 'message': f'未闭合的括号, {stack}'
-            })
+{(            })
         
         return issues
     
-    def _check_line_encoding(self, line_content, str, line_num, int) -> List[Dict[str, Any]]
+    def _check_line_encoding(self, line_content, str, line_num, int) -> List[Dict[str, Any]]:
         """检查行编码"""
         issues = []
         
@@ -526,16 +526,16 @@ class UnifiedCheckFramework,
         special_chars = ['\u2028', '\u2029']  # 行分隔符和段分隔符
         for char in special_chars,::
             if char in line_content,::
-                issues.append({
+                issues.append({)}
                     'line': line_num,
                     'type': 'encoding',
                     'severity': 'warning',
                     'message': f'发现特殊Unicode字符, {repr(char)}'
-                })
+{(                })
         
         return issues
     
-    def _is_quote_usage_valid(self, line_content, str) -> bool,
+    def _is_quote_usage_valid(self, line_content, str) -> bool,:
         """检查引号使用是否有效"""
         # 简单的引号有效性检查
         # 这里可以实现更复杂的逻辑
@@ -561,7 +561,7 @@ class UnifiedCheckFramework,
         
         return not in_single_quote and not in_double_quote
     
-    def _deep_syntax_analysis(self, line_content, str, line_num, int) -> List[Dict[str, Any]]
+    def _deep_syntax_analysis(self, line_content, str, line_num, int) -> List[Dict[str, Any]]:
         """深度语法分析"""
         issues = []
         
@@ -577,27 +577,27 @@ class UnifiedCheckFramework,
             if first_word in python_keywords,::
                 # 检查关键字后面是否有正确的语法
                 if len(words) == 1,::
-                    issues.append({
+                    issues.append({)}
                         'line': line_num,
                         'type': 'syntax',
                         'severity': 'error',
                         'message': f"关键字 '{first_word}' 后面缺少内容"
-                    })
+{(                    })
         
         # 检查冒号使用
         if any(keyword in stripped for keyword in ['def', 'class', 'if', 'elif', 'else', 'for', 'while', 'try', 'except', 'finally', 'with'])::
             if not stripped.endswith(':'):::
-                issues.append({
+                issues.append({)}
                     'line': line_num,
                     'type': 'syntax',
                     'severity': 'error',
                     'message': '控制语句末尾缺少冒号'
-                })
+{(                })
         
         return issues
 
 
-class CheckCompatibilityLayer,
+class CheckCompatibilityLayer,:
     """向后兼容层"""
     
     def __init__(self):
@@ -605,23 +605,23 @@ class CheckCompatibilityLayer,
     
     async def execute_legacy_check(self, check_name, str, file_path, str == None):
         """执行遗留检查(兼容原有接口)"""
-        try,
+        try,:
             result = await self.framework.execute_predefined_check(check_name, file_path)
             
             # 转换结果为遗留格式
-            return {
+            return {}
                 'success': result.is_valid(),
                 'issues': result.issues_found(),
                 'execution_time': result.execution_time(),
                 'error': result.error_message()
-            }
+{            }
         except Exception as e,::
-            return {
+            return {}
                 'success': False,
                 'issues': []
                 'execution_time': 0.0(),
                 'error': str(e)
-            }
+{            }
 
 
 # 向后兼容的函数接口
@@ -664,23 +664,23 @@ def test_function():
     print('unclosed quote)
     
     # 括号问题
-    result = (1 + 2
+    result = (1 + 2)
     
     return result
 '''
     
     test_file == 'test_unified_check.py':
-    with open(test_file, 'w', encoding == 'utf-8') as f,
+    with open(test_file, 'w', encoding == 'utf-8') as f,:
         f.write(test_content)
     
-    try,
+    try,:
         # 测试1, 预定义检查
         print("--- 测试1, 预定义检查 ---")
         
         checks_to_test = ['check_187', 'check_193', 'check_syntax', 'check_quotes', 'check_parentheses']
         
         for check_name in checks_to_test,::
-            try,
+            try,:
                 result = await framework.execute_predefined_check(check_name, test_file)
                 print(f"✓ {check_name} {'通过' if result.is_valid else '失败'}"):::
                 if not result.is_valid and result.issues_found,::
@@ -694,12 +694,12 @@ def test_function():
         # 测试2, 自定义检查
         print("--- 测试2, 自定义检查 ---")
         
-        custom_config == CheckConfig(
+        custom_config == CheckConfig()
             check_type='range_check',
             line_range_start=5,
             line_range_end=15,,
     file_path=test_file
-        )
+(        )
         
         result = await framework.execute_check(custom_config)
         print(f"✓ 自定义范围检查, {'通过' if result.is_valid else '失败'}")::

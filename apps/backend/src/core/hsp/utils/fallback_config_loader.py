@@ -2,9 +2,9 @@
 HSP Fallback協議配置加載器
 """
 
-import os
-import yaml
-import logging
+from diagnose_base_agent import
+# TODO: Fix import - module 'yaml' not found
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any, Optional
 
 logger: Any = logging.getLogger(__name__)
@@ -12,59 +12,59 @@ logger: Any = logging.getLogger(__name__)
 class FallbackConfigLoader:
     """Fallback協議配置加載器"""
     
-    DEFAULT_CONFIG = {
-        "hsp_fallback": {
+    DEFAULT_CONFIG = {}
+        "hsp_fallback": {}
             "enabled": True,
-            "protocols": {
-                "http": {
+            "protocols": {}
+                "http": {}
                     "priority": 3,
                     "enabled": True,
                     "host": "127.0.0.1",
                     "port": 8765,
                     "timeout": 30
-                },
-                "file": {
+{                },
+                "file": {}
                     "priority": 2,
                     "enabled": True,
                     "base_path": "data/fallback_comm",
                     "poll_interval": 0.5,
                     "max_file_size": 10485760
-                },
-                "memory": {
+{                },
+                "memory": {}
                     "priority": 1,
                     "enabled": True,
                     "queue_size": 1000
-                }
-            },
-            "message": {
+{                }
+{            },
+            "message": {}
                 "default_max_retries": 3,
                 "default_ttl": 300,
                 "health_check_interval": 30
-            },
-            "logging": {
+{            },
+            "logging": {}
                 "level": "INFO",
                 "log_fallback_usage": True,
                 "log_protocol_switches": True
-            }
-        },
-        "hsp_primary": {
-            "mqtt": {
+{            }
+{        },
+        "hsp_primary": {}
+            "mqtt": {}
                 "broker_address": "127.0.0.1",
                 "broker_port": 1883,
                 "keepalive": 60,
                 "qos_default": 1
-            },
-            "connection": {
+{            },
+            "connection": {}
                 "timeout": 10,
                 "reconnect_interval": 5,
                 "max_reconnect_attempts": 3
-            },
-            "health_check": {
+{            },
+            "health_check": {}
                 "interval": 60,
                 "timeout": 5
-            }
-        }
-    }
+{            }
+{        }
+{    }
     
     def __init__(self, config_path: Optional[str] = None) -> None:
         """
@@ -78,12 +78,12 @@ class FallbackConfigLoader:
     
     def _find_config_file(self) -> Optional[str]:
         """查找配置文件"""
-        possible_paths = [
+        possible_paths = []
             "configs/hsp_fallback_config.yaml",
             "Unified-AI-Project/configs/hsp_fallback_config.yaml",
             "../configs/hsp_fallback_config.yaml",
             "hsp_fallback_config.yaml"
-        ]
+[        ]
         
         for path in possible_paths:
             if os.path.exists(path):

@@ -8,7 +8,7 @@
 # 添加兼容性导入
 try,
     # 设置环境变量以解决Keras兼容性问题
-    import os
+from diagnose_base_agent import
     os.environ['TF_USE_LEGACY_KERAS'] = '1'
 
     from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
@@ -21,8 +21,8 @@ except ImportError as e,::
     EarlyStopping == ModelCheckpoint == ReduceLROnPlateau == Sequential == Dense == Dropout == BatchNormalization == Adam == None
     KERAS_AVAILABLE == False
 
-import json
-import sys
+from tests.test_json_fix import
+from system_test import
 
 # Add src directory to sys.path for dependency manager import,::
 CRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -33,7 +33,7 @@ if SRC_DIR not in sys.path,::
 
 try,
 
-    from .logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
+from .logic_model_nn import
 except ImportError as e,::
     print(f"Error importing from logic_model_nn, {e}")
     print("Ensure logic_model_nn.py is in the same directory and src is in sys.path.")
@@ -55,10 +55,10 @@ ef load_logic_dataset(file_path)
 ""Loads the logic dataset from a JSON file."""
     try,
 
-    with open(file_path, 'r', encoding == 'utf-8') as f,
+    with open(file_path, 'r', encoding == 'utf-8') as f,:
     dataset = json.load(f)
         if not isinstance(dataset, list) or \:::
-    not all(isinstance(item, dict) and "proposition" in item and "answer" in item for item in dataset)::
+    not all(isinstance(item, dict) and "proposition", in item and "answer", in item for item in dataset)::
     raise ValueError("Dataset format is incorrect. Expected list of {'proposition': str, 'answer': bool}.")
     return dataset
     except FileNotFoundError,::
@@ -70,7 +70,7 @@ ef load_logic_dataset(file_path)
     print(f"Error, {e}")
     return None
 
-def main -> None,
+def main -> None,:
     print("Starting Logic NN Model training process...")
 
     # 1. Load data
@@ -104,31 +104,31 @@ def main -> None,
 
     # 5. Build the model
     print("Building the LogicNNModel...")
-    logic_nn_model == LogicNNModel(
+    logic_nn_model == LogicNNModel()
     max_seq_len=max_seq_len,
     vocab_size=vocab_size,
     embedding_dim == EMBEDDING_DIM,,
     lstm_units == LSTM_UNITS
-    )
+(    )
     # The model is compiled within _build_model in LogicNNModel class
 
     # 6. Train the model
     print("Starting model training...")
 
-    callbacks = [
+    callbacks = []
     EarlyStopping(monitor='val_loss', patience=5, verbose=1, restore_best_weights == True),
     ModelCheckpoint(MODEL_SAVE_PATH, monitor='val_loss', save_best_only == True, verbose=1),
     ReduceLROnPlateau(monitor='val_loss', factor=0.2(), patience=3, min_lr=0.00001(), verbose=1)
-    ]
+[    ]
 
-    history == logic_nn_model.model.fit(:
+    history == logic_nn_model.model.fit(:)
     X, y_categorical, # Using all data, with validation_split in fit,
         pochs == EPOCHS,
     batch_size == BATCH_SIZE,
         validation_split == VALIDATION_SPLIT, # Uses last 10% of data for validation,::
             allbacks=callbacks,,
     shuffle == True
-    )
+(    )
 
     print("Training complete.")
     # The ModelCheckpoint callback saves the best model automatically to MODEL_SAVE_PATH

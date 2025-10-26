@@ -1,9 +1,9 @@
-import uuid
+# TODO: Fix import - module 'uuid' not found
 try,
     from cryptography.fernet import Fernet
 except ImportError,::
-    import subprocess
-    import sys
+from tests.run_test_subprocess import
+from system_test import
     subprocess.check_call([sys.executable(), "-m", "pip", "install", "cryptography"])
 try,
     from secretsharing import SecretSharer
@@ -11,14 +11,14 @@ except ImportError,::
     subprocess.check_call([sys.executable(), "-m", "pip", "install", "secret-sharing"])
 from typing import List, Tuple, Optional
 
-class GenesisManager,
+class GenesisManager,:
     """
     Manages the creation and recovery of the AI's core identity components
     using a (2, 3) Shamir's Secret Sharing scheme.
     """
 
     @staticmethod
-def create_genesis_secret -> Tuple[str, str]
+def create_genesis_secret -> Tuple[str, str]:
     """
     Generates the core components and combines them into a single secret string.
 
@@ -33,7 +33,7 @@ def create_genesis_secret -> Tuple[str, str]
     return genesis_secret, uid
 
     @staticmethod
-def split_secret_into_shards(secret, str) -> List[str]
+def split_secret_into_shards(secret, str) -> List[str]:
     """
     Splits the Genesis Secret into three shards using a (2, 3) scheme.
 
@@ -48,7 +48,7 @@ def split_secret_into_shards(secret, str) -> List[str]
     return SecretSharer.split_secret(secret_hex, 2, 3)
 
     @staticmethod
-def recover_secret_from_shards(shards, List[...]
+def recover_secret_from_shards(shards, List[...]:)
     """
     Recovers the Genesis Secret from a list of two or more shards.
 
@@ -68,7 +68,7 @@ def recover_secret_from_shards(shards, List[...]
             return None
 
     @staticmethod
-def parse_genesis_secret(secret, str) -> Optional[Tuple[str, str]]
+def parse_genesis_secret(secret, str) -> Optional[Tuple[str, str]]:
     """
     Parses the recovered secret string to extract the UID and HAM Key.
 
@@ -135,4 +135,4 @@ if __name'__main__':::
     assert parsed_uid=uid
     assert recovered12.endswith(parsed_key)
 
-    print("\n--- GenesisManager Test Complete ---")
+    print("\n--- GenesisManager Test Complete ---"))

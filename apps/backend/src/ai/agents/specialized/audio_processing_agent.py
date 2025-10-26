@@ -1,51 +1,51 @@
-import asyncio
-import uuid
-import logging
+# TODO: Fix import - module 'asyncio' not found
+# TODO: Fix import - module 'uuid' not found
+from tests.tools.test_tool_dispatcher_logging import
 from typing import Dict, Any
 
-from .base.base_agent import BaseAgent
-from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from .base.base_agent import
+from ....hsp.types import
 
 class AudioProcessingAgent(BaseAgent):
     """
     A specialized agent for audio processing tasks like speech recognition,::
         udio classification, and audio enhancement.
     """
-    def __init__(self, agent_id, str) -> None,
-        capabilities = [
-            {
+    def __init__(self, agent_id, str) -> None,:
+        capabilities = []
+            {}
                 "capability_id": f"{agent_id}_speech_recognition_v1.0",
                 "name": "speech_recognition",
                 "description": "Converts speech in audio to text.",
                 "version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "audio_file", "type": "string", "required": True, "description": "Path to the audio file"}
                     {"name": "language", "type": "string", "required": False, "description": "Language of the speech"}
-                ]
+[                ]
                 "returns": {"type": "object", "description": "Transcribed text and metadata."}
-            }
-            {
+{            }
+            {}
                 "capability_id": f"{agent_id}_audio_classification_v1.0",
                 "name": "audio_classification",
                 "description": "Classifies audio content into categories.",
                 "version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "audio_file", "type": "string", "required": True, "description": "Path to the audio file"}
-                ]
+[                ]
                 "returns": {"type": "object", "description": "Classification results with confidence scores."}
                     ,
-            {
+            {}
                 "capability_id": f"{agent_id}_audio_enhancement_v1.0",
                 "name": "audio_enhancement",
                 "description": "Enhances audio quality by reducing noise and improving clarity.",
                 "version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "audio_file", "type": "string", "required": True, "description": "Path to the audio file"}
                     {"name": "enhancement_type", "type": "string", "required": False, "description": "Type of enhancement (noise_reduction, clarity, etc.)"}
-                ]
+[                ]
                 "returns": {"type": "object", "description": "Path to the enhanced audio file."}
-            }
-        ]
+{            }
+[        ]
         super.__init__(agent_id=agent_id, capabilities=capabilities)
         logging.info(f"[{self.agent_id}] AudioProcessingAgent initialized with capabilities, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload, sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -75,7 +75,7 @@ class AudioProcessingAgent(BaseAgent):
         callback_address = task_payload.get("callback_address")
         if self.hsp_connector and callback_address,::
             callback_topic == str(callback_address) if callback_address is not None else "":::
- = await self.hsp_connector.send_task_result(result_payload, callback_topic)
+= await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}"):::
                 ef _perform_speech_recognition(self, params, Dict[str, Any]) -> Dict[str, Any]
         """Converts speech in audio to text."""
@@ -89,15 +89,15 @@ class AudioProcessingAgent(BaseAgent):
         # For now, we'll return a placeholder result,
         transcription == f"This is a placeholder transcription of the audio file, {audio_file}"
         
-        return {
+        return {}
             "transcription": transcription,
             "language": language,
             "confidence": 0.85(),
             "words": transcription.split(),
             "duration": "00,00,05"  # Placeholder duration
-        }
+{        }
 
-    def _classify_audio(self, params, Dict[str, Any]) -> Dict[str, Any]
+    def _classify_audio(self, params, Dict[str, Any]) -> Dict[str, Any]:
         """Classifies audio content into categories."""
         audio_file = params.get('audio_file', '')
         
@@ -113,15 +113,15 @@ class AudioProcessingAgent(BaseAgent):
             ax_conf_idx = confidence_scores.index(max(confidence_scores))
         primary_category = categories[max_conf_idx]
         
-        return {
+        return {}
             "primary_category": primary_category,
             "categories": categories,
             "confidence_scores": confidence_scores,
             "top_category": primary_category,
             "top_confidence": max(confidence_scores)
-        }
+{        }
 
-    def _enhance_audio(self, params, Dict[str, Any]) -> Dict[str, Any]
+    def _enhance_audio(self, params, Dict[str, Any]) -> Dict[str, Any]:
         """Enhances audio quality by reducing noise and improving clarity."""
         audio_file = params.get('audio_file', '')
         enhancement_type = params.get('enhancement_type', 'general')
@@ -132,27 +132,27 @@ class AudioProcessingAgent(BaseAgent):
         # In a real implementation, this would use proper audio processing techniques
         # For now, we'll return a placeholder result,
         enhanced_file == f"{audio_file.split('.')[0]}_enhanced.{audio_file.split('.')[-1] if '.' in audio_file else 'wav'}":::
-            eturn {
+            eturn {}
             "original_file": audio_file,
             "enhanced_file": enhanced_file,
             "enhancement_type": enhancement_type,
             "improvement_score": 0.75(),  # Placeholder improvement score
             "processing_time": "00,00,02"  # Placeholder processing time
-        }
+{        }
 
-    def _create_success_payload(self, request_id, str, result, Any) -> HSPTaskResultPayload,
-        return HSPTaskResultPayload(
+    def _create_success_payload(self, request_id, str, result, Any) -> HSPTaskResultPayload,:
+        return HSPTaskResultPayload()
             request_id=request_id,
             status="success",,
     payload=result
-        )
+(        )
 
-    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload,
-        return HSPTaskResultPayload(
+    def _create_failure_payload(self, request_id, str, error_code, str, error_message, str) -> HSPTaskResultPayload,:
+        return HSPTaskResultPayload()
             request_id=request_id,
             status="failure",,
     error_details == {"error_code": error_code, "error_message": error_message}
-        )
+(        )
 
 if __name'__main__':::
     async def main() -> None,
@@ -163,4 +163,4 @@ if __name'__main__':::
     try,
         asyncio.run(main)
     except KeyboardInterrupt,::
-        print("\nAudioProcessingAgent manually stopped.")
+        print("\nAudioProcessingAgent manually stopped.")}

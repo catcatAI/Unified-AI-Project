@@ -1,13 +1,13 @@
 from typing import Dict, Any, Optional
-import zlib
-import json
+# TODO: Fix import - module 'zlib' not found
+from tests.test_json_fix import
 
-class MappableDataObject,
+class MappableDataObject,:
     """
     A generic data object that can be mapped, compressed, and layered.
     """
 
-    def __init__(self, data, Any, metadata, Optional[Dict[str, Any]] = None) -> None,
+    def __init__(self, data, Any, metadata, Optional[Dict[str, Any]] = None) -> None,:
     """
     Initializes the MappableDataObject.
 
@@ -28,7 +28,7 @@ class MappableDataObject,
     serialized_data = json.dumps(self.data()).encode('utf-8')
             self.compressed_data = zlib.compress(serialized_data)
 
-    def decompress(self) -> Any,
+    def decompress(self) -> Any,:
     """
     Decompresses the data.
     """
@@ -47,7 +47,7 @@ class MappableDataObject,
                 ""
     self.layers[layer_name] = layer_data
 
-    def get_layer(self, layer_name, str) -> Optional[Any]
+    def get_layer(self, layer_name, str) -> Optional[Any]:
     """
     Gets a layer from the data object.
 

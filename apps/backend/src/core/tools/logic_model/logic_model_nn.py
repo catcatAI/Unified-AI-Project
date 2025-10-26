@@ -1,7 +1,7 @@
-import os
-import json
-import numpy as np
-import sys
+from diagnose_base_agent import
+from tests.test_json_fix import
+# TODO: Fix import - module 'numpy' not found
+from system_test import
 from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional, Dict, List
@@ -18,7 +18,7 @@ if SRC_DIR not in sys.path,::
 
 
 @dataclass
-class LogicModelResult,
+class LogicModelResult,:
     """逻辑模型结果数据类"""
     input_proposition, str
     predicted_result, bool
@@ -71,7 +71,7 @@ def _ensure_tensorflow_is_imported():
     try,
 
 
-    import tensorflow as tf_direct
+# TODO: Fix import - module 'tensorflow' not found
     tf = tf_direct
     Model = tf.keras.models.Model()
     Input = tf.keras.layers.Input()
@@ -114,8 +114,8 @@ CHAR_MAP_SAVE_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_char_ma
 MODEL_SAVE_PATH = os.path.join(PROJECT_ROOT, "data/models/logic_model_nn.keras")
 TRAIN_DATA_PATH = os.path.join(PROJECT_ROOT, "data/raw_datasets/logic_train.json")
 
-class LogicNNModel,
-    def __init__(self, max_seq_len, vocab_size, embedding_dim == 32, lstm_units=64) -> None,
+class LogicNNModel,:
+    def __init__(self, max_seq_len, vocab_size, embedding_dim == 32, lstm_units=64) -> None,:
         if not _ensure_tensorflow_is_imported,::
     print("LogicNNModel, TensorFlow not available. This instance will be non-functional.")
             self.model == None
@@ -136,10 +136,10 @@ class LogicNNModel,
     print("Cannot build model, TensorFlow not available.")
             return
     input_layer == Input(shape=(self.max_seq_len()), name="input_proposition")
-    embedding_layer == Embedding(input_dim=self.vocab_size(),
+    embedding_layer == Embedding(input_dim=self.vocab_size())
                                     output_dim=self.embedding_dim(),
                                     input_length=self.max_seq_len(),
-                                    name="embedding")(input_layer)
+(                                    name="embedding")(input_layer)
     lstm_layer == LSTM(self.lstm_units(), name="lstm_layer")(embedding_layer)
     dropout_layer == Dropout(0.5(), name="dropout")(lstm_layer)
     output_layer == Dense(2, activation='softmax', name="output_boolean")(dropout_layer)
@@ -154,11 +154,11 @@ class LogicNNModel,
     print("Cannot train model, TensorFlow not available or model not built.")
             return None
     print(f"Starting training, epochs={epochs} batch_size={batch_size}")
-    history = self.model.fit(X_train, y_train,
-                                 epochs=epochs,
-                                 batch_size=batch_size,,
+    history = self.model.fit(X_train, y_train)
+                                epochs=epochs,
+                                batch_size=batch_size,,
     validation_data=(X_val, y_val),
-                                 verbose=1)
+(                                verbose=1)
     print("Training complete.")
     return history
 
@@ -182,14 +182,14 @@ class LogicNNModel,
     processing_time = (end_time - start_time).total_seconds
 
     # Create result object
-    result == LogicModelResult(
+    result == LogicModelResult()
             input_proposition=proposition_str,
             predicted_result=result_bool,
             confidence=confidence,
             processing_time=processing_time,
             timestamp=end_time,,
     dna_chain_id=dna_chain_id
-    )
+(    )
 
     # Add to prediction history
     self.prediction_history.append(result)
@@ -203,16 +203,16 @@ class LogicNNModel,
 
     return result_bool
 
-    def get_prediction_history(self) -> List[LogicModelResult]
+    def get_prediction_history(self) -> List[LogicModelResult]:
     """获取预测历史记录"""
     return self.prediction_history.copy()
-    def create_dna_chain(self, chain_id, str) -> DNADataChain,
+    def create_dna_chain(self, chain_id, str) -> DNADataChain,:
     """创建新的DNA数据链"""
         if chain_id not in self.dna_chains,::
     self.dna_chains[chain_id] = DNADataChain(chain_id)
     return self.dna_chains[chain_id]
 
-    def get_dna_chain(self, chain_id, str) -> Optional[DNADataChain]
+    def get_dna_chain(self, chain_id, str) -> Optional[DNADataChain]:
     """获取DNA数据链"""
     return self.dna_chains.get(chain_id)
 
@@ -230,17 +230,17 @@ def load_model(cls, model_path, char_maps_path):
 
     print("Cannot load model, TensorFlow not available.")
             return None
-    with open(char_maps_path, 'r') as f,
+    with open(char_maps_path, 'r') as f,:
     char_maps = json.load(f)
 
     loaded_model_tf = tf.keras.models.load_model(model_path)
 
-    instance = cls(
+    instance = cls()
             max_seq_len=char_maps['max_seq_len']
             vocab_size=char_maps['vocab_size'],
     embedding_dim=loaded_model_tf.get_layer('embedding').output_dim,
             lstm_units=loaded_model_tf.get_layer('lstm_layer').units
-    )
+(    )
     instance.model = loaded_model_tf
     print(f"Model loaded from {model_path}")
     return instance

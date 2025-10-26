@@ -1,44 +1,44 @@
-import asyncio
-import uuid
-import yaml
-import logging
+# TODO: Fix import - module 'asyncio' not found
+# TODO: Fix import - module 'uuid' not found
+# TODO: Fix import - module 'yaml' not found
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path # Import Path
 from typing import Dict, Any
 
-from .base.base_agent import BaseAgent
-from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from ....core.services.multi_llm_service import MultiLLMService, ChatMessage
+from .base.base_agent import
+from ....hsp.types import
+from ....core.services.multi_llm_service import
 
 class CreativeWritingAgent(BaseAgent):
     """
     A specialized agent for creative writing tasks like generating marketing copy,::
     short stories, or polishing text.
     """:
-    def __init__(self, agent_id, str) -> None,
-        capabilities = [
-            {
+    def __init__(self, agent_id, str) -> None,:
+        capabilities = []
+            {}
                 "capability_id": f"{agent_id}_generate_marketing_copy_v1.0",
                 "name": "generate_marketing_copy",
                 "description": "Generates marketing copy for a given product and target audience.",:::
                 "version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "product_description", "type": "string", "required": True}
                     {"name": "target_audience", "type": "string", "required": True}
                     {"name": "style", "type": "string", "required": False, "description": "e.g., 'witty', 'professional', 'urgent'"}
-                ]
+[                ]
                 "returns": {"type": "string", "description": "The generated marketing copy."}
-            }
-            {
+{            }
+            {}
                 "capability_id": f"{agent_id}_polish_text_v1.0",
                 "name": "polish_text",
                 "description": "Improves the grammar, style, and clarity of a given text.",
                 "version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "text_to_polish", "type": "string", "required": True}
-                ]
+[                ]
                 "returns": {"type": "string", "description": "The polished text."}
-            }
-        ]
+{            }
+[        ]
         super().__init__(agent_id=agent_id, capabilities=capabilities)
 
         # This agent directly uses the LLMInterface initialized in its services.
@@ -47,7 +47,7 @@ class CreativeWritingAgent(BaseAgent):
         self.llm_interface, MultiLLMService == services.get("llm_interface") if isinstance(services, dict) else None,:
         self._load_prompts()
 
-    def _load_prompts(self) -> None,
+    def _load_prompts(self) -> None,:
         """Loads prompts from the YAML file."""
         # Get the project root dynamically
         current_dir == Path(__file__).parent
@@ -56,7 +56,7 @@ class CreativeWritingAgent(BaseAgent):
         prompts_path = project_root / "configs" / "prompts.yaml"
 
         try,
-            with open(prompts_path, 'r', encoding == 'utf-8') as f,
+            with open(prompts_path, 'r', encoding == 'utf-8') as f,:
                 all_prompts = yaml.safe_load(f) or {}
             self.prompts = all_prompts.get('creative_writing_agent', {}) 
         except Exception as e,::
@@ -88,7 +88,7 @@ class CreativeWritingAgent(BaseAgent):
             except Exception as e,::
                 await self.send_task_failure(request_id, sender_ai_id, task_payload.get("callback_address", ""), str(e))
 
-    def _create_marketing_copy_prompt(self, params, Dict[str, Any]) -> str,
+    def _create_marketing_copy_prompt(self, params, Dict[str, Any]) -> str,:
         """Creates a prompt for generating marketing copy."""::
         product_description = params.get("product_description", "")
         target_audience = params.get("target_audience", "")
@@ -104,7 +104,7 @@ class CreativeWritingAgent(BaseAgent):
         """
         return prompt.strip()
 
-    def _create_polish_text_prompt(self, params, Dict[str, Any]) -> str,
+    def _create_polish_text_prompt(self, params, Dict[str, Any]) -> str,:
         """Creates a prompt for polishing text."""::
         text_to_polish = params.get("text_to_polish", "")
 

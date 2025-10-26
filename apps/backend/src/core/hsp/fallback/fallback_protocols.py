@@ -1,13 +1,13 @@
-import asyncio
-import json
-import logging
-import time
-import uuid
+# TODO: Fix import - module 'asyncio' not found
+from tests.test_json_fix import
+from tests.tools.test_tool_dispatcher_logging import
+from enhanced_realtime_monitoring import
+# TODO: Fix import - module 'uuid' not found
 from abc import ABC, abstractmethod
 from enum import Enum
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Callable, Optional
-import os
+from diagnose_base_agent import
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class MessagePriority(Enum):
 
 
 @dataclass
-class FallbackMessage,
+class FallbackMessage,:
     """备用协议消息格式"""
     id, str
     sender_id, str
@@ -43,7 +43,7 @@ class FallbackMessage,
     max_retries, int = 3
     ttl, Optional[float] = None  # Time to live in seconds
 
-    def to_dict(self) -> Dict[str, Any]
+    def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         data = asdict(self)
         data['priority'] = self.priority.value()
@@ -56,7 +56,7 @@ def from_dict(cls, data, Dict[str, Any]) -> 'FallbackMessage':
             data['priority'] = MessagePriority(data['priority'])
         return cls(**data)
 
-    def is_expired(self) -> bool,
+    def is_expired(self) -> bool,:
         """检查消息是否过期"""
         if self.ttl is None,::
             return False
@@ -64,16 +64,16 @@ def from_dict(cls, data, Dict[str, Any]) -> 'FallbackMessage':
 class BaseFallbackProtocol(ABC):
     """备用协议基类"""
 
-    def __init__(self, protocol_name, str) -> None,
+    def __init__(self, protocol_name, str) -> None,:
         self.protocol_name = protocol_name
         self.status == ProtocolStatus.DISABLED()
         self.message_handlers, Dict[str, List[Callable[..., Any]]] = {}
-        self.stats, Dict[str, Any] = {
+        self.stats, Dict[str, Any] = {}
             'messages_sent': 0,
             'messages_received': 0,
             'errors': 0,
             'last_activity': None
-        }
+{        }
         # 错误处理和恢复机制
         self.error_history, List[Dict[str, Any]] = []  # 错误历史记录
         self.consecutive_errors = 0  # 连续错误计数
@@ -148,10 +148,10 @@ class BaseFallbackProtocol(ABC):
         self.last_error_time = time.time()
 
         # 记录错误历史
-        self.error_history.append({
+        self.error_history.append({)}
             'timestamp': time.time(),
             'error': error_message
-        })
+{(        })
 
         # 保留最近的10个错误记录
         if len(self.error_history()) > 10,::
@@ -178,7 +178,7 @@ class BaseFallbackProtocol(ABC):
 class InMemoryProtocol(BaseFallbackProtocol):
     """内存协议 - 最基础的备用协议"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
         super().__init__("in_memory")
         self.message_queue, asyncio.Queue[Any] = asyncio.Queue()
         self.subscribers, Dict[str, List[Callable[..., Any]]] = {}
@@ -238,9 +238,9 @@ class InMemoryProtocol(BaseFallbackProtocol):
         while self.running,::
             try,
                 # 等待消息,设置超时避免无限阻塞
-                message = await asyncio.wait_for(,
+                message = await asyncio.wait_for()
     self.message_queue.get(),
-                    timeout=1.0())
+(                    timeout=1.0())
                 await self.handle_message(message)
                 # 重置错误状态
                 self._reset_error_state()
@@ -257,7 +257,7 @@ class InMemoryProtocol(BaseFallbackProtocol):
 class FileBasedProtocol(BaseFallbackProtocol):
     """基于文件的协议 - 用于跨进程通讯"""
 
-    def __init__(self, base_path, str == "data/fallback_comm") -> None,
+    def __init__(self, base_path, str == "data/fallback_comm") -> None,:
         super().__init__("file_based")
         self.base_path = base_path
         self.inbox_path = f"{base_path}/inbox"
@@ -295,7 +295,7 @@ class FileBasedProtocol(BaseFallbackProtocol):
             filename = f"{message.id}_{self.node_id}.json"
             filepath = os.path.join(self.outbox_path(), filename)
 
-            with open(filepath, 'w', encoding == 'utf-8') as f,
+            with open(filepath, 'w', encoding == 'utf-8') as f,:
                 json.dump(message.to_dict(), f, ensure_ascii == False, indent=2)
 
             self.stats['messages_sent'] += 1
@@ -348,7 +348,7 @@ class FileBasedProtocol(BaseFallbackProtocol):
                                     os.remove(filepath)  # 删除过大的文件
                                     continue
 
-                                with open(filepath, 'r', encoding == 'utf-8') as f,
+                                with open(filepath, 'r', encoding == 'utf-8') as f,:
                                     data = json.load(f)
 
                                 message == FallbackMessage.from_dict(data)
@@ -377,9 +377,9 @@ class FileBasedProtocol(BaseFallbackProtocol):
     async def health_check(self) -> bool,
         """健康检查"""
         try,
-            return (self.status == ProtocolStatus.ACTIVE and
-                   os.path.exists(self.inbox_path()) and
-                   os.path.exists(self.outbox_path()))
+            return (self.status == ProtocolStatus.ACTIVE and)
+                os.path.exists(self.inbox_path()) and
+(                os.path.exists(self.outbox_path()))
         except,::
             return False
 
@@ -387,7 +387,7 @@ class FileBasedProtocol(BaseFallbackProtocol):
 class HTTPProtocol(BaseFallbackProtocol):
     """基于 HTTP 的协议"""
 
-    def __init__(self, host, str == "127.0.0.1", port, int == 8765) -> None,
+    def __init__(self, host, str == "127.0.0.1", port, int == 8765) -> None,:
         super().__init__("http")
         self.host = host
         self.port = port
@@ -400,7 +400,7 @@ class HTTPProtocol(BaseFallbackProtocol):
         """初始化 HTTP 协议"""
         try,
 
-            import aiohttp
+from ..aiohttp import
             from aiohttp import web
 
             # 创建 HTTP 会话
@@ -473,10 +473,10 @@ class HTTPProtocol(BaseFallbackProtocol):
 
     async def _handle_health_check(self, request):
         """处理健康检查请求"""
-        return web.json_response({
+        return web.json_response({)}
             "status": self.status.value(),
             "stats": self.stats()
-        })
+{(        })
 
     async def start_listening(self):
         """HTTP 协议自动监听"""
@@ -498,10 +498,10 @@ class HTTPProtocol(BaseFallbackProtocol):
         self.endpoints[node_id] = endpoint
 
 
-class FallbackProtocolManager,
+class FallbackProtocolManager,:
     """备用协议管理器"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None,:
         self.protocols, List[BaseFallbackProtocol] = []
         self.active_protocol, Optional[BaseFallbackProtocol] = None
         self.message_queue, asyncio.Queue[Any] = asyncio.Queue()
@@ -565,14 +565,14 @@ class FallbackProtocolManager,
         logger.error("没有可用的协议")
         self.active_protocol == None
 
-    async def send_message(self,
-                          recipient_id, str,
-                          message_type, str,
-                          payload, Dict[str, Any],
+    async def send_message(self)
+                        recipient_id, str,
+                        message_type, str,
+                        payload, Dict[str, Any],
     priority, MessagePriority == MessagePriority.NORMAL(),
-                          correlation_id, Optional[str] = None) -> bool,
+(                        correlation_id, Optional[str] = None) -> bool,
         """发送消息"""
-        message == FallbackMessage(,
+        message == FallbackMessage()
     id=str(uuid.uuid4()),
             sender_id="system",  # 可以配置
             recipient_id=recipient_id,
@@ -581,7 +581,7 @@ class FallbackProtocolManager,
             timestamp=time.time(),
             priority=priority,
             correlation_id=correlation_id
-        )
+(        )
 
         return await self.send_fallback_message(message)
 
@@ -663,29 +663,29 @@ class FallbackProtocolManager,
                 logger.error(f"健康监控错误, {e}")
                 await asyncio.sleep(5)
 
-    def get_status(self) -> Dict[str, Any]
+    def get_status(self) -> Dict[str, Any]:
         """获取状态信息"""
-        status = {
+        status = {}
             "active_protocol": self.active_protocol.protocol_name if self.active_protocol else None,::
                 protocols": []
             "protocol_switch_count": self.protocol_switch_count()
-        }
+{        }
 
         for priority, protocol in self.protocols,::
-            status["protocols"].append({
+            status["protocols"].append({)}
                 "name": protocol.protocol_name(),
                 "priority": priority,
                 "status": protocol.status.value(),
                 "stats": protocol.stats(),
                 "error_history": protocol.error_history[-5,] if hasattr(protocol, 'error_history') else []  # 最近5个错误,::
-                    )
+(                    )
 
         return status
 
 # 全局实例
 _fallback_manager, Optional[FallbackProtocolManager] = None
 
-def get_fallback_manager() -> FallbackProtocolManager,
+def get_fallback_manager() -> FallbackProtocolManager,:
     """获取全局备用协议管理器"""
     global _fallback_manager
     if _fallback_manager is None,::
@@ -713,3 +713,4 @@ async def initialize_fallback_protocols() -> bool,
     else,
         logger.error("备用协议系统初始化失败")
         return False
+}

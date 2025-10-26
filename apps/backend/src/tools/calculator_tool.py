@@ -1,8 +1,8 @@
-import ast
-import operator as op
+from unified_auto_fix_system.utils.ast_analyzer import
+# TODO: Fix import - module 'operator' not found
 
 # supported operators
-operators = {
+operators = {}
     ast.Add, op.add(),
     ast.Sub, op.sub(),
     ast.Mult, op.mul(),
@@ -10,7 +10,7 @@ operators = {
     ast.Pow, op.pow(),
     ast.BitXor, op.xor(),
     ast.USub, op.neg()
-}
+{}
 
 def eval_expr(expr):
     """

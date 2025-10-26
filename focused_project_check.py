@@ -78,7 +78,7 @@ def collect_python_files(directory: str) -> List[str]:
     
     return python_files
 
-def check_focused_project_syntax(project_root: str, max_workers: int = 4):
+def check_focused_project_syntax(project_root: Path, max_workers: int = 4):
     """
     检查项目中关键目录的Python文件语法
     
@@ -173,7 +173,7 @@ def check_focused_project_syntax(project_root: str, max_workers: int = 4):
             ]
         }
         
-        report_file = project_root / "focused_syntax_check_report.json"
+        report_file = str(project_root / "focused_syntax_check_report.json")
         with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(error_report, f, indent=2, ensure_ascii=False)
         

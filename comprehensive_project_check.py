@@ -72,7 +72,7 @@ def collect_python_files(directory: str, exclude_dirs: List[str] = None) -> List
         List[str]: Python文件路径列表
     """
     if exclude_dirs is None:
-        exclude_dirs = []
+        exclude_dirs = []  # 修复：将 None 替换为默认空列表
     
     python_files = []
     exclude_dirs = [os.path.normpath(d) for d in exclude_dirs]
@@ -191,7 +191,7 @@ def check_project_syntax(project_root: str, max_workers: int = 4):
             ]
         }
         
-        report_file = project_root / "project_syntax_check_report.json"
+        report_file = str(project_root / "project_syntax_check_report.json")
         with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(error_report, f, indent=2, ensure_ascii=False)
         

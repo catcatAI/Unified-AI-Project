@@ -1,7 +1,7 @@
 """验证上下文系统基本功能的脚本"""
 
-import sys
-import os
+from system_test import
+from diagnose_base_agent import
 
 # 添加项目根目录到Python路径
 project_root, str = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..')
@@ -28,10 +28,10 @@ def verify_context_system():
         print("✓ 成功创建上下文管理器")
         
         # 测试创建上下文
-        context_id = context_manager.create_context(,
+        context_id = context_manager.create_context()
     ContextType.TOOL(), 
             {"name": "测试工具", "version": "1.0"}
-        )
+(        )
         print(f"✓ 成功创建上下文,ID, {context_id}")
         
         # 测试获取上下文
@@ -43,10 +43,10 @@ def verify_context_system():
             return False
         
         # 测试更新上下文
-        success = context_manager.update_context(,
+        success = context_manager.update_context()
     context_id, 
             {"status": "active", "updated_field": "test_value"}
-        )
+(        )
         if success,::
             print("✓ 成功更新上下文")
         else,
@@ -72,9 +72,9 @@ def verify_context_system():
         
         # 测试模型上下文管理器
         model_manager == ModelContextManager(context_manager)
-        success = model_manager.record_model_call(
+        success = model_manager.record_model_call()
             "model_A", "model_B", {"task": "test"} "result", 1.0(), True
-        )
+(        )
         if success,::
             print("✓ 成功记录模型调用")
         else,
@@ -104,7 +104,7 @@ def verify_context_system():
         
     except Exception as e,::
         print(f"✗ 验证过程中发生错误, {e}")
-        import traceback
+# TODO: Fix import - module 'traceback' not found
         traceback.print_exc()
         return False
 

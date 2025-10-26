@@ -5,645 +5,548 @@ AI運維系統完整測試套件
 """
 
 import asyncio
-import sys
 import os
-import time
 import json
-import unittest
-from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime, timedelta
+import pytest
+from unittest.mock import Mock, AsyncMock, patch
+from datetime import datetime, timedelta, timezone
 
-# 添加項目路徑
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'apps', 'backend', 'src'))
+# Import necessary modules from the project structure
+from apps.backend.src.ai.ops.ai_ops_engine import AIOpsEngine
+from apps.backend.src.ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
+from apps.backend.src.ai.ops.performance_optimizer import PerformanceOptimizer
+from apps.backend.src.ai.ops.capacity_planner import CapacityPlanner, ResourceUsage
+from apps.backend.src.ai.ops.intelligent_ops_manager import IntelligentOpsManager, OpsInsight
 
-class TestAIOpsEngine(unittest.TestCase()):
+@pytest.fixture
+def ai_ops_engine():
+    """Fixture for AIOpsEngine instance."""
+    return AIOpsEngine()
+
+@pytest.fixture
+def predictive_maintenance_engine():
+    """Fixture for PredictiveMaintenanceEngine instance."""
+    return PredictiveMaintenanceEngine()
+
+@pytest.fixture
+def performance_optimizer():
+    """Fixture for PerformanceOptimizer instance."""
+    return PerformanceOptimizer()
+
+@pytest.fixture
+def capacity_planner():
+    """Fixture for CapacityPlanner instance."""
+    return CapacityPlanner()
+
+@pytest.fixture
+def intelligent_ops_manager():
+    """Fixture for IntelligentOpsManager instance."""
+    return IntelligentOpsManager()
+
+@pytest.mark.asyncio
+class TestAIOpsEngine:
     """AI運維引擎測試"""
     
-    def setUp(self):
-        """測試設置"""
-        from ai.ops.ai_ops_engine import AIOpsEngine
-        self.ai_ops == AIOpsEngine()
-    
-    def test_initialization(self):
+    def test_initialization(self, ai_ops_engine):
         """測試初始化"""
-        self.assertIsNotNone(self.ai_ops())
-        self.assertEqual(self.ai_ops.anomaly_threshold(), 0.1())
-        self.assertEqual(self.ai_ops.prediction_window(), 24)
-        self.assertEqual(self.ai_ops.min_data_points(), 100)
+        assert ai_ops_engine is not None
+        assert ai_ops_engine.anomaly_threshold == 0.1
+        assert ai_ops_engine.prediction_window == 24
+        assert ai_ops_engine.min_data_points == 100
     
-    def test_detect_anomalies_high_cpu(self):
+    async def test_detect_anomalies_high_cpu(self, ai_ops_engine):
         """測試高CPU異常檢測"""
-        async def run_test():
-            metrics = {
-                "cpu_usage": 95.0(),
-                "memory_usage": 75.0(),
-                "error_rate": 2.5(),
-                "response_time": 450
-            }
-            
-            anomalies = await self.ai_ops.detect_anomalies("test_component", metrics)
-            
-            self.assertEqual(len(anomalies), 1)
-            self.assertEqual(anomalies[0].anomaly_type, "high_cpu")
-            self.assertEqual(anomalies[0].severity.value(), "high")
-            self.assertGreater(anomalies[0].confidence, 0.8())
+        metrics = {
+            "cpu_usage": 95.0,
+            "memory_usage": 75.0,
+            "error_rate": 2.5,
+            "response_time": 450
+        }
         
-        asyncio.run(run_test())
+        anomalies = await ai_ops_engine.detect_anomalies("test_component", metrics)
+        
+        assert len(anomalies) == 1
+        assert anomalies[0].anomaly_type == "high_cpu"
+        assert anomalies[0].severity.value == "high"
+        assert anomalies[0].confidence > 0.8
     
-    def test_detect_anomalies_high_memory(self):
+    async def test_detect_anomalies_high_memory(self, ai_ops_engine):
         """測試高內存異常檢測"""
-        async def run_test():
-            metrics = {
-                "cpu_usage": 70.0(),
-                "memory_usage": 90.0(),
-                "error_rate": 2.5(),
-                "response_time": 450
-            }
-            
-            anomalies = await self.ai_ops.detect_anomalies("test_component", metrics)
-            
-            self.assertEqual(len(anomalies), 1)
-            self.assertEqual(anomalies[0].anomaly_type, "high_memory")
-            self.assertEqual(anomalies[0].severity.value(), "high")
+        metrics = {
+            "cpu_usage": 70.0,
+            "memory_usage": 90.0,
+            "error_rate": 2.5,
+            "response_time": 450
+        }
         
-        asyncio.run(run_test())
+        anomalies = await ai_ops_engine.detect_anomalies("test_component", metrics)
+        
+        assert len(anomalies) == 1
+        assert anomalies[0].anomaly_type == "high_memory"
+        assert anomalies[0].severity.value == "high"
     
-    def test_detect_anomalies_high_error_rate(self):
+    async def test_detect_anomalies_high_error_rate(self, ai_ops_engine):
         """測試高錯誤率異常檢測"""
-        async def run_test():
-            metrics = {
-                "cpu_usage": 70.0(),
-                "memory_usage": 75.0(),
-                "error_rate": 6.0(),
-                "response_time": 450
-            }
-            
-            anomalies = await self.ai_ops.detect_anomalies("test_component", metrics)
-            
-            self.assertEqual(len(anomalies), 1)
-            self.assertEqual(anomalies[0].anomaly_type, "high_error_rate")
-            self.assertEqual(anomalies[0].severity.value(), "critical")
+        metrics = {
+            "cpu_usage": 70.0,
+            "memory_usage": 75.0,
+            "error_rate": 6.0,
+            "response_time": 450
+        }
         
-        asyncio.run(run_test())
+        anomalies = await ai_ops_engine.detect_anomalies("test_component", metrics)
+        
+        assert len(anomalies) == 1
+        assert anomalies[0].anomaly_type == "high_error_rate"
+        assert anomalies[0].severity.value == "critical"
     
-    def test_detect_anomalies_high_response_time(self):
+    async def test_detect_anomalies_high_response_time(self, ai_ops_engine):
         """測試高響應時間異常檢測"""
-        async def run_test():
-            metrics = {
-                "cpu_usage": 70.0(),
-                "memory_usage": 75.0(),
-                "error_rate": 2.5(),
-                "response_time": 1200
-            }
-            
-            anomalies = await self.ai_ops.detect_anomalies("test_component", metrics)
-            
-            self.assertEqual(len(anomalies), 1)
-            self.assertEqual(anomalies[0].anomaly_type, "high_response_time")
-            self.assertEqual(anomalies[0].severity.value(), "high")
+        metrics = {
+            "cpu_usage": 70.0,
+            "memory_usage": 75.0,
+            "error_rate": 2.5,
+            "response_time": 1200
+        }
         
-        asyncio.run(run_test())
+        anomalies = await ai_ops_engine.detect_anomalies("test_component", metrics)
+        
+        assert len(anomalies) == 1
+        assert anomalies[0].anomaly_type == "high_response_time"
+        assert anomalies[0].severity.value == "high"
     
-    def test_detect_anomalies_no_issues(self):
+    async def test_detect_anomalies_no_issues(self, ai_ops_engine):
         """測試無異常情況"""
-        async def run_test():
-            metrics = {
-                "cpu_usage": 50.0(),
-                "memory_usage": 60.0(),
-                "error_rate": 1.0(),
-                "response_time": 200
-            }
-            
-            anomalies = await self.ai_ops.detect_anomalies("test_component", metrics)
-            
-            self.assertEqual(len(anomalies), 0)
+        metrics = {
+            "cpu_usage": 50.0,
+            "memory_usage": 60.0,
+            "error_rate": 1.0,
+            "response_time": 200
+        }
         
-        asyncio.run(run_test())
+        anomalies = await ai_ops_engine.detect_anomalies("test_component", metrics)
+        
+        assert len(anomalies) == 0
     
-    def test_predict_capacity_needs_insufficient_data(self):
+    async def test_predict_capacity_needs_insufficient_data(self, ai_ops_engine):
         """測試容量預測數據不足"""
-        async def run_test():
-            # 不添加歷史數據
-            result = await self.ai_ops.predict_capacity_needs()
-            
-            self.assertIn("error", result)
-            self.assertEqual(result["error"] "數據不足")
+        # 不添加歷史數據
+        result = await ai_ops_engine.predict_capacity_needs()
         
-        asyncio.run(run_test())
+        assert "error" in result
+        assert result["error"] == "數據不足"
     
-    def test_predict_capacity_needs_with_data(self):
+    async def test_predict_capacity_needs_with_data(self, ai_ops_engine):
         """測試容量預測有數據"""
-        async def run_test():
-            # 模擬歷史數據
-            for i in range(20)::
-                state = {
-                    'component_id': 'test',
-                    'component_type': 'server',
-                    'timestamp': datetime.now().isoformat(),
-                    'state': {
-                        'cpu_usage': 50 + i * 0.5(),
-                        'memory_usage': 60,
-                        'disk_usage': 70,
-                        'network_io': 100,
-                        'request_rate': 500,
-                        'error_rate': 1,
-                        'response_time': 200,
-                        'active_connections': 50,
-                        'queue_length': 10
-                    }
+        # 模擬歷史數據
+        for i in range(20):
+            state = {
+                'component_id': 'test',
+                'component_type': 'server',
+                'timestamp': datetime.now(timezone.utc()).isoformat(),
+                'state': {
+                    'cpu_usage': 50 + i * 0.5,
+                    'memory_usage': 60,
+                    'disk_usage': 70,
+                    'network_io': 100,
+                    'request_rate': 500,
+                    'error_rate': 1,
+                    'response_time': 200,
+                    'active_connections': 50,
+                    'queue_length': 10
                 }
-                self.ai_ops.system_states.append(state)
-            
-            result = await self.ai_ops.predict_capacity_needs()
-            
-            self.assertIn("predicted_cpu", result)
-            self.assertIn("current_cpu", result)
-            self.assertIn("trend", result)
-            self.assertIn("confidence", result)
+            }
+            ai_ops_engine.system_states.append(state)
         
-        asyncio.run(run_test())
+        result = await ai_ops_engine.predict_capacity_needs()
+        
+        assert "predicted_cpu" in result
+        assert "current_cpu" in result
+        assert "trend" in result
+        assert "confidence" in result
 
-class TestPredictiveMaintenance(unittest.TestCase()):
+@pytest.mark.asyncio
+class TestPredictiveMaintenance:
     """預測性維護測試"""
     
-    def setUp(self):
-        """測試設置"""
-        from ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
-        self.maintenance == PredictiveMaintenanceEngine()
-    
-    def test_initialization(self):
+    def test_initialization(self, predictive_maintenance_engine):
         """測試初始化"""
-        self.assertIsNotNone(self.maintenance())
-        self.assertEqual(self.maintenance.prediction_window_hours(), 24)
-        self.assertEqual(self.maintenance.health_threshold(), 70.0())
+        assert predictive_maintenance_engine is not None
+        assert predictive_maintenance_engine.prediction_window_hours == 24
+        assert predictive_maintenance_engine.health_threshold == 70.0
     
-    def test_simple_health_assessment_good(self):
+    def test_simple_health_assessment_good(self, predictive_maintenance_engine):
         """測試健康評估良好"""
         metrics = {
-            "cpu_usage": 50.0(),
-            "memory_usage": 60.0(),
+            "cpu_usage": 50.0,
+            "memory_usage": 60.0,
             "response_time": 200,
-            "error_rate": 1.0()
+            "error_rate": 1.0
         }
         
-        health_score = self.maintenance._simple_health_assessment(metrics)
+        health_score = predictive_maintenance_engine._simple_health_assessment(metrics)
         
-        self.assertGreater(health_score, 70.0())
-        self.assertLessEqual(health_score, 100.0())
+        assert health_score > 70.0
+        assert health_score <= 100.0
     
-    def test_simple_health_assessment_poor(self):
+    def test_simple_health_assessment_poor(self, predictive_maintenance_engine):
         """測試健康評估差"""
         metrics = {
-            "cpu_usage": 90.0(),
-            "memory_usage": 85.0(),
+            "cpu_usage": 90.0,
+            "memory_usage": 85.0,
             "response_time": 800,
-            "error_rate": 5.0()
+            "error_rate": 5.0
         }
         
-        health_score = self.maintenance._simple_health_assessment(metrics)
+        health_score = predictive_maintenance_engine._simple_health_assessment(metrics)
         
-        self.assertLess(health_score, 70.0())
-        self.assertGreaterEqual(health_score, 0.0())
+        assert health_score < 70.0
+        assert health_score >= 0.0
     
-    def test_simple_health_assessment_empty_metrics(self):
+    def test_simple_health_assessment_empty_metrics(self, predictive_maintenance_engine):
         """測試健康評估空指標"""
         metrics = {}
         
-        health_score = self.maintenance._simple_health_assessment(metrics)
+        health_score = predictive_maintenance_engine._simple_health_assessment(metrics)
         
-        self.assertEqual(health_score, 50.0())  # 默認值
+        assert health_score == 50.0  # 默認值
     
-    def test_predict_failure_probability(self):
+    def test_predict_failure_probability(self, predictive_maintenance_engine):
         """測試故障預測"""
         metrics = {
-            "cpu_usage": 85.0(),
-            "memory_usage": 80.0(),
+            "cpu_usage": 85.0,
+            "memory_usage": 80.0,
             "response_time": 600,
-            "error_rate": 3.0()
+            "error_rate": 3.0
         }
         
-        probability = self.maintenance._predict_failure_probability(metrics, "server")
+        probability = predictive_maintenance_engine._predict_failure_probability(metrics, "server")
         
-        self.assertGreaterEqual(probability, 0.0())
-        self.assertLessEqual(probability, 1.0())
+        assert probability >= 0.0
+        assert probability <= 1.0
     
-    def test_generate_maintenance_recommendation(self):
+    def test_generate_maintenance_recommendation(self, predictive_maintenance_engine):
         """測試生成維護建議"""
-        health_score = 45.0()
+        health_score = 45.0
         component_id = "test_server"
         
-        recommendation = self.maintenance._generate_maintenance_recommendation(,
-    health_score, component_id
+        recommendation = predictive_maintenance_engine._generate_maintenance_recommendation(
+            health_score, component_id
         )
         
-        self.assertIn(component_id, recommendation)
-        self.assertIn("維護", recommendation)
-        self.assertGreater(len(recommendation), 10)
+        assert component_id in recommendation
+        assert "維護" in recommendation
+        assert len(recommendation) > 10
 
-class TestPerformanceOptimizer(unittest.TestCase()):
+@pytest.mark.asyncio
+class TestPerformanceOptimizer:
     """性能優化器測試"""
     
-    def setUp(self):
-        """測試設置"""
-        from ai.ops.performance_optimizer import PerformanceOptimizer
-        self.optimizer == PerformanceOptimizer()
-    
-    def test_initialization(self):
+    def test_initialization(self, performance_optimizer):
         """測試初始化"""
-        self.assertIsNotNone(self.optimizer())
-        self.assertEqual(self.optimizer.optimization_threshold(), 0.8())
-        self.assertEqual(self.optimizer.performance_window_hours(), 24)
+        assert performance_optimizer is not None
+        assert performance_optimizer.optimization_threshold == 0.8
+        assert performance_optimizer.performance_window_hours == 24
     
-    def test_analyze_performance_trend_empty(self):
+    async def test_analyze_performance_trend_empty(self, performance_optimizer):
         """測試性能趨勢分析空數據"""
-        async def run_test():
-            result = await self.optimizer._analyze_performance_trend("server", [])
-            
-            self.assertIn("trend", result)
-            self.assertIn("confidence", result)
-            self.assertEqual(result["trend"] "insufficient_data")
+        result = await performance_optimizer._analyze_performance_trend("server", [])
         
-        asyncio.run(run_test())
+        assert "trend" in result
+        assert "confidence" in result
+        assert result["trend"] == "insufficient_data"
     
-    def test_analyze_performance_trend_with_data(self):
+    async def test_analyze_performance_trend_with_data(self, performance_optimizer):
         """測試性能趨勢分析有數據"""
-        async def run_test():
-            # 模擬性能數據
-            performance_data = []
-            for i in range(10)::
-                performance_data.append({
-                    'timestamp': datetime.now().isoformat(),
-                    'component_id': 'test_server',
-                    'component_type': 'server',
-                    'metrics': {
-                        'cpu_usage': 50 + i * 2,
-                        'memory_usage': 60 + i,
-                        'response_time': 200 + i * 10,
-                        'error_rate': 1.0 + i * 0.1(),
-                        'throughput': 500 + i * 20
-                    }
-                })
-            
-            result = await self.optimizer._analyze_performance_trend("server", performance_data)
-            
-            self.assertIn("trend", result)
-            self.assertIn("confidence", result)
-            self.assertIn(result["trend"] ["increasing", "decreasing", "stable"])
-        
-        asyncio.run(run_test())
-    
-    def test_detect_bottlenecks_empty(self):
-        """測試瓶頸檢測空數據"""
-        async def run_test():
-            bottlenecks = await self.optimizer.detect_bottlenecks("test_component")
-            
-            self.assertIsInstance(bottlenecks, list)
-        
-        asyncio.run(run_test())
-    
-    def test_detect_bottlenecks_with_data(self):
-        """測試瓶頸檢測有數據"""
-        async def run_test():
-            # 添加性能歷史
-            self.optimizer.performance_history = [{
-                'timestamp': datetime.now().isoformat(),
+        # 模擬性能數據
+        performance_data = []
+        for i in range(10):
+            performance_data.append({
+                'timestamp': datetime.now(timezone.utc()).isoformat(),
                 'component_id': 'test_server',
                 'component_type': 'server',
                 'metrics': {
-                    'cpu_usage': 95.0(),
-                    'memory_usage': 85.0(),
-                    'response_time': 800,
-                    'error_rate': 4.0(),
-                    'throughput': 300
+                    'cpu_usage': 50 + i * 2,
+                    'memory_usage': 60 + i,
+                    'response_time': 200 + i * 10,
+                    'error_rate': 1.0 + i * 0.1,
+                    'throughput': 500 + i * 20
                 }
-            }]
-            
-            bottlenecks = await self.optimizer.detect_bottlenecks("test_server")
-            
-            self.assertIsInstance(bottlenecks, list)
-            # 應該檢測到CPU瓶頸
-            if bottlenecks,::
-                self.assertIn("cpu", bottlenecks[0].lower())
+            })
         
-        asyncio.run(run_test())
+        result = await performance_optimizer._analyze_performance_trend("server", performance_data)
+        
+        assert "trend" in result
+        assert "confidence" in result
+        assert result["trend"] in ["increasing", "decreasing", "stable"]
+    
+    async def test_detect_bottlenecks_empty(self, performance_optimizer):
+        """測試瓶頸檢測空數據"""
+        bottlenecks = await performance_optimizer.detect_bottlenecks("test_component")
+        
+        assert isinstance(bottlenecks, list)
+    
+    async def test_detect_bottlenecks_with_data(self, performance_optimizer):
+        """測試瓶頸檢測有數據"""
+        # 添加性能歷史
+        performance_optimizer.performance_history = [{
+            'timestamp': datetime.now(timezone.utc()).isoformat(),
+            'component_id': 'test_server',
+            'component_type': 'server',
+            'metrics': {
+                'cpu_usage': 95.0,
+                'memory_usage': 85.0,
+                'response_time': 800,
+                'error_rate': 4.0,
+                'throughput': 300
+            }
+        }]
+        
+        bottlenecks = await performance_optimizer.detect_bottlenecks("test_server")
+        
+        assert isinstance(bottlenecks, list)
+        # 應該檢測到CPU瓶頸
+        if bottlenecks:
+            assert "cpu" in bottlenecks[0].lower()
 
-class TestCapacityPlanner(unittest.TestCase()):
+@pytest.mark.asyncio
+class TestCapacityPlanner:
     """容量規劃器測試"""
     
-    def setUp(self):
-        """測試設置"""
-        from ai.ops.capacity_planner import CapacityPlanner, ResourceUsage
-        self.planner == CapacityPlanner()
-        self.ResourceUsage == ResourceUsage
-    
-    def test_initialization(self):
+    def test_initialization(self, capacity_planner):
         """測試初始化"""
-        self.assertIsNotNone(self.planner())
-        self.assertEqual(self.planner.prediction_window_hours(), 24)
-        self.assertEqual(self.planner.scaling_threshold(), 0.8())
+        assert capacity_planner is not None
+        assert capacity_planner.prediction_window_hours == 24
+        assert capacity_planner.scaling_threshold == 0.8
     
-    def test_predict_cpu_needs_insufficient_data(self):
+    async def test_predict_cpu_needs_insufficient_data(self, capacity_planner):
         """測試CPU需求預測數據不足"""
-        async def run_test():
-            usage = self.ResourceUsage(,
-    timestamp=datetime.now(),
-                cpu_cores=4,
-                memory_gb=8,
-                disk_gb=100,
-                network_mbps=100,
-                gpu_count=1
-            )
-            
-            result = await self.planner._predict_cpu_needs(usage)
-            
-            self.assertIsNone(result)
+        usage = ResourceUsage(
+            timestamp=datetime.now(timezone.utc()),
+            cpu_cores=4,
+            memory_gb=8,
+            disk_gb=100,
+            network_mbps=100,
+            gpu_count=1
+        )
         
-        asyncio.run(run_test())
+        result = await capacity_planner._predict_cpu_needs(usage)
+        
+        assert result is None
     
-    def test_predict_cpu_needs_with_data(self):
+    async def test_predict_cpu_needs_with_data(self, capacity_planner):
         """測試CPU需求預測有數據"""
-        async def run_test():
-            # 添加歷史數據
-            for i in range(20)::
-                usage = self.ResourceUsage(,
-    timestamp=datetime.now() - timedelta(hours=i),
-                    cpu_cores=4 + i * 0.1(),
-                    memory_gb=8,
-                    disk_gb=100,
-                    network_mbps=100,
-                    gpu_count=1
-                )
-                self.planner.usage_history.append({
-                    'timestamp': usage.timestamp.isoformat(),
-                    'usage': usage
-                })
-            
-            current_usage = self.ResourceUsage(,
-    timestamp=datetime.now(),
-                cpu_cores=6,
+        # 添加歷史數據
+        for i in range(20):
+            usage = ResourceUsage(
+                timestamp=datetime.now(timezone.utc()) - timedelta(hours=i),
+                cpu_cores=4 + i * 0.1,
                 memory_gb=8,
                 disk_gb=100,
                 network_mbps=100,
                 gpu_count=1
             )
-            
-            result = await self.planner._predict_cpu_needs(current_usage)
-            
-            self.assertIsNotNone(result)
-            self.assertIn("predicted_cpu", result)
-            self.assertIn("recommendation", result)
-            self.assertIn("urgency", result)
-        
-        asyncio.run(run_test())
-    
-    def test_analyze_capacity_trends_empty(self):
-        """測試容量趨勢分析空數據"""
-        analysis = self.planner._analyze_capacity_trends([])
-        
-        self.assertIn("cpu_trend", analysis)
-        self.assertIn("memory_trend", analysis)
-        self.assertIn("disk_trend", analysis)
-    
-    def test_analyze_capacity_trends_with_data(self):
-        """測試容量趨勢分析有數據"""
-        # 添加歷史數據
-        for i in range(10)::
-            usage = self.ResourceUsage(,
-    timestamp=datetime.now() - timedelta(hours=i),
-                cpu_cores=4 + i * 0.1(),
-                memory_gb=8 + i * 0.2(),
-                disk_gb=100 + i,
-                network_mbps=100,
-                gpu_count=1
-            )
-            self.planner.usage_history.append({
+            capacity_planner.usage_history.append({
                 'timestamp': usage.timestamp.isoformat(),
                 'usage': usage
             })
         
-        analysis = self.planner._analyze_capacity_trends(self.planner.usage_history())
+        current_usage = ResourceUsage(
+            timestamp=datetime.now(timezone.utc()),
+            cpu_cores=6,
+            memory_gb=8,
+            disk_gb=100,
+            network_mbps=100,
+            gpu_count=1
+        )
         
-        self.assertIn("cpu_trend", analysis)
-        self.assertIn("memory_trend", analysis)
-        self.assertIn("disk_trend", analysis)
+        result = await capacity_planner._predict_cpu_needs(current_usage)
+        
+        assert result is not None
+        assert "predicted_cpu" in result
+        assert "recommendation" in result
+        assert "urgency" in result
+    
+    def test_analyze_capacity_trends_empty(self, capacity_planner):
+        """測試容量趨勢分析空數據"""
+        analysis = capacity_planner._analyze_capacity_trends([])
+        
+        assert "cpu_trend" in analysis
+        assert "memory_trend" in analysis
+        assert "disk_trend" in analysis
+    
+    def test_analyze_capacity_trends_with_data(self, capacity_planner):
+        """測試容量趨勢分析有數據"""
+        # 添加歷史數據
+        for i in range(10):
+            usage = ResourceUsage(
+                timestamp=datetime.now(timezone.utc()) - timedelta(hours=i),
+                cpu_cores=4 + i * 0.1,
+                memory_gb=8 + i * 0.2,
+                disk_gb=100 + i,
+                network_mbps=100,
+                gpu_count=1
+            )
+            capacity_planner.usage_history.append({
+                'timestamp': usage.timestamp.isoformat(),
+                'usage': usage
+            })
+        
+        analysis = capacity_planner._analyze_capacity_trends(capacity_planner.usage_history)
+        
+        assert "cpu_trend" in analysis
+        assert "memory_trend" in analysis
+        assert "disk_trend" in analysis
         
         # 應該檢測到增長趨勢
-        self.assertEqual(analysis["cpu_trend"] "increasing")
-        self.assertEqual(analysis["memory_trend"] "increasing")
+        assert analysis["cpu_trend"] == "increasing"
+        assert analysis["memory_trend"] == "increasing"
 
-class TestIntelligentOpsManager(unittest.TestCase()):
+@pytest.mark.asyncio
+class TestIntelligentOpsManager:
     """智能運維管理器測試"""
     
-    def setUp(self):
-        """測試設置"""
-        from ai.ops.intelligent_ops_manager import IntelligentOpsManager
-        self.manager == IntelligentOpsManager()
-    
-    def test_initialization(self):
+    def test_initialization(self, intelligent_ops_manager):
         """測試初始化"""
-        self.assertIsNotNone(self.manager())
-        self.assertEqual(self.manager.insight_retention_days(), 30)
-        self.assertEqual(self.manager.auto_action_threshold(), 0.8())
+        assert intelligent_ops_manager is not None
+        assert intelligent_ops_manager.insight_retention_days == 30
+        assert intelligent_ops_manager.auto_action_threshold == 0.8
     
-    def test_collect_system_metrics(self):
+    async def test_collect_system_metrics(self, intelligent_ops_manager):
         """測試收集系統指標"""
-        async def run_test():
-            # 模擬組件初始化失敗(無Redis)
-            self.manager.ai_ops_engine == Mock()
-            self.manager.predictive_maintenance == Mock()
-            self.manager.performance_optimizer == Mock()
-            self.manager.capacity_planner == Mock()
-            
-            # 設置mock返回值
-            self.manager.ai_ops_engine.collect_system_metrics == AsyncMock()
-            self.manager.predictive_maintenance.collect_component_metrics == AsyncMock()
-            self.manager.performance_optimizer.collect_performance_metrics == AsyncMock()
-            self.manager.capacity_planner.collect_resource_usage == AsyncMock()
-            
-            metrics = {
-                "cpu_usage": 85.0(),
-                "memory_usage": 75.0(),
-                "response_time": 450,
-                "error_rate": 2.5(),
-                "throughput": 800
-            }
-            
-            # 應該不拋出異常
-            await self.manager.collect_system_metrics("test_server", "api_server", metrics)
+        # 模擬組件初始化失敗(無Redis)
+        intelligent_ops_manager.ai_ops_engine = Mock()
+        intelligent_ops_manager.predictive_maintenance = Mock()
+        intelligent_ops_manager.performance_optimizer = Mock()
+        intelligent_ops_manager.capacity_planner = Mock()
         
-        asyncio.run(run_test())
+        # 設置mock返回值
+        intelligent_ops_manager.ai_ops_engine.collect_system_metrics = AsyncMock()
+        intelligent_ops_manager.predictive_maintenance.collect_component_metrics = AsyncMock()
+        intelligent_ops_manager.performance_optimizer.collect_performance_metrics = AsyncMock()
+        intelligent_ops_manager.capacity_planner.collect_resource_usage = AsyncMock()
+        
+        metrics = {
+            "cpu_usage": 85.0,
+            "memory_usage": 75.0,
+            "response_time": 450,
+            "error_rate": 2.5,
+            "throughput": 800
+        }
+        
+        # 應該不拋出異常
+        await intelligent_ops_manager.collect_system_metrics("test_server", "api_server", metrics)
     
-    def test_get_insights(self):
+    async def test_get_insights(self, intelligent_ops_manager):
         """測試獲取洞察"""
-        async def run_test():
-            # 添加測試洞察
-            from ai.ops.intelligent_ops_manager import OpsInsight
-            insight == OpsInsight(
-                insight_id="test_1",
-                insight_type="anomaly",
-                severity="high",
-                title="測試洞察",
-                description="測試描述",
-                affected_components=["test_server"]
-                recommendations=["測試建議"],
-    confidence=0.9(),
-                timestamp=datetime.now(),
-                auto_actionable == True
-            )
-            
-            self.manager.ops_insights = [insight.__dict__]
-            
-            insights = await self.manager.get_insights()
-            
-            self.assertEqual(len(insights), 1)
-            self.assertEqual(insights[0].insight_id, "test_1")
+        # 添加測試洞察
+        insight = OpsInsight(
+            insight_id="test_1",
+            insight_type="anomaly",
+            severity="high",
+            title="測試洞察",
+            description="測試描述",
+            affected_components=["test_server"],
+            recommendations=["測試建議"],
+            confidence=0.9,
+            timestamp=datetime.now(timezone.utc()),
+            auto_actionable=True
+        )
         
-        asyncio.run(run_test())
+        intelligent_ops_manager.ops_insights = [insight.__dict__]
+        
+        insights = await intelligent_ops_manager.get_insights()
+        
+        assert len(insights) == 1
+        assert insights[0].insight_id == "test_1"
     
-    def test_get_ops_dashboard_data(self):
+    async def test_get_ops_dashboard_data(self, intelligent_ops_manager):
         """測試獲取運維儀表板數據"""
-        async def run_test():
-            # 模擬系統健康分析
-            self.manager._analyze_system_health == = AsyncMock(return_value =={
-                'overall_score': 85.0(),
-                'unhealthy_components': []
-            })
-            
-            dashboard = await self.manager.get_ops_dashboard_data()
-            
-            self.assertIn('system_health', dashboard)
-            self.assertIn('recent_insights', dashboard)
-            self.assertIn('active_alerts', dashboard)
-            self.assertIn('auto_actions_24h', dashboard)
-            self.assertIn('total_insights', dashboard)
-            self.assertIn('last_update', dashboard)
+        # 模擬系統健康分析
+        intelligent_ops_manager._analyze_system_health = AsyncMock(return_value={
+            'overall_score': 85.0,
+            'unhealthy_components': []
+        })
         
-        asyncio.run(run_test())
+        dashboard = await intelligent_ops_manager.get_ops_dashboard_data()
+        
+        assert 'system_health' in dashboard
+        assert 'recent_insights' in dashboard
+        assert 'active_alerts' in dashboard
+        assert 'auto_actions_24h' in dashboard
+        assert 'total_insights' in dashboard
+        assert 'last_update' in dashboard
 
-class TestIntegration(unittest.TestCase()):
+@pytest.mark.asyncio
+class TestIntegration:
     """集成測試"""
     
-    def test_components_interaction(self):
+    async def test_components_interaction(self, ai_ops_engine, predictive_maintenance_engine, performance_optimizer, capacity_planner):
         """測試組件交互"""
-        async def run_test():
-            from ai.ops.ai_ops_engine import AIOpsEngine
-            from ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
-            from ai.ops.performance_optimizer import PerformanceOptimizer
-            from ai.ops.capacity_planner import CapacityPlanner
-            
-            # 創建所有組件
-            ai_ops == AIOpsEngine()
-            maintenance == PredictiveMaintenanceEngine()
-            optimizer == PerformanceOptimizer()
-            planner == CapacityPlanner()
-            
-            # 測試數據
-            metrics = {
-                "cpu_usage": 85.0(),
-                "memory_usage": 75.0(),
-                "error_rate": 2.5(),
-                "response_time": 450,
-                "throughput": 800
-            }
-            
-            # 執行異常檢測
-            anomalies = await ai_ops.detect_anomalies("test_component", metrics)
-            self.assertGreaterEqual(len(anomalies), 0)
-            
-            # 執行健康評估
-            health_score = maintenance._simple_health_assessment(metrics)
-            self.assertGreaterEqual(health_score, 0)
-            self.assertLessEqual(health_score, 100)
-            
-            # 添加性能數據
-            optimizer.performance_history = [{
-                'timestamp': datetime.now().isoformat(),
-                'component_id': 'test_component',
-                'component_type': 'server',
-                'metrics': metrics
-            }]
-            
-            # 執行瓶頸檢測
-            bottlenecks = await optimizer.detect_bottlenecks("test_component")
-            self.assertIsInstance(bottlenecks, list)
-            
-            # 創建資源使用記錄
-            from ai.ops.capacity_planner import ResourceUsage
-            usage == ResourceUsage(,
-    timestamp=datetime.now(),
-                cpu_cores=4,
+        # 創建所有組件
+        ai_ops = ai_ops_engine
+        maintenance = predictive_maintenance_engine
+        optimizer = performance_optimizer
+        planner = capacity_planner
+        
+        # 測試數據
+        metrics = {
+            "cpu_usage": 85.0,
+            "memory_usage": 75.0,
+            "error_rate": 2.5,
+            "response_time": 450,
+            "throughput": 800
+        }
+        
+        # 執行異常檢測
+        anomalies = await ai_ops.detect_anomalies("test_component", metrics)
+        assert len(anomalies) >= 0
+        
+        # 執行健康評估
+        health_score = maintenance._simple_health_assessment(metrics)
+        assert health_score >= 0
+        assert health_score <= 100
+        
+        # 添加性能數據
+        optimizer.performance_history = [{
+            'timestamp': datetime.now(timezone.utc()).isoformat(),
+            'component_id': 'test_component',
+            'component_type': 'server',
+            'metrics': metrics
+        }]
+        
+        # 執行瓶頸檢測
+        bottlenecks = await optimizer.detect_bottlenecks("test_component")
+        assert isinstance(bottlenecks, list)
+        
+        # 創建資源使用記錄
+        usage = ResourceUsage(
+            timestamp=datetime.now(timezone.utc()),
+            cpu_cores=4,
+            memory_gb=8,
+            disk_gb=100,
+            network_mbps=100,
+            gpu_count=1
+        )
+        
+        # 添加歷史數據
+        for i in range(20):
+            historical_usage = ResourceUsage(
+                timestamp=datetime.now(timezone.utc()) - timedelta(hours=i),
+                cpu_cores=4 + i * 0.1,
                 memory_gb=8,
                 disk_gb=100,
                 network_mbps=100,
                 gpu_count=1
             )
-            
-            # 添加歷史數據
-            for i in range(20)::
-                historical_usage == ResourceUsage(,
-    timestamp=datetime.now() - timedelta(hours=i),
-                    cpu_cores=4 + i * 0.1(),
-                    memory_gb=8,
-                    disk_gb=100,
-                    network_mbps=100,
-                    gpu_count=1
-                )
-                planner.usage_history.append({
-                    'timestamp': historical_usage.timestamp.isoformat(),
-                    'usage': historical_usage
-                })
-            
-            # 執行CPU預測
-            prediction = await planner._predict_cpu_needs(usage)
-            if prediction,  # 可能为None如果数据不足,:
-                self.assertIn("predicted_cpu", prediction)
+            planner.usage_history.append({
+                'timestamp': historical_usage.timestamp.isoformat(),
+                'usage': historical_usage
+            })
         
-        asyncio.run(run_test())
+        # 執行CPU預測
+        prediction = await planner._predict_cpu_needs(usage)
+        if prediction:  # 可能为None如果数据不足
+            assert "predicted_cpu" in prediction
 
-def run_all_tests():
-    """運行所有測試"""
-    # 創建測試套件
-    test_suite = unittest.TestSuite()
-    
-    # 添加測試類
-    test_classes = [
-        TestAIOpsEngine,
-        TestPredictiveMaintenance,
-        TestPerformanceOptimizer,
-        TestCapacityPlanner,
-        TestIntelligentOpsManager,
-        TestIntegration
-    ]
-    
-    for test_class in test_classes,::
-        tests = unittest.TestLoader().loadTestsFromTestCase(test_class)
-        test_suite.addTests(tests)
-    
-    # 運行測試
-    runner = unittest.TextTestRunner(verbosity=2)
-    result = runner.run(test_suite)
-    
-    # 輸出結果
-    print(f"\n{'='*60}")
-    print("測試結果摘要")
-    print(f"{'='*60}")
-    print(f"運行測試, {result.testsRun}")
-    print(f"失敗, {len(result.failures())}")
-    print(f"錯誤, {len(result.errors())}")
-    print(f"成功率, {((result.testsRun - len(result.failures()) - len(result.errors())) / result.testsRun * 100).1f}%")
-    
-    if result.failures,::
-        print(f"\n失敗詳情,")
-        for test, traceback in result.failures,::
-            print(f"- {test} {traceback}")
-    
-    if result.errors,::
-        print(f"\n錯誤詳情,")
-        for test, traceback in result.errors,::
-            print(f"- {test} {traceback}")
-    
-    return result.wasSuccessful()
-
-if __name"__main__":::
-    success = run_all_tests()
-    sys.exit(0 if success else 1)::
+# No need for run_all_tests() or if __name__ == "__main__" block with pytest

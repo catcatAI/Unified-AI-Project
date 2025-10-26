@@ -4,27 +4,27 @@ Security Module for Unified AI Project:
 Provides comprehensive security controls for AI operations:
 """
 
-from .permission_control import (
+from .permission_control import
 PermissionControlSystem,
 PermissionType,
 PermissionLevel,
 PermissionRule,
 PermissionContext
-)
+()
 
-from .audit_logger import (
+from .audit_logger import
 AuditLogger,
 AuditEvent,
 AuditEventType
-)
+()
 
-from .enhanced_sandbox import (
+from .enhanced_sandbox import
 EnhancedSandboxExecutor,
 SandboxConfig,
 ResourceLimits
-)
+()
 
-__all_[
+__all_[]
 'PermissionControlSystem',
 'PermissionType',
 'PermissionLevel',
@@ -36,4 +36,4 @@ __all_[
 'EnhancedSandboxExecutor',
 'SandboxConfig',
 'ResourceLimits'
-]
+[]
