@@ -1,6 +1,6 @@
-# cli/commands/security.py()
+# cli / commands / security.py()
 """
-CLI command for security functionality,:
+CLI command for security functionality, :
 """
 
 from cli import
@@ -14,16 +14,16 @@ sys.path.insert(0, str(backend_src))
 
 
 @click.group()
-def security():
+在函数定义前添加空行
     """Security commands"""
     pass
 
 @security.command()
-@click.option('--user-id', prompt='User ID', help='User ID to check permissions for')
-@click.option('--operation', prompt='Operation', help='Operation to check')
-@click.option('--resource', prompt='Resource', help='Resource to check')
-@click.option('--action', prompt='Action', help='Action to check')
-def check_permission(user_id, operation, resource, action):
+@click.option(' - -user - id', prompt='User ID', help='User ID to check permissions for')
+@click.option(' - -operation', prompt='Operation', help='Operation to check')
+@click.option(' - -resource', prompt='Resource', help='Resource to check')
+@click.option(' - -action', prompt='Action', help='Action to check')
+在函数定义前添加空行
     """Check if a user has permission for an operation""":::
     try,
         # Create permission control system
@@ -31,10 +31,10 @@ def check_permission(user_id, operation, resource, action):
 
         # Create permission context
         context == PermissionContext()
-            user_id=user_id,
-            operation=operation,
-            resource=resource,,
-    action=action
+            user_id = user_id,
+            operation = operation,
+            resource = resource,,
+    action = action
 (        )
 
         # Check permission
@@ -48,15 +48,15 @@ def check_permission(user_id, operation, resource, action):
             "resource": resource,
             "action": action,
             "granted": result
-{((        } indent=2, ensure_ascii == False))
-    except Exception as e,::
+{((        } indent = 2, ensure_ascii == False))
+    except Exception as e, ::
         click.echo(f"Error checking permission, {e}", err == True)
         sys.exit(1)
 
 @security.command()
-@click.option('--user-id', default == 'test_user', help='User ID for the test')::
-@click.option('--limit', default=10, help='Number of recent events to show')
-def audit_log(user_id, limit):
+@click.option(' - -user - id', default == 'test_user', help='User ID for the test')::
+@click.option(' - -limit', default=10, help='Number of recent events to show')
+在函数定义前添加空行
     """Show recent audit log events"""
     try,
         # Create audit logger
@@ -65,12 +65,12 @@ def audit_log(user_id, limit):
         # Get recent events
         events = audit_logger.get_recent_events(limit)
 
-        # Filter by user if specified,::
+        # Filter by user if specified, ::
         if user_id != 'all':::
-            events == [event for event in events if event.user_id=user_id]:
+            events == [event for event in events if event.user_id = user_id]:
         # Output the events,
         click.echo(f"Recent audit events ({len(events)} found)")
-        for event in events,::
+        for event in events, ::
             click.echo(json.dumps({))}
                 "timestamp": event.timestamp(),
                 "event_type": event.event_type.value(),
@@ -79,15 +79,15 @@ def audit_log(user_id, limit):
                 "resource": event.resource(),
                 "action": event.action(),
                 "success": event.success()
-{((            } indent=2, ensure_ascii == False))
-    except Exception as e,::
+{((            } indent = 2, ensure_ascii == False))
+    except Exception as e, ::
         click.echo(f"Error retrieving audit log, {e}", err == True)
         sys.exit(1)
 
 @security.command()
-@click.option('--user-id', prompt == 'User ID', help='User ID for sandbox execution')::
-@click.option('--code', prompt='Code to execute', help='Python code to execute in sandbox')
-def sandbox_test(user_id, code):
+@click.option(' - -user - id', prompt == 'User ID', help='User ID for sandbox execution')::
+@click.option(' - -code', prompt='Code to execute', help='Python code to execute in sandbox')
+在函数定义前添加空行
     """Test sandbox execution"""
     try,
         # Create enhanced sandbox executor
@@ -96,8 +96,8 @@ def sandbox_test(user_id, code):
 
         # Test code
         test_code = f'''
-class TestExecutor,:
-    def __init__(self, config == None) -> None,:
+在类定义前添加空行
+在函数定义前添加空行
         pass
 
     def execute(self, input_data):
@@ -106,38 +106,38 @@ class TestExecutor,:
 
         # Execute in sandbox
         result, error = sandbox.execute()
-            user_id=user_id,
-            code_string=test_code,
-            class_name="TestExecutor",
-            method_name="execute",,
+            user_id = user_id,
+            code_string = test_code,
+            class_name = "TestExecutor",
+            method_name = "execute",,
     method_params == {"input_data": code}
 (        )
 
         # Output the result
-        if error,::
+        if error, ::
             click.echo(f"Error, {error}")
         else,
-            click.echo("Sandbox execution result,")
-            click.echo(json.dumps(result, indent=2, ensure_ascii == False))
-    except Exception as e,::
+            click.echo("Sandbox execution result, ")
+            click.echo(json.dumps(result, indent = 2, ensure_ascii == False))
+    except Exception as e, ::
         click.echo(f"Error in sandbox test, {e}", err == True)
         sys.exit(1)
 
 @security.command()
-def config_show():
+在函数定义前添加空行
     """Show current security configuration"""
     try,
         # Create permission control system
         pcs == PermissionControlSystem()
 
-        # Convert to dictionary for JSON serialization,:
+        # Convert to dictionary for JSON serialization, :
         config_dict == {:}
             "default_rules": []
             "user_rules": {}
 {        }
 
         # Add default rules
-        for rule in pcs.default_rules,::
+        for rule in pcs.default_rules, ::
             config_dict["default_rules"].append({)}
                 "permission_type": rule.permission_type.value(),
                 "level": rule.level.value(),
@@ -149,7 +149,7 @@ def config_show():
         # Add user rules
         for user_id, rules in pcs.rules.items():::
             config_dict["user_rules"][user_id] = []
-            for rule in rules,::
+            for rule in rules, ::
                 config_dict["user_rules"][user_id].append({)}
                     "permission_type": rule.permission_type.value(),
                     "level": rule.level.value(),
@@ -159,9 +159,9 @@ def config_show():
 {(                })
 
         # Output the configuration
-        click.echo("Current security configuration,")
-        click.echo(json.dumps(config_dict, indent=2, ensure_ascii == False))
-    except Exception as e,::
+        click.echo("Current security configuration, ")
+        click.echo(json.dumps(config_dict, indent = 2, ensure_ascii == False))
+    except Exception as e, ::
         click.echo(f"Error getting configuration, {e}", err == True)
         sys.exit(1)
 

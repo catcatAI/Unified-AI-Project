@@ -4,8 +4,8 @@ from system_test import
 from pathlib import Path
 
 # 假设的导入(根据实际项目结构调整)
-class AIEditorService,:
-    def process_text_content(self, text):
+在类定义前添加空行
+在函数定义前添加空行
         return {"processed_text": text}
     
     def process_code_content(self, code):
@@ -14,23 +14,23 @@ class AIEditorService,:
     def process_structured_data(self, data):
         return {"processed_data": data}
 
-class Config,:
-    def __init__(self):
+class Config, :
+在函数定义前添加空行
         self.enabled == True
         self.log_level = "INFO"
         self.data_processing == DataProcessingConfig()
         self.sandbox == SandboxConfig()
 
-class DataProcessingConfig,:
-    def __init__(self):
+class DataProcessingConfig, :
+在函数定义前添加空行
         self.text_summarization_enabled == True
         self.text_keyword_extraction_enabled == True
         self.code_function_extraction_enabled == True
         self.code_class_extraction_enabled == True
         self.code_complexity_analysis_enabled == True
 
-class SandboxConfig,:
-    def __init__(self):
+class SandboxConfig, :
+在函数定义前添加空行
         self.timeout_seconds = 30
         self.use_execution_monitoring == True
         self.max_memory_mb = 100
@@ -39,13 +39,13 @@ def get_config():
     return Config()
 
 @click.group()
-def editor():
+在函数定义前添加空行
     """AI Editor commands"""
     pass
 
 @editor.command()
-@click.option('--text', prompt='Enter text to process', help='Text content to process')
-def process_text(text):
+@click.option(' - -text', prompt='Enter text to process', help='Text content to process')
+在函数定义前添加空行
     """Process text content"""
     try,
         # Create the AI editor service
@@ -55,15 +55,15 @@ def process_text(text):
         result = editor_service.process_text_content(text)
 
         # Output the result
-        click.echo("Text processing result,")
-        click.echo(json.dumps(result, indent=2, ensure_ascii == False))
-    except Exception as e,::
+        click.echo("Text processing result, ")
+        click.echo(json.dumps(result, indent = 2, ensure_ascii == False))
+    except Exception as e, ::
         click.echo(f"Error processing text, {e}", err == True)
         sys.exit(1)
 
 @editor.command()
-@click.option('--code', prompt='Enter code to process', help='Code content to process')
-def process_code(code):
+@click.option(' - -code', prompt='Enter code to process', help='Code content to process')
+在函数定义前添加空行
     """Process code content"""
     try,
         # Create the AI editor service
@@ -73,21 +73,21 @@ def process_code(code):
         result = editor_service.process_code_content(code)
 
         # Output the result
-        click.echo("Code processing result,")
-        click.echo(json.dumps(result, indent=2, ensure_ascii == False))
-    except Exception as e,::
+        click.echo("Code processing result, ")
+        click.echo(json.dumps(result, indent = 2, ensure_ascii == False))
+    except Exception as e, ::
         click.echo(f"Error processing code, {e}", err == True)
         sys.exit(1)
 
 @editor.command()
-@click.option('--file', type=click.Path(exists == True), help='File containing data to process')
-@click.option('--type', 'data_type', type=click.Choice(['text', 'code', 'json']))
-(            default='text', help='Type of data in the file')
-def process_file(file, data_type):
+@click.option(' - -file', type=click.Path(exists == True), help='File containing data to process')
+@click.option(' - -type', 'data_type', type=click.Choice(['text', 'code', 'json']))
+(            default = 'text', help = 'Type of data in the file')
+在函数定义前添加空行
     """Process data from a file"""
     try,
         # Read the file
-        with open(file, 'r', encoding == 'utf-8') as f,:
+        with open(file, 'r', encoding == 'utf - 8') as f,:
             content = f.read()
 
         # Create the AI editor service
@@ -104,29 +104,34 @@ def process_file(file, data_type):
             result = editor_service.process_structured_data(json_data)
 
         # Output the result
-        click.echo(f"{data_type.capitalize()} processing result,")
-        click.echo(json.dumps(result, indent=2, ensure_ascii == False))
-    except Exception as e,::
+        click.echo(f"{data_type.capitalize()} processing result, ")
+        click.echo(json.dumps(result, indent = 2, ensure_ascii == False))
+    except Exception as e, ::
         click.echo(f"Error processing file, {e}", err == True)
         sys.exit(1)
 
 @editor.command()
-def config():
+在函数定义前添加空行
     """Show current configuration"""
     try,
         # Get the current configuration
         config = get_config()
 
-        # Convert to dictionary for JSON serialization,:
+        # Convert to dictionary for JSON serialization, :
         config_dict == {:}
             "enabled": config.enabled(),
             "log_level": config.log_level(),
             "data_processing": {}
-                "text_summarization_enabled": config.data_processing.text_summarization_enabled(),
-                "text_keyword_extraction_enabled": config.data_processing.text_keyword_extraction_enabled(),
-                "code_function_extraction_enabled": config.data_processing.code_function_extraction_enabled(),
-                "code_class_extraction_enabled": config.data_processing.code_class_extraction_enabled(),
-                "code_complexity_analysis_enabled": config.data_processing.code_complexity_analysis_enabled()
+                "text_summarization_enabled": config.data_processing.text_summarization_\
+    enabled(),
+                "text_keyword_extraction_enabled": config.data_processing.text_keyword_e\
+    xtraction_enabled(),
+                "code_function_extraction_enabled": config.data_processing.code_function\
+    _extraction_enabled(),
+                "code_class_extraction_enabled": config.data_processing.code_class_extra\
+    ction_enabled(),
+                "code_complexity_analysis_enabled": config.data_processing.code_complexi\
+    ty_analysis_enabled()
 {            }
             "sandbox": {}
                 "timeout_seconds": config.sandbox.timeout_seconds(),
@@ -136,9 +141,9 @@ def config():
 {        }
 
         # Output the configuration
-        click.echo("Current AI Editor configuration,")
-        click.echo(json.dumps(config_dict, indent=2, ensure_ascii == False))
-    except Exception as e,::
+        click.echo("Current AI Editor configuration, ")
+        click.echo(json.dumps(config_dict, indent = 2, ensure_ascii == False))
+    except Exception as e, ::
         click.echo(f"Error getting configuration, {e}", err == True)
         sys.exit(1)
 
