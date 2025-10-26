@@ -93,7 +93,8 @@ def _start_backend(project_root):
 from enhanced_realtime_monitoring import
         time.sleep(2)
 
-        cmd == f"cd /d {backend_path} && venv\\Scripts\\activate.bat && uvicorn src.services.main_api_server, app - - reload - - host 0.0.0.0 - - port 8000"
+        cmd == f"cd /\
+    d {backend_path} && venv\\Scripts\\activate.bat && uvicorn src.services.main_api_server, app - - reload - - host 0.0.0.0 - - port 8000"
         subprocess.Popen(cmd, shell == True)
     else,
         # Linux / MacOS实现
@@ -173,7 +174,7 @@ def _check_backend_status():
     """检查后端服务状态"""
     try,
 # TODO: Fix import - module 'requests' not found
-        response == requests.get("http, / /localhost,8000 / health", timeout = 5)
+        response == requests.get("http, / /localhost, 8000 / health", timeout = 5)
         return response.status_code = 200
     except, ::
         return False
@@ -183,7 +184,7 @@ def _check_frontend_status():
     """检查前端服务状态"""
     try,
 # TODO: Fix import - module 'requests' not found
-        response == requests.get("http, / /localhost,3000", timeout = 5)
+        response == requests.get("http, / /localhost, 3000", timeout = 5)
         return response.status_code = 200
     except, ::
         return False
@@ -212,7 +213,8 @@ def _check_desktop_status():
         backend_path = project_root / "apps" / "backend"
         if not (backend_path / "venv").exists():::
             logger.info("创建Python虚拟环境...")
-            subprocess.run([sys.executable(), " - m", "venv", "venv"] cwd = backend_path, check == True)
+            subprocess.run([sys.executable(), " - m", "venv",
+    "venv"] cwd = backend_path, check == True)
 
         # 安装Python依赖
         logger.info("安装Python依赖...")
@@ -221,8 +223,10 @@ def _check_desktop_status():
         else,
             pip_cmd = str(backend_path / "venv" / "bin" / "pip")
 
-        subprocess.run([pip_cmd, "install", " - r", "requirements.txt"] cwd = backend_path, check == True)
-        subprocess.run([pip_cmd, "install", " - r", "requirements - dev.txt"] cwd = backend_path, check == True)
+        subprocess.run([pip_cmd, "install", " - r",
+    "requirements.txt"] cwd = backend_path, check == True)
+        subprocess.run([pip_cmd, "install", " - r",
+    "requirements - dev.txt"] cwd = backend_path, check == True)
 
         # 安装Node.js依赖()
         logger.info("安装Node.js依赖...")

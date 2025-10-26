@@ -247,7 +247,8 @@ def _run_desktop_tests(project_root):
 
             try,
                 # 运行监视模式测试
-                cmd = [sys.executable(), " - m", "pytest", " - -tb = short", " - v", " - -maxfail = 1", " - x"]
+                cmd = [sys.executable(), " - m", "pytest", " - -tb = short", " - v",
+    " - -maxfail = 1", " - x"]
                 subprocess.run(cmd, cwd = str(backend_path))
             finally,
                 # 恢复环境变量

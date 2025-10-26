@@ -20,9 +20,11 @@ from integrations.rovo_dev_agent import RovoDevAgent
     pass
 
 @rovo.command()
-@click.option(' - -task', prompt == 'Enter task description', help = 'Task description for Rovo Dev')::
+@click.option(' - -task', prompt == 'Enter task description',
+    help = 'Task description for Rovo Dev')::
 @click.option(' - -project - key', help == 'Project key for the task')::
-@click.option(' - -issue - type', default = 'Task', help = 'Issue type (Task, Bug, Story, etc.)')
+@click.option(' - -issue - type', default = 'Task', help = 'Issue type (Task, Bug,
+    Story, etc.)')
 在函数定义前添加空行
     """Create a Jira issue using Rovo Dev"""
     try,
@@ -61,9 +63,12 @@ from integrations.rovo_dev_agent import RovoDevAgent
         sys.exit(1)
 
 @rovo.command()
-@click.option(' - -source - path', prompt == 'Enter source path', help = 'Source path for documentation')::
-@click.option(' - -space - key', prompt = 'Enter Confluence space key', help = 'Confluence space key')
-@click.option(' - -doc - type', default = 'technical', help = 'Documentation type (technical, api, user)')
+@click.option(' - -source - path', prompt == 'Enter source path',
+    help = 'Source path for documentation')::
+@click.option(' - -space - key', prompt = 'Enter Confluence space key',
+    help = 'Confluence space key')
+@click.option(' - -doc - type', default = 'technical',
+    help = 'Documentation type (technical, api, user)')
 在函数定义前添加空行
     """Generate documentation using Rovo Dev"""
     try,
@@ -91,6 +96,7 @@ from integrations.rovo_dev_agent import RovoDevAgent
         # For now, we'll just print what would be done
         click.echo(f"Would generate {doc_type} documentation for {source_path} in space \
     \
+    \
     {space_key}")::
         # In a real implementation, you would
         # 1. Start the agent
@@ -103,8 +109,10 @@ from integrations.rovo_dev_agent import RovoDevAgent
         sys.exit(1)
 
 @rovo.command()
-@click.option(' - -repo - url', prompt == 'Enter repository URL', help = 'Repository URL for code analysis')::
-@click.option(' - -analysis - type', default = 'quality', help = 'Analysis type (quality, security, performance)')
+@click.option(' - -repo - url', prompt == 'Enter repository URL',
+    help = 'Repository URL for code analysis')::
+@click.option(' - -analysis - type', default = 'quality',
+    help = 'Analysis type (quality, security, performance)')
 在函数定义前添加空行
     """Analyze code using Rovo Dev"""
     try,

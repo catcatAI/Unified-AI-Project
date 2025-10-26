@@ -19,7 +19,8 @@ sys.path.insert(0, str(backend_src))
     pass
 
 @security.command()
-@click.option(' - -user - id', prompt = 'User ID', help = 'User ID to check permissions for')
+@click.option(' - -user - id', prompt = 'User ID',
+    help = 'User ID to check permissions for')
 @click.option(' - -operation', prompt = 'Operation', help = 'Operation to check')
 @click.option(' - -resource', prompt = 'Resource', help = 'Resource to check')
 @click.option(' - -action', prompt = 'Action', help = 'Action to check')
@@ -85,8 +86,10 @@ sys.path.insert(0, str(backend_src))
         sys.exit(1)
 
 @security.command()
-@click.option(' - -user - id', prompt == 'User ID', help = 'User ID for sandbox execution')::
-@click.option(' - -code', prompt = 'Code to execute', help = 'Python code to execute in sandbox')
+@click.option(' - -user - id', prompt == 'User ID',
+    help = 'User ID for sandbox execution')::
+@click.option(' - -code', prompt = 'Code to execute',
+    help = 'Python code to execute in sandbox')
 在函数定义前添加空行
     """Test sandbox execution"""
     try,
