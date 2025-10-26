@@ -379,3 +379,12 @@ venv/
 node_modules/
 .DS_Store
 *.log
+# Auto-fix additions
+__pycache__/
+*.pyc
+*.pyo
+.Python
+venv/
+node_modules/
+.DS_Store
+*.log
