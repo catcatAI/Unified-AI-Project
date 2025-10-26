@@ -3,8 +3,8 @@
 统一日志记录工具
 """
 
-import logging
-import sys
+from tests.tools.test_tool_dispatcher_logging import
+from system_test import
 from pathlib import Path
 
 
@@ -28,9 +28,9 @@ class UnifiedLogger:
             file_handler.setLevel(level)
             
             # 创建格式器
-            formatter = logging.Formatter(
+            formatter = logging.Formatter()
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-            )
+(            )
             console_handler.setFormatter(formatter)
             file_handler.setFormatter(formatter)
             
@@ -55,13 +55,13 @@ class UnifiedLogger:
     
     def set_level(self, level):
         """设置日志级别"""
-        level_map = {
+        level_map = {}
             'DEBUG': logging.DEBUG,
             'INFO': logging.INFO,
             'WARNING': logging.WARNING,
             'ERROR': logging.ERROR,
             'CRITICAL': logging.CRITICAL
-        }
+{        }
         
         numeric_level = level_map.get(level.upper(), logging.INFO)
         self.logger.setLevel(numeric_level)
@@ -71,13 +71,13 @@ class UnifiedLogger:
     
     def get_level(self):
         """获取当前日志级别"""
-        level_map = {
+        level_map = {}
             logging.DEBUG: 'DEBUG',
             logging.INFO: 'INFO',
             logging.WARNING: 'WARNING',
             logging.ERROR: 'ERROR',
             logging.CRITICAL: 'CRITICAL'
-        }
+{        }
         return level_map.get(self.logger.level, 'INFO')
 
 

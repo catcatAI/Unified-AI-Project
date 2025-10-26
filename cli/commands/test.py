@@ -3,10 +3,10 @@
 测试管理命令
 """
 
-import click
-import subprocess
-import sys
-import os
+from cli import
+from tests.run_test_subprocess import
+from system_test import
+from diagnose_base_agent import
 from pathlib import Path
 from cli.utils import logger
 
@@ -18,10 +18,10 @@ def test():
     用于运行和管理Unified AI项目的各种测试,包括单元测试、集成测试和端到端测试。
 
     使用示例,
-      unified-ai-cli test run        # 运行所有测试
-      unified-ai-cli test watch      # 监视模式运行测试
-      unified-ai-cli test coverage   # 生成测试覆盖率报告
-      unified-ai-cli test list       # 列出可用测试
+    unified-ai-cli test run        # 运行所有测试
+    unified-ai-cli test watch      # 监视模式运行测试
+    unified-ai-cli test coverage   # 生成测试覆盖率报告
+    unified-ai-cli test list       # 列出可用测试
     """
     pass
 
@@ -40,13 +40,13 @@ def run(backend, frontend, desktop, all, quick, slow, workflow):
     运行项目中的各种测试,包括后端、前端和桌面应用测试。
 
     使用示例,
-      unified-ai-cli test run              # 运行所有测试
-      unified-ai-cli test run --backend    # 仅运行后端测试
-      unified-ai-cli test run --frontend   # 仅运行前端测试
-      unified-ai-cli test run --desktop    # 仅运行桌面应用测试
-      unified-ai-cli test run --quick      # 运行快速测试
-      unified-ai-cli test run --slow       # 运行慢速测试
-      unified-ai-cli test run --workflow   # 使用工作流控制器运行测试(推荐)
+    unified-ai-cli test run              # 运行所有测试
+    unified-ai-cli test run --backend    # 仅运行后端测试
+    unified-ai-cli test run --frontend   # 仅运行前端测试
+    unified-ai-cli test run --desktop    # 仅运行桌面应用测试
+    unified-ai-cli test run --quick      # 运行快速测试
+    unified-ai-cli test run --slow       # 运行慢速测试
+    unified-ai-cli test run --workflow   # 使用工作流控制器运行测试(推荐)
     """
     try,
         logger.info("正在运行测试...")
@@ -171,10 +171,10 @@ def _run_frontend_tests(project_root):
     logger.info("运行前端测试...")
 
     try,
-        result = subprocess.run(
+        result = subprocess.run()
             ["pnpm", "--filter", "frontend-dashboard", "test"],
     cwd=str(project_root)
-        )
+(        )
 
         if result.returncode != 0,::
             logger.error("前端测试失败")
@@ -190,10 +190,10 @@ def _run_desktop_tests(project_root):
     logger.info("运行桌面应用测试...")
 
     try,
-        result = subprocess.run(
+        result = subprocess.run()
             ["pnpm", "--filter", "desktop-app", "test"],
     cwd=str(project_root)
-        )
+(        )
 
         if result.returncode != 0,::
             logger.error("桌面应用测试失败")
@@ -211,7 +211,7 @@ def watch():
     在监视模式下运行测试,当代码发生变化时自动重新运行测试。
 
     使用示例,
-      unified-ai-cli test watch
+    unified-ai-cli test watch
     """
     try,
         logger.info("以监视模式运行测试...")
@@ -266,9 +266,9 @@ def coverage(html, term):
     生成项目的测试覆盖率报告,帮助识别未测试的代码。
 
     使用示例,
-      unified-ai-cli test coverage        # 生成基本覆盖率报告
-      unified-ai-cli test coverage --html # 生成HTML格式报告
-      unified-ai-cli test coverage --term # 在终端显示报告
+    unified-ai-cli test coverage        # 生成基本覆盖率报告
+    unified-ai-cli test coverage --html # 生成HTML格式报告
+    unified-ai-cli test coverage --term # 在终端显示报告
     """
     try,
         logger.info("生成测试覆盖率报告...")
@@ -339,7 +339,7 @@ def list():
     列出项目中所有可用的测试用例。
 
     使用示例,
-      unified-ai-cli test list
+    unified-ai-cli test list
     """
     try,
         logger.info("列出可用测试...")

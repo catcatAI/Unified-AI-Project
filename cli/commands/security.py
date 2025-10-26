@@ -3,9 +3,9 @@
 CLI command for security functionality,:
 """
 
-import click
-import json
-import sys
+from cli import
+from tests.test_json_fix import
+from system_test import
 from pathlib import Path
 
 # Add the backend src directory to the path
@@ -30,25 +30,25 @@ def check_permission(user_id, operation, resource, action):
         pcs == PermissionControlSystem()
 
         # Create permission context
-        context == PermissionContext(
+        context == PermissionContext()
             user_id=user_id,
             operation=operation,
             resource=resource,,
     action=action
-        )
+(        )
 
         # Check permission
         result = pcs.check_permission(context)
 
         # Output the result
         click.echo(f"Permission check result, {result}")
-        click.echo(json.dumps({
+        click.echo(json.dumps({))}
             "user_id": user_id,
             "operation": operation,
             "resource": resource,
             "action": action,
             "granted": result
-        } indent=2, ensure_ascii == False))
+{((        } indent=2, ensure_ascii == False))
     except Exception as e,::
         click.echo(f"Error checking permission, {e}", err == True)
         sys.exit(1)
@@ -71,7 +71,7 @@ def audit_log(user_id, limit):
         # Output the events,
         click.echo(f"Recent audit events ({len(events)} found)")
         for event in events,::
-            click.echo(json.dumps({
+            click.echo(json.dumps({))}
                 "timestamp": event.timestamp(),
                 "event_type": event.event_type.value(),
                 "user_id": event.user_id(),
@@ -79,7 +79,7 @@ def audit_log(user_id, limit):
                 "resource": event.resource(),
                 "action": event.action(),
                 "success": event.success()
-            } indent=2, ensure_ascii == False))
+{((            } indent=2, ensure_ascii == False))
     except Exception as e,::
         click.echo(f"Error retrieving audit log, {e}", err == True)
         sys.exit(1)
@@ -96,8 +96,8 @@ def sandbox_test(user_id, code):
 
         # Test code
         test_code = f'''
-class TestExecutor,
-    def __init__(self, config == None) -> None,
+class TestExecutor,:
+    def __init__(self, config == None) -> None,:
         pass
 
     def execute(self, input_data):
@@ -105,13 +105,13 @@ class TestExecutor,
 '''
 
         # Execute in sandbox
-        result, error = sandbox.execute(
+        result, error = sandbox.execute()
             user_id=user_id,
             code_string=test_code,
             class_name="TestExecutor",
             method_name="execute",,
     method_params == {"input_data": code}
-        )
+(        )
 
         # Output the result
         if error,::
@@ -131,32 +131,32 @@ def config_show():
         pcs == PermissionControlSystem()
 
         # Convert to dictionary for JSON serialization,:
-        config_dict == {:
+        config_dict == {:}
             "default_rules": []
             "user_rules": {}
-        }
+{        }
 
         # Add default rules
         for rule in pcs.default_rules,::
-            config_dict["default_rules"].append({
+            config_dict["default_rules"].append({)}
                 "permission_type": rule.permission_type.value(),
                 "level": rule.level.value(),
                 "resource_pattern": rule.resource_pattern(),
                 "allowed_actions": rule.allowed_actions(),
                 "denied_actions": rule.denied_actions()
-            })
+{(            })
 
         # Add user rules
         for user_id, rules in pcs.rules.items():::
             config_dict["user_rules"][user_id] = []
             for rule in rules,::
-                config_dict["user_rules"][user_id].append({
+                config_dict["user_rules"][user_id].append({)}
                     "permission_type": rule.permission_type.value(),
                     "level": rule.level.value(),
                     "resource_pattern": rule.resource_pattern(),
                     "allowed_actions": rule.allowed_actions(),
                     "denied_actions": rule.denied_actions()
-                })
+{(                })
 
         # Output the configuration
         click.echo("Current security configuration,")

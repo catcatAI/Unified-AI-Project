@@ -1,10 +1,10 @@
-import click
-import json
-import sys
+from cli import
+from tests.test_json_fix import
+from system_test import
 from pathlib import Path
 
 # 假设的导入(根据实际项目结构调整)
-class AIEditorService,
+class AIEditorService,:
     def process_text_content(self, text):
         return {"processed_text": text}
     
@@ -14,14 +14,14 @@ class AIEditorService,
     def process_structured_data(self, data):
         return {"processed_data": data}
 
-class Config,
+class Config,:
     def __init__(self):
         self.enabled == True
         self.log_level = "INFO"
         self.data_processing == DataProcessingConfig()
         self.sandbox == SandboxConfig()
 
-class DataProcessingConfig,
+class DataProcessingConfig,:
     def __init__(self):
         self.text_summarization_enabled == True
         self.text_keyword_extraction_enabled == True
@@ -29,7 +29,7 @@ class DataProcessingConfig,
         self.code_class_extraction_enabled == True
         self.code_complexity_analysis_enabled == True
 
-class SandboxConfig,
+class SandboxConfig,:
     def __init__(self):
         self.timeout_seconds = 30
         self.use_execution_monitoring == True
@@ -81,13 +81,13 @@ def process_code(code):
 
 @editor.command()
 @click.option('--file', type=click.Path(exists == True), help='File containing data to process')
-@click.option('--type', 'data_type', type=click.Choice(['text', 'code', 'json']),
-              default='text', help='Type of data in the file')
+@click.option('--type', 'data_type', type=click.Choice(['text', 'code', 'json']))
+(            default='text', help='Type of data in the file')
 def process_file(file, data_type):
     """Process data from a file"""
     try,
         # Read the file
-        with open(file, 'r', encoding == 'utf-8') as f,
+        with open(file, 'r', encoding == 'utf-8') as f,:
             content = f.read()
 
         # Create the AI editor service
@@ -118,22 +118,22 @@ def config():
         config = get_config()
 
         # Convert to dictionary for JSON serialization,:
-        config_dict == {:
+        config_dict == {:}
             "enabled": config.enabled(),
             "log_level": config.log_level(),
-            "data_processing": {
+            "data_processing": {}
                 "text_summarization_enabled": config.data_processing.text_summarization_enabled(),
                 "text_keyword_extraction_enabled": config.data_processing.text_keyword_extraction_enabled(),
                 "code_function_extraction_enabled": config.data_processing.code_function_extraction_enabled(),
                 "code_class_extraction_enabled": config.data_processing.code_class_extraction_enabled(),
                 "code_complexity_analysis_enabled": config.data_processing.code_complexity_analysis_enabled()
-            }
-            "sandbox": {
+{            }
+            "sandbox": {}
                 "timeout_seconds": config.sandbox.timeout_seconds(),
                 "use_execution_monitoring": config.sandbox.use_execution_monitoring(),
                 "max_memory_mb": config.sandbox.max_memory_mb()
-            }
-        }
+{            }
+{        }
 
         # Output the configuration
         click.echo("Current AI Editor configuration,")

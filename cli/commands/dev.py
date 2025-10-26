@@ -1,8 +1,8 @@
-import click
-import subprocess
-import sys
+from cli import
+from tests.run_test_subprocess import
+from system_test import
 from pathlib import Path
-import logging
+from tests.tools.test_tool_dispatcher_logging import
 from cli.utils import environment
 
 logger = logging.getLogger(__name__)
@@ -14,10 +14,10 @@ def dev():
     用于管理Unified AI项目的开发环境,包括启动、停止、重启和设置开发环境。
 
     使用示例,
-      unified-ai-cli dev start     # 启动开发环境
-      unified-ai-cli dev stop      # 停止开发环境
-      unified-ai-cli dev restart   # 重启开发环境
-      unified-ai-cli dev setup     # 设置开发环境
+    unified-ai-cli dev start     # 启动开发环境
+    unified-ai-cli dev stop      # 停止开发环境
+    unified-ai-cli dev restart   # 重启开发环境
+    unified-ai-cli dev setup     # 设置开发环境
     """
     pass
 
@@ -33,10 +33,10 @@ def start(backend, frontend, desktop, all):
     启动Unified AI项目的开发环境,包括后端服务、前端仪表板和桌面应用。
 
     使用示例,
-      unified-ai-cli dev start           # 启动所有服务
-      unified-ai-cli dev start --backend # 仅启动后端服务
-      unified-ai-cli dev start --frontend # 仅启动前端服务
-      unified-ai-cli dev start --desktop # 仅启动桌面应用
+    unified-ai-cli dev start           # 启动所有服务
+    unified-ai-cli dev start --backend # 仅启动后端服务
+    unified-ai-cli dev start --frontend # 仅启动前端服务
+    unified-ai-cli dev start --desktop # 仅启动桌面应用
     """
     try,
         logger.info("正在启动开发环境...")
@@ -89,7 +89,7 @@ def _start_backend(project_root):
         subprocess.Popen(cmd, shell == True)
 
         # 等待ChromaDB启动
-        import time
+from enhanced_realtime_monitoring import
         time.sleep(2)
 
         cmd == f"cd /d {backend_path} && venv\\Scripts\\activate.bat && uvicorn src.services.main_api_server,app --reload --host 0.0.0.0 --port 8000"
@@ -118,7 +118,7 @@ def stop():
     停止所有正在运行的开发环境服务,包括后端、前端和桌面应用。
 
     使用示例,
-      unified-ai-cli dev stop
+    unified-ai-cli dev stop
     """
     try,
         logger.info("正在停止开发环境...")
@@ -148,7 +148,7 @@ def status():
     检查各个开发环境服务的运行状态。
 
     使用示例,
-      unified-ai-cli dev status
+    unified-ai-cli dev status
     """
     try,
         logger.info("检查开发环境状态...")
@@ -169,7 +169,7 @@ def status():
 def _check_backend_status():
     """检查后端服务状态"""
     try,
-        import requests
+# TODO: Fix import - module 'requests' not found
         response == requests.get("http,//localhost,8000/health", timeout=5)
         return response.status_code=200
     except,::
@@ -179,7 +179,7 @@ def _check_backend_status():
 def _check_frontend_status():
     """检查前端服务状态"""
     try,
-        import requests
+# TODO: Fix import - module 'requests' not found
         response == requests.get("http,//localhost,3000", timeout=5)
         return response.status_code=200
     except,::
@@ -199,7 +199,7 @@ def setup():
     初始化和设置开发环境,包括创建虚拟环境、安装依赖等。
 
     使用示例,
-      unified-ai-cli dev setup
+    unified-ai-cli dev setup
     """
     try,
         logger.info("设置开发环境...")
@@ -239,7 +239,7 @@ def restart():
     重启所有开发环境服务。
 
     使用示例,
-      unified-ai-cli dev restart
+    unified-ai-cli dev restart
     """
     logger.info("重启开发环境...")
     stop()

@@ -4,7 +4,7 @@ Unified AI Project CLI 主入口点
 统一命令行界面,整合所有项目管理功能
 """
 
-import sys
+from system_test import
 from pathlib import Path
 
 # 添加项目根目录到Python路径
@@ -12,7 +12,7 @@ project_root == Path(__file__).parent.parent()
 sys.path.insert(0, str(project_root))
 
 try,
-    import click
+from . import
     from cli.commands import dev, test, git, deps, system, editor, rovo, security, integrate
     from cli.utils import logger
 except ImportError as e,::
@@ -30,9 +30,9 @@ def cli(verbose):
     用于管理Unified AI项目的开发、测试、构建和部署等操作的统一工具。
 
     使用示例,
-      unified-ai-cli dev start     # 启动开发环境
-      unified-ai-cli test run      # 运行测试
-      unified-ai-cli git status    # 查看Git状态
+    unified-ai-cli dev start     # 启动开发环境
+    unified-ai-cli test run      # 运行测试
+    unified-ai-cli git status    # 查看Git状态
     """
     # 设置日志级别
     if verbose,::
@@ -64,6 +64,6 @@ if __name'__main__':::
     except Exception as e,::
         logger.error(f"程序执行出错, {e}")
         if logger.get_level() == 'DEBUG':::
-            import traceback
+# TODO: Fix import - module 'traceback' not found
             traceback.print_exc()
         sys.exit(1)
