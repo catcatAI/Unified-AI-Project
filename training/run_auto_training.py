@@ -22,7 +22,8 @@ def main() -> None, :
     parser.add_argument(' - -config', type = str, help = '指定训练配置文件路径')
     parser.add_argument(' - -output', type = str, help = '指定输出报告路径')
     parser.add_argument(' - -verbose', action = 'store_true', help = '启用详细日志输出')
-    parser.add_argument(' - -dry - run', action = 'store_true', help = '仅显示将要执行的操作, 不实际执行')
+    parser.add_argument(' - -dry - run', action = 'store_true', help = '仅显示将要执行的操作,
+    不实际执行')
     
     args = parser.parse_args()
     

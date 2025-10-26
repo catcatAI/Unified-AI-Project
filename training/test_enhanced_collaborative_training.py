@@ -26,6 +26,7 @@ def test_enhanced_collaborative_training() -> None, :
         from training.collaborative_training_manager import CollaborativeTrainingManager\
     \
     \
+    \
     , ModelTrainingTask
         
         # 创建协作式训练管理器

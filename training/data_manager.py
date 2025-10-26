@@ -450,7 +450,9 @@ uality_info['quality_score'] += 5
                     'character_count': len(content),
                     'empty_lines': sum(1 for line in lines if not line.strip()), :::
                         comment_lines': sum(1 for line in lines if line.strip().startswi\
-    th('#') or line.strip().startswith(' / /') or line.strip().startswith(' / *') or line.strip().startswith(' * ')):::
+    \
+    th('#') or line.strip().startswith(' / /') or line.strip().startswith(' / *') or \
+    line.strip().startswith(' * ')):::
                 # 评估代码复杂度
                 if quality_info['code_info']['line_count'] > 0, ::
     comment_ratio = quality_info['code_info']['comment_lines'] /\
@@ -768,6 +770,7 @@ from apps.backend.src.tools.csv_tool import
                             ile_info = {}
                                 'path': str(json_file),
                                 'relative_path': str(json_file.relative_to(self.data_dir\
+    \
     \
     \
     ())),

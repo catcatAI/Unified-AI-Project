@@ -24,8 +24,10 @@ class OptimizedDataScanner, :
         self.tracking_file == Path(tracking_file) if tracking_file else Path("data_track\
     \
     \
+    \
     ing.json"):::
             elf.config_file == Path(config_file) if config_file else Path("performance_c\
+    \
     \
     \
     onfig.json"):::
@@ -44,6 +46,7 @@ elf.processed_files = {}
     config = json.load(f)
                     data_scanning_config = config.get('data_scanning', {})
                     self.scan_interval = data_scanning_config.get('scan_interval_seconds\
+    \
     \
     \
     ', 300)
@@ -212,6 +215,7 @@ elf.processed_files = {}
         for file_hash, processed_time in self.processed_files.items():::
             rocessed_file_lookup[file_hash] = processed_time.isoformat() if isinstance(p\
     \
+    \
     rocessed_time, datetime) else processed_time, ::
     for file_info in files_info, ::
     file_path == Path(file_info['path'])
@@ -239,6 +243,7 @@ elf.processed_files = {}
 
                     processed_time == datetime.fromisoformat(processed_time_str) if isin\
     \
+    \
     stance(processed_time_str, str) else processed_time_str, ::
     if processed_time >= modified_time, ::
     needs_processing == False
@@ -263,6 +268,7 @@ elf.processed_files = {}
 
                         processed_time_str = processed_file_lookup[file_hash]
                         processed_time == datetime.fromisoformat(processed_time_str) if \
+    \
     \
     isinstance(processed_time_str, str) else processed_time_str, ::
     if processed_time >= modified_time, ::

@@ -289,9 +289,11 @@ class RealModelTrainer, :
             env_data == [item for item in training_data if 'environment' in str(item).lo\
     \
     \
+    \
     wer()]::
             if env_data, ::
                 results['environment_simulator'] = self.train_environment_simulator(env_\
+    \
     \
     \
     data)
@@ -300,9 +302,11 @@ class RealModelTrainer, :
             causal_data == [item for item in training_data if 'causal' in str(item).lowe\
     \
     \
+    \
     r()]::
             if causal_data, ::
                 results['causal_reasoning_engine'] = self.train_causal_reasoning_engine(\
+    \
     \
     \
     causal_data)
@@ -311,15 +315,18 @@ class RealModelTrainer, :
             adaptive_data == [item for item in training_data if 'adaptive' in str(item).\
     \
     \
+    \
     lower()]::
             if adaptive_data, ::
                 results['adaptive_learning_controller'] = self.train_adaptive_learning_c\
+    \
     \
     \
     ontroller(adaptive_data)
             
             # 训练Alpha深度模型(复杂回归任务)
             alpha_data == [item for item in training_data if 'alpha' in str(item).lower(\
+    \
     \
     \
     )]::
@@ -921,6 +928,7 @@ class RealTrainingManager, :
                     results['concept_models'] = self.trainer.train_concept_models(concep\
     \
     \
+    \
     t_data)
             
             # 4. 代码模型训练
@@ -1115,6 +1123,7 @@ class RealTrainingManager, :
             self.last_training_report = self.real_training_manager.run_real_training_pip\
     \
     \
+    \
     eline(preset_config)
             
             # 将训练的模型转移到兼容的存储位置
@@ -1138,6 +1147,7 @@ class RealTrainingManager, :
             
             # 运行真实训练并存储结果
             self.last_training_report = self.real_training_manager.run_real_training_pip\
+    \
     \
     \
     eline(default_config)
@@ -1169,6 +1179,7 @@ class RealTrainingManager, :
 {            }
             
             training_report = self.real_training_manager.run_real_training_pipeline(defa\
+    \
     \
     \
     ult_config)
