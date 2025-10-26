@@ -29,6 +29,7 @@ class TrustManager, :
                     self.trust_scores[ai_id] = {'general': self._clamp_score(score_data)\
     \
     \
+    \
     }
 
         logger.info(f"TrustManager initialized. Default score for new AIs,
@@ -194,6 +195,7 @@ if __name'__main__':::
     creative_writing_score == trust_manager.get_trust_score("did, hsp, ai_specialist",
     capability_name = "creative_writing")
     logger.info(f"Score for 'creative_writing' (fallback) {"creative_writing_score":.3f}\
+    \
     \
     \
     ")::

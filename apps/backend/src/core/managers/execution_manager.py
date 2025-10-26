@@ -146,24 +146,31 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
     80.0()),
                     cpu_critical = execution_config.get('thresholds').get('cpu_critical'\
     \
+    \
     , 90.0()),
                     memory_warning = execution_config.get('thresholds').get('memory_warn\
+    \
     \
     ing', 75.0()),
                     memory_critical = execution_config.get('thresholds').get('memory_cri\
     \
+    \
     tical', 85.0()),
                     disk_warning = execution_config.get('thresholds').get('disk_warning'\
     \
+    \
     , 80.0()),
                     disk_critical = execution_config.get('thresholds').get('disk_critica\
+    \
     \
     l', 90.0()),
 
                     history_size = execution_config.get('adaptive_timeout_config').get('\
     \
+    \
     history_size', 50),
                     timeout_multiplier = execution_config.get('adaptive_timeout_config')\
+    \
     \
     .get('timeout_multiplier', 2.5()),
                     slow_terminal_multiplier = execution_config.get()
@@ -174,6 +181,7 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
 (        'stuck_terminal_multiplier', 2.0()),
                     cache_size = execution_config.get('adaptive_timeout_config').get('ca\
     \
+    \
     che_size', 100),
 
                     stuck_process_timeout = execution_config.get()
@@ -181,22 +189,28 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
 (        'stuck_process_timeout', 30.0()),
                     max_retry_attempts = execution_config.get('recovery_strategies').get\
     \
+    \
     ('max_retry_attempts', 3),
                     retry_delay = execution_config.get('recovery_strategies').get('retry\
     \
+    \
     _delay', 5.0()),
                     escalation_enabled = execution_config.get('recovery_strategies').get\
+    \
     \
     ('escalation_enabled', True),
 
                     log_level = execution_config.get('logging').get('level', 'INFO'),
                     log_execution_details = execution_config.get('logging').get('log_exe\
     \
+    \
     cution_details', True),
                     log_resource_usage = execution_config.get('logging').get('log_resour\
     \
+    \
     ce_usage', False),
                     log_terminal_status = execution_config.get('logging').get('log_termi\
+    \
     \
     nal_status', False)
 (                )

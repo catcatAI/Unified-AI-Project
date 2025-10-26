@@ -171,12 +171,14 @@ async def get_detailed_system_metrics():
             "status": "normal" if cpu_usage < 70 else "warning" if cpu_usage < 90 else "\
     \
     \
+    \
     critical"::
 {        }
         "memory": {}
             "value": memory.percent(),
             "max": 100,
             "status": "normal" if memory.percent < 70 else "warning" if memory.percent <\
+    \
     \
     \
     90 else "critical"::

@@ -53,6 +53,7 @@ A simple parser and evaluator for basic logical expressions.
                 raise ValueError(f"Unexpected character at position {position}: {express\
     \
     \
+    \
     ion_string[position]}")
         return tokens
 
@@ -122,6 +123,7 @@ A simple parser and evaluator for basic logical expressions.
             result = self._parse_or_expression()
             if self.pos != len(self.tokens):
                 raise ValueError(f"Extra tokens remaining after parsing: {self.tokens[se\
+    \
     \
     \
     lf.pos:]}")

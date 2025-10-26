@@ -361,6 +361,7 @@ class DemoLearningManager, :
             self.learning_data['error_patterns'][error_key]['last_seen'] = datetime.now.\
     \
     \
+    \
     isoformat()
         else,
 

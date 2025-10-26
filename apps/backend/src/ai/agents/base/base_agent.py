@@ -145,6 +145,7 @@ from ....ai.dynamic_agent_registry import
         logger.info(f"[{self.agent_id}] Received task request {request_id} for capabilit\
     \
     \
+    \
     y '{capability_id}' from '{sender_ai_id}'.")
 
         try:
@@ -174,6 +175,7 @@ from ....ai.dynamic_agent_registry import
             logger.info(f"[{self.agent_id}] Task {queued_task.task_id} added to queue wi\
     \
     \
+    \
     th priority {queued_task.priority.name}")
 
         asyncio.create_task(self._process_task_queue())
@@ -193,6 +195,7 @@ from ....ai.dynamic_agent_registry import
     async def _process_single_task(self, task: QueuedTask):
         """Processes a single task."""
         logger.info(f"[{self.agent_id}] Processing task {task.task_id} with priority {ta\
+    \
     \
     \
     sk.priority.name}")
@@ -218,6 +221,7 @@ from ....ai.dynamic_agent_registry import
             if task.retry_count < self.max_retries:
                 logger.info(f"[{self.agent_id}] Retrying task {task.task_id} ({task.retr\
     \
+    \
     y_count + 1} / {self.max_retries})")
                 await asyncio.sleep(self.retry_delay * (2 ** task.retry_count))
                 task.retry_count += 1
@@ -225,6 +229,7 @@ from ....ai.dynamic_agent_registry import
                     self.task_queue.insert(0, task)
             else:
                 logger.error(f"[{self.agent_id}] Task {task.task_id} failed after {self.\
+    \
     \
     \
     max_retries} retries.")
@@ -243,12 +248,14 @@ from ....ai.dynamic_agent_registry import
         logger.warning(f"[{self.agent_id}] No specific handler for capability '{capabili\
     \
     \
+    \
     ty_id}'")
         return {}
             "status": "failure",
             "error_details": {}
                 "error_code": "NOT_IMPLEMENTED",
                 "error_message": f"The '{self.__class__.__name__}' has not implemented a\
+    \
     \
     \
     handler for capability '{capability_id}'."
@@ -274,6 +281,7 @@ from ....ai.dynamic_agent_registry import
         """Register a specific handler for a capability."""
         self.task_handlers[capability_id] = handler
         logger.info(f"[{self.agent_id}] Registered handler for capability '{capability_i\
+    \
     \
     \
     d}'")

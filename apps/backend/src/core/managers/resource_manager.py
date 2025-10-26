@@ -70,6 +70,7 @@ class ResourceManager, :
                             logger.error(f"Error cleaning up resource for {service_name}\
     \
     \
+    \
     {e}")::
                 # 清空资源列表
                 self._resources[service_name].clear

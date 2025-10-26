@@ -54,8 +54,10 @@ ef __init__(self, personality_profile, dict == None, config, dict == None) -> No
                 default_personality_tone = self.personality.get("communication_style").g\
     \
     \
+    \
     et("default_tone", "neutral")
             new_emotion == default_personality_tone  # Revert to default if no specific \
+    \
     \
     trigger, ::
                 f new_emotion != self.current_emotion,

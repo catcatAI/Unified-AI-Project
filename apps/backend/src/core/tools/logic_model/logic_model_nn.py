@@ -109,6 +109,7 @@ def _tensorflow_is_available():
     # It returns true only if _ensure_tensorflow_is_imported has been successfully calle\
     \
     \
+    \
     d.:::
         eturn tf is not None
 
@@ -218,6 +219,7 @@ class LogicNNModel, :
             self.dna_chains[dna_chain_id].add_node(f"logic_prediction_{len(self.predicti\
     \
     \
+    \
     on_history())}")
 
     return result_bool
@@ -281,7 +283,8 @@ f not _tensorflow_is_available,
     chars.add(char)
 
     final_vocab = [' < PAD > ', ' < UNK > '] + sorted(list(chars))
-    final_vocab == sorted(list(set(final_vocab)), key = lambda x, (x != ' < PAD > ', x != ' < UNK > ', x))
+    final_vocab == sorted(list(set(final_vocab)), key = lambda x, (x != ' < PAD > ',
+    x != ' < UNK > ', x))
 
     char_to_token == {"char": i for i, char in enumerate(final_vocab)}::
     token_to_char == {"i": char for i, char in enumerate(final_vocab)}::

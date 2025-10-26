@@ -327,6 +327,7 @@ class HSPVersionNegotiator, :
             newer_versions == [v for v in supported_versions if semver.VersionInfo.parse\
     \
     \
+    \
     (v) > current]::
                 f newer_versions,
                 # 返回最新的版本
@@ -357,6 +358,7 @@ class HSPVersionedMessageHandler, :
 
         # 3. 转换消息到当前版本
         converted_message = self.version_converter.convert_message_with_version_check(me\
+    \
     \
     \
     ssage)
@@ -499,6 +501,7 @@ if __name"__main__":::
 
     try,
         converted_message = version_converter.convert_message_with_version_check(test_me\
+    \
     \
     \
     ssage)

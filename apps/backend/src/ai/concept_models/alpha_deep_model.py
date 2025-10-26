@@ -163,6 +163,7 @@ class AlphaDeepModel, :
     memory_symbol = await self.symbolic_space.get_symbol_by_name(deep_parameter.source_m\
     \
     \
+    \
     emory_id())
         if not memory_symbol, ::
     await self.symbolic_space.add_symbol()
@@ -210,13 +211,16 @@ class AlphaDeepModel, :
             subject_symbol = await self.symbolic_space.get_symbol_by_name(rel['subject']\
     \
     \
+    \
     )
             if not subject_symbol, ::
     subject_symbol_id = await self.symbolic_space.add_symbol(rel['subject'] SymbolType.U\
     \
     \
+    \
     NKNOWN())
                 subject_symbol = await self.symbolic_space.get_symbol_by_id(subject_symb\
+    \
     \
     \
     ol_id)
@@ -226,8 +230,10 @@ class AlphaDeepModel, :
     object_symbol_id = await self.symbolic_space.add_symbol(rel['object'] SymbolType.UNK\
     \
     \
+    \
     NOWN())
                 object_symbol = await self.symbolic_space.get_symbol_by_id(object_symbol\
+    \
     \
     \
     _id)
@@ -257,6 +263,7 @@ class AlphaDeepModel, :
             feedback_symbol = await self.symbolic_space.get_symbol_by_id(feedback_symbol\
     \
     \
+    \
     _id)
             if memory_symbol and feedback_symbol, ::
     await self.symbolic_space.add_relationship()
@@ -282,6 +289,7 @@ class AlphaDeepModel, :
             return await self.symbolic_space.get_symbol_by_name(feedback_symbol_name)
 
         self.logger.info(f"Symbolic space updated for {deep_parameter.source_memory_id}"\
+    \
     \
     \
     ):::
@@ -333,8 +341,10 @@ class AlphaDeepModel, :
             deep_parameter.modalities.text_confidence(),
             deep_parameter.modalities.audio_features['pitch'] if deep_parameter.modaliti\
     \
+    \
     es.audio_features else 0.0(), ::
     deep_parameter.modalities.audio_features['volume'] if deep_parameter.modalities.audi\
+    \
     \
     o_features else 0.0, ::
     features.extend(modality_features)
@@ -376,6 +386,7 @@ class AlphaDeepModel, :
                 raise ValueError(f"deep_parameter must be a dataclass with to_dict metho\
     \
     \
+    \
     d, a dict, or msgpack serializable, {e}")
 
     # 將字典序列化為JSON字符串
@@ -400,6 +411,7 @@ class AlphaDeepModel, :
         original_size == len(json_bytes) if algorithm != CompressionAlgorithm.MSGPACK_ON\
     \
     \
+    \
     LY else len(msgpack.packb(param_dict, use_bin_type == True))::
     compressed_size = len(compressed_data)
         compression_ratio == original_size /\
@@ -416,6 +428,7 @@ class AlphaDeepModel, :
     self.compression_stats[algorithm.value]['total_original_size'] += original_size
     self.compression_stats[algorithm.value]['total_compressed_size'] += compressed_size
     self.compression_stats[algorithm.value]['last_compression_ratio'] = compression_rati\
+    \
     \
     \
     o
@@ -524,6 +537,7 @@ if __name"__main__":::
                 # 測試解壓縮
                 decompressed = model.decompress(compressed, algorithm)
                 print(f"Decompressed with {algorithm.value} {len(str(decompressed))} cha\
+    \
     \
     \
     racters")

@@ -28,6 +28,7 @@ rom memory.ham_memory_manager import HAMMemoryManager
 # These constants are defined here as they are specific to the HAMLISCache implementatio\
     \
     \
+    \
     n details,
 # and its interaction with HAM metadata.:
 IS_INCIDENT_DATA_TYPE_PREFIX = "lis_incident_v0.1_"
@@ -103,9 +104,11 @@ class LISCacheInterface(ABC):
             time_window_hours (Optional[int]) Look back N hours from now (filters on tim\
     \
     \
+    \
     estamp_logged).
             limit (int) Maximum number of records to return.
             sort_by_timestamp_desc (bool) Whether to sort results by timestamp descendin\
+    \
     \
     \
     g (most recent first).
@@ -147,8 +150,10 @@ class LISCacheInterface(ABC):
             for_anomaly_type (Optional[LIS_AnomalyType]) Filter antibodies relevant to a\
     \
     \
+    \
     specific anomaly type.
             min_effectiveness (Optional[float]) Filter by minimum effectiveness score of\
+    \
     \
     \
     the antibody.
@@ -156,6 +161,7 @@ class LISCacheInterface(ABC):
 
     Returns, List[...] A list of learned antibodies.
                                         The structure of NarrativeAntibodyObject needs t\
+    \
     \
     \
     o be defined more concretely.
@@ -179,9 +185,11 @@ class LISCacheInterface(ABC):
             new_status (str) The new status for the incident (from LIS_IncidentRecord.st\
     \
     \
+    \
     atus Literal).:::
     notes (Optional[str]) Additional notes to append or set.
             intervention_report (Optional[LIS_InterventionReport]) An intervention repor\
+    \
     \
     \
     t to add to the incident's list.
@@ -236,6 +244,7 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
     updating the list, and re - storing.
     -\
     Semantic similarity for `find_related_incidents` is complex. It would likely require\
+    \
     , ::
     storing embeddings or \
     feature vectors (derived from `LIS_SemanticAnomalyDetectedEvent` details)
@@ -260,6 +269,7 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
     Stores LIS_IncidentRecord in HAM.
     Key fields are stored in HAM metadata.
     The LIS_IncidentRecord itself is stored as raw_data (likely serialized to JSON strin\
+    \
     \
     \
     g).
@@ -325,6 +335,7 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
             # If HAM expects a string, we should json.dumps(incident_record).
             # Based on HAM's design (recall_gist often returning dicts for structured da\
     \
+    \
     ta), :
             # storing the dict directly might be intended.:
             # For robustness with various HAM backends,
@@ -356,6 +367,7 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
     Retrieves an LIS_IncidentRecord from HAM by its 'lis_object_id' (custom ID) metadata\
     \
     \
+    \
     field.
     """
     # ham_records_results = self.ham_manager.query_core_memory()
@@ -368,6 +380,7 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
     #     serialized_record = recalled_ham_entry.get("rehydrated_gist") # Assuming HAM r\
     \
     \
+    \
     eturns serialized string in gist
         #     if isinstance(serialized_record, str)::
     #         try,
@@ -375,6 +388,7 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
     #             return incident_data # type ignore
         #         except json.JSONDecodeError as e, :
     #             print(f"Error deserializing LIS incident record {incident_id} from HAM\
+    \
     \
     \
     {e}"):
@@ -391,8 +405,10 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
             # HAMRecallResult has 'rehydrated_gist'. This should be the serialized LIS_I\
     \
     \
+    \
     ncidentRecord.
             # The HAMRecallResult.rehydrated_gist is 'Any'. We assume it's the string we\
+    \
     \
     \
     stored.
@@ -401,6 +417,7 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
             if isinstance(serialized_record, str)::
                 ry,
                     # Attempt to deserialize the string back into an LIS_IncidentRecord \
+    \
     \
     \
     TypedDict
@@ -418,10 +435,12 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
                         print(f"Error,
     Deserialized data for incident '{incident_id}' is not a valid LIS_IncidentRecord."):\
     \
+    \
     ::
                             eturn None
                 except json.JSONDecodeError as e, ::
                     print(f"Error deserializing LIS incident record '{incident_id}' from\
+    \
     \
     \
     HAM, {e}. Data, '{str(serialized_record)[:200]}'")
@@ -459,6 +478,7 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
     time_window if not directly supported by HAM query.:::
         ""
     # metadata_filters == # if anomaly_type metadata_filters[HAM_META_LIS_ANOMALY_TYPE] \
+    \
     \
     = anomaly_type, :
         # if status metadata_filters[HAM_META_LIS_STATUS] = status, :
@@ -506,6 +526,7 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
             limit = fetch_limit, ,
     sort_by_timestamp_desc == sort_by_timestamp_desc # Pass sorting preference to HAM if\
     \
+    \
     it supports it, :
                                                         # Otherwise,
     we sort after retrieval.
@@ -548,6 +569,7 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
                                     ecord_dt = datetime.fromisoformat(record_timestamp_s\
     \
     \
+    \
     tr)
                                 # Ensure record_dt is offset -\
     aware for comparison with offset - aware now, ::
@@ -561,6 +583,7 @@ Key queryable fields from these objects (e.g., anomaly_type, status,
                             except ValueError, ::
                                 print(f"Warning,
     Could not parse timestamp_logged '{record_timestamp_str}' for time window filter."):\
+    \
     \
     ::
                                     ontinue # Skip record if timestamp is unparseable,
@@ -608,6 +631,7 @@ lse,
         # If HAM didn't sort,
     or if we need to re - sort after filtering (though HAM sort should be preferred)::
     # The current MockHAMMemoryManager doesn't implement sorting by timestamp in query_c\
+    \
     \
     \
     ore_memory,
@@ -699,9 +723,11 @@ lse,
         Queries HAM for NarrativeAntibodyObjects using the LIS_ANTIBODY_DATA_TYPE_PREFIX\
     \
     \
+    \
     .:::
             ""
     # metadata_filters == # if for_anomaly_type metadata_filters[HAM_META_ANTIBODY_FOR_A\
+    \
     \
     NOMALY] = for_anomaly_type, :
     # # min_effectiveness might require post - filtering.
@@ -768,6 +794,7 @@ lse,
                     # This check is more robust if an antibody can truly target multiple\
     \
     \
+    \
     types.:::
                         f for_anomaly_type,
 
@@ -778,8 +805,10 @@ lse,
     this check ensures true multi - target match
                             # If HAM_META_ANTIBODY_FOR_ANOMALY stored the exact 'for_ano\
     \
+    \
     maly_type', this check is redundant for that part, :
                             # but good if an antibody object itself lists multiple targe\
+    \
     \
     \
     ts.::
@@ -790,8 +819,10 @@ lse,
                             # Let's assume the initial HAM filter is sufficient for prim\
     \
     \
+    \
     ary target type.:::
                                 ass # No further filtering needed if initial query used \
+    \
     \
     \
     for_anomaly_type correctly.:::
@@ -836,12 +867,14 @@ ntibodies.append(antibody)
         primary_target_type == target_anomalies[0] if target_anomalies else "GENERIC_ANT\
     \
     \
+    \
     IBODY":::
     data_type = f"{LIS_ANTIBODY_DATA_TYPE_PREFIX}{primary_target_type}"
 
     ham_metadata = {}
             HAM_META_LIS_OBJECT_ID, antibody_id,
             # Storing a list in HAM metadata might be tricky for querying depending on H\
+    \
     \
     \
     AM impl.::
@@ -901,6 +934,7 @@ ntibodies.append(antibody)
     #     HAM_META_ANTIBODY_EFFECTIVENESS antibody.get("effectiveness_score"),
         #     # Using HAM_META_TIMESTAMP_LOGGED for creation time of antibody for consis\
     \
+    \
     tency, :
     #     HAM_META_TIMESTAMP_LOGGED antibody.get("timestamp_created",
     datetime.now.isoformat())
@@ -926,6 +960,7 @@ ntibodies.append(antibody)
 
     target_anomalies = antibody.get("target_anomaly_types")
         primary_target_type == target_anomalies[0] if target_anomalies else "GENERIC_ANT\
+    \
     \
     \
     IBODY":::

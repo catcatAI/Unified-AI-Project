@@ -122,6 +122,7 @@ class ToolPerformanceMetrics, :
             logger.info(f"Created tool category {category_id} with context {context_id}"\
     \
     \
+    \
     ):
 
 
@@ -187,6 +188,7 @@ eturn True
                     "average_duration": tool.performance_metrics.average_duration(),
                     "last_used": tool.performance_metrics.last_used.isoformat if tool.pe\
     \
+    \
     rformance_metrics.last_used else None, ::
 {            }
 
@@ -194,6 +196,7 @@ eturn True
             context_id = self.context_manager.create_context(ContextType.TOOL(),
     context_content)
             logger.info(f"Recorded usage for tool {tool_id} with context {context_id}"):\
+    \
     \
     \
     ::

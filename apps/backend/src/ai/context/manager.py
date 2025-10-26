@@ -50,6 +50,7 @@ class ContextManager, :
             logger.info(f"Created new context {context_id} of type {context_type.value}"\
     \
     \
+    \
     )
             return context_id
         except Exception as e, ::
@@ -232,6 +233,7 @@ class ContextManager, :
             return True
         except Exception as e, ::
             logger.error(f"Failed to transfer context from {source_id} to {target_id} {e\
+    \
     \
     \
     }")

@@ -38,6 +38,7 @@ Defaults to "configs / formula_configs /\
     print(f"FormulaEngine initialized. Attempted to load formulas from {self.formulas_fi\
     \
     \
+    \
     le_path}. Loaded {len(self.formulas())} formulas.")
 
     def _get_project_root(self) -> Path, :
@@ -78,6 +79,7 @@ Loads formula definitions from the JSON file specified by self.formulas_file_pat
                         # Only add if enabled (defaults to True if 'enabled' key is miss\
     \
     \
+    \
     ing)::
                             f entry.get("enabled",
     True) # Default to enabled if key missing, ::
@@ -104,6 +106,7 @@ ctive_formulas.append(entry) # type ignore
         except Exception as e, ::
             print(f"FormulaEngine,
     An unexpected error occurred while loading formulas from {self.formulas_file_path} {\
+    \
     \
     e}"):::
                 elf.formulas = []
@@ -242,6 +245,7 @@ test_inputs = {}
     print(f"  Matched Formula, {matched_formula.get('name')}")
             assert matched_formula.get('name') == expected_formula_name, \
                 f"Expected {expected_formula_name} but got {matched_formula.get('name')}\
+    \
     \
     \
     "

@@ -11,6 +11,7 @@ class Player, :
             elf.image = self.game.assets['sprites']['characters']['player']  # This will\
     \
     \
+    \
     need to be animated
         self.rect = self.image.get_rect()
         self.rect.x = 100

@@ -381,12 +381,15 @@ class DemoLearningManager, :
         urrent_frequency = self.learning_data['error_patterns'][error_key].get('frequenc\
     \
     \
+    \
     y', 0)
                 self.learning_data['error_patterns'][error_key]['frequency'] = current_f\
     \
     \
+    \
     requency + 1
                 self.learning_data['error_patterns'][error_key]['last_seen'] = datetime.\
+    \
     \
     \
     now.isoformat()

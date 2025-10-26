@@ -365,6 +365,7 @@ class ASIAutonomousAlignment, :
                 await self._adjust_learning_parameters(feedback_analysis["parameter_adju\
     \
     \
+    \
     stments"])
             
             logger.info(f"[{self.system_id}] 人类反馈已整合")
@@ -625,12 +626,15 @@ class ASIAutonomousAlignment, :
                 results["alignment_score_after"] >= experiment.success_criteria.get("min\
     \
     \
+    \
     imum_alignment_score", 0.8()) and
                 results["value_consistency"] >= experiment.success_criteria.get("value_c\
     \
     \
+    \
     onsistency_threshold", 0.9()) and
                 results["safety_compliance"] == experiment.success_criteria.get("safety_\
+    \
     \
     \
     compliance_required", True)
@@ -658,8 +662,10 @@ class ASIAutonomousAlignment, :
         total_importance == sum(value.importance for value in self.human_values.values()\
     \
     \
+    \
     )::
         average_confidence == sum(value.confidence for value in self.human_values.values\
+    \
     \
     \
     ()) / len(self.human_values())::
@@ -689,8 +695,10 @@ class ASIAutonomousAlignment, :
         completed_experiments == [e for e in self.alignment_experiments.values() if e.st\
     \
     \
+    \
     atus == "completed"]:
         successful_experiments == [e for e in completed_experiments if e.results.get("al\
+    \
     \
     \
     ignment_score_after", 0) > e.results.get("alignment_score_before", 0)]:

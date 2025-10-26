@@ -3,6 +3,7 @@ Deployment Manager for Unified - AI - Project, ::
     This module provides intelligent deployment configuration based on hardware capabili\
     \
     \
+    \
     ties.
 It automatically adjusts model parameters, memory usage,
     and processing modes to optimize
@@ -137,6 +138,7 @@ class DeploymentManager, :
             gpu_available = best_gpu_memory_gb > 1.0  # More than 1GB likely indicates u\
     \
     \
+    \
     sable GPU
 
             # Check if this is integrated graphics, ::
@@ -151,6 +153,7 @@ class DeploymentManager, :
 from .integrated_graphics_optimizer import
                 ig_optimizer == IntegratedGraphicsOptimizer(self.hardware_profile())
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier\
+    \
     \
     \
     ()
@@ -336,6 +339,7 @@ from .integrated_graphics_optimizer import
             elif feature == "real_time_inference":::
                 # Real -\
     time inference benefits from GPU but can work on integrated graphics with reduced pe\
+    \
     rformance,
     if score >= min_score and \
     (gpu_available or self.hardware_profile.cpu.cores_logical >= 4)::
@@ -353,6 +357,7 @@ from .integrated_graphics_optimizer import
                     disabled.append(feature)
             elif feature == "background_learning":::
                 # Background learning can work on integrated graphics with reduced perfo\
+    \
     \
     \
     rmance,
@@ -427,6 +432,7 @@ from .integrated_graphics_optimizer import
             try,
                 ig_optimizer == IntegratedGraphicsOptimizer(self.hardware_profile())
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier\
+    \
     \
     \
     ()
@@ -534,6 +540,7 @@ from .integrated_graphics_optimizer import
             "ENABLE_BACKGROUND_LEARNING": config.processing_config.enable_background_lea\
     \
     \
+    \
     rning(),
             "MAX_CONCURRENT_TASKS": config.processing_config.max_concurrent_tasks(),
             "TIMEOUT_SECONDS": config.processing_config.timeout_seconds(),
@@ -617,6 +624,7 @@ from diagnose_base_agent import
                 enable_real_time = processing_data['enable_real_time']
                 enable_background_learning = processing_data['enable_background_learning\
     \
+    \
     ']
                 max_concurrent_tasks = processing_data['max_concurrent_tasks'],
     timeout_seconds = processing_data['timeout_seconds']
@@ -654,6 +662,7 @@ from diagnose_base_agent import
     score = profile.ai_capability_score()
         if score < 30, ::
     recommendations.append("Consider upgrading to at least 8GB RAM for better performanc\
+    \
     \
     \
     e"):::

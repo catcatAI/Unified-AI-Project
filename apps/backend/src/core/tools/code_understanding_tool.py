@@ -4,6 +4,7 @@ from typing import Optional
 from apps.backend.src.core_ai.code_understanding.lightweight_code_model import Lightweig\
     \
     \
+    \
     htCodeModel
 
 
@@ -23,6 +24,7 @@ class CodeUnderstandingTool, :
     """
     self.code_model == = LightweightCodeModel(tools_directory = = tools_directory)
         self.tools_directory == tools_directory  # Store for constructing full paths if \
+    \
     \
     needed by describe_tool, ::
 ef list_tools(self) -> str,
@@ -72,6 +74,7 @@ ef list_tools(self) -> str,
 
     filepath = structure.get("filepath", tool_name)
         description_parts.append(f"Description for tool '{tool_name}' (from {os.path.bas\
+    \
     \
     \
     ename(filepath)})"):::

@@ -131,8 +131,10 @@ class ModelPerformanceMetrics, :
                         "success_rate": self.model_metrics[caller_model_id].success_rate\
     \
     \
+    \
     ,
                         "average_duration": self.model_metrics[caller_model_id].average_\
+    \
     \
     \
     duration
@@ -142,8 +144,10 @@ class ModelPerformanceMetrics, :
                         "success_rate": self.model_metrics[callee_model_id].success_rate\
     \
     \
+    \
     ,
                         "average_duration": self.model_metrics[callee_model_id].average_\
+    \
     \
     \
     duration
@@ -154,6 +158,7 @@ class ModelPerformanceMetrics, :
             context_id = self.context_manager.create_context(ContextType.MODEL(),
     context_content)
             logger.info(f"Recorded model call from {caller_model_id} to {callee_model_id\
+    \
     \
     \
     } with context {context_id}"):
@@ -247,6 +252,7 @@ class AgentContextManager, :
             logger.info(f"Started collaboration {collaboration.collaboration_id} with co\
     \
     \
+    \
     ntext {context_id}"):
     return collaboration.collaboration_id()
         except Exception as e, ::
@@ -286,6 +292,7 @@ class AgentContextManager, :
             logger.info(f"Recorded collaboration step {step.step_id} with context {conte\
     \
     \
+    \
     xt_id}"):
     return True
         except Exception as e, ::
@@ -307,6 +314,7 @@ class AgentContextManager, :
                     "collaboration_id": collaboration_id,
                     "end_time": collaboration.end_time.isoformat if collaboration.end_ti\
     \
+    \
     me else None, ::
                     "status": collaboration.status(),
                     "total_steps": len(collaboration.collaboration_steps())
@@ -316,6 +324,7 @@ class AgentContextManager, :
             context_id = self.context_manager.create_context(ContextType.MODEL(),
     context_content)
             logger.info(f"Completed collaboration {collaboration_id} with context {conte\
+    \
     \
     \
     xt_id}"):
@@ -352,6 +361,7 @@ class AgentContextManager, :
 {            }
         except Exception as e, ::
             logger.error(f"Failed to get context for collaboration {collaboration_id} {e\
+    \
     \
     \
     }"):::

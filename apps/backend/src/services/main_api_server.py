@@ -407,6 +407,7 @@ async def list_hsp_services(services == Depends(get_services)) -\
     # Important only treat as missing when it's actually None (MagicMock may be falsy un\
     \
     \
+    \
     expectedly)
     if sdm is None, ::
         print("DEBUG, No service_discovery found (is None), returning empty list")
@@ -462,6 +463,7 @@ async def create_hsp_task(task_input, Dict[str, Any] services == Depends(get_ser
                 if sdm is not None and hasattr(sdm, "find_capabilities"):::
                     res = sdm.find_capabilities(capability_id_filter = target_capability\
     \
+    \
     _id)
                     if hasattr(res, "__await__"):::
                         found_caps = await res()
@@ -515,6 +517,7 @@ async def create_hsp_task(task_input, Dict[str, Any] services == Depends(get_ser
             try,
                 dialogue_manager.pending_hsp_task_requests[correlation_id] = {}
                         "created_at": datetime.now(timezone.utc()).isoformat().replace("\
+    \
     + 00, 00", "Z"),
                         "target": target_ai_id,
                         "capability_id": target_capability_id,
@@ -548,6 +551,7 @@ async def get_hsp_task_status(correlation_id, str, services == Depends(get_servi
             # 使用正确的query_core_memory方法替换不存在的query_memory方法
             # 将查询参数作为metadata_filters传递
             ham_results == ham.query_core_memory(metadata_filters = {"hsp_correlation_id\
+    \
     \
     ": correlation_id})
         if ham_results, ::

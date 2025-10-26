@@ -28,10 +28,12 @@ class VisionToneInverter, :
     processed_visual_data["color_palette"] = self._make_brighter(processed_visual_data["\
     \
     \
+    \
     color_palette"])
         elif target_tone == "minimalist" and "layout_elements" in processed_visual_data,
     ::
     processed_visual_data["layout_elements"] = self._simplify_layout(processed_visual_da\
+    \
     \
     \
     ta["layout_elements"])
@@ -68,6 +70,7 @@ class VisionToneInverter, :
     print(f"Adjusted visuals (brighter) {adjusted_visuals}")
 
     adjusted_visuals_minimal == inverter.invert_visual_tone({"layout_elements": ["header\
+    \
     \
     \
     ", "sidebar", "content", "footer"]} "minimalist")

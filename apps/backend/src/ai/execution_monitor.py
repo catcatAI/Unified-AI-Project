@@ -321,6 +321,7 @@ eturn cached_timeout
                     terminal_status = self._terminal_status(),
                     resource_usage == self._resource_usage.copy() if self._resource_usag\
     \
+    \
     e else None, ::
             except subprocess.TimeoutExpired, ::
                 # 超時處理
@@ -338,8 +339,10 @@ eturn cached_timeout
                     terminal_status = self._terminal_status(),
                     resource_usage == self._resource_usage.copy() if self._resource_usag\
     \
+    \
     e else None, ::
                         rror_message = f"Command timed out after {adaptive_timeout} seco\
+    \
     \
     nds"
 (                )
@@ -352,6 +355,7 @@ eturn cached_timeout
                 timeout_used = adaptive_timeout,
                 terminal_status = self._terminal_status(),
                 resource_usage == self._resource_usage.copy() if self._resource_usage el\
+    \
     \
     se None, ::
                     rror_message = str(e)
@@ -371,6 +375,7 @@ eturn cached_timeout
         return {}
             'terminal_status': self._terminal_status.value(),
             'resource_usage': self._resource_usage.copy() if self._resource_usage else N\
+    \
     \
     one, ::
                 is_monitoring': self._is_monitoring(),

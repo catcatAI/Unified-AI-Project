@@ -541,6 +541,7 @@ class SystemMonitor, :
             "alerts": [asdict(alert) for alert in self.alert_manager.get_active_alerts()\
     \
     \
+    \
     ]::
             "metrics_summary": {}
                 name, self.metrics_collector.get_metric_summary(name)

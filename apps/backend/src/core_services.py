@@ -39,6 +39,7 @@ def get_AgentManager():
         from apps.backend.src.managers.agent_manager import AgentManager as ActualAgentM\
     \
     \
+    \
     anager
         return ActualAgentManager
     except ImportError, ::
@@ -59,6 +60,7 @@ def get_HAMMemoryManager():
     """获取HAMMemoryManager类"""
     try,
         from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager as Ac\
+    \
     \
     \
     tualHAMMemoryManager
@@ -224,6 +226,7 @@ class DialogueManager, :
 在函数定义前添加空行
         try,
             from ai.dialogue.dialogue_manager import DialogueManager as RealDialogueMana\
+    \
     \
     \
     ger
@@ -395,6 +398,7 @@ async def initialize_services()
             applied_settings = deployment_manager_instance.apply_config(deployment_confi\
     \
     \
+    \
     g)
             logger.info(f"Core Services,
     Applied {deployment_config.mode.value} deployment mode")
@@ -441,6 +445,7 @@ async def initialize_services()
     # - - - 1. Configurations - - -
     effective_op_configs == operational_configs if operational_configs else DEFAULT_OPER\
     \
+    \
     ATIONAL_CONFIGS, :
     main_config_dict == {:}
         "operational_configs": effective_op_configs,
@@ -450,6 +455,7 @@ async def initialize_services()
     if llm_interface_instance is None, ::
         try,
             from apps.backend.src.services.multi_llm_service import get_multi_llm_servic\
+    \
     \
     \
     e
@@ -590,6 +596,7 @@ from .services.multi_llm_service import
                 logger.warning(f"Core Services,
     WARNING -\
     HSPConnector for {ai_id} failed to connect to {hsp_broker_address}{hsp_broker_port}"\
+    \
     )::
             else,
                 logger.info(f"Core Services, HSPConnector for {ai_id} connected."):::
@@ -612,6 +619,7 @@ from .services.multi_llm_service import
     if not service_discovery_module_instance, ::
         service_discovery_module_instance == ServiceDiscoveryModule(trust_manager = trus\
     \
+    \
     t_manager_instance)
 
     if hsp_connector_instance and service_discovery_module_instance, ::
@@ -622,6 +630,7 @@ from .services.multi_llm_service import
     if not fact_extractor_instance, ::
         if llm_interface_instance is not None, ::
             fact_extractor_instance == FactExtractorModule(llm_service = llm_interface_i\
+    \
     \
     nstance)
         else,
@@ -674,6 +683,7 @@ from .services.multi_llm_service import
                             logger.warning("Learning manager does not have process_and_s\
     \
     \
+    \
     tore_hsp_fact method")
                             return None
                     except Exception as e, ::
@@ -691,6 +701,7 @@ from .services.multi_llm_service import
         if personality_profile is None, ::
             personality_profile = {}
         emotion_system_instance == EmotionSystem(personality_profile = personality_profi\
+    \
     \
     le)
 
@@ -713,6 +724,7 @@ from .ai.formula_engine import
     if not agent_manager_instance, ::
         AgentManagerClass = get_AgentManager()
         agent_manager_instance == AgentManagerClass(python_executable = sys.executable()\
+    \
     \
     )
 

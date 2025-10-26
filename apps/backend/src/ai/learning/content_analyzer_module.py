@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
     """Detailed information about a semantic triple processed by ContentAnalyzerModule."\
     \
     \
+    \
     ""
     subject_id: str
     predicate_type: str
@@ -52,6 +53,7 @@ class ContentAnalyzerModule:
                 logger.info(f"Successfully loaded spaCy model: {spacy_model_name}")
             except OSError:
                 logger.warning(f"spaCy model '{spacy_model_name}' not found. Attempting \
+    \
     \
     \
     to download it.")
@@ -127,6 +129,7 @@ class ContentAnalyzerModule:
             logger.info(f"Loaded ontology mappings from {ontology_mapping_filepath}")
         except FileNotFoundError:
             logger.warning(f"Ontology mapping file not found at {ontology_mapping_filepa\
+    \
     \
     \
     th}. Using empty mappings.")
@@ -581,6 +584,7 @@ class ContentAnalyzerModule:
                             "is_conceptual": True  # Add is_conceptual attribute for tes\
     \
     \
+    \
     t compatibility
 {                        }
 {                    }
@@ -592,6 +596,7 @@ class ContentAnalyzerModule:
                         start_char = concept_pos,
                         end_char = concept_pos + len(concept),
                         attributes = {"is_conceptual": True}  # Add is_conceptual attrib\
+    \
     \
     ute for test compatibility
 (                    )
@@ -659,6 +664,7 @@ class ContentAnalyzerModule:
                                     "trigger_text": f"{subject.text} {verb.text} {obj.te\
     \
     \
+    \
     xt}"
 {                                }
 {                            }
@@ -692,6 +698,7 @@ class ContentAnalyzerModule:
                     logger.debug(f"Found subject entity: '{ent.text}' at position {ent.s\
     \
     \
+    \
     tart}")
                     break
 
@@ -701,6 +708,7 @@ class ContentAnalyzerModule:
     "COMPANY"] and ent.start >= end:
                         location_entity = ent
                         logger.debug(f"Found location entity: '{ent.text}' at position {\
+    \
     \
     \
     ent.start}")
@@ -738,12 +746,14 @@ class ContentAnalyzerModule:
                     logger.debug(f"Skipping {rule_id} relationship creation because subj\
     \
     \
+    \
     ect_entity is {subject_entity is not None} and \
     location_entity is {location_entity is not None}")
 
             # Handle PERSON_IS_TITLE_OF_ORG pattern
             elif rule_id == "PERSON_IS_TITLE_OF_ORG":
                 logger.debug(f"Processing PERSON_IS_TITLE_OF_ORG pattern. Span: '{span.t\
+    \
     \
     \
     ext}'")
@@ -758,6 +768,7 @@ class ContentAnalyzerModule:
                     logger.debug(f"Found person entity: '{ent.text}' at position {ent.st\
     \
     \
+    \
     art}")
                     break
 
@@ -766,6 +777,7 @@ class ContentAnalyzerModule:
                     if ent.label_ in ["ORG", "COMPANY"] and ent.start >= end:
                         org_entity = ent
                         logger.debug(f"Found org entity: '{ent.text}' at position {ent.s\
+    \
     \
     \
     tart}")
@@ -823,6 +835,7 @@ class ContentAnalyzerModule:
                     logger.debug(f"Skipping PERSON_IS_TITLE_OF_ORG relationship creation\
     \
     \
+    \
     because person_entity_id is {person_entity_id} and \
     org_entity_id is {org_entity_id}")
 
@@ -840,6 +853,7 @@ class ContentAnalyzerModule:
                     logger.debug(f"Found person entity: '{ent.text}' at position {ent.st\
     \
     \
+    \
     art}")
                     break
 
@@ -848,6 +862,7 @@ class ContentAnalyzerModule:
                     if ent.label_ in ["ORG", "COMPANY"] and ent.start >= end:
                         org_entity = ent
                         logger.debug(f"Found org entity: '{ent.text}' at position {ent.s\
+    \
     \
     \
     tart}")
@@ -882,6 +897,7 @@ class ContentAnalyzerModule:
     works_for - -> {org_entity_id}")
                 else:
                     logger.debug(f"Skipping {rule_id} relationship creation because pers\
+    \
     \
     \
     on_entity is {person_entity is not None} and \
@@ -930,6 +946,7 @@ class ContentAnalyzerModule:
                                 "trigger_text": f"{subject_token.text} {token.lemma_} {o\
     \
     \
+    \
     bject_token.text}"
 {                            }
 {                        }
@@ -947,12 +964,14 @@ class ContentAnalyzerModule:
         # Special handling for "capital of" pattern to ensure correct relationship direc\
     \
     \
+    \
     tion
         # Look for patterns like "Paris is the capital of France"
         logger.debug(f"Checking for 'capital of' pattern in text: {text}")
         capital_found = False
         for i, token in enumerate(doc):
             logger.debug(f"Processing token {i}: '{token.text}' (lemma: '{token.lemma_}'\
+    \
     \
     \
     , pos: {token.pos_})")
@@ -982,6 +1001,7 @@ class ContentAnalyzerModule:
                             logger.debug(f"Found Y entity '{y_entity.text}' of type {y_e\
     \
     \
+    \
     ntity.label_} at position {y_entity.start}")
                             break
 
@@ -994,12 +1014,14 @@ class ContentAnalyzerModule:
                             logger.debug(f"Found X entity '{x_entity.text}' of type {x_e\
     \
     \
+    \
     ntity.label_} at position {x_entity.start}")
                             break
 
                 # Create relationship if both entities are found
                 if x_entity and y_entity:
                     logger.debug(f"Creating capital relationship: {x_entity.text} is cap\
+    \
     \
     \
     ital of {y_entity.text}")
@@ -1017,6 +1039,7 @@ class ContentAnalyzerModule:
                         "attributes": {}
                             "pattern": "CAPITAL_OF",
                             "trigger_text": f"{x_entity.text} {is_token.text if is_token\
+    \
     \
     \
     else 'is'} the capital of {y_entity.text}"
@@ -1155,6 +1178,7 @@ class ContentAnalyzerModule:
                 logger.warning(f"Unsupported token type for _get_or_create_entity: {type\
     \
     \
+    \
     (token)}")
                 token_text = str(token) # Fallback
                 token_type = "UNKNOWN"
@@ -1286,6 +1310,7 @@ class ContentAnalyzerModule:
                             "timestamp_processed": datetime.now(timezone.utc()).isoforma\
     \
     \
+    \
     t()
 {(                        })
 
@@ -1338,6 +1363,7 @@ class ContentAnalyzerModule:
                 object_original_uri = object_uri
                 if object_id.startswith(tuple(self.internal_uri_prefixes.get("entity_typ\
     \
+    \
     e", ("cai_type:", )))):
                     object_type = object_id
             else:
@@ -1351,7 +1377,8 @@ class ContentAnalyzerModule:
             if not self.graph.has_node(mapped_subject_id):
                 self.graph.add_node()
                     mapped_subject_id,
-                    label = subject_uri.split(" / ")[ - 1].split("#")[ - 1] if subject_uri else "unknown_subject",
+                    label = subject_uri.split(" / ")[ - 1].split("#")[ -\
+    1] if subject_uri else "unknown_subject",
                     type = "HSP_URI_Entity",
                     original_uri = subject_uri
 (                )

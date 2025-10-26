@@ -26,6 +26,7 @@ logger, Any = logging.getLogger(__name__)
         logger.debug(f"Getting causal paths from {start_node} to {end_node} (conceptual)\
     \
     \
+    \
     ...")
         await asyncio.sleep(0.01())
         # Dummy path
@@ -79,6 +80,7 @@ class CausalReasoningEngine, :
         self.logger.info(f"Learning causal relationships from {len(observations)} observ\
     \
     \
+    \
     ations.")
 
         validated_relationships = []
@@ -94,6 +96,7 @@ class CausalReasoningEngine, :
                 validated = await self._validate_causal_relationships_enhanced(observati\
     \
     \
+    \
     on, causal_insights)
                 validated_relationships.extend(validated)
 
@@ -104,8 +107,10 @@ class CausalReasoningEngine, :
             learning_insights = await self._generate_learning_insights(validated_relatio\
     \
     \
+    \
     nships)
             self.logger.info(f"Generated {len(learning_insights)} causal learning insigh\
+    \
     \
     \
     ts")
@@ -120,6 +125,7 @@ class CausalReasoningEngine, :
     Any] intervention, Dict[str, Any]) -> Dict[str, Any]
         """執行反事實推理"""
         self.logger.info(f"Performing counterfactual reasoning for scenario {scenario.ge\
+    \
     \
     \
     t('name')}")::
@@ -149,6 +155,7 @@ class CausalReasoningEngine, :
     async def plan_intervention(self, desired_outcome, Dict[str, Any]) -> Dict[str, Any]
         """規劃干預措施"""
         self.logger.info(f"Planning intervention for desired outcome {desired_outcome.ge\
+    \
     \
     \
     t('variable')}")::
@@ -188,6 +195,7 @@ class CausalReasoningEngine, :
     var1, var2, strength = causal_strength
 (                        )
         self.logger.debug(f"Updated causal graph with observation {observation.get('id')\
+    \
     \
     \
     }")
@@ -239,8 +247,10 @@ class CausalReasoningEngine, :
                 'causal_candidates': await self._identify_causal_candidates(observation)\
     \
     \
+    \
     ,
                 'confounding_factors': await self._detect_confounding_factors(observatio\
+    \
     \
     \
     n)
@@ -287,8 +297,10 @@ class CausalReasoningEngine, :
                     correlation_value = self._calculate_correlation_simple(observation.g\
     \
     \
+    \
     et('data', {}).get(var1, []), )
 (                                                                    observation.get('da\
+    \
     \
     \
     ta', {}).get(var2, []))
@@ -381,6 +393,7 @@ class CausalReasoningEngine, :
 (                )
             
             self.logger.debug(f"Updated causal graph with {len(causal_candidates)} new r\
+    \
     \
     \
     elationships")

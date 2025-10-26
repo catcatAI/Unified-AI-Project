@@ -74,6 +74,7 @@ class VectorMemoryStore, :
             logger.warning("VectorMemoryStore not initialized. Cannot perform semantic s\
     \
     \
+    \
     earch.")
             return {}
             

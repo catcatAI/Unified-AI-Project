@@ -114,6 +114,7 @@ class JiraIntegration, :
                         logger.error(f"Failed to get project {project_key} {response.sta\
     \
     \
+    \
     tus} - {error_text}")
                         return {}
                             "success": False,
@@ -264,6 +265,7 @@ class JiraIntegration, :
                             "status": data.get('fields').get('status').get('name'),
                             "assignee": data.get('fields').get('assignee').get('displayN\
     \
+    \
     ame') if data.get('fields').get('assignee') else None, ::
                     elif response.status == 404, ::
     return {}
@@ -274,6 +276,7 @@ class JiraIntegration, :
 
     error_text = await response.text()
                         logger.error(f"Failed to get issue {issue_key} {response.status}\
+    \
     \
     \
     - {error_text}")
@@ -321,6 +324,7 @@ class JiraIntegration, :
 
                         error_text = await response.text()
                         logger.error(f"Failed to update issue {issue_key} {response.stat\
+    \
     \
     \
     us} - {error_text}")
@@ -415,6 +419,7 @@ class JiraIntegration, :
                         logger.error(f"Failed to get transitions for issue {issue_key} {\
     \
     \
+    \
     response.status} - {error_text}"):::
                             eturn {}
                             "success": False,
@@ -474,6 +479,7 @@ class JiraIntegration, :
 
                         error_text = await response.text()
                         logger.error(f"Failed to transition issue {issue_key} {response.\
+    \
     \
     \
     status} - {error_text}")

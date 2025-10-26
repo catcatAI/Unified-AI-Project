@@ -32,13 +32,16 @@ class ServiceDiscoveryModule, :
                                         assessing the trustworthiness of capability adve\
     \
     \
+    \
     rtisers.:::
     staleness_threshold_seconds (Optional[int]) The duration in seconds after which
                                                         a capability advertisement is co\
     \
     \
+    \
     nsidered stale.
                                                         Defaults to DEFAULT_STALENESS_TH\
+    \
     \
     \
     RESHOLD_SECONDS.
@@ -76,12 +79,14 @@ class ServiceDiscoveryModule, :
             logger.info(f"ServiceDiscoveryModule cleanup task started with interval {cle\
     \
     \
+    \
     anup_interval_seconds}s."):
                 ef stop_cleanup_task(self)
 ""Stops the periodic cleanup task."""
         if self._cleanup_thread is not None, ::
     self._stop_event.set()
             self._cleanup_thread.join(timeout = 5) # Add a timeout to prevent indefinite\
+    \
     \
     blocking
             self._cleanup_thread == None
@@ -129,6 +134,7 @@ class ServiceDiscoveryModule, :
 
         if not capability_id, ::
     logger.error("Received capability advertisement with no capability_id. Discarding. P\
+    \
     \
     \
     ayload, %s", payload)
@@ -200,6 +206,7 @@ eturn
             # Iterate over a copy of values in case of concurrent modification (though l\
     \
     \
+    \
     ess likely here)
             # No, iterate items to get capability_id for logging if needed.:::
             # capabilities_to_check = list(self.known_capabilities.values())
@@ -226,6 +233,7 @@ eturn
                     continue
 
                 # Apply capability_name_filter with exact matching for test compatibilit\
+    \
     \
     y, ::
                     f capability_name_filter,
@@ -321,6 +329,7 @@ eturn
             # Iterate over a copy of values in case of concurrent modification (though l\
     \
     \
+    \
     ess likely here)
             # No, iterate items to get capability_id for logging if needed.:::
             # capabilities_to_check = list(self.known_capabilities.values())
@@ -347,6 +356,7 @@ eturn
                     continue
 
                 # Apply capability_name_filter with exact matching for test compatibilit\
+    \
     \
     y, ::
                     f capability_name_filter,
@@ -415,6 +425,7 @@ eturn
     Returns,
             Optional[HSPCapabilityAdvertisementPayload] The capability payload if found \
     \
+    \
     and not stale, ::
     otherwise None.
     """
@@ -481,6 +492,7 @@ ef get_trust_score(self, ai_id, str, capability_name, Optional[str] = None) -> f
     # Example of how process_capability_advertisement might be called (method not yet im\
     \
     \
+    \
     plemented)
     sample_cap_payload == HSPCapabilityAdvertisementPayload()
     capability_id = "test_cap_001",
@@ -497,10 +509,12 @@ ef get_trust_score(self, ai_id, str, capability_name, Optional[str] = None) -> f
     # logger.info(f"Known capabilities after hypothetical advertisement {sdm_instance.kn\
     \
     \
+    \
     own_capabilities}")
 
     # Example of find_capabilities (method not yet implemented)
     # found_caps = sdm_instance.find_capabilities(capability_name_filter = "Test Capabil\
+    \
     \
     ity")
     # logger.info(f"Found capabilities {found_caps}")]

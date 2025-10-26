@@ -84,6 +84,7 @@ class AIVirtualInputService, :
             search_list (Optional[List[VirtualInputElementDescription]]) The list of ele\
     \
     \
+    \
     ments
                 to search within. If None, searches self.virtual_ui_elements.
 
@@ -127,6 +128,7 @@ class AIVirtualInputService, :
     all non - simulation modes are treated as "not implemented for real action".:::
                 utcome == {"status": "error",
     "message": f"Mode '{self.mode}' not fully supported for actual mouse actions yet. Si\
+    \
     \
     mulating."}::
             # Fall through to simulation for now.:::
@@ -231,6 +233,7 @@ class AIVirtualInputService, :
     outcome == {"status": "error",
     "message": f"Mode '{self.mode}' not fully supported for actual keyboard actions yet.\
     \
+    \
     Simulating."}:
             # Fall through to simulation
 
@@ -258,6 +261,7 @@ class AIVirtualInputService, :
                 lement_to_type_in = self._find_element_by_id(self.virtual_focused_elemen\
     \
     \
+    \
     t_id())
 
             if target_element, # If a specific target is given,
@@ -279,15 +283,18 @@ class AIVirtualInputService, :
                     type_details["updated_element_id"] = element_to_type_in.get("element\
     \
     \
+    \
     _id")
                     print(f"  AVIS Sim,
     Element '{element_to_type_in.get('element_id')}' value updated to '{text_to_type}'."\
+    \
     \
     )
                 else,
 
                     print(f"  AVIS Sim,
     Element '{element_to_type_in.get('element_id')}' not a text input type (no 'value' a\
+    \
     \
     ttribute). Typing simulated by log only.")
             else,
@@ -334,6 +341,7 @@ class AIVirtualInputService, :
     "details": special_key_details}
             print(f"  AVIS Sim,
     Special key '{key_name}' press logged on focused '{self.virtual_focused_element_id o\
+    \
     \
     r 'unknown'}'.")
 

@@ -61,6 +61,7 @@ class DependencyManager:
                 logger.warning(f"Dependency configuration file not found: {config_path}"\
     \
     \
+    \
     )
                 self._config = {}
         except Exception as e:
@@ -103,6 +104,7 @@ class DependencyManager:
                     logger.info(f"Using fallback {fallback_name} for {name}")
                 except ImportError as fallback_error:
                     logger.error(f"Failed to load fallback {fallback_name} for {name}: {\
+    \
     \
     \
     fallback_error}")

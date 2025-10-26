@@ -78,6 +78,7 @@ class PetManager, :
         logger.info(f"Updating behavior for pet '{self.pet_id}' from {self.behavior_rule\
     \
     \
+    \
     s} to {new_behaviors}")::
         # Add validation for new behaviors.:::
         for key, value in new_behaviors.items():::

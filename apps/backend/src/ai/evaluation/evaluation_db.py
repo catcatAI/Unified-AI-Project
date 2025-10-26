@@ -41,6 +41,7 @@ class EvaluationDB, :
     """Adds a new evaluation record to the database. Returns the ID of the new record.""\
     \
     \
+    \
     ",
     conn == sqlite3.connect(self.db_path()):
         ursor = conn.cursor()

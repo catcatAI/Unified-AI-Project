@@ -66,6 +66,7 @@ class CodeUnderstandingAgent(BaseAgent):
                 "description": "Automatically fixes common code issues like syntax error\
     \
     \
+    \
     s, style issues, etc.",
                 "version": "1.0",
                 "parameters": []
@@ -83,6 +84,7 @@ class CodeUnderstandingAgent(BaseAgent):
         logger.info(f"[{self.agent_id}] CodeUnderstandingAgent initialized with capabili\
     \
     \
+    \
     ties, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload,
     sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -91,6 +93,7 @@ class CodeUnderstandingAgent(BaseAgent):
         params = task_payload.get("parameters", {})
 
         logger.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capa\
+    \
     \
     \
     bility_id}'"):::
@@ -123,9 +126,11 @@ class CodeUnderstandingAgent(BaseAgent):
             callback_topic == str(callback_address) if callback_address is not None else\
     \
     \
+    \
     "":::
 = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logger.info(f"[{self.agent_id}] Sent task result for {request_id} to {callba\
+    \
     \
     \
     ck_topic}"):::
@@ -151,8 +156,10 @@ class CodeUnderstandingAgent(BaseAgent):
                 analysis["function_count"] = len([node for node in ast.walk(tree) if isi\
     \
     \
+    \
     nstance(node, ast.FunctionDef())])::
                     nalysis["class_count"] = len([node for node in ast.walk(tree) if isi\
+    \
     \
     \
     nstance(node, ast.ClassDef())])::
@@ -189,6 +196,7 @@ nalysis["import_from_count"] = len([node for node in ast.walk(tree) if isinstanc
         
         # Add header
         doc_lines.append(f"# {'Technical' if style == 'technical' else 'User'} Documenta\
+    \
     \
     \
     tion"):::
@@ -334,7 +342,7 @@ nalysis["import_from_count"] = len([node for node in ast.walk(tree) if isinstanc
         
         # Fix missing colons in control structures
         patterns = []
-            (r'^(\s * (if|elif|else|for|while|try|except|finally|with|def|class)\s + . + ?)(?<!:)$', r'\1,'),::
+            (r'^(\s * (if|elif|else|for|while|try|except|finally|with|def|class)\s + . + ?)(? < !:)$', r'\1,'),::
 [        ]
         
         lines = fixed_code.split('\n')

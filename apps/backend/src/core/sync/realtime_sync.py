@@ -312,8 +312,10 @@ class RealtimeSyncManager, :
             'active_connections': len(self.websocket_connections()),
             'registered_handlers': sum(len(handlers) for handlers in self.event_handlers\
     \
+    \
     .values()), :::
             'subscriptions': sum(len(callbacks) for callbacks in self.subscribers.values\
+    \
     \
     \
     ())::

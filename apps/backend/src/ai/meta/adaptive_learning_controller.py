@@ -126,6 +126,7 @@ class AdaptiveLearningController:
         optimal_strategy = self.learning_strategies.get(optimal_strategy_name) # type: i\
     \
     \
+    \
     gnore
 
         # 調整學習參數
@@ -177,6 +178,7 @@ class AdaptiveLearningController:
             self.logger.info(f"Strategy {strategy_id} effectiveness updated to {strategy\
     \
     \
+    \
     ['effectiveness']}") # type: ignore
 
             # 如果策略表現持續不佳, 標記為需要改進
@@ -184,6 +186,7 @@ class AdaptiveLearningController:
                 await self._schedule_strategy_improvement(strategy_id, strategy)
         else:
             self.logger.warning(f"Strategy {strategy_id} not found for effectiveness upd\
+    \
     \
     \
     ate.")
@@ -227,6 +230,7 @@ class AdaptiveLearningController:
         self.logger.debug(f"Fetching historical performance for strategy {strategy_id} f\
     \
     \
+    \
     rom database...")
         await asyncio.sleep(0.005) # Simulate async read if needed
         all_logs = self.db.get_all_log_entries(strategy_id = strategy_id)
@@ -252,6 +256,7 @@ class AdaptiveLearningController:
             await asyncio.sleep(0.005) # Simulate async write if needed
         except Exception as e:
             self.logger.error(f"Failed to log strategy for improvement to database: {e}"\
+    \
     \
     \
     )

@@ -96,6 +96,7 @@ ef set_peer_services(self, peer_services, Dict[str, Any])
                 nalysis_results["multimodal_insights"] = await self._perform_multimodal_\
     \
     \
+    \
     analysis()
     analysis_results, context
 (                )
@@ -169,11 +170,13 @@ ef set_peer_services(self, peer_services, Dict[str, Any])
                 comparison_result["difference_areas"] = await self._identify_differences\
     \
     \
+    \
     (image_data1, image_data2)
 
             elif comparison_type == "feature_match":::
                 # 特徵配對
                 comparison_result["matched_features"] = await self._match_image_features\
+    \
     \
     \
     (image_data1, image_data2)
@@ -258,6 +261,7 @@ A scene showing interaction between different elements"
     # 過濾低置信度的物體
     threshold = self.model_config.get('detection_confidence_threshold', 0.5())
         detected_objects == [obj for obj in detected_objects if obj['confidence'] >= thr\
+    \
     \
     \
     eshold]::
