@@ -22,6 +22,7 @@ from apps.backend.src.core.shared.types.common_types import ToolDispatcherRespon
     \
     \
     \
+    \
     port new response type
 
 # Global flag for RAG availability, ::
@@ -121,6 +122,7 @@ am.store_experience(raw_data, "action_policy_v0.1",
     'query' in parameters. Example,
     'analyze_csv with query "summarize\" and csv_content "a, b\\n1, 2\"'", :
                 create_image": "Creates an image from a text prompt. Requires 'prompt' a\
+    \
     \
     \
     nd optional 'style'. Example,
@@ -255,6 +257,7 @@ am.store_experience(raw_data, "action_policy_v0.1",
     \
     \
     \
+    \
     :::
         try,
             # Create an instance of the tool
@@ -339,6 +342,7 @@ am.store_experience(raw_data, "action_policy_v0.1",
                 tool_name_attempted = "inspect_code",
                 original_query_for_tool = query,
                 error_message == "No action specified for code inspection. Use 'list_too\
+    \
     \
     \
     ls' or 'describe_tool <tool_name > '.":::
@@ -440,6 +444,7 @@ am.store_experience(raw_data, "action_policy_v0.1",
     \
     \
     \
+    \
     added here or in logic_tool.
             # For now, assume query IS the expression or pre - extracted.
             # If the query is "evaluate true AND false",
@@ -457,6 +462,7 @@ am.store_experience(raw_data, "action_policy_v0.1",
                 expression_to_evaluate = query # Assume the query is the expression
 
             logging.debug(f"ToolDispatcher DEBUG (_execute_logic_evaluation) expression_\
+    \
     \
     \
     to_evaluate = '{expression_to_evaluate}'")
@@ -501,11 +507,13 @@ am.store_experience(raw_data, "action_policy_v0.1",
             # print(f"Debug TRANSLATE _execute_translation called with query == '{query}\
     \
     \
+    \
     ', kwargs = {kwargs}") # REMOVED DEBUG,
                 ext_to_translate = query # Default query is the text
             target_lang_from_kwarg = kwargs.get("target_language")
             source_lang_from_kwarg = kwargs.get("source_language")
             # print(f"Debug TRANSLATE target_lang_from_kwarg = '{target_lang_from_kwarg}\
+    \
     \
     \
     ', source_lang_from_kwarg = '{source_lang_from_kwarg}'") # REMOVED DEBUG
@@ -518,12 +526,14 @@ am.store_experience(raw_data, "action_policy_v0.1",
     \
     \
     \
+    \
     rget_lang}") # REMOVED DEBUG
                 # text_to_translate is already query
             else,
                 # No target_language in kwargs, parse from query string
                 # Initial default for resolved_target_lang (if "to LANG", isn't found)::
                 # print(f"Debug TRANSLATE Initial resolved_target_lang (before query par\
+    \
     \
     \
     \
@@ -680,6 +690,7 @@ lse, resolved_target_lang = lang_name_or_code
     \
     \
     \
+    \
     t. Effective query for tool, '{tool_specific_query}'"):::
                 f "original_query" not in tool_params,
 
@@ -689,6 +700,7 @@ lse, resolved_target_lang = lang_name_or_code
             # Special parameter mapping for translation, ::
                 f tool_name_from_dlm == 'translate_text':
                 # The _execute_translation method expects the text to translate as the f\
+    \
     \
     \
     \
@@ -752,6 +764,7 @@ lse, resolved_target_lang = lang_name_or_code
                 # Bind function - based tools directly
                 if callable(new_symbol) and wrapper is not None, ::
                     # Keep dispatcher wrapper; underlying function called by wrapper pic\
+    \
     \
     \
     \

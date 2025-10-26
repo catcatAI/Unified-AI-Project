@@ -315,6 +315,7 @@ class PerformanceOptimizer, :
     \
     \
     \
+    \
     ]
 {            }
 {    }

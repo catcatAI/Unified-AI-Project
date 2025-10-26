@@ -82,6 +82,7 @@ ef _align_fact_payload(self, payload, Dict[str,
     self._create_error_details("Missing 'capability_id' in CapabilityAdvertisement paylo\
     \
     \
+    \
     ad", "payload.capability_id")
         return payload, None
 

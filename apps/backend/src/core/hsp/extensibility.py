@@ -155,6 +155,7 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
     \
     \
     \
+    \
     )
                 message['payload'] = decrypted_payload
             except Exception as e, ::

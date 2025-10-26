@@ -313,8 +313,10 @@ class RealtimeSyncManager, :
             'registered_handlers': sum(len(handlers) for handlers in self.event_handlers\
     \
     \
+    \
     .values()), :::
             'subscriptions': sum(len(callbacks) for callbacks in self.subscribers.values\
+    \
     \
     \
     \

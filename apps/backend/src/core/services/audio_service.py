@@ -17,6 +17,7 @@ class AudioService, :
     \
     \
     \
+    \
     '} mode"):::
 sync def initialize(self):
         """初始化音频服务"""

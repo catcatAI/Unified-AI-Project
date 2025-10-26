@@ -113,6 +113,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
     \
     \
     \
+    \
     nce_spaces')
 
             for space_config in spaces_config, ::
@@ -143,6 +144,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
     try,
         emo_config = self.demo_manager.config.get('demo_credentials')
     projects_config = demo_config.get('auto_initialization').get('demo_data').get('jira_\
+    \
     \
     \
     \
@@ -257,6 +259,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
     \
     \
     \
+    \
     (performance_metric)
 
     async def create_jira_issue()
@@ -331,6 +334,7 @@ class EnhancedAtlassianBridge(AtlassianBridge):
                     'timestamp': asyncio.get_event_loop.time()
 {                }
                 self.demo_manager.learning_data.setdefault('performance_metrics').append\
+    \
     \
     \
     \

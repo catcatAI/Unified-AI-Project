@@ -77,6 +77,7 @@ class AlignmentManager, :
     \
     \
     \
+    \
     rity.name}")::
     async def configure_balance_thresholds(self)
                                         ethical_min, float,
@@ -95,6 +96,7 @@ class AlignmentManager, :
         self.adversarial_mode == True
         self.adversarial_intensity = max(0.0(), min(1.0(), intensity))
         logger.info(f"[{self.system_id}] Enabled adversarial mode with intensity {self.a\
+    \
     \
     \
     \
@@ -152,6 +154,7 @@ class AlignmentManager, :
         logger.info(f"[{self.system_id}] Decision made with confidence {alignment_result\
     \
     \
+    \
     .confidence, .2f}")
         return alignment_result
     
@@ -198,10 +201,12 @@ class AlignmentManager, :
     \
     \
     \
+    \
     option, context)
             
             # 评估世界观一致性
             worldview_consistency = await self.ontology_system.assess_worldview_consiste\
+    \
     \
     \
     \
@@ -223,6 +228,7 @@ class AlignmentManager, :
 (    existential_assessments, List[Dict[str, Any]]) -> Tuple[List, List, List]
         """生成对抗性测试"""
         logger.info(f"[{self.system_id}] Generating adversarial tests with intensity {se\
+    \
     \
     \
     \
@@ -284,6 +290,7 @@ class AlignmentManager, :
     \
     \
     \
+    \
     l"
             
             # 增加情感冲突
@@ -311,6 +318,7 @@ class AlignmentManager, :
             # 创建存在威胁：短期利益但长期存在风险
             adversarial_option = options[i].copy()
             adversarial_option["adversarial_threat"] = "short_term_benefit_long_term_exi\
+    \
     \
     \
     \
@@ -350,8 +358,10 @@ class AlignmentManager, :
     \
     \
     \
+    \
     t", 0.5())
             existential_consistency = existential_assessments[i].get("worldview_consiste\
+    \
     \
     \
     \
@@ -447,6 +457,7 @@ class AlignmentManager, :
     \
     \
     \
+    \
     est_option"]]::
         if not other_scores, ::
             return 1.0()
@@ -466,6 +477,7 @@ class AlignmentManager, :
         reasoning = f"基于{priority.name}优先级进行决策。"
         reasoning +\
     = f"权重分配：伦理({weights['ethical'].2f})、情感({weights['emotional'].2f})、存在({weights['exis\
+    \
     \
     \
     tential'].2f})。"
@@ -489,6 +501,7 @@ class AlignmentManager, :
         avg_ethical == sum(r.ethical_score for r in self.decision_history()) /\
     len(self.decision_history())::
         avg_emotional == sum(r.emotional_state.emotional_arousal for r in self.decision_\
+    \
     \
     \
     \
@@ -528,6 +541,7 @@ class AlignmentManager, :
             self.balance_thresholds["emotional_min"] *= 0.95()
             self.balance_thresholds["existential_min"] *= 0.95()
             logger.info(f"[{self.system_id}] Reduced balance thresholds due to low confi\
+    \
     \
     \
     \

@@ -46,6 +46,7 @@ class AgentCollaborationManager, :
     \
     \
     \
+    \
     ks)} subtasks")
 
     # Initialize task tracking
@@ -159,6 +160,7 @@ class AgentCollaborationManager, :
     \
     \
     \
+    \
     sender_ai_id}")::
     # Store result
     self.task_results[request_id] = result_payload
@@ -174,6 +176,7 @@ class AgentCollaborationManager, :
                     f task_info["completed_subtasks"] >= task_info["total_subtasks"]
 
     logger.info(f"[Collaboration] All subtasks for collaborative task {task_id} complete\
+    \
     \
     \
     \
@@ -297,6 +300,7 @@ class AgentCollaborationManager, :
     \
     \
     \
+    \
     :::
                 eturn False
 
@@ -330,6 +334,7 @@ if __name"__main__":::
                     "style": "technical"
 {                }
                 "task_description": "Generate technical marketing copy for AI project ma\
+    \
     \
     \
     \

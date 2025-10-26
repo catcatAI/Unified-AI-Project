@@ -45,8 +45,10 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     system resources.
             personality_manager (Optional[Any]): Optional. A manager for AI personality \
+    \
     \
     \
     \
@@ -54,9 +56,11 @@ class HAMMemoryManager:
             storage_dir (Optional[str]): Optional. Directory for storing memory files. D\
     \
     \
+    \
     efaults to PROJECT_ROOT / data / processed_data / .
             core_storage_filename (str): Filename for the core memory JSON file.
             chroma_client (Optional[chromadb.Client]): Optional. An existing ChromaDB cl\
+    \
     \
     \
     \
@@ -96,6 +100,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     ht be invalid. Error: {e}")
                 logger.error("Encryption will be DISABLED for this session.")
                 self.fernet = None
@@ -112,10 +117,12 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     de()}")
 
         self._load_core_memory_from_file()
         logger.info(f"HAMMemoryManager initialized. Core memory file: {self.core_storage\
+    \
     \
     \
     \
@@ -124,6 +131,7 @@ class HAMMemoryManager:
         # Initialize VectorMemoryStore and ImportanceScorer
         self.vector_store: Optional[VectorMemoryStore] = None
         self.chroma_collection: Optional[Any] = None # Type hint as Any due to chromadb'\
+    \
     \
     \
     \
@@ -141,9 +149,11 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     .")
             except Exception as e:
                 logger.error(f"Failed to initialize ChromaDB collection from external cl\
+    \
     \
     \
     \
@@ -154,6 +164,7 @@ class HAMMemoryManager:
                 logger.info("HAM: VectorMemoryStore disabled via HAM_DISABLE_VECTOR_STOR\
     \
     \
+    \
     E = 1")
             else:
                 try:
@@ -161,8 +172,10 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     hromadb internally.
                     self.vector_store = VectorMemoryStore(persist_directory = os.path.jo\
+    \
     \
     \
     in(self.storage_dir, "chroma_db"))
@@ -179,6 +192,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     ate_collection()
                                 name = "ham_memories",
                                 metadata = {"hnsw:space": "cosine"}
@@ -187,9 +201,11 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     a VectorMemoryStore.")
                         except Exception as e:
                             logger.error(f"Failed to initialize ChromaDB collection via \
+    \
     \
     \
     \
@@ -200,9 +216,11 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     t ChromaDB collection access.")
                 except Exception as e:
                     logger.warning(f"VectorMemoryStore initialization failed (likely due\
+    \
     \
     \
     to chromadb / numpy issue): {e}. Vector search will be disabled.")
@@ -239,9 +257,11 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     ully.")
             except Exception as e:
                 logger.error(f"HAMMemoryManager: Error dereferencing vector store client\
+    \
     \
     \
     \
@@ -264,6 +284,7 @@ class HAMMemoryManager:
                 return self.fernet.decrypt(data)
             except InvalidToken:
                 logger.error("Invalid token during Fernet decryption. Data might be corr\
+    \
     \
     \
     \
@@ -323,6 +344,7 @@ class HAMMemoryManager:
             # Conceptual: In a real system, call POS tagging
             if keywords: # Only add if there are keywords, to simulate some processing:
                 pos_tags_placeholder = [{"kw": "NOUN_placeholder"} for kw in keywords[:2\
+    \
     \
     \
     \
@@ -394,6 +416,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     SO format.")
         else:
             raise TypeError(f"Unsupported date input type: {type(date_input)}")
@@ -407,6 +430,7 @@ class HAMMemoryManager:
                 return file_size_bytes / (1024 * *3) # Bytes to GB
         except OSError as e:
             logger.error(f"HAM: Error getting file size for {self.core_storage_filepath}\
+    \
     \
     \
     \
@@ -450,7 +474,9 @@ class HAMMemoryManager:
             logger.warning(f"HAM: Simulated disk usage ({current_usage_gb:.2f}GB) is at \
     \
     \
+    \
     CRITICAL level ( > {critical_thresh_gb:.2f}GB). Simulating {lag_to_apply_seconds:.2f\
+    \
     \
     }s lag.")
         elif current_usage_gb >= warning_thresh_gb:
@@ -459,7 +485,9 @@ class HAMMemoryManager:
             logger.info(f"HAM: Simulated disk usage ({current_usage_gb:.2f}GB) is at WAR\
     \
     \
+    \
     NING level ( > {warning_thresh_gb:.2f}GB). Simulating {lag_to_apply_seconds:.2f}s la\
+    \
     \
     g.")
 
@@ -486,6 +514,7 @@ class HAMMemoryManager:
     the check in _simulate_disk_lag_and_check_limit is mostly reactive based on existing\
     \
     \
+    \
     file size.
             # A proper pre -\
     emptive check would serialize self.core_memory_store to a string,
@@ -500,6 +529,7 @@ class HAMMemoryManager:
                         "timestamp": data_pkg["timestamp"],
                         "data_type": data_pkg["data_type"],
                         "encrypted_package_b64": data_pkg["encrypted_package"].decode('l\
+    \
     \
     \
     atin - 1'), # latin - 1 for bytes
@@ -533,6 +563,7 @@ class HAMMemoryManager:
                         data_type = data_pkg_b64["data_type"],
                         encrypted_package = data_pkg_b64["encrypted_package_b64"].encode\
     \
+    \
     ('latin - 1'),
                         metadata = data_pkg_b64.get("metadata"),
                         relevance = 0.5,  # Default relevance score
@@ -542,9 +573,11 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     {self.next_memory_id}")
         except Exception as e:
             logger.error(f"Error loading core memory from file: {e}. Starting with an em\
+    \
     \
     \
     \
@@ -567,6 +600,7 @@ class HAMMemoryManager:
     text abstraction is applied.
             metadata (Optional[Dict[str, Any]]): Additional metadata for the experience.
             Should conform to DialogueMemoryEntryMetadata. A 'sha256_checksum' will be a\
+    \
     \
     \
     \
@@ -635,6 +669,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     e()
                 raw_data if isinstance(raw_data, str) else json.dumps(raw_data),
                 current_metadata
@@ -656,6 +691,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     hroma collection.")
             elif self.vector_store is not None:
                 await self.vector_store.add_memory()
@@ -664,6 +700,7 @@ class HAMMemoryManager:
                     metadata = current_metadata # Pass the updated metadata
 (                )
                 logger.debug(f"HAM: Stored semantic vector for {memory_id} in VectorMemo\
+    \
     \
     \
     \
@@ -708,10 +745,12 @@ class HAMMemoryManager:
             logger.error(f"HAM: Failed to save core memory to file for experience {memor\
     \
     \
+    \
     y_id}. Reverting in - memory store for this item.")
             if memory_id in self.core_memory_store:
                 del self.core_memory_store[memory_id]
             # Note: self.next_memory_id was already incremented. This could lead to skip\
+    \
     \
     \
     \
@@ -754,6 +793,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     , data_package))
                                 semantic_results_ids.add(mem_id)
                             except HAMMemoryError as e:
@@ -761,9 +801,11 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     _id} from vector store due to error: {e}")
 
                 logger.debug(f"Retrieved {len(semantic_memories)} semantic memories for \
+    \
     \
     \
     \
@@ -791,12 +833,14 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     t() if len(kw) > 2):
                 try:
                     keyword_memories.append(self._deserialize_memory(mem_id,
     data_package))
                 except HAMMemoryError as e:
                     logger.warning(f"Skipping deserialization of memory {mem_id} from ke\
+    \
     \
     \
     \
@@ -808,6 +852,7 @@ class HAMMemoryManager:
         combined_results = semantic_memories + keyword_memories
 
         # Sort by relevance (semantic score from Chroma is implicitly higher for semanti\
+    \
     \
     \
     \
@@ -824,6 +869,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     y: '{query}'")
         return final_results
 
@@ -837,6 +883,7 @@ class HAMMemoryManager:
 
         Returns:
             Optional[HAMRecallResult]: A HAMRecallResult object with a rehydrated string\
+    \
     \
     \
     \
@@ -872,12 +919,14 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     may be corrupted.")
                     # Optionally,
     could return a specific error or flag instead of proceeding
                     # For now, we'll proceed but the warning is logged.
             else:
                 logger.warning(f"No checksum found in metadata for memory ID {memory_id}\
+    \
     \
     \
     \
@@ -896,6 +945,7 @@ class HAMMemoryManager:
                 rehydrated_content = self._rehydrate_text_gist(abstracted_gist)
             except json.JSONDecodeError:
                 logger.error("Could not decode abstracted gist for memory_id '%s'. Data \
+    \
     \
     \
     \
@@ -951,6 +1001,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     may be corrupted.")
                     return None # Return None on checksum failure for raw recall
             decompressed_data_str = decompressed_data_bytes.decode('utf - 8')
@@ -986,6 +1037,7 @@ class HAMMemoryManager:
                 current_checksum = hashlib.sha256(decompressed_data_bytes).hexdigest()
                 if current_checksum != stored_checksum:
                     logger.critical(f"Checksum mismatch during deserialization for memor\
+    \
     \
     \
     \
@@ -1030,6 +1082,7 @@ class HAMMemoryManager:
                             results.append(recalled_item)
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Failed to parse timestamp for memory {memory_id} or\
+    \
     \
     \
     date_range {start_date} - {end_date}: {e}. Skipping this memory for date filter.")
@@ -1087,6 +1140,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     ories deleted")
                         break
 
@@ -1097,8 +1151,10 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     s:
                             # Additional safety check: ensure we're not deleting protect\
+    \
     \
     \
     \
@@ -1113,6 +1169,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     memory_id}")
                     else:
                         break
@@ -1121,6 +1178,7 @@ class HAMMemoryManager:
                     # Save the updated memory store to file
                     self._save_core_memory_to_file()
                     logger.info(f"Memory cleanup completed: {deleted_count} memories del\
+    \
     \
     \
     \
@@ -1160,6 +1218,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     ntic search.")
                 # Fallback to iterating all memories if semantic search is not available
                 candidate_mem_ids = sorted(list(self.core_memory_store.keys()),
@@ -1168,6 +1227,7 @@ class HAMMemoryManager:
             else:
                 try:
                     # Generate embedding for the semantic query using the collection's e\
+    \
     \
     \
     \
@@ -1185,6 +1245,7 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     dates for semantic query.")
                 except Exception as e:
                     logger.error(f"Error querying ChromaDB: {e}")
@@ -1195,6 +1256,7 @@ class HAMMemoryManager:
         else:
             # If no semantic query, iterate through all memories
             candidate_mem_ids = [mem_id for mem_id in self.core_memory_store.keys() if m\
+    \
     \
     \
     \
@@ -1312,12 +1374,14 @@ class HAMMemoryManager:
     \
     \
     \
+    \
     '{memory_id}'.")
                 # For simplicity, we trigger a full save. A more advanced implementation
                 # might use a more granular or delayed save mechanism.
                 return self._save_core_memory_to_file()
             else:
                 logger.error(f"HAM: Metadata field '{field_name}' for mem_id '{memory_id\
+    \
     \
     \
     \
@@ -1397,12 +1461,14 @@ if __name__ == '__main__':
     query_results_kw: List[HAMRecallResult] = asyncio.run(ham.query_core_memory(keywords\
     \
     \
+    \
     = ["test_user"]))
     for res_item in query_results_kw:
         print(json.dumps(res_item, indent = 2))
 
     print("\n - -- Querying Memory (data_type) - - -")
     query_results_type: List[HAMRecallResult] = asyncio.run(ham.query_core_memory(data_t\
+    \
     \
     \
     ype_filter = "generic_data"))
@@ -1415,9 +1481,11 @@ if __name__ == '__main__':
     ham_reloaded = HAMMemoryManager(core_storage_filename = test_file_name) # Reload fro\
     \
     \
+    \
     m file
 
     print(f"Recalling exp1 after reload: {ham_reloaded.recall_gist(exp1_id if exp1_id el\
+    \
     \
     \
     \

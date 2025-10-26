@@ -131,6 +131,7 @@ class PredictiveMaintenanceEngine:
     \
     \
     \
+    \
     _data", 0, -1)
                 if data:
                     self.historical_data = [json.loads(item) for item in data]
@@ -148,6 +149,7 @@ class PredictiveMaintenanceEngine:
         try:
             if self.redis_available and self.redis_client and self.sklearn_available:
                 models_dict_str = await self.redis_client.get("predictive_maintenance:mo\
+    \
     \
     \
     \
@@ -514,6 +516,7 @@ class PredictiveMaintenanceEngine:
                 schedule_id = f"maint_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%\
     \
     \
+    \
     M%S')}_{component_health.component_id}",
                 component_id = component_health.component_id,
                 maintenance_type = maintenance_type,
@@ -522,8 +525,10 @@ class PredictiveMaintenanceEngine:
                 estimated_duration = self._estimate_maintenance_duration(component_healt\
     \
     \
+    \
     h.component_type),
                 required_resources = self._get_required_resources(component_health.compo\
+    \
     \
     \
     nent_type),
@@ -624,6 +629,7 @@ class PredictiveMaintenanceEngine:
     \
     \
     \
+    \
     :{schedule_id}")
                 
             except Exception as e:
@@ -694,6 +700,7 @@ class PredictiveMaintenanceEngine:
     \
     \
     \
+    \
     time.now(timezone.utc())
                     
                     # 重置健康分数
@@ -702,11 +709,13 @@ class PredictiveMaintenanceEngine:
     \
     \
     \
+    \
     .05
                 # 移除维护计划
                 del self.maintenance_schedules[schedule_id]
                 if self.redis_available and self.redis_client:
                     await self.redis_client.delete(f"predictive_maintenance:schedule:{sc\
+    \
     \
     \
     \

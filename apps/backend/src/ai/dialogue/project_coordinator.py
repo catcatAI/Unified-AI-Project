@@ -18,6 +18,7 @@ if TYPE_CHECKING, ::
     \
     \
     \
+    \
     DiscoveryModule
     from apps.backend.src.core.hsp.connector import HSPConnector
     from apps.backend.src.core.managers.agent_manager import AgentManager
@@ -52,6 +53,7 @@ class ProjectCoordinator, :
     \
     \
     \
+    \
     inator":::
     self._load_prompts()
     logging.info("ProjectCoordinator initialized.")
@@ -73,6 +75,7 @@ class ProjectCoordinator, :
         else,
 
             self.task_results[correlation_id] = {"error": result_payload.get("error_deta\
+    \
     \
     \
     \
@@ -134,6 +137,7 @@ class ProjectCoordinator, :
     raise ValueError(f"Task {i} has an invalid dependency on a future task {dep_index}."\
     \
     \
+    \
     )
 
         if not nx.is_directed_acyclic_graph(task_graph)::
@@ -145,6 +149,7 @@ class ProjectCoordinator, :
 
             if isinstance(subtask_data.get("task_parameters"), dict)::
     subtask_data["task_parameters"] = self._substitute_dependencies(subtask_data["task_p\
+    \
     \
     \
     \
@@ -182,8 +187,10 @@ class ProjectCoordinator, :
         ound_caps = await self.service_discovery.find_capabilities(capability_name_filte\
     \
     \
+    \
     r = capability_name)
         logging.info(f"[ProjectCoordinator] Found {len(found_caps)} capabilities for '{c\
+    \
     \
     \
     \
@@ -202,6 +209,7 @@ class ProjectCoordinator, :
     \
     \
     \
+    \
     ome ready..."):::
             wait self.agent_manager.wait_for_agent_ready(agent_to_launch, timeout = 10,
     service_discovery = self.service_discovery())
@@ -211,8 +219,10 @@ class ProjectCoordinator, :
                     found_caps = await self.service_discovery.find_capabilities(capabili\
     \
     \
+    \
     ty_name_filter = capability_name)
                     logging.info(f"[ProjectCoordinator] Found {len(found_caps)} capabili\
+    \
     \
     \
     \
@@ -224,6 +234,7 @@ class ProjectCoordinator, :
             # Log all available capabilities for debugging, ::
                 ll_caps = await self.service_discovery.get_all_capabilities_async()
             logging.info(f"[ProjectCoordinator] No capabilities found. All known capabil\
+    \
     \
     \
     \
@@ -310,6 +321,7 @@ class ProjectCoordinator, :
     \
     \
     \
+    \
     ks for testing.")::
             # Return a more comprehensive mock decomposition for testing purposes, ::
             # This should be sufficient for the agent collaboration tests, ::
@@ -364,6 +376,7 @@ eturn []
             else,
 
                 logging.error(f"[ProjectCoordinator] LLM response is not a list of dicti\
+    \
     \
     \
     \

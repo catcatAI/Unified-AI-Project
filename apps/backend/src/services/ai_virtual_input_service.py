@@ -85,6 +85,7 @@ class AIVirtualInputService, :
     \
     \
     \
+    \
     ments
                 to search within. If None, searches self.virtual_ui_elements.
 
@@ -128,6 +129,7 @@ class AIVirtualInputService, :
     all non - simulation modes are treated as "not implemented for real action".:::
                 utcome == {"status": "error",
     "message": f"Mode '{self.mode}' not fully supported for actual mouse actions yet. Si\
+    \
     \
     \
     mulating."}::
@@ -234,6 +236,7 @@ class AIVirtualInputService, :
     "message": f"Mode '{self.mode}' not fully supported for actual keyboard actions yet.\
     \
     \
+    \
     Simulating."}:
             # Fall through to simulation
 
@@ -262,6 +265,7 @@ class AIVirtualInputService, :
     \
     \
     \
+    \
     t_id())
 
             if target_element, # If a specific target is given,
@@ -284,9 +288,11 @@ class AIVirtualInputService, :
     \
     \
     \
+    \
     _id")
                     print(f"  AVIS Sim,
     Element '{element_to_type_in.get('element_id')}' value updated to '{text_to_type}'."\
+    \
     \
     \
     )
@@ -294,6 +300,7 @@ class AIVirtualInputService, :
 
                     print(f"  AVIS Sim,
     Element '{element_to_type_in.get('element_id')}' not a text input type (no 'value' a\
+    \
     \
     \
     ttribute). Typing simulated by log only.")
@@ -341,6 +348,7 @@ class AIVirtualInputService, :
     "details": special_key_details}
             print(f"  AVIS Sim,
     Special key '{key_name}' press logged on focused '{self.virtual_focused_element_id o\
+    \
     \
     \
     r 'unknown'}'.")

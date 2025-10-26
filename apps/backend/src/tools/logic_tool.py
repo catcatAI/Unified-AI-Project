@@ -29,6 +29,7 @@ class LogicTool:
     \
     \
     \
+    \
     library
         self.nn_char_to_token: Optional[Dict[str, int]] = None
         self.tensorflow_import_error: Optional[str] = None
@@ -52,8 +53,10 @@ class LogicTool:
     \
     \
     \
+    \
     manager"
             logger.critical(f"CRITICAL: TensorFlow not available. Logic tool's NN featur\
+    \
     \
     \
     \
@@ -78,6 +81,7 @@ from .logic_model.logic_model_nn import
     \
     \
     \
+    \
     N features will be disabled. Error: {e}")
             self.tensorflow_import_error = str(e)
         except FileNotFoundError as e:
@@ -85,10 +89,12 @@ from .logic_model.logic_model_nn import
     \
     \
     \
+    \
     e disabled. Error: {e}")
             self.tensorflow_import_error = str(e)
         except Exception as e:
             logger.error(f"An unexpected error occurred while loading the LogicNNModel: \
+    \
     \
     \
     \
@@ -112,11 +118,13 @@ from .logic_model.logic_model_nn import
     \
     \
     \
+    \
     hod.")
             try:
                 return nn_model.predict(normalized_expression, char_map)
             except Exception as e:
                 logger.critical(f"Error during NN prediction for '{normalized_expression\
+    \
     \
     \
     \
@@ -130,6 +138,7 @@ from .logic_model.logic_model_nn import
     \
     \
     \
+    \
     hod.")
         try:
             parser = self._get_parser_evaluator()
@@ -138,9 +147,11 @@ from .logic_model.logic_model_nn import
     \
     \
     \
+    \
     er."
         except Exception as e:
             logger.critical(f"Error during parser evaluation for '{normalized_expression\
+    \
     \
     \
     \
@@ -164,9 +175,11 @@ if __name__ == "__main__":
     logger.info("\n - -- Testing Unified evaluate_expression (NN fallback to Parser) - -\
     \
     \
+    \
     -")
     for expr, expected in test_cases:
         result = logic_tool_instance.evaluate_expression(expr) # Corrected to use instan\
+    \
     \
     \
     \

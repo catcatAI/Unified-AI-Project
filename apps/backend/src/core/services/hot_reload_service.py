@@ -173,6 +173,7 @@ class HotReloadService, :
     \
     \
     \
+    \
     , LIS_ANTIBODY_DATA_TYPE_PREFIX  # type ignore
                     lis_incident_data_type_prefix == LIS_INCIDENT_DATA_TYPE_PREFIX
                     lis_antibody_data_type_prefix == LIS_ANTIBODY_DATA_TYPE_PREFIX
@@ -343,6 +344,7 @@ Connect and subscribe required topics
                     f sdm is not None,
 
     new_hsp.register_on_capability_advertisement_callback(sdm.process_capability_adverti\
+    \
     \
     \
     sement())  # type ignore[arg - type]

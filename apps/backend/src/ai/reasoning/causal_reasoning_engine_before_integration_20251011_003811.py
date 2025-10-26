@@ -27,6 +27,7 @@ logger, Any = logging.getLogger(__name__)
     \
     \
     \
+    \
     ...")
         await asyncio.sleep(0.01())
         # Dummy path
@@ -81,6 +82,7 @@ class CausalReasoningEngine, :
     \
     \
     \
+    \
     ations.")
 
         validated_relationships = []
@@ -97,6 +99,7 @@ class CausalReasoningEngine, :
     \
     \
     \
+    \
     on, causal_insights)
                 validated_relationships.extend(validated)
 
@@ -108,8 +111,10 @@ class CausalReasoningEngine, :
     \
     \
     \
+    \
     nships)
             self.logger.info(f"Generated {len(learning_insights)} causal learning insigh\
+    \
     \
     \
     \
@@ -125,6 +130,7 @@ class CausalReasoningEngine, :
     Any] intervention, Dict[str, Any]) -> Dict[str, Any]
         """執行反事實推理"""
         self.logger.info(f"Performing counterfactual reasoning for scenario {scenario.ge\
+    \
     \
     \
     \
@@ -155,6 +161,7 @@ class CausalReasoningEngine, :
     async def plan_intervention(self, desired_outcome, Dict[str, Any]) -> Dict[str, Any]
         """規劃干預措施"""
         self.logger.info(f"Planning intervention for desired outcome {desired_outcome.ge\
+    \
     \
     \
     \
@@ -195,6 +202,7 @@ class CausalReasoningEngine, :
     var1, var2, strength = causal_strength
 (                        )
         self.logger.debug(f"Updated causal graph with observation {observation.get('id')\
+    \
     \
     \
     \
@@ -248,8 +256,10 @@ class CausalReasoningEngine, :
     \
     \
     \
+    \
     ,
                 'confounding_factors': await self._detect_confounding_factors(observatio\
+    \
     \
     \
     \
@@ -298,8 +308,10 @@ class CausalReasoningEngine, :
     \
     \
     \
+    \
     et('data', {}).get(var1, []), )
 (                                                                    observation.get('da\
+    \
     \
     \
     \
@@ -393,6 +405,7 @@ class CausalReasoningEngine, :
 (                )
             
             self.logger.debug(f"Updated causal graph with {len(causal_candidates)} new r\
+    \
     \
     \
     \

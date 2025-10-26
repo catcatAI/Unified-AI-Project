@@ -115,6 +115,7 @@ class JiraIntegration, :
     \
     \
     \
+    \
     tus} - {error_text}")
                         return {}
                             "success": False,
@@ -266,6 +267,7 @@ class JiraIntegration, :
                             "assignee": data.get('fields').get('assignee').get('displayN\
     \
     \
+    \
     ame') if data.get('fields').get('assignee') else None, ::
                     elif response.status == 404, ::
     return {}
@@ -276,6 +278,7 @@ class JiraIntegration, :
 
     error_text = await response.text()
                         logger.error(f"Failed to get issue {issue_key} {response.status}\
+    \
     \
     \
     \
@@ -324,6 +327,7 @@ class JiraIntegration, :
 
                         error_text = await response.text()
                         logger.error(f"Failed to update issue {issue_key} {response.stat\
+    \
     \
     \
     \
@@ -420,6 +424,7 @@ class JiraIntegration, :
     \
     \
     \
+    \
     response.status} - {error_text}"):::
                             eturn {}
                             "success": False,
@@ -479,6 +484,7 @@ class JiraIntegration, :
 
                         error_text = await response.text()
                         logger.error(f"Failed to transition issue {issue_key} {response.\
+    \
     \
     \
     \

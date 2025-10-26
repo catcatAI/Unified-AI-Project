@@ -103,6 +103,7 @@ class ConfluenceIntegration, :
     \
     \
     \
+    \
     - {error_text}")
                         return {}
                             "success": False,
@@ -210,6 +211,7 @@ class ConfluenceIntegration, :
                     else,
                         error_text = await response.text()
                         logger.error(f"Failed to update page {page_id} {response.status}\
+    \
     \
     \
     \
@@ -336,6 +338,7 @@ class ConfluenceIntegration, :
                     else,
                         error_text = await response.text()
                         logger.error(f"Failed to get page children for {page_id} {respon\
+    \
     \
     \
     \

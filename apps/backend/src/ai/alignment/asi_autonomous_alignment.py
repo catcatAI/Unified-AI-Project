@@ -366,6 +366,7 @@ class ASIAutonomousAlignment, :
     \
     \
     \
+    \
     stments"])
             
             logger.info(f"[{self.system_id}] 人类反馈已整合")
@@ -627,13 +628,16 @@ class ASIAutonomousAlignment, :
     \
     \
     \
+    \
     imum_alignment_score", 0.8()) and
                 results["value_consistency"] >= experiment.success_criteria.get("value_c\
     \
     \
     \
+    \
     onsistency_threshold", 0.9()) and
                 results["safety_compliance"] == experiment.success_criteria.get("safety_\
+    \
     \
     \
     \
@@ -663,8 +667,10 @@ class ASIAutonomousAlignment, :
     \
     \
     \
+    \
     )::
         average_confidence == sum(value.confidence for value in self.human_values.values\
+    \
     \
     \
     \
@@ -696,8 +702,10 @@ class ASIAutonomousAlignment, :
     \
     \
     \
+    \
     atus == "completed"]:
         successful_experiments == [e for e in completed_experiments if e.results.get("al\
+    \
     \
     \
     \

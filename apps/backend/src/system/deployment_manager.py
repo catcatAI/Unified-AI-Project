@@ -4,6 +4,7 @@ Deployment Manager for Unified - AI - Project, ::
     \
     \
     \
+    \
     ties.
 It automatically adjusts model parameters, memory usage,
     and processing modes to optimize
@@ -139,6 +140,7 @@ class DeploymentManager, :
     \
     \
     \
+    \
     sable GPU
 
             # Check if this is integrated graphics, ::
@@ -153,6 +155,7 @@ class DeploymentManager, :
 from .integrated_graphics_optimizer import
                 ig_optimizer == IntegratedGraphicsOptimizer(self.hardware_profile())
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier\
+    \
     \
     \
     \
@@ -340,6 +343,7 @@ from .integrated_graphics_optimizer import
                 # Real -\
     time inference benefits from GPU but can work on integrated graphics with reduced pe\
     \
+    \
     rformance,
     if score >= min_score and \
     (gpu_available or self.hardware_profile.cpu.cores_logical >= 4)::
@@ -357,6 +361,7 @@ from .integrated_graphics_optimizer import
                     disabled.append(feature)
             elif feature == "background_learning":::
                 # Background learning can work on integrated graphics with reduced perfo\
+    \
     \
     \
     \
@@ -432,6 +437,7 @@ from .integrated_graphics_optimizer import
             try,
                 ig_optimizer == IntegratedGraphicsOptimizer(self.hardware_profile())
                 performance_tier = ig_optimizer.get_integrated_graphics_performance_tier\
+    \
     \
     \
     \
@@ -541,6 +547,7 @@ from .integrated_graphics_optimizer import
     \
     \
     \
+    \
     rning(),
             "MAX_CONCURRENT_TASKS": config.processing_config.max_concurrent_tasks(),
             "TIMEOUT_SECONDS": config.processing_config.timeout_seconds(),
@@ -625,6 +632,7 @@ from diagnose_base_agent import
                 enable_background_learning = processing_data['enable_background_learning\
     \
     \
+    \
     ']
                 max_concurrent_tasks = processing_data['max_concurrent_tasks'],
     timeout_seconds = processing_data['timeout_seconds']
@@ -662,6 +670,7 @@ from diagnose_base_agent import
     score = profile.ai_capability_score()
         if score < 30, ::
     recommendations.append("Consider upgrading to at least 8GB RAM for better performanc\
+    \
     \
     \
     \

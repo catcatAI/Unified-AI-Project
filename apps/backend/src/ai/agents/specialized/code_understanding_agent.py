@@ -67,6 +67,7 @@ class CodeUnderstandingAgent(BaseAgent):
     \
     \
     \
+    \
     s, style issues, etc.",
                 "version": "1.0",
                 "parameters": []
@@ -85,6 +86,7 @@ class CodeUnderstandingAgent(BaseAgent):
     \
     \
     \
+    \
     ties, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload,
     sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -93,6 +95,7 @@ class CodeUnderstandingAgent(BaseAgent):
         params = task_payload.get("parameters", {})
 
         logger.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capa\
+    \
     \
     \
     \
@@ -127,9 +130,11 @@ class CodeUnderstandingAgent(BaseAgent):
     \
     \
     \
+    \
     "":::
 = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logger.info(f"[{self.agent_id}] Sent task result for {request_id} to {callba\
+    \
     \
     \
     \
@@ -157,8 +162,10 @@ class CodeUnderstandingAgent(BaseAgent):
     \
     \
     \
+    \
     nstance(node, ast.FunctionDef())])::
                     nalysis["class_count"] = len([node for node in ast.walk(tree) if isi\
+    \
     \
     \
     \
@@ -196,6 +203,7 @@ nalysis["import_from_count"] = len([node for node in ast.walk(tree) if isinstanc
         
         # Add header
         doc_lines.append(f"# {'Technical' if style == 'technical' else 'User'} Documenta\
+    \
     \
     \
     \
@@ -342,7 +350,7 @@ nalysis["import_from_count"] = len([node for node in ast.walk(tree) if isinstanc
         
         # Fix missing colons in control structures
         patterns = []
-            (r'^(\s * (if|elif|else|for|while|try|except|finally|with|def|class)\s + . + ?)(? < !:)$', r'\1,'),::
+            (r'^(\s * (if|elif|else|for|while|try|except|finally|with|def|class)\s + . + ?)(? < !:)$', r'\1, '), ::
 [        ]
         
         lines = fixed_code.split('\n')

@@ -58,6 +58,7 @@ class DailyLanguageModel, :
         prompt +\
     = "  "parameters\": { <parameters_object_for_the_tool_OR_null_OR_empty_object> }\n" \
     \
+    \
     # Using  for object placeholder in text, ::
 {            rompt += "}\n\n"
         prompt +\
@@ -65,14 +66,17 @@ class DailyLanguageModel, :
             rompt += "- If 'NO_TOOL' is selected,
     'parameters' should be null or an empty .\n"
     prompt +\
-    = "-\
-    For 'calculate': 'parameters' must be an object like {"query\": " < the_full_arithmetic_expression_to_calculate > \"}. Example, {"query\": "2 + 2 / 5\"}.\n"
+    = " - \
+    For 'calculate': 'parameters' must be an object like {"query\": " < the_full_arithme\
+    tic_expression_to_calculate > \"}. Example, {"query\": "2 + 2 / 5\"}.\n"
     prompt +\
-    = "-\
-    For 'evaluate_logic': 'parameters' must be an object like {"query\": " < the_logical_expression_to_evaluate > \"}. If the user specifies an evaluation method (e.g., "using nn\"), include {"method\": "nn\"}. Otherwise, you can omit 'method' or use {"method\": "parser\"}. Example, {"query\": "(true AND false) OR NOT true\"}.\n"
+    = " - \
+    For 'evaluate_logic': 'parameters' must be an object like {"query\": " < the_logical\
+    _expression_to_evaluate > \"}. If the user specifies an evaluation method (e.g., "using nn\"), include {"method\": "nn\"}. Otherwise, you can omit 'method' or use {"method\": "parser\"}. Example, {"query\": "(true AND false) OR NOT true\"}.\n"
     prompt +\
-    = "-\
-    For 'translate_text': 'parameters' must be an object containing {"text_to_translate\": " < text_to_be_translated > \"} and {"target_language\": " < target_language_code_or_name > \"}. If the user specifies a source language, also include {"source_language\": " < source_language_code_or_name > \"}. Example, {"text_to_translate\": "Hello world\", "target_language\": "Spanish\"}.\n\n"
+    = " - \
+    For 'translate_text': 'parameters' must be an object containing {"text_to_translate\\
+    ": " < text_to_be_translated > \"} and {"target_language\": " < target_language_code_or_name > \"}. If the user specifies a source language, also include {"source_language\": " < source_language_code_or_name > \"}. Example, {"text_to_translate\": "Hello world\", "target_language\": "Spanish\"}.\n\n"
     prompt += "Only include parameters relevant to the selected tool.\n"
     return prompt
 
@@ -80,6 +84,7 @@ class DailyLanguageModel, :
     str]] = None) -> Dict[str, Any]
     """
         Recognizes intent (primarily for tool dispatching) from input text using an LLM.\
+    \
     \
     \
     \
@@ -98,6 +103,7 @@ class DailyLanguageModel, :
     # Use the MultiLLMService to generate the response
         # For mock testing,
     the mock LLM should be configured to respond in the expected JSON format for some in\
+    \
     \
     \
     puts.:::
@@ -122,6 +128,7 @@ class DailyLanguageModel, :
     print(f"DLM,
     Warning -\
     LLM selected tool '{tool_name}' which is not in available_tools. Treating as no tool\
+    \
     \
     .")
                 return {"tool_name": None, "parameters": None}
@@ -154,6 +161,7 @@ if __name'__main__':::
     \
     \
     \
+    \
     prompt.
 
         class PatchedMultiLLMService(MultiLLMService):
@@ -166,12 +174,14 @@ if __name'__main__':::
     \
     \
     \
+    \
     s
                     if "calculate 2 + 2" in prompt or "what is 10 times 5" in prompt, ::
                         # Extract the actual expression for the "query" parameter, ::
                             uery_text_match == re.search(r"User Query, "(. * ?)\"",
     prompt)
                         original_query == query_text_match.group(1) if query_text_match \
+    \
     \
     \
     \
@@ -183,7 +193,8 @@ if __name'__main__':::
                         elif "what is", in original_query.lower():::
                             xpression = original_query.lower().split("what is")[ -\
     1].strip()
-                        elif "times", in original_query.lower() or " + ", in original_query or " - ", in original_query or " / ", in original_query, ::
+                        elif "times", in original_query.lower() or " + ",
+    in original_query or " - ", in original_query or " / ", in original_query, ::
                             # Keep it simple, assume it's mostly the expression
                             expression = original_query
 
@@ -200,6 +211,7 @@ if __name'__main__':::
     in prompt or "logic of (true or not false)", in prompt, ::
     query_text_match == re.search(r"User Query, "(. * ?)\"", prompt)
                         original_query == query_text_match.group(1) if query_text_match \
+    \
     \
     \
     \
@@ -234,6 +246,7 @@ if __name'__main__':::
     \
     \
     \
+    \
     se"}}),
                             model = "dlm - intent - mock",
     provider == ModelProvider.GOOGLE(), usage = {} cost = 0.0(), latency = 0.0(),
@@ -245,8 +258,10 @@ if __name'__main__':::
                                             "parameters": {"text_to_translate": "good mo\
     \
     \
+    \
     rning", }
 {{(                                                            "target_language": "spani\
+    \
     \
     \
     \
@@ -262,8 +277,10 @@ if __name'__main__':::
                                             "parameters": {"text_to_translate": "my text\
     \
     \
+    \
     ", }
 {{(                                                            "target_language": "engli\
+    \
     \
     \
     \
@@ -279,9 +296,11 @@ if __name'__main__':::
                                             "parameters": {"text_to_translate": "bonjour\
     \
     \
+    \
     ", }
                                                             "source_language": "french",
 {{(                                                            "target_language": "engli\
+    \
     \
     \
     \
@@ -324,6 +343,7 @@ uery_text_match == re.search(r"User Query, "(. * ?)\"", prompt)
     \
     \
     \
+    \
     else "":::
     expression = original_query
                         if "compute",
@@ -355,6 +375,7 @@ eturn LLMResponse()
                         # Default for queries not specifically handled above by PatchedM\
     \
     \
+    \
     ultiLLMService, ::
                             rint(f"PatchedMultiLLMService,
     No specific mock rule for prompt containing,
@@ -368,6 +389,7 @@ eturn LLMResponse()
 (                        )
 
                 # Fallback to super if not a tool selection prompt (e.g. direct MultiLLM\
+    \
     \
     \
     \

@@ -303,6 +303,7 @@ class DecisionTheorySystem, :
     \
     \
     \
+    \
     tcome, context)
             
             # 计算该结果的效用
@@ -385,11 +386,13 @@ class DecisionTheorySystem, :
     \
     \
     \
+    \
     != best_option]::
         elif strategy == DecisionStrategy.SATISFICING, ::
             # 选择第一个满足最低要求的选项
             threshold = 0.7  # 满意度阈值
             satisfactory_options == [item for item in sorted_options if item["overall_sc\
+    \
     \
     \
     \
@@ -410,6 +413,7 @@ class DecisionTheorySystem, :
     \
     \
     \
+    \
     != best_option]::
         elif strategy == DecisionStrategy.MAXIMAX, ::
             # 乐观策略：最大化最大可能收益
@@ -418,6 +422,7 @@ class DecisionTheorySystem, :
     key == lambda x, self._calculate_best_case_score(x["option"])
 (            )["option"]
             alternatives == [item["option"] for item in sorted_options if item["option"]\
+    \
     \
     \
     \

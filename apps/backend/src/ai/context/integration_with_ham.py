@@ -158,6 +158,7 @@ class ContextHAMIntegration, :
     \
     \
     \
+    \
     {context_id}"):
 
 
@@ -213,6 +214,7 @@ eturn memory_id
     \
     \
     \
+    \
     ext_id}"):
                 eturn True
         except Exception as e, ::
@@ -246,6 +248,7 @@ eturn memory_id
     \
     \
     \
+    \
     se {}::
             # 如果源上下文有关联的HAM记忆, 也进行转移
             if "ham_memory_id" in source_context.content, ::
@@ -271,10 +274,12 @@ eturn memory_id
     \
     \
     \
+    \
     mory_id} with context {transfer_context_id}"):
                 eturn True
         except Exception as e, ::
             logger.error(f"Failed to transfer context memory from {source_context_id} {e\
+    \
     \
     \
     \

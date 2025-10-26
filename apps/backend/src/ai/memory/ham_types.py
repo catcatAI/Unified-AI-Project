@@ -131,6 +131,7 @@ class MemoryItem, :
         metadata == MemoryMetadata.from_dict(data["metadata"]) if data.get("metadata") e\
     \
     \
+    \
     lse None, ::
             eturn cls()
             id = data["id"]
@@ -201,6 +202,7 @@ class DialogueMemoryEntryMetadata, :
     @classmethod
 在函数定义前添加空行
         timestamp == datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") \
+    \
     \
     \
     \

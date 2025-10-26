@@ -325,6 +325,7 @@ class ArithmeticSeq2Seq, :
     \
     \
     \
+    \
     n_history())}")
         
         return decoded_sentence
@@ -363,8 +364,10 @@ class ArithmeticSeq2Seq, :
     \
     \
     \
+    \
     :::
                 nstance.max_decoder_seq_length == max(len(k) for k in token_to_char.keys\
+    \
     \
     \
     \

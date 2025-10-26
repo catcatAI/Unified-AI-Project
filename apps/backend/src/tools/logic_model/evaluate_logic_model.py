@@ -61,6 +61,7 @@ def main -> None, :
         # vocab_size == char_maps['vocab_size'] # Needed if building model structure her\
     \
     \
+    \
     e, ::
             xcept FileNotFoundError,
 
@@ -86,6 +87,7 @@ def main -> None, :
     \
     \
     \
+    \
     params
     # and then loading weights.
     logic_nn_model_instance == LogicNNModel.load_model(MODEL_LOAD_PATH,
@@ -94,6 +96,7 @@ def main -> None, :
     # logic_nn_model_instance == LogicNNModel.load_model(MODEL_LOAD_PATH,
     CHAR_MAP_LOAD_PATH)
     #                                                 embedding_dim = embedding_dim_eval\
+    \
     \
     \
     ,

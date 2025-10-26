@@ -291,7 +291,8 @@ async def get_rovo_tasks():
     "updatedAt": "2023 - 01 - 01T10, 30, 00Z"}
             {"id": "task_2", "agentId": "agent_2",
     "title": "Generate API documentation", "status": "in_progress",
-    "createdAt": "2023 - 01 - 01T11, 00, 00Z", "updatedAt": "2023 - 01 - 01T11, 15, 00Z"}
+    "createdAt": "2023 - 01 - 01T11, 00, 00Z", "updatedAt": "2023 - 01 - 01T11, 15,
+    00Z"}
             {"id": "task_3", "agentId": "agent_3", "title": "Plan sprint tasks",
     "status": "pending", "createdAt": "2023 - 01 - 01T12, 00, 00Z",
     "updatedAt": "2023 - 01 - 01T12, 00, 00Z"}

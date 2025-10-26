@@ -23,6 +23,7 @@ except ImportError as e, ::
     \
     \
     \
+    \
     out == BatchNormalization == Adam == None
     KERAS_AVAILABLE == False
 
@@ -57,6 +58,7 @@ EPOCHS == 50  # Can be adjusted, EarlyStopping will help,
 EMBEDDING_DIM == 32  # Should match model definition if not loaded from char_map, ::
 STM_UNITS == 64    # Should match model definition if not loaded from char_map, ::
 ALIDATION_SPLIT == 0.1  # Using a portion of the training data for validation during tra\
+    \
     \
     \
     ining, ::

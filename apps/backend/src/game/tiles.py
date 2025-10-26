@@ -27,6 +27,7 @@ class TileMap, :
     'rock' if random.random < 0.1 else 'grass') for y in range(height)] for x in range(w\
     \
     \
+    \
     idth)]::
             ef render(self, surface)
         for x in range(self.width())::

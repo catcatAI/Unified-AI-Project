@@ -139,6 +139,7 @@ class PerformanceTracker, :
     \
     \
     \
+    \
     history[:N]])::
     # 简单线性回归计算斜率
     x = np.arange(N)
@@ -251,14 +252,17 @@ class StrategySelector, :
     \
     \
     \
+    \
     5]]::
         vg_success_rate == np.mean(recent_success_rates) if recent_success_rates else 0.\
+    \
     \
     \
     5, ::
     features.append(avg_success_rate)
 
             success_rate_std == np.std(recent_success_rates) if len(recent_success_rates\
+    \
     \
     \
     ) > 1 else 0.0, ::
@@ -447,6 +451,7 @@ class LearningStrategyOptimizer, :
     \
     \
     \
+    \
     :
                     f avg_success_rate < 0.7,  # 表现不佳,
 f "exploration_rate" in base_params,
@@ -471,6 +476,7 @@ f "exploration_rate" in base_params,
     features.extend([, )]
     context.complexity_level(),
             float(len(context.previous_performance())) if context.previous_performance e\
+    \
     \
     \
     lse 0.0, ::
@@ -535,6 +541,7 @@ f "exploration_rate" in base_params,
             logger.info(f"Strategy {strategy_id} effectiveness updated to {strategy.effe\
     \
     \
+    \
     ctiveness, .2f}")
 
     async def get_best_strategies(self, limit, int == 3) -> List[LearningStrategy]
@@ -552,6 +559,7 @@ f "exploration_rate" in base_params,
     def train_model(self, training_data, List[Dict[str, Any]] epochs, int == 100):
         ""训练参数优化模型"""
     logger.info(f"Training parameter optimization model with {len(training_data)} sample\
+    \
     \
     \
     \
@@ -654,6 +662,7 @@ class AdaptiveLearningController, :
     \
     \
     \
+    \
     )
 
     # 选择最优学习策略
@@ -665,6 +674,7 @@ class AdaptiveLearningController, :
         if not optimal_strategy, ::
             # 如果策略不存在, 使用默认策略
             optimal_strategy = await self.strategy_optimizer.get_strategy("current_strat\
+    \
     \
     \
     \

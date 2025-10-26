@@ -38,6 +38,7 @@ class EconomyManager, :
     \
     \
     \
+    \
     ent, {current_balance} Attempted, {amount}")::
             return False
 

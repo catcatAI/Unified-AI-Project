@@ -695,6 +695,7 @@ class AtlassianBridge, :
 
     # = == == == == == == == == == = Bitbucket 操作 = async def get_bitbucket_repositories\
     \
+    \
     ()
     self, ,
     workspace, str

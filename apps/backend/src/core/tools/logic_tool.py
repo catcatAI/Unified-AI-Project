@@ -43,6 +43,7 @@ elf.parser_evaluator == LogicParserEval
     \
     \
     \
+    \
     manager"
             logging.critical(f"CRITICAL,
     TensorFlow not available. Logic tool's NN features will be disabled.")
@@ -95,6 +96,7 @@ from .logic_model.logic_model_nn import
     \
     \
     \
+    \
     : {e}")::
                 # Fall through to parser on prediction error
                 logging.warning("LogicTool, NN prediction failed,
@@ -110,6 +112,7 @@ from .logic_model.logic_model_nn import
     Invalid expression for parser.":::
                 xcept Exception as e,
             logging.error(f"Error during parser evaluation for '{normalized_expression}'\
+    \
     \
     \
     \

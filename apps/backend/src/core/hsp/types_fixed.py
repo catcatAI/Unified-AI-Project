@@ -222,8 +222,10 @@ class HSPRegistration(TypedDict):
     \
     \
     \
+    \
     oad or HSPRegistrationResponsePayload
     payload: HSPRegistrationRequestPayload | HSPRegistrationResponsePayload  # The actua\
+    \
     \
     \
     \
@@ -232,6 +234,7 @@ class HSPRegistration(TypedDict):
 
 class HSPRegistrationRequest(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPRegistrationRequestPayl\
+    \
     \
     \
     \
@@ -244,6 +247,7 @@ class HSPRegistrationResponse(TypedDict):
     \
     \
     \
+    \
     load
     payload: HSPRegistrationResponsePayload  # The actual registration response data
 
@@ -253,8 +257,10 @@ class HSPDeregistration(TypedDict):
     \
     \
     \
+    \
     yload or HSPDeregistrationResponsePayload
     payload: HSPDeregistrationRequestPayload | HSPDeregistrationResponsePayload  # The a\
+    \
     \
     \
     \
@@ -266,12 +272,14 @@ class HSPDeregistrationRequest(TypedDict):
     \
     \
     \
+    \
     yload
     payload: HSPDeregistrationRequestPayload  # The actual deregistration request data
 
 
 class HSPDeregistrationResponse(TypedDict):
     envelope: HSPMessageEnvelope  # Must have payload of type HSPDeregistrationResponseP\
+    \
     \
     \
     \

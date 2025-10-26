@@ -32,14 +32,17 @@ class ServiceDiscoveryModule, :
     \
     \
     \
+    \
     rtisers.:::
     staleness_threshold_seconds (Optional[int]) The duration in seconds after which
                                                         a capability advertisement is co\
     \
     \
     \
+    \
     nsidered stale.
                                                         Defaults to DEFAULT_STALENESS_TH\
+    \
     \
     \
     \
@@ -79,12 +82,14 @@ class ServiceDiscoveryModule, :
     \
     \
     \
+    \
     anup_interval_seconds}s."):
                 ef stop_cleanup_task(self)
 ""Stops the periodic cleanup task."""
         if self._cleanup_thread is not None, ::
     self._stop_event.set()
             self._cleanup_thread.join(timeout = 5) # Add a timeout to prevent indefinite\
+    \
     \
     \
     blocking
@@ -136,6 +141,7 @@ class ServiceDiscoveryModule, :
 
         if not capability_id, ::
     logger.error("Received capability advertisement with no capability_id. Discarding. P\
+    \
     \
     \
     \
@@ -213,6 +219,7 @@ eturn
     \
     \
     \
+    \
     ess likely here)
             # No, iterate items to get capability_id for logging if needed.:::
             # capabilities_to_check = list(self.known_capabilities.values())
@@ -239,6 +246,7 @@ eturn
                     continue
 
                 # Apply capability_name_filter with exact matching for test compatibilit\
+    \
     \
     \
     y, ::
@@ -336,6 +344,7 @@ eturn
     \
     \
     \
+    \
     ess likely here)
             # No, iterate items to get capability_id for logging if needed.:::
             # capabilities_to_check = list(self.known_capabilities.values())
@@ -362,6 +371,7 @@ eturn
                     continue
 
                 # Apply capability_name_filter with exact matching for test compatibilit\
+    \
     \
     \
     y, ::
@@ -432,6 +442,7 @@ eturn
             Optional[HSPCapabilityAdvertisementPayload] The capability payload if found \
     \
     \
+    \
     and not stale, ::
     otherwise None.
     """
@@ -479,6 +490,7 @@ eturn
     ServiceDiscoveryModule.get_all_capabilities_async returning {len(result)} capabiliti\
     \
     \
+    \
     es")
     return result
 
@@ -514,6 +526,7 @@ ef get_trust_score(self, ai_id, str, capability_name, Optional[str] = None) -> f
     \
     \
     \
+    \
     plemented)
     sample_cap_payload == HSPCapabilityAdvertisementPayload()
     capability_id = "test_cap_001",
@@ -531,10 +544,12 @@ ef get_trust_score(self, ai_id, str, capability_name, Optional[str] = None) -> f
     \
     \
     \
+    \
     own_capabilities}")
 
     # Example of find_capabilities (method not yet implemented)
     # found_caps = sdm_instance.find_capabilities(capability_name_filter = "Test Capabil\
+    \
     \
     \
     ity")

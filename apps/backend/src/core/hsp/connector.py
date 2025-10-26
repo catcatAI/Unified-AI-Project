@@ -84,6 +84,7 @@ class HSPConnector, :
     \
     \
     \
+    \
     )
 
         # 安全管理器
@@ -93,6 +94,7 @@ class HSPConnector, :
         # 高级性能优化器
         self.advanced_performance_optimizer == HSPAdvancedPerformanceOptimizer()
         self.advanced_performance_enhancer == HSPAdvancedPerformanceEnhancer(self.advanc\
+    \
     \
     \
     \
@@ -117,6 +119,7 @@ class HSPConnector, :
             self.external_connector.subscribe.return_value == True
             self.external_connector.unsubscribe.return_value == True
             self.external_connector.publish == = AsyncMock(return_value = = True)  # Exp\
+    \
     \
     licitly set return value for publish, :
             # Explicitly mock mqtt_client and its publish method,
@@ -218,6 +221,7 @@ class HSPConnector, :
     Any) -> None, :
         """同步包装器用于分发能力广告消息到回调"""
         asyncio.create_task(self._dispatch_capability_advertisement_to_callbacks(message\
+    \
     \
     \
     \
@@ -376,6 +380,7 @@ class HSPConnector, :
     \
     \
     \
+    \
     _request)."""::
         self.register_on_task_request_callback(callback)
 
@@ -497,6 +502,7 @@ class HSPConnector, :
     \
     \
     \
+    \
     n.
         """
         try,
@@ -527,6 +533,7 @@ from .fallback.fallback_protocols import
                 host = http_config.get("host", "127.0.0.1")
                 # Check TESTING env var here as well
                 port == 0 if os.environ.get('TESTING') == 'true' else http_config.get("p\
+    \
     \
     \
     \
@@ -626,6 +633,7 @@ from .fallback.fallback_protocols import
     \
     \
     \
+    \
     is not None
             except, ::
                 health["fallback_healthy"] = False
@@ -697,9 +705,11 @@ from .fallback.fallback_protocols import
     \
     \
     \
+    \
     fully.")
             else,
                 self.logger.error(f"Failed to publish opinion {opinion_payload.get('id')\
+    \
     \
     \
     \
@@ -737,6 +747,7 @@ from .fallback.fallback_protocols import
         sender_ai_id = message.get("sender_ai_id")
 
         self.logger.debug(f"Dispatching task result to {len(self._task_result_callbacks(\
+    \
     \
     \
     \
@@ -788,6 +799,7 @@ from .fallback.fallback_protocols import
     \
     \
     \
+    \
     a.json"),
                     "payload": dict(ack_payload)
 {                }
@@ -800,6 +812,7 @@ from .fallback.fallback_protocols import
         sender_ai_id = message.get("sender_ai_id")
 
         self.logger.debug(f"Dispatching acknowledgement to {len(self._acknowledgement_ca\
+    \
     \
     \
     \
@@ -931,6 +944,7 @@ from .fallback.fallback_protocols import
     publish_message called. self.external_connector.publish is {type(self.external_conne\
     \
     \
+    \
     ctor.publish())}")
 
         message_id = envelope.get("message_id")
@@ -941,6 +955,7 @@ from .fallback.fallback_protocols import
 
         # 性能优化：优化消息路由
         optimized_message = await self.performance_optimizer.optimize_message_routing(di\
+    \
     \
     \
     \
@@ -982,6 +997,7 @@ from .fallback.fallback_protocols import
     \
     \
     \
+    \
     )
 
             if requires_ack, ::
@@ -1001,6 +1017,7 @@ from .fallback.fallback_protocols import
     \
     \
     \
+    \
     ng fallback if enabled."):::
                     # Try fallback first before retrying,
                     if self.enable_fallback and self.fallback_manager, ::
@@ -1008,6 +1025,7 @@ from .fallback.fallback_protocols import
     dict(envelope), qos)
                         if fallback_success, ::
                             self.logger.info(f"Message {correlation_id} sent via fallbac\
+    \
     \
     \
     \
@@ -1023,6 +1041,7 @@ from .fallback.fallback_protocols import
     \
     \
     \
+    \
     ation_id} after ACK timeout.")::
                     # Implement retry logic based on max_ack_retries for HSP attempts,
     ::
@@ -1032,12 +1051,14 @@ from .fallback.fallback_protocols import
                         self.logger.info(f"Retrying message {correlation_id} (attempt {r\
     \
     \
+    \
     etry_count + 1} / {self.max_ack_retries}) after ACK timeout.")
                         # Exponential backoff before retry,
 = await asyncio.sleep(2 ** retry_count)
                         return await self.publish_message(topic, envelope, qos)
                     else,
                         self.logger.error(f"Max retries exceeded for message {correlatio\
+    \
     \
     \
     \
@@ -1061,12 +1082,14 @@ from .fallback.fallback_protocols import
                 self.logger.info(f"Retrying message {correlation_id} (attempt {retry_cou\
     \
     \
+    \
     nt + 1} / {self.max_ack_retries}) after error.")
                 # Exponential backoff before retry,
 = await asyncio.sleep(2 ** retry_count)
                 return await self.publish_message(topic, envelope, qos)
             else,
                 self.logger.error(f"Max retries exceeded for message {correlation_id} af\
+    \
     \
     \
     \
@@ -1105,6 +1128,7 @@ from .fallback.fallback_protocols import
     \
     \
     \
+    \
     ")
             else,
                 self.logger.error(f"Failed to publish fact {fact_payload.get('id')}.")
@@ -1125,6 +1149,7 @@ from .fallback.fallback_protocols import
             "sender_ai_id": self.ai_id(),
             "recipient_ai_id": payload.get("target_ai_id") or \
     target_ai_id_or_topic if payload.get("target_ai_id") is not None else target_ai_id_o\
+    \
     \
     r_topic, ::
                 timestamp_sent": datetime.now(timezone.utc()).isoformat(),
@@ -1184,6 +1209,7 @@ from .fallback.fallback_protocols import
             "qos_parameters": {"requires_ack": False, "priority": "medium"}
             "routing_info": None,
             "payload_schema_uri": get_schema_uri("HSP_CapabilityAdvertisement_v0.1.schem\
+    \
     \
     \
     \

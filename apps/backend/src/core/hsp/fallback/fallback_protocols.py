@@ -674,6 +674,7 @@ class FallbackProtocolManager, :
             "active_protocol": self.active_protocol.protocol_name if self.active_protoco\
     \
     \
+    \
     l else None, ::
                 protocols": []
             "protocol_switch_count": self.protocol_switch_count()

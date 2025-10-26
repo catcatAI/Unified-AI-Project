@@ -239,8 +239,10 @@ from .storage.base import
     context_id == context2.context_id if context2.updated_at > context1.updated_at else \
     \
     \
+    \
     context1.context_id(), ::
     context_type == context2.context_type if context2.updated_at > context1.updated_at e\
+    \
     \
     \
     lse context1.context_type, ::
