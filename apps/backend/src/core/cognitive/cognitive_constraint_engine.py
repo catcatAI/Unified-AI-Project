@@ -266,6 +266,7 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     cription())
             
             similarities = []
@@ -280,6 +281,7 @@ class CognitiveConstraintEngine, :
                 if not hasattr(existing_target,
     'semantic_vector') or existing_target.semantic_vector is None, ::
                     existing_target.semantic_vector = await self._generate_semantic_vect\
+    \
     \
     \
     \
@@ -493,9 +495,11 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     ster)
                 cluster.cluster_size = len(cluster.target_ids())
                 cluster.representative_target = self._select_representative_target(clust\
+    \
     \
     \
     \
@@ -512,11 +516,13 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     _id}"
         
         return SemanticCluster()
             cluster_id = cluster_id, ,
     centroid_vector = target.semantic_vector.copy() if target.semantic_vector is not Non\
+    \
     \
     \
     e else np.random.random(100), :
@@ -640,6 +646,7 @@ class CognitiveConstraintEngine, :
                 if 'target_id' in history_entry and \
     history_entry['target_id'] in self.cognitive_targets, ::
                     historical_target = self.cognitive_targets[history_entry['target_id'\
+    \
     \
     \
     \
@@ -921,6 +928,7 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     get, old_priority, new_priority)
 {(                    })
                     
@@ -936,6 +944,7 @@ class CognitiveConstraintEngine, :
             
             # 生成优化推理说明
             optimization_result['optimization_reasoning'] = await self._generate_optimiz\
+    \
     \
     \
     \
@@ -1271,6 +1280,7 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     }",
                             target_ids = conflict_targets,
                             conflict_type = 'resource_conflict',
@@ -1280,8 +1290,10 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     })超过可用限制"]
                             resolution_suggestions = await self._generate_resource_resol\
+    \
     \
     \
     \
@@ -1327,6 +1339,7 @@ class CognitiveConstraintEngine, :
                                             conflict_id = f"semantic_conflict_{target1.t\
     \
     \
+    \
     arget_id}_{target2.target_id}", ,
     target_ids = [target1.target_id(), target2.target_id]
                                             conflict_type = 'semantic_conflict',
@@ -1335,8 +1348,10 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     {target2.description}'存在语义冲突"]
                                             resolution_suggestions = await self._generat\
+    \
     \
     \
     \
@@ -1392,6 +1407,7 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     ution_suggestions(target_ids, deadline),
                             detection_time = datetime.now()
 (                        )
@@ -1426,6 +1442,7 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     gestions(cycle, 'cycle_dependency'),
                     detection_time = datetime.now()
 (                )
@@ -1448,6 +1465,7 @@ class CognitiveConstraintEngine, :
                                     conflict_id = f"logical_conflict_mutex_{target.targe\
     \
     \
+    \
     t_id}", ,
     target_ids = [target.target_id(), dep1, dep2]
                                     conflict_type = 'logical_conflict',
@@ -1456,8 +1474,10 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     rget1.description}'与'{dep_target2.description}'互斥"]
                                     resolution_suggestions = await self._generate_logica\
+    \
     \
     \
     \
@@ -1743,10 +1763,12 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     self) -> Dict[str, Any]
         """优化认知资源分配"""
         optimization_result = {}
             'optimization_id': f"resource_opt_{datetime.now().strftime('%Y%m%d_%H%M%S')}\
+    \
     \
     \
     \
@@ -1769,6 +1791,7 @@ class CognitiveConstraintEngine, :
             
             # 步骤1, 资源需求分析
             resource_analysis = await self._analyze_resource_requirements(active_targets\
+    \
     \
     \
     \
@@ -1797,6 +1820,7 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     e_targets)
             optimization_result['resource_allocation'] = optimal_allocation
             
@@ -1808,6 +1832,7 @@ class CognitiveConstraintEngine, :
             
             # 步骤4, 效率评估
             efficiency_improvement = await self._calculate_efficiency_improvement(active\
+    \
     \
     \
     \
@@ -1899,6 +1924,7 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     et(, ))
 ((    conflict.root_causes[0].split("'")[1] 0) for target_id in conflict.target_ids())::
             if total_demand <= 0, ::
@@ -1983,6 +2009,7 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     2]
             
             for target_id in targets_to_reschedule, ::
@@ -2002,6 +2029,7 @@ class CognitiveConstraintEngine, :
                         'conflict_type': conflict.conflict_type(),
                         'resolution': 'temporal_rescheduling',
                         'new_deadline': target.deadline.isoformat() if target.deadline e\
+    \
     \
     \
     \
@@ -2169,6 +2197,7 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     lse None, ::
                         'resolution_time': datetime.now().isoformat()
 {(                    })
@@ -2272,8 +2301,10 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     (allocation['resource_assignments'])
             allocation['fairness_score'] = await self._calculate_allocation_fairness(all\
+    \
     \
     \
     \
@@ -2357,6 +2388,7 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     ics(self) -> Dict[str, Any]
         """获取认知约束统计"""
         stats = {}
@@ -2380,8 +2412,10 @@ class CognitiveConstraintEngine, :
     \
     \
     \
+    \
     _targets.values()]:
                 priorities == [target.priority for target in self.cognitive_targets.valu\
+    \
     \
     \
     \
@@ -2393,6 +2427,7 @@ class CognitiveConstraintEngine, :
             # 计算去重率,
             if self.target_history, ::
                 duplicate_events == [entry for entry in self.target_history if entry.get\
+    \
     \
     \
     \

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from datetime import datetime, timezone
 
 from apps.backend.src.ai.personality.personality_manager import PersonalityManager
-from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+from apps.backend.src.ai.memory.ham_memory.ham_manager import HAMMemoryManager
 from apps.backend.src.core.services.multi_llm_service import MultiLLMService
 from apps.backend.src.ai.emotion.emotion_system import EmotionSystem
 from apps.backend.src.ai.crisis.crisis_system import CrisisSystem
@@ -21,15 +21,16 @@ from apps.backend.src.ai.discovery.service_discovery_module import ServiceDiscov
     \
     \
     \
+    \
     e
 from apps.backend.src.core.shared.types.common_types import ()
     OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
 ()
 
-from apps.backend.src.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
+from apps.backend.src.core.hsp.types import HSPTaskResultPayload, HSPMessageEnvelope
 from apps.backend.src.ai.dialogue.project_coordinator import ProjectCoordinator
 from apps.backend.src.managers.agent_manager import AgentManager
-from apps.backend.src.hsp.connector import HSPConnector
+from apps.backend.src.core.hsp.connector import HSPConnector
 
 if TYPE_CHECKING:
     pass
@@ -66,6 +67,7 @@ class DialogueManager:
     \
     \
     \
+    \
     le
         self.hsp_connector = hsp_connector # Store hsp_connector
         self.config = config or {}
@@ -98,6 +100,7 @@ class DialogueManager:
     \
     \
     \
+    \
     g_hsp_task_result())
     async def _handle_incoming_hsp_task_result(self,
     result_payload: HSPTaskResultPayload, sender_ai_id: str,
@@ -115,6 +118,7 @@ class DialogueManager:
     \
     \
     \
+    \
     ator is not available.")
 
     async def get_simple_response(self, user_input: str,
@@ -128,6 +132,7 @@ class DialogueManager:
     user_input.lower().startswith(self.triggers["complex_project"]):
             roject_query = user_input[len(self.triggers["complex_project"])].strip()
             logging.info(f"[{self.ai_id}] Complex project detected. Delegating to Projec\
+    \
     \
     \
     \
@@ -188,6 +193,7 @@ class DialogueManager:
     \
     \
     \
+    \
     ent(user_input)
             if adjustment and self.personality_manager:
                 self.personality_manager.apply_personality_adjustment(adjustment)
@@ -226,6 +232,7 @@ class DialogueManager:
     \
     \
     \
+    \
     capabilities.
 
             Guidelines,
@@ -243,6 +250,7 @@ class DialogueManager:
             {user_context}
             
             Please provide a thoughtful response that demonstrates real understanding an\
+    \
     \
     \
     \
@@ -265,6 +273,7 @@ class DialogueManager:
                 if len(llm_response.content.strip()) > 10:  # 基本质量检查:
                     # 记录真实的推理过程
                     self.logger.info(f"Generated intelligent response with {len(llm_resp\
+    \
     \
     \
     \
@@ -296,6 +305,7 @@ class DialogueManager:
     \
     \
     \
+    \
     carefully..."
             elif any(word in user_input.lower() for word in ["hello", "hi", "hey"]):
                 return f"{ai_name} Hello! I'm here to help with thoughtful responses. Wh\
@@ -303,9 +313,11 @@ class DialogueManager:
     \
     \
     \
+    \
     at would you like to discuss?"
             else:
                 return f"{ai_name} I understand you're sharing something important. Let \
+    \
     \
     \
     \
@@ -340,6 +352,7 @@ class DialogueManager:
     \
     \
     \
+    \
     ailable or not connected.", None):
 
             # Generate correlation ID
@@ -366,6 +379,7 @@ class DialogueManager:
 
             if success:
                 return (f"Task request sent successfully to {capability_advertisement.ge\
+    \
     \
     \
     \

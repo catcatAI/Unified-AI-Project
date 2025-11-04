@@ -61,6 +61,7 @@ class AudioProcessingAgent(BaseAgent):
     \
     \
     \
+    \
     ies, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload,
     sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -69,6 +70,7 @@ class AudioProcessingAgent(BaseAgent):
         params = task_payload.get("parameters")
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
     \
     \
     \
@@ -102,9 +104,11 @@ class AudioProcessingAgent(BaseAgent):
     \
     \
     \
+    \
     "":::
 = await self.hsp_connector.send_task_result(result_payload, callback_topic)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callb\
+    \
     \
     \
     \
@@ -168,6 +172,7 @@ class AudioProcessingAgent(BaseAgent):
         # In a real implementation, this would use proper audio processing techniques
         # For now, we'll return a placeholder result,
         enhanced_file == f"{audio_file.split('.')[0]}_enhanced.{audio_file.split('.')[ -\
+    \
     \
     \
     \

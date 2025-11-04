@@ -8,7 +8,7 @@ import logging
 
 from apps.backend.src.tools.math_model import data_generator
 from apps.backend.src.tools.math_tool import extract_arithmetic_problem, calculate as calculate_via_tool
-from apps.backend.src.tools.math_tool import MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH
+from apps.backend.src.tools.math_model.model import MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH
 from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
 from apps.backend.src.tools.math_model.model import ArithmeticSeq2Seq, get_char_token_maps
 

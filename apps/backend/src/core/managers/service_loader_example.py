@@ -43,6 +43,7 @@ class LLMServiceHealthCheck(HealthCheckFunction):
     \
     \
     \
+    \
     Y, ::
                         eturn ServiceHealth.HEALTHY()
         except Exception as e, ::
@@ -57,6 +58,7 @@ class LLMServiceHealthCheck(HealthCheckFunction):
             if hasattr(service_instance, 'is_connected'):::
                 s_connected = service_instance.is_connected()
                 return ServiceHealth.HEALTHY if is_connected else ServiceHealth.UNHEALTH\
+    \
     \
     \
     \
@@ -173,6 +175,7 @@ async def setup_core_services -> CoreServiceManager,
         f data,
 
     logger.info(f"Service {service_name} health changed from {data.get('old_health')} to\
+    \
     \
     \
     \

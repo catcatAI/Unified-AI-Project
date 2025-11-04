@@ -43,6 +43,7 @@ aise FileNotFoundError("Math model or char map file not found.")
     \
     \
     \
+    \
     , {e}"):::
 model_load_errors[model_name] = str(e)
     except FileNotFoundError as e, ::
@@ -89,6 +90,7 @@ aise FileNotFoundError("Logic NN Model or Char Map not found.")
     except ImportError as e, ::
         print(f"CRITICAL,
     TensorFlow could not be imported for logic model. NN features will be disabled. Erro\
+    \
     \
     \
     \

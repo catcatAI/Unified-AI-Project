@@ -57,6 +57,7 @@ class RealCausalGraph, :
     \
     \
     \
+    \
     im = 0)
             
             similarity_score = similarity.item()
@@ -359,6 +360,7 @@ class RealCounterfactualReasoner, :
     \
     \
     \
+    \
     )
         
         return semantic_similarity * intervention_magnitude
@@ -510,6 +512,7 @@ class RealCausalReasoningEngine, :
     \
     \
     \
+    \
     on, causal_insights)
                 validated_relationships.extend(validated)
             
@@ -518,6 +521,7 @@ class RealCausalReasoningEngine, :
             
             # 生成学习洞察
             learning_insights = await self._generate_learning_insights(validated_relatio\
+    \
     \
     \
     \
@@ -545,14 +549,17 @@ class RealCausalReasoningEngine, :
     \
     \
     \
+    \
     ,
                 'confounding_factors': await self._detect_confounding_factors(observatio\
     \
     \
     \
     \
+    \
     n),
                 'semantic_relationships': await self._analyze_semantic_relationships(obs\
+    \
     \
     \
     \
@@ -916,6 +923,7 @@ class RealCausalReasoningEngine, :
     \
     \
     \
+    \
     ar1, var2)
                     semantic_relationships[f"{var1}_{var2}"] = similarity
         
@@ -992,6 +1000,7 @@ class RealCausalReasoningEngine, :
         
         # 语义相似度验证
         semantic_similarity = await self.causal_graph.calculate_semantic_similarity(caus\
+    \
     \
     \
     \
@@ -1081,6 +1090,7 @@ class RealCausalReasoningEngine, :
             
             # 1. 干预语义影响置信度
             intervention_confidence = await self._calculate_intervention_confidence(inte\
+    \
     \
     \
     \

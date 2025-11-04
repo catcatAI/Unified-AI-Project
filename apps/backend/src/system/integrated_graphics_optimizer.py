@@ -272,8 +272,10 @@ class IntegratedGraphicsOptimizer, :
     \
     \
     \
+    \
     tion()
     results["optimizations_applied"]["precision_adjustment"] = self.enable_precision_adj\
+    \
     \
     \
     \
@@ -284,8 +286,10 @@ class IntegratedGraphicsOptimizer, :
     \
     \
     \
+    \
     sage()
     results["optimizations_applied"]["model_compression"] = self.apply_model_compression\
+    \
     \
     \
     \

@@ -6,20 +6,20 @@ import unittest
 import logging
 
 # 配置日志
-logging.basicConfig(level=logging.INFO())
-logger, Any = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-class TestToolCallChainTracker(unittest.TestCase()):
+class TestToolCallChainTracker(unittest.TestCase):
     """工具调用链追踪器测试类"""
     
     def setUp(self):
         """测试初始化"""
-        self.context_manager == = Mock(spec ==ContextManager)
+        self.context_manager = Mock(spec=ContextManager)
         self.context_manager.create_context.return_value = "test_context_id"
-        self.tracker == ToolCallChainTracker(self.context_manager())
+        self.tracker = ToolCallChainTracker(self.context_manager())
         
-    def test_start_tool_chain(self) -> None,
+    def test_start_tool_chain(self) -> None:
         """测试开始工具调用链"""
         root_tool_id = "test_tool_1"
         chain_id = self.tracker.start_tool_chain(root_tool_id)
@@ -32,7 +32,7 @@ class TestToolCallChainTracker(unittest.TestCase()):
         self.assertIsNotNone(self.tracker.chain_context.current_chain())
         self.assertEqual(self.tracker.chain_context.current_chain.root_tool_id(), root_tool_id)
         
-    def test_end_tool_chain(self) -> None,
+    def test_end_tool_chain(self) -> None:
         """测试结束工具调用链"""
         root_tool_id = "test_tool_1"
         chain_id = self.tracker.start_tool_chain(root_tool_id)
@@ -49,13 +49,13 @@ class TestToolCallChainTracker(unittest.TestCase()):
         # 验证链已存储
         self.assertIn(chain_id, self.tracker.stored_chains())
         
-    def test_start_tool_call(self) -> None,
+    def test_start_tool_call(self) -> None:
         """测试开始工具调用"""
         root_tool_id = "test_tool_1"
         chain_id = self.tracker.start_tool_chain(root_tool_id)
         
         tool_id = "test_tool_2"
-        parameters == {"param1": "value1", "param2": "value2"}
+        parameters = {"param1": "value1", "param2": "value2"}
         call_id = self.tracker.start_tool_call(tool_id, parameters)
         
         # 验证返回的call_id不为空
@@ -68,17 +68,17 @@ class TestToolCallChainTracker(unittest.TestCase()):
         self.assertEqual(call_node.tool_id(), tool_id)
         self.assertEqual(call_node.parameters(), parameters)
         
-    def test_end_tool_call(self) -> None,
+    def test_end_tool_call(self) -> None:
         """测试结束工具调用"""
         root_tool_id = "test_tool_1"
         self.tracker.start_tool_chain(root_tool_id)
         
         tool_id = "test_tool_2"
-        parameters == {"param1": "value1"}
+        parameters = {"param1": "value1"}
         call_id = self.tracker.start_tool_call(tool_id, parameters)
         
-        result == {"output": "test_result"}
-        ended_call_id = self.tracker.end_tool_call(result, success == True)
+        result = {"output": "test_result"}
+        ended_call_id = self.tracker.end_tool_call(result, success=True)
         
         # 验证返回的call_id正确
         self.assertEqual(ended_call_id, call_id)
@@ -90,29 +90,29 @@ class TestToolCallChainTracker(unittest.TestCase()):
         self.assertIsNotNone(call_node.completed_at())
         self.assertGreaterEqual(call_node.duration(), 0)
         
-    def test_tool_call_chain_structure(self) -> None,
+    def test_tool_call_chain_structure(self) -> None:
         """测试工具调用链结构"""
         root_tool_id = "root_tool"
         chain_id = self.tracker.start_tool_chain(root_tool_id)
         
         # 创建根调用
-        root_parameters == {"input": "root_input"}
+        root_parameters = {"input": "root_input"}
         root_call_id = self.tracker.start_tool_call(root_tool_id, root_parameters)
         
         # 创建子调用1
         child1_tool_id = "child_tool_1"
-        child1_parameters == {"param": "value1"}
+        child1_parameters = {"param": "value1"}
         child1_call_id = self.tracker.start_tool_call(child1_tool_id, child1_parameters)
-        self.tracker.end_tool_call({"result": "child1_result"} success == True)
+        self.tracker.end_tool_call({"result": "child1_result"}, success=True)
         
         # 创建子调用2
         child2_tool_id = "child_tool_2"
-        child2_parameters == {"param": "value2"}
+        child2_parameters = {"param": "value2"}
         child2_call_id = self.tracker.start_tool_call(child2_tool_id, child2_parameters)
-        self.tracker.end_tool_call({"result": "child2_result"} success == True)
+        self.tracker.end_tool_call({"result": "child2_result"}, success=True)
         
         # 结束根调用
-        self.tracker.end_tool_call({"result": "root_result"} success == True)
+        self.tracker.end_tool_call({"result": "root_result"}, success=True)
         
         # 结束调用链
         self.tracker.end_tool_chain()
@@ -146,7 +146,7 @@ class TestToolCallChainTracker(unittest.TestCase()):
         self.assertEqual(child2_call.parent_id(), root_call_id)
         self.assertEqual(len(child2_call.child_calls()), 0)
         
-    def test_get_call_chain_by_id(self) -> None,
+    def test_get_call_chain_by_id(self) -> None:
         """测试根据ID获取调用链"""
         root_tool_id = "test_tool"
         chain_id = self.tracker.start_tool_chain(root_tool_id)
@@ -162,7 +162,7 @@ class TestToolCallChainTracker(unittest.TestCase()):
         non_existent_chain = self.tracker.get_call_chain_by_id("non_existent")
         self.assertIsNone(non_existent_chain)
         
-    def test_get_chains_by_tool_id(self) -> None,
+    def test_get_chains_by_tool_id(self) -> None:
         """测试根据工具ID获取相关调用链"""
         # 创建使用特定工具的调用链
         tool_id = "specific_tool"
@@ -178,7 +178,7 @@ class TestToolCallChainTracker(unittest.TestCase()):
         non_existent_chains = self.tracker.get_chains_by_tool_id("non_existent_tool")
         self.assertEqual(len(non_existent_chains), 0)
         
-    def test_error_handling_in_chain(self) -> None,
+    def test_error_handling_in_chain(self) -> None:
         """测试调用链中的错误处理"""
         root_tool_id = "root_tool"
         chain_id = self.tracker.start_tool_chain(root_tool_id)
@@ -187,7 +187,7 @@ class TestToolCallChainTracker(unittest.TestCase()):
         tool_id = "error_tool"
         call_id = self.tracker.start_tool_call(tool_id, {})
         error_message = "Test error occurred"
-        self.tracker.end_tool_call(None, success == False, error_message=error_message)
+        self.tracker.end_tool_call(None, success=False, error_message=error_message)
         
         # 结束调用链
         self.tracker.end_tool_chain()
@@ -198,14 +198,14 @@ class TestToolCallChainTracker(unittest.TestCase()):
         self.assertEqual(chain.error_message(), error_message)
 
 
-class TestToolCallChainContext(unittest.TestCase()):
+class TestToolCallChainContext(unittest.TestCase):
     """工具调用链上下文管理器测试类"""
     
     def setUp(self):
         """测试初始化"""
-        self.context == ToolCallChainContext()
+        self.context = ToolCallChainContext()
         
-    def test_start_chain(self) -> None,
+    def test_start_chain(self) -> None:
         """测试开始调用链"""
         chain_id = "test_chain"
         root_tool_id = "root_tool"
@@ -215,25 +215,23 @@ class TestToolCallChainContext(unittest.TestCase()):
         self.assertEqual(chain.root_tool_id(), root_tool_id)
         self.assertIsNotNone(chain.created_at())
         
-    def test_end_chain_without_active_chain(self) -> None,
+    def test_end_chain_without_active_chain(self) -> None:
         """测试在没有活动调用链时结束调用链"""
         chain = self.context.end_chain()
         self.assertIsNone(chain)
         
-    def test_start_call_without_active_chain(self) -> None,
-        """测试在没有活动调用链时开始调用"""
-        with self.assertRaises(RuntimeError)
+    def test_start_call_without_active_chain(self) -> None:
+        with self.assertRaises(RuntimeError):
             self.context.start_call("test_tool", {})
             
-    def test_end_call_without_active_call(self) -> None,
+    def test_end_call_without_active_call(self) -> None:
         """测试在没有活动调用时结束调用"""
         # 先开始一个调用链
         self.context.start_chain("test_chain", "root_tool")
         
         # 尝试结束不存在的调用
-        with self.assertRaises(RuntimeError)
-            self.context.end_call()
+        with self.assertRaises(RuntimeError):
+                        self.context.end_call()
 
-
-if __name"__main__":::
+if __name__ == "__main__":
     unittest.main()

@@ -11,6 +11,7 @@ from diagnose_base_agent import
     \
     \
     \
+    \
     line
         pipeline, TRANSFORMERS_AVAILABLE = import_transformers_pipeline
         if not TRANSFORMERS_AVAILABLE:

@@ -1,169 +1,118 @@
-from diagnose_base_agent import
-from tests.core_ai import
-from system_test import
+import operator
+import ast
+import re
 from typing import Union, Dict, Callable, Type, List
 
-# Temporarily add project root to sys.path for local imports during development /\
-    testing
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-
-from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
-
-# - - - Configuration - - -
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-MODEL_WEIGHTS_PATH = os.path.join(PROJECT_ROOT,
-    "data / models / arithmetic_model.keras")
-CHAR_MAPS_PATH = os.path.join(PROJECT_ROOT, "data / models / arithmetic_char_maps.json")
-
-_model_instance = None
-_tensorflow_import_error = None
-
-def _load_math_model():
-    """Loads the arithmetic model, handling potential TensorFlow import errors."""
-    global _model_instance, _tensorflow_import_error
-    if _model_instance is not None or _tensorflow_import_error is not None:
-        return _model_instance
-
-    try:
-        # Import statement for the model is now inside a try -\
-    except block in the loading function.
-from .math_model.model import
-        print("Loading arithmetic model for the first time...")
-        if not os.path.exists(MODEL_WEIGHTS_PATH) or not os.path.exists(CHAR_MAPS_PATH):
-            raise FileNotFoundError("Model or char map file not found.")
-
-        _model_instance = ArithmeticSeq2Seq.load_for_inference()
-            MODEL_WEIGHTS_PATH, CHAR_MAPS_PATH
-(        )
-        print("Arithmetic model loaded successfully.")
-
-    except ImportError as e:
-        print(f"CRITICAL: TensorFlow could not be imported. Math tool's NN features will\
-    \
-    \
-    \
-    \
-    be disabled. Error: {e}")
-        _tensorflow_import_error = str(e)
-        _model_instance = None
-    except FileNotFoundError as e:
-        print(f"Warning: Math model files not found. NN features will be disabled. Error\
-    \
-    \
-    \
-    \
-    : {e}")
-        _tensorflow_import_error = str(e)  # Treat missing files as an import -\
-    level issue for this tool
-        _model_instance = None
-    except Exception as e:
-        print(f"An unexpected error occurred while loading the math model: {e}")
-        _tensorflow_import_error = str(e)
-        _model_instance = None
-
-    return _model_instance
-
-def extract_arithmetic_problem(text: str) -> str | None:
+def extract_arithmetic_problem(text: str) -> str:
     """
-    Extracts a basic arithmetic problem from a string.
+    Extracts a simple arithmetic problem from a given text.
+    For example, "What is 5 + 3?" -> "5 + 3"
+    This is a placeholder for a more sophisticated NLP-based extraction.
     """
-    normalized_text = text.lower().replace("plus", " + ").replace("add",
-    " + ").replace("minus", " - ").replace("subtract", " - ") \
-                        .replace("times", " * ").replace("multiply by",
-    " * ").replace("multiplied by", " * ") \
-                        .replace("divided by", " / ").replace("divide by", " / ")
-
-    float_num_pattern = r"[ - +]?\d + (?:\.\d + )?"
-    problem_pattern_grouped = rf"({float_num_pattern})\s * ([\ +\
-    \ - \ * \ / ])\s * ({float_num_pattern})"
-
-    match = re.search(problem_pattern_grouped, normalized_text)
+    # Very basic extraction: looks for numbers and basic operators
+    match = re.search(r'(\d+\s*[\+\-\*\/]\s*\d+)', text)
     if match:
-        try:
-            num1_str, op_str, num2_str = match.groups()
-            float(num1_str)
-            float(num2_str)
-            return f"{num1_str.strip()} {op_str} {num2_str.strip()}"
-        except (ValueError, IndexError):
-            return None
-    return None
+        return match.group(1)
+    return ""
 
-def calculate(input_string: str) -> ToolDispatcherResponse:
+def calculate(expression: str) -> Union[int, float]:
     """
-    Takes a natural language string, extracts an arithmetic problem,
-    and returns the calculated answer using the trained model.
+    Calculates the result of a simple arithmetic expression.
+    Supports basic operations: +, -, *, /, ** (power), % (modulo).
     """
-    model = _load_math_model()
-    if model is None:
-        error_msg = "Error: Math model is not available."
-        if _tensorflow_import_error:
-            error_msg += f" Reason: {_tensorflow_import_error}"
-        return ToolDispatcherResponse()
-            status = "failure_tool_error",
-            payload = None,
-            tool_name_attempted = "calculate",
-            original_query_for_tool = input_string,
-            error_message = error_msg
-(        )
+    # Define supported operators
+    bin_operators: Dict[Type[ast.operator], Callable[[Union[int, float], Union[int, float]], Union[int, float]]] = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.Pow: operator.pow,
+        ast.Mod: operator.mod,
+    }
 
-    problem_to_solve = extract_arithmetic_problem(input_string)
+    unary_operators: Dict[Type[ast.unaryop], Callable[[Union[int, float]], Union[int, float]]] = {
+        ast.USub: operator.neg,
+        ast.UAdd: operator.pos,
+    }
 
-    if problem_to_solve is None:
-        return ToolDispatcherResponse()
-            status = "failure_tool_error",
-            payload = None,
-            tool_name_attempted = "calculate",
-            original_query_for_tool = input_string,
-            error_message = "Could not understand the math problem from the input."
-(        )
+    def eval_node(node) -> Union[int, float]:
+        if isinstance(node, ast.Constant):  # Python 3.8+
+            value = node.value
+            if isinstance(value, (int, float)):
+                return value
+            else:
+                raise ValueError(f"Unsupported constant value type: {type(value)}")
+        elif isinstance(node, ast.Num):  # Python < 3.8
+            # Ensure return value is int or float type
+            n_value = node.n
+            if isinstance(n_value, complex):
+                # If complex, return real part
+                return float(n_value.real)
+            elif isinstance(n_value, (int, float)):
+                return n_value
+            else:
+                raise ValueError(f"Unsupported number type: {type(n_value)}")
+        elif isinstance(node, ast.BinOp):
+            left = eval_node(node.left)
+            right = eval_node(node.right)
+            op_func = bin_operators.get(type(node.op))
+            if op_func:
+                return op_func(left, right)
+            else:
+                raise ValueError(f"Unsupported binary operation: {type(node.op)}")
+        elif isinstance(node, ast.UnaryOp):
+            operand = eval_node(node.operand)
+            op_func = unary_operators.get(type(node.op))
+            if op_func:
+                return op_func(operand)
+            else:
+                raise ValueError(f"Unsupported unary operation: {type(node.op)}")
+        else:
+            raise ValueError(f"Unsupported operation: {type(node)}")
 
-    print(f"Extracted problem: '{problem_to_solve}' for model.")
     try:
-        predicted_answer = model.predict_sequence(problem_to_solve)
-        try:
-            val = float(predicted_answer)
-            result_str = str(int(val)) if val.is_integer() else str(val)
-            return ToolDispatcherResponse()
-                status = "success",
-                payload = result_str,
-                tool_name_attempted = "calculate",
-                original_query_for_tool = input_string
-(            )
-        except (ValueError, TypeError):
-            return ToolDispatcherResponse()
-                status = "failure_tool_error",
-                payload = None,
-                tool_name_attempted = "calculate",
-                original_query_for_tool = input_string,
-                error_message = f"Model returned a non -\
-    numeric answer: {predicted_answer}"
-(            )
-
+        tree = ast.parse(expression, mode='eval')
+        return eval_node(tree.body)
     except Exception as e:
-        print(f"Error during model prediction: {e}")
-        return ToolDispatcherResponse()
-            status = "failure_tool_error",
-            payload = None,
-            tool_name_attempted = "calculate",
-            original_query_for_tool = input_string,
-            error_message = "Error: Failed to get a prediction from the math model."
-(        )
+        raise ValueError(f"Cannot evaluate expression: {expression} error: {str(e)}")
 
 if __name__ == "__main__":
-    print("Math Tool Example Usage:")
+    print("--- Math Tool Example Usage ---")
 
-    test_queries = []
-        "what is 10 + 5?",
-        "calculate 100 / 25",
-        "2 * 3",
-        "123 - 45",
-        "Tell me the sum of 7 and 3.",
-        "What's 9 divided by 2",
-        "what is 10.5 + 2.1?",
-        "calculate 7.5 / 2.5",
-[    ]
+    # Test cases
+    expressions = [
+        "5 + 3",
+        "10 - 4",
+        "6 * 7",
+        "100 / 5",
+        "2 ** 3",
+        "10 % 3",
+        "(5 + 3) * 2",
+        "10 / (2 + 3)",
+        "-5 + 2",
+        "2 + -5",
+        "10 / 0" # Should raise ZeroDivisionError
+    ]
 
-    for query in test_queries:
-        print(f"\nQuery: \"{query}\"")
-        answer = calculate(query)
-        print(f"  -> Answer: {answer}")
+    for expr in expressions:
+        try:
+            result = calculate(expr)
+            print(f"Expression: '{expr}' = {result}")
+        except ValueError as e:
+            print(f"Expression: '{expr}' - Error: {e}")
+        except ZeroDivisionError:
+            print(f"Expression: '{expr}' - Error: Division by zero")
+
+    print("\n--- Extraction Example ---")
+    text_query = "Please calculate 15 * 4 for me."
+    extracted_problem = extract_arithmetic_problem(text_query)
+    if extracted_problem:
+        try:
+            result = calculate(extracted_problem)
+            print(f"From text: '{text_query}', extracted: '{extracted_problem}', result: {result}")
+        except ValueError as e:
+            print(f"From text: '{text_query}', extracted: '{extracted_problem}', error: {e}")
+    else:
+        print(f"No arithmetic problem extracted from: '{text_query}'")
+
+    print("\nMath Tool script execution finished.")

@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 
 # Correct import paths for DemoLearningManager and ExecutionManager
-from apps.backend.src.core_ai.learning.demo_learning_manager import DemoLearningManager
-from apps.backend.src.core_ai.execution.execution_manager import ExecutionManager
+from apps.backend.src.ai.learning.demo_learning_manager import DemoLearningManager
+from apps.backend.src.ai.execution.execution_manager import ExecutionManager
 
 class TestTrainingManager:
     """训练系统组件单元测试"""
@@ -21,7 +21,7 @@ class TestTrainingManager:
         return manager
     
     
-def test_demo_learning_manager_init(self, demo_learning_manager) -> None:
+    def test_demo_learning_manager_init(self, demo_learning_manager) -> None:
         """测试DemoLearningManager初始化"""
         assert demo_learning_manager is not None
         assert hasattr(demo_learning_manager, 'training_configs')

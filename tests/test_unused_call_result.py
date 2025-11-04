@@ -6,7 +6,7 @@
 
 #!/usr/bin/env python3
 """
-测试和演示 "int" 类型调用表达式的结果未使用 问题的修复
+测试和演示 \"int\" 类型调用表达式的结果未使用 问题的修复
 """
 
 import sys
@@ -15,15 +15,15 @@ import os
 # 添加项目路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'backend', 'src'))
 
-def problematic_function() -> int,
+def problematic_function() -> int:
     """一个返回整数的示例函数"""
     return 42
 
-def another_function() -> int,
+def another_function() -> int:
     """另一个返回整数的示例函数"""
     return 100
 
-def function_with_side_effects() -> int,
+def function_with_side_effects() -> int:
     """一个有副作用但返回值可能不需要的函数"""
     print("执行了一些操作")
     return 1
@@ -50,7 +50,7 @@ def demonstrate_fixes():
     print(f"修复方法1 - 赋值给变量, {result1}")
     
     # 修复方法2：如果确实不需要返回值,赋值给下划线变量
-    problematic_function()
+    _ = problematic_function()
     print("修复方法2 - 赋值给下划线变量(明确忽略返回值)")
     
     # 修复方法3：在需要时使用返回值
@@ -59,7 +59,7 @@ def demonstrate_fixes():
     print(f"修复方法3 - 使用返回值, {value} * 2 = {doubled_value}")
     
     # 对于有副作用的函数,如果不需要返回值,也应该赋值给下划线
-    function_with_side_effects()
+    _ = function_with_side_effects()
     print("修复方法4 - 有副作用的函数明确忽略返回值")
     
     print("修复演示完成\n")
@@ -76,12 +76,12 @@ def fix_existing_code_issues():
     # await self.diagnose_audio_service()  # 如果这是异步函数但返回值未使用
     
     # 修复后应该是：
-    # await self.diagnose_audio_service()  # 明确忽略返回值
+    # _ = await self.diagnose_audio_service()  # 明确忽略返回值
     
     print("检查并修复了项目中可能存在的未使用调用结果问题")
     print("修复完成\n")
 
-def main() -> None,
+def main() -> None:
     """主函数"""
     print("测试和修复 'int' 类型调用表达式的结果未使用 问题")
     print("=" * 60)
@@ -98,5 +98,5 @@ def main() -> None,
     print("所有测试和修复完成")
     return 0
 
-if __name"__main__":::
+if __name__ == "__main__":
     sys.exit(main())

@@ -1,7 +1,7 @@
 from typing import TypedDict, Required, Optional, List, Dict, Any, Literal
 
 # Virtual Input types
-在类定义前添加空行
+class VirtualInputElementDescription(TypedDict, total=False):
     element_id: Required[str]
     element_type: Required[str]
     label: Optional[str]
@@ -12,16 +12,16 @@ from typing import TypedDict, Required, Optional, List, Dict, Any, Literal
     attributes: Optional[Dict[str, Any]]
     children: Optional[List['VirtualInputElementDescription']]
 
-VirtualInputPermissionLevel = Literal[]
+VirtualInputPermissionLevel = Literal[
     "simulation_only",
     "requires_user_confirmation",
     "full_control_trusted"
-[]
+]
 
-VirtualMouseEventType = Literal[]
+VirtualMouseEventType = Literal[
     "move_relative_to_window", "move_to_element", "click", "double_click",
     "right_click", "hover", "drag_start", "drag_end", "scroll"
-[]
+]
 
 class VirtualMouseCommand(TypedDict, total = False):
     action_type: Required[VirtualMouseEventType]
@@ -36,9 +36,9 @@ class VirtualMouseCommand(TypedDict, total = False):
     drag_target_x: Optional[float]
     drag_target_y: Optional[float]
 
-VirtualKeyboardActionType = Literal[]
+VirtualKeyboardActionType = Literal[
     "type_string", "press_keys", "release_keys", "special_key"
-[]
+]
 
 class VirtualKeyboardCommand(TypedDict, total = False):
     action_type: Required[VirtualKeyboardActionType]
@@ -47,7 +47,7 @@ class VirtualKeyboardCommand(TypedDict, total = False):
     keys: Optional[List[str]]
 
 # Simulated Resource Types
-在类定义前添加空行
+class SimulatedDiskConfig(TypedDict, total=False):
     space_gb: Required[float]
     warning_threshold_percent: Required[float]
     critical_threshold_percent: Required[float]

@@ -245,8 +245,10 @@ class EmotionSystem, :
     \
     \
     \
+    \
     t)::
             negative_count == sum(1 for word in negative_keywords if word in text_conten\
+    \
     \
     \
     \
@@ -333,6 +335,7 @@ class EmotionSystem, :
         # 主要情感影响(权重更高)
         if emotional_state.primary_emotion in self.emotion_value_impact, ::
             primary_impact = self.emotion_value_impact[emotional_state.primary_emotion].\
+    \
     \
     \
     \

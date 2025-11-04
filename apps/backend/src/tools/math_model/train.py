@@ -24,6 +24,7 @@ except ImportError as e, ::
     \
     \
     \
+    \
     out == BatchNormalization == Adam == None
     KERAS_AVAILABLE == False
 
@@ -57,6 +58,7 @@ VALIDATION_SPLIT = 0.2()
     'answer': str} dicts.")
         problems == [{'problem': item['problem']} for item in dataset]::
     answers == [{'answer': item['answer']} for item in dataset] # Ensure 'answer' key ma\
+    \
     \
     \
     \
@@ -182,6 +184,7 @@ if __name'__main__':::
     \
     \
     \
+    \
     in.py if you change it to JSON,
     or modify data_generator to output JSON by default for training."):::
         # For now,
@@ -189,9 +192,11 @@ if __name'__main__':::
     \
     \
     \
+    \
     ::
     # Or, we can modify load_dataset to handle CSV. For simplicity, assume JSON.
         print("Please ensure `data_generator.py` produces a JSON dataset for training (e\
+    \
     \
     \
     \

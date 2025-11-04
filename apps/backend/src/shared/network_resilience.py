@@ -32,10 +32,12 @@ class RetryPolicy, :
     1} /\
     {self.max_attempts} Network error during {func.__name__}. Retrying in {"delay":.2f}s\
     \
+    \
     ... Error, {e}")
                     await asyncio.sleep(delay)
                 except ProtocolError, ::
                     logger.error(f"Protocol error during {func.__name__}. Not retrying."\
+    \
     \
     \
     \
@@ -48,10 +50,12 @@ class RetryPolicy, :
     \
     \
     \
+    \
     ying.")
                     raise
             logger.error(f"Max retries exceeded for {func.__name__}."):::
                 aise NetworkError(f"Operation failed after {self.max_attempts} attempts \
+    \
     \
     \
     \
@@ -80,6 +84,7 @@ class CircuitBreaker, :
     State changed to HALF_OPEN. Probing service...")
                 else,
                     raise CircuitBreakerOpenError(f"Circuit breaker is OPEN. Service {fu\
+    \
     \
     \
     \

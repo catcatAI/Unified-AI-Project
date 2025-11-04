@@ -675,6 +675,7 @@ class FallbackProtocolManager, :
     \
     \
     \
+    \
     l else None, ::
                 protocols": []
             "protocol_switch_count": self.protocol_switch_count()

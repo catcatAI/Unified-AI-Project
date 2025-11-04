@@ -42,6 +42,7 @@ class LearningLogDB:
     \
     \
     \
+    \
     ."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -91,6 +92,7 @@ class LearningLogDB:
 
     def close(self):
         """Closes the database connection. (Not strictly necessary for sqlite3.connect()\
+    \
     \
     \
     \

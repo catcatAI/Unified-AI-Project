@@ -2,23 +2,27 @@
 This module defines the neural network model for the logic tool.
 """
 
-from diagnose_base_agent import
-from tests.test_json_fix import
-# TODO: Fix import - module 'numpy' not found
-from system_test import
+import os
+import sys
+import ast
+import logging
+import numpy as np
 from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional, Dict, List, Any
 
 # Add project root to path to allow absolute imports
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..',
-    '..'))
-sys.path.insert(0, PROJECT_ROOT)
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..'))
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
+BACKEND_SRC = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if str(BACKEND_SRC) not in sys.path:
+    sys.path.insert(0, str(BACKEND_SRC))
 
 # Corrected import paths
-from apps.backend.src.core_ai.dependency_manager import dependency_manager
-from apps.backend.src.core_ai.compression.alpha_deep_model import DNADataChain
+from apps.backend.src.ai.dependency_manager import dependency_manager
+from apps.backend.src.ai.compression.alpha_deep_model import DNADataChain
 
 # Global variables for lazy - loaded TensorFlow components
 tf_module: Optional[Any] = None
@@ -31,7 +35,8 @@ pad_sequences_func: Optional[Any] = None
 to_categorical_func: Optional[Any] = None
 
 @dataclass
-在类定义前添加空行
+# 在类定义前添加空行
+class LogicModelPredictionResult:
     """Data class for storing the result of a logic model prediction."""
     input_proposition: str
     predicted_result: bool
@@ -42,8 +47,7 @@ to_categorical_func: Optional[Any] = None
 
 def _ensure_tensorflow_is_imported() -> bool:
     """Lazily imports TensorFlow and its components."""
-    global tf_module, Model_cls, Input_cls, Embedding_cls, LSTM_cls, Dense_cls,
-    pad_sequences_func, to_categorical_func
+    global tf_module, Model_cls, Input_cls, Embedding_cls, LSTM_cls, Dense_cls, pad_sequences_func, to_categorical_func
     if tf_module is not None:
         return True
     
@@ -67,13 +71,15 @@ def _ensure_tensorflow_is_imported() -> bool:
     \
     \
     \
+    \
     be disabled. Error: {e}")
         tf_module = None
         return False
 
 class LogicNNModel:
     """A neural network model for evaluating logical propositions."""
-在函数定义前添加空行
+    # 在函数定义前添加空行
+    def __init__(self, max_seq_len: int = 128, vocab_size: int = 10000, embedding_dim: int = 128):
         if not _ensure_tensorflow_is_imported():
             self.model = None
             return
@@ -107,13 +113,13 @@ class LogicNNModel:
             print("Cannot train model, it was not built.")
             return None
         
-        history = self.model.fit()
+        history = self.model.fit(
             X_train, y_train,
             epochs = epochs,
             batch_size = batch_size,
             validation_data = (X_val, y_val),
             verbose = 1
-(        )
+        )
         return history
 
     def predict(self, proposition_str: str, char_to_token: Dict[str,
@@ -131,10 +137,10 @@ class LogicNNModel:
         predicted_class = np.argmax(prediction, axis = 1)[0]
         confidence = float(np.max(prediction))
         
-        return LogicModelResult()
+        return LogicModelResult(
             input_proposition = proposition_str,
             predicted_result = bool(predicted_class),
             confidence = confidence,
             processing_time = (datetime.now() - start_time).total_seconds(),
             timestamp = datetime.now()
-(        )
+        )

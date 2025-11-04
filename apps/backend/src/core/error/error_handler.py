@@ -416,6 +416,7 @@ class EnterpriseErrorHandler, :
     \
     \
     \
+    \
     alue(), 0) + 1
         
         return []
@@ -430,6 +431,7 @@ class EnterpriseErrorHandler, :
         severity_counts = {}
         for error in errors, ::
             severity_counts[error.severity.value] = severity_counts.get(error.severity.v\
+    \
     \
     \
     \

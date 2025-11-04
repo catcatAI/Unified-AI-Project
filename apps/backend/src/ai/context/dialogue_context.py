@@ -82,6 +82,7 @@ class Conversation, :
     \
     \
     \
+    \
     d}"):
 
 
@@ -122,6 +123,7 @@ eturn True
     \
     \
     \
+    \
     context_id}"):
                 eturn True
         except Exception as e, ::
@@ -156,7 +158,8 @@ eturn True
     entities.extend(emails)
 
     # 匹配URL
-    urls == re.findall(r'http[s]?: / /(?:[a - zA - Z]|[0 - 9]|[$ - _@.& + ]|[! * \\(\\), ]|(?:%[0 - 9a - fA - F][0 - 9a - fA - F])) + ', text)
+    urls == re.findall(r'http[s]?: / /(?:[a - zA - Z]|[0 - 9]|[$ - _@.& + ]|[! * \\(\\),
+    ]|(?:%[0 - 9a - fA - F][0 - 9a - fA - F])) + ', text)
     entities.extend(urls)
 
     # 匹配日期
@@ -238,10 +241,12 @@ f positive_count > negative_count,
     \
     \
     \
+    \
     ith context {context_id}"):::
                 eturn summary
         except Exception as e, ::
             logger.error(f"Failed to generate context summary for conversation {conversa\
+    \
     \
     \
     \
@@ -278,6 +283,7 @@ f positive_count > negative_count,
 {            }
         except Exception as e, ::
             logger.error(f"Failed to get context for conversation {conversation_id} {e}"\
+    \
     \
     \
     \
@@ -359,6 +365,7 @@ f positive_count > negative_count,
     \
     \
     \
+    \
     et_conversation_id} with context {context_id}"):
                     eturn True
 
@@ -367,10 +374,12 @@ f positive_count > negative_count,
     \
     \
     \
+    \
     )
             return False
         except Exception as e, ::
             logger.error(f"Failed to transfer context from {source_conversation_id} to {\
+    \
     \
     \
     \

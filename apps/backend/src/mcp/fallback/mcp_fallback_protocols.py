@@ -746,6 +746,7 @@ class MCPFallbackManager, :
     \
     \
     \
+    \
     e_protocol else "None":::
                             elf.active_protocol = protocol_obj
                         logger.info(f"MCP協議切換,
@@ -812,6 +813,7 @@ class MCPFallbackManager, :
         """獲取狀態信息"""
         status, Dict[str, Any] = {}
             "active_protocol": self.active_protocol.protocol_name if self.active_protoco\
+    \
     \
     \
     \

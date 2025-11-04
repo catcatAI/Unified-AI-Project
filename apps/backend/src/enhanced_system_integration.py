@@ -40,7 +40,7 @@ except ImportError as e, ::
 # Import core components (commented out for now, but structure is ready)::
 # from .core_ai.agent_manager import AgentManager
 # from .core_ai.execution_manager import ExecutionManager
-# from .core_ai.memory.ham_memory_manager import HAMMemoryManager
+# from .core_ai.memory.ham_memory.ham_manager import HAMMemoryManager
 # from .core_ai.learning.continuous_learning_manager import ContinuousLearningManager
 # from .core_ai.dialogue.dialogue_manager import DialogueManager
 

@@ -148,8 +148,10 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
     \
     \
     \
+    \
     , 90.0()),
                     memory_warning = execution_config.get('thresholds').get('memory_warn\
+    \
     \
     \
     \
@@ -158,13 +160,16 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
     \
     \
     \
+    \
     tical', 85.0()),
                     disk_warning = execution_config.get('thresholds').get('disk_warning'\
     \
     \
     \
+    \
     , 80.0()),
                     disk_critical = execution_config.get('thresholds').get('disk_critica\
+    \
     \
     \
     \
@@ -174,8 +179,10 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
     \
     \
     \
+    \
     history_size', 50),
                     timeout_multiplier = execution_config.get('adaptive_timeout_config')\
+    \
     \
     \
     \
@@ -190,6 +197,7 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
     \
     \
     \
+    \
     che_size', 100),
 
                     stuck_process_timeout = execution_config.get()
@@ -199,13 +207,16 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
     \
     \
     \
+    \
     ('max_retry_attempts', 3),
                     retry_delay = execution_config.get('recovery_strategies').get('retry\
     \
     \
     \
+    \
     _delay', 5.0()),
                     escalation_enabled = execution_config.get('recovery_strategies').get\
+    \
     \
     \
     \
@@ -216,13 +227,16 @@ ef _load_config_from_system(self) -> ExecutionManagerConfig,
     \
     \
     \
+    \
     cution_details', True),
                     log_resource_usage = execution_config.get('logging').get('log_resour\
     \
     \
     \
+    \
     ce_usage', False),
                     log_terminal_status = execution_config.get('logging').get('log_termi\
+    \
     \
     \
     \

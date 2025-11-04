@@ -148,6 +148,7 @@ from .execution_manager import
     \
     \
     \
+    \
     ame}")::
                 return False
 
@@ -191,6 +192,7 @@ from .execution_manager import
             await self._emit_event('service_loaded', service_name)
 
             logger.info(f"Service {service_name} loaded successfully in {service_info.lo\
+    \
     \
     \
     \
@@ -290,6 +292,7 @@ from .execution_manager import
     \
     \
     \
+    \
     es} cannot unload")
                 return False
 
@@ -314,6 +317,7 @@ from .execution_manager import
                                 callback(service_info.instance())
                         except Exception as e, ::
                             logger.error(f"Error in resource cleanup callback for {servi\
+    \
     \
     \
     \

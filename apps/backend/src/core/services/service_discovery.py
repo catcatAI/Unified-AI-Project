@@ -68,6 +68,7 @@ class ServiceStatus(Enum):
     \
     \
     \
+    \
     ::
             # 更新现有能力或创建新能力,
             if capability_id_str in self.capabilities, ::

@@ -126,6 +126,7 @@ class MemoryContextManager, :
     \
     \
     \
+    \
     _id}"):::
                 eturn True
         except Exception as e, ::
@@ -224,6 +225,7 @@ class MemoryContextManager, :
     \
     \
     \
+    \
     :
                     ogger.info(f"Cleaned up {deleted_count} old memories")
             return deleted_count
@@ -250,6 +252,7 @@ class MemoryContextManager, :
     \
     \
     \
+    \
     one, ::
             # 如果源记忆有向量表示, 也复制过去
             if source_memory.embedding, ::
@@ -269,6 +272,7 @@ class MemoryContextManager, :
             context_id = self.context_manager.create_context(ContextType.MEMORY(),
     context_content)
             logger.info(f"Transferred memory from {source_memory_id} to {new_memory_id} \
+    \
     \
     \
     \

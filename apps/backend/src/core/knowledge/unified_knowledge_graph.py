@@ -203,6 +203,7 @@ class UnifiedKnowledgeGraph, :
     \
     \
     \
+    \
     s]::
                 return existing_entity
             
@@ -267,6 +268,7 @@ class UnifiedKnowledgeGraph, :
     \
     \
     \
+    \
     pe}"
             for key, value in entity.properties.items():::
                 entity_text += f" {key} {value}"
@@ -299,8 +301,10 @@ class UnifiedKnowledgeGraph, :
     \
     \
     \
+    \
     0.0, :
             type_similarity == 1.0 if entity1.entity_type = entity2.entity_type else 0.0\
+    \
     \
     \
     , :
@@ -459,6 +463,7 @@ class UnifiedKnowledgeGraph, :
     \
     \
     \
+    \
     f, source_domain, str, target_domain, str) -> List[Dict[str, Any]]
         """发现跨领域模式"""
         patterns = []
@@ -538,6 +543,7 @@ class UnifiedKnowledgeGraph, :
                     'center_entity': entity_id,
                     'neighbor_count': len(neighbors),
                     'neighbor_types': [domain_knowledge.entities[nid].entity_type for ni\
+    \
     \
     \
     \
@@ -899,6 +905,7 @@ class UnifiedKnowledgeGraph, :
     \
     \
     \
+    \
     (source_pattern, target_pattern),
                     'confidence': pattern.get('similarity', 0),
                     'transfer_potential': pattern.get('transfer_potential', 0)
@@ -1026,6 +1033,7 @@ class UnifiedKnowledgeGraph, :
     \
     \
     \
+    \
     > Dict[str, Any]
         """获取知识统计"""
         stats = {}
@@ -1040,8 +1048,10 @@ class UnifiedKnowledgeGraph, :
     \
     \
     \
+    \
     s.values()), :::
             'temporal_knowledge_entries': sum(len(entries) for entries in self.temporal_\
+    \
     \
     \
     \

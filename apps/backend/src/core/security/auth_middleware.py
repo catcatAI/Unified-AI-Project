@@ -28,6 +28,7 @@ class AuthMiddleware, :
     \
     \
     \
+    \
     , 30)
         self.refresh_token_expire_days = self.config.get('refresh_token_expire_days', 7)
         

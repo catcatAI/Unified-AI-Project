@@ -16,7 +16,7 @@ from datetime import datetime
 
 from .ai_virtual_input_service import
 from .sandbox_executor import
-# from memory.ham_memory_manager import HAMMemoryManager
+# from memory.ham_memory.ham_manager import HAMMemoryManager
 # Temporarily disable HAMMemoryManager import due to import issues
 
 # Configure logger
@@ -542,6 +542,7 @@ if __name"__main__":::
 
     # Test text processing
     sample_text == "This is a sample text for processing. It contains multiple sentences\
+    \
     \
     \
     \

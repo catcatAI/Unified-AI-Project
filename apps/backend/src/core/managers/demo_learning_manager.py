@@ -383,14 +383,17 @@ class DemoLearningManager, :
     \
     \
     \
+    \
     y', 0)
                 self.learning_data['error_patterns'][error_key]['frequency'] = current_f\
     \
     \
     \
     \
+    \
     requency + 1
                 self.learning_data['error_patterns'][error_key]['last_seen'] = datetime.\
+    \
     \
     \
     \

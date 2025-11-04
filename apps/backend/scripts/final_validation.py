@@ -28,8 +28,8 @@ def test_original_problem_imports() -> None,
 
     # 测试问题1 HSPConnector导入问题
     print("\n1. 测试HSPConnector导入,")
-    try,
-        from apps.backend.src.hsp.connector import HSPConnector
+    try:
+        from apps.backend.src.core.hsp.connector import HSPConnector
         print("✓ HSPConnector 导入成功")
     except ImportError as e,::
         print(f"✗ HSPConnector 导入失败, {e}")

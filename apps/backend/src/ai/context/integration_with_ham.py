@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 
 # 假设这些是从现有系统导入的
-# from ..memory.ham_memory_manager import HAMMemoryManager
+# from ..memory.ham_memory.ham_manager import HAMMemoryManager
 # from ..memory.ham_types import HAMMemory
 
 from .manager import
@@ -159,6 +159,7 @@ class ContextHAMIntegration, :
     \
     \
     \
+    \
     {context_id}"):
 
 
@@ -215,6 +216,7 @@ eturn memory_id
     \
     \
     \
+    \
     ext_id}"):
                 eturn True
         except Exception as e, ::
@@ -249,6 +251,7 @@ eturn memory_id
     \
     \
     \
+    \
     se {}::
             # 如果源上下文有关联的HAM记忆, 也进行转移
             if "ham_memory_id" in source_context.content, ::
@@ -275,10 +278,12 @@ eturn memory_id
     \
     \
     \
+    \
     mory_id} with context {transfer_context_id}"):
                 eturn True
         except Exception as e, ::
             logger.error(f"Failed to transfer context memory from {source_context_id} {e\
+    \
     \
     \
     \

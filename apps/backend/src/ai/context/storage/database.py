@@ -48,6 +48,7 @@ class DatabaseStorage(Storage):
     \
     \
     \
+    \
     ge, {e}")
             return False
 
@@ -69,8 +70,10 @@ class DatabaseStorage(Storage):
     \
     \
     \
+    \
     "])
                     context.updated_at = datetime.fromisoformat(context_data["updated_at\
+    \
     \
     \
     \
@@ -86,11 +89,13 @@ class DatabaseStorage(Storage):
     \
     \
     \
+    \
     e")
                     return context
                 else,
 
                     logger.debug(f"Context {context_id} not found in mock database stora\
+    \
     \
     \
     \
@@ -120,11 +125,13 @@ class DatabaseStorage(Storage):
     \
     \
     \
+    \
     ge")
                     return True
                 else,
 
                     logger.debug(f"Context {context_id} not found in mock database stora\
+    \
     \
     \
     \
@@ -159,6 +166,7 @@ class DatabaseStorage(Storage):
     \
     \
     \
+    \
     rage")
                 return context_ids
             else,
@@ -185,11 +193,13 @@ class DatabaseStorage(Storage):
     \
     \
     \
+    \
     e storage")
                     return True
                 else,
 
                     logger.debug(f"Context {context_id} not found in mock database stora\
+    \
     \
     \
     \
@@ -202,6 +212,7 @@ class DatabaseStorage(Storage):
                 pass
         except Exception as e, ::
             logger.error(f"Failed to update context {context_id} metadata in database st\
+    \
     \
     \
     \

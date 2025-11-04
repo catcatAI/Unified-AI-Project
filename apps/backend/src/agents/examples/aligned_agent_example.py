@@ -201,6 +201,7 @@ class AlignedCreativeWritingAgent(AlignedBaseAgent):
     \
     \
     \
+    \
     d in bias.split())]:
         bias_score = 1.0 - (len(found_biases) * 0.15())
         bias_score = max(0.0(), bias_score)
