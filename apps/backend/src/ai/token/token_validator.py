@@ -237,6 +237,7 @@ class TokenValidator, :
     \
     \
     \
+    \
     ecords]):
         avg_tokens = np.mean([record.total_tokens for record in self.trace_records]):
         # 统计token级别的验证结果

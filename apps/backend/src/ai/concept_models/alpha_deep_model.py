@@ -165,6 +165,7 @@ class AlphaDeepModel, :
     \
     \
     \
+    \
     emory_id())
         if not memory_symbol, ::
     await self.symbolic_space.add_symbol()
@@ -214,6 +215,7 @@ class AlphaDeepModel, :
     \
     \
     \
+    \
     )
             if not subject_symbol, ::
     subject_symbol_id = await self.symbolic_space.add_symbol(rel['subject'] SymbolType.U\
@@ -221,8 +223,10 @@ class AlphaDeepModel, :
     \
     \
     \
+    \
     NKNOWN())
                 subject_symbol = await self.symbolic_space.get_symbol_by_id(subject_symb\
+    \
     \
     \
     \
@@ -236,8 +240,10 @@ class AlphaDeepModel, :
     \
     \
     \
+    \
     NOWN())
                 object_symbol = await self.symbolic_space.get_symbol_by_id(object_symbol\
+    \
     \
     \
     \
@@ -271,6 +277,7 @@ class AlphaDeepModel, :
     \
     \
     \
+    \
     _id)
             if memory_symbol and feedback_symbol, ::
     await self.symbolic_space.add_relationship()
@@ -296,6 +303,7 @@ class AlphaDeepModel, :
             return await self.symbolic_space.get_symbol_by_name(feedback_symbol_name)
 
         self.logger.info(f"Symbolic space updated for {deep_parameter.source_memory_id}"\
+    \
     \
     \
     \
@@ -351,8 +359,10 @@ class AlphaDeepModel, :
     \
     \
     \
+    \
     es.audio_features else 0.0(), ::
     deep_parameter.modalities.audio_features['volume'] if deep_parameter.modalities.audi\
+    \
     \
     \
     \
@@ -398,6 +408,7 @@ class AlphaDeepModel, :
     \
     \
     \
+    \
     d, a dict, or msgpack serializable, {e}")
 
     # 將字典序列化為JSON字符串
@@ -424,6 +435,7 @@ class AlphaDeepModel, :
     \
     \
     \
+    \
     LY else len(msgpack.packb(param_dict, use_bin_type == True))::
     compressed_size = len(compressed_data)
         compression_ratio == original_size /\
@@ -440,6 +452,7 @@ class AlphaDeepModel, :
     self.compression_stats[algorithm.value]['total_original_size'] += original_size
     self.compression_stats[algorithm.value]['total_compressed_size'] += compressed_size
     self.compression_stats[algorithm.value]['last_compression_ratio'] = compression_rati\
+    \
     \
     \
     \
@@ -550,6 +563,7 @@ if __name"__main__":::
                 # 測試解壓縮
                 decompressed = model.decompress(compressed, algorithm)
                 print(f"Decompressed with {algorithm.value} {len(str(decompressed))} cha\
+    \
     \
     \
     \

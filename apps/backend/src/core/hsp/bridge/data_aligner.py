@@ -83,6 +83,7 @@ ef _align_fact_payload(self, payload, Dict[str,
     \
     \
     \
+    \
     ad", "payload.capability_id")
         return payload, None
 

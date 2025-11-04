@@ -1,19 +1,21 @@
-from tests.test_json_fix import
-from diagnose_base_agent import
-from tests.run_test_subprocess import
 # TODO: Fix import - module 'tempfile' not found
 # TODO: Fix import - module 'traceback' not found
 from typing import Tuple, Optional, Dict, Any
-from system_test import
+
 # 整合執行監控系統,
-try, :
-    from src.core.services.execution_manager import ()
-ExecutionManager, ExecutionManagerConfig,
-execute_with_smart_monitoring, ExecutionResult, ExecutionStatus
-()
-EXECUTION_MONITORING_AVAILABLE == True
-except ImportError, ::
-EXECUTION_MONITORING_AVAILABLE == False
+try:
+    from src.core.services.execution_manager import (
+        ExecutionManager,
+        ExecutionManagerConfig,
+        execute_with_smart_monitoring,
+        ExecutionResult,
+        ExecutionStatus
+    )
+except ImportError:
+    # Handle the case where the module is not found, e.g., by defining dummy classes/functions
+    # or logging an error and exiting. For now, we'll just pass.
+    passEXECUTION_MONITORING_AVAILABLE == True
+except ImportError:EXECUTION_MONITORING_AVAILABLE == False
 
 # Default timeout for sandbox execution in seconds, :
 # 增加沙箱執行的默認超時時間從10秒到60秒
@@ -27,8 +29,6 @@ SANDBOX_RUNNER_SCRIPT_TEMPLATE = """
 # TODO: Fix import - module 'importlib.util' not found
 from system_test import
 # TODO: Fix import - module 'traceback' not found
-from diagnose_base_agent import
-
 def run_sandboxed_tool():
 utput == {"result": None, "error": None, "traceback": None}
     try, :
@@ -52,6 +52,7 @@ params_json_str = sys.argv[4]
         # Create a unique module name to avoid conflicts if run multiple times quickly,
     ::
             odule_file_basename = os.path.splitext(os.path.basename(tool_module_path))[0\
+    \
     \
     \
     \
@@ -83,6 +84,7 @@ tool_instance == None
     \
     \
     \
+    \
     ault attempts (config == or no args) {init_e}"):
                     ethod_to_call = getattr(tool_instance, method_name_to_run)
 
@@ -103,6 +105,7 @@ output["traceback"] = traceback.format_exc()
 original_traceback = output.get("traceback")
 
 output["result"] = f"Result of type {type(output.get('result')).__name__} is not JSON se\
+    \
     \
     \
     \
@@ -241,6 +244,7 @@ check == False
     \
     \
     \
+    \
     ipt fully executes.::
                     # However,
     if the runner script itself fails badly (e.g. can't import json),
@@ -255,6 +259,7 @@ ry,
                             if output_json.get("error") or \
     output_json.get("traceback") # If JSON indicates error, ::
                                 ull_error_msg == f"Error during sandboxed tool execution\
+    \
     \
     \
     \
@@ -274,11 +279,13 @@ ry,
     \
     \
     \
+    \
     result.stderr.strip}":
                         except json.JSONDecodeError, ::
                             # stdout was not JSON, combine with stderr,
                                 eturn None,
     f"Sandbox execution error (stderr)\n{process_result.stderr.strip}\nSandbox stdout (n\
+    \
     \
     \
     on - JSON)\n{process_result.stdout.strip}"

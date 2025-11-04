@@ -118,6 +118,7 @@ class CausalGraph, :
     \
     \
     \
+    \
     ions")
         
         discovered_relationships = []
@@ -292,6 +293,7 @@ class CausalGraph, :
     def train_model(self, training_data, List[Dict[str, Any]] epochs, int == 100):
         """训练因果发现模型"""
         logger.info(f"Training causal discovery model with {len(training_data)} samples"\
+    \
     \
     \
     \
@@ -476,6 +478,7 @@ class InterventionPlanner, :
     \
     \
     \
+    \
     es")
         
         # 准备训练数据
@@ -650,6 +653,7 @@ class CounterfactualReasoner, :
     \
     \
     \
+    \
     samples")
         
         # 准备训练数据
@@ -728,6 +732,7 @@ class CausalReasoningEngine, :
     \
     \
     \
+    \
     ations")
         
         learned_relationships = []
@@ -754,6 +759,7 @@ class CausalReasoningEngine, :
     \
     \
     \
+    \
     ")
             return learned_relationships
             
@@ -765,6 +771,7 @@ class CausalReasoningEngine, :
 (    intervention, Intervention) -> CounterfactualScenario,
         """执行反事实推理"""
         self.logger.info(f"Performing counterfactual reasoning for scenario {scenario.ge\
+    \
     \
     \
     \
@@ -836,11 +843,13 @@ class CausalReasoningEngine, :
     \
     \
     \
+    \
     epochs)
         
         # 训练反事实推理模型
         if "counterfactual_data" in training_data, ::
             self.counterfactual_reasoner.train_model(training_data["counterfactual_data"\
+    \
     \
     \
     \

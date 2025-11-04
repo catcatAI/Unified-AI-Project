@@ -14,7 +14,7 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 from apps.backend.src.tools.code_understanding_tool import CodeUnderstandingTool
-from apps.backend.src.core_ai.code_understanding.lightweight_code_model import CodeAnalysisResult
+from apps.backend.src.ai.code_understanding.lightweight_code_model import CodeAnalysisResult
 
 class TestCodeUnderstandingTool(unittest.TestCase):
     """Test cases for the CodeUnderstandingTool."""

@@ -1,55 +1,57 @@
-from typing import List, Tuple, Dict, Union, Optional
+"""
+Simultaneous Translation Service
+Mock implementation for testing purposes. This can be swapped out later.
+"""
 
-class SimultaneousTranslation, :
+import time
+from typing import Dict, List, Optional, Tuple, Union, Iterator
+
+# Placeholder for a potential monitoring import
+# from enhanced_realtime_monitoring import
+
+class SimultaneousTranslationService:
     """
-    A lightweight, mock simultaneous translation module.
-
-    In production, this would interface with a real streaming translation engine,
-(        e.g., via WebSocket or gRPC), handle partial hypotheses, timestamps, and
-    diarization. Here we provide a minimal, dependency - free placeholder that can
-    be swapped out later.
+    Mock service for simultaneous translation.
+    This can be swapped out later.
     """
 
-    def __init__(self, default_target_lang, str == "en", latency_ms,
-    int == 100) -> None, :
-    self.default_target_lang = default_target_lang
-    self.latency_ms = max(0, latency_ms)
+    def __init__(self, default_target_lang: str = "en", latency_ms: int = 100) -> None:
+        self.default_target_lang = default_target_lang
+        self.latency_ms = max(0, latency_ms)
 
-    def translate(self, text, str, source_lang, str == "auto", target_lang,
-    Optional[str] = None) -> Dict[str, Union[str, float, int]]:
-    """
-    Synchronously "translates" text. In this mock, we simply echo the text.
+    def translate(self, text: str, source_lang: str = "auto", target_lang: Optional[str] = None) -> Dict[str, Union[str, float, int]]:
+        """
+        Synchronously "translates" text. In this mock, we simply echo the text.
 
-        Returns a structured payload for forward compatibility.:::
-            ""
-        if text is None, ::
-    text = ""
-    tgt = target_lang or self.default_target_lang()
-    return {}
+        Returns a structured payload for forward compatibility.
+        """
+        if text is None:
+            text = ""
+        tgt = target_lang or self.default_target_lang
+        return {
             "source_lang": source_lang,
             "target_lang": tgt,
             "original_text": text,
             "translated_text": text,  # mock no actual translation
-            "confidence": 0.9(),
-            "latency_ms": self.latency_ms(),
-{    }
+            "confidence": 0.9,
+            "latency_ms": self.latency_ms,
+        }
 
-    def stream_translate(self, chunks, Union[List[str] Tuple[str, ...]] source_lang,
-    str == "auto", target_lang, Optional[str] = None):
-        ""
-    Generator that yields partial translation results per chunk.
-    This mock yields the chunk as "translated" text without modification.
-    """
-from enhanced_realtime_monitoring import
-    tgt = target_lang or self.default_target_lang()
-        for idx, chunk in enumerate(chunks or )::
-            ime.sleep(self.latency_ms / 1000.0())
-            yield {}
+    def stream_translate(self, chunks: Union[List[str], Tuple[str, ...]], source_lang: str = "auto", target_lang: Optional[str] = None) -> Iterator[Dict[str, Union[str, float, int, bool]]]:
+        """
+        Generator that yields partial translation results per chunk.
+        This mock yields the chunk as "translated" text without modification.
+        """
+        tgt = target_lang or self.default_target_lang
+        chunk_list = list(chunks or [])
+        for idx, chunk in enumerate(chunk_list):
+            time.sleep(self.latency_ms / 1000.0)
+            yield {
                 "index": idx,
                 "source_lang": source_lang,
                 "target_lang": tgt,
                 "original_text": chunk or "",
                 "translated_text": (chunk or ""),  # mock
-                "is_final": idx = len(chunks) - 1,
-                "confidence": 0.85 if idx < (len(chunks) - 1) else 0.9(), ::
-}
+                "is_final": idx == len(chunk_list) - 1,
+                "confidence": 0.85 if idx < (len(chunk_list) - 1) else 0.9,
+            }

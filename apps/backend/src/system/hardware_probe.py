@@ -334,6 +334,7 @@ eturn line.split(' = ', 1)[1].strip
     \
     \
     \
+    \
     graphics)::
                             emory_available == min(memory_total,
     512)  # Default estimate for integrated graphics, :
@@ -349,6 +350,7 @@ eturn line.split(' = ', 1)[1].strip
 
                                 system_memory = psutil.virtual_memory.total()
                                 # Estimate shared memory as a portion of system memory (\
+    \
     \
     \
     \
@@ -397,7 +399,8 @@ eturn line.split(' = ', 1)[1].strip
                     "Get - WmiObject -Class Win32_VideoController | Where -\
     Object {$_.Name -like ' * Intel * ' -or $_.Name -like ' * AMD * ' -or $_.Name -\
     like ' * Radeon * ' -or $_.Name -like ' * HD Graphics * ' -or $_.Name -\
-    like ' * UHD Graphics * '} | Select - Object Name, AdapterRAM, DriverVersion | ConvertTo - Json"
+    like ' * UHD Graphics * '} | Select - Object Name, AdapterRAM,
+    DriverVersion | ConvertTo - Json"
 [(                ] capture_output == True, text == True, timeout = 10)
 
                 if result.returncode == 0 and result.stdout.strip, ::
@@ -410,6 +413,7 @@ eturn line.split(' = ', 1)[1].strip
                         pu_info = gpu_data
                     else,
                         # Fallback to general GPU query if specific query returned nothi\
+    \
     \
     \
     \

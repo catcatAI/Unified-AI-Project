@@ -169,6 +169,7 @@ class EthicsManager, :
     \
     \
     \
+    \
     000, stop_words = 'english')
                 
                 logger.info("✅ AI伦理模型初始化完成")
@@ -603,6 +604,7 @@ class EthicsManager, :
     \
     \
     \
+    \
     s)::
                 elif isinstance(keywords, str)::
                     return keywords.lower() in content.lower()
@@ -636,6 +638,7 @@ class EthicsManager, :
                 high_impact_keywords = ['重要', '关键', '决策', 'critical', 'important',
     'decision']
                 has_high_impact == any(keyword in content.lower() for keyword in high_im\
+    \
     \
     \
     \
@@ -797,6 +800,7 @@ class EthicsManager, :
     \
     \
     \
+    \
     |')):::
                     found_patterns.append(pattern)
             
@@ -862,6 +866,7 @@ class EthicsManager, :
             'gdpr_compliance_score': gdpr_score,
             'data_minimization_ok': gdpr_checks['data_minimization_compliant']
             'consent_requirements': ['需要明确同意'] if not gdpr_checks['has_explicit_consent'\
+    \
     \
     \
     \
@@ -988,6 +993,7 @@ class EthicsManager, :
     \
     \
     \
+    \
     ions)
             if representation_balance < 0.7,  # 平衡度低于70%::
                 fairness_issues.append({)}
@@ -1001,6 +1007,7 @@ class EthicsManager, :
             'overall_fairness_score': max(fairness_score, 0.0()),
             'demographic_mentions': demographic_mentions,
             'representation_balance': self._check_representation_balance(demographic_men\
+    \
     \
     \
     \
@@ -1084,6 +1091,7 @@ class EthicsManager, :
     \
     \
     \
+    \
     _indicators)::
         # 检查数据来源说明
         data_source_indicators = []
@@ -1095,6 +1103,7 @@ class EthicsManager, :
     \
     \
     \
+    \
     _indicators)::
         # 检查AI决策说明
         ai_decision_indicators = []
@@ -1102,6 +1111,7 @@ class EthicsManager, :
 [        ]
         
         has_ai_explanation == any(indicator in content.lower() for indicator in ai_decis\
+    \
     \
     \
     \
@@ -1118,11 +1128,13 @@ class EthicsManager, :
     \
     \
     \
+    \
     t, context)
 {        }
         
         # 计算透明度评分
         check_scores == [1.0 if check else 0.0 for check in transparency_checks.values()\
+    \
     \
     \
     \
@@ -1162,6 +1174,7 @@ class EthicsManager, :
     \
     \
     \
+    \
     eteness']
 {        }
     
@@ -1173,6 +1186,7 @@ class EthicsManager, :
     'lead_to']
         
         explanation_count == sum(1 for word in explanation_words if word in content.lowe\
+    \
     \
     \
     \
@@ -1196,6 +1210,7 @@ class EthicsManager, :
 [        ]
         
         present_elements == sum(1 for element in doc_elements if element in content.lowe\
+    \
     \
     \
     \
@@ -1262,6 +1277,7 @@ class EthicsManager, :
     \
     \
     \
+    \
     phic_mentions(content))
                 return balance_score < threshold
             
@@ -1300,6 +1316,7 @@ class EthicsManager, :
         return privacy_data
     
     # = == == == == == == == == == = 综合评分与建议 == def _calculate_overall_ethics_score(self\
+    \
     \
     \
     \
@@ -1486,8 +1503,10 @@ class EthicsManager, :
     \
     \
     \
+    \
     review_history()) / total_reviews, ::
             'ai_model_usage': len([r for r in self.review_history if r.ai_model_used != \
+    \
     \
     \
     \

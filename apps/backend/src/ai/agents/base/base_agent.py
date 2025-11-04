@@ -147,6 +147,7 @@ from ....ai.dynamic_agent_registry import
     \
     \
     \
+    \
     y '{capability_id}' from '{sender_ai_id}'.")
 
         try:
@@ -178,6 +179,7 @@ from ....ai.dynamic_agent_registry import
     \
     \
     \
+    \
     th priority {queued_task.priority.name}")
 
         asyncio.create_task(self._process_task_queue())
@@ -197,6 +199,7 @@ from ....ai.dynamic_agent_registry import
     async def _process_single_task(self, task: QueuedTask):
         """Processes a single task."""
         logger.info(f"[{self.agent_id}] Processing task {task.task_id} with priority {ta\
+    \
     \
     \
     \
@@ -226,6 +229,7 @@ from ....ai.dynamic_agent_registry import
     \
     \
     \
+    \
     y_count + 1} / {self.max_retries})")
                 await asyncio.sleep(self.retry_delay * (2 ** task.retry_count))
                 task.retry_count += 1
@@ -233,6 +237,7 @@ from ....ai.dynamic_agent_registry import
                     self.task_queue.insert(0, task)
             else:
                 logger.error(f"[{self.agent_id}] Task {task.task_id} failed after {self.\
+    \
     \
     \
     \
@@ -255,12 +260,14 @@ from ....ai.dynamic_agent_registry import
     \
     \
     \
+    \
     ty_id}'")
         return {}
             "status": "failure",
             "error_details": {}
                 "error_code": "NOT_IMPLEMENTED",
                 "error_message": f"The '{self.__class__.__name__}' has not implemented a\
+    \
     \
     \
     \
@@ -288,6 +295,7 @@ from ....ai.dynamic_agent_registry import
         """Register a specific handler for a capability."""
         self.task_handlers[capability_id] = handler
         logger.info(f"[{self.agent_id}] Registered handler for capability '{capability_i\
+    \
     \
     \
     \

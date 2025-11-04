@@ -1,7 +1,7 @@
 # TODO: Fix import - module 'uuid' not found
 from tests.tools.test_tool_dispatcher_logging import
 from ....hsp.types import
-# 修复导入路径问题 - 从 ..memory.ham_memory_manager 改为 ...memory.ham_memory_manager()
+# 修复导入路径问题 - 从 ..memory.ham_memory_manager 改为 ..memory.ham_memory.ham_manager
 from ..base.base_agent import
 
 class KnowledgeGraphAgent(BaseAgent):
@@ -58,6 +58,7 @@ class KnowledgeGraphAgent(BaseAgent):
     \
     \
     \
+    \
     es, {[cap['name'] for cap in capabilities]}"):::
             sync def handle_task_request(self, task_payload, HSPTaskRequestPayload,
     sender_ai_id, str, envelope, HSPMessageEnvelope):
@@ -66,6 +67,7 @@ class KnowledgeGraphAgent(BaseAgent):
         params = task_payload.get("parameters")
 
         logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
     \
     \
     \
@@ -99,6 +101,7 @@ class KnowledgeGraphAgent(BaseAgent):
         if self.hsp_connector and callback_address, ::
             await self.hsp_connector.send_task_result(result_payload, callback_address)
             logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callb\
+    \
     \
     \
     \
@@ -217,6 +220,7 @@ class KnowledgeGraphAgent(BaseAgent):
                 esults.append({)}
                 "query": query,
                 "result": f"No specific information found for '{query}'. This is a place\
+    \
     \
     \
     \

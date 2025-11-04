@@ -2,10 +2,11 @@
 This script generates a dataset of logical propositions and their evaluated results.
 """
 
-from tests.test_json_fix import
+# from tests.test_json_fix import
 # TODO: Fix import - module 'random' not found
-from diagnose_base_agent import
-from unified_auto_fix_system.utils.ast_analyzer import
+# from diagnose_base_agent import
+# from unified_auto_fix_system.utils.ast_analyzer import
+import os
 from typing import Optional, List, Dict, Any
 
 # Define output directory and filenames relative to the project root
@@ -34,10 +35,8 @@ def generate_simple_proposition(max_nesting: int = 1, current_nesting: int = 0) 
         left = generate_simple_proposition(max_nesting, current_nesting + 1)
         right = generate_simple_proposition(max_nesting, current_nesting + 1)
 
-        use_parens_left = random.choice([True, False]) and ("AND", in left or "OR",
-    in left)
-        use_parens_right = random.choice([True, False]) and ("AND", in right or "OR",
-    in right)
+        use_parens_left = random.choice([True, False]) and ("AND" in left or "OR" in left)
+        use_parens_right = random.choice([True, False]) and ("AND" in right or "OR" in right)
 
         left_expr = f"({left})" if use_parens_left else left
         right_expr = f"({right})" if use_parens_right else right
@@ -51,7 +50,7 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
     "False")
         
         # Whitelist of allowed nodes
-        allowed_nodes = {}
+        allowed_nodes = {
             ast.Expression,
             ast.Constant,      # For Python 3.8+
             ast.NameConstant,  # For Python < 3.8
@@ -60,7 +59,7 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
             ast.Or,
             ast.UnaryOp,
             ast.Not
-{        }
+        }
 
         tree = ast.parse(normalized_str, mode = 'eval')
 

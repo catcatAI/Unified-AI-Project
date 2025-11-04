@@ -43,6 +43,7 @@ class EvaluationDB, :
     \
     \
     \
+    \
     ",
     conn == sqlite3.connect(self.db_path()):
         ursor = conn.cursor()

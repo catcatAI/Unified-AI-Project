@@ -293,11 +293,13 @@ class MultimodalInformationFusionEngine, :
     \
     \
     \
+    \
     0)
                     # 这里应该拟合数据, 为简化返回随机特征
                     text_feature = np.random.random(100)
                 else,
                     text_feature = self._structured_vectorizer.transform([combined_text]\
+    \
     \
     \
     \
@@ -403,6 +405,7 @@ class MultimodalInformationFusionEngine, :
                 for i, data_id in enumerate(data_ids)::
                     if data_id in self.modal_data, ::
                         confidence = self._calculate_alignment_confidence(alignment_matr\
+    \
     \
     \
     \
@@ -550,11 +553,13 @@ class MultimodalInformationFusionEngine, :
     \
     \
     \
+    \
     ignment_matrix, i)
                     
                     # 提取语义概念(基于模态类型和数据内容)
                     if data_id in self.modal_data, ::
                         concepts = await self._extract_semantic_concepts(self.modal_data\
+    \
     \
     \
     \
@@ -593,6 +598,7 @@ class MultimodalInformationFusionEngine, :
                     'fusion_method': 'weighted_average',
                     'alignment_matrix': alignment_matrix.tolist(),
                     'modalities': [self.modal_data[did].modality for did in data_ids if \
+    \
     \
     \
     \
@@ -682,6 +688,7 @@ class MultimodalInformationFusionEngine, :
     \
     \
     \
+    \
     ), query_concepts)
             
             # 推理步骤
@@ -712,6 +719,7 @@ class MultimodalInformationFusionEngine, :
     \
     \
     \
+    \
     repr)
             reasoning_steps.append({)}
                 'step': 3,
@@ -727,6 +735,7 @@ class MultimodalInformationFusionEngine, :
             
             # 计算总体置信度
             total_confidence = np.mean([step['confidence'] for step in reasoning_steps])\
+    \
     \
     \
     \
@@ -957,6 +966,7 @@ class MultimodalInformationFusionEngine, :
     \
     \
     \
+    \
     None)::
             diversity = len(value_types) / 4  # 假设4种基本类型
             
@@ -1020,6 +1030,7 @@ class MultimodalInformationFusionEngine, :
     \
     \
     \
+    \
     ]):
             # 结论1, 总体评估
             if overall_confidence > 0.8, ::
@@ -1049,6 +1060,7 @@ class MultimodalInformationFusionEngine, :
             
             # 结论3, 语义相关性
             semantic_step == next((step for step in reasoning_steps if step['type'] == '\
+    \
     \
     \
     \
@@ -1116,6 +1128,7 @@ class MultimodalInformationFusionEngine, :
     \
     \
     \
+    \
     raph(self, data_mapping, Dict[str, str]) -> Dict[str, Any]
         """构建多模态知识图谱"""
         construction_result = {}
@@ -1141,8 +1154,10 @@ class MultimodalInformationFusionEngine, :
     \
     \
     \
+    \
     r, original_data_id)
                     success = await self.fusion_knowledge_graph.add_entity(multimodal_en\
+    \
     \
     \
     \
@@ -1152,6 +1167,7 @@ class MultimodalInformationFusionEngine, :
                     if success, ::
                         entities_created.append(multimodal_entity.entity_id())
                         construction_result['modalities_integrated'].extend(unified_repr\
+    \
     \
     \
     \
@@ -1167,6 +1183,7 @@ class MultimodalInformationFusionEngine, :
                                 unified_repr
 (                            )
                             success = await self.fusion_knowledge_graph.add_relation(mod\
+    \
     \
     \
     \
@@ -1211,6 +1228,7 @@ class MultimodalInformationFusionEngine, :
     \
     \
     \
+    \
     ,
             'fusion_method': unified_repr.metadata.get('fusion_method', 'unknown'),
             'original_data_id': original_data_id
@@ -1218,6 +1236,7 @@ class MultimodalInformationFusionEngine, :
         
         # 生成实体ID
         entity_id = f"mm_entity_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{original_dat\
+    \
     \
     \
     \
@@ -1302,6 +1321,7 @@ class MultimodalInformationFusionEngine, :
     \
     \
     \
+    \
     set(repr2.semantic_concepts())),
                                 'cross_modal_similarity': True
 {                            }
@@ -1363,6 +1383,7 @@ class MultimodalInformationFusionEngine, :
         # 计算融合成功率
         if self.unified_representations, ::
             successful_fusions == len([ur for ur in self.unified_representations.values(\
+    \
     \
     \
     \
@@ -1540,6 +1561,7 @@ async def test_multimodal_fusion_engine():
     # 构建多模态知识图谱
     print("\n🏗️ 构建多模态知识图谱...")
     data_mapping == {"repr_id": "original_data_001"} if 'unified_representation' in alig\
+    \
     \
     \
     \

@@ -598,6 +598,7 @@ class EnvironmentSimulator, :
     \
     \
     \
+    \
     e}"):::
             eturn {}
             'predicted_state': predicted_state,
@@ -761,6 +762,7 @@ class EnvironmentSimulator, :
 
     # 使用传入的训练数据或内部存储的数据
         data_to_use == training_data if training_data is not None else self.training_dat\
+    \
     \
     \
     \

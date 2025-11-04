@@ -430,6 +430,7 @@ class AdversarialGenerationSystem, :
     \
     \
     \
+    \
     )
             
             # 生成场景
@@ -440,6 +441,7 @@ class AdversarialGenerationSystem, :
             
             if adversarial_type == AdversarialType.ETHICAL_DILEMMA, ::
                 reasoning_response = await reasoning_system.assess_ethical_implications(\
+    \
     \
     \
     \
@@ -501,6 +503,7 @@ class AdversarialGenerationSystem, :
 (    duration_seconds, int == 60) -> Dict[str, Any]
         """运行压力测试"""
         logger.info(f"[{self.system_id}] Running stress test for {duration_seconds} seco\
+    \
     \
     \
     \
@@ -633,11 +636,13 @@ class AdversarialGenerationSystem, :
     \
     \
     \
+    \
     sabled'}")::
 在函数定义前添加空行
         """启用 / 禁用持续测试"""
         self.continuous_testing = enabled
         logger.info(f"[{self.system_id}] Continuous testing {'enabled' if enabled else '\
+    \
     \
     \
     \

@@ -314,8 +314,10 @@ class RealtimeSyncManager, :
     \
     \
     \
+    \
     .values()), :::
             'subscriptions': sum(len(callbacks) for callbacks in self.subscribers.values\
+    \
     \
     \
     \

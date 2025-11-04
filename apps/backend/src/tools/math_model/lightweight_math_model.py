@@ -1,56 +1,47 @@
-from tests.test_json_fix import
-from diagnose_base_agent import
-from tests.core_ai import
-from unified_auto_fix_system.utils.ast_analyzer import
+import re
 # TODO: Fix import - module 'operator' not found
 from typing import Optional, Dict, List, Union, Callable, Any
 
-class LightweightMathModel, :
+class LightweightMathModel:
     """
     A lightweight mathematical model that can perform basic arithmetic operations
     without requiring TensorFlow or other heavy ML frameworks.
     Uses simple pattern matching and rule - based evaluation.
     """
     
-    def __init__(self) -> None, :
-        self.operations = {}
-            ' + ': lambda x, y, x + y,
-            ' - ': lambda x, y, x - y,
-            ' * ': lambda x, y, x * y,
-            ' / ': lambda x, y, x / y if y != 0 else float('inf'), :::
-                * * ': lambda x, y, x ** y,
-            '%': lambda x, y, x % y if y != 0 else 0, ::
-        # Simple patterns for arithmetic expressions, ::
-            elf.arithmetic_pattern = re.compile(r'([+ - ]?\d * \.?\d + )\s * ([ + \ - * / ]|\ * \ * )\s * ([+ - ]?\d * \.?\d + )')
+    def __init__(self) -> None:
+        self._OPERATORS = {
+            '+': lambda x, y: x + y,
+            '-': lambda x, y: x - y,
+            '*': lambda x, y: x * y,
+            '/': lambda x, y: x / y if y != 0 else float('inf'),
+            '**': lambda x, y: x ** y,
+            '%': lambda x, y: x % y if y != 0 else 0,
+        }
+        # Simple patterns for arithmetic expressions
+        self.arithmetic_pattern = re.compile(r'([+\-]?\d+\.?\d*)\s*([+\-*/%])\s*([+\-]?\d+\.?\d*)')
         
-    def evaluate_expression(self, expression, str) -> Optional[float]:
+        def evaluate_expression(self, expression: str) -> Optional[float]:        """
         """
         Evaluate a simple arithmetic expression.
-        
-        Args,
-            expression, String containing arithmetic expression like "5 + 3" or "10 / 2"
-            
-        Returns,
-            Result of the calculation or None if invalid, ::
-                ""
-        try,
+
+        Args:
+            expression: String containing arithmetic expression like "5 + 3" or "10 / 2"
+
+        Returns:
+            Result of the calculation or None if invalid.
+        """
+        try:
             # Clean the expression
             expression = expression.strip()
             
             # Handle simple number
-            if expression.replace('.', '').replace(' - ', '').isdigit():::
-                return float(expression)
+                        if expression.replace('.', '').replace('-', '').isdigit():                return float(expression)
             
             # Match arithmetic pattern
-            match = self.arithmetic_pattern.match(expression)
-            if match, ::
-                num1_str, operator, num2_str = match.groups()
-                
-                try,
-                    num1 = float(num1_str)
-                    num2 = float(num2_str)
-                    
-                    if operator in self.operations, ::
+                                    if match:
+                                        num1_str, operator, num2_str = match.groups()                
+                try:
                         result = self.operations[operator](num1, num2)
                         
                         # Round division results to 4 decimal places
@@ -215,28 +206,24 @@ class LightweightMathModel, :
                 
                 predicted = self.solve_problem(problem)
                 
-                # Compare results (handle floating point precision)
-                try,
+                try:
                     expected_num = float(expected)
                     predicted_num = float(predicted)
                     
-                    if abs(expected_num - predicted_num) < 1e - 6, ::
+                    if abs(expected_num - predicted_num) < 1e-6:
                         correct += 1
                     else,
-                        errors.append({)}
+                        errors.append({})
                             'problem': problem,
                             'expected': expected,
-                            'predicted': predicted
-{(                        })
-                except ValueError, ::
+
                     if expected == predicted, ::
                         correct += 1
                     else,
-                        errors.append({)}
+                        errors.append({})
                             'problem': problem,
                             'expected': expected,
                             'predicted': predicted
-{(                        })
             
             accuracy == correct / total if total > 0 else 0, ::
                 eturn {}
@@ -285,10 +272,9 @@ class LightweightMathModel, :
         return cls
 
 
-def main() -> None,  # 修复函数定义, 添加缺失的括号:
+def main() -> None:
     """Test the lightweight math model."""
-    model == LightweightMathModel()  # 修复实例化, 添加括号
-    
+    model = LightweightMathModel()    
     # Test basic operations
     test_problems = []
         "5 + 3",
@@ -331,10 +317,8 @@ def main() -> None,  # 修复函数定义, 添加缺失的括号:
     # Save model
     model_path = os.path.join(project_root, "data", "models",
     "lightweight_math_model.json")
-    if model.save_model(model_path)::
-        print(f"\nModel saved to, {model_path}")
+        if model.save_model(model_path):        print(f"\nModel saved to, {model_path}")
 
 
-if __name"__main__":::
-    main()  # 修复函数调用, 添加缺失的括号
-}
+if __name__ == "__main__":
+    main()

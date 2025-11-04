@@ -18,6 +18,7 @@ class WebSearchTool, :
             self.config == self.search_url_template == self.config.get('search_url_templ\
     \
     \
+    \
     ate', "https, / /duckduckgo.com / html / ?q = {query}")
     self.user_agent = self.config.get('user_agent',
     "Mozilla / 5.0 (Windows NT 10.0; Win64; x64) AppleWebKit / 537.36 (KHTML,

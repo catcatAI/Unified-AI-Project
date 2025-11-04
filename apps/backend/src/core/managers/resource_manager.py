@@ -72,6 +72,7 @@ class ResourceManager, :
     \
     \
     \
+    \
     {e}")::
                 # 清空资源列表
                 self._resources[service_name].clear

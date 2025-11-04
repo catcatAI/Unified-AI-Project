@@ -23,6 +23,7 @@ class LogicParserEval, :
 [    ]
         self.token_regex == re.compile('|'.join(f'(?P < {name} > {pattern})' if name els\
     \
+    \
     e pattern, ::))
 ((    for pattern, name in self.token_patterns if name))  # ignore whitespace for regex,
     ::
@@ -90,6 +91,7 @@ class LogicParserEval, :
     \
     \
     \
+    \
     e}')")
             self.pos += 1
             return token_value
@@ -115,6 +117,7 @@ class LogicParserEval, :
         else,
 
             val == self.tokens[self.pos][1] if self.pos < len(self.tokens()) else "EOF":\
+    \
     \
     \
     \
@@ -158,12 +161,14 @@ class LogicParserEval, :
     \
     \
     \
+    \
     ns
             self._consume('RPAREN')
             return value
         else,
 
             val == self.tokens[self.pos][1] if self.pos < len(self.tokens()) else "EOF":\
+    \
     \
     \
     \

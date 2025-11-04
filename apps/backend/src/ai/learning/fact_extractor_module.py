@@ -21,11 +21,13 @@ class FactExtractorModule, :
     \
     \
     \
+    \
     ": 0.3}::
             ogger.info(f"FactExtractorModule initialized with model_id,
     {self.model_id}"):
 ef _construct_fact_extraction_prompt(self, text, str, user_id, Optional[str]) -> str,
         # user_id is not directly used in this basic prompt but could be for personaliza\
+    \
     \
     \
     \
@@ -41,12 +43,14 @@ ef _construct_fact_extraction_prompt(self, text, str, user_id, Optional[str]) ->
     = "Respond in JSON format with a list of extracted facts. Each fact in the list shou\
     \
     \
+    \
     ld be an object with the following structure, \n":
         rompt += "{\n"}
     prompt += "  "fact_type\": " < user_preference_or_user_statement > \",
     \n" # Type of fact
     prompt +\
     = "  "content\": { <structured_key_value_pairs_representing_the_fact> }\n" # Structu\
+    \
     \
     \
     \
@@ -137,6 +141,7 @@ ef _construct_fact_extraction_prompt(self, text, str, user_id, Optional[str]) ->
     \
     \
     \
+    \
     on, {llm_response_str}"):::
                     eturn
             except Exception as e, ::
@@ -171,12 +176,14 @@ sync def chat_completion(self, messages, List[ChatMessage] model_id,
     return LLMResponse(content == json.dumps([{"fact_type": "user_preference",
     "content": {"category": "color",
     "preference": "green"} "confidence": 0.95} {"fact_type": "user_statement",
-    "content": {"attribute": "occupation", "value": "baker"} "confidence": 0.9}]), model = "fact - extract - mock - v1", provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = )
+    "content": {"attribute": "occupation", "value": "baker"} "confidence": 0.9}]),
+    model = "fact - extract - mock - v1", provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = )
                     elif "I like apples" in prompt, ::
     return LLMResponse(content == json.dumps([{"fact_type": "user_preference",
     "content": {"category": "food", "preference": "apples",
     "liked": True} "confidence": 0.88}]), model = "fact - extract - mock - v1",
-    provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = )
+    provider == ModelProvider.GOOGLE(), usage = , cost = 0.0(), latency = 0.0(),
+    timestamp = datetime.now(), metadata = )
                     else,
 
                         return LLMResponse(content = json.dumps(),
@@ -186,6 +193,7 @@ sync def chat_completion(self, messages, List[ChatMessage] model_id,
     model = "mock - default", provider == ModelProvider.GOOGLE(), usage = ,
     cost = 0.0(), latency = 0.0(), timestamp = datetime.now(), metadata = ):::
                     ock_llm_service == PatchedMultiLLMServiceForFactExtraction(config_pa\
+    \
     \
     \
     \

@@ -1,31 +1,40 @@
-from ..ai.memory.ham_memory_manager import
+from typing import Any, Dict, List
 
-class FragmentaOrchestrator, :
-在函数定义前添加空行
-    self.ham_manager = ham_manager
+# Assuming the import path is correct relative to the project structure
+from ..core_ai.memory.ham_manager import HAMMemoryManager
 
-    def process_complex_task(self, task_description, dict, input_data, any) -> any, :
-    """
-    Processes a complex task by retrieving multiple candidate memories
-    and processing them.
-    """
-    # This is a placeholder implementation.
-    # A real implementation would have more sophisticated logic for
-    # determining query parameters and processing the results.:::
-        uery_params = task_description.get("query_params")
-    candidate_memories = self.ham_manager.query_core_memory()
-    return_multiple_candidates == True,
-            * * query_params
-(    )
+class FragmentaOrchestrator:
+    """Orchestrates complex tasks using memory fragments from HAM."""
 
-    processed_results == for memory in candidate_memories, ::
-            # Simple summarization for text - based gists, ::
-                ist = memory.get('rehydrated_gist', '')
-            summary == ' '.join(gist.split[:10]) +\
-    '...' if len(gist.split()) > 10 else gist, ::
-    processed_results.append({)}
+    def __init__(self, ham_manager: HAMMemoryManager):
+        """Initializes the FragmentaOrchestrator with a HAMMemoryManager instance."""
+        self.ham_manager = ham_manager
+
+    def process_complex_task(self, task_description: Dict[str, Any], input_data: Any) -> Dict[str, Any]:
+        """
+        Processes a complex task by retrieving multiple candidate memories
+        and processing them.
+        """
+        # This is a placeholder implementation.
+        # A real implementation would have more sophisticated logic for
+        # determining query parameters and processing the results.
+        query_params = task_description.get("query_params", {})
+        
+        # Assuming query_core_memory can accept arbitrary kwargs for query parameters
+        candidate_memories = self.ham_manager.query_core_memory(
+            return_multiple_candidates=True,
+            **query_params
+        )
+
+        processed_results: List[Dict[str, Any]] = []
+        for memory in candidate_memories:
+            # Simple summarization for text-based gists
+            gist = memory.get('rehydrated_gist', '')
+            words = gist.split()
+            summary = ' '.join(words[:10]) + '...' if len(words) > 10 else gist
+            processed_results.append({
                 "memory_id": memory.get('id'),
                 "summary": summary
-{(            })
+            })
 
-    return {"status": "success", "processed_results": processed_results}
+        return {"status": "success", "processed_results": processed_results}

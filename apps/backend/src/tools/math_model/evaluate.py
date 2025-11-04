@@ -100,10 +100,12 @@ def main -> None,  # 修复函数定义, 添加缺失的括号:
     \
     \
     \
+    \
     g model structure
 
     # The inference models (encoder_model, decoder_model) inside math_model_shell
     # should now have the trained weights because they share layers with math_model_shel\
+    \
     \
     \
     \
@@ -113,6 +115,7 @@ def main -> None,  # 修复函数定义, 添加缺失的括号:
     except Exception as e, ::
     print(f"Error loading model, {e}")
     print(f"Ensure that the model was saved correctly at {MODEL_LOAD_PATH} after trainin\
+    \
     \
     \
     \
