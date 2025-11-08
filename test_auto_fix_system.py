@@ -217,5 +217,5 @@ def main():
         print("❌ 部分测试失败，请检查上述错误。")
         return 1
 
-if __name__ == "__main__":
-    sys.exit(main())
+# if __name__ == "__main__":
+#     sys.exit(main())

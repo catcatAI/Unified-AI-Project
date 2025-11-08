@@ -139,15 +139,16 @@ def cleanup_test_file(test_file) -> None,
     """清理测试文件"""
     try,
 
-        if test_file.exists():::
-            est_file.unlink()
-            print(f"✓ 清理了测试文件, {test_file}")
-    return True
-    except Exception as e,::
-    print(f"✗ 清理测试文件时出错, {e}")
-    return False
+        if test_file.exists():
+            test_file.unlink()
+            print(f"✓ 清理了测试文件: {test_file}")
+            return True
+        return False
+    except Exception as e:
+        print(f"✗ 清理测试文件时出错: {e}")
+        return False
 
-def main() -> None,
+def main() -> None:
     """主函数"""
     print("=== 自动修复工具演示 ===")
     print("本演示将展示自动修复工具如何解决原始的导入问题")
@@ -167,7 +168,7 @@ def main() -> None,
     # 清理
     cleanup_test_file(test_file)
 
-    print("\n=演示完成 ===")
+    print("\n=== 演示完成 ===")
     print("自动修复工具成功解决了原始的导入问题！")
 
 if __name"__main__":::

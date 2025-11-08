@@ -1,5 +1,5 @@
 {
-  "auto_fix_enabled": true,
+  "auto_fix_enabled": false,
   "fix_categories": [
     "syntax_errors",
     "style_issues",

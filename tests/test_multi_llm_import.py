@@ -8,7 +8,7 @@ import os
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-class TestMultiLLMImport(unittest.TestCase()):
+class TestMultiLLMImport(unittest.TestCase):
     def setUp(self):
         """测试前设置"""
         self.test_data = {}
@@ -21,12 +21,12 @@ class TestMultiLLMImport(unittest.TestCase()):
     
     def test_multi_llm_import(self):
         """测试MultiLLMService导入"""
-        try,
+        try:
             from apps.backend.src.core.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider
             print("✓ MultiLLMService imported successfully")
             
             # 测试基本功能
-            service == MultiLLMService()
+            service = MultiLLMService()
             print("✓ MultiLLMService created successfully")
             
             # 验证关键属性存在
@@ -35,10 +35,10 @@ class TestMultiLLMImport(unittest.TestCase()):
             self.assertTrue(hasattr(service, 'usage_stats'))
             print("✓ MultiLLMService has required attributes")
             
-        except ImportError as e,::
+        except ImportError as e:
             self.fail(f"Failed to import MultiLLMService, {e}")
-        except Exception as e,::
+        except Exception as e:
             self.fail(f"Failed to create MultiLLMService, {e}")
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

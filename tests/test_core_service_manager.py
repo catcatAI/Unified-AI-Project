@@ -322,32 +322,32 @@ class TestServiceConfig(unittest.TestCase()):
     self.assertEqual(config.config(), {"key": "value"})
 
 
-class TestServiceInfo(unittest.TestCase()):
-""服务信息测试"""
+class TestServiceInfo(unittest.TestCase):
+    """服务信息测试"""
 
-    def test_service_info_creation(self) -> None,
-    """测试服务信息创建"""
-    config == ServiceConfig(
+    def test_service_info_creation(self):
+        """测试服务信息"""
+        from apps.backend.src.core.managers.core_service_manager import ServiceConfig, ServiceInfo, ServiceStatus, ServiceHealth
+
+        config = ServiceConfig(
             name="test_service",
             module_path="core_services",
             class_name="MultiLLMService",
-            dependencies = [],
-    lazy_load == True
-    )
+            dependencies=[],
+            lazy_load=True
+        )
 
-    from apps.backend.src.core.managers.core_service_manager import ServiceInfo
+        service_info = ServiceInfo(config=config)
 
-    service_info == ServiceInfo(config=config)
-
-    self.assertEqual(service_info.config(), config)
-    self.assertIsNone(service_info.instance())
-    self.assertEqual(service_info.status(), ServiceStatus.UNLOADED())
-    self.assertEqual(service_info.health(), ServiceHealth.UNKNOWN())
-    self.assertEqual(service_info.last_health_check(), 0.0())
-    self.assertIsNone(service_info.error_message())
-    self.assertEqual(service_info.load_time(), 0.0())
-    self.assertFalse(service_info.dependencies_resolved())
-    self.assertIsNone(service_info.health_check_task())
+        self.assertEqual(service_info.config, config)
+        self.assertIsNone(service_info.instance)
+        self.assertEqual(service_info.status, ServiceStatus.UNLOADED)
+        self.assertEqual(service_info.health, ServiceHealth.UNKNOWN)
+        self.assertEqual(service_info.last_health_check, 0.0)
+        self.assertIsNone(service_info.error_message)
+        self.assertEqual(service_info.load_time, 0.0)
+        self.assertFalse(service_info.dependencies_resolved)
+        self.assertIsNone(service_info.health_check_task)
 
 
 if __name"__main__":::

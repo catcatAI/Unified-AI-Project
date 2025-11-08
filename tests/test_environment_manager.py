@@ -18,12 +18,12 @@ from pathlib import Path
 
 # 设置日志
 logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
-logger, Any = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
-class TestEnvironmentManager,
+class TestEnvironmentManager:
     """测试环境管理器"""
     
-    def __init__(self, config_file, str == "test_env_config.json") -> None,
+    def __init__(self, config_file: str = "test_env_config.json") -> None:
         """
         初始化测试环境管理器
         

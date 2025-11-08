@@ -10,7 +10,7 @@ import os
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-try,
+try:
     from learning.content_analyzer_module import ContentAnalyzerModule
     print("Import successful")
     
@@ -29,12 +29,12 @@ try,
     print(f"NetworkX nodes, {nx_graph.number_of_nodes()}")
     
     # Check for specific entities,::
-        ound_apple == False
-    found_steve == False
-    for entity_id, entity_details in kg_data["entities"].items():::
-        print(f"Entity, {entity_details['label']} ({entity_details['type']})")
-        if entity_details["label"] == "Apple Inc.":::
-            found_apple == True
+    found_apple = False
+    found_steve = False
+    for entity_id, entity_details in kg_data["entities"].items():
+        print(f"Entity: {entity_details['label']} ({entity_details['type']})")
+        if entity_details["label"] == "Apple Inc.":
+            found_apple = True
         if entity_details["label"] == "Steve Jobs":::
             found_steve == True
     

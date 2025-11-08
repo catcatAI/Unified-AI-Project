@@ -10,13 +10,13 @@ from datetime import datetime
 
 def analyze_test_coverage():
     """分析测试覆盖率"""
-    project_root == Path(__file__).parent.parent()
+    project_root = Path(__file__).parent
     # 分析各组件的测试覆盖情况
     coverage_report = {
         "backend": {
             "total_files": 0,
             "tested_files": 0,
-            "coverage": 0.0(),
+            "coverage": 0.0,
             "files": []
         }
         "frontend": {

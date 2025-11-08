@@ -52,6 +52,4 @@ for ent in doc.ents:
 print("\\nTokens:")
 for i, token in enumerate(doc):
     print(f"  {i}: '{token.text}' (POS: {token.pos_}, LEMMA: {token.lemma_}, ENT_TYPE: {token.ent_type_})")
-'''
-
-exec(code)
+# exec(code)

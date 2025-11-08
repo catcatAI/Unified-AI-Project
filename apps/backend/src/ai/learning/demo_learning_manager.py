@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, TYPE_CHECKING, Any
 # 导入测试所需的类
 from ..memory.ham_memory.ham_manager import HAMMemoryManager
 from ..hsp.connector import HSPConnector
-from ..shared.utils.cleanup_utils import CleanupUtils
+from ...shared.utils.cleanup_utils import cleanup_temp_files, cleanup_cache_data, cleanup_log_files, cleanup_demo_artifacts
 
 # 用于类型检查的导入
 if TYPE_CHECKING:
@@ -290,13 +290,13 @@ class DemoLearningManager:
 
             for target in targets:
                 if target == "temporary_files":
-                    CleanupUtils.cleanup_temp_files()
+                    cleanup_temp_files()
                 elif target == "cache_data":
-                    CleanupUtils.cleanup_cache_data(retention.get('cache_data', 1))
+                    cleanup_cache_data(retention.get('cache_data', 1))
                 elif target == "log_files":
-                    CleanupUtils.cleanup_log_files(retention.get('important_logs', 7))
+                    cleanup_log_files(retention.get('important_logs', 7))
                 elif target == "demo_artifacts":
-                    CleanupUtils.cleanup_demo_artifacts(retention.get('demo_data', 30), self.storage_path)
+                    cleanup_demo_artifacts(retention.get('demo_data', 30), self.storage_path)
 
             logger.info("清除操作完成")
 

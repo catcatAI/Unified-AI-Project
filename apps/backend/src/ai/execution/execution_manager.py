@@ -5,34 +5,34 @@ Execution Manager for Unified AI Project, ::
 """
 
 # TODO: Fix import - module 'asyncio' not found
-from tests.tools.test_tool_dispatcher_logging import
+# from tests.tools.test_tool_dispatcher_logging import # Incomplete import, commented out
 # TODO: Fix import - module 'threading' not found
-from enhanced_realtime_monitoring import
+# from enhanced_realtime_monitoring import # Incomplete import, commented out
 # TODO: Fix import - module 'uuid' not found
 # TODO: Fix import - module 'yaml' not found
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 
-from .execution_monitor import
+from .execution_monitor import (
     ExecutionMonitor, ExecutionConfig, ExecutionResult,
     ExecutionStatus, TerminalStatus
-()
+)
 
 
 @dataclass
-在类定义前添加空行
+class ExecutionManagerConfig:
     """執行管理器配置"""
     # 基本配置
-    enabled, bool == True
-    adaptive_timeout, bool == True
-    terminal_monitoring, bool == True
-    resource_monitoring, bool == True
-    auto_recovery, bool == True
+    enabled: bool = True
+    adaptive_timeout: bool = True
+    terminal_monitoring: bool = True
+    resource_monitoring: bool = True
+    auto_recovery: bool = True
 
     # 超時配置
-    default_timeout, float = 60.0   # 增加默認超時時間從30秒到60秒
-    max_timeout, float = 600.0      # 增加最大超時時間從300秒到600秒
+    default_timeout: float = 60.0   # 增加默認超時時間從30秒到60秒
+    max_timeout: float = 600.0      # 增加最大超時時間從300秒到600秒
     min_timeout, float = 10.0       # 增加最小超時時間從5秒到10秒
 
     # 閾值配置
@@ -43,26 +43,33 @@ from .execution_monitor import
     disk_warning, float = 80.0()
     disk_critical, float = 90.0()
     # 自適應超時配置
-    history_size, int = 50
+    max_history_size: int = 1000
+    alert_threshold: float = 0.8
     timeout_multiplier, float = 2.5()
     slow_terminal_multiplier, float = 1.5()
     stuck_terminal_multiplier, float = 2.0()
     cache_size, int = 100
 
     # 恢復策略配置
+    circuit_breaker_enabled: bool = True
+    failure_threshold: int = 5
+    recovery_timeout: int = 300
     stuck_process_timeout, float = 60.0   # 增加卡住進程檢測超時從30秒到60秒
-    max_retry_attempts, int = 3
-    retry_delay, float = 5.0()
+    max_concurrent_tasks: int = 5
+    task_timeout: int = 300
+    max_retries: int = 5
+    retry_interval: float = 1.0
     escalation_enabled, bool == True
 
     # 日誌配置
-    log_level, str = "INFO"
+    log_level: str = "INFO"
+    log_file: str = "execution.log"
     log_execution_details, bool == True
     log_resource_usage, bool == False
     log_terminal_status, bool == False
 
 
-class ExecutionManager, :
+class ExecutionManager:
     """
     執行管理器 - 統一的執行監控和管理系統
 
@@ -75,49 +82,51 @@ class ExecutionManager, :
     - 問題升級處理
     """
 
-    def __init__(self, config, Optional[ExecutionManagerConfig] = None) -> None, :
+    def __init__(self, config: Optional[ExecutionManagerConfig] = None) -> None:
         self.config = config or self._load_config_from_system()
         self.logger = self._setup_logger()
 
         # 初始化執行監控器
-        monitor_config == ExecutionConfig()
-    default_timeout = self.config.default_timeout(),
-                max_timeout = self.config.max_timeout(),
-                min_timeout = self.config.min_timeout(),
-                adaptive_timeout = self.config.adaptive_timeout(),
-                enable_terminal_check = self.config.terminal_monitoring(),
-                enable_process_monitor = self.config.resource_monitoring(),
-                cpu_threshold = self.config.cpu_critical(),
-(                memory_threshold = self.config.memory_critical())
+        monitor_config = ExecutionConfig(
+            default_timeout=self.config.default_timeout,
+            max_timeout=self.config.max_timeout,
+            min_timeout=self.config.min_timeout,
+            adaptive_timeout=self.config.adaptive_timeout,
+            enable_terminal_check=self.config.terminal_monitoring,
+        )
+        # Initialize execution monitor
+        self.execution_monitor = ExecutionMonitor(
+            enable_process_monitor=self.config.resource_monitoring,
+            cpu_threshold=self.config.cpu_critical,
+            memory_threshold=self.config.memory_critical
+        )
+        self.monitor = ExecutionMonitor(monitor_config)
 
-        self.monitor == ExecutionMonitor(monitor_config)
-
-        # 執行統計
-        self.execution_stats = {}
-                'total_executions': 0,
-                'successful_executions': 0,
-                'failed_executions': 0,
-                'timeout_executions': 0,
-                'recovered_executions': 0,
-                'average_execution_time': 0.0()
-{        }
+        self.execution_stats = {
+            'total_executions': 0,
+            'successful_executions': 0,
+            'failed_executions': 0,
+            'timeout_executions': 0,
+            'recovered_executions': 0,
+            'average_execution_time': 0.0
+        }
 
         # 添加測試所需的屬性
-        self.task_queue, Dict[str, Any] = {}
-        self.execution_status, Dict[str, Any] = {}
+        self.task_queue: Dict[str, Any] = {}
+        self.execution_status: Dict[str, Any] = {}
 
         # 問題追蹤
-        self.issues_log, List[Dict[str, Any]] = []
-        self.recovery_actions, List[Dict[str, Any]] = []
+        self.issues_log: List[Dict[str, Any]] = []
+        self.recovery_actions: List[Dict[str, Any]] = []
 
         # 狀態監控
-        self._monitoring_active == False
-        self._health_check_thread, Optional[threading.Thread] = None
+        self._monitoring_active = False
+        self._health_check_thread: Optional[threading.Thread] = None
 
-        self.logger.info("ExecutionManager initialized with adaptive monitoring"):
+        self.logger.info("ExecutionManager initialized with adaptive monitoring")
 
 
-ef _load_config_from_system(self) -> ExecutionManagerConfig,
+    def _load_config_from_system(self) -> ExecutionManagerConfig:
         """從系統配置文件加載配置"""
         # 先設置一個臨時的logger用於錯誤記錄
         temp_logger = logging.getLogger(f"{__name__}.ExecutionManager.temp")

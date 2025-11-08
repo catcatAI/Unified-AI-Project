@@ -18,12 +18,12 @@ from datetime import datetime
 
 # 设置日志
 logging.basicConfig(level=logging.INFO(), format='%(asctime)s - %(levelname)s - %(message)s')
-logger, Any = logging.getLogger(__name__)
+logger: Any = logging.getLogger(__name__)
 
-class TestDataManager,
+class TestDataManager:
     """测试数据管理器"""
     
-    def __init__(self, data_dir, str == "test_data") -> None,
+    def __init__(self, data_dir: str = "test_data") -> None:
         """
         初始化测试数据管理器
         

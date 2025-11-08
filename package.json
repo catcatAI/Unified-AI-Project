@@ -8,7 +8,7 @@
     "dev:desktop": "node scripts/port_manager.js kill-service DESKTOP_APP && pnpm --filter desktop-app start",
     "dev": "concurrently --kill-others-on-fail --raw \"pnpm dev:backend\" \"pnpm dev:dashboard\"",
     "dev:all": "node scripts/kill_port_3000.js && concurrently --kill-others-on-fail --raw \"pnpm dev:backend\" \"pnpm dev:dashboard\" \"pnpm dev:desktop\"",
-    "test": "cd apps/backend && python scripts/workflow_controller.py",
+    "test": "pytest tests",
     "test:backend": "pnpm --filter backend test",
     "test:frontend": "pnpm --filter frontend-dashboard test",
     "test:desktop": "pnpm --filter desktop-app test",
