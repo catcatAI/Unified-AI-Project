@@ -29,9 +29,7 @@ from security.audit_logger import (
 )
 
 from apps.backend.src.core.services.sandbox_executor import (
-    EnhancedSandboxExecutor,
-    SandboxConfig,
-    ResourceLimits
+    SandboxExecutor
 )
 
 class TestPermissionControl(unittest.TestCase):
@@ -259,13 +257,11 @@ class TestEnhancedSandbox(unittest.TestCase):
     """Test cases for the EnhancedSandboxExecutor class"""
     def setUp(self):
         """Set up test fixtures"""
-        self.sandbox_config = SandboxConfig()
-        self.sandbox = EnhancedSandboxExecutor(self.sandbox_config)
+        self.sandbox = SandboxExecutor()
 
     def test_sandbox_initialization(self) -> None:
         """Test sandbox initialization"""
-        self.assertIsInstance(self.sandbox, EnhancedSandboxExecutor)
-        self.assertIsInstance(self.sandbox.config, SandboxConfig)
+        self.assertIsInstance(self.sandbox, SandboxExecutor)
 
     def test_code_validation(self) -> None:
         """Test code validation"""

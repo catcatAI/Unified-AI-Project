@@ -7,7 +7,7 @@
 import pytest
 import os
 
-class TestDependencyManager,
+class TestDependencyManager:
     """依赖管理器测试"""
     
     

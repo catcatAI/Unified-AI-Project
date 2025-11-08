@@ -11,15 +11,15 @@ import os
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-class TestCoreServices(unittest.TestCase()):
-    """Test cases for core_services.py""":::
-        ef setUp(self)
+class TestCoreServices(unittest.TestCase):
+    """Test cases for core_services.py"""
+
+    def setUp(self):
         """Set up test fixtures before each test method."""
         pass
 
     def tearDown(self):
         """Tear down test fixtures after each test method."""
-        # Clean up any global variables that might have been set
         pass
 
     def test_import_core_services(self) -> None,

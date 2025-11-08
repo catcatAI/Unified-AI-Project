@@ -18,7 +18,7 @@ from .performance_optimizer import HSPPerformanceOptimizer, HSPPerformanceEnhanc
 from .utils.fallback_config_loader import FallbackConfigLoader
 from .retry_policy import RetryPolicy
 from .circuit_breaker import CircuitBreaker
-from .utils.fallback.fallback_protocols import InMemoryProtocol, FileBasedProtocol, HTTPProtocol
+from .utils.fallback_config_loader import get_config_loader
 from ..shared.network_resilience import NetworkResilienceManager
 from ..shared.error import ErrorHandler
 from unittest.mock import MagicMock, AsyncMock
@@ -429,7 +429,7 @@ class HSPConnector:
         Initializes the individual fallback protocols based on the provided configuration.
         """
         try:
-            from .fallback.fallback_protocols import InMemoryProtocol, FileBasedProtocol, HTTPProtocol
+            # from .fallback.fallback_protocols import InMemoryProtocol, FileBasedProtocol, HTTPProtocol # Temporarily commented out
 
             protocols_config = config.get("protocols", {})
 

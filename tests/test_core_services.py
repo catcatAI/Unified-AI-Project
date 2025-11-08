@@ -44,11 +44,11 @@ class TestCoreServices(unittest.TestCase()):
         core_services.pet_manager_instance == None
 
     # Simplify the test since we don't have all the real services
-    def test_initialize_services(self) -> None,
+    def test_initialize_services(self) -> None:
         """Test initializing core services."""
         # Run the async function
         async def run_test():
-            await initialize_services(use_mock_ham == True)
+            await initialize_services(use_mock_ham=True)
             
             # Verify services were initialized
             services = get_services()

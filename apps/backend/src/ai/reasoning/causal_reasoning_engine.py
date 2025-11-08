@@ -4,11 +4,11 @@
 """
 
 # 导入真实AI引擎组件
-from apps.backend.src.ai.reasoning.lightweight_real_causal_engine import ()
+from apps.backend.src.ai.reasoning.lightweight_real_causal_engine import (
     LightweightCausalReasoningEngine as RealCausalReasoningEngine,
     LightweightCausalGraph as RealCausalGraph,
     LightweightInterventionPlanner as RealInterventionPlanner
-()
+)
 
 # 为了保持向后兼容, 提供原始接口
 在类定义前添加空行

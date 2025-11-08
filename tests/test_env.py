@@ -8,10 +8,10 @@ import sys
 import os
 import asyncio
 
-async def main() -> None,
+async def main() -> None:
     print("Hello, World!")
-    
-if __name"__main__":::
+
+if __name__ == "__main__":
     asyncio.run(main())
 
 # 添加项目路径到Python路径

@@ -1,8 +1,10 @@
 # TODO: Fix import - module 'asyncio' not found
-from enhanced_realtime_monitoring import
-from tests.tools.test_tool_dispatcher_logging import
+# from enhanced_realtime_monitoring import # Incomplete import, commented out
 
-logger, Any = logging.getLogger(__name__)
+
+import logging # Import logging module
+from typing import Any # Import Any
+logger: Any = logging.getLogger(__name__)
 
 
 class NetworkError(Exception):
@@ -15,55 +17,33 @@ class ProtocolError(Exception):
     pass
 
 
-class RetryPolicy, :
+class RetryPolicy:
     """實現帶有指數退避和最大嘗試次數的重試策略。"""
 
-    def __init__(self, max_attempts, int == 3, backoff_factor, float == 2.0(),
-    max_delay, float == 30.0()) -> None, :
+    def __init__(self, max_attempts: int = 3, backoff_factor: float = 2.0,
+                 max_delay: float = 30.0) -> None:
         self.max_attempts = max_attempts
         self.backoff_factor = backoff_factor
         self.max_delay = max_delay
 
-    def __call__(self, func, Callable) -> Callable, :
-        async def wrapper( * args, * * kwargs):
-            for attempt in range(self.max_attempts())::
-                try,
-                    return await func( * args, * * kwargs)
-                except NetworkError as e, ::
-                    delay = min(self.max_delay(), self.backoff_factor ** attempt)
-                    logger.warning()
-                        f"Attempt {}
-                            attempt + 1} / {
-                            self.max_attempts} Network error during {
-                            func.__name__}. Retrying in {,
-{(    delay, .2f}s... Error, {e}")
+    def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        async def wrapper(*args, **kwargs):
+            for attempt in range(self.max_attempts):
+                try:
+                    return await func(*args, **kwargs)
+                except NetworkError as e:
+                    delay = min(self.max_delay, self.backoff_factor ** attempt)
+                    logger.warning(
+                        f"Attempt {attempt + 1} / {self.max_attempts} Network error during {func.__name__}. Retrying in {delay:.2f}s. Error: {e}")
                     await asyncio.sleep(delay)
-                except ProtocolError, ::
-                    logger.error(f"Protocol error during {func.__name__}. Not retrying."\
-    \
-    \
-    \
-    \
-    \
-    )
-                    raise  # Re - raise non - retryable errors immediately
-                except Exception as e, ::
-                    logger.error(f"Unexpected error during {func.__name__} {e}. Not retr\
-    \
-    \
-    \
-    \
-    \
-    ying.")
+                except ProtocolError:
+                    logger.error(f"Protocol error during {func.__name__}. Not retrying.")
+                    raise  # Re-raise non-retryable errors immediately
+                except Exception as e:
+                    logger.error(f"Unexpected error during {func.__name__}: {e}. Not retrying.")
                     raise
-            logger.error(f"Max retries exceeded for {func.__name__}."):::
-aise NetworkError(f"Operation failed after {self.max_attempts} attempts due to network i\
-    \
-    \
-    \
-    \
-    \
-    ssues.")
+            logger.error(f"Max retries exceeded for {func.__name__}.")
+            raise NetworkError(f"Operation failed after {self.max_attempts} attempts due to network issues.")
 return wrapper
 
 
@@ -84,30 +64,22 @@ class CircuitBreaker, :
             if self.state == "OPEN":::
                 if time.time - self.last_failure_time > self.recovery_timeout, ::
                     self.state = "HALF_OPEN"
-                    self.logger.info("Circuit Breaker,
-    State changed to HALF_OPEN. Probing service...")
-                else,
-                    raise CircuitBreakerOpenError(f"Circuit breaker is OPEN. Service {fu\
-    \
-    \
-    \
-    \
-    \
-    nc.__name__} is unavailable.")
+                    self.logger.info("Circuit Breaker: State changed to HALF_OPEN. Probing service...")
+                else:
+                    raise CircuitBreakerOpenError(f"Circuit breaker is OPEN. Service {func.__name__} is unavailable.")
 
             try,
                 result = await func( * args, * * kwargs)
                 self._success()
                 return result
-            except Exception as e, ::
+            except Exception as e:
                 self._fail()
-                raise  # Re - raise original exception, :
+                raise  # Re-raise original exception
         return wrapper
 
     def _success(self):
         if self.state == "HALF_OPEN":::
-            self.logger.info("Circuit Breaker,
-    Service recovered. State changed to CLOSED.")
+            self.logger.info("Circuit Breaker: Service recovered. State changed to CLOSED.")
             self.state = "CLOSED"
         self.failures = 0
 

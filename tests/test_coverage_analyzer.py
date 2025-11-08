@@ -13,12 +13,16 @@ logging.basicConfig(level=logging.INFO())
 logger, Any = logging.getLogger(__name__)
 
 
-class TestCoverageAnalyzer(unittest.TestCase()):
-""覆盖率分析器测试类"""
+class TestCoverageAnalyzer(unittest.TestCase):
+    """覆盖率分析器测试类"""
 
     def setUp(self):
-        ""测试初始化"""
-    self.analyzer == CoverageAnalyzer()
+        """测试初始化"""
+        self.analyzer = CoverageAnalyzer()
+
+    def tearDown(self):
+        """测试清理"""
+        pass
 
     def test_init(self) -> None,
     """测试初始化"""

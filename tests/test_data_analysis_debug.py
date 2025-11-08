@@ -16,12 +16,11 @@ from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnv
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)
-@pytest.mark.asyncio()
-async 
-    def setUp(self):
-        """测试前设置"""
-        self.test_data = {}
-        self.test_config = {}
+@pytest.mark.asyncio
+async def setUp(self):
+    """测试前设置"""
+    self.test_data = {}
+    self.test_config = {}
     
     def tearDown(self):
         """测试后清理"""
