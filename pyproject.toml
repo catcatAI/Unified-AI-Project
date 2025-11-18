@@ -6,3 +6,47 @@ build-backend = "setuptools.build_meta"
 name = "project-name"
 version = "0.1.0"
 description = "Project description"
+# NOTE: 'transformers' and 'huggingface-hub' dependencies were removed due to persistent
+# installation issues and conflicts with TensorFlow's import mechanism, leading to
+# 'ValueError: tensorflow.__spec__ is not set'. This impacts core AI functionalities
+# such as agent memory (VectorStore) and Linguistic Immune System (LIS).
+# Re-enabling these dependencies will require careful management of their versions
+# and potential workarounds for TensorFlow compatibility.
+dependencies = [
+    "fastapi==0.104.1",
+    "paho-mqtt==1.6.1",
+    "scikit-learn==1.3.0",
+
+    "torch>=2.2.0,<2.3",
+
+    "numpy>=1.21.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+    "psutil>=5.8.0",
+    "pandas>=1.3.0",
+    "jinja2>=3.0.0",
+    "uvicorn==0.23.2",
+    "cryptography>=3.4.0",
+    "requests>=2.25.0",
+    "python-dotenv>=0.19.0",
+    "PyYAML>=6.0",
+    "typing-extensions>=4.0.0",
+    "networkx>=2.6.0",
+    "faiss-cpu>=1.7.0",
+    "gmqtt>=0.7.0",
+    "rich>=13.0.0",
+    "click>=8.0.0",
+    "tqdm>=4.64.0",
+    "firebase-admin>=6.0.0",
+    "spacy==3.7.5",
+    "openai>=1.0.0",
+
+    "pygame"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["apps/backend*", "packages/cli*"]
