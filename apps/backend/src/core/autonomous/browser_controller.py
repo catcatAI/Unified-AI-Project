@@ -538,8 +538,9 @@ if __name__ == "__main__":
             page_content="Welcome to the best online game experience..."
         )
         print(f"  游戏检测: {is_game}")
-        if browser.is_playing_game():
-            print(f"  当前游戏: {browser.get_active_game().game_name}")
+        active_game = browser.get_active_game()
+        if active_game:
+            print(f"  当前游戏: {active_game.game_name}")
         
         # Statistics
         print("\n统计信息 / Statistics:")

@@ -198,7 +198,7 @@ class EbbinghausForgettingCurve:
         """
         # Spaced repetition intervals (hours)
         # Based on modified Ebbinghaus curve
-        return [1, 3, 8, 24, 72, 168, 336][:n_reviews]
+        return [1.0, 3.0, 8.0, 24.0, 72.0, 168.0, 336.0][:n_reviews]
     
     def estimate_strength_from_reviews(
         self, 
@@ -468,12 +468,13 @@ class NeuroplasticitySystem:
         for assoc_id in trace.associated_memories:
             if assoc_id in self.memory_traces:
                 # Create synapse between memories
-                synapse_key = tuple(sorted([memory_id, assoc_id]))
+                sorted_ids = sorted([memory_id, assoc_id])
+                synapse_key: Tuple[str, str] = (sorted_ids[0], sorted_ids[1])
                 
                 if synapse_key not in self.synaptic_weights:
                     self.synaptic_weights[synapse_key] = SynapticWeight(
-                        pre_neuron=memory_id,
-                        post_neuron=assoc_id,
+                        pre_neuron=sorted_ids[0],
+                        post_neuron=sorted_ids[1],
                         weight=0.1
                     )
                 
@@ -526,12 +527,13 @@ class NeuroplasticitySystem:
     def _apply_hebbian_update(self, memory_id_1: str, memory_id_2: str):
         """Apply Hebbian learning between two memories"""
         # Treat memories as "co-firing" when one is accessed and they're associated
-        synapse_key = tuple(sorted([memory_id_1, memory_id_2]))
+        sorted_ids = sorted([memory_id_1, memory_id_2])
+        synapse_key: Tuple[str, str] = (sorted_ids[0], sorted_ids[1])
         
         if synapse_key not in self.synaptic_weights:
             self.synaptic_weights[synapse_key] = SynapticWeight(
-                pre_neuron=memory_id_1,
-                post_neuron=memory_id_2,
+                pre_neuron=sorted_ids[0],
+                post_neuron=sorted_ids[1],
                 weight=0.1
             )
         
@@ -1448,11 +1450,13 @@ if __name__ == "__main__":
         
         print("\n4. 创伤记忆70%减缓遗忘 / 70% slower forgetting:")
         hours_list = [1, 24, 168, 720]  # 1 hour, 1 day, 1 week, 1 month
+        trauma = trauma_system.trauma_memories.get("trauma_001")
         for hours in hours_list:
             retention = trauma_system.get_retention("trauma_001")
             print(f"   {hours}小时后 / after {hours}h: 保持率={retention:.2%}")
             # Advance time for next check
-            trauma.encoding_timestamp -= timedelta(hours=hours)
+            if trauma and hasattr(trauma, 'encoding_timestamp'):
+                trauma.encoding_timestamp -= timedelta(hours=hours)
         
         print("\n5. 侵入性回忆可能性 / Intrusion likelihood:")
         for stress in [0.2, 0.5, 0.8]:

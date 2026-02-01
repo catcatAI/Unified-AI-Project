@@ -44,8 +44,8 @@ if TYPE_CHECKING:
     from .action_executor import ActionExecutor, ActionQueue, ActionPriority
     from .desktop_interaction import DesktopInteraction, FileOperation, DesktopState
     from .browser_controller import BrowserController, SearchResult, BrowserState
-    from .audio_system import AudioSystem, TTSConfig, MusicPlayer, LyricsSync
-    from .desktop_presence import DesktopPresence, MouseTracker, CollisionDetector
+    from .audio_system import AudioSystem, TTSConfig, LyricsSync
+    from .desktop_presence import DesktopPresence, MouseTracker
     from .live2d_integration import Live2DIntegration, Live2DExpression, Live2DAction
     
     # Integration Systems
@@ -53,9 +53,9 @@ if TYPE_CHECKING:
     from .digital_life_integrator import DigitalLifeIntegrator, LifeCycleState
     from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge, MemoryConsolidation
     from .extended_behavior_library import ExtendedBehaviorLibrary, BehaviorDefinition
-    from .multidimensional_trigger import MultidimensionalTrigger, TriggerDimension
+    from .multidimensional_trigger import MultidimensionalTriggerSystem, TriggerDimension
     from .cyber_identity import CyberIdentity, SelfModel, IdentityGrowth
-    from .self_generation import SelfGeneration, Live2DGenerator, AvatarBuilder
+    from .self_generation import SelfGeneration, AvatarBuilder
 
 __version__ = "6.0.0"
 __author__ = "Angela AI Development Team"
@@ -122,11 +122,9 @@ __all__ = [
     "BrowserState",
     "AudioSystem",
     "TTSConfig",
-    "MusicPlayer",
     "LyricsSync",
     "DesktopPresence",
     "MouseTracker",
-    "CollisionDetector",
     "Live2DIntegration",
     "Live2DExpression",
     "Live2DAction",
@@ -146,7 +144,6 @@ __all__ = [
     "SelfModel",
     "IdentityGrowth",
     "SelfGeneration",
-    "Live2DGenerator",
     "AvatarBuilder",
 ]
 
@@ -271,7 +268,7 @@ async def initialize_all_systems() -> dict:
         'digital_life_integrator': DigitalLifeIntegrator(),
         'memory_neuroplasticity_bridge': MemoryNeuroplasticityBridge(),
         'extended_behavior_library': ExtendedBehaviorLibrary(),
-        'multidimensional_trigger': MultidimensionalTrigger(),
+        'multidimensional_trigger': MultidimensionalTriggerSystem(),
         'cyber_identity': CyberIdentity(),
         'self_generation': SelfGeneration(),
     }
