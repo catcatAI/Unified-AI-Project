@@ -669,7 +669,7 @@ class ExtendedBehaviorLibrary:
             "queued_behaviors": len(self.behavior_queue),
         }
     
-    def get_default_behavior(self) -> BehaviorDefinition:
+    def get_default_behavior(self) -> Optional[BehaviorDefinition]:
         """Get default idle behavior"""
         return self.behaviors.get(
             self.default_behavior_id,

@@ -341,7 +341,7 @@ class BiologicalIntegrator:
             if emotional_context == "comfort":
                 self.emotional_system.set_emotion_from_basic(BasicEmotion.LOVE, 0.6)
             else:
-                self.emotional_system.set_emotion_from_basic(BasicEmotion.SURPRISED, 0.5)
+                self.emotional_system.set_emotion_from_basic(BasicEmotion.SURPRISE, 0.5)
         
         # Trigger oxytocin for positive touch
         if emotional_context in ["comfort", "love", "joy"]:

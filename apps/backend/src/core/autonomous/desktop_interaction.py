@@ -450,7 +450,7 @@ class DesktopInteraction:
             if system == "Windows":
                 import ctypes
                 SPI_SETDESKWALLPAPER = 20
-                ctypes.windll.user32.SystemParametersInfoW(
+                ctypes.windll.user32.SystemParametersInfoW(  # type: ignore[attr-defined]
                     SPI_SETDESKWALLPAPER, 0, str(image_path.absolute()), 3
                 )
                 return True
