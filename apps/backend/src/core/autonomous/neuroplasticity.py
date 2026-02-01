@@ -1,0 +1,732 @@
+"""
+Angela AI v6.0 - Neuroplasticity System
+神经可塑性系统
+
+Simulates biological learning mechanisms including LTP/LTD, Hebbian learning,
+memory consolidation, and Ebbinghaus forgetting curves.
+
+Features:
+- LTP (Long-Term Potentiation) and LTD (Long-Term Depression)
+- Memory weight updates based on usage patterns
+- Memory consolidation during rest/sleep
+- Ebbinghaus forgetting curve implementation
+- Hebbian learning rule (neurons that fire together, wire together)
+
+Author: Angela AI Development Team
+Version: 6.0.0
+Date: 2026-02-02
+"""
+
+from __future__ import annotations
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from typing import Dict, List, Optional, Tuple, Callable, Any, Set
+from datetime import datetime, timedelta
+import asyncio
+import math
+import random
+
+
+class SynapticState(Enum):
+    """突触状态 / Synaptic states"""
+    POTENTIATED = ("增强", "Potentiated")
+    DEPRESSED = ("抑制", "Depressed")
+    BASELINE = ("基线", "Baseline")
+    
+    def __init__(self, cn_name: str, en_name: str):
+        self.cn_name = cn_name
+        self.en_name = en_name
+
+
+class ConsolidationPhase(Enum):
+    """记忆巩固阶段 / Memory consolidation phases"""
+    ENCODING = ("编码", 0, 30)          # First 30 minutes
+    STABILIZATION = ("稳定", 30, 60)     # 30-60 minutes
+    CONSOLIDATION = ("巩固", 60, 1440)   # 1-24 hours
+    RE_CONSOLIDATION = ("再巩固", 1440, float('inf'))  # After retrieval
+    
+    def __init__(self, cn_name: str, min_minutes: float, max_minutes: float):
+        self.cn_name = cn_name
+        self.min_minutes = min_minutes
+        self.max_minutes = max_minutes
+    
+    @classmethod
+    def from_age(cls, minutes: float) -> ConsolidationPhase:
+        """根据记忆年龄获取阶段"""
+        for phase in cls:
+            if phase.min_minutes <= minutes < phase.max_minutes:
+                return phase
+        return cls.RE_CONSOLIDATION
+
+
+@dataclass
+class SynapticWeight:
+    """突触权重 / Synaptic weight"""
+    pre_neuron: str         # 前神经元 / Pre-synaptic neuron
+    post_neuron: str        # 后神经元 / Post-synaptic neuron
+    weight: float           # 权重值 / Weight value (0-1)
+    last_update: datetime = field(default_factory=datetime.now)
+    activation_count: int = 0
+    state: SynapticState = SynapticState.BASELINE
+    
+    def __post_init__(self):
+        self.weight = max(0.0, min(1.0, self.weight))
+
+
+@dataclass
+class MemoryTrace:
+    """记忆痕迹 / Memory trace"""
+    memory_id: str
+    content: Any
+    initial_weight: float
+    current_weight: float
+    created_at: datetime = field(default_factory=datetime.now)
+    last_accessed: datetime = field(default_factory=datetime.now)
+    access_count: int = 0
+    emotional_tags: List[str] = field(default_factory=list)
+    associated_memories: Set[str] = field(default_factory=set)
+    consolidation_strength: float = 0.0  # 0-1
+    is_consolidated: bool = False
+    
+    def get_age_minutes(self) -> float:
+        """Get age of memory in minutes"""
+        return (datetime.now() - self.created_at).total_seconds() / 60.0
+    
+    def get_retention_intervals(self) -> int:
+        """Get number of retention intervals (for forgetting curve)"""
+        age_hours = self.get_age_minutes() / 60.0
+        # Rough approximation of review intervals
+        return int(math.log2(max(1, age_hours)) + 1)
+
+
+@dataclass
+class HebbianRule:
+    """Hebbian学习规则 / Hebbian learning rule"""
+    learning_rate: float = 0.1
+    decay_factor: float = 0.01
+    threshold: float = 0.5
+    
+    def apply(
+        self, 
+        pre_activation: float, 
+        post_activation: float, 
+        current_weight: float
+    ) -> float:
+        """
+        Apply Hebbian learning: "neurons that fire together, wire together"
+        
+        Args:
+            pre_activation: Activation of pre-synaptic neuron (0-1)
+            post_activation: Activation of post-synaptic neuron (0-1)
+            current_weight: Current synaptic weight
+            
+        Returns:
+            New synaptic weight
+        """
+        # Only strengthen if both neurons are active above threshold
+        if pre_activation > self.threshold and post_activation > self.threshold:
+            # Hebbian update: delta_w = learning_rate * pre * post
+            delta_w = self.learning_rate * pre_activation * post_activation
+            new_weight = current_weight + delta_w
+        else:
+            # Decay if not co-activated
+            new_weight = current_weight * (1 - self.decay_factor)
+        
+        return max(0.0, min(1.0, new_weight))
+
+
+@dataclass
+class LTPParameters:
+    """LTP参数 / LTP parameters"""
+    threshold_frequency: float = 10.0  # Hz, minimum frequency for LTP
+    potentiation_rate: float = 0.15
+    max_weight: float = 1.0
+    duration_minutes: float = 60.0
+
+
+@dataclass
+class LTDParameters:
+    """LTD参数 / LTD parameters"""
+    threshold_frequency: float = 1.0   # Hz, maximum frequency for LTD
+    depression_rate: float = 0.1
+    min_weight: float = 0.0
+    duration_minutes: float = 30.0
+
+
+class EbbinghausForgettingCurve:
+    """
+    艾宾浩斯遗忘曲线 / Ebbinghaus forgetting curve
+    
+    R = e^(-t/S) where:
+    - R = retention
+    - t = time
+    - S = stability (depends on memory strength)
+    """
+    
+    def __init__(self, base_stability: float = 24.0):
+        self.base_stability = base_stability  # hours
+    
+    def calculate_retention(
+        self, 
+        hours_since_learning: float, 
+        memory_strength: float = 1.0
+    ) -> float:
+        """
+        Calculate memory retention using Ebbinghaus formula
+        
+        Args:
+            hours_since_learning: Time since memory was formed
+            memory_strength: Memory strength multiplier (0-2)
+            
+        Returns:
+            Retention rate (0-1)
+        """
+        # Adjust stability based on memory strength
+        stability = self.base_stability * memory_strength
+        
+        # Ebbinghaus formula
+        retention = math.exp(-hours_since_learning / stability)
+        
+        return retention
+    
+    def get_optimal_review_times(self, n_reviews: int = 5) -> List[float]:
+        """
+        Get optimal review times based on forgetting curve
+        
+        Returns:
+            List of hours for optimal review schedule
+        """
+        # Spaced repetition intervals (hours)
+        # Based on modified Ebbinghaus curve
+        return [1, 3, 8, 24, 72, 168, 336][:n_reviews]
+    
+    def estimate_strength_from_reviews(
+        self, 
+        review_count: int, 
+        average_performance: float
+    ) -> float:
+        """Estimate memory strength from review history"""
+        base = 1.0
+        review_bonus = review_count * 0.2
+        performance_factor = average_performance
+        return base + review_bonus * performance_factor
+
+
+class NeuroplasticitySystem:
+    """
+    神经可塑性系统主类 / Main neuroplasticity system class
+    
+    Simulates biological learning and memory mechanisms for Angela AI.
+    Implements LTP/LTD, Hebbian learning, memory consolidation, and
+    forgetting curves to create a biologically-inspired memory system.
+    
+    Attributes:
+        synaptic_weights: Dictionary of all synaptic connections
+        memory_traces: Dictionary of memory traces
+        hebbian_rule: Hebbian learning configuration
+        ltp_params: LTP parameters
+        ltd_params: LTD parameters
+        forgetting_curve: Ebbinghaus forgetting curve model
+        consolidation_queue: Memories pending consolidation
+    
+    Example:
+        >>> np_system = NeuroplasticitySystem()
+        >>> await np_system.initialize()
+        >>> 
+        >>> # Create a memory trace
+        >>> memory = np_system.create_memory_trace(
+        ...     memory_id="mem_001",
+        ...     content="Important information",
+        ...     initial_weight=0.6
+        ... )
+        >>> 
+        >>> # Apply LTP (strengthen through repetition)
+        >>> np_system.apply_ltp("mem_001", frequency=15.0, duration=5.0)
+        >>> 
+        >>> # Access memory (triggers Hebbian updates)
+        >>> np_system.access_memory("mem_001")
+        >>> 
+        >>> # Check retention
+        >>> retention = np_system.get_memory_retention("mem_001")
+        >>> print(f"Retention: {retention:.2%}")
+    """
+    
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {}
+        
+        # Synaptic connections
+        self.synaptic_weights: Dict[Tuple[str, str], SynapticWeight] = {}
+        
+        # Memory traces
+        self.memory_traces: Dict[str, MemoryTrace] = {}
+        
+        # Learning mechanisms
+        self.hebbian_rule = HebbianRule(
+            learning_rate=self.config.get("hebbian_learning_rate", 0.1),
+            decay_factor=self.config.get("hebbian_decay", 0.01),
+            threshold=self.config.get("hebbian_threshold", 0.5),
+        )
+        
+        self.ltp_params = LTPParameters(
+            threshold_frequency=self.config.get("ltp_threshold_freq", 10.0),
+            potentiation_rate=self.config.get("ltp_rate", 0.15),
+        )
+        
+        self.ltd_params = LTDParameters(
+            threshold_frequency=self.config.get("ltd_threshold_freq", 1.0),
+            depression_rate=self.config.get("ltd_rate", 0.1),
+        )
+        
+        # Forgetting curve
+        self.forgetting_curve = EbbinghausForgettingCurve(
+            base_stability=self.config.get("base_stability_hours", 24.0)
+        )
+        
+        # Consolidation
+        self.consolidation_queue: List[str] = []
+        self.consolidation_active: bool = False
+        
+        # Running state
+        self._running = False
+        self._update_task: Optional[asyncio.Task] = None
+        
+        # Callbacks
+        self._memory_callbacks: Dict[str, List[Callable[[MemoryTrace], None]]] = {}
+        self._consolidation_callbacks: List[Callable[[str], None]] = []
+    
+    async def initialize(self):
+        """Initialize the neuroplasticity system"""
+        self._running = True
+        self._update_task = asyncio.create_task(self._update_loop())
+    
+    async def shutdown(self):
+        """Shutdown the system"""
+        self._running = False
+        if self._update_task:
+            self._update_task.cancel()
+            try:
+                await self._update_task
+            except asyncio.CancelledError:
+                pass
+    
+    async def _update_loop(self):
+        """Background update loop"""
+        while self._running:
+            await self._decay_synaptic_weights()
+            await self._update_memory_consolidation()
+            await asyncio.sleep(60)  # Update every minute
+    
+    async def _decay_synaptic_weights(self):
+        """Apply natural decay to synaptic weights"""
+        current_time = datetime.now()
+        
+        for key, synapse in self.synaptic_weights.items():
+            hours_since_update = (
+                (current_time - synapse.last_update).total_seconds() / 3600.0
+            )
+            
+            if hours_since_update > 1:
+                # Apply decay
+                decay_amount = self.hebbian_rule.decay_factor * hours_since_update
+                synapse.weight = max(0.0, synapse.weight - decay_amount)
+                
+                # Update state
+                if synapse.weight > 0.7:
+                    synapse.state = SynapticState.POTENTIATED
+                elif synapse.weight < 0.3:
+                    synapse.state = SynapticState.DEPRESSED
+                else:
+                    synapse.state = SynapticState.BASELINE
+    
+    async def _update_memory_consolidation(self):
+        """Update memory consolidation status"""
+        for memory_id, trace in self.memory_traces.items():
+            age_minutes = trace.get_age_minutes()
+            phase = ConsolidationPhase.from_age(age_minutes)
+            
+            # Calculate consolidation strength based on phase and access
+            base_strength = {
+                ConsolidationPhase.ENCODING: 0.2,
+                ConsolidationPhase.STABILIZATION: 0.5,
+                ConsolidationPhase.CONSOLIDATION: 0.8,
+                ConsolidationPhase.RE_CONSOLIDATION: 0.9,
+            }[phase]
+            
+            # Boost with access frequency
+            access_factor = min(1.0, trace.access_count / 10.0)
+            trace.consolidation_strength = base_strength + (0.1 * access_factor)
+            
+            if phase in [ConsolidationPhase.CONSOLIDATION, ConsolidationPhase.RE_CONSOLIDATION]:
+                trace.is_consolidated = True
+    
+    def create_memory_trace(
+        self, 
+        memory_id: str, 
+        content: Any, 
+        initial_weight: float = 0.5,
+        emotional_tags: Optional[List[str]] = None
+    ) -> MemoryTrace:
+        """
+        Create a new memory trace
+        
+        Args:
+            memory_id: Unique identifier for the memory
+            content: Memory content
+            initial_weight: Initial memory strength (0-1)
+            emotional_tags: List of emotional associations
+            
+        Returns:
+            Created MemoryTrace
+        """
+        trace = MemoryTrace(
+            memory_id=memory_id,
+            content=content,
+            initial_weight=initial_weight,
+            current_weight=initial_weight,
+            emotional_tags=emotional_tags or [],
+        )
+        
+        self.memory_traces[memory_id] = trace
+        self.consolidation_queue.append(memory_id)
+        
+        return trace
+    
+    def apply_ltp(
+        self, 
+        memory_id: str, 
+        frequency: float, 
+        duration: float = 5.0
+    ):
+        """
+        Apply Long-Term Potentiation to strengthen a memory
+        
+        Args:
+            memory_id: Target memory ID
+            frequency: Stimulation frequency in Hz (should be > 10 for LTP)
+            duration: Duration of stimulation in minutes
+        """
+        if memory_id not in self.memory_traces:
+            return
+        
+        trace = self.memory_traces[memory_id]
+        
+        # Check if frequency is above LTP threshold
+        if frequency >= self.ltp_params.threshold_frequency:
+            # Calculate potentiation amount
+            potentiation = (
+                self.ltp_params.potentiation_rate * 
+                (frequency / self.ltp_params.threshold_frequency) *
+                (duration / 5.0)  # Normalize to 5 minutes
+            )
+            
+            # Apply potentiation
+            trace.current_weight = min(
+                1.0, 
+                trace.current_weight + potentiation
+            )
+            
+            # Update synaptic connections for associated neurons
+            self._potentiate_associated_synapses(memory_id, potentiation)
+    
+    def apply_ltd(
+        self, 
+        memory_id: str, 
+        frequency: float = 0.5, 
+        duration: float = 10.0
+    ):
+        """
+        Apply Long-Term Depression to weaken a memory
+        
+        Args:
+            memory_id: Target memory ID
+            frequency: Stimulation frequency in Hz (should be < 1 for LTD)
+            duration: Duration in minutes
+        """
+        if memory_id not in self.memory_traces:
+            return
+        
+        trace = self.memory_traces[memory_id]
+        
+        # Check if frequency is below LTD threshold
+        if frequency <= self.ltd_params.threshold_frequency:
+            depression = (
+                self.ltd_params.depression_rate * 
+                (duration / 10.0)
+            )
+            
+            trace.current_weight = max(
+                0.0, 
+                trace.current_weight - depression
+            )
+    
+    def _potentiate_associated_synapses(self, memory_id: str, amount: float):
+        """Strengthen synapses associated with a memory"""
+        # This is a simplified model - in reality, memories involve complex networks
+        trace = self.memory_traces[memory_id]
+        
+        # Create or strengthen connections to associated memories
+        for assoc_id in trace.associated_memories:
+            if assoc_id in self.memory_traces:
+                # Create synapse between memories
+                synapse_key = tuple(sorted([memory_id, assoc_id]))
+                
+                if synapse_key not in self.synaptic_weights:
+                    self.synaptic_weights[synapse_key] = SynapticWeight(
+                        pre_neuron=memory_id,
+                        post_neuron=assoc_id,
+                        weight=0.1
+                    )
+                
+                # Strengthen connection
+                synapse = self.synaptic_weights[synapse_key]
+                synapse.weight = min(1.0, synapse.weight + amount)
+                synapse.activation_count += 1
+                synapse.last_update = datetime.now()
+    
+    def access_memory(self, memory_id: str) -> Optional[MemoryTrace]:
+        """
+        Access a memory trace (triggers Hebbian updates)
+        
+        Args:
+            memory_id: Memory to access
+            
+        Returns:
+            MemoryTrace if found, None otherwise
+        """
+        if memory_id not in self.memory_traces:
+            return None
+        
+        trace = self.memory_traces[memory_id]
+        
+        # Update access metadata
+        trace.last_accessed = datetime.now()
+        trace.access_count += 1
+        
+        # Apply Hebbian learning to strengthen trace
+        # Each access strengthens the memory slightly
+        trace.current_weight = min(
+            1.0, 
+            trace.current_weight + self.hebbian_rule.learning_rate * 0.1
+        )
+        
+        # Strengthen connections to associated memories (Hebbian principle)
+        for assoc_id in trace.associated_memories:
+            self._apply_hebbian_update(memory_id, assoc_id)
+        
+        # Trigger callbacks
+        if memory_id in self._memory_callbacks:
+            for callback in self._memory_callbacks[memory_id]:
+                try:
+                    callback(trace)
+                except Exception:
+                    pass
+        
+        return trace
+    
+    def _apply_hebbian_update(self, memory_id_1: str, memory_id_2: str):
+        """Apply Hebbian learning between two memories"""
+        # Treat memories as "co-firing" when one is accessed and they're associated
+        synapse_key = tuple(sorted([memory_id_1, memory_id_2]))
+        
+        if synapse_key not in self.synaptic_weights:
+            self.synaptic_weights[synapse_key] = SynapticWeight(
+                pre_neuron=memory_id_1,
+                post_neuron=memory_id_2,
+                weight=0.1
+            )
+        
+        synapse = self.synaptic_weights[synapse_key]
+        
+        # Both "neurons" are considered active (0.7 activation)
+        new_weight = self.hebbian_rule.apply(0.7, 0.7, synapse.weight)
+        synapse.weight = new_weight
+        synapse.activation_count += 1
+        synapse.last_update = datetime.now()
+    
+    def get_memory_retention(self, memory_id: str) -> float:
+        """
+        Calculate current retention of a memory using forgetting curve
+        
+        Args:
+            memory_id: Memory to check
+            
+        Returns:
+            Retention rate (0-1)
+        """
+        if memory_id not in self.memory_traces:
+            return 0.0
+        
+        trace = self.memory_traces[memory_id]
+        
+        # Calculate hours since last access
+        hours_since = (
+            (datetime.now() - trace.last_accessed).total_seconds() / 3600.0
+        )
+        
+        # Calculate memory strength based on current weight and consolidation
+        memory_strength = (
+            trace.current_weight * 0.5 + 
+            trace.consolidation_strength * 0.5
+        ) * (1 + trace.access_count * 0.1)
+        
+        # Apply forgetting curve
+        retention = self.forgetting_curve.calculate_retention(
+            hours_since, 
+            memory_strength
+        )
+        
+        return retention
+    
+    def consolidate_memories(self, memory_ids: Optional[List[str]] = None):
+        """
+        Trigger memory consolidation (typically during sleep/rest)
+        
+        Args:
+            memory_ids: Specific memories to consolidate, or None for all
+        """
+        targets = memory_ids or list(self.memory_traces.keys())
+        
+        for memory_id in targets:
+            if memory_id in self.memory_traces:
+                trace = self.memory_traces[memory_id]
+                
+                # Strengthen consolidated memories
+                if not trace.is_consolidated:
+                    trace.consolidation_strength = min(1.0, trace.consolidation_strength + 0.3)
+                    trace.current_weight = min(1.0, trace.current_weight + 0.1)
+                    
+                    if trace.consolidation_strength >= 0.7:
+                        trace.is_consolidated = True
+                        
+                        # Notify callbacks
+                        for callback in self._consolidation_callbacks:
+                            try:
+                                callback(memory_id)
+                            except Exception:
+                                pass
+    
+    def associate_memories(self, memory_id_1: str, memory_id_2: str):
+        """
+        Create an association between two memories
+        
+        Args:
+            memory_id_1: First memory ID
+            memory_id_2: Second memory ID
+        """
+        if memory_id_1 in self.memory_traces:
+            self.memory_traces[memory_id_1].associated_memories.add(memory_id_2)
+        
+        if memory_id_2 in self.memory_traces:
+            self.memory_traces[memory_id_2].associated_memories.add(memory_id_1)
+    
+    def get_optimal_review_schedule(self, memory_id: str) -> List[float]:
+        """Get optimal review times for a memory"""
+        return self.forgetting_curve.get_optimal_review_times()
+    
+    def get_weak_memories(self, threshold: float = 0.3) -> List[MemoryTrace]:
+        """Get memories with low retention"""
+        weak = []
+        for memory_id, trace in self.memory_traces.items():
+            retention = self.get_memory_retention(memory_id)
+            if retention < threshold:
+                weak.append(trace)
+        return weak
+    
+    def register_memory_callback(
+        self, 
+        memory_id: str, 
+        callback: Callable[[MemoryTrace], None]
+    ):
+        """Register callback for memory access"""
+        if memory_id not in self._memory_callbacks:
+            self._memory_callbacks[memory_id] = []
+        self._memory_callbacks[memory_id].append(callback)
+    
+    def register_consolidation_callback(self, callback: Callable[[str], None]):
+        """Register callback for memory consolidation"""
+        self._consolidation_callbacks.append(callback)
+    
+    def get_system_stats(self) -> Dict[str, Any]:
+        """Get system statistics"""
+        total_memories = len(self.memory_traces)
+        consolidated = sum(1 for m in self.memory_traces.values() if m.is_consolidated)
+        total_synapses = len(self.synaptic_weights)
+        
+        avg_weight = 0.0
+        if self.synaptic_weights:
+            avg_weight = sum(s.weight for s in self.synaptic_weights.values()) / len(self.synaptic_weights)
+        
+        return {
+            "total_memories": total_memories,
+            "consolidated_memories": consolidated,
+            "total_synapses": total_synapses,
+            "average_synapse_weight": avg_weight,
+            "pending_consolidation": len(self.consolidation_queue),
+        }
+
+
+# Example usage
+if __name__ == "__main__":
+    async def demo():
+        np_system = NeuroplasticitySystem()
+        await np_system.initialize()
+        
+        print("=" * 60)
+        print("Angela AI v6.0 - 神经可塑性系统演示")
+        print("Neuroplasticity System Demo")
+        print("=" * 60)
+        
+        # Create memories
+        print("\n创建记忆痕迹 / Creating memory traces:")
+        memories = [
+            np_system.create_memory_trace(
+                f"mem_{i:03d}", 
+                f"Information chunk {i}",
+                initial_weight=0.5 + i * 0.05
+            )
+            for i in range(5)
+        ]
+        
+        for mem in memories:
+            print(f"  {mem.memory_id}: weight={mem.current_weight:.2f}")
+        
+        # Associate memories
+        print("\n建立记忆关联 / Creating memory associations:")
+        np_system.associate_memories("mem_000", "mem_001")
+        np_system.associate_memories("mem_001", "mem_002")
+        print("  mem_000 <-> mem_001")
+        print("  mem_001 <-> mem_002")
+        
+        # Apply LTP
+        print("\n应用LTP增强 / Applying LTP:")
+        np_system.apply_ltp("mem_000", frequency=15.0, duration=10.0)
+        mem = np_system.memory_traces["mem_000"]
+        print(f"  mem_000 new weight: {mem.current_weight:.2f}")
+        
+        # Access memory (Hebbian)
+        print("\n访问记忆（Hebbian学习）/ Accessing memory (Hebbian):")
+        np_system.access_memory("mem_000")
+        print(f"  mem_000 access count: {mem.access_count}")
+        
+        # Check retention
+        print("\n记忆保持率 / Memory retention:")
+        for mem in memories:
+            retention = np_system.get_memory_retention(mem.memory_id)
+            print(f"  {mem.memory_id}: {retention:.2%}")
+        
+        # Consolidate memories
+        print("\n记忆巩固 / Memory consolidation:")
+        np_system.consolidate_memories()
+        consolidated = sum(1 for m in np_system.memory_traces.values() if m.is_consolidated)
+        print(f"  Consolidated: {consolidated}/{len(memories)}")
+        
+        # System stats
+        print("\n系统统计 / System stats:")
+        stats = np_system.get_system_stats()
+        for key, value in stats.items():
+            print(f"  {key}: {value}")
+        
+        await np_system.shutdown()
+        print("\n系统已关闭 / System shutdown complete")
+    
+    asyncio.run(demo())
