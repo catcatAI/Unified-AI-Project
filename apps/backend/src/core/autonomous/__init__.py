@@ -16,11 +16,29 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # Biological Simulation Systems
-    from .physiological_tactile import PhysiologicalTactileSystem, SkinReceptor, BodyPart
-    from .endocrine_system import EndocrineSystem, Hormone, HormoneType
+    from .physiological_tactile import (
+        PhysiologicalTactileSystem, Receptor, BodyPart,
+        TrajectoryAnalyzer, TrajectoryPoint, TrajectoryAnalysis,
+        AdaptationMechanism, ReceptorAdaptationState
+    )
+    from .endocrine_system import (
+        EndocrineSystem, Hormone, HormoneType,
+        HormoneKinetics, ReceptorStatus,
+        FeedbackLoop, FeedbackNode
+    )
     from .autonomic_nervous_system import AutonomicNervousSystem, ANSState, NerveType
-    from .neuroplasticity import NeuroplasticitySystem, MemoryTrace, HebbianRule
-    from .emotional_blending import EmotionalBlendingSystem, PADEmotion, EmotionalExpression
+    from .neuroplasticity import (
+        NeuroplasticitySystem, MemoryTrace, HebbianRule,
+        SkillAcquisition, SkillTrace,
+        HabitFormation, HabitTrace,
+        TraumaMemorySystem, TraumaMemory,
+        ExplicitImplicitLearning, LearningEvent
+    )
+    from .emotional_blending import (
+        EmotionalBlendingSystem, PADEmotion, EmotionalExpression,
+        MultidimensionalStateMatrix, StateDimension
+    )
+    from .state_matrix import StateMatrix4D, DimensionState
     
     # Execution Systems
     from .action_executor import ActionExecutor, ActionQueue, ActionPriority
@@ -61,9 +79,36 @@ __all__ = [
     "NeuroplasticitySystem",
     "MemoryTrace",
     "HebbianRule",
+    "SkillAcquisition",
+    "SkillTrace",
+    "HabitFormation",
+    "HabitTrace",
+    "TraumaMemorySystem",
+    "TraumaMemory",
+    "ExplicitImplicitLearning",
+    "LearningEvent",
     "EmotionalBlendingSystem",
     "PADEmotion",
     "EmotionalExpression",
+    "MultidimensionalStateMatrix",
+    "StateDimension",
+    
+    # Physiological Tactile Extensions
+    "TrajectoryAnalyzer",
+    "TrajectoryPoint",
+    "TrajectoryAnalysis",
+    "AdaptationMechanism",
+    "ReceptorAdaptationState",
+    
+    # Endocrine System Extensions
+    "HormoneKinetics",
+    "ReceptorStatus",
+    "FeedbackLoop",
+    "FeedbackNode",
+    
+    # State Matrix System
+    "StateMatrix4D",
+    "DimensionState",
     
     # Execution Systems
     "ActionExecutor",
@@ -127,7 +172,8 @@ def get_system_info() -> dict:
                 "endocrine_system",
                 "autonomic_nervous_system",
                 "neuroplasticity",
-                "emotional_blending"
+                "emotional_blending",
+                "state_matrix"
             ],
             "execution": [
                 "action_executor",
@@ -152,6 +198,15 @@ def get_system_info() -> dict:
             "hormonal_regulation",
             "neural_plasticity",
             "emotional_blending",
+            "trajectory_analysis",
+            "receptor_adaptation",
+            "hormone_kinetics",
+            "feedback_regulation",
+            "skill_acquisition",
+            "habit_formation",
+            "trauma_memory",
+            "explicit_implicit_learning",
+            "multidimensional_state_matrix",
             "action_execution",
             "desktop_interaction",
             "browser_control",
