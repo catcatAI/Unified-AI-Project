@@ -21,10 +21,11 @@ import asyncio
 import math
 from datetime import datetime
 from typing import List, Tuple, Any, Dict
+from pathlib import Path
 
 # Import the modules under test
 import sys
-sys.path.insert(0, 'D:\\Projects\\Unified-AI-Project\\apps\\backend\\src')
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
 
 from core.autonomous.physiological_tactile import (
     ReceptorType,
@@ -522,10 +523,12 @@ class TestAdaptationMechanism:
         adaptation_mechanism.register_receptor("test_receptor", base_sensitivity=0.8)
         
         # Apply repeated stimuli
+        state = None
         for _ in range(10):
             state = adaptation_mechanism.process_stimulus("test_receptor", "touch", intensity=0.5)
         
         # Sensitivity should decrease due to habituation
+        assert state is not None
         assert state.habituation_level > 0
         assert state.current_sensitivity < 0.8
 
