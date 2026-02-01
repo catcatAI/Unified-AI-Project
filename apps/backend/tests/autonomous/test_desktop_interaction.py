@@ -27,7 +27,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 # Import the modules under test
 import sys
-sys.path.insert(0, 'D:\\Projects\\Unified-AI-Project\\apps\\backend\\src')
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
 
 from core.autonomous.desktop_interaction import (
     FileOperationType,

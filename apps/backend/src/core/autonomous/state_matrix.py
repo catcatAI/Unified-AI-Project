@@ -411,7 +411,10 @@ class StateMatrix4D:
         valence = (positive - negative) / 3  # -1 to 1
         
         # Dominant dimension
-        dominant_dim = max(averages, key=averages.get)
+        if averages:
+            dominant_dim = max(averages.items(), key=lambda x: x[1])[0]
+        else:
+            dominant_dim = None
         
         # Dominant emotions
         dominant_emotion = self.gamma.get_dominant()
