@@ -542,7 +542,7 @@ if __name__ == "__main__":
         icon_box = BoundingBox(400, 250, 64, 64)
         collision = presence.check_collision(icon_box)
         print(f"  与图标碰撞: {collision.is_colliding}")
-        if collision.is_colliding:
+        if collision.is_colliding and collision.collision_point:
             print(f"  碰撞点: ({collision.collision_point.x}, {collision.collision_point.y})")
         
         # Change modes
