@@ -582,6 +582,474 @@ class EmotionalBlendingSystem:
         }
 
 
+@dataclass
+class StateDimension:
+    """状态维度 / State dimension"""
+    name: str
+    cn_name: str
+    values: Dict[str, float]  # 维度内的各项指标 / Metrics within dimension
+    weight: float = 1.0  # 维度权重
+    timestamp: datetime = field(default_factory=datetime.now)
+
+
+class MultidimensionalStateMatrix:
+    """
+    多维度状态矩阵 / Multidimensional State Matrix (4D Matrix)
+    
+    Implements a 4-dimensional state matrix for Angela AI:
+    - α Dimension: Physiological (生理维度)
+      - energy, comfort, arousal, rest_need
+    - β Dimension: Cognitive (认知维度)
+      - curiosity, focus, confusion, learning
+    - γ Dimension: Emotional (情感维度)
+      - happiness, sadness, anger, fear, etc.
+    - δ Dimension: Social (社交维度)
+      - attention, bond, trust, presence
+    
+    Features:
+    - Inter-dimensional influence modeling
+    - State computation and blending
+    - Dynamic weight adjustment
+    
+    Example:
+        >>> matrix = MultidimensionalStateMatrix()
+        >>> 
+        >>> # Set dimension states
+        >>> matrix.set_alpha_dimension(energy=0.8, comfort=0.7, arousal=0.6)
+        >>> matrix.set_beta_dimension(curiosity=0.9, focus=0.8)
+        >>> matrix.set_gamma_dimension(happiness=0.8, sadness=0.1)
+        >>> matrix.set_delta_dimension(attention=0.7, trust=0.9)
+        >>> 
+        >>> # Compute inter-dimensional influences
+        >>> matrix.compute_inter_influences()
+        >>> 
+        >>> # Get overall state summary
+        >>> summary = matrix.get_state_summary()
+        >>> print(f"Overall wellbeing: {summary['wellbeing']:.2f}")
+    """
+    
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {}
+        
+        # Initialize 4 dimensions
+        self.alpha = StateDimension(  # Physiological
+            name="alpha",
+            cn_name="生理维度",
+            values={
+                "energy": 0.5,
+                "comfort": 0.5,
+                "arousal": 0.5,
+                "rest_need": 0.5,
+            },
+            weight=self.config.get("alpha_weight", 1.0)
+        )
+        
+        self.beta = StateDimension(  # Cognitive
+            name="beta",
+            cn_name="认知维度",
+            values={
+                "curiosity": 0.5,
+                "focus": 0.5,
+                "confusion": 0.0,
+                "learning": 0.5,
+            },
+            weight=self.config.get("beta_weight", 1.0)
+        )
+        
+        self.gamma = StateDimension(  # Emotional
+            name="gamma",
+            cn_name="情感维度",
+            values={
+                "happiness": 0.5,
+                "sadness": 0.0,
+                "anger": 0.0,
+                "fear": 0.0,
+                "disgust": 0.0,
+                "surprise": 0.0,
+                "trust": 0.5,
+                "anticipation": 0.5,
+            },
+            weight=self.config.get("gamma_weight", 1.0)
+        )
+        
+        self.delta = StateDimension(  # Social
+            name="delta",
+            cn_name="社交维度",
+            values={
+                "attention": 0.5,
+                "bond": 0.5,
+                "trust": 0.5,
+                "presence": 0.5,
+            },
+            weight=self.config.get("delta_weight", 1.0)
+        )
+        
+        # Inter-dimensional influence matrix
+        # influence_matrix[from][to] = influence strength
+        self.influence_matrix: Dict[str, Dict[str, float]] = {
+            "alpha": {
+                "beta": 0.3,   # Physiological affects cognitive
+                "gamma": 0.5,  # Physiological affects emotional
+                "delta": 0.2,  # Physiological affects social
+            },
+            "beta": {
+                "alpha": 0.2,  # Cognitive affects physiological
+                "gamma": 0.4,  # Cognitive affects emotional
+                "delta": 0.3,  # Cognitive affects social
+            },
+            "gamma": {
+                "alpha": 0.4,  # Emotional affects physiological
+                "beta": 0.3,   # Emotional affects cognitive
+                "delta": 0.5,  # Emotional affects social
+            },
+            "delta": {
+                "alpha": 0.2,  # Social affects physiological
+                "beta": 0.3,   # Social affects cognitive
+                "gamma": 0.6,  # Social affects emotional
+            },
+        }
+        
+        # Update tracking
+        self.last_update: datetime = datetime.now()
+        self.update_count: int = 0
+    
+    def set_alpha_dimension(
+        self,
+        energy: Optional[float] = None,
+        comfort: Optional[float] = None,
+        arousal: Optional[float] = None,
+        rest_need: Optional[float] = None
+    ) -> None:
+        """
+        设置α维度（生理） / Set alpha dimension (physiological)
+        
+        Args:
+            energy: Energy level (0-1)
+            comfort: Comfort level (0-1)
+            arousal: Arousal level (0-1)
+            rest_need: Rest need level (0-1)
+        """
+        if energy is not None:
+            self.alpha.values["energy"] = max(0.0, min(1.0, energy))
+        if comfort is not None:
+            self.alpha.values["comfort"] = max(0.0, min(1.0, comfort))
+        if arousal is not None:
+            self.alpha.values["arousal"] = max(0.0, min(1.0, arousal))
+        if rest_need is not None:
+            self.alpha.values["rest_need"] = max(0.0, min(1.0, rest_need))
+        
+        self.alpha.timestamp = datetime.now()
+        self._update_count()
+    
+    def set_beta_dimension(
+        self,
+        curiosity: Optional[float] = None,
+        focus: Optional[float] = None,
+        confusion: Optional[float] = None,
+        learning: Optional[float] = None
+    ) -> None:
+        """
+        设置β维度（认知） / Set beta dimension (cognitive)
+        
+        Args:
+            curiosity: Curiosity level (0-1)
+            focus: Focus level (0-1)
+            confusion: Confusion level (0-1)
+            learning: Learning state (0-1)
+        """
+        if curiosity is not None:
+            self.beta.values["curiosity"] = max(0.0, min(1.0, curiosity))
+        if focus is not None:
+            self.beta.values["focus"] = max(0.0, min(1.0, focus))
+        if confusion is not None:
+            self.beta.values["confusion"] = max(0.0, min(1.0, confusion))
+        if learning is not None:
+            self.beta.values["learning"] = max(0.0, min(1.0, learning))
+        
+        self.beta.timestamp = datetime.now()
+        self._update_count()
+    
+    def set_gamma_dimension(
+        self,
+        happiness: Optional[float] = None,
+        sadness: Optional[float] = None,
+        anger: Optional[float] = None,
+        fear: Optional[float] = None,
+        disgust: Optional[float] = None,
+        surprise: Optional[float] = None,
+        trust: Optional[float] = None,
+        anticipation: Optional[float] = None
+    ) -> None:
+        """
+        设置γ维度（情感） / Set gamma dimension (emotional)
+        
+        Args:
+            happiness: Happiness level (0-1)
+            sadness: Sadness level (0-1)
+            anger: Anger level (0-1)
+            fear: Fear level (0-1)
+            disgust: Disgust level (0-1)
+            surprise: Surprise level (0-1)
+            trust: Trust level (0-1)
+            anticipation: Anticipation level (0-1)
+        """
+        if happiness is not None:
+            self.gamma.values["happiness"] = max(0.0, min(1.0, happiness))
+        if sadness is not None:
+            self.gamma.values["sadness"] = max(0.0, min(1.0, sadness))
+        if anger is not None:
+            self.gamma.values["anger"] = max(0.0, min(1.0, anger))
+        if fear is not None:
+            self.gamma.values["fear"] = max(0.0, min(1.0, fear))
+        if disgust is not None:
+            self.gamma.values["disgust"] = max(0.0, min(1.0, disgust))
+        if surprise is not None:
+            self.gamma.values["surprise"] = max(0.0, min(1.0, surprise))
+        if trust is not None:
+            self.gamma.values["trust"] = max(0.0, min(1.0, trust))
+        if anticipation is not None:
+            self.gamma.values["anticipation"] = max(0.0, min(1.0, anticipation))
+        
+        self.gamma.timestamp = datetime.now()
+        self._update_count()
+    
+    def set_delta_dimension(
+        self,
+        attention: Optional[float] = None,
+        bond: Optional[float] = None,
+        trust: Optional[float] = None,
+        presence: Optional[float] = None
+    ) -> None:
+        """
+        设置δ维度（社交） / Set delta dimension (social)
+        
+        Args:
+            attention: Attention level (0-1)
+            bond: Bond level (0-1)
+            trust: Trust level (0-1)
+            presence: Presence level (0-1)
+        """
+        if attention is not None:
+            self.delta.values["attention"] = max(0.0, min(1.0, attention))
+        if bond is not None:
+            self.delta.values["bond"] = max(0.0, min(1.0, bond))
+        if trust is not None:
+            self.delta.values["trust"] = max(0.0, min(1.0, trust))
+        if presence is not None:
+            self.delta.values["presence"] = max(0.0, min(1.0, presence))
+        
+        self.delta.timestamp = datetime.now()
+        self._update_count()
+    
+    def _update_count(self) -> None:
+        """Update modification count and timestamp"""
+        self.update_count += 1
+        self.last_update = datetime.now()
+    
+    def compute_inter_influences(self) -> Dict[str, Dict[str, float]]:
+        """
+        计算维度间相互影响 / Compute inter-dimensional influences
+        
+        Calculates how each dimension affects others based on
+        the influence matrix and current values.
+        
+        Returns:
+            Dictionary mapping source -> target -> influence amount
+        """
+        influences: Dict[str, Dict[str, float]] = {}
+        
+        dimensions = {
+            "alpha": self.alpha,
+            "beta": self.beta,
+            "gamma": self.gamma,
+            "delta": self.delta,
+        }
+        
+        for source_name, targets in self.influence_matrix.items():
+            influences[source_name] = {}
+            source_dim = dimensions[source_name]
+            
+            # Calculate source dimension intensity
+            source_avg = sum(source_dim.values.values()) / len(source_dim.values)
+            
+            for target_name, base_influence in targets.items():
+                target_dim = dimensions[target_name]
+                
+                # Calculate influence based on:
+                # 1. Base influence strength
+                # 2. Source dimension intensity
+                # 3. Dimension weights
+                influence_amount = (
+                    base_influence *
+                    source_avg *
+                    source_dim.weight *
+                    target_dim.weight
+                )
+                
+                influences[source_name][target_name] = influence_amount
+                
+                # Apply influence to target dimension
+                self._apply_influence(target_dim, source_name, influence_amount)
+        
+        return influences
+    
+    def _apply_influence(
+        self,
+        target_dim: StateDimension,
+        source_name: str,
+        amount: float
+    ) -> None:
+        """应用维度间影响 / Apply influence to target dimension"""
+        # Dimension-specific influence rules
+        if target_dim.name == "alpha":  # Physiological
+            if source_name == "gamma":  # Emotional affects physiological
+                # Positive emotions increase energy, reduce rest need
+                happiness = self.gamma.values.get("happiness", 0.5)
+                target_dim.values["energy"] = min(
+                    1.0, target_dim.values["energy"] + amount * happiness * 0.1
+                )
+                target_dim.values["rest_need"] = max(
+                    0.0, target_dim.values["rest_need"] - amount * happiness * 0.1
+                )
+        
+        elif target_dim.name == "beta":  # Cognitive
+            if source_name == "alpha":  # Physiological affects cognitive
+                # High energy increases focus
+                energy = self.alpha.values.get("energy", 0.5)
+                target_dim.values["focus"] = min(
+                    1.0, target_dim.values["focus"] + amount * energy * 0.1
+                )
+            if source_name == "gamma":  # Emotional affects cognitive
+                # High arousal emotions reduce focus
+                arousal_emotions = (
+                    self.gamma.values.get("anger", 0) +
+                    self.gamma.values.get("fear", 0) +
+                    self.gamma.values.get("surprise", 0)
+                ) / 3
+                target_dim.values["focus"] = max(
+                    0.0, target_dim.values["focus"] - amount * arousal_emotions * 0.15
+                )
+        
+        elif target_dim.name == "gamma":  # Emotional
+            if source_name == "alpha":  # Physiological affects emotional
+                # High arousal increases emotional intensity
+                arousal = self.alpha.values.get("arousal", 0.5)
+                for emotion in ["happiness", "sadness", "anger", "fear"]:
+                    target_dim.values[emotion] = min(
+                        1.0, target_dim.values[emotion] + amount * arousal * 0.05
+                    )
+            if source_name == "delta":  # Social affects emotional
+                # Bond increases happiness
+                bond = self.delta.values.get("bond", 0.5)
+                target_dim.values["happiness"] = min(
+                    1.0, target_dim.values["happiness"] + amount * bond * 0.1
+                )
+        
+        elif target_dim.name == "delta":  # Social
+            if source_name == "gamma":  # Emotional affects social
+                # Happiness increases bond
+                happiness = self.gamma.values.get("happiness", 0.5)
+                target_dim.values["bond"] = min(
+                    1.0, target_dim.values["bond"] + amount * happiness * 0.1
+                )
+                target_dim.values["presence"] = min(
+                    1.0, target_dim.values["presence"] + amount * happiness * 0.08
+                )
+    
+    def get_dimension_state(self, dimension: str) -> Dict[str, float]:
+        """
+        获取维度状态 / Get dimension state
+        
+        Args:
+            dimension: "alpha", "beta", "gamma", or "delta"
+            
+        Returns:
+            Dictionary of dimension values
+        """
+        if dimension == "alpha":
+            return self.alpha.values.copy()
+        elif dimension == "beta":
+            return self.beta.values.copy()
+        elif dimension == "gamma":
+            return self.gamma.values.copy()
+        elif dimension == "delta":
+            return self.delta.values.copy()
+        return {}
+    
+    def get_dimension_average(self, dimension: str) -> float:
+        """获取维度平均值 / Get average value for a dimension"""
+        values = self.get_dimension_state(dimension)
+        if not values:
+            return 0.0
+        return sum(values.values()) / len(values)
+    
+    def get_state_summary(self) -> Dict[str, Any]:
+        """
+        获取状态摘要 / Get comprehensive state summary
+        
+        Returns:
+            Dictionary with all dimension states and computed metrics
+        """
+        alpha_avg = self.get_dimension_average("alpha")
+        beta_avg = self.get_dimension_average("beta")
+        gamma_avg = self.get_dimension_average("gamma")
+        delta_avg = self.get_dimension_average("delta")
+        
+        # Calculate overall wellbeing
+        wellbeing = (
+            alpha_avg * 0.3 +
+            beta_avg * 0.2 +
+            gamma_avg * 0.3 +
+            delta_avg * 0.2
+        )
+        
+        # Calculate arousal/activation level
+        arousal = self.alpha.values["arousal"] * 0.4 + self.gamma.values["surprise"] * 0.3
+        
+        # Calculate valence (positive/negative)
+        positive = self.gamma.values["happiness"] + self.gamma.values["trust"]
+        negative = self.gamma.values["sadness"] + self.gamma.values["anger"] + self.gamma.values["fear"]
+        valence = (positive - negative) / 2  # -1 to 1
+        
+        return {
+            "alpha": self.alpha.values.copy(),
+            "beta": self.beta.values.copy(),
+            "gamma": self.gamma.values.copy(),
+            "delta": self.delta.values.copy(),
+            "averages": {
+                "alpha": alpha_avg,
+                "beta": beta_avg,
+                "gamma": gamma_avg,
+                "delta": delta_avg,
+            },
+            "computed": {
+                "wellbeing": wellbeing,
+                "arousal": arousal,
+                "valence": valence,
+            },
+            "timestamp": self.last_update.isoformat(),
+            "update_count": self.update_count,
+        }
+    
+    def set_dimension_weight(self, dimension: str, weight: float) -> None:
+        """设置维度权重 / Set dimension weight"""
+        if dimension == "alpha":
+            self.alpha.weight = weight
+        elif dimension == "beta":
+            self.beta.weight = weight
+        elif dimension == "gamma":
+            self.gamma.weight = weight
+        elif dimension == "delta":
+            self.delta.weight = weight
+    
+    def get_influence_matrix(self) -> Dict[str, Dict[str, float]]:
+        """获取影响矩阵 / Get influence matrix"""
+        return {
+            source: targets.copy()
+            for source, targets in self.influence_matrix.items()
+        }
+
+
 # Example usage
 if __name__ == "__main__":
     async def demo():
@@ -635,5 +1103,38 @@ if __name__ == "__main__":
         
         await eb_system.shutdown()
         print("\n系统已关闭 / System shutdown complete")
+        
+        # Multidimensional State Matrix Demo
+        print("\n" + "=" * 60)
+        print("4D状态矩阵演示 / 4D State Matrix Demo")
+        print("=" * 60)
+        
+        matrix = MultidimensionalStateMatrix()
+        
+        print("\n9. 设置4维度状态 / Setting 4D state:")
+        matrix.set_alpha_dimension(energy=0.8, comfort=0.7, arousal=0.6, rest_need=0.2)
+        matrix.set_beta_dimension(curiosity=0.9, focus=0.8, confusion=0.1, learning=0.7)
+        matrix.set_gamma_dimension(happiness=0.85, sadness=0.1, trust=0.8, anger=0.05)
+        matrix.set_delta_dimension(attention=0.9, bond=0.7, trust=0.8, presence=0.6)
+        
+        print("   α生理维度 / Physiological:", matrix.get_dimension_state("alpha"))
+        print("   β认知维度 / Cognitive:", matrix.get_dimension_state("beta"))
+        print("   γ情感维度 / Emotional:", matrix.get_dimension_state("gamma"))
+        print("   δ社交维度 / Social:", matrix.get_dimension_state("delta"))
+        
+        print("\n10. 计算维度间影响 / Computing inter-dimensional influences:")
+        influences = matrix.compute_inter_influences()
+        for source, targets in influences.items():
+            print(f"   {source} -> {targets}")
+        
+        print("\n11. 更新后的维度平均值 / Updated dimension averages:")
+        summary = matrix.get_state_summary()
+        for dim, avg in summary["averages"].items():
+            print(f"   {dim}维度 / dimension: {avg:.2f}")
+        
+        print("\n12. 计算指标 / Computed metrics:")
+        print(f"   幸福感 / Wellbeing: {summary['computed']['wellbeing']:.2f}")
+        print(f"   唤醒度 / Arousal: {summary['computed']['arousal']:.2f}")
+        print(f"   情感效价 / Valence: {summary['computed']['valence']:.2f}")
     
     asyncio.run(demo())

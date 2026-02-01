@@ -665,6 +665,676 @@ class NeuroplasticitySystem:
         }
 
 
+@dataclass
+class SkillTrace:
+    """技能痕迹 / Skill learning trace"""
+    skill_id: str
+    skill_name: str
+    initial_performance: float  # 初始表现 (0-1)
+    current_performance: float  # 当前表现
+    practice_count: int  # 练习次数
+    learning_curve_factor: float  # 学习曲线因子
+    is_automatized: bool  # 是否自动化（习惯化）
+    created_at: datetime = field(default_factory=datetime.now)
+    last_practice: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class HabitTrace:
+    """习惯痕迹 / Habit formation trace"""
+    habit_id: str
+    habit_name: str
+    repetition_count: int  # 重复次数
+    automaticity_score: float  # 自动化程度 (0-1)
+    context_stability: float  # 情境稳定性
+    reward_association: float  # 奖励关联强度
+    is_formed: bool  # 是否已形成
+    created_at: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class TraumaMemory:
+    """创伤记忆 / Traumatic memory"""
+    memory_id: str
+    content: Any
+    trauma_intensity: float  # 创伤强度 (0-1)
+    encoding_timestamp: datetime = field(default_factory=datetime.now)
+    reactivation_count: int = 0  # 重新激活次数
+    
+    def get_retention(self, current_time: Optional[datetime] = None) -> float:
+        """
+        计算创伤记忆保持率 / Calculate trauma memory retention
+        
+        创伤记忆以70%速度减缓遗忘
+        Trauma memories fade 70% slower than normal memories
+        """
+        time = current_time or datetime.now()
+        hours_since = (time - self.encoding_timestamp).total_seconds() / 3600.0
+        
+        # Normal forgetting: R = e^(-t/24)
+        # Trauma forgetting: R = e^(-t/(24*1.7)) (70% slower = 1.7x stability)
+        stability = 24.0 * 1.7
+        retention = math.exp(-hours_since / stability)
+        
+        return retention
+
+
+@dataclass
+class LearningEvent:
+    """学习事件 / Learning event for explicit/implicit tracking"""
+    event_id: str
+    content: Any
+    learning_type: str  # "explicit" or "implicit"
+    context: str
+    timestamp: datetime = field(default_factory=datetime.now)
+    consolidation_level: float = 0.0
+
+
+class SkillAcquisition:
+    """
+    技能习得系统 / Skill Acquisition System
+    
+    Implements power law learning curves for skill acquisition.
+    Models the transition from conscious effort to automatic execution.
+    
+    Power Law of Learning: Performance = A * N^(-α)
+    where N = practice count, α = learning rate
+    
+    Example:
+        >>> skill_system = SkillAcquisition()
+        >>> 
+        >>> # Start learning a skill
+        >>> skill = skill_system.start_skill("typing", initial_performance=0.2)
+        >>> 
+        >>> # Practice and improve
+        >>> for _ in range(100):
+        ...     skill_system.practice("typing", success=True)
+        >>> 
+        >>> performance = skill_system.get_performance("typing")
+        >>> print(f"Current performance: {performance:.2%}")
+    """
+    
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {}
+        
+        # Learning parameters
+        self.learning_rate: float = self.config.get("learning_rate", 0.3)  # α in power law
+        self.automatization_threshold: float = self.config.get("automatization", 0.8)
+        self.max_performance: float = self.config.get("max_performance", 0.95)
+        
+        # Skill storage
+        self.skills: Dict[str, SkillTrace] = {}
+        
+        # Performance history
+        self.performance_history: Dict[str, List[Tuple[datetime, float]]] = {}
+    
+    def start_skill(
+        self,
+        skill_id: str,
+        skill_name: str,
+        initial_performance: float = 0.1
+    ) -> SkillTrace:
+        """
+        开始学习新技能 / Start learning a new skill
+        
+        Args:
+            skill_id: Unique skill identifier
+            skill_name: Human-readable skill name
+            initial_performance: Initial performance level (0-1)
+            
+        Returns:
+            SkillTrace object
+        """
+        skill = SkillTrace(
+            skill_id=skill_id,
+            skill_name=skill_name,
+            initial_performance=initial_performance,
+            current_performance=initial_performance,
+            practice_count=0,
+            learning_curve_factor=self.learning_rate,
+            is_automatized=False
+        )
+        
+        self.skills[skill_id] = skill
+        self.performance_history[skill_id] = []
+        
+        return skill
+    
+    def practice(
+        self,
+        skill_id: str,
+        success: bool = True,
+        difficulty: float = 0.5
+    ) -> float:
+        """
+        练习技能 / Practice a skill
+        
+        Args:
+            skill_id: Skill identifier
+            success: Whether the practice was successful
+            difficulty: Difficulty of the practice (0-1)
+            
+        Returns:
+            Updated performance level
+        """
+        if skill_id not in self.skills:
+            return 0.0
+        
+        skill = self.skills[skill_id]
+        skill.practice_count += 1
+        skill.last_practice = datetime.now()
+        
+        # Power law of learning: Improvement decreases with practice
+        # New performance = Old + (Max - Old) * (N^(-α) - (N-1)^(-α))
+        n = skill.practice_count
+        alpha = skill.learning_curve_factor
+        
+        if n == 1:
+            improvement = (self.max_performance - skill.initial_performance) * 0.1
+        else:
+            # Power law improvement
+            improvement_factor = (n ** (-alpha)) - ((n - 1) ** (-alpha))
+            improvement = (self.max_performance - skill.current_performance) * abs(improvement_factor)
+        
+        # Adjust for success/failure and difficulty
+        if success:
+            improvement *= (1.0 + difficulty * 0.5)
+        else:
+            improvement *= -0.1  # Small penalty for failure
+        
+        skill.current_performance = max(
+            skill.initial_performance,
+            min(self.max_performance, skill.current_performance + improvement)
+        )
+        
+        # Check for automatization (habit formation)
+        if skill.current_performance > self.automatization_threshold and skill.practice_count > 50:
+            skill.is_automatized = True
+        
+        # Record history
+        self.performance_history[skill_id].append((datetime.now(), skill.current_performance))
+        
+        return skill.current_performance
+    
+    def get_performance(self, skill_id: str) -> float:
+        """获取当前技能水平 / Get current skill performance"""
+        if skill_id not in self.skills:
+            return 0.0
+        return self.skills[skill_id].current_performance
+    
+    def get_learning_curve(self, skill_id: str, n_points: int = 100) -> List[float]:
+        """
+        预测学习曲线 / Predict learning curve
+        
+        Returns projected performance over practice trials.
+        """
+        if skill_id not in self.skills:
+            return []
+        
+        skill = self.skills[skill_id]
+        curve = []
+        
+        for n in range(1, n_points + 1):
+            # Power law prediction
+            if n == 1:
+                perf = skill.initial_performance + (self.max_performance - skill.initial_performance) * 0.1
+            else:
+                perf = self.max_performance - (self.max_performance - skill.initial_performance) * (n ** (-self.learning_rate))
+            
+            curve.append(max(skill.initial_performance, min(self.max_performance, perf)))
+        
+        return curve
+    
+    def get_all_skills(self) -> Dict[str, SkillTrace]:
+        """获取所有技能 / Get all skills"""
+        return self.skills.copy()
+
+
+class HabitFormation:
+    """
+    习惯形成系统 / Habit Formation System
+    
+    Implements the "66 repetitions" theory of habit formation.
+    Tracks habit automaticity based on repetition in stable contexts.
+    
+    Habit Formation Model:
+    - Automaticity increases with repetition in stable context
+    - Context stability enhances habit formation
+    - Reward association strengthens habit
+    - Takes ~66 repetitions to form a habit (on average)
+    
+    Example:
+        >>> habit_system = HabitFormation()
+        >>> 
+        >>> # Start a new habit
+        >>> habit = habit_system.start_habit("morning_exercise")
+        >>> 
+        >>> # Repeat in stable context (66 times theory)
+        >>> for day in range(66):
+        ...     habit_system.reinforce("morning_exercise", context="bedroom", reward=0.8)
+        >>> 
+        >>> if habit_system.is_habit_formed("morning_exercise"):
+        ...     print("Habit successfully formed!")
+    """
+    
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {}
+        
+        # Habit formation parameters
+        self.repetitions_for_habit: int = self.config.get("repetitions_for_habit", 66)
+        self.context_weight: float = self.config.get("context_weight", 0.3)
+        self.reward_weight: float = self.config.get("reward_weight", 0.4)
+        self.automaticity_threshold: float = self.config.get("automaticity_threshold", 0.7)
+        
+        # Habit storage
+        self.habits: Dict[str, HabitTrace] = {}
+        self.repetition_history: Dict[str, List[Tuple[str, datetime]]] = {}
+    
+    def start_habit(self, habit_id: str, habit_name: str = "") -> HabitTrace:
+        """
+        开始形成新习惯 / Start forming a new habit
+        
+        Args:
+            habit_id: Unique habit identifier
+            habit_name: Human-readable habit name
+            
+        Returns:
+            HabitTrace object
+        """
+        habit = HabitTrace(
+            habit_id=habit_id,
+            habit_name=habit_name or habit_id,
+            repetition_count=0,
+            automaticity_score=0.0,
+            context_stability=0.0,
+            reward_association=0.0,
+            is_formed=False
+        )
+        
+        self.habits[habit_id] = habit
+        self.repetition_history[habit_id] = []
+        
+        return habit
+    
+    def reinforce(
+        self,
+        habit_id: str,
+        context: str,
+        reward: float = 0.5,
+        success: bool = True
+    ) -> HabitTrace:
+        """
+        强化习惯 / Reinforce a habit
+        
+        Args:
+            habit_id: Habit identifier
+            context: Context/environment where repetition occurred
+            reward: Reward magnitude (0-1)
+            success: Whether the repetition was successful
+            
+        Returns:
+            Updated HabitTrace
+        """
+        if habit_id not in self.habits:
+            return self.start_habit(habit_id)
+        
+        habit = self.habits[habit_id]
+        
+        if not success:
+            # Failed repetition doesn't count toward habit
+            return habit
+        
+        # Record repetition
+        habit.repetition_count += 1
+        self.repetition_history[habit_id].append((context, datetime.now()))
+        
+        # Calculate context stability
+        contexts = [c for c, _ in self.repetition_history[habit_id][-20:]]
+        if contexts:
+            context_consistency = contexts.count(context) / len(contexts)
+            habit.context_stability = context_consistency
+        
+        # Update reward association (running average)
+        habit.reward_association = (
+            habit.reward_association * 0.9 + reward * 0.1
+        )
+        
+        # Calculate automaticity score
+        # Based on repetition count, context stability, and reward
+        repetition_factor = min(1.0, habit.repetition_count / self.repetitions_for_habit)
+        context_factor = habit.context_stability * self.context_weight
+        reward_factor = habit.reward_association * self.reward_weight
+        
+        habit.automaticity_score = min(
+            1.0,
+            repetition_factor * (1 - self.context_weight - self.reward_weight) +
+            context_factor +
+            reward_factor
+        )
+        
+        # Check if habit is formed
+        habit.is_formed = (
+            habit.automaticity_score >= self.automaticity_threshold and
+            habit.repetition_count >= self.repetitions_for_habit * 0.5
+        )
+        
+        return habit
+    
+    def is_habit_formed(self, habit_id: str) -> bool:
+        """检查习惯是否已形成 / Check if a habit is formed"""
+        if habit_id not in self.habits:
+            return False
+        return self.habits[habit_id].is_formed
+    
+    def get_automaticity(self, habit_id: str) -> float:
+        """获取习惯自动化程度 / Get habit automaticity score"""
+        if habit_id not in self.habits:
+            return 0.0
+        return self.habits[habit_id].automaticity_score
+    
+    def get_repetition_count(self, habit_id: str) -> int:
+        """获取重复次数 / Get repetition count"""
+        if habit_id not in self.habits:
+            return 0
+        return self.habits[habit_id].repetition_count
+    
+    def get_all_habits(self) -> Dict[str, HabitTrace]:
+        """获取所有习惯 / Get all habits"""
+        return self.habits.copy()
+
+
+class TraumaMemorySystem:
+    """
+    创伤记忆系统 / Trauma Memory System
+    
+    Manages traumatic memories with 70% slower forgetting rate.
+    Handles memory reactivation and intrusive recall.
+    
+    Trauma Characteristics:
+    - High emotional intensity encoding
+    - 70% slower forgetting (enhanced stability)
+    - Easily reactivated by similar stimuli
+    - Intrusive recall patterns
+    
+    Example:
+        >>> trauma_system = TraumaMemorySystem()
+        >>> 
+        >>> # Encode traumatic event
+        >>> trauma = trauma_system.encode_trauma(
+        ...     memory_id="trauma_001",
+        ...     content="traumatic_event_description",
+        ...     intensity=0.9
+        ... )
+        >>> 
+        >>> # Check retention over time (slower forgetting)
+        >>> retention = trauma_system.get_retention("trauma_001")
+        >>> print(f"Trauma retention: {retention:.2%}")
+    """
+    
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {}
+        
+        # Trauma parameters
+        self.trauma_intensity_threshold: float = self.config.get("intensity_threshold", 0.7)
+        self.slowing_factor: float = 1.7  # 70% slower = 1.7x stability
+        
+        # Storage
+        self.trauma_memories: Dict[str, TraumaMemory] = {}
+        self.reactivation_triggers: Dict[str, List[str]] = {}
+    
+    def encode_trauma(
+        self,
+        memory_id: str,
+        content: Any,
+        intensity: float,
+        timestamp: Optional[datetime] = None
+    ) -> Optional[TraumaMemory]:
+        """
+        编码创伤记忆 / Encode a traumatic memory
+        
+        Args:
+            memory_id: Unique memory identifier
+            content: Memory content
+            intensity: Trauma intensity (0-1, must exceed threshold)
+            timestamp: Encoding timestamp
+            
+        Returns:
+            TraumaMemory if intensity > threshold, None otherwise
+        """
+        if intensity < self.trauma_intensity_threshold:
+            return None
+        
+        trauma = TraumaMemory(
+            memory_id=memory_id,
+            content=content,
+            trauma_intensity=intensity,
+            encoding_timestamp=timestamp or datetime.now()
+        )
+        
+        self.trauma_memories[memory_id] = trauma
+        self.reactivation_triggers[memory_id] = []
+        
+        return trauma
+    
+    def get_retention(self, memory_id: str, current_time: Optional[datetime] = None) -> float:
+        """
+        获取创伤记忆保持率 / Get trauma memory retention
+        
+        Uses 70% slower forgetting curve.
+        """
+        if memory_id not in self.trauma_memories:
+            return 0.0
+        
+        return self.trauma_memories[memory_id].get_retention(current_time)
+    
+    def reactivate(self, memory_id: str, trigger_context: str = "") -> bool:
+        """
+        重新激活创伤记忆 / Reactivate a traumatic memory
+        
+        Args:
+            memory_id: Memory to reactivate
+            trigger_context: Context that triggered reactivation
+            
+        Returns:
+            True if reactivation occurred
+        """
+        if memory_id not in self.trauma_memories:
+            return False
+        
+        trauma = self.trauma_memories[memory_id]
+        trauma.reactivation_count += 1
+        
+        if trigger_context:
+            self.reactivation_triggers[memory_id].append(trigger_context)
+        
+        return True
+    
+    def get_intrusion_likelihood(self, memory_id: str, current_stress: float = 0.5) -> float:
+        """
+        计算侵入性回忆可能性 / Calculate intrusive recall likelihood
+        
+        Higher when:
+        - Memory has high trauma intensity
+        - Memory has been reactivated many times
+        - Current stress level is high
+        """
+        if memory_id not in self.trauma_memories:
+            return 0.0
+        
+        trauma = self.trauma_memories[memory_id]
+        
+        # Base likelihood from trauma characteristics
+        intensity_factor = trauma.trauma_intensity
+        reactivation_factor = min(1.0, trauma.reactivation_count / 10.0)
+        
+        # Stress amplifies intrusion likelihood
+        stress_factor = current_stress
+        
+        likelihood = (intensity_factor * 0.4 + reactivation_factor * 0.3 + stress_factor * 0.3)
+        
+        return min(1.0, likelihood)
+    
+    def get_all_trauma_memories(self) -> Dict[str, TraumaMemory]:
+        """获取所有创伤记忆 / Get all trauma memories"""
+        return self.trauma_memories.copy()
+
+
+class ExplicitImplicitLearning:
+    """
+    显性/隐性学习系统 / Explicit and Implicit Learning System
+    
+    Distinguishes between:
+    - Explicit learning: Conscious, declarative, factual
+    - Implicit learning: Unconscious, procedural, skill-based
+    
+    Different consolidation patterns:
+    - Explicit: Fast encoding, vulnerable to interference
+    - Implicit: Slow encoding, resistant to interference
+    
+    Example:
+        >>> learning = ExplicitImplicitLearning()
+        >>> 
+        >>> # Explicit learning (facts, conscious)
+        >>> learning.learn_explicit(
+        ...     event_id="fact_001",
+        ...     content="Paris is the capital of France",
+        ...     context="study_session"
+        ... )
+        >>> 
+        >>> # Implicit learning (skills, unconscious)
+        >>> learning.learn_implicit(
+        ...     event_id="skill_001",
+        ...     content="riding_bike_procedural_memory",
+        ...     context="practice_session"
+        ... )
+    """
+    
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {}
+        
+        # Learning storage
+        self.explicit_memories: Dict[str, LearningEvent] = {}
+        self.implicit_memories: Dict[str, LearningEvent] = {}
+        
+        # Consolidation parameters
+        self.explicit_consolidation_rate: float = self.config.get("explicit_rate", 0.3)
+        self.implicit_consolidation_rate: float = self.config.get("implicit_rate", 0.1)
+        self.explicit_interference: float = self.config.get("explicit_interference", 0.4)
+    
+    def learn_explicit(
+        self,
+        event_id: str,
+        content: Any,
+        context: str,
+        timestamp: Optional[datetime] = None
+    ) -> LearningEvent:
+        """
+        显性学习 / Explicit (conscious) learning
+        
+        Fast encoding but vulnerable to interference.
+        """
+        event = LearningEvent(
+            event_id=event_id,
+            content=content,
+            learning_type="explicit",
+            context=context,
+            timestamp=timestamp or datetime.now(),
+            consolidation_level=0.2  # Starts low, consolidates quickly
+        )
+        
+        self.explicit_memories[event_id] = event
+        
+        # Apply interference to other explicit memories
+        self._apply_interference(event_id)
+        
+        return event
+    
+    def learn_implicit(
+        self,
+        event_id: str,
+        content: Any,
+        context: str,
+        timestamp: Optional[datetime] = None
+    ) -> LearningEvent:
+        """
+        隐性学习 / Implicit (unconscious) learning
+        
+        Slow encoding but resistant to interference.
+        """
+        event = LearningEvent(
+            event_id=event_id,
+            content=content,
+            learning_type="implicit",
+            context=context,
+            timestamp=timestamp or datetime.now(),
+            consolidation_level=0.1  # Starts lower, consolidates slowly
+        )
+        
+        self.implicit_memories[event_id] = event
+        
+        return event
+    
+    def _apply_interference(self, new_event_id: str) -> None:
+        """应用干扰 / Apply interference to existing explicit memories"""
+        new_event = self.explicit_memories[new_event_id]
+        
+        for event_id, event in self.explicit_memories.items():
+            if event_id != new_event_id:
+                # Reduce consolidation level due to interference
+                event.consolidation_level = max(
+                    0.0,
+                    event.consolidation_level - self.explicit_interference * 0.1
+                )
+    
+    def consolidate(self, hours_elapsed: float = 1.0) -> None:
+        """
+        巩固学习记忆 / Consolidate learning memories
+        
+        Different rates for explicit vs implicit.
+        """
+        # Consolidate explicit memories (faster)
+        for event in self.explicit_memories.values():
+            consolidation_increase = self.explicit_consolidation_rate * hours_elapsed / 24.0
+            event.consolidation_level = min(1.0, event.consolidation_level + consolidation_increase)
+        
+        # Consolidate implicit memories (slower but more stable)
+        for event in self.implicit_memories.values():
+            consolidation_increase = self.implicit_consolidation_rate * hours_elapsed / 24.0
+            event.consolidation_level = min(1.0, event.consolidation_level + consolidation_increase)
+    
+    def get_explicit_memory(self, event_id: str) -> Optional[LearningEvent]:
+        """获取显性记忆 / Get explicit memory"""
+        return self.explicit_memories.get(event_id)
+    
+    def get_implicit_memory(self, event_id: str) -> Optional[LearningEvent]:
+        """获取隐性记忆 / Get implicit memory"""
+        return self.implicit_memories.get(event_id)
+    
+    def get_consolidation_stats(self) -> Dict[str, Any]:
+        """获取巩固统计 / Get consolidation statistics"""
+        explicit_consolidated = sum(
+            1 for e in self.explicit_memories.values() if e.consolidation_level > 0.7
+        )
+        implicit_consolidated = sum(
+            1 for e in self.implicit_memories.values() if e.consolidation_level > 0.7
+        )
+        
+        return {
+            "explicit_count": len(self.explicit_memories),
+            "explicit_consolidated": explicit_consolidated,
+            "implicit_count": len(self.implicit_memories),
+            "implicit_consolidated": implicit_consolidated,
+            "avg_explicit_consolidation": (
+                sum(e.consolidation_level for e in self.explicit_memories.values()) /
+                len(self.explicit_memories) if self.explicit_memories else 0.0
+            ),
+            "avg_implicit_consolidation": (
+                sum(e.consolidation_level for e in self.implicit_memories.values()) /
+                len(self.implicit_memories) if self.implicit_memories else 0.0
+            ),
+        }
+
+
 # Example usage
 if __name__ == "__main__":
     async def demo():
@@ -728,5 +1398,90 @@ if __name__ == "__main__":
         
         await np_system.shutdown()
         print("\n系统已关闭 / System shutdown complete")
+        
+        # Skill Acquisition Demo
+        print("\n" + "=" * 60)
+        print("技能习得演示 / Skill Acquisition Demo")
+        print("=" * 60)
+        
+        skill_system = SkillAcquisition()
+        skill_system.start_skill("typing", "Typing Skill", initial_performance=0.2)
+        
+        print("\n1. 幂律学习曲线 / Power law learning curve:")
+        for i in range(10):
+            skill_system.practice("typing", success=True, difficulty=0.5)
+            if i % 3 == 0 or i == 9:
+                perf = skill_system.get_performance("typing")
+                print(f"   练习 {i+1} 次后 / after {i+1} practices: {perf:.2%}")
+        
+        print("\n2. 学习曲线预测 / Learning curve prediction:")
+        curve = skill_system.get_learning_curve("typing", n_points=5)
+        print(f"   预测表现 / Predicted performance: {[f'{c:.2%}' for c in curve]}")
+        
+        # Habit Formation Demo
+        print("\n" + "=" * 60)
+        print("习惯形成演示 / Habit Formation Demo")
+        print("=" * 60)
+        
+        habit_system = HabitFormation()
+        habit_system.start_habit("morning_exercise", "晨间锻炼")
+        
+        print("\n3. 66次重复理论 / 66 repetitions theory:")
+        for day in range(1, 71):
+            habit_system.reinforce("morning_exercise", context="bedroom", reward=0.8)
+            if day in [1, 21, 42, 66, 70]:
+                auto = habit_system.get_automaticity("morning_exercise")
+                formed = habit_system.is_habit_formed("morning_exercise")
+                print(f"   第 {day} 天 / Day {day}: 自动化={auto:.2%}, 已形成={formed}")
+        
+        # Trauma Memory Demo
+        print("\n" + "=" * 60)
+        print("创伤记忆演示 / Trauma Memory Demo")
+        print("=" * 60)
+        
+        trauma_system = TraumaMemorySystem()
+        trauma = trauma_system.encode_trauma(
+            "trauma_001",
+            "traumatic_event_description",
+            intensity=0.85
+        )
+        
+        print("\n4. 创伤记忆70%减缓遗忘 / 70% slower forgetting:")
+        hours_list = [1, 24, 168, 720]  # 1 hour, 1 day, 1 week, 1 month
+        for hours in hours_list:
+            retention = trauma_system.get_retention("trauma_001")
+            print(f"   {hours}小时后 / after {hours}h: 保持率={retention:.2%}")
+            # Advance time for next check
+            trauma.encoding_timestamp -= timedelta(hours=hours)
+        
+        print("\n5. 侵入性回忆可能性 / Intrusion likelihood:")
+        for stress in [0.2, 0.5, 0.8]:
+            likelihood = trauma_system.get_intrusion_likelihood("trauma_001", stress)
+            print(f"   压力水平 / stress {stress}: 侵入可能性={likelihood:.2%}")
+        
+        # Explicit/Implicit Learning Demo
+        print("\n" + "=" * 60)
+        print("显性/隐性学习演示 / Explicit/Implicit Learning Demo")
+        print("=" * 60)
+        
+        learning = ExplicitImplicitLearning()
+        
+        print("\n6. 显性学习（易受干扰）/ Explicit learning (vulnerable to interference):")
+        for i in range(3):
+            learning.learn_explicit(f"fact_{i}", f"Fact number {i}", "study_session")
+            stats = learning.get_consolidation_stats()
+            print(f"   学习事实 {i} 后 / after fact {i}: 平均巩固度={stats['avg_explicit_consolidation']:.2%}")
+        
+        print("\n7. 隐性学习（抗干扰）/ Implicit learning (resistant to interference):")
+        for i in range(3):
+            learning.learn_implicit(f"skill_{i}", f"Skill number {i}", "practice_session")
+            stats = learning.get_consolidation_stats()
+            print(f"   学习技能 {i} 后 / after skill {i}: 平均巩固度={stats['avg_implicit_consolidation']:.2%}")
+        
+        print("\n8. 巩固进度 / Consolidation progress:")
+        learning.consolidate(hours_elapsed=24)
+        stats = learning.get_consolidation_stats()
+        print(f"   显性记忆 / Explicit: {stats['avg_explicit_consolidation']:.2%}")
+        print(f"   隐性记忆 / Implicit: {stats['avg_implicit_consolidation']:.2%}")
     
     asyncio.run(demo())
