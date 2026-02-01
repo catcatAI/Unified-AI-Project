@@ -1,0 +1,6002 @@
+[
+  {
+    "id": 0,
+    "proposition": "NOT NOT false AND NOT false OR NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 1,
+    "proposition": "true AND true AND false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 2,
+    "proposition": "true OR (true AND true) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 3,
+    "proposition": "false AND false OR false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 4,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 5,
+    "proposition": "true AND (false AND true AND (true AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 6,
+    "proposition": "NOT NOT true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 7,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 8,
+    "proposition": "NOT false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 9,
+    "proposition": "NOT true AND (true AND false AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 10,
+    "proposition": "true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 11,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 12,
+    "proposition": "NOT NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 13,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 14,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 15,
+    "proposition": "((true OR true) AND false OR true) AND (false OR false) OR true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 16,
+    "proposition": "true AND false AND (true OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 17,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 18,
+    "proposition": "false AND true OR (false AND true OR (false AND true))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 19,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 20,
+    "proposition": "((true AND false) AND false) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 21,
+    "proposition": "NOT false AND false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 22,
+    "proposition": "true OR true OR true OR false OR false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 23,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 24,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 25,
+    "proposition": "(false OR true AND false OR true) AND (false AND true) OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 26,
+    "proposition": "NOT false AND NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 27,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 28,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 29,
+    "proposition": "NOT false AND false OR ((false AND true) AND true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 30,
+    "proposition": "NOT true OR (false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 31,
+    "proposition": "(NOT true AND false) AND NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 32,
+    "proposition": "NOT true OR (true OR false AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 33,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 34,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 35,
+    "proposition": "NOT true OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 36,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 37,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 38,
+    "proposition": "(false AND true OR true AND true) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 39,
+    "proposition": "true OR NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 40,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 41,
+    "proposition": "((true OR true) OR false OR true) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 42,
+    "proposition": "(false AND true OR false) OR true OR (true AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 43,
+    "proposition": "NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 44,
+    "proposition": "false OR true AND false AND true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 45,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 46,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 47,
+    "proposition": "false OR true OR false OR true AND false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 48,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 49,
+    "proposition": "NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 50,
+    "proposition": "true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 51,
+    "proposition": "true AND false AND true AND ((false AND true) AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 52,
+    "proposition": "((true AND true) OR true) OR (true OR true) OR NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 53,
+    "proposition": "NOT false AND true OR false AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 54,
+    "proposition": "(true AND (false OR true)) AND true AND true AND false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 55,
+    "proposition": "(false OR true AND true) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 56,
+    "proposition": "NOT false OR true OR true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 57,
+    "proposition": "(true OR false) OR true OR false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 58,
+    "proposition": "((true AND false) OR false AND false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 59,
+    "proposition": "(NOT true AND true) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 60,
+    "proposition": "true OR true AND NOT true AND (false AND false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 61,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 62,
+    "proposition": "(false OR false OR false) OR (true AND (true AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 63,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 64,
+    "proposition": "(true OR false) AND true OR (true AND true AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 65,
+    "proposition": "true OR ((false OR false) AND NOT true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 66,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 67,
+    "proposition": "true AND (true AND false AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 68,
+    "proposition": "true AND true AND true OR true AND (false OR true) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 69,
+    "proposition": "true OR true OR true OR (true OR false AND true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 70,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 71,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 72,
+    "proposition": "(false OR false AND (true OR true)) OR true AND false AND true OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 73,
+    "proposition": "false OR true OR true AND false AND false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 74,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 75,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 76,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 77,
+    "proposition": "true AND NOT false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 78,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 79,
+    "proposition": "((false OR false) OR false OR true) AND (false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 80,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 81,
+    "proposition": "false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 82,
+    "proposition": "NOT false OR true OR NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 83,
+    "proposition": "false AND (false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 84,
+    "proposition": "NOT NOT true AND NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 85,
+    "proposition": "NOT false OR false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 86,
+    "proposition": "(false OR true OR false) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 87,
+    "proposition": "(false AND false AND true) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 88,
+    "proposition": "false AND true OR false AND true OR true OR false AND (false AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 89,
+    "proposition": "NOT true OR true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 90,
+    "proposition": "true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 91,
+    "proposition": "(NOT false OR (true AND true)) OR NOT NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 92,
+    "proposition": "NOT (true AND false) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 93,
+    "proposition": "NOT (true AND false) AND true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 94,
+    "proposition": "true OR NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 95,
+    "proposition": "(false AND false AND true) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 96,
+    "proposition": "(false OR true OR true) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 97,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 98,
+    "proposition": "(false OR false OR false) AND true OR true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 99,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 100,
+    "proposition": "false OR (false AND false) OR (false OR true) AND (false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 101,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 102,
+    "proposition": "NOT true OR (false AND false) AND (false AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 103,
+    "proposition": "(true OR true OR false) OR (NOT false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 104,
+    "proposition": "(true OR (true OR true)) AND ((false OR false) AND false AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 105,
+    "proposition": "(false OR false AND true OR true) AND (false AND true) AND (true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 106,
+    "proposition": "NOT true AND true OR (true OR (false AND true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 107,
+    "proposition": "false OR false AND (false OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 108,
+    "proposition": "((false OR true) OR true) AND (false AND false) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 109,
+    "proposition": "(true OR false OR true OR true) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 110,
+    "proposition": "NOT true OR (true AND true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 111,
+    "proposition": "NOT false OR false AND ((true OR true) OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 112,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 113,
+    "proposition": "false AND NOT true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 114,
+    "proposition": "true AND false AND true AND (true AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 115,
+    "proposition": "true AND (true OR true) OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 116,
+    "proposition": "((true OR false) AND false) OR (false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 117,
+    "proposition": "false AND true AND false OR false AND true AND (false OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 118,
+    "proposition": "true OR (false AND true OR true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 119,
+    "proposition": "(true AND true OR true OR false) AND NOT true OR (true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 120,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 121,
+    "proposition": "true AND false OR false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 122,
+    "proposition": "(NOT false AND (true AND false)) AND ((true OR false) OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 123,
+    "proposition": "false OR (false OR true) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 124,
+    "proposition": "(NOT false OR false) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 125,
+    "proposition": "(false AND true AND true) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 126,
+    "proposition": "((true OR true) OR (false AND false)) AND true OR true AND (false AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 127,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 128,
+    "proposition": "false OR true OR true AND false AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 129,
+    "proposition": "NOT true OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 130,
+    "proposition": "false AND ((false AND false) OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 131,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 132,
+    "proposition": "(true OR false) AND true OR ((false OR false) OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 133,
+    "proposition": "true OR true AND (true OR true) AND (true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 134,
+    "proposition": "true OR true OR true AND true OR false OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 135,
+    "proposition": "true AND NOT false OR (false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 136,
+    "proposition": "(false AND false) OR false OR false AND (true AND false AND true OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 137,
+    "proposition": "NOT false OR false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 138,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 139,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 140,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 141,
+    "proposition": "(false OR true OR (true OR true)) OR NOT false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 142,
+    "proposition": "(NOT true OR false) OR (true OR (true OR false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 143,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 144,
+    "proposition": "false AND true AND false OR (NOT true OR true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 145,
+    "proposition": "(false AND false OR false OR false) OR ((true OR true) OR NOT true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 146,
+    "proposition": "((false AND false) AND (true OR true)) OR ((true AND true) AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 147,
+    "proposition": "(NOT false AND true) OR (NOT false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 148,
+    "proposition": "NOT NOT false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 149,
+    "proposition": "true AND false AND true AND true AND true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 150,
+    "proposition": "false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 151,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 152,
+    "proposition": "NOT true OR false AND (true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 153,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 154,
+    "proposition": "NOT (false OR false) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 155,
+    "proposition": "NOT false OR true OR (true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 156,
+    "proposition": "true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 157,
+    "proposition": "(true OR (false OR false)) OR (false AND false OR true AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 158,
+    "proposition": "NOT NOT true OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 159,
+    "proposition": "(false OR true AND false) OR NOT false AND (false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 160,
+    "proposition": "(true OR false OR false OR false) AND false OR true OR (false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 161,
+    "proposition": "(false OR false AND false) OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 162,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 163,
+    "proposition": "true AND true AND false OR (false OR false AND (true AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 164,
+    "proposition": "true OR (NOT true AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 165,
+    "proposition": "false OR (false AND false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 166,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 167,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 168,
+    "proposition": "NOT (true AND true) OR (true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 169,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 170,
+    "proposition": "true AND false AND false OR false AND false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 171,
+    "proposition": "false OR (true AND false AND true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 172,
+    "proposition": "(true OR true) AND true AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 173,
+    "proposition": "false AND false OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 174,
+    "proposition": "true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 175,
+    "proposition": "(true OR true OR false) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 176,
+    "proposition": "false OR (false OR false) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 177,
+    "proposition": "(NOT true OR NOT false) OR (false AND (false AND false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 178,
+    "proposition": "(false AND false) AND NOT true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 179,
+    "proposition": "true AND true OR true AND ((false AND true) OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 180,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 181,
+    "proposition": "false AND (false OR false OR false AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 182,
+    "proposition": "(NOT true AND (false OR true)) AND (true AND (true OR false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 183,
+    "proposition": "(false AND true) AND true OR true AND ((true OR true) AND (false AND true))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 184,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 185,
+    "proposition": "NOT true OR (true AND false) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 186,
+    "proposition": "true OR (false AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 187,
+    "proposition": "false AND (true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 188,
+    "proposition": "true OR ((false OR false) OR false AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 189,
+    "proposition": "NOT true AND true AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 190,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 191,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 192,
+    "proposition": "true OR (false OR true) AND true OR false OR (true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 193,
+    "proposition": "(false OR true OR NOT true) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 194,
+    "proposition": "true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 195,
+    "proposition": "(NOT true AND true) OR ((true AND false) AND (false OR true))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 196,
+    "proposition": "NOT NOT true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 197,
+    "proposition": "NOT false AND NOT false AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 198,
+    "proposition": "true OR false AND true OR false AND false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 199,
+    "proposition": "false OR (true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 200,
+    "proposition": "(true AND true) OR true AND true AND true AND false AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 201,
+    "proposition": "(false AND false) OR (false AND false) OR (true AND false) OR false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 202,
+    "proposition": "false AND false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 203,
+    "proposition": "((false OR true) AND NOT true) OR true AND false AND false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 204,
+    "proposition": "false AND NOT false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 205,
+    "proposition": "NOT false AND true AND (false AND true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 206,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 207,
+    "proposition": "NOT NOT true OR (false AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 208,
+    "proposition": "true AND ((false OR false) OR false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 209,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 210,
+    "proposition": "((true AND false) OR false OR false) OR NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 211,
+    "proposition": "(false OR true AND NOT true) OR (true AND false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 212,
+    "proposition": "true OR false OR (false AND true) OR true OR false AND (true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 213,
+    "proposition": "(false OR true OR true) OR NOT false OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 214,
+    "proposition": "((false OR true) OR false AND false) AND (false AND false) OR (true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 215,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 216,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 217,
+    "proposition": "(true OR false) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 218,
+    "proposition": "false OR false AND true AND true OR true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 219,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 220,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 221,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 222,
+    "proposition": "false OR false AND true OR (true AND false AND (false AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 223,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 224,
+    "proposition": "false OR (NOT false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 225,
+    "proposition": "true AND ((true OR true) AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 226,
+    "proposition": "false AND NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 227,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 228,
+    "proposition": "true AND (true AND false) AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 229,
+    "proposition": "(false OR true AND true) OR (NOT true AND true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 230,
+    "proposition": "(true AND NOT true) OR (false OR true) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 231,
+    "proposition": "NOT false AND true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 232,
+    "proposition": "NOT true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 233,
+    "proposition": "true OR false OR true OR NOT false AND false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 234,
+    "proposition": "(NOT false AND true) AND (false OR (true AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 235,
+    "proposition": "false AND true OR NOT true AND (false OR false) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 236,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 237,
+    "proposition": "NOT NOT true AND (false AND false AND true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 238,
+    "proposition": "(false AND (false AND false)) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 239,
+    "proposition": "NOT true OR (true AND NOT true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 240,
+    "proposition": "false AND true OR true AND (false OR (true AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 241,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 242,
+    "proposition": "NOT false AND true AND (false AND false AND NOT true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 243,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 244,
+    "proposition": "((true AND true) OR true) OR true OR (false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 245,
+    "proposition": "false OR (false AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 246,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 247,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 248,
+    "proposition": "false OR (false OR true) AND (true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 249,
+    "proposition": "true OR (false AND true) AND NOT NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 250,
+    "proposition": "NOT (false AND false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 251,
+    "proposition": "true AND false AND true AND true OR NOT true OR false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 252,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 253,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 254,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 255,
+    "proposition": "(false AND false) OR true OR false OR (false OR (false AND false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 256,
+    "proposition": "(false OR true AND true) OR (false AND false OR true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 257,
+    "proposition": "((false OR true) OR false) OR (false OR false OR false AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 258,
+    "proposition": "false AND false AND true OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 259,
+    "proposition": "(NOT false AND false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 260,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 261,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 262,
+    "proposition": "NOT NOT true AND true OR true AND true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 263,
+    "proposition": "((true AND true) AND true OR true) AND (false OR NOT true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 264,
+    "proposition": "((true OR false) AND (false OR false)) OR (true AND false OR (true AND true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 265,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 266,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 267,
+    "proposition": "NOT (true OR true) AND true OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 268,
+    "proposition": "true OR true OR false AND false OR false AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 269,
+    "proposition": "false AND (true AND false) OR true OR false AND (true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 270,
+    "proposition": "(true AND false) AND false AND (true OR true AND (true OR true))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 271,
+    "proposition": "NOT (false AND false) OR false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 272,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 273,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 274,
+    "proposition": "false AND (NOT false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 275,
+    "proposition": "(false OR true) OR true AND false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 276,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 277,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 278,
+    "proposition": "false OR (false OR true) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 279,
+    "proposition": "true AND (false AND true) AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 280,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 281,
+    "proposition": "((true OR true) AND NOT false) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 282,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 283,
+    "proposition": "true OR ((true OR true) AND true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 284,
+    "proposition": "(NOT true OR false AND false) AND false AND true OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 285,
+    "proposition": "NOT (false AND true) OR (false AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 286,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 287,
+    "proposition": "true OR false AND (false AND false) AND true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 288,
+    "proposition": "(false AND true OR true OR true) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 289,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 290,
+    "proposition": "false OR false OR (true AND true) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 291,
+    "proposition": "true AND false AND ((false AND true) OR false OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 292,
+    "proposition": "true AND (NOT false AND false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 293,
+    "proposition": "((true AND true) OR (false AND true)) AND (false AND true OR NOT true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 294,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 295,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 296,
+    "proposition": "(false AND true OR true) AND ((false AND true) AND (true AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 297,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 298,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 299,
+    "proposition": "true OR true AND true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 300,
+    "proposition": "false OR (false AND false) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 301,
+    "proposition": "(true AND false) AND true AND true OR (false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 302,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 303,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 304,
+    "proposition": "NOT false AND true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 305,
+    "proposition": "(true AND true OR false) AND ((true AND false) AND NOT true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 306,
+    "proposition": "false AND NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 307,
+    "proposition": "NOT (true OR true) AND false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 308,
+    "proposition": "true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 309,
+    "proposition": "((false AND false) OR true) OR NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 310,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 311,
+    "proposition": "(false AND false) OR NOT true AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 312,
+    "proposition": "NOT (false OR false) OR (true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 313,
+    "proposition": "NOT false AND false AND false OR (true OR true AND (true OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 314,
+    "proposition": "(NOT true AND false AND true) OR (false AND true) OR (true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 315,
+    "proposition": "NOT NOT true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 316,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 317,
+    "proposition": "(true AND false AND false AND true) AND ((true AND true) OR false AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 318,
+    "proposition": "(true OR false) OR (true AND false) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 319,
+    "proposition": "true OR false OR true OR NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 320,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 321,
+    "proposition": "(true OR true AND true) AND NOT false AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 322,
+    "proposition": "(false OR false) AND (false AND true) AND (false AND false) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 323,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 324,
+    "proposition": "false AND (true AND true OR NOT true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 325,
+    "proposition": "(true OR true AND NOT true) AND (false OR (false OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 326,
+    "proposition": "((true AND false) AND false OR false) AND false AND false OR NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 327,
+    "proposition": "false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 328,
+    "proposition": "(true OR true AND false) AND ((true AND true) OR false AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 329,
+    "proposition": "true AND false OR false AND NOT true OR (true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 330,
+    "proposition": "true OR (true OR false) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 331,
+    "proposition": "(NOT true AND false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 332,
+    "proposition": "true OR (true OR (true AND true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 333,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 334,
+    "proposition": "false AND false OR (false OR true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 335,
+    "proposition": "(false OR true AND false OR false) AND (false AND (false OR false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 336,
+    "proposition": "true AND true OR false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 337,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 338,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 339,
+    "proposition": "(NOT false AND true) AND false OR (true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 340,
+    "proposition": "NOT true OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 341,
+    "proposition": "(true AND (false AND false)) OR NOT false AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 342,
+    "proposition": "(false OR false AND (true AND false)) OR (true AND true) OR false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 343,
+    "proposition": "(true OR true OR (true AND false)) OR (false OR false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 344,
+    "proposition": "true AND false OR true OR false OR (true OR true) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 345,
+    "proposition": "((false OR true) AND false) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 346,
+    "proposition": "(false OR false OR true AND false) OR ((false AND true) OR true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 347,
+    "proposition": "true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 348,
+    "proposition": "false OR (false AND true AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 349,
+    "proposition": "((false AND true) AND false AND true) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 350,
+    "proposition": "NOT true AND false AND (true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 351,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 352,
+    "proposition": "false AND false AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 353,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 354,
+    "proposition": "true AND true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 355,
+    "proposition": "true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 356,
+    "proposition": "true OR true AND false AND true OR (NOT true OR (false AND false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 357,
+    "proposition": "(false AND false) AND (true AND false) OR (false AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 358,
+    "proposition": "false AND false AND (false AND false) OR (NOT true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 359,
+    "proposition": "NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 360,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 361,
+    "proposition": "true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 362,
+    "proposition": "NOT false AND (false OR false) OR (false AND true OR (true AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 363,
+    "proposition": "(NOT false OR true) OR false OR false AND (false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 364,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 365,
+    "proposition": "NOT NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 366,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 367,
+    "proposition": "NOT (true OR true) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 368,
+    "proposition": "(false OR (true OR true)) AND (true AND false) AND NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 369,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 370,
+    "proposition": "false AND false AND true OR false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 371,
+    "proposition": "(false OR false OR (true AND false)) AND ((true OR true) AND true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 372,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 373,
+    "proposition": "NOT false AND false OR (true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 374,
+    "proposition": "(true AND (false OR false)) AND ((false AND false) OR (false AND true))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 375,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 376,
+    "proposition": "NOT (false OR false) OR (true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 377,
+    "proposition": "((true OR false) OR true OR false) OR (true OR true AND false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 378,
+    "proposition": "(true OR false OR true) AND NOT false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 379,
+    "proposition": "(false AND true) AND NOT false AND true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 380,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 381,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 382,
+    "proposition": "true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 383,
+    "proposition": "(NOT true OR true AND false) OR (NOT true AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 384,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 385,
+    "proposition": "(true OR true OR true) OR NOT false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 386,
+    "proposition": "(true AND false) AND (true OR false) AND (true OR false) OR false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 387,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 388,
+    "proposition": "true AND NOT true OR (false OR true) OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 389,
+    "proposition": "((true OR true) OR true OR false) OR false OR false OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 390,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 391,
+    "proposition": "false OR (false OR false) AND ((false AND true) OR (false AND true))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 392,
+    "proposition": "true AND (false OR false) OR (false OR (false OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 393,
+    "proposition": "(true OR false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 394,
+    "proposition": "false AND true OR false AND true AND (true OR true AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 395,
+    "proposition": "NOT NOT false AND NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 396,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 397,
+    "proposition": "true OR false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 398,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 399,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 400,
+    "proposition": "true OR false OR true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 401,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 402,
+    "proposition": "(NOT false OR true) OR false AND NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 403,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 404,
+    "proposition": "true AND (true AND true AND NOT false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 405,
+    "proposition": "NOT false AND (false AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 406,
+    "proposition": "(true AND true OR true) AND (true AND true AND false AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 407,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 408,
+    "proposition": "(true OR true OR (false OR true)) AND NOT NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 409,
+    "proposition": "(NOT false OR true) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 410,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 411,
+    "proposition": "NOT true AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 412,
+    "proposition": "(false OR true OR true) OR ((true OR true) OR (false AND true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 413,
+    "proposition": "NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 414,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 415,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 416,
+    "proposition": "(NOT false AND false) OR ((true AND true) OR (false AND false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 417,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 418,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 419,
+    "proposition": "true OR true OR false AND (false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 420,
+    "proposition": "true AND true OR false AND (true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 421,
+    "proposition": "(NOT true OR (false AND true)) OR ((true AND true) OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 422,
+    "proposition": "((false AND true) AND (false AND false)) OR (NOT true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 423,
+    "proposition": "NOT NOT false OR NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 424,
+    "proposition": "((false AND true) AND (true OR false)) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 425,
+    "proposition": "true OR (NOT true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 426,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 427,
+    "proposition": "NOT false AND (false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 428,
+    "proposition": "(false OR NOT true) OR ((true AND false) AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 429,
+    "proposition": "false OR true OR true OR (NOT true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 430,
+    "proposition": "false OR false AND true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 431,
+    "proposition": "false OR true AND false OR ((true OR true) OR false AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 432,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 433,
+    "proposition": "NOT NOT true AND (NOT false OR (true AND true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 434,
+    "proposition": "(true OR true) AND false AND false OR (NOT true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 435,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 436,
+    "proposition": "false OR true AND false AND (false AND false AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 437,
+    "proposition": "NOT true AND false AND NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 438,
+    "proposition": "NOT false OR false AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 439,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 440,
+    "proposition": "(true OR true) AND true OR (false AND true AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 441,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 442,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 443,
+    "proposition": "false OR false OR (false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 444,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 445,
+    "proposition": "(true OR true AND true) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 446,
+    "proposition": "(false OR false AND true) OR NOT false AND (false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 447,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 448,
+    "proposition": "false OR NOT false OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 449,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 450,
+    "proposition": "NOT NOT true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 451,
+    "proposition": "false AND (true AND false) OR false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 452,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 453,
+    "proposition": "true OR (false OR true) AND (false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 454,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 455,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 456,
+    "proposition": "NOT (true AND true) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 457,
+    "proposition": "((false AND true) AND false AND false) OR (true OR false AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 458,
+    "proposition": "(false OR false) AND false OR true OR true OR false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 459,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 460,
+    "proposition": "NOT false AND true OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 461,
+    "proposition": "NOT false OR true AND false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 462,
+    "proposition": "false OR NOT true AND false AND true AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 463,
+    "proposition": "NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 464,
+    "proposition": "(false OR true) OR true OR false AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 465,
+    "proposition": "NOT true OR true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 466,
+    "proposition": "(NOT true OR false) AND true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 467,
+    "proposition": "false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 468,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 469,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 470,
+    "proposition": "(true OR false) AND false OR true OR (false OR (true OR false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 471,
+    "proposition": "true OR true OR false AND false AND NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 472,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 473,
+    "proposition": "((false AND true) AND (true AND true)) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 474,
+    "proposition": "(NOT true AND true) OR ((false AND false) AND (false AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 475,
+    "proposition": "NOT true AND false OR false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 476,
+    "proposition": "false AND (true AND false) AND true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 477,
+    "proposition": "NOT NOT false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 478,
+    "proposition": "NOT true AND (true AND true) AND (false AND NOT true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 479,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 480,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 481,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 482,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 483,
+    "proposition": "false AND NOT false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 484,
+    "proposition": "false OR true OR (false AND true) AND false OR (false AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 485,
+    "proposition": "((false OR false) OR false) AND (false AND (false AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 486,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 487,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 488,
+    "proposition": "NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 489,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 490,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 491,
+    "proposition": "(NOT true AND false) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 492,
+    "proposition": "true OR (true OR false) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 493,
+    "proposition": "false OR (true OR false AND NOT false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 494,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 495,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 496,
+    "proposition": "((false AND false) OR false OR false) OR (true AND (false AND true))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 497,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 498,
+    "proposition": "NOT NOT true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 499,
+    "proposition": "NOT false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 500,
+    "proposition": "((true AND true) OR false AND false) AND true OR (false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 501,
+    "proposition": "NOT NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 502,
+    "proposition": "true OR (NOT false AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 503,
+    "proposition": "true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 504,
+    "proposition": "true AND true OR true OR (false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 505,
+    "proposition": "NOT (true OR true) AND (true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 506,
+    "proposition": "NOT NOT false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 507,
+    "proposition": "NOT NOT false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 508,
+    "proposition": "NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 509,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 510,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 511,
+    "proposition": "NOT true AND true AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 512,
+    "proposition": "false AND false AND true AND false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 513,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 514,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 515,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 516,
+    "proposition": "true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 517,
+    "proposition": "(false AND false AND true) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 518,
+    "proposition": "false OR false OR false AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 519,
+    "proposition": "NOT false AND true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 520,
+    "proposition": "NOT true AND false OR (NOT false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 521,
+    "proposition": "NOT false AND (false AND true) OR false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 522,
+    "proposition": "NOT false AND true OR NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 523,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 524,
+    "proposition": "false AND NOT false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 525,
+    "proposition": "false OR (false AND false AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 526,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 527,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 528,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 529,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 530,
+    "proposition": "NOT false OR false OR ((false AND true) OR true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 531,
+    "proposition": "true AND (false OR true) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 532,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 533,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 534,
+    "proposition": "false AND false AND false OR true OR false AND false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 535,
+    "proposition": "NOT false OR (true OR false) AND true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 536,
+    "proposition": "true AND NOT false OR (true OR false OR (true OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 537,
+    "proposition": "false OR ((false AND false) OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 538,
+    "proposition": "NOT true AND true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 539,
+    "proposition": "true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 540,
+    "proposition": "NOT NOT true OR true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 541,
+    "proposition": "NOT (true AND false) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 542,
+    "proposition": "(false OR true AND (false AND false)) AND ((false OR false) AND false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 543,
+    "proposition": "false OR false AND false AND false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 544,
+    "proposition": "(false AND false) OR (false AND true) AND true OR true AND false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 545,
+    "proposition": "false AND true AND (false AND false) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 546,
+    "proposition": "NOT true OR true OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 547,
+    "proposition": "false OR (false AND true) OR NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 548,
+    "proposition": "true OR false AND false OR false AND (NOT false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 549,
+    "proposition": "(false OR false) AND (NOT false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 550,
+    "proposition": "false OR (true OR NOT false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 551,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 552,
+    "proposition": "true OR (true AND false OR (false AND true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 553,
+    "proposition": "true OR ((true OR true) OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 554,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 555,
+    "proposition": "(true AND false) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 556,
+    "proposition": "(false AND false AND false OR true) AND false AND false OR (false AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 557,
+    "proposition": "((true OR true) OR true AND true) AND false OR true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 558,
+    "proposition": "(true OR true) OR NOT NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 559,
+    "proposition": "(true OR false) OR (true AND false) OR (false AND false AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 560,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 561,
+    "proposition": "false OR NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 562,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 563,
+    "proposition": "NOT false AND true OR (false OR false AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 564,
+    "proposition": "false AND false AND true AND ((true AND false) OR (true OR true))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 565,
+    "proposition": "false AND NOT false AND true AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 566,
+    "proposition": "((true AND true) AND NOT true) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 567,
+    "proposition": "NOT (false AND false) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 568,
+    "proposition": "(false OR true OR true) AND ((false OR true) AND (true AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 569,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 570,
+    "proposition": "true AND true OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 571,
+    "proposition": "true OR false AND true OR false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 572,
+    "proposition": "false OR false OR NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 573,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 574,
+    "proposition": "((true AND true) AND true OR true) AND (true OR false AND (true AND false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 575,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 576,
+    "proposition": "(false AND false OR (false AND true)) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 577,
+    "proposition": "NOT (true AND true) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 578,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 579,
+    "proposition": "NOT true AND (false AND true) AND true OR (false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 580,
+    "proposition": "false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 581,
+    "proposition": "NOT false AND (false AND true) OR true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 582,
+    "proposition": "(false AND true OR true) OR (false AND true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 583,
+    "proposition": "(false OR false) AND true AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 584,
+    "proposition": "NOT false OR true AND (false OR (false AND true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 585,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 586,
+    "proposition": "NOT true OR true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 587,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 588,
+    "proposition": "true OR (NOT true AND false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 589,
+    "proposition": "(true OR true AND (false AND true)) AND false AND false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 590,
+    "proposition": "((true AND true) AND NOT false) AND false AND false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 591,
+    "proposition": "NOT (false AND false) OR NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 592,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 593,
+    "proposition": "NOT (false AND true) OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 594,
+    "proposition": "(false OR false OR NOT false) AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 595,
+    "proposition": "(false OR true AND false AND false) AND false OR false OR NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 596,
+    "proposition": "NOT true AND false AND NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 597,
+    "proposition": "NOT (false OR false) OR true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 598,
+    "proposition": "true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 599,
+    "proposition": "true AND (true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 600,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 601,
+    "proposition": "NOT NOT true AND false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 602,
+    "proposition": "true OR (false OR (true OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 603,
+    "proposition": "NOT true AND true OR false OR false OR (false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 604,
+    "proposition": "((false AND true) OR NOT false) AND ((true OR true) AND (true AND true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 605,
+    "proposition": "(true OR false) OR false AND false AND NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 606,
+    "proposition": "true OR ((false OR false) AND true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 607,
+    "proposition": "(false AND true) OR false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 608,
+    "proposition": "(true AND true OR NOT false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 609,
+    "proposition": "((false AND false) OR NOT true) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 610,
+    "proposition": "((false OR true) OR false) AND ((true AND true) OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 611,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 612,
+    "proposition": "NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 613,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 614,
+    "proposition": "NOT true AND (true OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 615,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 616,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 617,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 618,
+    "proposition": "false AND true AND (false AND false) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 619,
+    "proposition": "NOT (false OR false) AND NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 620,
+    "proposition": "false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 621,
+    "proposition": "(true AND false AND (false AND true)) OR true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 622,
+    "proposition": "((false AND true) OR false) AND ((false AND true) AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 623,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 624,
+    "proposition": "true OR (false AND (true OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 625,
+    "proposition": "NOT NOT false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 626,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 627,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 628,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 629,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 630,
+    "proposition": "false AND (true OR true) OR (false OR true OR (false OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 631,
+    "proposition": "false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 632,
+    "proposition": "false OR false OR (false OR true) AND (false OR (false OR false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 633,
+    "proposition": "NOT false AND (true OR false) AND (NOT true OR (false AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 634,
+    "proposition": "false AND true OR false OR true AND ((false OR true) AND true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 635,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 636,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 637,
+    "proposition": "(true AND false) AND true AND true AND (false AND (false OR true))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 638,
+    "proposition": "(false AND true OR true) OR NOT true AND false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 639,
+    "proposition": "((true OR true) AND true AND false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 640,
+    "proposition": "true AND NOT false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 641,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 642,
+    "proposition": "true AND false AND (true OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 643,
+    "proposition": "(NOT false AND (false OR false)) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 644,
+    "proposition": "NOT false AND NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 645,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 646,
+    "proposition": "true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 647,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 648,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 649,
+    "proposition": "true AND (true OR true) AND (true AND true) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 650,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 651,
+    "proposition": "false OR (false OR false AND NOT false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 652,
+    "proposition": "((true OR false) OR (true AND false)) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 653,
+    "proposition": "false OR (true OR (true AND true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 654,
+    "proposition": "true AND (false AND false AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 655,
+    "proposition": "false AND (false OR true OR true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 656,
+    "proposition": "false OR (false AND false AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 657,
+    "proposition": "(true AND true) OR true OR true AND (false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 658,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 659,
+    "proposition": "(NOT false OR false) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 660,
+    "proposition": "false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 661,
+    "proposition": "NOT (false OR false) AND NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 662,
+    "proposition": "NOT false AND (false AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 663,
+    "proposition": "true OR true OR false AND (true AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 664,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 665,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 666,
+    "proposition": "(false OR true) AND (false AND true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 667,
+    "proposition": "(false AND false AND true OR true) OR NOT NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 668,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 669,
+    "proposition": "(true OR (false AND false)) OR (true AND true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 670,
+    "proposition": "true AND (true AND false) AND NOT NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 671,
+    "proposition": "true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 672,
+    "proposition": "(true OR false OR false OR true) AND (true AND true) OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 673,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 674,
+    "proposition": "(false AND false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 675,
+    "proposition": "true OR false OR false AND false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 676,
+    "proposition": "NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 677,
+    "proposition": "true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 678,
+    "proposition": "(NOT true OR true AND true) AND NOT false AND true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 679,
+    "proposition": "(NOT false OR false) AND ((false AND true) AND false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 680,
+    "proposition": "(true AND true) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 681,
+    "proposition": "(true AND true AND true AND true) OR (true AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 682,
+    "proposition": "NOT (true AND false) AND true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 683,
+    "proposition": "false AND true AND true OR (false AND false) OR false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 684,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 685,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 686,
+    "proposition": "true AND (false OR false OR NOT false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 687,
+    "proposition": "((true AND true) AND (true OR false)) OR ((false AND true) AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 688,
+    "proposition": "false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 689,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 690,
+    "proposition": "false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 691,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 692,
+    "proposition": "(NOT false OR true) AND (true AND true) AND (true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 693,
+    "proposition": "(false OR true OR (false AND false)) OR (false AND false AND (true AND false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 694,
+    "proposition": "false OR (true AND false) AND false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 695,
+    "proposition": "false OR (false AND false AND NOT true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 696,
+    "proposition": "NOT true AND false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 697,
+    "proposition": "NOT false AND false AND true OR (true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 698,
+    "proposition": "true AND true OR (true OR true) AND false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 699,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 700,
+    "proposition": "NOT true OR false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 701,
+    "proposition": "false OR true OR true AND true AND NOT false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 702,
+    "proposition": "false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 703,
+    "proposition": "NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 704,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 705,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 706,
+    "proposition": "((false AND false) OR (false OR false)) OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 707,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 708,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 709,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 710,
+    "proposition": "(false OR true AND false OR false) OR NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 711,
+    "proposition": "(NOT false AND true) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 712,
+    "proposition": "NOT NOT false OR (true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 713,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 714,
+    "proposition": "NOT NOT true AND (true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 715,
+    "proposition": "true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 716,
+    "proposition": "(true OR true) OR false AND false AND ((false AND true) OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 717,
+    "proposition": "((false AND false) OR true OR false) OR (true OR false AND (true OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 718,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 719,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 720,
+    "proposition": "false OR false AND false OR true AND true AND (true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 721,
+    "proposition": "false OR ((false AND true) AND true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 722,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 723,
+    "proposition": "(false OR true OR false) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 724,
+    "proposition": "true AND false OR (true OR true) OR false AND true AND (true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 725,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 726,
+    "proposition": "false AND true OR (false AND true) AND NOT true AND (false AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 727,
+    "proposition": "((false AND true) OR (false OR true)) OR (NOT false OR (false AND true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 728,
+    "proposition": "NOT false AND true AND (true OR true) AND NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 729,
+    "proposition": "(false AND true AND true) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 730,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 731,
+    "proposition": "NOT true OR (true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 732,
+    "proposition": "(true OR true) OR NOT false OR false AND false OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 733,
+    "proposition": "false AND NOT false AND (true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 734,
+    "proposition": "true AND false OR (true OR true) OR NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 735,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 736,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 737,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 738,
+    "proposition": "(NOT true OR false) AND (true OR false OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 739,
+    "proposition": "false OR true OR true OR true OR NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 740,
+    "proposition": "NOT NOT true AND true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 741,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 742,
+    "proposition": "false OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 743,
+    "proposition": "false AND true OR true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 744,
+    "proposition": "((false OR false) OR NOT false) OR (true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 745,
+    "proposition": "NOT (true OR true) OR false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 746,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 747,
+    "proposition": "(true AND false AND true) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 748,
+    "proposition": "false OR false OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 749,
+    "proposition": "true OR true AND false AND ((false OR false) AND (true AND false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 750,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 751,
+    "proposition": "true AND NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 752,
+    "proposition": "((false OR true) AND NOT true) OR (true AND NOT false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 753,
+    "proposition": "true OR (NOT true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 754,
+    "proposition": "(true AND false OR (true OR false)) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 755,
+    "proposition": "true OR true AND NOT false AND ((true OR true) OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 756,
+    "proposition": "true AND (NOT false OR (true AND false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 757,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 758,
+    "proposition": "NOT true AND true AND (NOT true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 759,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 760,
+    "proposition": "NOT (true OR true) OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 761,
+    "proposition": "NOT (false AND false) OR (false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 762,
+    "proposition": "(false AND true AND (false AND false)) AND false AND true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 763,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 764,
+    "proposition": "NOT true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 765,
+    "proposition": "(true AND false) AND false AND false AND false AND true OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 766,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 767,
+    "proposition": "true OR (false OR (false OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 768,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 769,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 770,
+    "proposition": "true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 771,
+    "proposition": "false OR true AND true AND (true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 772,
+    "proposition": "NOT false OR (true AND false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 773,
+    "proposition": "true AND false AND true OR true AND true AND NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 774,
+    "proposition": "NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 775,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 776,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 777,
+    "proposition": "(false OR true OR false) AND (NOT true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 778,
+    "proposition": "true AND (NOT true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 779,
+    "proposition": "true OR (false OR true AND (true OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 780,
+    "proposition": "NOT NOT true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 781,
+    "proposition": "true OR (false AND true AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 782,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 783,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 784,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 785,
+    "proposition": "(NOT true AND NOT false) AND NOT false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 786,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 787,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 788,
+    "proposition": "false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 789,
+    "proposition": "NOT false OR true OR false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 790,
+    "proposition": "false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 791,
+    "proposition": "(false AND false) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 792,
+    "proposition": "(true OR true) AND false OR false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 793,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 794,
+    "proposition": "NOT (false OR true) OR true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 795,
+    "proposition": "false OR NOT NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 796,
+    "proposition": "NOT false OR true AND (false OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 797,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 798,
+    "proposition": "false AND true AND ((true OR true) AND (true AND false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 799,
+    "proposition": "false AND true AND true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 800,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 801,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 802,
+    "proposition": "(false OR true OR false) OR true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 803,
+    "proposition": "(false OR true OR true) OR (false AND true) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 804,
+    "proposition": "(true OR false OR false) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 805,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 806,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 807,
+    "proposition": "(NOT true AND false) AND NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 808,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 809,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 810,
+    "proposition": "false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 811,
+    "proposition": "true AND true AND NOT false AND true AND true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 812,
+    "proposition": "false OR false AND NOT false AND true AND true AND (true AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 813,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 814,
+    "proposition": "(false AND NOT true) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 815,
+    "proposition": "true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 816,
+    "proposition": "(NOT false OR true) AND true OR false AND (true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 817,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 818,
+    "proposition": "(false AND (true OR false)) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 819,
+    "proposition": "NOT NOT NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 820,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 821,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 822,
+    "proposition": "false AND (true AND (true OR true))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 823,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 824,
+    "proposition": "(NOT true AND false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 825,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 826,
+    "proposition": "NOT true OR NOT true OR NOT true AND (true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 827,
+    "proposition": "(NOT true AND true) AND true AND (false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 828,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 829,
+    "proposition": "(false OR (false AND false)) AND false AND false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 830,
+    "proposition": "false OR NOT false AND false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 831,
+    "proposition": "NOT false AND NOT true OR true OR NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 832,
+    "proposition": "NOT false AND false OR (false AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 833,
+    "proposition": "NOT (true AND false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 834,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 835,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 836,
+    "proposition": "((true AND false) OR (false AND true)) OR (false OR (false AND true))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 837,
+    "proposition": "((false OR false) OR NOT false) OR false OR true OR (false AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 838,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 839,
+    "proposition": "(true OR (true OR true)) AND (false OR (false OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 840,
+    "proposition": "NOT NOT false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 841,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 842,
+    "proposition": "NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 843,
+    "proposition": "NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 844,
+    "proposition": "false AND (true AND false OR (false OR false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 845,
+    "proposition": "true AND false AND true OR false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 846,
+    "proposition": "NOT NOT true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 847,
+    "proposition": "false AND true OR false AND (NOT true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 848,
+    "proposition": "(NOT false OR true) OR ((true AND false) OR (true OR true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 849,
+    "proposition": "(false OR true OR false) AND (false AND false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 850,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 851,
+    "proposition": "(false OR true AND true OR false) OR false OR (true AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 852,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 853,
+    "proposition": "(true OR true) AND true AND true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 854,
+    "proposition": "(true AND true AND false) OR false AND false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 855,
+    "proposition": "true OR ((false OR true) AND false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 856,
+    "proposition": "(NOT false OR (false OR false)) OR ((false AND true) OR false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 857,
+    "proposition": "false OR (NOT true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 858,
+    "proposition": "true AND false AND false AND false AND true OR true AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 859,
+    "proposition": "((true AND true) OR (true AND true)) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 860,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 861,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 862,
+    "proposition": "true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 863,
+    "proposition": "NOT true OR true OR NOT true AND false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 864,
+    "proposition": "(NOT true OR false) AND (true AND true AND NOT true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 865,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 866,
+    "proposition": "false OR false OR true AND false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 867,
+    "proposition": "(true AND true OR (false AND false)) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 868,
+    "proposition": "true AND true OR true OR false OR NOT false OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 869,
+    "proposition": "((false OR false) OR NOT true) AND false AND true AND (true OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 870,
+    "proposition": "true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 871,
+    "proposition": "true AND false OR true AND false AND (true AND false OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 872,
+    "proposition": "(false AND false OR true OR true) AND true OR true OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 873,
+    "proposition": "(NOT false OR false) OR (true OR false AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 874,
+    "proposition": "true OR NOT false AND ((true AND false) OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 875,
+    "proposition": "(NOT true OR true) AND NOT false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 876,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 877,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 878,
+    "proposition": "true OR (false OR false AND NOT true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 879,
+    "proposition": "(true AND false) AND (NOT true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 880,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 881,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 882,
+    "proposition": "true AND true AND true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 883,
+    "proposition": "NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 884,
+    "proposition": "true AND true OR false OR false OR ((true OR false) OR true AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 885,
+    "proposition": "false AND false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 886,
+    "proposition": "false AND (false OR false) AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 887,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 888,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 889,
+    "proposition": "(false AND true OR (true OR false)) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 890,
+    "proposition": "NOT NOT true AND NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 891,
+    "proposition": "((false OR true) OR true AND false) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 892,
+    "proposition": "false AND true AND true AND false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 893,
+    "proposition": "NOT false AND true OR (false AND (true AND false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 894,
+    "proposition": "((true OR true) OR false OR false) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 895,
+    "proposition": "(false OR true OR false) OR (NOT false OR false AND true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 896,
+    "proposition": "false OR true OR false OR (false AND true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 897,
+    "proposition": "(true AND true AND (true OR true)) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 898,
+    "proposition": "false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 899,
+    "proposition": "NOT true OR false AND false AND (true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 900,
+    "proposition": "NOT NOT NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 901,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 902,
+    "proposition": "false OR (false OR NOT false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 903,
+    "proposition": "((false OR false) AND false) AND (true AND false) AND false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 904,
+    "proposition": "(NOT true AND true) AND (false AND false OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 905,
+    "proposition": "NOT false AND true OR ((false OR false) AND (false OR false))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 906,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 907,
+    "proposition": "(false OR false AND false OR true) AND (false AND true AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 908,
+    "proposition": "true AND true AND false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 909,
+    "proposition": "NOT NOT false OR true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 910,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 911,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 912,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 913,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 914,
+    "proposition": "(true AND (false AND true)) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 915,
+    "proposition": "NOT (true OR true) AND true AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 916,
+    "proposition": "true OR false AND true AND true AND false AND false AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 917,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 918,
+    "proposition": "true OR ((true AND true) AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 919,
+    "proposition": "(NOT false AND NOT true) AND NOT true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 920,
+    "proposition": "(true AND false OR false) AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 921,
+    "proposition": "false OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 922,
+    "proposition": "NOT false AND false OR true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 923,
+    "proposition": "false OR (false OR true) OR true AND true AND (true OR true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 924,
+    "proposition": "NOT false AND true OR (true AND false) AND NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 925,
+    "proposition": "(NOT true OR false OR false) OR (false OR false) AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 926,
+    "proposition": "NOT true OR true OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 927,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 928,
+    "proposition": "(true AND true AND true) OR NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 929,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 930,
+    "proposition": "(NOT true OR true) OR ((false OR true) AND NOT true)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 931,
+    "proposition": "true OR false OR (true AND true) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 932,
+    "proposition": "false OR (true OR false AND NOT false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 933,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 934,
+    "proposition": "false OR false AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 935,
+    "proposition": "NOT NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 936,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 937,
+    "proposition": "(true AND true) OR (true AND false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 938,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 939,
+    "proposition": "(false AND (true OR true)) OR ((true AND false) OR (false OR false))",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 940,
+    "proposition": "false OR (false AND true) OR false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 941,
+    "proposition": "NOT true AND true OR false AND NOT true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 942,
+    "proposition": "NOT false AND NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 943,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 944,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 945,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 946,
+    "proposition": "NOT true AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 947,
+    "proposition": "true AND (true AND true) OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 948,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 949,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 950,
+    "proposition": "(true OR false AND true) OR (false AND (true AND true))",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 951,
+    "proposition": "false OR true AND true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 952,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 953,
+    "proposition": "NOT true OR (true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 954,
+    "proposition": "(false AND false OR (false OR true)) OR NOT false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 955,
+    "proposition": "((true AND true) AND true) AND (true OR false OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 956,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 957,
+    "proposition": "((true OR true) OR (false AND true)) AND NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 958,
+    "proposition": "(false AND false AND NOT false) AND NOT true AND (true AND true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 959,
+    "proposition": "false OR NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 960,
+    "proposition": "(true AND false) OR NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 961,
+    "proposition": "(true OR true) AND false OR true OR false",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 962,
+    "proposition": "(false AND false) AND true AND false AND true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 963,
+    "proposition": "false OR true OR NOT true OR NOT NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 964,
+    "proposition": "NOT false AND false AND ((true AND false) OR true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 965,
+    "proposition": "(true OR true) OR true OR false AND (false AND true) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 966,
+    "proposition": "(true AND false) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 967,
+    "proposition": "false OR NOT NOT false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 968,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 969,
+    "proposition": "false OR (false OR false AND NOT true)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 970,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 971,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 972,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 973,
+    "proposition": "NOT false AND true AND true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 974,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 975,
+    "proposition": "NOT true",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 976,
+    "proposition": "NOT true OR true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 977,
+    "proposition": "true AND NOT false OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 978,
+    "proposition": "true AND ((false OR true) AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 979,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 980,
+    "proposition": "false AND (false AND true) OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 981,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 982,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 983,
+    "proposition": "false AND ((false OR false) OR false AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 984,
+    "proposition": "false AND false AND true AND false AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 985,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 986,
+    "proposition": "(false OR true) OR (true OR false AND true AND false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 987,
+    "proposition": "((true OR false) AND (true AND true)) AND (false OR true AND true AND false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 988,
+    "proposition": "((true AND false) AND false) AND (true AND false AND true OR false)",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 989,
+    "proposition": "(NOT false OR false) OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 990,
+    "proposition": "false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 991,
+    "proposition": "(NOT true OR true OR true) AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 992,
+    "proposition": "true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 993,
+    "proposition": "NOT false AND true AND true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 994,
+    "proposition": "((true OR true) OR false) OR NOT true OR true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 995,
+    "proposition": "(false AND false AND true) OR NOT true OR false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 996,
+    "proposition": "true OR true AND true OR (false AND false OR true OR false)",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 997,
+    "proposition": "NOT (true AND false) AND true AND false",
+    "result": false,
+    "complexity": 3
+  },
+  {
+    "id": 998,
+    "proposition": "false AND true AND true OR false OR true OR NOT true",
+    "result": true,
+    "complexity": 3
+  },
+  {
+    "id": 999,
+    "proposition": "true AND false AND false AND false OR ((false AND true) OR true)",
+    "result": true,
+    "complexity": 3
+  }
+]
