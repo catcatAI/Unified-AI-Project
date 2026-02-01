@@ -323,14 +323,17 @@ class SelfGeneration:
         
         base = self.avatars_by_id[base_avatar_id]
         
+        # Ensure attribute_changes is not None
+        changes = attribute_changes or {}
+        
         # Create modified attributes
         new_attrs = VisualAttributes(
-            hair_color=attribute_changes.get("hair_color", base.attributes.hair_color),
-            hair_style=attribute_changes.get("hair_style", base.attributes.hair_style),
-            eye_color=attribute_changes.get("eye_color", base.attributes.eye_color),
-            skin_tone=attribute_changes.get("skin_tone", base.attributes.skin_tone),
-            outfit=attribute_changes.get("outfit", base.attributes.outfit),
-            accessories=attribute_changes.get("accessories", base.attributes.accessories.copy()),
+            hair_color=changes.get("hair_color", base.attributes.hair_color),
+            hair_style=changes.get("hair_style", base.attributes.hair_style),
+            eye_color=changes.get("eye_color", base.attributes.eye_color),
+            skin_tone=changes.get("skin_tone", base.attributes.skin_tone),
+            outfit=changes.get("outfit", base.attributes.outfit),
+            accessories=changes.get("accessories", base.attributes.accessories.copy()),
             expression=expression or base.attributes.expression,
         )
         
@@ -418,7 +421,7 @@ class SelfGeneration:
         self,
         mood: str,
         intensity: float = 0.5
-    ) -> GeneratedAvatar:
+    ) -> Optional[GeneratedAvatar]:
         """
         Create mood-adapted version of current avatar
         
@@ -427,7 +430,7 @@ class SelfGeneration:
             intensity: Mood intensity (0-1)
             
         Returns:
-            Mood-adapted avatar
+            Mood-adapted avatar or None if current avatar not set
         """
         if not self.current_avatar:
             return await self.generate_avatar(GenerationMode.FULL_GENERATION)
@@ -524,10 +527,12 @@ if __name__ == "__main__":
         
         # Create variation
         print("\n创建变体 / Creating variation:")
-        variation = await gen.create_variation(
-            gen.current_avatar.avatar_id,
-            expression="surprised"
-        )
+        variation = None
+        if gen.current_avatar:
+            variation = await gen.create_variation(
+                gen.current_avatar.avatar_id,
+                expression="surprised"
+            )
         if variation:
             print(f"  新ID: {variation.avatar_id}")
             print(f"  新表情: {variation.attributes.expression}")
