@@ -1,49 +1,140 @@
-﻿# Operating System Files
+# ===========================================
+# Angela AI v6.0.0 - Comprehensive .gitignore
+# ===========================================
+
+# -----------------------------------------
+# Operating System Files
+# -----------------------------------------
 .DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
+Thumbs.db:encryptable
 ehthumbs.db
 Desktop.ini
-.BIN/
 *.lnk
+.BIN/
+.directory
 
-# Python specific
+# -----------------------------------------
+# Python Virtual Environments
+# -----------------------------------------
+myenv/
+venv_py311/
+venv/
+env/
+ENV/
+.venv/
+.conda/
+env.bak/
+venv.bak/
+
+# -----------------------------------------
+# Python Cache & Compiled Files
+# -----------------------------------------
 __pycache__/
 *.py[cod]
+*$py.class
 *.so
-*.egg
-*.egg-info/
 .Python
 build/
 develop-eggs/
 dist/
 downloads/
 eggs/
+.eggs/
 lib/
 lib64/
 parts/
 sdist/
 var/
 wheels/
+*.egg-info/
 .installed.cfg
+*.egg
+MANIFEST
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.tox/
+.nox/
 .mypy_cache/
 .dmypy.json
 dmypy.json
 .pyre/
+.pytype/
+.ruff_cache/
 .python-version
-celerybeat-schedule
-*.sage.py
 
-# Virtual Environments
+# -----------------------------------------
+# Sensitive Files - Credentials & Secrets
+# -----------------------------------------
+**/credentials.json
+**/token.json
+**/client_secrets.json
 .env
-.venv/
-env/
-venv/
-ENV/
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+*.env
+.env.example
+!.env.example
 
-# Node.js specific
+# -----------------------------------------
+# API Keys & Certificates
+# -----------------------------------------
+*.pem
+*.key
+*.p12
+*.crt
+*.cert
+*.cer
+*.p7b
+*.p7c
+*.p7s
+*.pfx
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+*.gpg
+*.asc
+secrets/
+secret*
+
+# -----------------------------------------
+# Large Model Files & Datasets
+# -----------------------------------------
+*.pt
+*.pth
+*.h5
+*.hdf5
+*.onnx
+*.pkl
+*.pickle
+*.bin
+*.safetensors
+*.npy
+*.npz
+*.ckpt
+models/
+checkpoints/
+trained_models/
+*.tar.gz
+*.tar.bz2
+*.zip
+*.rar
+*.7z
+
+# -----------------------------------------
+# Node.js
+# -----------------------------------------
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -51,6 +142,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 .npm
+yarn.lock
 package-lock.json
 bun.lockb
 .next/
@@ -59,22 +151,20 @@ out/
 *.min.js
 *.min.css
 *.map
+.eslintcache
+.parcel-cache
 
-# Build Outputs and Caches
-build/
-dist/
-out/
-temp/
-tmp/
-.cache/
-.parcel-cache/
-/site
-target/
-.mooncakes/
-
-# IDE and Editor Specific
-.idea/
+# -----------------------------------------
+# IDE & Editor Configuration
+# -----------------------------------------
 .vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.idea/
 *.iml
 .project
 .classpath
@@ -92,389 +182,172 @@ target/
 .ropeproject
 profile_default/
 ipython_config.py
+*.code-workspace
+*.sublime-*
+*.tmproj
+*.esproj
 
-# Environment Variables and Secrets
-.env*
-!.env.example # Allow .env.example to be committed
-*.pem
-*.key
-*.p12
-*.crt
-*.cert
-*.cer
-*.p7b
-*.p7c
-*.p7s
-*.pfx
-serviceAccountKey.json
-*-firebase-adminsdk-*.json
+# -----------------------------------------
+# Personal Data & User Content
+# -----------------------------------------
+我的活動/
+drive-download*/
+*.xlsx
+*.xls
+*.csv
+*.doc
+*.docx
+*.pdf
+*.ppt
+*.pptx
 
-# Logs
-logs/
-*.log
-firebase-debug.log
-firebase-debug.*.log
-debug.log
-error.log
-
-# Database Files
-*.sqlite
-*.sqlite-journal
-*.db
-*.mdb
-*.accdb
-
+# -----------------------------------------
 # Temporary Files
+# -----------------------------------------
+auth_url*.txt
+auth_url*.json
+*.log
 *.tmp
 *.temp
 *.bak
+*.backup
 *.old
+*.orig
 *.obj
 *.o
 *.exe
 *.dll
 *.so
 *.out
-*.log.*
+*.app
+*.ipa
+*.apk
 
-.terraform/
-.terraform.lock.hcl
-.cabal-sandbox/
-.stack-work/
-.Rhistory
-.Rdata
-.virtual_documents/
-.ipynb_checkpoints/
-
-# Specific files possibly referenced elsewhere
-commit_message.txt
-git.txt
-moon.mod.json
-tmp_rovodev_complete_integration_test.py
-tmp_rovodev_test_cli_desktop.py
-
-# Model and data outputs
-*.pt
-*.h5
-*.onnx
-*.pkl
-*.bin
-*.npy
-*.npz
-
-# Large Training Datasets (should not be committed to Git)
-data/common_voice_zh/
-data/visual_genome_sample/
-data/coco_captions/
-data/flickr30k_sample/
-
-# Data directories that should not be tracked
-data/
-!data/README.md
-!data/TRAINING_DATA_GUIDE.md
-!data/data_config.json
-
-# Additional data directories that should not be tracked
-data/audio_samples/*.wav
-data/audio_samples/*.mp3
-data/audio_samples/*.flac
-data/vision_samples/*.jpg
-data/vision_samples/*.png
-data/vision_samples/*.jpeg
-data/multimodal_samples/
-data/reasoning_samples/
-
-# Project organization and backup
+# -----------------------------------------
+# Backup Directories
+# -----------------------------------------
+.git-backup*/
 backup/
-# DO NOT ignore docs folder globally; docs are tracked
-#!docs/
-!docs/README.md
+backup_*/
+backups/
+_archive/
+archive_backup/
 
-# Temporary scripts and tools
-fix-git-10k.bat
-emergency-git-fix.bat
-git-status-check.bat
-solve-git-issues.bat
-*_temp*.txt
-git_*.txt
+# -----------------------------------------
+# Database Files
+# -----------------------------------------
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.db
+*.mdb
+*.accdb
+*.dbf
+*.sql
+*.dump
 
-# Debug and development files
-debug_test.js
-
-# Test and report files
-apps/backend/*_test_report_*.txt
-*.test_report.txt
-
-# Training artifacts and model files
-training/models/
-training/checkpoints/
-training/logs/
-*.tar.gz
-*.zip
-
-# Data processing artifacts
-data/processed_data/
-data/temp_data/
-data/atlassian_cache/
-data/fallback_comm/
-data/task_queue/
-
-# Evaluation and report outputs
-evaluations/
-reports/
-test_results/
-
-# Temporary files specific to machine learning/data processing
-data/processed_data/
-data/temp_data/
-checkpoints/
-
-# Temporary files and logs
-style_check_output.txt
-temp_dir_list.txt
-todo_grep.txt
-markdown_files.txt
-# Fix for the problematic file
-t FETCH origin...
-
-# Test execution artifacts
-test_results/
+# -----------------------------------------
+# Testing & Coverage
+# -----------------------------------------
+test_reports/
 test_output/
+test_data/
 *.test.log
-test_*.pyc
-test_*.pyo
-
-# Local test configurations
-test_config.json
-local_test_settings.py
-
-# Performance test results
-performance_reports/
-benchmark_results/
-*.perf
-
-# Temporary test files
-test_*.tmp
-test_*.bak
-*_test_temp.*
-
-# Local development
-test_import.py
-test_simple.py
-test_basic_import.py
-test_component_import.py
-test_functionality.py
-test_performance.py
-
-# Test databases
-test_*.db
-test_*.sqlite
-test_*.sqlite3
-
-# Coverage reports
-htmlcov/
-.coverage
 coverage.xml
 *.cover
+*.py,cover
+.hypothesis/
 .coverage.*
+coverage/
 
-# pytest
-.pytest_cache/
-.tox/
+# -----------------------------------------
+# Build & Distribution
+# -----------------------------------------
+build/
+dist/
+*.spec
+*.manifest
+*.egg-info/
 
-# Test environments
-test_env/
-test_venv/
+# -----------------------------------------
+# Documentation Build
+# -----------------------------------------
+site/
+docs/_build/
+docs/api/
+*.rst.txt
 
-# Local test scripts (keep structure, ignore execution artifacts)
-tests/local/
-tests/temp/
-tests/logs/
+# -----------------------------------------
+# Jupyter Notebook
+# -----------------------------------------
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+*.nbconvert.ipynb
+.virtual_documents/
 
-# Project backup files
-*.backup
-*.bak
+# -----------------------------------------
+# Docker
+# -----------------------------------------
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+docker-compose*.yaml
+*.dockerfile
 
+# -----------------------------------------
+# Local Development
+# -----------------------------------------
+local_settings.py
+db.sqlite3
+instance/
+.webassets-cache
+.scrapy
+*.pid
+*.seed
+*.pid.lock
 
-# Unified fix backups
-unified_fix_backups/
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
-# Auto-fix additions
-__pycache__/
-*.pyc
-*.pyo
-.Python
-venv/
-node_modules/
-.DS_Store
-*.log
+# -----------------------------------------
+# Project Specific
+# -----------------------------------------
+logs/
+log/
+data/temp/
+data/cache/
+data/processed/
+run/
+temp/
+tmp/
+*.cache
+
+# -----------------------------------------
+# Misc
+# -----------------------------------------
+*.pid
+*.seed
+*.pid.lock
+session*
+.sessions/
+*.stackdump
+
+# -----------------------------------------
+# Windows Specific
+# -----------------------------------------
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# -----------------------------------------
+# macOS Specific
+# -----------------------------------------
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# -----------------------------------------
+# End of .gitignore
+# ===========================================
