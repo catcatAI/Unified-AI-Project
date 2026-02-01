@@ -1,8 +1,129 @@
-tensorflow>=2.0.0
-numpy>=1.18.0
-scikit-learn>=0.22.0
-matplotlib>=3.5.0
-seaborn>=0.11.0
-psutil>=5.8.0
-pandas>=1.3.0
-jinja2>=3.0.0
+# Angela AI - Complete Requirements
+# Python 3.9+ required
+
+# Core Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+python-multipart>=0.0.6
+starlette>=0.27.0
+
+# HTTP & Web
+aiohttp>=3.9.0
+requests>=2.31.0
+httpx>=0.25.0
+websockets>=12.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Data Processing
+numpy>=1.26.0
+pandas>=2.1.0
+scipy>=1.11.0
+
+# AI/ML Core
+openai>=1.0.0
+tiktoken>=0.5.0
+transformers>=4.35.0
+torch>=2.1.0
+torchvision>=0.16.0
+sentence-transformers>=2.2.0
+
+# Vector Database
+chromadb>=0.4.0
+tiktoken>=0.5.0
+
+# Audio Processing (Critical)
+pyaudio>=0.2.11
+sounddevice>=0.4.6
+soundfile>=0.12.0
+pydub>=0.25.0
+pygame>=2.5.0
+librosa>=0.10.0
+
+# Text-to-Speech
+edge-tts>=6.1.0
+pyttsx3>=2.90
+
+# Speech Recognition
+faster-whisper>=0.9.0
+SpeechRecognition>=3.10.0
+openai-whisper>=20231117
+webrtcvad>=2.0.10
+
+# Live2D & Graphics
+PyOpenGL>=3.1.7
+PyOpenGL-accelerate>=3.1.7
+Pillow>=10.1.0
+
+# Browser Automation
+selenium>=4.15.0
+playwright>=1.40.0
+webdriver-manager>=4.0.0
+
+# Desktop Integration
+watchdog>=3.0.0
+pystray>=0.19.0
+plyer>=2.1.0
+psutil>=5.9.0
+
+# Windows Specific (optional on other platforms)
+pywin32>=306; platform_system=="Windows"
+winshell>=0.6; platform_system=="Windows"
+comtypes>=1.2.0; platform_system=="Windows"
+
+# macOS Specific (optional on other platforms)
+pyobjc>=10.0; platform_system=="Darwin"
+
+# Linux Specific (optional on other platforms)
+dbus-python>=1.3.2; platform_system=="Linux"
+
+# PDF Processing
+PyPDF2>=3.0.0
+pdf2image>=1.16.0
+pymupdf>=1.23.0
+
+# Configuration & Data
+pyyaml>=6.0.1
+toml>=0.10.2
+python-dotenv>=1.0.0
+jsonschema>=4.20.0
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+sqlite3; python_version>="3.9"
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# Development
+black>=23.11.0
+flake8>=6.1.0
+mypy>=1.7.0
+
+# Logging & Monitoring
+loguru>=0.7.0
+structlog>=23.2.0
+
+# Utilities
+tqdm>=4.66.0
+click>=8.1.0
+rich>=13.7.0
+colorama>=0.4.6
+appdirs>=1.4.4
+pathlib>=1.0.1; python_version<"3.4"
+
+# Security
+cryptography>=41.0.0
+bcrypt>=4.1.0
+PyJWT>=2.8.0
+
+# Optional: For enhanced features
+# Uncomment if needed:
+# opencv-python>=4.8.0
+# mediapipe>=0.10.0
+# matplotlib>=3.8.0
+# seaborn>=0.13.0
