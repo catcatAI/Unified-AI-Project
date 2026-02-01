@@ -72,7 +72,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.65.0",
     "react-markdown": "^10.1.0",
-    "react-resizable-panels": "^3.0.3",
+    "react-resizable-panels": "^4.5.7",
     "react-router-dom": "^6.26.2",
     "react-syntax-highlighter": "^15.6.1",
     "recharts": "^2.15.4",
