@@ -386,6 +386,213 @@ class BiologicalIntegrator:
             "emotional": self.emotional_system,
         }
         return systems.get(name)
+    
+    async def _handle_system_interaction(
+        self,
+        source_system: str,
+        target_system: str,
+        interaction_type: str,
+        intensity: float
+    ) -> Dict[str, Any]:
+        """
+        处理生物系统间的实际协调逻辑 / Handle actual coordination logic between biological systems
+        
+        实现以下生理-内分泌-情绪系统间的相互影响：
+        - 生理系统影响内分泌系统（压力反应）
+        - 内分泌系统影响情绪系统（激素效应）
+        - 自主神经系统调节生理状态（唤醒水平）
+        - 添加激素对情绪的具体影响计算
+        - 添加神经激活对生理参数的影响
+        
+        Implements the following physiological-endocrine-emotional system interactions:
+        - Physiological system affects endocrine system (stress response)
+        - Endocrine system affects emotional system (hormonal effects)
+        - Autonomic nervous system regulates physiological state (arousal level)
+        - Specific calculations for hormone effects on emotions
+        - Neural activation effects on physiological parameters
+        
+        Args:
+            source_system: Source biological system name (nervous, endocrine, tactile, emotional)
+            target_system: Target biological system name
+            interaction_type: Type of interaction (e.g., 'arousal_to_adrenaline', 'hormonal_mood')
+            intensity: Influence strength (0-1)
+            
+        Returns:
+            Dict containing interaction results and system state changes
+            
+        Example:
+            >>> result = await integrator._handle_system_interaction(
+            ...     "nervous", "endocrine", "arousal_to_adrenaline", 0.8
+            ... )
+            >>> print(f"Hormone change: {result['hormone_change']:.2f}")
+        """
+        results = {
+            "source": source_system,
+            "target": target_system,
+            "interaction_type": interaction_type,
+            "intensity": intensity,
+            "changes": {},
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            # Get source and target system instances
+            source = self.get_system_by_name(source_system)
+            target = self.get_system_by_name(target_system)
+            
+            if not source or not target:
+                results["error"] = f"System not found: {source_system} or {target_system}"
+                return results
+            
+            # 1. 生理系统影响内分泌系统 / Physiological system affects endocrine system
+            if interaction_type == "arousal_to_adrenaline" and source_system == "nervous":
+                # Calculate adrenaline release based on arousal level
+                arousal = getattr(source, 'arousal_level', 50.0)
+                adrenaline_increase = (arousal / 100.0) * intensity * 25.0  # Max 25 unit increase
+                
+                if hasattr(target, 'adjust_hormone'):
+                    await target.adjust_hormone(HormoneType.ADRENALINE, adrenaline_increase)
+                    results["changes"]["adrenaline"] = f"+{adrenaline_increase:.1f}"
+                    
+                    # Trigger cortisol for sustained arousal
+                    if arousal > 60:
+                        cortisol_increase = ((arousal - 60) / 40.0) * intensity * 15.0
+                        await target.adjust_hormone(HormoneType.CORTISOL, cortisol_increase)
+                        results["changes"]["cortisol"] = f"+{cortisol_increase:.1f}"
+            
+            # 2. 内分泌系统影响情绪系统 / Endocrine system affects emotional system
+            elif interaction_type == "hormonal_mood" and source_system == "endocrine":
+                # Calculate emotional influence from hormone levels
+                hormone_effects = {}
+                
+                if hasattr(source, 'get_hormone_level'):
+                    # Dopamine effect on pleasure/joy
+                    dopamine = source.get_hormone_level(HormoneType.DOPAMINE)
+                    dopamine_normalized = (dopamine - 20) / 80  # Normalize to -0.25 to 1.0
+                    hormone_effects["pleasure"] = dopamine_normalized * intensity * 0.6
+                    
+                    # Serotonin effect on mood stability
+                    serotonin = source.get_hormone_level(HormoneType.SEROTONIN)
+                    serotonin_normalized = (serotonin - 30) / 70
+                    hormone_effects["mood_stability"] = serotonin_normalized * intensity * 0.5
+                    
+                    # Adrenaline effect on arousal/anxiety
+                    adrenaline = source.get_hormone_level(HormoneType.ADRENALINE)
+                    if adrenaline > 50:
+                        hormone_effects["anxiety"] = ((adrenaline - 50) / 50) * intensity * 0.7
+                    
+                    # Oxytocin effect on bonding/trust
+                    oxytocin = source.get_hormone_level(HormoneType.OXYTOCIN)
+                    if oxytocin > 40:
+                        hormone_effects["trust"] = ((oxytocin - 40) / 60) * intensity * 0.5
+                    
+                    # Cortisol effect on stress/negative mood
+                    cortisol = source.get_hormone_level(HormoneType.CORTISOL)
+                    if cortisol > 30:
+                        hormone_effects["stress"] = ((cortisol - 30) / 70) * intensity * 0.8
+                
+                # Apply emotional influence
+                if hasattr(target, 'apply_influence'):
+                    for emotion, value in hormone_effects.items():
+                        if abs(value) > 0.1:  # Only apply significant effects
+                            target.apply_influence("hormonal", emotion, value, intensity)
+                
+                results["changes"]["emotional_influences"] = hormone_effects
+            
+            # 3. 自主神经系统调节生理状态 / Autonomic nervous system regulates physiological state
+            elif interaction_type == "emotion_to_arousal" and source_system == "emotional":
+                # Calculate arousal change from emotional state
+                if hasattr(source, 'get_dominant_emotion'):
+                    emotion, confidence = source.get_dominant_emotion()
+                    if emotion:
+                        # Emotion arousal affects nervous system
+                        arousal_impact = emotion.arousal * 30 * intensity  # -30 to +30
+                        
+                        if hasattr(target, 'arousal_level') and hasattr(target, 'set_arousal_directly'):
+                            current_arousal = target.arousal_level
+                            new_arousal = max(0, min(100, current_arousal + arousal_impact))
+                            target.set_arousal_directly(new_arousal)
+                            results["changes"]["arousal"] = f"{new_arousal - current_arousal:+.1f}"
+                            
+                            # High arousal triggers sympathetic activation
+                            if new_arousal > 70 and hasattr(target, 'apply_stimulus'):
+                                await target.apply_stimulus(
+                                    "emotional_arousal",
+                                    NerveType.SYMPATHETIC,
+                                    (new_arousal - 70) / 30,
+                                    5.0
+                                )
+            
+            # 4. 触觉系统影响情绪系统 / Tactile system affects emotional system
+            elif interaction_type == "touch_to_emotion" and source_system == "tactile":
+                # Calculate emotional response from tactile input
+                if hasattr(source, 'get_sensitivity_level'):
+                    sensitivity = source.get_sensitivity_level()
+                    
+                    # High sensitivity increases emotional response
+                    if sensitivity > 0.6 and hasattr(target, 'apply_influence'):
+                        target.apply_influence("tactile", "sensitivity", sensitivity * intensity, 0.5)
+                        results["changes"]["tactile_sensitivity"] = f"{sensitivity * intensity:.2f}"
+            
+            # 5. 压力激素影响神经可塑性 / Stress hormones affect neuroplasticity
+            elif interaction_type == "cortisol_to_memory" and source_system == "endocrine":
+                # Cortisol can impair memory formation under chronic stress
+                if hasattr(source, 'get_hormone_level'):
+                    cortisol = source.get_hormone_level(HormoneType.CORTISOL)
+                    
+                    if cortisol > 50 and hasattr(target, 'set_learning_rate'):
+                        # High cortisol reduces learning rate
+                        learning_impairment = ((cortisol - 50) / 50) * intensity * 0.4
+                        target.set_learning_rate(1.0 - learning_impairment)
+                        results["changes"]["learning_rate"] = f"{1.0 - learning_impairment:.2f}"
+                        results["changes"]["stress_impact"] = "impaired"
+                    elif hasattr(target, 'set_learning_rate'):
+                        # Normal learning rate
+                        target.set_learning_rate(1.0)
+            
+            # 6. 情绪记忆影响神经可塑性 / Emotional memories affect neuroplasticity
+            elif interaction_type == "emotional_memory" and source_system == "emotional":
+                # Emotional intensity enhances memory consolidation
+                if hasattr(source, 'get_emotional_intensity'):
+                    emotional_intensity = source.get_emotional_intensity()
+                    
+                    if emotional_intensity > 0.5 and hasattr(target, 'enhance_consolidation'):
+                        # Strong emotions enhance memory consolidation
+                        enhancement = (emotional_intensity - 0.5) * 2 * intensity * 0.3
+                        target.enhance_consolidation(enhancement)
+                        results["changes"]["consolidation_enhancement"] = f"+{enhancement:.2f}"
+            
+            # Log successful interaction
+            results["status"] = "success"
+            
+        except Exception as e:
+            results["status"] = "error"
+            results["error"] = str(e)
+            results["error_type"] = type(e).__name__
+        
+        return results
+    
+    async def execute_system_interaction(
+        self,
+        interaction: SystemInteraction,
+        intensity: float = 0.5
+    ) -> Dict[str, Any]:
+        """
+        执行预定义的系统交互 / Execute a predefined system interaction
+        
+        Args:
+            interaction: SystemInteraction definition
+            intensity: Influence intensity (0-1)
+            
+        Returns:
+            Interaction results
+        """
+        return await self._handle_system_interaction(
+            interaction.source_system,
+            interaction.target_system,
+            interaction.interaction_type,
+            intensity * interaction.influence_strength
+        )
 
 
 # Example usage

@@ -1179,6 +1179,233 @@ class TraumaMemorySystem:
     def get_all_trauma_memories(self) -> Dict[str, TraumaMemory]:
         """获取所有创伤记忆 / Get all trauma memories"""
         return self.trauma_memories.copy()
+    
+    def _process_trauma_reactivation(
+        self,
+        memory_id: str,
+        trigger_context: str = "",
+        current_stress_level: float = 0.5,
+        coping_strategy: str = "default"
+    ) -> Dict[str, Any]:
+        """
+        实现创伤记忆关键处理 / Implement critical trauma memory processing
+        
+        创伤记忆核心处理功能：
+        - 创伤记忆的闪回处理（侵入性回忆管理）
+        - 情感调节策略（降低情绪强度）
+        - 避免过度激活的机制（防止创伤加重）
+        - 创伤记忆的逐步消退（治疗性消退）
+        
+        Critical trauma memory processing features:
+        - Flashback handling for traumatic memories (intrusive recall management)
+        - Emotional regulation strategies (reduce emotional intensity)
+        - Mechanism to prevent over-activation (prevent trauma escalation)
+        - Gradual trauma memory extinction (therapeutic extinction)
+        
+        Args:
+            memory_id: Trauma memory identifier to process
+            trigger_context: Context or trigger that caused reactivation
+            current_stress_level: Current system stress level (0-1)
+                               Higher stress increases reactivation intensity
+            coping_strategy: Emotional regulation strategy to use
+                           Options: "default", "grounding", "reframing", 
+                                   "distraction", "extinction"
+            
+        Returns:
+            Dict containing trauma processing results:
+            - memory_id: Processed memory identifier
+            - reactivation_occurred: Whether reactivation was triggered
+            - flashback_intensity: Calculated flashback intensity (0-1)
+            - emotional_regulation_applied: Strategy applied
+            - regulation_effectiveness: How well regulation worked (0-1)
+            - over_activation_prevented: Whether over-activation was blocked
+            - extinction_progress: Progress toward memory extinction (0-1)
+            - recommended_actions: Suggested follow-up actions
+            
+        Raises:
+            ValueError: If memory_id is not found or coping_strategy is invalid
+            
+        Example:
+            >>> result = trauma_system._process_trauma_reactivation(
+            ...     memory_id="trauma_001",
+            ...     trigger_context="loud_noise",
+            ...     current_stress_level=0.7,
+            ...     coping_strategy="grounding"
+            ... )
+            >>> print(f"Flashback intensity: {result['flashback_intensity']:.2%}")
+            >>> print(f"Over-activation prevented: {result['over_activation_prevented']}")
+        """
+        import math
+        
+        results = {
+            "memory_id": memory_id,
+            "reactivation_occurred": False,
+            "flashback_intensity": 0.0,
+            "emotional_regulation_applied": coping_strategy,
+            "regulation_effectiveness": 0.0,
+            "over_activation_prevented": False,
+            "extinction_progress": 0.0,
+            "recommended_actions": [],
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            # Validate memory exists
+            if memory_id not in self.trauma_memories:
+                raise ValueError(f"Trauma memory {memory_id} not found in system")
+            
+            # Validate coping strategy
+            valid_strategies = ["default", "grounding", "reframing", "distraction", "extinction"]
+            if coping_strategy not in valid_strategies:
+                raise ValueError(f"Invalid coping strategy: {coping_strategy}. "
+                               f"Must be one of: {valid_strategies}")
+            
+            trauma = self.trauma_memories[memory_id]
+            
+            # 1. 计算闪回可能性 / Calculate flashback likelihood
+            intrusion_likelihood = self.get_intrusion_likelihood(
+                memory_id, 
+                current_stress=current_stress_level
+            )
+            
+            # 2. 闪回处理 / Flashback handling
+            if intrusion_likelihood > 0.3:  # Threshold for flashback
+                results["reactivation_occurred"] = True
+                
+                # Increment reactivation count
+                trauma.reactivation_count += 1
+                
+                if trigger_context:
+                    self.reactivation_triggers[memory_id].append(trigger_context)
+                
+                # Calculate flashback intensity
+                # Based on: trauma intensity, reactivation history, current stress
+                base_intensity = trauma.trauma_intensity
+                reactivation_history_factor = min(1.0, trauma.reactivation_count / 20.0)  # Habituation effect
+                stress_amplification = current_stress_level * 0.3
+                
+                # Habituation: more reactivations = lower intensity (if not too frequent)
+                if trauma.reactivation_count > 10:
+                    habituation_reduction = math.log10(trauma.reactivation_count) * 0.1
+                else:
+                    habituation_reduction = 0.0
+                
+                flashback_intensity = min(1.0, 
+                    base_intensity * (1 + reactivation_history_factor + stress_amplification) 
+                    - habituation_reduction
+                )
+                
+                results["flashback_intensity"] = flashback_intensity
+            else:
+                results["flashback_intensity"] = 0.0
+            
+            # 3. 情感调节策略 / Emotional regulation strategies
+            regulation_effects = {
+                "default": 0.2,      # Basic regulation
+                "grounding": 0.4,    # Present-moment focus (stronger)
+                "reframing": 0.35,   # Cognitive reframing
+                "distraction": 0.3,  # Attention redirection
+                "extinction": 0.5    # Therapeutic exposure (strongest)
+            }
+            
+            base_regulation = regulation_effects.get(coping_strategy, 0.2)
+            
+            # Effectiveness decreases with higher stress
+            stress_impact = current_stress_level * 0.4
+            effectiveness = max(0.0, base_regulation - stress_impact)
+            
+            results["regulation_effectiveness"] = effectiveness
+            
+            # Apply emotional regulation
+            if results["reactivation_occurred"]:
+                # Reduce flashback intensity based on regulation
+                reduced_intensity = max(0.0, 
+                    results["flashback_intensity"] - effectiveness
+                )
+                results["flashback_intensity"] = reduced_intensity
+            
+            # 4. 避免过度激活的机制 / Prevent over-activation mechanism
+            # Check if this would cause over-activation
+            if results["flashback_intensity"] > 0.7 and current_stress_level > 0.6:
+                # High risk of over-activation - apply dampening
+                dampening = min(0.3, current_stress_level * 0.4)
+                results["flashback_intensity"] = max(0.0, 
+                    results["flashback_intensity"] - dampening
+                )
+                results["over_activation_prevented"] = True
+                results["recommended_actions"].append("implement_grounding_protocol")
+                results["recommended_actions"].append("reduce_stimuli")
+            else:
+                results["over_activation_prevented"] = False
+            
+            # 5. 创伤记忆的逐步消退 / Gradual trauma extinction
+            if coping_strategy == "extinction":
+                # Extinction therapy: controlled reactivation without negative outcome
+                # Gradually reduces trauma response
+                if results["reactivation_occurred"] and results["flashback_intensity"] < 0.5:
+                    # Successful extinction trial
+                    extinction_boost = 0.05 + (effectiveness * 0.1)
+                    
+                    # Reduce trauma intensity slightly (simulating therapeutic extinction)
+                    trauma.trauma_intensity = max(0.1, trauma.trauma_intensity - 0.02)
+                    
+                    results["extinction_progress"] = extinction_boost
+                    results["recommended_actions"].append("continue_extinction_therapy")
+                    results["recommended_actions"].append("track_extinction_progress")
+                else:
+                    # Intensity too high for effective extinction
+                    results["extinction_progress"] = 0.0
+                    results["recommended_actions"].append("reduce_intensity_before_extinction")
+            else:
+                # Calculate natural extinction progress from repeated safe reactivations
+                if trauma.reactivation_count > 5 and results["flashback_intensity"] < 0.4:
+                    natural_extinction = min(0.3, trauma.reactivation_count * 0.01)
+                    results["extinction_progress"] = natural_extinction
+            
+            # 6. 生成推荐行动 / Generate recommended actions
+            if not results["recommended_actions"]:
+                if results["flashback_intensity"] > 0.5:
+                    results["recommended_actions"].append("apply_emotional_regulation")
+                    results["recommended_actions"].append("monitor_stress_levels")
+                
+                if trauma.reactivation_count > 15 and results["extinction_progress"] > 0.2:
+                    results["recommended_actions"].append("consider_therapeutic_extinction")
+                
+                if current_stress_level > 0.7:
+                    results["recommended_actions"].append("reduce_system_stress")
+                
+                if not results["recommended_actions"]:
+                    results["recommended_actions"].append("continue_monitoring")
+            
+            # 7. 记录处理结果 / Log processing results
+            processing_record = {
+                "timestamp": datetime.now().isoformat(),
+                "memory_id": memory_id,
+                "trigger": trigger_context,
+                "stress_level": current_stress_level,
+                "strategy": coping_strategy,
+                "intensity": results["flashback_intensity"],
+                "regulation": results["regulation_effectiveness"],
+                "extinction_progress": results["extinction_progress"]
+            }
+            
+            # Store processing history (could be extended to persistent storage)
+            if not hasattr(self, '_processing_history'):
+                self._processing_history = []
+            self._processing_history.append(processing_record)
+            
+            results["status"] = "processed"
+            
+        except ValueError as e:
+            results["status"] = "error"
+            results["error"] = str(e)
+            results["error_type"] = "ValueError"
+        except Exception as e:
+            results["status"] = "error"
+            results["error"] = str(e)
+            results["error_type"] = type(e).__name__
+        
+        return results
 
 
 class ExplicitImplicitLearning:

@@ -439,6 +439,359 @@ class MemoryNeuroplasticityBridge:
                 self.reinforcement_map[memory_id].reinforcement_strength + strength
             )
     
+    def consolidate_memory(
+        self,
+        memory_id: str,
+        emotional_intensity: float = 0.5,
+        priority: str = "normal"
+    ) -> Dict[str, Any]:
+        """
+        实现记忆巩固关键逻辑 / Implement critical memory consolidation logic
+        
+        连接CDM（短期记忆）到HSM（长期记忆）的关键桥接：
+        - 将短期记忆转换为长期存储
+        - 实现记忆的LTP增强（长时程增强）
+        - 根据情绪强度调整记忆权重（情绪标记增强）
+        - 实现记忆的优先级排序（重要记忆优先巩固）
+        - 添加记忆的时间衰减计算
+        
+        Critical bridge connecting CDM (short-term) to HSM (long-term):
+        - Transforms short-term memories to long-term storage
+        - Implements LTP enhancement for memory strengthening
+        - Adjusts memory weights based on emotional intensity (emotional tagging)
+        - Implements memory priority sorting (important memories consolidate first)
+        - Adds time decay calculation for memories
+        
+        Args:
+            memory_id: External memory identifier to consolidate
+            emotional_intensity: Emotional intensity of the memory (0-1), 
+                               higher values lead to stronger consolidation
+            priority: Consolidation priority - "high", "normal", or "low"
+                     High priority memories consolidate faster
+            
+        Returns:
+            Dict containing consolidation results:
+            - success: Whether consolidation was successful
+            - consolidation_level: Final consolidation strength (0-1)
+            - ltp_applied: Amount of LTP enhancement applied
+            - time_decay: Calculated time decay factor
+            - priority_multiplier: Priority boost applied
+            
+        Raises:
+            ValueError: If memory_id is not found in the system
+            
+        Example:
+            >>> result = bridge.consolidate_memory(
+            ...     memory_id="mem_001",
+            ...     emotional_intensity=0.8,
+            ...     priority="high"
+            ... )
+            >>> print(f"Consolidation level: {result['consolidation_level']:.2%}")
+        """
+        import math
+        
+        results = {
+            "memory_id": memory_id,
+            "success": False,
+            "consolidation_level": 0.0,
+            "ltp_applied": 0.0,
+            "time_decay": 1.0,
+            "priority_multiplier": 1.0,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            # Validate memory exists
+            if memory_id not in self._external_to_neuro:
+                raise ValueError(f"Memory {memory_id} not found in bridge registry")
+            
+            neuro_id = self._external_to_neuro[memory_id]
+            
+            # Get current memory trace
+            trace = self.neuroplasticity.access_memory(neuro_id)
+            if not trace:
+                raise ValueError(f"Memory trace {neuro_id} not found in neuroplasticity system")
+            
+            # 1. 计算优先级乘数 / Calculate priority multiplier
+            priority_multipliers = {
+                "high": 1.5,
+                "normal": 1.0,
+                "low": 0.7
+            }
+            priority_mult = priority_multipliers.get(priority, 1.0)
+            results["priority_multiplier"] = priority_mult
+            
+            # 2. 计算时间衰减 / Calculate time decay
+            age_hours = (datetime.now() - trace.created_at).total_seconds() / 3600.0
+            # Exponential decay: newer memories consolidate better
+            time_decay = math.exp(-age_hours / 24.0)  # 24-hour half-life
+            results["time_decay"] = time_decay
+            
+            # 3. 应用LTP增强 / Apply LTP enhancement
+            # Higher emotional intensity = stronger LTP
+            base_ltp_frequency = 10.0
+            emotional_boost = emotional_intensity * 10.0  # 0-10 Hz boost
+            ltp_frequency = (base_ltp_frequency + emotional_boost) * priority_mult * time_decay
+            ltp_duration = 5.0 + emotional_intensity * 5.0  # 5-10 seconds
+            
+            self.neuroplasticity.apply_ltp(
+                neuro_id,
+                frequency=ltp_frequency,
+                duration=ltp_duration
+            )
+            results["ltp_applied"] = ltp_frequency * ltp_duration / 100.0  # Normalized LTP amount
+            
+            # 4. 情绪标记增强 / Emotional tagging enhancement
+            if emotional_intensity > 0.6:
+                # High emotional memories get extra consolidation boost
+                emotional_boost = (emotional_intensity - 0.6) * 0.5  # 0-0.2 boost
+                trace.consolidation_strength = min(1.0, trace.consolidation_strength + emotional_boost)
+                results["emotional_boost"] = emotional_boost
+            
+            # 5. 更新巩固强度 / Update consolidation strength
+            base_consolidation_increase = 0.3 * priority_mult * time_decay
+            trace.consolidation_strength = min(
+                1.0,
+                trace.consolidation_strength + base_consolidation_increase
+            )
+            
+            # 6. 更新记忆权重 / Update memory weight
+            weight_increase = 0.1 * priority_mult * (1 + emotional_intensity * 0.5) * time_decay
+            trace.current_weight = min(1.0, trace.current_weight + weight_increase)
+            
+            # 7. 检查是否完全巩固 / Check if fully consolidated
+            if trace.consolidation_strength >= self._consolidation_threshold:
+                trace.is_consolidated = True
+                results["is_fully_consolidated"] = True
+                
+                # 从队列中移除 / Remove from queue
+                if memory_id in self.consolidation_queue:
+                    self.consolidation_queue.remove(memory_id)
+                
+                # 通知回调 / Notify callbacks
+                for callback in self._consolidation_callbacks:
+                    try:
+                        callback(memory_id)
+                    except Exception:
+                        pass
+            else:
+                results["is_fully_consolidated"] = False
+                # Add to queue if not already there
+                if memory_id not in self.consolidation_queue:
+                    self.consolidation_queue.append(memory_id)
+            
+            # 8. 更新元数据 / Update metadata
+            if memory_id in self._memory_metadata:
+                self._memory_metadata[memory_id]["consolidation_level"] = trace.consolidation_strength
+                self._memory_metadata[memory_id]["last_consolidation"] = datetime.now()
+                self._memory_metadata[memory_id]["emotional_intensity"] = emotional_intensity
+            
+            results["consolidation_level"] = trace.consolidation_strength
+            results["success"] = True
+            
+        except ValueError as e:
+            results["error"] = str(e)
+            results["error_type"] = "ValueError"
+        except Exception as e:
+            results["error"] = str(e)
+            results["error_type"] = type(e).__name__
+        
+        return results
+    
+    def reinforce_memory(
+        self,
+        memory_id: str,
+        strength: float = 0.1,
+        emotional_context: Optional[str] = None,
+        source: str = "manual"
+    ) -> Dict[str, Any]:
+        """
+        实现记忆强化关键逻辑 / Implement critical memory reinforcement logic
+        
+        记忆桥接关键功能：
+        - 连接CDM到HSM的记忆强化通路
+        - 实现LTP（长时程增强）效应
+        - 根据情绪强度调整记忆权重
+        - 实现记忆的优先级排序
+        - 添加记忆的时间衰减和保护机制
+        
+        Critical memory bridge functionality:
+        - Connects CDM to HSM memory reinforcement pathway
+        - Implements LTP (Long-Term Potentiation) effects
+        - Adjusts memory weights based on emotional intensity
+        - Implements memory priority sorting
+        - Adds time decay calculation and memory protection
+        
+        Args:
+            memory_id: Memory identifier to reinforce
+            strength: Reinforcement strength (0-1), determines LTP intensity
+            emotional_context: Optional emotional context for reinforcement
+                             (e.g., "joy", "stress", "nostalgia")
+            source: Source of reinforcement - "manual", "access", "association",
+                   or "emotional_trigger"
+                   
+        Returns:
+            Dict containing reinforcement results:
+            - success: Whether reinforcement was successful
+            - reinforcement_strength: Final reinforcement level
+            - ltp_applied: LTP parameters applied
+            - weight_change: Change in memory weight
+            - access_count: Updated access count
+            - emotional_boost: Extra boost from emotional context
+            
+        Raises:
+            ValueError: If memory_id is not found or strength is invalid
+            
+        Example:
+            >>> result = bridge.reinforce_memory(
+            ...     memory_id="mem_001",
+            ...     strength=0.3,
+            ...     emotional_context="nostalgia",
+            ...     source="emotional_trigger"
+            ... )
+            >>> print(f"New reinforcement level: {result['reinforcement_strength']:.2%}")
+        """
+        import math
+        
+        results = {
+            "memory_id": memory_id,
+            "success": False,
+            "reinforcement_strength": 0.0,
+            "ltp_applied": {},
+            "weight_change": 0.0,
+            "access_count": 0,
+            "emotional_boost": 0.0,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            # Validate inputs
+            if not 0 <= strength <= 1:
+                raise ValueError(f"Strength must be between 0 and 1, got {strength}")
+            
+            # Validate memory exists
+            if memory_id not in self._external_to_neuro:
+                raise ValueError(f"Memory {memory_id} not found in bridge registry")
+            
+            neuro_id = self._external_to_neuro[memory_id]
+            
+            # Get reinforcement tracking
+            if memory_id not in self.reinforcement_map:
+                self.reinforcement_map[memory_id] = MemoryReinforcement(
+                    memory_id=memory_id,
+                    reinforcement_strength=0.0,
+                    association_count=0,
+                    access_frequency=0.0
+                )
+            
+            reinforcement = self.reinforcement_map[memory_id]
+            
+            # 1. 更新访问统计 / Update access statistics
+            reinforcement.access_frequency += 1.0
+            reinforcement.last_accessed = datetime.now()
+            results["access_count"] = int(reinforcement.access_frequency)
+            
+            # 2. 根据来源调整基础强度 / Adjust base strength by source
+            source_multipliers = {
+                "manual": 1.0,
+                "access": 0.7,  # Regular access has lower reinforcement
+                "association": 0.8,  # Association-based reinforcement
+                "emotional_trigger": 1.3  # Emotional triggers are stronger
+            }
+            adjusted_strength = strength * source_multipliers.get(source, 1.0)
+            
+            # 3. 情绪上下文增强 / Emotional context enhancement
+            emotional_boost = 0.0
+            if emotional_context:
+                # Different emotions provide different boosts
+                emotion_multipliers = {
+                    "joy": 0.15,
+                    "love": 0.20,
+                    "nostalgia": 0.12,
+                    "pride": 0.10,
+                    "stress": 0.08,  # Stress can also reinforce (flashbulb memory)
+                    "fear": 0.10,
+                }
+                emotional_boost = emotion_multipliers.get(emotional_context, 0.05)
+                adjusted_strength += emotional_boost
+            
+            results["emotional_boost"] = emotional_boost
+            
+            # 4. 应用LTP / Apply LTP
+            # Calculate LTP parameters based on adjusted strength
+            base_frequency = 10.0
+            ltp_frequency = base_frequency + adjusted_strength * 15.0  # 10-25 Hz
+            ltp_duration = 5.0 + adjusted_strength * 10.0  # 5-15 seconds
+            
+            self.neuroplasticity.apply_ltp(
+                neuro_id,
+                frequency=ltp_frequency,
+                duration=ltp_duration
+            )
+            
+            results["ltp_applied"] = {
+                "frequency": ltp_frequency,
+                "duration": ltp_duration,
+                "intensity": adjusted_strength
+            }
+            
+            # 5. 更新强化强度 / Update reinforcement strength
+            # Apply diminishing returns for very high access frequencies
+            if reinforcement.access_frequency > 20:
+                # Diminishing returns after 20 accesses
+                diminishing_factor = 1.0 / math.sqrt(reinforcement.access_frequency / 20)
+                adjusted_strength *= diminishing_factor
+            
+            old_strength = reinforcement.reinforcement_strength
+            reinforcement.reinforcement_strength = min(
+                1.0,
+                reinforcement.reinforcement_strength + adjusted_strength
+            )
+            results["reinforcement_strength"] = reinforcement.reinforcement_strength
+            results["weight_change"] = reinforcement.reinforcement_strength - old_strength
+            
+            # 6. 更新神经可塑性追踪 / Update neuroplasticity trace
+            trace = self.neuroplasticity.access_memory(neuro_id)
+            if trace:
+                trace.current_weight = min(1.0, trace.current_weight + adjusted_strength * 0.1)
+                trace.access_count += 1
+                trace.last_accessed = datetime.now()
+                
+                # Add emotional tags if provided
+                if emotional_context and emotional_context not in trace.emotional_tags:
+                    trace.emotional_tags.append(emotional_context)
+            
+            # 7. 检查LTP阈值 / Check LTP threshold
+            if reinforcement.access_frequency >= self._ltp_threshold_accesses:
+                # Bonus reinforcement for repeated access
+                bonus_strength = 0.05
+                reinforcement.reinforcement_strength = min(
+                    1.0,
+                    reinforcement.reinforcement_strength + bonus_strength
+                )
+                results["ltp_threshold_bonus"] = bonus_strength
+            
+            # 8. 更新元数据 / Update metadata
+            if memory_id in self._memory_metadata:
+                self._memory_metadata[memory_id]["access_count"] = int(reinforcement.access_frequency)
+                self._memory_metadata[memory_id]["last_accessed"] = datetime.now()
+                if emotional_context:
+                    if "emotional_contexts" not in self._memory_metadata[memory_id]:
+                        self._memory_metadata[memory_id]["emotional_contexts"] = []
+                    if emotional_context not in self._memory_metadata[memory_id]["emotional_contexts"]:
+                        self._memory_metadata[memory_id]["emotional_contexts"].append(emotional_context)
+            
+            results["success"] = True
+            
+        except ValueError as e:
+            results["error"] = str(e)
+            results["error_type"] = "ValueError"
+        except Exception as e:
+            results["error"] = str(e)
+            results["error_type"] = type(e).__name__
+        
+        return results
+    
     def register_consolidation_callback(self, callback: Callable[[str], None]):
         """Register callback for memory consolidation events"""
         self._consolidation_callbacks.append(callback)
