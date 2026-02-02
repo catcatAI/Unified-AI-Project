@@ -27,6 +27,7 @@ import asyncio
 from .biological_integrator import BiologicalIntegrator
 from .action_executor import ActionExecutor
 from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
+from .autonomous_life_cycle import AutonomousLifeCycle
 
 
 class LifeCycleState(Enum):
@@ -131,6 +132,10 @@ class DigitalLifeIntegrator:
         self.action_executor: ActionExecutor = ActionExecutor()
         self.memory_bridge: Optional[MemoryNeuroplasticityBridge] = None
         
+        # Theoretical Framework Integration
+        self.autonomous_lifecycle: Optional[AutonomousLifeCycle] = None
+        self._formula_integration_enabled: bool = self.config.get('enable_formula_integration', True)
+        
         # Health monitoring
         self.systems_health: Dict[str, SystemHealth] = {}
         self._health_check_interval: float = 60.0  # seconds
@@ -171,12 +176,40 @@ class DigitalLifeIntegrator:
         except Exception:
             pass
         
+        # Initialize theoretical frameworks (AutonomousLifeCycle)
+        if self._formula_integration_enabled:
+            try:
+                self.autonomous_lifecycle = AutonomousLifeCycle()
+                await self.autonomous_lifecycle.initialize()
+                
+                # Register callbacks for formula-driven decisions
+                self.autonomous_lifecycle.register_decision_callback(
+                    self._on_formula_decision
+                )
+            except Exception:
+                pass
+        
         # Set initial state
         await self._transition_state(LifeCycleState.AWAKENING)
         
         # Start monitoring
         self._life_cycle_task = asyncio.create_task(self._life_cycle_loop())
         self._health_check_task = asyncio.create_task(self._health_check_loop())
+    
+    def _on_formula_decision(self, decision):
+        """Callback for formula-driven life decisions"""
+        # Record as life event if significant
+        if decision.confidence > 0.6:
+            self.record_life_event(
+                event_type=f"formula_decision_{decision.decision_type}",
+                description=decision.rationale,
+                significance=decision.confidence,
+                metadata={
+                    "decision_id": decision.decision_id,
+                    "triggered_by": decision.triggered_by,
+                    "expected_outcome": decision.expected_outcome
+                }
+            )
     
     async def shutdown(self):
         """Shutdown digital life and all subsystems"""
@@ -193,6 +226,10 @@ class DigitalLifeIntegrator:
         await self.action_executor.shutdown()
         if self.memory_bridge:
             await self.memory_bridge.shutdown()
+        
+        # Shutdown theoretical frameworks
+        if self.autonomous_lifecycle:
+            await self.autonomous_lifecycle.shutdown()
         
         # Record final stats
         self._update_active_time()
@@ -457,6 +494,33 @@ class DigitalLifeIntegrator:
     async def force_state(self, state: LifeCycleState):
         """Forcefully change to a specific state (for testing/emergencies)"""
         await self._transition_state(state)
+    
+    def get_formula_metrics(self) -> Optional[Dict[str, Any]]:
+        """
+        Get theoretical formula metrics if formula integration is enabled
+        
+        Returns:
+            Dictionary containing formula metrics, or None if not available
+        """
+        if self.autonomous_lifecycle:
+            return self.autonomous_lifecycle.get_lifecycle_summary()
+        return None
+    
+    def record_user_interaction_for_formulas(self, user_id: str, intensity: float = 0.5):
+        """
+        Record user interaction for formula calculations
+        
+        Args:
+            user_id: Unique user identifier
+            intensity: Interaction intensity (0-1)
+        """
+        if self.autonomous_lifecycle:
+            # Register or update observer
+            self.autonomous_lifecycle.register_observer(user_id, relationship_depth=intensity)
+            self.autonomous_lifecycle.update_observer_interaction(user_id, intensity)
+        
+        # Also record regular activity
+        self.record_activity("interaction")
 
 
 # Example usage

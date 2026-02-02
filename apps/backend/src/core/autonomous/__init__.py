@@ -59,6 +59,7 @@ if TYPE_CHECKING:
     from .multidimensional_trigger import MultidimensionalTriggerSystem, TriggerDimension
     from .cyber_identity import CyberIdentity, SelfModel, IdentityGrowth
     from .self_generation import SelfGeneration, AvatarBuilder
+    from .autonomous_life_cycle import AutonomousLifeCycle
 
 __version__ = "6.0.0"
 __author__ = "Angela AI Development Team"
@@ -71,8 +72,6 @@ __all__ = [
     
     # Biological Systems
     "PhysiologicalTactileSystem",
-    "SkinReceptor",
-    "BodyPart",
     "EndocrineSystem",
     "Hormone",
     "HormoneType",
@@ -95,21 +94,6 @@ __all__ = [
     "EmotionalExpression",
     "MultidimensionalStateMatrix",
     "StateDimension",
-    
-    # Physiological Tactile Extensions
-    "TrajectoryAnalyzer",
-    "TrajectoryPoint",
-    "TrajectoryAnalysis",
-    "AdaptationMechanism",
-    "ReceptorAdaptationState",
-    
-    # Endocrine System Extensions
-    "HormoneKinetics",
-    "ReceptorStatus",
-    "FeedbackLoop",
-    "FeedbackNode",
-    
-    # State Matrix System
     "StateMatrix4D",
     "DimensionState",
     
@@ -145,13 +129,19 @@ __all__ = [
     "MemoryConsolidation",
     "ExtendedBehaviorLibrary",
     "BehaviorDefinition",
-    "MultidimensionalTrigger",
+    "MultidimensionalTriggerSystem",
     "TriggerDimension",
     "CyberIdentity",
     "SelfModel",
     "IdentityGrowth",
     "SelfGeneration",
     "AvatarBuilder",
+    
+    # Autonomous Life Cycle (Theoretical Frameworks)
+    "AutonomousLifeCycle",
+    "LifePhase",
+    "LifeDecision",
+    "FormulaMetrics",
 ]
 
 
@@ -194,7 +184,8 @@ def get_system_info() -> dict:
                 "extended_behavior_library",
                 "multidimensional_trigger",
                 "cyber_identity",
-                "self_generation"
+                "self_generation",
+                "autonomous_life_cycle"
             ]
         },
         "capabilities": [
@@ -219,7 +210,14 @@ def get_system_info() -> dict:
             "memory_consolidation",
             "behavior_generation",
             "identity_formation",
-            "self_generation"
+            "self_generation",
+            "autonomous_life_cycle",
+            "theoretical_frameworks",
+            "hsm_formula",
+            "cdm_model",
+            "life_intensity",
+            "active_cognition",
+            "non_paradox_existence"
         ]
     }
 
@@ -257,6 +255,7 @@ async def initialize_all_systems() -> dict:
     from .multidimensional_trigger import MultidimensionalTrigger
     from .cyber_identity import CyberIdentity
     from .self_generation import SelfGeneration
+    from .autonomous_life_cycle import AutonomousLifeCycle
     
     # Initialize all systems
     systems = {
@@ -278,6 +277,7 @@ async def initialize_all_systems() -> dict:
         'multidimensional_trigger': MultidimensionalTriggerSystem(),
         'cyber_identity': CyberIdentity(),
         'self_generation': SelfGeneration(),
+        'autonomous_life_cycle': AutonomousLifeCycle(),
     }
     
     # Initialize each system
