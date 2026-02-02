@@ -23,7 +23,7 @@ class AngelaInstaller:
     
     def __init__(self, install_dir: Optional[str] = None):
         self.install_dir = install_dir or self._get_default_install_dir()
-        self.source_dir = Path(__file__).parent.parent.parent  # apps/backend
+        self.source_dir = Path(__file__).parent  # Project root directory
         self.resources_dir = Path(__file__).parent / "resources"
         
     def _get_default_install_dir(self) -> str:
