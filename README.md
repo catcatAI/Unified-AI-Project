@@ -74,17 +74,64 @@ The Desktop Pet is the heart of Angela AI - a living virtual entity on your desk
 
 ### Installation
 
+#### 🎯 **Option 1: One-Click Installer (Recommended for New Users)**
+
+Download and run the installer script - it will automatically fetch everything from GitHub:
+
+```bash
+# Download the installer
+curl -o install_angela.py https://raw.githubusercontent.com/catcatAI/Unified-AI-Project/main/install_angela.py
+
+# Run the installer
+python install_angela.py
+```
+
+Or on Windows, simply double-click `install_angela.py` after downloading.
+
+**What the installer does:**
+1. ✅ Checks system requirements (Python 3.9+, pip, disk space)
+2. ✅ Clones the repository from GitHub to `~/AngelaAI` (or your chosen directory)
+3. ✅ Installs all Python dependencies automatically
+4. ✅ Creates desktop and start menu shortcuts
+5. ✅ Generates an uninstaller for easy removal
+
+**After installation:**
+- Launch from desktop shortcut "Angela AI"
+- Or from terminal: `cd ~/AngelaAI && python run_angela.py`
+
+---
+
+#### 💻 **Option 2: Manual Installation (For Developers)**
+
+If you want to contribute or customize the code:
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/catcatAI/Unified-AI-Project.git
 cd Unified-AI-Project
 
-# 2. Run the installation script
+# 2. Install dependencies
+pip install -r requirements.txt --user
+
+# 3. Run setup (creates shortcuts in current directory)
 python setup.py
 
-# 3. Start Angela with Desktop Pet
+# 4. Start Angela
 python run_angela.py
 ```
+
+---
+
+#### 🔧 **Option 3: Docker Installation**
+
+For containerized deployment:
+
+```bash
+# Build and run with Docker
+docker-compose up -d
+```
+
+See `docker-compose.yml` for configuration options.
 
 ### Command Line Options
 
@@ -159,7 +206,8 @@ angela-ai/
 │
 ├── 🚀 Entry Points
 │   ├── run_angela.py              # Main entry point
-│   ├── setup.py                   # Installation script
+│   ├── install_angela.py          # One-click installer (recommended)
+│   ├── setup.py                   # Local installation script
 │   └── verify_installation.py     # Installation verification
 │
 ├── 📄 Documentation
