@@ -379,6 +379,7 @@ test_functionality.py
 test_performance.py
 test_*.py
 !test_*.py.example
+!apps/backend/tests/**/*.py
 
 # Local Configurations
 test_config.json
