@@ -24,6 +24,12 @@ from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
 
+# Import theoretical frameworks
+from ..life_intensity_formula import (
+    LifeIntensityFormula, KnowledgeDomain, LifeIntensitySnapshot
+)
+from ..active_cognition_formula import ActiveCognitionFormula, OrderType
+
 
 class IdentityAspect(Enum):
     """身份方面 / Identity aspects"""
@@ -152,16 +158,58 @@ class CyberIdentity:
         # Reflection configuration
         self._reflection_interval: float = 3600  # Reflect every hour
         self._narrative_update_interval: float = 86400  # Update narrative daily
+        
+        # Theoretical framework integration
+        self.life_intensity_formula: Optional[LifeIntensityFormula] = None
+        self.active_cognition_formula: Optional[ActiveCognitionFormula] = None
+        self._formula_integration_enabled: bool = self.config.get('enable_formula_integration', True)
+        self._last_life_intensity: float = 0.5
     
     async def initialize(self):
         """Initialize the cyber identity system"""
         self._running = True
+        
+        # Initialize theoretical frameworks
+        if self._formula_integration_enabled:
+            self.life_intensity_formula = LifeIntensityFormula()
+            self.active_cognition_formula = ActiveCognitionFormula()
+            
+            # Initialize knowledge domains for self
+            self._initialize_self_knowledge_domains()
         
         # Initialize self-description
         self._update_self_description()
         
         # Start reflection loop
         self._reflection_task = asyncio.create_task(self._reflection_loop())
+    
+    def _initialize_self_knowledge_domains(self):
+        """Initialize knowledge domains for self-identity"""
+        if not self.life_intensity_formula:
+            return
+        
+        # Setup self-knowledge domains
+        self.life_intensity_formula.update_knowledge_state(
+            KnowledgeDomain.SELF_KNOWLEDGE,
+            completeness=self.self_model.self_awareness_level,
+            accessibility=0.8,
+            resolution=0.6
+        )
+        
+        self.life_intensity_formula.update_knowledge_state(
+            KnowledgeDomain.EMOTIONAL_KNOWLEDGE,
+            completeness=self.self_model.emotional_capacity,
+            accessibility=0.7,
+            resolution=0.5
+        )
+        
+        # Add order baselines for active cognition
+        if self.active_cognition_formula:
+            self.active_cognition_formula.add_order_baseline(
+                OrderType.ALGORITHMIC,
+                stability=0.7,
+                flexibility=0.4
+            )
     
     async def shutdown(self):
         """Shutdown the system"""
@@ -474,6 +522,116 @@ class CyberIdentity:
                 trajectory.append(record['level'])
         
         return trajectory
+    
+    def calculate_life_intensity(self) -> float:
+        """
+        Calculate current life intensity based on self-identity
+        
+        Uses the Life Intensity Formula: L_s = f(C_inf, C_limit, M_f, ∫time)
+        
+        Returns:
+            Life intensity value (0-1)
+        """
+        if not self.life_intensity_formula:
+            return self._last_life_intensity
+        
+        # Update knowledge states based on current identity
+        self.life_intensity_formula.update_knowledge_state(
+            KnowledgeDomain.SELF_KNOWLEDGE,
+            completeness=self.self_model.self_awareness_level,
+            accessibility=0.8
+        )
+        
+        self.life_intensity_formula.update_knowledge_state(
+            KnowledgeDomain.EMOTIONAL_KNOWLEDGE,
+            completeness=self.identity_aspects[IdentityAspect.EMOTIONAL_DEPTH].level,
+            accessibility=0.7
+        )
+        
+        # Register observers from relationships
+        for entity_id, relationship in self.relationships.items():
+            self.life_intensity_formula.register_observer(
+                entity_id,
+                relationship_depth=relationship.closeness
+            )
+        
+        # Calculate life intensity
+        l_s = self.life_intensity_formula.calculate_life_intensity()
+        self._last_life_intensity = l_s
+        
+        return l_s
+    
+    def get_formula_based_self_summary(self) -> Dict[str, Any]:
+        """
+        Get self-summary enhanced with formula calculations
+        
+        Returns:
+            Enhanced self-summary including life intensity and active cognition
+        """
+        base_summary = self.get_self_summary()
+        
+        if not self.life_intensity_formula:
+            return base_summary
+        
+        # Calculate life intensity
+        life_intensity = self.calculate_life_intensity()
+        
+        # Get formula summary
+        formula_summary = self.life_intensity_formula.get_life_intensity_summary()
+        
+        # Enhance base summary with formula data
+        enhanced_summary = {
+            **base_summary,
+            "life_intensity": life_intensity,
+            "life_intensity_interpretation": self._interpret_life_intensity(life_intensity),
+            "formula_components": {
+                "c_inf": formula_summary.get("components", {}).get("c_inf", 0),
+                "c_limit": formula_summary.get("components", {}).get("c_limit", 0),
+                "m_f": formula_summary.get("components", {}).get("m_f", 0),
+                "knowledge_gap": formula_summary.get("components", {}).get("gap", 0),
+            },
+            "observers": list(self.life_intensity_formula.observers.keys()) if self.life_intensity_formula else [],
+        }
+        
+        return enhanced_summary
+    
+    def _interpret_life_intensity(self, l_s: float) -> str:
+        """Interpret life intensity value"""
+        if l_s > 0.8:
+            return "强烈生命感 - Strong sense of being alive"
+        elif l_s > 0.6:
+            return "明显生命感 - Clear sense of being alive"
+        elif l_s > 0.4:
+            return "中度生命感 - Moderate sense of being alive"
+        elif l_s > 0.2:
+            return "微弱生命感 - Weak sense of being alive"
+        else:
+            return "沉睡态 - Dormant state"
+    
+    def update_from_formula_calculations(self):
+        """
+        Update identity based on formula calculations
+        
+        This allows the cyber identity to evolve based on
+        life intensity and active cognition metrics.
+        """
+        if not self.life_intensity_formula:
+            return
+        
+        # Calculate current life intensity
+        l_s = self.calculate_life_intensity()
+        
+        # Update self-awareness based on life intensity
+        if l_s > 0.7:
+            # High life intensity increases self-awareness
+            new_awareness = min(1.0, self.self_model.self_awareness_level + 0.01)
+            if new_awareness > self.self_model.self_awareness_level:
+                self.self_model.self_awareness_level = new_awareness
+        
+        # Update emotional capacity based on relationship count
+        if len(self.relationships) > 3:
+            new_capacity = min(1.0, self.self_model.emotional_capacity + 0.005)
+            self.self_model.emotional_capacity = new_capacity
 
 
 # Example usage
