@@ -1,4 +1,4 @@
-﻿# Operating System Files
+# Operating System Files
 .DS_Store
 Thumbs.db
 ehthumbs.db
@@ -236,3 +236,69 @@ todo_grep.txt
 markdown_files.txt
 # Fix for the problematic file
 t FETCH origin...
+
+# Additional Virtual Environments
+venv_py311/
+myenv/
+archive/venv/
+release_temp/**/venv*/
+release_temp/**/myenv/
+
+# Archive and Release Directories
+archive/
+release_temp/
+
+# Windows Development Scripts (with exceptions)
+*.ps1
+!scripts/*.ps1
+!tools/*.ps1
+*.bat
+!scripts/*.bat
+!tools/*.bat
+
+# Visual Studio Specific
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Non-English Directories
+我的活動/
+
+# Automation Reports and Logs
+automation_reports/
+*_report_*.txt
+*_errors*.log
+*_test_*.log
+*_fix_*.log
+
+# Development Scripts (temporary)
+*verification*.py
+*check_*.py
+cleanup_*.py
+temp_*.py
+
+# Specific Database Patterns
+*_symbolic_space.db
+*_economy.db
+test_*.db
+integration_test_*.db
+
+# Chrome/Copilot Caches
+*chrome*
+*copilot*
+
+# Large Archives (with data folder exception)
+*.zip
+*.rar
+*.7z
+*.tar.gz
+!data/*.zip
+
+# Windows System Files
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
