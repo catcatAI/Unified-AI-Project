@@ -41,7 +41,10 @@ if TYPE_CHECKING:
     from .state_matrix import StateMatrix4D, DimensionState
     
     # Execution Systems
-    from .action_executor import ActionExecutor, ActionQueue, ActionPriority
+    from .action_executor import (
+        ActionExecutor, ActionQueue, ActionPriority, 
+        Action, ActionResult, ActionStatus, ActionCategory
+    )
     from .desktop_interaction import DesktopInteraction, FileOperation, DesktopState
     from .browser_controller import BrowserController, SearchResult, BrowserState
     from .audio_system import AudioSystem, TTSConfig, LyricsSync
@@ -114,6 +117,10 @@ __all__ = [
     "ActionExecutor",
     "ActionQueue",
     "ActionPriority",
+    "Action",
+    "ActionResult",
+    "ActionStatus",
+    "ActionCategory",
     "DesktopInteraction",
     "FileOperation",
     "DesktopState",
