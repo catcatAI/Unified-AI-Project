@@ -12,21 +12,46 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    # Biological Simulation Systems
+# Biological Simulation Systems
+try:
     from .physiological_tactile import (
         PhysiologicalTactileSystem, Receptor, BodyPart,
         TrajectoryAnalyzer, TrajectoryPoint, TrajectoryAnalysis,
         AdaptationMechanism, ReceptorAdaptationState
     )
+except ImportError:
+    PhysiologicalTactileSystem = None
+    Receptor = None
+    BodyPart = None
+    TrajectoryAnalyzer = None
+    TrajectoryPoint = None
+    TrajectoryAnalysis = None
+    AdaptationMechanism = None
+    ReceptorAdaptationState = None
+
+try:
     from .endocrine_system import (
         EndocrineSystem, Hormone, HormoneType,
         HormoneKinetics, ReceptorStatus,
         FeedbackLoop, FeedbackNode
     )
+except ImportError:
+    EndocrineSystem = None
+    Hormone = None
+    HormoneType = None
+    HormoneKinetics = None
+    ReceptorStatus = None
+    FeedbackLoop = None
+    FeedbackNode = None
+
+try:
     from .autonomic_nervous_system import AutonomicNervousSystem, ANSState, NerveType
+except ImportError:
+    AutonomicNervousSystem = None
+    ANSState = None
+    NerveType = None
+
+try:
     from .neuroplasticity import (
         NeuroplasticitySystem, MemoryTrace, HebbianRule,
         SkillAcquisition, SkillTrace,
@@ -34,32 +59,137 @@ if TYPE_CHECKING:
         TraumaMemorySystem, TraumaMemory,
         ExplicitImplicitLearning, LearningEvent
     )
+except ImportError:
+    NeuroplasticitySystem = None
+    MemoryTrace = None
+    HebbianRule = None
+    SkillAcquisition = None
+    SkillTrace = None
+    HabitFormation = None
+    HabitTrace = None
+    TraumaMemorySystem = None
+    TraumaMemory = None
+    ExplicitImplicitLearning = None
+    LearningEvent = None
+
+try:
     from .emotional_blending import (
         EmotionalBlendingSystem, PADEmotion, EmotionalExpression,
         MultidimensionalStateMatrix, StateDimension
     )
+except ImportError:
+    EmotionalBlendingSystem = None
+    PADEmotion = None
+    EmotionalExpression = None
+    MultidimensionalStateMatrix = None
+    StateDimension = None
+
+try:
     from .state_matrix import StateMatrix4D, DimensionState
-    
-    # Execution Systems
+except ImportError:
+    StateMatrix4D = None
+    DimensionState = None
+
+# Execution Systems
+try:
     from .action_executor import (
-        ActionExecutor, ActionQueue, ActionPriority, 
+        ActionExecutor, ActionQueue, ActionPriority,
         Action, ActionResult, ActionStatus, ActionCategory
     )
+except ImportError:
+    ActionExecutor = None
+    ActionQueue = None
+    ActionPriority = None
+    Action = None
+    ActionResult = None
+    ActionStatus = None
+    ActionCategory = None
+
+try:
     from .desktop_interaction import DesktopInteraction, FileOperation, DesktopState
+except ImportError:
+    DesktopInteraction = None
+    FileOperation = None
+    DesktopState = None
+
+try:
     from .browser_controller import BrowserController, SearchResult, BrowserState
+except ImportError:
+    BrowserController = None
+    SearchResult = None
+    BrowserState = None
+
+try:
     from .audio_system import AudioSystem, TTSConfig, LyricsSync
+except ImportError:
+    AudioSystem = None
+    TTSConfig = None
+    LyricsSync = None
+
+try:
     from .desktop_presence import DesktopPresence, MouseTracker
+except ImportError:
+    DesktopPresence = None
+    MouseTracker = None
+
+try:
     from .live2d_integration import Live2DIntegration, Live2DExpression, Live2DAction
-    
-    # Integration Systems
+except ImportError:
+    Live2DIntegration = None
+    Live2DExpression = None
+    Live2DAction = None
+
+# Integration Systems
+try:
     from .biological_integrator import BiologicalIntegrator, SystemInteraction
+except ImportError:
+    BiologicalIntegrator = None
+    SystemInteraction = None
+
+try:
     from .digital_life_integrator import DigitalLifeIntegrator, LifeCycleState
+except ImportError:
+    DigitalLifeIntegrator = None
+    LifeCycleState = None
+
+try:
     from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge, MemoryConsolidation
+except ImportError:
+    MemoryNeuroplasticityBridge = None
+    MemoryConsolidation = None
+
+try:
     from .extended_behavior_library import ExtendedBehaviorLibrary, BehaviorDefinition
+except ImportError:
+    ExtendedBehaviorLibrary = None
+    BehaviorDefinition = None
+
+try:
     from .multidimensional_trigger import MultidimensionalTriggerSystem, TriggerDimension
+except ImportError:
+    MultidimensionalTriggerSystem = None
+    TriggerDimension = None
+
+try:
     from .cyber_identity import CyberIdentity, SelfModel, IdentityGrowth
+except ImportError:
+    CyberIdentity = None
+    SelfModel = None
+    IdentityGrowth = None
+
+try:
     from .self_generation import SelfGeneration, AvatarBuilder
-    from .autonomous_life_cycle import AutonomousLifeCycle
+except ImportError:
+    SelfGeneration = None
+    AvatarBuilder = None
+
+try:
+    from .autonomous_life_cycle import AutonomousLifeCycle, LifePhase, LifeDecision, FormulaMetrics
+except ImportError:
+    AutonomousLifeCycle = None
+    LifePhase = None
+    LifeDecision = None
+    FormulaMetrics = None
 
 __version__ = "6.0.0"
 __author__ = "Angela AI Development Team"
@@ -252,7 +382,7 @@ async def initialize_all_systems() -> dict:
     from .digital_life_integrator import DigitalLifeIntegrator
     from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
     from .extended_behavior_library import ExtendedBehaviorLibrary
-    from .multidimensional_trigger import MultidimensionalTrigger
+    from .multidimensional_trigger import MultidimensionalTriggerSystem
     from .cyber_identity import CyberIdentity
     from .self_generation import SelfGeneration
     from .autonomous_life_cycle import AutonomousLifeCycle
