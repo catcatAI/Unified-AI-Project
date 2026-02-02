@@ -26,6 +26,9 @@ import asyncio
 import uuid
 import json
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ..action_execution_bridge import ActionExecutionBridge, ExecutionResult
@@ -323,8 +326,8 @@ class ActionExecutor:
             for callback in self._pre_execution_callbacks:
                 try:
                     callback(action)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Pre-execution callback failed: {e}")
             
             # Validate action
             is_valid, error_msg = await self._validate_action(action)
@@ -385,8 +388,8 @@ class ActionExecutor:
             for callback in self._post_execution_callbacks:
                 try:
                     callback(action, action.result)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Post-execution callback failed: {e}")
             
         except Exception as e:
             action.status = ActionStatus.FAILED
@@ -414,7 +417,7 @@ class ActionExecutor:
                         return False, message or f"Critical safety check failed: {check_name}"
                     else:
                         # Non-critical check failed - log but continue
-                        pass
+                        logger.warning(f"Non-critical safety check failed: {check_name} - {message}")
         
         return True, None
     
@@ -455,8 +458,8 @@ class ActionExecutor:
             for callback in self._status_change_callbacks[action.action_id]:
                 try:
                     callback(action.status)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Status change callback failed for action {action.action_id}: {e}")
     
     def _register_default_safety_checks(self):
         """Register default safety checks"""
