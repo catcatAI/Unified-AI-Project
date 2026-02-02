@@ -1,4 +1,0 @@
-docs: Finalize MERGE_AND_RESTRUCTURE_PLAN and README updates
-
-- Updates MERGE_AND_RESTRUCTURE_PLAN.md to indicate the described merge process is concluded and the document is now for historical reference. Adds a concluding statement and recontextualizes sections discussing pending merges.
-- Ensures README.md 'Getting Started' is populated and 'Contributing' section is simplified to a local workflow, removing GitHub-specific merge instructions.

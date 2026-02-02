@@ -1,9 +1,0 @@
-tree 4309c3cb44b782e7ac044efd6a97cbf7a9f9a6da
-parent 1d84c0db0e844d7ac4ac232d94dd4f8513506011
-author google-labs-jules[bot] <161369871+google-labs-jules[bot]@users.noreply.github.com> 1751682633 +0000
-committer google-labs-jules[bot] <161369871+google-labs-jules[bot]@users.noreply.github.com> 1751682633 +0000
-
-docs: Finalize MERGE_AND_RESTRUCTURE_PLAN and README updates
-
-- Updates MERGE_AND_RESTRUCTURE_PLAN.md to indicate the described merge process is concluded and the document is now for historical reference. Adds a concluding statement and recontextualizes sections discussing pending merges.
-- Ensures README.md 'Getting Started' is populated and 'Contributing' section is simplified to a local workflow, removing GitHub-specific merge instructions.
