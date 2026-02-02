@@ -183,6 +183,52 @@ except ImportError:
     SelfGeneration = None
     AvatarBuilder = None
 
+# Art Learning and Live2D Generation Systems
+try:
+    from .art_learning_system import (
+        ArtLearningSystem, ArtKnowledge, ArtDomain,
+        TutorialContent, ImageAnalysis, LearningSession,
+        BodyPartMapping, Live2DParameter, LearningType
+    )
+except ImportError:
+    ArtLearningSystem = None
+    ArtKnowledge = None
+    ArtDomain = None
+    TutorialContent = None
+    ImageAnalysis = None
+    LearningSession = None
+    BodyPartMapping = None
+    Live2DParameter = None
+    LearningType = None
+
+try:
+    from .live2d_avatar_generator import (
+        Live2DAvatarGenerator, GeneratedAvatar, Live2DModelConfig,
+        GenerationStage, ViewAngle, BodyLayer
+    )
+except ImportError:
+    Live2DAvatarGenerator = None
+    GeneratedAvatar = None
+    Live2DModelConfig = None
+    GenerationStage = None
+    ViewAngle = None
+    BodyLayer = None
+
+try:
+    from .art_learning_workflow import (
+        ArtLearningWorkflow, WorkflowStage, LearningObjective,
+        WorkflowProgress, SkillAssessment, GenerationResult,
+        WorkflowConfig
+    )
+except ImportError:
+    ArtLearningWorkflow = None
+    WorkflowStage = None
+    LearningObjective = None
+    WorkflowProgress = None
+    SkillAssessment = None
+    GenerationResult = None
+    WorkflowConfig = None
+
 try:
     from .autonomous_life_cycle import AutonomousLifeCycle, LifePhase, LifeDecision, FormulaMetrics
 except ImportError:
@@ -272,6 +318,30 @@ __all__ = [
     "LifePhase",
     "LifeDecision",
     "FormulaMetrics",
+    
+    # Art Learning and Live2D Generation
+    "ArtLearningSystem",
+    "ArtKnowledge",
+    "ArtDomain",
+    "TutorialContent",
+    "ImageAnalysis",
+    "LearningSession",
+    "BodyPartMapping",
+    "Live2DParameter",
+    "LearningType",
+    "Live2DAvatarGenerator",
+    "GeneratedAvatar",
+    "Live2DModelConfig",
+    "GenerationStage",
+    "ViewAngle",
+    "BodyLayer",
+    "ArtLearningWorkflow",
+    "WorkflowStage",
+    "LearningObjective",
+    "WorkflowProgress",
+    "SkillAssessment",
+    "GenerationResult",
+    "WorkflowConfig",
 ]
 
 
@@ -316,6 +386,11 @@ def get_system_info() -> dict:
                 "cyber_identity",
                 "self_generation",
                 "autonomous_life_cycle"
+            ],
+            "art_learning": [
+                "art_learning_system",
+                "live2d_avatar_generator",
+                "art_learning_workflow"
             ]
         },
         "capabilities": [
@@ -347,7 +422,16 @@ def get_system_info() -> dict:
             "cdm_model",
             "life_intensity",
             "active_cognition",
-            "non_paradox_existence"
+            "non_paradox_existence",
+            "art_learning",
+            "live2d_generation",
+            "anime_style_learning",
+            "tutorial_search",
+            "image_analysis",
+            "body_part_rigging",
+            "physiological_live2d_bridge",
+            "skill_acquisition_power_law",
+            "implicit_style_learning"
         ]
     }
 
@@ -387,6 +471,11 @@ async def initialize_all_systems() -> dict:
     from .self_generation import SelfGeneration
     from .autonomous_life_cycle import AutonomousLifeCycle
     
+    # Art Learning Systems
+    from .art_learning_system import ArtLearningSystem
+    from .live2d_avatar_generator import Live2DAvatarGenerator
+    from .art_learning_workflow import ArtLearningWorkflow
+    
     # Initialize all systems
     systems = {
         'physiological_tactile': PhysiologicalTactileSystem(),
@@ -409,6 +498,36 @@ async def initialize_all_systems() -> dict:
         'self_generation': SelfGeneration(),
         'autonomous_life_cycle': AutonomousLifeCycle(),
     }
+    
+    # Art Learning Systems (initialized with dependencies)
+    browser = systems.get('browser_controller')
+    vision = None  # Would be provided externally
+    neuroplasticity = systems.get('neuroplasticity')
+    live2d = systems.get('live2d_integration')
+    tactile = systems.get('physiological_tactile')
+    identity = systems.get('cyber_identity')
+    
+    if browser:
+        systems['art_learning'] = ArtLearningSystem(
+            browser_controller=browser,
+            vision_service=vision,
+            neuroplasticity=neuroplasticity
+        )
+        
+        # Create Live2D avatar generator (requires image generator, would be provided externally)
+        systems['live2d_generator'] = Live2DAvatarGenerator(
+            image_generator=None,  # Would be set externally
+            art_learning_system=systems['art_learning']
+        )
+        
+        # Create learning workflow
+        systems['art_learning_workflow'] = ArtLearningWorkflow(
+            art_learning_system=systems['art_learning'],
+            avatar_generator=systems['live2d_generator'],
+            live2d_integration=live2d,
+            physiological_tactile=tactile,
+            cyber_identity=identity
+        )
     
     # Initialize each system
     for name, system in systems.items():

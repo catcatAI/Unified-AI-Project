@@ -547,6 +547,204 @@ class Live2DIntegration:
     def get_all_parameters(self) -> Dict[str, float]:
         """Get all current parameter values"""
         return {name: param.value for name, param in self.parameters.items()}
+    
+    # Body-to-Live2D Integration Methods
+    def apply_body_touch(
+        self,
+        body_part: str,
+        touch_type: str = "pat",
+        intensity: float = 0.5,
+        duration: float = 1.0
+    ) -> Dict[str, float]:
+        """
+        Apply body touch to Live2D parameters
+        
+        Args:
+            body_part: Body part being touched (e.g., "top_of_head", "face")
+            touch_type: Type of touch (pat, stroke, poke, pinch, etc.)
+            intensity: Touch intensity (0-1)
+            duration: Animation duration in seconds
+            
+        Returns:
+            Applied parameter values
+        """
+        # Get parameter changes based on body part and touch type
+        param_changes = self._get_body_touch_parameters(body_part, touch_type, intensity)
+        
+        # Apply parameters
+        for param_name, value in param_changes.items():
+            if param_name in self.parameters:
+                self.set_parameter(param_name, value)
+        
+        return param_changes
+    
+    def _get_body_touch_parameters(
+        self,
+        body_part: str,
+        touch_type: str,
+        intensity: float
+    ) -> Dict[str, float]:
+        """Get parameter changes for body touch (using physiological mapping)"""
+        # Import from physiological_tactile to ensure consistency
+        from .physiological_tactile import BODY_TO_LIVE2D_MAPPING
+        
+        if body_part not in BODY_TO_LIVE2D_MAPPING:
+            return {}
+        
+        part_mapping = BODY_TO_LIVE2D_MAPPING[body_part]
+        touch_mapping = part_mapping.get(touch_type, part_mapping.get("pat", {}))
+        
+        params = {}
+        for param_name, (min_val, max_val) in touch_mapping.items():
+            value = min_val + (max_val - min_val) * intensity
+            params[param_name] = value
+        
+        return params
+    
+    def apply_emotion_to_expression(self, emotion: str, intensity: float = 0.8):
+        """
+        Apply emotion to Live2D expression parameters
+        
+        Args:
+            emotion: Emotion name (happy, sad, angry, surprised, shy, love)
+            intensity: Expression intensity (0-1)
+        """
+        emotion_to_expression = {
+            "happy": ExpressionType.HAPPY,
+            "joy": ExpressionType.HAPPY,
+            "sad": ExpressionType.SAD,
+            "sadness": ExpressionType.SAD,
+            "angry": ExpressionType.ANGRY,
+            "anger": ExpressionType.ANGRY,
+            "surprised": ExpressionType.SURPRISED,
+            "shocked": ExpressionType.SURPRISED,
+            "shy": ExpressionType.SHY,
+            "embarrassed": ExpressionType.SHY,
+            "love": ExpressionType.LOVE,
+            "loving": ExpressionType.LOVE,
+        }
+        
+        expr_type = emotion_to_expression.get(emotion.lower())
+        if expr_type:
+            self.set_expression(expr_type, blend_duration=0.3 * intensity)
+    
+    def set_body_angle_from_touch(self, body_part: str, touch_intensity: float = 0.5):
+        """
+        Set body angle parameters based on touch location
+        
+        Args:
+            body_part: Body part touched
+            touch_intensity: Touch intensity
+        """
+        body_part_angles = {
+            "top_of_head": {"ParamAngleX": 0, "ParamAngleY": -5},
+            "face": {"ParamAngleX": 0, "ParamAngleY": 0},
+            "neck": {"ParamAngleY": 8},
+            "chest": {"ParamBodyAngleX": 0, "ParamBodyAngleY": -3},
+            "back": {"ParamBodyAngleX": 0, "ParamBodyAngleY": 5},
+            "shoulders": {"ParamBodyAngleZ": 0},
+            "left": {"ParamAngleX": -15, "ParamBodyAngleX": -8},
+            "right": {"ParamAngleX": 15, "ParamBodyAngleX": 8},
+        }
+        
+        angles = body_part_angles.get(body_part, {})
+        for param, base_value in angles.items():
+            if param in self.parameters:
+                # Apply with some randomness for natural feel
+                variation = (random.random() - 0.5) * 5 * touch_intensity
+                value = base_value + variation
+                self.set_parameter(param, value)
+    
+    def get_body_parameter_mapping(self) -> Dict[str, List[str]]:
+        """
+        Get mapping of body parts to Live2D parameters
+        
+        Returns:
+            Dictionary of body parts to parameter lists
+        """
+        from .physiological_tactile import BODY_TO_LIVE2D_MAPPING
+        
+        mapping = {}
+        for body_part, touch_types in BODY_TO_LIVE2D_MAPPING.items():
+            params = set()
+            for touch_type, param_ranges in touch_types.items():
+                params.update(param_ranges.keys())
+            mapping[body_part] = list(params)
+        
+        return mapping
+    
+    def create_touch_animation(
+        self,
+        body_part: str,
+        touch_type: str = "pat",
+        intensity: float = 0.5
+    ) -> List[Dict[str, float]]:
+        """
+        Create animation keyframes for a touch interaction
+        
+        Args:
+            body_part: Body part touched
+            touch_type: Type of touch
+            intensity: Touch intensity
+            
+        Returns:
+            List of parameter states for animation keyframes
+        """
+        keyframes = []
+        
+        # Get touch parameters
+        touch_params = self._get_body_touch_parameters(body_part, touch_type, intensity)
+        
+        # Frame 1: Initial touch (peak intensity)
+        keyframes.append({
+            "time": 0.0,
+            "params": touch_params,
+            "easing": "ease_out"
+        })
+        
+        # Frame 2: Sustain
+        sustain_params = {k: v * 0.7 for k, v in touch_params.items()}
+        keyframes.append({
+            "time": 0.2,
+            "params": sustain_params,
+            "easing": "linear"
+        })
+        
+        # Frame 3: Release (return to default)
+        release_params = {k: 0.0 for k in touch_params.keys()}
+        keyframes.append({
+            "time": 0.5,
+            "params": release_params,
+            "easing": "ease_in"
+        })
+        
+        return keyframes
+    
+    def sync_with_physiological_state(
+        self,
+        arousal_level: float,
+        active_body_parts: List[str] = None
+    ):
+        """
+        Sync Live2D with physiological state
+        
+        Args:
+            arousal_level: Arousal level (0-100)
+            active_body_parts: List of currently stimulated body parts
+        """
+        # Adjust breathing based on arousal
+        breath_intensity = 0.3 + (arousal_level / 100.0) * 0.4
+        self.set_parameter("ParamBreath", breath_intensity)
+        
+        # Adjust eye openness based on arousal
+        eye_openness = 0.6 + (arousal_level / 100.0) * 0.4
+        self.set_parameter("ParamEyeLOpen", eye_openness)
+        self.set_parameter("ParamEyeROpen", eye_openness)
+        
+        # Apply subtle body movement based on active body parts
+        if active_body_parts:
+            for part in active_body_parts:
+                self.set_body_angle_from_touch(part, 0.3)
 
 
 # Example usage

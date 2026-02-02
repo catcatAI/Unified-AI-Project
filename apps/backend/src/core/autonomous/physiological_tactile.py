@@ -496,6 +496,178 @@ class PhysiologicalTactileSystem:
             for location in mapping.preferred_locations:
                 for receptor in self.receptors.get(location, []):
                     receptor.sensitivity *= (1 + 0.3 * intensity)
+    
+    # Live2D Integration Methods
+    def get_live2d_response_for_touch(
+        self,
+        body_part: BodyPart,
+        touch_type: str = "pat",
+        intensity: float = 0.5
+    ) -> Dict[str, float]:
+        """
+        Get Live2D parameter response for a body touch
+        
+        Args:
+            body_part: Body part being touched
+            touch_type: Type of touch (pat, stroke, poke, pinch, etc.)
+            intensity: Touch intensity (0-1)
+            
+        Returns:
+            Dictionary of Live2D parameter names to values
+        """
+        body_part_key = body_part.name.lower()
+        
+        # Map BodyPart enum names to mapping keys
+        mapping_key = self._get_body_part_mapping_key(body_part)
+        
+        if mapping_key not in BODY_TO_LIVE2D_MAPPING:
+            return {}
+        
+        part_mapping = BODY_TO_LIVE2D_MAPPING[mapping_key]
+        
+        # Get touch response (default to "pat" if touch type not found)
+        touch_mapping = part_mapping.get(touch_type, part_mapping.get("pat", {}))
+        
+        # Calculate parameter values based on intensity
+        live2d_params = {}
+        for param_name, (min_val, max_val) in touch_mapping.items():
+            # Interpolate based on intensity
+            value = min_val + (max_val - min_val) * intensity
+            
+            # Apply body part sensitivity
+            sensitivity = body_part.base_sensitivity
+            value = value * sensitivity
+            
+            live2d_params[param_name] = value
+        
+        return live2d_params
+    
+    def _get_body_part_mapping_key(self, body_part: BodyPart) -> str:
+        """Map BodyPart enum to BODY_TO_LIVE2D_MAPPING keys"""
+        mapping = {
+            BodyPart.TOP_OF_HEAD: "top_of_head",
+            BodyPart.FOREHEAD: "forehead",
+            BodyPart.FACE: "face",
+            BodyPart.NECK: "neck",
+            BodyPart.CHEST: "chest",
+            BodyPart.BACK: "back",
+            BodyPart.ABDOMEN: "abdomen",
+            BodyPart.WAIST: "waist",
+            BodyPart.HIPS: "hips",
+            BodyPart.THIGHS: "thighs",
+            BodyPart.SHOULDERS: "shoulders",
+            BodyPart.UPPER_ARMS: "upper_arms",
+            BodyPart.FOREARMS: "forearms",
+            BodyPart.HANDS: "hands",
+            BodyPart.FINGERS: "fingers",
+            BodyPart.KNEES: "knees",
+            BodyPart.CALVES: "calves",
+            BodyPart.FEET: "feet",
+        }
+        return mapping.get(body_part, body_part.name.lower())
+    
+    async def process_stimulus_with_live2d(
+        self,
+        stimulus: TactileStimulus,
+        touch_type: str = "pat"
+    ) -> TactileResponse:
+        """
+        Process tactile stimulus and return response with Live2D parameters
+        
+        Args:
+            stimulus: Tactile stimulus
+            touch_type: Type of touch interaction
+            
+        Returns:
+            TactileResponse with live2d_parameters
+        """
+        # Process normally first
+        response = await self.process_stimulus(stimulus)
+        
+        # Add Live2D parameters
+        intensity = stimulus.intensity / 10.0  # Normalize to 0-1
+        live2d_params = self.get_live2d_response_for_touch(
+            stimulus.location,
+            touch_type,
+            intensity
+        )
+        
+        # Add emotional modifiers
+        if stimulus.emotional_tag:
+            live2d_params = self._apply_emotional_to_live2d(
+                live2d_params,
+                stimulus.emotional_tag,
+                intensity
+            )
+        
+        response.live2d_parameters = live2d_params
+        
+        return response
+    
+    def _apply_emotional_to_live2d(
+        self,
+        params: Dict[str, float],
+        emotion: str,
+        intensity: float
+    ) -> Dict[str, float]:
+        """Apply emotional context to Live2D parameters"""
+        modified = params.copy()
+        
+        # Emotion-specific parameter adjustments
+        emotion_modifiers = {
+            "joy": {"ParamCheek": 0.3, "ParamEyeLSmile": 0.5, "ParamEyeRSmile": 0.5},
+            "comfort": {"ParamEyeLOpen": -0.1, "ParamEyeROpen": -0.1, "ParamCheek": 0.2},
+            "anxiety": {"ParamBrowLY": 0.3, "ParamBrowRY": 0.3, "ParamEyeLOpen": 0.2},
+            "relaxation": {"ParamEyeLOpen": -0.2, "ParamEyeROpen": -0.2, "ParamBreath": 0.3},
+            "excitement": {"ParamEyeLOpen": 0.2, "ParamEyeROpen": 0.2, "ParamCheek": 0.4},
+            "sadness": {"ParamBrowLY": -0.3, "ParamBrowRY": -0.3, "ParamMouthForm": -0.3},
+            "anger": {"ParamBrowLAngle": 0.5, "ParamBrowRAngle": 0.5, "ParamEyeLOpen": 0.1},
+            "love": {"ParamCheek": 0.6, "ParamEyeLSmile": 0.6, "ParamEyeRSmile": 0.6},
+        }
+        
+        if emotion in emotion_modifiers:
+            for param, modifier in emotion_modifiers[emotion].items():
+                if param in modified:
+                    modified[param] = max(-1.0, min(1.0, modified[param] + modifier * intensity))
+                else:
+                    modified[param] = modifier * intensity
+        
+        return modified
+    
+    def get_all_body_live2d_mappings(self) -> Dict[str, Dict[str, Any]]:
+        """Get all body part to Live2D mappings"""
+        return BODY_TO_LIVE2D_MAPPING.copy()
+    
+    def get_live2d_touch_zones(self) -> List[Dict[str, Any]]:
+        """
+        Get touch zone definitions for Live2D integration
+        
+        Returns:
+            List of touch zone definitions with body parts and parameters
+        """
+        zones = []
+        
+        for body_part in BodyPart:
+            mapping_key = self._get_body_part_mapping_key(body_part)
+            
+            if mapping_key in BODY_TO_LIVE2D_MAPPING:
+                part_mapping = BODY_TO_LIVE2D_MAPPING[mapping_key]
+                
+                # Collect all parameters for this body part
+                all_params = set()
+                for touch_type, params in part_mapping.items():
+                    all_params.update(params.keys())
+                
+                zones.append({
+                    "body_part": body_part.name,
+                    "cn_name": body_part.cn_name,
+                    "sensitivity": body_part.base_sensitivity,
+                    "touch_types": list(part_mapping.keys()),
+                    "parameters": list(all_params),
+                    "region": body_part.region.name
+                })
+        
+        return zones
 
 
 @dataclass
@@ -506,12 +678,105 @@ class TactileResponse:
     activated_receptors: int
     duration: float
     timestamp: datetime
+    live2d_parameters: Dict[str, float] = field(default_factory=dict)  # Added for Live2D integration
     
     def __repr__(self) -> str:
         return (
             f"TactileResponse({self.stimulus.tactile_type.name} at "
             f"{self.stimulus.location.cn_name}, intensity={self.perceived_intensity:.2f})"
         )
+
+
+# Live2D Integration Mapping
+# Maps 18 body parts to Live2D parameter changes
+BODY_TO_LIVE2D_MAPPING = {
+    "top_of_head": {
+        "pat": {"ParamAngleX": (-15, 15), "ParamAngleY": (-10, 10), "ParamHairSwing": (0, 0.8)},
+        "stroke": {"ParamHairSwing": (0, 0.5), "ParamHairFront": (-0.3, 0.3)},
+        "rub": {"ParamAngleX": (-8, 8), "ParamHairSwing": (0, 0.3)},
+    },
+    "forehead": {
+        "pat": {"ParamBrowLY": (-0.5, 0.5), "ParamBrowRY": (-0.5, 0.5)},
+        "stroke": {"ParamAngleY": (-5, 5)},
+        "poke": {"ParamBrowLY": (0.3, 0.8), "ParamBrowRY": (0.3, 0.8)},
+    },
+    "face": {
+        "pat": {"ParamCheek": (0.2, 0.8), "ParamFaceColor": (0.1, 0.5), "ParamEyeScale": (1, 1.2)},
+        "stroke": {"ParamCheek": (0.1, 0.4), "ParamFaceColor": (0.05, 0.2)},
+        "poke": {"ParamEyeLOpen": (0.5, 0.8), "ParamEyeROpen": (0.5, 0.8), "ParamCheek": (0.3, 0.6)},
+        "pinch": {"ParamMouthForm": (-0.6, 0.6), "ParamCheek": (0.5, 0.9)},
+    },
+    "neck": {
+        "pat": {"ParamAngleY": (5, 15)},
+        "stroke": {"ParamAngleX": (-10, 10), "ParamBodyAngleY": (-3, 3)},
+    },
+    "chest": {
+        "pat": {"ParamBodyAngleX": (-8, 8), "ParamBreath": (0.1, 0.4)},
+        "press": {"ParamBreath": (0.2, 0.6)},
+    },
+    "back": {
+        "pat": {"ParamBodyAngleX": (-12, 12)},
+        "stroke": {"ParamBodyAngleZ": (-5, 5)},
+    },
+    "abdomen": {
+        "pat": {"ParamBodyAngleY": (5, 10)},
+        "press": {"ParamBreath": (0.2, 0.5)},
+        "tickle": {"ParamBodyAngleY": (-8, 8), "ParamBreath": (0.3, 0.8)},
+    },
+    "waist": {
+        "pat": {"ParamBodyAngleX": (-10, 10)},
+        "stroke": {"ParamBodyAngleZ": (-6, 6)},
+    },
+    "hips": {
+        "pat": {"ParamBodyAngleX": (-12, 12), "ParamBodyAngleZ": (-8, 8)},
+    },
+    "thighs": {
+        "pat": {"ParamBodyAngleY": (-3, 3)},
+        "stroke": {"ParamBodyAngleY": (-2, 2)},
+    },
+    "shoulders": {
+        "pat": {"ParamBodyAngleZ": (-8, 8)},
+        "massage": {"ParamArmLA": (-0.4, 0.4), "ParamArmRA": (-0.4, 0.4)},
+    },
+    "upper_arms": {
+        "pat": {"ParamArmLA": (-0.6, 0.6), "ParamArmRA": (-0.6, 0.6)},
+        "stroke": {"ParamArmLA": (-0.3, 0.3), "ParamArmRA": (-0.3, 0.3)},
+    },
+    "forearms": {
+        "pat": {"ParamArmLA": (-0.7, 0.7), "ParamArmRA": (-0.7, 0.7)},
+        "stroke": {"ParamHandL": (-0.3, 0.3), "ParamHandR": (-0.3, 0.3)},
+    },
+    "hands": {
+        "pat": {"ParamHandL": (-1.0, 1.0), "ParamHandR": (-1.0, 1.0)},
+        "hold": {"ParamHandL": (0.4, 0.8), "ParamHandR": (0.4, 0.8)},
+        "stroke": {"ParamHandL": (-0.4, 0.4), "ParamHandR": (-0.4, 0.4)},
+    },
+    "fingers": {
+        "pat": {"ParamHandL": (-0.6, 0.6), "ParamHandR": (-0.6, 0.6)},
+        "stroke": {"ParamHandL": (-0.3, 0.3), "ParamHandR": (-0.3, 0.3)},
+    },
+    "knees": {
+        "pat": {"ParamBodyAngleY": (-3, 3)},
+    },
+    "calves": {
+        "pat": {"ParamBodyAngleY": (-2, 2)},
+        "stroke": {"ParamBodyAngleY": (-1, 1)},
+    },
+    "feet": {
+        "pat": {"ParamBodyAngleY": (-2, 2)},
+        "tickle": {"ParamBodyAngleY": (-4, 4)},
+    },
+}
+
+
+@dataclass
+class Live2DTouchResponse:
+    """Live2D触摸响应 / Live2D touch response"""
+    body_part: str
+    touch_type: str
+    intensity: float
+    parameters: Dict[str, float]
+    timestamp: datetime = field(default_factory=datetime.now)
 
 
 @dataclass

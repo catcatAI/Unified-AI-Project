@@ -188,8 +188,15 @@ class SelfGeneration:
         self.output_path: Path = Path(self.config.get("output_path", "./avatars"))
         self.output_path.mkdir(parents=True, exist_ok=True)
         
+        # Integrated systems
+        self.art_learning: Optional[Any] = None
+        self.live2d_generator: Optional[Any] = None
+        self.learning_workflow: Optional[Any] = None
+        
         # Running state
         self._running = False
+        self._use_art_learning = self.config.get("use_art_learning", True)
+        self._use_live2d_generator = self.config.get("use_live2d_generator", True)
         
         # Callbacks
         self._generation_callbacks: List[Callable[[GeneratedAvatar], None]] = []
@@ -197,6 +204,18 @@ class SelfGeneration:
         
         # Version tracking
         self._version_counter: Dict[str, int] = {}
+    
+    def set_art_learning_system(self, art_learning: Any):
+        """Set art learning system for knowledge-based generation"""
+        self.art_learning = art_learning
+    
+    def set_live2d_generator(self, generator: Any):
+        """Set Live2D avatar generator for actual model creation"""
+        self.live2d_generator = generator
+    
+    def set_learning_workflow(self, workflow: Any):
+        """Set art learning workflow for orchestrated generation"""
+        self.learning_workflow = workflow
     
     async def initialize(self):
         """Initialize the self-generation system"""
@@ -288,18 +307,142 @@ class SelfGeneration:
         return avatar
     
     async def _simulate_generation(self, avatar: GeneratedAvatar):
-        """Simulate avatar generation (placeholder for actual generation)"""
-        # In real implementation, this would:
-        # 1. Use image generation API
-        # 2. Create Live2D model
-        # 3. Generate textures and parameters
+        """
+        Generate avatar using art learning and Live2D generator
         
-        # Simulate processing time
+        This enhanced implementation uses:
+        1. Art learning system for style knowledge
+        2. Live2D avatar generator for actual model creation
+        3. Physiological-tactile mapping for body interactions
+        """
+        # Use learning workflow if available for complete pipeline
+        if self.learning_workflow and self._use_art_learning:
+            try:
+                from .art_learning_workflow import LearningObjective
+                
+                result = await self.learning_workflow.run_complete_workflow(
+                    learning_objectives=[
+                        LearningObjective.ANIME_BASICS,
+                        LearningObjective.LIVE2D_TECHNIQUES
+                    ],
+                    target_mastery=0.7,
+                    cyber_identity_attrs=self._attributes_to_dict(avatar.attributes)
+                )
+                
+                # Update avatar with generated model info
+                if result:
+                    avatar.file_path = Path(result.model_path)
+                    avatar.thumbnail_path = self.output_path / f"{avatar.avatar_id}_thumb.png"
+                
+                return
+            except Exception as e:
+                # Fallback to simple generation if workflow fails
+                pass
+        
+        # Use Live2D generator directly if available
+        if self.live2d_generator and self._use_live2d_generator:
+            try:
+                from .live2d_avatar_generator import ViewAngle
+                
+                # Generate actual Live2D avatar
+                generated = await self.live2d_generator.generate_avatar(
+                    model_name=avatar.avatar_id,
+                    attributes=self._attributes_to_dict(avatar.attributes),
+                    view_angle=ViewAngle.FRONT
+                )
+                
+                # Update avatar paths
+                if generated.model_json_path:
+                    avatar.file_path = Path(generated.model_json_path)
+                
+                if generated.texture_paths:
+                    avatar.thumbnail_path = Path(generated.texture_paths[0])
+                
+                return
+            except Exception as e:
+                # Fallback to placeholder
+                pass
+        
+        # Fallback: Simulate processing time for backwards compatibility
         await asyncio.sleep(0.5)
         
-        # Set file paths
+        # Set placeholder file paths
         avatar.file_path = self.output_path / f"{avatar.avatar_id}.png"
         avatar.thumbnail_path = self.output_path / f"{avatar.avatar_id}_thumb.png"
+    
+    def _attributes_to_dict(self, attributes: VisualAttributes) -> Dict[str, Any]:
+        """Convert VisualAttributes to dictionary"""
+        return {
+            "hair_color": attributes.hair_color,
+            "hair_style": attributes.hair_style,
+            "eye_color": attributes.eye_color,
+            "skin_tone": attributes.skin_tone,
+            "outfit": attributes.outfit,
+            "expression": attributes.expression,
+            "accessories": attributes.accessories
+        }
+    
+    async def generate_with_learning(
+        self,
+        attributes: Optional[VisualAttributes] = None,
+        enable_learning: bool = True,
+        target_mastery: float = 0.8
+    ) -> GeneratedAvatar:
+        """
+        Generate avatar with art learning workflow
+        
+        Args:
+            attributes: Visual attributes
+            enable_learning: Whether to run learning phase
+            target_mastery: Target mastery level for learning
+            
+        Returns:
+            Generated avatar with Live2D model
+        """
+        if enable_learning and self.learning_workflow:
+            # Use complete workflow with learning
+            from .art_learning_workflow import LearningObjective
+            
+            result = await self.learning_workflow.run_complete_workflow(
+                learning_objectives=[
+                    LearningObjective.ANIME_BASICS,
+                    LearningObjective.LIVE2D_TECHNIQUES,
+                    LearningObjective.BODY_RIGGING
+                ],
+                target_mastery=target_mastery,
+                cyber_identity_attrs=self._attributes_to_dict(attributes) if attributes else None
+            )
+            
+            # Create avatar record
+            avatar_id = f"angela_learned_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            base_attrs = attributes or (
+                self.current_avatar.attributes if self.current_avatar 
+                else VisualAttributes()
+            )
+            
+            avatar = GeneratedAvatar(
+                avatar_id=avatar_id,
+                generation_mode=GenerationMode.FULL_GENERATION,
+                attributes=base_attrs,
+                version=1
+            )
+            
+            if result:
+                avatar.file_path = Path(result.model_path) if result.model_path else None
+                avatar.thumbnail_path = self.output_path / f"{avatar_id}_thumb.png"
+            
+            # Store
+            self.avatar_history.append(avatar)
+            self.avatars_by_id[avatar_id] = avatar
+            self.current_avatar = avatar
+            
+            return avatar
+        else:
+            # Use standard generation
+            return await self.generate_avatar(
+                mode=GenerationMode.FULL_GENERATION,
+                attributes=attributes
+            )
     
     async def create_variation(
         self,
