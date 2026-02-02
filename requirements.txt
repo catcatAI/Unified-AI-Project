@@ -17,7 +17,7 @@ beautifulsoup4>=4.12.0
 lxml>=4.9.0
 
 # Data Processing
-numpy>=1.26.0
+numpy>=1.26.0,<2.0
 pandas>=2.1.0
 scipy>=1.11.0
 
@@ -92,7 +92,7 @@ jsonschema>=4.20.0
 # Database
 sqlalchemy>=2.0.0
 alembic>=1.12.0
-sqlite3; python_version>="3.9"
+# Note: sqlite3 is Python standard library, no need to install
 
 # Testing
 pytest>=7.4.0
