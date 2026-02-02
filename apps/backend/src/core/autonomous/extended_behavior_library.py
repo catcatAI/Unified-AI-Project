@@ -128,6 +128,10 @@ class ExtendedBehaviorLibrary:
         self._behavior_start_callbacks: Dict[str, List[Callable[[], None]]] = {}
         self._behavior_end_callbacks: Dict[str, List[Callable[[], None]]] = {}
         
+        # Dynamic Parameters Integration
+        self._dynamic_params_manager: Optional[Any] = None
+        self._dynamic_params_enabled: bool = self.config.get('enable_dynamic_params', True)
+        
         # Initialize built-in behaviors
         self._initialize_behaviors()
     
@@ -140,6 +144,31 @@ class ExtendedBehaviorLibrary:
         self._running = False
         self.active_behavior = None
         self.behavior_queue.clear()
+    
+    def set_dynamic_params_manager(self, manager: Any):
+        """Set the DynamicThresholdManager for dynamic threshold integration"""
+        self._dynamic_params_manager = manager
+    
+    def _get_dynamic_threshold(self, param_name: str, default_value: float, context: Optional[Dict[str, float]] = None) -> float:
+        """Get dynamic threshold value from manager or return default"""
+        if self._dynamic_params_manager and self._dynamic_params_enabled:
+            return self._dynamic_params_manager.get_parameter(param_name, context)
+        return default_value
+    
+    def _get_emotion_threshold(self, emotion_type: str = "happiness", context: Optional[Dict[str, float]] = None) -> float:
+        """Get dynamic emotion threshold"""
+        param_map = {
+            "happiness": "emotion_happiness_threshold",
+            "joy": "emotion_happiness_threshold",
+            "sadness": "emotion_sadness_threshold",
+            "anger": "emotion_anger_threshold",
+        }
+        param_name = param_map.get(emotion_type, "emotion_happiness_threshold")
+        return self._get_dynamic_threshold(param_name, 0.6, context)
+    
+    def _get_social_threshold(self, context: Optional[Dict[str, float]] = None) -> float:
+        """Get dynamic social initiative threshold"""
+        return self._get_dynamic_threshold("social_initiative_threshold", 0.5, context)
     
     def _initialize_behaviors(self):
         """Initialize all 25+ predefined behaviors"""
@@ -547,6 +576,7 @@ class ExtendedBehaviorLibrary:
     def check_triggers(self, context: Dict[str, Any]) -> List[BehaviorDefinition]:
         """
         Check which behaviors can be triggered based on context
+        Uses dynamic thresholds when available
         
         Args:
             context: Current context containing triggers like:
@@ -560,6 +590,13 @@ class ExtendedBehaviorLibrary:
         """
         triggerable = []
         
+        # Build context for dynamic parameter evaluation
+        param_context = {}
+        if 'emotion' in context and isinstance(context['emotion'], (int, float)):
+            param_context['mood'] = context['emotion']
+        if 'energy' in context:
+            param_context['energy'] = context['energy']
+        
         for behavior in self.behaviors.values():
             for trigger in behavior.triggers:
                 if not trigger.can_trigger():
@@ -568,11 +605,29 @@ class ExtendedBehaviorLibrary:
                 # Check if context matches trigger
                 if trigger.trigger_type in context:
                     value = context[trigger.trigger_type]
-                    if isinstance(value, (int, float)) and value >= trigger.threshold:
+                    
+                    # Get dynamic threshold based on trigger type
+                    if trigger.trigger_type == "emotion":
+                        dynamic_threshold = self._get_emotion_threshold(
+                            emotion_type=trigger.condition,
+                            context=param_context
+                        )
+                    elif trigger.trigger_type == "proximity" or trigger.trigger_type == "stimulus":
+                        # For social behaviors, use social initiative threshold
+                        if behavior.category == BehaviorCategory.SOCIAL:
+                            dynamic_threshold = self._get_social_threshold(param_context)
+                        else:
+                            dynamic_threshold = trigger.threshold
+                    else:
+                        dynamic_threshold = trigger.threshold
+                    
+                    if isinstance(value, (int, float)) and value >= dynamic_threshold:
                         triggerable.append(behavior)
+                        trigger.mark_triggered()
                         break
-                    elif value == trigger.condition or value == trigger.threshold:
+                    elif value == trigger.condition or value == dynamic_threshold:
                         triggerable.append(behavior)
+                        trigger.mark_triggered()
                         break
         
         # Sort by priority

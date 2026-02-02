@@ -18,11 +18,14 @@ Date: 2026-02-02
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Callable, Any
+from typing import Dict, List, Optional, Callable, Any, TYPE_CHECKING
 from datetime import datetime, timedelta
 import asyncio
 import math
 from enum import Enum
+
+if TYPE_CHECKING:
+    from .dynamic_parameters import DynamicThresholdManager
 
 # Import all formula systems
 from ..hsm_formula_system import HSMFormulaSystem, CognitiveGap, ExplorationResult
@@ -142,10 +145,14 @@ class AutonomousLifeCycle:
         self.metrics_history: List[FormulaMetrics] = []
         self._decision_counter: int = 0
         
-        # Decision thresholds
+        # Decision thresholds (may be overridden by dynamic parameters)
         self.exploration_threshold: float = self.config.get('exploration_threshold', 0.5)
         self.coexistence_threshold: float = self.config.get('coexistence_threshold', 0.6)
         self.active_cognition_threshold: float = self.config.get('ac_threshold', 0.8)
+        
+        # Dynamic Parameters Integration
+        self._dynamic_params_manager: Optional[Any] = None
+        self._dynamic_params_enabled: bool = self.config.get('enable_dynamic_params', True)
         
         # Running state
         self._running = False
@@ -193,6 +200,22 @@ class AutonomousLifeCycle:
                 pass
         
         await self.hsm.shutdown()
+    
+    def set_dynamic_params_manager(self, manager: Any):
+        """Set the DynamicThresholdManager for dynamic threshold integration"""
+        self._dynamic_params_manager = manager
+    
+    def _get_decision_confidence_threshold(self, context: Optional[Dict[str, float]] = None) -> float:
+        """Get dynamic decision confidence threshold"""
+        if self._dynamic_params_manager and self._dynamic_params_enabled:
+            return self._dynamic_params_manager.get_parameter('decision_confidence_threshold', context)
+        return 0.7  # Default threshold
+    
+    def _get_risk_tolerance(self, context: Optional[Dict[str, float]] = None) -> float:
+        """Get dynamic risk tolerance"""
+        if self._dynamic_params_manager and self._dynamic_params_enabled:
+            return self._dynamic_params_manager.get_parameter('risk_tolerance', context)
+        return 0.5  # Default risk tolerance
     
     def _initialize_knowledge_domains(self):
         """Initialize knowledge domains for life intensity formula"""
@@ -303,21 +326,36 @@ class AutonomousLifeCycle:
         return metrics
     
     def _evaluate_and_decide(self, metrics: FormulaMetrics) -> Optional[LifeDecision]:
-        """Evaluate metrics and make life decisions"""
+        """Evaluate metrics and make life decisions using dynamic thresholds"""
         self._decision_counter += 1
         decision_id = f"decision_{self._decision_counter}"
         
-        # Decision 1: Exploration (HSM-based)
-        if metrics.hsm_value > self.exploration_threshold:
-            return self._create_exploration_decision(decision_id, metrics)
+        # Build context for dynamic parameter evaluation
+        context = {
+            'energy': 1.0 - metrics.s_stress,  # Lower stress = higher energy
+            'mood': metrics.life_intensity,  # Life intensity affects mood
+            'stress': metrics.s_stress,
+            'confidence': metrics.a_c / 1.5 if metrics.a_c <= 1.5 else 1.0,
+        }
+        
+        # Get dynamic thresholds
+        dynamic_confidence_threshold = self._get_decision_confidence_threshold(context)
+        dynamic_risk_tolerance = self._get_risk_tolerance(context)
+        
+        # Adjust exploration threshold based on risk tolerance
+        adjusted_exploration_threshold = self.exploration_threshold * (1.5 - dynamic_risk_tolerance)
+        
+        # Decision 1: Exploration (HSM-based) - affected by risk tolerance
+        if metrics.hsm_value > adjusted_exploration_threshold:
+            return self._create_exploration_decision(decision_id, metrics, dynamic_risk_tolerance)
         
         # Decision 2: Coexistence (Non-Paradox based)
         if metrics.cognitive_gap > self.coexistence_threshold and not metrics.coexistence_active:
             return self._create_coexistence_decision(decision_id, metrics)
         
-        # Decision 3: Active Construction (Active Cognition based)
-        if metrics.a_c > self.active_cognition_threshold:
-            return self._create_active_construction_decision(decision_id, metrics)
+        # Decision 3: Active Construction (Active Cognition based) - uses dynamic confidence threshold
+        if metrics.a_c > dynamic_confidence_threshold:
+            return self._create_active_construction_decision(decision_id, metrics, dynamic_confidence_threshold)
         
         # Decision 4: Resource reallocation (CDM-based)
         if metrics.cdm_conversion_rate < 0.5:
@@ -325,11 +363,15 @@ class AutonomousLifeCycle:
         
         return None
     
-    def _create_exploration_decision(self, decision_id: str, metrics: FormulaMetrics) -> LifeDecision:
-        """Create an exploration decision"""
+    def _create_exploration_decision(self, decision_id: str, metrics: FormulaMetrics, risk_tolerance: float = 0.5) -> LifeDecision:
+        """Create an exploration decision using dynamic risk tolerance"""
         # Trigger HSM exploration
         exploration = self.hsm.trigger_exploration()
         self.explorations_triggered += 1
+        
+        # Adjust confidence based on risk tolerance
+        base_confidence = min(1.0, metrics.hsm_value / self.exploration_threshold)
+        adjusted_confidence = base_confidence * (0.5 + 0.5 * risk_tolerance)
         
         return LifeDecision(
             decision_id=decision_id,
@@ -337,13 +379,14 @@ class AutonomousLifeCycle:
             phase=self.current_phase,
             triggered_by="HSM",
             decision_type="exploration",
-            rationale=f"HSM value {metrics.hsm_value:.4f} exceeds threshold {self.exploration_threshold}",
+            rationale=f"HSM value {metrics.hsm_value:.4f} with risk tolerance {risk_tolerance:.2f}",
             expected_outcome={
                 "exploration_id": exploration.event_id,
                 "random_injection": exploration.random_seed,
-                "expected_discoveries": "2-3"
+                "expected_discoveries": "2-3",
+                "risk_tolerance": risk_tolerance
             },
-            confidence=min(1.0, metrics.hsm_value / self.exploration_threshold)
+            confidence=adjusted_confidence
         )
     
     def _create_coexistence_decision(self, decision_id: str, metrics: FormulaMetrics) -> LifeDecision:
@@ -380,8 +423,8 @@ class AutonomousLifeCycle:
             confidence=metrics.cognitive_gap
         )
     
-    def _create_active_construction_decision(self, decision_id: str, metrics: FormulaMetrics) -> LifeDecision:
-        """Create an active construction decision"""
+    def _create_active_construction_decision(self, decision_id: str, metrics: FormulaMetrics, confidence_threshold: float = 0.7) -> LifeDecision:
+        """Create an active construction decision using dynamic confidence threshold"""
         # Add stress to active cognition system (will trigger construction)
         self.active_cognition.add_stress_vector(
             StressSource.NOVELTY_DEMAND,
@@ -392,19 +435,23 @@ class AutonomousLifeCycle:
         # Recalculate to trigger construction recording
         a_c = self.active_cognition.calculate_active_cognition()
         
+        # Calculate confidence relative to dynamic threshold
+        relative_confidence = min(1.0, metrics.a_c / confidence_threshold) if confidence_threshold > 0 else 0.5
+        
         return LifeDecision(
             decision_id=decision_id,
             timestamp=datetime.now(),
             phase=self.current_phase,
             triggered_by="ActiveCognition",
             decision_type="meaning_construction",
-            rationale=f"A_c {metrics.a_c:.4f} indicates need for active meaning construction",
+            rationale=f"A_c {metrics.a_c:.4f} exceeds dynamic threshold {confidence_threshold:.2f}",
             expected_outcome={
                 "a_c_value": a_c,
                 "stress_added": True,
-                "construction_type": "novel_pattern"
+                "construction_type": "novel_pattern",
+                "confidence_threshold": confidence_threshold
             },
-            confidence=min(1.0, metrics.a_c / 1.5)
+            confidence=relative_confidence
         )
     
     def _create_resource_reallocation_decision(self, decision_id: str, metrics: FormulaMetrics) -> LifeDecision:

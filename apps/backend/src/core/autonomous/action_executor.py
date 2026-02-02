@@ -269,6 +269,10 @@ class ActionExecutor:
             "total_cancelled": 0,
             "average_execution_time": 0.0,
         }
+        
+        # Dynamic Parameters Integration
+        self._dynamic_params_manager: Optional[Any] = None
+        self._dynamic_params_enabled: bool = self.config.get('enable_dynamic_params', True)
     
     async def initialize(self):
         """Initialize the action executor"""
@@ -350,6 +354,9 @@ class ActionExecutor:
             start_time = asyncio.get_event_loop().time()
             
             try:
+                # Get dynamic success rate
+                success_rate = self._get_action_success_rate()
+                
                 # Execute with timeout
                 result = await asyncio.wait_for(
                     self._run_action_function(action),
@@ -358,17 +365,42 @@ class ActionExecutor:
                 
                 execution_time = asyncio.get_event_loop().time() - start_time
                 
-                action.status = ActionStatus.COMPLETED
-                action.result = ActionResult(
-                    success=True,
-                    action_id=action.action_id,
-                    output=result,
-                    execution_time=execution_time
-                )
-                self.queue._completed.append(action)
+                # Apply dynamic success rate (simulate occasional failures based on success rate)
+                import random
+                actual_success = random.random() < success_rate
                 
-                # Update statistics
-                self._update_stats(execution_time, success=True)
+                if actual_success:
+                    action.status = ActionStatus.COMPLETED
+                    action.result = ActionResult(
+                        success=True,
+                        action_id=action.action_id,
+                        output=result,
+                        execution_time=execution_time
+                    )
+                    self.queue._completed.append(action)
+                    
+                    # Update statistics
+                    self._update_stats(execution_time, success=True)
+                    
+                    # Record success to dynamic params
+                    self._record_action_outcome(action, success=True)
+                else:
+                    # Simulated failure due to dynamic success rate
+                    action.status = ActionStatus.FAILED
+                    action.result = ActionResult(
+                        success=False,
+                        action_id=action.action_id,
+                        error="Action execution failed due to dynamic conditions",
+                        execution_time=execution_time
+                    )
+                    self.queue._failed.append(action)
+                    self._update_stats(execution_time, success=False)
+                    
+                    # Record failure to dynamic params
+                    self._record_action_outcome(action, success=False)
+                    
+                    logger.warning(f"[ActionExecutor] Action {action.name} failed due to "
+                                   f"dynamic success rate ({success_rate:.2%})")
                 
             except asyncio.TimeoutError:
                 execution_time = asyncio.get_event_loop().time() - start_time
@@ -381,6 +413,9 @@ class ActionExecutor:
                 )
                 self.queue._failed.append(action)
                 self._update_stats(execution_time, success=False)
+                
+                # Record failure to dynamic params
+                self._record_action_outcome(action, success=False)
             
             action.completed_at = datetime.now()
             
@@ -400,6 +435,9 @@ class ActionExecutor:
                 execution_time=0.0
             )
             self.queue._failed.append(action)
+            
+            # Record failure to dynamic params
+            self._record_action_outcome(action, success=False)
         
         finally:
             if action.action_id in self.active_actions:
@@ -579,6 +617,31 @@ class ActionExecutor:
     def set_bridge(self, bridge: 'ActionExecutionBridge'):
         """Set the ActionExecutionBridge for integration"""
         self._bridge = bridge
+    
+    # ========== NEW: Integration with Dynamic Parameters ==========
+    
+    def set_dynamic_params_manager(self, manager: Any):
+        """Set the DynamicThresholdManager for integration"""
+        self._dynamic_params_manager = manager
+        logger.info("[ActionExecutor] Dynamic parameters manager connected")
+    
+    def _get_action_success_rate(self, context: Optional[Dict[str, float]] = None) -> float:
+        """Get dynamic action success rate"""
+        if self._dynamic_params_manager and self._dynamic_params_enabled:
+            return self._dynamic_params_manager.get_parameter('action_success_rate', context)
+        return 0.85  # Default 85% success rate
+    
+    def _record_action_outcome(self, action: Action, success: bool):
+        """Record action outcome to dynamic parameters manager"""
+        if self._dynamic_params_manager and self._dynamic_params_enabled:
+            try:
+                self._dynamic_params_manager.record_outcome(
+                    action_type=action.category.value[1],  # English name
+                    success=success,
+                    intensity=0.5 if action.priority.level <= 1 else 0.3
+                )
+            except Exception as e:
+                logger.warning(f"[ActionExecutor] Failed to record outcome: {e}")
     
     async def handle_autonomous_action(
         self, 

@@ -28,6 +28,7 @@ from .biological_integrator import BiologicalIntegrator
 from .action_executor import ActionExecutor
 from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
 from .autonomous_life_cycle import AutonomousLifeCycle
+from .dynamic_parameters import DynamicThresholdManager
 
 
 class LifeCycleState(Enum):
@@ -136,6 +137,12 @@ class DigitalLifeIntegrator:
         self.autonomous_lifecycle: Optional[AutonomousLifeCycle] = None
         self._formula_integration_enabled: bool = self.config.get('enable_formula_integration', True)
         
+        # Dynamic Parameters Integration
+        self.dynamic_params: Optional[DynamicThresholdManager] = None
+        self._dynamic_params_enabled: bool = self.config.get('enable_dynamic_params', True)
+        self._dynamic_params_update_interval: float = self.config.get('dynamic_params_update_interval', 60.0)
+        self._last_params_log: datetime = datetime.now()
+        
         # Health monitoring
         self.systems_health: Dict[str, SystemHealth] = {}
         self._health_check_interval: float = 60.0  # seconds
@@ -167,6 +174,19 @@ class DigitalLifeIntegrator:
         
         # Initialize action executor
         await self.action_executor.initialize()
+        
+        # Initialize dynamic parameters manager
+        if self._dynamic_params_enabled:
+            try:
+                self.dynamic_params = DynamicThresholdManager()
+                await self.dynamic_params.start()
+                
+                # Connect action executor to dynamic params
+                self.action_executor.set_dynamic_params_manager(self.dynamic_params)
+                
+            except Exception as e:
+                print(f"[DigitalLife] Failed to initialize dynamic params: {e}")
+                self.dynamic_params = None
         
         # Initialize memory bridge if available
         try:
@@ -231,6 +251,13 @@ class DigitalLifeIntegrator:
         if self.autonomous_lifecycle:
             await self.autonomous_lifecycle.shutdown()
         
+        # Shutdown dynamic parameters
+        if self.dynamic_params:
+            try:
+                await self.dynamic_params.stop()
+            except Exception:
+                pass
+        
         # Record final stats
         self._update_active_time()
     
@@ -240,6 +267,7 @@ class DigitalLifeIntegrator:
             await self._check_activity_status()
             await self._process_life_cycle_transitions()
             await self._update_statistics()
+            await self._update_dynamic_parameters()
             await asyncio.sleep(10)  # Check every 10 seconds
     
     async def _health_check_loop(self):
@@ -373,6 +401,29 @@ class DigitalLifeIntegrator:
             except:
                 pass
     
+    async def _update_dynamic_parameters(self):
+        """Update and log dynamic parameters periodically"""
+        if not self.dynamic_params:
+            return
+        
+        try:
+            # Log significant parameter changes every 5 minutes
+            time_since_last_log = (datetime.now() - self._last_params_log).total_seconds()
+            if time_since_last_log >= 300:  # 5 minutes
+                params_summary = self.dynamic_params.get_all_parameters_summary()
+                
+                # Log parameters that have changed significantly
+                for param_name, param_data in params_summary.items():
+                    base = param_data['base']
+                    current = param_data['current']
+                    if abs(current - base) > 0.15:  # Significant change threshold
+                        print(f"[DynamicParams] {param_name}: {current:.2f} "
+                              f"(base: {base:.2f}, trend: {param_data['trend']:+.3f})")
+                
+                self._last_params_log = datetime.now()
+        except Exception as e:
+            print(f"[DigitalLife] Error updating dynamic parameters: {e}")
+    
     def record_activity(self, activity_type: str):
         """Record user activity"""
         self._last_activity_time = datetime.now()
@@ -505,6 +556,32 @@ class DigitalLifeIntegrator:
         if self.autonomous_lifecycle:
             return self.autonomous_lifecycle.get_lifecycle_summary()
         return None
+    
+    def get_dynamic_parameters(self) -> Optional[Dict[str, Any]]:
+        """
+        Get dynamic parameters summary if dynamic params integration is enabled
+        
+        Returns:
+            Dictionary containing all dynamic parameter states, or None if not available
+        """
+        if self.dynamic_params:
+            return self.dynamic_params.get_all_parameters_summary()
+        return None
+    
+    def get_dynamic_parameter(self, param_name: str, context: Optional[Dict[str, float]] = None) -> float:
+        """
+        Get a specific dynamic parameter value
+        
+        Args:
+            param_name: Name of the parameter
+            context: Optional context for context-aware parameter calculation
+            
+        Returns:
+            Current parameter value, or 0.5 if not found
+        """
+        if self.dynamic_params:
+            return self.dynamic_params.get_parameter(param_name, context)
+        return 0.5
     
     def record_user_interaction_for_formulas(self, user_id: str, intensity: float = 0.5):
         """
