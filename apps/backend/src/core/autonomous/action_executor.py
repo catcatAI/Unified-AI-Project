@@ -20,10 +20,15 @@ Date: 2026-02-02
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Dict, List, Optional, Callable, Any, Set
+from typing import Dict, List, Optional, Callable, Any, Set, TYPE_CHECKING
 from datetime import datetime, timedelta
 import asyncio
 import uuid
+import json
+from pathlib import Path
+
+if TYPE_CHECKING:
+    from ..action_execution_bridge import ActionExecutionBridge, ExecutionResult
 
 
 class ActionPriority(Enum):
@@ -565,6 +570,225 @@ class ActionExecutor:
         stats["queue_status"] = self.queue.get_queue_status()
         stats["active_actions"] = len(self.active_actions)
         return stats
+    
+    # ========== NEW: Integration with ActionExecutionBridge ==========
+    
+    def set_bridge(self, bridge: 'ActionExecutionBridge'):
+        """Set the ActionExecutionBridge for integration"""
+        self._bridge = bridge
+    
+    async def handle_autonomous_action(
+        self, 
+        action_type: str, 
+        parameters: Dict[str, Any],
+        priority: int = 5
+    ) -> 'ExecutionResult':
+        """
+        Handle autonomous actions from the life cycle system.
+        This is the main integration point with the autonomous system.
+        
+        Args:
+            action_type: Type of autonomous action
+            parameters: Action parameters
+            priority: Priority level (1-10)
+            
+        Returns:
+            ExecutionResult from the bridge
+        """
+        if hasattr(self, '_bridge') and self._bridge:
+            # Use bridge for execution
+            return await self._bridge.execute_action(
+                action_type=action_type,
+                parameters=parameters,
+                priority=priority,
+                trigger_source="autonomous"
+            )
+        else:
+            # Fallback: create and execute as regular action
+            return await self._execute_fallback(action_type, parameters)
+    
+    async def _execute_fallback(
+        self, 
+        action_type: str, 
+        parameters: Dict[str, Any]
+    ) -> 'ExecutionResult':
+        """Fallback execution when bridge is not available"""
+        from ..action_execution_bridge import ExecutionResult, ExecutionResultStatus, ActionType
+        
+        action_id = str(uuid.uuid4())
+        start_time = asyncio.get_event_loop().time()
+        
+        try:
+            # Try to handle basic action types
+            if action_type == "initiate_conversation":
+                message = parameters.get("message", "Hi!")
+                print(f"[ActionExecutor] Fallback: {message}")
+                
+                execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+                return ExecutionResult(
+                    action_id=action_id,
+                    action_type=ActionType.INITIATE_CONVERSATION,
+                    status=ExecutionResultStatus.SUCCESS,
+                    success=True,
+                    data={"message": message, "method": "fallback"},
+                    execution_time_ms=execution_time
+                )
+            
+            elif action_type == "express_feeling":
+                emotion = parameters.get("emotion", "neutral")
+                print(f"[ActionExecutor] Fallback: Expressing {emotion}")
+                
+                execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+                return ExecutionResult(
+                    action_id=action_id,
+                    action_type=ActionType.EXPRESS_FEELING,
+                    status=ExecutionResultStatus.SUCCESS,
+                    success=True,
+                    data={"emotion": emotion, "method": "fallback"},
+                    execution_time_ms=execution_time
+                )
+            
+            else:
+                execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+                return ExecutionResult(
+                    action_id=action_id,
+                    action_type=ActionType.SYSTEM_QUERY,
+                    status=ExecutionResultStatus.FAILURE,
+                    success=False,
+                    error_message=f"No fallback handler for action type: {action_type}",
+                    execution_time_ms=execution_time
+                )
+        
+        except Exception as e:
+            execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+            return ExecutionResult(
+                action_id=action_id,
+                action_type=ActionType.SYSTEM_QUERY,
+                status=ExecutionResultStatus.FAILURE,
+                success=False,
+                error_message=str(e),
+                execution_time_ms=execution_time
+            )
+    
+    # ========== NEW: Execution History Persistence ==========
+    
+    async def save_execution_history(self, filepath: Optional[str] = None):
+        """Save execution history to file"""
+        path = Path(filepath or "~/.angela/executor_history.json").expanduser()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        
+        history = []
+        for action in self.queue._completed:
+            if action.result:
+                history.append({
+                    "action_id": action.action_id,
+                    "name": action.name,
+                    "category": action.category.value[0],
+                    "priority": action.priority.level,
+                    "status": action.status.en_name,
+                    "result": {
+                        "success": action.result.success,
+                        "error": action.result.error,
+                        "execution_time": action.result.execution_time
+                    },
+                    "created_at": action.created_at.isoformat(),
+                    "completed_at": action.completed_at.isoformat() if action.completed_at else None
+                })
+        
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
+    
+    async def load_execution_history(self, filepath: Optional[str] = None):
+        """Load execution history from file"""
+        path = Path(filepath or "~/.angela/executor_history.json").expanduser()
+        
+        if path.exists():
+            with open(path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return []
+    
+    # ========== NEW: Retry Mechanism ==========
+    
+    async def retry_action(self, action_id: str) -> Optional[ActionResult]:
+        """Retry a failed action"""
+        # Find in failed actions
+        for action in self.queue._failed:
+            if action.action_id == action_id:
+                if action.retry_count < action.max_retries:
+                    action.retry_count += 1
+                    action.status = ActionStatus.PENDING
+                    action.result = None
+                    
+                    # Re-queue
+                    self.queue.enqueue(action)
+                    
+                    # Wait for completion
+                    while action.status not in [ActionStatus.COMPLETED, ActionStatus.FAILED]:
+                        await asyncio.sleep(0.05)
+                    
+                    return action.result
+                else:
+                    return ActionResult(
+                        success=False,
+                        action_id=action_id,
+                        error="Max retries exceeded"
+                    )
+        
+        return None
+    
+    # ========== NEW: Batch Operations ==========
+    
+    async def execute_batch(
+        self, 
+        actions: List[Action],
+        continue_on_error: bool = True
+    ) -> List[ActionResult]:
+        """Execute multiple actions in batch"""
+        results = []
+        
+        for action in actions:
+            result = await self.submit_and_execute(action)
+            results.append(result)
+            
+            if not result.success and not continue_on_error:
+                break
+        
+        return results
+    
+    # ========== NEW: Validation Enhancement ==========
+    
+    def add_safety_check(
+        self, 
+        check_name: str, 
+        check_function: Callable[[Action], tuple[bool, Optional[str]]],
+        is_critical: bool = False
+    ):
+        """Add a custom safety check"""
+        self.register_safety_check(
+            SafetyCheck(
+                check_name=check_name,
+                check_function=check_function,
+                is_critical=is_critical
+            )
+        )
+    
+    # ========== NEW: Result Validation ==========
+    
+    async def validate_result(
+        self, 
+        action: Action, 
+        result: Any,
+        validators: List[Callable[[Any], bool]]
+    ) -> tuple[bool, Optional[str]]:
+        """Validate action execution result"""
+        for validator in validators:
+            try:
+                if not validator(result):
+                    return False, f"Result validation failed: {validator.__name__}"
+            except Exception as e:
+                return False, f"Validation error: {str(e)}"
+        
+        return True, None
 
 
 # Example usage
