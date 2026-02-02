@@ -1,0 +1,14 @@
+{
+  "context_id": "c5b658e9-7099-4cc8-b9a2-7eeeab2291bf",
+  "context_type": "model",
+  "created_at": "2025-09-21T19:43:58.516371",
+  "updated_at": "2025-09-21T19:43:58.516371",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "name": "模型A",
+    "description": "测试模型"
+  },
+  "version": "1.0",
+  "tags": []
+}

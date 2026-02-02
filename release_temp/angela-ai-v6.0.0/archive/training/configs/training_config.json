@@ -1,0 +1,25 @@
+{
+  "data_paths": {
+    "flickr30k": "data/flickr30k_sample",
+    "common_voice": "data/common_voice_zh",
+    "coco": "data/coco_captions",
+    "visual_genome": "data/visual_genome_sample",
+    "full_vision_data": "data/full_vision_dataset",
+    "full_audio_data": "data/full_audio_dataset",
+    "full_text_data": "data/full_text_dataset",
+    "full_multimodal_data": "data/full_multimodal_dataset"
+  },
+  "training": {
+    "batch_size": 16,
+    "epochs": 10,
+    "learning_rate": 0.001,
+    "save_interval": 100,
+    "checkpoint_interval": 5
+  },
+  "hardware": {
+    "use_gpu": true,
+    "mixed_precision": true,
+    "auto_pause_on_low_disk": true,
+    "min_disk_space_gb": 5
+  }
+}

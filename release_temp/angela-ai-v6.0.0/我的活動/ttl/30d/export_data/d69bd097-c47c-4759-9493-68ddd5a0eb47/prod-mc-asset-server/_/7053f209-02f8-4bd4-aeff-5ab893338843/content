@@ -1,0 +1,2446 @@
+# 📦 安全性與敏感資料管理說明
+
+為保護專案安全並確保未來開源協作不會洩漏個人帳號或金鑰，請遵守以下準則：
+
+1. **嚴禁將以下資訊硬編碼寫入代碼中**：
+   - API Key、Token
+   - Firebase 憑證檔（.json）
+   - OAuth 密鑰、Webhook 祕密值
+
+2. **所有敏感資訊皆應透過安全的方式進行管理**：
+   - 對於伺服器端應用（如 Node.js 後端），應優先使用環境變數（例如 `.env` 文件，並確保 `.gitignore` 排除此文件）。
+   - 對於客戶端應用（如 Electron 應用），敏感資訊應在後端處理，或透過安全的 IPC 機制從主進程傳遞，避免直接在渲染進程中處理或硬編碼。
+   - 考慮使用專門的密碼管理服務或配置管理工具來安全地存儲和檢索敏感資訊。
+
+3. **使用 `.env.example` 或 `config.example.json` 提供格式參考**，協作人員需自行填寫有效值。
+
+4. **請勿將任何生產環境金鑰上傳至公共平台**（如 GitHub、Gitee、Discord、Telegram 等）。
+
+5. 若發現憑證洩漏，請立即撤銷該金鑰並通知倉庫管理者。定期審查和輪換憑證是最佳實踐。
+
+
+## 配置管理與驗證
+
+1. **配置分離**：將應用程式的配置與代碼分離，特別是敏感資訊。
+2. **配置驗證**：對載入的配置進行嚴格驗證，確保所有必要的配置項都已提供且格式正確，並符合預期的類型和範圍。
+3. **安全傳輸**：在 Electron 應用中，確保敏感配置資訊從主進程傳遞到渲染進程時，使用安全的 IPC 通道，並避免在不必要的範圍內暴露這些資訊。
+
+—
+
+感謝您協助保護貓貓AI的未來 🐾
+
+# MikoAI-Project 專案結構與功能整合紀錄
+
+## 專案概述
+
+MikoAI-Project 旨在整合多個 CatAI 相關專案的功能，建立一個更強大、更具彈性的 AI 系統。本文件將記錄專案的結構、各模組的功能以及未來的整合計畫。
+
+## 已整合或計畫整合的功能模組
+
+以下是從 `d:` 槽中分析的 CatAI 相關專案及其主要功能，這些功能將作為 MikoAI-Project 的潛在整合模組：
+
+### 1. CatAI_Rebuild_Starter
+- **功能**: 基礎 Electron 桌面應用程式框架，提供主視窗、配置載入與儲存、API Key 管理等核心功能。
+- **潛在整合點**: 作為 MikoAI 桌面應用程式的基礎框架，提供統一的啟動介面和配置管理。
+
+### 2. catAI_new
+- **功能**: 具備 Firebase 整合、API Key 管理、後端服務啟動和前後端通信的 Electron 應用程式。
+- **潛在整合點**: 引入 Firebase 認證和資料庫功能，強化用戶管理和數據持久化能力。
+
+### 3. catAIpc (2) / catAIpc
+- **功能**: 包含 API 管理視窗和沙盒視窗的 Electron 應用程式，並啟動後端服務。
+- **潛在整合點**: 提供獨立的 API 管理介面和沙盒環境，方便開發者測試和管理 AI 服務。
+
+### 4. catAI
+- **功能**: 基於 Node.js 的後端服務專案，可能包含核心 AI 邏輯或與外部 AI 服務的介面。
+- **潛在整合點**: 作為 MikoAI 的後端服務層，處理複雜的 AI 運算和資料處理。
+
+### 5. catAIzip (MikoAI 相關專案集合)
+- **MikoAI-FULL-PACK-v1**: 包含 MikoAI-Project-main、核心模組、數據和 Firebase 配置，代表一個完整的 MikoAI 版本。
+- **MikoAI-Project-main**: MikoAI 的核心專案，以「人格模組演化」為核心，具備多層次人格結構、記憶演化機制和公式湧現能力。
+- **MikoAI-StarterKit-AutoGrowth**: 包含自動成長引擎，用於載入核心設定檔、記錄成長事件並根據歷史記錄演化偏好。
+- **潛在整合點**: 這些專案是 MikoAI 的核心，將直接整合其人格模組、記憶演化、自動成長等關鍵 AI 功能。
+
+### 6. catzip (多個 CatAI 變體集合)
+- **cat1**: 類似 `catAI_new`，主要負責 API 密鑰管理、後端服務啟動和前後端通信，使用 `cat-ai-config.json` 儲存配置。
+- **cat2**: 類似 `catAIpc (2)`，具備 API 管理和沙盒視窗功能。
+- **cat3**: 類似 `catAIpc`，修正了 HTML 和後端服務檔案路徑，並初始化 Firebase，暴露 `auth` 和 `firestore` 模組。
+- **未來貓**: 單一 HTML 檔案版本的應用程式，模擬 Firebase 客戶端 SDK 行為，處理聊天、設定和圖庫 UI 交互。
+- **潛在整合點**: 這些變體提供了不同層次的 Electron 應用程式功能和 Firebase 整合方式，可以根據 MikoAI 的需求選擇性地整合其優點，例如更精細的配置管理、更完善的 UI 介面或更靈活的 Firebase 互動模式。
+
+## 專案目錄結構 (MikoAI-Project)
+
+```
+
+### 相關專案與歷史版本
+
+以下是與 MikoAI-Project 相關的其他專案或歷史版本，它們可能包含部分功能或設計理念，可作為參考：
+
+#### `d:\CatAI_Rebuild_Starter`
+
+這是一個簡化的 Electron 應用程式，主要用於展示 Electron 與 Firebase 的基本整合。它提供了一個基礎的桌面應用框架，用於與 Firebase 進行用戶認證和資料儲存。
+
+-   `main.js`: Electron 主進程文件，負責創建應用程式視窗和初始化預加載腳本。
+-   `preload.js`: 預加載腳本，用於在渲染進程中安全地暴露 Electron API 和 Firebase 相關功能。
+-   `src/`:
+    -   `index.html`: 應用程式的主頁面。
+    -   `renderer/`:
+        -   `firebaseClient.js`: 處理前端與 Firebase 互動的邏輯，例如獲取用戶 ID 和儲存資料。
+        -   `mainClient.js`: 前端主邏輯，負責初始化應用程式並監聽用戶登入狀態。
+
+#### `d:\catAI`
+
+這是一個基於 Firebase Cloud Functions 的後端應用程式，主要處理與 Gemini AI 的互動以及貓貓公式的判斷和學習。它展示了如何將 AI 模型與自定義業務邏輯結合，並透過 Firestore 進行資料管理。
+
+-   `index.js`: Firebase Cloud Functions 的入口文件，包含 `chatApi` 和 `evaluateGemini` 兩個主要函數，分別用於處理聊天請求和後端評估學習。
+-   `server.js`: 一個獨立的 Node.js Express 伺服器，用於本地開發和測試，提供與 `index.js` 類似的聊天和評估功能，並包含 Firebase Admin SDK 的初始化和公式的實時監聽。
+-   `public/`: 包含前端靜態文件，如 `index.html` 和相關的 JavaScript 服務文件（`apiService.js`, `firebaseService.js`, `chatUI.js` 等），用於構建聊天介面。
+
+#### `d:\catAI_new`
+
+這是一個 Electron 桌面應用程式，旨在提供一個用戶友好的介面來與 AI 進行互動。它特別注重配置管理，允許用戶在應用程式內部設定 Gemini API Key 和 Firebase 憑證，並將這些敏感資訊安全地傳遞給後端服務。
+
+-   `main.js`: Electron 主進程文件，負責應用程式的生命週期管理、窗口創建、配置的讀取與儲存，以及後端服務的啟動與監控。它還處理與渲染進程的 IPC 通訊，特別是關於 API Key 的設定。
+-   `preload.js`: 預加載腳本，用於在渲染進程中安全地暴露 Electron API，以便前端可以與主進程進行通訊，例如儲存 API Key 和監聽後端狀態。
+-   `src/backend/server.js`: 後端服務，基於 Express.js，負責處理 AI 聊天請求（透過 Gemini API）和與 Firebase Firestore 的資料互動（儲存對話歷史）。它從環境變數中獲取敏感的 API Key 和 Firebase 憑證。
+-   `src/index.html`: 應用程式的主要用戶介面，包含聊天界面和用於設定 API Key 的模態對話框。
+
+#### `d:\catAIpc`
+
+這是一個功能更為豐富的 Electron 桌面應用程式，它在 `d:\catAI_new` 的基礎上進行了擴展，增加了多個窗口（主窗口、API 管理窗口、沙盒窗口）的管理能力，並引入了 API 管理和沙盒執行功能。這個專案展示了更複雜的 Electron 應用架構和進程間通訊。
+
+-   `main.js`: Electron 主進程文件，負責應用程式的啟動、多個窗口的創建與管理、配置的讀取與儲存、後端服務的啟動與監控，以及處理來自不同渲染進程的 IPC 事件。它特別處理了 API Key 和 Firebase 憑證的安全傳遞。
+-   `preload.js`: 預加載腳本，用於在渲染進程中安全地暴露 Electron API 和 Firebase 相關功能，並處理用戶認證狀態的監聽。
+-   `src/backend/server.js`: 後端服務，基於 Express.js，處理聊天請求、API 管理（獲取、創建、更新、刪除、切換狀態）和沙盒執行請求。它從環境變數中獲取敏感配置，並與 Firestore 進行資料互動。
+-   `src/index.html`: 主窗口的用戶介面，包含聊天功能。
+-   `src/api_management.html`: API 管理窗口的用戶介面，用於查看和管理貓貓公式。
+-   `src/sandbox.html`: 沙盒窗口的用戶介面，用於測試和執行代碼片段。
+├── .env.example
+├── .gitignore
+├── CONTRIBUTING.md
+├── LICENSE
+├── SECURITY.md
+├── README.md
+├── config.example.yml
+├── config.yml
+├── data\             # 數據儲存，例如記憶、日誌、模型數據
+│   └── implementation_plan.md
+├── docs\             # 專案文件，包括 catAI_features.md 和本文件 PROJECT_STRUCTURE.md
+│   ├── PROJECT_STRUCTURE.md
+│   ├── SECURITY_AND_MAINTAINABILITY_GUIDELINES.md
+│   ├── catAI_features.md
+│   └── miko_tool_dispatcher_design.txt
+├── logs\             # 運行日誌 (目前為空)
+├── main.py           # 主程式入口 (如果 MikoAI-Project 是 Python 專案)
+├── package-lock.json # Node.js 依賴鎖定文件
+├── requirements.in   # Python 依賴管理文件
+├── scripts\           # 腳本文件，例如部署腳本、數據處理腳本
+│   ├── encode_firebase_key.js
+│   └── test_gemini_evaluation.ps1
+├── src\              # 核心原始碼，可能包含以下子目錄：
+│   ├── backend\      # 後端服務，整合 catAI 和其他後端邏輯
+│   ├── frontend\     # 前端介面，整合 Electron 應用程式 (如 CatAI_Rebuild_Starter, catAIpc)
+│   ├── core\         # MikoAI 核心邏輯，整合 MikoAI-Project-main, MikoAI-StarterKit-AutoGrowth
+│   ├── utils\        # 通用工具函數
+│   └── config\       # 配置管理模組
+├── tests\            # 測試文件
+└── version_manifest.json # 版本資訊
+```
+
+## 未來整合計畫
+
+1.  **模組化重構**: 將現有 CatAI 專案中的功能抽象為可重用的模組，便於在 MikoAI-Project 中靈活組合和擴展。
+2.  **統一配置管理**: 建立統一的配置系統，管理所有模組的 API Key、Firebase 設定、用戶偏好等。
+3.  **跨平台支援**: 確保整合後的桌面應用程式能夠在不同作業系統上穩定運行。
+4.  **性能優化**: 對整合後的系統進行性能測試和優化，確保流暢的用戶體驗。
+5.  **文檔完善**: 持續更新專案文檔，包括 API 文檔、開發指南和部署說明。
+
+## 已查看文件列表
+
+- `d:\catAIpc (2)\catAIpc\main.js`
+- `d:\catAIpc (2)\catAIpc\preload.js`
+- `d:\catAIzip\MikoAI-FULL-PACK-v1\MikoAI-Project-main\README.md`
+- `d:\catAIzip\MikoAI-StarterKit-AutoGrowth\core\auto_growth_engine.js`
+- `d:\catzip\cat1\main.js`
+- `d:\catzip\cat1\preload.js`
+- `d:\catzip\cat2\main.js`
+- `d:\catzip\cat2\preload.js`
+- `d:\catzip\cat3\main.js`
+- `d:\catzip\cat3\preload.js`
+- `d:\catzip\未來貓\js\未來貓main.js`
+- `d:\GitHub\MikoAI-Project\docs\catAI_features.md`
+- `d:\GitHub\MikoAI-Project\PROJECT_STRUCTURE.md` (此文件)
+- `d:\GitHub\MikoAI-Project\src\electron_app\src\renderer.js`: 未找到此文件，此部分功能暫時無法整合。
+- `d:\GitHub\MikoAI-Project\src\electron_app\src\js\chat.js`: 未找到此文件，此部分功能暫時無法整合。
+- `d:\GitHub\MikoAI-Project\src\electron_app\src\js\config.js`: 未找到此文件，此部分功能暫時無法整合。
+- `d:\GitHub\MikoAI-Project\src\electron_app\src\js\firebase-config.js`: 未找到此文件，此部分功能暫時無法整合。
+- `d:\GitHub\MikoAI-Project\src\electron_app\src\js\main.js`: 未找到此文件，此部分功能暫時無法整合。
+- `d:\GitHub\MikoAI-Project\src\electron_app\src\js\utils.js`: 未找到此文件，此部分功能暫時無法整合。
+- `d:\GitHub\MikoAI-Project\src\electron_app\src\renderer`: 未找到此目錄，此部分功能暫時無法整合。
+- `d:\GitHub\MikoAI-Project\src\electron_app\src\backend\server.js`: Electron 應用程式的後端服務，負責處理聊天請求、與 Gemini API 互動以及與 Firebase Firestore 進行數據存儲。
+- `d:\GitHub\MikoAI-Project\src\core\README.md`: 貓貓AI核心模組實現規範，詳細描述了模組結構、核心功能實現、API 整合、開發規範、測試要求、文檔要求、版本控制和注意事項。
+- `d:\GitHub\MikoAI-Project\src\core\__init__.py`: 核心模組的初始化文件，僅包含一行註解，說明其用於AI邏輯和記憶體管理。
+- `d:\GitHub\MikoAI-Project\src\core`: 核心模組目錄，包含了貓貓AI的核心邏輯實現，包括時間系統、公式系統、危機判斷、自動成長、可逆生成和工具分發器等子模組。
+- `d:\GitHub\MikoAI-Project\src\core\time_system\time_system.py`: 時間系統的核心實現，包含現實時間、體感時間和心理時間三層時間機制，以及時間事件的添加、移除和處理。
+- `d:\GitHub\MikoAI-Project\src\core\formula_system\formula_system.py`: 公式系統的核心實現，包含公式的添加、移除、執行，以及GUIPE元公式、隨機元公式和數學公式的初始化。
+- `d:\GitHub\MikoAI-Project\src\core\crisis\crisis_system.py`: 危機判斷系統的核心實現，包含聲音分析、動作分析和危機等級評估，並定義了危機事件和危機等級。
+- `d:\GitHub\MikoAI-Project\src\core\auto_growth\auto_growth_engine.js`: 實現了自動成長引擎，負責讀取核心清單、記錄成長事件，並根據歷史數據演化偏好，例如工具使用偏好。
+- `d:\GitHub\MikoAI-Project\src\core\auto_growth\cat_core_manifest.txt`: 檔案解碼失敗，暫時無法獲取內容。
+- `d:\GitHub\MikoAI-Project\src\core\auto_growth\growth_log.json`: 成長日誌文件，目前內容為空陣列 `[]`。
+- `d:\GitHub\MikoAI-Project\src\core\generation\generation_system.py`: 實現了可逆生成系統，支持文字轉圖像、圖像轉模型、模型轉圖像和圖像轉文字等多種生成類型，並管理生成任務的生命週期。
+- `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\README.md`: 工具分發器的概述文件，詳細說明了其作為貓貓AI核心模組之一的功能、目錄結構、核心功能、配置說明、使用示例、錯誤處理、性能優化、開發指南和注意事項。
+- `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\__tests__\tool_dispatcher.test.js`: 工具分發器的測試文件，使用 Jest 框架，包含對初始化、工具列表、任務分發、API 錯誤處理、請求隊列和各種錯誤處理（如網路錯誤、超時錯誤）的測試用例。
+- `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\index.js`: 工具分發器的入口文件，定義了 `ToolDispatcher` 類，負責載入工具註冊表、驗證配置、列出可用工具、分發任務、管理請求隊列，並實現了對 Gemini、Whisper 和 Vision API 的調用以及錯誤處理。
+- `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\jsdoc.json`: JSDoc 的配置文件，用於生成工具分發器的 API 文檔，定義了源文件、插件、輸出路徑、模板和文檔元數據等。
+- `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\package.json`: 工具分發器的 npm 包配置文件，包含了項目名稱、版本、描述、主入口文件、類型定義文件、腳本（測試、lint、文檔生成等）、關鍵字、作者、許可證、依賴項和開發依賴項，以及 Jest 和 ESLint 的配置。
+- `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\tool_dispatcher.js`: 工具分發器的核心實現文件，負責載入工具註冊表、列出可用工具、分發任務，並包含了對 Gemini、Whisper 和 Vision API 的調用邏輯。
+- `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\tool_registry.json`: 工具註冊表文件，定義了 Gemini、Whisper 和 Vision 等工具的類型、描述、API 金鑰環境變量和端點。
+- `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\types.d.ts`: TypeScript 類型定義文件，定義了工具類型、工具配置介面、音頻配置介面、圖像配置介面、工具註冊表介面、任務類型、任務參數介面、任務介面、錯誤上下文介面和工具分發器介面，為整個模組提供了強類型支持。
+- `d:\/GitHub\/MikoAI-Project\/README.md`: 專案的總覽文件，詳細介紹了 MikoAI（御影玲）的設計理念、核心特色（如多版本人格、模組化架構、可逆公式推理）、系統抽象架構、快速開始指南、記憶與湧現邏輯、安全與開源策略、貢獻指南以及許可證信息。
+- `d:\GitHub\MikoAI-Project\.gitignore`: Git 忽略文件，定義了版本控制系統應忽略的文件和目錄模式，包括日誌文件、Python 編譯文件、環境變數文件、臨時文件、IDE 相關文件、pip-tools 相關文件和測試相關文件。
+- `d:\GitHub\MikoAI-Project\.env.example`: 環境變數範例文件，用於指導開發者配置 API 金鑰和敏感設定，例如 Gemini API Key、Firebase Admin SDK JSON 路徑、Base URL 和其他服務金鑰（如 OpenAI API Key），並強調這些資訊不應直接寫入代碼。
+- `d:\GitHub\MikoAI-Project\config.yml`: 專案的配置文件，與 `config.example.yml` 內容相同，用於定義系統各項運行參數、API 金鑰、資源限制等，並強調敏感資訊應透過環境變數載入。
+- `d:\GitHub\MikoAI-Project\config.example.yml`: 專案的配置範例文件，定義了系統運行參數、API 金鑰（Gemini, Whisper, Stable Diffusion, OpenPose, Firebase）、核心系統配置（時間系統、公式系統、危機判斷系統、可逆生成系統）、資源限制和安全設置等，並強調敏感資訊應透過環境變數載入。
+- `d:\GitHub\MikoAI-Project\LICENSE`: 許可證文件，表明專案採用 MIT License，版權歸屬於 2025 年。
+- `d:\GitHub\MikoAI-Project\CONTRIBUTING.md`: 貢獻指南文件，提供了參與專案的簡要說明，包括 Fork 倉庫、創建新分支以及提交 Pull Request 前需附上測試與說明。
+- `d:\GitHub\MikoAI-Project\SECURITY.md`: 安全性與敏感資料管理說明文件，強調了保護專案安全的準則，包括嚴禁將敏感資訊寫入代碼、所有敏感資訊應放入 `.env` 檔案並加入 `.gitignore`、使用 `.env.example` 提供格式參考、禁止將生產環境金鑰上傳至任何平台，以及憑證洩漏時的處理方式。
+- `d:\GitHub\MikoAI-Project\data\implementation_plan.md`: 實施計畫文件，詳細規劃了貓貓AI的核心功能實現、API生態系統、公式系統、危機判斷系統、可逆生成系統和介面系統的開發進度，並追蹤技術重點、里程碑、注意事項和整體進度。
+- `d:\GitHub\MikoAI-Project\version_manifest.json`: 版本清單文件，定義了貓貓AI的三個版本（v1, v2, v3），包括它們的ID、標題、描述、特性和狀態，以及作者、最後更新日期和筆記。
+- `d:\GitHub\MikoAI-Project\docs\SECURITY_AND_MAINTAINABILITY_GUIDELINES.md`: 安全與可維護性指南文件，提供了將 MikoAI-Project 的安全性提升至航空業級別的綜合性建議，包括嚴格的安全編碼實踐、最小權限原則、全面的日誌與監控、嚴格的配置管理、安全審計與認證，以及代碼品質與可維護性方面的編碼規範、類型提示、詳盡文檔、全面測試、靜態分析與代碼審查、架構與設計、錯誤處理與容錯機制、依賴管理和依賴漏洞掃描。
+- `d:\GitHub\MikoAI-Project\docs\miko_tool_dispatcher_design.txt`: 貓貓工具調度模組設計說明文件，詳細描述了 `mikoToolRouter.js` 模組的用途、結構、工具註冊、任務調度、可用工具列表、錯誤處理、性能優化、安全性、擴展性以及使用建議場景和設計原則。
+- `d:\GitHub\MikoAI-Project\docs\catAI_features.md`: 專案功能概述文件，詳細描述了多個 CatAI 相關專案的功能，包括基於 Electron 的桌面應用程式、Node.js 後端服務、API 密鑰管理、沙盒功能、Firebase 集成以及 MikoAI 核心概念（人格模組演化、多版本人格、模組化架構、記憶與湧現邏輯、自動成長引擎等）。
+- `d:\GitHub\MikoAI-Project\scripts\encode_firebase_key.js`: 用於將 Firebase 服務帳戶金鑰 JSON 文件編碼為 Base64 字串的 Node.js 腳本，方便將敏感資訊安全地儲存到環境變數中。
+- `d:\GitHub\MikoAI-Project\scripts\test_gemini_evaluation.ps1`: 用於自動向 Node.js 伺服器發送測試問題並接收 Gemini 回應的 PowerShell 腳本，用於評估和測試貓貓AI的對話和學習功能。
+- `d:\GitHub\MikoAI-Project\src\__init__.py`: Python 套件初始化文件。
+- `d:\GitHub\MikoAI-Project\src\api\`: 包含所有 API 相關的模組和服務。
+  - `d:\GitHub\MikoAI-Project\src\api\README.md`: API 目錄的說明文件。
+  - `d:\GitHub\MikoAI-Project\src\api\__init__.py`: API 套件初始化文件。
+  - `d:\GitHub\MikoAI-Project\src\api\api_server.py`: API 服務器主文件。
+  - `d:\GitHub\MikoAI-Project\src\api\audio\`: 處理音頻相關 API 的模組。
+    - `d:\GitHub\MikoAI-Project\src\api\audio\__init__.py`: 音頻 API 套件初始化文件。
+    - `d:\GitHub\MikoAI-Project\src\api\audio\whisper.py`: Whisper 語音識別模型相關實現。
+    - `d:\GitHub\MikoAI-Project\src\api\audio\whisper_api.py`: Whisper 語音識別 API 接口。
+  - `d:\GitHub\MikoAI-Project\src\api\cat_backend\`: 貓貓後端服務相關文件。
+    - `d:\GitHub\MikoAI-Project\src\api\cat_backend\package-lock.json`: Node.js 依賴鎖定文件。
+    - `d:\GitHub\MikoAI-Project\src\api\cat_backend\package.json`: Node.js 專案配置文件。
+    - `d:\GitHub\MikoAI-Project\src\api\cat_backend\public\`: 靜態文件目錄。
+    - `d:\GitHub\MikoAI-Project\src\api\cat_backend\server.js`: 貓貓後端服務器主文件。
+    - `d:\GitHub\MikoAI-Project\src\api\cat_backend\serviceAccountKey.json`: Firebase 服務帳戶金鑰文件。
+  - `d:\GitHub\MikoAI-Project\src\api\llm\`: 大型語言模型相關 API 的模組。
+    - `d:\GitHub\MikoAI-Project\src\api\llm\__init__.py`: LLM API 套件初始化文件。
+    - `d:\GitHub\MikoAI-Project\src\api\llm\gemini.py`: Gemini 模型相關實現。
+    - `d:\GitHub\MikoAI-Project\src\api\llm\gemini_api.py`: Gemini 模型 API 接口。
+  - `d:\GitHub\MikoAI-Project\src\api\vision\`: 視覺相關 API 的模組。
+    - `d:\GitHub\MikoAI-Project\src\api\vision\__init__.py`: 視覺 API 套件初始化文件。
+    - `d:\GitHub\MikoAI-Project\src\api\vision\stable_diffusion.py`: Stable Diffusion 模型相關實現。
+    - `d:\GitHub\MikoAI-Project\src\api\vision\stable_diffusion_api.py`: Stable Diffusion 模型 API 接口。
+- `d:\GitHub\MikoAI-Project\src\core\`: 包含 MikoAI 核心邏輯和系統。
+  - `d:\GitHub\MikoAI-Project\src\core\README.md`: 核心目錄的說明文件。
+  - `d:\GitHub\MikoAI-Project\src\core\__init__.py`: 核心套件初始化文件。
+  - `d:\GitHub\MikoAI-Project\src\core\auto_growth\`: 自動成長引擎相關模組。
+    - `d:\GitHub\MikoAI-Project\src\core\auto_growth\auto_growth_engine.js`: 自動成長引擎的 JavaScript 實現。
+    - `d:\GitHub\MikoAI-Project\src\core\auto_growth\cat_core_manifest.txt`: 貓貓核心清單文件。
+    - `d:\GitHub\MikoAI-Project\src\core\auto_growth\growth_log.json`: 成長日誌文件。
+  - `d:\GitHub\MikoAI-Project\src\core\crisis\`: 危機判斷系統模組。
+    - `d:\GitHub\MikoAI-Project\src\core\crisis\crisis_system.py`: 危機判斷系統的 Python 實現。
+  - `d:\GitHub\MikoAI-Project\src\core\formula_system\`: 公式系統模組。
+    - `d:\GitHub\MikoAI-Project\src\core\formula_system\formula_system.py`: 公式系統的 Python 實現。
+  - `d:\GitHub\MikoAI-Project\src\core\generation\`: 可逆生成系統模組。
+    - `d:\GitHub\MikoAI-Project\src\core\generation\generation_system.py`: 可逆生成系統的 Python 實現。
+  - `d:\GitHub\MikoAI-Project\src\core\time_system\`: 時間系統模組。
+    - `d:\GitHub\MikoAI-Project\src\core\time_system\time_system.py`: 時間系統的 Python 實現。
+  - `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\`: 工具調度模組。
+    - `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\README.md`: 工具調度目錄的說明文件。
+    - `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\__tests__\`: 測試文件目錄。
+    - `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\index.js`: 工具調度模組的入口文件。
+    - `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\jsdoc.json`: JSDoc 配置文件。
+    - `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\package.json`: Node.js 專案配置文件。
+    - `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\tool_dispatcher.js`: 工具調度器的 JavaScript 實現。
+    - `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\tool_registry.json`: 工具註冊表文件。
+    - `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher\types.d.ts`: TypeScript 類型定義文件。
+- `d:\GitHub\MikoAI-Project\src\electron_app\`: 包含 Electron 桌面應用程式的相關文件。
+  - `d:\GitHub\MikoAI-Project\src\electron_app\api_management\`: API 管理相關文件。
+    - `d:\GitHub\MikoAI-Project\src\electron_app\api_management\api_management.html`: API 管理頁面。
+    - `d:\GitHub\MikoAI-Project\src\electron_app\api_management\sandbox.html`: 沙盒頁面。
+  - `d:\GitHub\MikoAI-Project\src\electron_app\config\`: 配置相關文件。
+    - `d:\GitHub\MikoAI-Project\src\electron_app\config\config.json`: 應用程式配置文件。
+  - `d:\GitHub\MikoAI-Project\src\electron_app\firebase-service-account.json`: Firebase 服務帳戶金鑰文件。
+  - `d:\GitHub\MikoAI-Project\src\electron_app\main.js`: Electron 主進程文件。
+  - `d:\GitHub\MikoAI-Project\src\electron_app\package-lock.json`: Node.js 依賴鎖定文件。
+  - `d:\GitHub\MikoAI-Project\src\electron_app\package.json`: Node.js 專案配置文件。
+  - `d:\GitHub\MikoAI-Project\src\electron_app\preload.js`: Electron 預加載腳本。
+  - `d:\GitHub\MikoAI-Project\src\electron_app\src\`: 渲染進程源代碼目錄。
+    - `d:\GitHub\MikoAI-Project\src\electron_app\src\backend\`: 後端相關文件。
+    - `d:\GitHub\MikoAI-Project\src\electron_app\src\css\`: CSS 樣式文件。
+    - `d:\GitHub\MikoAI-Project\src\electron_app\src\index.html`: 應用程式主頁面。
+  - `d:\GitHub\MikoAI-Project\src\electron_app\tailwind.config.js`: Tailwind CSS 配置文件。
+- `d:\GitHub\MikoAI-Project\src\interface\`: 包含介面相關的模組。
+  - `d:\GitHub\MikoAI-Project\src\interface\__init__.py`: 介面套件初始化文件。
+- `d:\GitHub\MikoAI-Project\src\ui\`: 包含使用者介面相關的模組。
+  - `d:\GitHub\MikoAI-Project\src\ui\README.md`: UI 目錄的說明文件。
+  - `d:\GitHub\MikoAI-Project\src\ui\dashboard\`: 儀表板系統模組。
+    - `d:\GitHub\MikoAI-Project\src\ui\dashboard\__init__.py`: 儀表板套件初始化文件。
+    - `d:\GitHub\MikoAI-Project\src\ui\dashboard\dashboard_system.py`: 儀表板系統的 Python 實現。
+  - `d:\GitHub\MikoAI-Project\src\ui\input\`: 輸入系統模組。
+    - `d:\GitHub\MikoAI-Project\src\ui\input\__init__.py`: 輸入套件初始化文件。
+    - `d:\GitHub\MikoAI-Project\src\ui\input\input_system.py`: 輸入系統的 Python 實現。
+  - `d:\GitHub\MikoAI-Project\src\ui\live2d\`: Live2D 系統模組。
+    - `d:\GitHub\MikoAI-Project\src\ui\live2d\__init__.py`: Live2D 套件初始化文件。
+    - `d:\GitHub\MikoAI-Project\src\ui\live2d\live2d_system.py`: Live2D 系統的 Python 實現。
+  - `d:\GitHub\MikoAI-Project\src\ui\output\`: 輸出系統模組。
+    - `d:\GitHub\MikoAI-Project\src\ui\output\__init__.py`: 輸出套件初始化文件。
+    - `d:\GitHub\MikoAI-Project\src\ui\output\output_system.py`: 輸出系統的 Python 實現。
+- `d:\GitHub\MikoAI-Project\src\versions\`: 包含不同版本的 MikoAI 實現。
+  - `d:\GitHub\MikoAI-Project\src\versions\miko-v1\`: MikoAI 版本 1 的文件。
+    - `d:\GitHub\MikoAI-Project\src\versions\miko-v1\main.js`: 版本 1 的主文件。
+    - `d:\GitHub\MikoAI-Project\src\versions\miko-v1\preload.js`: 版本 1 的預加載腳本。
+    - `d:\GitHub\MikoAI-Project\src\versions\miko-v1\src\`: 版本 1 的源代碼目錄。
+  - `d:\GitHub\MikoAI-Project\src\versions\miko-v2\`: MikoAI 版本 2 的文件。
+    - `d:\GitHub\MikoAI-Project\src\versions\miko-v2\main.js`: 版本 2 的主文件。
+    - `d:\GitHub\MikoAI-Project\src\versions\miko-v2\package.json`: 版本 2 的 Node.js 專案配置文件。
+    - `d:\GitHub\MikoAI-Project\src\versions\miko-v2\preload.js`: 版本 2 的預加載腳本。
+    - `d:\GitHub\MikoAI-Project\src\versions\miko-v2\src\`: 版本 2 的源代碼目錄。
+  - `d:\GitHub\MikoAI-Project\src\versions\miko-v3\`: MikoAI 版本 3 的文件。
+    - `d:\GitHub\MikoAI-Project\src\versions\miko-v3\main.js`: 版本 3 的主文件。
+    - `d:\GitHub\MikoAI-Project\src\versions\miko-v3\package.json`: 版本 3 的 Node.js 專案配置文件。
+    - `d:\GitHub\MikoAI-Project\src\versions\miko-v3\preload.js`: 版本 3 的預加載腳本。
+    - `d:\GitHub\MikoAI-Project\src\versions\miko-v3\src\`: 版本 3 的源代碼目錄。
+- `d:\GitHub\MikoAI-Project\src\main.py`: 未找到此文件，此部分功能暫時無法整合。
+- `d:\GitHub\MikoAI-Project\config.example.yml`: 貓貓AI的配置範例文件，定義了系統運行參數、API 金鑰、資源限制等。敏感資訊（如 API 金鑰）應透過環境變數載入。
+  - `system`: 系統設置，包括運行環境、日誌級別、日誌和數據路徑、模型路徑、程式碼和文檔根目錄。
+  - `api_keys`: API 密鑰配置，包含 Gemini、Whisper、Stable Diffusion、OpenPose 和 Firebase 的 API 設置，強調金鑰應從環境變數中讀取。
+  - `core_systems`: 核心系統配置，包括時間系統、公式系統、危機判斷系統和可逆生成系統的詳細參數。
+  - `resource_limits`: 資源限制配置，定義了 CPU、記憶體、網路帶寬、並發請求數以及後端進程數的限制。
+  - `security`: 安全設置，包含 JWT 認證、加密設置和訪問控制的相關配置。
+  - `cache`: 快取設置，目前包含 Redis 配置的佔位符。
+- `d:\GitHub\MikoAI-Project\CONTRIBUTING.md`: 貢獻指南文件，提供了參與專案開發的指引，包括 Fork 倉庫、創建新分支以及提交 Pull Request 的要求。
+- `d:\GitHub\MikoAI-Project\LICENSE`: 專案的開源許可證文件，指定了專案的許可類型為 MIT License。
+- `d:\GitHub\MikoAI-Project\README.md`: 專案的根 README 文件，詳細介紹了 MikoAI 專案的核心特色、系統架構、快速開始指南、記憶與湧現邏輯、安全與開源策略、貢獻指南和許可證信息。
+- `d:\GitHub\MikoAI-Project\package-lock.json`: npm 的鎖定文件，記錄了項目依賴的精確版本，確保團隊成員之間依賴的一致性。目前顯示為一個空的 `packages` 對象，表示沒有直接的 npm 依賴。
+- `d:\GitHub\MikoAI-Project\requirements.in`: Python 依賴文件，列出了項目所需的 Python 包，包括用於環境變量管理 (`python-dotenv`)、日誌 (`loguru`)、數據驗證 (`pydantic`)、Web 框架 (`fastapi`, `uvicorn`)、HTTP 請求 (`requests`, `aiohttp`)、WebSockets (`websockets`)、安全 (`PyJWT`, `cryptography`, `passlib`, `python-jose`, `bcrypt`)、機器學習 (`torch`, `torchvision`, `transformers`, `whisper`, `stable-diffusion`)、音頻處理 (`pyaudio`, `librosa`, `sounddevice`)、圖像處理 (`opencv-python`, `Pillow`)、科學計算 (`numpy`, `scipy`)、數據可視化 (`matplotlib`, `seaborn`)、測試 (`pytest`, `pytest-cov`)、代碼質量工具 (`black`, `isort`, `flake8`, `mypy`)、文檔生成 (`Sphinx`, `sphinx_rtd_theme`)、監控 (`prometheus-client`, `py-spy`)、數據庫 ORM (`sqlalchemy`, `alembic`)、異步任務 (`celery`) 和雲存儲 (`s3fs`, `fsspec`) 等。
+- `d:\GitHub\MikoAI-Project\SECURITY.md`: 專案的安全性與敏感資料管理說明文件，強調了嚴禁將敏感資訊寫入代碼、應將所有敏感資訊放入 `.env` 文件並添加到 `.gitignore`、使用 `.env.example` 提供格式參考以及憑證洩漏時的處理方式。
+- `d:\GitHub\MikoAI-Project\version_manifest.json`: 版本清單文件，定義了 MikoAI 不同版本的詳細信息，包括版本 ID、標題、描述、功能、狀態以及作者和更新日期，用於識別和切換不同版本的貓貓模組。
+- `d:\GitHub\MikoAI-Project\requirements.txt`: 根據 `requirements.in` 生成的精確依賴文件，用於確保環境一致性。
+
+## 整合進度
+
+### 1. `catAI_new` 專案整合
+- **整合方式**: 將 `catAI_new` 專案的核心文件複製到 `d:\GitHub\MikoAI-Project\src\electron_app` 目錄下。
+- **複製文件**: `main.js`, `preload.js`, `package.json`, `package-lock.json`, `firebase-service-account.json`, `tailwind.config.js` 以及 `src` 目錄。
+- **代碼更新**: 將 `electron-builder` 的版本從 `^24.0.0` 更新為 `^24.13.5`。
+- **目的**: 為 MikoAI-Project 提供一個基於 Electron 的桌面應用程式基礎，包含 Firebase 整合和 API Key 管理功能。
+
+### 2. `catAIpc` 專案整合
+- **整合方式**: 將 `catAIpc` 專案的相關文件複製到 `d:\GitHub\MikoAI-Project\src\electron_app` 目錄下。
+- **複製文件**: `api_management.html`, `sandbox.html` (到 `src\electron_app\api_management` 目錄), `config` 目錄及其內容。
+- **目的**: 為 MikoAI-Project 引入 API 管理和沙盒視窗功能，方便開發者測試和管理 AI 服務。
+
+### 3. `catAI` 專案整合 (後端服務)
+- **整合方式**: 將 `catAI` 專案的核心後端文件複製到 `d:\GitHub\MikoAI-Project\src\api\cat_backend` 目錄下。
+- **複製文件**: `server.js`, `package.json`, `package-lock.json`, `public` 目錄及其內容, `serviceAccountKey.json`, `.env`。
+- **代碼更新**: 將 `@google/generative-ai` 的版本從 `^0.24.1` 更新為 `^0.15.0`，並添加 `node-fetch` 依賴。
+- **代碼更新**: 將 `GEMINI_API_KEY` 的獲取方式修改為優先從 `process.env.GEMINI_API_KEY` 或 `process.env.GOOGLE_API_KEY` 中獲取，並將錯誤處理方式改為警告而非終止應用程式。
+- **目的**: 為 MikoAI-Project 提供基於 Node.js 的後端服務，包含 Firebase Firestore 的貓貓公式管理和 Gemini API 的聊天功能。
+
+- **整合方式**: 確認 `catAI` 專案的 `electron_app` 目錄下的 `src` 目錄下的 `index.html` 文件路徑已調整至 `d:\GitHub\MikoAI-Project\src\electron_app\src\index.html`。
+- **目的**: 作為 Electron 應用程式的前端頁面，提供 API Key 設置和聊天界面。
+
+### 4. `MikoAI-StarterKit-AutoGrowth` 專案整合 (核心自動成長引擎)
+- **整合方式**: 將 `MikoAI-StarterKit-AutoGrowth` 專案的核心文件複製到 `d:\GitHub\MikoAI-Project\src\core\auto_growth` 目錄下。
+- **複製文件**: `auto_growth_engine.js`, `cat_core_manifest.txt`, `growth_log.json`。
+- **代碼更新**: 將 `auto_growth_engine.js` 中 `manifestPath` 和 `logPath` 的路徑調整為 `d:\GitHub\MikoAI-Project\data` 目錄。
+- **目的**: 為 MikoAI-Project 引入自動成長和偏好演化功能，使其能夠根據使用歷史自動優化和調整行為。
+
+### 5. `MikoAI-StarterKit-FULL` 專案整合 (工具分發器)
+- **整合方式**: 將 `MikoAI-StarterKit-FULL` 專案的工具分發器相關文件複製到 `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher` 目錄下。
+- **複製文件**: `tool_dispatcher.js`, `tool_registry.json`。
+- **代碼更新**: 將 `axios` 替換為 `node-fetch`，並將 `process.env.GEMINI_API_KEY` 替換為 `process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY`。
+- **目的**: 為 MikoAI-Project 提供統一的工具調度機制，方便整合和管理各種 AI 工具和服務。
+
+### 6. `miko_tool_dispatcher` 專案整合 (工具分發器)
+- **整合方式**: 將 `miko_tool_dispatcher` 專案的工具分發器相關文件複製到 `d:\GitHub\MikoAI-Project\src\core\tool_dispatcher` 目錄下。
+- **複製文件**: `tool_dispatcher.js`, `tool_registry.json`。
+- **目的**: 進一步完善 MikoAI-Project 的工具調度機制，確保與最新版本的工具分發器功能同步。
+
+### 7. `MikoAI-FULL-PACK-v1` 專案整合 (危機管理)
+- **整合方式**: 嘗試整合 `MikoAI-FULL-PACK-v1` 專案的危機管理功能。
+- **複製文件**: `crisis_management.js` (未找到)。
+- **目的**: 為 MikoAI-Project 引入危機管理和應急響應機制，以應對潛在的系統故障或異常情況。**注意：`crisis_management.js` 文件在源目錄中未找到，此部分功能暫時無法整合。**
+
+### 8. `MikoAI-StarterKit-FULL` 專案整合 (Electron 主進程)
+- **整合方式**: 將 `MikoAI-StarterKit-FULL` 專案的 `electron_app` 目錄下的 `main.js` 文件複製到 `d:\GitHub\MikoAI-Project\src\electron_app` 目錄下。
+- **複製文件**: `main.js`。
+- **代碼更新**: 將 `main.js` 中 `serverPath` 的路徑調整為 `d:\GitHub\MikoAI-Project\src\api\cat_backend\server.js`。
+- **目的**: 提供 Electron 應用程式的主進程邏輯，負責窗口管理、IPC 通訊和後端服務的啟動。
+
+### 9. `MikoAI-StarterKit-FULL` 專案整合 (Electron 預加載腳本)
+- **整合方式**: 將 `MikoAI-StarterKit-FULL` 專案的 `electron_app` 目錄下的 `preload.js` 文件複製到 `d:\GitHub\MikoAI-Project\src\electron_app` 目錄下。
+- **複製文件**: `preload.js`。
+- **代碼更新**: 添加 `onBackendError` 事件監聽器，以便前端能夠接收後端錯誤訊息並顯示給用戶。
+- **目的**: 提供 Electron 應用程式的預加載腳本，用於在渲染進程中安全地暴露 Node.js 功能。
+
+### 10. `MikoAI-StarterKit-FULL` 專案整合 (前端樣式)
+- **整合方式**: 將 `MikoAI-StarterKit-FULL` 專案的 `electron_app` 目錄下的 `src` 目錄中的 `css` 目錄中的 `output.css` 文件複製到 `d:\GitHub\MikoAI-Project\src\electron_app\src\css` 目錄下。
+- **複製文件**: `output.css`。
+- **代碼更新**: 添加 `error-message` 的樣式，以便在前端顯示錯誤訊息時有明確的視覺區分。
+- **目的**: 提供 Electron 應用程式的前端樣式。
+
+## 已查看文件列表
+
+- `d:\GitHub\MikoAI-Project\src\electron_app\src\css\output.css`: Electron 應用程式的前端樣式文件，包含 Tailwind CSS 的基礎樣式和自定義的 `ai-message` 及 `error-message` 樣式。
+
+### 11. `MikoAI-StarterKit-FULL` 專案整合 (渲染進程腳本)
+- **整合方式**: 嘗試整合 `MikoAI-StarterKit-FULL` 專案的 `electron_app` 目錄下的 `src` 目錄中的 `js` 目錄中的 `renderer.js` 文件，但該文件和目錄不存在。
+- **複製文件**: `renderer.js` (未找到)。
+- **目的**: 提供 Electron 應用程式的渲染進程邏輯，處理前端交互和與主進程的通訊。**注意：`renderer.js` 文件在源目錄中未找到，此部分功能暫時無法整合。**
+
+# MikoAI-Project 重構版本
+
+## 專案結構
+
+本專案採用模塊化架構，將 Miko AI 人格與功能模塊分離，實現更好的可維護性和可擴展性。
+
+### 目錄結構
+
+- `src/miko/` - Miko AI 人格核心
+- `src/modules/` - 功能模塊
+- `src/interfaces/` - 介面層
+- `src/shared/` - 共享組件
+- `src/external/` - 外部服務整合
+
+### 快速開始
+
+1. 安裝依賴：`npm install`
+2. 配置環境：複製 `config.example.yml` 為 `config.yml`
+3. 啟動應用：`npm start`
+
+### 開發指南
+
+請參考各目錄下的 README 文件了解詳細的開發指南。
+
+### 版本資訊
+
+- 重構版本：2.0.0
+- 重構日期：2025-01-27
+- 基於版本：MikoAI-Project v1.x
+
+# 貓貓AI UI層實現規範
+
+## 1. UI層結構
+
+### 1.1 目錄結構
+```
+src/ui/
+├── __init__.py           # 模組初始化
+├── live2d/               # Live2D整合
+│   ├── model.py          # 模型管理
+│   ├── motion.py         # 動作控制
+│   └── expression.py     # 表情系統
+├── dashboard/            # 控制面板
+│   ├── monitor.py        # 監控介面
+│   ├── settings.py       # 設置介面
+│   └── status.py         # 狀態顯示
+├── input/                # 輸入處理
+│   ├── voice.py          # 語音輸入
+│   ├── text.py           # 文本輸入
+│   └── gesture.py        # 手勢輸入
+└── output/               # 輸出處理
+    ├── speech.py         # 語音輸出
+    ├── animation.py      # 動畫效果
+    └── notification.py   # 通知系統
+```
+
+## 2. Live2D整合
+
+### 2.1 模型管理
+- 模型載入
+- 資源優化
+- 動態切換
+- 記憶體管理
+- 錯誤處理
+
+### 2.2 動作控制
+- 基礎動作
+- 複合動作
+- 動作過渡
+- 動作觸發
+- 動作同步
+
+### 2.3 表情系統
+- 表情切換
+- 情緒映射
+- 混合表情
+- 漸變效果
+- 即時反應
+
+## 3. 控制面板
+
+### 3.1 監控介面
+- 系統狀態
+- 資源使用
+- API監控
+- 錯誤追蹤
+- 性能指標
+
+### 3.2 設置介面
+- 基本設置
+- API配置
+- 模型設置
+- 性能調整
+- 安全設置
+
+### 3.3 狀態顯示
+- 運行狀態
+- 處理進度
+- 警告提示
+- 錯誤顯示
+- 系統消息
+
+## 4. 輸入處理
+
+### 4.1 語音輸入
+- 音頻捕獲
+- 噪音處理
+- 實時轉錄
+- 命令識別
+- 錯誤處理
+
+### 4.2 文本輸入
+- 輸入驗證
+- 格式處理
+- 命令解析
+- 上下文管理
+- 自動完成
+
+### 4.3 手勢輸入
+- 手勢識別
+- 動作追蹤
+- 命令映射
+- 實時響應
+- 錯誤處理
+
+## 5. 輸出處理
+
+### 5.1 語音輸出
+- 語音合成
+- 音量控制
+- 語速調整
+- 音效處理
+- 同步控制
+
+### 5.2 動畫效果
+- 過渡動畫
+- 反饋動畫
+- 載入動畫
+- 特效系統
+- 性能優化
+
+### 5.3 通知系統
+- 消息分級
+- 顯示樣式
+- 交互響應
+- 堆疊管理
+- 自動消失
+
+## 6. 性能優化
+
+### 6.1 渲染優化
+- 幀率控制
+- 資源預載
+- 動畫優化
+- 記憶體管理
+- GPU加速
+
+### 6.2 響應優化
+- 事件節流
+- 異步處理
+- 快取策略
+- 延遲載入
+- 批量更新
+
+### 6.3 資源管理
+- 資源釋放
+- 記憶體監控
+- 垃圾回收
+- 資源池化
+- 動態卸載
+
+## 7. 使用者體驗
+
+### 7.1 介面設計
+- 簡潔佈局
+- 響應式設計
+- 主題系統
+- 無障礙支持
+- 多語言支持
+
+### 7.2 交互設計
+- 操作反饋
+- 錯誤提示
+- 引導說明
+- 快捷操作
+- 手勢支持
+
+### 7.3 動畫效果
+- 流暢過渡
+- 自然動作
+- 情感表達
+- 視覺反饋
+- 加載效果
+
+## 8. 測試規範
+
+### 8.1 介面測試
+- 功能測試
+- 兼容性測試
+- 性能測試
+- 使用者測試
+- 自動化測試
+
+### 8.2 互動測試
+- 輸入測試
+- 輸出測試
+- 動畫測試
+- 事件測試
+- 錯誤測試
+
+## 9. 文檔要求
+
+### 9.1 開發文檔
+- 架構說明
+- API文檔
+- 示例代碼
+- 最佳實踐
+- 故障排除
+
+### 9.2 使用者文檔
+- 使用說明
+- 功能介紹
+- 常見問題
+- 操作指南
+- 更新日誌
+
+## 10. 安全考慮
+
+### 10.1 輸入安全
+- 數據驗證
+- XSS防護
+- 注入防護
+- 權限控制
+- 輸入限制
+
+### 10.2 資源安全
+- 資源訪問
+- 文件操作
+- 記憶體保護
+- 錯誤處理
+- 日誌記錄
+
+# 功能模塊
+
+本目錄包含所有功能模塊，每個模塊都是獨立的功能單元，可以被 Miko AI 調用。
+
+## 模塊列表
+
+- `sandbox/` - 沙盒執行模塊
+- `api_management/` - API 管理模塊
+- `chat_service/` - 聊天服務模塊
+- `file_system/` - 文件系統模塊
+- `network/` - 網路通信模塊
+- `security/` - 安全模塊
+
+## 模塊開發指南
+
+### 創建新模塊
+
+1. 在 `modules/` 下創建模塊目錄
+2. 繼承 `BaseModule` 類
+3. 實現必要的方法
+4. 創建配置文件
+5. 編寫測試
+
+### 模塊結構
+
+```
+module_name/
+├── module_name_module.js    # 模塊主入口
+├── config/
+│   └── module_name_config.json
+├── tests/
+│   └── module_name.test.js
+└── README.md
+```
+
+### 模塊介面
+
+所有模塊必須繼承 `BaseModule` 並實現以下方法：
+
+- `initialize()` - 模塊初始化
+- `cleanup()` - 模塊清理
+- `healthCheck()` - 健康檢查
+
+# Miko AI 人格核心
+
+本目錄包含 Miko AI 的人格核心邏輯，包括不同版本的人格實現、記憶系統和情感引擎。
+
+## 目錄結構
+
+- `personalities/` - 人格版本實現
+- `core/` - 核心控制邏輯
+- `memory/` - 記憶管理系統
+- `emotion/` - 情感引擎
+
+## 人格版本
+
+- `v1` - 原始版本（已棄用）
+- `v2` - 過渡版本（穩定測試版）
+- `v3` - 湧現實驗版本（當前版本）
+
+## 開發指南
+
+### 創建新人格版本
+
+1. 在 `personalities/` 下創建新版本目錄
+2. 實現 `PersonalityInterface` 介面
+3. 配置人格特質和行為模式
+4. 更新版本清單
+
+### 調用功能模塊
+
+```javascript
+// 在人格類中調用模塊
+const result = await this.callModule('sandbox', 'execute', {
+    code: 'console.log("Hello World");'
+});
+```
+# 貓貓AI核心模組實現規範
+
+## 1. 模組結構
+
+### 1.1 基礎模組
+```
+src/core/
+├── __init__.py          # 模組初始化
+├── time_system/         # 時間系統
+│   ├── real_time.py     # 現實時間處理
+│   ├── sensory_time.py  # 體感時間處理
+│   └── mental_time.py   # 心理時間處理
+├── formula_system/      # 公式系統
+│   ├── guipe.py         # GUIPE元公式
+│   ├── random.py        # 隨機元公式
+│   └── array.py         # 公式陣列
+├── crisis/              # 危機判斷
+│   ├── sound.py         # 聲音分析
+│   ├── motion.py        # 動作識別
+│   └── alert.py         # 警報系統
+└── generation/          # 可逆生成
+    ├── text2img.py      # 文字轉圖像
+    ├── img2model.py     # 圖像轉模型
+    └── reverse.py       # 反向轉換
+```
+
+## 2. 核心功能實現
+
+### 2.1 時間系統
+- 實現三層時間機制
+- 時間迴圈事件處理
+- 時間同步與校準
+- 資源使用監控
+- 時間感知調整
+
+### 2.2 公式系統
+- GUIPE公式實現
+- 隨機元公式生成
+- 公式陣列管理
+- 公式套公式邏輯
+- 公式評估機制
+
+### 2.3 危機判斷
+- 聲音特徵分析
+- 動作模式識別
+- 危機等級評估
+- 警報觸發邏輯
+- 應急響應處理
+
+### 2.4 可逆生成
+- 文字轉圖像流程
+- 圖像轉模型處理
+- 模型優化與調整
+- 反向轉換邏輯
+- 質量評估系統
+
+## 3. API整合
+
+### 3.1 必要API
+- Gemini API：文本生成
+- Whisper API：語音識別
+- Stable Diffusion API：圖像生成
+- OpenPose API：動作識別
+
+### 3.2 API管理
+- 密鑰管理
+- 請求限制
+- 錯誤處理
+- 數據快取
+- 成本控制
+
+## 4. 開發規範
+
+### 4.1 代碼風格
+- 使用Python類型提示
+- 遵循PEP 8規範
+- 編寫完整文檔
+- 添加單元測試
+- 進行代碼審查
+
+### 4.2 錯誤處理
+- 異常捕獲與記錄
+- 優雅降級策略
+- 自動重試機制
+- 錯誤報告系統
+- 監控告警設置
+
+### 4.3 性能優化
+- 非同步處理
+- 記憶體管理
+- 快取策略
+- 並發控制
+- 資源釋放
+
+### 4.4 安全控制
+- 輸入驗證
+- 數據加密
+- 權限檢查
+- 審計日誌
+- 漏洞防護
+
+## 5. 測試要求
+
+### 5.1 單元測試
+- 時間系統測試
+- 公式系統測試
+- 危機判斷測試
+- 可逆生成測試
+- API整合測試
+
+### 5.2 整合測試
+- 模組間交互測試
+- 系統流程測試
+- 性能基準測試
+- 壓力測試
+- 恢復測試
+
+## 6. 文檔要求
+
+### 6.1 代碼文檔
+- 函數文檔字符串
+- 類型提示註釋
+- 示例代碼
+- 使用說明
+- 版本記錄
+
+### 6.2 API文檔
+- 接口說明
+- 參數描述
+- 返回值說明
+- 錯誤碼定義
+- 調用示例
+
+## 7. 版本控制
+
+### 7.1 分支管理
+- main：穩定版本
+- develop：開發版本
+- feature/*：功能分支
+- bugfix/*：修復分支
+- release/*：發布分支
+
+### 7.2 提交規範
+- feat：新功能
+- fix：錯誤修復
+- docs：文檔更新
+- style：代碼格式
+- refactor：重構
+- test：測試相關
+- chore：構建相關
+
+## 8. 注意事項
+
+### 8.1 資源管理
+- 及時釋放資源
+- 控制記憶體使用
+- 優化CPU使用
+- 管理網絡連接
+- 監控API使用
+
+### 8.2 安全考慮
+- 避免敏感信息洩露
+- 防止代碼注入
+- 控制資源訪問
+- 保護用戶數據
+- 記錄安全事件
+
+# 貓貓AI API層實現規範
+
+## 1. API層結構
+
+### 1.1 目錄結構
+```
+src/api/
+├── __init__.py           # 模組初始化
+├── llm/                  # 大語言模型
+│   ├── gemini.py         # Gemini API
+│   └── mistral.py        # Mistral API
+├── audio/                # 音頻處理
+│   ├── whisper.py        # Whisper API
+│   └── yamnet.py         # YAMNet API
+├── vision/               # 視覺處理
+│   ├── stable_diff.py    # Stable Diffusion
+│   └── openpose.py       # OpenPose API
+└── safety/               # 安全處理
+    ├── audit.py          # 審核系統
+    └── monitor.py        # 監控系統
+```
+
+## 2. API整合規範
+
+### 2.1 通用要求
+- 統一錯誤處理
+- 請求重試機制
+- 響應超時控制
+- 數據格式轉換
+- 日誌記錄系統
+
+### 2.2 認證管理
+- API密鑰管理
+- 訪問令牌刷新
+- 權限級別控制
+- 安全存儲機制
+- 密鑰輪換策略
+
+### 2.3 請求管理
+- 請求隊列
+- 並發控制
+- 限流機制
+- 負載均衡
+- 故障轉移
+
+### 2.4 響應處理
+- 數據驗證
+- 格式轉換
+- 錯誤映射
+- 快取策略
+- 響應壓縮
+
+## 3. 具體API實現
+
+### 3.1 Gemini API
+- 文本生成
+- 對話管理
+- 上下文處理
+- 參數優化
+- 成本控制
+
+### 3.2 Whisper API
+- 語音識別
+- 語言檢測
+- 噪音處理
+- 實時轉錄
+- 批量處理
+
+### 3.3 Stable Diffusion API
+- 圖像生成
+- 風格轉換
+- 參數調整
+- 質量控制
+- 批次處理
+
+### 3.4 OpenPose API
+- 姿態識別
+- 動作分析
+- 實時追蹤
+- 數據過濾
+- 結果優化
+
+## 4. 安全控制
+
+### 4.1 輸入驗證
+- 參數檢查
+- 類型驗證
+- 範圍限制
+- 格式驗證
+- 安全過濾
+
+### 4.2 輸出控制
+- 數據脫敏
+- 格式規範
+- 大小限制
+- 內容過濾
+- 錯誤處理
+
+### 4.3 訪問控制
+- IP限制
+- 頻率限制
+- 權限驗證
+- 會話管理
+- 審計日誌
+
+## 5. 性能優化
+
+### 5.1 請求優化
+- 併發處理
+- 連接池
+- 請求合併
+- 預熱機制
+- 超時控制
+
+### 5.2 響應優化
+- 數據快取
+- 結果緩存
+- 異步處理
+- 分批處理
+- 壓縮傳輸
+
+### 5.3 資源管理
+- 連接管理
+- 記憶體控制
+- CPU使用
+- 網絡頻寬
+- 磁盤IO
+
+## 6. 監控告警
+
+### 6.1 性能監控
+- 響應時間
+- 請求成功率
+- 資源使用率
+- 並發數量
+- QPS統計
+
+### 6.2 錯誤監控
+- 錯誤率
+- 超時統計
+- 異常類型
+- 重試次數
+- 失敗原因
+
+### 6.3 成本監控
+- API調用量
+- 計費統計
+- 資源消耗
+- 使用趨勢
+- 成本預警
+
+## 7. 測試規範
+
+### 7.1 單元測試
+- 接口測試
+- 參數測試
+- 錯誤測試
+- 邊界測試
+- 性能測試
+
+### 7.2 整合測試
+- 流程測試
+- 並發測試
+- 負載測試
+- 穩定性測試
+- 恢復測試
+
+## 8. 文檔要求
+
+### 8.1 接口文檔
+- 接口說明
+- 參數描述
+- 返回格式
+- 錯誤碼
+- 示例代碼
+
+### 8.2 部署文檔
+- 環境要求
+- 配置說明
+- 部署步驟
+- 維護指南
+- 故障處理
+
+## 9. 版本管理
+
+### 9.1 版本規範
+- 主版本號
+- 次版本號
+- 修訂號
+- 兼容性
+- 更新日誌
+
+### 9.2 發布流程
+- 代碼審查
+- 測試驗證
+- 文檔更新
+- 版本發布
+- 回滾機制
+
+# MikoAI-Project 安全與可維護性指南
+
+為了將 MikoAI-Project 的整體安全性提升至航空業級別，並進一步增強代碼品質與可維護性，以下是綜合性建議：
+
+## 航空業級別的安全考量
+
+1.  **嚴格的安全編碼實踐**：
+    *   **輸入驗證與淨化**：對所有來自外部的輸入（包括用戶輸入、API 響應、文件內容等）進行嚴格的驗證和淨化，防止注入攻擊（如 SQL 注入、命令注入、XSS）。
+    *   **錯誤處理與信息洩露防範**：避免在錯誤信息中暴露敏感系統細節。錯誤日誌應詳細，但對外顯示的錯誤信息應通用且不具體。
+    *   **資源管理**：確保所有資源（文件句柄、網絡連接、內存等）在使用後正確釋放，防止資源洩露和拒絕服務攻擊。
+    *   **加密實踐**：所有敏感數據（如 API 密鑰、用戶憑證、個人信息）在傳輸和靜態存儲時都應使用強加密算法。使用成熟的加密庫，而非自定義加密算法。
+
+2.  **最小權限原則 (Principle of Least Privilege)**：
+    *   **服務帳戶權限**：為每個服務或模塊分配其完成功能所需的最小權限，避免使用具有過高權限的帳戶運行應用程序。
+    *   **文件系統權限**：限制對敏感文件和目錄的訪問權限，確保只有授權的用戶或服務才能讀寫。
+
+3.  **全面的日誌與監控**：
+    *   **安全事件日誌**：記錄所有關鍵的安全事件，如登錄嘗試（成功與失敗）、權限變更、數據訪問、異常行為等。日誌應包含時間戳、事件類型、來源、用戶等信息。
+    *   **實時監控與警報**：部署監控系統，實時分析日誌數據，並在檢測到潛在的安全威脅或異常模式時立即觸發警報。
+    *   **日誌不可篡改性**：確保日誌數據的完整性和不可篡改性，可考慮將日誌發送到獨立的日誌服務器或使用區塊鏈技術。
+
+4.  **嚴格的配置管理**：
+    *   **安全配置基準**：為所有系統組件（操作系統、數據庫、應用服務器、應用程序本身）建立安全的配置基準，並定期審核。
+    *   **敏感信息分離**：將敏感配置信息（如數據庫密碼、API 密鑰）與代碼庫分離，使用環境變量、密碼管理服務或專用配置管理工具進行管理。
+
+5.  **安全審計與認證**：
+    *   **定期安全審計**：定期進行內部和外部安全審計、滲透測試和漏洞掃描，以發現和修復潛在的安全弱點。
+    *   **遵循行業標準**：雖然航空業有其特定標準，但可以參考其他高安全要求行業的標準（如 ISO 27001、NIST SP 800 系列）來指導安全實踐。
+
+## 代碼品質與可維護性
+
+1.  **編碼規範與風格**：
+    *   **遵循 PEP 8**：嚴格遵循 Python 的 PEP 8 編碼規範，確保代碼風格的一致性。
+    *   **代碼格式化工具**：使用 `black`、`isort` 等自動化工具來強制執行代碼格式和導入排序。
+
+2.  **類型提示 (Type Hinting)**：
+    *   **全面應用類型提示**：在函數簽名、變量聲明中廣泛使用類型提示，提高代碼可讀性、減少潛在錯誤，並支持靜態分析工具進行更深入的檢查。
+    *   **使用 `mypy` 進行靜態類型檢查**：將 `mypy` 集成到 CI/CD 流程中，確保代碼符合類型規範。
+
+3.  **詳盡的文檔**：
+    *   **Docstrings**：為所有模塊、類、方法和複雜函數編寫清晰、簡潔且符合規範的 Docstrings，解釋其目的、參數、返回值和可能拋出的異常。
+    *   **架構文檔**：維護一份高層次的架構文檔，描述系統的各個組件、它們之間的交互以及數據流。
+    *   **API 文檔**：對於 FastAPI 應用，確保 OpenAPI/Swagger 文檔的準確性和完整性。
+
+4.  **配置管理**：
+    *   **敏感配置分離**：將敏感配置信息（如 API 密鑰、數據庫憑證）與代碼庫分離，使用環境變量、配置服務或專用配置管理工具進行管理，避免硬編碼敏感信息。
+    *   **配置驗證**：對載入的配置進行嚴格驗證，確保所有必要的配置項都已提供且格式正確。
+
+5.  **全面的測試**：
+    *   **單元測試**：為每個獨立的函數和方法編寫單元測試，確保其行為符合預期。
+    *   **集成測試**：測試不同模塊或服務之間的交互，確保它們協同工作正常。
+    *   **端到端測試**：模擬真實用戶場景，測試整個系統的功能。
+    *   **測試覆蓋率**：設定合理的測試覆蓋率目標（例如，使用 `pytest-cov`），並持續監控。
+    *   **性能測試**：對關鍵功能進行性能測試，確保在高負載下的響應能力。
+
+
+
+5.  **靜態分析與代碼審查**：
+    *   **靜態分析工具**：除了 `mypy`，還可以集成 `flake8`、`pylint` 等工具，檢查代碼中的潛在問題、風格違規和安全漏洞。
+    *   **自動化安全掃描**：使用 `bandit` 等工具對代碼進行安全漏洞掃描。
+    *   **嚴格的代碼審查**：實施強制性的代碼審查流程，由至少兩名開發人員審查所有代碼變更，特別關注安全性、可讀性、性能和設計模式。
+
+## 架構與設計
+
+1.  **模塊化與解耦**：
+    *   **清晰的職責劃分**：確保每個模塊、類和函數都有單一、明確的職責。
+    *   **低耦合高內聚**：減少模塊之間的依賴，提高模塊的獨立性和可重用性。
+
+2.  **異步編程最佳實踐**：
+    *   **正確使用 `async/await`**：確保所有 I/O 密集型操作都使用異步方式處理，避免阻塞主事件循環。
+    *   **避免異步陷阱**：注意異步代碼中的常見陷阱，如在異步函數中執行同步阻塞操作。
+
+3.  **錯誤處理與容錯機制**：
+    *   **集中式錯誤處理**：實現統一的錯誤處理機制，捕獲和處理應用程序中的所有異常。
+    *   **重試機制**：對於可能由於臨時性問題（如網絡波動）而失敗的操作，實現帶有指數退避的重試機制。
+    *   **熔斷器模式 (Circuit Breaker)**：在與外部服務交互時，應用熔斷器模式，防止級聯故障。
+
+## 依賴管理
+
+1.  **定期審查和更新依賴**：
+    *   **使用 `pip-tools`**：如我們之前所做，使用 `pip-tools` 管理依賴，明確頂層依賴 (`requirements.in`) 和精確鎖定依賴 (`requirements.txt`)。
+    *   **自動化更新**：定期（例如，每月）運行 `pip-compile --upgrade` 更新依賴，並在測試環境中充分測試。
+
+2.  **依賴漏洞掃描**：
+    *   **集成安全工具**：使用 `safety` 或 `Snyk` 等工具，在 CI/CD 流程中自動掃描 `requirements.txt` 中是否存在已知漏洞的庫。
+
+通過實施這些建議，MikoAI-Project 將能夠在安全性、代碼品質和可維護性方面達到更高的標準，為未來的發展奠定堅實的基礎。
+
+# MikoAI-Project 專案目錄結構
+
+本文件詳細描述了 MikoAI 專案的目錄組織結構，旨在幫助開發者快速理解各模組的位置與職責。
+
+```
+.git/
+data/
+  implementation_plan.md
+docs/
+  CODE_QUALITY_AND_MAINTAINABILITY.md
+  miko_tool_dispatcher_design.txt
+  PROJECT_STRUCTURE.md
+  SECURITY_AND_MAINTAINABILITY_GUIDELINES.md
+scripts/
+  encode_firebase_key.js
+  test_gemini_evaluation.ps1
+logs/
+  2025-06-17.log  
+src/
+  __pycache__/
+  api/
+    audio/
+      __init__.py
+      whisper.py
+      whisper_api.py
+    llm/
+      __init__.py
+      gemini.py
+      gemini_api.py
+    vision/
+      __init__.py
+      stable_diffusion.py
+      stable_diffusion_api.py
+    __init__.py
+    api_server.py
+    README.md
+  core/
+    crisis/
+      crisis_system.py
+    formula_system/
+      formula_system.py
+    generation/
+      generation_system.py
+    time_system/
+      time_system.py
+    tool_dispatcher/
+      __tests__/
+      index.js
+      jsdoc.json
+      package.json
+      tool_registry.json
+      types.d.ts
+    __init__.py
+    README.md
+  interface/
+    __init__.py
+  ui/
+    dashboard/
+      __init__.py
+      dashboard_system.py
+    input/
+      __init__.py
+      input_system.py
+    live2d/
+      __init__.py
+      live2d_system.py
+    output/
+      __init__.py
+      output_system.py
+    README.md
+  versions/
+    miko-v1/
+      src/
+        backend/
+          package-lock.json
+          package.json
+          server.js
+        frontend/
+          assets/
+            cat_icon.png
+          index.html
+      main.js
+      preload.js
+    miko-v2/
+      src/
+        api_management.html
+        backend/
+          apiManager.js
+          chatService.js
+          formulaManager.js
+          geminiService.js
+          orchestratorAgent.js
+          package-lock.json
+          package.json
+          sandboxService.js
+          server.js
+          utils.js
+        index.html
+        renderer/
+          apiClient.js
+          firebaseClient.empty.js
+          indexedDBService.js
+          mainClient.js
+          sandboxClient.js
+          uiManager.js
+        sandbox.html
+      main.js
+      package.json
+      preload.js
+    miko-v3/
+      src/
+        api_management.html
+        backend/
+          apiManager.js
+          chatService.js
+          formulaManager.js
+          geminiService.js
+          orchestratorAgent.js
+          package-lock.json
+          package.json
+          sandboxService.js
+          server.js
+          utils.js
+        css/
+          cat_icon.png
+          style.css
+        index.html
+        renderer/
+          apiClient.js
+          firebaseClient.empty.js
+          indexedDBService.js
+          mainClient.js
+          sandboxClient.js
+          uiManager.js
+        sandbox.html
+      main.js
+      package.json
+      preload.js
+  __init__.py
+  index.js
+  jsdoc.json
+  package.json
+  tool_registry.json
+  types.d.ts
+  README.md
+  tests/
+    __init__.py
+    tool_dispatcher.test.js
+  electron_app/
+    ├── backend/  # 從 catAIpc 專案遷移的後端服務模組
+    │   ├── apiManager.js
+    │   ├── chatService.js
+    │   ├── formulaManager.js
+    │   ├── geminiService.js
+    │   ├── orchestratorAgent.js
+    │   ├── sandboxService.js
+    │   ├── server.js                 # 後端服務主文件，處理 API 請求、Gemini 互動和 Firestore 公式管理
+│   ├── serviceAccountKey.json    # Firebase 服務帳戶金鑰 (敏感文件，不應提交到公共倉庫)
+│   ├── package.json              # 後端服務的 Node.js 依賴配置
+│   └── utils/
+    │       ├── errorHandler.js
+    │       ├── firebaseAdmin.js
+    │       ├── geminiClient.js
+    │       └── utils.js
+    ├── api_management.html # 從 catAIpc 專案遷移的 API 管理頁面
+    ├── sandbox.html # 從 catAIpc 專案遷移的沙盒頁面
+    ├── config/
+    ├── firebase-service-account.json
+    ├── main.js
+    ├── package-lock.json
+    ├── package.json
+    ├── preload.js
+    ├── src/
+    │   ├── backend/ # 後端服務相關文件
+    │   │   └── server.js
+    │   ├── css/ # 樣式文件
+    │   │   ├── input.css
+    │   │   ├── output.css
+    │   │   ├── cat_icon.png # 從 catAIpc 專案遷移的圖標
+    │   │   └── style.css # 從 catAIpc 專案遷移的樣式表
+    │   ├── index.html # 主頁面 (已更新為 catAI 的版本)
+│   └── renderer/ # 前端渲染器腳本 (已更新為 catAI 的 js 文件)
+│       ├── apiService.js
+│       ├── chatUI.js
+│       ├── firebaseService.js
+│       ├── main.js
+│       ├── mmdDisplay.js
+│       ├── statusIndicator.js
+│       └── utils.js
+    └── tailwind.config.js
+.env.example
+.gitignore
+config.example.yml
+CONTRIBUTING.md
+LICENSE
+README.md
+requirements.in
+requirements.txt
+SECURITY.md
+version_manifest.json
+```
+
+# MikoAI-Project 專案重構計劃
+
+## 重構目標
+
+將 MikoAI-Project 重新組織，實現功能模塊與 AI 人格的清晰分離，使 Miko 調用外部功能模塊而非將所有功能包含在 Miko 資料夾中。
+
+## 當前問題分析
+
+### 現有結構問題
+1. **功能耦合**: 沙盒服務、API管理等功能直接嵌入在 `electron_app/backend` 中
+2. **人格與功能混合**: Miko 人格邏輯與系統功能模塊未分離
+3. **版本管理混亂**: 多個版本 (v1, v2, v3) 各自包含完整功能
+4. **模塊依賴不清晰**: 功能模塊之間的調用關係複雜
+
+## 新架構設計
+
+### 1. 頂層目錄結構
+```
+MikoAI-Project/
+├── src/
+│   ├── miko/                    # Miko AI 人格核心
+│   │   ├── personalities/        # 人格模塊 (v1, v2, v3)
+│   │   ├── memory/              # 記憶系統
+│   │   ├── emotion/             # 情感系統
+│   │   └── core/                # 核心邏輯
+│   ├── modules/                 # 功能模塊 (獨立於人格)
+│   │   ├── sandbox/             # 沙盒執行模塊
+│   │   ├── api_management/      # API 管理模塊
+│   │   ├── chat_service/        # 聊天服務模塊
+│   │   ├── file_system/         # 文件系統模塊
+│   │   ├── network/             # 網路通信模塊
+│   │   └── security/            # 安全模塊
+│   ├── interfaces/              # 介面層
+│   │   ├── electron_app/        # Electron 應用介面
+│   │   ├── web_interface/       # Web 介面
+│   │   └── api_gateway/         # API 閘道
+│   ├── shared/                  # 共享組件
+│   │   ├── utils/               # 工具函數
+│   │   ├── config/              # 配置管理
+│   │   ├── logging/             # 日誌系統
+│   │   └── types/               # 類型定義
+│   └── external/                # 外部服務整合
+│       ├── firebase/            # Firebase 整合
+│       ├── gemini/              # Gemini API 整合
+│       └── whisper/             # Whisper API 整合
+├── docs/                        # 文檔
+├── tests/                       # 測試
+├── config/                      # 配置文件
+└── data/                        # 數據存儲
+```
+
+### 2. Miko 人格核心設計
+
+#### 2.1 人格模塊結構
+```
+src/miko/
+├── personalities/
+│   ├── base/                    # 基礎人格介面
+│   │   ├── personality_interface.js
+│   │   └── base_traits.js
+│   ├── v1/                      # 原始版本人格
+│   │   ├── v1_personality.js
+│   │   └── v1_config.json
+│   ├── v2/                      # 過渡版本人格
+│   │   ├── v2_personality.js
+│   │   └── v2_config.json
+│   └── v3/                      # 湧現實驗版本人格
+│       ├── v3_personality.js
+│       ├── v3_config.json
+│       └── emergence_engine.js
+├── core/
+│   ├── miko_core.js             # Miko 核心控制器
+│   ├── module_dispatcher.js     # 模塊調度器
+│   └── personality_manager.js   # 人格管理器
+├── memory/
+│   ├── memory_manager.js        # 記憶管理
+│   ├── context_tracker.js       # 上下文追蹤
+│   └── preference_system.js     # 偏好系統
+└── emotion/
+    ├── emotion_engine.js        # 情感引擎
+    └── mood_tracker.js          # 情緒追蹤
+```
+
+#### 2.2 模塊調度機制
+```javascript
+// src/miko/core/module_dispatcher.js
+class ModuleDispatcher {
+    constructor() {
+        this.moduleRegistry = new Map();
+        this.loadModules();
+    }
+
+    // 註冊功能模塊
+    registerModule(name, moduleInstance) {
+        this.moduleRegistry.set(name, moduleInstance);
+    }
+
+    // 調用功能模塊
+    async callModule(moduleName, method, params) {
+        const module = this.moduleRegistry.get(moduleName);
+        if (!module) {
+            throw new Error(`Module ${moduleName} not found`);
+        }
+        return await module[method](params);
+    }
+
+    // 載入所有功能模塊
+    loadModules() {
+        // 動態載入 modules/ 目錄下的所有模塊
+    }
+}
+```
+
+### 3. 功能模塊設計
+
+#### 3.1 沙盒模塊
+```
+src/modules/sandbox/
+├── sandbox_module.js            # 沙盒模塊主入口
+├── execution_engine.js          # 執行引擎
+├── security_manager.js          # 安全管理
+├── resource_monitor.js          # 資源監控
+└── config/
+    └── sandbox_config.json      # 沙盒配置
+```
+
+#### 3.2 API 管理模塊
+```
+src/modules/api_management/
+├── api_module.js                # API 模塊主入口
+├── api_registry.js              # API 註冊表
+├── api_validator.js             # API 驗證器
+├── rate_limiter.js              # 速率限制器
+└── config/
+    └── api_config.json          # API 配置
+```
+
+#### 3.3 模塊介面標準
+```javascript
+// src/modules/base/module_interface.js
+class BaseModule {
+    constructor(config) {
+        this.config = config;
+        this.name = this.constructor.name;
+        this.version = '1.0.0';
+    }
+
+    // 模塊初始化
+    async initialize() {
+        throw new Error('initialize method must be implemented');
+    }
+
+    // 模塊清理
+    async cleanup() {
+        throw new Error('cleanup method must be implemented');
+    }
+
+    // 健康檢查
+    async healthCheck() {
+        return { status: 'healthy', timestamp: Date.now() };
+    }
+
+    // 獲取模塊資訊
+    getInfo() {
+        return {
+            name: this.name,
+            version: this.version,
+            config: this.config
+        };
+    }
+}
+```
+
+### 4. 介面層設計
+
+#### 4.1 Electron 應用介面
+```
+src/interfaces/electron_app/
+├── main.js                      # Electron 主進程
+├── preload.js                   # 預載腳本
+├── renderer/                    # 渲染進程
+│   ├── miko_interface.js        # Miko 介面
+│   ├── module_interface.js      # 模塊介面
+│   └── ui_components/           # UI 組件
+├── ipc/                         # IPC 通信
+│   ├── miko_ipc.js             # Miko IPC 處理
+│   └── module_ipc.js           # 模塊 IPC 處理
+└── config/
+    └── electron_config.json     # Electron 配置
+```
+
+#### 4.2 API 閘道
+```
+src/interfaces/api_gateway/
+├── gateway.js                   # API 閘道主入口
+├── routes/                      # 路由定義
+│   ├── miko_routes.js          # Miko 相關路由
+│   └── module_routes.js        # 模塊相關路由
+├── middleware/                  # 中間件
+│   ├── auth_middleware.js      # 認證中間件
+│   └── rate_limit_middleware.js # 速率限制中間件
+└── config/
+    └── gateway_config.json     # 閘道配置
+```
+
+### 5. 共享組件設計
+
+#### 5.1 配置管理
+```
+src/shared/config/
+├── config_manager.js            # 配置管理器
+├── environment_loader.js        # 環境變數載入器
+├── schema_validator.js          # 配置驗證器
+└── templates/                   # 配置模板
+    ├── miko_config.template.json
+    └── module_config.template.json
+```
+
+#### 5.2 日誌系統
+```
+src/shared/logging/
+├── logger.js                    # 日誌記錄器
+├── log_formatter.js             # 日誌格式化器
+├── log_transport.js             # 日誌傳輸器
+└── config/
+    └── logging_config.json      # 日誌配置
+```
+
+## 重構實施計劃
+
+### 階段一：基礎架構建立 (1-2 週)
+1. 創建新的目錄結構
+2. 實現基礎模塊介面和調度機制
+3. 建立配置管理和日誌系統
+4. 創建模塊註冊和發現機制
+
+### 階段二：功能模塊遷移 (2-3 週)
+1. 將沙盒服務重構為獨立模塊
+2. 將 API 管理重構為獨立模塊
+3. 將聊天服務重構為獨立模塊
+4. 實現模塊間通信機制
+
+### 階段三：人格系統重構 (2-3 週)
+1. 提取 Miko 人格核心邏輯
+2. 實現人格版本管理系統
+3. 建立人格與模塊的調用介面
+4. 遷移記憶和情感系統
+
+### 階段四：介面層重構 (1-2 週)
+1. 重構 Electron 應用介面
+2. 實現新的 IPC 通信機制
+3. 建立 API 閘道
+4. 更新 UI 組件
+
+### 階段五：測試和優化 (1-2 週)
+1. 編寫單元測試和整合測試
+2. 性能優化和安全加固
+3. 文檔更新和使用指南
+4. 部署和發布準備
+
+## 預期效益
+
+### 1. 架構優勢
+- **模塊化**: 功能模塊獨立開發和維護
+- **可擴展性**: 易於添加新功能模塊
+- **可測試性**: 模塊可獨立測試
+- **可重用性**: 模塊可在不同專案中重用
+
+### 2. 開發優勢
+- **職責分離**: Miko 專注於人格邏輯，模塊專注於功能實現
+- **並行開發**: 不同團隊可同時開發不同模塊
+- **版本管理**: 人格版本與功能版本獨立管理
+- **維護性**: 降低系統複雜度，提高維護效率
+
+### 3. 部署優勢
+- **靈活部署**: 可選擇性部署所需模塊
+- **資源優化**: 按需載入模塊，節省資源
+- **故障隔離**: 單個模塊故障不影響整體系統
+- **熱更新**: 支援模塊熱插拔和更新
+
+## 風險評估與應對
+
+### 1. 技術風險
+- **模塊通信延遲**: 通過優化 IPC 機制和緩存策略應對
+- **依賴管理複雜**: 建立清晰的依賴圖和版本控制
+- **調試困難**: 提供統一的調試工具和日誌系統
+
+### 2. 開發風險
+- **重構工作量大**: 分階段實施，逐步遷移
+- **向後兼容性**: 保留舊版本介面，提供遷移指南
+- **團隊學習成本**: 提供詳細文檔和培訓
+
+### 3. 應對策略
+- 建立完善的測試體系
+- 實施漸進式重構策略
+- 保持與現有系統的兼容性
+- 提供詳細的遷移文檔和工具
+
+## 結論
+
+通過這次重構，MikoAI-Project 將實現真正的模塊化架構，Miko AI 人格將專注於智能邏輯和情感表達，而功能模塊將提供穩定可靠的服務支持。這種架構將大大提高系統的可維護性、可擴展性和可重用性，為未來的發展奠定堅實基礎。
+
+# MikoAI-Project 模塊分離指南
+
+## 概述
+
+本指南描述了 MikoAI-Project 的功能模塊與 AI 人格分離的重構過程，實現了清晰的架構分層和模塊化設計。
+
+## 重構目標
+
+### 主要目標
+1. **功能與人格分離**：將具體功能實現從 AI 人格核心中分離
+2. **模塊化架構**：創建可插拔的功能模塊系統
+3. **清晰的責任劃分**：明確各組件的職責範圍
+4. **可擴展性**：支持未來新功能模塊的添加
+
+## 新的架構設計
+
+### 目錄結構
+```
+src/
+├── miko/                    # Miko 人格核心
+│   ├── dispatcher.js        # 核心調度器
+│   └── personality.js       # 人格定義
+├── modules/                 # 功能模塊
+│   ├── sandbox/            # 沙盒執行模塊
+│   │   ├── index.js        # 模塊介面
+│   │   ├── sandboxService.js # 核心實現
+│   │   └── module.json     # 模塊配置
+│   └── api_manager/        # API 管理模塊
+│       ├── index.js        # 模塊介面
+│       ├── apiManager.js   # 核心實現
+│       └── module.json     # 模塊配置
+└── shared/                 # 共享組件
+    └── moduleRegistry.js   # 模塊註冊表
+```
+
+## 已分離的模塊
+
+### 1. 沙盒執行模塊 (`modules/sandbox/`)
+
+**功能**：提供安全的代碼執行環境
+
+**文件結構**：
+- `index.js`：模塊介面，提供標準化的調用方法
+- `sandboxService.js`：核心沙盒實現，從原 `backend/sandboxService.js` 移動
+- `module.json`：模塊配置和元數據
+
+**主要功能**：
+- 安全代碼執行
+- 超時控制
+- 記憶體監控
+- 日誌捕獲
+
+### 2. API 管理模塊 (`modules/api_manager/`)
+
+**功能**：管理 API 資訊的 CRUD 操作
+
+**文件結構**：
+- `index.js`：模塊介面，提供標準化的 API 管理方法
+- `apiManager.js`：核心 API 管理實現，從原 `backend/apiManager.js` 移動
+- `module.json`：模塊配置和元數據
+
+**主要功能**：
+- API 資訊獲取
+- API 添加、更新、刪除
+- API 狀態管理
+- 搜索和過濾
+
+## 核心組件
+
+### 1. Miko 調度器 (`miko/dispatcher.js`)
+
+**職責**：
+- 協調 AI 人格與功能模塊之間的交互
+- 請求路由和處理
+- 模塊載入和管理
+- 系統健康監控
+
+**主要方法**：
+- `callModule(moduleName, method, ...args)`：調用功能模塊
+- `processRequest(request)`：處理用戶請求
+- `getSystemHealth()`：獲取系統健康狀態
+
+### 2. 模塊註冊表 (`shared/moduleRegistry.js`)
+
+**職責**：
+- 模塊註冊和發現
+- 動態載入機制
+- 模塊生命週期管理
+- 健康檢查協調
+
+**主要方法**：
+- `register(name, path, config)`：註冊模塊
+- `load(name)`：載入模塊
+- `healthCheckAll()`：執行所有模塊健康檢查
+
+### 3. Miko 人格核心 (`miko/personality.js`)
+
+**職責**：
+- 定義 AI 人格特徵
+- 個性化響應生成
+- 對話上下文管理
+- 人格化交互邏輯
+
+## 模塊標準
+
+### 模塊介面規範
+
+每個功能模塊必須實現以下標準介面：
+
+```javascript
+class ModuleInterface {
+    constructor() {
+        this.name = 'module_name';
+        this.version = '1.0.0';
+        this.description = '模塊描述';
+    }
+
+    // 必需方法
+    getInfo() {
+        return {
+            name: this.name,
+            version: this.version,
+            description: this.description,
+            capabilities: [],
+            type: 'functional_module'
+        };
+    }
+
+    // 可選方法
+    async healthCheck() {
+        return {
+            healthy: true,
+            module: this.name,
+            timestamp: new Date().toISOString()
+        };
+    }
+}
+```
+
+### 模塊配置格式 (`module.json`)
+
+```json
+{
+  "name": "module_name",
+  "version": "1.0.0",
+  "description": "模塊描述",
+  "type": "functional_module",
+  "entry_point": "index.js",
+  "dependencies": [],
+  "security_level": "high|medium|low",
+  "capabilities": [],
+  "configuration": {},
+  "author": "MikoAI-Project",
+  "created_at": "2024-12-19",
+  "tags": []
+}
+```
+
+## 使用方式
+
+### 1. 初始化系統
+
+```javascript
+const MikoDispatcher = require('./src/miko/dispatcher');
+const dispatcher = new MikoDispatcher();
+await dispatcher.initialize();
+```
+
+### 2. 調用功能模塊
+
+```javascript
+// 執行沙盒代碼
+const result = await dispatcher.executeSandbox('console.log("Hello World");');
+
+// 獲取 API 資訊
+const apis = await dispatcher.getApiInfo({ queryText: 'search' });
+
+// 添加新 API
+const newApi = await dispatcher.addApi({
+    name: 'Test API',
+    endpoint: '/api/test',
+    method: 'GET',
+    description: '測試 API'
+});
+```
+
+### 3. 處理用戶請求
+
+```javascript
+const response = await dispatcher.processRequest({
+    type: 'sandbox_execute',
+    code: 'return Math.random();',
+    options: { timeout: 3000 }
+});
+```
+
+## 集成到現有系統
+
+### 更新 server.js
+
+在 `src/electron_app/backend/server.js` 中集成新的模塊系統：
+
+```javascript
+// 引入 Miko 調度器
+const MikoDispatcher = require('../../miko/dispatcher');
+
+// 創建調度器實例
+const mikoDispatcher = new MikoDispatcher();
+
+// 初始化調度器
+mikoDispatcher.initialize().then(() => {
+    console.log('✓ Miko 調度器已初始化');
+}).catch(error => {
+    console.error('✗ Miko 調度器初始化失敗:', error);
+});
+
+// 更新 API 路由
+app.post('/api/sandbox/execute', async (req, res) => {
+    try {
+        const { code, options } = req.body;
+        const result = await mikoDispatcher.executeSandbox(code, options);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.get('/api/management/apis', async (req, res) => {
+    try {
+        const options = req.query;
+        const result = await mikoDispatcher.getApiInfo(options);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+```
+
+## 優勢
+
+### 1. 清晰的責任分離
+- **Miko 人格**：專注於 AI 人格特徵和交互邏輯
+- **功能模塊**：專注於具體功能實現
+- **調度器**：專注於協調和管理
+
+### 2. 可擴展性
+- 新功能模塊可以獨立開發和測試
+- 模塊可以獨立更新和維護
+- 支持模塊的熱插拔
+
+### 3. 可維護性
+- 代碼結構更清晰
+- 模塊間依賴關係明確
+- 便於單元測試和調試
+
+### 4. 安全性
+- 模塊間隔離
+- 統一的安全控制點
+- 權限管理集中化
+
+## 下一步計劃
+
+1. **測試模塊系統**：確保所有模塊正常工作
+2. **更新服務器集成**：修改 `server.js` 使用新的調度器
+3. **添加更多模塊**：將其他功能也模塊化
+4. **完善文檔**：添加更詳細的開發指南
+5. **性能優化**：優化模塊載入和調用性能
+
+## 注意事項
+
+1. **路徑依賴**：確保模塊間的路徑引用正確
+2. **Firebase 依賴**：API 管理模塊需要 Firebase 連接
+3. **錯誤處理**：所有模塊都應該有完善的錯誤處理
+4. **日誌記錄**：保持一致的日誌格式和級別
+
+---
+
+這個模塊分離重構為 MikoAI-Project 提供了更好的架構基礎，支持未來的擴展和維護。
+
+貓貓工具調度模組設計說明（mikoToolRouter.js）
+
+貓貓工具調度模組設計說明
+
+1. 模組用途：
+   - 負責管理和調度貓貓AI系統中所有可用的外部工具（如Gemini, Whisper, Vision等）。
+   - 提供統一的介面供其他模組調用工具，無需關心工具的具體實現細節。
+   - 處理工具的註冊、查找、執行、錯誤處理、超時、重試和速率限制。
+
+2. 模組結構：
+   - `ToolDispatcher` 類：核心調度器，負責工具的生命週期管理和任務調度。
+   - `tool_registry.json`：工具註冊表，定義了所有工具的元數據和配置。
+   - `types.d.ts`：TypeScript 類型定義文件，提供類型安全。
+
+3. 工具註冊：
+   - 工具通過 `tool_registry.json` 文件進行註冊。
+   - 每個工具包含以下屬性：
+     - `name`: 工具名稱 (e.g., "Gemini", "Whisper", "Vision")。
+     - `endpoint`: 工具API的URL。
+     - `timeout`: 調用工具的超時時間 (毫秒)。
+     - `retryStrategy`: 重試策略 (e.g., "exponentialBackoff", "fixedDelay")。
+     - `maxRetries`: 最大重試次數。
+     - `rateLimit`: 速率限制 (e.g., "100/minute")。
+     - `errorMessage`: 預設錯誤訊息。
+
+4. 任務調度：
+   - `ToolDispatcher` 提供 `dispatch(toolName, payload)` 方法來調度工具。
+   - 該方法會根據 `toolName` 從註冊表中查找對應的工具配置。
+   - 執行工具調用，並處理超時、重試和速率限制。
+   - 返回工具執行結果或拋出錯誤。
+
+5. 可用工具列表：
+   - `ToolDispatcher` 提供 `listAvailableTools()` 方法來獲取所有已註冊工具的列表。
+
+6. 錯誤處理：
+   - 模組內部會捕獲工具調用過程中可能發生的錯誤。
+   - 根據配置的 `errorMessage` 返回友好的錯誤訊息。
+   - 記錄詳細的錯誤日誌以便調試。
+
+7. 性能優化：
+   - 考慮使用連接池來管理與外部API的連接。
+   - 實現緩存機制以減少重複調用。
+   - 異步處理工具調用以避免阻塞主線程。
+
+8. 安全性：
+   - 敏感信息（如API Key）應通過環境變量或安全的配置管理系統加載，而不是直接硬編碼在 `tool_registry.json` 中。
+   - 對輸入進行嚴格的驗證和清理，防止注入攻擊。
+
+9. 擴展性：
+   - 新增工具只需更新 `tool_registry.json` 文件和實現對應的調用邏輯。
+   - 模組設計應支持未來添加更多複雜的調度策略和工具類型。
+mikoToolRouter.js
+├── toolRegistry         # 註冊工具與配置
+│   ├── gemini
+│   ├── whisper
+│   └── vision
+├── dispatchToolTask     # 外部調用主入口
+└── listAvailableTools   # 顯示當前支援工具
+
+---
+
+🛠 toolRegistry：工具註冊表
+
+每個工具需註冊：
+- type（分類：llm、image、audio）
+- call() 函數（接收 payload 執行任務）
+
+---
+
+📦 dispatchToolTask(task)
+
+外部工具調用主入口，供貓貓或其他 AI 使用。
+
+支援任務類型包括：
+- "text-question" → Gemini 回答
+- "audio-analysis" → Whisper 聲音分析
+- "image-analysis" → 圖像理解（Vision 模型）
+
+---
+
+📋 listAvailableTools()
+
+回傳目前已註冊可調用的工具清單。可作為人格回應生成器或 UI 顯示用。
+
+---
+
+⚠️ 錯誤處理策略
+
+內建錯誤處理邏輯，貓貓可輸出友善錯誤提示，例如：
+「喵～這項工具壞掉了，等我修一修。」
+
+---
+
+🧩 使用建議場景（人格模組內部）
+
+任務場景：使用者提問無法回答 / 上傳語音 / 上傳圖片
+→ 可分派工具執行任務並整合回應
+
+---
+
+🧠 延伸設計建議
+
+- tool memory（任務 → 工具效果紀錄）
+- 工具偏好權重（依人格差異選擇）
+- 任務預判路由器（自動挑選最佳工具）
+
+---
+
+🪪 設計原則
+
+- 貓貓為中控者而非工具本身
+- 根據任務選用工具
+- 工具錯誤時，行為優雅而非崩潰
+
+---
+
+.env 參考：
+
+GEMINI_API_KEY=your-key
+
+
+# 程式碼品質與可維護性建議
+
+本文件旨在提供一系列建議，以提升 MikoAI-Project 的程式碼品質、可維護性、可擴展性及安全性。
+
+## 1. 程式碼風格與一致性
+
+*   **使用 ESLint 和 Prettier**：
+    *   **ESLint**：配置 ESLint 以強制執行一致的程式碼風格、發現潛在的錯誤和程式碼異味。可以根據專案需求選擇或自定義規則集（例如 Airbnb 或 Standard）。
+    *   **Prettier**：集成 Prettier 進行自動程式碼格式化。這將確保所有開發者提交的程式碼都具有統一的格式，減少程式碼審查中的格式問題。
+    *   **集成到 CI/CD**：將 ESLint 和 Prettier 檢查集成到持續集成/持續部署 (CI/CD) 流程中，確保只有符合規範的程式碼才能被合併。
+
+*   **命名約定**：
+    *   **一致性**：在整個專案中遵循一致的命名約定（例如，變數使用 `camelCase`，類名使用 `PascalCase`，常數使用 `SCREAMING_SNAKE_CASE`）。
+    *   **描述性**：變數、函數和類名應具有描述性，清晰地表達其用途和職責。
+
+*   **註釋與文檔**：
+    *   **清晰的註釋**：對於複雜的邏輯、非顯而易見的程式碼或潛在的陷阱，添加清晰、簡潔的註釋。
+    *   **JSDoc**：使用 JSDoc 或類似工具為函數、類和模組編寫文檔，這有助於自動生成 API 文檔並提高程式碼可讀性。
+    *   **READMEs**：確保每個主要模組或服務都有一個 `README.md` 文件，解釋其目的、如何使用和如何貢獻。
+
+## 2. 錯誤處理
+
+*   **集中式錯誤處理**：
+    *   **統一的錯誤響應**：確保 API 錯誤響應格式一致（例如，包含 `code`、`message` 和 `details` 字段）。
+    *   **自定義錯誤類**：為特定類型的錯誤（例如，`NotFoundError`、`ValidationError`、`AuthenticationError`）創建自定義錯誤類，以便於區分和處理。
+
+*   **非同步錯誤處理**：
+    *   **Promise 鏈中的 `.catch()`**：確保所有 Promise 鏈都有適當的 `.catch()` 處理，避免未處理的 Promise 拒絕。
+    *   **`try-catch` 與 `async/await`**：在 `async/await` 函數中使用 `try-catch` 塊來捕獲同步和非同步錯誤。
+
+*   **錯誤日誌**：
+    *   **詳細日誌**：在捕獲錯誤時，記錄足夠的上下文資訊（例如，請求參數、用戶 ID、堆棧追蹤），以便於調試。
+    *   **避免敏感資訊**：確保錯誤日誌中不包含敏感用戶數據或憑證。
+
+## 3. 日誌記錄
+
+*   **結構化日誌**：使用結構化日誌庫（例如 Winston 或 Pino），以便於日誌的解析、過濾和分析。
+*   **日誌級別**：根據日誌的重要性使用不同的日誌級別（例如 `debug`、`info`、`warn`、`error`），並在生產環境中配置適當的日誌級別。
+*   **可觀察性**：考慮集成監控工具（例如 Prometheus、Grafana）和日誌聚合服務（例如 ELK Stack、Datadog），以提供更好的系統可觀察性。
+
+## 4. 配置管理
+
+*   **環境變數**：所有敏感資訊（API 金鑰、資料庫憑證等）和環境相關的配置應通過環境變數管理，而不是硬編碼在程式碼中。
+*   **配置庫**：使用配置管理庫（例如 `dotenv`、`config` 或 `nconf`）來加載和管理配置，支持不同環境的配置覆蓋。
+*   **預設值**：為所有配置項提供合理的預設值，並明確標識哪些是必需的。
+
+## 5. 模組化與解耦
+
+*   **單一職責原則 (SRP)**：確保每個模組、函數或類只負責一項功能，並將其職責清晰地定義。
+*   **依賴注入 (DI)**：考慮使用依賴注入模式來管理模組之間的依賴關係，這有助於提高程式碼的可測試性和可維護性。
+*   **服務層**：將業務邏輯從路由處理器中分離出來，放入獨立的服務層，使路由處理器只負責請求的接收和響應的發送。
+*   **數據訪問層 (DAL)**：將數據庫操作封裝在單獨的數據訪問層中，與業務邏輯分離。
+
+## 6. 測試
+
+*   **單元測試**：為每個獨立的模組或函數編寫單元測試，確保其行為符合預期。
+*   **整合測試**：為模組之間的交互和整個系統的流程編寫整合測試，確保各部分協同工作正常。
+*   **端到端測試 (E2E)**：對於關鍵用戶流程，考慮編寫端到端測試，模擬真實用戶行為。
+*   **測試框架**：選擇合適的測試框架（例如 Jest、Mocha、Chai）和斷言庫。
+
+## 7. 依賴管理
+
+*   **定期更新**：定期更新專案的第三方依賴項，以獲取最新的功能、性能改進和安全修復。
+*   **依賴審查**：審查新引入的依賴項，確保其質量、活躍度和安全性。
+*   **版本鎖定**：使用 `package-lock.json` 或 `yarn.lock` 文件來鎖定依賴項的版本，確保不同環境下安裝的依賴項版本一致。
+
+## 8. 效能優化
+
+*   **非同步操作**：對於 I/O 密集型或計算密集型操作，確保使用非同步方式處理，避免阻塞主線程。
+*   **快取**：對於頻繁訪問且不經常變化的數據，考慮引入快取機制（例如 Redis），減少數據庫負載。
+*   **數據庫查詢優化**：優化數據庫查詢，例如使用索引、避免 N+1 查詢問題。
+*   **資源管理**：確保正確關閉數據庫連接、文件句柄等資源，避免資源洩漏。
+
+## 9. 安全性
+
+*   **輸入驗證**：對所有來自用戶的輸入進行嚴格的驗證和清理，防止注入攻擊（例如 SQL 注入、XSS 攻擊）。
+*   **身份驗證與授權**：實施健壯的身份驗證和授權機制，確保只有授權用戶才能訪問受保護的資源。
+*   **密碼安全**：不直接儲存用戶密碼，而是儲存其哈希值（使用 bcrypt 等安全算法），並使用足夠長的鹽值。
+*   **HTTPS**：在生產環境中始終使用 HTTPS 加密所有通信。
+*   **CORS 配置**：精確配置 CORS 策略，只允許受信任的域訪問 API。
+*   **依賴項安全掃描**：使用工具（例如 `npm audit`）定期掃描依賴項中的已知安全漏洞。
+*   **最小權限原則**：應用程式和服務應以最小必要的權限運行。
+
+通過採納這些建議，MikoAI-Project 將能夠構建一個更健壯、更易於維護和擴展的程式碼庫。
+
+# CatAI 專案功能概述與已查看文件
+
+## 已查看文件列表
+
+以下是本次會話中已查看的 `catAI` 相關文件：
+
+*   `d:\CatAI_Rebuild_Starter\main.js`
+*   `d:\CatAI_Rebuild_Starter\preload.js`
+*   `d:\catAI\index.js`
+*   `d:\catAI\server.js`
+*   `d:\catAI_new\main.js`
+*   `d:\catAI_new\preload.js`
+*   `d:\catAIpc (2)\catAIpc\main.js`
+*   `d:\catAIpc (2)\catAIpc\preload.js`
+*   `d:\catAIpc\main.js`
+*   `d:\catAIpc\preload.js`
+*   `d:\catAIzip\MikoAI-FULL-PACK-v1\MikoAI-Project-main\README.md`
+*   `d:\catAIzip\MikoAI-StarterKit-AutoGrowth\core\auto_growth_engine.js`
+*   `d:\catzip\cat1\main.js`
+*   `d:\catzip\cat1\preload.js`
+*   `d:\catzip\cat2\main.js`
+*   `d:\catzip\cat2\preload.js`
+*   `d:\catzip\cat3\main.js`
+*   `d:\catzip\cat3\preload.js`
+*   `d:\catzip\未來貓\js\未來貓main.js`
+*   `d:\GitHub\MikoAI-Project\PROJECT_STRUCTURE.md`
+*   `d:\GitHub\MikoAI-Project\docs\CODE_QUALITY_AND_MAINTAINABILITY.md`
+
+## CatAI 專案功能描述
+
+### 1. `d:\CatAI_Rebuild_Starter`
+
+這是一個基於 Electron 的桌面應用程式專案。其主要功能包括：
+
+*   **Electron 應用程式框架**：使用 Electron 構建桌面應用程式。
+*   **網頁內容載入**：載入 `index.html` 作為應用程式的用戶界面。
+*   **預載入腳本 (`preload.js`)**：在渲染進程載入網頁內容之前執行，用於橋接 Node.js 環境與渲染進程，增強安全性。
+*   **Firebase 初始化**：在 `preload.js` 中初始化 Firebase，並通過 `contextBridge` 將 Firebase 的 `auth` 和 `firestore` 模組以及用戶 ID 相關功能安全地暴露給渲染進程，供前端使用。
+
+### 2. `d:\catAI`
+
+這是一個基於 Node.js 的後端服務專案，主要處理聊天請求和數據管理。其主要功能包括：
+
+*   **Firebase Cloud Function (`index.js`)**：作為 Firebase Cloud Function 部署，用於處理聊天請求。它會優先從 Firestore 中獲取「貓貓公式」來生成回應，如果沒有找到，則會調用 Gemini API 來生成回應。
+*   **Express 伺服器 (`server.js`)**：一個獨立的 Express 伺服器，也處理聊天請求，邏輯與 `index.js` 類似。此外，它還包含一個用於評估和學習的新端點，表明其可能具備更複雜的學習和優化能力。
+
+### 3. `d:\catAI_new`
+
+這是一個基於 Electron 的桌面應用程式專案，專注於 API 密鑰管理和後端服務的啟動。其主要功能包括：
+
+*   **Electron 應用程式框架**：使用 Electron 構建桌面應用程式。
+*   **配置管理**：能夠讀取、建立和儲存應用程式的配置，包括 Gemini API Key、Firebase 客戶端配置和 Firebase 服務帳戶憑證。配置儲存在用戶資料目錄下的 `cat-ai-config.json` 文件中。
+*   **API 密鑰提示**：應用程式啟動時會檢查必要的 API 密鑰是否配置，如果缺少，會提示用戶輸入。
+*   **後端服務啟動**：通過 `child_process.fork` 啟動一個獨立的 Node.js 後端服務 (`src/backend/server.js`)，並將 API 密鑰作為環境變數傳遞給後端。
+*   **IPC 通信**：通過 Electron 的 `ipcMain` 和 `ipcRenderer` 模組實現主進程與渲染進程之間的通信，用於保存 API 密鑰、提示用戶輸入密鑰以及通知後端服務的狀態（就緒或錯誤）。
+
+### 4. `d:\catAIpc (2)`
+
+這是一個基於 Electron 的桌面應用程式專案，在 `catAI_new` 的基礎上增加了 API 管理和沙盒功能。其主要功能包括：
+
+*   **Electron 應用程式框架**：與 `catAI_new` 類似，使用 Electron 構建桌面應用程式。
+*   **配置管理**：與 `catAI_new` 類似，管理 API 密鑰和 Firebase 配置。
+*   **API 管理視窗**：新增一個獨立的視窗 (`api_management.html`) 用於管理 API 密鑰和相關配置，提供更友好的用戶界面。
+*   **沙盒視窗**：新增一個獨立的沙盒視窗 (`sandbox.html`)，可能用於測試、實驗或提供隔離的運行環境。
+*   **後端服務啟動**：與 `catAI_new` 類似，啟動後端服務並傳遞 API 密鑰。
+*   **IPC 通信**：除了基本的配置和後端狀態通信外，還增加了開啟 API 管理視窗和沙盒視窗的 IPC 事件。
+
+### 5. `d:\catAIpc`
+
+這是一個功能更為完整的 Electron 桌面應用程式專案，它在 `catAIpc (2)` 的基礎上進行了路徑修正和 Firebase 集成方式的調整。其主要功能包括：
+
+*   **Electron 應用程式框架**：與 `catAIpc (2)` 類似。
+*   **配置管理**：與 `catAIpc (2)` 類似，但增加了 `firebaseServiceAccountBase64` 屬性，用於儲存 Firebase 服務帳戶的 Base64 編碼憑證。
+*   **路徑修正**：修正了 HTML 文件（`index.html`, `api_management.html`, `sandbox.html`）的載入路徑，確保它們能從 `src/` 目錄下正確載入。
+*   **Firebase 直接集成 (`preload.js`)**：與其他版本不同，`preload.js` 直接初始化 Firebase，並將 `auth` 和 `firestore` 實例暴露給渲染進程，而不是通過 IPC 傳遞配置。這簡化了前端與 Firebase 的交互。
+*   **API 管理視窗和沙盒視窗**：保留了 `catAIpc (2)` 中的 API 管理和沙盒功能。
+*   **後端服務**：後端服務 (`src/backend/server.js`) 包含了更詳細的模組，如 `apiManager.js`, `chatService.js`, `formulaManager.js`, `geminiService.js`, `orchestratorAgent.js`, `sandboxService.js` 等，表明其後端功能更加模組化和豐富。
+
+### 6. `d:\catAIzip` (MikoAI 相關套件)
+
+這個目錄包含了多個 `MikoAI` 專案的不同版本或套件，主要圍繞「人格模組演化」和 AI 設計系統展開。其主要功能包括：
+
+*   **MikoAI 核心概念**：專案以「人格模組演化」為核心，旨在構建一個具備多層次人格結構、記憶演化機制和公式湧現能力的數據生命體。
+*   **多版本人格**：包含 `miko-v1` (靜態人格)、`miko-v2` (半動態人格) 和 `miko-v3` (具備湧現能力) 等多個人格版本，可通過 `version_manifest.json` 管理切換。
+*   **模組化架構**：支持插拔式記憶模組、行為控制器和審核過濾器。
+*   **記憶與湧現邏輯**：AI 根據過往記憶、當前語境偏好和人格設定進行生成與行為選擇，可能產生「學壞」、「撒嬌策略」等湧現行為。
+*   **自動成長引擎 (`auto_growth_engine.js`)**：負責讀取核心清單 (`cat_core_manifest.txt`)、記錄成長事件 (`growth_log.json`)，並根據歷史數據演化 AI 的偏好。這表明 AI 具備自我學習和調整的能力。
+*   **安全策略**：強調金鑰和敏感資訊應放入 `.env` 文件，並提供 `SECURITY.md` 說明安全開發和憑證處理。
+*   **貢獻指南**：鼓勵用戶參與專案，包括提出人格行為範式、協助模組測試、提交新模組和回報錯誤。
+
+### 7. `d:\catzip\cat1`
+
+這是一個基於 Electron 的桌面應用程式專案，其功能與 `d:\catAI_new` 類似，主要負責 API 密鑰管理、後端服務啟動和前端與後端之間的通信。它也使用了 `cat-ai-config.json` 來儲存配置。
+
+### 8. `d:\catzip\cat2`
+
+這是一個基於 Electron 的桌面應用程式專案，其功能與 `d:\catAIpc (2)` 幾乎一致，包含了 API 管理視窗和沙盒視窗的功能。
+
+### 9. `d:\catzip\cat3`
+
+這是一個功能更為完整的 Electron 桌面應用程式專案，它在 `catzip\cat2` 的基礎上進行了路徑修正和 Firebase 集成方式的調整。其功能與 `d:\catAIpc` 幾乎一致，包含了 API 管理視窗和沙盒視窗的功能，並且在 `main.js` 中對路徑處理進行了修正，確保了 HTML 文件的正確載入。`preload.js` 文件則直接初始化了 Firebase，並將其暴露給渲染進程。
+
+### 10. `d:\catzip\未來貓`
+
+這是一個純前端的網頁應用程式專案，主要用於展示聊天、設定和圖片生成等功能。其主要特點包括：
+
+*   **純前端實現**：所有功能均在瀏覽器端實現，沒有獨立的後端服務。
+*   **模擬 Firebase**：為了在沒有實際後端的情況下運行，它模擬了 Firebase 的行為，包括匿名登入、Firestore 數據操作等。
+*   **模組化設計**：功能被拆分為多個 JavaScript 模組，如 `chatUI.js` (聊天界面)、`settingsUI.js` (設定界面)、`galleryUI.js` (圖片生成界面) 等。
+*   **用戶界面**：提供了聊天、設定和圖片生成等功能的可視化界面。
+
+### 11. `d:\GitHub\MikoAI-Project\src\electron_app` (後端與前端模組整合)
+
+此部分記錄了將 `d:\catAIpc\src` 目錄下的後端服務模組和部分前端資源遷移到 `d:\GitHub\MikoAI-Project\src\electron_app` 的過程。這項整合旨在將 `catAIpc` 專案中成熟的功能（包括後端服務、API 管理頁面、沙盒頁面以及前端渲染器腳本和樣式）整合到 `MikoAI-Project` 的 Electron 應用程式中，實現功能的模組化和集中管理。整合的模組和資源包括：
+
+**後端模組 (遷移至 `src\electron_app\backend`)**：
+
+*   `apiManager.js`：API 管理。
+*   `chatService.js`：聊天服務核心邏輯。
+*   `formulaManager.js`：公式管理與實時監聽。
+*   `geminiService.js`：Gemini 模型交互。
+*   `orchestratorAgent.js`：總指揮官代理，協調 AI 行為與學習。
+*   `sandboxService.js`：安全沙盒代碼執行。
+*   `server.js`：後端服務入口點。
+*   `utils/` 目錄下的通用工具，如 `errorHandler.js` (錯誤處理)、`firebaseAdmin.js` (Firebase Admin SDK 初始化)、`geminiClient.js` (Gemini 客戶端初始化) 和 `utils.js` (通用輔助函數)。
+
+**前端資源 (遷移至 `src\electron_app\src` 及其子目錄)**：
+
+*   `api_management.html`：API 管理頁面。
+*   `sandbox.html`：沙盒頁面。
+*   `renderer/` 目錄下的所有前端渲染器腳本，包括 `apiClient.js`, `firebaseClient.js`, `indexedDBService.js`, `mainClient.js`, `sandboxClient.js`, `uiManager.js`。
+*   `css/` 目錄下的 `cat_icon.png` 和 `style.css`。
+
+- **後端與前端模組整合**：
+  - 將核心後端服務（`backend` 目錄）和前端資源（`api_management.html`、`sandbox.html`、`renderer` 目錄下的所有文件，以及 `css` 目錄下的 `cat_icon.png` 和 `style.css`）成功整合到 `d:\GitHub\MikoAI-Project\src\electron_app` 目錄中，其中 `api_management.html` 和 `sandbox.html` 已被移動到 `d:\GitHub\MikoAI-Project\src\electron_app\src` 目錄下。
+  - 此外，還整合了 `d:\catAI\server.js` 中的 Firestore 公式管理和 Gemini 評估學習機制。Firebase Admin SDK 的初始化方式已從讀取本地 `serviceAccountKey.json` 文件改為從環境變數 `FIREBASE_SERVICE_ACCOUNT_BASE64` 讀取 Base64 編碼的服務帳戶金鑰，因此 `serviceAccountKey.json` 已被刪除。
+  - 同時，將 `d:\catAI\public` 目錄下的 `index.html`、`css` 目錄下的 `input.css` 和 `output.css`，以及 `js` 目錄下的所有文件（`apiService.js`, `chatUI.js`, `firebaseService.js`, `main.js`, `mmdDisplay.js`, `statusIndicator.js`, `utils.js`）整合到 `d:\GitHub\MikoAI-Project\src\electron_app\src` 目錄中。
+  - 這項整合提高了專案的獨立性、可維護性和功能完整性，使得 `MikoAI-Project` 的 Electron 應用程式能夠直接使用 `catAIpc` 的 API 管理和沙盒功能，並具備更強大的 AI 公式管理和學習能力，同時更新了主頁面和相關前端腳本。
+
+- **未整合的 `catAI` 文件**：
+  - `d:\catAI\index.js`：此文件是為 Firebase Cloud Functions 設計的，其功能（如 `loadCatFormulas`、`findMatchingFormula`、`chatApi` 和 `evaluateGemini`）已在 `d:\GitHub\MikoAI-Project\src\electron_app\src\backend\server.js` 中以本地 Express 服務的形式實現，因此無需重複整合。
+  - `d:\catAI\firebase.json`：此文件定義了 Firebase Hosting 和 Firestore 的配置，由於 `MikoAI-Project` 的後端是基於本地 Express 服務，而非 Firebase Cloud Functions，因此此配置無需整合。
+
+這些 `catAI` 相關的專案展示了從簡單的 Electron 應用到複雜的 AI 人格生成系統的演進，涵蓋了桌面應用開發、後端服務、API 管理、Firebase 集成以及 AI 核心邏輯等多個方面。
+
+# 貓貓AI實現計劃與進度追蹤
+
+## 1. 核心功能實現計劃
+
+### 1.1 基礎架構 (0-3個月)
+- [ ] 建立Electron應用框架
+- [ ] 實現配置管理系統
+- [ ] 整合Gemini API
+- [ ] 實現基本對話功能
+- [ ] 建立時間迴圈系統
+
+### 1.2 API生態系統 (2-6個月)
+- [ ] 整合Whisper API
+- [ ] 整合Stable Diffusion API
+- [ ] 實現API管理介面
+- [ ] 建立API錯誤處理機制
+- [ ] 實現API數據快取
+
+### 1.3 公式系統 (4-8個月)
+- [ ] 實現GUIPE元公式組
+- [ ] 建立公式陣列系統
+- [ ] 實現公式套公式機制
+- [ ] 開發提示詞生成公式
+- [ ] 建立公式評估系統
+
+### 1.4 危機判斷系統 (6-12個月)
+- [ ] 實現聲音分析
+- [ ] 建立動作識別
+- [ ] 開發危機評估邏輯
+- [ ] 實現警報系統
+- [ ] 建立應急響應機制
+
+### 1.5 可逆生成系統 (9-15個月)
+- [ ] 實現詞>圖轉換
+- [ ] 實現圖>模型轉換
+- [ ] 實現模型>圖轉換
+- [ ] 實現圖>詞轉換
+- [ ] 優化轉換質量
+
+### 1.6 介面系統 (12-18個月)
+- [ ] 實現Live2D整合
+- [ ] 開發多模態輸入介面
+- [ ] 建立監控儀表板
+- [ ] 實現用戶設置介面
+- [ ] 優化使用者體驗
+
+## 2. 技術重點追蹤
+
+### 2.1 API整合
+- [ ] API密鑰管理
+- [ ] 請求限制處理
+- [ ] 錯誤重試機制
+- [ ] 數據格式轉換
+- [ ] 成本優化
+
+### 2.2 安全控制
+- [ ] 用戶認證
+- [ ] 數據加密
+- [ ] 權限管理
+- [ ] 審計日誌
+- [ ] 漏洞掃描
+
+### 2.3 性能優化
+- [ ] 記憶體使用監控
+- [ ] CPU使用優化
+- [ ] 網絡請求優化
+- [ ] 數據快取策略
+- [ ] 啟動時間優化
+
+### 2.4 測試覆蓋
+- [ ] 單元測試
+- [ ] 整合測試
+- [ ] 性能測試
+- [ ] 安全測試
+- [ ] 用戶體驗測試
+
+## 3. 里程碑
+
+### 3.1 第一階段 (6個月)
+- [ ] MVP版本發布
+- [ ] 基礎對話功能
+- [ ] 時間迴圈實現
+- [ ] Live2D基礎整合
+- [ ] 危機聲音檢測
+
+### 3.2 第二階段 (12個月)
+- [ ] 2D圖紙生成
+- [ ] 完整公式系統
+- [ ] 基礎危機判斷
+- [ ] API生態整合
+- [ ] 社群版本發布
+
+### 3.3 第三階段 (18個月)
+- [ ] 完整可逆生成
+- [ ] IoT設備整合
+- [ ] 全面危機應對
+- [ ] BIM系統整合
+- [ ] 商業版本發布
+
+## 4. 注意事項
+
+### 4.1 資源管理
+- 監控API使用成本
+- 優化計算資源使用
+- 控制記憶體佔用
+- 管理數據存儲空間
+- 評估雲服務需求
+
+### 4.2 風險控制
+- 定期安全審計
+- 數據備份策略
+- 應急響應計劃
+- 用戶隱私保護
+- 合規性檢查
+
+### 4.3 品質保證
+- 代碼審查流程
+- 自動化測試
+- 性能基準測試
+- 用戶反饋收集
+- 文檔維護
+
+## 5. 進度更新
+
+### 5.1 當前狀態
+- 開始日期：2025年6月16日
+- 完成項目：0/75
+- 進行中項目：0/75
+- 整體進度：0%
+
+### 5.2 近期目標
+1. 建立基礎架構
+2. 實現配置管理
+3. 整合Gemini API
+4. 建立時間迴圈
+5. 開發基礎介面
+
+### 5.3 下一步行動
+1. 初始化專案結構
+2. 建立開發環境
+3. 實現基礎功能
+4. 編寫單元測試
+5. 部署測試環境

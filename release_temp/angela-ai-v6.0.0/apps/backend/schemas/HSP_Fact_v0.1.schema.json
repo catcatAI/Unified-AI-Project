@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://unified-ai-project.com/schemas/HSP_Fact_v0.1.schema.json",
+  "title": "HSP Fact Payload",
+  "description": "Schema for the payload of an HSP Fact message.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "statement_type": {
+      "type": "string",
+      "enum": ["natural_language", "semantic_triple", "json_ld"]
+    },
+    "statement_nl": {
+      "type": "string"
+    },
+    "statement_structured": {
+      "$ref": "#/$defs/HSPFactStatementStructured"
+    },
+    "source_ai_id": {
+      "type": "string"
+    },
+    "original_source_info": {
+      "$ref": "#/$defs/HSPOriginalSourceInfo"
+    },
+    "timestamp_created": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "timestamp_observed": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "weight": {
+      "type": "number"
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "context": {
+      "type": "object"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "access_policy_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "statement_type",
+    "source_ai_id",
+    "timestamp_created",
+    "confidence_score"
+  ],
+  "$defs": {
+    "HSPFactStatementStructured": {
+      "type": "object",
+      "properties": {
+        "subject_uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "predicate_uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "object_literal": {},
+        "object_uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "object_datatype": {
+          "type": "string"
+        }
+      },
+      "required": ["subject_uri", "predicate_uri"]
+    },
+    "HSPOriginalSourceInfo": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["url", "document_id"]
+        },
+        "identifier": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "identifier"]
+    }
+  }
+}

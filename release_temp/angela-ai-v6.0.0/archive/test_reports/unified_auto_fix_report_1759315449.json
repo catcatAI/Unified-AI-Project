@@ -1,0 +1,107 @@
+{
+  "timestamp": "2025-10-01 18:43:59",
+  "operation_mode": "pure_test",
+  "execution_scope": "specific_test",
+  "specific_target": "tests/test_syntax_fixer.py",
+  "test_results": {
+    "command": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest tests/test_syntax_fixer.py --tb=short -v --tb=short --json-report --json-report-file=latest_test_results.json -v",
+    "return_code": 4,
+    "stdout": "",
+    "stderr": "ImportError while loading conftest 'D:\\Projects\\Unified-AI-Project\\tests\\conftest.py'.\nC:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\ast.py:52: in parse\n    return compile(source, filename, mode, flags,\nE     File \"D:\\Projects\\Unified-AI-Project\\tests\\conftest.py\", line 227\nE       capability_id = processed_payload.get('capability_id')\nE   SyntaxError: expected 'except' or 'finally' block\n",
+    "success": false,
+    "tests_collected": 0,
+    "tests_passed": 0,
+    "tests_failed": 0,
+    "tests_skipped": 0,
+    "duration": 0
+  },
+  "fix_results": {},
+  "environment_results": {
+    "summary": {
+      "total_components": 9,
+      "healthy_components": 5,
+      "warning_components": 2,
+      "error_components": 2,
+      "health_percentage": "55.6%",
+      "overall_status": "error"
+    },
+    "details": {
+      "python": {
+        "status": "healthy",
+        "details": "Python版本 3.12.10 满足要求",
+        "version": "3.12.10",
+        "errors": [],
+        "warnings": []
+      },
+      "venv": {
+        "status": "warning",
+        "details": "虚拟环境存在但未激活: D:\\Projects\\Unified-AI-Project\\venv",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "node": {
+        "status": "healthy",
+        "details": "Node.js版本 22.16.0 已安装",
+        "version": "22.16.0",
+        "errors": [],
+        "warnings": []
+      },
+      "pnpm": {
+        "status": "error",
+        "details": "无法检查pnpm",
+        "version": "",
+        "errors": [
+          "检查pnpm时出错: [WinError 2] 系統找不到指定的檔案。"
+        ],
+        "warnings": []
+      },
+      "dependencies": {
+        "status": "healthy",
+        "details": "依赖包检查通过",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "database": {
+        "status": "warning",
+        "details": "FIREBASE_CREDENTIALS_PATH环境变量未设置",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "api_server": {
+        "status": "error",
+        "details": "无法连接到API服务器: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000213F02EA780>: Failed to establish a new connection: [WinError 10061] 無法連線，因為目標電腦拒絕連線。'))",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "mqtt_broker": {
+        "status": "healthy",
+        "details": "MQTT代理连接正常: 127.0.0.1:1883",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "config_files": {
+        "status": "healthy",
+        "details": "所有配置文件都存在: apps/backend/configs/system_config.yaml, apps/backend/configs/hsp_fallback_config.yaml",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      }
+    },
+    "success": false
+  },
+  "errors": [],
+  "warnings": [],
+  "summary": {
+    "overall_success": false,
+    "operation_mode": "pure_test",
+    "execution_scope": "specific_test",
+    "specific_target": "tests/test_syntax_fixer.py",
+    "timestamp": "2025-10-01 18:44:09",
+    "test_success": false
+  }
+}

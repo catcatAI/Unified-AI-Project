@@ -1,0 +1,40 @@
+@if (isVisible()) {
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" (click)="onCancel()">
+    <div class="w-full max-w-lg bg-gray-900 border-2 border-yellow-500 rounded-2xl shadow-2xl shadow-yellow-500/20 transform transition-all scale-100 opacity-100 p-6" (click)="$event.stopPropagation()">
+      <div class="flex items-center space-x-4 mb-4">
+        <div class="flex-shrink-0 p-2 bg-yellow-500/20 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+        </div>
+        <div>
+            <h2 class="text-2xl font-bold text-yellow-400 font-orbitron">{{ 'modals.m6Review.title' | translate }}</h2>
+            <p class="text-sm text-gray-400">{{ 'modals.m6Review.subtitle' | translate }}</p>
+        </div>
+      </div>
+      
+      <p class="text-gray-300 mb-4">{{ 'modals.m6Review.description' | translate }}</p>
+      
+      <div class="p-3 bg-black/40 rounded-lg text-center mb-6">
+        <p class="text-sm text-gray-400">{{ 'modals.m6Review.currentSecurity' | translate }}</p>
+        <p class="text-3xl font-mono font-bold" [class]="m6Security() >= 0.65 ? 'text-green-400' : 'text-red-400'">
+            {{ m6Security() | number:'1.2-2' }}
+        </p>
+        @if(m6Security() < 0.65) {
+            <p class="text-xs text-red-400 mt-1">{{ 'modals.m6Review.warning' | translate }}</p>
+        } @else {
+            <p class="text-xs text-green-400 mt-1">{{ 'modals.m6Review.safe' | translate }}</p>
+        }
+      </div>
+
+      <div class="flex items-center justify-end space-x-4">
+        <button (click)="onCancel()" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 text-white font-bold rounded-lg shadow-lg transition duration-200">
+            {{ 'modals.m6Review.cancel' | translate }}
+        </button>
+        <button (click)="onConfirm()" class="px-6 py-2 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-lg shadow-lg transition duration-200">
+            {{ 'modals.m6Review.confirm' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,17 @@
+{
+  "context_id": "5dc1afbb-290a-4583-96e0-0647f79212bc",
+  "context_type": "memory",
+  "created_at": "2025-09-23T18:52:39.295130",
+  "updated_at": "2025-09-23T18:52:39.295130",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "memory_access": {
+      "memory_id": "mem_20250923185239277711",
+      "access_time": "2025-09-23T18:52:39.295130",
+      "access_count": 1
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}

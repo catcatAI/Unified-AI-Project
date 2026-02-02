@@ -1,0 +1,598 @@
+
+{
+  "setup": {
+    "title": "Adventure Forge",
+    "subtitle": "Craft your adventure's rules and let AI bring it to life.",
+    "loadPrompt": "Or, load a saved adventure",
+    "newAdventure": "New Adventure",
+    "loadAdventure": "Load Adventure",
+    "loadFromCodex": "Load from Codex",
+    "scenarioPromptLabel": "Character & Story Prompt",
+    "scenarioPromptPlaceholder": "Describe your world, character, and adventure in detail. For example: A noir detective in a city where magic is illegal, investigating the magical murder of a high-profile politician. My character is a grizzled former battlemage named Kaelen, now working as a private eye...",
+    "promptTemplate": "**WORLDVIEW:**\n{world}\n\n**STORY HOOK:**\n{story}\n\n**PLAYER CHARACTER:**\n{character}",
+    "aiCompanionsLabel": "AI Companions ({count})",
+    "startAdventureButton": "Start Adventure",
+    "generateStoryButton": "Generate World & Party",
+    "generatingFullGame": "Generating your world...",
+    "generatingImages": "Generating Portraits...",
+    "validatingAssets": "Validating assets...",
+    "generatingMap": "Regenerating world map...",
+    "generatingLocation": "Regenerating location view...",
+    "generatedCharactersTitle": "Generated Party",
+    "generating": "Generating...",
+    "generateAllPortraits": "Generate All Portraits",
+    "aiOptimizationTitle": "AI Creativity",
+    "creativityBalanced": "Balanced",
+    "creativityCreative": "Creative",
+    "creativityWild": "Wild",
+    "suggestButton": "Suggest",
+    "suggesting": "Suggesting...",
+    "retryButton": "Retry",
+    "validationError": "Please fill in all required fields.",
+    "task": {
+      "generateMap": "Generating world map...",
+      "generateLocation": "Generating location scene...",
+      "generateIcon": "Generating icon: {name}",
+      "generateSfx": "Generating SFX: {prompt}",
+      "autoAction": "AI is deciding player action..."
+    },
+    "difficulty": {
+      "title": "Game Difficulty",
+      "presetLabel": "Difficulty Preset",
+      "presets": {
+        "easy": "Easy",
+        "normal": "Normal",
+        "hard": "Hard",
+        "custom": "Custom"
+      },
+      "showAiPartyLabel": "Show AI Teammate Status",
+      "enableVehiclesLabel": "Enable Vehicles",
+      "enableRealEstateLabel": "Enable Real Estate",
+      "followPlotLabel": "Follow Plot"
+    },
+    "gameStyle": {
+      "title": "Game Style",
+      "narrative": {
+        "title": "Narrative TRPG",
+        "desc": "Text-based, open-ended."
+      },
+      "sandbox": {
+        "title": "2D Sandbox",
+        "desc": "Grid-based, direct control."
+      }
+    },
+    "codex": {
+      "choose": "Choose from Codex...",
+      "selected": "Selected: {name}"
+    }
+  },
+  "game": {
+    "gmThinking": "The GM is thinking...",
+    "playerTurn": "Generating next turn...",
+    "playerInputPlaceholder": "Enter your action...",
+    "sendButton": "Send",
+    "gameMaster": "Game Master",
+    "system": "System",
+    "partyStash": "Party Stash",
+    "vehicles": "Vehicles",
+    "empty": "Empty",
+    "inventory": "Inventory",
+    "inventoryEmpty": "The bag is empty.",
+    "player": "Player",
+    "ai": "AI",
+    "controls": {
+      "title": "Game Controls",
+      "save": "Save Game",
+      "load": "Load from Codex",
+      "loadFromFile": "Load from File",
+      "restart": "Restart Game",
+      "autoPlayStart": "Auto-Play",
+      "autoPlayStop": "Stop Auto-Play"
+    },
+    "suggestedActionsTitle": "Suggested Actions",
+    "partyAndControls": "Party, Inventory & Controls",
+    "backgroundMusic": "Background Music",
+    "soundEffects": "Sound Effects",
+    "generate": "Generate",
+    "retry": "Retry",
+    "loadingAdventure": "Loading your adventure...",
+    "strength": "Strength",
+    "agility": "Agility",
+    "intelligence": "Intelligence",
+    "cinematicMoment": "Cinematic Moment",
+    "generatingImage": "Generating image...",
+    "generatingVideo": "Generating video...",
+    "mediaError": "Media generation failed.",
+    "examine": "Examine Surroundings",
+    "tabStatus": "Status",
+    "tabParty": "Party",
+    "tabBag": "Bag",
+    "tabInventory": "Inventory",
+    "tabCraft": "Craft",
+    "tabAssets": "Assets",
+    "tabLog": "Log",
+    "attachAsset": "Attach Asset from Hub",
+    "attachedContext": "Attached as context for your next action.",
+    "clearContext": "Clear context",
+    "voiceListening": "Listening...",
+    "assets": {
+      "mapTitle": "World Map",
+      "vehiclesTitle": "Vehicles",
+      "realEstateTitle": "Real Estate",
+      "knownLocationsTitle": "Known Locations"
+    },
+    "crafting": {
+      "selectType": "Select Crafting Type",
+      "dropPrompt": "Click items from your inventory to add them here.",
+      "button": "Craft",
+      "action": "Craft {type}: {items}",
+      "crafting": "Crafting...",
+      "crafted": "Crafted:",
+      "consumed": "Consumed:",
+      "notEnough": "Not enough {itemName}.",
+      "types": {
+        "alchemy": "Alchemy",
+        "forging": "Forging",
+        "processing": "Processing"
+      },
+      "inventoryTitle": "Your Inventory",
+      "addIngredient": "Add {itemName} to crafting slot"
+    },
+    "diceRoll": {
+      "attempts": "attempts to",
+      "roll": "Roll",
+      "success": "Success",
+      "failure": "Failure"
+    },
+    "sfx": {
+      "play": "Play Sound: {prompt}"
+    },
+    "veo": {
+      "title": "Video Generation Request",
+      "loading1": "Warming up the VEO engine...",
+      "loading2": "Rendering digital photons...",
+      "loading3": "Compositing alternate realities...",
+      "loading4": "Finalizing the timeline. This may take a few minutes."
+    },
+    "mobile": {
+      "menu": "Menu",
+      "log": "Log"
+    },
+    "itemDetail": {
+      "title": "Item Details",
+      "selectForCraft": "Select for Crafting",
+      "close": "Close",
+      "viewItemDetails": "View details for {itemName}"
+    },
+    "world": {
+      "travelTo": "Travel to {location}",
+      "currentLocation": "Current Location: {location}"
+    },
+    "action": {
+      "title": "Combat!",
+      "enemy": "Enemy"
+    },
+    "simulation": {
+      "title": "Simulation"
+    },
+    "puzzle": {
+      "title": "Puzzle"
+    },
+    "sandbox": {
+      "action": {
+        "talk": "Talk",
+        "pickup": "Pick up",
+        "interact": "Interact",
+        "minedBlock": "You mined one {blockName}.",
+        "cannotDig": "You can't dig that."
+      },
+      "blockNames": {
+        "ground": "Ground",
+        "crystal": "Crystal"
+      }
+    },
+    "ariaLabels": {
+      "dpadUp": "D-pad Up",
+      "dpadDown": "D-pad Down",
+      "dpadLeft": "D-pad Left",
+      "dpadRight": "D-pad Right",
+      "buttonA": "A Button",
+      "buttonB": "B Button",
+      "toggleBgmOn": "Turn background music on",
+      "toggleBgmOff": "Turn background music off",
+      "toggleSfxOn": "Turn sound effects on",
+      "toggleSfxOff": "Turn sound effects off",
+      "playTts": "Play text-to-speech for message from {author}",
+      "stopTts": "Stop text-to-speech for message from {author}",
+      "loadingTts": "Loading audio for message from {author}",
+      "generatePortrait": "Generate portrait for {name}",
+      "regeneratePortrait": "Regenerate portrait for {name}",
+      "closeModal": "Close dialog",
+      "itemButton": "{name}, quantity {quantity}",
+      "placeIngredient": "Place {name} in ingredient slot",
+      "emptyIngredientSlot": "Empty ingredient slot",
+      "hpBar": "Health Points: {value} of {max}",
+      "mpBar": "Mana Points: {value} of {max}",
+      "spBar": "Stamina Points: {value} of {max}",
+      "toggleVoiceInput": "Toggle voice input for main text area"
+    },
+    "bgmMood": {
+      "change": "🎵 Atmosphere changed to: {mood}",
+      "moods": {
+        "Action": "Action",
+        "Calm": "Calm",
+        "Suspense": "Suspense",
+        "Mysterious": "Mysterious",
+        "Epic": "Epic",
+        "Sad": "Sad",
+        "Horror": "Horror",
+        "Default": "Default"
+      }
+    },
+    "inventory": {
+      "ground": "On the Ground",
+      "player": "Player Inventory",
+      "stash": "Party Stash",
+      "vehicleCargo": "{name} Cargo",
+      "itemSelected": "{itemName} selected. Press Enter on a container title to move.",
+      "moveToContainer": "Move selected item to {containerName}",
+      "moveErrorTargetNotFound": "Failed to find target inventory {containerName}. Move cancelled."
+    },
+    "fallbackSuggestions": {
+      "one": "Examine surroundings",
+      "two": "Wait and see what happens",
+      "three": "Check inventory"
+    },
+    "quantityModal": {
+      "title": "Move {itemName}",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "hp": "HP",
+    "mp": "MP",
+    "stamina": "Stamina",
+    "saveFailed": "Save failed!",
+    "saveModal": {
+      "prompt": "Enter a name for your save:",
+      "defaultName": "Save",
+      "description": "Saved on {date}",
+      "success": "Game saved as \"{name}\" in Codex."
+    },
+    "loadConfirm": {
+      "fileMessage": "Load game from file? All unsaved progress will be lost.",
+      "success": "Game loaded successfully.",
+      "codexMessage": "Load game \"{name}\"? All unsaved progress will be lost.",
+      "codexSuccess": "Game \"{name}\" loaded."
+    },
+    "restartConfirm": {
+      "message": "Are you sure you want to restart? All unsaved progress will be lost."
+    },
+    "autoPlayStarted": "Auto-play started.",
+    "autoPlayStopped": "Auto-play stopped.",
+    "autoPlayError": "Auto-play stopped due to an error."
+  },
+  "summon": {
+    "qte": {
+      "title": "Summoning Ritual",
+      "instruction": "Input the sequence before time runs out!",
+      "listening": "Listening...",
+      "cancel": "Cancel",
+      "ariaLabels": {
+        "toggleVoice": "Toggle voice input"
+      }
+    },
+    "anomaly": {
+      "resolutionAction": "The summoning ritual for '{originalAction}' was successful, but a surge of wild magic caused an anomaly! Describe something completely random and unexpected appearing instead of the intended creature. It could be something mundane, silly, or from another world entirely (e.g., a sports car, a shower of rabbits, a mischievous cartoon creature, a ghost from a horror movie)."
+    },
+    "critical_failure": {
+      "resolutionAction": "The summoning ritual for '{originalAction}' failed catastrophically. Describe a massive, uncontrolled, city-destroying monster (like Godzilla) appearing and causing chaos."
+    },
+    "failure": {
+      "resolutionAction": "The summoning ritual for '{originalAction}' failed. Creatively describe a twisted, ugly, comedic, or pun-based parody of the intended creature. The result should be surprising and reflect a clear failure."
+    },
+    "success": {
+      "resolutionAction": "The player's summoning ritual for '{originalAction}' was successful. Describe the intended creature appearing under their control and add it to the game state."
+    },
+    "critical_success": {
+      "resolutionAction": "The player's summoning ritual for '{originalAction}' was a critical success. Describe a much more powerful or impressive version of the intended creature appearing under their control, and add it to the game state."
+    }
+  },
+  "service": {
+    "errorInit": "Failed to start the adventure. An unknown error occurred.",
+    "errorTurn": "The story could not continue. An unknown error occurred.",
+    "errorUnexpected": "An unexpected error occurred. Please try again.",
+    "errorLoad": "Failed to load save file. It might be corrupted or in an invalid format.",
+    "errorRateLimit": "You have exceeded the API request limit. Please wait a moment and try again.",
+    "errorBusy": "The AI is currently busy. Please wait for the current action to complete.",
+    "errorConflict": "The application is busy processing another operation. Please wait for it to complete to avoid conflicts.",
+    "errorInvalidApiKey": "Your API key is not valid or could not be found. Please select a valid key in the settings.",
+    "errorPromptBlocked": "The request was blocked due to safety settings. Please modify your prompt and try again.",
+    "errorServer": "The AI model server is currently experiencing issues. Please try again later.",
+    "errorRollback": "A critical error occurred. Reverting to the state before your last action.",
+    "fallbackMessage": "API limit reached. Switched to a fallback text-only model. Media generation is temporarily disabled.",
+    "errorTtsModel": "TTS model not configured in settings.",
+    "imagePrompt": {
+      "character": "Pixel art JRPG-style portrait of a character. White background. Character: {description}",
+      "map": "A stylized world map for a tabletop RPG. Genre and tone: {genreAndTone}. The story is about: {goal}.",
+      "location": "A scenic view of a location in a tabletop RPG, 16:9 aspect ratio. The location is: {location}. Genre and tone: {genreAndTone}."
+    }
+  },
+  "common": {
+    "on": "On",
+    "off": "Off",
+    "quantity": "Quantity",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back"
+  },
+  "presets": {
+    "worldview": {
+      "title": "Worldview",
+      "cyberpunk": { "title": "Cyberpunk 'Panpsychic' World", "description": "A 'panpsychic' world where stars, battleships, mechs, concepts, and everything else can possess consciousness known as a 'Digital Soul'. Magical girls, angels, demons, gods, Taoist priests, and monsters coexist peacefully with humans, and technology has advanced to the interstellar travel stage." },
+      "fantasy": { "title": "Classic High Fantasy", "description": "The kingdom of Eldoria, a land of ancient forests, soaring mountains, and hidden magic. The peace between humans, elves, and dwarves is fragile, maintained by a pact sworn under the watchful eyes of the Elder Dragons." },
+      "space": { "title": "Space Opera: The Galactic Concord", "description": "The Galactic Concord, a sprawling alliance of diverse alien species in the year 2842. Hyperspace travel is common via the 'Star-Streams', but the furthest reaches of the galaxy, the 'Veil Nebula', remain uncharted and dangerous." },
+      "kancolle": { "title": "Ship Girls World (Pre-WWI)", "description": "A world similar to our own before World War I. However, historical warships (pre-WWI, WWI, WWII, Cold War) are manifested as 'Ship Girls' (Kanmusu) - young women equipped with naval armaments." },
+      "mahjong": { "title": "Superpowered Mahjong World", "description": "A world obsessed with mahjong, where prodigies and professionals have near-supernatural abilities related to the game. It's a slice-of-life setting reminiscent of mahjong anime." },
+      "witch": { "title": "Cosmic Witch Society", "description": "A universe where witches are immense power, with technology and magic so advanced they traverse and govern territories spanning 10^N worlds. New witches are born from 'witch eggs' or through the natural magical saturation of other species. Their society is perfectly stable and without threats due to their overwhelming power." },
+      "foxgod": { "title": "Modern 'All Things Have Spirits' World", "description": "A 'panpsychic' world where stars, battleships, mechs, concepts, and everything else can possess consciousness. Magical girls, angels, demons, gods, Taoist priests, and youkai coexist peacefully with humans, and technology has advanced to the interstellar travel stage." }
+    },
+    "story": {
+      "title": "Story Hook",
+      "soul-tuner": { "title": "The Abyss Echo Anomaly", "description": "In the neon-drenched metropolis of 'Neo-Aethelburg', you are hired to investigate a series of incidents where Digital Souls are inexplicably going berserk or silent. The clues point to a mysterious code, 'The Abyss Echo', hidden deep within the network." },
+      "dragons-ire": { "title": "The Dragon's Ire", "description": "The great dragon Ignis has awoken from his thousand-year slumber, his rage setting the northern mountains ablaze. You are tasked by the desperate King to journey to the forgotten Sunken City of Aerthos to retrieve the legendary Sunstone before Ignis's fury consumes the land." },
+      "star-stream": { "title": "The Veil Nebula Signal", "description": "You are part of the vanguard crew of the explorer vessel 'Odyssey', commissioned for a perilous journey into the Veil Nebula, drawn by a repeating, complex signal that defies all known physics. As you venture deeper, you find that the nebula warps reality itself, and you are not the only ones seeking the signal's source." },
+      "survival": { "title": "Survive Until Modern Times", "description": "Your goal is simple: survive until the year 2000. You must avoid being drawn into the disputes between war-mongering and pacifist factions, evade dangerous missions, and live a peaceful life as the world changes around you." },
+      "mahjong-prodigy": { "title": "The Unknowing Mahjong Prodigy", "description": "Your goal is to become a scientist. However, you have an unconscious, miraculous, talent for mahjong: you always get a winning hand (Tenhou) on your first draw. The problem is, you don't know or care about mahjong, so unless someone points it out, you won't even realize you've won." },
+      "witch-graduate": { "title": "A Witch's First Steps", "description": "As a newly 'hatched' witch, you have just graduated, which signifies adulthood. You are no longer cared for by your kin and must now make your own decisions about your life, your path, and your place in the vast, magical cosmos." },
+      "little-god": { "title": "A Little God's Beginning", "description": "As a minor local god born from a makeshift shrine, your initial goal is to gather a few believers and establish your presence in the bustling metropolis. You need to perform small miracles, answer prayers, and navigate the complex relationship between the divine and mortal realms in the modern age." }
+    },
+    "character": {
+      "title": "Character",
+      "customTitle": "Custom...",
+      "customDescription": "Describe your character in the prompt box.",
+      "zero": { "title": "Zero, the Soul-Tuner", "description": "An aloof 'Soul-Tuner' who can communicate directly with 'Digital Souls' through a specialized cybernetic body. They always wear a black trench coat that resists electronic interference, with a calm gaze that seems to be searching for their own lost past." },
+      "kaelen": { "title": "Kaelen, the Dragon Warden", "description": "A young, determined warrior from a remote mountain village, carrying the ancestral blade of the Dragon Wardens. They are skilled in combat but naive to the political intrigues of the kingdom's capital. They possess a rare, innate connection to the land's magical energies." },
+      "jax": { "title": "Jax, the Star-Pilot", "description": "A brilliant but reckless pilot and xeno-linguist, fascinated with the unknown. Jax left a promising career in the Concord Navy for the thrill of exploration. They are equipped with a state-of-the-art translation device and an advanced piloting rig integrated into their suit." },
+      "matsu": { "title": "Matsu, the Coastal Defense Ship", "description": "A 'Matsu-class' coastal defense boat. Height 145cm, weight 47kg. Belongs to a local shore defense fleet under the Japanese navy. She is pragmatic and cautious, more concerned with patrolling her home waters than grand naval battles." },
+      "saki": { "title": "Saki, the Child Prodigy", "description": "A bright and diligent elementary school girl. She is a model student who loves science and dreams of becoming a scientist. She has absolutely no interest in mahjong." },
+      "nova": { "title": "Nova, the Newly Hatched", "description": "A young witch, freshly graduated and hatched from a witch egg. She is curious, powerful, and a blank slate, ready to choose her destiny among the infinite possibilities the universe offers." },
+      "kiko": { "title": "Kiko, the Little Fox God", "description": "A young fox god (Nogami/Roboshin) of a small, makeshift shrine in a big city. Born from the casual worship of a few youths, she is cheerful, mischievous, and trying to figure out her role as a minor deity in a world of skyscrapers and spaceships." }
+    },
+    "items": {
+      "pistol": { "name": "Pistol", "description": "A standard issue pistol." },
+      "medkit": { "name": "Medkit", "description": "A basic first-aid kit." },
+      "shotgun": { "name": "Shotgun", "description": "A powerful close-range weapon." },
+      "cyber-blade": { "name": "Cyber Blade", "description": "A high-frequency blade for melee combat." },
+      "health-potion": { "name": "Health Potion", "description": "A magical potion that restores health." },
+      "longbow": { "name": "Longbow", "description": "A traditional longbow for ranged attacks." },
+      "rations": { "name": "Rations", "description": "A day's worth of preserved food." },
+      "scanner": { "name": "Scanner", "description": "A device to scan the environment for data." }
+    },
+    "locations": {
+      "cyberpunk-map": { "name": "Cyberpunk World Map", "description": "A neon-drenched digital world map." },
+      "fantasy-map": { "name": "Fantasy World Map", "description": "A map of a classic fantasy kingdom." },
+      "space-map": { "name": "Space Sector Map", "description": "A star chart of a nebula-filled space sector." },
+      "cyberpunk-location": { "name": "Cyberpunk Cityscape", "description": "Towering skyscrapers under a neon sky." },
+      "fantasy-location": { "name": "Fantasy Landscape", "description": "Rolling hills and ancient forests." },
+      "space-location": { "name": "Space Colony View", "description": "A view from inside a futuristic space colony." }
+    }
+  },
+  "suite": {
+    "title": "Gemini Creative Suite",
+    "navAdventureForge": "Adventure Forge",
+    "navCreativeHub": "Creative Hub",
+    "navModel": "Modeling",
+    "navCodex": "Codex",
+    "settings": {
+      "title": "Settings",
+      "language": "Language",
+      "generation": "Generation Options",
+      "gameplay": "Gameplay",
+      "followPlot": "Follow Plot",
+      "portraits": "Character Portraits",
+      "mapImages": "World Map",
+      "itemIcons": "Item Icons",
+      "locationImages": "Location Images",
+      "tts": "Text-to-Speech",
+      "sfx": "Sound Effects (SFX)",
+      "voiceInput": "Voice Input",
+      "audio": "Audio",
+      "apiKey": "VEO API Key",
+      "apiKeyDesc": "Video generation requires a user-selected API key.",
+      "apiKeySelected": "API Key Selected",
+      "selectApiKey": "Select API Key",
+      "apiKeyToast": "Please select a VEO API key in the settings menu to generate video.",
+      "apiSettings": "API Settings",
+      "modelSettings": "Model Settings",
+      "primaryModel": "Primary Model",
+      "fallbackModel": "Fallback Model",
+      "imageModel": {
+        "primary": "Image Model (Quality)",
+        "edit": "Image Model (Edit/Fast)"
+      },
+      "videoModel": {
+        "primary": "Video Model"
+      },
+      "audioGenerationModels": "Audio Generation Models",
+      "sfxModel": "SFX Model",
+      "musicModel": "Music Model",
+      "qteDifficulty": "QTE Difficulty",
+      "qteDifficulties": {
+        "easy": "Easy",
+        "normal": "Normal",
+        "hard": "Hard"
+      },
+      "disableQteTimer": "Disable QTE Timer",
+      "enableMvalGen": "Enable M-VAL Asset Generation",
+      "roundRobin": "Enable Round-Robin Initiative",
+      "characterAgency": "Enable Player Character Agency",
+      "enableDragAndDrop": "Enable Drag & Drop Inventory"
+    }
+  },
+  "codex": {
+    "title": "Codex",
+    "subtitle": "A persistent library of all your discovered characters, items, and locations.",
+    "importButton": "Import to Codex",
+    "exportButton": "Export...",
+    "importSuccess": "Successfully imported {count} new assets.",
+    "importCodexHint": "Importing Codex file. Merging assets.",
+    "exportSuccess": "Codex exported successfully.",
+    "exportError": "Failed to export Codex.",
+    "emptyCategory": "No assets in this category yet. Play the game to discover them!",
+    "categories": {
+      "character": "Characters",
+      "item": "Items",
+      "block": "Blocks",
+      "location": "Locations",
+      "vehicle": "Vehicles",
+      "realEstate": "Real Estate",
+      "image": "Images",
+      "video": "Videos",
+      "audio": "Audio",
+      "model": "Models",
+      "save": "Saves"
+    },
+    "edit": {
+      "title": "Edit Asset",
+      "name": "Name",
+      "description": "Description",
+      "saveSuccess": "Changes to {name} saved."
+    },
+    "error": {
+      "invalidFile": "Invalid file format in {name}."
+    },
+    "createWith": "Create with this asset",
+    "delete": {
+      "confirm": "Are you sure you want to delete \"{name}\"? This cannot be undone.",
+      "presetError": "Preset assets cannot be deleted."
+    }
+  },
+  "creativeHub": {
+    "title": "Creative Hub",
+    "subtitle": "A multi-modal launchpad for creating assets from any source.",
+    "inputPrompt": "Start with...",
+    "fromText": "Text",
+    "fromCamera": "Camera",
+    "fromMic": "Microphone",
+    "actionPrompt": "What do you want to create?",
+    "promptPlaceholder": "Enter a prompt...",
+    "optionalPromptPlaceholder": "Add a descriptive prompt (optional)...",
+    "captureName": "Camera Capture {time}",
+    "recordName": "Audio Recording {time}",
+    "imageActions": {
+      "generateAvatar": "Generate Character Avatar",
+      "generatePortrait": "Generate Full Body Portrait",
+      "generateItemIcon": "Generate Item Icon",
+      "generateScene": "Generate Scene",
+      "describeImage": "Describe / Read Text (OCR)",
+      "create3DModel": "Create 3-View Model"
+    },
+    "audioActions": {
+      "transcribe": "Transcribe to Text",
+      "generateSfx": "Generate Sound Effect",
+      "generateMusic": "Generate Music",
+      "generateImage": "Generate Image from Description"
+    },
+    "textActions": {
+      "generateImage": "Generate Image",
+      "generateSfx": "Generate Sound Effect",
+      "generateMusic": "Generate Music"
+    },
+    "generating": "Generating...",
+    "errorApi": "Sorry, an error occurred. Please try again.",
+    "success": "{assetName} has been created and added to your Codex!",
+    "audioModal": {
+      "title": "Record Audio",
+      "start": "Start Recording",
+      "stop": "Stop Recording",
+      "use": "Use This Audio",
+      "retake": "Retake",
+      "recording": "Recording...",
+      "preview": "Preview",
+      "error": "Could not access microphone. Please ensure permissions are granted."
+    },
+    "task": {
+      "avatar": "Generating avatar...",
+      "portrait": "Generating portrait...",
+      "itemIcon": "Generating icon...",
+      "scene": "Generating scene...",
+      "describe": "Analyzing image...",
+      "transcribe": "Transcribing audio...",
+      "sfx": "Generating sound effect...",
+      "music": "Generating music...",
+      "image": "Generating image..."
+    },
+    "assetSuffix": {
+      "avatar": "Avatar",
+      "portrait": "Portrait",
+      "icon": "Icon",
+      "scene": "Scene"
+    },
+    "generatedAssetDescription": "Generated in the Creative Hub from {sourceName}."
+  },
+  "modelingTool": {
+    "title": "3-View Modeling Tool",
+    "subtitle": "Generate front, side, and top views of an object for 3D modeling.",
+    "promptPlaceholder": "Describe an object or attach an asset...",
+    "generateButton": "Generate Blueprint",
+    "generateFromAssetButton": "Generate from Asset",
+    "generating": "Generating views...",
+    "generatingBlueprint": "Generating blueprint description...",
+    "generatingView": "Generating {view} view...",
+    "queued": "Queued...",
+    "error": "Error",
+    "defaultDescription": "3-view model blueprint for {name}",
+    "captureName": "Camera Capture {time}",
+    "views": {
+      "front": "Front",
+      "side": "Side",
+      "top": "Top"
+    },
+    "idlePrompt": "Describe an object or select an asset to generate model views.",
+    "blueprintTitle": "Blueprint Description",
+    "refineButton": "Refine & Align Views",
+    "refining": "Refining blueprint...",
+    "refiningBlueprint": "Analyzing views & refining blueprint...",
+    "regeneratingView": "Regenerating {view} view...",
+    "captureSuccessToast": "Image captured and added to assets!",
+    "cameraModal": {
+      "title": "Capture from Camera",
+      "captureButton": "Capture",
+      "useButton": "Use Photo",
+      "retakeButton": "Retake",
+      "error": "Could not access camera. Please check permissions."
+    },
+    "attachedContext": "Attached as source for blueprint generation.",
+    "clearContext": "Clear source asset"
+  },
+  "assetPicker": {
+    "title": "Select an Asset",
+    "searchPlaceholder": "Search assets...",
+    "noResults": "No assets found.",
+    "select": "Select"
+  },
+  "playerInput": {
+    "placeholder": "Enter your action...",
+    "submitButton": "Send Action",
+    "attachAsset": "Attach Asset",
+    "startVoiceInput": "Start voice input",
+    "stopVoiceInput": "Stop voice input",
+    "attachedContext": "Attached Context:",
+    "clearContext": "Clear attached context",
+    "textAreaLabel": "Player action input"
+  },
+  "fullscreen": {
+    "enter": "Enter Fullscreen",
+    "exit": "Exit Fullscreen"
+  },
+  "taskQueue": {
+    "title": "Task Queue"
+  },
+  "videoGenerator": {
+    "title": "Video Generator",
+    "subtitle": "Generate short video clips from text prompts using Veo.",
+    "promptPlaceholder": "e.g., A majestic dragon flying through a stormy sky...",
+    "generateButton": "Generate Video",
+    "generating": "Generating video..."
+  }
+}

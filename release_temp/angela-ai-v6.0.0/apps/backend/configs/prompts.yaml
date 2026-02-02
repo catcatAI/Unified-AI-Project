@@ -1,0 +1,40 @@
+# Prompts for the ProjectCoordinator
+
+decompose_user_intent: |
+  Given a user's request, break it down into a series of subtasks that can be executed by specialized agents.
+  The available capabilities are:
+  {capabilities}
+
+  The user's request is:
+  {user_query}
+
+  Please provide a JSON-formatted list of subtasks with the following structure:
+  [
+    {{
+      "capability_needed": "capability_name",
+      "task_parameters": {{
+        "param1": "value1",
+        "param2": "value2"
+      }},
+      "task_description": "A description of the subtask."
+    }},
+    ...
+  ]
+
+  If a task depends on the output of a previous task, use the placeholder "<output_of_task_N>" where N is the index of the dependency task.
+
+integrate_subtask_results: |
+  Given the user's original request and the results of the subtasks, please provide a comprehensive final response.
+
+  User's Original Request:
+  {original_query}
+
+  Collected Results from Sub-Agents:
+  {results}
+
+  Please provide a final, integrated response that directly addresses the user's original request.
+
+# Prompts for the CreativeWritingAgent
+creative_writing_agent:
+  generate_marketing_copy: "Generate marketing copy in a {style} tone for the following product: '{product}'. The target audience is: {audience}."
+  polish_text: "Please proofread and polish the following text for grammar, style, and clarity. Return only the improved text:\n\n---\n{text}\n---"

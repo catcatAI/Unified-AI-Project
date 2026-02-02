@@ -1,0 +1,170 @@
+<div class="p-4 h-full flex flex-col bg-gray-900/60 rounded-xl border border-cyan-400/20 shadow-2xl backdrop-blur-sm">
+  @if (!selectedHex()) {
+    <div class="m-auto text-center text-gray-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mx-auto mb-3 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+      <h3 class="font-orbitron text-lg text-gray-300">{{ 'actionPanel.title' | translate }}</h3>
+      <p class="text-sm mt-1">{{ 'actionPanel.subtitle' | translate }}</p>
+    </div>
+  } @else {
+    <div class="w-full h-full flex flex-col">
+       <h3 class="text-lg font-bold mb-1 font-orbitron" 
+           [class]="selectedHex()?.type === 'Refinery' ? 'text-yellow-400' : 
+                    selectedHex()?.type === 'Resource' ? 'text-green-400' :
+                    selectedHex()?.type === 'Server_Farm' ? 'text-blue-400' :
+                    selectedHex()?.type === 'ASI_Core' ? 'text-red-400' : 
+                    selectedHex()?.constructionProgress ? 'text-orange-400' : 'text-gray-400'">
+        {{ selectedHex()?.labelKey | translate }}
+      </h3>
+       <p class="text-xs text-gray-400 border-b border-gray-700 pb-3 mb-3">{{ 'actionPanel.id' | translate }}: {{ selectedHex()?.id }}</p>
+
+        @if(selectedHex()?.constructionProgress; as construction) {
+          <div class="flex-1 flex flex-col justify-center text-center">
+            <h4 class="text-lg text-orange-300 font-bold mb-2">{{ 'actionPanel.constructionInProgress' | translate }}</h4>
+            <div class="w-full bg-black/50 rounded-full h-4 overflow-hidden border-2 border-orange-500/50 mb-2">
+                <div class="bg-orange-500 h-full rounded-full transition-all duration-500" [style.width.%]="(construction.progress / construction.total) * 100"></div>
+            </div>
+            <p class="text-sm text-gray-400">{{ 'sidebar.upgrades.timeRemaining' | translate: { time: (construction.total - construction.progress) } }}</p>
+          </div>
+        } @else {
+          @switch (selectedHex()?.type) {
+            @case ('Refinery') {
+              <div class="flex-1 flex flex-col justify-between">
+                <div>
+                  <p class="text-sm text-gray-300 mb-4">{{ 'actionPanel.refinery.description' | translate }}</p>
+                  <div class="p-3 bg-black/30 rounded-lg text-sm space-y-2 mb-4">
+                    <p class="flex justify-between">{{ 'actionPanel.refinery.precision' | translate }}: <span class="font-mono font-bold text-cyan-300">{{ coreState().M3_Precision.value | number:'1.2-2' }}</span></p>
+                    <p class="flex justify-between">{{ 'actionPanel.refinery.successChance' | translate }}: <span class="font-mono font-bold text-cyan-300">{{ (0.5 + coreState().M3_Precision.value * 0.5) | percent:'1.0-0' }}</span></p>
+                  </div>
+                  <div class="p-3 bg-black/30 rounded-lg text-sm space-y-2 text-gray-300">
+                      <p class="flex justify-between items-center"><span class="text-gray-400">{{ 'actionPanel.refinery.input' | translate }}:</span> <span class="font-bold text-white">100 {{ 'resources.M_Si.label' | translate }}</span></p>
+                      <p class="flex justify-between items-center"><span class="text-green-400">{{ 'actionPanel.refinery.output' | translate }}:</span> <span class="font-bold text-green-300">~150 {{ 'resources.M_Cm.label' | translate }}</span></p>
+                      <p class="flex justify-between items-center"><span class="text-red-400">{{ 'actionPanel.refinery.risk' | translate }}:</span> <span class="font-bold text-red-300">-0.05 M6 Penalty</span></p>
+                  </div>
+                </div>
+                <button (click)="onConversion()" [disabled]="resourceState().M_Si.amount < 100" class="w-full mt-4 p-3 bg-yellow-600 hover:bg-yellow-500 disabled:bg-gray-600 disabled:opacity-50 text-white font-bold rounded-lg shadow-lg transition flex items-center justify-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0L6.18 10.51 1.69 11.2c-1.61.23-2.26 2.22-1.09 3.32l3.24 2.97-1.02 4.38c-.34 1.57 1.37 2.78 2.81 1.95l3.9-2.28 3.9 2.28c1.44.83 3.15-.38 2.81-1.95l-1.02-4.38 3.24-2.97c1.17-1.1 1.52-3.09-1.09-3.32l-4.49-.69L11.49 3.17z" clip-rule="evenodd" /></svg>
+                    <span>{{ 'actionPanel.refinery.button' | translate }}</span>
+                </button>
+              </div>
+            }
+            @case ('Resource') {
+              <div class="flex-1 flex flex-col justify-between">
+                  <div>
+                    <p class="text-sm text-gray-300 mb-4">{{ 'actionPanel.resource.description' | translate }}</p>
+                    <div class="p-3 bg-black/30 rounded-lg text-sm space-y-2 mb-4">
+                        <p class="flex justify-between">{{ 'actionPanel.resource.efficiency' | translate }}: <span class="font-mono font-bold text-green-300">{{ coreState().M1_Efficiency.value | number:'1.2-2' }}</span></p>
+                    </div>
+                     <div class="p-3 bg-black/30 rounded-lg text-sm space-y-2 text-gray-300">
+                        <p class="flex justify-between">{{ 'actionPanel.resource.baseYield' | translate }}: <span class="font-bold">100</span></p>
+                        <p class="flex justify-between">{{ 'actionPanel.resource.m1Bonus' | translate }}: <span class="font-bold text-green-300">+{{ (100 * coreState().M1_Efficiency.value) | number:'1.1-1' }}</span></p>
+                        <hr class="border-gray-700 my-1"/>
+                        <p class="flex justify-between font-bold">{{ 'actionPanel.resource.totalYield' | translate }}: <span class="text-white">{{ 100 + (100 * coreState().M1_Efficiency.value) | number:'1.1-1' }}</span></p>
+                         <p class="flex justify-between mt-2">{{ 'actionPanel.resource.energyCost' | translate }}: <span class="font-bold text-yellow-300">25 {{ 'resources.L_A.label' | translate }}</span></p>
+                    </div>
+                  </div>
+                  <button (click)="onExtraction()" [disabled]="resourceState().L_A.amount < 25" class="w-full mt-4 p-3 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-600 disabled:opacity-50 text-white font-bold rounded-lg shadow-lg transition flex items-center justify-center space-x-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13 7H7v6h6V7z" /><path fill-rule="evenodd" d="M2 5a3 3 0 013-3h10a3 3 0 013 3v10a3 3 0 01-3-3H5a3 3 0 01-3-3V5zm3-1a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V5a1 1 0 00-1-1H5z" clip-rule="evenodd" /></svg>
+                      <span>{{ 'actionPanel.resource.button' | translate }}</span>
+                  </button>
+              </div>
+            }
+            @case ('ASI_Core') {
+              <div class="flex-1 flex flex-col justify-between">
+                  <div>
+                      <p class="text-sm text-gray-300 mb-4">{{ 'actionPanel.asiCore.description' | translate }}</p>
+                      <div class="p-3 bg-black/30 rounded-lg text-sm space-y-2 mb-4">
+                        <p class="flex justify-between items-center text-lg">{{ 'actionPanel.asiCore.status' | translate }}: 
+                          @if(overclock().isActive) {
+                            <span class="font-mono font-bold text-yellow-400 flex items-center gap-2"><div class="w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>{{ 'actionPanel.asiCore.statusOverclocked' | translate }}</span>
+                          } @else {
+                            <span class="font-mono font-bold text-gray-500 flex items-center gap-2"><div class="w-2 h-2 bg-gray-500 rounded-full"></div>{{ 'actionPanel.asiCore.statusNominal' | translate }}</span>
+                          }
+                        </p>
+                        <p class="flex justify-between">{{ 'actionPanel.asiCore.effect' | translate }}: <span class="font-bold">{{ 'actionPanel.asiCore.effectValue' | translate }}</span></p>
+                        <p class="flex justify-between">{{ 'actionPanel.asiCore.timeRemaining' | translate }}: <span class="font-bold">{{ overclock().ticksRemaining * 2 }}s</span></p>
+                      </div>
+                       <div class="p-3 bg-black/30 rounded-lg text-sm space-y-2 text-gray-300">
+                         <p class="flex justify-between">{{ 'actionPanel.resource.energyCost' | translate }}: <span class="font-bold text-yellow-300">1000 {{ 'resources.L_A.label' | translate }}</span></p>
+                       </div>
+                  </div>
+                  <button (click)="onOverclock()" [disabled]="resourceState().L_A.amount < 1000 || overclock().isActive" class="w-full mt-4 p-3 bg-red-600 hover:bg-red-500 disabled:bg-gray-600 disabled:opacity-50 text-white font-bold rounded-lg shadow-lg transition flex items-center justify-center space-x-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.415L11 9.586V6z" clip-rule="evenodd" /></svg>
+                      <span>{{ 'actionPanel.asiCore.button' | translate }}</span>
+                  </button>
+              </div>
+            }
+             @case ('Server_Farm') {
+              <div class="flex-1 flex flex-col justify-between">
+                @if(assignedEntity(); as entity) {
+                  <div>
+                    <p class="text-sm text-gray-300 mb-4">{{ 'actionPanel.serverFarm.activeDescription' | translate }}</p>
+                    <div class="p-3 bg-black/30 rounded-lg text-sm space-y-2 mb-4">
+                      <p class="flex justify-between items-center text-lg">{{ 'actionPanel.asiCore.status' | translate }}: <span class="font-mono font-bold text-green-400 flex items-center gap-2"><div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>{{ 'actionPanel.serverFarm.statusActive' | translate }}</span></p>
+                      <p class="flex justify-between items-center">{{ 'actionPanel.serverFarm.baseOutput' | translate }}: <span class="font-mono font-bold text-yellow-300">+20 /s</span></p>
+                      <p class="flex justify-between items-center">{{ 'actionPanel.serverFarm.bonus' | translate: { level: entity.level } }}: <span class="font-mono font-bold text-yellow-300">+{{serverDaughterBonus() | number:'1.0-0'}} /s</span></p>
+                       @if(entity.abilities.includes('OPTI_ALGO')) {
+                        <p class="text-xs text-center text-cyan-300 border-t border-gray-700 pt-2 mt-2">{{ 'actionPanel.serverFarm.optiAlgoActive' | translate }}</p>
+                      }
+                    </div>
+                    <div class="p-3 bg-gray-800 rounded-lg text-sm text-gray-300 border border-gray-700">
+                       <p class="text-xs text-gray-400">{{ 'actionPanel.serverFarm.assignedEntity' | translate }}:</p>
+                       <p class="font-bold text-cyan-300 text-base">{{entity.name}} (Lvl {{entity.level}})</p>
+                       <p class="text-xs text-gray-400">{{ ('entities.' + entity.type + '.typeName') | translate }}</p>
+                    </div>
+                  </div>
+                  <button (click)="onRecall()" class="w-full mt-4 p-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg shadow-lg transition flex items-center justify-center space-x-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                      <span>{{ 'actionPanel.serverFarm.recallButton' | translate }}</span>
+                  </button>
+                } @else {
+                  <div>
+                    <p class="text-sm text-gray-300 mb-4">{{ 'actionPanel.serverFarm.inactiveDescription' | translate }}</p>
+                     <div class="p-3 bg-black/30 rounded-lg text-sm space-y-2 mb-4">
+                        <p class="flex justify-between items-center text-lg">{{ 'actionPanel.asiCore.status' | translate }}: <span class="font-mono font-bold text-gray-500 flex items-center gap-2"><div class="w-2 h-2 bg-gray-500 rounded-full"></div>{{ 'actionPanel.serverFarm.statusInactive' | translate }}</span></p>
+                        <p class="flex justify-between items-center">{{ 'actionPanel.serverFarm.inactiveOutput' | translate }}: <span class="font-mono font-bold text-gray-500">+0 /s</span></p>
+                    </div>
+                    @if(availableServerDaughter(); as daughter) {
+                       <p class="text-xs text-center text-green-400">{{ 'actionPanel.serverFarm.readyMessage' | translate: { name: daughter.name, level: daughter.level } }}</p>
+                    } @else {
+                       <p class="text-xs text-center text-yellow-400">{{ 'actionPanel.serverFarm.warningMessage' | translate }}</p>
+                    }
+                  </div>
+                  <button (click)="onDispatch()" [disabled]="!availableServerDaughter()" class="w-full mt-4 p-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:opacity-50 text-white font-bold rounded-lg shadow-lg transition flex items-center justify-center space-x-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
+                      <span>{{ 'actionPanel.serverFarm.dispatchButton' | translate }}</span>
+                  </button>
+                }
+              </div>
+            }
+            @default { <!-- This now only applies to 'Empty' type -->
+              <div class="flex-1 flex flex-col justify-between">
+                <div>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.293 2.293a1 1 0 010 1.414L10 12l3.293 3.293a1 1 0 010 1.414L11 19m-6 0l2.293-2.293a1 1 0 011.414 0L12 20.293l3.293-3.293a1 1 0 011.414 0L19 19" /></svg>
+                  <h3 class="font-orbitron text-lg text-center text-gray-400">{{ 'actionPanel.empty.title' | translate }}</h3>
+                  <p class="text-sm text-center text-gray-500 mt-2 mb-4">{{ 'actionPanel.empty.description' | translate }}</p>
+                </div>
+                <div class="space-y-3">
+                  <button (click)="openConstructionPanel()" class="w-full p-3 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-lg shadow-lg transition flex items-center justify-center space-x-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
+                      <span>{{ 'actionPanel.empty.buildButton' | translate }}</span>
+                  </button>
+                  @if(availableScoutVessel(); as scout) {
+                      <div class="p-3 bg-black/30 rounded-lg text-sm space-y-2 text-gray-300">
+                        <p class="flex justify-between items-center"><span class="text-gray-400">{{ 'actionPanel.empty.action' | translate }}:</span> <span class="font-bold text-white">{{ 'actionPanel.empty.surveyAction' | translate }}</span></p>
+                        <p class="flex justify-between items-center"><span class="text-gray-400">{{ 'actionPanel.empty.entity' | translate }}:</span> <span class="font-bold text-green-300">{{ scout.name }} (Lvl {{scout.level}})</span></p>
+                         <p class="flex justify-between items-center"><span class="text-gray-400">{{ 'actionPanel.refinery.successChance' | translate }}:</span> <span class="font-bold text-green-300">{{ scoutSuccessChance() | percent:'1.0-0' }}</span></p>
+                         <p class="flex justify-between mt-2">{{ 'actionPanel.resource.energyCost' | translate }}: <span class="font-bold text-yellow-300">40 {{ 'resources.L_A.label' | translate }}</span></p>
+                      </div>
+                      <button (click)="onScout()" [disabled]="resourceState().L_A.amount < 40" class="w-full p-3 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:opacity-50 text-white font-bold rounded-lg shadow-lg transition flex items-center justify-center space-x-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
+                          <span>{{ 'actionPanel.empty.scoutButton' | translate }}</span>
+                      </button>
+                  }
+                </div>
+              </div>
+            }
+          }
+        }
+    </div>
+  }
+</div>

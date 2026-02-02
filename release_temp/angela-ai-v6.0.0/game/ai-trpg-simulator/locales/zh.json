@@ -1,0 +1,600 @@
+{
+  "setup": {
+    "title": "冒险锻造工坊",
+    "subtitle": "构建你的冒险规则，让AI赋予它生命。",
+    "loadPrompt": "或者，读取一个已保存的冒险",
+    "newAdventure": "新冒险",
+    "loadAdventure": "读取冒险",
+    "loadFromCodex": "从资产中心读取",
+    "scenarioPromptLabel": "角色与故事设定",
+    "scenarioPromptPlaceholder": "详细描述你的世界、角色和冒险。例如：在一个魔法被视为非法的城市里，一位黑色电影风格的侦探正在调查一宗涉及魔法的高调政治家谋杀案。我的角色是名叫凯兰的饱经风霜的前战斗法师，现在是一名私家侦探...",
+    "promptTemplate": "**世界观:**\n{world}\n\n**故事背景:**\n{story}\n\n**玩家角色:**\n{character}",
+    "aiCompanionsLabel": "AI 队友 ({count})",
+    "startAdventureButton": "开始冒险",
+    "generateStoryButton": "生成世界与队伍",
+    "generatingFullGame": "正在生成你的世界...",
+    "generatingImages": "正在生成肖像...",
+    "validatingAssets": "正在验证资源...",
+    "generatingMap": "正在重新生成世界地图...",
+    "generatingLocation": "正在重新生成场景视图...",
+    "generatedCharactersTitle": "已生成的队伍",
+    "generating": "正在生成...",
+    "generateAllPortraits": "生成所有肖像",
+    "aiOptimizationTitle": "AI 创造力",
+    "creativityBalanced": "平衡",
+    "creativityCreative": "创造",
+    "creativityWild": "狂野",
+    "suggestButton": "建议",
+    "suggesting": "建议中...",
+    "retryButton": "重试",
+    "validationError": "请填写所有必填字段。",
+    "task": {
+      "generateMap": "正在生成世界地图...",
+      "generateLocation": "正在生成场景...",
+      "generateIcon": "生成图标: {name}",
+      "generateSfx": "生成音效: {prompt}",
+      "autoAction": "AI 正在决定玩家行动..."
+    },
+    "difficulty": {
+      "title": "游戏难度",
+      "presetLabel": "难度预设",
+      "presets": {
+        "easy": "简单",
+        "normal": "普通",
+        "hard": "困难",
+        "custom": "自定义"
+      },
+      "showAiPartyLabel": "显示AI队友状态",
+      "enableVehiclesLabel": "启用载具",
+      "enableRealEstateLabel": "启用不动产",
+      "followPlotLabel": "跟随剧情"
+    },
+    "gameStyle": {
+      "title": "游戏风格",
+      "narrative": {
+        "title": "叙事TRPG",
+        "desc": "纯文本，高自由度。"
+      },
+      "sandbox": {
+        "title": "2D沙盒",
+        "desc": "网格地图，直接操控。"
+      }
+    },
+    "codex": {
+      "choose": "从资产中心选择...",
+      "selected": "已选择: {name}"
+    }
+  },
+  "game": {
+    "gmThinking": "主持人正在思考...",
+    "playerTurn": "正在生成下一回合...",
+    "playerInputPlaceholder": "输入你的行动...",
+    "sendButton": "发送",
+    "gameMaster": "游戏主持人",
+    "system": "系统",
+    "partyStash": "队伍仓库",
+    "vehicles": "载具",
+    "empty": "空",
+    "inventory": "背包",
+    "inventoryEmpty": "背包是空的。",
+    "player": "玩家",
+    "ai": "AI",
+    "controls": {
+      "title": "游戏控制",
+      "save": "保存游戏",
+      "load": "从资产中心读取",
+      "loadFromFile": "从文件载入",
+      "restart": "重新开始游戏",
+      "autoPlayStart": "自动游戏",
+      "autoPlayStop": "停止自动"
+    },
+    "suggestedActionsTitle": "推荐行动",
+    "partyAndControls": "队伍、背包与控制",
+    "backgroundMusic": "背景音乐",
+    "soundEffects": "音效",
+    "generate": "生成",
+    "retry": "重试",
+    "loadingAdventure": "正在读取你的冒险...",
+    "strength": "力量",
+    "agility": "敏捷",
+    "intelligence": "智力",
+    "cinematicMoment": "电影化时刻",
+    "generatingImage": "正在生成图片...",
+    "generatingVideo": "正在生成视频...",
+    "mediaError": "媒体生成失败。",
+    "examine": "调查周围",
+    "tabStatus": "状态",
+    "tabParty": "队伍",
+    "tabBag": "背包",
+    "tabInventory": "物品栏",
+    "tabCraft": "合成",
+    "tabAssets": "资产",
+    "tabLog": "日志",
+    "attachAsset": "从资产中心附加",
+    "attachedContext": "已附加为下一个行动的上下文。",
+    "clearContext": "清除上下文",
+    "voiceListening": "聆听中...",
+    "party": {
+      "noCompanions": "队伍中没有同伴。"
+    },
+    "assets": {
+      "mapTitle": "世界地图",
+      "vehiclesTitle": "载具",
+      "realEstateTitle": "不动产",
+      "knownLocationsTitle": "已知地点"
+    },
+    "crafting": {
+      "selectType": "选择合成类型",
+      "dropPrompt": "点击你的物品以添加到此处。",
+      "button": "合成",
+      "action": "合成 {type}: {items}",
+      "crafting": "合成中...",
+      "crafted": "合成成功:",
+      "consumed": "已消耗:",
+      "notEnough": "{itemName}数量不足。",
+      "types": {
+        "alchemy": "炼金",
+        "forging": "锻造",
+        "processing": "加工"
+      },
+      "inventoryTitle": "你的物品",
+      "addIngredient": "将 {itemName} 加入合成槽"
+    },
+    "diceRoll": {
+      "attempts": "尝试",
+      "roll": "检定",
+      "success": "成功",
+      "failure": "失败"
+    },
+    "sfx": {
+      "play": "播放音效: {prompt}"
+    },
+    "veo": {
+      "title": "视频生成请求",
+      "loading1": "正在预热VEO引擎...",
+      "loading2": "正在渲染数字光子...",
+      "loading3": "正在合成替代现实...",
+      "loading4": "正在确定时间线。这可能需要几分钟。"
+    },
+    "mobile": {
+      "menu": "菜单",
+      "log": "日志"
+    },
+    "itemDetail": {
+      "title": "物品详情",
+      "selectForCraft": "选择用于合成",
+      "close": "关闭",
+      "viewItemDetails": "查看 {itemName} 的详情"
+    },
+    "world": {
+      "travelTo": "移动到 {location}",
+      "currentLocation": "当前位置: {location}"
+    },
+    "action": {
+      "title": "战斗！",
+      "enemy": "敌人"
+    },
+    "simulation": {
+      "title": "模拟"
+    },
+    "puzzle": {
+      "title": "解谜"
+    },
+    "sandbox": {
+      "action": {
+        "talk": "交谈",
+        "pickup": "拾取",
+        "interact": "互动",
+        "minedBlock": "你挖掘了一个{blockName}。",
+        "cannotDig": "你无法挖掘那个。"
+      },
+      "blockNames": {
+        "ground": "泥土",
+        "crystal": "水晶"
+      }
+    },
+    "ariaLabels": {
+      "dpadUp": "方向键 上",
+      "dpadDown": "方向键 下",
+      "dpadLeft": "方向键 左",
+      "dpadRight": "方向键 右",
+      "buttonA": "A 按钮",
+      "buttonB": "B 按钮",
+      "toggleBgmOn": "开启背景音乐",
+      "toggleBgmOff": "关闭背景音乐",
+      "toggleSfxOn": "开启音效",
+      "toggleSfxOff": "关闭音效",
+      "playTts": "播放来自 {author} 的文本转语音",
+      "stopTts": "停止来自 {author} 的文本转语音",
+      "loadingTts": "正在加载 {author} 的音频",
+      "generatePortrait": "为 {name} 生成肖像",
+      "regeneratePortrait": "重新生成 {name} 的肖像",
+      "closeModal": "关闭对话框",
+      "itemButton": "{name}，数量 {quantity}",
+      "placeIngredient": "将 {name} 放入合成槽",
+      "emptyIngredientSlot": "清空合成槽",
+      "hpBar": "生命值：{value} / {max}",
+      "mpBar": "魔法值：{value} / {max}",
+      "spBar": "耐力值：{value} / {max}",
+      "toggleVoiceInput": "切换主文本区域的语音输入"
+    },
+    "bgmMood": {
+      "change": "🎵 气氛变为：{mood}",
+      "moods": {
+        "Action": "行动",
+        "Calm": "平静",
+        "Suspense": "悬疑",
+        "Mysterious": "神秘",
+        "Epic": "史诗",
+        "Sad": "悲伤",
+        "Horror": "恐怖",
+        "Default": "默认"
+      }
+    },
+    "inventory": {
+      "ground": "地面上",
+      "player": "玩家物品栏",
+      "stash": "队伍储物箱",
+      "vehicleCargo": "{name} 载货",
+      "itemSelected": "{itemName} 已选中。在容器标题上按回车键移动。",
+      "moveToContainer": "移动选中物品到 {containerName}",
+      "moveErrorTargetNotFound": "未能找到目标物品栏 {containerName}。移动已取消。"
+    },
+    "fallbackSuggestions": {
+      "one": "检查周围",
+      "two": "等待情况发展",
+      "three": "检查物品栏"
+    },
+    "quantityModal": {
+      "title": "移动 {itemName}",
+      "confirm": "确认",
+      "cancel": "取消"
+    },
+    "hp": "HP",
+    "mp": "MP",
+    "stamina": "耐力",
+    "saveFailed": "保存失败！",
+    "saveModal": {
+      "prompt": "为你的存档命名:",
+      "defaultName": "存档",
+      "description": "保存于 {date}",
+      "success": "游戏已作为 “{name}” 保存在资产中心。"
+    },
+    "loadConfirm": {
+      "fileMessage": "从文件读取游戏？所有未保存的进度都将丢失。",
+      "success": "游戏读取成功。",
+      "codexMessage": "读取游戏 “{name}”？所有未保存的进度将会丢失。",
+      "codexSuccess": "游戏 “{name}” 已读取。"
+    },
+    "restartConfirm": {
+      "message": "确定要重新开始吗？所有未保存的进度将会丢失。"
+    },
+    "autoPlayStarted": "自动游戏已启动。",
+    "autoPlayStopped": "自动游戏已停止。",
+    "autoPlayError": "因发生错误，自动游戏已停止。"
+  },
+  "summon": {
+    "qte": {
+      "title": "召唤仪式",
+      "instruction": "在时间结束前输入序列！",
+      "listening": "聆听中...",
+      "cancel": "取消",
+      "ariaLabels": {
+        "toggleVoice": "切换语音输入"
+      }
+    },
+    "anomaly": {
+      "resolutionAction": "针对‘{originalAction}’的召唤仪式成功了，但一股狂野的魔法能量引发了异常！描述一个完全随机且出人意料的东西出现了，而不是预期的生物。它可能是平凡的、滑稽的，或者来自另一个世界的东西（例如：一辆跑车、一场兔子雨、一个淘气的卡通生物、一个恐怖电影里的鬼魂）。"
+    },
+    "critical_failure": {
+      "resolutionAction": "针对‘{originalAction}’的召唤仪式灾难性地失败了。描述一个巨大的、不受控制的、足以摧毁城市的怪物（像哥斯拉一样）出现并造成混乱。"
+    },
+    "failure": {
+      "resolutionAction": "针对‘{originalAction}’的召唤仪式失败了。富有创意地描述一个扭曲的、丑陋的、喜剧性的，或者基于谐音梗的拙劣模仿品。结果应当出人意料并明确地反映出失败。"
+    },
+    "success": {
+      "resolutionAction": "玩家针对‘{originalAction}’的召唤仪式成功了。描述预期的生物在他们的控制下出现，并将其添加到游戏状态中。"
+    },
+    "critical_success": {
+      "resolutionAction": "玩家针对‘{originalAction}’的召唤仪式取得了大成功。描述一个比预期更强大或更令人印象深刻的生物在他们的控制下出现，并将其添加到游戏状态中。"
+    }
+  },
+  "service": {
+    "errorInit": "无法开始冒险。发生未知错误。",
+    "errorTurn": "故事无法继续。发生未知错误。",
+    "errorUnexpected": "发生意外错误，请重试。",
+    "errorLoad": "无法加载存档文件。文件可能已损坏或格式无效。",
+    "errorRateLimit": "您已超出API请求限制。请稍等片刻再试。",
+    "errorBusy": "AI正在忙碌中。请等待当前操作完成后再试。",
+    "errorConflict": "应用程式正在处理另一个操作。请等待其完成后再试，以避免冲突。",
+    "errorInvalidApiKey": "您的 API 密钥无效或未找到。请在设定中选择一个有效的密钥。",
+    "errorPromptBlocked": "由于安全设置，您的请求已被阻止。请修改您的提示后重试。",
+    "errorServer": "AI 模型服务器当前遇到问题。请稍后再试。",
+    "errorRollback": "发生严重错误。已恢复到您上一个操作之前的状态。",
+    "fallbackMessage": "已达到 API 请求上限。已切换至备用纯文本模型。媒体生成功能暂时禁用。",
+    "errorTtsModel": "TTS 模型未在设置中配置。",
+    "imagePrompt": {
+      "character": "JRPG风格的像素艺术角色肖像。白色背景。角色：{description}",
+      "map": "一张为桌上角色扮演游戏设计的风格化世界地图。风格与基調：{genreAndTone}。故事关于：{goal}。",
+      "location": "一个桌上角色扮演游戏中的场景，16:9长宽比。地点是：{location}。风格与基調：{genreAndTone}。"
+    }
+  },
+  "common": {
+    "on": "开启",
+    "off": "关闭",
+    "quantity": "数量",
+    "save": "保存",
+    "cancel": "取消",
+    "back": "返回"
+  },
+  "presets": {
+    "worldview": {
+      "title": "世界观",
+      "cyberpunk": { "title": "赛博朋克‘万物有灵’", "description": "一个‘万物有灵’的世界。星辰、战舰、机甲、概念，乃至一切事物都可能拥有被称为‘虚拟灵魂’的意识。魔法少女、天使、恶魔、神明、道士和妖怪与人类和平共处，科技已发展到星际航行阶段。" },
+      "fantasy": { "title": "经典奇幻", "description": "艾尔多利亚王国，一片拥有古老森林、高耸山脉和隐藏魔法的土地。人类、精灵和矮人之间的和平是脆弱的，靠着在远古巨龙注视下签订的契约维持着。" },
+      "space": { "title": "太空歌剧：银河协和", "description": "公元2842年的银河协和联盟，一个由多种外星物种组成的庞大联盟。通过‘星流’进行超空间旅行很普遍，但银河系最遥远的区域——‘帷幕星云’——仍然是未经探索的危险地带。" },
+      "kancolle": { "title": "舰娘世界 (一战前)", "description": "一个与我们一战前的世界相似的平行世界。然而，历史上的战舰（一战前、一战、二战、冷战时期）会以‘舰娘’的形态出现——即装备着舰船武器的少女。" },
+      "mahjong": { "title": "超能力麻将世界", "description": "一个痴迷于麻将的世界，在这里，天才和职业选手拥有近乎超自然的麻将相关能力。这是一个类似麻将动漫的日常世界观。" },
+      "witch": { "title": "宇宙魔女社会", "description": "一个魔女拥有无上伟力的宇宙。她们的魔法与科技极为发达，可以穿越世界，统治着以10的N次方个世界来计算的广阔疆域。新魔女通过魔女生产的‘魔女蛋’，或通过自然扩散的魔力感染异种族而诞生。由于魔女过于强大，社会不存在任何不稳定与威胁。" },
+      "foxgod": { "title": "现代‘万物有灵’世界", "description": "一个‘万物有灵’的世界。星辰、战舰、机甲、概念，乃至一切事物都可能拥有灵魂与人体，被称为‘星神’‘舰娘’‘机娘’等。魔法少女、天使、恶魔、神明、道士和妖怪与人类和平共处，科技已发展到星际航行阶段。" }
+    },
+    "story": {
+      "title": "故事背景",
+      "soul-tuner": { "title": "深渊回响异常", "description": "在霓虹闪烁的超级都市‘新天穹’中，你被委托调查一系列虚拟灵魂无故陷入狂暴或沉寂的事件。线索指向了一个隐藏在网络深处的神秘代码‘深渊回响’。" },
+      "dragons-ire": { "title": "巨龙之怒", "description": "巨龙伊格尼斯从千年的沉睡中苏醒，他的愤怒点燃了北方的山脉。你被绝望的国王派往被遗忘的沉没之城埃尔索斯，赶在伊格尼斯的怒火吞噬这片土地之前，取回传说中的太阳石。" },
+      "star-stream": { "title": "帷幕星云信号", "description": "你是探索船‘奥德赛号’先遣队的一员，被委托进入危险的帷幕星云，去调查一个违背所有已知物理学、不断重复的复杂信号。随着你深入，你发现星云本身会扭曲现实，而且你并不是唯一在寻找信号源的人。" },
+      "survival": { "title": "存活至现代", "description": "你的目标很简单：存活到2000年。你必须避免被卷入主战派与主和派的争端，回避危险任务，在世界风云变幻中过上平静的生活。" },
+      "mahjong-prodigy": { "title": "无意识的麻将天才", "description": "你的目标是成为一名科学家。然而，你拥有一种无意识的、奇迹般的麻将天赋：每次起手都是天胡。问题是，你对麻将既不懂也不关心，所以除非有人指出，你根本不知道自己已经胡牌了。" },
+      "witch-graduate": { "title": "魔女的第一步", "description": "作为一名新‘孵化’的魔女，你刚刚毕业，这象征着成年。你不再受亲属抚养，必须自己决定你的生活、你的道路，以及你在这广阔魔法宇宙中的位置。" },
+      "little-god": { "title": "小神的开端", "description": "作为一个由临时神社诞生的地方小神，你的初始目标是在这个繁华的大都市中聚集一些信徒，建立你的存在感。你需要施行小小的奇迹，回应祈祷，并在现代社会中探索神明与凡人之间的复杂关系。" }
+    },
+    "character": {
+      "title": "角色",
+      "customTitle": "自定义...",
+      "customDescription": "在下方的提示框中描述您的角色。",
+      "zero": { "title": "零，灵魂调律师", "description": "一位孤僻的‘灵魂调律师’，能通过特制的义体直接与‘虚拟灵魂’沟通。她总是穿着一件能抵御电子干扰的黑色风衣，眼神冷静，似乎在寻找着自己失落的过去。" },
+      "kaelen": { "title": "凯兰，巨龙守望者", "description": "一位来自偏远山村的年轻、坚定的战士，携带着屠龙者的祖传之刃。他精通战斗，但对王国首都的政治阴谋一无所知。他与这片土地的魔法能量有着罕见的内在联系。" },
+      "jax": { "title": "贾克斯，星际飞行员", "description": "一位才华横溢但鲁莽的飞行员和外星语言学家，对未知事物着迷。贾克斯为了追求探索的刺激，放弃了在协和海军的大好前程。他配备了最先进的翻译设备和集成在宇航服中的高级驾驶装置。" },
+      "matsu": { "title": "松，海防舰", "description": "‘松’型海防艇。身高145厘米，体重47公斤。隶属于日本海军的地方岸防舰队。她务实而谨慎，比起宏大的海战，更关心巡逻自己家乡的水域。" },
+      "saki": { "title": "咲，小学生", "description": "一个聪明勤奋的小学女生。她是个模范生，热爱科学，梦想成为一名科学家。她对麻将完全没有兴趣。" },
+      "nova": { "title": "诺娃，新生魔女", "description": "一位年轻的魔女，刚从魔女蛋中孵化并毕业。她充满好奇心，力量强大，如同一张白纸，准备在宇宙提供的无限可能性中选择自己的命运。" },
+      "kiko": { "title": "纪子，小狐神", "description": "一个大城市里小小的、临时神社的年轻狐神（野神/路傍神）。因几个年轻人随手用废料搭建神社进行参拜而诞生。她性格开朗、爱恶棘手，正在努力适应作为现代小神的生活。" }
+    },
+    "items": {
+      "pistol": { "name": "手枪", "description": "一把标准制式手枪。" },
+      "medkit": { "name": "医疗包", "description": "一个基本的急救包。" },
+      "shotgun": { "name": "霰弹枪", "description": "一种强大的近距离武器。" },
+      "cyber-blade": { "name": "赛博之刃", "description": "用于近战的高频刀刃。" },
+      "health-potion": { "name": "治疗药水", "description": "一种能恢复生命的魔法药水。" },
+      "longbow": { "name": "长弓", "description": "用于远程攻击的传统长弓。" },
+      "rations": { "name": "口粮", "description": "一天份的压缩食品。" },
+      "scanner": { "name": "扫描仪", "description": "用于扫描环境数据的设备。" }
+    },
+    "locations": {
+      "cyberpunk-map": { "name": "赛博朋克世界地图", "description": "一张霓虹闪烁的数字世界地图。" },
+      "fantasy-map": { "name": "奇幻世界地图", "description": "一张经典奇幻王国的地图。" },
+      "space-map": { "name": "太空星区图", "description": "一张充满星云的太空星图。" },
+      "cyberpunk-location": { "name": "赛博朋克城市景观", "description": "霓虹天空下的高耸摩天大楼。" },
+      "fantasy-location": { "name": "奇幻景观", "description": "连绵起伏的丘陵和古老的森林。" },
+      "space-location": { "name": "太空殖民地景观", "description": "从一个未来太空殖民地内部看到的景象。" }
+    }
+  },
+  "suite": {
+    "title": "Gemini 创意套件",
+    "navAdventureForge": "冒险锻造工坊",
+    "navCreativeHub": "创意中心",
+    "navModel": "建模",
+    "navCodex": "资产中心",
+    "settings": {
+      "title": "设定",
+      "language": "语言",
+      "generation": "生成选项",
+      "gameplay": "游戏玩法",
+      "followPlot": "跟随剧情",
+      "portraits": "角色肖像",
+      "mapImages": "世界地图",
+      "itemIcons": "物品图标",
+      "locationImages": "场景图片",
+      "tts": "语音合成 (TTS)",
+      "sfx": "音效 (SFX)",
+      "voiceInput": "语音输入",
+      "audio": "音频",
+      "apiKey": "VEO API 密钥",
+      "apiKeyDesc": "视频生成需要一个用户选择的API密钥。",
+      "apiKeySelected": "已选择API密钥",
+      "selectApiKey": "选择API密钥",
+      "apiKeyToast": "请在设置菜单中选择一个VEO API密钥以生成视频。",
+      "apiSettings": "API设定",
+      "modelSettings": "模型设定",
+      "primaryModel": "主模型",
+      "fallbackModel": "备用模型",
+      "imageModel": {
+        "primary": "图像模型 (质量)",
+        "edit": "图像模型 (编辑/快速)"
+      },
+      "videoModel": {
+        "primary": "视频模型"
+      },
+      "audioGenerationModels": "音频生成模型",
+      "sfxModel": "音效模型",
+      "musicModel": "音乐模型",
+      "qteDifficulty": "QTE 难度",
+      "qteDifficulties": {
+        "easy": "简单",
+        "normal": "普通",
+        "hard": "困难"
+      },
+      "disableQteTimer": "禁用QTE计时器",
+      "enableMvalGen": "启用 M值工程 资产生成",
+      "roundRobin": "启用轮询优先权",
+      "characterAgency": "启用玩家角色代理",
+      "enableDragAndDrop": "启用拖拽移动"
+    }
+  },
+  "codex": {
+    "title": "资产中心",
+    "subtitle": "一个包含你所有已发现的角色、物品和地点的持久资料库。",
+    "importButton": "导入到资产中心",
+    "exportButton": "导出...",
+    "importSuccess": "成功导入 {count} 个新资产。",
+    "importCodexHint": "正在导入资产中心文件。合并资产。",
+    "exportSuccess": "资产中心已成功导出。",
+    "exportError": "导出资产中心失败。",
+    "emptyCategory": "此类别中尚无资产。进行游戏以发现它们！",
+    "categories": {
+      "character": "角色",
+      "item": "物品",
+      "block": "方块",
+      "location": "地点",
+      "vehicle": "载具",
+      "realEstate": "不动产",
+      "image": "图片",
+      "video": "视频",
+      "audio": "音频",
+      "model": "模型",
+      "save": "存档"
+    },
+    "edit": {
+      "title": "编辑资产",
+      "name": "名称",
+      "description": "描述",
+      "saveSuccess": "已保存对 {name} 的更改。"
+    },
+    "error": {
+      "invalidFile": "{name} 中的文件格式无效。"
+    },
+    "createWith": "使用此资产创作",
+    "delete": {
+      "confirm": "您确定要删除 “{name}” 吗？此操作无法撤销。",
+      "presetError": "无法删除预设资产。"
+    }
+  },
+  "creativeHub": {
+    "title": "创意中心",
+    "subtitle": "一个从任何来源创建资产的多模态启动平台。",
+    "inputPrompt": "开始于...",
+    "fromText": "文本",
+    "fromCamera": "相机",
+    "fromMic": "麦克风",
+    "actionPrompt": "你想创造什么？",
+    "promptPlaceholder": "输入提示...",
+    "optionalPromptPlaceholder": "添加描述性提示（可选）...",
+    "captureName": "捕获的图像 {time}",
+    "recordName": "录制的音频 {time}",
+    "imageActions": {
+      "generateAvatar": "生成角色头像",
+      "generatePortrait": "生成全身立绘",
+      "generateItemIcon": "生成物品图标",
+      "generateScene": "生成场景",
+      "describeImage": "描述/读取文本 (OCR)",
+      "create3DModel": "创建三视图模型"
+    },
+    "audioActions": {
+      "transcribe": "转录为文本",
+      "generateSfx": "生成音效",
+      "generateMusic": "生成音乐",
+      "generateImage": "从描述生成图像"
+    },
+    "textActions": {
+      "generateImage": "生成图像",
+      "generateSfx": "生成音效",
+      "generateMusic": "生成音乐"
+    },
+    "generating": "生成中...",
+    "errorApi": "抱歉，发生错误，请重试。",
+    "success": "{assetName} 已创建并添加至资产中心！",
+    "audioModal": {
+      "title": "录制音频",
+      "start": "开始录制",
+      "stop": "停止录制",
+      "use": "使用此音频",
+      "retake": "重录",
+      "recording": "录制中...",
+      "preview": "预览",
+      "error": "无法访问麦克风。请确保已授予权限。"
+    },
+    "task": {
+      "avatar": "生成头像中...",
+      "portrait": "生成立绘中...",
+      "itemIcon": "生成图标中...",
+      "scene": "生成场景中...",
+      "describe": "分析图像中...",
+      "transcribe": "转录音频中...",
+      "sfx": "生成音效中...",
+      "music": "生成音乐中...",
+      "image": "生成图像中..."
+    },
+    "assetSuffix": {
+      "avatar": "头像",
+      "portrait": "立绘",
+      "icon": "图标",
+      "scene": "场景"
+    },
+    "generatedAssetDescription": "于创意中心由 {sourceName} 生成。"
+  },
+  "modelingTool": {
+    "title": "三视图建模工具",
+    "subtitle": "为3D建模生成对象的正、侧、顶三视图。",
+    "promptPlaceholder": "描述对象或附加一个资产...",
+    "generateButton": "生成蓝图",
+    "generateFromAssetButton": "从资产生成",
+    "generating": "生成视图中...",
+    "generatingBlueprint": "生成蓝图描述中...",
+    "generatingView": "生成 {view} 视图中...",
+    "queued": "排队中...",
+    "error": "错误",
+    "defaultDescription": "{name} 的三视图模型蓝图",
+    "captureName": "相机捕获 {time}",
+    "views": {
+      "front": "正面",
+      "side": "侧面",
+      "top": "顶部"
+    },
+    "idlePrompt": "描述一个对象或选择一个资产以生成模型视图。",
+    "blueprintTitle": "蓝图描述",
+    "refineButton": "优化并对齐视图",
+    "refining": "优化蓝图中...",
+    "refiningBlueprint": "分析视图并优化蓝图中...",
+    "regeneratingView": "重新生成 {view} 视图中...",
+    "captureSuccessToast": "图像已捕获并添加至资产！",
+    "cameraModal": {
+      "title": "从相机捕获",
+      "captureButton": "拍摄",
+      "useButton": "使用照片",
+      "retakeButton": "重拍",
+      "error": "无法访问相机。请检查权限。"
+    },
+    "attachedContext": "已附加为蓝图生成的源。",
+    "clearContext": "清除源资产"
+  },
+  "assetPicker": {
+    "title": "选择一个资产",
+    "searchPlaceholder": "搜索资产...",
+    "noResults": "未找到资产。",
+    "select": "选择"
+  },
+  "playerInput": {
+    "placeholder": "输入你的行动...",
+    "submitButton": "发送行动",
+    "attachAsset": "附加资产",
+    "startVoiceInput": "开始语音输入",
+    "stopVoiceInput": "停止语音输入",
+    "attachedContext": "附加的上下文：",
+    "clearContext": "清除附加的上下文",
+    "textAreaLabel": "玩家行动输入"
+  },
+  "fullscreen": {
+    "enter": "进入全屏",
+    "exit": "退出全屏"
+  },
+  "taskQueue": {
+    "title": "任务队列"
+  },
+  "videoGenerator": {
+    "title": "视频生成器",
+    "subtitle": "使用Veo从文本提示生成短视频片段。",
+    "promptPlaceholder": "例如：一条雄伟的龙飞过暴风雨的天空...",
+    "generateButton": "生成视频",
+    "generating": "正在生成视频..."
+  }
+}

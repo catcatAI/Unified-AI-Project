@@ -1,0 +1,22 @@
+{
+  "context_id": "5ff98e12-7ecd-4e10-b2c4-8c32f29d1599",
+  "context_type": "model",
+  "created_at": "2025-09-21T05:40:14.427710",
+  "updated_at": "2025-09-21T05:40:14.427710",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "collaboration_step": {
+      "step_id": "step_20250921054014427710",
+      "collaboration_id": "collab_20250921054014426382",
+      "agent_id": "agent_001",
+      "action": "test_action",
+      "input_data": "input",
+      "output_data": "output",
+      "timestamp": "2025-09-21T05:40:14.427710",
+      "duration": 0.5
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}

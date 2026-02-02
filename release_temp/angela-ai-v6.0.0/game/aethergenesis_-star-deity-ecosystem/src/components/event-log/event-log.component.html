@@ -1,0 +1,15 @@
+<div class="h-full flex flex-col bg-black/30 rounded-lg p-3 border border-gray-700/50 shadow-inner relative overflow-hidden">
+  <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
+  <h3 class="text-sm font-semibold text-cyan-300 mb-2 border-b border-gray-700/50 pb-1 font-orbitron tracking-wider">{{ 'eventLog.title' | translate }}</h3>
+  <div class="flex-1 overflow-y-auto text-xs font-mono pr-2">
+    @for (event of events(); track event.timestamp) {
+      <div class="mb-1.5 flex items-start">
+        <span class="text-gray-600 mr-2">{{ event.timestamp | date:'HH:mm:ss' }} ></span>
+        <span class="flex-1" [class]="getEventTypeColor(event.type)">{{ event.message }}</span>
+      </div>
+    }
+    @if(events().length === 0) {
+      <p class="text-gray-500">{{ 'eventLog.awaiting' | translate }}</p>
+    }
+  </div>
+</div>
