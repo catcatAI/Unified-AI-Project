@@ -13,7 +13,7 @@ description = "Project description"
 # Re-enabling these dependencies will require careful management of their versions
 # and potential workarounds for TensorFlow compatibility.
 dependencies = [
-    "fastapi==0.104.1",
+    "fastapi==0.128.0",
     "paho-mqtt==1.6.1",
     "scikit-learn==1.3.0",
 
