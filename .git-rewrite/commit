@@ -1,0 +1,25 @@
+tree e23418c82c903de6f3e648b943305335a5ae677e
+parent c68c0a112a5f8eb83e9248f4ed01a5a389131d62
+author google-labs-jules[bot] <161369871+google-labs-jules[bot]@users.noreply.github.com> 1751868752 +0000
+committer google-labs-jules[bot] <161369871+google-labs-jules[bot]@users.noreply.github.com> 1751868752 +0000
+
+Feat: Define LISCacheInterface and HAMLISCache conceptual outline
+
+- Create `src/core_ai/lis/` directory and `__init__.py` to establish the LIS sub-package.
+- Create `src/core_ai/lis/lis_cache_interface.py`.
+- Define `LISCacheInterface(ABC)` with abstract methods for:
+    - `store_incident`
+    - `get_incident_by_id`
+    - `query_incidents`
+    - `find_related_incidents`
+    - `get_learned_antibodies`
+    - `update_incident_status`
+    - `add_antibody`
+- Add `HAMLISCache(LISCacheInterface)` class skeleton.
+    - Include detailed comments outlining design considerations for a HAM-based implementation,
+      covering data storage, metadata usage for querying, and handling of updates.
+      Full implementation of HAMLISCache methods is deferred.
+
+This commit establishes the interface for the IMMUNO-NARRATIVE CACHE and provides
+initial design thoughts for its HAM-based persistence, paving the way for
+further LIS component development.
