@@ -48,3 +48,222 @@ development:
   debug_mode: true
   log_sql_queries: false
   cors_origins: ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+# =============================================================================
+# Angela AI - Three Modes Configuration (Lite/Standard/Extended)
+# Based on hardware requirements and use cases
+# =============================================================================
+angela_modes:
+  # ===========================================================================
+  # LITE MODE - For Raspberry Pi, mobile devices, or low-resource environments
+  # Hardware: 4GB RAM, no GPU required
+  # ===========================================================================
+  lite:
+    name: "Lite"
+    description: "Lightweight mode for edge devices and mobile"
+    
+    hardware_requirements:
+      min_ram_gb: 4
+      recommended_ram_gb: 4
+      gpu_required: false
+      cpu_cores: 2
+    
+    llm:
+      primary_backend: "local"  # Uses local models only
+      backend_type: "ollama"   # or "llamacpp"
+      base_url: "http://localhost:11434"  # Ollama default
+      model: "tinyllama-1.1b"
+      quantization: "q4_0"      # 4-bit quantization for memory efficiency
+      context_length: 2048
+      temperature: 0.7
+      max_tokens: 512
+    
+    dimensions:
+      count: 64                 # Total dimension count
+      precision: "low"          # 8-bit precision
+      update_rate: 10           # Hz (updates per second)
+      layers: 3                 # Merged bio+emo+cog layers
+    
+    memory:
+      max_capacity: 100       # Maximum memories
+      consolidation: "daily"  # Consolidate once per day
+      layer_3_only: true       # Only L1-L3 merged
+    
+    features:
+      learning: false
+      prediction: false
+      dreaming: false
+      self_modification: false
+      live2d_fps: 15
+      audio_channels: 1
+      audio_sample_rate: 16000
+    
+    expected_performance:
+      memory_usage: "50MB"
+      cpu_usage: "5%"
+      response_latency: "500ms-2s"
+      quality: "Basic conversation, simple emotions"
+  
+  # ===========================================================================
+  # STANDARD MODE - For laptops and desktops
+  # Hardware: 8GB RAM, GPU optional
+  # ===========================================================================
+  standard:
+    name: "Standard"
+    description: "Full experience for desktop/laptop users"
+    
+    hardware_requirements:
+      min_ram_gb: 8
+      recommended_ram_gb: 16
+      gpu_required: false
+      gpu_vram_gb: 0            # Optional
+      cpu_cores: 4
+    
+    llm:
+      primary_backend: "api"    # Uses cloud APIs
+      provider: "openai"
+      model: "gpt-3.5-turbo"
+      api_key_env: "OPENAI_API_KEY"
+      fallback:
+        enabled: true
+        backend: "local"
+        backend_type: "ollama"
+        model: "llama3-8b"
+      context_length: 4096
+      temperature: 0.7
+      max_tokens: 1024
+    
+    dimensions:
+      count: 384                # 6 layers × 4×4×4
+      precision: "medium"         # 16-bit precision
+      update_rate: 30             # Hz
+      layers: 6                   # Full 6-layer architecture
+    
+    memory:
+      max_capacity: 10000       # 10K memories
+      consolidation: "hourly"     # Consolidate every hour
+      all_layers: true
+    
+    features:
+      learning: true
+      learning_rate: 0.1
+      prediction:
+        enabled: true
+        horizon: 5                # 5 seconds prediction
+      dreaming: false
+      self_modification: false
+      live2d_fps: 30
+      audio_channels: 2
+      audio_sample_rate: 44100
+      audio_effects: true
+    
+    expected_performance:
+      memory_usage: "200MB"
+      cpu_usage: "15%"
+      response_latency: "200ms-1s"
+      quality: "Coherent conversation, stable personality"
+  
+  # ===========================================================================
+  # EXTENDED MODE - For workstations and high-end PCs
+  # Hardware: 16GB+ RAM, GPU required
+  # ===========================================================================
+  extended:
+    name: "Extended"
+    description: "Maximum capabilities for power users"
+    
+    hardware_requirements:
+      min_ram_gb: 16
+      recommended_ram_gb: 32
+      gpu_required: true
+      gpu_vram_gb: 8            # Minimum 8GB VRAM
+      cpu_cores: 8
+    
+    llm:
+      primary_backend: "ensemble"  # Uses multiple models
+      ensemble:
+        - provider: "anthropic"
+          model: "claude-3-opus"
+          weight: 0.4
+          api_key_env: "ANTHROPIC_API_KEY"
+        - provider: "openai"
+          model: "gpt-4o"
+          weight: 0.4
+          api_key_env: "OPENAI_API_KEY"
+        - provider: "local"
+          backend_type: "llamacpp"
+          model: "mixtral-8x22b"
+          weight: 0.2
+          base_url: "http://localhost:8080"
+      reasoning_model: "o1-preview"  # For complex reasoning
+      context_length: 128000       # 128K context
+      temperature: 0.8
+      max_tokens: 4096
+    
+    dimensions:
+      count: 4096                 # 8×8×8×8 extended dimensions
+      precision: "ultra"          # 64-bit precision
+      update_rate: 60             # Hz
+      layers: 8                   # 6 + 2 extended layers (meta, quantum)
+    
+    memory:
+      max_capacity: 1000000      # 1M memories
+      consolidation: "continuous" # Real-time consolidation
+      extended_storage: true
+    
+    features:
+      learning:
+        enabled: true
+        rate: 0.5
+        meta_learning: true       # Learn how to learn
+      prediction:
+        enabled: true
+        horizon: 60               # 60 seconds
+        multiverse: true          # Multi-world prediction
+      dreaming:
+        enabled: true
+        rem_cycles: "continuous"   # Continuous dream state
+      self_modification: true     # Can modify own parameters
+      live2d_fps: 60
+      physics_simulation: "advanced"
+      ray_tracing: true
+      audio_channels: 8
+      audio_sample_rate: 192000
+      spatial_audio: true
+    
+    expected_performance:
+      memory_usage: "2GB+"
+      cpu_usage: "60%"
+      gpu_usage: "80%"
+      response_latency: "100ms-500ms"
+      quality: "Deep reasoning, self-reflection, full creativity"
+
+# =============================================================================
+# Auto Mode Detection and Switching
+# =============================================================================
+auto_mode_detection:
+  enabled: true
+  check_on_startup: true
+  check_interval_minutes: 5
+  
+  thresholds:
+    upgrade:
+      memory_percent: 50        # If memory < 50%, can upgrade
+      cpu_percent: 50
+    downgrade:
+      memory_percent: 80        # If memory > 80%, must downgrade
+      cpu_percent: 90
+  
+  behavior:
+    auto_switch: true           # Automatically switch modes
+    notify_user: true           # Notify user of mode changes
+    smooth_transition: true     # Gradual transition (30 seconds)
+    save_state: true            # Save/load state during transition
+
+# =============================================================================
+# Mode Selection Priority (when multiple modes are possible)
+# =============================================================================
+mode_selection_priority:
+  - "user_override"            # User manually selected mode (highest)
+  - "hardware_detected"        # Auto-detected based on hardware
+  - "previous_session"         # Mode from previous session
+  - "lite_fallback"            # Always available fallback (lowest)
