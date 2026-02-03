@@ -1,1358 +1,1219 @@
 """
-多模型 LLM 服务
-支持 OpenAI GPT、Google Gemini、Anthropic Claude、Ollama 等主流 AI 模型
+Multi-Model LLM Service - Rewritten Version v2.0
+
+Supports: OpenAI GPT, Anthropic Claude, Google Gemini, Ollama, llama.cpp
+Features:
+- Dual-track local models (Ollama + llama.cpp via config)
+- Triple key management (ENV > .env file > config file)
+- Integrated PolicyRouter for auto model selection
+- Config-driven for Lite/Standard/Extended modes
+
+Architecture based on LLM_ROUTING_AND_ADAPTATION_PLAN.md
 """
 
-# TODO: Fix import - module 'asyncio' not found
-from tests.tools.test_tool_dispatcher_logging import
-from tests.test_json_fix import
-from diagnose_base_agent import
+import os
+import logging
+import json
 from datetime import datetime
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Coroutine, AsyncGenerator
+from typing import Any, Dict, List, Optional, AsyncGenerator
+from pathlib import Path
 
-from ..aiohttp import
-from open..ai import
-# TODO: Fix import - module 'cohere' not found
-from google.generative..ai import
-from anthropic import AsyncAnthropic
-from azure.identity import DefaultAzureCredential
-from azure.core.credentials import AzureKeyCredential
-from azure.ai.inference import ChatCompletionsClient
-from azure.ai.inference.models import SystemMessage, UserMessage
-from google.generativeai.types import GenerationConfig
+import aiohttp
 from aiolimiter import AsyncLimiter
 
-logger, Any = logging.getLogger(__name__)
+# Optional imports - will be loaded dynamically
+OptionalImports = {}
+
+def _load_optional_imports():
+    """Lazy load optional dependencies"""
+    global OptionalImports
+    try:
+        from openai import AsyncOpenAI
+        OptionalImports['openai'] = AsyncOpenAI
+    except ImportError:
+        pass
+    
+    try:
+        from anthropic import AsyncAnthropic
+        OptionalImports['anthropic'] = AsyncAnthropic
+    except ImportError:
+        pass
+    
+    try:
+        import google.generativeai as genai
+        OptionalImports['google'] = genai
+    except ImportError:
+        pass
+    
+    try:
+        from azure.ai.inference import ChatCompletionsClient
+        from azure.core.credentials import AzureKeyCredential
+        OptionalImports['azure'] = (ChatCompletionsClient, AzureKeyCredential)
+    except ImportError:
+        pass
+
+
+logger = logging.getLogger(__name__)
 
 
 class ModelProvider(Enum):
-    """模型提供商枚举"""
+    """Model provider enumeration"""
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
     OLLAMA = "ollama"
+    LLAMACPP = "llamacpp"  # NEW: llama.cpp support
     AZURE_OPENAI = "azure_openai"
     COHERE = "cohere"
     HUGGINGFACE = "huggingface"
 
 
 @dataclass
-在类定义前添加空行
-    """模型配置"""
-    provider, ModelProvider
-    model_name, str
-    api_key, Optional[str] = None
-    base_url, Optional[str] = None
-    max_tokens, int = 4096
-    temperature, float = 0.7()
-    top_p, float = 1.0()
-    frequency_penalty, float = 0.0()
-    presence_penalty, float = 0.0()
-    timeout, int = 60
-    enabled, bool == True
-    cost_per_1k_tokens, float = 0.0()
-    context_window, int = 4096
+class ModelConfig:
+    """Model configuration with secure key handling"""
+    provider: ModelProvider
+    model_name: str
+    api_key: Optional[str] = None
+    api_key_env: Optional[str] = None  # Environment variable name for key
+    base_url: Optional[str] = None
+    max_tokens: int = 4096
+    temperature: float = 0.7
+    top_p: float = 1.0
+    frequency_penalty: float = 0.0
+    presence_penalty: float = 0.0
+    timeout: int = 60
+    enabled: bool = True
+    cost_per_1k_tokens: float = 0.0
+    context_window: int = 4096
+    capabilities: Dict[str, bool] = field(default_factory=dict)
+    # For local models: backend_type ('ollama' or 'llamacpp')
+    backend_type: Optional[str] = None
+    
+    def __post_init__(self):
+        """Post-initialization: resolve API key from various sources"""
+        if self.api_key is None and self.provider != ModelProvider.OLLAMA and self.provider != ModelProvider.LLAMACPP:
+            self.api_key = self._resolve_api_key()
+    
+    def _resolve_api_key(self) -> Optional[str]:
+        """
+        Resolve API key from multiple sources (in priority order):
+        1. Environment variable (api_key_env or default name)
+        2. .env file
+        3. Return None (will be loaded from secure storage later)
+        """
+        # Priority 1: Environment variable
+        env_var = self.api_key_env or f"{self.provider.value.upper()}_API_KEY"
+        key = os.getenv(env_var)
+        if key:
+            logger.debug(f"API key loaded from environment variable: {env_var}")
+            return key
+        
+        # Priority 2: .env file
+        try:
+            from dotenv import load_dotenv
+            load_dotenv(override=False)  # Don't override existing env vars
+            key = os.getenv(env_var)
+            if key:
+                logger.debug(f"API key loaded from .env file: {env_var}")
+                return key
+        except ImportError:
+            pass
+        
+        # Priority 3: Return None - key will be loaded from config file by MultiLLMService
+        logger.warning(f"No API key found for {self.provider.value} in environment or .env")
+        return None
 
 
 @dataclass
-在类定义前添加空行
-    """聊天消息"""
-    role, str  # system, user, assistant
-    content, str
-    name, Optional[str] = None
-    timestamp, Optional[datetime] = None
+class ChatMessage:
+    """Chat message"""
+    role: str  # system, user, assistant
+    content: str
+    name: Optional[str] = None
+    timestamp: Optional[datetime] = None
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.now()
 
 
 @dataclass
-在类定义前添加空行
-    """LLM 响应"""
-    content, str
-    model, str
-    provider, ModelProvider
-    usage, Dict[str, int]
-    cost, float
-    latency, float
-    timestamp, datetime
-    metadata, Dict[str, Any]
+class LLMResponse:
+    """LLM response"""
+    content: str
+    model: str
+    provider: ModelProvider
+    usage: Dict[str, int]
+    cost: float
+    latency: float
+    timestamp: datetime
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 class BaseLLMProvider(ABC):
-    """LLM 提供商基类"""
-
-    def __init__(self, config, ModelConfig) -> None, :
+    """Base LLM provider class"""
+    
+    def __init__(self, config: ModelConfig):
         self.config = config
-        self.session, Optional[aiohttp.ClientSession] = None
-
-    @abstractmethod
-    async def chat_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> LLMResponse,
-        """聊天完成"""
-        pass
-
-    @abstractmethod
-    async def stream_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        """流式聊天完成"""
-        pass
-
-    async def __aenter__(self):
-        if not self.session, ::
+        self.session: Optional[aiohttp.ClientSession] = None
+        self.rate_limiter = AsyncLimiter(max_rate=10, time_period=1)  # 10 requests per second
+    
+    async def _ensure_session(self):
+        """Ensure aiohttp session is created"""
+        if self.session is None or self.session.closed:
             self.session = aiohttp.ClientSession()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.session, ::
+    
+    @abstractmethod
+    async def chat_completion(
+        self,
+        messages: List[ChatMessage],
+        **kwargs
+    ) -> LLMResponse:
+        """Chat completion"""
+        pass
+    
+    @abstractmethod
+    async def stream_completion(
+        self,
+        messages: List[ChatMessage],
+        **kwargs
+    ) -> AsyncGenerator[str, None]:
+        """Stream completion"""
+        pass
+    
+    async def close(self):
+        """Close provider resources"""
+        if self.session and not self.session.closed:
             await self.session.close()
-在类定义前添加空行
-    """OpenAI GPT 提供商"""
+    
+    def _calculate_cost(self, usage: Dict[str, int]) -> float:
+        """Calculate cost based on token usage"""
+        total_tokens = usage.get('total_tokens', 0)
+        return (total_tokens / 1000) * self.config.cost_per_1k_tokens
 
-    def __init__(self, config, ModelConfig) -> None, :
-        super.__init__(config)
-        # 修复：使用正确的 OpenAI 客户端初始化方式
-        self.client = openai.AsyncOpenAI()
-    api_key = config.api_key(),
-(            base_url = config.base_url())
 
-    async def chat_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> LLMResponse,
+class OpenAIProvider(BaseLLMProvider):
+    """OpenAI GPT provider"""
+    
+    def __init__(self, config: ModelConfig):
+        super().__init__(config)
+        _load_optional_imports()
+        self.client = None
+        if 'openai' in OptionalImports:
+            self.client = OptionalImports['openai'](api_key=config.api_key)
+    
+    async def chat_completion(self, messages: List[ChatMessage], **kwargs) -> LLMResponse:
+        if not self.client:
+            raise RuntimeError("OpenAI client not available. Install with: pip install openai")
+        
         start_time = datetime.now()
-        try,
-            openai_messages = []
-            for msg in messages, ::
-                # Check if msg is a dictionary or ChatMessage object, ::
-                if isinstance(msg, dict)::
-                    openai_messages.append({"role": msg["role"] "content": msg["content"\
-    \
-    \
-    \
-    \
-    \
-    ]})
-                else,
-                    openai_messages.append({"role": msg.role(), "content": msg.content})
-            
-            # 确保使用真实API密钥进行token级别推理
-            api_key = self.config.api_key or os.getenv("OPENAI_API_KEY")
-            # 不再检查dummy_key - 让真实连接自然进行
-            
-            response = await self.client.chat.completions.create()
-    model = self.config.model_name(),
-                messages = openai_messages,
-                max_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
-                temperature = kwargs.get('temperature', self.config.temperature()),
-                top_p = kwargs.get('top_p', self.config.top_p()),
-                frequency_penalty = kwargs.get('frequency_penalty',
-    self.config.frequency_penalty()),
-                presence_penalty = kwargs.get('presence_penalty',
-    self.config.presence_penalty()),
-(                timeout = self.config.timeout())
+        
+        openai_messages = [
+            {"role": msg.role, "content": msg.content}
+            for msg in messages
+        ]
+        
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.config.model_name,
+                messages=openai_messages,
+                max_tokens=kwargs.get('max_tokens', self.config.max_tokens),
+                temperature=kwargs.get('temperature', self.config.temperature),
+                top_p=kwargs.get('top_p', self.config.top_p),
+                frequency_penalty=kwargs.get('frequency_penalty', self.config.frequency_penalty),
+                presence_penalty=kwargs.get('presence_penalty', self.config.presence_penalty),
+                timeout=self.config.timeout
+            )
             
             latency = (datetime.now() - start_time).total_seconds()
-            usage_dict == response.usage.model_dump() if response.usage else {}::
-            usage, Dict[str, int] = {}
-                "prompt_tokens": usage_dict.get("prompt_tokens", 0),
-                "completion_tokens": usage_dict.get("completion_tokens", 0),
-                "total_tokens": usage_dict.get("total_tokens", 0)
-{            }
-            cost = self._calculate_cost(usage)
             
-            return LLMResponse()
-                content = response.choices[0].message.content or "", ,
-    model = self.config.model_name(),
-                provider == ModelProvider.OPENAI(),
-                usage = usage,
-                cost = cost,
-                latency = latency,
-                timestamp = datetime.now(),
-                metadata == {"finish_reason": response.choices[0].finish_reason}
-(            )
+            usage = {
+                'prompt_tokens': response.usage.prompt_tokens if response.usage else 0,
+                'completion_tokens': response.usage.completion_tokens if response.usage else 0,
+                'total_tokens': response.usage.total_tokens if response.usage else 0
+            }
             
-        except Exception as e, ::
-            logger.error(f"OpenAI API 错误, {e}")
+            return LLMResponse(
+                content=response.choices[0].message.content,
+                model=self.config.model_name,
+                provider=ModelProvider.OPENAI,
+                usage=usage,
+                cost=self._calculate_cost(usage),
+                latency=latency,
+                timestamp=datetime.now(),
+                metadata={'finish_reason': response.choices[0].finish_reason}
+            )
+        except Exception as e:
+            logger.error(f"OpenAI API error: {e}")
             raise
     
-    async def stream_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 直接返回异步生成器协程
-        async for item in self._stream_impl(messages, * * kwargs)::
-            yield item
-    
-    async def _stream_impl()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        openai_messages = []
-        for msg in messages, ::
-            # Check if msg is a dictionary or ChatMessage object, ::
-            if isinstance(msg, dict)::
-                openai_messages.append({"role": msg["role"] "content": msg["content"]})
-            else,
-                openai_messages.append({"role": msg.role(), "content": msg.content})
+    async def stream_completion(self, messages: List[ChatMessage], **kwargs) -> AsyncGenerator[str, None]:
+        if not self.client:
+            raise RuntimeError("OpenAI client not available")
         
-        try,
-            stream = await self.client.chat.completions.create()
-    model = self.config.model_name(),
-                messages = openai_messages,
-                stream == True,
-                max_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
-                temperature = kwargs.get('temperature', self.config.temperature()),
-(                timeout = self.config.timeout())
+        openai_messages = [
+            {"role": msg.role, "content": msg.content}
+            for msg in messages
+        ]
+        
+        try:
+            stream = await self.client.chat.completions.create(
+                model=self.config.model_name,
+                messages=openai_messages,
+                stream=True,
+                **kwargs
+            )
             
-            async for chunk in stream, ::
-                if chunk.choices[0].delta.content, ::
-                    yield chunk.choices[0].delta.content()
-        except Exception as e, ::
-            logger.error(f"OpenAI 流式 API 错误, {e}")
+            async for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+        except Exception as e:
+            logger.error(f"OpenAI streaming error: {e}")
             raise
+
+
+class AnthropicProvider(BaseLLMProvider):
+    """Anthropic Claude provider"""
     
-    def _calculate_cost(self, usage, Dict[str, int]) -> float, :
-        """计算成本"""
-        total_tokens = usage.get('total_tokens', 0)
-        return (total_tokens / 1000) * self.config.cost_per_1k_tokens()
-在类定义前添加空行
-    """Anthropic Claude 提供商"""
+    def __init__(self, config: ModelConfig):
+        super().__init__(config)
+        _load_optional_imports()
+        self.client = None
+        if 'anthropic' in OptionalImports:
+            self.client = OptionalImports['anthropic'](api_key=config.api_key)
     
-    def __init__(self, config, ModelConfig) -> None, :
-        super.__init__(config)
-        self.client == = AsyncAnthropic(api_key = = config.api_key())
-    
-    async def chat_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> LLMResponse,
+    async def chat_completion(self, messages: List[ChatMessage], **kwargs) -> LLMResponse:
+        if not self.client:
+            raise RuntimeError("Anthropic client not available. Install with: pip install anthropic")
+        
         start_time = datetime.now()
-        try,
-            claude_messages = []
-            system_message == None
+        
+        # Convert messages to Anthropic format
+        system_msg = None
+        anthropic_messages = []
+        
+        for msg in messages:
+            if msg.role == "system":
+                system_msg = msg.content
+            else:
+                anthropic_messages.append({"role": msg.role, "content": msg.content})
+        
+        try:
+            params = {
+                "model": self.config.model_name,
+                "messages": anthropic_messages,
+                "max_tokens": kwargs.get('max_tokens', self.config.max_tokens),
+                "temperature": kwargs.get('temperature', self.config.temperature),
+                "top_p": kwargs.get('top_p', self.config.top_p),
+                "timeout": self.config.timeout
+            }
+            if system_msg:
+                params["system"] = system_msg
             
-            for msg in messages, ::
-                # Check if msg is a dictionary or ChatMessage object, ::
-                if isinstance(msg, dict)::
-                    if msg["role"] == "system":::
-                        system_message = msg["content"]
-                    else,
-                        claude_messages.append({)}
-                            "role": msg["role"]
-                            "content": msg["content"]
-{(                        })
-                else,
-                    if msg.role == "system":::
-                        system_message = msg.content()
-                    else,
-                        claude_messages.append({)}
-                            "role": msg.role(),
-                            "content": msg.content()
-{(                        })
+            response = await self.client.messages.create(**params)
             
-            response = await self.client.messages.create()
-    model = self.config.model_name(),
-                max_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
-                temperature = kwargs.get('temperature', self.config.temperature()),
-                system = system_message or "",
-                messages = claude_messages
-(            )
+            latency = (datetime.now() - start_time).total_seconds()
             
-            latency = (datetime.now - start_time).total_seconds
-            usage = {}
-                "prompt_tokens": response.usage.input_tokens(),
-                "completion_tokens": response.usage.output_tokens(),
-                "total_tokens": response.usage.input_tokens +\
-    response.usage.output_tokens()
-{            }
-            cost = self._calculate_cost(usage)
+            usage = {
+                'prompt_tokens': response.usage.input_tokens if response.usage else 0,
+                'completion_tokens': response.usage.output_tokens if response.usage else 0,
+                'total_tokens': (response.usage.input_tokens + response.usage.output_tokens) if response.usage else 0
+            }
             
-            # 获取 Claude 响应的文本内容
-            content_text = ""
-            if response.content and len(response.content()) > 0, ::
-                # 安全地提取文本内容
-                content_item = response.content[0]
-                if hasattr(content_item, 'text'):::
-                    content_text = str(getattr(content_item, 'text', ''))
+            content = "".join([block.text for block in response.content if hasattr(block, 'text')])
             
-            return LLMResponse()
-                content = content_text, ,
-    model = self.config.model_name(),
-                provider == ModelProvider.ANTHROPIC(),
-                usage = usage,
-                cost = cost,
-                latency = latency,
-                timestamp = datetime.now(),
-                metadata == {"stop_reason": response.stop_reason}
-(            )
-            
-        except Exception as e, ::
-            logger.error(f"Anthropic API 错误, {e}")
+            return LLMResponse(
+                content=content,
+                model=self.config.model_name,
+                provider=ModelProvider.ANTHROPIC,
+                usage=usage,
+                cost=self._calculate_cost(usage),
+                latency=latency,
+                timestamp=datetime.now(),
+                metadata={'stop_reason': response.stop_reason}
+            )
+        except Exception as e:
+            logger.error(f"Anthropic API error: {e}")
             raise
     
-    async def stream_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 直接返回异步生成器协程
-        async for item in self._stream_impl(messages, * * kwargs)::
-            yield item
-    
-    async def _stream_impl()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 转换消息格式
-        claude_messages = []
-        system_message == None
+    async def stream_completion(self, messages: List[ChatMessage], **kwargs) -> AsyncGenerator[str, None]:
+        if not self.client:
+            raise RuntimeError("Anthropic client not available")
         
-        for msg in messages, ::
-            # Check if msg is a dictionary or ChatMessage object, ::
-            if isinstance(msg, dict)::
-                if msg["role"] == "system":::
-                    system_message = msg["content"]
-                else,
-                    claude_messages.append({)}
-                        "role": msg["role"]
-                        "content": msg["content"]
-{(                    })
-            else,
-                if msg.role == "system":::
-                    system_message = msg.content()
-                else,
-                    claude_messages.append({)}
-                        "role": msg.role(),
-                        "content": msg.content()
-{(                    })
+        system_msg = None
+        anthropic_messages = []
         
-        try,
-            async with self.client.messages.stream()
-    model = self.config.model_name(),
-                max_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
-                temperature = kwargs.get('temperature', self.config.temperature()),
-                system = system_message or "",
-                messages == claude_messages,
-(            ) as stream,
-                async for text in stream.text_stream, ::
+        for msg in messages:
+            if msg.role == "system":
+                system_msg = msg.content
+            else:
+                anthropic_messages.append({"role": msg.role, "content": msg.content})
+        
+        params = {
+            "model": self.config.model_name,
+            "messages": anthropic_messages,
+            "max_tokens": kwargs.get('max_tokens', self.config.max_tokens),
+            "stream": True
+        }
+        if system_msg:
+            params["system"] = system_msg
+        
+        try:
+            async with self.client.messages.stream(**params) as stream:
+                async for text in stream.text_stream:
                     yield text
-                    
-        except Exception as e, ::
-            logger.error(f"Anthropic 流式 API 错误, {e}")
+        except Exception as e:
+            logger.error(f"Anthropic streaming error: {e}")
             raise
+
+
+class GoogleProvider(BaseLLMProvider):
+    """Google Gemini provider"""
     
-    def _calculate_cost(self, usage, Dict[str, int]) -> float, :
-        """计算成本"""
-        total_tokens = usage.get('total_tokens', 0)
-        return (total_tokens / 1000) * self.config.cost_per_1k_tokens()
-在类定义前添加空行
-    """Google Gemini 提供商"""
+    def __init__(self, config: ModelConfig):
+        super().__init__(config)
+        _load_optional_imports()
+        self.genai = OptionalImports.get('google')
+        if self.genai:
+            self.genai.configure(api_key=config.api_key)
     
-    def __init__(self, config, ModelConfig) -> None, :
-        super.__init__(config)
-        genai.configure(api_key = config.api_key())
-        self.model = genai.GenerativeModel(config.model_name())
-    
-    async def chat_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> LLMResponse,
+    async def chat_completion(self, messages: List[ChatMessage], **kwargs) -> LLMResponse:
+        if not self.genai:
+            raise RuntimeError("Google Generative AI not available. Install with: pip install google-generativeai")
+        
         start_time = datetime.now()
-        try,
-            # 转换消息格式
-            chat_history = []
-            user_message = ""
+        
+        # Convert messages
+        gemini_messages = []
+        system_instruction = None
+        
+        for msg in messages:
+            if msg.role == "system":
+                system_instruction = msg.content
+            else:
+                gemini_messages.append({"role": msg.role, "parts": [msg.content]})
+        
+        try:
+            model = self.genai.GenerativeModel(
+                model_name=self.config.model_name,
+                system_instruction=system_instruction
+            )
             
-            for msg in messages, ::
-                if msg.role == "system":::
-                    # Gemini 没有 system role, 将其作为第一条用户消息
-                    chat_history.append({)}
-                        "role": "user",
-                        "parts": [msg.content]
-{(                    })
-                    chat_history.append({)}
-                        "role": "model",
-                        "parts": ["我理解了这些指示。"]
-{(                    })
-                elif msg.role == "user":::
-                    user_message = msg.content()
-                elif msg.role == "assistant":::
-                    chat_history.append({)}
-                        "role": "user",
-                        "parts": [user_message] if user_message else ["继续"]:
-{(                    })
-                    chat_history.append({:)}
-                        "role": "model",
-                        "parts": [msg.content]
-{(                    })
-                    user_message = ""
+            generation_config = self.genai.GenerationConfig(
+                max_output_tokens=kwargs.get('max_tokens', self.config.max_tokens),
+                temperature=kwargs.get('temperature', self.config.temperature),
+                top_p=kwargs.get('top_p', self.config.top_p)
+            )
             
-            # 如果有最后的用户消息, 添加到历史中
-            if user_message, ::
-                chat_history.append({)}
-                    "role": "user",
-                    "parts": [user_message]
-{(                })
+            chat = model.start_chat(history=gemini_messages[:-1] if len(gemini_messages) > 1 else [])
+            last_message = gemini_messages[-1]["parts"][0] if gemini_messages else ""
             
-            # 创建聊天会话
-            chat == self.model.start_chat(history = chat_history[: -\
-    1] if chat_history else [])::
-            # 发送最后一条消息
-            last_message == chat_history[ -\
-    1]["parts"][0] if chat_history else "Hello"::
-            response = await chat.send_message_async()
+            response = await chat.send_message_async(
                 last_message,
-                generation_config == GenerationConfig()
-    max_output_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
-                    temperature = kwargs.get('temperature', self.config.temperature()),
-(                    top_p = kwargs.get('top_p', self.config.top_p()))
-(            )
+                generation_config=generation_config
+            )
             
-            latency = (datetime.now - start_time).total_seconds
+            latency = (datetime.now() - start_time).total_seconds()
             
-            # Gemini 不提供详细的 token 使用信息
-            usage == {:}
-                "prompt_tokens": len(last_message) // 4,  # 估算
-                "completion_tokens": len(response.text()) // 4,  # 估算
-                "total_tokens": (len(last_message) + len(response.text())) // 4
-{            }
-            cost = self._calculate_cost(usage)
+            usage = {
+                'prompt_tokens': 0,  # Gemini doesn't always provide token counts
+                'completion_tokens': 0,
+                'total_tokens': 0
+            }
             
-            return LLMResponse()
-    content = response.text(),
-                model = self.config.model_name(),
-                provider == ModelProvider.GOOGLE(),
-                usage = usage,
-                cost = cost,
-                latency = latency,
-                timestamp = datetime.now(),
-                metadata == {"finish_reason": "stop"}
-(            )
-            
-        except Exception as e, ::
-            logger.error(f"Google Gemini API 错误, {e}")
+            return LLMResponse(
+                content=response.text,
+                model=self.config.model_name,
+                provider=ModelProvider.GOOGLE,
+                usage=usage,
+                cost=self._calculate_cost(usage),
+                latency=latency,
+                timestamp=datetime.now(),
+                metadata={'candidates': len(response.candidates) if hasattr(response, 'candidates') else 1}
+            )
+        except Exception as e:
+            logger.error(f"Google Gemini API error: {e}")
             raise
     
-    async def stream_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 直接返回异步生成器协程
-        async for item in self._stream_impl(messages, * * kwargs)::
-            yield item
-    
-    async def _stream_impl()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 类似的消息转换逻辑
-        chat_history = []
-        user_message = ""
+    async def stream_completion(self, messages: List[ChatMessage], **kwargs) -> AsyncGenerator[str, None]:
+        if not self.genai:
+            raise RuntimeError("Google Generative AI not available")
         
-        for msg in messages, ::
-            if msg.role == "system":::
-                chat_history.append({)}
-                    "role": "user",
-                    "parts": [msg.content]
-{(                })
-                chat_history.append({)}
-                    "role": "model",
-                    "parts": ["我理解了这些指示。"]
-{(                })
-            elif msg.role == "user":::
-                user_message = msg.content()
-            elif msg.role == "assistant":::
-                chat_history.append({)}
-                    "role": "user",
-                    "parts": [user_message] if user_message else ["继续"]:
-{(                })
-                chat_history.append({:)}
-                    "role": "model",
-                    "parts": [msg.content]
-{(                })
-                user_message = ""
+        gemini_messages = []
+        system_instruction = None
         
-        if user_message, ::
-            chat_history.append({)}
-                "role": "user",
-                "parts": [user_message]
-{(            })
+        for msg in messages:
+            if msg.role == "system":
+                system_instruction = msg.content
+            else:
+                gemini_messages.append({"role": msg.role, "parts": [msg.content]})
         
-        try,
-            chat == self.model.start_chat(history = chat_history[: -\
-    1] if chat_history else [])::
-            last_message == chat_history[ -\
-    1]["parts"][0] if chat_history else "Hello"::
-            response = await chat.send_message_async()
+        try:
+            model = self.genai.GenerativeModel(
+                model_name=self.config.model_name,
+                system_instruction=system_instruction
+            )
+            
+            chat = model.start_chat(history=gemini_messages[:-1] if len(gemini_messages) > 1 else [])
+            last_message = gemini_messages[-1]["parts"][0] if gemini_messages else ""
+            
+            response = await chat.send_message_async(
                 last_message,
-                stream == True,
-                generation_config == GenerationConfig()
-    max_output_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
-(                    temperature = kwargs.get('temperature', self.config.temperature()))
-(            )
+                stream=True,
+                generation_config=self.genai.GenerationConfig(
+                    max_output_tokens=kwargs.get('max_tokens', self.config.max_tokens)
+                )
+            )
+            
+            async for chunk in response:
+                if chunk.text:
+                    yield chunk.text
+        except Exception as e:
+            logger.error(f"Google Gemini streaming error: {e}")
+            raise
 
-            async for chunk in response, ::
-                if chunk.text, ::
-                    yield chunk.text()
-        except Exception as e, ::
-            logger.error(f"Google Gemini 流式 API 错误, {e}")
-            raise
+
+class UnifiedLocalProvider(BaseLLMProvider):
+    """
+    Unified Local Model Provider - Dual-track support for Ollama and llama.cpp
     
-    def _calculate_cost(self, usage, Dict[str, int]) -> float, :
-        """计算成本"""
-        total_tokens = usage.get('total_tokens', 0)
-        return (total_tokens / 1000) * self.config.cost_per_1k_tokens()
-在类定义前添加空行
-    """Ollama 本地模型提供商"""
+    Uses configuration to switch between:
+    - Ollama: /api/chat endpoint
+    - llama.cpp: /v1/chat/completions (OpenAI compatible)
+    """
     
-    def __init__(self, config, ModelConfig) -> None, :
-        super.__init__(config)
-        self.base_url == config.base_url or "http, / /localhost, 11434"
+    def __init__(self, config: ModelConfig):
+        super().__init__(config)
+        # Determine backend type from config or auto-detect from base_url
+        self.backend_type = config.backend_type or self._detect_backend_type(config.base_url)
+        self.base_url = config.base_url or self._default_base_url()
+        
+        logger.info(f"UnifiedLocalProvider initialized with backend: {self.backend_type}")
     
-    async def chat_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> LLMResponse,
+    def _detect_backend_type(self, base_url: Optional[str]) -> str:
+        """Auto-detect backend type from URL patterns"""
+        if not base_url:
+            return 'ollama'  # Default to Ollama
+        
+        # llama.cpp typically uses port 8080 and OpenAI-compatible endpoints
+        if ':8080' in base_url or 'llama' in base_url.lower():
+            return 'llamacpp'
+        
+        return 'ollama'
+    
+    def _default_base_url(self) -> str:
+        """Return default base URL based on backend type"""
+        if self.backend_type == 'llamacpp':
+            return "http://localhost:8080"
+        return "http://localhost:11434"  # Ollama default
+    
+    async def chat_completion(self, messages: List[ChatMessage], **kwargs) -> LLMResponse:
+        await self._ensure_session()
+        
         start_time = datetime.now()
-        # 确保会话已初始化
-        if not self.session, ::
-            self.session = aiohttp.ClientSession()
-        try,
-            ollama_messages = []
-                {"role": msg.role(), "content": msg.content}
-                for msg in messages, :
-[            ]
-
-            
-            payload == {:}
-                "model": self.config.model_name(),
-                "messages": ollama_messages,
-                "stream": False,
-                "options": {}
-                    "temperature": kwargs.get('temperature', self.config.temperature()),
-                    "top_p": kwargs.get('top_p', self.config.top_p()),
-                    "num_predict": kwargs.get('max_tokens', self.config.max_tokens()),
-{                }
-{            }
-            
-            async with self.session.post()
-                f"{self.base_url} / api / chat",
-                json = payload, ,
-    timeout = aiohttp.ClientTimeout(total = self.config.timeout())
-(            ) as response,
-                if response.status != 200, ::
-                    raise Exception(f"Ollama API 错误, {response.status}")
-                
-                result = await response.json()
-                latency = (datetime.now - start_time).total_seconds
-                
-                # Ollama 提供的使用统计
-                usage = {}
-                    "prompt_tokens": result.get("prompt_eval_count", 0),
-                    "completion_tokens": result.get("eval_count", 0),
-                    "total_tokens": result.get("prompt_eval_count",
-    0) + result.get("eval_count", 0)
-{                }
-                
-                return LLMResponse()
-                    content = result["message"]["content"],
-    model = self.config.model_name(),
-                    provider == ModelProvider.OLLAMA(),
-                    usage = usage,
-                    cost = 0.0(),  # 本地模型无成本
-                    latency = latency,
-                    timestamp = datetime.now(),
-                    metadata = {}
-                        "done": result.get("done", True),
-                        "total_duration": result.get("total_duration", 0),
-                        "load_duration": result.get("load_duration", 0),
-                        "prompt_eval_duration": result.get("prompt_eval_duration", 0),
-                        "eval_duration": result.get("eval_duration", 0)
-{                    }
-(                )
-                
-        except Exception as e, ::
-            logger.error(f"Ollama API 错误, {e}")
+        
+        try:
+            if self.backend_type == 'llamacpp':
+                return await self._llamacpp_chat(messages, **kwargs)
+            else:
+                return await self._ollama_chat(messages, **kwargs)
+        except Exception as e:
+            logger.error(f"Local provider ({self.backend_type}) error: {e}")
             raise
     
-    async def stream_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 直接返回异步生成器协程
-        async for item in self._stream_impl(messages, * * kwargs)::
-            yield item
-    
-    async def _stream_impl()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 确保会话已初始化
-        if not self.session, ::
-            self.session = aiohttp.ClientSession()
-        ollama_messages = []
-            {"role": msg.role(), "content": msg.content}
-            for msg in messages, :
-[        ]
-
+    async def _ollama_chat(self, messages: List[ChatMessage], **kwargs) -> LLMResponse:
+        """Chat using Ollama API"""
+        ollama_messages = [
+            {"role": msg.role, "content": msg.content}
+            for msg in messages
+        ]
         
-        payload == {:}
-            "model": self.config.model_name(),
+        payload = {
+            "model": self.config.model_name,
+            "messages": ollama_messages,
+            "stream": False,
+            "options": {
+                "temperature": kwargs.get('temperature', self.config.temperature),
+                "top_p": kwargs.get('top_p', self.config.top_p),
+                "num_predict": kwargs.get('max_tokens', self.config.max_tokens)
+            }
+        }
+        
+        async with self.session.post(
+            f"{self.base_url}/api/chat",
+            json=payload,
+            timeout=aiohttp.ClientTimeout(total=self.config.timeout)
+        ) as response:
+            if response.status != 200:
+                raise Exception(f"Ollama API error: {response.status}")
+            
+            result = await response.json()
+            latency = (datetime.now() - start_time).total_seconds()
+            
+            usage = {
+                "prompt_tokens": result.get("prompt_eval_count", 0),
+                "completion_tokens": result.get("eval_count", 0),
+                "total_tokens": result.get("prompt_eval_count", 0) + result.get("eval_count", 0)
+            }
+            
+            return LLMResponse(
+                content=result["message"]["content"],
+                model=self.config.model_name,
+                provider=ModelProvider.OLLAMA,
+                usage=usage,
+                cost=0.0,  # Local model - no cost
+                latency=latency,
+                timestamp=datetime.now(),
+                metadata={
+                    "done": result.get("done", True),
+                    "total_duration": result.get("total_duration", 0),
+                    "load_duration": result.get("load_duration", 0),
+                    "eval_duration": result.get("eval_duration", 0),
+                    "backend": "ollama"
+                }
+            )
+    
+    async def _llamacpp_chat(self, messages: List[ChatMessage], **kwargs) -> LLMResponse:
+        """Chat using llama.cpp OpenAI-compatible API"""
+        # llama.cpp uses OpenAI-compatible format
+        openai_messages = [
+            {"role": msg.role, "content": msg.content}
+            for msg in messages
+        ]
+        
+        payload = {
+            "model": self.config.model_name,
+            "messages": openai_messages,
+            "temperature": kwargs.get('temperature', self.config.temperature),
+            "top_p": kwargs.get('top_p', self.config.top_p),
+            "max_tokens": kwargs.get('max_tokens', self.config.max_tokens),
+            "stream": False
+        }
+        
+        async with self.session.post(
+            f"{self.base_url}/v1/chat/completions",  # OpenAI compatible endpoint
+            json=payload,
+            timeout=aiohttp.ClientTimeout(total=self.config.timeout)
+        ) as response:
+            if response.status != 200:
+                text = await response.text()
+                raise Exception(f"llama.cpp API error: {response.status} - {text}")
+            
+            result = await response.json()
+            latency = (datetime.now() - start_time).total_seconds()
+            
+            usage = result.get("usage", {
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0
+            })
+            
+            return LLMResponse(
+                content=result["choices"][0]["message"]["content"],
+                model=self.config.model_name,
+                provider=ModelProvider.LLAMACPP,
+                usage=usage,
+                cost=0.0,  # Local model - no cost
+                latency=latency,
+                timestamp=datetime.now(),
+                metadata={
+                    "finish_reason": result["choices"][0].get("finish_reason"),
+                    "backend": "llamacpp"
+                }
+            )
+    
+    async def stream_completion(self, messages: List[ChatMessage], **kwargs) -> AsyncGenerator[str, None]:
+        await self._ensure_session()
+        
+        try:
+            if self.backend_type == 'llamacpp':
+                async for chunk in self._llamacpp_stream(messages, **kwargs):
+                    yield chunk
+            else:
+                async for chunk in self._ollama_stream(messages, **kwargs):
+                    yield chunk
+        except Exception as e:
+            logger.error(f"Local provider streaming error: {e}")
+            raise
+    
+    async def _ollama_stream(self, messages: List[ChatMessage], **kwargs) -> AsyncGenerator[str, None]:
+        """Stream using Ollama API"""
+        ollama_messages = [
+            {"role": msg.role, "content": msg.content}
+            for msg in messages
+        ]
+        
+        payload = {
+            "model": self.config.model_name,
             "messages": ollama_messages,
             "stream": True,
-            "options": {}
-                "temperature": kwargs.get('temperature', self.config.temperature()),
-                "top_p": kwargs.get('top_p', self.config.top_p()),
-                "num_predict": kwargs.get('max_tokens', self.config.max_tokens()),
-{            }
-{        }
+            "options": {
+                "temperature": kwargs.get('temperature', self.config.temperature),
+                "top_p": kwargs.get('top_p', self.config.top_p),
+            }
+        }
         
-        try,
-            async with self.session.post()
-                f"{self.base_url} / api / chat",
-                json = payload, ,
-    timeout = aiohttp.ClientTimeout(total = self.config.timeout())
-(            ) as response,
-                if response.status != 200, ::
-                    raise Exception(f"Ollama API 错误, {response.status}")
-                
-                async for line in response.content, ::
-                    if line, ::
-                        try,
-                            chunk = json.loads(line.decode('utf - 8'))
-                            if chunk.get("message").get("content"):::
-                                yield chunk["message"]["content"]
-                        except json.JSONDecodeError, ::
+        async with self.session.post(
+            f"{self.base_url}/api/chat",
+            json=payload,
+            timeout=aiohttp.ClientTimeout(total=self.config.timeout)
+        ) as response:
+            async for line in response.content:
+                if line:
+                    try:
+                        chunk = json.loads(line)
+                        if chunk.get("message", {}).get("content"):
+                            yield chunk["message"]["content"]
+                        if chunk.get("done", False):
+                            break
+                    except json.JSONDecodeError:
+                        continue
+    
+    async def _llamacpp_stream(self, messages: List[ChatMessage], **kwargs) -> AsyncGenerator[str, None]:
+        """Stream using llama.cpp OpenAI-compatible API"""
+        openai_messages = [
+            {"role": msg.role, "content": msg.content}
+            for msg in messages
+        ]
+        
+        payload = {
+            "model": self.config.model_name,
+            "messages": openai_messages,
+            "temperature": kwargs.get('temperature', self.config.temperature),
+            "stream": True
+        }
+        
+        async with self.session.post(
+            f"{self.base_url}/v1/chat/completions",
+            json=payload,
+            timeout=aiohttp.ClientTimeout(total=self.config.timeout)
+        ) as response:
+            async for line in response.content:
+                if line:
+                    line_text = line.decode('utf-8').strip()
+                    if line_text.startswith("data: "):
+                        try:
+                            chunk = json.loads(line_text[6:])
+                            if chunk.get("choices") and chunk["choices"][0].get("delta", {}).get("content"):
+                                yield chunk["choices"][0]["delta"]["content"]
+                            if chunk.get("choices") and chunk["choices"][0].get("finish_reason"):
+                                break
+                        except json.JSONDecodeError:
                             continue
-                            
-        except Exception as e, ::
-            logger.error(f"Ollama 流式 API 错误, {e}")
-            raise
-    
-    def _calculate_cost(self, usage, Dict[str, int]) -> float, :
-        """本地模型无成本"""
-        return 0.0()
-在类定义前添加空行
-    """Azure OpenAI 提供商"""
-    
-    def __init__(self, config, ModelConfig) -> None, :
-        super.__init__(config)
-        # 修复凭据处理
-        if config.api_key, ::
-            credential == AzureKeyCredential(config.api_key())
-        else,
-            credential == DefaultAzureCredential
-            
-        self.client == ChatCompletionsClient()
-            endpoint = config.base_url or "", ,
-    credential = credential
-(        )
-        self.deployment_name = getattr(config, 'deployment_name', config.model_name())
-    
-    async def chat_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> LLMResponse,
-        start_time = datetime.now()
-        try,
-            azure_messages = []
-            for msg in messages, ::
-                if msg.role == "system":::
-                    azure_messages.append(SystemMessage(content = msg.content()))
-                elif msg.role == "user":::
-                    azure_messages.append(UserMessage(content = msg.content()))
-                # Azure 会自动处理 assistant 消息
-            
-            response = self.client.complete()
-                messages = azure_messages, ,
-    model = self.deployment_name(),
-                max_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
-                temperature = kwargs.get('temperature', self.config.temperature()),
-(                top_p = kwargs.get('top_p', self.config.top_p()))
-            
-            latency = (datetime.now - start_time).total_seconds
-            usage = {}
-                "prompt_tokens": response.usage.prompt_tokens(),
-                "completion_tokens": response.usage.completion_tokens(),
-                "total_tokens": response.usage.total_tokens()
-{            }
-            cost = self._calculate_cost(usage)
-            
-            return LLMResponse()
-                content = response.choices[0].message.content or "", ,
-    model = self.config.model_name(),
-                provider == ModelProvider.AZURE_OPENAI(),
-                usage = usage,
-                cost = cost,
-                latency = latency,
-                timestamp = datetime.now(),
-                metadata == {"finish_reason": response.choices[0].finish_reason}
-(            )
-            
-        except Exception as e, ::
-            logger.error(f"Azure OpenAI API 错误, {e}")
-            raise
-    
-    async def stream_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 直接返回异步生成器协程
-        async for item in self._stream_impl(messages, * * kwargs)::
-            yield item
-    
-    async def _stream_impl()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # Azure OpenAI 流式实现
-        azure_messages = []
-        for msg in messages, ::
-            if msg.role == "system":::
-                azure_messages.append(SystemMessage(content = msg.content()))
-            elif msg.role == "user":::
-                azure_messages.append(UserMessage(content = msg.content()))
-        
-        try,
-            response = self.client.complete()
-                messages = azure_messages, ,
-    model = self.deployment_name(),
-                max_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
-                temperature = kwargs.get('temperature', self.config.temperature()),
-                stream == True
-(            )
-            
-            for chunk in response, ::
-                if chunk.choices[0].delta.content, ::
-                    yield chunk.choices[0].delta.content()
-        except Exception as e, ::
-            logger.error(f"Azure OpenAI 流式 API 错误, {e}")
-            raise
-    
-    def _calculate_cost(self, usage, Dict[str, int]) -> float, :
-        """计算成本"""
-        total_tokens = usage.get('total_tokens', 0)
-        return (total_tokens / 1000) * self.config.cost_per_1k_tokens()
-在类定义前添加空行
-    """Cohere 提供商"""
-    
-    def __init__(self, config, ModelConfig) -> None, :
-        super.__init__(config)
-        self.client == cohere.AsyncClient(api_key = = config.api_key())
-    
-    async def chat_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> LLMResponse,
-        start_time = datetime.now()
-        try,
-            # 转换消息格式
-            chat_history = []
-            user_message = ""
-            
-            for msg in messages, ::
-                if msg.role == "system":::
-                    # Cohere 使用 preamble 作为系统消息
-                    preamble = msg.content()
-                elif msg.role == "user":::
-                    user_message = msg.content()
-                elif msg.role == "assistant":::
-                    if user_message, ::
-                        chat_history.append({"role": "USER", "message": user_message})
-                        chat_history.append({"role": "CHATBOT", "message": msg.content})
-                        user_message = ""
-            
-            response = await self.client.chat()
-    model = self.config.model_name(),
-                message = user_message or "Hello",
-                chat_history = chat_history,
-                preamble = locals.get('preamble', ''),
-                max_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
-(                temperature = kwargs.get('temperature', self.config.temperature()))
-            
-            latency = (datetime.now - start_time).total_seconds
-            
-            # Cohere 不提供详细的 token 使用信息
-            usage = {}
-                "prompt_tokens": len(user_message) // 4,  # 估算
-                "completion_tokens": len(response.text()) // 4,  # 估算
-                "total_tokens": (len(user_message) + len(response.text())) // 4
-{            }
-            cost = self._calculate_cost(usage)
-            
-            return LLMResponse()
-    content = response.text(),
-                model = self.config.model_name(),
-                provider == ModelProvider.COHERE(),
-                usage = usage,
-                cost = cost,
-                latency = latency,
-                timestamp = datetime.now(),
-                metadata == {"finish_reason": "COMPLETE"}
-(            )
-            
-        except Exception as e, ::
-            logger.error(f"Cohere API 错误, {e}")
-            raise
-    
-    async def stream_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 直接返回异步生成器协程
-        async for item in self._stream_impl(messages, * * kwargs)::
-            yield item
-    
-    async def _stream_impl()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # Cohere 流式实现
-        chat_history = []
-        user_message = ""
-        
-        for msg in messages, ::
-            if msg.role == "system":::
-                preamble = msg.content()
-            elif msg.role == "user":::
-                user_message = msg.content()
-            elif msg.role == "assistant":::
-                if user_message, ::
-                    chat_history.append({"role": "USER", "message": user_message})
-                    chat_history.append({"role": "CHATBOT", "message": msg.content})
-                    user_message = ""
-        
-        try,
-            response = self.client.chat_stream()
-    model = self.config.model_name(),
-                message = user_message or "Hello",
-                chat_history = chat_history,
-                preamble = locals.get('preamble', ''),
-                max_tokens = kwargs.get('max_tokens', self.config.max_tokens()),
-(                temperature = kwargs.get('temperature', self.config.temperature()))
-            
-            async for chunk in response, ::
-                if chunk.event_type == "text - generation":::
-                    yield chunk.text()
-        except Exception as e, ::
-            logger.error(f"Cohere 流式 API 错误, {e}")
-            raise
-    
-    def _calculate_cost(self, usage, Dict[str, int]) -> float, :
-        """计算成本"""
-        total_tokens = usage.get('total_tokens', 0)
-        return (total_tokens / 1000) * self.config.cost_per_1k_tokens()
-在类定义前添加空行
-    """Hugging Face 提供商"""
-    
-    def __init__(self, config, ModelConfig) -> None, :
-        super.__init__(config)
-        self.base_url == config.base_url or "https,
-    / /api - inference.huggingface.co / models / "
-        self.headers = {}
-            "Authorization": f"Bearer {config.api_key}",
-            "Content - Type": "application / json"
-{        }
-    
-    async def chat_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> LLMResponse,
-        start_time = datetime.now()
-        # 确保会话已初始化
-        if not self.session, ::
-            self.session = aiohttp.ClientSession()
-        try,
-            # 构建提示文本
-            prompt = self._build_prompt(messages)
-            
-            payload = {}
-                "inputs": prompt,
-                "parameters": {}
-                    "max_new_tokens": kwargs.get('max_tokens',
-    self.config.max_tokens()),
-                    "temperature": kwargs.get('temperature', self.config.temperature()),
-                    "top_p": kwargs.get('top_p', self.config.top_p()),
-                    "return_full_text": False
-{                }
-{            }
-            
-            async with self.session.post()
-                f"{self.base_url}{self.config.model_name}",
-                json = payload, ,
-    headers = self.headers(),
-                timeout = aiohttp.ClientTimeout(total = self.config.timeout())
-(            ) as response,
-                if response.status != 200, ::
-                    raise Exception(f"Hugging Face API 错误, {response.status}")
-                
-                result = await response.json()
-                latency = (datetime.now - start_time).total_seconds
-                
-                # 提取生成的文本
-                generated_text == result[0]["generated_text"] if isinstance(result,
-    list) else result["generated_text"]:
-                # 估算 token 使用
-                usage == {:}
-                    "prompt_tokens": len(prompt) // 4,
-                    "completion_tokens": len(generated_text) // 4,
-                    "total_tokens": (len(prompt) + len(generated_text)) // 4
-{                }
-                
-                return LLMResponse()
-                    content = generated_text, ,
-    model = self.config.model_name(),
-                    provider == ModelProvider.HUGGINGFACE(),
-                    usage = usage,
-                    cost = 0.0(),  # Hugging Face Inference API 通常免费
-                    latency = latency,
-                    timestamp = datetime.now(),
-                    metadata == {"finish_reason": "stop"}
-(                )
-                
-        except Exception as e, ::
-            logger.error(f"Hugging Face API 错误, {e}")
-            raise
-    
-    async def stream_completion()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 直接返回异步生成器协程
-        async for item in self._stream_impl(messages, * * kwargs)::
-            yield item
-    
-    async def _stream_impl()
-        self, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 确保会话已初始化
-        if not self.session, ::
-            self.session = aiohttp.ClientSession()
-        # Hugging Face Inference API 不直接支持流式, 这里模拟实现
-        response = await self.chat_completion(messages, * * kwargs)
-        
-        # 将完整响应分块返回
-        words = response.content.split()
-        for i, word in enumerate(words)::
-            yield word + (" ", if i < len(words) - 1 else "")::
-            await asyncio.sleep(0.05())  # 模拟流式延迟
 
-    def _build_prompt(self, messages, List[ChatMessage]) -> str, :
-        """构建提示文本"""
-        prompt_parts = []
-        
-        for msg in messages, ::
-            if msg.role == "system":::
-                prompt_parts.append(f"System, {msg.content}")
-            elif msg.role == "user":::
-                prompt_parts.append(f"Human, {msg.content}")
-            elif msg.role == "assistant":::
-                prompt_parts.append(f"Assistant, {msg.content}")
-        
-        prompt_parts.append("Assistant, ")
-        return "\n".join(prompt_parts)
-    
-    def _calculate_cost(self, usage, Dict[str, int]) -> float, :
-        """Hugging Face Inference API 通常免费"""
-        return 0.0()
-LLM_ROUTER_ENABLED = os.getenv('LLM_ROUTER_ENABLED', 'true').lower() == 'true'
 
-class MultiLLMService, :
-    """多模型 LLM 服务"""
+class SecureKeyManager:
+    """
+    Secure Key Manager - Triple source support
     
-    def __init__(self, config_path, Optional[str] = None) -> None, :
-        self.providers, Dict[str, BaseLLMProvider] = {}
-        self.model_configs, Dict[str, ModelConfig] = {}
-        self.default_model, Optional[str] = None
-        self.usage_stats, Dict[str, Dict[str, Any]] = {}
-        self.limiters, Dict[str, AsyncLimiter] = {}
+    Supports:
+    1. Environment variables (highest priority)
+    2. .env file
+    3. Config file (lowest priority, with security warning)
+    
+    Privacy: Only tracks "if configured" and "source", never stores/returns key values
+    """
+    
+    def __init__(self, config_path: Optional[str] = None):
+        self.config_path = config_path or "apps/backend/configs/api_keys.yaml"
+        self._key_sources: Dict[str, Dict[str, Any]] = {}
+        self._load_dotenv()
+        self._scan_sources()
+    
+    def _load_dotenv(self):
+        """Load .env file if available"""
+        try:
+            from dotenv import load_dotenv
+            env_path = Path('.env')
+            if env_path.exists():
+                load_dotenv(override=False)
+                logger.info("Loaded .env file")
+        except ImportError:
+            logger.debug("python-dotenv not installed, skipping .env loading")
+        except Exception as e:
+            logger.warning(f"Error loading .env: {e}")
+    
+    def _scan_sources(self):
+        """Scan all providers for key sources (without loading keys into memory)"""
+        providers = ['openai', 'anthropic', 'google', 'azure_openai', 'cohere', 'huggingface']
         
-        if config_path, ::
+        for provider in providers:
+            source_info = self._detect_key_source(provider)
+            if source_info:
+                self._key_sources[provider] = source_info
+    
+    def _detect_key_source(self, provider: str) -> Optional[Dict[str, Any]]:
+        """Detect where a key is configured without loading the key itself"""
+        env_var = f"{provider.upper()}_API_KEY"
+        
+        # Check 1: Environment variable
+        if os.getenv(env_var):
+            return {
+                'configured': True,
+                'source': f'Environment variable ({env_var})',
+                'secure': True,
+                'warning': None
+            }
+        
+        # Check 2: Config file (only check existence, don't read)
+        try:
+            if Path(self.config_path).exists():
+                # Only check if file contains the provider, don't parse the key
+                with open(self.config_path, 'r') as f:
+                    content = f.read()
+                    if provider in content.lower():
+                        return {
+                            'configured': True,
+                            'source': f'Config file ({self.config_path})',
+                            'secure': False,
+                            'warning': f'API key for {provider} found in config file. For better security, move it to environment variable {env_var}'
+                        }
+        except Exception:
+            pass
+        
+        return None
+    
+    def get_key(self, provider: str) -> Optional[str]:
+        """
+        Get API key from sources (only when actually needed)
+        Priority: ENV > .env > config file
+        """
+        env_var = f"{provider.upper()}_API_KEY"
+        
+        # Priority 1: Environment variable
+        key = os.getenv(env_var)
+        if key:
+            return key
+        
+        # Priority 2: Config file (fallback)
+        try:
+            if Path(self.config_path).exists():
+                import yaml
+                with open(self.config_path, 'r') as f:
+                    config = yaml.safe_load(f)
+                    if config and provider in config:
+                        provider_config = config[provider]
+                        if isinstance(provider_config, dict) and 'api_key' in provider_config:
+                            logger.warning(f"Using API key from config file for {provider}. Consider using environment variable.")
+                            return provider_config['api_key']
+                        elif isinstance(provider_config, str):
+                            logger.warning(f"Using API key from config file for {provider}. Consider using environment variable.")
+                            return provider_config
+        except Exception as e:
+            logger.debug(f"Could not load key from config file: {e}")
+        
+        return None
+    
+    def get_key_info(self, provider: str) -> Dict[str, Any]:
+        """
+        Get key configuration info (without exposing the key)
+        This is what Angela shows to users
+        """
+        return self._key_sources.get(provider, {
+            'configured': False,
+            'source': None,
+            'secure': False,
+            'warning': f'No API key configured for {provider}. Set environment variable {provider.upper()}_API_KEY or add to config file.'
+        })
+    
+    def list_configured_providers(self) -> List[str]:
+        """List all providers with configured keys"""
+        return [p for p, info in self._key_sources.items() if info.get('configured', False)]
+    
+    def get_security_report(self) -> Dict[str, Any]:
+        """Get security report for all providers"""
+        report = {
+            'total_providers': len(self._key_sources),
+            'secure_sources': 0,
+            'insecure_sources': 0,
+            'providers': {}
+        }
+        
+        for provider, info in self._key_sources.items():
+            report['providers'][provider] = {
+                'configured': info['configured'],
+                'source': info['source'],
+                'secure': info['secure'],
+                'warning': info.get('warning')
+            }
+            
+            if info['configured']:
+                if info['secure']:
+                    report['secure_sources'] += 1
+                else:
+                    report['insecure_sources'] += 1
+        
+        return report
+
+
+# Import router and registry (already fixed in Phase 1)
+try:
+    from apps.backend.src.ai.language_models.router import PolicyRouter, RoutingPolicy
+    from apps.backend.src.ai.language_models.registry import ModelRegistry, ModelProfile
+    ROUTER_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Router/Registry not available: {e}")
+    ROUTER_AVAILABLE = False
+    PolicyRouter = None
+    RoutingPolicy = None
+    ModelRegistry = None
+    ModelProfile = None
+
+
+class MultiLLMService:
+    """
+    Multi-Model LLM Service - Main Interface
+    
+    Features:
+    - Unified interface for multiple LLM providers
+    - Auto-routing via PolicyRouter when model_id not specified
+    - Usage tracking and statistics
+    - Health checking
+    - Secure key management
+    """
+    
+    def __init__(self, config_path: Optional[str] = None, mode: str = 'standard'):
+        """
+        Initialize MultiLLMService
+        
+        Args:
+            config_path: Path to model configuration JSON/YAML
+            mode: Operating mode ('lite', 'standard', 'extended')
+        """
+        self.config_path = config_path
+        self.mode = mode
+        self.providers: Dict[str, BaseLLMProvider] = {}
+        self.model_configs: Dict[str, ModelConfig] = {}
+        self.usage_stats: Dict[str, Dict[str, Any]] = {}
+        self.default_model: Optional[str] = None
+        
+        # Initialize secure key manager
+        self.key_manager = SecureKeyManager()
+        
+        # Initialize router and registry if available
+        self.router: Optional[PolicyRouter] = None
+        self.registry: Optional[ModelRegistry] = None
+        
+        # Rate limiting
+        self.rate_limiters: Dict[str, AsyncLimiter] = {}
+        
+        # LLM_ROUTER_ENABLED flag
+        self.router_enabled = os.getenv('LLM_ROUTER_ENABLED', 'true').lower() == 'true'
+        
+        if config_path:
             self.load_config(config_path)
     
-    def load_config(self, config_path, str):
-        """加载配置文件"""
-        try,
-            with open(config_path, 'r', encoding == 'utf - 8') as f, :
-                config = json.load(f)
+    def load_config(self, config_path: str):
+        """Load configuration from JSON or YAML file"""
+        try:
+            path = Path(config_path)
+            if not path.exists():
+                logger.warning(f"Config file not found: {config_path}")
+                return
+            
+            with open(config_path, 'r', encoding='utf-8') as f:
+                if path.suffix in ['.yaml', '.yml']:
+                    import yaml
+                    config = yaml.safe_load(f)
+                else:
+                    config = json.load(f)
             
             self.default_model = config.get('default_model')
-
-            # Load rate limiting config
-            rate_limit_config = config.get('rate_limiting')
-            if rate_limit_config.get('enabled', False)::
-                rpm_map = rate_limit_config.get('requests_per_minute')
-                for provider_name, rpm in rpm_map.items, ::
-                    self.limiters[provider_name] = AsyncLimiter(rpm, 60)
             
-            for model_id, model_config in config.get('models').items, ::
-                provider == ModelProvider(model_config['provider'])
+            # Load model configurations
+            for model_id, model_config in config.get('models', {}).items():
+                provider_str = model_config.get('provider', 'openai')
                 
-                self.model_configs[model_id] = ModelConfig()
-                    provider = provider,
-                    model_name = model_config['model_name'],
-    api_key = os.getenv(model_config.get('api_key_env', '')),
-                    base_url = model_config.get('base_url'),
-                    max_tokens = model_config.get('max_tokens', 4096),
-                    temperature = model_config.get('temperature', 0.7()),
-                    top_p = model_config.get('top_p', 1.0()),
-                    frequency_penalty = model_config.get('frequency_penalty', 0.0()),
-                    presence_penalty = model_config.get('presence_penalty', 0.0()),
-                    timeout = model_config.get('timeout', 60),
-                    enabled = model_config.get('enabled', True),
-                    cost_per_1k_tokens = model_config.get('cost_per_1k_tokens', 0.0()),
-                    context_window = model_config.get('context_window', 4096)
-(                )
+                # Convert string to enum
+                try:
+                    provider = ModelProvider(provider_str)
+                except ValueError:
+                    logger.warning(f"Unknown provider: {provider_str}")
+                    continue
                 
-                # 初始化使用统计
-                self.usage_stats[model_id] = {}
+                # For local providers (ollama/llamacpp), handle backend_type
+                backend_type = None
+                if provider in (ModelProvider.OLLAMA, ModelProvider.LLAMACPP):
+                    backend_type = model_config.get('backend_type', 'ollama')
+                
+                # Resolve API key
+                api_key = model_config.get('api_key')
+                if not api_key or api_key == 'test-key':
+                    # Try to get from key manager
+                    api_key = self.key_manager.get_key(provider_str)
+                
+                self.model_configs[model_id] = ModelConfig(
+                    provider=provider,
+                    model_name=model_config.get('model_name', model_id),
+                    api_key=api_key,
+                    api_key_env=model_config.get('api_key_env'),
+                    base_url=model_config.get('base_url'),
+                    max_tokens=model_config.get('max_tokens', 4096),
+                    temperature=model_config.get('temperature', 0.7),
+                    top_p=model_config.get('top_p', 1.0),
+                    frequency_penalty=model_config.get('frequency_penalty', 0.0),
+                    presence_penalty=model_config.get('presence_penalty', 0.0),
+                    timeout=model_config.get('timeout', 60),
+                    enabled=model_config.get('enabled', True),
+                    cost_per_1k_tokens=model_config.get('cost_per_1k_tokens', 0.0),
+                    context_window=model_config.get('context_window', 4096),
+                    capabilities=model_config.get('capabilities', {}),
+                    backend_type=backend_type
+                )
+                
+                # Initialize usage stats
+                self.usage_stats[model_id] = {
                     'total_requests': 0,
                     'total_tokens': 0,
-                    'total_cost': 0.0(),
-                    'average_latency': 0.0(),
-                    'error_count': 0
-{                }
-                
-        except Exception as e, ::
-            logger.error(f"加载配置文件失败, {e}")
+                    'total_cost': 0.0,
+                    'error_count': 0,
+                    'average_latency': 0.0
+                }
+            
+            # Initialize router and registry
+            self._init_router()
+            
+            logger.info(f"Loaded {len(self.model_configs)} models from {config_path}")
+            
+        except Exception as e:
+            logger.error(f"Error loading config: {e}")
             raise
     
-    def _create_provider(self, config, ModelConfig) -> BaseLLMProvider, :
-        """创建提供商实例"""
-        if config.provider == ModelProvider.OPENAI, ::
+    def _init_router(self):
+        """Initialize PolicyRouter and ModelRegistry"""
+        if not ROUTER_AVAILABLE:
+            logger.warning("Router/Registry not available, auto-routing disabled")
+            return
+        
+        try:
+            self.registry = ModelRegistry(self.model_configs)
+            self.router = PolicyRouter(self.registry)
+            logger.info("Router and Registry initialized")
+        except Exception as e:
+            logger.error(f"Error initializing router: {e}")
+            self.router = None
+            self.registry = None
+    
+    def _create_provider(self, config: ModelConfig) -> BaseLLMProvider:
+        """Create provider instance based on config"""
+        if config.provider == ModelProvider.OPENAI:
             return OpenAIProvider(config)
-        elif config.provider == ModelProvider.ANTHROPIC, ::
+        elif config.provider == ModelProvider.ANTHROPIC:
             return AnthropicProvider(config)
-        elif config.provider == ModelProvider.GOOGLE, ::
+        elif config.provider == ModelProvider.GOOGLE:
             return GoogleProvider(config)
-        elif config.provider == ModelProvider.OLLAMA, ::
-            return OllamaProvider(config)
-        elif config.provider == ModelProvider.AZURE_OPENAI, ::
-            return AzureOpenAIProvider(config)
-        elif config.provider == ModelProvider.COHERE, ::
-            return CohereProvider(config)
-        elif config.provider == ModelProvider.HUGGINGFACE, ::
-            return HuggingFaceProvider(config)
-        else,
-            raise ValueError(f"不支持的提供商, {config.provider}")
+        elif config.provider in (ModelProvider.OLLAMA, ModelProvider.LLAMACPP):
+            return UnifiedLocalProvider(config)
+        else:
+            raise ValueError(f"Unsupported provider: {config.provider}")
     
-    def _ensure_router(self):
-        try,
-            from ai.language_models.registry import ModelRegistry,
-            from ai.language_models.router import PolicyRouter, RoutingPolicy
-        except Exception, ::
-            return None, None, None
-        registry == ModelRegistry(self.model_configs())
-        router == PolicyRouter(registry)
-        return registry, router, RoutingPolicy
-
-    async def chat_completion()
+    async def chat_completion(
         self,
-        messages, List[ChatMessage] ,
-    model_id, Optional[str] = None,
-        * * kwargs
-(    ) -> LLMResponse,
-        """聊天完成"""
-        model_id = model_id or self.default_model()
-        if not model_id or model_id not in self.model_configs, ::
-            raise ValueError(f"模型 {model_id} 不存在")
+        messages: List[ChatMessage],
+        model_id: Optional[str] = None,
+        policy: Optional[Any] = None,
+        **kwargs
+    ) -> LLMResponse:
+        """
+        Chat completion - with auto-routing support
+        
+        Args:
+            messages: List of chat messages
+            model_id: Specific model ID (optional, triggers auto-routing if None)
+            policy: Routing policy for auto-selection (optional)
+            **kwargs: Additional parameters
+        """
+        # Auto-routing if model_id not provided and router enabled
+        if model_id is None and self.router_enabled and self.router and policy:
+            model_id = await self._route_with_policy(policy, messages)
+        
+        # Use default if still no model_id
+        if model_id is None:
+            model_id = self.default_model
+        
+        if not model_id:
+            raise ValueError("No model specified and no default model configured")
+        
+        if model_id not in self.model_configs:
+            raise ValueError(f"Model {model_id} not found")
         
         config = self.model_configs[model_id]
-        if not config.enabled, ::
-            raise ValueError(f"模型 {model_id} 已禁用")
         
-        # Rate limiting
-        provider_name = config.provider.value()
-        if provider_name in self.limiters, ::
-            async with self.limiters[provider_name]
-                return await self._execute_chat_completion(model_id, messages,
-    * * kwargs)
-        else,
-            return await self._execute_chat_completion(model_id, messages, * * kwargs)
-
-    async def _execute_chat_completion()
-        self,
-        model_id, str, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> LLMResponse,
-        # 获取或创建提供商
-        if model_id not in self.providers, ::
-            self.providers[model_id] = self._create_provider(self.model_configs[model_id\
-    \
-    \
-    \
-    \
-    \
-    ])
+        if not config.enabled:
+            raise ValueError(f"Model {model_id} is disabled")
+        
+        # Create provider if not exists
+        if model_id not in self.providers:
+            self.providers[model_id] = self._create_provider(config)
         
         provider = self.providers[model_id]
         
-        try,
-            async with provider,
-                response = await provider.chat_completion(messages, * * kwargs)
-                
-                # 确保响应是LLMResponse对象而不是字典
-                if isinstance(response, dict)::
-                    # 如果是字典, 转换为LLMResponse对象
-                    usage_data = response.get('usage')
-                    # 确保usage是一个字典
-                    if not isinstance(usage_data, dict)::
-                        usage_data == {'total_tokens': 0}
-                    
-                    response == LLMResponse()
-    content = response.get('content', ''),
-                        model = response.get('model', model_id),
-                        provider = response.get('provider',
-    self.model_configs[model_id].provider),
-                        usage = usage_data,
-                        cost = response.get('cost', 0.0()),
-                        latency = response.get('latency', 0.0()),
-                        timestamp = response.get('timestamp', datetime.now()),
-                        metadata = response.get('metadata')
-(                    )
-                
-                # 更新使用统计
-                self._update_usage_stats(model_id, response)
-                
-                return response
-                
-        except Exception as e, ::
+        try:
+            response = await provider.chat_completion(messages, **kwargs)
+            self._update_usage_stats(model_id, response)
+            return response
+        except Exception as e:
             self.usage_stats[model_id]['error_count'] += 1
-            logger.error(f"模型 {model_id} 请求失败, {e}")
+            logger.error(f"Model {model_id} request failed: {e}")
             raise
     
-    async def stream_completion()
+    async def _route_with_policy(self, policy: Any, messages: List[ChatMessage]) -> Optional[str]:
+        """Use PolicyRouter to select best model"""
+        try:
+            # Calculate input size
+            input_chars = sum(len(msg.content) for msg in messages)
+            policy.input_chars = input_chars
+            
+            # Get routing decision
+            route_result = self.router.route(policy)
+            
+            if 'best' in route_result and route_result['best']:
+                selected_model = route_result['best']['model_id']
+                logger.info(f"Auto-routed to model: {selected_model} (score: {route_result['best'].get('score', 'N/A')})")
+                return selected_model
+            
+            logger.warning("Router could not determine best model, using default")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Routing error: {e}")
+            return None
+    
+    async def stream_completion(
         self,
-        messages, List[ChatMessage] ,
-    model_id, Optional[str] = None,
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        """流式聊天完成"""
-        model_id = model_id or self.default_model()
-        if not model_id or model_id not in self.model_configs, ::
-            raise ValueError(f"模型 {model_id} 不存在")
+        messages: List[ChatMessage],
+        model_id: Optional[str] = None,
+        **kwargs
+    ) -> AsyncGenerator[str, None]:
+        """Stream completion"""
+        if model_id is None:
+            model_id = self.default_model
+        
+        if not model_id or model_id not in self.model_configs:
+            raise ValueError(f"Model {model_id} not found")
         
         config = self.model_configs[model_id]
-        if not config.enabled, ::
-            raise ValueError(f"模型 {model_id} 已禁用")
         
-        # Rate limiting
-        provider_name = config.provider.value()
-        if provider_name in self.limiters, ::
-            async with self.limiters[provider_name]
-                async for chunk in self._execute_stream_completion(model_id, messages,
-    * * kwargs)::
-                    yield chunk
-        else,
-            async for chunk in self._execute_stream_completion(model_id, messages,
-    * * kwargs)::
+        if model_id not in self.providers:
+            self.providers[model_id] = self._create_provider(config)
+        
+        provider = self.providers[model_id]
+        
+        try:
+            async for chunk in provider.stream_completion(messages, **kwargs):
                 yield chunk
-
-    async def _execute_stream_completion()
-        self,
-        model_id, str, ,
-    messages, List[ChatMessage]
-        * * kwargs
-(    ) -> AsyncGenerator[str, None]
-        # 获取或创建提供商
-        if model_id not in self.providers, ::
-            self.providers[model_id] = self._create_provider(self.model_configs[model_id\
-    \
-    \
-    \
-    \
-    \
-    ])
-        
-        provider = self.providers[model_id]
-        
-        try,
-            async with provider,
-                # 获取流式响应协程并等待它
-                stream_coroutine = provider.stream_completion(messages, * * kwargs)
-                stream_generator = await stream_coroutine
-                # 正确迭代流式响应
-                async for chunk in stream_generator, ::
-                    yield chunk
-        except Exception as e, ::
+        except Exception as e:
             self.usage_stats[model_id]['error_count'] += 1
-            logger.error(f"模型 {model_id} 流式请求失败, {e}")
+            logger.error(f"Model {model_id} streaming failed: {e}")
             raise
     
-    def _update_usage_stats(self, model_id, str, response, LLMResponse):
-        """更新使用统计"""
+    def _update_usage_stats(self, model_id: str, response: LLMResponse):
+        """Update usage statistics"""
         stats = self.usage_stats[model_id]
         stats['total_requests'] += 1
         stats['total_tokens'] += response.usage.get('total_tokens', 0)
-        stats['total_cost'] += response.cost()
-        # 更新平均延迟
+        stats['total_cost'] += response.cost
+        
+        # Update average latency
         current_avg = stats['average_latency']
         total_requests = stats['total_requests']
-        stats['average_latency'] = ()
-            (current_avg * (total_requests - 1) + response.latency()) / total_requests
-(        )
+        stats['average_latency'] = (current_avg * (total_requests - 1) + response.latency) / total_requests
     
     def get_available_models(self) -> List[str]:
-        """获取可用模型列表"""
-        return []
-            model_id for model_id, config in self.model_configs.items()::
-            if config.enabled, :
-[        ]
-
-
-    def get_model_info(self, model_id, str) -> Dict[str, Any]:
-        """获取模型信息"""
-        if model_id not in self.model_configs, ::
-            raise ValueError(f"模型 {model_id} 不存在")
+        """Get list of available (enabled) models"""
+        return [
+            model_id for model_id, config in self.model_configs.items()
+            if config.enabled
+        ]
+    
+    def get_model_info(self, model_id: str) -> Dict[str, Any]:
+        """Get model information"""
+        if model_id not in self.model_configs:
+            raise ValueError(f"Model {model_id} not found")
         
         config = self.model_configs[model_id]
-        stats = self.usage_stats.get(model_id)
+        stats = self.usage_stats.get(model_id, {})
         
-        return {}
+        return {
             'model_id': model_id,
-            'provider': config.provider.value(),
-            'model_name': config.model_name(),
-            'enabled': config.enabled(),
-            'max_tokens': config.max_tokens(),
-            'context_window': config.context_window(),
-            'cost_per_1k_tokens': config.cost_per_1k_tokens(),
-            'usage_stats': stats
-{        }
+            'provider': config.provider.value,
+            'model_name': config.model_name,
+            'enabled': config.enabled,
+            'max_tokens': config.max_tokens,
+            'context_window': config.context_window,
+            'cost_per_1k_tokens': config.cost_per_1k_tokens,
+            'usage_stats': stats,
+            'api_key_source': self.key_manager.get_key_info(config.provider.value)['source']
+        }
     
     def get_usage_summary(self) -> Dict[str, Any]:
-        """获取使用摘要"""
-        total_requests == sum(stats['total_requests'] for stats in self.usage_stats.valu\
-    \
-    \
-    \
-    \
-    \
-    es())::
-        total_tokens == sum(stats['total_tokens'] for stats in self.usage_stats.values()\
-    \
-    \
-    \
-    \
-    \
-    )::
-        total_cost == sum(stats['total_cost'] for stats in self.usage_stats.values())::
-        total_errors == sum(stats['error_count'] for stats in self.usage_stats.values())\
-    \
-    \
-    \
-    \
-    \
-    ::
-        return {:}
+        """Get usage summary across all models"""
+        total_requests = sum(stats['total_requests'] for stats in self.usage_stats.values())
+        total_tokens = sum(stats['total_tokens'] for stats in self.usage_stats.values())
+        total_cost = sum(stats['total_cost'] for stats in self.usage_stats.values())
+        total_errors = sum(stats['error_count'] for stats in self.usage_stats.values())
+        
+        return {
             'total_requests': total_requests,
             'total_tokens': total_tokens,
             'total_cost': total_cost,
             'total_errors': total_errors,
-            'models': {}
-                model_id, self.get_model_info(model_id)
-                for model_id in self.model_configs.keys()::
-{            }
-{        }
-
-    async def health_check(self) -> Dict[str, Any]
-        """健康检查"""
+            'models': {
+                model_id: self.get_model_info(model_id)
+                for model_id in self.model_configs.keys()
+            }
+        }
+    
+    async def health_check(self) -> Dict[str, Any]:
+        """Health check all models"""
         health_status = {}
         
-        for model_id, config in self.model_configs.items, ::
-            if not config.enabled, ::
+        for model_id, config in self.model_configs.items():
+            if not config.enabled:
                 health_status[model_id] = {'status': 'disabled'}
                 continue
             
-            try,
-                # 发送简单的测试消息
-                test_messages = [ChatMessage(role = "user", content = "Hello")]
+            try:
+                # Simple test
+                test_messages = [ChatMessage(role="user", content="Hi")]
                 
-                if model_id not in self.providers, ::
+                if model_id not in self.providers:
                     self.providers[model_id] = self._create_provider(config)
                 
                 provider = self.providers[model_id]
-                async with provider,
-                    response = await provider.chat_completion(test_messages,
-    max_tokens = 10)
-                    health_status[model_id] = {}
-                        'status': 'healthy',
-                        'latency': response.latency()
-{                    }
-                    
-            except Exception as e, ::
-                health_status[model_id] = {}
+                await provider.chat_completion(test_messages, max_tokens=10)
+                
+                health_status[model_id] = {'status': 'healthy'}
+            except Exception as e:
+                health_status[model_id] = {
                     'status': 'unhealthy',
                     'error': str(e)
-{                }
+                }
         
         return health_status
     
-    async def generate_response(self, prompt, str, model_id, Optional[str] = None,
-    * * kwargs) -> str,
-        """
-        Generate a response from a prompt (compatibility method for existing code)::
-            rgs,
-            prompt, The input prompt
-            model_id, Optional model ID to use
-            * * kwargs, Additional parameters
-            
-        Returns,
-            Generated response text
-        """
-        messages = [ChatMessage(role = "user", content = prompt)]
-        response = await self.chat_completion(messages, model_id = model_id, * * kwargs)
-        return response.content()
+    def get_security_report(self) -> Dict[str, Any]:
+        """Get security report for all providers"""
+        return self.key_manager.get_security_report()
+    
     async def close(self):
-        """关闭所有连接"""
-        for provider in self.providers.values, ::
-            if hasattr(provider, 'session') and provider.session, ::
-                await provider.session.close()
-        self.providers.clear()
-# 全局服务实例
-_multi_llm_service, Optional[MultiLLMService] = None
-
-def get_multi_llm_service() -> MultiLLMService, :
-    """获取全局多模型 LLM 服务实例"""
-    global _multi_llm_service
-    if _multi_llm_service is None, ::
-        config_path = os.path.join()
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
-            'configs', 'multi_llm_config.json'
-(        )
-        _multi_llm_service == MultiLLMService(config_path)
-    return _multi_llm_service
-
-async def initialize_multi_llm_service(config_path, Optional[str] = None):
-    """初始化多模型 LLM 服务"""
-    global _multi_llm_service
-    _multi_llm_service == MultiLLMService(config_path)
-    return _multi_llm_service
+        """Close all providers"""
+        for provider in self.providers.values():
+            await provider.close()
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.create_task(self.close())
+            else:
+                loop.run_until_complete(self.close())
+        except Exception as e:
+            logger.error(f"Error closing service: {e}")
