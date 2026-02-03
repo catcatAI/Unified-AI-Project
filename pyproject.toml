@@ -14,7 +14,7 @@ description = "Project description"
 # and potential workarounds for TensorFlow compatibility.
 dependencies = [
     "fastapi==0.104.1",
-    "paho-mqtt==1.6.1",
+    "paho-mqtt==2.1.0",
     "scikit-learn==1.3.0",
 
     "torch>=2.2.0,<2.3",
