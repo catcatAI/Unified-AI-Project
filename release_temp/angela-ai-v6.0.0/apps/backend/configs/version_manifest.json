@@ -1,0 +1,78 @@
+{
+  "project_name": "Unified-AI-Project",
+  "description": "Manifest for different versions, modules, or configurations within the Unified-AI-Project. This helps track the evolution and state of various components.",
+  "versions": [
+    {
+      "id": "miko-v1-legacy",
+      "title": "MikoAI v1 (Legacy Snapshot)",
+      "description": "Original MikoAI v1. Early prototype, static template dialogues, no persistent memory or self-updating logic. For functional demo and structural reference.",
+      "source_project": "MikoAI",
+      "features": [
+        "Fixed statement responses",
+        "No memory module",
+        "Simple tone expression",
+        "Prone to context errors"
+      ],
+      "status": "deprecated",
+      "migration_status": "archived"
+    },
+    {
+      "id": "miko-v2-legacy",
+      "title": "MikoAI v2 (Legacy Snapshot)",
+      "description": "MikoAI v2. Initial memory and preference simulation, modular architecture, conditional logic, context-based tone changes. Prone to memory errors.",
+      "source_project": "MikoAI",
+      "features": [
+        "Multi-turn dialogue logic",
+        "Simple emotion changes",
+        "Preference learning module (unstable)",
+        "Inconsistent API call style"
+      ],
+      "status": "archived",
+      "migration_status": "partially_integrated"
+    },
+    {
+      "id": "miko-v3-legacy",
+      "title": "MikoAI v3 (Legacy Snapshot)",
+      "description": "MikoAI v3. Emergent behavior construction, self-formula updates, 'data life' prototype traits.",
+      "source_project": "MikoAI",
+      "features": [
+        "Context-aware with self-optimization strategies",
+        "Can produce unexpected behavior (high emergence)",
+        "Subjective preference memory",
+        "Partial self-preservation tendencies"
+      ],
+      "status": "archived",
+      "migration_status": "key_components_integrated"
+    },
+    {
+      "id": "fragmenta-v1-legacy",
+      "title": "Fragmenta Core (Legacy Snapshot)",
+      "description": "Core modules and concepts from the Fragmenta project, focusing on layered processing and tone analysis.",
+      "source_project": "Fragmenta",
+      "features": [
+        "Modular design (EchoShell, SillScan, ToneFragment, TailStitch)",
+        "Tone vector analysis",
+        "Persona chain concept"
+      ],
+      "status": "archived",
+      "migration_status": "core_concepts_being_adapted"
+    },
+    {
+      "id": "unified-ai-v0.1.0",
+      "title": "Unified-AI-Project v0.1.0 - Genesis Merge",
+      "description": "Initial merged structure of MikoAI and Fragmenta. Focus on unified configuration, directory structure, and basic module integration.",
+      "source_project": "Unified-AI-Project",
+      "features": [
+        "Consolidated configuration system",
+        "Defined project structure (as per MERGE_AND_RESTRUCTURE_PLAN.md)",
+        "Initial MikoAI config management integrated",
+        "Basic personality and formula configs established"
+      ],
+      "status": "alpha",
+      "release_date": "YYYY-MM-DD"
+    }
+  ],
+  "author": "Unified AI Team (Original MikoAI: Uo Cx)",
+  "last_updated": "YYYY-MM-DD",
+  "notes": "This manifest tracks major versions and component states for the Unified-AI-Project. It will evolve as integration progresses and new features are added."
+}

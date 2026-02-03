@@ -1,40 +1,46 @@
-# src/services/resource_awareness_service.py
-"""
-Service to provide information about the AI's simulated hardware resources.
-Loads configuration from a YAML file and makes it accessible to other modules.
-"""
-import yaml
+"Service to provide information about the AI's simulated hardware resources.\nLoads configuration from a YAML file and makes it accessible to other modules. (SKELETON)\n"
 import os
+import yaml # type: ignore
+from pathlib import Path
 from typing import Optional, Dict, Any
+from dataclasses import dataclass, field
 
-# Assuming 'src' is a top-level package for imports
-from .types import (
-    SimulatedHardwareProfile,
-    SimulatedDiskConfig,
-    SimulatedCPUConfig,
-    SimulatedRAMConfig,
-    SimulatedResourcesRoot,
-)
+# Mock types for syntax validation
+@dataclass
+class SimulatedDiskConfig:
+    space_gb: float = 1.0
+    warning_threshold_percent: int = 90
+    critical_threshold_percent: int = 98
+    lag_factor_warning: float = 1.0
+    lag_factor_critical: float = 1.0
+
+@dataclass
+class SimulatedCPUConfig:
+    cores: int = 1
+
+@dataclass
+class SimulatedRAMConfig:
+    ram_gb: float = 1.0
+
+@dataclass
+class SimulatedHardwareProfile:
+    profile_name: str = "DefaultProfile"
+    disk: SimulatedDiskConfig = field(default_factory=SimulatedDiskConfig)
+    cpu: SimulatedCPUConfig = field(default_factory=SimulatedCPUConfig)
+    ram: SimulatedRAMConfig = field(default_factory=SimulatedRAMConfig)
+    gpu_available: bool = False
 
 DEFAULT_CONFIG_PATH = "configs/simulated_resources.yaml"
 
 class ResourceAwarenessService:
     """
-    Manages and provides access to the AI's simulated hardware resource profile.
+    Manages and provides access to the AI's simulated hardware resource profile. (SKELETON)
     """
-    def __init__(self, config_filepath: Optional[str] = None):
-        """
-        Initializes the ResourceAwarenessService.
 
-        Args:
-            config_filepath (Optional[str]): Path to the simulated resources YAML file.
-                Defaults to "configs/simulated_resources.yaml" relative to project root.
-        """
+    def __init__(self, config_filepath: Optional[str] = None) -> None:
         self.profile: Optional[SimulatedHardwareProfile] = None
         self._config_path: str
 
-        # Determine project root to correctly locate the config file
-        # Assuming this file is in src/services/
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
 
@@ -48,19 +54,15 @@ class ResourceAwarenessService:
 
         self._load_profile()
         if self.profile:
-            print(f"ResourceAwarenessService initialized. Loaded profile: '{self.profile.get('profile_name', 'Unknown Profile')}' from '{self._config_path}'")
+            print(f"ResourceAwarenessService initialized. Loaded profile: '{self.profile.profile_name}' from '{self._config_path}'")
         else:
             print(f"ResourceAwarenessService initialized, but FAILED to load a profile from '{self._config_path}'. Using no profile (None).")
 
-
     def _load_profile(self) -> None:
-        """Loads the simulated hardware profile from the YAML configuration file."""
         try:
             if not os.path.exists(self._config_path):
                 print(f"ResourceAwarenessService: Error - Config file not found at {self._config_path}")
-                # Fallback to a very basic default if file not found, or keep self.profile as None
                 self.profile = self._get_safe_default_profile()
-                print(f"ResourceAwarenessService: Using safe default profile due to missing config file.")
                 return
 
             with open(self._config_path, 'r', encoding='utf-8') as f:
@@ -77,59 +79,39 @@ class ResourceAwarenessService:
                 self.profile = self._get_safe_default_profile()
                 return
 
-            # Basic validation against TypedDict structure (runtime check for key fields)
-            # A more robust solution might use Pydantic for parsing and validation here.
-            if not all(k in profile_data for k in ['profile_name', 'disk', 'cpu', 'ram', 'gpu_available']):
-                print(f"ResourceAwarenessService: Error - Profile data missing required keys in {self._config_path}.")
-                self.profile = self._get_safe_default_profile()
-                return
+            # In a real implementation, use Pydantic for robust parsing and validation
+            self.profile = SimulatedHardwareProfile(**profile_data)
 
-            self.profile = profile_data # type: ignore # Trusting structure if keys are present
-
-        except yaml.YAMLError as e:
-            print(f"ResourceAwarenessService: Error parsing YAML from {self._config_path}: {e}")
-            self.profile = self._get_safe_default_profile()
         except Exception as e:
             print(f"ResourceAwarenessService: An unexpected error occurred loading profile from {self._config_path}: {e}")
             self.profile = self._get_safe_default_profile()
 
     def _get_safe_default_profile(self) -> SimulatedHardwareProfile:
-        """Provides a minimal, safe default profile if loading fails."""
         print("ResourceAwarenessService: WARNING - Using a minimal safe default hardware profile.")
-        return { # type: ignore
-            "profile_name": "SafeDefaultProfile_ErrorLoading",
-            "disk": {
-                "space_gb": 1.0, # Minimal space
-                "warning_threshold_percent": 90,
-                "critical_threshold_percent": 98,
-                "lag_factor_warning": 1.0, # No lag
-                "lag_factor_critical": 1.0  # No lag
-            },
-            "cpu": {"cores": 1},
-            "ram": {"ram_gb": 1.0},
-            "gpu_available": False
-        }
+        return SimulatedHardwareProfile(
+            profile_name="SafeDefaultProfile_ErrorLoading",
+            disk=SimulatedDiskConfig(),
+            cpu=SimulatedCPUConfig(),
+            ram=SimulatedRAMConfig(),
+            gpu_available=False
+        )
 
     def get_simulated_hardware_profile(self) -> Optional[SimulatedHardwareProfile]:
-        """Returns the entire loaded simulated hardware profile."""
         return self.profile
 
     def get_simulated_disk_config(self) -> Optional[SimulatedDiskConfig]:
-        """Returns the simulated disk configuration."""
         if self.profile:
-            return self.profile.get('disk') # type: ignore
+            return self.profile.disk
         return None
 
     def get_simulated_cpu_config(self) -> Optional[SimulatedCPUConfig]:
-        """Returns the simulated CPU configuration."""
         if self.profile:
-            return self.profile.get('cpu') # type: ignore
+            return self.profile.cpu
         return None
 
     def get_simulated_ram_config(self) -> Optional[SimulatedRAMConfig]:
-        """Returns the simulated RAM configuration."""
         if self.profile:
-            return self.profile.get('ram') # type: ignore
+            return self.profile.ram
         return None
 
 if __name__ == '__main__':
@@ -139,11 +121,11 @@ if __name__ == '__main__':
     print("\n1. Testing with default config path:")
     service_default = ResourceAwarenessService()
     if service_default.profile:
-        print(f"  Profile Name: {service_default.profile.get('profile_name')}")
+        print(f"  Profile Name: {service_default.profile.profile_name}")
         disk_conf = service_default.get_simulated_disk_config()
         if disk_conf:
-            print(f"  Disk Space (GB): {disk_conf.get('space_gb')}")
-            print(f"  Disk Warning Threshold (%): {disk_conf.get('warning_threshold_percent')}")
+            print(f"  Disk Space (GB): {disk_conf.space_gb}")
+            print(f"  Disk Warning Threshold (%): {disk_conf.warning_threshold_percent}")
         else:
             print("  No disk config found in default profile.")
     else:
@@ -152,9 +134,9 @@ if __name__ == '__main__':
     # Test with a non-existent config file path
     print("\n2. Testing with non-existent config file:")
     service_non_existent = ResourceAwarenessService(config_filepath="configs/non_existent_resources.yaml")
-    if service_non_existent.profile and service_non_existent.profile.get('profile_name') == "SafeDefaultProfile_ErrorLoading":
-        print(f"  Correctly fell back to safe default: {service_non_existent.profile.get('profile_name')}")
-        print(f"  Default Disk Space (GB): {service_non_existent.get_simulated_disk_config().get('space_gb') if service_non_existent.get_simulated_disk_config() else 'N/A'}") # type: ignore
+    if service_non_existent.profile and service_non_existent.profile.profile_name == "SafeDefaultProfile_ErrorLoading":
+        print(f"  Correctly fell back to safe default: {service_non_existent.profile.profile_name}")
+        print(f"  Default Disk Space (GB): {service_non_existent.get_simulated_disk_config().space_gb if service_non_existent.get_simulated_disk_config() else 'N/A'}")
     else:
         print(f"  Test failed or profile was unexpectedly loaded: {service_non_existent.profile}")
 
@@ -162,11 +144,11 @@ if __name__ == '__main__':
     print("\n3. Testing with malformed YAML config file:")
     malformed_yaml_path = "configs/temp_malformed_resources.yaml"
     with open(malformed_yaml_path, "w", encoding="utf-8") as f:
-        f.write("simulated_hardware_profile:\n  disk: [this is not a dict]\n profile_name: MalformedProfile") # Intentional malformed YAML
+        f.write("simulated_hardware_profile: \n  disk: [this is not a dict]\n  profile_name: MalformedProfile") # Intentional malformed YAML
 
     service_malformed = ResourceAwarenessService(config_filepath=malformed_yaml_path)
-    if service_malformed.profile and service_malformed.profile.get('profile_name') == "SafeDefaultProfile_ErrorLoading":
-        print(f"  Correctly fell back to safe default for malformed YAML: {service_malformed.profile.get('profile_name')}")
+    if service_malformed.profile and service_malformed.profile.profile_name == "SafeDefaultProfile_ErrorLoading":
+        print(f"  Correctly fell back to safe default for malformed YAML: {service_malformed.profile.profile_name}")
     else:
         print(f"  Test failed for malformed YAML or profile was unexpectedly loaded: {service_malformed.profile}")
 
@@ -174,5 +156,4 @@ if __name__ == '__main__':
         os.remove(malformed_yaml_path)
 
     print("\nResourceAwarenessService standalone test finished.")
-
-print("ResourceAwarenessService module loaded.")
+    print("ResourceAwarenessService module loaded.")

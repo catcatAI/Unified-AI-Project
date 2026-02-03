@@ -1,0 +1,4548 @@
+{
+  "timestamp": "2025-10-01 01:53:45",
+  "project_root": ".",
+  "summary": {
+    "total_fixes": 1,
+    "completed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "in_progress": 0,
+    "by_type": {
+      "import_fix": {
+        "total": 0,
+        "completed": 0,
+        "failed": 0,
+        "skipped": 0
+      },
+      "dependency_fix": {
+        "total": 0,
+        "completed": 0,
+        "failed": 0,
+        "skipped": 0
+      },
+      "syntax_fix": {
+        "total": 1,
+        "completed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cleanup_fix": {
+        "total": 0,
+        "completed": 0,
+        "failed": 0,
+        "skipped": 0
+      },
+      "environment_fix": {
+        "total": 0,
+        "completed": 0,
+        "failed": 0,
+        "skipped": 0
+      }
+    }
+  },
+  "detailed_results": [
+    {
+      "fix_type": "syntax_fix",
+      "target": "default",
+      "status": "completed",
+      "message": "语法修复部分完成: 596/970 文件验证通过",
+      "details": {
+        "files_processed": 970,
+        "indentation_fixed": 357,
+        "syntax_fixed": 357,
+        "validation_passed": 596,
+        "errors": [
+          {
+            "file": "automated_defect_detector.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 84,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 83",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "check_type_issues.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 23,
+                "offset": 87,
+                "message": "invalid syntax",
+                "text": "        dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith('.')]:\n"
+              }
+            ]
+          },
+          {
+            "file": "complete_fix_all.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 24,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 23",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "comprehensive_fix.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 14,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 13",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "coverage_analyzer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 65,
+                "offset": 8,
+                "message": "expected an indented block after 'if' statement on line 62",
+                "text": "        _ = cmd.extend([\"-m\", \"pytest\", test_dir])\n"
+              }
+            ]
+          },
+          {
+            "file": "final_syntax_fix.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 14,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 13",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "fix_all_syntax_errors.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 14",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "fix_project_syntax.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 14,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 13",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "fix_type_issues.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 23,
+                "offset": 87,
+                "message": "invalid syntax",
+                "text": "        dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith('.')]:\n"
+              }
+            ]
+          },
+          {
+            "file": "fix_unused_call_results_final.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 23,
+                "offset": 87,
+                "message": "invalid syntax",
+                "text": "        dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith('.')]:\n"
+              }
+            ]
+          },
+          {
+            "file": "performance_benchmark.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 136,
+                "offset": 112,
+                "message": "invalid syntax",
+                "text": "            metrics.test_description = f\"Component benchmark for {component_name} with {iterations} iterations\":\n"
+              }
+            ]
+          },
+          {
+            "file": "run_complete_training.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 228,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 227",
+                "text": "    _ = f.write(report_content)\n"
+              }
+            ]
+          },
+          {
+            "file": "run_training.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 140,
+                "offset": 4,
+                "message": "expected an indented block after 'if' statement on line 139",
+                "text": "    _ = print(\"数学模型数据生成失败，继续执行其他步骤...\")\n"
+              }
+            ]
+          },
+          {
+            "file": "tool_call_chain_tracker.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 70,
+                "offset": 21,
+                "message": "invalid syntax. Perhaps you forgot a comma?",
+                "text": "                    self.current_chain.completed_at - self.current_chain.created_at\n"
+              }
+            ]
+          },
+          {
+            "file": "verify_concept_models.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 24,
+                "offset": 5,
+                "message": "expected 'except' or 'finally' block",
+                "text": "    _ = print(\"\\n2. 验证因果推理引擎...\")\n"
+              }
+            ]
+          },
+          {
+            "file": "cli\\main.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 26,
+                "offset": 5,
+                "message": "invalid syntax",
+                "text": "_ = @click.group()\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\ai_orchestrator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 34,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    ROOT = Path(__file__).resolve().parents[1]\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\apply_test_timeouts.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 50,
+                "offset": 5,
+                "message": "expected an indented block after 'with' statement on line 49",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\automated_test_runner.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 19,
+                "offset": 97,
+                "message": "invalid syntax",
+                "text": "        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent:\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\auto_fix_project.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 61,
+                "offset": 9,
+                "message": "expected an indented block after 'if' statement on line 57",
+                "text": "        _ = print(f\"Installing from {req_file}...\")\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\check_ai_docstrings.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 49,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 48",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\document_update_plan.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 22,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\download_training_data.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\enhance_project.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 69,
+                "offset": 17,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "                _ = \"flickr30k\": str(self.data_dir / \"flickr30k_sample\"),\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\execution_monitor_cli.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 21,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    execute_with_smart_monitoring, execute_async_with_smart_monitoring\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\extract_common_voice.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 14,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\extract_common_voice_improved.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\fix_import_paths.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 16",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\generate_mock_data.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 42,
+                "offset": 29,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "                            _ = random.randint(0, 100),\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\health_monitor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 18,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\mock_hsp_peer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 38,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 37",
+                "text": "    cap_echo = HSPCapabilityAdvertisementPayload(\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\optimized_health_check.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 24,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\performance_benchmark.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 86,
+                "offset": 13,
+                "message": "':' expected after dictionary key",
+                "text": "            _ = 'cache_hit_ratio': (first_call_time - second_call_time) / first_call_time * 100,\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\project_ai_orchestrator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 66,
+                "offset": 72,
+                "message": "invalid syntax",
+                "text": "        print(f\"$ {' '.join(cmd)}\" + (f\"  (cwd={cwd})\" if cwd else \"\")):\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\project_setup_utils.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 8,
+                "message": "unexpected indent",
+                "text": "        self.unified_project_structure = {\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\run_comprehensive_tests.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 46,
+                "offset": 13,
+                "message": "':' expected after dictionary key",
+                "text": "            _ = 'PYTHONPATH': str(self.project_root)\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\run_parameter_extractor_example.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 9,
+                "message": "invalid syntax",
+                "text": "    _ = assert os.path.exists(model_path)\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\setup_ai_models.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 56,
+                "offset": 9,
+                "message": "expected an indented block after 'if' statement on line 53",
+                "text": "        _ = print(f\"✅ {config_file}\")\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\start_atlassian_server.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 14,
+                "message": "invalid syntax",
+                "text": "        level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\style_check.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 55,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Custom style checker for Unified AI Project.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\test_coverage_monitor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 97,
+                "message": "invalid syntax",
+                "text": "        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent:\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\test_environment_setup.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 97,
+                "message": "invalid syntax",
+                "text": "        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent:\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\test_execution_monitor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 137,
+                "offset": 46,
+                "message": "invalid syntax",
+                "text": "    _ = print(\"🧪 Testing retry mechanism...\"):\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\test_failure_alert.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 21,
+                "offset": 109,
+                "message": "invalid syntax",
+                "text": "        self.config_file = Path(config_file) if config_file else Path(__file__).parent / \"alert_config.json\":\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\training_monitoring_visualization.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 23,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    TrainingAnomalyDetector, \n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\unified_auto_fix.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 110,
+                "offset": 85,
+                "message": "invalid syntax",
+                "text": "                test_paths=[self.specific_target] if self.specific_target else None,:\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\update_common_voice_metadata.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 54,
+                "offset": 13,
+                "message": "':' expected after dictionary key",
+                "text": "            _ = 'downloaded': archive_path.exists(),\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\update_doc_status.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 37,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 36",
+                "text": "    return [cls.PENDING, cls.IN_PROGRESS, cls.COMPLETED, cls.NEEDS_REVIEW, cls.NOT_NEEDED]\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\validate_doc_links.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 46,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 45",
+                "text": "    \"\"\"查找所有 Markdown 文件\"\"\"\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\validate_mcp_types.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 46,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Validator for MCP type definitions.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\automated_integration_test_pipeline.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 18,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\conftest.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 19,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 18",
+                "text": "    pass\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\continuous_test_improvement.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\deadlock_detector.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 53,
+                "offset": 47,
+                "message": "invalid syntax",
+                "text": "        self.thread_states: Dict[int, Dict] = \n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\generate_test_report.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\maintain_test_suite.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 30,
+                "offset": 4,
+                "message": "expected an indented block after 'for' statement on line 29",
+                "text": "    if file.startswith('test_') and file.endswith('.py'):\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\smart_test_runner.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 33,
+                "offset": 4,
+                "message": "expected an indented block after 'if' statement on line 32",
+                "text": "    activate_script = venv_path / \"Scripts\" / \"activate.bat\"\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_atlassian_integration.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 21,
+                "offset": 54,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Integration tests for Atlassian integration\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_core_service_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 59,
+                "offset": 4,
+                "message": "expected an indented block after function definition on line 58",
+                "text": "    return ServiceHealth.HEALTHY\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_coverage_analyzer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 211,
+                "offset": 9,
+                "message": "invalid syntax",
+                "text": "    _ = @patch('subprocess.run')\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_fix_debug.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 42,
+                "offset": 9,
+                "message": "expected an indented block after 'if' statement on line 39",
+                "text": "        ms_node_id = entity_id\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_fix_demo.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 50,
+                "offset": 5,
+                "message": "expected an indented block after 'with' statement on line 49",
+                "text": "    f.write(problematic_content)\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_message_bridge.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 29,
+                "offset": 40,
+                "message": "invalid syntax",
+                "text": "    mock.align_message.return_value = (, None)\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_performance_benchmark.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 150,
+                "offset": 82,
+                "message": "invalid syntax",
+                "text": "        improvements = {item[\"metric\"]: item for item in results[\"improvements\"]}:\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_result_analyzer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 65,
+                "offset": 8,
+                "message": "expected an indented block after 'if' statement on line 62",
+                "text": "        longrepr = test['call'].get('longrepr', '')\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_result_feedback.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 216,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 215",
+                "text": "    f.write(html_content)\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_result_visualizer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 52,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 51",
+                "text": "    return json.load(f)\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_security.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 31,
+                "offset": 1,
+                "message": "unmatched ')'",
+                "text": ")"
+              }
+            ]
+          },
+          {
+            "file": "tests\\test_security_improvements.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 72,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 71",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\automated_data_pipeline.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 28,
+                "offset": 97,
+                "message": "invalid syntax",
+                "text": "        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent:\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\debug_visualizer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 24,
+                "offset": 67,
+                "message": "unexpected character after line continuation character",
+                "text": "        self.log_db_path = Path(log_db_path) if log_db_path else \\:\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\e2e_test.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 44,
+                "offset": 5,
+                "message": "expected 'except' or 'finally' block",
+                "text": "    context = PermissionContext(\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\enhance_training_data.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 86,
+                "offset": 21,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "                    _ = \"temperature\": 20.0 + np.random.normal(0, 2),\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\feature_status_tracker.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 51,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 42",
+                "text": "    self.id = id\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\fix_import_paths.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 21,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 20",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\generate_minimal_training_data.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 36,
+                "offset": 13,
+                "message": "':' expected after dictionary key",
+                "text": "            _ = \"timestamp\": datetime.now().isoformat()\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\generate_multimodal_data.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 35,
+                "offset": 96,
+                "message": "invalid syntax",
+                "text": "        self.model_dir = Path(model_dir) if model_dir else project_root / \"training\" / \"models\":\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\prepare_concept_models_training_data.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 29,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 28",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\process_traditional_data.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 29,
+                "offset": 78,
+                "message": "invalid syntax",
+                "text": "        self.data_dir = Path(data_dir) if data_dir else project_root / \"data\":\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\technical_debt_tracker.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 56,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 42",
+                "text": "    self.id = id\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\test_atlassian_full.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 112,
+                "offset": 78,
+                "message": "unexpected character after line continuation character",
+                "text": "        with patch('integrations.rovo_dev_agent.EnhancedRovoDevConnector'), \\:\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\test_data_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 98,
+                "message": "invalid syntax",
+                "text": "        self.data_dir = Path(data_dir) if data_dir else Path(__file__).parent.parent / \"testdata\":\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\test_integration.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 26,
+                "offset": 13,
+                "message": "invalid syntax",
+                "text": "        _ = assert hasattr(unified_ai, 'agent_manager'), \"Agent manager not initialized\"\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\test_rovo_cli.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 39,
+                "offset": 13,
+                "message": "invalid syntax",
+                "text": "        _ = assert hasattr(rovo, 'commands')\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\test_rovo_integration.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 47,
+                "offset": 78,
+                "message": "unexpected character after line continuation character",
+                "text": "        with patch('integrations.rovo_dev_agent.EnhancedRovoDevConnector'), \\:\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\train_audio_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 39,
+                "offset": 85,
+                "message": "invalid syntax",
+                "text": "        languages = list(set(item.get(\"language\", \"unknown\") for item in self.data)):\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\train_text_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 104,
+                "offset": 111,
+                "message": "invalid syntax",
+                "text": "        self.model_save_dir = Path(model_save_dir) if model_save_dir else project_root / \"training\" / \"models\":\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\train_vision_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 40,
+                "offset": 89,
+                "message": "invalid syntax",
+                "text": "        scene_types = list(set(item.get(\"scene_type\", \"unknown\") for item in self.data)):\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\user_acceptance_test.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 38,
+                "offset": 13,
+                "message": "':' expected after dictionary key",
+                "text": "            _ = \"timestamp\": time.time()\n"
+              }
+            ]
+          },
+          {
+            "file": "tools\\validate_generated_data.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 32,
+                "offset": 83,
+                "message": "invalid syntax",
+                "text": "        self.device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\"):\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\auto_training_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 30,
+                "offset": 6,
+                "message": "unindent does not match any outer indentation level",
+                "text": "    )\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\collaborative_training_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 323,
+                "offset": 71,
+                "message": "invalid syntax",
+                "text": "            checkpoint_type = 'epoch' if epoch % 5 == 0 else 'regular':\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\comprehensive_system_test.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 18,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\data_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 39,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 38",
+                "text": "    print(f\"Error in {context.component}.{context.operation}: {error}\")\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\dynamic_loader.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 131,
+                "offset": 17,
+                "message": "positional argument follows keyword argument",
+                "text": "                )\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\enhanced_checkpoint_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 33,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 32",
+                "text": "    print(f\"Error in {context.component}.{context.operation}: {error}\")\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\enhanced_unit_tests.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 50,
+                "offset": 17,
+                "message": "invalid syntax",
+                "text": "            _ = raise ValueError(\"测试错误\")\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\error_handling_framework.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\fault_detector.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 68,
+                "offset": 95,
+                "message": "invalid syntax",
+                "text": "                assigned_tasks=initial_info.get('assigned_tasks', []) if initial_info else [],:\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\gpu_optimizer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 76,
+                "offset": 4,
+                "message": "expected 'except' or 'finally' block",
+                "text": "    for gpu_info in gpu_list:\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\incremental_learning_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 31,
+                "offset": 6,
+                "message": "unindent does not match any outer indentation level",
+                "text": "    )\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\model_knowledge_sharing.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 33,
+                "offset": 13,
+                "message": "':' expected after dictionary key",
+                "text": "            _ = \"timestamp\": self.timestamp.isoformat()\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\model_version_controller.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 29,
+                "offset": 6,
+                "message": "unindent does not match any outer indentation level",
+                "text": "    )\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\optimized_data_scanner.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 23,
+                "offset": 98,
+                "message": "invalid syntax",
+                "text": "        self.tracking_file = Path(tracking_file) if tracking_file else Path(\"data_tracking.json\"):\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\parallel_optimized_data_scanner.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 26,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 25",
+                "text": "    bytes_read = 0\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\quick_hardware_test.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 23,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\resource_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 30,
+                "offset": 6,
+                "message": "unindent does not match any outer indentation level",
+                "text": "    )\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\simple_health_check.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 158,
+                "offset": 9,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "        _ = (\"核心组件\", check_core_components),\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\simple_test.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 133,
+                "offset": 9,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "        _ = (\"数据管理器\", test_data_manager),\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\smart_resource_allocator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 88,
+                "offset": 4,
+                "message": "expected 'except' or 'finally' block",
+                "text": "    for gpu_info in gpu_list:\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\system_health_check.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\task_migrator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 160,
+                "offset": 17,
+                "message": "':' expected after dictionary key",
+                "text": "                _ = 'timestamp': datetime.now().isoformat()\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\task_priority_evaluator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 25,
+                "offset": 6,
+                "message": "unindent does not match any outer indentation level",
+                "text": "    )\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\test_collaborative_training.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 133,
+                "offset": 9,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "        _ = (\"数据管理器\", test_data_manager),\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\test_collaborative_training_simple.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 103,
+                "offset": 9,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "        _ = (\"模型训练任务类\", test_model_training_task),\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\test_dynamic_loading.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 38,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 37",
+                "text": "    _ = f.write(os.urandom(file_size))\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\test_error_handling.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\test_fault_tolerance.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 27,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\test_hardware_compatibility.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 22,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\test_integrated_graphics_training.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\test_quick_validation.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 144,
+                "offset": 9,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "        _ = (\"数据管理器\", test_data_manager),\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\test_simple_collaborative.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 82,
+                "offset": 9,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "        _ = (\"协作式训练管理器导入\", test_collaborative_training_import),\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\training_monitor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 25,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\training_visualizer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 27,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 26",
+                "text": "    self.component = component\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\train_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 52,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 51",
+                "text": "    print(f\"Error in {context.component}.{context.operation}: {error}\")\n"
+              }
+            ]
+          },
+          {
+            "file": "training\\unified_execution_framework.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 27,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 26",
+                "text": "    self.DATA_DIR = None\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\check_person_title_v2.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 40,
+                "offset": 5,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "    _ = {\"POS\": {\"IN\": [\"NOUN\", \"ADJ\", \"DET\"]}, \"OP\": \"*\"},  # TITLE (e.g., \"a CEO\", \"the founder\")\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\debug_content_analyzer_issues.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 44,
+                "offset": 9,
+                "message": "expected an indented block after 'if' statement on line 41",
+                "text": "        ms_node_id = entity_id\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\debug_relationships_v2.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 44,
+                "offset": 9,
+                "message": "expected an indented block after 'if' statement on line 41",
+                "text": "        ms_node_id = entity_id\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\debug_relationship_extraction.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 44,
+                "offset": 9,
+                "message": "expected an indented block after 'if' statement on line 41",
+                "text": "        ms_node_id = entity_id\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\fix_hsp_integration.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 19",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scan_placeholders.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 60,
+                "message": "invalid syntax",
+                "text": "        \"\"\"Scans a single file for placeholder comments.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\simple_verify.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 7,
+                "offset": 64,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Verify the logic for test_05_prep_object_relationship\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\verify_fixes.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 44,
+                "offset": 9,
+                "message": "expected an indented block after 'if' statement on line 41",
+                "text": "        ms_node_id = entity_id\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\verify_fix_all.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 30,
+                "offset": 9,
+                "message": "expected an indented block after 'if' statement on line 27",
+                "text": "        ms_node_id = entity_id\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\chromadb_local\\config.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 2,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    def __init__(self, anonymized_telemetry: bool = False, **kwargs) -> None:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\chromadb_local\\__init__.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 10,
+                "offset": 0,
+                "message": "expected an indented block after function definition on line 9",
+                "text": "self.name = name\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scripts\\advanced_auto_fix.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 142,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 141",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scripts\\auto_fix_imports.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 41,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 40",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scripts\\coverage_analyzer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scripts\\coverage_monitor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scripts\\execute_smart_fix.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 174,
+                "offset": 98,
+                "message": "invalid syntax",
+                "text": "                \"success_rate\": 0 if (test_results[\"passed\"] + test_results[\"failed\"]) == 0 else :\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scripts\\final_validation.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 85,
+                "offset": 12,
+                "message": "unexpected indent",
+                "text": "            HSPConnector\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scripts\\integration_fixer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 78,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 77",
+                "text": "    content = f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scripts\\performance_benchmark_framework.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 21,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scripts\\performance_benchmark_workflow.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scripts\\performance_regression_detector.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 19,
+                "offset": 10,
+                "message": "invalid syntax",
+                "text": "    level: str=logging.INFO,\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\scripts\\smart_executor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 29,
+                "offset": 9,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "        _ = r\"ModuleNotFoundError: No module named '(\\w+)'\",\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core_services.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 93,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 92",
+                "text": "    pass\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\agents\\collaboration_demo_agent.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 28,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 26",
+                "text": "    capabilities = [\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\agents\\enhanced_demo_agent.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 30,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 28",
+                "text": "    capabilities = [\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\agents\\monitoring_demo_agent.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 28,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 26",
+                "text": "    capabilities = [\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\agents\\nlp_processing_agent.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 60,
+                "offset": 133,
+                "message": "invalid syntax",
+                "text": "        logging.info(f\"[{self.agent_id}] NLPProcessingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}\"):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\agents\\registry_demo_agent.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 28,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 26",
+                "text": "    capabilities = [\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\agent_collaboration_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 54,
+                "offset": 64,
+                "message": "invalid syntax",
+                "text": "        \"\"\"Register an agent's capability for collaboration.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\agent_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 24,
+                "offset": 8,
+                "message": "unexpected indent",
+                "text": "        self.agents = {}\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\agent_monitoring_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 109,
+                "offset": 61,
+                "message": "invalid syntax",
+                "text": "        \"\"\"Collect health metrics for all tracked agents.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\crisis_system.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 22,
+                "offset": 8,
+                "message": "unexpected indent",
+                "text": "        self.negative_words = self.config.get(\"negative_words\", )\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\demo_learning_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 37,
+                "offset": 32,
+                "message": "expression expected after dictionary key and ':'",
+                "text": "            'user_interactions': ,\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\dependency_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 22,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 20",
+                "text": "    self.name = name\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\dynamic_agent_registry.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 37,
+                "offset": 62,
+                "message": "invalid syntax",
+                "text": "        self.registered_agents: Dict[str, RegisteredAgent] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\execution_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 112,
+                "offset": 43,
+                "message": "invalid syntax",
+                "text": "        self.task_queue: Dict[str, Any] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\execution_monitor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 93,
+                "offset": 48,
+                "message": "invalid syntax",
+                "text": "        self._resource_usage: Dict[str, Any] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\genesis.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 25,
+                "offset": 31,
+                "message": "expected '('",
+                "text": "    def create_genesis_secret -> Tuple[str, str]:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\simultaneous_translation.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 43,
+                "offset": 47,
+                "message": "invalid syntax",
+                "text": "        for idx, chunk in enumerate(chunks or ):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\fragmenta\\fragmenta_orchestrator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 8,
+                "message": "unexpected indent",
+                "text": "        candidate_memories = self.ham_manager.query_core_memory(\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\game\\inventory.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 3,
+                "offset": 22,
+                "message": "invalid syntax",
+                "text": "        self.items = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\game\\main.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 28,
+                "offset": 32,
+                "message": "expression expected after dictionary key and ':'",
+                "text": "        self.assets = {'images': , 'sprites': }\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\game\\npcs.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 11,
+                "offset": 68,
+                "message": "invalid syntax",
+                "text": "        self.image = sprite if sprite else pygame.Surface((48, 48)):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\game\\scenes.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 10,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 9",
+                "text": "    pass\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\hsp\\connector.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 39,
+                "offset": 57,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Constructs a file URI for a given schema name.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\hsp\\performance_optimizer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 37,
+                "offset": 45,
+                "message": "invalid syntax",
+                "text": "        self.config: ConfigDict = config or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\hsp\\__init__.py",
+            "errors": [
+              {
+                "type": "ValidationError",
+                "message": "验证时出错: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\integrations\\atlassian_bridge.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 57,
+                "offset": 36,
+                "message": "invalid syntax",
+                "text": "        self.current_endpoints =   # 當前使用的端點\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\integrations\\atlassian_cli_bridge.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 157,
+                "offset": 82,
+                "message": "invalid syntax",
+                "text": "            labels_str = \",\".join([str(x).strip for x in labels if str(x).strip]):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\integrations\\confluence_integration.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 13,
+                "offset": 47,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Confluence Integration for AI system\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\integrations\\enhanced_atlassian_bridge.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 23,
+                "message": "invalid syntax",
+                "text": "        self.config = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\integrations\\enhanced_rovo_dev_connector.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 24,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 23",
+                "text": "    if self.retry_on_status is None:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\integrations\\jira_integration.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 14,
+                "offset": 41,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Jira Integration for AI system\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\integrations\\rovo_dev_agent.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 34,
+                "offset": 4,
+                "message": "expected an indented block after function definition on line 33",
+                "text": "    pass\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\managers\\agent_collaboration_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 22,
+                "offset": 38,
+                "message": "invalid syntax",
+                "text": "        self.collaboration_tasks =   # Track ongoing collaborative tasks\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\managers\\agent_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 23,
+                "offset": 59,
+                "message": "invalid syntax",
+                "text": "        self.active_agents: Dict[str, subprocess.Popen] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\managers\\demo_learning_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 29,
+                "offset": 30,
+                "message": "invalid syntax",
+                "text": "        self.learning_data = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\managers\\dependency_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 19,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 17",
+                "text": "    self.name = name\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\managers\\execution_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 110,
+                "offset": 49,
+                "message": "invalid syntax",
+                "text": "        self.issues_log: List[Dict[str, Any]] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\managers\\execution_monitor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 93,
+                "offset": 48,
+                "message": "invalid syntax",
+                "text": "        self._resource_usage: Dict[str, Any] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\managers\\genesis.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 25,
+                "offset": 31,
+                "message": "expected '('",
+                "text": "    def create_genesis_secret -> Tuple[str, str]:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\mcp\\connector.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 13",
+                "text": "    self.ai_id = ai_id\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\mcp\\context7_connector.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 19,
+                "offset": 54,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Configuration for Context7 MCP integration.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\modules_fragmenta\\element_layer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 9,
+                "offset": 33,
+                "message": "invalid syntax",
+                "text": "        self.config = config or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\modules_fragmenta\\vision_tone_inverter.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 9,
+                "offset": 33,
+                "message": "invalid syntax",
+                "text": "        self.config = config or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\monitoring\\system_monitor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 30,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 29",
+                "text": "    return asdict(self)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\optimization\\performance_optimizer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 77,
+                "offset": 52,
+                "message": "invalid syntax",
+                "text": "            key for key, value in self.cache.items :\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\search\\search_engine.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 7,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 6",
+                "text": "    pass\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\security\\audit_logger.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 53,
+                "offset": 45,
+                "message": "invalid syntax",
+                "text": "        self.log_buffer: List[AuditEvent] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\security\\enhanced_sandbox.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 28,
+                "offset": 49,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Configuration for the enhanced sandbox\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\security\\permission_control.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 44,
+                "offset": 42,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Context for permission checking\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\services\\ai_editor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 25,
+                "offset": 71,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Handles data processing and transformation for the AI editor\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\services\\ai_virtual_input_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 49,
+                "offset": 50,
+                "message": "invalid syntax",
+                "text": "        self.action_log: List[Dict[str, Any]] =  # Stores a log of commands processed\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\services\\api_models.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 69,
+                "offset": 34,
+                "message": "invalid syntax",
+                "text": "    components: Dict[str, Any] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\services\\audio_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 33,
+                "message": "invalid syntax",
+                "text": "        self.config = config or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\services\\hot_reload_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 11,
+                "offset": 28,
+                "message": "expected '('",
+                "text": "def get_hot_reload_service -> \"HotReloadService\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\services\\main_api_server.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 30,
+                "offset": 60,
+                "message": "invalid syntax",
+                "text": "    from ..ai.language_models.registry import ModelRegistry:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\services\\multi_llm_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 140,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 139",
+                "text": "    if not self.session:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\services\\resource_awareness_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 40,
+                "offset": 8,
+                "message": "unexpected indent",
+                "text": "        if config_filepath is None:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\services\\sandbox_executor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 1,
+                "message": "expected 'except' or 'finally' block",
+                "text": "EXECUTION_MONITORING_AVAILABLE = True\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\services\\vision_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 14,
+                "offset": 33,
+                "message": "invalid syntax",
+                "text": "        self.config = config or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\system\\deployment_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 37,
+                "offset": 38,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Configuration for AI models\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\system\\hardware_probe.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 145,
+                "offset": 65,
+                "message": "invalid syntax",
+                "text": "                frequency_max=cpu_freq.max if cpu_freq else 0.0,:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\system\\integrated_graphics_optimizer.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 39,
+                "offset": 8,
+                "message": "expected an indented block after 'if' statement on line 36",
+                "text": "        return True\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\code_understanding_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 35,
+                "offset": 22,
+                "message": "invalid syntax",
+                "text": "        tool_names = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\csv_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 12,
+                "offset": 33,
+                "message": "invalid syntax",
+                "text": "        self.config = config or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\dependency_checker.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 23,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 22",
+                "text": "    print(\"Dependency Manager is not available.\")\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\image_generation_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 12,
+                "offset": 33,
+                "message": "invalid syntax",
+                "text": "        self.config = config or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\math_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 29,
+                "offset": 64,
+                "message": "invalid syntax",
+                "text": "        print(\"Loading arithmetic model for the first time...\"):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\tool_dispatcher.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 38,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 37",
+                "text": "    try:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\translation_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 19,
+                "offset": 70,
+                "message": "invalid syntax",
+                "text": "        print(\"Loading translation dictionary for the first time...\"):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\web_search_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 11,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 10",
+                "text": "    config_path = os.path.join(os.path.dirname(__file__), '..', 'configs', 'system_config.yaml')\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\code_understanding\\lightweight_code_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 60,
+                "offset": 8,
+                "message": "unexpected indent",
+                "text": "        py_files = glob.glob(pattern, recursive=True)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\compression\\alpha_deep_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 35,
+                "offset": 81,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Represents data from different modalities, designed for extensibility.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\concept_models\\adaptive_learning_controller.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 75,
+                "offset": 73,
+                "message": "invalid syntax",
+                "text": "        logger.debug(f\"Recording performance for task {record.task_id}\"):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\concept_models\\alpha_deep_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 113,
+                "offset": 8,
+                "message": "expected an indented block after 'if' statement on line 110",
+                "text": "        self.nodes.append(node)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\concept_models\\causal_reasoning_engine.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 79,
+                "offset": 9,
+                "message": "invalid syntax",
+                "text": "        }\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\concept_models\\environment_simulator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 63,
+                "offset": 81,
+                "message": "invalid syntax",
+                "text": "        logger.debug(f\"Predicting next state for action {proposed_action.name}\"):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\concept_models\\unified_symbolic_space.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 99,
+                "offset": 66,
+                "message": "invalid syntax",
+                "text": "        props_json = json.dumps(properties) if properties else '':\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\context\\dialogue_context.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 46,
+                "offset": 38,
+                "message": "invalid syntax",
+                "text": "        self.key_points: List[str] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\context\\manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 18,
+                "offset": 82,
+                "message": "invalid syntax",
+                "text": "        self.memory_storage = memory_storage if memory_storage else MemoryStorage:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\context\\memory_context.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 34,
+                "offset": 44,
+                "message": "invalid syntax",
+                "text": "        self.memories: Dict[str, Memory] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\context\\model_context.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 14",
+                "text": "    self.record_id = f\"call_{datetime.now.strftime('%Y%m%d%H%M%S%f')}\"\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\context\\tool_context.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 19,
+                "offset": 53,
+                "message": "invalid syntax",
+                "text": "        self.sub_categories: List['ToolCategory'] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\context\\utils.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 260,
+                "offset": 114,
+                "message": "invalid syntax",
+                "text": "            context_id=context2.context_id if context2.updated_at > context1.updated_at else context1.context_id,:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\crisis\\crisis_system.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 22,
+                "offset": 8,
+                "message": "unexpected indent",
+                "text": "        self.negative_words = self.config.get(\"negative_words\", )\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\deep_mapper\\mapper.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 47,
+                "message": "invalid syntax",
+                "text": "        self.mapping_rules = mapping_rules or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\dialogue\\dialogue_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 73,
+                "offset": 8,
+                "message": "unexpected indent",
+                "text": "        self.active_sessions: Dict[str, List[DialogueTurn]] = {} \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\dialogue\\project_coordinator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 36,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 26",
+                "text": "    self.llm_interface = llm_interface\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\discovery\\service_discovery_module.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 38,
+                "offset": 98,
+                "message": "invalid syntax",
+                "text": "        self.known_capabilities: Dict[str, Tuple[HSPCapabilityAdvertisementPayload, datetime]] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\emotion\\emotion_system.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 10,
+                "offset": 8,
+                "message": "unexpected indent",
+                "text": "        default_tone = \"neutral\"\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\evaluation\\evaluation_db.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 103,
+                "message": "invalid syntax",
+                "text": "        \"\"\"Initializes the SQLite database and creates the 'evaluations' table if it doesn't exist.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\formula_engine\\__init__.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 61,
+                "offset": 75,
+                "message": "expected ':'",
+                "text": "            with open(self.formulas_file_path, 'r', encoding='utf-8') as f\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\integration\\unified_control_center.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 43,
+                "message": "invalid syntax",
+                "text": "        self.components: Dict[str, Any] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\language_models\\daily_language_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 22,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 21",
+                "text": "    _ = \"\"\"Inject or replace the LLM service at runtime (used by hot reload).\"\"\"\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\language_models\\registry.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 52,
+                "offset": 40,
+                "message": "invalid syntax",
+                "text": "        profiles: List[ModelProfile] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\language_models\\router.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 28,
+                "offset": 33,
+                "message": "invalid syntax",
+                "text": "        self.registry = registry:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\learning\\content_analyzer_module.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 49,
+                "offset": 16,
+                "message": "unexpected indent",
+                "text": "                print(f\"Successfully loaded spaCy model: {spacy_model_name}\")\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\learning\\experience_replay.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 10,
+                "offset": 23,
+                "message": "invalid syntax",
+                "text": "        self.buffer = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\learning\\fact_extractor_module.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 22,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 20",
+                "text": "    prompt = \"You are an expert at identifying simple facts and preferences stated by a user in their message.\\n\"\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\learning\\learning_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 32,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 23",
+                "text": "    self.ai_id = ai_id\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\learning\\self_critique_module.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 10,
+                "offset": 57,
+                "message": "invalid syntax",
+                "text": "        self.operational_config = operational_config or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\lis\\lis_cache_interface.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 286,
+                "offset": 74,
+                "message": "invalid syntax",
+                "text": "    ham_metadata = {k: v for k, v in ham_metadata.items if v is not None}:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\memory\\ham_memory_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 55,
+                "offset": 9,
+                "message": "invalid syntax",
+                "text": "        else:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\memory\\ham_types.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 65,
+                "message": "invalid syntax",
+                "text": "        self.metadata = metadata if metadata is not None else {}:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\meta\\learning_log_db.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 105,
+                "message": "invalid syntax",
+                "text": "        \"\"\"Initializes the SQLite database and creates the 'strategy_logs' table if it doesn't exist.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\personality\\personality_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 28,
+                "offset": 81,
+                "message": "invalid syntax",
+                "text": "        \"\"\"Scans the profiles directory for available JSON personality files.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\rag\\rag_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 28,
+                "offset": 42,
+                "message": "invalid syntax",
+                "text": "        self.documents: Dict[int, str] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\reasoning\\causal_reasoning_engine.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 11,
+                "offset": 22,
+                "message": "invalid syntax",
+                "text": "        self.edges = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\service_discovery\\service_discovery_module.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 38,
+                "offset": 98,
+                "message": "invalid syntax",
+                "text": "        self.known_capabilities: Dict[str, Tuple[HSPCapabilityAdvertisementPayload, datetime]] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\symbolic_space\\unified_symbolic_space.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 14",
+                "text": "    conn = sqlite3.connect(self.db_path)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\translation\\simultaneous_translation.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 43,
+                "offset": 47,
+                "message": "invalid syntax",
+                "text": "        for idx, chunk in enumerate(chunks or ):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\trust\\trust_manager_module.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 58,
+                "message": "invalid syntax",
+                "text": "        self.trust_scores: Dict[str, Dict[str, float]] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\trust_manager\\trust_manager_module.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 58,
+                "message": "invalid syntax",
+                "text": "        self.trust_scores: Dict[str, Dict[str, float]] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\world_model\\environment_simulator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 32,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 31",
+                "text": "    logger.debug(\"Updating state predictor model (conceptual)...\")\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\agents\\base\\base_agent.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 154,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 153",
+                "text": "    result_payload = HSPTaskResultPayload(\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\agents\\specialized\\nlp_processing_agent.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 60,
+                "offset": 133,
+                "message": "invalid syntax",
+                "text": "        logging.info(f\"[{self.agent_id}] NLPProcessingAgent initialized with capabilities: {[cap['name'] for cap in capabilities]}\"):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\context\\storage\\base.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 27,
+                "offset": 41,
+                "message": "invalid syntax",
+                "text": "        self.metadata: Dict[str, Any] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\context\\storage\\database.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 21,
+                "message": "invalid syntax",
+                "text": "        self._db =  if db_connection is None else db_connection:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\ai\\context\\storage\\disk.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 63,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 62",
+                "text": "    json.dump(context_data, f, ensure_ascii=False, indent=2)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\hsp\\connector.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 37,
+                "offset": 57,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Constructs a file URI for a given schema name.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\hsp\\versioning.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 91,
+                "offset": 8,
+                "message": "expected an indented block after 'if' statement on line 88",
+                "text": "        return version_info\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\agent_collaboration_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 22,
+                "offset": 38,
+                "message": "invalid syntax",
+                "text": "        self.collaboration_tasks =   # Track ongoing collaborative tasks\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\agent_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 23,
+                "offset": 59,
+                "message": "invalid syntax",
+                "text": "        self.active_agents: Dict[str, subprocess.Popen] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\core_service_demo.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 10,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    ServiceConfig, \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\core_service_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 82,
+                "offset": 50,
+                "message": "invalid syntax",
+                "text": "        self._services: Dict[str, ServiceInfo] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\demo_learning_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 31,
+                "offset": 32,
+                "message": "expression expected after dictionary key and ':'",
+                "text": "            'user_interactions': ,\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\dependency_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 22,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 20",
+                "text": "    self.name = name\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\execution_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 111,
+                "offset": 49,
+                "message": "invalid syntax",
+                "text": "        self.issues_log: List[Dict[str, Any]] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\execution_monitor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 94,
+                "offset": 48,
+                "message": "invalid syntax",
+                "text": "        self._resource_usage: Dict[str, Any] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\genesis.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 27,
+                "offset": 31,
+                "message": "expected '('",
+                "text": "    def create_genesis_secret -> Tuple[str, str]:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\resource_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 27,
+                "offset": 51,
+                "message": "invalid syntax",
+                "text": "        self._resources: Dict[str, List[Any]] =   # 服务资源列表\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\service_loader_example.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 12,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    CoreServiceManager, \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\managers\\service_monitor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 76,
+                "offset": 43,
+                "message": "invalid syntax",
+                "text": "        self.events: List[ServiceEvent] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\services\\ai_editor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 25,
+                "offset": 71,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Handles data processing and transformation for the AI editor\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\services\\ai_virtual_input_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    VirtualMouseCommand,\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\services\\api_models.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 69,
+                "offset": 34,
+                "message": "invalid syntax",
+                "text": "    components: Dict[str, Any] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\services\\hot_reload_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 13,
+                "offset": 28,
+                "message": "expected '('",
+                "text": "def get_hot_reload_service -> \"HotReloadService\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\services\\resource_awareness_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 40,
+                "offset": 8,
+                "message": "unexpected indent",
+                "text": "        if config_filepath is None:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\services\\sandbox_executor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 1,
+                "message": "expected 'except' or 'finally' block",
+                "text": "EXECUTION_MONITORING_AVAILABLE = True\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\services\\service_discovery.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 41,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 40",
+                "text": "    if self.tags is None:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\services\\vision_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 49,
+                "message": "invalid syntax",
+                "text": "        self.config: Dict[str, Any] = config or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\code_understanding_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 35,
+                "offset": 22,
+                "message": "invalid syntax",
+                "text": "        tool_names = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\csv_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 12,
+                "offset": 33,
+                "message": "invalid syntax",
+                "text": "        self.config = config or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\dependency_checker.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 23,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 22",
+                "text": "    print(\"Dependency Manager is not available.\")\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\image_generation_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 12,
+                "offset": 33,
+                "message": "invalid syntax",
+                "text": "        self.config = config or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\math_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 26,
+                "offset": 64,
+                "message": "invalid syntax",
+                "text": "        print(\"Loading arithmetic model for the first time...\"):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\tool_dispatcher.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 36,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 35",
+                "text": "    try:\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\translation_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 20,
+                "offset": 70,
+                "message": "invalid syntax",
+                "text": "        print(\"Loading translation dictionary for the first time...\"):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\web_search_tool.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 11,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 10",
+                "text": "    config_path = os.path.join(os.path.dirname(__file__), '..', 'configs', 'system_config.yaml')\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\hsp\\fallback\\fallback_protocols.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 69,
+                "offset": 60,
+                "message": "invalid syntax",
+                "text": "        self.message_handlers: Dict[str, List[Callable]] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\shared\\types\\mappable_data_object.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 19,
+                "offset": 37,
+                "message": "invalid syntax",
+                "text": "        self.metadata = metadata or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\shared\\utils\\env_utils.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 35,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 34",
+                "text": "    content = f_example.read\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\logic_model\\evaluate_logic_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 32,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 31",
+                "text": "    dataset = json.load(f)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\logic_model\\lightweight_logic_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 75,
+                "offset": 4,
+                "message": "expected 'except' or 'finally' block",
+                "text": "    normalized = proposition\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\logic_model\\logic_data_generator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 33,
+                "offset": 5,
+                "message": "expected an indented block after 'else' statement on line 31",
+                "text": "    op = random.choice(OPERATORS)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\logic_model\\logic_model_nn.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 62,
+                "offset": 12,
+                "message": "unexpected indent",
+                "text": "            Input = getattr(tf.keras.layers, 'Input', None)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\logic_model\\logic_parser_eval.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 12,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 10",
+                "text": "    self.token_patterns = [\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\logic_model\\simple_logic_generator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 9,
+                "offset": 15,
+                "message": "invalid syntax",
+                "text": "    dataset = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\logic_model\\train_logic_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 55,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    def load_logic_dataset(file_path):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\math_model\\data_generator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 5,
+                "message": "expected an indented block after 'with' statement on line 14",
+                "text": "    f.write(content)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\math_model\\evaluate.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 15",
+                "text": "    char_map_data = json.load(f)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\math_model\\lightweight_math_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 74,
+                "offset": 4,
+                "message": "expected 'except' or 'finally' block",
+                "text": "    return self._safe_eval(expression)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\math_model\\model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 71,
+                "offset": 44,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Check if TensorFlow is available.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\math_model\\train.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 47,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 46",
+                "text": "    dataset = json.load(f)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\core\\tools\\parameter_extractor\\extractor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 47,
+                "offset": 25,
+                "message": "invalid syntax",
+                "text": "        mapped_params = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\data\\models\\unified_model_loader.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 13,
+                "offset": 18,
+                "message": "invalid syntax",
+                "text": "_loaded_models = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\game\\scenes\\village.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 10,
+                "offset": 21,
+                "message": "invalid syntax",
+                "text": "        self.npcs = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\hsp\\bridge\\data_aligner.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 4,
+                "offset": 51,
+                "message": "invalid syntax",
+                "text": "        self.schema_registry = schema_registry or :\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\hsp\\bridge\\message_bridge.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 11,
+                "offset": 5,
+                "message": "expected an indented block after class definition on line 10",
+                "text": "    _message_type_to_internal_topic_map = {\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\hsp\\external\\external_connector.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 119,
+                "offset": 12,
+                "message": "expected ':'",
+                "text": "        try\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\hsp\\fallback\\fallback_protocols.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 69,
+                "offset": 60,
+                "message": "invalid syntax",
+                "text": "        self.message_handlers: Dict[str, List[Callable]] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\hsp\\internal\\internal_bus.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 7,
+                "offset": 70,
+                "message": "invalid syntax",
+                "text": "        self.subscriptions: Dict[str, List[Callable[[Any], None]]] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\mcp\\fallback\\mcp_fallback_protocols.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 75,
+                "offset": 95,
+                "message": "invalid syntax",
+                "text": "        self.command_handlers: Dict[str, List[Callable[[Dict[str, Any]], Awaitable[None]]]] = \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\shared\\types\\mappable_data_object.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 19,
+                "offset": 37,
+                "message": "invalid syntax",
+                "text": "        self.metadata = metadata or \n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\shared\\utils\\env_utils.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 35,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 34",
+                "text": "    content = f_example.read\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\logic_model\\evaluate_logic_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 35,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 34",
+                "text": "    dataset = json.load(f)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\logic_model\\lightweight_logic_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 77,
+                "offset": 4,
+                "message": "expected 'except' or 'finally' block",
+                "text": "    normalized = proposition\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\logic_model\\logic_data_generator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 34,
+                "offset": 5,
+                "message": "expected an indented block after 'else' statement on line 32",
+                "text": "    op = random.choice(OPERATORS)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\logic_model\\logic_model_nn.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 64,
+                "offset": 12,
+                "message": "unexpected indent",
+                "text": "            Input_cls = getattr(tf_mod.keras.layers, 'Input', None)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\logic_model\\logic_parser_eval.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 12,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 10",
+                "text": "    self.token_patterns = [\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\logic_model\\simple_logic_generator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 9,
+                "offset": 17,
+                "message": "invalid syntax",
+                "text": "    dataset =   # 修复列表初始化\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\logic_model\\train_logic_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 95,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    def load_logic_dataset(file_path):\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\math_model\\data_generator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 123,
+                "offset": 18,
+                "message": "invalid syntax",
+                "text": "    problems =   # 修复列表初始化\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\math_model\\evaluate.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 33,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 32",
+                "text": "    char_map_data = json.load(f)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\math_model\\train.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 47,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 46",
+                "text": "    dataset = json.load(f)\n"
+              }
+            ]
+          },
+          {
+            "file": "apps\\backend\\src\\tools\\parameter_extractor\\extractor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 47,
+                "offset": 27,
+                "message": "invalid syntax",
+                "text": "        mapped_params =   # 修复字典初始化\n"
+              }
+            ]
+          },
+          {
+            "file": "cli\\commands\\deps.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 28,
+                "offset": 5,
+                "message": "invalid syntax",
+                "text": "_ = @deps.command()\n"
+              }
+            ]
+          },
+          {
+            "file": "cli\\commands\\dev.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 13,
+                "offset": 5,
+                "message": "invalid syntax",
+                "text": "_ = @click.group()\n"
+              }
+            ]
+          },
+          {
+            "file": "cli\\commands\\editor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 18,
+                "offset": 5,
+                "message": "invalid syntax",
+                "text": "_ = @click.group()\n"
+              }
+            ]
+          },
+          {
+            "file": "cli\\commands\\git.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 11,
+                "offset": 5,
+                "message": "invalid syntax",
+                "text": "_ = @click.group()\n"
+              }
+            ]
+          },
+          {
+            "file": "cli\\commands\\integrate.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 5,
+                "message": "invalid syntax",
+                "text": "_ = @click.group()\n"
+              }
+            ]
+          },
+          {
+            "file": "cli\\commands\\rovo.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 5,
+                "message": "invalid syntax",
+                "text": "_ = @click.group()\n"
+              }
+            ]
+          },
+          {
+            "file": "cli\\commands\\security.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 16,
+                "offset": 5,
+                "message": "invalid syntax",
+                "text": "_ = @click.group()\n"
+              }
+            ]
+          },
+          {
+            "file": "cli\\commands\\system.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 29,
+                "offset": 5,
+                "message": "invalid syntax",
+                "text": "_ = @system.command()\n"
+              }
+            ]
+          },
+          {
+            "file": "cli\\commands\\test.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 14,
+                "offset": 5,
+                "message": "invalid syntax",
+                "text": "_ = @click.group()\n"
+              }
+            ]
+          },
+          {
+            "file": "cli\\utils\\environment.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 9,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "        _ = (\"Node.js\", check_nodejs),\n"
+              }
+            ]
+          },
+          {
+            "file": "data\\flickr30k_sample\\master\\flickr30k_entities-master\\flickr30k_entities_utils.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 24,
+                "offset": 5,
+                "message": "expected an indented block after 'with' statement on line 23",
+                "text": "    sentences = f.read().split('\\n')\n"
+              }
+            ]
+          },
+          {
+            "file": "packages\\cli\\cli\\ai_models_cli.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 36,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 35",
+                "text": "    self.service: Optional[MultiLLMService] = None\n"
+              }
+            ]
+          },
+          {
+            "file": "packages\\cli\\cli\\main.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 90,
+                "offset": 5,
+                "message": "expected an indented block after 'try' statement on line 85",
+                "text": "    print(f\"\\n[CLI App] Generic HSP TaskResult Received from '{sender_ai_id}' for CorrID '{full_envelope.get('correlation_id')}':\")\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\core\\config_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 201,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 200",
+                "text": "    if config_path.suffix.lower() in ['.yaml', '.yml']:\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\core\\report_generator.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 74,
+                "offset": 13,
+                "message": "':' expected after dictionary key",
+                "text": "            _ = \"generated_at\": time.strftime(\"%Y-%m-%d %H:%M:%S\"),\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\data_processing\\ingest_processed_logs_to_ham.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 24,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    def ingest_to_ham(processed_data_path: str, ham_storage_file: str):\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\prototypes\\miko_core_ham_prototype.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 43,
+                "offset": 9,
+                "message": "invalid syntax. Maybe you meant '==' or ':=' instead of '='?",
+                "text": "        _ = (\"Hello Miko, how are you today?\", {\"user\": \"UserA\", \"sentiment\": \"positive\"}),\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\utils\\file_utils.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 115,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 114",
+                "text": "    return f.read()\n"
+              }
+            ]
+          },
+          {
+            "file": "scripts\\utils\\process_utils.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 81,
+                "offset": 85,
+                "message": "invalid syntax",
+                "text": "        result.command = \" \".join(command) if isinstance(command, list) else command:\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\agents\\test_base_agent.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 14,
+                "offset": 51,
+                "message": "invalid syntax",
+                "text": "    \"\"\"Create a BaseAgent instance for testing.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\agents\\test_knowledge_graph_agent.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 31,
+                "offset": 83,
+                "message": "invalid syntax",
+                "text": "    capability_names = [cap['name'] for cap in knowledge_graph_agent.capabilities]:\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\core_ai\\test_agent_manager.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 36,
+                "message": "invalid syntax",
+                "text": "        \"\"\"Set up for each test.\"\"\":\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\hsp\\test_hsp_advanced_integration.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 5,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    HSPMessageEnvelope\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\hsp\\test_hsp_enhanced_integration.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 6,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    HSPMessageEnvelope\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\integration\\test_example_integration.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 15,
+                "offset": 99,
+                "message": "unexpected character after line continuation character",
+                "text": "        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager, \\:\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\integration\\test_utils.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 184,
+                "offset": 4,
+                "message": "expected an indented block after 'if' statement on line 183",
+                "text": "    self.calls[service_name] = []\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\integrations\\test_atlassian_bridge_fallback.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 56,
+                "offset": 57,
+                "message": "invalid syntax",
+                "text": "        connector._make_request_with_retry = AsyncMock():\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\integrations\\test_rovo_dev_agent.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 55,
+                "offset": 4,
+                "message": "expected an indented block after 'with' statement on line 54",
+                "text": "    with patch('integrations.rovo_dev_agent.AtlassianBridge'):\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\integrations\\test_rovo_dev_agent_recovery.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 88,
+                "offset": 95,
+                "message": "unexpected character after line continuation character",
+                "text": "        with patch('apps.backend.src.integrations.rovo_dev_agent.EnhancedRovoDevConnector'), \\:\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\mcp\\test_context7_connector.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 11,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    Context7MCPConnector,\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\search\\test_search_engine.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 17,
+                "offset": 123,
+                "message": "unexpected character after line continuation character",
+                "text": "        with patch(\"apps.backend.src.search.search_engine.SearchEngine._search_huggingface\") as mock_search_huggingface, \\:\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\services\\test_ai_virtual_input_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 7,
+                "offset": 1,
+                "message": "unmatched ')'",
+                "text": ")"
+              }
+            ]
+          },
+          {
+            "file": "tests\\services\\test_main_api_server_hsp.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 36,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 35",
+                "text": "    try:\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\services\\test_resource_awareness_service.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 10,
+                "offset": 1,
+                "message": "unmatched ')'",
+                "text": ")"
+              }
+            ]
+          },
+          {
+            "file": "tests\\services\\test_sandbox_executor.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 18,
+                "offset": 0,
+                "message": "expected an indented block after function definition on line 16",
+                "text": "self.executor = SandboxExecutor(timeout_seconds=30) # 从2秒增加到30秒\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\tools\\test_logic_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 27,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 25",
+                "text": "    os.makedirs(TEST_DATA_GEN_OUTPUT_DIR, exist_ok=True)\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\tools\\test_translation_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 27,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 26",
+                "text": "    os.makedirs(TEST_DATA_DIR, exist_ok=True)\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\core_ai\\code_understanding\\test_lightweight_code_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 14,
+                "offset": 5,
+                "message": "expected an indented block after function definition on line 12",
+                "text": "    self.temp_dir_obj = tempfile.TemporaryDirectory()\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\core_ai\\language_models\\test_daily_language_model.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 3,
+                "offset": 4,
+                "message": "unexpected indent",
+                "text": "    import json\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\core_ai\\learning\\test_content_analyzer_module.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 29,
+                "offset": 8,
+                "message": "expected an indented block after 'if' statement on line 26",
+                "text": "        found = True\n"
+              }
+            ]
+          },
+          {
+            "file": "tests\\core_ai\\lis\\test_ham_lis_cache.py",
+            "errors": [
+              {
+                "type": "SyntaxError",
+                "line": 40,
+                "offset": 8,
+                "message": "unexpected indent",
+                "text": "        self._next_memory_id_counter = 1\n"
+              }
+            ]
+          }
+        ]
+      },
+      "error": null,
+      "duration": 50.58252263069153,
+      "start_time": 1759254774.666465,
+      "end_time": 1759254825.2489877
+    }
+  ]
+}

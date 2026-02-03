@@ -1,0 +1,38 @@
+> **注意：此報告的內容可能已過時。** 其分析基於一份2024年12月的狀態報告，可能無法反映當前的程式碼狀態。請參考最新的 OpenAPI 規格或原始碼以獲取準確資訊。此文件已被移動到歸檔目錄。
+
+# API 實現問題報告
+
+本報告記錄了在 Unified AI Project 中發現的 API 端點實現問題，主要基於 `API_STATUS_REPORT.md` 的分析。
+
+## ✅ 已處理的後端 API 端點
+
+以下 API 端點已確認其實現狀態：
+
+1.  **圖像管理後端API**
+    *   `POST /api/v1/images/batch-delete` - 批量刪除圖像：已修復語法錯誤。
+    *   `GET /api/v1/images/statistics` - 獲取圖像統計：已確認在 `main_api_server.py` 中有實現。
+
+2.  **模型訓練API**
+    *   `GET /api/v1/models/{model_id}/training` - 獲取模型訓練狀態：已確認在 `main_api_server.py` 中有模擬實現。
+
+## 🔴 待實現的後端 API 端點
+
+以下 API 端點在前端有調用，但後端尚未實現：
+
+1.  **圖像管理後端API**
+    *   `GET /api/v1/images/history` - 獲取圖像歷史
+    *   `DELETE /api/v1/images/{imageId}` - 刪除圖像
+
+## 🔴 待實現的前端 Next.js API 路由
+
+以下前端 Next.js API 路由的目錄為空，表示尚未實現：
+
+*   `/api/chat`
+*   `/api/image`
+*   `/api/search`
+*   `/api/code`
+*   `/api/health`
+
+## 建議
+
+建議優先處理上述「未實現」的後端 API 端點，並對「狀態未知」的前端 Next.js API 路由進行詳細檢查，以確保所有功能都能正常運作並提供完整的服務。

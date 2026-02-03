@@ -1,4 +1,4 @@
-import speech_recognition as sr
+# TODO: Fix import - module 'speech_recognition' not found
 
 def recognize_speech(audio_file):
     """
@@ -10,7 +10,7 @@ def recognize_speech(audio_file):
     Returns:
         The recognized text.
     """
-    r = sr.Recognizer()
+    r = sr.Recognizer
     with sr.AudioFile(audio_file) as source:
         audio = r.record(source)
     return r.recognize_google(audio)
@@ -24,7 +24,7 @@ def save_model(model, model_path):
         model_path: The path to the file where the model will be saved.
     """
     with open(model_path, "wb") as f:
-        f.write(model.get_wav_data())
+        f.write(model.get_wav_data)
 
 def load_model(model_path):
     """
@@ -37,4 +37,4 @@ def load_model(model_path):
         The loaded model.
     """
     with open(model_path, "rb") as f:
-        return sr.AudioData(f.read(), 44100, 2)
+        return sr.AudioData(f.read, 44100, 2)

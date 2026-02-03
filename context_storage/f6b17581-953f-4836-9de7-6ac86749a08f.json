@@ -1,0 +1,22 @@
+{
+  "context_id": "f6b17581-953f-4836-9de7-6ac86749a08f",
+  "context_type": "model",
+  "created_at": "2025-09-22T22:44:03.715810",
+  "updated_at": "2025-09-22T22:44:03.715810",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "collaboration": {
+      "collaboration_id": "collab_20250922224403715810",
+      "task_id": "task_001",
+      "participating_agents": [
+        "agent_001",
+        "agent_002"
+      ],
+      "start_time": "2025-09-22T22:44:03.715810",
+      "status": "active"
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}

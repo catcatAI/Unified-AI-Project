@@ -1,0 +1,27 @@
+{
+  "context_id": "f0624241-810d-4ed3-8abf-a487833c89a5",
+  "context_type": "tool",
+  "created_at": "2025-09-24T09:20:44.942720",
+  "updated_at": "2025-09-24T09:20:44.942720",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "usage_record": {
+      "timestamp": "2025-09-24T09:20:44.942720",
+      "parameters": {
+        "input": "test"
+      },
+      "result": "result",
+      "duration": 0.5,
+      "success": true
+    },
+    "performance_metrics": {
+      "total_calls": 1,
+      "success_rate": 1.0,
+      "average_duration": 0.5,
+      "last_used": "2025-09-24T09:20:44.942720"
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}

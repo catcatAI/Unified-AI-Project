@@ -1,0 +1,289 @@
+{
+  "test_name": "AGI端到端集成测试",
+  "start_time": "2025-10-10T06:14:31.834799",
+  "tests": {
+    "input_validation": {
+      "success": true,
+      "total_inputs": 3,
+      "valid_inputs": 3,
+      "validation_results": [
+        {
+          "input_index": 0,
+          "input_type": "text",
+          "validation_passed": true,
+          "issues_found": 0,
+          "confidence_score": 1.0,
+          "suggestions": []
+        },
+        {
+          "input_index": 1,
+          "input_type": "code",
+          "validation_passed": true,
+          "issues_found": 0,
+          "confidence_score": 1.0,
+          "suggestions": []
+        },
+        {
+          "input_index": 2,
+          "input_type": "structured",
+          "validation_passed": true,
+          "issues_found": 0,
+          "confidence_score": 1.0,
+          "suggestions": []
+        }
+      ],
+      "average_confidence": 1.0
+    },
+    "multi_model_coordination": {
+      "success": true,
+      "total_tasks": 4,
+      "successful_tasks": 4,
+      "task_results": [
+        {
+          "name": "nlp_processing",
+          "status": "completed",
+          "execution_time": 0.195069,
+          "stdout": "NLP处理完成\r\n语义分析: 函数功能清晰",
+          "stderr": ""
+        },
+        {
+          "name": "code_analysis",
+          "status": "completed",
+          "execution_time": 0.229439,
+          "stdout": "代码分析完成\r\n语法检查: 无错误",
+          "stderr": ""
+        },
+        {
+          "name": "logic_reasoning",
+          "status": "completed",
+          "execution_time": 0.251829,
+          "stdout": "逻辑推理完成\r\n推理结果: 功能正确",
+          "stderr": ""
+        },
+        {
+          "name": "output_synthesis",
+          "status": "completed",
+          "execution_time": 0.265285,
+          "stdout": "输出合成完成\r\n综合报告: 生成成功",
+          "stderr": ""
+        }
+      ],
+      "total_execution_time": 0.941622
+    },
+    "memory_integration": {
+      "success": true,
+      "total_operations": 4,
+      "successful_operations": 4,
+      "memory_results": [
+        {
+          "operation_index": 0,
+          "operation": "store",
+          "success": true,
+          "result": {
+            "success": true,
+            "message": "已存储: previous_analysis"
+          }
+        },
+        {
+          "operation_index": 1,
+          "operation": "retrieve",
+          "success": true,
+          "result": {
+            "success": true,
+            "data": {
+              "result": "函数分析完成",
+              "confidence": 0.95
+            }
+          }
+        },
+        {
+          "operation_index": 2,
+          "operation": "update",
+          "success": true,
+          "result": {
+            "success": true,
+            "message": "已更新: previous_analysis"
+          }
+        },
+        {
+          "operation_index": 3,
+          "operation": "query",
+          "success": true,
+          "result": {
+            "success": true,
+            "matches": [
+              "previous_analysis"
+            ]
+          }
+        }
+      ]
+    },
+    "reasoning_engine": {
+      "success": true,
+      "total_reasoning_tests": 3,
+      "successful_reasoning": 3,
+      "reasoning_results": [
+        {
+          "test_index": 0,
+          "reasoning_type": "causal",
+          "success": true,
+          "result": {
+            "success": true,
+            "relationships_learned": 2,
+            "confidence": 0.92,
+            "reasoning_steps": [
+              "数据收集",
+              "相关性分析",
+              "因果推断"
+            ]
+          }
+        },
+        {
+          "test_index": 1,
+          "reasoning_type": "logical",
+          "success": true,
+          "result": {
+            "success": true,
+            "conclusion_valid": true,
+            "reasoning_chain": [
+              "所有函数都有输入输出",
+              "这是一个函数",
+              "这个函数有输入输出"
+            ]
+          }
+        },
+        {
+          "test_index": 2,
+          "reasoning_type": "counterfactual",
+          "success": true,
+          "result": {
+            "success": true,
+            "counterfactual_outcome": "uncomfortable",
+            "confidence": 0.85,
+            "reasoning_path": [
+              "原始场景",
+              "干预应用",
+              "结果预测"
+            ]
+          }
+        }
+      ],
+      "average_confidence": 0.59
+    },
+    "output_generation": {
+      "success": true,
+      "total_outputs": 3,
+      "successful_outputs": 3,
+      "output_results": [
+        {
+          "output_index": 0,
+          "output_type": "text_analysis",
+          "success": true,
+          "validation_passed": true,
+          "output": {
+            "content": "经过详细分析，该函数实现了基本的加法运算功能。函数结构清晰，参数定义明确，返回值处理正确。建议可以考虑添加类型检查和错误处理机制来提高代码的健壮性。",
+            "length": 150,
+            "language": "chinese",
+            "quality_score": 0.95
+          },
+          "quality_score": 0.95
+        },
+        {
+          "output_index": 1,
+          "output_type": "code_suggestion",
+          "success": true,
+          "validation_passed": true,
+          "output": {
+            "content": "```python\ndef improved_function(x: float, y: float) -> float:\n    \"\"\"改进的加法函数，包含类型检查\"\"\"\n    if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):\n        raise TypeError('参数必须是数字类型')\n    return x + y\n```",
+            "format": "python",
+            "has_examples": true,
+            "quality_score": 0.98
+          },
+          "quality_score": 0.98
+        },
+        {
+          "output_index": 2,
+          "output_type": "summary_report",
+          "success": true,
+          "validation_passed": true,
+          "output": {
+            "content": {
+              "overview": "整体分析完成，函数功能正常",
+              "details": "语法检查通过，逻辑正确，性能良好",
+              "recommendations": [
+                "添加文档字符串",
+                "考虑异常处理",
+                "进行性能测试"
+              ]
+            },
+            "sections": 3,
+            "completeness": 1.0,
+            "quality_score": 0.92
+          },
+          "quality_score": 0.92
+        }
+      ],
+      "average_quality_score": 0.9500000000000001
+    },
+    "performance_evaluation": {
+      "success": true,
+      "total_tests": 3,
+      "successful_tests": 3,
+      "performance_results": [
+        {
+          "test_name": "response_time",
+          "description": "响应时间测试",
+          "success": true,
+          "result": {
+            "success": true,
+            "average_response_time": 0.12035727500915527,
+            "max_response_time": 0.13398289680480957,
+            "response_times": [
+              0.12062764167785645,
+              0.12759709358215332,
+              0.1122286319732666,
+              0.13398289680480957,
+              0.10735011100769043
+            ],
+            "meets_requirement": true
+          }
+        },
+        {
+          "test_name": "throughput",
+          "description": "吞吐量测试",
+          "success": true,
+          "result": {
+            "success": true,
+            "processed_count": 3,
+            "duration": 0.20925378799438477,
+            "throughput_per_second": 14.336658030202559,
+            "concurrent_requests": 3
+          }
+        },
+        {
+          "test_name": "resource_usage",
+          "description": "资源使用测试",
+          "success": true,
+          "result": {
+            "success": true,
+            "monitor_duration": 3.009812593460083,
+            "cpu_usage_start": 65.1,
+            "cpu_usage_end": 62.0,
+            "memory_usage_start": 85.6,
+            "memory_usage_end": 85.7,
+            "resource_monitoring_available": true
+          }
+        }
+      ],
+      "overall_performance_score": 1.0
+    }
+  },
+  "overall_success": true,
+  "total_execution_time": 6.3837151527404785,
+  "summary": {
+    "total_tests": 6,
+    "successful_tests": 6,
+    "failed_tests": 0,
+    "success_rate": 1.0
+  }
+}

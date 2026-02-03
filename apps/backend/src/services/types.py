@@ -23,7 +23,7 @@ VirtualMouseEventType = Literal[
     "right_click", "hover", "drag_start", "drag_end", "scroll"
 ]
 
-class VirtualMouseCommand(TypedDict, total=False):
+class VirtualMouseCommand(TypedDict, total = False):
     action_type: Required[VirtualMouseEventType]
     target_element_id: Optional[str]
     relative_x: Optional[float]
@@ -40,14 +40,14 @@ VirtualKeyboardActionType = Literal[
     "type_string", "press_keys", "release_keys", "special_key"
 ]
 
-class VirtualKeyboardCommand(TypedDict, total=False):
+class VirtualKeyboardCommand(TypedDict, total = False):
     action_type: Required[VirtualKeyboardActionType]
     target_element_id: Optional[str]
     text_to_type: Optional[str]
     keys: Optional[List[str]]
 
 # Simulated Resource Types
-class SimulatedDiskConfig(TypedDict):
+class SimulatedDiskConfig(TypedDict, total=False):
     space_gb: Required[float]
     warning_threshold_percent: Required[float]
     critical_threshold_percent: Required[float]

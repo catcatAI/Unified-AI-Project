@@ -1,0 +1,322 @@
+[
+  {
+    "question": "如果AI能够真正理解幽默，它会如何回应这个笑话？",
+    "answer": "基于token分析，需要结合具体内容的语境和概念框架来形成有针对性的回答。",
+    "confidence": 0.9463618674852539,
+    "analysis_type": "philosophical",
+    "processing_time": 0.14752782917507357,
+    "timestamp": "2025-10-10T08:33:29.501518",
+    "answer_length": 37,
+    "question_length": 24,
+    "metadata": {
+      "token_analysis": {
+        "category_counts": {
+          "philosophical": 0,
+          "technical": 0,
+          "emotional": 0,
+          "creative": 0,
+          "practical": 0
+        },
+        "primary_category": "philosophical",
+        "token_density": 0.0,
+        "complexity_indicators": {
+          "unique_tokens": 347,
+          "total_tokens": 352,
+          "average_token_length": 3.7443181818181817,
+          "specialized_terms": 0
+        }
+      },
+      "question_tokens": 5,
+      "based_on_tokens": true,
+      "semantic_associations": {}
+    }
+  },
+  {
+    "question": "如果我用Python写了一个递归函数，但是忘记写base case，AI会如何分析这个无限递归的问题？",
+    "answer": "基于token分析，需要结合具体内容的语境和概念框架来形成有针对性的回答。",
+    "confidence": 0.7864204151945585,
+    "analysis_type": "philosophical",
+    "processing_time": 0.15679320717886672,
+    "timestamp": "2025-10-10T08:33:30.143211",
+    "answer_length": 37,
+    "question_length": 51,
+    "metadata": {
+      "token_analysis": {
+        "category_counts": {
+          "philosophical": 0,
+          "technical": 0,
+          "emotional": 0,
+          "creative": 0,
+          "practical": 0
+        },
+        "primary_category": "philosophical",
+        "token_density": 0.0,
+        "complexity_indicators": {
+          "unique_tokens": 347,
+          "total_tokens": 352,
+          "average_token_length": 3.7443181818181817,
+          "specialized_terms": 0
+        }
+      },
+      "question_tokens": 9,
+      "based_on_tokens": true,
+      "semantic_associations": {}
+    }
+  },
+  {
+    "question": "我今天早上喝咖啡时不小心把咖啡洒在了键盘上，AI会建议我如何紧急处理这个问题？",
+    "answer": "基于token分析，需要结合具体内容的语境和概念框架来形成有针对性的回答。",
+    "confidence": 0.7746741442729136,
+    "analysis_type": "philosophical",
+    "processing_time": 0.15315149397840955,
+    "timestamp": "2025-10-10T08:33:30.949520",
+    "answer_length": 37,
+    "question_length": 39,
+    "metadata": {
+      "token_analysis": {
+        "category_counts": {
+          "philosophical": 0,
+          "technical": 0,
+          "emotional": 0,
+          "creative": 0,
+          "practical": 0
+        },
+        "primary_category": "philosophical",
+        "token_density": 0.0,
+        "complexity_indicators": {
+          "unique_tokens": 347,
+          "total_tokens": 352,
+          "average_token_length": 3.7443181818181817,
+          "specialized_terms": 0
+        }
+      },
+      "question_tokens": 10,
+      "based_on_tokens": true,
+      "semantic_associations": {}
+    }
+  },
+  {
+    "question": "设计一个能够自我验证代码正确性的AI系统，需要哪些核心组件？",
+    "answer": "基于token分析，需要结合具体内容的语境和概念框架来形成有针对性的回答。",
+    "confidence": 0.8593282430141014,
+    "analysis_type": "philosophical",
+    "processing_time": 0.056952597627453555,
+    "timestamp": "2025-10-10T08:33:31.968445",
+    "answer_length": 37,
+    "question_length": 30,
+    "metadata": {
+      "token_analysis": {
+        "category_counts": {
+          "philosophical": 0,
+          "technical": 0,
+          "emotional": 0,
+          "creative": 0,
+          "practical": 0
+        },
+        "primary_category": "philosophical",
+        "token_density": 0.0,
+        "complexity_indicators": {
+          "unique_tokens": 347,
+          "total_tokens": 352,
+          "average_token_length": 3.7443181818181817,
+          "specialized_terms": 0
+        }
+      },
+      "question_tokens": 7,
+      "based_on_tokens": true,
+      "semantic_associations": {}
+    }
+  },
+  {
+    "question": "想象一个AI城市管理系统，它需要同时处理交通拥堵、空气污染、能源消耗和市民投诉，它会如何平衡这些相互冲突的目标？",
+    "answer": "基于token分析，需要结合具体内容的语境和概念框架来形成有针对性的回答。",
+    "confidence": 0.8840415815797409,
+    "analysis_type": "philosophical",
+    "processing_time": 0.1258754583216452,
+    "timestamp": "2025-10-10T08:33:32.650124",
+    "answer_length": 37,
+    "question_length": 56,
+    "metadata": {
+      "token_analysis": {
+        "category_counts": {
+          "philosophical": 0,
+          "technical": 0,
+          "emotional": 0,
+          "creative": 0,
+          "practical": 0
+        },
+        "primary_category": "philosophical",
+        "token_density": 0.0,
+        "complexity_indicators": {
+          "unique_tokens": 347,
+          "total_tokens": 352,
+          "average_token_length": 3.7443181818181817,
+          "specialized_terms": 0
+        }
+      },
+      "question_tokens": 13,
+      "based_on_tokens": true,
+      "semantic_associations": {}
+    }
+  },
+  {
+    "question": "如果AI能够观察和理解人类的认知偏差，它是否会发展出与人类不同的认知模式？这种差异会如何体现？",
+    "answer": "基于token分析，需要结合具体内容的语境和概念框架来形成有针对性的回答。",
+    "confidence": 0.9266773268744224,
+    "analysis_type": "philosophical",
+    "processing_time": 0.05450325865629156,
+    "timestamp": "2025-10-10T08:33:33.612286",
+    "answer_length": 37,
+    "question_length": 47,
+    "metadata": {
+      "token_analysis": {
+        "category_counts": {
+          "philosophical": 0,
+          "technical": 0,
+          "emotional": 0,
+          "creative": 0,
+          "practical": 0
+        },
+        "primary_category": "philosophical",
+        "token_density": 0.0,
+        "complexity_indicators": {
+          "unique_tokens": 347,
+          "total_tokens": 352,
+          "average_token_length": 3.7443181818181817,
+          "specialized_terms": 0
+        }
+      },
+      "question_tokens": 12,
+      "based_on_tokens": true,
+      "semantic_associations": {}
+    }
+  },
+  {
+    "question": "当我感到焦虑和不确定时，AI会如何识别我的情绪状态并提供适当的支持和建议？",
+    "answer": "基于token分析，此问题涉及具体实践，需要实用的解决方案和可操作的步骤。",
+    "confidence": 0.7769878047717764,
+    "analysis_type": "practical",
+    "processing_time": 0.11198632372887776,
+    "timestamp": "2025-10-10T08:33:34.597396",
+    "answer_length": 37,
+    "question_length": 37,
+    "metadata": {
+      "token_analysis": {
+        "category_counts": {
+          "philosophical": 0,
+          "technical": 0,
+          "emotional": 0,
+          "creative": 0,
+          "practical": 0
+        },
+        "primary_category": "philosophical",
+        "token_density": 0.0,
+        "complexity_indicators": {
+          "unique_tokens": 347,
+          "total_tokens": 352,
+          "average_token_length": 3.7443181818181817,
+          "specialized_terms": 0
+        }
+      },
+      "question_tokens": 10,
+      "based_on_tokens": true,
+      "semantic_associations": {}
+    }
+  },
+  {
+    "question": "如何将量子物理的原理应用到日常决策中？AI会如何解释量子叠加态来帮助我选择职业方向？",
+    "answer": "基于token分析，需要结合具体内容的语境和概念框架来形成有针对性的回答。",
+    "confidence": 0.7606040227259211,
+    "analysis_type": "philosophical",
+    "processing_time": 0.19308277373020355,
+    "timestamp": "2025-10-10T08:33:35.367311",
+    "answer_length": 37,
+    "question_length": 42,
+    "metadata": {
+      "token_analysis": {
+        "category_counts": {
+          "philosophical": 0,
+          "technical": 0,
+          "emotional": 0,
+          "creative": 0,
+          "practical": 0
+        },
+        "primary_category": "philosophical",
+        "token_density": 0.0,
+        "complexity_indicators": {
+          "unique_tokens": 347,
+          "total_tokens": 352,
+          "average_token_length": 3.7443181818181817,
+          "specialized_terms": 0
+        }
+      },
+      "question_tokens": 10,
+      "based_on_tokens": true,
+      "semantic_associations": {}
+    }
+  },
+  {
+    "question": "当AI说'我不知道'时，这代表什么意义上的'无知'？",
+    "answer": "基于token分析，需要结合具体内容的语境和概念框架来形成有针对性的回答。",
+    "confidence": 0.7989478632215743,
+    "analysis_type": "philosophical",
+    "processing_time": 0.06294164064616403,
+    "timestamp": "2025-10-10T08:33:36.373197",
+    "answer_length": 37,
+    "question_length": 26,
+    "metadata": {
+      "token_analysis": {
+        "category_counts": {
+          "philosophical": 0,
+          "technical": 0,
+          "emotional": 0,
+          "creative": 0,
+          "practical": 0
+        },
+        "primary_category": "philosophical",
+        "token_density": 0.0,
+        "complexity_indicators": {
+          "unique_tokens": 347,
+          "total_tokens": 352,
+          "average_token_length": 3.7443181818181817,
+          "specialized_terms": 0
+        }
+      },
+      "question_tokens": 5,
+      "based_on_tokens": true,
+      "semantic_associations": {}
+    }
+  },
+  {
+    "question": "我正在思考'我在思考我正在思考什么'这个问题，但是我发现我陷入了无限递归，AI会如何帮助我跳出这种元认知的循环？",
+    "answer": "基于token分析，需要结合具体内容的语境和概念框架来形成有针对性的回答。",
+    "confidence": 0.8574559817315284,
+    "analysis_type": "philosophical",
+    "processing_time": 0.1865363823878488,
+    "timestamp": "2025-10-10T08:33:37.112265",
+    "answer_length": 37,
+    "question_length": 56,
+    "metadata": {
+      "token_analysis": {
+        "category_counts": {
+          "philosophical": 0,
+          "technical": 0,
+          "emotional": 0,
+          "creative": 0,
+          "practical": 0
+        },
+        "primary_category": "philosophical",
+        "token_density": 0.0,
+        "complexity_indicators": {
+          "unique_tokens": 347,
+          "total_tokens": 352,
+          "average_token_length": 3.7443181818181817,
+          "specialized_terms": 0
+        }
+      },
+      "question_tokens": 14,
+      "based_on_tokens": true,
+      "semantic_associations": {}
+    }
+  }
+]

@@ -2,16 +2,20 @@
 # This system will manage the AI's perception and use of time, scheduling, reminders, etc.
 
 import datetime
+from typing import List, Dict, Optional, Any
 
 class TimeSystem:
-    def __init__(self, config: dict = None):
+    """Manages time-related functions for the AI."""
+
+    def __init__(self, config: Optional[Dict] = None):
+        """Initializes the TimeSystem."""
         self.config = config or {}
-        self.current_time_override = None # For testing or specific scenarios
-        self.reminders = []
+        self.current_time_override: Optional[datetime.datetime] = None  # For testing
+        self.reminders: List[Dict[str, Any]] = []
         print("TimeSystem initialized.")
 
     def get_current_time(self) -> datetime.datetime:
-        """Returns the current datetime."""
+        """Returns the current datetime, respecting the override."""
         if self.current_time_override:
             return self.current_time_override
         return datetime.datetime.now()
@@ -22,7 +26,7 @@ class TimeSystem:
 
     def set_reminder(self, time_expression: str, event_description: str) -> bool:
         """
-        Sets a reminder based on a time expression (e.g., "in 5 minutes").
+        Sets a reminder based on a simple time expression (e.g., "in 5 minutes").
         """
         parts = time_expression.lower().split()
         if len(parts) == 3 and parts[0] == "in" and parts[2] in ["minute", "minutes"]:
@@ -39,7 +43,7 @@ class TimeSystem:
         print(f"TimeSystem: Time expression not supported: {time_expression}")
         return False
 
-    def check_due_reminders(self) -> list:
+    def check_due_reminders(self) -> List[str]:
         """
         Checks for any reminders that are due.
         Returns a list of due reminder descriptions and removes them from the list.
@@ -61,7 +65,7 @@ class TimeSystem:
             return "afternoon"
         elif 18 <= current_hour < 22:
             return "evening"
-        else: # 22:00 to 04:59
+        else:  # 22:00 to 04:59
             return "night"
 
 if __name__ == '__main__':
@@ -73,10 +77,10 @@ if __name__ == '__main__':
     time_segment = time_sys.get_time_of_day_segment()
     print(f"Current time segment: {time_segment}")
 
-    time_sys.set_reminder("in 10 minutes", "Check on the AI's learning progress.")
+    time_sys.set_reminder("in 1 minute", "Check on the AI's learning progress.")
 
     due_reminders = time_sys.check_due_reminders()
-    if not due_reminders: # Corrected variable name
+    if not due_reminders:
         print("No reminders currently due.")
     else:
         print(f"Due reminders: {due_reminders}")

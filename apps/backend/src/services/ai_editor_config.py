@@ -1,35 +1,29 @@
-# src/services/ai_editor_config.py
 """
-Configuration for the AI Editor Service
+Configuration for the AI Editor Service.
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 
 @dataclass
 class DataProcessingConfig:
     """Configuration for data processing"""
-    # Text processing settings
     text_summarization_enabled: bool = True
     text_keyword_extraction_enabled: bool = True
     max_summary_length: int = 200
     max_keywords: int = 10
     
-    # Code processing settings
     code_function_extraction_enabled: bool = True
     code_class_extraction_enabled: bool = True
     code_comment_extraction_enabled: bool = True
     code_docstring_extraction_enabled: bool = True
     code_complexity_analysis_enabled: bool = True
     
-    # Structured data processing settings
     structured_data_flattening_enabled: bool = True
     max_nesting_depth: int = 10
     
-    # Application data processing settings
     app_element_filtering_enabled: bool = True
     max_ui_elements: int = 1000
-
 
 @dataclass
 class SandboxConfig:
@@ -45,39 +39,30 @@ class SandboxConfig:
         "os", "sys", "subprocess", "socket"
     ])
 
-
 @dataclass
 class AIEditorConfig:
     """Main configuration for AI Editor Service"""
-    # General settings
     enabled: bool = True
     log_level: str = "INFO"
     
-    # Data processing configuration
     data_processing: DataProcessingConfig = field(default_factory=DataProcessingConfig)
-    
-    # Sandbox configuration
     sandbox: SandboxConfig = field(default_factory=SandboxConfig)
     
-    # Memory settings
     memory_storage_enabled: bool = True
     max_memory_entries: int = 10000
     
-    # Performance settings
     max_concurrent_processes: int = 5
     cache_enabled: bool = True
-    cache_ttl_seconds: int = 300  # 5 minutes
+    cache_ttl_seconds: int = 300
     
-    # Security settings
     input_validation_enabled: bool = True
     output_sanitization_enabled: bool = True
-
 
 # Default configuration
 DEFAULT_CONFIG = AIEditorConfig()
 
 # Configuration presets for different use cases
-CONFIG_PRESETS = {
+CONFIG_PRESETS: Dict[str, AIEditorConfig] = {
     "development": AIEditorConfig(
         log_level="DEBUG",
         data_processing=DataProcessingConfig(
@@ -90,23 +75,21 @@ CONFIG_PRESETS = {
             max_memory_mb=1024
         )
     ),
-    
     "production": AIEditorConfig(
         log_level="INFO",
         data_processing=DataProcessingConfig(
             text_summarization_enabled=True,
-            code_complexity_analysis_enabled=False  # Disable for performance
+            code_complexity_analysis_enabled=False
         ),
         sandbox=SandboxConfig(
             timeout_seconds=30,
             max_memory_mb=256
         )
     ),
-    
     "high_performance": AIEditorConfig(
         log_level="WARNING",
         data_processing=DataProcessingConfig(
-            text_summarization_enabled=False,  # Disable for performance
+            text_summarization_enabled=False,
             code_complexity_analysis_enabled=False
         ),
         sandbox=SandboxConfig(
@@ -118,11 +101,10 @@ CONFIG_PRESETS = {
     )
 }
 
-
 def get_config(preset: str = "development") -> AIEditorConfig:
     """
     Get configuration for the AI Editor Service.
-    
+
     Args:
         preset: Configuration preset to use ('development', 'production', 'high_performance')
         
@@ -133,11 +115,10 @@ def get_config(preset: str = "development") -> AIEditorConfig:
         return CONFIG_PRESETS[preset]
     return DEFAULT_CONFIG
 
-
 def update_config(config: AIEditorConfig, updates: Dict[str, Any]) -> AIEditorConfig:
     """
     Update configuration with new values.
-    
+
     Args:
         config: Current configuration
         updates: Dictionary of updates to apply

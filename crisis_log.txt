@@ -191,3 +191,135 @@
 [2025-09-21 22:18:03.651582] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
 [2025-09-21 22:18:03.662693] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
 [2025-09-21 22:18:03.677026] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 04:59:34.563592] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 04:59:34.569193] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 04:59:34.575980] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 04:59:34.582409] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 05:17:08.014529] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 05:17:08.261667] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 05:17:08.574688] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 05:17:08.730427] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 10:27:01.440033] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 10:27:01.464249] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 10:27:01.480981] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 10:27:01.499080] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 11:08:10.485546] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 11:08:10.501480] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 11:08:10.501480] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 11:08:10.513573] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 11:51:06.637507] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 11:51:06.656722] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 11:51:06.659747] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 11:51:06.659747] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 12:21:24.247709] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 12:21:24.272609] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 12:21:24.287126] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 12:21:24.307972] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 12:44:14.671297] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 12:44:14.686847] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 12:44:14.697955] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 12:44:14.706602] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 12:53:30.286900] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 12:53:30.298798] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 12:53:30.316916] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 12:53:30.332318] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 13:48:35.167494] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 13:48:35.167494] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 13:48:35.185770] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 13:48:35.192073] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 14:11:30.809229] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 14:11:30.831388] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 14:11:30.851804] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 14:11:30.868507] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 18:40:26.642466] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 18:40:26.658415] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 18:40:26.658415] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 18:40:26.658415] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 19:57:17.763695] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 19:57:17.770784] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 19:57:17.776971] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 19:57:17.786439] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-22 22:44:11.561807] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-22 22:44:11.561807] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-22 22:44:11.577611] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-22 22:44:11.577611] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 00:54:16.379636] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 00:54:16.383806] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 00:54:16.383806] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 00:54:16.400181] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 00:58:52.798360] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 00:58:52.809306] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 00:58:52.813941] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 00:58:52.822120] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 01:05:17.568270] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 01:05:17.579663] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 01:05:17.586071] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 01:05:17.594276] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 01:25:14.538480] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 01:25:14.538480] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 01:25:14.554444] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 01:25:14.554444] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 01:27:37.210602] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 01:27:37.218465] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 01:27:37.229078] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 01:27:37.236272] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 01:29:59.532819] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 01:29:59.541292] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 01:29:59.548661] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 01:29:59.555066] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 05:27:36.084071] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 05:27:36.084071] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 05:27:36.100174] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 05:27:36.100174] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 05:56:56.750872] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 05:56:56.750872] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 05:56:56.762569] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 05:56:56.766675] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 16:54:08.483023] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 16:54:08.490635] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 16:54:08.492656] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 16:54:08.503837] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 17:04:18.364763] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 17:04:18.373310] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 17:04:18.379836] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 17:04:18.388048] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 17:27:17.548398] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 17:27:17.548398] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 17:27:17.563409] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 17:27:17.563409] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 17:53:49.614091] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 17:53:49.620486] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 17:53:49.620486] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 17:53:49.634571] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 18:06:56.915745] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 18:06:56.922021] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 18:06:56.927807] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 18:06:56.934621] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 18:09:13.923713] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 18:09:13.925734] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 18:09:13.925734] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 18:09:13.941522] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 18:11:54.283922] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 18:11:54.299666] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 18:11:54.302700] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 18:11:54.318401] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 18:14:13.466881] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 18:14:13.477645] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 18:14:13.489550] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 18:14:13.498714] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 18:16:47.393911] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 18:16:47.405787] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 18:16:47.419197] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 18:16:47.436841] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 18:49:43.609013] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 18:49:43.614392] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 18:49:43.621890] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 18:49:43.625700] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-23 18:52:46.300365] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-23 18:52:46.300365] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-23 18:52:46.314016] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-23 18:52:46.317464] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}
+[2025-09-24 09:20:56.290653] CRISIS_LOG: Level 1 event. Details: {'input_text': 'this is an emergency!', 'context': None}
+[2025-09-24 09:20:56.302718] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i feel unsafe.', 'context': None}
+[2025-09-24 09:20:56.320588] CRISIS_LOG: Level 1 event. Details: {'input_text': 'critical danger detected', 'context': None}
+[2025-09-24 09:20:56.336619] CRISIS_LOG: Level 1 event. Details: {'input_text': 'i am so sad and depressed and angry.', 'context': None}

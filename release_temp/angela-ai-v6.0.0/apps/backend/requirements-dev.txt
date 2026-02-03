@@ -1,0 +1,16 @@
+# This file contains all dependencies needed to run the backend test suite.
+# It combines the main project dependencies and the testing-specific ones.
+
+# === Testing Dependencies ===
+pytest
+pytest-asyncio
+pytest-cov
+aiounittest
+pytest-timeout>=2.1.0
+astunparse>=1.6.0
+aiohttp
+amqtt
+pytest-benchmark
+
+# === Build/Dependency Tools ===
+pip-tools

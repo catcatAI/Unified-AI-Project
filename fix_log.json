@@ -1,0 +1,751 @@
+[
+  {
+    "timestamp": "2025-11-07T19:15:37.042917",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\agents\\test_agent_manager.py",
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.058858",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.058858",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.058858",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\code_understanding\\test_lightweight_code_model.py",
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.058858",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.058858",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.058858",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.058858",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.058858",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.058858",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\test_crisis_system.py",
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.074340",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.080876",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\creation\\test_creation_engine.py",
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.080876",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.080876",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.090207",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\hsp\\test_hsp_advanced_integration.py",
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.090207",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.090207",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.090207",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core\\hsp\\bridge\\message_bridge.py",
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.090207",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.090207",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.105890",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\mcp\\test_mcp_connector.py",
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.105890",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.105890",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.105890",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\test_dependency_manager.py",
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.105890",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.105890",
+    "success": false,
+    "file_path": null,
+    "fix_type": "IMPORT_ERROR",
+    "description": "需要人工检查: ImportError. Check for incorrect import paths or circular dependencies."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.122103",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\agents\\test_agent_manager.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.122103",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\agents\\test_base_agent.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.122103",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\agents\\test_code_understanding_agent.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.122103",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\agents\\test_creative_writing_agent.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.137405",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\agents\\test_data_analysis_agent.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.137405",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\agents\\test_knowledge_graph_agent.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.137405",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\code_understanding\\test_lightweight_code_model.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.137405",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\context\\test_context_system.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.153313",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\dialogue\\test_dialogue_manager.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.153313",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\dialogue\\test_project_coordinator.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.153313",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\formula_engine\\test_formula_engine.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.168519",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\language_models\\test_daily_language_model.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.173849",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\ai\\learning\\content_analyzer_module.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.173849",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\lis\\test_ham_lis_cache.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.173849",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\lis\\test_tonal_repair_engine.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.185237",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\memory\\test_ham_chromadb_integration.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.185237",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\memory\\test_ham_memory_manager.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.185237",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\meta_formulas\\test_meta_formulas.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.185237",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\personality\\test_personality_manager.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.201066",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\service_discovery\\test_service_discovery_module.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.201066",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\test_agent_manager.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.201066",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\test_crisis_system.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.201066",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\test_emotion_system.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.216811",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\core_ai\\test_time_system.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.216811",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\creation\\test_creation_engine.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.216811",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\economy\\economy_db.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.232519",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\economy\\economy_manager.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.233101",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\evaluation\\test_evaluation_db.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.233101",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\evaluation\\test_evaluator.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.260457",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\ai\\evaluation\\task_evaluator.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.263699",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\fragmenta\\test_fragmenta_orchestrator.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.263699",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\game\\test_assets.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.271834",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\game\\test_main.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.273850",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\game\\test_npcs.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.275866",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\hsp\\test_hsp_ack_retry.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.277878",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\hsp\\test_hsp_integration.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.280342",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\hsp\\test_hsp_security.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.280342",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\core\\hsp\\bridge\\message_bridge.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.280342",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integration\\conftest.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.280342",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integrations\\test_atlassian_api.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.280342",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integrations\\test_atlassian_bridge.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.280342",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integrations\\test_atlassian_bridge_fallback.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.280342",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integrations\\test_rovo_dev_agent.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.280342",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\integrations\\test_rovo_dev_agent_recovery.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.280342",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\mcp\\test_mcp_connector.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.296174",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\meta\\test_learning_log_db.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.298187",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\modules_fragmenta\\test_element_layer.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.300199",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\modules_fragmenta\\test_vision_tone_inverter.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.302210",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\pet\\pet_manager.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.302210",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\search\\test_search_engine.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.304223",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_audio_service.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.306234",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_health_ready_endpoints.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.308246",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_hot_endpoints.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.310257",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_hsp_endpoints.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.312307",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_llm_interface.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.315277",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_main_api_server_hsp.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.315277",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_models_endpoints.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.315277",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_node_services.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.315277",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_sandbox_executor.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.327684",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_vision_service.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.328232",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\shared\\test_key_manager.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.328232",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\shared\\utils\\cleanup_utils.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.328232",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\services\\ai_editor.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.349763",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\test_atlassian_integration.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.355817",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\test_basic.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.363409",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\src\\config_loader.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.372445",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\..\\src\\core_services.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.376357",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\test_core_services_module.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.376357",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\test_dependency_manager.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.376357",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\test_result_processing_test.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.376357",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\test_simple.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.395628",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\test_smart_dev_runner.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.399696",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\..\\src\\system_integration.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.403764",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\tools\\test_code_understanding_tool.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.410881",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\tools\\test_logic_model.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.416996",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\tools\\test_math_model.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.424439",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\tools\\test_parameter_extractor.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.430584",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\tools\\test_tool_dispatcher_logging.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.434654",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\tools\\test_translation_model.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.443991",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\training\\test_training_manager.py",
+    "fix_type": "SYNTAX_ERROR",
+    "description": "需要人工检查: SyntaxError."
+  },
+  {
+    "timestamp": "2025-11-07T19:15:37.448084",
+    "success": false,
+    "file_path": "D:\\Projects\\Unified-AI-Project\\apps\\backend\\tests\\services\\test_node_services.py",
+    "fix_type": "CONNECTION_ERROR",
+    "description": "需要人工检查: ConnectionError. Check network or add retry logic."
+  }
+]

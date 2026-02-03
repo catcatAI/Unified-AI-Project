@@ -1,0 +1,20 @@
+{
+  "context_id": "bc61cf00-069f-45c9-8422-5c444a12cf81",
+  "context_type": "dialogue",
+  "created_at": "2025-09-21T03:16:22.974972",
+  "updated_at": "2025-09-21T03:16:22.974972",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "message": {
+      "message_id": "msg_20250921031622974972",
+      "conversation_id": "test_conv_001",
+      "sender": "user",
+      "content": "测试消息",
+      "timestamp": "2025-09-21T03:16:22.974972",
+      "message_type": "text"
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}

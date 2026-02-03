@@ -1,0 +1,13 @@
+{
+  "context_id": "29ed312f-f820-4f84-bc04-eccd4dedd625",
+  "context_type": "tool",
+  "created_at": "2025-09-21T22:17:46.272877",
+  "updated_at": "2025-09-21T22:17:46.272877",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "test": "data"
+  },
+  "version": "1.0",
+  "tags": []
+}

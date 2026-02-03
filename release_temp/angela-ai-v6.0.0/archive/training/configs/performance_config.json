@@ -1,0 +1,49 @@
+{
+  "data_scanning": {
+    "max_files_per_scan": 5000,
+    "scan_interval_seconds": 300,
+    "file_types_to_scan": [
+      "image",
+      "audio",
+      "text",
+      "json",
+      "code",
+      "model",
+      "archive",
+      "binary"
+    ],
+    "enable_file_type_filtering": true,
+    "progress_log_interval": 5000,
+    "max_workers": 8,
+    "enable_parallel_scanning": true
+  },
+  "resource_management": {
+    "cpu_threshold_idle": 30,
+    "cpu_threshold_busy": 80,
+    "memory_min_available_gb": 1,
+    "disk_min_available_gb": 5,
+    "gpu_required_for_vision": false,
+    "gpu_required_for_audio": false
+  },
+  "training_scheduler": {
+    "idle_check_interval_seconds": 60,
+    "min_idle_duration_seconds": 300,
+    "max_retry_attempts": 3,
+    "task_priority": {
+      "vision_service": 1,
+      "audio_service": 1,
+      "concept_models": 2
+    }
+  },
+  "memory_buffer": {
+    "max_buffer_size": 1000,
+    "persist_to_disk": true,
+    "buffer_flush_interval_seconds": 60
+  },
+  "model_management": {
+    "auto_cleanup_enabled": true,
+    "auto_cleanup_interval_seconds": 3600,
+    "versions_to_keep_per_model": 5,
+    "compress_old_models": true
+  }
+}

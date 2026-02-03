@@ -1,0 +1,149 @@
+{
+  "tasks": {
+    "nlp_processing": {
+      "name": "nlp_processing",
+      "command": "python -c \"print('NLP\u5904\u7406\u5b8c\u6210'); print('\u8bed\u4e49\u5206\u6790: \u51fd\u6570\u529f\u80fd\u6e05\u6670')\"",
+      "script_path": null,
+      "working_dir": null,
+      "timeout": 30,
+      "retry_count": 0,
+      "retry_delay": 1,
+      "priority": "TaskPriority.MEDIUM",
+      "dependencies": [],
+      "environment_vars": {},
+      "cpu_limit": null,
+      "memory_limit": null
+    },
+    "code_analysis": {
+      "name": "code_analysis",
+      "command": "python -c \"print('\u4ee3\u7801\u5206\u6790\u5b8c\u6210'); print('\u8bed\u6cd5\u68c0\u67e5: \u65e0\u9519\u8bef')\"",
+      "script_path": null,
+      "working_dir": null,
+      "timeout": 30,
+      "retry_count": 0,
+      "retry_delay": 1,
+      "priority": "TaskPriority.MEDIUM",
+      "dependencies": [
+        "nlp_processing"
+      ],
+      "environment_vars": {},
+      "cpu_limit": null,
+      "memory_limit": null
+    },
+    "logic_reasoning": {
+      "name": "logic_reasoning",
+      "command": "python -c \"print('\u903b\u8f91\u63a8\u7406\u5b8c\u6210'); print('\u63a8\u7406\u7ed3\u679c: \u529f\u80fd\u6b63\u786e')\"",
+      "script_path": null,
+      "working_dir": null,
+      "timeout": 30,
+      "retry_count": 0,
+      "retry_delay": 1,
+      "priority": "TaskPriority.MEDIUM",
+      "dependencies": [
+        "code_analysis"
+      ],
+      "environment_vars": {},
+      "cpu_limit": null,
+      "memory_limit": null
+    },
+    "output_synthesis": {
+      "name": "output_synthesis",
+      "command": "python -c \"print('\u8f93\u51fa\u5408\u6210\u5b8c\u6210'); print('\u7efc\u5408\u62a5\u544a: \u751f\u6210\u6210\u529f')\"",
+      "script_path": null,
+      "working_dir": null,
+      "timeout": 30,
+      "retry_count": 0,
+      "retry_delay": 1,
+      "priority": "TaskPriority.MEDIUM",
+      "dependencies": [
+        "logic_reasoning"
+      ],
+      "environment_vars": {},
+      "cpu_limit": null,
+      "memory_limit": null
+    }
+  },
+  "execution_history": [
+    {
+      "task_name": "nlp_processing",
+      "timestamp": "2025-10-10T06:14:32.092243",
+      "status": "completed",
+      "execution_time": 0.195069,
+      "return_code": 0,
+      "error_message": null
+    },
+    {
+      "task_name": "nlp_processing",
+      "timestamp": "2025-10-10T06:14:32.435754",
+      "status": "completed",
+      "execution_time": 0.337917,
+      "return_code": 0,
+      "error_message": null
+    },
+    {
+      "task_name": "code_analysis",
+      "timestamp": "2025-10-10T06:14:32.670222",
+      "status": "completed",
+      "execution_time": 0.229439,
+      "return_code": 0,
+      "error_message": null
+    },
+    {
+      "task_name": "nlp_processing",
+      "timestamp": "2025-10-10T06:14:32.937139",
+      "status": "completed",
+      "execution_time": 0.252815,
+      "return_code": 0,
+      "error_message": null
+    },
+    {
+      "task_name": "code_analysis",
+      "timestamp": "2025-10-10T06:14:33.136681",
+      "status": "completed",
+      "execution_time": 0.199542,
+      "return_code": 0,
+      "error_message": null
+    },
+    {
+      "task_name": "logic_reasoning",
+      "timestamp": "2025-10-10T06:14:33.394199",
+      "status": "completed",
+      "execution_time": 0.251829,
+      "return_code": 0,
+      "error_message": null
+    },
+    {
+      "task_name": "nlp_processing",
+      "timestamp": "2025-10-10T06:14:33.628383",
+      "status": "completed",
+      "execution_time": 0.232183,
+      "return_code": 0,
+      "error_message": null
+    },
+    {
+      "task_name": "code_analysis",
+      "timestamp": "2025-10-10T06:14:33.935286",
+      "status": "completed",
+      "execution_time": 0.306903,
+      "return_code": 0,
+      "error_message": null
+    },
+    {
+      "task_name": "logic_reasoning",
+      "timestamp": "2025-10-10T06:14:34.128295",
+      "status": "completed",
+      "execution_time": 0.190132,
+      "return_code": 0,
+      "error_message": null
+    },
+    {
+      "task_name": "output_synthesis",
+      "timestamp": "2025-10-10T06:14:34.393580",
+      "status": "completed",
+      "execution_time": 0.265285,
+      "return_code": 0,
+      "error_message": null
+    }
+  ],
+  "last_saved": "2025-10-10T06:14:34.396227"
+}

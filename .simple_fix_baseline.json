@@ -1,0 +1,111 @@
+{
+  "created_at": "2025-10-06T17:46:46.088695",
+  "scripts": {
+    "execute_repair_plan.py": {
+      "path": "execute_repair_plan.py",
+      "size": 4877,
+      "modified": "2025-10-05T21:48:06.922742",
+      "content_hash": "68ad2ee0",
+      "has_fix_functions": 2,
+      "complexity_score": {
+        "total_lines": 140,
+        "code_lines": 110,
+        "functions": 4,
+        "classes": 0
+      }
+    },
+    "fix_decorators.py": {
+      "path": "fix_decorators.py",
+      "size": 2576,
+      "modified": "2025-10-06T11:36:32.901979",
+      "content_hash": "c5f5f2f6",
+      "has_fix_functions": 1,
+      "complexity_score": {
+        "total_lines": 74,
+        "code_lines": 54,
+        "functions": 3,
+        "classes": 0
+      }
+    },
+    "fix_indentation.py": {
+      "path": "fix_indentation.py",
+      "size": 3806,
+      "modified": "2025-10-06T11:19:24.792112",
+      "content_hash": "bd13a755",
+      "has_fix_functions": 1,
+      "complexity_score": {
+        "total_lines": 104,
+        "code_lines": 76,
+        "functions": 2,
+        "classes": 0
+      }
+    },
+    "fix_method_references.py": {
+      "path": "fix_method_references.py",
+      "size": 4660,
+      "modified": "2025-10-05T14:38:29.781710",
+      "content_hash": "3c2fe915",
+      "has_fix_functions": 2,
+      "complexity_score": {
+        "total_lines": 117,
+        "code_lines": 84,
+        "functions": 14,
+        "classes": 0
+      }
+    },
+    "iterative_syntax_fixer.py": {
+      "path": "iterative_syntax_fixer.py",
+      "size": 4535,
+      "modified": "2025-10-06T15:01:01.637646",
+      "content_hash": "7b88cf1c",
+      "has_fix_functions": 0,
+      "complexity_score": {
+        "total_lines": 134,
+        "code_lines": 95,
+        "functions": 5,
+        "classes": 1
+      }
+    },
+    "smart_python_repair.py": {
+      "path": "smart_python_repair.py",
+      "size": 6492,
+      "modified": "2025-10-05T22:31:17.003226",
+      "content_hash": "8bcadacc",
+      "has_fix_functions": 3,
+      "complexity_score": {
+        "total_lines": 181,
+        "code_lines": 134,
+        "functions": 6,
+        "classes": 0
+      }
+    },
+    "syntax_checker.py": {
+      "path": "syntax_checker.py",
+      "size": 3076,
+      "modified": "2025-10-06T10:07:14.247080",
+      "content_hash": "9edb5f40",
+      "has_fix_functions": 0,
+      "complexity_score": {
+        "total_lines": 104,
+        "code_lines": 82,
+        "functions": 3,
+        "classes": 0
+      }
+    },
+    "systematic_repair_executor.py": {
+      "path": "systematic_repair_executor.py",
+      "size": 7215,
+      "modified": "2025-10-06T14:37:54.031119",
+      "content_hash": "86a73dcc",
+      "has_fix_functions": 1,
+      "complexity_score": {
+        "total_lines": 206,
+        "code_lines": 155,
+        "functions": 5,
+        "classes": 0
+      }
+    }
+  },
+  "count": 8,
+  "hash": "9d1c6cf7ed51e44a"
+}

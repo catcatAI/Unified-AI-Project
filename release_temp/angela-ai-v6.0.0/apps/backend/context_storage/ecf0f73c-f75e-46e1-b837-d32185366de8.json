@@ -1,0 +1,17 @@
+{
+  "context_id": "ecf0f73c-f75e-46e1-b837-d32185366de8",
+  "context_type": "memory",
+  "created_at": "2025-09-22T19:46:24.089357",
+  "updated_at": "2025-09-22T19:46:24.089357",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "memory_embedding": {
+      "memory_id": "mem_20250922194624076595",
+      "embedding_updated": "2025-09-22T19:46:24.088356",
+      "embedding_length": 3
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}

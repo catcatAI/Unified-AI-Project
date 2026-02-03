@@ -1,0 +1,17 @@
+{
+  "timestamp": "2025-10-19T00:39:17.693488",
+  "imports": {
+    "FastAPI": true,
+    "System Manager": false,
+    "Config": false,
+    "Knowledge Graph": false,
+    "API Routes": false
+  },
+  "startup": false,
+  "components": {
+    "Level5Config": false,
+    "SystemManager": false,
+    "KnowledgeGraph": false
+  },
+  "overall": false
+}

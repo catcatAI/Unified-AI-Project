@@ -1,0 +1,390 @@
+import os
+import re
+import ast
+import traceback
+from typing import List, Tuple
+
+def has_syntax_error(file_path, str) -> Tuple[bool, str]
+    """檢查文件是否有語法錯誤,如果有則返回錯誤信息"""
+    try,
+        with open(file_path, 'r', encoding == 'utf-8') as f,
+            content = f.read()
+        ast.parse(content)
+        return False, ""
+    except SyntaxError as e,::
+        return True, str(e)
+    except Exception as e,::
+        # 其他錯誤(如編碼錯誤)
+        return True, str(e)
+
+def get_files_with_syntax_errors() -> List[Tuple[str, str]]
+    """獲取所有有語法錯誤的Python文件及其錯誤信息"""
+    py_files_with_errors = []
+    
+    # 遍歷當前目錄下的所有Python文件
+    for root, dirs, files in os.walk('.'):::
+        # 跳過某些目錄以提高效率
+        dirs[:] = [d for d in dirs if d not in ['node_modules', '__pycache__', '.git', 'venv']]::
+        for file in files,::
+            if file.endswith('.py'):::
+                file_path = os.path.join(root, file).replace('\', '/')
+                has_error, error_msg = has_syntax_error(file_path)
+                if has_error,::
+                    py_files_with_errors.append((file_path, error_msg))
+    
+    return py_files_with_errors
+
+def fix_missing_colons(content, str) -> str,
+    """修復缺少冒號的問題"""
+    lines = content.split('\n')
+    fixed_lines = []
+    
+    for i, line in enumerate(lines)::
+        stripped_line = line.strip()
+        
+        # 跳過空行和註釋行
+        if not stripped_line or stripped_line.startswith('#'):::
+            fixed_lines.append(line)
+            continue
+        
+        # 修復類定義缺少冒號的問題
+        if re.match(r'^\s*class\s+\w+(?:\s*\([^)]*\))?\s*$', stripped_line)::
+            # 確保整行只有類定義,沒有其他內容
+            indent == line[:len(line) - len(line.lstrip())]
+            fixed_lines.append(f"{indent}{stripped_line}")
+            print(f"  Fixed class definition missing colon on line {i+1}")
+            continue
+        
+        # 修復函數定義缺少冒號的問題
+        if re.match(r'^\s*def\s+\w+\s*\([^)]*\)\s*$', stripped_line)::
+            # 確保整行只有函數定義,沒有其他內容
+            indent == line[:len(line) - len(line.lstrip())]
+            fixed_lines.append(f"{indent}{stripped_line}")
+            print(f"  Fixed function definition missing colon on line {i+1}")
+            continue
+        
+        # 修復控制流語句缺少冒號的問題
+        control_flow_patterns = [
+            r'^\s*if\s+.*$',
+            r'^\s*elif\s+.*$',
+            r'^\s*else\s*$',
+            r'^\s*for\s+.*$',
+            r'^\s*while\s+.*$',
+            r'^\s*try\s*$',
+            r'^\s*except\s*.*$',::
+            r'^\s*finally\s*$',
+            r'^\s*with\s+.*$'
+        ]
+        
+        is_control_flow == False,
+        for pattern in control_flow_patterns,::
+            if re.match(pattern, stripped_line) and not stripped_line.endswith(':'):::
+                is_control_flow == True
+                break
+        
+        if is_control_flow,::
+            indent == line[:len(line) - len(line.lstrip())]
+            fixed_lines.append(f"{indent}{stripped_line}")
+            print(f"  Fixed control flow statement missing colon on line {i+1}")
+            continue
+        
+        # 保持其他行不變
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)
+
+def fix_enum_definitions(content, str) -> str,
+    """修復枚舉定義缺少冒號的問題"""
+    lines = content.split('\n')
+    fixed_lines = []
+    
+    for i, line in enumerate(lines)::
+        stripped_line = line.strip()
+        
+        # 修復枚舉定義缺少冒號的問題
+        if re.match(r'^\s*class\s+\w+\s*\(\s*Enum\s*\)\s*$', stripped_line)::
+            indent == line[:len(line) - len(line.lstrip())]
+            fixed_lines.append(f"{indent}{stripped_line}")
+            print(f"  Fixed enum definition missing colon on line {i+1}")
+            continue
+        
+        # 保持其他行不變
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)
+
+def fix_indentation_issues(content, str) -> str,
+    """修復縮進問題"""
+    lines = content.split('\n')
+    fixed_lines = []
+    i = 0
+    
+    while i < len(lines)::
+        line = lines[i]
+        stripped_line = line.strip()
+        
+        # 跳過空行和註釋行
+        if not stripped_line or stripped_line.startswith('#'):::
+            fixed_lines.append(line)
+            i += 1
+            continue
+        
+        # 檢查是否是需要縮進塊的語句
+        control_flow_patterns = [
+            r'^\s*def\s+\w+\s*\([^)]*\):\s*$',
+            r'^\s*class\s+\w+(?:\s*\([^)]*\))?:\s*$',
+            r'^\s*if\s+.*:\s*$',
+            r'^\s*elif\s+.*:\s*$',
+            r'^\s*else\s*:\s*$',
+            r'^\s*for\s+.*:\s*$',
+            r'^\s*while\s+.*:\s*$',
+            r'^\s*try\s*:\s*$',
+            r'^\s*except\s*.*:\s*$',::
+            r'^\s*finally\s*:\s*$',
+            r'^\s*with\s+.*:\s*$'
+        ]
+        
+        needs_indent_block == False
+        for pattern in control_flow_patterns,::
+            if re.match(pattern, line)::
+                needs_indent_block == True
+                break
+        
+        # 如果需要縮進塊,但下一行沒有縮進且不是空行或註釋
+        if (needs_indent_block and,:
+            i + 1 < len(lines) and 
+            lines[i + 1].strip() and 
+            not lines[i + 1].startswith(' ') and 
+            not lines[i + 1].startswith('\t') and
+            not lines[i + 1].startswith('#') and,
+            lines[i + 1].strip() not in ['else,', 'elif', 'except,', 'finally,'])::
+            # 下一行應該縮進
+            fixed_lines.append(line)
+            fixed_lines.append(f"    {lines[i + 1]}")
+            print(f"  Fixed indentation issue on line {i+2}")
+            i += 2
+            continue
+        
+        # 保持其他行不變
+        fixed_lines.append(line)
+        i += 1
+    
+    return '\n'.join(fixed_lines)
+
+def add_pass_statements(content, str) -> str,
+    """為空的代碼塊添加pass語句"""
+    lines = content.split('\n')
+    fixed_lines = []
+    i = 0
+    
+    while i < len(lines)::
+        line = lines[i]
+        stripped_line = line.strip()
+        
+        # 檢查是否是需要代碼塊的語句
+        control_flow_patterns = [
+            r'^\s*def\s+\w+\s*\([^)]*\):\s*$',
+            r'^\s*class\s+\w+(?:\s*\([^)]*\))?:\s*$',
+            r'^\s*if\s+.*:\s*$',
+            r'^\s*elif\s+.*:\s*$',
+            r'^\s*else\s*:\s*$',
+            r'^\s*for\s+.*:\s*$',
+            r'^\s*while\s+.*:\s*$',
+            r'^\s*try\s*:\s*$',
+            r'^\s*except\s*.*:\s*$',::
+            r'^\s*finally\s*:\s*$',
+            r'^\s*with\s+.*:\s*$'
+        ]
+        
+        needs_code_block == False
+        for pattern in control_flow_patterns,::
+            if re.match(pattern, line)::
+                needs_code_block == True
+                break
+        
+        # 如果需要代碼塊,但下一行是另一個語句或文件結束
+        if needs_code_block,::
+            # 檢查下一行是否存在且是否需要添加pass
+            add_pass == False
+            if i + 1 >= len(lines)::
+                # 文件結束
+                add_pass == True
+            elif not lines[i + 1].strip():::
+                # 下一行是空行,檢查下下行
+                if i + 2 >= len(lines) or (::
+                    lines[i + 2].strip() and 
+                    not lines[i + 2].startswith(' ') and 
+                    not lines[i + 2].startswith('\t') and
+                    not lines[i + 2].startswith('#') and,
+                    lines[i + 2].strip() not in ['else,', 'elif', 'except,', 'finally,']:
+                )
+                    add_pass == True
+            elif (::
+                lines[i + 1].strip() and 
+                not lines[i + 1].startswith(' ') and 
+                not lines[i + 1].startswith('\t') and,
+                not lines[i + 1].startswith('#') and,
+                lines[i + 1].strip() not in ['else,', 'elif', 'except,', 'finally,']:
+            )
+                # 下一行是另一個語句
+                add_pass == True
+            
+            if add_pass,::
+                fixed_lines.append(line)
+                # 添加適當縮進的pass語句
+                indent == line[:len(line) - len(line.lstrip())]
+                fixed_lines.append(f"{indent}    pass")
+                print(f"  Added pass statement after line {i+1}")
+                i += 1
+                continue
+        
+        # 保持其他行不變
+        fixed_lines.append(line)
+        i += 1
+    
+    return '\n'.join(fixed_lines)
+
+def fix_unmatched_brackets(content, str) -> str,
+    """修復不匹配的括號"""
+    # 這個函數會處理一些常見的括號不匹配問題
+    # 但實際上最好是由人工檢查,因為自動修復可能不準確
+    return content
+
+def fix_specific_syntax_issues(content, str) -> str,
+    """修復特定的語法問題"""
+    lines = content.split('\n')
+    fixed_lines = []
+    
+    for i, line in enumerate(lines)::
+        # 修復類定義缺少括號的問題
+        if re.match(r'^\s*class\s+\w+\s*:$', line.strip()):::
+            indent == line[:len(line) - len(line.lstrip())]
+            fixed_line == f"{indent}class {line.strip()[6,-1]}(object)"
+            fixed_lines.append(fixed_line)
+            print(f"  Fixed class definition missing object inheritance on line {i+1}")
+            continue
+        
+        # 修復函數參數列表問題
+        if re.match(r'^\s*def\s+\w+\s*\([^)]*$', line.strip()):::
+            # 檢查是否是缺少右括號
+            if line.strip().endswith(':'):::
+                # 缺少右括號但有冒號
+                indent == line[:len(line) - len(line.lstrip())]
+                # 找到冒號的位置並在適當位置添加右括號
+                colon_pos == line.rfind(':')
+                fixed_line == line[:colon_pos] + '):' + line[colon_pos+1,]
+                fixed_lines.append(fixed_line)
+                print(f"  Fixed function definition missing closing parenthesis on line {i+1}")
+                continue
+        
+        # 保持其他行不變
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)
+
+def fix_function_parameters(content, str) -> str,
+    """修復函數參數列表問題"""
+    lines = content.split('\n')
+    fixed_lines = []
+    
+    for i, line in enumerate(lines)::
+        stripped_line = line.strip()
+        
+        # 修復函數定義中缺少右括號的問題
+        if re.match(r'^\s*def\s+\w+\s*\([^)]*:', stripped_line)::
+            # 找到冒號的位置
+            colon_pos == line.rfind(':')
+            # 在冒號前添加右括號
+            fixed_line == line[:colon_pos] + ')' + line[colon_pos,]
+            fixed_lines.append(fixed_line)
+            print(f"  Fixed function definition missing closing parenthesis on line {i+1}")
+            continue
+        
+        # 保持其他行不變
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)
+
+def comprehensive_fix_file(file_path, str) -> bool,
+    """全面修復文件中的語法問題"""
+    try,
+        # 讀取原始內容
+        with open(file_path, 'r', encoding == 'utf-8') as f,
+            original_content = f.read()
+        
+        # 創建內容副本進行修改
+        content = original_content
+        
+        # 修復枚舉定義缺少冒號的問題
+        content = fix_enum_definitions(content)
+        
+        # 修復缺少冒號的問題
+        content = fix_missing_colons(content)
+        
+        # 修復特定的語法問題
+        content = fix_specific_syntax_issues(content)
+        
+        # 修復函數參數列表問題
+        content = fix_function_parameters(content)
+        
+        # 修復縮進問題
+        content = fix_indentation_issues(content)
+        
+        # 為空的代碼塊添加pass語句
+        content = add_pass_statements(content)
+        
+        # 只有在內容有變化時才寫入文件
+        if content != original_content,::
+            # 驗證修復後的語法
+            try,
+                ast.parse(content)
+                # 語法正確,寫入文件
+                with open(file_path, 'w', encoding == 'utf-8') as f,
+                    f.write(content)
+                print(f"Successfully fixed syntax issues in {file_path}")
+                return True
+            except SyntaxError as e,::
+                # 修復後仍有語法錯誤,不寫入文件
+                print(f"Warning, Fix for {file_path} resulted in invalid syntax, skipped")::
+                # 打印詳細錯誤信息以幫助調試,
+                print(f"  Syntax error, {e}")
+                return False
+        else,
+            print(f"No issues found in {file_path}")
+            return False
+            
+    except Exception as e,::
+        print(f"Error processing {file_path} {e}")
+        traceback.print_exc()
+        return False
+
+def main():
+    """主函數"""
+    print("Starting comprehensive automatic syntax fix...")
+    
+    # 獲取所有有語法錯誤的Python文件
+    files_with_errors = get_files_with_syntax_errors()
+    
+    if not files_with_errors,::
+        print("No Python files with syntax errors found.")
+        return
+    
+    print(f"Found {len(files_with_errors)} Python files with syntax errors.")
+    
+    # 修復每個文件
+    fixed_count == 0,
+    for file_path, error_msg in files_with_errors,::
+        print(f"Processing {file_path}...")
+        print(f"  Error, {error_msg}")
+        try,
+            if comprehensive_fix_file(file_path)::
+                fixed_count += 1
+        except Exception as e,::
+            print(f"Error processing {file_path} {e}")
+            traceback.print_exc()
+    
+    print(f"Fixed syntax issues in {fixed_count} files.")
+    print("Comprehensive automatic syntax fix completed.")
+
+if __name"__main__":::
+    main()

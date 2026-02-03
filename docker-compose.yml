@@ -1,0 +1,129 @@
+# Unified AI Project - Docker Compose Configuration
+# Production-ready multi-container deployment
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: unified-ai-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ARCHITECTURE_MODE=ray_distributed
+      - PYTHONPATH=/app
+    volumes:
+      - backend_logs:/app/logs
+      - ./apps/backend/configs:/app/apps/backend/configs:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - unified-ai-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Frontend Dashboard
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend-dashboard/Dockerfile
+    container_name: unified-ai-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - frontend_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - unified-ai-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Redis for caching and pub/sub
+  redis:
+    image: redis:7-alpine
+    container_name: unified-ai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - unified-ai-network
+    restart: unless-stopped
+
+  # Optional: Ray Head Node (for distributed mode)
+  ray-head:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: unified-ai-ray-head
+    ports:
+      - "8001:8001"  # Ray dashboard
+      - "10001:10001"  # Ray client
+    environment:
+      - ARCHITECTURE_MODE=ray_distributed
+      - PYTHONPATH=/app
+      - RAY_DASHBOARD_HOST=0.0.0.0
+      - RAY_DASHBOARD_PORT=8001
+    command: >
+      bash -c "ray start --head 
+        --dashboard-host 0.0.0.0 
+        --dashboard-port 8001 
+        --port 10001 
+        --num-cpus=4
+        --include-dashboard=true"
+    volumes:
+      - ray_logs:/tmp/ray
+    healthcheck:
+      test: ["CMD", "python", "-c", "import ray; ray.init()"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - unified-ai-network
+    restart: unless-stopped
+    profiles:
+      - distributed  # Only start with --profile distributed
+
+volumes:
+  backend_logs:
+  frontend_logs:
+  redis_data:
+  ray_logs:
+
+networks:
+  unified-ai-network:
+    driver: bridge
+
+# Development override
+x-development: &development
+  volumes:
+    - ./apps/backend:/app/apps/backend
+    - ./apps/frontend-dashboard:/app/apps/frontend-dashboard
+  environment:
+    - DEV_MODE=true
+
+# Command to run full stack with Ray
+# docker-compose --profile distributed up -d
+
+# Command to run just backend and frontend (no Ray)
+# docker-compose up -d

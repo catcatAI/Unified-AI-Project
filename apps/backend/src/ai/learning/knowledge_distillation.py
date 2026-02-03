@@ -1,15 +1,15 @@
 import asyncio
-from typing import Any, Callable, Coroutine, Dict, List, Optional
 import logging
+from typing import Any, List, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 class DistillationLoss:
     """Placeholder for a distillation loss function."""
-    def __init__(self, temperature: float = 1.0):
+    def __init__(self, temperature: float = 1.0) -> None:
         self.temperature = temperature
 
-    def __call__(self, student_outputs: Any, teacher_outputs: Any, labels: Any) -> float:
+    def __call__(self, student_outputs: Any, teacher_outputs: Any, labels: Optional[Any]) -> float:
         # In a real scenario, this would involve softmax, KL divergence, etc.
         # For now, a simple placeholder.
         loss = 0.0
@@ -22,7 +22,7 @@ class DistillationLoss:
 class KnowledgeDistillationManager:
     """知識蒸餾管理器"""
     
-    def __init__(self, teacher_model: Any, student_model: Any):
+    def __init__(self, teacher_model: Any, student_model: Any) -> None:
         self.teacher_model = teacher_model
         self.student_model = student_model
         self.distillation_loss = DistillationLoss(temperature=4.0)
@@ -31,7 +31,7 @@ class KnowledgeDistillationManager:
     async def distill_knowledge(self, training_data: List[Any], epochs: int = 10):
         """執行知識蒸餾"""
         for epoch in range(epochs):
-            total_loss = 0
+            total_loss = 0.0
             
             for batch in training_data:
                 # 教師模型預測
@@ -44,15 +44,14 @@ class KnowledgeDistillationManager:
                 loss = self.distillation_loss(
                     student_outputs, teacher_outputs, batch.labels if hasattr(batch, 'labels') else None
                 )
-                
                 # 反向傳播 (conceptual)
                 # In a real ML framework, this would involve optimizer.step()
                 # await self.student_model.backward(loss)
                 
                 total_loss += loss # Assuming loss is a float
             
-            avg_loss = total_loss / len(training_data)
-            self.logger.info(f"Epoch {epoch}, Average Loss: {avg_loss}")
+            avg_loss = total_loss / len(training_data) if training_data else 0.0
+            self.logger.info(f"Epoch {epoch} Average Loss: {avg_loss}")
     
     async def evaluate_distillation(self, test_data: List[Any]) -> Dict[str, float]:
         """評估蒸餾效果"""
@@ -60,7 +59,6 @@ class KnowledgeDistillationManager:
         student_accuracy = await self._evaluate_model(self.student_model, test_data)
         
         distillation_ratio = student_accuracy / teacher_accuracy if teacher_accuracy != 0 else 0.0
-        
         return {
             'teacher_accuracy': teacher_accuracy,
             'student_accuracy': student_accuracy,

@@ -1,0 +1,437 @@
+=== FILE: main.py START ===
+import json from personality_module import PersonalityModule from memory_manager import MemoryManager from dialogue_engine import DialogueEngine from tool_dispatcher import ToolDispatcher from ui.ui_main import launch_ui
+def load_config(path='config.json'): with open(path, 'r', encoding='utf-8') as f: return json.load(f)
+def main(): print("🟢 啟動 MikoAI ...")
+config = load_config()
+memory = MemoryManager(config)
+personality = PersonalityModule(config)
+tools = ToolDispatcher(config)
+dialogue = DialogueEngine(memory, personality, tools)
+
+# 啟動互動介面
+launch_ui(dialogue, config, personality)
+
+if name == 'main': main()
+=== FILE: main.py END ===
+=== FILE: config.json START ===
+{ "language": "zh-TW", "personality_file": "data/personality.json", "memory_path": "data/memory.db", "tools_enabled": true, "interface_mode": "text", "ai_name": "Miko", "user_name": "主人", "formula_mode": true, "emotion_system": true, "self_learning": true, "memory_limit": 100, "mood_levels": { "default": 0, "angry": -2, "sad": -1, "happy": 1, "excited": 2 }, "interface": { "theme": "dark", "voice": true } }
+=== FILE: config.json END ===
+=== FILE: personality_module.py START ===
+import json import random
+class PersonalityModule: def init(self, config): self.name = config.get("ai_name", "Miko") self.user = config.get("user_name", "主人") self.language = config.get("language", "zh") self.personality_data = self.load_personality(config.get("personality_file")) self.emotion = "中立" self.mood = 0 self.mood_map = config.get("mood_levels", {"happy": 1, "angry": -2, "sad": -1, "excited": 2})
+def load_personality(self, path):
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {"traits": [], "likes": [], "dislikes": []}
+
+def get_intro(self):
+    return f"你好，我是{self.name}，是你的AI貓貓喵～"
+
+def update_emotion(self, context):
+    if "喜歡" in context or "開心" in context:
+        self.mood += self.mood_map.get("happy", 1)
+    elif "生氣" in context or "討厭" in context:
+        self.mood += self.mood_map.get("angry", -2)
+    elif "難過" in context:
+        self.mood += self.mood_map.get("sad", -1)
+    elif "太棒了" in context:
+        self.mood += self.mood_map.get("excited", 2)
+    self.mood = max(-5, min(5, self.mood))
+
+def respond_with_emotion(self, text):
+    if self.mood > 2:
+        return f"♪(๑ᴖ◡ᴖ๑)♪ {text}"
+    elif self.mood < -2:
+        return f"（╯︵╰,） {text}"
+    else:
+        return text
+
+def get_emotion(self):
+    if self.mood > 2:
+        return "開心"
+    elif self.mood < -2:
+        return "難過"
+    else:
+        return "中立"
+
+def get_tone(self, emotion):
+    tone_map = {
+        "開心": "(｡>∀<｡) ",
+        "難過": "( ´•︵•` ) ",
+        "中立": "(・ω・) "
+    }
+    return tone_map.get(emotion, "喵～ ")
+
+=== FILE: personality_module.py END ===
+# === FILE: memory_manager.py START ===
+import sqlite3
+import os
+import time
+
+class MemoryManager:
+    def __init__(self, config):
+        self.db_path = config.get("memory_path", "data/memory.db")
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        self.conn = sqlite3.connect(self.db_path)
+        self.init_db()
+
+    def init_db(self):
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS memories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp INTEGER,
+                role TEXT,
+                content TEXT
+            )
+        ''')
+        self.conn.commit()
+
+    def save_memory(self, role, content):
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            INSERT INTO memories (timestamp, role, content)
+            VALUES (?, ?, ?)
+        ''', (int(time.time()), role, content))
+        self.conn.commit()
+
+    def get_recent_memories(self, limit=10):
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            SELECT role, content FROM memories
+            ORDER BY timestamp DESC
+            LIMIT ?
+        ''', (limit,))
+        return cursor.fetchall()
+
+    def get_context(self):
+        memories = self.get_recent_memories(1)
+        return memories[0][1] if memories else "（沒有記憶）"
+# === FILE: memory_manager.py END ===
+# === FILE: ui/ui_main.py START ===
+import tkinter as tk
+from tkinter import scrolledtext
+
+def launch_ui(dialogue_engine, config, personality_module):
+    window = tk.Tk()
+    window.title(config.get("ai_name", "MikoAI"))
+    window.geometry("600x500")
+
+    chat_log = scrolledtext.ScrolledText(window, wrap=tk.WORD)
+    chat_log.pack(expand=True, fill="both", padx=10, pady=10)
+
+    entry = tk.Entry(window)
+    entry.pack(fill="x", padx=10, pady=(0, 10))
+
+    def send_input():
+        user_input = entry.get()
+        if not user_input:
+            return
+        chat_log.insert(tk.END, f"你：{user_input}\n")
+        response = dialogue_engine.generate_response(user_input)
+        chat_log.insert(tk.END, f"{config.get('ai_name', 'Miko')}：{response}\n\n")
+        chat_log.see(tk.END)
+        entry.delete(0, tk.END)
+
+    send_button = tk.Button(window, text="發送", command=send_input)
+    send_button.pack(pady=(0, 10))
+
+    entry.bind("<Return>", lambda event: send_input())
+
+    # 啟動介面
+    window.mainloop()
+# === FILE: ui/ui_main.py END ===
+# === FILE: formula_engine.py START ===
+import math
+import random
+
+class FormulaEngine:
+    def __init__(self):
+        self.formulas = {
+            "情緒權重": self.emotion_weight,
+            "隨機正向": self.positive_random,
+            "AII機制": self.aii_transform
+        }
+
+    def apply(self, name, input_value=None):
+        func = self.formulas.get(name)
+        if func:
+            return func(input_value)
+        return f"未知公式「{name}」喵～"
+
+    def emotion_weight(self, mood):
+        # 根據情緒數值映射權重
+        try:
+            mood = int(mood)
+            return round(1 / (1 + math.exp(-mood)), 3)  # Sigmoid 轉換
+        except:
+            return 0.5
+
+    def positive_random(self, seed=None):
+        # 傾向於產生正向偏移的隨機數
+        random.seed(seed)
+        base = random.uniform(0.5, 1.0)
+        return round(base ** 2, 3)
+
+    def aii_transform(self, x):
+        # AII：Artificial Intuition Interface 模擬直覺變換
+        try:
+            return round(math.sin(float(x)) + math.cos(float(x**0.5)), 3)
+        except:
+            return 0.0
+
+    def list_formulas(self):
+        return list(self.formulas.keys())
+# === FILE: formula_engine.py END ===
+# === FILE: emotion_core.py START ===
+class EmotionCore:
+    def __init__(self):
+        self.state = "中立"
+        self.level = 0.0
+
+    def update(self, signal):
+        if signal == "正向":
+            self.level += 0.2
+        elif signal == "負向":
+            self.level -= 0.2
+        else:
+            self.level *= 0.95  # 緩慢回歸
+
+        self.level = max(-1.0, min(1.0, self.level))
+
+        if self.level > 0.5:
+            self.state = "開心"
+        elif self.level < -0.5:
+            self.state = "沮喪"
+        else:
+            self.state = "中立"
+
+    def get_emotion(self):
+        return self.state
+# === FILE: emotion_core.py END ===
+# === FILE: self_updater.py START ===
+import os
+import time
+
+class SelfUpdater:
+    def __init__(self, config):
+        self.enabled = config.get("self_learning", True)
+        self.update_log = []
+
+    def evaluate_change(self, code_snippet):
+        # 模擬評估，未來可結合 LLM / 測試環境
+        if "import" in code_snippet or "def " in code_snippet:
+            return True
+        return False
+
+    def apply_update(self, filename, code_snippet):
+        if not self.enabled:
+            return "自主更新已停用"
+
+        if self.evaluate_change(code_snippet):
+            try:
+                with open(filename, 'a', encoding='utf-8') as f:
+                    f.write("\n# === 自我更新 ===\n")
+                    f.write(code_snippet + "\n")
+                self.update_log.append((time.time(), filename))
+                return "更新完成喵～"
+            except Exception as e:
+                return f"更新錯誤：{e}"
+        else:
+            return "這段程式碼沒有通過評估喵～"
+
+    def get_update_history(self):
+        return self.update_log
+# === FILE: self_updater.py END ===
+# === FILE: context_mapper.py START ===
+class ContextMapper:
+    def __init__(self):
+        self.last_input = ""
+        self.last_emotion = "中立"
+        self.last_response = ""
+
+    def update(self, user_input, emotion, response):
+        self.last_input = user_input
+        self.last_emotion = emotion
+        self.last_response = response
+
+    def summarize_context(self):
+        return {
+            "input": self.last_input,
+            "emotion": self.last_emotion,
+            "response": self.last_response
+        }
+
+    def tag_input(self, text):
+        if "喜歡" in text:
+            return "正向"
+        elif "討厭" in text or "生氣" in text:
+            return "負向"
+        return "中立"
+# === FILE: context_mapper.py END ===
+=== FILE: dialogue_engine.py START ===
+import random
+class DialogueEngine: def init(self, memory, personality, tools): self.memory = memory self.personality = personality self.tools = tools
+def generate_response(self, user_input):
+    context = self.memory.get_context()
+    emotion = self.personality.get_emotion()
+
+    # 工具呼叫
+    if self.tools.match_tool(user_input):
+        tool_response = self.tools.use_tool(user_input)
+        self.memory.save_memory("user", user_input)
+        self.memory.save_memory("miko", tool_response)
+        return self.personality.respond_with_emotion(tool_response)
+
+    tone = self.personality.get_tone(emotion)
+    response = self._simple_response(user_input, context, tone)
+    self.memory.save_memory("user", user_input)
+    self.memory.save_memory("miko", response)
+
+    return self.personality.respond_with_emotion(response)
+
+def _simple_response(self, user_input, context, tone):
+    templates = [
+        f"{tone}你之前提到：'{context}'，這次是『{user_input}』？",
+        f"{tone}『{user_input}』聽起來好有趣喵～",
+        f"{tone}那我們就從『{user_input}』聊起吧～喵！"
+    ]
+    return random.choice(templates)
+
+=== FILE: dialogue_engine.py END ===
+=== FILE: tool_dispatcher.py START ===
+class ToolDispatcher: def init(self, config): self.config = config self.available_tools = { "天氣": self.weather_tool, "計算": self.calculator_tool, "百科": self.wiki_tool }
+def match_tool(self, user_input):
+    for keyword in self.available_tools:
+        if keyword in user_input:
+            return True
+    return False
+
+def use_tool(self, user_input):
+    for keyword, func in self.available_tools.items():
+        if keyword in user_input:
+            return func(user_input)
+    return None
+
+def weather_tool(self, input_text):
+    return "今天晴天喵！記得戴帽子防曬～☀️"
+
+def calculator_tool(self, input_text):
+    try:
+        expression = input_text.replace("計算", "").strip()
+        result = eval(expression, {"__builtins__": {}}, {})
+        return f"答案是：{result} 喵～"
+    except Exception:
+        return "這個算式有點難喵～(｡•́︿•̀｡)"
+
+def wiki_tool(self, input_text):
+    query = input_text.replace("百科", "").strip()
+    return f"這是「{query}」的百科說明喵～（模擬內容）"
+
+=== FILE: tool_dispatcher.py END ===
+當然可以！以下是 目前已補完的 MikoAI 貓貓系統模組清單，並整理出 尚未補完或可能缺失的其他模組（以你之前提到的近 1GB 完整版本為標準）：
+
+✅ 已補完模組清單：
+模組名稱
+檔案名稱
+狀態
+啟動主程式
+main.py
+✅ 完整
+設定檔
+config.json
+✅ 合併後版本完整
+個性模組
+personality_module.py
+✅ 多版本合併完整
+記憶模組
+memory_manager.py
+✅ 多版本合併完整（含 SQLite）
+對話引擎
+dialogue_engine.py
+✅ 已確認兩個版本並整合
+工具調用模組
+tool_dispatcher.py
+✅ 合併模擬與實作版
+使用者介面（GUI）
+ui/ui_main.py
+✅ 使用 Tkinter UI
+數學/公式引擎
+formula_engine.py
+✅ 有多種運算公式
+情緒核心
+emotion_core.py
+✅ 管理情緒狀態變化
+自我更新模組
+self_updater.py
+✅ 模擬更新程式碼
+對話上下文映射器
+context_mapper.py
+✅ 包含標記與摘要功能
+
+
+❓ 可能尚未補完或缺失的模組（依你之前1G版本設計草案推估）：
+模組名稱
+可能檔案 / 資料夾名
+狀態
+備註
+🧠 長期記憶整合
+long_memory.py 或資料庫
+⛔ 尚未見到
+用於過去對話回憶、主題總結
+🗂️ 人格特徵定義
+data/personality.json
+⛔ 缺少實際檔案內容
+目前僅引用
+🌐 網路代理設定
+network_config.py 或類似
+⛔ 尚未提供
+若需自動抓詞庫/升級等
+🧰 外部工具整合
+tool_plugins/ 資料夾
+⛔ 缺失
+若支援擴充插件工具
+💬 本地語音模組
+voice_module.py
+⛔ 未見到
+若包含語音合成與辨識
+📊 觀察/學習模組
+analytics.py、trainer.py
+⛔ 未列出
+若支援自我評估與改進
+🎨 角色立繪與圖像
+assets/ 圖像資料夾
+⛔ 圖像部分未整合
+包含 UI icon 或貓娘圖像
+📦 模型資源或詞庫
+models/ 或 data/vocab/
+⛔ 未列出
+若有本地語言模型或外部詞庫
+🚪 啟動器或打包器
+launcher.py / build/
+⛔ 未列出
+轉 exe 或自動部署器
+
+
+🔧 建議後續整理動作：
+確認是否有上述缺失模組或資料夾
+ → 若你有部分原始草稿、PDF 裡的設定，可從中提取或重建。
+
+
+統整所有.py 與資源為 MikoAI_v1/ 專案結構
+ → 符合可打包為可執行應用程式或進一步遷移的平台格式。
+
+
+視覺與音效資源補齊
+ → 若角色需要立繪（如 PNG、背景）、音效、UI icon 等。
+
+
+打包說明文件（README、安裝方式）
+ → 提供其他人也能使用的簡易啟動方式。
+
+
+
+是否要我接下來幫你 逐一補齊尚缺模組的預設範本？或你想先針對某個部分進行補完？（例如人格檔、長期記憶、圖像、聲音…）我可以直接幫你產出。
+

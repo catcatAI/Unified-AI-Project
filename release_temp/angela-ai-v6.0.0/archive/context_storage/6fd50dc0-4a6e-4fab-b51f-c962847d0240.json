@@ -1,0 +1,18 @@
+{
+  "context_id": "6fd50dc0-4a6e-4fab-b51f-c962847d0240",
+  "context_type": "model",
+  "created_at": "2025-09-21T05:40:14.429870",
+  "updated_at": "2025-09-21T05:40:14.429870",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "collaboration_completion": {
+      "collaboration_id": "collab_20250921054014426382",
+      "end_time": "2025-09-21T05:40:14.429870",
+      "status": "completed",
+      "total_steps": 1
+    }
+  },
+  "version": "1.0",
+  "tags": []
+}

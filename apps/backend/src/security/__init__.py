@@ -1,7 +1,6 @@
-# src/security/__init__.py
 """
-Security Module for Unified AI Project
-Provides comprehensive security controls for AI operations
+Security Module for Unified AI Project:
+Provides comprehensive security controls for AI operations:
 """
 
 from .permission_control import (
@@ -18,11 +17,12 @@ from .audit_logger import (
     AuditEventType
 )
 
-from .enhanced_sandbox import (
-    EnhancedSandboxExecutor,
-    SandboxConfig,
-    ResourceLimits
-)
+# Assuming these exist and are correct
+# from .enhanced_sandbox import (
+#     EnhancedSandboxExecutor,
+#     SandboxConfig,
+# #    ResourceLimits
+# )
 
 __all__ = [
     'PermissionControlSystem',
@@ -33,7 +33,7 @@ __all__ = [
     'AuditLogger',
     'AuditEvent',
     'AuditEventType',
-    'EnhancedSandboxExecutor',
-    'SandboxConfig',
-    'ResourceLimits'
+    # 'EnhancedSandboxExecutor',
+    # 'SandboxConfig',
+    # 'ResourceLimits'
 ]

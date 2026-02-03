@@ -1,21 +1,29 @@
+import operator
+import ast
+import re
 import os
 import sys
+import json
+import hashlib
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-import numpy as np
+from typing import Optional, Dict, List, Callable, Type, Union, Any, Tuple
 
 # Add the src directory to the path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
-SRC_DIR = os.path.join(PROJECT_ROOT, "src")
+SRC_DIR = os.path.join(PROJECT_ROOT, "apps", "backend", "src") # Corrected path to src
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-# 修复导入路径
-from ...core_ai.dependency_manager import dependency_manager
-# 修复导入路径
-from ...core_ai.compression.alpha_deep_model import DNADataChain
+# Fix import path for dependency_manager
+from ai.dependency_manager import dependency_manager
+# Fix import path for DNADataChain
+from ai.compression.alpha_deep_model import DNADataChain
+
+# Define model paths (assuming they are in the same directory as this model.py)
+MODEL_WEIGHTS_PATH = os.path.join(SCRIPT_DIR, "math_model_weights.h5")
+CHAR_MAPS_PATH = os.path.join(SCRIPT_DIR, "math_char_maps.json")
 
 @dataclass
 class MathModelResult:
@@ -31,7 +39,7 @@ class MathModelResult:
 tf = None
 Model = None
 Input = None
-LSTM = None
+LSTM_LAYER = None  # 重命名以避免与常量冲突
 Dense = None
 Embedding = None
 
@@ -40,7 +48,7 @@ def _ensure_tensorflow_is_imported():
     Lazily imports TensorFlow and its Keras components using dependency manager.
     Returns True if successful, False otherwise.
     """
-    global tf, Model, Input, LSTM, Dense, Embedding
+    global tf, Model, Input, LSTM_LAYER, Dense, Embedding
     
     if tf is not None:
         return True
@@ -52,7 +60,7 @@ def _ensure_tensorflow_is_imported():
             tf = tf_module
             Model = tf.keras.models.Model
             Input = tf.keras.layers.Input
-            LSTM = tf.keras.layers.LSTM
+            LSTM_LAYER = tf.keras.layers.LSTM  # 重命名以避免与常量冲突
             Dense = tf.keras.layers.Dense
             Embedding = tf.keras.layers.Embedding
             return True
@@ -70,13 +78,11 @@ def _tensorflow_is_available():
 # Attempt to import TensorFlow on module load
 _ensure_tensorflow_is_imported()
 
-def get_char_token_maps(problems, answers):
+def get_char_token_maps(problems: List[Union[str, Dict[str, str]]], answers: List[Union[str, Dict[str, str]]]) -> Tuple[Dict[str, int], Dict[int, str], int, int, int]:
     """Create character to token mappings for the arithmetic model.
-    
     Args:
-        problems: List of problem dictionaries with 'problem' key
-        answers: List of answer dictionaries with 'answer' key
-        
+        problems: List of problem dictionaries with 'problem' key, or strings.
+        answers: List of answer dictionaries with 'answer' key, or strings.
     Returns:
         tuple: (char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length)
     """
@@ -139,7 +145,7 @@ def get_char_token_maps(problems, answers):
     return char_to_token, token_to_char, n_token, max_encoder_seq_length, max_decoder_seq_length
 
 class ArithmeticSeq2Seq:
-    def __init__(self, char_to_token, token_to_char, max_encoder_seq_length, max_decoder_seq_length, n_token, latent_dim=256, embedding_dim=128):
+    def __init__(self, char_to_token: Dict[str, int], token_to_char: Dict[int, str], n_token: int, max_encoder_seq_length: int, max_decoder_seq_length: int, latent_dim: int = 256, embedding_dim: int = 128):
         if not dependency_manager.is_available('tensorflow'):
             print("ArithmeticSeq2Seq: TensorFlow not available. This instance will be non-functional.")
             self.char_to_token = char_to_token
@@ -175,14 +181,20 @@ class ArithmeticSeq2Seq:
     def _build_inference_models(self):
         """Builds the model structure for training and inference."""
         if not dependency_manager.is_available('tensorflow'):
-            print("Cannot build inference models: TensorFlow not available.")
+            print("Cannot build inference models, TensorFlow not available.")
             return
         _ensure_tensorflow_is_imported() # Lazy import of TensorFlow
+
+        # Check if TensorFlow components are available
+        if tf is None or Model is None or Input is None or LSTM_LAYER is None or \
+            Dense is None or Embedding is None:
+            print("Cannot build inference models, TensorFlow components not available.")
+            return
 
         # Encoder
         encoder_inputs = Input(shape=(None,), name="encoder_inputs")
         encoder_embedding = Embedding(self.n_token, self.embedding_dim, name="encoder_embedding")(encoder_inputs)
-        encoder_lstm_layer = LSTM(self.latent_dim, return_state=True, name="encoder_lstm")
+        encoder_lstm_layer = LSTM_LAYER(self.latent_dim, return_state=True, name="encoder_lstm")  # 使用重命名的变量
         _, state_h, state_c = encoder_lstm_layer(encoder_embedding)
         encoder_states = [state_h, state_c]
 
@@ -190,7 +202,7 @@ class ArithmeticSeq2Seq:
         decoder_inputs = Input(shape=(None,), name="decoder_inputs")
         decoder_embedding_layer_instance = Embedding(self.n_token, self.embedding_dim, name="decoder_embedding")
         decoder_embedding = decoder_embedding_layer_instance(decoder_inputs)
-        decoder_lstm_layer = LSTM(self.latent_dim, return_sequences=True, return_state=True, name="decoder_lstm")
+        decoder_lstm_layer = LSTM_LAYER(self.latent_dim, return_sequences=True, return_state=True, name="decoder_lstm")  # 使用重命名的变量
         decoder_outputs, _, _ = decoder_lstm_layer(decoder_embedding, initial_state=encoder_states)
 
         decoder_dense_layer = Dense(self.n_token, activation='softmax', name="decoder_dense")
@@ -207,8 +219,7 @@ class ArithmeticSeq2Seq:
 
         decoder_embedding_inf = decoder_embedding_layer_instance(decoder_inputs)
 
-        decoder_outputs_inf, state_h_inf, state_c_inf = decoder_lstm_layer(
-            decoder_embedding_inf, initial_state=decoder_states_inputs)
+        decoder_outputs_inf, state_h_inf, state_c_inf = decoder_lstm_layer(decoder_embedding_inf, initial_state=decoder_states_inputs)
         decoder_states_inf = [state_h_inf, state_c_inf]
         decoder_outputs_inf = decoder_dense_layer(decoder_outputs_inf)
 
@@ -217,10 +228,14 @@ class ArithmeticSeq2Seq:
             [decoder_outputs_inf] + decoder_states_inf
         )
 
-    def _string_to_tokens(self, input_string, max_len, is_target=False):
+    def _string_to_tokens(self, input_string: str, max_len: int, is_target: bool = False):
         if not dependency_manager.is_available('tensorflow'):
-            print("Cannot convert string to tokens: TensorFlow not available.")
+            print("Cannot convert string to tokens, TensorFlow not available.")
+            # Assuming numpy is imported, otherwise this will fail
+            import numpy as np
             return np.array([])
+        
+        import numpy as np # Ensure numpy is imported here if not globally
         tokens = np.zeros((1, max_len), dtype='float32')
         if is_target:
             processed_string = '\t' + input_string + '\n'
@@ -238,14 +253,16 @@ class ArithmeticSeq2Seq:
         return tokens
 
     def predict_sequence(self, input_seq_str: str, dna_chain_id: Optional[str] = None) -> str:
-        if not _tensorflow_is_available() or not self.encoder_model or not self.decoder_model:
+        if not _tensorflow_is_available() or not self.encoder_model or \
+            not self.decoder_model:
             print("Cannot predict sequence: TensorFlow not available or models not built.")
             return "Error: Math model is not available."
 
         start_time = datetime.now()
         
         input_seq = self._string_to_tokens(input_seq_str, self.max_encoder_seq_length, is_target=False)
-        if input_seq.size == 0: # Handle case where _string_to_tokens failed due to TF unavailability
+        if input_seq.size == 0:
+            # Handle case where _string_to_tokens failed due to TF unavailability
             return "Error: Math model is not available."
 
         states_value = self.encoder_model.predict(input_seq, verbose=0)
@@ -253,7 +270,7 @@ class ArithmeticSeq2Seq:
         target_seq = np.zeros((1, 1))
 
         if '\t' not in self.char_to_token:
-            # This should ideally be caught during char map generation/loading
+            # This should ideally be caught during char map generation / loading
             return "Error: Start token '\t' not found in char_to_token map."
         target_seq[0, 0] = self.char_to_token['\t']
 
@@ -264,9 +281,9 @@ class ArithmeticSeq2Seq:
             output_tokens, h, c = self.decoder_model.predict([target_seq] + states_value, verbose=0)
 
             sampled_token_index = np.argmax(output_tokens[0, -1, :])
-            sampled_char = self.token_to_char.get(str(sampled_token_index), 'UNK') # Ensure key is string for lookup
-
-            if sampled_char == '\n' or sampled_char == 'UNK' or len(decoded_sentence) >= self.max_decoder_seq_length:
+            sampled_char = self.token_to_char.get(sampled_token_index, 'UNK') # Ensure key is string for lookup
+            if sampled_char == '\n' or sampled_char == 'UNK' or \
+                len(decoded_sentence) >= self.max_decoder_seq_length:
                 stop_condition = True
                 break
 
@@ -315,25 +332,36 @@ class ArithmeticSeq2Seq:
         return self.dna_chains.get(chain_id)
 
     @classmethod
-    def load_for_inference(cls, model_weights_path, char_maps_path):
+    def load_for_inference(cls, model_weights_path: str = MODEL_WEIGHTS_PATH, char_maps_path: str = CHAR_MAPS_PATH):
         """Loads a trained model and its character maps for inference."""
         if not dependency_manager.is_available('tensorflow'):
-            print("Cannot load model for inference: TensorFlow not available.")
+            print("Cannot load model for inference, TensorFlow not available.")
             return None
         _ensure_tensorflow_is_imported() # Lazy import of TensorFlow
         try:
             with open(char_maps_path, 'r', encoding='utf-8') as f:
-                char_to_token, token_to_char = json.load(f)
+                char_to_token_json, token_to_char_json = json.load(f)
             
-            # Load model architecture and weights
+            # Convert keys back to int for token_to_char
+            char_to_token = {k: int(v) for k, v in char_to_token_json.items()}
+            token_to_char = {int(k): v for k, v in token_to_char_json.items()}
+            
+            # Recalculate max_encoder_seq_length and max_decoder_seq_length based on loaded maps
+            # This assumes the maps contain all characters from the training data
+            # A more robust solution would save these lengths during training
             instance = cls.__new__(cls)  # Create instance without calling __init__
             instance.char_to_token = char_to_token
-            instance.token_to_char = token_to_char  # Note: variable name swap in saved file
-            instance.max_encoder_seq_length = max(len(k) for k in char_to_token.keys())
-            instance.max_decoder_seq_length = max(len(k) for k in token_to_char.keys())
+            instance.token_to_char = token_to_char
             instance.n_token = len(char_to_token)
-            instance.latent_dim = 256  # Default, should be saved/loaded
-            instance.embedding_dim = 128  # Default, should be saved/loaded
+            
+            # These lengths should ideally be loaded from the saved model configuration
+            # For now, we'll make a reasonable guess or derive from char_to_token/token_to_char
+            # A more robust solution would save these lengths during training
+            instance.max_encoder_seq_length = max(len(k) for k in char_to_token.keys()) + 2 if char_to_token else 2
+            instance.max_decoder_seq_length = max(len(v) for v in token_to_char.values()) + 2 if token_to_char else 2
+
+            instance.latent_dim = 256  # Default, should be saved / loaded
+            instance.embedding_dim = 128  # Default, should be saved / loaded
             instance.model = None
             instance.encoder_model = None
             instance.decoder_model = None

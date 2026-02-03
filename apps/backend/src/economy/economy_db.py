@@ -1,82 +1,102 @@
 import sqlite3
-import logging
-import os
-
-logger = logging.getLogger(__name__)
+from typing import Dict, Optional
 
 class EconomyDB:
-    def __init__(self, db_path: str = "economy.db"):
-        self.db_path = db_path
-        self._init_db()
+    """
+    Handles all database operations for the economy system.
+    Initializes the SQLite database and creates the 'balances' table if it doesn't exist.
+    """
 
-    def _init_db(self):
-        """Initializes the SQLite database and creates the 'balances' table if it doesn't exist."""
-        conn = None
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            cursor.execute("""
+    def __init__(self, db_path: str = "economy.db") -> None:
+        self.db_path = db_path
+        self.conn: Optional[sqlite3.Connection] = None
+        self.cursor: Optional[sqlite3.Cursor] = None
+        self._connect()
+        self._create_table()
+
+    def _connect(self) -> None:
+        """Connects to the SQLite database."""
+        self.conn = sqlite3.connect(self.db_path)
+        self.cursor = self.conn.cursor()
+
+    def _create_table(self) -> None:
+        """Creates the balances table if it does not exist."""
+        if self.cursor:
+            self.cursor.execute("""
                 CREATE TABLE IF NOT EXISTS balances (
                     user_id TEXT PRIMARY KEY,
                     balance REAL NOT NULL DEFAULT 0.0
                 )
             """)
-            conn.commit()
-            logger.info(f"EconomyDB initialized at {self.db_path}")
-        except sqlite3.Error as e:
-            logger.error(f"Error initializing EconomyDB at {self.db_path}: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
+            if self.conn:
+                self.conn.commit()
 
-    def get_user_balance(self, user_id: str) -> float:
-        """Retrieves the balance for a given user_id. Returns 0.0 if user not found."""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute("SELECT balance FROM balances WHERE user_id = ?", (user_id,))
-        result = cursor.fetchone()
-        conn.close()
-        if result:
-            return result[0]
+    def close(self) -> None:
+        """Closes the database connection."""
+        if self.conn:
+            self.conn.close()
+            self.conn = None
+            self.cursor = None
+
+    def add_balance(self, user_id: str, amount: float) -> None:
+        """Adds a specified amount to a user's balance."""
+        if self.cursor and self.conn:
+            self.cursor.execute("""
+                INSERT INTO balances (user_id, balance) VALUES (?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET balance = balance + excluded.balance;
+            """, (user_id, amount))
+            self.conn.commit()
+
+    def get_balance(self, user_id: str) -> float:
+        """Retrieves the balance for a given user."""
+        if self.cursor:
+            self.cursor.execute("SELECT balance FROM balances WHERE user_id = ?", (user_id,))
+            result = self.cursor.fetchone()
+            return result[0] if result else 0.0
         return 0.0
 
-    def update_user_balance(self, user_id: str, amount: float) -> bool:
-        """
-        Updates the balance for a user.
-        If the user does not exist, a new entry is created.
-        Returns True on success, False on failure (e.g., insufficient funds for a debit).
-        """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        current_balance = self.get_user_balance(user_id)
-        new_balance = current_balance + amount
-
-        if new_balance < 0:
-            logger.warning(f"Attempted to debit {user_id} with {amount}, but balance would be negative ({new_balance}). Transaction aborted.")
-            conn.close()
+    def transfer_balance(self, from_user_id: str, to_user_id: str, amount: float) -> bool:
+        """Transfers a balance from one user to another."""
+        if amount <= 0:
             return False
 
-        cursor.execute("""
-            INSERT OR REPLACE INTO balances (user_id, balance)
-            VALUES (?, ?)
-        """, (user_id, new_balance))
-        conn.commit()
-        conn.close()
-        logger.debug(f"User {user_id} balance updated from {current_balance} to {new_balance}")
-        return True
+        from_balance = self.get_balance(from_user_id)
+        if from_balance < amount:
+            return False
 
-    def close(self):
-        """Closes the database connection. (Not strictly necessary for sqlite3.connect, but good practice)."""
-        # For sqlite3.connect, connections are typically closed when the object is garbage collected
-        # or when the program exits. Explicit close is good for testing or specific scenarios.
-        pass
+        if self.cursor and self.conn:
+            # Use a transaction
+            try:
+                # Debit from sender
+                self.cursor.execute("UPDATE balances SET balance = balance - ? WHERE user_id = ?", (amount, from_user_id))
+                # Credit to receiver
+                self.cursor.execute("""
+                    INSERT INTO balances (user_id, balance) VALUES (?, ?)
+                    ON CONFLICT(user_id) DO UPDATE SET balance = balance + excluded.balance;
+                """, (to_user_id, amount))
+                self.conn.commit()
+                return True
+            except sqlite3.Error:
+                self.conn.rollback()
+                return False
+        return False
 
-    def delete_db_file(self):
-        """Deletes the database file. Use with caution, primarily for testing."""
-        if os.path.exists(self.db_path):
-            os.remove(self.db_path)
-            logger.info(f"EconomyDB file deleted: {self.db_path}")
-        else:
-            logger.warning(f"Attempted to delete non-existent EconomyDB file: {self.db_path}")
+    def delete_user(self, user_id: str) -> None:
+        """Deletes a user from the balances table."""
+        if self.cursor and self.conn:
+            self.cursor.execute("DELETE FROM balances WHERE user_id = ?", (user_id,))
+            self.conn.commit()
+
+    def get_all_balances(self) -> Dict[str, float]:
+        """Retrieves all user balances from the database."""
+        if self.cursor:
+            self.cursor.execute("SELECT user_id, balance FROM balances")
+            return {row[0]: row[1] for row in self.cursor.fetchall()}
+        return {}
+
+    def reset_database(self) -> None:
+        """Drops the existing balances table and recreates it."""
+        if self.cursor and self.conn:
+            self.cursor.execute("DROP TABLE IF EXISTS balances")
+            self._create_table()
+            self.conn.commit()

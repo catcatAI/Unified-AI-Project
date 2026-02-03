@@ -1,0 +1,42 @@
+{
+  "include": [
+    ".",
+    "apps/backend/src"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.*",
+    "**/venv",
+    "**/dist",
+    "**/build",
+    "**/backup*",
+    "**/chroma_db",
+    "**/context_storage",
+    "**/model_cache",
+    "**/test_reports",
+    "**/automation_reports",
+    "**/docs",
+    "**/scripts/venv",
+    "**/apps/backend/venv",
+    "**/apps/desktop-app",
+    "**/graphic-launcher",
+    "**/packages"
+  ],
+  "ignore": [
+    "apps/backend/src/hsp/external/external_connector.py",
+    "apps/backend/src/core/hsp/external/external_connector.py",
+    "install_gmqtt.py",
+    "test_gmqtt_import.py",
+    "apps/backend/src/ai/memory/vector_store.py",
+    "apps/backend/scripts/health_check_service.py"
+  ],
+  "stubPath": "stubs",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "pythonVersion": "3.8",
+  "typeStubPath": "stubs",
+  "extraPaths": [
+    "apps/backend/src"
+  ]
+}

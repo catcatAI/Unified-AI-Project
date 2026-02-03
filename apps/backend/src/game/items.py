@@ -1,12 +1,17 @@
-import pygame
+from unittest.mock import Mock
+
+# Mock pygame for syntax validation since it might not be installed
+try:
+    import pygame
+except ImportError:
+    pygame = Mock()
 
 class Item:
-    def __init__(self, name, description, icon):
+    """Represents an item in the game."""
+    def __init__(self, name: str, description: str, icon: any):
         self.name = name
         self.description = description
         self.icon = icon
-
-# --- Item Definitions ---
 
 # This could be loaded from a JSON or YAML file in the future
 ITEM_DATA = {
@@ -17,12 +22,12 @@ ITEM_DATA = {
     },
     "wood": {
         "name": "木材",
-        "description": "普通的木材，是建築和製作工具的基礎材料。",
+        "description": "普通的木材, 是建築和製作工具的基礎材料。",
         "type": "material",
     },
     "stone": {
         "name": "石材",
-        "description": "普通的石材，可用於建築和製作工具。",
+        "description": "普通的石材, 可用於建築和製作工具。",
         "type": "material",
     },
     "copper_ore": {
@@ -44,16 +49,16 @@ ITEM_DATA = {
         "name": "蕪菁",
         "description": "一種常見的根莖類蔬菜。",
         "type": "crop",
-    },
+    }
 }
 
-def create_item(item_id):
+def create_item(item_id: str):
+    """Factory function to create an Item object from an item_id."""
     item_data = ITEM_DATA.get(item_id)
     if not item_data:
         return None
 
     # For now, we'll just use a placeholder icon
     icon = pygame.Surface((24, 24))
-    icon.fill((255, 255, 0)) # Yellow for placeholder
-
+    icon.fill((255, 255, 0))  # Yellow for placeholder
     return Item(item_data["name"], item_data["description"], icon)

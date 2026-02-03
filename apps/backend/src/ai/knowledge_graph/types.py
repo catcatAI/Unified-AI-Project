@@ -1,6 +1,5 @@
-from typing import TypedDict, Required, Optional, List, Dict, Any
 
-class KGEntityAttributes(TypedDict, total=False):
+class KGEntityAttributes(TypedDict, total = False):
     start_char: int
     end_char: int
     is_conceptual: bool
@@ -15,7 +14,7 @@ class KGEntity(TypedDict):
     attributes: KGEntityAttributes
     # Optional: description: Optional[str], confidence: Optional[float]
 
-class KGRelationshipAttributes(TypedDict, total=False):
+class KGRelationshipAttributes(TypedDict, total = False):
     pattern: str # Name of the pattern or rule that extracted this
     trigger_token: Optional[str]
     trigger_text: Optional[str]
@@ -24,7 +23,8 @@ class KGRelationshipAttributes(TypedDict, total=False):
 class KGRelationship(TypedDict):
     source_id: Required[str] # ID of the source KGEntity
     target_id: Required[str] # ID of the target KGEntity
-    type: Required[str]      # Type of the relationship (e.g., "is_a", "works_for", verb_lemma)
+    type: Required[str]      # Type of the relationship (e.g., "is_a", "works_for",
+    verb_lemma)
     weight: Optional[float]  # Or confidence score
     attributes: KGRelationshipAttributes
 

@@ -1,0 +1,437 @@
+# =============================================================================
+# Angela AI - Comprehensive .gitignore
+# Purpose: Exclude sensitive files, large binaries, dependencies, and build artifacts
+# Last Updated: 2026-02-01
+# =============================================================================
+
+# =============================================================================
+# 🔒 SENSITIVE CREDENTIALS - NEVER COMMIT THESE!
+# =============================================================================
+# OAuth & API Credentials
+**/credentials.json
+**/credentials_*.json
+**/google_credentials.json
+**/oauth_credentials.json
+**/client_secret*.json
+**/serviceAccountKey.json
+*-firebase-adminsdk-*.json
+
+# API Keys & Tokens
+**/.api_key
+**/api_key.txt
+**/secret.key
+**/token.json
+**/*_token.json
+**/tokens.json
+**/refresh_token.txt
+
+# Private Keys & Certificates
+*.pem
+*.key
+*.p12
+*.crt
+*.cert
+*.cer
+*.p7b
+*.p7c
+*.p7s
+*.pfx
+*.ppk
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+!.env.template
+*.env.local
+*.env.production
+*.env.development
+
+# =============================================================================
+# 🐍 PYTHON - Virtual Environments & Dependencies
+# =============================================================================
+# Virtual Environments (DO NOT commit - users install these locally)
+myenv/
+venv_py311/
+venv_py310/
+venv_py39/
+venv/
+env/
+ENV/
+.venv/
+.python-version
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / Packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+*.cover
+.hypothesis/
+
+# Type Checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# =============================================================================
+# 📦 NODE.JS - Frontend & Dependencies
+# =============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+
+# Package Locks (keep one - determined by project)
+# package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# Build Output
+.next/
+.nuxt/
+.dist/
+out/
+build/
+*.min.js
+*.min.css
+*.map
+
+# Vercel
+.vercel
+
+# =============================================================================
+# 🎯 IDE & EDITOR CONFIGURATIONS
+# =============================================================================
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# Visual Studio
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Vim & Emacs
+*.swp
+*.swo
+*~
+.ropeproject
+.spyderproject
+.spyproject
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# =============================================================================
+# 💾 LARGE FILES - Models, Data, Binaries
+# =============================================================================
+# Machine Learning Models
+*.pt
+*.pth
+*.h5
+*.hdf5
+*.onnx
+*.tflite
+*.pb
+*.ckpt
+*.safetensors
+*.bin
+*.pkl
+*.pickle
+*.joblib
+
+# NumPy Arrays
+*.npy
+*.npz
+
+# Data Files
+*.sqlite
+*.sqlite-journal
+*.db
+*.db-journal
+*.mdb
+*.accdb
+
+# Compressed Archives
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.zip
+*.rar
+*.7z
+*.gz
+
+# =============================================================================
+# 📊 PROJECT-SPECIFIC EXCLUSIONS - Angela AI
+# =============================================================================
+
+# Training Data & Models (Large datasets - not for git)
+data/common_voice_zh/
+data/visual_genome_sample/
+data/coco_captions/
+data/flickr30k_sample/
+data/audio_samples/*.wav
+data/audio_samples/*.mp3
+data/audio_samples/*.flac
+data/vision_samples/*.jpg
+data/vision_samples/*.png
+data/vision_samples/*.jpeg
+data/multimodal_samples/
+data/reasoning_samples/
+data/processed_data/
+data/temp_data/
+data/atlassian_cache/
+data/fallback_comm/
+data/task_queue/
+
+# Keep structure but ignore content
+data/
+!data/README.md
+!data/TRAINING_DATA_GUIDE.md
+!data/data_config.json
+
+# Model Cache & Checkpoints
+model_cache/
+training/models/
+training/checkpoints/
+training/logs/
+checkpoints/
+*.checkpoint
+
+# Test Artifacts
+test_data/
+test_results/
+test_output/
+*.test.log
+*.test_report.txt
+*_test_report_*.txt
+tests/local/
+tests/temp/
+tests/logs/
+
+# Performance Reports
+performance_reports/
+benchmark_results/
+*.perf
+
+# Evaluation Outputs
+evaluations/
+reports/
+
+# =============================================================================
+# 📁 DIRECTORIES TO EXCLUDE
+# =============================================================================
+# Logs
+logs/
+*.log
+firebase-debug.log*
+debug.log
+error.log
+
+# Temporary Files
+temp/
+tmp/
+.cache/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+
+# Build Outputs
+out/
+site/
+target/
+.parcel-cache/
+.mooncakes/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+
+# Cabal & Stack
+.cabal-sandbox/
+.stack-work/
+
+# R
+.Rhistory
+.Rdata
+
+# =============================================================================
+# 🎮 EXTERNAL SDKs & LIBRARIES (User downloads separately)
+# =============================================================================
+# Live2D SDK (Proprietary - user must download)
+**/Live2D/
+**/CubismSDK*
+**/CubismCore*
+*.moc3
+*.model3.json
+
+# Large Binary Dependencies
+*.dll
+*.so
+*.dylib
+*.exe
+*.out
+*.app
+
+# =============================================================================
+# 📄 PROJECT ORGANIZATION & BACKUPS
+# =============================================================================
+backup/
+unified_fix_backups/
+archive/temp/
+
+# Migration & Fix Artifacts
+*_temp*.txt
+git_*.txt
+style_check_output.txt
+temp_dir_list.txt
+todo_grep.txt
+markdown_files.txt
+
+# Batch Fix Scripts (Local use only)
+fix-git-*.bat
+emergency-git-*.bat
+git-status-check.bat
+solve-git-issues.bat
+
+# =============================================================================
+# 🧪 DEVELOPMENT & DEBUG FILES
+# =============================================================================
+# Local Test Files
+test_import.py
+test_simple.py
+test_basic_import.py
+test_component_import.py
+test_functionality.py
+test_performance.py
+test_*.py
+!test_*.py.example
+
+# Local Configurations
+test_config.json
+local_test_settings.py
+personal_*.py
+personal_*.json
+
+# Debug Files
+debug_test.js
+debug_*.py
+
+# =============================================================================
+# 🖥️ OPERATING SYSTEM FILES
+# =============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.lnk
+$RECYCLE.BIN/
+*.stackdump
+
+# Linux
+*~
+.nfs*
+
+# =============================================================================
+# 📋 PROJECT-SPECIFIC FILES
+# =============================================================================
+# Generated Documentation (if auto-generated)
+docs/generated/
+
+# Specific exclusions (keep these for reference)
+# commit_message.txt
+# git.txt
+# moon.mod.json
+
+# =============================================================================
+# ⚠️ END OF .gitignore
+# If you need to track a file that matches a pattern above,
+# use `git add -f <file>` to force add it.
+# =============================================================================

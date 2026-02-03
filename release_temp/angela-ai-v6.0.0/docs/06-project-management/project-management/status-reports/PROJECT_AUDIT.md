@@ -1,0 +1,69 @@
+# Project Audit
+
+This document contains a comprehensive audit of the Unified AI Project, including a feature inventory and a list of identified issues such as errors, code duplication, and integration problems.
+
+## Feature Inventory
+
+### Backend (`apps/backend`)
+
+#### `apps/backend/src/core_ai/agent_manager.py`
+- Manages the lifecycle of sub-agents.
+- Can launch and terminate sub-agent processes.
+- Discovers available agent scripts automatically.
+- Can wait for an agent to be ready by checking for its capability advertisement.
+
+- **Hardcoded Path:** The `_discover_agent_scripts` method has a hardcoded path to the `src/agents` directory. It would be better to make this configurable.
+
+#### `apps/backend/src/core_ai/crisis_system.py`
+- **Simplified Sentiment Analysis:** The sentiment analysis is very basic and only checks for a few negative words. It could be easily fooled.
+- **Hardcoded Negative Words:** The list of negative words is hardcoded in the `assess_input_for_crisis` method. It would be better to move this to the configuration file.
+- **Noisy `print` Statements:** The code uses `print` statements for logging. It would be better to use the `logging` module consistently.
+- **Hardcoded Log File Name:** The `_trigger_protocol` method has a hardcoded log file name `crisis_log.txt`. It would be better to make this configurable.
+- **Lack of De-escalation Logic:** The comment in `assess_input_for_crisis` mentions that "More sophisticated logic could allow assess_input to also de-escalate." This is a potential area for improvement.
+
+- **Lack of De-escalation Logic:** The comment in `assess_input_for_crisis` mentions that "More sophisticated logic could allow assess_input to also de-escalate." This is a potential area for improvement.
+
+#### `apps/backend/src/core_ai/dialogue/dialogue_manager.py`
+- **Incomplete Session Management:** The `active_sessions` dictionary is now being populated, but the conversation history is never actually used. The `get_simple_response` method does not take the history into account when generating a response.
+- **Noisy `print` Statements:** The code still uses a `print` statement in `start_session`. This should be replaced with a `logging` call.
+- **Lack of Context in Tool Dispatch:** The `tool_dispatcher.dispatch` call does not pass any conversation context. This means that the tools are stateless and cannot take the conversation history into account.
+
+- **Lack of Context in Tool Dispatch:** The `tool_dispatcher.dispatch` call does not pass any conversation context. This means that the tools are stateless and cannot take the conversation history into account.
+
+#### `apps/backend/src/tools/tool_dispatcher.py`
+- **Incomplete `rag_query` Implementation:** The `_execute_rag_query` method is defined, but the `rag_manager` is commented out and not initialized. This means the `rag_query` tool will not work.
+- **Noisy `print` Statements:** The code uses `print` statements for logging in several places. It would be better to use the `logging` module consistently.
+- **Complex `_execute_translation` Logic:** The `_execute_translation` method has a very complex and fragile logic for parsing the query to extract the text and target language. This could be simplified and made more robust.
+- **Potential for Unhandled Exceptions:** While some of the `_execute_*` methods have `try...except` blocks, others do not. For example, `_execute_rag_query` does not have one. This could lead to unhandled exceptions.
+- **Redundant `kwargs`:** The `dispatch` method accepts `**kwargs`, but it doesn't seem to be used when calling the tool.
+
+- **Redundant `kwargs`:** The `dispatch` method accepts `**kwargs`, but it doesn't seem to be used when calling the tool.
+
+#### `apps/backend/src/tools/logic_tool.py`
+- **Noisy `print` Statements:** The code uses `print` statements for logging. It would be better to use the `logging` module consistently.
+- **Potential for Unhandled Exceptions:** The `evaluate_expression` function has a `try...except` block for the NN model prediction, but it does not handle the case where the parser also raises an exception.
+- **Global Variables:** The code uses global variables to store the evaluator instances. This is not ideal, as it can lead to issues in a multi-threaded environment. It would be better to use a class to manage the state of the tool.
+
+- **Global Variables:** The code uses global variables to store the evaluator instances. This is not ideal, as it can lead to issues in a multi-threaded environment. It would be better to use a class to manage the state of the tool.
+
+#### `apps/backend/src/hsp/connector.py`
+- **Noisy `print` Statements:** The code uses `print` statements for logging in `publish_message` and in the `__main__` block. It would be better to use the `logging` module consistently.
+- **Hardcoded Schema Path:** The `get_schema_uri` function has a hardcoded fallback path to the schemas directory. This could be made more robust.
+- **Inconsistent Error Handling:** The `publish_message` method has a `try...except` block, but it only logs the error and then tries the fallback. It does not re-raise the exception or return a clear error message.
+- **Lack of Comments:** The fallback protocol implementation is not well-commented, making it difficult to understand.
+- **Type Hinting:** The type hints for `internal_bus` and `message_bridge` in the `__init__` method are `Optional[Any]`. They could be more specific.
+
+*This section will be populated as the audit progresses.*
+
+## Identified Issues
+
+### Backend (`apps/backend`)
+
+#### `apps/backend/src/core_ai/agent_manager.py`
+- **Placeholder `check_agent_health`:** The `check_agent_health` method is a placeholder and only checks if the process is running. This is not a robust health check.
+- **Placeholder `wait_for_agent_ready`:** The `wait_for_agent_ready` method is also a placeholder. It relies on the `ServiceDiscoveryModule` to check for capability advertisements, which might not be reliable.
+- **Noisy `print` Statements:** The code uses `print` statements for logging. It would be better to use the `logging` module consistently.
+- **Potential Race Condition:** In `launch_agent`, there is a potential race condition. The code checks if an agent is already running and then launches it. It's possible that another process could launch the same agent in between these two steps.
+- **Hardcoded Path:** The `_discover_agent_scripts` method has a hardcoded path to the `src/agents` directory. It would be better to make this configurable.
+
+*This section will be populated as the audit progresses.*

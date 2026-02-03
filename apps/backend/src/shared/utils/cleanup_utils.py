@@ -1,11 +1,10 @@
-import os
-import shutil
-import logging
+# TODO: Fix import - module 'shutil' not found
+
+import logging # Import logging module
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Dict, Any
-
-logger = logging.getLogger(__name__)
+from typing import Any
+logger: Any = logging.getLogger(__name__)
 
 def cleanup_temp_files(project_root: Path = Path(".")):
     """清除臨時文件"""
@@ -46,8 +45,8 @@ def cleanup_cache_data(retention_days: int, project_root: Path = Path(".")):
         if cache_dir.exists():
             for file_path in cache_dir.rglob("*"):
                 try:
-                    if (file_path.is_file() and 
-                        datetime.fromtimestamp(file_path.stat().st_mtime) < cutoff_date):
+                    if file_path.is_file() and \
+                       datetime.fromtimestamp(file_path.stat().st_mtime) < cutoff_date:
                         file_path.unlink()
                         logger.debug(f"刪除過期緩存: {file_path}")
                 except Exception as e:
@@ -65,8 +64,8 @@ def cleanup_log_files(retention_days: int, project_root: Path = Path(".")):
     for pattern in log_patterns:
         for log_file in project_root.rglob(pattern):
             try:
-                if (log_file.is_file() and 
-                    datetime.fromtimestamp(log_file.stat().st_mtime) < cutoff_date):
+                if log_file.is_file() and \
+                   datetime.fromtimestamp(log_file.stat().st_mtime) < cutoff_date:
                     log_file.unlink()
                     logger.debug(f"刪除過期日誌: {log_file}")
             except Exception as e:
@@ -79,8 +78,8 @@ def cleanup_demo_artifacts(retention_days: int, storage_path: Path):
     if storage_path.exists():
         for file_path in storage_path.rglob("*"):
             try:
-                if (file_path.is_file() and 
-                    datetime.fromtimestamp(file_path.stat().st_mtime) < cutoff_date):
+                if file_path.is_file() and \
+                   datetime.fromtimestamp(file_path.stat().st_mtime) < cutoff_date:
                     file_path.unlink()
                     logger.debug(f"刪除演示產物: {file_path}")
             except Exception as e:

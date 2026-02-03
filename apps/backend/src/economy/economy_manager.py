@@ -1,18 +1,20 @@
 import logging
-from .economy_db import EconomyDB
 from typing import Dict, Any
+
+from .economy_db import EconomyDB
 
 logger = logging.getLogger(__name__)
 
 class EconomyManager:
-    """Manages the in-game economy, including currency, transactions, and market dynamics.
+    """Manages the in-game economy, including currency, transactions,
+    and market dynamics.
     Designed to be adaptable, allowing rules to be updated dynamically by the core AI.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]) -> None:
         """Initializes the EconomyManager with a given configuration."""
         self.config = config
-        self.rules = {
+        self.rules: Dict[str, Any] = {
             "transaction_tax_rate": self.config.get("initial_tax_rate", 0.05),
             "daily_coin_allowance": self.config.get("initial_allowance", 10.0)
         }
@@ -29,43 +31,33 @@ class EconomyManager:
             logger.error("Transaction failed: Missing data.")
             return False
 
-        # Implement balance check and update logic here.
-        # For simplicity, assuming 'user_id' is the sender.
-        # If a receiver is involved, that logic would be added here.
         sender_id = user_id
-        current_balance = self.db.get_user_balance(sender_id)
+        current_balance = self.db.get_balance(sender_id)
 
         if current_balance < amount:
-            logger.warning(f"Transaction failed for {sender_id}: Insufficient funds. Current: {current_balance}, Attempted: {amount}")
+            logger.warning(f"Transaction failed for {sender_id}. Insufficient funds. Current: {current_balance}, Attempted: {amount}")
             return False
 
         tax = amount * self.rules["transaction_tax_rate"]
         net_amount = amount - tax
 
-        # Debit sender
-        if not self.db.update_user_balance(sender_id, -amount):
-            logger.error(f"Failed to debit {sender_id} during transaction.")
-            return False
+        # Assuming a negative amount debits the account
+        self.db.add_balance(sender_id, -amount)
         
-        # Credit receiver (if applicable, for now, just remove from sender)
-        # In a real scenario, net_amount might go to another user or system.
-        # For this MVP, we just debit the sender and tax is 'burned'.
-
         logger.info(
-            f"Processing transaction for user '{user_id}': \n"
-            f"  Item: {item_id}, Amount: {amount}, Tax: {tax}, Net: {net_amount}"
+            f"Processing transaction for user '{user_id}': "
+            f"Item: {item_id}, Amount: {amount}, Tax: {tax}, Net: {net_amount}"
         )
         return True
 
     def get_balance(self, user_id: str) -> float:
         """Retrieves the currency balance for a given user."""
         logger.debug(f"Getting balance for user: {user_id}")
-        return self.db.get_user_balance(user_id)
+        return self.db.get_balance(user_id)
 
     def update_rules(self, new_rules: Dict[str, Any]):
         """Allows the core AI to dynamically update the economic rules."""
         logger.info(f"Updating economic rules from {self.rules} to {new_rules}")
-        # Add validation for new rules.
         if "transaction_tax_rate" in new_rules:
             tax_rate = new_rules["transaction_tax_rate"]
             if not (0.0 <= tax_rate <= 1.0):

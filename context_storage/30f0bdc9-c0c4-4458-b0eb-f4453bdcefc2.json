@@ -1,0 +1,14 @@
+{
+  "context_id": "30f0bdc9-c0c4-4458-b0eb-f4453bdcefc2",
+  "context_type": "tool",
+  "created_at": "2025-09-23T18:49:31.402435",
+  "updated_at": "2025-09-23T18:49:31.402435",
+  "status": "active",
+  "metadata": {},
+  "content": {
+    "name": "工具A",
+    "description": "测试工具"
+  },
+  "version": "1.0",
+  "tags": []
+}

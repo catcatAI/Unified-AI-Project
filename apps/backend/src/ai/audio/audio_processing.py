@@ -1,5 +1,5 @@
 class AudioProcessing:
     """
-    A placeholder class for the audio processing module.
+    A placeholder class for the audio processing module.:
     """
     pass

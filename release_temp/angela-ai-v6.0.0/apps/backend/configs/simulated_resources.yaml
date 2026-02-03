@@ -1,0 +1,13 @@
+simulated_hardware_profile:
+  cpu:
+    cores: 1
+  disk:
+    critical_threshold_percent: 70
+    lag_factor_critical: 1.0
+    lag_factor_warning: 1.0
+    space_gb: 5.0
+    warning_threshold_percent: 50
+  gpu_available: false
+  profile_name: TemporaryDefaultTestProfile
+  ram:
+    ram_gb: 2.0

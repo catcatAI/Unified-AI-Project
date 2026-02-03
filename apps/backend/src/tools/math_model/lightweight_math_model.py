@@ -1,8 +1,9 @@
-import numpy as np
+import re
+import operator
 import json
 import os
-import re
-from typing import Dict, List, Tuple, Optional
+import ast
+from typing import Optional, Dict, List, Union, Callable, Any, cast
 
 class LightweightMathModel:
     """
@@ -10,86 +11,139 @@ class LightweightMathModel:
     without requiring TensorFlow or other heavy ML frameworks.
     Uses simple pattern matching and rule-based evaluation.
     """
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         self.operations = {
-            '+': lambda x, y: x + y,
-            '-': lambda x, y: x - y,
-            '*': lambda x, y: x * y,
-            '/': lambda x, y: x / y if y != 0 else float('inf'),
-            '**': lambda x, y: x ** y,
-            '%': lambda x, y: x % y if y != 0 else 0
+            '+': operator.add,
+            '-': operator.sub,
+            '*': operator.mul,
+            '/': operator.truediv,
+            '**': operator.pow,
+            '%': operator.mod,
         }
-        
         # Simple patterns for arithmetic expressions
-        self.arithmetic_pattern = re.compile(r'([+-]?\d*\.?\d+)\s*([+\-*/]|\*\*)\s*([+-]?\d*\.?\d+)')
-        
+        self.arithmetic_pattern = re.compile(r'([+\-]?\d+\.?\d*)\s*([+\-*/%])\s*([+\-]?\d+\.?\d*)')
+
     def evaluate_expression(self, expression: str) -> Optional[float]:
         """
         Evaluate a simple arithmetic expression.
-        
+
         Args:
             expression: String containing arithmetic expression like "5 + 3" or "10 / 2"
-            
+
         Returns:
-            Result of the calculation or None if invalid
+            Result of the calculation or None if invalid.
         """
         try:
             # Clean the expression
             expression = expression.strip()
-            
+
             # Handle simple number
             if expression.replace('.', '').replace('-', '').isdigit():
                 return float(expression)
-            
+
             # Match arithmetic pattern
             match = self.arithmetic_pattern.match(expression)
             if match:
-                num1_str, operator, num2_str = match.groups()
-                
+                num1_str, op_str, num2_str = match.groups()
                 try:
                     num1 = float(num1_str)
                     num2 = float(num2_str)
-                    
-                    if operator in self.operations:
-                        result = self.operations[operator](num1, num2)
-                        
+                    op_func = self.operations.get(op_str)
+                    if op_func:
+                        result = op_func(num1, num2)
                         # Round division results to 4 decimal places
-                        if operator == '/':
+                        if op_str == '/':
                             result = round(result, 4)
-                        elif operator != '/' and result == int(result):
+                        elif op_str != '/' and result == int(result):
                             result = int(result)
-                            
-                        return result
+                        return float(result)
+                    else:
+                        return None
                 except (ValueError, ZeroDivisionError, OverflowError):
                     return None
             
-            # Fallback: try eval for more complex expressions (with safety checks)
+            # Fallback, try safe_eval for more complex expressions
             return self._safe_eval(expression)
-            
+
         except Exception:
             return None
-    
+
     def _safe_eval(self, expression: str) -> Optional[float]:
         """
-        Safely evaluate mathematical expressions using eval with restricted scope.
+        Safely evaluate mathematical expressions using AST parsing.
         """
         try:
+            # Define supported operators for AST nodes
+            operators: Dict[type, Callable[..., Any]] = {
+                ast.Add: operator.add,
+                ast.Sub: operator.sub,
+                ast.Mult: operator.mul,
+                ast.Div: operator.truediv,
+                ast.Pow: operator.pow,
+                ast.Mod: operator.mod,
+                ast.USub: operator.neg,
+                ast.UAdd: operator.pos,
+            }
+
+            def eval_node(node):
+                if isinstance(node, ast.Constant):  # Python 3.8+
+                    value = node.value
+                    if isinstance(value, complex):
+                        return float(value.real)
+                    if isinstance(value, (int, float)):
+                        return float(value)
+                    raise ValueError(f"Unsupported constant value type: {type(value)}")
+                elif isinstance(node, ast.Num):  # Python < 3.8
+                    n_value = node.n
+                    if isinstance(n_value, complex):
+                        return float(n_value.real)
+                    if isinstance(n_value, (int, float)):
+                        return float(n_value)
+                    raise ValueError(f"Unsupported number type: {type(n_value)}")
+                elif isinstance(node, ast.BinOp):
+                    left = eval_node(node.left)
+                    right = eval_node(node.right)
+                    op_type = type(node.op)
+                    if op_type in operators:
+                        op_func = operators[op_type]
+                        result = op_func(float(left), float(right))
+                        return float(result)
+                    else:
+                        raise ValueError(f"Unsupported binary operation: {op_type}")
+                elif isinstance(node, ast.UnaryOp):
+                    operand = eval_node(node.operand)
+                    op_type = type(node.op)
+                    if op_type in operators:
+                        op_func = operators[op_type]
+                        result = op_func(float(operand))
+                        return float(result)
+                    else:
+                        raise ValueError(f"Unsupported unary operation: {op_type}")
+                else:
+                    raise ValueError(f"Unsupported operation: {type(node)}")
+            
             # Only allow mathematical operations and numbers
-            allowed_chars = set('0123456789+-*/.() ')
+            # This is a basic filter, a more robust solution would involve AST traversal
+            # to ensure no dangerous functions are called.
+            allowed_chars = set('0123456789+-*/%.() ')
             if not all(c in allowed_chars for c in expression):
                 return None
+
+            # Parse and evaluate the expression
+            tree = ast.parse(expression, mode='eval')
+            result = eval_node(tree.body)
             
-            # Evaluate with restricted globals
-            result = eval(expression, {"__builtins__": {}}, {})
-            
+            # Ensure the result is a float
             if isinstance(result, (int, float)):
                 return float(result)
+            elif isinstance(result, complex):
+                return float(result.real)
             return None
             
         except Exception:
             return None
-    
+
     def solve_problem(self, problem: str) -> str:
         """
         Solve a mathematical problem given as a string.
@@ -109,7 +163,7 @@ class LightweightMathModel:
                 return str(result)
         
         return "Unable to solve"
-    
+
     def _extract_expression(self, problem: str) -> Optional[str]:
         """
         Extract mathematical expression from a natural language problem.
@@ -120,7 +174,7 @@ class LightweightMathModel:
             return match.group(0)
         
         # Look for "what is X" patterns
-        what_is_pattern = re.compile(r'what is\s+([0-9+\-*/.\s]+)', re.IGNORECASE)
+        what_is_pattern = re.compile(r'what is\s+([0-9+\-*/%.	 ]+)', re.IGNORECASE)
         match = what_is_pattern.search(problem)
         if match:
             return match.group(1).strip()
@@ -130,8 +184,8 @@ class LightweightMathModel:
             return problem.strip()
         
         return None
-    
-    def train_on_dataset(self, dataset_path: str) -> Dict[str, any]:
+
+    def train_on_dataset(self, dataset_path: str) -> Dict[str, Union[str, int, float, List[Dict[str, str]]]]:
         """
         'Train' the model on a dataset (actually just validate performance).
         Since this is a rule-based model, no actual training occurs.
@@ -156,7 +210,7 @@ class LightweightMathModel:
                 
                 predicted = self.solve_problem(problem)
                 
-                # Compare results (handle floating point precision)
+                # Attempt to compare as floats for numerical problems
                 try:
                     expected_num = float(expected)
                     predicted_num = float(predicted)
@@ -170,6 +224,7 @@ class LightweightMathModel:
                             'predicted': predicted
                         })
                 except ValueError:
+                    # If not purely numerical, compare as strings
                     if expected == predicted:
                         correct += 1
                     else:
@@ -180,7 +235,6 @@ class LightweightMathModel:
                         })
             
             accuracy = correct / total if total > 0 else 0
-            
             return {
                 'accuracy': accuracy,
                 'correct': correct,
@@ -195,7 +249,7 @@ class LightweightMathModel:
                 'correct': 0,
                 'total': 0
             }
-    
+
     def save_model(self, model_path: str) -> bool:
         """
         Save model configuration (minimal for rule-based model).
@@ -217,9 +271,9 @@ class LightweightMathModel:
             
         except Exception:
             return False
-    
+
     @classmethod
-    def load_model(cls, model_path: str) -> 'LightweightMathModel':
+    def load_model(cls, model_path: str):
         """
         Load model from configuration file.
         """
@@ -227,7 +281,7 @@ class LightweightMathModel:
         return cls()
 
 
-def main():
+def main() -> None:
     """Test the lightweight math model."""
     model = LightweightMathModel()
     
@@ -260,13 +314,14 @@ def main():
         print("\nTesting on training dataset:")
         stats = model.train_on_dataset(dataset_path)
         print(f"Accuracy: {stats['accuracy']:.2%}")
-        print(f"Correct: {stats['correct']}/{stats['total']}")
+        print(f"Correct: {stats['correct']} / {stats['total']}")
         
         if stats.get('errors'):
             print("\nSample errors:")
-            for error in stats['errors'][:3]:
+            errors = cast(List[Dict[str, str]], stats['errors'])
+            for error in errors[:3]:
                 print(f"  Problem: {error['problem']}")
-                print(f"  Expected: {error['expected']}, Got: {error['predicted']}")
+                print(f"  Expected: {error['expected']} Got: {error['predicted']}")
     
     # Save model
     model_path = os.path.join(project_root, "data", "models", "lightweight_math_model.json")

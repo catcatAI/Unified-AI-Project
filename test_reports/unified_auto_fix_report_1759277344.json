@@ -1,0 +1,107 @@
+{
+  "timestamp": "2025-10-01 08:08:41",
+  "operation_mode": "pure_test",
+  "execution_scope": "specific_test",
+  "specific_target": "test_syntax_fixer.py",
+  "test_results": {
+    "command": "C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest test_syntax_fixer.py --tb=short -v --tb=short --json-report --json-report-file=latest_test_results.json -v",
+    "return_code": 5,
+    "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-8.4.2, pluggy-1.6.0 -- C:\\Users\\catai\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\ncachedir: .pytest_cache\nbenchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)\nmetadata: {'Python': '3.12.10', 'Platform': 'Windows-11-10.0.26100-SP0', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.9.0', 'langsmith': '0.4.5', 'asyncio': '1.2.0', 'benchmark': '5.1.0', 'cov': '6.2.1', 'json-report': '1.5.0', 'metadata': '3.1.1', 'timeout': '2.4.0'}}\nrootdir: D:\\Projects\\Unified-AI-Project\nconfigfile: pytest.ini\nplugins: anyio-4.9.0, langsmith-0.4.5, asyncio-1.2.0, benchmark-5.1.0, cov-6.2.1, json-report-1.5.0, metadata-3.1.1, timeout-2.4.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 0 items\n\n--------------------------------- JSON report ---------------------------------\nreport saved to: latest_test_results.json\n============================ no tests ran in 0.33s ============================\n",
+    "stderr": "",
+    "success": false,
+    "tests_collected": 0,
+    "tests_passed": 0,
+    "tests_failed": 0,
+    "tests_skipped": 0,
+    "duration": 0
+  },
+  "fix_results": {},
+  "environment_results": {
+    "summary": {
+      "total_components": 9,
+      "healthy_components": 5,
+      "warning_components": 2,
+      "error_components": 2,
+      "health_percentage": "55.6%",
+      "overall_status": "error"
+    },
+    "details": {
+      "python": {
+        "status": "healthy",
+        "details": "Python版本 3.12.10 满足要求",
+        "version": "3.12.10",
+        "errors": [],
+        "warnings": []
+      },
+      "venv": {
+        "status": "warning",
+        "details": "虚拟环境存在但未激活: D:\\Projects\\Unified-AI-Project\\venv",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "node": {
+        "status": "healthy",
+        "details": "Node.js版本 22.16.0 已安装",
+        "version": "22.16.0",
+        "errors": [],
+        "warnings": []
+      },
+      "pnpm": {
+        "status": "error",
+        "details": "无法检查pnpm",
+        "version": "",
+        "errors": [
+          "检查pnpm时出错: [WinError 2] 系統找不到指定的檔案。"
+        ],
+        "warnings": []
+      },
+      "dependencies": {
+        "status": "healthy",
+        "details": "依赖包检查通过",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "database": {
+        "status": "warning",
+        "details": "FIREBASE_CREDENTIALS_PATH环境变量未设置",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "api_server": {
+        "status": "error",
+        "details": "无法连接到API服务器: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025BF0DDAA80>: Failed to establish a new connection: [WinError 10061] 無法連線，因為目標電腦拒絕連線。'))",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "mqtt_broker": {
+        "status": "healthy",
+        "details": "MQTT代理连接正常: 127.0.0.1:1883",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      },
+      "config_files": {
+        "status": "healthy",
+        "details": "所有配置文件都存在: apps/backend/configs/system_config.yaml, apps/backend/configs/hsp_fallback_config.yaml",
+        "version": "",
+        "errors": [],
+        "warnings": []
+      }
+    },
+    "success": false
+  },
+  "errors": [],
+  "warnings": [],
+  "summary": {
+    "overall_success": false,
+    "operation_mode": "pure_test",
+    "execution_scope": "specific_test",
+    "specific_target": "test_syntax_fixer.py",
+    "timestamp": "2025-10-01 08:09:04",
+    "test_success": false
+  }
+}

@@ -1,8 +1,10 @@
-from typing import TypedDict, Literal, Any, Optional, Dict, List
-from dataclasses import dataclass
+"""
+MCP (Model Context Protocol) Type Definitions for Unified AI Project.
+This module provides type definitions for the Model Context Protocol integration,
+with Context7 and other MCP-compatible services.
+"""
 
-
-
+from typing import Any, Dict, Optional, TypedDict, Literal, List
 
 # Original MCP Types (Legacy)
 class MCPEnvelope(TypedDict):

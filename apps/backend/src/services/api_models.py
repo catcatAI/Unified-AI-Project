@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Literal
 
 class UserInput(BaseModel):
     user_id: str
@@ -54,7 +54,7 @@ class JQLSearchModel(BaseModel):
     jql: str
 
 # --- Hot Status Models ---
-class HotStatusResponse(BaseModel):
+class HotStatusModel(BaseModel):
     draining: bool
     services_initialized: Dict[str, bool]
     hsp: Dict[str, Any]
@@ -62,14 +62,14 @@ class HotStatusResponse(BaseModel):
     metrics: Dict[str, Any]
 
 # --- Health Models ---
-class HealthResponse(BaseModel):
+class HealthStatusModel(BaseModel):
     status: str
     timestamp: str
     services_initialized: Dict[str, bool]
     components: Dict[str, Any] = {}
 
 # --- Readiness Models ---
-class ReadinessResponse(BaseModel):
+class ReadinessStatusModel(BaseModel):
     ready: bool
     timestamp: str
     services_initialized: Dict[str, bool]
@@ -77,7 +77,7 @@ class ReadinessResponse(BaseModel):
     reason: Optional[str] = None
 
 # --- HSP Service Discovery Models ---
-class HSPServiceDiscoveryResponse(BaseModel):
+class HSPCapabilityModel(BaseModel):
     capability_id: str
     name: str
     description: str

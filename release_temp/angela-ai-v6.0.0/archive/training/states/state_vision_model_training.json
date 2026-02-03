@@ -1,0 +1,25 @@
+{
+  "task_id": "vision_model_training",
+  "model_name": "vision_model_training",
+  "current_epoch": 20,
+  "total_epochs": 20,
+  "metrics": {
+    "loss": 0.1,
+    "accuracy": 0.9,
+    "val_loss": 0.11,
+    "val_accuracy": 0.855
+  },
+  "model_state": {},
+  "optimizer_state": {},
+  "learning_rate": 0.001,
+  "batch_size": 32,
+  "progress": 100.0,
+  "start_time": 1758192121.8816721,
+  "last_update_time": 1758192321.8816721,
+  "config": {
+    "batch_size": 32,
+    "epochs": 20,
+    "learning_rate": 0.001
+  },
+  "additional_data": {}
+}

@@ -1,136 +1,151 @@
-import asyncio
-import uuid
-import yaml
-import os
-import logging
-from typing import Dict, Any, List
+# TODO: Fix import - module 'asyncio' not found
+# TODO: Fix import - module 'uuid' not found
+# TODO: Fix import - module 'yaml' not found
+from tests.tools.test_tool_dispatcher_logging import
 from pathlib import Path # Import Path
+from typing import Dict, Any
 
-from .base.base_agent import BaseAgent
-from ....hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
-from ....core.services.multi_llm_service import MultiLLMService, ChatMessage
+from .base.base_agent import
+from ....hsp.types import
+from ....core.services.multi_llm_service import
 
 class CreativeWritingAgent(BaseAgent):
     """
-    A specialized agent for creative writing tasks like generating marketing copy,
+    A specialized agent for creative writing tasks like generating marketing copy, ::
     short stories, or polishing text.
-    """
-    def __init__(self, agent_id: str):
-        capabilities = [
-            {
+    """:
+在函数定义前添加空行
+        capabilities = []
+            {}
                 "capability_id": f"{agent_id}_generate_marketing_copy_v1.0",
                 "name": "generate_marketing_copy",
-                "description": "Generates marketing copy for a given product and target audience.",
+                "description": "Generates marketing copy for a given product and \
+    target audience.", :::
                 "version": "1.0",
-                "parameters": [
-                    {"name": "product_description", "type": "string", "required": True},
-                    {"name": "target_audience", "type": "string", "required": True},
-                    {"name": "style", "type": "string", "required": False, "description": "e.g., 'witty', 'professional', 'urgent'"}
-                ],
-                "returns": {"type": "string", "description": "The generated marketing copy."}
-            },
-            {
+                "parameters": []
+                    {"name": "product_description", "type": "string", "required": True}
+                    {"name": "target_audience", "type": "string", "required": True}
+                    {"name": "style", "type": "string", "required": False,
+    "description": "e.g., 'witty', 'professional', 'urgent'"}
+[                ]
+                "returns": {"type": "string",
+    "description": "The generated marketing copy."}
+{            }
+            {}
                 "capability_id": f"{agent_id}_polish_text_v1.0",
                 "name": "polish_text",
-                "description": "Improves the grammar, style, and clarity of a given text.",
+                "description": "Improves the grammar, style,
+    and clarity of a given text.",
                 "version": "1.0",
-                "parameters": [
+                "parameters": []
                     {"name": "text_to_polish", "type": "string", "required": True}
-                ],
+[                ]
                 "returns": {"type": "string", "description": "The polished text."}
-            }
-        ]
-        super().__init__(agent_id=agent_id, capabilities=capabilities)
+{            }
+[        ]
+        super().__init__(agent_id = agent_id, capabilities = capabilities)
 
         # This agent directly uses the LLMInterface initialized in its services.
         # Be defensive in case tests patch initialize_services to return None.
         services = getattr(self, "services", None)
-        self.llm_interface: MultiLLMService = services.get("llm_interface") if isinstance(services, dict) else None
+        self.llm_interface,
+    MultiLLMService == services.get("llm_interface") if isinstance(services,
+    dict) else None, :
         self._load_prompts()
 
-    def _load_prompts(self):
+    def _load_prompts(self) -> None, :
         """Loads prompts from the YAML file."""
         # Get the project root dynamically
-        current_dir = Path(__file__).parent
-        # Assuming 'configs' is directly under 'apps/backend'
-        project_root = current_dir.parent.parent # Go up from src/agents to apps/backend
+        current_dir == Path(__file__).parent
+        # Assuming 'configs' is directly under 'apps / backend'
+        project_root = current_dir.parent.parent # Go up from src / agents to apps /\
+    backend
         prompts_path = project_root / "configs" / "prompts.yaml"
 
-        try:
-            with open(prompts_path, 'r', encoding='utf-8') as f:
-                all_prompts = yaml.safe_load(f)
-                self.prompts = all_prompts.get('creative_writing_agent', {})
-        except FileNotFoundError:
-            self.prompts = {}
-        except Exception as e:
-            logging.error(f"Error loading prompts from {prompts_path}: {e}")
+        try,
+            with open(prompts_path, 'r', encoding == 'utf - 8') as f, :
+                all_prompts = yaml.safe_load(f) or {}
+            self.prompts = all_prompts.get('creative_writing_agent', {})
+        except Exception as e, ::
+            logging.error(f"Error loading prompts from {prompts_path} {e}")
             self.prompts = {}
 
-    async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
-        request_id = task_payload.get("request_id")
+    async def handle_task_request(self, task_payload, HSPTaskRequestPayload,
+    sender_ai_id, str, envelope, HSPMessageEnvelope):
+        request_id = task_payload.get("request_id", "")
         capability_id = task_payload.get("capability_id_filter", "")
         params = task_payload.get("parameters", {})
 
-        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{capability_id}'")
-
-        if not self.llm_interface:
-            result_payload = self._create_failure_payload(request_id, "INTERNAL_ERROR", "MultiLLMService is not available.")
-        else:
-            try:
-                if "generate_marketing_copy" in capability_id:
+        logging.info(f"[{self.agent_id}] Handling task {request_id} for capability '{cap\
+    \
+    \
+    \
+    \
+    \
+    ability_id}'")::
+        if not self.llm_interface, ::
+            await self.send_task_failure(request_id, sender_ai_id,
+    task_payload.get("callback_address", ""), "MultiLLMService is not available.")
+        else,
+            try,
+                if "generate_marketing_copy" in capability_id, ::
                     prompt = self._create_marketing_copy_prompt(params)
-                    messages = [ChatMessage(role="user", content=prompt)]
+                    messages = [ChatMessage(role = "user", content = prompt)]
                     llm_response = await self.llm_interface.chat_completion(messages)
-                    result_payload = self._create_success_payload(request_id, llm_response.content)
-                elif "polish_text" in capability_id:
+                    await self.send_task_success(request_id, sender_ai_id,
+    task_payload.get("callback_address", ""), llm_response.content())
+                elif "polish_text" in capability_id, ::
                     prompt = self._create_polish_text_prompt(params)
-                    messages = [ChatMessage(role="user", content=prompt)]
+                    messages = [ChatMessage(role = "user", content = prompt)]
                     llm_response = await self.llm_interface.chat_completion(messages)
-                    result_payload = self._create_success_payload(request_id, llm_response.content)
-                else:
-                    result_payload = self._create_failure_payload(request_id, "CAPABILITY_NOT_SUPPORTED", f"Capability '{capability_id}' is not supported by this agent.")
-            except Exception as e:
-                result_payload = self._create_failure_payload(request_id, "EXECUTION_ERROR", str(e))
+                    await self.send_task_success(request_id, sender_ai_id,
+    task_payload.get("callback_address", ""), llm_response.content())
+                else,
+                    await self.send_task_failure(request_id, sender_ai_id,
+    task_payload.get("callback_address", ""),
+    f"Capability '{capability_id}' is not supported by this agent.")
+            except Exception as e, ::
+                await self.send_task_failure(request_id, sender_ai_id,
+    task_payload.get("callback_address", ""), str(e))
 
-        if self.hsp_connector and task_payload.get("callback_address"):
-            callback_topic = task_payload["callback_address"]
-            await self.hsp_connector.send_task_result(result_payload, callback_topic)
-            logging.info(f"[{self.agent_id}] Sent task result for {request_id} to {callback_topic}")
+    def _create_marketing_copy_prompt(self, params, Dict[str, Any]) -> str, :
+        """Creates a prompt for generating marketing copy."""::
+        product_description = params.get("product_description", "")
+        target_audience = params.get("target_audience", "")
+        style = params.get("style", "professional")
 
-    def _create_marketing_copy_prompt(self, params: Dict[str, Any]) -> str:
-        product = params.get('product_description', 'an unspecified product')
-        audience = params.get('target_audience', 'a general audience')
-        style = params.get('style', 'persuasive')
-        prompt_template = self.prompts.get('generate_marketing_copy', "Generate marketing copy for {product}.")
-        return prompt_template.format(style=style, product=product, audience=audience)
+        prompt == f""":
+        Generate marketing copy for the following product, ::
+        Product, {product_description}
+        Target Audience, {target_audience}
+        Desired Style, {style}
 
-    def _create_polish_text_prompt(self, params: Dict[str, Any]) -> str:
-        text = params.get('text_to_polish', '')
-        prompt_template = self.prompts.get('polish_text', "Please proofread and polish the following text for grammar, style, and clarity. Return only the improved text: {text}")
-        return prompt_template.format(text=text)
+        Please create compelling marketing copy that highlights the key benefits and \
+    appeals to the target audience.
+        """
+        return prompt.strip()
 
-    def _create_success_payload(self, request_id: str, result: Any) -> HSPTaskResultPayload:
-        return HSPTaskResultPayload(
-            request_id=request_id,
-            status="success",
-            payload=result
-        )
+    def _create_polish_text_prompt(self, params, Dict[str, Any]) -> str, :
+        """Creates a prompt for polishing text."""::
+        text_to_polish = params.get("text_to_polish", "")
 
-    def _create_failure_payload(self, request_id: str, error_code: str, error_message: str) -> HSPTaskResultPayload:
-        return HSPTaskResultPayload(
-            request_id=request_id,
-            status="failure",
-            error_details={"error_code": error_code, "error_message": error_message}
-        )
+        prompt == f""":
+        Please improve the following text by enhancing grammar, style, and clarity,
 
+        {text_to_polish}
 
-if __name__ == '__main__':
-    async def main():
-        agent_id = f"did:hsp:creative_writing_agent_{uuid.uuid4().hex[:6]}"
-        agent = CreativeWritingAgent(agent_id=agent_id)
+        Make sure the polished text is clear, concise,
+    and well - structured while preserving the original meaning.::
+        """
+        return prompt.strip()
+
+if __name'__main__':::
+    async def main() -> None,
+        agent_id == f"did, hsp, creative_writing_agent_{uuid.uuid4().hex[:6]}"
+        agent == CreativeWritingAgent(agent_id = agent_id)
         await agent.start()
 
-    try:
+    try,
         asyncio.run(main())
-    except KeyboardInterrupt:
+    except KeyboardInterrupt, ::
         print("\nCreativeWritingAgent manually stopped.")

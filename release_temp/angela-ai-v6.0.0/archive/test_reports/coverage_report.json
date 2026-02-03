@@ -1,0 +1,99 @@
+{
+  "total_source_files": 391,
+  "total_test_files": 89,
+  "total_functions": 1965,
+  "total_classes": 722,
+  "total_tests": 549,
+  "matched_tests": 505,
+  "unmatched_tests": [
+    {
+      "test_file": "test_basic.py",
+      "test_functions": [
+        "test_python_version",
+        "test_basic_imports",
+        "test_project_structure",
+        "test_slow_example",
+        "test_environment_variables"
+      ]
+    },
+    {
+      "test_file": "test_security.py",
+      "test_functions": [
+        "test_permission_system_initialization",
+        "test_permission_check_allowed",
+        "test_permission_check_denied",
+        "test_add_user_rule",
+        "test_permission_check_with_resource_pattern",
+        "test_permission_check_with_action_restrictions",
+        "test_audit_logger_initialization",
+        "test_log_event",
+        "test_log_operation",
+        "test_flush_buffer",
+        "test_get_recent_events",
+        "test_sandbox_initialization",
+        "test_code_validation",
+        "test_method",
+        "test_method",
+        "test_safe_code_execution",
+        "test_dangerous_code_blocking"
+      ]
+    },
+    {
+      "test_file": "test_simple.py",
+      "test_functions": [
+        "test_simple"
+      ]
+    },
+    {
+      "test_file": "integration\\test_knowledge_update.py",
+      "test_functions": [
+        "test_knowledge_update"
+      ]
+    },
+    {
+      "test_file": "integration\\test_self_improvement.py",
+      "test_functions": [
+        "test_self_improvement"
+      ]
+    },
+    {
+      "test_file": "meta\\test_adaptive_learning_controller.py",
+      "test_functions": [
+        "test_analyze_trend_improving",
+        "test_analyze_trend_degrading",
+        "test_analyze_trend_stable",
+        "test_analyze_trend_empty_history",
+        "test_select_improving_trend",
+        "test_select_degrading_complex_task",
+        "test_select_degrading_simple_task",
+        "test_select_stable_low_confidence_complex_task",
+        "test_select_stable_high_confidence_simple_task",
+        "test_adapt_learning_strategy",
+        "test_optimize_parameters_degrading_performance",
+        "test_optimize_parameters_improving_performance"
+      ]
+    },
+    {
+      "test_file": "services\\test_hot_endpoints.py",
+      "test_functions": [
+        "test_hot_status_endpoint_basic_structure"
+      ]
+    },
+    {
+      "test_file": "services\\test_node_services.py",
+      "test_functions": [
+        "test_node_service_sends_data_to_python_api",
+        "test_node_service_status_check",
+        "test_node_service_data_exchange_formats",
+        "test_node_service_error_handling",
+        "test_node_service_with_empty_data"
+      ]
+    },
+    {
+      "test_file": "tools\\test_tool_dispatcher_logging.py",
+      "test_functions": [
+        "test_tool_dispatcher_action_policy_logged_smoke"
+      ]
+    }
+  ]
+}
