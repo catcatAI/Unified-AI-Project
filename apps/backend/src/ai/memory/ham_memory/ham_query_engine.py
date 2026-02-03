@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union, Tuple
@@ -63,6 +64,10 @@ class HAMQueryEngine:
                 if not (start_date <= memory_timestamp <= end_date):
                     match = False
             
+            # Initialize variables
+            decompressed_data_str: str = ""
+            gist_content: str = ""
+            
             # Filter by keywords (simple check in gist for now)
             if keywords and match:
                 try:
@@ -70,7 +75,6 @@ class HAMQueryEngine:
                     decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
                     decompressed_data_str = decompressed_data_bytes.decode('utf-8')
                     
-                    gist_content = ""
                     if "dialogue_text" in data_package["data_type"]:
                         abstracted_gist = json.loads(decompressed_data_str)
                         gist_content = abstracted_gist.get("gist", "")
@@ -88,7 +92,7 @@ class HAMQueryEngine:
                     logger.error(f"Error processing memory {mem_id} for keyword search: {e}")
                     match = False # Exclude if there's an error processing
 
-            if match:
+            if match and decompressed_data_str:
                 results.append(HAMRecallResult(
                     memory_id=mem_id,
                     content=self.data_processor._rehydrate_text_gist(json.loads(decompressed_data_str)) if "dialogue_text" in data_package["data_type"] else decompressed_data_str,
