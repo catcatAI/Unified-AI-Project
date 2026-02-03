@@ -4,22 +4,148 @@
     "gpt-3.5-turbo": {
       "model_name": "gpt-3.5-turbo",
       "provider": "openai",
-      "api_key": "test-key",
+      "api_key_env": "OPENAI_API_KEY",
       "max_tokens": 4096,
-      "temperature": 0.7
+      "temperature": 0.7,
+      "top_p": 1.0,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0,
+      "timeout": 60,
+      "enabled": true,
+      "cost_per_1k_tokens": 0.0015,
+      "context_window": 4096
     },
     "gpt-4": {
       "model_name": "gpt-4",
       "provider": "openai",
-      "api_key": "test-key",
-      "max_tokens": 8192,
-      "temperature": 0.7
+      "api_key_env": "OPENAI_API_KEY",
+      "max_tokens": 4096,
+      "temperature": 0.7,
+      "timeout": 60,
+      "enabled": true,
+      "cost_per_1k_tokens": 0.03,
+      "context_window": 8192
+    },
+    "gpt-4o": {
+      "model_name": "gpt-4o",
+      "provider": "openai",
+      "api_key_env": "OPENAI_API_KEY",
+      "max_tokens": 4096,
+      "temperature": 0.7,
+      "timeout": 60,
+      "enabled": true,
+      "cost_per_1k_tokens": 0.005,
+      "context_window": 128000
+    },
+    "claude-3-opus": {
+      "model_name": "claude-3-opus-20240229",
+      "provider": "anthropic",
+      "api_key_env": "ANTHROPIC_API_KEY",
+      "max_tokens": 4096,
+      "temperature": 0.7,
+      "timeout": 60,
+      "enabled": true,
+      "cost_per_1k_tokens": 0.015,
+      "context_window": 200000
+    },
+    "claude-3-sonnet": {
+      "model_name": "claude-3-sonnet-20240229",
+      "provider": "anthropic",
+      "api_key_env": "ANTHROPIC_API_KEY",
+      "max_tokens": 4096,
+      "temperature": 0.7,
+      "timeout": 60,
+      "enabled": true,
+      "cost_per_1k_tokens": 0.003,
+      "context_window": 200000
+    },
+    "gemini-1.5-pro": {
+      "model_name": "gemini-1.5-pro",
+      "provider": "google",
+      "api_key_env": "GEMINI_API_KEY",
+      "max_tokens": 4096,
+      "temperature": 0.7,
+      "timeout": 60,
+      "enabled": true,
+      "cost_per_1k_tokens": 0.0035,
+      "context_window": 1000000
+    },
+    "ollama-tinyllama": {
+      "model_name": "tinyllama",
+      "provider": "ollama",
+      "backend_type": "ollama",
+      "base_url": "http://localhost:11434",
+      "max_tokens": 2048,
+      "temperature": 0.7,
+      "timeout": 120,
+      "enabled": true,
+      "cost_per_1k_tokens": 0.0,
+      "context_window": 2048
+    },
+    "ollama-llama3": {
+      "model_name": "llama3",
+      "provider": "ollama",
+      "backend_type": "ollama",
+      "base_url": "http://localhost:11434",
+      "max_tokens": 4096,
+      "temperature": 0.7,
+      "timeout": 120,
+      "enabled": true,
+      "cost_per_1k_tokens": 0.0,
+      "context_window": 8192
+    },
+    "llamacpp-local": {
+      "model_name": "llama-3-8b-instruct",
+      "provider": "llamacpp",
+      "backend_type": "llamacpp",
+      "base_url": "http://localhost:8080",
+      "max_tokens": 4096,
+      "temperature": 0.7,
+      "timeout": 120,
+      "enabled": true,
+      "cost_per_1k_tokens": 0.0,
+      "context_window": 8192
+    },
+    "azure-gpt-4": {
+      "model_name": "gpt-4",
+      "provider": "azure_openai",
+      "api_key_env": "AZURE_OPENAI_API_KEY",
+      "base_url": "https://your-resource.openai.azure.com/",
+      "max_tokens": 4096,
+      "temperature": 0.7,
+      "timeout": 60,
+      "enabled": false,
+      "cost_per_1k_tokens": 0.03,
+      "context_window": 8192
     }
   },
   "providers": {
     "openai": {
       "base_url": "https://api.openai.com/v1",
       "timeout": 30
+    },
+    "anthropic": {
+      "base_url": "https://api.anthropic.com",
+      "timeout": 30
+    },
+    "google": {
+      "base_url": "https://generativelanguage.googleapis.com",
+      "timeout": 30
     }
+  },
+  "routing": {
+    "enabled": true,
+    "strategy": "auto",
+    "fallback_enabled": true,
+    "fallback_model": "ollama-llama3"
+  },
+  "ensemble": {
+    "enabled": false,
+    "models": [
+      {"model_id": "gpt-4o", "weight": 0.4},
+      {"model_id": "claude-3-opus", "weight": 0.4},
+      {"model_id": "llamacpp-local", "weight": 0.2}
+    ],
+    "fusion_strategy": "best_single"
   }
 }
