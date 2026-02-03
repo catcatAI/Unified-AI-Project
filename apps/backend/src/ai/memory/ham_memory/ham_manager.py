@@ -1,9 +1,16 @@
 import logging
 import os
 import asyncio
+import json
+import hashlib
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union, Tuple
-from cryptography.fernet import Fernet
+
+# Optional imports
+try:
+    from cryptography.fernet import Fernet
+except ImportError:
+    Fernet = None
 
 # Internal imports
 from .ham_types import HAMDataPackageInternal, HAMMemory, HAMRecallResult, HAMMemoryError
@@ -198,7 +205,7 @@ class HAMMemoryManager:
             raise Exception(f"Failed to store experience: {e}") from e
 
         data_package: HAMDataPackageInternal = {
-            "timestamp": datetime.now(timezone.utc()).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "data_type": data_type,
             "encrypted_package": encrypted_data, # This is bytes
             "metadata": current_metadata, # Use the processed current_metadata
@@ -288,7 +295,7 @@ class HAMMemoryManager:
             memory_id=memory_id,
             content=rehydrated_content,
             score=0.0,  # Default score
-            timestamp=self.query_engine._normalize_date(data_package.get("timestamp", datetime.now(timezone.utc()).isoformat())) if hasattr(self.query_engine, '_normalize_date') else datetime.now(timezone.utc()),
+            timestamp=self.query_engine._normalize_date(data_package.get("timestamp", datetime.now(timezone.utc).isoformat())) if hasattr(self.query_engine, '_normalize_date') else datetime.now(timezone.utc),
             metadata=data_package.get("metadata", {})
         )
 
@@ -388,7 +395,7 @@ if __name__ == '__main__':
 
     # Test storing experiences
     print("\n--- Storing Experiences ---")
-    ts_now = datetime.now(timezone.utc()).isoformat() # Added timezone
+    ts_now = datetime.now(timezone.utc).isoformat() # Added timezone
     # Provide metadata that aligns better with DialogueMemoryEntryMetadata
     exp1_metadata = {
         "timestamp": datetime.fromisoformat(ts_now) if isinstance(ts_now, str) else ts_now,
@@ -410,7 +417,7 @@ if __name__ == '__main__':
     exp2_id = asyncio.run(ham.store_experience("Miko learned about HAM today.", "dialogue_text", exp2_metadata))
 
     exp3_metadata = {
-        "timestamp": datetime.now(timezone.utc()),
+        "timestamp": datetime.now(timezone.utc),
         "speaker": "system",
         "dialogue_id": "test_dialogue_2",
         "turn_id": 1,
