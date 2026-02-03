@@ -64,8 +64,13 @@ class HAMMemoryManager:
 
         # Initialize Fernet for encryption
         key_str = os.environ.get("MIKO_HAM_KEY")
-        self.fernet: Optional[Fernet] = None
-        if key_str:
+        self.fernet: Optional[Any] = None
+        self.fernet_key: Optional[bytes] = None
+        
+        if Fernet is None:
+            logger.warning("cryptography library not installed. Encryption DISABLED.")
+            logger.warning("Install with: pip install cryptography")
+        elif key_str:
             self.fernet_key = key_str.encode()
             try:
                 self.fernet = Fernet(self.fernet_key)
@@ -77,9 +82,14 @@ class HAMMemoryManager:
             logger.critical("MIKO_HAM_KEY environment variable not set.")
             logger.warning("Encryption / Decryption will NOT be functional. Generating a TEMPORARY, NON-PERSISTENT key for this session only.")
             logger.warning("DO NOT use this for any real data you want to keep, as it will be lost.")
-            self.fernet_key = Fernet.generate_key()
-            self.fernet = Fernet(self.fernet_key)
-            logger.info(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
+            try:
+                self.fernet_key = Fernet.generate_key()
+                self.fernet = Fernet(self.fernet_key)
+                if self.fernet_key:
+                    logger.info(f"Temporary MIKO_HAM_KEY for this session: {self.fernet_key.decode()}")
+            except Exception as e:
+                logger.error(f"Failed to generate temporary key: {e}")
+                self.fernet = None
 
         self.core_storage = HAMCoreStorage(self.storage_dir, core_storage_filename, resource_awareness_service)
         self.data_processor = HAMDataProcessor(fernet=self.fernet)
@@ -437,6 +447,24 @@ if __name__ == '__main__':
         print(f"Recalled exp3: {json.dumps(recalled_exp3, indent=2) if recalled_exp3 else 'None'}")
     recalled_non_existent = ham.recall_gist('mem_000999')
     print(f"Recalled non-existent: {recalled_non_existent}")
+
+    async def query_core_memory(self, keywords: Optional[List[str]] = None, data_type_filter: Optional[str] = None, limit: int = 10) -> List[HAMRecallResult]:
+        """
+        Query core memory by keywords or data type.
+        
+        Args:
+            keywords: List of keywords to search for
+            data_type_filter: Filter by data type
+            limit: Maximum number of results
+            
+        Returns:
+            List of matching HAMRecallResult objects
+        """
+        if self.query_engine and hasattr(self.query_engine, 'query_core_memory'):
+            return await self.query_engine.query_core_memory(keywords, data_type_filter, limit)
+        else:
+            logger.warning("Query engine not available")
+            return []
 
     # Test querying memory
     print("\n--- Querying Memory (keywords in metadata) ---")
