@@ -137,11 +137,15 @@ class DynamicThresholdManager:
     - 社交活跃度阈值（有时想互动，有时不想）
     """
     
-    def __init__(self):
-        """初始化动态阈值系统"""
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """初始化动态阈值系统 - 支持配置驱动"""
+        self.config = config or {}
         self.parameters: Dict[str, ParameterState] = {}
         self._initialize_default_parameters()
         self._update_task: Optional[asyncio.Task] = None
+        self._running = False
+        # Configurable update interval (default 60 seconds)
+        self._update_interval = self.config.get('update_interval', 60.0)
     
     def _initialize_default_parameters(self):
         """初始化默认的动态参数"""
@@ -246,10 +250,12 @@ class DynamicThresholdManager:
     async def start(self):
         """启动动态更新循环"""
         if self._update_task is None:
+            self._running = True
             self._update_task = asyncio.create_task(self._update_loop())
     
     async def stop(self):
         """停止动态更新循环"""
+        self._running = False
         if self._update_task:
             self._update_task.cancel()
             try:
@@ -259,11 +265,11 @@ class DynamicThresholdManager:
             self._update_task = None
     
     async def _update_loop(self):
-        """后台更新循环"""
-        while True:
+        """后台更新循环 - Configurable"""
+        while self._running:
             try:
-                # 每分钟更新一次所有参数
-                await asyncio.sleep(60)
+                # 使用可配置的更新间隔（默认60秒）
+                await asyncio.sleep(self._update_interval)
                 
                 # 为每个参数构建上下文（基于其他参数）
                 context = self._build_context()

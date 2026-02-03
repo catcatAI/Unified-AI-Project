@@ -83,11 +83,15 @@ class BiologicalIntegrator:
         
         # State tracking
         self._last_update: datetime = datetime.now()
-        self._homeostatic_targets = {
+        # Configurable homeostatic targets (from config or use defaults)
+        self._homeostatic_targets = self.config.get('homeostatic_targets', {
             "arousal": 50.0,
             "stress": 20.0,
             "mood": 0.6,
-        }
+        })
+        
+        # Update interval from config (default 5 seconds)
+        self._update_interval = self.config.get('update_interval', 5.0)
         
         # Running state
         self._running = False
@@ -222,11 +226,11 @@ class BiologicalIntegrator:
             self.tactile_system.apply_emotional_context("anxiety", new_emotion.intensity)
     
     async def _integration_loop(self):
-        """Background loop for system integration"""
+        """Background loop for system integration - Configurable"""
         while self._running:
             await self._apply_homeostasis()
             await self._synchronize_states()
-            await asyncio.sleep(5)  # Update every 5 seconds
+            await asyncio.sleep(self._update_interval)  # Configurable update interval
     
     async def _apply_homeostasis(self):
         """Apply homeostatic regulation across all systems"""
