@@ -91,12 +91,221 @@ class FileWatcherConfig:
     organize_threshold: int = 20  # Auto-organize when more than N files
 
 
+class DesktopBrowserIntegration:
+    """
+    Angela桌面背景浏览器集成
+    让Angela能在桌面背景中浏览网页、学习教程、查看作品
+    """
+    
+    def __init__(self, desktop_interaction: DesktopInteraction):
+        self.desktop = desktop_interaction
+        self.browser_window = None
+        self.current_url = None
+        self.learning_mode = False
+        self.collected_resources = []
+        
+    async def open_browser_in_background(self, url: str = "about:blank"):
+        """
+        在桌面背景层打开浏览器窗口
+        浏览器位于桌面图标下方，Angela专用
+        """
+        try:
+            import webview
+            
+            # 创建无边框窗口，位于桌面层
+            self.browser_window = webview.create_window(
+                'Angela Browser',
+                url=url,
+                width=1920,
+                height=1080,
+                x=0,
+                y=0,
+                frameless=True,
+                on_top=False,  # 不置顶，在桌面下方
+                transparent=True
+            )
+            
+            self.current_url = url
+            logger.info(f"Angela浏览器已在桌面背景打开: {url}")
+            
+            # 启动webview（非阻塞）
+            asyncio.create_task(self._run_browser())
+            
+        except ImportError:
+            logger.warning("webview未安装，使用系统浏览器")
+            import webbrowser
+            webbrowser.open(url)
+    
+    async def _run_browser(self):
+        """运行浏览器线程"""
+        try:
+            import webview
+            webview.start()
+        except Exception as e:
+            logger.error(f"浏览器运行错误: {e}")
+    
+    async def browse_tutorial(self, tutorial_url: str) -> Dict:
+        """
+        Angela浏览教程页面并提取关键信息
+        """
+        if self.browser_window:
+            self.browser_window.load_url(tutorial_url)
+            await asyncio.sleep(3)  # 等待页面加载
+            
+            # 执行JavaScript提取内容
+            content = await self._extract_page_content()
+            
+            return {
+                'url': tutorial_url,
+                'title': content.get('title', ''),
+                'techniques': content.get('techniques', []),
+                'steps': content.get('steps', []),
+                'images': content.get('images', []),
+                'timestamp': datetime.now()
+            }
+        else:
+            logger.error("浏览器未初始化")
+            return {}
+    
+    async def _extract_page_content(self) -> Dict:
+        """提取页面教学内容"""
+        try:
+            if self.browser_window:
+                # 通过JavaScript提取教程内容
+                js_code = """
+                (function() {
+                    return {
+                        title: document.title,
+                        techniques: Array.from(document.querySelectorAll('h1, h2, h3')).map(h => h.innerText),
+                        steps: Array.from(document.querySelectorAll('ol li, ul li')).map(li => li.innerText),
+                        images: Array.from(document.querySelectorAll('img')).map(img => img.src)
+                    };
+                })()
+                """
+                result = self.browser_window.evaluate_js(js_code)
+                return result if result else {}
+        except Exception as e:
+            logger.error(f"提取内容失败: {e}")
+            return {}
+    
+    async def collect_artwork(self, gallery_url: str) -> List[Dict]:
+        """
+        Angela浏览作品画廊，收集风格参考
+        """
+        logger.info(f"Angela正在浏览画廊: {gallery_url}")
+        
+        artworks = []
+        
+        if self.browser_window:
+            self.browser_window.load_url(gallery_url)
+            await asyncio.sleep(3)
+            
+            # 提取作品图片URL
+            js_code = """
+            Array.from(document.querySelectorAll('img')).map(img => ({
+                src: img.src,
+                alt: img.alt,
+                width: img.naturalWidth,
+                height: img.naturalHeight
+            })).filter(img => img.width > 200 && img.height > 200)
+            """
+            
+            images = self.browser_window.evaluate_js(js_code) or []
+            
+            for img in images[:10]:  # 收集前10张
+                artwork = {
+                    'source_url': gallery_url,
+                    'image_url': img['src'],
+                    'description': img['alt'],
+                    'dimensions': (img['width'], img['height']),
+                    'collected_at': datetime.now()
+                }
+                artworks.append(artwork)
+                self.collected_resources.append(artwork)
+        
+        logger.info(f"Angela收集了 {len(artworks)} 张参考作品")
+        return artworks
+    
+    async def analyze_style(self, image_url: str) -> Dict:
+        """
+        Angela分析单张作品的风格特征
+        """
+        # 下载图片并分析
+        try:
+            import aiohttp
+            async with aiohttp.ClientSession() as session:
+                async with session.get(image_url) as response:
+                    if response.status == 200:
+                        image_data = await response.read()
+                        
+                        # 使用PIL分析风格
+                        from PIL import Image
+                        import io
+                        
+                        img = Image.open(io.BytesIO(image_data))
+                        
+                        # 提取颜色特征
+                        colors = img.getcolors(maxcolors=1000)
+                        if colors:
+                            dominant_colors = sorted(colors, key=lambda x: x[0], reverse=True)[:5]
+                        else:
+                            dominant_colors = []
+                        
+                        # 分析构图
+                        width, height = img.size
+                        aspect_ratio = width / height
+                        
+                        return {
+                            'dominant_colors': dominant_colors,
+                            'aspect_ratio': aspect_ratio,
+                            'size': (width, height),
+                            'mode': img.mode,
+                            'style_tags': self._infer_style_tags(img)
+                        }
+                        
+        except Exception as e:
+            logger.error(f"风格分析失败: {e}")
+            return {}
+    
+    def _infer_style_tags(self, img) -> List[str]:
+        """推断风格标签"""
+        tags = []
+        
+        # 基于简单特征推断
+        width, height = img.size
+        
+        if width < 200 and height < 200:
+            tags.append('icon')
+        elif width > 1000 or height > 1000:
+            tags.append('wallpaper')
+        
+        if img.mode == 'RGBA':
+            tags.append('transparent')
+        
+        return tags
+    
+    async def save_to_desktop(self, content: bytes, filename: str) -> Path:
+        """
+        保存收集的资源到桌面
+        """
+        desktop_path = self.desktop.desktop_path
+        target_path = desktop_path / filename
+        
+        with open(target_path, 'wb') as f:
+            f.write(content)
+        
+        logger.info(f"资源已保存到桌面: {target_path}")
+        return target_path
+
+
 class DesktopInteraction:
     """
     桌面交互系统主类 / Main desktop interaction class
     
     Manages desktop file operations, monitoring, and organization for Angela AI.
     Provides automated cleanup, wallpaper management, and file system monitoring.
+    
+    新增：集成浏览器功能
     
     Attributes:
         desktop_path: Path to desktop directory
