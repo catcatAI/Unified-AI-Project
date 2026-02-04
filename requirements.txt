@@ -109,3 +109,9 @@ appdirs>=1.4.4
 cryptography>=42.0.0
 bcrypt>=4.1.2
 PyJWT>=2.9.0
+
+# Web Framework Security
+markupsafe>=2.1.0
+jinja2>=3.1.0
+werkzeug>=3.0.0
+flask>=3.0.0
