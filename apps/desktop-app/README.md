@@ -1,35 +1,27 @@
-# Desktop App: Angela's World Game Client
+# Desktop App: Angela AI (Coming Soon)
 
-This application is the official game client for "Angela's World", the AI-driven simulation game at the heart of the Unified AI Project.
+**Status: Temporarily Unavailable**
 
-## Features
+The Live2D desktop pet application is currently under development.
 
-- Desktop interface for interacting with AI services
-- Integrates with the Python backend via IPC
-- Embedded web views for specific functionalities (e.g., code inspection, dashboard)
-- Complete game client for "Angela's World" simulation
-- Real-time AI interaction with context management
-- Integrated training system access
-- Comprehensive error handling and logging
+## What's Coming
 
-## Getting Started
+- **Live2D Digital Companion** - Angela as a desktop pet
+- **Real-time Interaction** - Touch, voice, and visual responses
+- **Full Integration** - Connected to Angela's 4D state matrix
+- **Desktop Features** - Canvas drawing, file management
 
-To run the desktop application:
+## For Now
 
-```bash
-pnpm --filter desktop-app start
-```
-
-## Running Tests
-
-To run tests for the desktop application:
+Please use the backend API directly:
 
 ```bash
-pnpm --filter desktop-app test
+cd apps/backend
+python -m uvicorn src.services.main_api_server:app --host 0.0.0.0 --port 8000
 ```
 
-To run tests with coverage:
+Then access the API at http://localhost:8000
 
-```bash
-pnpm --filter desktop-app test:coverage
-```
+## Stay Tuned
+
+The complete desktop experience is coming soon!

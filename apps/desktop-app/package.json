@@ -2,29 +2,9 @@
   "name": "desktop-app",
   "version": "1.0.0",
   "private": true,
-  "main": "electron_app/main.js",
+  "description": "Desktop app placeholder - Live2D pet coming soon",
   "scripts": {
-    "start": "electron .",
-    "test": "jest",
-    "test:coverage": "jest --coverage"
-  },
-  "devDependencies": {
-    "@testing-library/jest-dom": "^6.6.4",
-    "@testing-library/react": "^16.0.0",
-    "electron": "^33.0.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "ts-jest": "^29.2.5",
-    "typescript": "^5.7.2",
-    "@types/jest": "^29.5.14",
-    "@types/react": "^19.0.8",
-    "@types/react-dom": "^19.0.3"
-  },
-  "dependencies": {
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "electron-store": "^8.2.0",
-    "dompurify": "^3.2.3",
-    "ses": "^1.0.2"
+    "start": "echo \"Desktop app temporarily unavailable. Stay tuned!\"",
+    "test": "echo \"No tests configured\""
   }
 }
