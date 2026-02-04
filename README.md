@@ -151,8 +151,16 @@ cd Unified-AI-Project
 # 2. Install dependencies
 pip install -r requirements.txt --user
 
-# 3. Start Angela (one command!)
+# 3. Install desktop app dependencies
+cd apps/desktop-app && npm install && cd ../..
+
+# 4. Start Angela (one command - starts backend + desktop!)
 python run_angela.py
+```
+
+**Single Shortcut:** Double-click "Angela AI" on desktop, or run:
+```bash
+python run_angela.py --install-shortcut
 ```
 
 ---
