@@ -1,1 +1,0 @@
-{"response":"我是 Angela。我可以陪你聊天、報時、計算，還能記住我們說過的話。試試問我『現在幾點？』或『calculate 100/4』。","metadata":{"v_total":0.08000000000000002,"risk_score":0.0,"governance_lock":false,"drafts_count":0,"exploration_count":0,"tool_usage":null,"processing_time":25.338053941726685}}

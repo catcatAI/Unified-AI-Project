@@ -1,8 +1,0 @@
-{
-  "name": "AI TRPG Simulator",
-  "description": "A solo tabletop role-playing game simulator where AI acts as the Game Master and fellow party members, allowing you to embark on epic adventures by yourself.",
-  "requestFramePermissions": [
-    "microphone",
-    "camera"
-  ]
-}
