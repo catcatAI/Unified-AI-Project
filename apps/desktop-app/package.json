@@ -5,7 +5,7 @@
   "main": "electron_app/main.js",
   "scripts": {
     "start": "electron .",
-    "test": "pnpm exec jest",
+    "test": "jest",
     "test:coverage": "jest --coverage"
   },
   "devDependencies": {
@@ -25,7 +25,6 @@
     "react-dom": "^19.1.1",
     "electron-store": "^8.2.0",
     "dompurify": "^3.2.3",
-    "ses": "^1.0.2",
-    "@acme/ui": "workspace:*"
+    "ses": "^1.0.2"
   }
 }
