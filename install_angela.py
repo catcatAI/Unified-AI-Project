@@ -30,9 +30,13 @@ from typing import Optional
 
 
 class AngelaInstaller:
-    def __init__(self, install_dir: Optional[str] = None, repo_url: Optional[str] = None):
+    def __init__(
+        self, install_dir: Optional[str] = None, repo_url: Optional[str] = None
+    ):
         self.repo_url = repo_url or "https://github.com/catcatAI/Unified-AI-Project.git"
-        self.install_dir = Path(install_dir) if install_dir else self._get_default_install_dir()
+        self.install_dir = (
+            Path(install_dir) if install_dir else self._get_default_install_dir()
+        )
         self.temp_dir: Optional[Path] = None
         self.hardware_info = {}
 
@@ -66,6 +70,7 @@ class AngelaInstaller:
     def _get_memory_gb(self):
         try:
             import psutil
+
             return psutil.virtual_memory().total // (1024**3)
         except:
             return 8
@@ -73,19 +78,26 @@ class AngelaInstaller:
     def _detect_gpu(self):
         try:
             import subprocess
+
             if sys.platform == "win32":
-                result = subprocess.run(["wmic", "path", "win32_VideoController", "get", "name"],
-                                      capture_output=True, text=True, timeout=5)
-                for line in result.stdout.split('\n'):
-                    if line.strip() and 'Name' not in line:
+                result = subprocess.run(
+                    ["wmic", "path", "win32_VideoController", "get", "name"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                for line in result.stdout.split("\n"):
+                    if line.strip() and "Name" not in line:
                         return line.strip()
             elif sys.platform == "darwin":
                 return "Apple Metal"
             else:
-                result = subprocess.run(["lspci"], capture_output=True, text=True, timeout=5)
-                for line in result.stdout.split('\n'):
-                    if 'VGA' in line or '3D' in line:
-                        return line.split(':')[-1].strip()
+                result = subprocess.run(
+                    ["lspci"], capture_output=True, text=True, timeout=5
+                )
+                for line in result.stdout.split("\n"):
+                    if "VGA" in line or "3D" in line:
+                        return line.split(":")[-1].strip()
         except:
             pass
         return "Unknown/Software"
@@ -115,8 +127,11 @@ class AngelaInstaller:
         checks.append(f"✅ Python {sys.version_info.major}.{sys.version_info.minor}")
 
         try:
-            subprocess.run([sys.executable, "-m", "pip", "--version"],
-                          check=True, capture_output=True)
+            subprocess.run(
+                [sys.executable, "-m", "pip", "--version"],
+                check=True,
+                capture_output=True,
+            )
             checks.append("✅ pip 包管理器")
         except:
             print("❌ pip 不可用")
@@ -141,7 +156,7 @@ class AngelaInstaller:
         if self.install_dir.exists():
             print(f"⚠️  目录已存在: {self.install_dir}")
             response = input("   是否覆盖? (y/n): ").lower().strip()
-            if response != 'y':
+            if response != "y":
                 print("   安装取消")
                 return False
             try:
@@ -157,7 +172,9 @@ class AngelaInstaller:
             print("   正在克隆仓库...")
             result = subprocess.run(
                 ["git", "clone", "--depth", "1", self.repo_url, str(self.temp_dir)],
-                capture_output=True, text=True, timeout=300
+                capture_output=True,
+                text=True,
+                timeout=300,
             )
 
             if result.returncode != 0:
@@ -193,7 +210,7 @@ class AngelaInstaller:
             urllib.request.urlretrieve(zip_url, zip_path)
 
             print(f"   解压中...")
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 zip_ref.extractall(self.temp_dir)
 
             extracted_dir = self.temp_dir / "Unified-AI-Project-main"
@@ -220,8 +237,19 @@ class AngelaInstaller:
             print("   安装中（这可能需要5-10分钟）...")
 
             result = subprocess.run(
-                [sys.executable, "-m", "pip", "install", "-r", str(requirements_file), "--user", "--quiet"],
-                capture_output=True, text=True, timeout=600
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "-r",
+                    str(requirements_file),
+                    "--user",
+                    "--quiet",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=600,
             )
 
             critical_packages = ["fastapi", "uvicorn", "pydantic", "numpy"]
@@ -237,7 +265,7 @@ class AngelaInstaller:
                 for package in missing:
                     subprocess.run(
                         [sys.executable, "-m", "pip", "install", package, "--user"],
-                        capture_output=True
+                        capture_output=True,
                     )
 
             print(f"   ✅ 依赖安装完成\n")
@@ -290,21 +318,22 @@ class AngelaInstaller:
         config_file = config_dir / "angela_config.yaml"
         try:
             import yaml
-            with open(config_file, 'w', encoding='utf-8') as f:
+
+            with open(config_file, "w", encoding="utf-8") as f:
                 yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
             print(f"   ✅ 配置已生成: {config_file}")
         except Exception:
             config_file = config_dir / "angela_config.json"
-            with open(config_file, 'w', encoding='utf-8') as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
             print(f"   ✅ 配置已生成: {config_file}")
 
         credentials_example = {
             "google_api_key": "YOUR_API_KEY_HERE",
-            "instructions": "复制此文件到 ~/.config/angela-ai/credentials.json 并填入您的API密钥"
+            "instructions": "复制此文件到 ~/.config/angela-ai/credentials.json 并填入您的API密钥",
         }
         creds_file = config_dir / "credentials.example.json"
-        with open(creds_file, 'w', encoding='utf-8') as f:
+        with open(creds_file, "w", encoding="utf-8") as f:
             json.dump(credentials_example, f, indent=2, ensure_ascii=False)
         print(f"   ✅ 凭证示例: {creds_file}")
 
@@ -315,7 +344,7 @@ class AngelaInstaller:
 
         if sys.platform != "win32":
             print("   ℹ️  非Windows系统")
-            print(f"   启动命令: cd \"{self.install_dir}\" && python run_angela.py")
+            print(f'   启动命令: cd "{self.install_dir}" && python run_angela.py')
             return True
 
         try:
@@ -324,15 +353,23 @@ class AngelaInstaller:
             except ImportError:
                 print("   安装快捷方式工具...")
                 subprocess.run(
-                    [sys.executable, "-m", "pip", "install", "winshell", "pypiwin32", "--quiet"],
-                    capture_output=True
+                    [
+                        sys.executable,
+                        "-m",
+                        "pip",
+                        "install",
+                        "winshell",
+                        "pypiwin32",
+                        "--quiet",
+                    ],
+                    capture_output=True,
                 )
                 import winshell
 
             from win32com.client import Dispatch
 
             desktop = winshell.desktop()
-            shell = Dispatch('WScript.Shell')
+            shell = Dispatch("WScript.Shell")
 
             shortcut_path = os.path.join(desktop, "Angela AI.lnk")
             shortcut = shell.CreateShortCut(shortcut_path)
@@ -387,6 +424,7 @@ class AngelaInstaller:
 
         try:
             import urllib.request
+
             uninstall_url = "https://raw.githubusercontent.com/catcatAI/Unified-AI-Project/main/uninstall.py"
             urllib.request.urlretrieve(uninstall_url, uninstall_script)
             print(f"   ✅ 卸载程序已创建")
@@ -396,7 +434,31 @@ class AngelaInstaller:
         print()
         return True
 
-    def print_summary(self, success: bool):
+    def launch_angela(self) -> bool:
+        """一键启动 Angela"""
+        print("\n🚀 正在启动 Angela AI...")
+        print("   提示: 按 Ctrl+C 可安全退出\n")
+
+        try:
+            if sys.platform == "win32":
+                subprocess.Popen(
+                    [sys.executable, str(self.install_dir / "run_angela.py")],
+                    cwd=str(self.install_dir),
+                    creationflags=subprocess.CREATE_NEW_CONSOLE,
+                )
+            else:
+                subprocess.Popen(
+                    [sys.executable, str(self.install_dir / "run_angela.py")],
+                    cwd=str(self.install_dir),
+                )
+            print("   ✅ Angela 已启动！")
+            return True
+        except Exception as e:
+            print(f"   ⚠️  启动失败: {e}")
+            print(f'   请手动运行: cd "{self.install_dir}" && python run_angela.py')
+            return False
+
+    def print_summary(self, success: bool, launch: bool = False):
         print("=" * 70)
         if success:
             print("✅ 安装成功!")
@@ -407,11 +469,14 @@ class AngelaInstaller:
         print(f"\n📂 安装位置: {self.install_dir}")
 
         if success:
-            print("\n🚀 启动方式:")
-            print(f"   1. 双击桌面快捷方式 'Angela AI'")
-            print(f"   2. 或在终端运行:")
-            print(f"      cd \"{self.install_dir}\"")
-            print(f"      python run_angela.py")
+            if launch:
+                self.launch_angela()
+            else:
+                print("\n🚀 启动方式:")
+                print(f"   1. 双击桌面快捷方式 'Angela AI'")
+                print(f"   2. 或在终端运行:")
+                print(f'      cd "{self.install_dir}"')
+                print(f"      python run_angela.py")
 
             print("\n📖 首次配置:")
             print(f"   1. 复制凭证模板:")
@@ -443,21 +508,22 @@ def main():
   python install_angela.py --install-dir "D:\\AngelaAI"
 
   python install_angela.py --skip-clone
-        """
+        """,
     )
 
     parser.add_argument("--install-dir", type=str, help="安装目录")
-    parser.add_argument("--repo", type=str,
-                       default="https://github.com/catcatAI/Unified-AI-Project.git",
-                       help="GitHub仓库地址")
+    parser.add_argument(
+        "--repo",
+        type=str,
+        default="https://github.com/catcatAI/Unified-AI-Project.git",
+        help="GitHub仓库地址",
+    )
     parser.add_argument("--skip-clone", action="store_true", help="跳过克隆")
+    parser.add_argument("--launch", action="store_true", help="安装后自动启动")
 
     args = parser.parse_args()
 
-    installer = AngelaInstaller(
-        install_dir=args.install_dir,
-        repo_url=args.repo
-    )
+    installer = AngelaInstaller(install_dir=args.install_dir, repo_url=args.repo)
 
     installer.print_header()
 
@@ -481,7 +547,7 @@ def main():
         installer.create_shortcuts()
         installer.create_uninstaller()
 
-    installer.print_summary(success)
+    installer.print_summary(success, launch=args.launch)
 
     return 0 if success else 1
 
