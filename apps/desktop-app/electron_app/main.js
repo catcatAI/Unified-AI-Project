@@ -170,7 +170,7 @@ ipcMain.handle(CHANNELS.API_START_SESSION, async (event, data) => {
 
 ipcMain.handle(CHANNELS.API_SEND_MESSAGE, async (event, data) => {
     try {
-        return await handleApiCall("post", "chat", data);
+        return await handleApiCall("post", "angela/chat", data);
     } catch (error) {
         errorHandler.log('error', `Error in API_SEND_MESSAGE: ${error.message}`, error);
         throw error;

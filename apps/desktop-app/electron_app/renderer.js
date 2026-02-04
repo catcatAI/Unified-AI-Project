@@ -82,40 +82,52 @@ document.addEventListener("DOMContentLoaded", () => {
         const text = sanitizedText;
         if (!text) return;
 
-        const sessionId = window.store.getState().chat.sessionId;
-        if (!sessionId) {
-            const response = await window.electronAPI.invoke(CHANNELS.API_START_SESSION, {});
-            if (!response.ok) {
-                window.store.updateState(window.store.actions.setErrorMessage, `HTTP error! status: ${response.status}`);
-                return;
-            }
-            const data = await response.json();
-            window.store.updateState(window.store.actions.setSessionId, data.session_id);
-        }
+        // Add user message to display
+        addMessageToChat("user", text);
+        userInputField.value = "";
 
-        window.store.updateState(window.store.actions.addChatMessage, { text, sender: "user" });
-        userInputField.value = ""; // Clear input field
-
+        // Send to Angela API
         try {
             const response = await window.electronAPI.invoke(CHANNELS.API_SEND_MESSAGE, {
                 text: text,
-                session_id: window.store.getState().chat.sessionId,
+                message: text,
+                user_name: "用户"
             });
-            if (!response.ok) {
-                const errorData = await response.text(); // Try to get more error info
-                throw new Error(
-                    `HTTP error! status: ${response.status}, details: ${errorData}`,
-                );
+            
+            if (response && response.response_text) {
+                addMessageToChat("angela", response.response_text);
+            } else {
+                addMessageToChat("angela", "抱歉，我现在有点忙，请稍后再试~");
             }
-            const data = await response.json();
-            window.store.updateState(window.store.actions.addChatMessage, {
-                text: data.response_text,
-                sender: "ai",
-            });
         } catch (error) {
             console.error("Error sending message:", error);
-            window.store.updateState(window.store.actions.setErrorMessage, `Error sending message: ${error.message}`);
+            addMessageToChat("angela", "连接遇到了一点问题，请确保后端正在运行！");
         }
+    }
+
+    function addMessageToChat(sender, text) {
+        const chatDisplay = document.getElementById("chatDisplay");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${sender}`;
+        
+        const avatar = document.createElement("div");
+        avatar.className = "avatar";
+        if (sender === "user") {
+            avatar.textContent = "👤";
+        } else if (sender === "angela") {
+            avatar.textContent = "🌟";
+        }
+        
+        const content = document.createElement("div");
+        content.className = "message-content";
+        content.textContent = text;
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(content);
+        chatDisplay.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        chatDisplay.scrollTop = chatDisplay.scrollHeight;
     }
 
     async function loadHspServices() {
