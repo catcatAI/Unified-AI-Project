@@ -347,71 +347,101 @@ class AngelaInstaller:
             print(f'   启动命令: cd "{self.install_dir}" && python run_angela.py')
             return True
 
-        try:
-            try:
-                import winshell
-            except ImportError:
-                print("   安装快捷方式工具...")
-                subprocess.run(
-                    [
-                        sys.executable,
-                        "-m",
-                        "pip",
-                        "install",
-                        "winshell",
-                        "pypiwin32",
-                        "--quiet",
-                    ],
-                    capture_output=True,
-                )
-                import winshell
+        shortcut_target = str(self.install_dir / "run_angela.py")
+        shortcut_workdir = str(self.install_dir)
+        python_path = sys.executable
 
+        try:
             from win32com.client import Dispatch
 
-            desktop = winshell.desktop()
+            desktop = os.path.join(os.environ["USERPROFILE"], "Desktop")
             shell = Dispatch("WScript.Shell")
 
             shortcut_path = os.path.join(desktop, "Angela AI.lnk")
-            shortcut = shell.CreateShortCut(shortcut_path)
-            shortcut.Targetpath = sys.executable
-            shortcut.Arguments = f'"{self.install_dir / "run_angela.py"}"'
-            shortcut.WorkingDirectory = str(self.install_dir)
-            shortcut.Description = "Angela AI - 桌面数字生命"
-            try:
-                shortcut.IconLocation = f"{self.install_dir / 'apps' / 'backend' / 'resources' / 'icon.ico'},0"
-            except:
-                pass
-            shortcut.save()
-            print(f"   ✅ 桌面快捷方式")
+            sc = shell.CreateShortCut(shortcut_path)
+            sc.Targetpath = python_path
+            sc.Arguments = f'"{shortcut_target}"'
+            sc.WorkingDirectory = shortcut_workdir
+            sc.Description = "Angela AI - 桌面数字生命"
+            sc.save()
+            print("   ✅ 桌面快捷方式")
 
-            start_menu = winshell.start_menu()
-            angela_folder = os.path.join(start_menu, "Angela AI")
-            os.makedirs(angela_folder, exist_ok=True)
+            start_menu = os.path.join(
+                os.environ["APPDATA"],
+                "Microsoft",
+                "Windows",
+                "Start Menu",
+                "Programs",
+                "Angela AI",
+            )
+            os.makedirs(start_menu, exist_ok=True)
 
-            shortcut_path = os.path.join(angela_folder, "启动 Angela AI.lnk")
-            shortcut = shell.CreateShortCut(shortcut_path)
-            shortcut.Targetpath = sys.executable
-            shortcut.Arguments = f'"{self.install_dir / "run_angela.py"}"'
-            shortcut.WorkingDirectory = str(self.install_dir)
-            shortcut.Description = "启动 Angela AI"
-            shortcut.save()
-            print(f"   ✅ 开始菜单 - 启动")
+            for name, target in [
+                ("启动 Angela AI.lnk", shortcut_target),
+                ("卸载 Angela AI.lnk", str(self.install_dir / "uninstall.py")),
+            ]:
+                sc = shell.CreateShortCut(os.path.join(start_menu, name))
+                sc.Targetpath = python_path
+                sc.Arguments = f'"{target}"'
+                sc.WorkingDirectory = shortcut_workdir
+                sc.Description = name.replace(".lnk", "")
+                sc.save()
+            print("   ✅ 开始菜单快捷方式")
 
-            shortcut_path = os.path.join(angela_folder, "卸载 Angela AI.lnk")
-            shortcut = shell.CreateShortCut(shortcut_path)
-            shortcut.Targetpath = sys.executable
-            shortcut.Arguments = f'"{self.install_dir / "uninstall.py"}"'
-            shortcut.WorkingDirectory = str(self.install_dir)
-            shortcut.Description = "卸载 Angela AI"
-            shortcut.save()
-            print(f"   ✅ 开始菜单 - 卸载")
-
-            print()
             return True
 
         except Exception as e:
-            print(f"   ⚠️  快捷方式创建失败: {e}")
-            print("   您可以手动创建\n")
+            print(f"   ⚠️  使用 PowerShell 创建...")
+            return self._create_shortcuts_powershell(
+                shortcut_target, shortcut_workdir, python_path
+            )
+
+    def _create_shortcuts_powershell(
+        self, target: str, workdir: str, python: str
+    ) -> bool:
+        try:
+            desktop = os.path.join(os.environ["USERPROFILE"], "Desktop")
+            ps = f'''
+$ws = New-Object -ComObject WScript.Shell
+$sc = $ws.CreateShortcut("{desktop}\\Angela AI.lnk")
+$sc.TargetPath = "{python}"
+$sc.Arguments = '"{target}"'
+$sc.WorkingDirectory = "{workdir}"
+$sc.Description = "Angela AI"
+$sc.Save()
+'''
+            subprocess.run(["powershell", "-Command", ps], capture_output=True)
+            print("   ✅ 桌面快捷方式 (PowerShell)")
+
+            start_menu = os.path.join(
+                os.environ["APPDATA"],
+                "Microsoft",
+                "Windows",
+                "Start Menu",
+                "Programs",
+                "Angela AI",
+            )
+            os.makedirs(start_menu, exist_ok=True)
+
+            for name, arg in [
+                ("启动 Angela AI", target),
+                ("卸载 Angela", f"{self.install_dir}\\uninstall.py"),
+            ]:
+                ps = f'''
+$ws = New-Object -ComObject WScript.Shell
+$sc = $ws.CreateShortcut("{start_menu}\\{name}.lnk")
+$sc.TargetPath = "{python}"
+$sc.Arguments = '"{arg}"'
+$sc.WorkingDirectory = "{workdir}"
+$sc.Description = "{name}"
+$sc.Save()
+'''
+                subprocess.run(["powershell", "-Command", ps], capture_output=True)
+            print("   ✅ 开始菜单快捷方式 (PowerShell)")
+
+            return True
+        except Exception as e:
+            print(f"   ❌ 快捷方式创建失败: {e}")
             return False
 
     def create_uninstaller(self) -> bool:
