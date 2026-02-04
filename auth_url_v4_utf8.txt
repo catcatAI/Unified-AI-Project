@@ -1,2 +1,0 @@
-﻿https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=61292494238-8rn5unq1063s1ni74ske4jpe5g7j3um7.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive.readonly&state=h32QEALfgQRXO4Ct2pq84hD6AfAw8X&prompt=consent&access_type=offline
-

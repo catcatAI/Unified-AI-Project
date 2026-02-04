@@ -1,1 +1,0 @@
-https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=61292494238-8rn5unq1063s1ni74ske4jpe5g7j3um7.apps.googleusercontent.com&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive.readonly&state=OKDq8AyoiMXBk8RrryIHQ6cdzUtUs0&prompt=consent&access_type=offline

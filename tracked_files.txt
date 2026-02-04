@@ -1,7 +1,0 @@
-apps/frontend-dashboard/
-apps/backend/concurrent_load_test.py
-apps/backend/run_server.bat
-apps/backend/start_server.bat
-apps/backend/system_health_check.py
-apps/backend/ultra_stable.py
-.gitignore
