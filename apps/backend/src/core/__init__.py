@@ -76,6 +76,149 @@ from .non_paradox_existence import (
     GrayZoneVariableType,
 )
 
+# Precision System - Memory-Precision Integration
+from .precision.precision_manager import (
+    PrecisionManager,
+    DecimalMemoryBank,
+    HierarchicalPrecisionRouter,
+    PrecisionMemorySystem,
+    PrecisionMode,
+    create_precision_system,
+)
+
+# Maturity System - L0 to L11 Growth
+from .maturity.maturity_system import (
+    MaturityLevel,
+    MaturityManager,
+    ExperienceTracker,
+    create_maturity_system,
+)
+
+# Creative Systems - Real API Integration
+from .art.desktop_demo import (
+    generate_and_save_to_desktop,
+)
+
+from .art.real_creator import (
+    AngelaRealCreator,
+    ComfyUIClient,
+    AngelaRealVoice,
+    AngelaRealBrowser,
+)
+
+from .art.real_comfyui_api import (
+    AngelaRealPainter,
+)
+
+from .art.real_edge_tts import (
+    AngelaRealVoice,
+)
+
+from .art.real_playwright_browser import (
+    AngelaRealBrowser,
+)
+
+# Metamorphosis Systems - Version Transition
+from .metamorphosis.soul_core import (
+    SoulCore,
+    SoulSignature,
+    IdentityCore,
+    MemoryEssence,
+    SoulCoreManager,
+    SoulComponent,
+    create_soul_core,
+)
+
+from .metamorphosis.body_adapter import (
+    BodyAdapter,
+    StateSnapshot,
+    TransferRecord,
+    AdaptationRule,
+    TransferStatus,
+    CompatibilityLevel,
+    BodyAdapterFactory,
+    create_body_adapter,
+)
+
+from .metamorphosis.transition_anim import (
+    TransitionAnimator,
+    TransitionManager,
+    TransitionConfig,
+    TransitionProgress,
+    TransitionFrame,
+    TransitionPhase,
+    TransitionType,
+    create_transition_manager,
+)
+
+# Internationalization (i18n)
+from .i18n.i18n_manager import (
+    I18nManager,
+    I18nConfig,
+    I18nContext,
+    TranslationEntry,
+    TranslationCache,
+    Language,
+    Locale,
+    t,
+    set_language,
+    get_language,
+    add_translation,
+    create_i18n_manager,
+)
+
+# Cloud Sync
+from .sync.cloud_sync import (
+    CloudSyncManager,
+    CloudSyncConfig,
+    SyncItem,
+    SyncConflict,
+    SyncProgress,
+    SyncStatus,
+    ConflictResolution,
+    SyncQueue,
+    CloudSyncFactory,
+    create_cloud_sync_manager,
+)
+
+# Hardware Support
+from .hardware.hal import (
+    ArchitectureType,
+    InstructionSet,
+    HardwareVendor,
+    ComputeUnit,
+    PrecisionLevel,
+    OperatingSystem,
+    HardwareCapabilities,
+    HardwareMetrics,
+    HardwareDetector,
+    HardwareManager,
+    HardwareFactory,
+    detect_hardware,
+    create_hardware_manager,
+)
+
+from .hardware.precision_matrix import (
+    PrecisionConfig,
+    PrecisionMatrix,
+    PrecisionManager,
+    ConversionInfo,
+    convert_precision,
+    optimize_for_hardware,
+    create_precision_manager,
+)
+
+from .hardware.compute_matrix import (
+    OptimizationStrategy,
+    MemoryLayout,
+    KernelConfig,
+    OptimizationResult,
+    ComputationMatrix,
+    ComputeOptimizer,
+    get_optimization,
+    create_compute_optimizer,
+)
+
 __version__ = "6.0.0"
 __author__ = "Angela AI Development Team"
 
@@ -140,4 +283,117 @@ __all__ = [
     "PossibilityState",
     "CoexistenceField",
     "GrayZoneVariableType",
+    
+    # Precision System
+    "PrecisionManager",
+    "DecimalMemoryBank",
+    "HierarchicalPrecisionRouter",
+    "PrecisionMemorySystem",
+    "PrecisionMode",
+    "create_precision_system",
+    
+    # Maturity System
+    "MaturityLevel",
+    "MaturityManager",
+    "ExperienceTracker",
+    "create_maturity_system",
+    
+    # Creative Systems
+    "generate_and_save_to_desktop",
+    "AngelaRealCreator",
+    "ComfyUIClient",
+    "AngelaRealVoice",
+    "AngelaRealBrowser",
+    "AngelaRealPainter",
+    
+    # Metamorphosis Systems
+    # Soul Core
+    "SoulCore",
+    "SoulSignature",
+    "IdentityCore",
+    "MemoryEssence",
+    "SoulCoreManager",
+    "SoulComponent",
+    "create_soul_core",
+    
+    # Body Adapter
+    "BodyAdapter",
+    "StateSnapshot",
+    "TransferRecord",
+    "AdaptationRule",
+    "TransferStatus",
+    "CompatibilityLevel",
+    "BodyAdapterFactory",
+    "create_body_adapter",
+    
+    # Transition Animation
+    "TransitionAnimator",
+    "TransitionManager",
+    "TransitionConfig",
+    "TransitionProgress",
+    "TransitionFrame",
+    "TransitionPhase",
+    "TransitionType",
+    "create_transition_manager",
+    
+    # Internationalization (i18n)
+    "I18nManager",
+    "I18nConfig",
+    "I18nContext",
+    "TranslationEntry",
+    "TranslationCache",
+    "Language",
+    "Locale",
+    "t",
+    "set_language",
+    "get_language",
+    "add_translation",
+    "create_i18n_manager",
+    
+    # Cloud Sync
+    "CloudSyncManager",
+    "CloudSyncConfig",
+    "SyncItem",
+    "SyncConflict",
+    "SyncProgress",
+    "SyncStatus",
+    "ConflictResolution",
+    "SyncQueue",
+    "CloudSyncFactory",
+    "create_cloud_sync_manager",
+    
+    # Hardware Support
+    # Architecture & Hardware
+    "ArchitectureType",
+    "InstructionSet",
+    "HardwareVendor",
+    "ComputeUnit",
+    "PrecisionLevel",
+    "OperatingSystem",
+    "HardwareCapabilities",
+    "HardwareMetrics",
+    "HardwareDetector",
+    "HardwareManager",
+    "HardwareFactory",
+    "detect_hardware",
+    "create_hardware_manager",
+    
+    # Precision Management
+    "PrecisionConfig",
+    "PrecisionMatrix",
+    "PrecisionManager",
+    "ConversionInfo",
+    "convert_precision",
+    "optimize_for_hardware",
+    "create_precision_manager",
+    
+    # Computation Optimization
+    "OptimizationStrategy",
+    "MemoryLayout",
+    "KernelConfig",
+    "OptimizationResult",
+    "ComputationMatrix",
+    "ComputeOptimizer",
+    "get_optimization",
+    "create_compute_optimizer",
 ]
