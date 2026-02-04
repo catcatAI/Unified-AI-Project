@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angela AI - Settings</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #34495e;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #34495e;
+        }
+
+        .nav-item.active {
+            background: #34495e;
+            border-left-color: #3498db;
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .setting-group {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .setting-group h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #34495e;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            flex: 1;
+        }
+
+        .setting-label label {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .setting-label p {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        input[type="range"] {
+            width: 150px;
+            cursor: pointer;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            padding: 8px 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            width: 200px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        button.secondary {
+            background: #95a5a6;
+        }
+
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+
+        button.danger {
+            background: #e74c3c;
+        }
+
+        button.danger:hover {
+            background: #c0392b;
+        }
+
+        .value-display {
+            font-size: 14px;
+            color: #7f8c8d;
+            min-width: 40px;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.connected {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .status-badge.disconnected {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .model-preview {
+            width: 100%;
+            height: 200px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .model-preview canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .footer {
+            padding: 15px;
+            border-top: 1px solid #ecf0f1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>Angela AI Settings</h1>
+                <p>v1.0.0</p>
+            </div>
+            <div class="nav-item active" data-section="general">
+                <i>⚙️</i> General
+            </div>
+            <div class="nav-item" data-section="appearance">
+                <i>🎨</i> Appearance
+            </div>
+            <div class="nav-item" data-section="audio">
+                <i>🔊</i> Audio
+            </div>
+            <div class="nav-item" data-section="haptics">
+                <i>📳</i> Haptics
+            </div>
+            <div class="nav-item" data-section="advanced">
+                <i>🔧</i> Advanced
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- General Section -->
+            <div class="section active" id="general">
+                <h2>General Settings</h2>
+                
+                <div class="setting-group">
+                    <h3>Window</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Always on Top</label>
+                            <p>Keep Angela visible above other windows</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="always-on-top">
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Auto-start with System</label>
+                            <p>Launch Angela when system starts</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="auto-start">
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Window Opacity</label>
+                            <p>Adjust transparency of Angela window</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" id="window-opacity" min="0.1" max="1" step="0.1" value="1">
+                            <span class="value-display" id="opacity-value">100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Behavior</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Idle Mode</label>
+                            <p>Enable autonomous behaviors when idle</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="idle-mode" checked>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Response Sensitivity</label>
+                            <p>How quickly Angela responds to interactions</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="sensitivity">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appearance Section -->
+            <div class="section" id="appearance">
+                <h2>Appearance</h2>
+                
+                <div class="setting-group">
+                    <h3>Model Selection</h3>
+                    <div class="model-preview">
+                        <canvas id="model-preview-canvas"></canvas>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Active Model</label>
+                            <p>Choose which Live2D model to display</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="model-select">
+                                <option value="miara_pro">Miara Pro</option>
+                                <!-- More models will be added dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Model Scale</label>
+                            <p>Adjust the size of the model</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" id="model-scale" min="0.5" max="2" step="0.1" value="1">
+                            <span class="value-display" id="scale-value">1.0x</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Wallpaper</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Wallpaper Mode</label>
+                            <p>How Angela integrates with desktop wallpaper</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="wallpaper-mode">
+                                <option value="overlay">Overlay (on top)</option>
+                                <option value="behind">Behind Desktop Icons</option>
+                                <option value="none">No Wallpaper</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Custom Wallpaper</label>
+                            <p>Load a custom wallpaper image</p>
+                        </div>
+                        <div class="setting-control">
+                            <button class="secondary" id="load-wallpaper">Browse...</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Wallpaper Effects</label>
+                            <p>Apply visual effects to wallpaper</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="wallpaper-effect">
+                                <option value="none">None</option>
+                                <option value="blur">Blur</option>
+                                <option value="darken">Darken</option>
+                                <option value="grayscale">Grayscale</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audio Section -->
+            <div class="section" id="audio">
+                <h2>Audio Settings</h2>
+                
+                <div class="setting-group">
+                    <h3>Text-to-Speech</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>TTS Engine</label>
+                            <p>Choose the text-to-speech engine</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="tts-engine">
+                                <option value="browser">Browser (Web Speech API)</option>
+                                <option value="edge">Microsoft Edge TTS</option>
+                                <option value="google">Google Cloud TTS</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Voice</label>
+                            <p>Select the voice for TTS</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="tts-voice">
+                                <!-- Voices will be loaded dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Speech Rate</label>
+                            <p>Speed of speech</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" id="speech-rate" min="0.5" max="2" step="0.1" value="1">
+                            <span class="value-display" id="rate-value">1.0x</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Pitch</label>
+                            <p>Pitch of speech</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" id="speech-pitch" min="0.5" max="2" step="0.1" value="1">
+                            <span class="value-display" id="pitch-value">1.0x</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Speech Recognition</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Language</label>
+                            <p>Language for speech recognition</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="speech-language">
+                                <option value="en-US">English (US)</option>
+                                <option value="zh-TW">Chinese (Taiwan)</option>
+                                <option value="ja-JP">Japanese</option>
+                                <option value="ko-KR">Korean</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Continuous Recognition</label>
+                            <p>Keep listening even after detecting speech</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="continuous-recognition" checked>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>System Audio</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Capture System Audio</label>
+                            <p>Allow Angela to listen to system sounds</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="capture-system-audio">
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Backend Connection</label>
+                            <p>Connection status to backend server</p>
+                        </div>
+                        <div class="setting-control">
+                            <span class="status-badge disconnected" id="backend-status">Disconnected</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Haptics Section -->
+            <div class="section" id="haptics">
+                <h2>Haptic Settings</h2>
+                
+                <div class="setting-group">
+                    <h3>Haptic Devices</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Enable Haptics</label>
+                            <p>Enable haptic feedback</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="enable-haptics" checked>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Connected Devices</label>
+                            <p>List of available haptic devices</p>
+                        </div>
+                        <div class="setting-control">
+                            <button class="secondary" id="scan-devices">Scan Devices</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Haptic Intensity</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Click Intensity</label>
+                            <p>Intensity for click feedback</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" id="click-intensity" min="0" max="1" step="0.1" value="0.5">
+                            <span class="value-display" id="click-value">50%</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Touch Intensity</label>
+                            <p>Intensity for touch feedback</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" id="touch-intensity" min="0" max="1" step="0.1" value="0.8">
+                            <span class="value-display" id="touch-value">80%</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Emotion Intensity</label>
+                            <p>Intensity for emotion-based haptics</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" id="emotion-intensity" min="0" max="1" step="0.1" value="0.7">
+                            <span class="value-display" id="emotion-value">70%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Section -->
+            <div class="section" id="advanced">
+                <h2>Advanced Settings</h2>
+                
+                <div class="setting-group">
+                    <h3>Performance</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Frame Rate</label>
+                            <p>Live2D rendering frame rate</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="frame-rate">
+                                <option value="30">30 FPS</option>
+                                <option value="60" selected>60 FPS</option>
+                                <option value="120">120 FPS</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Render Quality</label>
+                            <p>Balance between quality and performance</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="render-quality">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Debug</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Debug Mode</label>
+                            <p>Enable debug logging and tools</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="debug-mode">
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Show Click Regions</label>
+                            <p>Visualize clickable areas on model</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="show-click-regions">
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Developer Tools</label>
+                            <p>Open Chrome DevTools for debugging</p>
+                        </div>
+                        <div class="setting-control">
+                            <button class="secondary" id="open-devtools">Open DevTools</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group" style="border-left: 4px solid #e74c3c;">
+                    <h3 style="color: #c0392b;">Danger Zone</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Reset All Settings</label>
+                            <p>Reset all settings to default values</p>
+                        </div>
+                        <div class="setting-control">
+                            <button class="danger" id="reset-settings">Reset</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Clear Cache</label>
+                            <p>Clear all cached data</p>
+                        </div>
+                        <div class="setting-control">
+                            <button class="danger" id="clear-cache">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <button class="secondary" id="cancel">Cancel</button>
+                <button id="save">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification container -->
+    <div id="notification-container"></div>
+
+    <script src="js/settings.js"></script>
+</body>
+</html>

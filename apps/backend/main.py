@@ -11,7 +11,8 @@ import asyncio
 from pathlib import Path
 from datetime import datetime
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from typing import List, Dict, Any
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 # 添加项目路径
@@ -106,6 +107,35 @@ async def lifespan(app: FastAPI):
     logger.info("✅ Level 5 AGI后端系统已关闭")
 
 
+class ConnectionManager:
+    """WebSocket 連接管理器"""
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+        logger.info(f"新的 WebSocket 連接，當前連接數: {len(self.active_connections)}")
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+            logger.info(f"WebSocket 已斷開，當前連接數: {len(self.active_connections)}")
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(message)
+
+    async def broadcast(self, message: Dict[str, Any]):
+        import json
+        for connection in self.active_connections:
+            try:
+                await connection.send_text(json.dumps(message))
+            except Exception as e:
+                logger.error(f"廣播消息失敗: {e}")
+
+manager = ConnectionManager()
+
+
 def create_app() -> FastAPI:
     """创建FastAPI应用"""
     app = FastAPI(
@@ -125,11 +155,8 @@ def create_app() -> FastAPI:
     )
     
     # API路由
-    try:
-        from src.api.routes import router
-        app.include_router(router, prefix="/api/v1")
-    except ImportError:
-        logger.warning("API路由模块不可用")
+    from src.api.router import router
+    app.include_router(router, prefix="/api/v1")
     
     # 健康检查端点
     @app.get("/health")
@@ -143,7 +170,7 @@ def create_app() -> FastAPI:
             "timestamp": datetime.now().isoformat()
         }
     
-    # 系统状态端点
+    # 系統狀態端點
     @app.get("/api/v1/system/status")
     async def system_status():
         """获取系统状态"""
@@ -163,8 +190,35 @@ def create_app() -> FastAPI:
             "timestamp": datetime.now().isoformat()
         }
     
+    # WebSocket 端點
+    @app.websocket("/ws")
+    async def websocket_endpoint(websocket: WebSocket):
+        await manager.connect(websocket)
+        try:
+            while True:
+                data = await websocket.receive_text()
+                import json
+                try:
+                    message = json.loads(data)
+                    # 處理 ping
+                    if message.get("type") == "ping":
+                        await websocket.send_text(json.dumps({"type": "pong", "timestamp": datetime.now().isoformat()}))
+                    # 處理其他消息 (例如 tactile_event)
+                    else:
+                        logger.info(f"收到 WebSocket 消息: {message}")
+                        # 這裡可以根據消息類型轉發給相關系統
+                except json.JSONDecodeError:
+                    await websocket.send_text(json.dumps({"error": "Invalid JSON"}))
+        except WebSocketDisconnect:
+            manager.disconnect(websocket)
+        except Exception as e:
+            logger.error(f"WebSocket 錯誤: {e}")
+            manager.disconnect(websocket)
+    
     return app
 
+
+app = create_app()
 
 def main():
     """主函数"""

@@ -35,6 +35,7 @@ class ParameterState:
     last_update: datetime = field(default_factory=datetime.now)
     update_interval: float = 60.0  # 更新间隔（秒）
     history: List[float] = field(default_factory=list)  # 历史值
+    influence_map: Dict[str, float] = field(default_factory=dict)  # 因素对该参数的影响权重
     
     def __post_init__(self):
         if not self.history:
@@ -64,18 +65,22 @@ class ParameterState:
     
     def _calculate_influence(self, factor_name: str, factor_value: float) -> float:
         """计算外部因素对参数的影响"""
-        # 不同因素对不同参数的影响权重
-        influence_weights = {
-            'energy': 0.3,  # 精力影响大
-            'mood': 0.2,    # 情绪影响中等
-            'stress': -0.25, # 压力有负面影响
-            'confidence': 0.15,  # 信心有正面影响
-            'fatigue': -0.2,  # 疲劳有负面影响
-            'recent_success': 0.35,  # 最近成功大幅提升
-            'recent_failure': -0.3,  # 最近失败大幅降低
-        }
+        # 优先使用该参数特定的影响权重
+        if factor_name in self.influence_map:
+            weight = self.influence_map[factor_name]
+        else:
+            # 不同因素对不同参数的影响权重
+            influence_weights = {
+                'energy': 0.3,  # 精力影响大
+                'mood': 0.2,    # 情绪影响中等
+                'stress': -0.25, # 压力有负面影响
+                'confidence': 0.15,  # 信心有正面影响
+                'fatigue': -0.2,  # 疲劳有负面影响
+                'recent_success': 0.35,  # 最近成功大幅提升
+                'recent_failure': -0.3,  # 最近失败大幅降低
+            }
+            weight = influence_weights.get(factor_name, 0.1)
         
-        weight = influence_weights.get(factor_name, 0.1)
         return factor_value * weight * self.volatility
     
     def update(self, time_delta: Optional[float] = None):
@@ -150,12 +155,17 @@ class DynamicThresholdManager:
     def _initialize_default_parameters(self):
         """初始化默认的动态参数"""
         
-        # 1. 情绪触发阈值（人类有时容易高兴，有时不容易）
+        # 1. 情绪触发阈值
         self.parameters['emotion_happiness_threshold'] = ParameterState(
-            base_value=0.6,  # 基础：需要60%的正面刺激才高兴
+            base_value=0.6,
             current_value=0.6,
-            variation_range=(0.3, 0.9),  # 变化范围：有时容易(0.3)，有时难(0.9)
-            volatility=0.4,  # 较高的波动性
+            variation_range=(0.3, 0.9),
+            volatility=0.4,
+            influence_map={
+                'stress': 0.5,           # 压力大更难高兴 (threshold increase)
+                'recent_success': -0.6,  # 成功了容易高兴 (threshold decrease)
+                'mood': -0.4             # 心情好容易更高兴
+            }
         )
         
         self.parameters['emotion_sadness_threshold'] = ParameterState(
@@ -163,6 +173,10 @@ class DynamicThresholdManager:
             current_value=0.4,
             variation_range=(0.2, 0.7),
             volatility=0.3,
+            influence_map={
+                'stress': -0.4,          # 压力大容易难过
+                'recent_failure': -0.5   # 失败了容易难过
+            }
         )
         
         self.parameters['emotion_anger_threshold'] = ParameterState(
@@ -170,29 +184,47 @@ class DynamicThresholdManager:
             current_value=0.7,
             variation_range=(0.4, 0.95),
             volatility=0.35,
+            influence_map={
+                'stress': -0.6,          # 压力大容易生气 (threshold decrease)
+                'fatigue': -0.4          # 疲劳容易生气
+            }
         )
         
-        # 2. 行为执行成功率（有时成功，有时失败）
+        # 2. 行为执行成功率
         self.parameters['action_success_rate'] = ParameterState(
-            base_value=0.85,  # 基础85%成功率
+            base_value=0.85,
             current_value=0.85,
-            variation_range=(0.5, 0.98),  # 有时很差(50%)，有时几乎完美(98%)
+            variation_range=(0.5, 0.98),
             volatility=0.25,
+            influence_map={
+                'energy': 0.4,
+                'confidence': 0.3,
+                'fatigue': -0.5
+            }
         )
         
         self.parameters['action_speed_factor'] = ParameterState(
-            base_value=1.0,  # 基础速度倍数
+            base_value=1.0,
             current_value=1.0,
-            variation_range=(0.3, 2.0),  # 有时很慢，有时很快
+            variation_range=(0.3, 2.0),
             volatility=0.3,
+            influence_map={
+                'energy': 0.6,
+                'fatigue': -0.7
+            }
         )
         
-        # 3. 决策置信度（有时觉得能做到，有时觉得不能）
+        # 3. 决策置信度
         self.parameters['decision_confidence_threshold'] = ParameterState(
             base_value=0.7,
             current_value=0.7,
             variation_range=(0.4, 0.95),
             volatility=0.2,
+            influence_map={
+                'confidence': -0.6,      # 信心足则门槛低
+                'recent_success': -0.4,
+                'recent_failure': 0.5
+            }
         )
         
         self.parameters['risk_tolerance'] = ParameterState(
@@ -200,14 +232,23 @@ class DynamicThresholdManager:
             current_value=0.5,
             variation_range=(0.1, 0.9),
             volatility=0.4,
+            influence_map={
+                'confidence': 0.5,
+                'mood': 0.3,
+                'stress': -0.4
+            }
         )
         
-        # 4. 社交活跃度（有时想互动，有时不想）
+        # 4. 社交活跃度
         self.parameters['social_initiative_threshold'] = ParameterState(
             base_value=0.5,
             current_value=0.5,
             variation_range=(0.1, 0.9),
             volatility=0.35,
+            influence_map={
+                'mood': -0.6,            # 心情好降低门槛 (threshold decrease)
+                'energy': -0.4           # 精力足降低门槛
+            }
         )
         
         self.parameters['social_sensitivity'] = ParameterState(
@@ -294,14 +335,18 @@ class DynamicThresholdManager:
     
     def _build_context(self) -> Dict[str, float]:
         """构建全局上下文"""
+        def get_val(name: str, default: float = 0.5) -> float:
+            param = self.parameters.get(name)
+            return param.current_value if param else default
+
         return {
-            'energy': self.parameters.get('energy_decay_rate', ParameterState()).current_value,
-            'mood': self.parameters.get('emotion_happiness_threshold', ParameterState()).current_value,
-            'stress': 1.0 - self.parameters.get('emotion_anger_threshold', ParameterState()).current_value,
-            'confidence': self.parameters.get('decision_confidence_threshold', ParameterState()).current_value,
-            'fatigue': 1.0 - self.parameters.get('rest_recovery_rate', ParameterState()).current_value,
-            'recent_success': self.parameters.get('action_success_rate', ParameterState()).current_value,
-            'recent_failure': 1.0 - self.parameters.get('action_success_rate', ParameterState()).current_value,
+            'energy': get_val('energy_decay_rate', 0.05),
+            'mood': get_val('emotion_happiness_threshold', 0.6),
+            'stress': 1.0 - get_val('emotion_anger_threshold', 0.7),
+            'confidence': get_val('decision_confidence_threshold', 0.7),
+            'fatigue': 1.0 - get_val('rest_recovery_rate', 0.1),
+            'recent_success': get_val('action_success_rate', 0.85),
+            'recent_failure': 1.0 - get_val('action_success_rate', 0.85),
         }
     
     def _build_context_for_parameter(self, param_name: str, global_context: Dict[str, float]) -> Dict[str, float]:

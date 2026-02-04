@@ -9,8 +9,15 @@ from typing import Any, Dict, List, Optional
 import uuid
 
 from fastapi import APIRouter, Body
+from src.api.v1.endpoints import drive, pet
+from src.api.routes.ops_routes import router as ops_router
 
 router = APIRouter()
+
+# 包含 v1 端點
+router.include_router(drive.router)
+router.include_router(pet.router)
+router.include_router(ops_router)
 
 
 @router.get("/")

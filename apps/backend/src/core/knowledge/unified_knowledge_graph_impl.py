@@ -1,10 +1,10 @@
-#! / usr / bin / env python3
+#!/usr/bin/env python3
 """
 统一知识图谱实现
 """
 
-from tests.tools.test_tool_dispatcher_logging import
-# TODO: Fix import - module 'typing' not found
+import logging
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 

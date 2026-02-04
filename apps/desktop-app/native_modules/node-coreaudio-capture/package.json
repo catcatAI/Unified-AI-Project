@@ -1,0 +1,25 @@
+{
+  "name": "node-coreaudio-capture",
+  "version": "1.0.0",
+  "description": "Native Node.js module for capturing system audio on macOS using CoreAudio",
+  "main": "index.js",
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "test": "node test.js"
+  },
+  "gypfile": true,
+  "author": "Angela AI Project",
+  "license": "MIT",
+  "dependencies": {
+    "node-addon-api": "^7.0.0"
+  },
+  "devDependencies": {
+    "node-gyp": "^10.0.0"
+  },
+  "os": [
+    "darwin"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

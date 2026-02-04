@@ -16,11 +16,15 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def mock_dependencies():
     """Mocks external dependencies for Google Drive integration tests."""
-    with patch("apps.backend.main.system_manager") as mock_system_manager, \
-         patch("apps.backend.src.api.v1.endpoints.drive.drive_service", autospec=True) as mock_drive_service, \
-         patch("apps.backend.src.api.v1.endpoints.drive.DriveDeduplication", autospec=True) as MockDriveDeduplication, \
-         patch("apps.backend.src.api.v1.endpoints.drive.DocumentParser", autospec=True) as MockDocumentParser, \
-         patch("apps.backend.src.api.v1.endpoints.drive.ham_memory_manager", autospec=True) as mock_ham_memory_manager:
+    # Try both possible paths for patching
+    drive_module = "src.api.v1.endpoints.drive"
+    main_module = "main"
+    
+    with patch(f"{main_module}.system_manager") as mock_system_manager, \
+         patch(f"{drive_module}.drive_service", autospec=True) as mock_drive_service, \
+         patch(f"{drive_module}.DriveDeduplication", autospec=True) as MockDriveDeduplication, \
+         patch(f"{drive_module}.DocumentParser", autospec=True) as MockDocumentParser, \
+         patch(f"{drive_module}.ham_memory_manager", autospec=True) as mock_ham_memory_manager:
 
         # Configure mock_system_manager and its components as they are accessed by drive.py globally
         mock_system_manager.google_drive_service = mock_drive_service

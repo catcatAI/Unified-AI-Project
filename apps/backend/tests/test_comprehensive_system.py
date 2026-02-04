@@ -16,6 +16,7 @@ Comprehensive System Tests
 import pytest
 import asyncio
 import time
+import pytest_asyncio
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Any, Optional
@@ -48,8 +49,8 @@ from core.autonomous.desktop_interaction import (
     DesktopInteraction, FileOperation, FileOperationType,
     FileCategory
 )
-from core.autonomous.autonomous_life_cycle import AutonomousLifeCycleManager
-from core.autonomous.extended_behavior_library import BehaviorLibrary
+from core.autonomous.autonomous_life_cycle import AutonomousLifeCycle
+from core.autonomous.extended_behavior_library import ExtendedBehaviorLibrary
 from core.autonomous.action_executor import ActionExecutor
 
 
@@ -66,14 +67,14 @@ def temp_directory():
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def dynamic_params_manager():
     """动态参数管理器夹具 / Dynamic parameters manager fixture"""
     manager = DynamicThresholdManager()
     yield manager
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def neuroplasticity_system():
     """神经可塑性系统夹具 / Neuroplasticity system fixture"""
     system = NeuroplasticitySystem()
@@ -82,7 +83,7 @@ async def neuroplasticity_system():
     await system.shutdown()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def memory_bridge():
     """记忆桥接器夹具 / Memory bridge fixture"""
     bridge = MemoryNeuroplasticityBridge()
@@ -91,7 +92,7 @@ async def memory_bridge():
     await bridge.shutdown()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def biological_integrator():
     """生物系统整合器夹具 / Biological integrator fixture"""
     integrator = BiologicalIntegrator()
@@ -100,7 +101,7 @@ async def biological_integrator():
     await integrator.shutdown()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def desktop_interaction(temp_directory):
     """桌面交互系统夹具 / Desktop interaction fixture"""
     config = {
@@ -1454,7 +1455,7 @@ class TestDynamicParamsWithBehaviorTriggers:
         Test that behavior triggers respect dynamic thresholds
         """
         # Create behavior library with dynamic params / 创建带动态参数的行为库
-        behavior_lib = BehaviorLibrary()
+        behavior_lib = ExtendedBehaviorLibrary()
         
         # Create dynamic params manager / 创建动态参数管理器
         dynamic_manager = DynamicThresholdManager()
@@ -1472,7 +1473,7 @@ class TestDynamicParamsWithBehaviorTriggers:
         测试动态社交阈值
         Test dynamic social threshold
         """
-        behavior_lib = BehaviorLibrary()
+        behavior_lib = ExtendedBehaviorLibrary()
         dynamic_manager = DynamicThresholdManager()
         behavior_lib.set_dynamic_params_manager(dynamic_manager)
         
@@ -1548,7 +1549,7 @@ class TestDynamicParamsWithDecisionMaking:
         
         # The lifecycle manager should be able to use dynamic params / 生命周期管理器应该能够使用动态参数
         # This is a structural test / 这是一个结构测试
-        assert hasattr(AutonomousLifeCycleManager, 'set_dynamic_params_manager') or True
+        assert hasattr(AutonomousLifeCycle, 'set_dynamic_params_manager') or True
 
 
 class TestCompleteLifecycleFlow:
@@ -2019,8 +2020,8 @@ class TestPerformanceBenchmarks:
             state = desktop.get_desktop_state()
         state_time = time.time() - start
         
-        create_ops_per_sec = 50 / create_time
-        state_ops_per_sec = 100 / state_time
+        create_ops_per_sec = 50 / (create_time + 0.0001)
+        state_ops_per_sec = 100 / (state_time + 0.0001)
         
         print(f"\nFile Creation: {create_ops_per_sec:.0f} ops/sec")
         print(f"State Retrieval: {state_ops_per_sec:.0f} ops/sec")

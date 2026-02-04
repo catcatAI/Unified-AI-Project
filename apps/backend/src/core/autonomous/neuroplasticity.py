@@ -565,11 +565,9 @@ class NeuroplasticitySystem:
             (datetime.now() - trace.last_accessed).total_seconds() / 3600.0
         )
         
-        # Calculate memory strength based on current weight and consolidation
-        memory_strength = (
-            trace.current_weight * 0.5 + 
-            trace.consolidation_strength * 0.5
-        ) * (1 + trace.access_count * 0.1)
+        # Calculate memory strength
+        # We use current weight as the base, and consolidation strength as a bonus
+        memory_strength = (trace.current_weight + trace.consolidation_strength * 0.5) * (1 + trace.access_count * 0.1)
         
         # Apply forgetting curve
         retention = self.forgetting_curve.calculate_retention(
@@ -577,7 +575,9 @@ class NeuroplasticitySystem:
             memory_strength
         )
         
-        return retention
+        # Scale retention by memory strength to account for weak initial traces
+        # even if they are very fresh (hours_since is near 0)
+        return retention * min(1.0, memory_strength)
     
     def consolidate_memories(self, memory_ids: Optional[List[str]] = None):
         """

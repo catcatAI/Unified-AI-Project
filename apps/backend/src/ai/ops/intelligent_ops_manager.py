@@ -863,9 +863,9 @@ class IntelligentOpsManager:
             logger.error(f"执行手动操作失败: {e}")
             return False
 
-# 全局智能运维管理器实例 (由外部统一管理, 此处不再创建)
-# intelligent_ops_manager = IntelligentOpsManager()
+# 全局智能运维管理器实例
+_intelligent_ops_manager = IntelligentOpsManager()
 
-# async def get_intelligent_ops_manager() -> IntelligentOpsManager:
-#     """获取智能运维管理器实例"""
-#     return intelligent_ops_manager
+async def get_intelligent_ops_manager() -> IntelligentOpsManager:
+    """获取智能运维管理器实例"""
+    return _intelligent_ops_manager

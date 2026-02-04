@@ -17,6 +17,7 @@ Date: 2026-02-02
 """
 
 import pytest
+import pytest_asyncio
 import asyncio
 import time
 import uuid
@@ -59,7 +60,7 @@ class TestCognitiveCycle:
     测试 Perceive → Think → Act → Reflect 的完整流程
     """
     
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def cognitive_system(self):
         """认知系统fixture"""
         # 模拟认知系统组件
@@ -335,7 +336,7 @@ class TestBiologicalSystemCoordination:
     测试触觉 → 生理反应 → 激素变化 → 情绪生成的完整链路
     """
     
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def biological_systems(self):
         """生物系统fixture"""
         return {
@@ -620,7 +621,7 @@ class TestExecutionPipeline:
     测试 决策生成 → ActionExecutor → ActionExecutionBridge → 执行
     """
     
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def execution_system(self):
         """执行系统fixture"""
         return {
@@ -879,7 +880,7 @@ class TestMemoryLearningIntegration:
     测试 经验存储 → HSM更新 → CDM学习 → 策略调整
     """
     
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def memory_learning_system(self):
         """记忆学习系统fixture"""
         return {
@@ -1137,7 +1138,7 @@ class TestRealTimeFeedbackLoop:
     测试 用户输入 → 实时监测 → 事件处理 → 响应生成
     """
     
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def feedback_system(self):
         """反馈系统fixture"""
         return {
