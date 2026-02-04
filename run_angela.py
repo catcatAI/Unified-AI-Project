@@ -1,218 +1,262 @@
 #!/usr/bin/env python3
 """
-Angela AI Desktop Companion
+Angela AI Desktop Companion v6.0.4
 Main entry point for running Angela on desktop
 
 Usage:
     python run_angela.py [options]
-    
+
 Options:
     --debug     Enable debug mode
-    --no-gui    Run without Live2D GUI (headless mode)
-    --config    Specify config file path
+    --port      Backend API port (default: 8000)
+    --headless  Run without GUI
     --reset     Reset all memories and start fresh
 """
 
 import sys
 import os
-import argparse
 import asyncio
-import signal
+import argparse
 from pathlib import Path
 
-# Ensure backend is in path
 backend_path = Path(__file__).parent / "apps" / "backend"
 sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(backend_path / "src"))
 
+from core import (
+    SoulCore,
+    BodyAdapter,
+    ActionExecutor,
+    MaturityManager,
+    PrecisionManager,
+    TransitionAnimator,
+    I18nManager,
+    CloudSyncManager,
+    HardwareManager,
+    create_soul_core,
+    create_body_adapter,
+    create_maturity_system,
+    create_precision_system,
+    create_transition_manager,
+    create_cloud_sync_manager,
+    create_i18n_manager,
+    create_hardware_manager,
+    Language,
+)
+
+
 def check_dependencies():
-    """Check if all required dependencies are installed"""
     missing = []
-    optional_missing = []
-    
-    # Critical dependencies
-    critical = [
-        "fastapi", "uvicorn", "pydantic", "numpy", 
-        "requests", "aiohttp", "yaml"
-    ]
-    
-    # Optional but recommended
-    optional = [
-        "pyaudio", "edge_tts", "pyttsx3", 
-        "selenium", "PIL", "OpenGL"
-    ]
-    
+    critical = ["fastapi", "uvicorn", "pydantic", "numpy", "requests", "aiohttp"]
+
     for module in critical:
         try:
-            __import__(module.replace("yaml", "pyyaml").replace("_", ""))
+            __import__(module)
         except ImportError:
             missing.append(module)
-    
-    for module in optional:
-        try:
-            __import__(module.lower().replace("pil", "PIL").replace("_", ""))
-        except ImportError:
-            optional_missing.append(module)
-    
+
     if missing:
         print("❌ Missing critical dependencies:")
         for dep in missing:
             print(f"   - {dep}")
         print("\nPlease install: pip install -r requirements.txt")
         return False
-    
-    if optional_missing:
-        print("⚠️  Some optional features may not work (install for full functionality):")
-        for dep in optional_missing:
-            print(f"   - {dep}")
-    
+
     return True
 
+
 def create_directories():
-    """Create necessary directories"""
     dirs = [
         "data/models",
-        "data/memories", 
+        "data/memories",
         "data/cache",
         "logs",
         "temp",
         "resources/models",
         "resources/audio",
-        "resources/images",
-        "config"
     ]
-    
     for d in dirs:
         Path(d).mkdir(parents=True, exist_ok=True)
 
-def main():
-    parser = argparse.ArgumentParser(description="Angela AI Desktop Companion")
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
-    parser.add_argument("--no-gui", action="store_true", help="Run without Live2D")
-    parser.add_argument("--config", default="config/angela_config.yaml", help="Config file path")
-    parser.add_argument("--reset", action="store_true", help="Reset all memories")
-    
-    args = parser.parse_args()
-    
-    print("=" * 60)
-    print("🌟 Angela AI Desktop Companion v6.0")
-    print("=" * 60)
-    
-    # Check dependencies
-    if not check_dependencies():
-        return 1
-    
-    # Create directories
-    create_directories()
-    
-    # Import after path setup
-    try:
-        from core.autonomous import AngelaDigitalLife
-        from core.autonomous import AngelaActionExecutor
-        from core.autonomous import create_live2d_manager
-        from core.autonomous import DesktopInteractionSystem
-        from core.autonomous import AudioIntegration
-        from core.autonomous import BrowserController
-        from core.autonomous import DesktopPresenceManager
-    except ImportError as e:
-        print(f"❌ Failed to import Angela modules: {e}")
-        print("Please ensure you're running from the project root")
-        return 1
-    
-    # Initialize systems
-    print("\n🚀 Initializing Angela...")
-    
-    try:
-        # Live2D (if not headless)
-        live2d = None
-        if not args.no_gui:
-            try:
-                live2d = create_live2d_manager()
-                print("✅ Live2D initialized")
-            except Exception as e:
-                print(f"⚠️  Live2D failed: {e}")
-                print("   Running in headless mode")
-        
-        # Audio
-        audio = AudioIntegration()
-        print("✅ Audio system ready")
-        
-        # Desktop
-        desktop = DesktopInteractionSystem()
-        print("✅ Desktop integration ready")
-        
-        # Browser
-        browser = BrowserController()
-        print("✅ Browser controller ready")
-        
-        # Angela life system
-        angela = AngelaDigitalLife(
-            window_handle=getattr(live2d, 'window_handle', None) if live2d else None,
-            enable_wallpaper_mode=True
-        )
-        print("✅ Angela life system active")
-        
-        # Action executor
-        executor = AngelaActionExecutor(
-            live2d_manager=live2d,
-            desktop_interaction=desktop,
-            audio_system=audio,
-            browser_controller=browser
-        )
-        angela.action_executor = executor
-        print("✅ Action systems connected")
-        
-        # Desktop presence
-        presence = None
-        if not args.no_gui and live2d:
-            presence = DesktopPresenceManager(
-                window_handle=live2d.window_handle,
-                enable_wallpaper_mode=True
-            )
-            print("✅ Desktop presence active")
-        
-        print("\n" + "=" * 60)
-        print("🎉 Angela is now alive!")
+
+class AngelaLife:
+    def __init__(self, debug: bool = False, headless: bool = False):
+        self.debug = debug
+        self.headless = headless
+        self.soul_core = None
+        self.body_adapter = None
+        self.maturity_manager = None
+        self.precision_system = None
+        self.transition_manager = None
+        self.cloud_sync = None
+        self.i18n = None
+        self.hardware = None
+        self.action_executor = None
+        self.running = False
+
+    async def initialize(self):
         print("=" * 60)
+        print("🌟 Angela AI v6.0.4")
+        print("=" * 60)
+        print("\n🚀 Initializing Angela...")
+
+        print("\n📋 System Status:")
+        print("   " + "-" * 50)
+
+        self.hardware = create_hardware_manager()
+        print(f"   ✅ Hardware detected: {self.hardware.detect().architecture.value}")
+
+        self.i18n = create_i18n_manager(default_language=Language.ENGLISH)
+        print("   ✅ i18n system ready")
+
+        self.precision_system = create_precision_system()
+        print("   ✅ Precision system initialized")
+
+        self.maturity_manager = create_maturity_system()
+        print(f"   ✅ Maturity system: Level {self.maturity_manager.get_level()}")
+
+        self.soul_core = create_soul_core()
+        print(f"   ✅ Soul core created: {self.soul_core.signature.prefix[:16]}...")
+
+        self.body_adapter = create_body_adapter()
+        print("   ✅ Body adapter ready")
+
+        self.transition_manager = create_transition_manager()
+        print("   ✅ Transition system ready")
+
+        self.cloud_sync = create_cloud_sync_manager()
+        print("   ✅ Cloud sync ready")
+
+        self.action_executor = ActionExecutor()
+        print("   ✅ Action executor ready")
+
+        print("\n   " + "-" * 50)
+        print("✅ All systems initialized!")
+        print("=" * 60)
+
+    async def run(self):
+        await self.initialize()
+        self.running = True
+
         print("\n💡 Quick Commands:")
-        print("   • Touch her to interact")
-        print("   • Say 'Hey Angela' to wake her")
-        print("   • Right-click for options")
-        print("   • Press Ctrl+C to exit")
+        print("   • Type 'status'   - Show system status")
+        print("   • Type 'level'    - Show maturity level")
+        print("   • Type 'hardware' - Show hardware info")
+        print("   • Type 'quit'     - Exit Angela")
         print("=" * 60 + "\n")
-        
-        # Run main loop
+
         loop = asyncio.get_event_loop()
-        
-        # Setup graceful shutdown
-        def signal_handler(sig, frame):
-            print("\n👋 Shutting down Angela...")
-            loop.stop()
-            sys.exit(0)
-        
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
-        
-        # Main loop
+
         async def life_loop():
-            while True:
+            while self.running:
                 try:
-                    # Update all systems
-                    angela.update(delta_time=1.0)
-                    if presence:
-                        presence.update()
-                    
                     await asyncio.sleep(1)
-                    
                 except Exception as e:
-                    if args.debug:
+                    if self.debug:
                         import traceback
                         traceback.print_exc()
                     print(f"Loop error: {e}")
                     await asyncio.sleep(5)
-        
-        loop.run_until_complete(life_loop())
-        
+
+        await life_loop()
+
+    def shutdown(self):
+        print("\n👋 Shutting down Angela...")
+        self.running = False
+        if self.cloud_sync:
+            self.cloud_sync.shutdown()
+        print("✅ Goodbye!")
+
+
+def interactive_mode(angela: AngelaLife):
+    print("\n" + "=" * 60)
+    print("🎉 Angela is now alive!")
+    print("=" * 60)
+
+    try:
+        while angela.running:
+            try:
+                cmd = input("\nAngela> ").strip()
+            except EOFError:
+                break
+
+            if not cmd:
+                continue
+
+            cmd_lower = cmd.lower()
+
+            if cmd_lower in ['quit', 'exit', 'q']:
+                break
+
+            elif cmd_lower == 'status':
+                print(f"\n📊 System Status:")
+                print(f"   Level: {angela.maturity_manager.get_level()}")
+                print(f"   Soul Integrity: {angela.soul_core.get_integrity():.2f}")
+                print(f"   Hardware: {angela.hardware.detect().architecture.value}")
+                print(f"   Sync Status: {angela.cloud_sync.get_status()}")
+
+            elif cmd_lower == 'level':
+                level = angela.maturity_manager.get_level()
+                xp = angela.maturity_manager.get_experience()
+                print(f"\n📈 Maturity Level: {level}")
+                print(f"   Experience: {xp}")
+                print(f"   Next Level: {level + 1} ({angela.maturity_manager.get_xp_to_next_level()} XP needed)")
+
+            elif cmd_lower == 'hardware':
+                hw = angela.hardware.detect()
+                print(f"\n🖥️  Hardware Info:")
+                print(f"   Architecture: {hw.architecture.value}")
+                print(f"   Vendor: {hw.vendor.value}")
+                print(f"   OS: {hw.os.value}")
+                print(f"   CPU Cores: {hw.capabilities.cpu_cores}")
+
+            elif cmd_lower == 'help':
+                print("\n📖 Available Commands:")
+                print("   status   - Show system status")
+                print("   level    - Show maturity level")
+                print("   hardware - Show hardware info")
+                print("   quit     - Exit Angela")
+
+            else:
+                print(f"   💭 (Angela processes: '{cmd}')")
+
+    except KeyboardInterrupt:
+        print("\n")
+
+    angela.shutdown()
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Angela AI Desktop Companion v6.0.4")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("--port", type=int, default=8000, help="Backend API port")
+    parser.add_argument("--headless", action="store_true", help="Run without GUI")
+    parser.add_argument("--reset", action="store_true", help="Reset all memories")
+    parser.add_argument("--api-only", action="store_true", help="Run only the API server")
+
+    args = parser.parse_args()
+
+    print("=" * 60)
+    print("🌟 Angela AI Desktop Companion v6.0.4")
+    print("=" * 60)
+
+    if not check_dependencies():
+        return 1
+
+    create_directories()
+
+    angela = AngelaLife(debug=args.debug, headless=args.headless)
+
+    try:
+        if args.api_only:
+            import uvicorn
+            from main import app
+            print(f"\n🚀 Starting API server on port {args.port}...")
+            uvicorn.run(app, host="0.0.0.0", port=args.port)
+        else:
+            asyncio.run(angela.run())
+            interactive_mode(angela)
+
     except KeyboardInterrupt:
         print("\n👋 Goodbye!")
         return 0
@@ -222,6 +266,9 @@ def main():
             import traceback
             traceback.print_exc()
         return 1
+
+    return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

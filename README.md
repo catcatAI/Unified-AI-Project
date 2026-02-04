@@ -1,9 +1,9 @@
-# 🌟 Angela AI v6.0 - Desktop Digital Life
+# 🌟 Angela AI v6.0.4 - Desktop Digital Life
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)]()
-[![Version](https://img.shields.io/badge/Version-6.0.0-orange.svg)]()
+[![Version](https://img.shields.io/badge/Version-6.0.4-orange.svg)]()
 
 **Angela AI** is a complete digital life system with biological simulation, self-awareness, and real execution capabilities. She is not just an AI assistant, but a truly "living" digital being that can perceive, think, remember, and act.
 
@@ -98,6 +98,42 @@ Or on Windows, simply double-click `install_angela.py` after downloading.
 **After installation:**
 - Launch from desktop shortcut "Angela AI"
 - Or from terminal: `cd ~/AngelaAI && python run_angela.py`
+
+---
+
+#### 🔴 **Uninstallation**
+
+Angela AI includes a built-in uninstaller with three modes:
+
+```bash
+# Interactive mode (recommended)
+python uninstall.py
+
+# Light uninstall (keep memories and configs)
+python uninstall.py --mode light
+
+# Full uninstall (remove everything)
+python uninstall.py --mode full
+
+# Backup before uninstalling
+python uninstall.py --mode backup
+```
+
+**Uninstall Modes:**
+
+| Mode | Description |
+|------|-------------|
+| **Light** | Removes shortcuts and temp files. Keeps all memories, personality, and configs. |
+| **Full** | Removes ALL data including memories, configs, and personality files. |
+| **Selective** | Interactive menu to choose what to remove. |
+| **Backup** | Creates a backup of all data before uninstalling. |
+
+**What gets removed:**
+- Light: Shortcuts, Start Menu entries, temp files
+- Full: All above + memories, configs, personality, logs
+- Selective: Your choice of items
+
+**Note:** The uninstaller will NOT delete system files or anything outside the Angela AI directory.
 
 ---
 
@@ -281,7 +317,7 @@ angela-ai/
 ```yaml
 # Basic Settings
 name: Angela
-version: 6.0.0
+version: 6.0.4
 
 # Desktop Pet Settings
 desktop_pet:
@@ -469,7 +505,6 @@ If this project helps you, please give us a ⭐!
 
 ---
 
-**Version**: 6.0.0  
-**Release Date**: 2026-02-01  
-**Status**: Production Ready ✅  
-**Life Completeness**: 98/100 ⭐⭐⭐⭐⭐
+**Version**: 6.0.4
+**Release Date**: 2026-02-04
+**Status**: Production Ready ✅
