@@ -159,6 +159,8 @@ function setupSlider(sliderId, displayId, formatter) {
     });
 }
 
+let monitorInterval = null;
+
 function switchSection(sectionId) {
     // Update nav items
     navItems.forEach(item => {
@@ -169,6 +171,83 @@ function switchSection(sectionId) {
     sections.forEach(section => {
         section.classList.toggle('active', section.id === sectionId);
     });
+
+    // Start/Stop monitoring for network section
+    if (sectionId === 'network') {
+        startMonitoring();
+    } else {
+        stopMonitoring();
+    }
+}
+
+function startMonitoring() {
+    if (monitorInterval) return;
+    
+    console.log('Starting cluster monitoring...');
+    updateMonitorUI(); // Initial update
+    monitorInterval = setInterval(updateMonitorUI, 3000);
+}
+
+function stopMonitoring() {
+    if (monitorInterval) {
+        console.log('Stopping cluster monitoring...');
+        clearInterval(monitorInterval);
+        monitorInterval = null;
+    }
+}
+
+async function updateMonitorUI() {
+    const backendIp = document.getElementById('backend-ip').value || '127.0.0.1';
+    const backendPort = document.getElementById('backend-port').value || 8000;
+    const url = `http://${backendIp}:${backendPort}/api/v1/system/cluster/status`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Backend unreachable');
+        const data = await response.json();
+
+        // Update Hardware UI
+        document.getElementById('mon-cpu-usage').textContent = `${data.hardware.cpu.usage.toFixed(1)}%`;
+        document.getElementById('mon-cpu-brand').textContent = data.hardware.cpu.brand;
+        document.getElementById('mon-mem-usage').textContent = `${data.hardware.memory.usage_percent.toFixed(1)}%`;
+        document.getElementById('mon-mem-total').textContent = `${(data.hardware.memory.total / (1024**3)).toFixed(1)} GB`;
+        document.getElementById('mon-perf-tier').textContent = data.hardware.performance_tier;
+        document.getElementById('mon-ai-score').textContent = data.hardware.ai_capability_score;
+
+        // Update Cluster UI
+        const activeNodes = data.cluster.active_nodes;
+        const totalNodes = data.cluster.total_nodes;
+        const activeNodesEl = document.getElementById('mon-active-nodes');
+        activeNodesEl.textContent = `${activeNodes} / ${totalNodes}`;
+        activeNodesEl.className = `status-badge ${activeNodes > 0 ? 'connected' : 'disconnected'}`;
+
+        const nodeList = document.getElementById('node-list');
+        nodeList.innerHTML = '';
+        data.cluster.nodes.forEach(node => {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.style.display = 'flex';
+            nodeDiv.style.justifyContent = 'space-between';
+            nodeDiv.style.padding = '4px 0';
+            nodeDiv.style.borderBottom = '1px solid #eee';
+            
+            const statusColor = node.status === 'online' ? '#2ecc71' : '#e74c3c';
+            nodeDiv.innerHTML = `
+                <span><span style="color: ${statusColor}">●</span> ${node.id} (${node.type})</span>
+                <span>Load: ${Math.round(node.load * 100)}%</span>
+            `;
+            nodeList.appendChild(nodeDiv);
+        });
+
+        // Update general backend status
+        const backendStatus = document.getElementById('backend-status');
+        backendStatus.textContent = 'Connected';
+        backendStatus.className = 'status-badge connected';
+
+    } catch (error) {
+        console.warn('Monitor update failed:', error);
+        document.getElementById('backend-status').textContent = 'Disconnected';
+        document.getElementById('backend-status').className = 'status-badge disconnected';
+    }
 }
 
 function loadWallpaper() {

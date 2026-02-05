@@ -4,12 +4,13 @@ API路由模块
 
 import random
 import psutil
+from src.system.cluster_manager import cluster_manager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 import uuid
 
 from fastapi import APIRouter, Body
-from src.api.v1.endpoints import drive, pet, vision, audio, tactile
+from src.api.v1.endpoints import drive, pet, vision, audio, tactile, mobile
 from src.api.routes.ops_routes import router as ops_router
 
 router = APIRouter()
@@ -20,6 +21,7 @@ router.include_router(pet.router)
 router.include_router(vision.router)
 router.include_router(audio.router)
 router.include_router(tactile.router)
+router.include_router(mobile.router)
 router.include_router(ops_router)
 
 
@@ -102,7 +104,7 @@ async def get_models():
 
 @router.get("/system/metrics/detailed", response_model=Dict[str, Any])
 async def get_detailed_system_metrics():
-    """获取详细系统指标"""
+    """获取详细 system 指标"""
     cpu_usage = psutil.cpu_percent(interval=1)
     memory = psutil.virtual_memory()
     disk = psutil.disk_usage("/")
@@ -139,6 +141,12 @@ async def get_detailed_system_metrics():
         "timestamp": datetime.now().isoformat(),
     }
     return metrics
+
+
+@router.get("/system/cluster/status", response_model=Dict[str, Any])
+async def get_cluster_status():
+    """獲取集群與硬體探針狀態"""
+    return cluster_manager.get_cluster_status()
 
 
 @router.post("/chat/completions")

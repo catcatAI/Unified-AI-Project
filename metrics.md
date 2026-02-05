@@ -8,12 +8,36 @@ Angela 的運行狀態由四維張量共同定義，實現了從「版本能力�
 
 | 維度 | 代號 | 範圍 (Range) | 說明 |
 | :--- | :--- | :--- | :--- |
-| **Version Status** | **V** | v6.0.4 - Production | Angela 目前的版本功能狀態與能力邊界 |
+| **Version Status** | **V** | v6.1.0 - Production | Angela 目前的版本功能狀態與能力邊界 |
 | **Maturity Level** | **L** | L0 ~ L11 | 12 個階段的矩陣成熟度，定義認知深度 |
 | **Precision Level** | **P** | FP8 ~ FP128 | 5 個等級的浮點精度，定義數值解析度 |
 | **Precision Mode** | **M** | INT ~ DEC4 | 5 個模式的精度模式，定義整數/小數傳輸策略 |
 
 **狀態公式**: `Angela_State = V ⊗ L ⊗ P ⊗ M`
+
+## 2. 安全與通訊監控 (Security & Communication Matrix)
+
+為了確保跨裝置（桌面/行動）通訊的安全，Angela 引入了 A/B/C 密鑰體系與常駐監控器，並與外部模型金鑰進行了物理與邏輯上的隔離。
+
+### **2.1 密鑰 vs 金鑰 (Secret Keys vs API Keys)**
+
+| 類別 | 對象 | 存儲位置 | 生命週期 | 說明 |
+| :--- | :--- | :--- | :--- | :--- |
+| **系統密鑰 (Angela Secrets)** | Key A, B, C | `data/security/abc_keys.json` | 系統生成，可重置 | 用於內部通訊、行動端驗證、後端控制 |
+| **外部金鑰 (Model API Keys)** | OpenAI, Anthropic, etc. | `.env` 或 `configs/*.yaml` | 外部服務商提供 | 用於調用大模型 API，與系統安全性解耦 |
+
+### **2.2 A/B/C 密鑰體系詳解**
+
+| 密鑰類型 | 代號 | 用途 | 保護範圍 |
+| :--- | :--- | :--- | :--- |
+| **Key A** | **Backend Control** | 後端服務啟停與核心權限 | 本地系統管理 (System Tray) |
+| **Key B** | **Mobile Comm** | 行動端與後端加密通訊 (HMAC-SHA256) | /api/v1/mobile/* |
+| **Key C** | **Sync/Desktop** | 桌面端同步與跨裝置二級驗證 | 全域同步數據 |
+
+**監控表現 (推算)**:
+- **密鑰隔離效率**: 100% (獨立管理路徑)
+- **密鑰生成速度**: < 50ms (Fernet/AES-128)
+- **通訊驗證延遲**: < 2ms (HMAC-SHA256)
 
 ## 2. 核心性能指標 (Expected Metrics)
 

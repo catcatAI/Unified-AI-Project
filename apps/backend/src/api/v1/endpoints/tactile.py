@@ -6,7 +6,7 @@ Tactile API 端點
 from fastapi import APIRouter, HTTPException, Body
 from typing import Dict, Any, List, Optional
 import logging
-from ...services.tactile_service import TactileService
+from ....services.tactile_service import TactileService
 
 logger = logging.getLogger(__name__)
 

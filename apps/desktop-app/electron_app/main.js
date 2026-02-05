@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, screen, globalShortcut, systemPreferences, nativeTheme, Menu, Tray } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const securityManager = require('./js/security-manager');
 
 // Import Live2D Cubism Web SDK (will be loaded via CDN or local)
 const LIVE2D_VERSION = '5.0.0';
@@ -22,13 +23,20 @@ let moduleStates = {
 let tray = null;
 
 // App lifecycle
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   isDevMode = process.argv.includes('--dev');
+  
+  // Initialize security manager (Key C sync)
+  const userDataPath = app.getPath('userData');
+  await securityManager.setup(userDataPath, backendIP);
   
   createMainWindow();
   
   // Create system tray
   createTray();
+  
+  // Register security handlers
+  registerSecurityHandlers();
   
   // Register global shortcuts
   registerGlobalShortcuts();
@@ -352,7 +360,46 @@ function createSettingsWindow(tab = 'general') {
 }
 
 /**
- * Register global keyboard shortcuts
+ * Register security related IPC handlers
+ */
+function registerSecurityHandlers() {
+  ipcMain.handle('security:init', (event, keyC) => {
+    try {
+      securityManager.init(keyC);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('security:is-initialized', () => {
+    return securityManager.isInitialized();
+  });
+
+  ipcMain.handle('security:sync', async () => {
+    const result = await securityManager.syncFromBackend(backendIP);
+    return { success: result };
+  });
+
+  ipcMain.handle('security:encrypt', (event, data) => {
+    try {
+      return { success: true, data: securityManager.encrypt(data) };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('security:decrypt', (event, encryptedData) => {
+    try {
+      return { success: true, data: securityManager.decrypt(encryptedData) };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+}
+
+/**
+ * Register global shortcuts
  */
 function registerGlobalShortcuts() {
   // Toggle visibility

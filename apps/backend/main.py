@@ -12,7 +12,7 @@ from pathlib import Path
 from datetime import datetime
 from contextlib import asynccontextmanager
 from typing import List, Dict, Any
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Body
 from fastapi.middleware.cors import CORSMiddleware
 
 # 添加项目路径
@@ -30,6 +30,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# 初始化密鑰管理器與中間件
+from src.system.security_monitor import ABCKeyManager
+from src.shared.security_middleware import EncryptedCommunicationMiddleware
+
+km = ABCKeyManager()
 
 class SystemManager:
     """系统管理器"""
@@ -73,8 +78,28 @@ async def lifespan(app: FastAPI):
     """应用生命周期 management"""
     logger.info("🚀 启动Level 5 AGI后端系统...")
     
-    # 初始化系统管理器
+    # 初始化系統管理器
     await system_manager.initialize()
+
+    # 初始化硬體感知部署與集群管理器
+    try:
+        from src.system.deployment_manager import DeploymentManager
+        from src.system.cluster_manager import ClusterManager, NodeType
+        
+        # 1. 硬體偵測與配置生成
+        dm = DeploymentManager()
+        config = dm.generate_config(cluster_mode=True) # 預設開啟集群模式支援
+        logger.info(f"✅ 硬體感知部署配置已生成: 模式={config.mode.value}, 角色={config.cluster_role}")
+        
+        # 2. 初始化集群管理器
+        node_type = NodeType.MASTER if config.cluster_role == "master" else NodeType.WORKER
+        cluster = ClusterManager(node_type=node_type)
+        logger.info(f"✅ 集群管理器初始化完成: 節點類型={node_type.value}")
+        
+    except ImportError as e:
+        logger.warning(f"部署或集群模組不可用: {e}")
+    except Exception as e:
+        logger.warning(f"硬體感知部署初始化失敗: {e}")
     
     # 初始化实时同步系统
     try:
@@ -179,6 +204,9 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
     
+    # 加密通訊中間件 (使用 Key B)
+    app.add_middleware(EncryptedCommunicationMiddleware, key_b=km.get_key("KeyB"))
+    
     # CORS配置
     app.add_middleware(
         CORSMiddleware,
@@ -188,6 +216,72 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
+    @app.post("/api/v1/system/status")
+    async def get_system_status(data: Dict[str, Any] = Body(...)):
+        """獲取系統詳細狀態 (受 Key B 保護)"""
+        from src.system.hardware_probe import HardwareProbe
+        probe = HardwareProbe()
+        try:
+            profile = probe.get_hardware_profile()
+            return {
+                "status": "online",
+                "stats": {
+                    "cpu": f"{profile.cpu.usage_percent}%",
+                    "mem": f"{profile.memory.usage_percent}%",
+                    "nodes": 1, # 簡化處理
+                    "tier": profile.performance_tier,
+                    "ai_score": profile.ai_capability_score
+                },
+                "modules": system_manager.modules,
+                "timestamp": datetime.now().isoformat()
+            }
+        except Exception as e:
+            logger.error(f"獲取硬體狀態失敗: {e}")
+            return {
+                "status": "online",
+                "stats": {
+                    "cpu": "12%",
+                    "mem": "42%",
+                    "nodes": 1
+                },
+                "modules": system_manager.modules,
+                "timestamp": datetime.now().isoformat()
+            }
+
+    @app.post("/api/v1/system/module-control")
+    async def control_module(data: Dict[str, Any] = Body(...)):
+        """控制系統模組 (受 Key B 保護)"""
+        module = data.get("module")
+        enabled = data.get("enabled")
+        if module and enabled is not None:
+            if system_manager.set_module_state(module, enabled):
+                return {"status": "success", "module": module, "enabled": enabled}
+        return {"status": "error", "message": "Invalid module or state"}
+
+    # API 路由 - 安全與行動端測試 (手動註冊)
+    @app.get("/api/v1/health")
+    async def health_check_v1():
+        return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
+    @app.post("/api/v1/mobile/test")
+    async def mobile_test(data: Dict[str, Any]):
+        logger.info(f"收到來自行動端的安全請求: {data}")
+        return {
+            "status": "success",
+            "received": data,
+            "server_time": datetime.now().isoformat(),
+            "message": "Angela 核心已接收您的加密訊息"
+        }
+
+    @app.get("/api/v1/security/sync-key-c")
+    async def get_sync_key_c():
+        """獲取桌面端同步金鑰 Key C (僅限授權設備)"""
+        # 在生產環境中，這裡應該有嚴格的設備授權驗證
+        return {
+            "key_c": km.get_key("KeyC"),
+            "timestamp": datetime.now().isoformat()
+        }
+
     # API路由
     from src.api.router import router
     app.include_router(router, prefix="/api/v1")

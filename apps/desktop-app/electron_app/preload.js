@@ -87,6 +87,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openDialog: (options) => ipcRenderer.invoke('file-open-dialog', options)
   },
   
+  // Security management
+  security: {
+    init: (keyC) => ipcRenderer.invoke('security:init', keyC),
+    isInitialized: () => ipcRenderer.invoke('security:is-initialized'),
+    sync: () => ipcRenderer.invoke('security:sync'),
+    encrypt: (data) => ipcRenderer.invoke('security:encrypt', data),
+    decrypt: (encryptedData) => ipcRenderer.invoke('security:decrypt', encryptedData)
+  },
+  
   // WebSocket communication with backend
   websocket: {
     connect: (url) => ipcRenderer.send('websocket-connect', { url }),

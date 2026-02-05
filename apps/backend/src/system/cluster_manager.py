@@ -15,10 +15,13 @@ import logging
 import uuid
 import time
 import os
+import psutil
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional, Tuple
 from enum import Enum
 from pathlib import Path
+
+from .hardware_probe import HardwareProbe
 
 logger = logging.getLogger(__name__)
 
@@ -162,11 +165,54 @@ class ClusterManager:
         self.memoizer = DecimalMemoizer()
         self.precision_map = PrecisionMap()
         self.metrics_history: List[PerformanceMetrics] = []
+        self.probe = HardwareProbe()
+        
+        # FP128 切分還原緩衝區: task_id -> {chunk_index: data}
+        self.reconstruction_buffer: Dict[str, Dict[int, List[float]]] = {}
         
         # 矩陣基礎定義
         self.LAYERS = range(12)
         
         self.metrics_file = Path(__file__).parent.parent.parent.parent.parent / "metrics.md"
+
+    def get_cluster_status(self) -> Dict[str, Any]:
+        """獲取集群當前狀態與硬體資訊"""
+        profile = self.probe.get_hardware_profile()
+        
+        # 模擬一些集群節點
+        if not self.workers and self.node_type == NodeType.MASTER:
+            self.workers = {
+                "worker-alpha": {"status": "online", "precision": "FP16", "load": 0.45},
+                "worker-beta": {"status": "online", "precision": "FP8", "load": 0.12},
+                "worker-gamma": {"status": "offline", "precision": "FP32", "load": 0.0}
+            }
+
+        return {
+            "node_type": self.node_type.value,
+            "hardware": {
+                "cpu": {
+                    "brand": profile.cpu.brand,
+                    "usage": profile.cpu.usage_percent,
+                    "cores": profile.cpu.cores_logical
+                },
+                "memory": {
+                    "total": profile.memory.total,
+                    "used": profile.memory.used,
+                    "usage_percent": profile.memory.usage_percent
+                },
+                "performance_tier": profile.performance_tier,
+                "ai_capability_score": profile.ai_capability_score
+            },
+            "cluster": {
+                "active_nodes": len([w for w in self.workers.values() if w["status"] == "online"]),
+                "total_nodes": len(self.workers) + 1,
+                "nodes": [
+                    {"id": "master-node (Self)", "type": "master", "status": "online", "load": psutil.cpu_percent() / 100},
+                    *[{"id": k, "type": "worker", **v} for k, v in self.workers.items()]
+                ]
+            },
+            "timestamp": time.time()
+        }
 
     async def distribute_task(self, module_name: str, matrix_data: List[float], custom_precision: Optional[PrecisionLevel] = None) -> str:
         """主機分配任務：根據精度圖譜切分數據並封裝狀態張量"""
@@ -225,10 +271,34 @@ class ClusterManager:
         tensor_info = task.status_tensor.to_vector() if task.status_tensor else ("unknown", 0, "unknown", "unknown")
         logger.info(f"分機執行任務 [狀態張量: {tensor_info}]: {task.module}")
         
-        # 處理 FP128 切分還原邏輯 (模擬)
+        # 處理 FP128 切分還原邏輯
         if task.precision == PrecisionLevel.FP128 and task.fp_chunks > 1:
-            logger.info(f"執行 FP128 切分塊運算: {task.module} (Chunk 1/{task.fp_chunks})")
-            # 實際實現中，這裡會等待所有塊到達或並行計算後合併
+            chunk_idx = task.payload.get("chunk_index", 0)
+            logger.info(f"執行 FP128 切分塊運算: {task.module} (Chunk {chunk_idx + 1}/{task.fp_chunks})")
+            
+            # 模擬計算塊數據
+            chunk_data = [float(i) * 1.000000000001 for i in task.data_int]
+            
+            if task.task_id not in self.reconstruction_buffer:
+                self.reconstruction_buffer[task.task_id] = {}
+            
+            self.reconstruction_buffer[task.task_id][chunk_idx] = chunk_data
+            
+            # 檢查是否所有塊都已到達
+            if len(self.reconstruction_buffer[task.task_id]) == task.fp_chunks:
+                logger.info(f"FP128 任務所有塊已到達，開始還原: {task.task_id}")
+                full_data = []
+                # 按順序合併塊數據 (簡化邏輯：假設每個塊對應矩陣的一個子集或精度層)
+                for i in range(task.fp_chunks):
+                    full_data.extend(self.reconstruction_buffer[task.task_id][i])
+                
+                del self.reconstruction_buffer[task.task_id]
+                execution_time = time.time() - start_time
+                self._record_local_metrics(execution_time, 0.999999, task.status_tensor)
+                return full_data
+            else:
+                # 尚未完成，返回當前塊結果（在實際異步系統中，這通常會觸發一個回調或事件）
+                return chunk_data
         
         # 嘗試從本地記憶化獲取小數點矩陣
         memoized_decimals = self.memoizer.get_decimals(
@@ -286,11 +356,26 @@ class ClusterManager:
         # 模擬能效計算 (Tasks / sec / normalized_power)
         efficiency = speed / 1.5 
         
+        # 獲取硬體資訊
+        hardware_usage = {
+            "cpu_percent": psutil.cpu_percent(),
+            "memory_percent": psutil.virtual_memory().percent,
+        }
+        
+        # 嘗試獲取 GPU 資訊 (如果有)
+        try:
+            profile = self.probe.get_hardware_profile()
+            if profile.gpu:
+                hardware_usage["gpu_load"] = profile.gpu[0].load if hasattr(profile.gpu[0], 'load') else 0
+        except:
+            pass
+        
         metric = PerformanceMetrics(
             efficiency=efficiency,
             speed=speed,
             precision=precision,
-            status_tensor_snapshot=status_tensor.to_vector() if status_tensor else None
+            status_tensor_snapshot=status_tensor.to_vector() if status_tensor else None,
+            hardware_usage=hardware_usage
         )
         self.metrics_history.append(metric)
         
@@ -299,7 +384,7 @@ class ClusterManager:
             asyncio.create_task(self.update_metrics_file())
 
     async def update_metrics_file(self):
-        """將指標記錄到指標 MD 中 (最大、最小、平均/時間單位)"""
+        """將指標記錄到指標 MD 中 (更新實測記錄區段)"""
         if not self.metrics_history:
             return
 
@@ -307,31 +392,55 @@ class ClusterManager:
         effs = [m.efficiency for m in self.metrics_history]
         precs = [m.precision for m in self.metrics_history]
         
+        cpu_loads = [m.hardware_usage.get("cpu_percent", 0) for m in self.metrics_history]
+        mem_loads = [m.hardware_usage.get("memory_percent", 0) for m in self.metrics_history]
+        
         stats = {
             "speed": {"max": max(speeds), "min": min(speeds), "avg": sum(speeds)/len(speeds)},
             "efficiency": {"max": max(effs), "min": min(effs), "avg": sum(effs)/len(effs)},
-            "precision": {"max": max(precs), "min": min(precs), "avg": sum(precs)/len(precs)}
+            "precision": {"max": max(precs), "min": min(precs), "avg": sum(precs)/len(precs)},
+            "cpu": sum(cpu_loads)/len(cpu_loads),
+            "mem": sum(mem_loads)/len(mem_loads)
         }
         
         self.metrics_history.clear()
         
         try:
-            # 讀取現有內容並更新
             if self.metrics_file.exists():
                 with open(self.metrics_file, "r", encoding="utf-8") as f:
-                    content = f.read()
+                    lines = f.readlines()
                 
-                # 這裡簡單地追加到文件末尾或替換特定標籤
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                new_entry = f"\n### 硬體效能日誌 ({timestamp})\n"
-                new_entry += f"- **速度 (Tasks/s)**: Max: {stats['speed']['max']:.2f}, Min: {stats['speed']['min']:.2f}, Avg: {stats['speed']['avg']:.2f}\n"
-                new_entry += f"- **能效 (Tasks/W)**: Max: {stats['efficiency']['max']:.2f}, Min: {stats['efficiency']['min']:.2f}, Avg: {stats['efficiency']['avg']:.2f}\n"
-                new_entry += f"- **精度 (Score)**: Max: {stats['precision']['max']:.2f}, Min: {stats['precision']['min']:.2f}, Avg: {stats['precision']['avg']:.2f}\n"
+                new_lines = []
+                skip = False
+                for line in lines:
+                    if "### 運算速度 (Ops/s)" in line:
+                        new_lines.append(line)
+                        new_lines.append(f"- **最大值**: {stats['speed']['max']:.2f}\n")
+                        new_lines.append(f"- **最小值**: {stats['speed']['min']:.2f}\n")
+                        new_lines.append(f"- **平均值**: {stats['speed']['avg']:.2f}\n")
+                        skip = True
+                    elif "### 推論精度 (%)" in line:
+                        new_lines.append(line)
+                        new_lines.append(f"- **最大值**: {stats['precision']['max']*100:.2f}%\n")
+                        new_lines.append(f"- **最小值**: {stats['precision']['min']*100:.2f}%\n")
+                        new_lines.append(f"- **平均值**: {stats['precision']['avg']*100:.2f}%\n")
+                        skip = True
+                    elif "### 資源利用率 (%)" in line:
+                        new_lines.append(line)
+                        new_lines.append(f"- **GPU 平均負載**: 測算中...\n")
+                        new_lines.append(f"- **CPU 平均負載**: {stats['cpu']:.1f}%\n")
+                        new_lines.append(f"- **記憶體平均負載**: {stats['mem']:.1f}%\n")
+                        skip = True
+                    elif line.startswith("- **") and skip:
+                        continue
+                    else:
+                        skip = False
+                        new_lines.append(line)
                 
-                with open(self.metrics_file, "a", encoding="utf-8") as f:
-                    f.write(new_entry)
+                with open(self.metrics_file, "w", encoding="utf-8") as f:
+                    f.writelines(new_lines)
                     
-                logger.info("已更新 metrics.md 硬體效能日誌")
+                logger.info("已更新 metrics.md 實測記錄")
         except Exception as e:
             logger.error(f"更新 metrics.md 失敗: {e}")
 

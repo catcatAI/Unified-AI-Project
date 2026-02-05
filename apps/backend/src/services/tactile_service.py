@@ -23,7 +23,12 @@ class TactileService:
         self._init_standard_materials()
         
         # 註冊同步事件監聽
-        asyncio.create_task(self._init_sync_listener())
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self._init_sync_listener())
+        except RuntimeError:
+            # No running event loop, this is fine during import or sync tests
+            logger.debug("No running event loop, sync listener will not be initialized automatically")
         
         logger.info("Tactile Service initialized with material modeling capabilities")
 

@@ -194,6 +194,24 @@ class HardwareProbe:
         
         return tier, score
 
+    def get_cluster_capability(self) -> Dict[str, Any]:
+        """Assess node's capability for cluster participation"""
+        profile = self.get_hardware_profile()
+        score = profile.ai_capability_score
+        
+        # Logic to determine preferred role
+        if score > 70:
+            preferred_role = "master"
+        else:
+            preferred_role = "worker"
+            
+        return {
+            "score": score,
+            "preferred_role": preferred_role,
+            "can_participate": score > 20,
+            "max_tasks": int(score / 10) + 1
+        }
+
 def get_hardware_profile() -> HardwareProfile:
     """Helper function to get current hardware profile"""
     probe = HardwareProbe()

@@ -1,129 +1,73 @@
 """
+Angela AI v6.0 - Key Manager (Legacy Support & Refined)
 統一金鑰管理器
-處理演示模式、生產模式和開發模式的金鑰管理
+
+提供對 A/B/C 密鑰體系的訪問，並保留對舊有配置的相容性。
 """
 
-from diagnose_base_agent import
-# TODO: Fix import - module 'yaml' not found
-from tests.tools.test_tool_dispatcher_logging import
-# TODO: Fix import - module 'pathlib' not found
-# TODO: Fix import - module 'typing' not found
-# TODO: Fix import - module 'cryptography.fernet' not found
+import os
+import logging
+from pathlib import Path
+from typing import Dict, Any, Optional
+import yaml
 
-logger: Any = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class UnifiedKeyManager:
-    """統一金鑰管理器"""
+    """統一金鑰管理器 (明確區分通訊密鑰與模型金鑰)"""
     
-    def __init__(self, config_path: str = "configs / unified_demo_config.yaml") -> None:
+    def __init__(self, config_path: str = "configs/unified_demo_config.yaml") -> None:
         self.config_path = Path(config_path)
-        self.config = self._load_config
-        self.demo_mode = self._detect_demo_mode
+        self.config = self._load_config()
         
-    def _load_config(self) -> Dict[str, Any]:
-        """載入配置"""
-        if self.config_path.exists:
-            with open(self.config_path, 'r', encoding = 'utf - 8') as f:
-                return yaml.safe_load(f)
-        return
-    
-    def _detect_demo_mode(self) -> bool:
-        """檢測是否為演示模式"""
-        demo_cfg = self.config.get('demo_mode')
-        
-        # 顯式啟用開關(若配置中提供 enabled = True, 直接啟用)
-        if demo_cfg.get('enabled') is True:
-            logger.info("配置中啟用 demo_mode.enabled = True, 啟用演示模式")
-            return True
-        
-        # 自動偵測開關
-        if not demo_cfg.get('auto_detect', False):
-            return False
-        
-        patterns = demo_cfg.get('detection_patterns')
-        
-        # 明確 DEMO_FLAG 支持(任何真值都啟用)
-        demo_flag = os.environ.get('DEMO_FLAG')
-        if isinstance(demo_flag, str) and demo_flag.lower in {"1", "true", "yes", "on"}:
-            logger.info("檢測到 DEMO_FLAG = true, 啟用演示模式")
-            return True
-        
-        # 檢查環境變量的「鍵」或「值」是否匹配
-        for k, v in os.environ.items:
-            # 鍵匹配(滿足如 ^DEMO_ 的場景)
-            if any(self._match_pattern(k, ptn) for ptn in patterns):
-                logger.info(f"檢測到演示環境變量鍵: {k}")
-                return True
-            # 值匹配(原有行為)
-            if any(self._match_pattern(v, ptn) for ptn in patterns):
-                logger.info(f"檢測到演示金鑰: {k}")
-                return True
-        
-        return False
-    
-    def _match_pattern(self, value: str, pattern: str) -> bool:
-        """匹配模式"""
-from tests.core_ai import
+        # 1. 系統通訊密鑰 (Angela Secret Keys: A/B/C)
+        # 用於內部組件、行動端、桌面端的加密與控制
         try:
-            return bool(re.match(pattern, value))
-        except re.error:
-            return pattern in value
-    
-    def get_key(self, key_name: str) -> Optional[str]:
-        """獲取金鑰"""
-        if self.demo_mode:
-            # 演示模式使用固定金鑰
-            fixed_keys = self.config.get('demo_mode').get('fixed_keys')
-            if key_name in fixed_keys:
-                logger.info(f"使用演示金鑰: {key_name}")
-                return fixed_keys[key_name]
-        
-        # 從環境變量獲取
-        return os.environ.get(key_name)
-    
-    def setup_demo_environment(self):
-        """設置演示環境"""
-        if not self.demo_mode:
-            return
-            
-        logger.info("設置演示環境...")
-        
-        # 設置固定金鑰
-        fixed_keys = self.config.get('demo_mode').get('fixed_keys')
-        for key, value in fixed_keys.items:
-            os.environ[key] = value
-        
-        # 執行自動動作
-        auto_actions = self.config.get('demo_mode').get('auto_actions')
-        
-        if auto_actions.get('learning'):
-            self._setup_learning
-        
-        if auto_actions.get('initialization'):
-            self._setup_initialization
-        
-        if auto_actions.get('cleanup'):
-            self._setup_cleanup
-    
-    def _setup_learning(self):
-        # 這裡為簡化示範, 實際可調用 DemoLearningManager 等
-        logger.info("初始化演示學習環境(示範)")
-    
-    def _setup_initialization(self):
-        logger.info("執行演示初始化(示範)")
-    
-    def _setup_cleanup(self):
-        logger.info("設定演示清理任務(示範)")
-    
-    def generate_ham_key(self) -> str:
-        """生成 HAM 金鑰"""
-        if self.demo_mode:
-            # 演示模式使用固定金鑰
-            return self.get_key('MIKO_HAM_KEY') or \
-    'DEMO_HAM_FIXED_KEY_2025_aGVsbG93b3JsZA == '
-        
-        # 生產模式生成新金鑰
-        return Fernet.generate_key.decode
+            from ..system.security_monitor import ABCKeyManager
+            self.abc_km = ABCKeyManager()
+        except ImportError:
+            self.abc_km = None
+            logger.warning("ABCKeyManager 不可用")
 
-# 全局實例
-key_manager = UnifiedKeyManager
+    def _load_config(self) -> Dict[str, Any]:
+        """載入舊有 YAML 配置 (通常包含模型 API Keys)"""
+        if self.config_path.exists():
+            try:
+                with open(self.config_path, 'r', encoding='utf-8') as f:
+                    return yaml.safe_load(f) or {}
+            except Exception as e:
+                logger.error(f"載入配置失敗: {e}")
+        return {}
+
+    def get_security_key(self, key_name: str) -> Optional[str]:
+        """獲取 Angela 系統通訊密鑰 (KeyA, KeyB, KeyC)"""
+        if self.abc_km and key_name in ["KeyA", "KeyB", "KeyC"]:
+            return self.abc_km.get_key(key_name)
+        return None
+
+    def get_api_key(self, service_name: str) -> Optional[str]:
+        """獲取外部模型服務金鑰 (如 OpenAI, Anthropic API Keys)"""
+        # 優先從環境變量獲取，然後從配置文件獲取
+        env_key = os.environ.get(f"{service_name.upper()}_API_KEY")
+        if env_key:
+            return env_key
+        return self.config.get("api_keys", {}).get(service_name)
+
+    def get_key(self, key_name: str) -> Optional[str]:
+        """通用檢索 (向下相容)"""
+        # 優先檢查是否為 A/B/C 密鑰
+        sec_key = self.get_security_key(key_name)
+        if sec_key:
+            return sec_key
+        
+        # 否則作為 API 金鑰或環境變量處理
+        return os.environ.get(key_name) or self.config.get(key_name)
+
+    def setup_environment(self):
+        """設置運行環境金鑰"""
+        if self.abc_km:
+            for k in ["KeyA", "KeyB", "KeyC"]:
+                val = self.abc_km.get_key(k)
+                if val:
+                    os.environ[k] = val
+        logger.info("✅ 安全金鑰環境已設置完成")

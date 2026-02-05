@@ -15,6 +15,7 @@ class AngelaApp {
         // Core systems
         this.logger = null;
         this.dataPersistence = null;
+        this.security = null;
         this.i18n = null;
         this.themeManager = null;
         this.pluginManager = null;
@@ -51,6 +52,7 @@ class AngelaApp {
             // Initialize core systems first
             await this._initializeLogger();
             await this._initializeDataPersistence();
+            await this._initializeSecurity();
             await this._initializeI18n();
             await this._initializeThemeManager();
             await this._initializeUserManager();
@@ -143,6 +145,73 @@ class AngelaApp {
         this.statePersistence = new StatePersistence({
             maxHistorySize: 100
         });
+    }
+    
+    async _initializeSecurity() {
+        this.updateLoadingText('Initializing security system...');
+        
+        try {
+            // 從後端獲取實際的 Key C
+            const backendHost = localStorage.getItem('backend_host') || 'localhost';
+            const response = await fetch(`http://${backendHost}:8000/api/v1/security/sync-key-c`);
+            const data = await response.json();
+            
+            if (data.key_c) {
+                const result = await window.electronAPI.security.init(data.key_c);
+                if (result.success) {
+                    this.security = window.electronAPI.security;
+                    this.logger.info('✅ Security system initialized with remote Key C');
+                    this._updateSecurityBadge(true);
+                    this._updateSyncBadge(true);
+                } else {
+                    throw new Error(result.error);
+                }
+            } else {
+                throw new Error('Failed to retrieve Key C from backend');
+            }
+        } catch (error) {
+            this.logger.error('Failed to initialize security:', error);
+            // 降級處理：使用本地快取的金鑰或預設金鑰（僅供開發使用）
+            const fallbackKey = "Angela-Desktop-Sync-Key-C-Fallback";
+            await window.electronAPI.security.init(fallbackKey);
+            this.security = window.electronAPI.security;
+            this.showStatus('Security initialized in fallback mode', 3000);
+            this._updateSecurityBadge(false);
+        }
+    }
+
+    _updateSecurityBadge(isSecure) {
+        const badge = document.getElementById('security-badge');
+        if (badge) {
+            if (isSecure) {
+                badge.classList.remove('unsecure');
+                badge.classList.add('secure');
+                badge.querySelector('.text').textContent = 'Security: Verified';
+                badge.querySelector('.icon').textContent = '🛡️';
+            } else {
+                badge.classList.remove('secure');
+                badge.classList.add('unsecure');
+                badge.querySelector('.text').textContent = 'Security: Fallback';
+                badge.querySelector('.icon').textContent = '⚠️';
+            }
+        }
+    }
+
+    _updateSyncBadge(isSynced) {
+        const badge = document.getElementById('sync-badge');
+        if (badge) {
+            if (isSynced) {
+                badge.classList.remove('unsecure');
+                badge.classList.add('secure');
+                badge.querySelector('.text').textContent = 'Sync: Connected';
+                badge.querySelector('.icon').textContent = '🛰️';
+            } else {
+                badge.classList.remove('secure');
+                badge.classList.add('unsecure');
+                badge.querySelector('.text').textContent = 'Sync: Disconnected';
+                badge.querySelector('.icon').textContent = '📡';
+            }
+        }
     }
     
     async _initializeI18n() {

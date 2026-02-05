@@ -82,6 +82,36 @@
             opacity: 1;
         }
 
+        .badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .badge.secure {
+            background: rgba(0, 255, 128, 0.2);
+            color: #00ff80;
+            border-color: rgba(0, 255, 128, 0.4);
+        }
+
+        .badge.unsecure {
+            background: rgba(255, 64, 64, 0.2);
+            color: #ff4040;
+            border-color: rgba(255, 64, 64, 0.4);
+        }
+
         #loading-overlay {
             position: fixed;
             top: 0;
@@ -226,6 +256,16 @@
     </div>
 
     <div id="status-bar"></div>
+
+    <div id="security-badge" class="badge unsecure">
+        <span class="icon">🔒</span>
+        <span class="text">Security: Off</span>
+    </div>
+
+    <div id="sync-badge" class="badge unsecure">
+        <span class="icon">🔄</span>
+        <span class="text">Sync: Pending</span>
+    </div>
 
     <div id="controls">
         <button class="control-btn" id="btn-settings" title="Settings">⚙️</button>

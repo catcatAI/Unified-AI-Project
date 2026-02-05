@@ -668,6 +668,37 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="setting-group" id="cluster-monitor-group">
+                    <h3>System Status & Cluster Monitoring</h3>
+                    <div id="cluster-monitor-content">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #dee2e6;">
+                                <div style="font-size: 12px; color: #6c757d;">CPU Usage</div>
+                                <div id="mon-cpu-usage" style="font-size: 18px; font-weight: bold; color: #2c3e50;">0%</div>
+                                <div id="mon-cpu-brand" style="font-size: 10px; color: #adb5bd; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">-</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #dee2e6;">
+                                <div style="font-size: 12px; color: #6c757d;">Memory</div>
+                                <div id="mon-mem-usage" style="font-size: 18px; font-weight: bold; color: #2c3e50;">0%</div>
+                                <div id="mon-mem-total" style="font-size: 10px; color: #adb5bd;">0 GB</div>
+                            </div>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #dee2e6; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="font-size: 12px; color: #6c757d;">Active Nodes</div>
+                                <div id="mon-active-nodes" class="status-badge connected">1 / 1</div>
+                            </div>
+                            <div id="node-list" style="font-size: 11px;">
+                                <!-- Nodes will be added here -->
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #6c757d;">
+                            <span>Performance Tier: <b id="mon-perf-tier">-</b></span>
+                            <span>AI Capability: <b id="mon-ai-score">-</b></span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Advanced Section -->
