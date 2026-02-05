@@ -281,6 +281,9 @@
             <div class="nav-item" data-section="haptics">
                 <i>📳</i> Haptics
             </div>
+            <div class="nav-item" data-section="network">
+                <i>🌐</i> Network & Cluster
+            </div>
             <div class="nav-item" data-section="advanced">
                 <i>🔧</i> Advanced
             </div>
@@ -582,6 +585,86 @@
                         <div class="setting-control">
                             <input type="range" id="emotion-intensity" min="0" max="1" step="0.1" value="0.7">
                             <span class="value-display" id="emotion-value">70%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network & Cluster Section -->
+            <div class="section" id="network">
+                <h2>Network & Cluster</h2>
+                
+                <div class="setting-group">
+                    <h3>Connection</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Backend IP Address</label>
+                            <p>IP address of the backend server (Default: 127.0.0.1)</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="text" id="backend-ip" placeholder="127.0.0.1" value="127.0.0.1">
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Backend Port</label>
+                            <p>Port of the backend server (Default: 8000)</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="number" id="backend-port" placeholder="8000" value="8000">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>Cluster Deployment (Beta)</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Enable Cluster Mode</label>
+                            <p>Enable (L0~L11) × (4~8) matrix distributed computing</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="enable-cluster">
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Node Role</label>
+                            <p>Master handles distribution, Worker handles calculation</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="cluster-role">
+                                <option value="auto">Auto Detect</option>
+                                <option value="master">Master</option>
+                                <option value="worker">Worker</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Integer-Only Transmission</label>
+                            <p>Reduce latency by transmitting only integers between nodes</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="cluster-integer-only" checked>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Decimal Memoization</label>
+                            <p>Store decimal values on workers to maintain precision</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="cluster-memoization" checked>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Node Name</label>
+                            <p>Identifier for this node in the cluster</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="text" id="node-name" placeholder="Angela-Node-1">
                         </div>
                     </div>
                 </div>

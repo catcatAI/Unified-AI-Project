@@ -17,6 +17,7 @@ Date: 2026-02-02
 from __future__ import annotations
 
 import pytest
+import pytest_asyncio
 import asyncio
 import tempfile
 import shutil
@@ -65,8 +66,8 @@ def desktop_interaction(temp_desktop_dir: Path) -> DesktopInteraction:
     return DesktopInteraction(config=config)
 
 
-@pytest.fixture
-def initialized_desktop(temp_desktop_dir: Path) -> Generator[DesktopInteraction, None, None]:
+@pytest_asyncio.fixture
+async def initialized_desktop(temp_desktop_dir: Path) -> DesktopInteraction:
     """Create an initialized DesktopInteraction instance."""
     config = {
         "desktop_path": str(temp_desktop_dir),
@@ -75,9 +76,9 @@ def initialized_desktop(temp_desktop_dir: Path) -> Generator[DesktopInteraction,
         "auto_organize": False
     }
     desktop = DesktopInteraction(config=config)
-    asyncio.run(desktop.initialize())
+    await desktop.initialize()
     yield desktop
-    asyncio.run(desktop.shutdown())
+    await desktop.shutdown()
 
 
 @pytest.fixture
@@ -639,14 +640,18 @@ class TestDesktopInteractionIntegration:
         await desktop.initialize()
         
         try:
-            # 1. Create some files
-            await desktop.create_file("doc1.txt", "Document 1", FileCategory.DOCUMENTS)
-            await desktop.create_file("img1.png", "fake", FileCategory.IMAGES)
-            
+            # 1. Create some files directly on desktop (no category)
+            # In create_file, if category is provided, it creates in Organized/Category
+            # But _scan_desktop only scans desktop_path
+            await desktop.create_file("doc1.txt", "Document 1")
+            await desktop.create_file("img1.png", "fake")  
+
             # 2. Check state
             await desktop._scan_desktop()
             state = desktop.get_desktop_state()
-            assert state.total_files > 0
+            assert state.total_files == 2
+            assert state.files_by_category[FileCategory.DOCUMENTS] == 1
+            assert state.files_by_category[FileCategory.IMAGES] == 1
             
             # 3. Organize
             operations = await desktop.organize_desktop()

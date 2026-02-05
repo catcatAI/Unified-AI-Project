@@ -9,6 +9,8 @@ class WallpaperHandler {
         this.currentWallpaper = null;
         this.systemWallpaper = null;
         this.userWallpaper = null;
+        this.renderingMode = '2D'; // 預設 2D
+        this.modeledObjects = []; // 被建模的物體
         
         // Canvas for composition
         this.compositionCanvas = null;
@@ -17,8 +19,13 @@ class WallpaperHandler {
         // Live2D layer
         this.live2dLayer = null;
         
-        // Cache
+        // Cache management
         this.wallpaperCache = new Map();
+        this.maxCacheSize = 10; // 限制快取數量以節省記憶體
+        
+        // Performance scaling
+        this.performanceTier = 'medium';
+        this.autoAdjustEnabled = true;
         
         this.initialize();
     }
@@ -28,7 +35,10 @@ class WallpaperHandler {
         
         // Create composition canvas
         this.compositionCanvas = document.createElement('canvas');
-        this.compositionContext = this.compositionCanvas.getContext('2d');
+        this.compositionContext = this.compositionCanvas.getContext('2d', { alpha: true });
+        
+        // Get hardware performance tier
+        await this._detectHardwareTier();
         
         // Get current system wallpaper
         await this._getSystemWallpaper();
@@ -39,14 +49,42 @@ class WallpaperHandler {
         // Listen for window resize
         window.addEventListener('resize', this._onResize.bind(this));
         
-        // Listen for theme changes
+        // Listen for hardware changes
         if (window.electronAPI) {
-            window.electronAPI.on('theme-changed', (data) => {
-                console.log('Theme changed:', data);
+            window.electronAPI.on('hardware-update', (data) => {
+                if (this.autoAdjustEnabled) {
+                    this._adjustToHardware(data.tier);
+                }
             });
         }
         
         console.log('Wallpaper Handler initialized');
+    }
+
+    async _detectHardwareTier() {
+        if (window.angelaApp && window.angelaApp.hardwareDetection) {
+            const profile = await window.angelaApp.hardwareDetection.getProfile();
+            this.performanceTier = profile.performanceTier || 'medium';
+            this._adjustToHardware(this.performanceTier);
+        }
+    }
+
+    _adjustToHardware(tier) {
+        console.log(`Adjusting wallpaper rendering to ${tier} tier hardware`);
+        this.performanceTier = tier;
+        
+        if (tier === 'low') {
+            this.renderingMode = '2D';
+            this.maxCacheSize = 3;
+        } else if (tier === 'medium') {
+            this.renderingMode = '2.5D';
+            this.maxCacheSize = 10;
+        } else {
+            this.renderingMode = '3D';
+            this.maxCacheSize = 25;
+        }
+        
+        this.setRenderingMode(this.renderingMode);
     }
 
     async loadWallpaper(imagePath) {
@@ -56,6 +94,12 @@ class WallpaperHandler {
             // Check cache first
             if (this.wallpaperCache.has(imagePath)) {
                 return this.wallpaperCache.get(imagePath);
+            }
+            
+            // Manage cache size
+            if (this.wallpaperCache.size >= this.maxCacheSize) {
+                const firstKey = this.wallpaperCache.keys().next().value;
+                this.wallpaperCache.delete(firstKey);
             }
             
             // Load image
@@ -76,7 +120,7 @@ class WallpaperHandler {
         
         if (image) {
             this.userWallpaper = image;
-            this.currentWallpaper = image;
+            this.currentWallpaper = 'user';
             
             if (window.electronAPI && window.electronAPI.wallpaper) {
                 window.electronAPI.wallpaper.set(imagePath);
@@ -88,9 +132,13 @@ class WallpaperHandler {
 
     async setSystemWallpaper() {
         if (this.systemWallpaper) {
-            this.currentWallpaper = this.systemWallpaper;
+            this.currentWallpaper = 'system';
             this.renderComposition();
         }
+    }
+
+    _getActiveWallpaper() {
+        return this.currentWallpaper === 'user' ? this.userWallpaper : this.systemWallpaper;
     }
 
     async _getSystemWallpaper() {
@@ -132,6 +180,92 @@ class WallpaperHandler {
         this._updateCanvasSize();
     }
 
+    setRenderingMode(mode) {
+        console.log(`Setting rendering mode to: ${mode}`);
+        this.renderingMode = mode;
+        
+        // 根據模式切換渲染管線
+        if (mode === '3D') {
+            this._setup3DScene();
+        } else if (mode === '2.5D') {
+            this._setup25DParallax();
+        } else {
+            this._setup2DCanvas();
+        }
+        
+        this.renderComposition();
+    }
+
+    _setup2DCanvas() {
+        console.log('Using 2D Canvas rendering');
+        // 清除 2.5D/3D 特效
+        this.compositionCanvas.style.transform = '';
+        this.compositionCanvas.style.transition = 'transform 0.3s ease';
+        if (this._parallaxHandler) {
+            window.removeEventListener('mousemove', this._parallaxHandler);
+            this._parallaxHandler = null;
+        }
+    }
+
+    _setup25DParallax() {
+        console.log('Setting up 2.5D Parallax effects');
+        
+        // 清除舊的監聽器
+        if (this._parallaxHandler) {
+            window.removeEventListener('mousemove', this._parallaxHandler);
+        }
+
+        this.compositionCanvas.style.transition = 'transform 0.1s ease-out';
+        
+        this._parallaxHandler = (e) => {
+            if (this.renderingMode !== '2.5D') return;
+            const x = (e.clientX / window.innerWidth - 0.5) * 30;
+            const y = (e.clientY / window.innerHeight - 0.5) * 30;
+            this.compositionCanvas.style.transform = `translate(${x}px, ${y}px) scale(1.1)`;
+        };
+
+        window.addEventListener('mousemove', this._parallaxHandler);
+    }
+
+    _setup3DScene() {
+        console.log('Setting up 3D WebGL scene (Pseudo-3D)');
+        
+        // 清除舊的監聽器
+        if (this._parallaxHandler) {
+            window.removeEventListener('mousemove', this._parallaxHandler);
+        }
+
+        this.compositionCanvas.style.transition = 'transform 0.1s ease-out';
+        
+        this._parallaxHandler = (e) => {
+            if (this.renderingMode !== '3D') return;
+            const rotateY = (e.clientX / window.innerWidth - 0.5) * 20;
+            const rotateX = (e.clientY / window.innerHeight - 0.5) * -20;
+            this.compositionCanvas.parentElement.style.perspective = '1000px';
+            this.compositionCanvas.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+        };
+
+        window.addEventListener('mousemove', this._parallaxHandler);
+    }
+
+    injectObject(objectData) {
+        console.log('Injecting object into wallpaper:', objectData);
+        
+        const newObject = {
+            id: objectData.id || Date.now(),
+            name: objectData.name,
+            position: objectData.position || { x: 0.5, y: 0.5, z: 0 },
+            scale: objectData.scale || 1.0,
+            rotation: objectData.rotation || { x: 0, y: 0, z: 0 },
+            type: objectData.type || 'generic'
+        };
+        
+        this.modeledObjects.push(newObject);
+        this.renderComposition();
+        
+        return newObject.id;
+    }
+
     renderComposition() {
         if (!this.compositionContext) return;
         
@@ -141,13 +275,58 @@ class WallpaperHandler {
         // Clear canvas
         this.compositionContext.clearRect(0, 0, width, height);
         
-        // Draw wallpaper
-        if (this.currentWallpaper) {
-            this._drawImageCover(this.compositionContext, this.currentWallpaper, 0, 0, width, height);
+        // 1. 繪製背景桌布
+        const activeWallpaper = this._getActiveWallpaper();
+        if (activeWallpaper) {
+            this._drawImageCover(this.compositionContext, activeWallpaper, 0, 0, width, height);
         }
+
+        // 2. 繪製建模物體 (根據渲染模式)
+        this.modeledObjects.forEach(obj => {
+            this._drawObject(obj, width, height);
+        });
+
+        // 3. 通知 UI 更新 (如果有需要)
+    }
+
+    _drawObject(obj, width, height) {
+        const ctx = this.compositionContext;
+        const x = obj.position.x * width;
+        const y = obj.position.y * height;
+        const size = 50 * obj.scale;
+
+        ctx.save();
+        ctx.translate(x, y);
         
-        // The Live2D layer is rendered on a separate canvas (live2d-canvas)
-        // This function is for any additional visual effects or overlays
+        // 根據模式添加一些視覺效果
+        if (this.renderingMode === '3D') {
+            // 模擬 3D 陰影
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowOffsetX = 5;
+            ctx.shadowOffsetY = 5;
+        } else if (this.renderingMode === '2.5D') {
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        }
+
+        // 繪製一個代表物體的發光球體或圖標
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
+        gradient.addColorStop(0, 'rgba(100, 200, 255, 0.8)');
+        gradient.addColorStop(1, 'rgba(100, 200, 255, 0)');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, size, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 繪製標籤
+        ctx.fillStyle = 'white';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(obj.name || 'Object', 0, size + 15);
+        
+        ctx.restore();
     }
 
     _drawImageCover(ctx, image, x, y, w, h) {
@@ -278,14 +457,15 @@ class WallpaperHandler {
             'dark': this._createSolidWallpaper('#1a1a1a')
         };
         
-        const wallpaper = presets[preset];
+        let wallpaper = presets[preset];
         
         if (wallpaper instanceof Promise) {
-            const result = await wallpaper;
-            this.currentWallpaper = result;
-            this.renderComposition();
-        } else if (wallpaper) {
-            this.currentWallpaper = wallpaper;
+            wallpaper = await wallpaper;
+        }
+
+        if (wallpaper) {
+            this.userWallpaper = wallpaper;
+            this.currentWallpaper = 'user';
             this.renderComposition();
         }
     }

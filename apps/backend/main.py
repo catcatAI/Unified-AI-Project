@@ -35,11 +35,29 @@ class SystemManager:
     """系统管理器"""
     def __init__(self):
         self.initialized = False
+        self.modules = {
+            "vision": True,
+            "audio": True,
+            "tactile": True,
+            "action": True
+        }
     
     async def initialize(self):
         """初始化"""
         self.initialized = True
         logger.info("系统管理器初始化完成")
+    
+    def set_module_state(self, module: str, enabled: bool):
+        """設置模組狀態"""
+        if module in self.modules:
+            self.modules[module] = enabled
+            logger.info(f"模組 {module} 狀態更新為: {enabled}")
+            return True
+        return False
+    
+    def get_module_state(self, module: str):
+        """獲取模組狀態"""
+        return self.modules.get(module, False)
     
     async def shutdown(self):
         """关闭"""
@@ -52,7 +70,7 @@ system_manager = SystemManager()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
+    """应用生命周期 management"""
     logger.info("🚀 启动Level 5 AGI后端系统...")
     
     # 初始化系统管理器
@@ -60,9 +78,16 @@ async def lifespan(app: FastAPI):
     
     # 初始化实时同步系统
     try:
-        from core.sync.realtime_sync import sync_manager
+        from src.core.sync.realtime_sync import sync_manager, SyncEvent
         await sync_manager.initialize()
-        logger.info("✅ 实时同步系统初始化完成")
+        
+        # 註冊 WebSocket 廣播回調到同步管理器
+        async def ws_broadcast_callback(event: SyncEvent):
+            await manager.broadcast(event.to_dict())
+            
+        await sync_manager.register_client("websocket_bridge", ws_broadcast_callback)
+        
+        logger.info("✅ 实时同步系统初始化完成並已橋接 WebSocket")
     except ImportError as e:
         logger.warning(f"实时同步系统模块不可用: {e}")
     except Exception as e:
@@ -136,6 +161,15 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+# 全局廣播函數，供其他模組調用
+async def broadcast_to_clients(message_type: str, data: Any):
+    await manager.broadcast({
+        "type": message_type,
+        "data": data,
+        "timestamp": datetime.now().isoformat()
+    })
+
+
 def create_app() -> FastAPI:
     """创建FastAPI应用"""
     app = FastAPI(
@@ -203,10 +237,62 @@ def create_app() -> FastAPI:
                     # 處理 ping
                     if message.get("type") == "ping":
                         await websocket.send_text(json.dumps({"type": "pong", "timestamp": datetime.now().isoformat()}))
+                    # 處理模組控制
+                    elif message.get("type") == "module_control":
+                        module = message.get("module")
+                        enabled = message.get("enabled")
+                        logger.info(f"收到模組控制消息: {module} -> {enabled}")
+                        
+                        # 更新系統管理器中的狀態
+                        system_manager.set_module_state(module, enabled)
+                        
+                        # 1. 廣播給所有 WebSocket 客戶端同步 UI 狀態
+                        await manager.broadcast({
+                            "type": "module_status_changed",
+                            "data": {
+                                "module": module,
+                                "enabled": enabled
+                            },
+                            "timestamp": datetime.now().isoformat()
+                        })
+                        
+                        # 2. 通過同步管理器廣播給後端各個服務模組
+                        from src.core.sync.realtime_sync import sync_manager, SyncEvent, SyncEventType
+                        import uuid
+                        try:
+                            # 映射到 SyncEventType.STATUS_CHANGE
+                            event = SyncEvent(
+                                id=str(uuid.uuid4()),
+                                event_type=SyncEventType.STATUS_CHANGE,
+                                source="websocket_client",
+                                data={"module": module, "enabled": enabled, "action": "module_control"}
+                            )
+                            await sync_manager.broadcast_event(event)
+                            logger.info(f"已將模組控制事件廣播至同步管理器: {module}")
+                        except Exception as e:
+                            logger.error(f"廣播模組控制事件到同步管理器失敗: {e}")
                     # 處理其他消息 (例如 tactile_event)
                     else:
                         logger.info(f"收到 WebSocket 消息: {message}")
                         # 這裡可以根據消息類型轉發給相關系統
+                        # 例如轉發到同步管理器
+                        from src.core.sync.realtime_sync import sync_manager, SyncEvent, SyncEventType
+                        import uuid
+                        try:
+                            # 嘗試解析消息類型，默認為 DATA_UPDATE
+                            msg_type = message.get("type", "unknown")
+                            sync_type = SyncEventType.DATA_UPDATE
+                            if msg_type == "status_change":
+                                sync_type = SyncEventType.STATUS_CHANGE
+                            
+                            await sync_manager.broadcast_event(SyncEvent(
+                                id=str(uuid.uuid4()),
+                                event_type=sync_type,
+                                data=message.get("data", {}),
+                                source="websocket_client"
+                            ))
+                        except Exception as e:
+                            logger.error(f"轉發消息到同步管理器失敗: {e}")
                 except json.JSONDecodeError:
                     await websocket.send_text(json.dumps({"error": "Invalid JSON"}))
         except WebSocketDisconnect:
@@ -227,7 +313,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Unified AI Project - Level 5 AGI Backend'
     )
-    parser.add_argument('--host', default='0.0.0.0', help='主机地址')
+    parser.add_argument('--host', default='127.0.0.1', help='主机地址')
     parser.add_argument('--port', type=int, default=8000, help='端口号')
     parser.add_argument('--reload', action='store_true', help='开发模式热重载')
     parser.add_argument('--workers', type=int, default=1, help='工作进程数')

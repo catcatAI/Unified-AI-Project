@@ -106,6 +106,16 @@ function applySettingsToUI(settings) {
     // Advanced
     document.getElementById('frame-rate').value = settings.frameRate || 60;
     document.getElementById('render-quality').value = settings.renderQuality || 'medium';
+    
+    // Network & Cluster
+    document.getElementById('backend-ip').value = settings.backendIp || '127.0.0.1';
+    document.getElementById('backend-port').value = settings.backendPort || 8000;
+    document.getElementById('enable-cluster').checked = settings.enableCluster || false;
+    document.getElementById('cluster-role').value = settings.clusterRole || 'auto';
+    document.getElementById('cluster-integer-only').checked = settings.clusterIntegerOnly !== false;
+    document.getElementById('cluster-memoization').checked = settings.clusterMemoization !== false;
+    document.getElementById('node-name').value = settings.nodeName || '';
+    
     document.getElementById('debug-mode').checked = settings.debugMode || false;
     document.getElementById('show-click-regions').checked = settings.showClickRegions || false;
 }
@@ -274,6 +284,13 @@ function collectSettings() {
         // Advanced
         frameRate: parseInt(document.getElementById('frame-rate').value),
         renderQuality: document.getElementById('render-quality').value,
+        backendIp: document.getElementById('backend-ip').value,
+        backendPort: parseInt(document.getElementById('backend-port').value),
+        enableCluster: document.getElementById('enable-cluster').checked,
+        clusterRole: document.getElementById('cluster-role').value,
+        clusterIntegerOnly: document.getElementById('cluster-integer-only').checked,
+        clusterMemoization: document.getElementById('cluster-memoization').checked,
+        nodeName: document.getElementById('node-name').value,
         debugMode: document.getElementById('debug-mode').checked,
         showClickRegions: document.getElementById('show-click-regions').checked
     };
@@ -309,6 +326,11 @@ function applySettingsToApplication(settings) {
         } else {
             window.angelaApp.hapticHandler.disable();
         }
+    }
+
+    // Apply backend IP change
+    if (window.electronAPI && window.electronAPI.settings && settings.backendIp) {
+        window.electronAPI.settings.setBackendIP(settings.backendIp);
     }
 }
 

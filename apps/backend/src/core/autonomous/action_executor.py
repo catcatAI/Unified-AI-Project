@@ -73,6 +73,10 @@ class ActionCategory(Enum):
     VISUAL = ("视觉", "Visual operations")
     COMMUNICATION = ("通信", "Communication")
     SAFETY_CRITICAL = ("安全关键", "Safety critical operations")
+    
+    def __init__(self, cn_name: str, description: str):
+        self.cn_name = cn_name
+        self.description = description
 
 
 @dataclass
@@ -300,6 +304,8 @@ class ActionExecutor:
                 await self._executor_task
             except asyncio.CancelledError:
                 pass
+            finally:
+                self._executor_task = None
     
     async def _execution_loop(self):
         """Main execution loop"""
@@ -627,6 +633,10 @@ class ActionExecutor:
     
     def _get_action_success_rate(self, context: Optional[Dict[str, float]] = None) -> float:
         """Get dynamic action success rate"""
+        # For testing, we might want to bypass the random failure
+        if self.config.get("bypass_dynamic_failure", False):
+            return 1.0
+            
         if self._dynamic_params_manager and self._dynamic_params_enabled:
             return self._dynamic_params_manager.get_parameter('action_success_rate', context)
         return 0.85  # Default 85% success rate

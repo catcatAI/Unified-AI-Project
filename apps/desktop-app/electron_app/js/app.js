@@ -366,6 +366,101 @@ class AngelaApp {
             console.log('Theme changed:', data);
             this._applyTheme(data.shouldUseDarkColors);
         });
+
+        // Performance mode changed from tray
+        window.electronAPI.on('performance-mode-changed', (mode) => {
+            console.log('Performance mode changed from tray:', mode);
+            if (this.performanceManager) {
+                this.performanceManager.setPerformanceMode(mode);
+            }
+        });
+
+        // Auto-adjust toggled from tray
+        window.electronAPI.on('performance-auto-adjust', (enabled) => {
+            console.log('Performance auto-adjust toggled from tray:', enabled);
+            if (this.performanceManager) {
+                this.performanceManager.setAutoAdjust(enabled);
+            }
+        });
+
+        // Wallpaper mode changed from tray
+        window.electronAPI.on('wallpaper-mode-changed', (mode) => {
+            console.log('Wallpaper mode changed from tray:', mode);
+            if (this.performanceManager) {
+                this.performanceManager.setWallpaperMode(mode);
+            }
+        });
+
+        // Module toggle from tray
+        window.electronAPI.on('module-toggle', (data) => {
+            console.log('Module toggle from tray:', data);
+            this.toggleModule(data.module, data.enabled);
+        });
+
+        // Backend IP changed from tray
+        window.electronAPI.on('backend-ip-changed', (ip) => {
+            console.log('Backend IP changed from tray:', ip);
+            this._reconnectBackend(ip);
+        });
+    }
+
+    /**
+     * 重新連接後端服務
+     * @param {string} ip 新的 IP 地址
+     */
+    _reconnectBackend(ip) {
+        if (this.backendWebSocket) {
+            console.log(`Reconnecting to backend at ${ip}...`);
+            const url = `ws://${ip}:8000/ws`;
+            this.backendWebSocket.connect(url);
+        }
+    }
+
+    /**
+     * 切換功能模組的啟用狀態
+     * @param {string} module 模組名稱 (vision, audio, tactile, action)
+     * @param {boolean} enabled 是否啟用
+     * @param {boolean} fromBackend 是否來自後端通知
+     */
+    toggleModule(module, enabled, fromBackend = false) {
+        console.log(`Toggling module ${module} to ${enabled} (fromBackend: ${fromBackend})`);
+        
+        // 通知 Electron 主進程更新系統匣選單
+        if (window.electronAPI && window.electronAPI.modules) {
+            window.electronAPI.modules.setState(module, enabled);
+        }
+        
+        switch (module) {
+            case 'vision':
+                // 視覺系統通常在後端，這裡可以通知後端或控制前端的攝像頭採集
+                if (!fromBackend && this.backendWebSocket) {
+                    this.backendWebSocket.send({
+                        type: 'module_control',
+                        module: 'vision',
+                        enabled: enabled
+                    });
+                }
+                break;
+            case 'audio':
+                if (this.audioHandler) {
+                    enabled ? this.audioHandler.start() : this.audioHandler.stop();
+                }
+                break;
+            case 'tactile':
+                if (this.hapticHandler) {
+                    // 觸覺系統控制
+                    this.hapticHandler.setEnabled(enabled);
+                }
+                break;
+            case 'action':
+                // 動作執行器控制
+                if (this.live2dManager) {
+                    this.live2dManager.setActionsEnabled(enabled);
+                }
+                break;
+        }
+        
+        this.showStatus(`${module.charAt(0).toUpperCase() + module.slice(1)} system ${enabled ? 'enabled' : 'disabled'}`, 2000);
     }
 
     async _loadDefaultModel() {

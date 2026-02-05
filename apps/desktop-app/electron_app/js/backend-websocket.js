@@ -85,9 +85,39 @@ class BackendWebSocketClient {
             case 'hardware_detected':
                 this._handleHardwareDetected(data);
                 break;
+            case 'wallpaper_object_injection':
+                this._handleWallpaperObjectInjection(data);
+                break;
+            case 'module_status_changed':
+                this._handleModuleStatusChanged(data);
+                break;
             default:
                 console.warn('Unknown message type:', type);
         }
+    }
+    
+    _handleModuleStatusChanged(data) {
+        console.log('Module status changed from backend:', data);
+        
+        // 更新前端模組狀態
+        if (window.angelaApp) {
+            window.angelaApp.toggleModule(data.module, data.enabled, true);
+        }
+        
+        // 觸發事件
+        this._fireEvent('moduleStatusChanged', data);
+    }
+
+    _handleWallpaperObjectInjection(data) {
+        console.log('Wallpaper object injection received:', data);
+        
+        // 注入到桌布管理器
+        if (window.angelaApp && window.angelaApp.wallpaperHandler) {
+            window.angelaApp.wallpaperHandler.injectObject(data);
+        }
+        
+        // 觸發事件
+        this._fireEvent('wallpaperObjectInjected', data);
     }
     
     _handleStateUpdate(data) {
@@ -128,10 +158,10 @@ class BackendWebSocketClient {
         // 更新性能設定
         if (window.angelaApp && window.angelaApp.performanceManager) {
             if (data.mode) {
-                window.angelaApp.performanceManager.setMode(data.mode);
+                window.angelaApp.performanceManager.setPerformanceMode(data.mode);
             }
             if (data.frameRate) {
-                window.angelaApp.performanceManager._setFrameRate(data.frameRate);
+                window.angelaApp.performanceManager.setTargetFPS(data.frameRate);
             }
         }
         

@@ -1,5 +1,7 @@
 import logging
-from typing import Dict, Any
+import uuid
+from typing import Dict, Any, List, Optional
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +17,19 @@ class PetManager:
         self.state: Dict[str, Any] = {
             "happiness": 100,
             "hunger": 0,
-            "energy": 100
+            "energy": 100,
+            "position": {"x": 0, "y": 0},
+            "scale": 1.0,
+            "current_animation": "idle",
+            "current_expression": "neutral"
         }
         self.personality: Dict[str, Any] = self.config.get("initial_personality", {"curiosity": 0.7, "playfulness": 0.8})
         self.behavior_rules: Dict[str, Any] = self.config.get("initial_behaviors", {"on_interaction": "show_happiness"})
+        
+        # Action queue for AI-initiated actions / AI 主動行為隊列
+        self.action_queue: List[Dict[str, Any]] = []
+        self.max_queue_size = 10
+        
         logger.info(f"PetManager for pet '{self.pet_id}' initialized with personality: {self.personality}")
 
     def handle_interaction(self, interaction_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -26,27 +37,57 @@ class PetManager:
         interaction_type = interaction_data.get("type")
         logger.debug(f"Handling interaction: '{interaction_type}' for pet '{self.pet_id}'")
         
-        # Placeholder logic
-        response_message = "looks confused."
+        # Update state based on interaction / 根據交互更新狀態
         if interaction_type == "pet":
-            response_message = "purrs happily."
+            self.state["happiness"] = min(100, self.state["happiness"] + 10)
+            self.state["current_expression"] = "happy"
+            self.state["current_animation"] = "respond_to_pet"
         elif interaction_type == "feed":
-            response_message = "eats eagerly."
+            self.state["hunger"] = max(0, self.state["hunger"] - 20)
+            self.state["happiness"] = min(100, self.state["happiness"] + 5)
+            self.state["current_expression"] = "joy"
+            self.state["current_animation"] = "eat"
         elif interaction_type == "play":
-            response_message = "plays energetically!"
+            self.state["energy"] = max(0, self.state["energy"] - 15)
+            self.state["happiness"] = min(100, self.state["happiness"] + 15)
+            self.state["current_animation"] = "dance"
         elif interaction_type == "rest":
-            response_message = "rests peacefully."
+            self.state["energy"] = min(100, self.state["energy"] + 20)
+            self.state["current_expression"] = "relaxed"
+            self.state["current_animation"] = "sleep"
 
-        logger.info(f"Pet '{self.pet_id}' {response_message}. Current state: {self.state}")
+        logger.info(f"Pet '{self.pet_id}' handled interaction '{interaction_type}'. Current state: {self.state}")
         return {"status": "success", "new_state": self.state}
 
     def get_current_state(self) -> Dict[str, Any]:
         """Returns the current state of the pet."""
         return self.state
 
-    def _update_state_over_time(self, time_passed: float):
-        """Simulates the passage of time affecting pet's hunger and energy."""
-        pass
+    def update_position(self, x: float, y: float, scale: float = None):
+        """Update pet's desktop position and scale / 更新寵物在桌面上的位置和縮放"""
+        self.state["position"] = {"x": x, "y": y}
+        if scale is not None:
+            self.state["scale"] = scale
+        logger.debug(f"Pet '{self.pet_id}' position updated to ({x}, {y}), scale: {self.state['scale']}")
+
+    def add_action(self, action_type: str, data: Dict[str, Any] = None):
+        """Add an action for the desktop pet to perform / 為桌面端添加待執行動作"""
+        action = {
+            "action_id": str(uuid.uuid4()),
+            "type": action_type,
+            "data": data or {},
+            "timestamp": datetime.now().isoformat()
+        }
+        self.action_queue.append(action)
+        if len(self.action_queue) > self.max_queue_size:
+            self.action_queue.pop(0)
+        logger.info(f"Added action '{action_type}' to queue for pet '{self.pet_id}'")
+
+    def get_pending_actions(self) -> List[Dict[str, Any]]:
+        """Get and clear pending actions / 獲取並清除待執行動作"""
+        actions = self.action_queue.copy()
+        self.action_queue.clear()
+        return actions
 
     def update_behavior(self, new_behaviors: Dict[str, Any]):
         """Allows the core AI to dynamically update the pet's behavior rules."""

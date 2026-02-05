@@ -575,9 +575,7 @@ class NeuroplasticitySystem:
             memory_strength
         )
         
-        # Scale retention by memory strength to account for weak initial traces
-        # even if they are very fresh (hours_since is near 0)
-        return retention * min(1.0, memory_strength)
+        return retention
     
     def consolidate_memories(self, memory_ids: Optional[List[str]] = None):
         """
@@ -626,11 +624,12 @@ class NeuroplasticitySystem:
         return self.forgetting_curve.get_optimal_review_times()
     
     def get_weak_memories(self, threshold: float = 0.3) -> List[MemoryTrace]:
-        """Get memories with low retention"""
+        """Get memories with low retention or low strength"""
         weak = []
         for memory_id, trace in self.memory_traces.items():
             retention = self.get_memory_retention(memory_id)
-            if retention < threshold:
+            # A memory is weak if its retention is low OR its current weight is low
+            if retention < threshold or trace.current_weight < threshold:
                 weak.append(trace)
         return weak
     

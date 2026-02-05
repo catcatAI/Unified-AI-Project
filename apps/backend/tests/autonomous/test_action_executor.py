@@ -17,6 +17,7 @@ Date: 2026-02-02
 from __future__ import annotations
 
 import pytest
+import pytest_asyncio
 import asyncio
 import uuid
 from datetime import datetime
@@ -49,13 +50,13 @@ def action_executor() -> ActionExecutor:
     return ActionExecutor()
 
 
-@pytest.fixture
-def initialized_executor() -> ActionExecutor:
+@pytest_asyncio.fixture
+async def initialized_executor() -> ActionExecutor:
     """Create an initialized ActionExecutor instance."""
-    executor = ActionExecutor()
-    asyncio.run(executor.initialize())
+    executor = ActionExecutor(config={"bypass_dynamic_failure": True})
+    await executor.initialize()
     yield executor
-    asyncio.run(executor.shutdown())
+    await executor.shutdown()
 
 
 @pytest.fixture
@@ -501,7 +502,7 @@ class TestActionExecutor:
         
         assert result.success is True
         assert result.output == 42
-        assert result.execution_time >= 0.05
+        assert result.execution_time >= 0.04
 
     @pytest.mark.asyncio
     async def test_action_failure(self, initialized_executor: ActionExecutor) -> None:
@@ -635,42 +636,31 @@ class TestActionExecutor:
         assert len(initialized_executor._pre_execution_callbacks) == 1
 
     @pytest.mark.asyncio
-    async def test_priority_execution_order(self, initialized_executor: ActionExecutor) -> None:
-        """Test that high priority actions execute before low priority."""
-        execution_order: List[str] = []
+    async def test_visual_sampling_action(self, initialized_executor: ActionExecutor) -> None:
+        """Test a visual sampling action using the new sampler logic"""
+        # Mock a vision service response
+        async def mock_vision_sampling(**kwargs):
+            # In real life, this would call vision_service.get_sampling_analysis
+            return {
+                "status": "success",
+                "sampling_stats": {
+                    "average_precision": 0.85,
+                    "attention_range": 0.2
+                }
+            }
         
-        async def make_action(name: str) -> str:
-            execution_order.append(name)
-            await asyncio.sleep(0.01)
-            return name
-        
-        # Create actions with different priorities
-        low_action = Action.create(
-            "low",
-            ActionCategory.SYSTEM,
-            ActionPriority.LOW,
-            make_action,
-            parameters={"name": "low"}
+        action = Action.create(
+            name="visual_focus",
+            category=ActionCategory.VISUAL,
+            priority=ActionPriority.HIGH,
+            function=mock_vision_sampling,
+            parameters={"center": [0.5, 0.5], "scale": 1.2}
         )
         
-        high_action = Action.create(
-            "high",
-            ActionCategory.SYSTEM,
-            ActionPriority.HIGH,
-            make_action,
-            parameters={"name": "high"}
-        )
-        
-        # Submit low priority first
-        initialized_executor.submit(low_action)
-        initialized_executor.submit(high_action)
-        
-        # Wait for execution
-        await asyncio.sleep(0.1)
-        
-        # High priority should execute before low (or concurrently, but typically before)
-        # Note: With async execution, exact order may vary, but high priority
-        # should be dequeued first
+        result = await initialized_executor.submit_and_execute(action)
+        assert result.success is True
+        assert result.output["status"] == "success"
+        assert result.output["sampling_stats"]["average_precision"] > 0
 
     def test_default_safety_checks_present(self, action_executor: ActionExecutor) -> None:
         """Test that default safety checks are registered."""

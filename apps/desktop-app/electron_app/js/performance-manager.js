@@ -3,6 +3,7 @@ class PerformanceManager {
         this.config = config;
         this.hardwareProfile = null;
         this.currentMode = 'standard';
+        this.wallpaperMode = '2D'; // 預設 2D
         this.targetFPS = 60;
         this.currentFPS = 60;
         this.resolutionScale = 1.0;
@@ -307,9 +308,46 @@ class PerformanceManager {
         this.resolutionScale = settings.resolution;
         this.effectsLevel = settings.effects;
         
+        // 根據性能自動推薦桌布模式
+        if (this.autoAdjustEnabled) {
+            if (mode === 'ultra' || mode === 'high') {
+                this.setWallpaperMode('3D');
+            } else if (mode === 'medium') {
+                this.setWallpaperMode('2.5D');
+            } else {
+                this.setWallpaperMode('2D');
+            }
+        }
+        
         this.applyPerformanceSettings();
         
         console.log(`Performance mode changed to: ${mode} (${settings.description})`);
+    }
+
+    setWallpaperMode(mode) {
+        const validModes = ['2D', '2.5D', '3D'];
+        if (!validModes.includes(mode)) {
+            console.warn(`Unknown wallpaper mode: ${mode}`);
+            return;
+        }
+        
+        this.wallpaperMode = mode;
+        console.log(`Wallpaper mode set to: ${mode}`);
+        
+        // 通知桌布處理器更新渲染模式
+        const wallpaperHandler = window.wallpaperHandler || (window.angelaApp && window.angelaApp.wallpaperHandler);
+        if (wallpaperHandler) {
+            wallpaperHandler.setRenderingMode(mode);
+        }
+        
+        // 如果有 WebSocket，通知後端
+        if (this.websocket && this.websocket.isConnected()) {
+            this.websocket.send({
+                type: 'wallpaper_mode_changed',
+                mode: mode,
+                timestamp: Date.now()
+            });
+        }
     }
     
     setAngelaMode(mode) {
@@ -327,7 +365,42 @@ class PerformanceManager {
         console.log(`Angela mode changed to: ${mode}`);
     }
     
+    _autoConfigureModules() {
+        if (!this.hardwareProfile) return;
+        
+        const ram = this.hardwareProfile.ram_gb || 4;
+        const gpu = this.hardwareProfile.gpu_info ? this.hardwareProfile.gpu_info.name : '';
+        const level = this.currentMode;
+        
+        console.log(`Auto-configuring modules for ${level} mode on ${ram}GB RAM...`);
+        
+        // 視覺模組：極低配置下禁用，或 RAM < 4GB
+        const visionEnabled = level !== 'lite' && ram >= 4;
+        
+        // 音頻模組：基本都開啟，除非極低配置
+        const audioEnabled = level !== 'lite' || ram >= 4;
+        
+        // 觸覺模組：基本都開啟
+        const tactileEnabled = true;
+        
+        // 動作執行：Lite 模式下簡化，但不完全關閉
+        const actionEnabled = true;
+        
+        // 應用變更
+        if (window.angelaApp) {
+            window.angelaApp.toggleModule('vision', visionEnabled, true);
+            window.angelaApp.toggleModule('audio', audioEnabled, true);
+            window.angelaApp.toggleModule('tactile', tactileEnabled, true);
+            window.angelaApp.toggleModule('action', actionEnabled, true);
+        }
+    }
+
     applyPerformanceSettings() {
+        if (this.autoAdjustEnabled && this._autoConfigureModules) {
+            // 自動配置模組
+            this._autoConfigureModules();
+        }
+
         const canvas = document.querySelector('#live2d-canvas');
         if (!canvas) return;
         

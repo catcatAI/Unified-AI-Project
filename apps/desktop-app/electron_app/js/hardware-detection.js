@@ -199,6 +199,8 @@ class HardwareDetector {
             performance_level: this._assessPerformanceLevel(profile),
             // 支援的精確度模式
             precision_mode: this._assessPrecisionMode(profile),
+            // 支援的渲染模式 (2D, 2.5D, 3D)
+            wallpaper_mode: this._assessWallpaperMode(profile),
             // 支援的渲染等級
             render_quality: this._assessRenderQuality(profile),
             // 支援的特效
@@ -212,6 +214,24 @@ class HardwareDetector {
         };
         
         return capabilities;
+    }
+
+    _assessWallpaperMode(profile) {
+        const ram = profile.ram_gb;
+        const gpuName = profile.gpu_info.name;
+        
+        // 3D 模式要求：16GB RAM + 獨立顯卡
+        if (ram >= 16 && (gpuName.includes('RTX') || gpuName.includes('Radeon') || gpuName.includes('M'))) {
+            return '3D';
+        }
+        
+        // 2.5D 模式要求：8GB RAM
+        if (ram >= 8) {
+            return '2.5D';
+        }
+        
+        // 預設 2D
+        return '2D';
     }
     
     _assessPerformanceLevel(profile) {

@@ -3,7 +3,7 @@ Angela AI Backend API Server v6.0.4
 FastAPI-based backend with chat, health, and basic endpoints
 
 Usage:
-    python -m uvicorn src.services.main_api_server:app --host 0.0.0.0 --port 8000
+    python -m uvicorn src.services.main_api_server:app --host 127.0.0.1 --port 8000
 """
 
 import os
@@ -13,14 +13,39 @@ import random
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
-from fastapi import FastAPI, HTTPException, APIRouter, Body
+from fastapi import FastAPI, HTTPException, APIRouter, Body, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+
+from ..core.autonomous.desktop_interaction import DesktopInteraction, FileCategory
+from ..core.autonomous.action_executor import ActionExecutor, Action, ActionCategory, ActionPriority
+from .vision_service import VisionService
+from .audio_service import AudioService
+from .tactile_service import TactileService
 
 app = FastAPI(
     title="Angela AI API",
     description="Backend API for Angela AI Desktop Companion",
     version="6.0.4",
 )
+
+# Initialize Core Services
+desktop_interaction = DesktopInteraction()
+action_executor = ActionExecutor()
+vision_service = VisionService()
+audio_service = AudioService()
+tactile_service = TactileService()
+
+@app.on_event("startup")
+async def startup_event():
+    await desktop_interaction.initialize()
+    await action_executor.initialize()
+    # vision_service doesn't have an async initialize yet, but we can call it if needed
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await desktop_interaction.shutdown()
+    await action_executor.shutdown()
 
 app.add_middleware(
     CORSMiddleware,
@@ -138,6 +163,161 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
         "response_text": random.choice(responses),
         "angela_mood": "happy",
     }
+
+
+# --- Desktop Interaction API ---
+
+@router.get("/api/v1/desktop/state")
+async def get_desktop_state():
+    """Get current desktop state"""
+    state = desktop_interaction.get_desktop_state()
+    return {
+        "total_files": state.total_files,
+        "total_size": state.total_size,
+        "clutter_level": state.clutter_level,
+        "files_by_category": {cat.name: count for cat, count in state.files_by_category.items()},
+        "last_organized": state.last_organized.isoformat() if state.last_organized else None
+    }
+
+@router.post("/api/v1/desktop/organize")
+async def organize_desktop(background_tasks: BackgroundTasks):
+    """Trigger desktop organization"""
+    # Background task for long running operation
+    operations = await desktop_interaction.organize_desktop()
+    return {"status": "success", "operations_count": len(operations)}
+
+@router.post("/api/v1/desktop/cleanup")
+async def cleanup_desktop(days_old: int = 30):
+    """Trigger desktop cleanup"""
+    operations = await desktop_interaction.cleanup_desktop(days_old=days_old)
+    return {"status": "success", "operations_count": len(operations)}
+
+
+# --- Action Executor API ---
+
+@router.get("/api/v1/actions/status")
+async def get_actions_status():
+    """Get action executor status"""
+    return action_executor.queue.get_queue_status()
+
+@router.post("/api/v1/actions/execute")
+async def execute_action(action_data: Dict[str, Any]):
+    """Execute a custom action"""
+    # This is a simplified implementation. In a real scenario,
+    # we would map the request to specific registered functions.
+    
+    # Example action creation
+    try:
+        category = ActionCategory[action_data.get("category", "SYSTEM")]
+        priority = ActionPriority[action_data.get("priority", "NORMAL")]
+        
+        # For now, we only support a "dummy" function via API for safety
+        async def dummy_func(**kwargs):
+            return {"result": "Action executed successfully", "params": kwargs}
+            
+        action = Action.create(
+            name=action_data.get("name", "api_action"),
+            category=category,
+            priority=priority,
+            function=dummy_func,
+            parameters=action_data.get("parameters", {})
+        )
+        
+        result = await action_executor.submit_and_execute(action)
+        return {
+            "success": result.success,
+            "action_id": result.action_id,
+            "output": result.output,
+            "error": result.error
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# --- Vision API ---
+
+@router.post("/api/v1/vision/sampling")
+async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
+    """
+    Get visual sampling analysis with particle cloud
+    """
+    center = params.get("center", [0.5, 0.5])
+    scale = params.get("scale", 1.0)
+    deformation = params.get("deformation", 0.0)
+    distribution = params.get("distribution", "GAUSSIAN")
+    
+    try:
+        result = await vision_service.get_sampling_analysis(
+            center=(center[0], center[1]),
+            scale=scale,
+            deformation=deformation,
+            distribution=distribution
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/v1/vision/perceive")
+async def vision_perceive(image_data: bytes = Body(...)):
+    """
+    Simulate Discover-Focus-Memory cycle
+    """
+    try:
+        result = await vision_service.perceive_and_focus(image_data)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/v1/audio/scan")
+async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0):
+    """
+    Simulate cocktail party effect: listen, identify, and focus
+    """
+    try:
+        result = await audio_service.scan_and_identify(audio_data, duration)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/v1/audio/register_user")
+async def audio_register_user(audio_data: bytes = Body(...)):
+    """
+    Register user voiceprint
+    """
+    try:
+        result = await audio_service.register_user_voice(audio_data)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/v1/tactile/model")
+async def tactile_model(visual_data: Dict[str, Any] = Body(...)):
+    """
+    Model tactile properties from visual data (texture, light, etc.)
+    """
+    try:
+        result = await tactile_service.model_object_tactile(visual_data)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/v1/tactile/touch")
+async def tactile_touch(request: Dict[str, Any] = Body(...)):
+    """
+    Simulate touch interaction with a specific object
+    """
+    try:
+        object_id = request.get("object_id")
+        contact_point = request.get("contact_point", {})
+        result = await tactile_service.simulate_touch(object_id, contact_point)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 app.include_router(router)

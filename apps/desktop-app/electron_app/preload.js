@@ -30,7 +30,27 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Wallpaper management
   wallpaper: {
     set: (imagePath) => ipcRenderer.invoke('wallpaper-set', imagePath),
-    get: () => ipcRenderer.invoke('wallpaper-get')
+    get: () => ipcRenderer.invoke('wallpaper-get'),
+    getMode: () => ipcRenderer.invoke('wallpaper-get-mode'),
+    setMode: (mode) => ipcRenderer.invoke('wallpaper-set-mode', mode),
+    injectObject: (objectData) => ipcRenderer.invoke('wallpaper-inject-object', objectData)
+  },
+
+  // Performance management
+  performance: {
+    getMode: () => ipcRenderer.invoke('performance-get-mode'),
+    setMode: (mode) => ipcRenderer.invoke('performance-set-mode', mode)
+  },
+  
+  // Module management
+  modules: {
+    setState: (module, enabled) => ipcRenderer.invoke('module-set-state', { module, enabled })
+  },
+  
+  // Backend settings
+  backend: {
+    getIP: () => ipcRenderer.invoke('backend-get-ip'),
+    setIP: (ip) => ipcRenderer.invoke('backend-set-ip', ip)
   },
   
   // Screen information
@@ -82,7 +102,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'theme-changed',
       'click-through-regions-updated',
       'websocket-connected',
-      'websocket-message'
+      'websocket-message',
+      'performance-mode-changed',
+      'performance-auto-adjust',
+      'wallpaper-mode-changed',
+      'wallpaper-inject-object',
+      'module-toggle'
     ];
     
     if (validChannels.includes(channel)) {

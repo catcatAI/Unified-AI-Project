@@ -10,6 +10,15 @@ let settingsWindow;
 let isDevMode = false;
 let modelPath = null;
 let currentWallpaper = null;
+let currentWallpaperMode = '2D';
+let currentPerformanceMode = 'standard';
+let backendIP = '127.0.0.1';
+let moduleStates = {
+  vision: true,
+  audio: true,
+  tactile: true,
+  action: true
+};
 let tray = null;
 
 // App lifecycle
@@ -147,6 +156,59 @@ function createTray() {
       }
     },
     {
+      label: 'Advanced Settings',
+      submenu: [
+        {
+          label: 'Connection',
+          submenu: [
+            { label: `IP: ${backendIP}`, enabled: false },
+            { label: 'Set to localhost (127.0.0.1)', click: () => setBackendIP('127.0.0.1') },
+            { label: 'Custom IP...', click: () => createSettingsWindow('advanced') }
+          ]
+        },
+        { type: 'separator' },
+        {
+          label: 'Open Advanced Tab',
+          click: () => createSettingsWindow('advanced')
+        }
+      ]
+    },
+    {
+      label: 'Hardware & Performance',
+      submenu: [
+        {
+          label: 'Performance Mode',
+          submenu: [
+            { label: 'Lite', type: 'radio', checked: currentPerformanceMode === 'lite', click: () => setPerformanceMode('lite') },
+            { label: 'Standard', type: 'radio', checked: currentPerformanceMode === 'standard', click: () => setPerformanceMode('standard') },
+            { label: 'Extended', type: 'radio', checked: currentPerformanceMode === 'extended', click: () => setPerformanceMode('extended') },
+            { label: 'Ultra', type: 'radio', checked: currentPerformanceMode === 'ultra', click: () => setPerformanceMode('ultra') }
+          ]
+        },
+        {
+          label: 'Wallpaper Rendering',
+          submenu: [
+            { label: '2D (Basic)', type: 'radio', checked: currentWallpaperMode === '2D', click: () => setWallpaperMode('2D') },
+            { label: '2.5D (Parallax)', type: 'radio', checked: currentWallpaperMode === '2.5D', click: () => setWallpaperMode('2.5D') },
+            { label: '3D (Full)', type: 'radio', checked: currentWallpaperMode === '3D', click: () => setWallpaperMode('3D') }
+          ]
+        },
+        { type: 'separator' },
+        { label: 'Auto-adjust', type: 'checkbox', checked: true, click: (item) => {
+          mainWindow.webContents.send('performance-auto-adjust', item.checked);
+        }}
+      ]
+    },
+    {
+      label: 'Angela Matrix',
+      submenu: [
+        { label: 'Vision System', type: 'checkbox', checked: moduleStates.vision, click: (item) => toggleModule('vision', item.checked) },
+        { label: 'Audio System', type: 'checkbox', checked: moduleStates.audio, click: (item) => toggleModule('audio', item.checked) },
+        { label: 'Tactile System', type: 'checkbox', checked: moduleStates.tactile, click: (item) => toggleModule('tactile', item.checked) },
+        { label: 'Action Executor', type: 'checkbox', checked: moduleStates.action, click: (item) => toggleModule('action', item.checked) }
+      ]
+    },
+    {
       label: 'Reload Model',
       click: () => {
         if (mainWindow) {
@@ -259,9 +321,12 @@ function getTrayIconPath() {
 /**
  * Create settings window
  */
-function createSettingsWindow() {
+function createSettingsWindow(tab = 'general') {
   if (settingsWindow) {
     settingsWindow.focus();
+    if (tab) {
+      settingsWindow.webContents.send('open-tab', tab);
+    }
     return;
   }
   
@@ -279,7 +344,7 @@ function createSettingsWindow() {
     }
   });
   
-  settingsWindow.loadFile('settings.html');
+  settingsWindow.loadFile('settings.html', { query: { tab } });
   
   settingsWindow.on('closed', () => {
     settingsWindow = null;
@@ -423,8 +488,77 @@ function cleanupResources() {
 }
 
 /**
+ * Hardware & Performance settings helpers
+ */
+function setPerformanceMode(mode) {
+  currentPerformanceMode = mode;
+  if (mainWindow) {
+    mainWindow.webContents.send('performance-mode-changed', mode);
+  }
+  createTray(); // Refresh menu
+}
+
+function setWallpaperMode(mode) {
+  currentWallpaperMode = mode;
+  if (mainWindow) {
+    mainWindow.webContents.send('wallpaper-mode-changed', mode);
+  }
+  createTray(); // Refresh menu
+}
+
+function toggleModule(module, enabled) {
+  moduleStates[module] = enabled;
+  if (mainWindow) {
+    mainWindow.webContents.send('module-toggle', { module, enabled });
+  }
+  createTray(); // Refresh menu
+}
+
+function setBackendIP(ip) {
+  backendIP = ip;
+  if (mainWindow) {
+    mainWindow.webContents.send('backend-ip-changed', ip);
+  }
+  createTray(); // Refresh menu
+}
+
+/**
  * IPC handlers for communication with renderer process
  */
+
+// Performance & Wallpaper Mode
+ipcMain.handle('performance-get-mode', () => currentPerformanceMode);
+ipcMain.handle('performance-set-mode', (event, mode) => {
+  setPerformanceMode(mode);
+  return { success: true };
+});
+
+ipcMain.handle('wallpaper-get-mode', () => currentWallpaperMode);
+ipcMain.handle('wallpaper-set-mode', (event, mode) => {
+  setWallpaperMode(mode);
+  return { success: true };
+});
+
+ipcMain.handle('module-set-state', (event, { module, enabled }) => {
+  moduleStates[module] = enabled;
+  createTray(); // Refresh menu
+  return { success: true };
+});
+
+ipcMain.handle('backend-get-ip', () => backendIP);
+ipcMain.handle('backend-set-ip', (event, ip) => {
+  backendIP = ip;
+  createTray(); // Refresh menu
+  return { success: true };
+});
+
+ipcMain.handle('wallpaper-inject-object', (event, objectData) => {
+  if (mainWindow) {
+    mainWindow.webContents.send('wallpaper-inject-object', objectData);
+    return { success: true };
+  }
+  return { success: false, error: 'Main window not available' };
+});
 
 // Window management
 ipcMain.handle('window-minimize', () => {

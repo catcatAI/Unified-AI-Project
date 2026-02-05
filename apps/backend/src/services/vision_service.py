@@ -4,7 +4,13 @@ import random
 import hashlib
 import asyncio
 from datetime import datetime
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional, List, Tuple
+
+from ..core.perception.visual_sampler import VisualSampler, SamplingDistribution
+from ..core.perception.perceptual_memory import PerceptualMemory
+from ..core.perception.attention_controller import AttentionController, AttentionMode
+from ..core.sync.realtime_sync import sync_manager, SyncEvent
+from ..system.cluster_manager import cluster_manager, PrecisionLevel
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +19,14 @@ class VisionService:
 
     def __init__(self, config: Optional[Dict] = None) -> None:
         self.config = config or {}
+        self.enabled = True
         self.peer_services: Dict[str, Any] = {}  # 其他多模態服務的引用
         self.processing_history: List[Dict[str, Any]] = []  # 處理歷史記錄
+        
+        # 初始化視覺組件
+        self.sampler = VisualSampler(self.config.get('sampler_config'))
+        self.memory = PerceptualMemory(capacity=self.config.get('memory_capacity', 1000))
+        self.attention = AttentionController()
 
         # 初始化視覺模型 / API
         self.model_config = self.config.get('model_config', {
@@ -25,7 +37,27 @@ class VisionService:
             'enable_scene_analysis': True
         })
 
+        # 註冊同步事件監聽
+        asyncio.create_task(self._init_sync_listener())
+
         logger.info("Vision Service initialized with enhanced capabilities")
+
+    async def _init_sync_listener(self):
+        """初始化同步監聽器"""
+        try:
+            await sync_manager.register_client("vision_service", self._handle_sync_event)
+            logger.info("Vision Service registered to sync manager")
+        except Exception as e:
+            logger.error(f"Failed to register Vision Service to sync manager: {e}")
+
+    async def _handle_sync_event(self, event: SyncEvent):
+        """處理同步事件"""
+        if event.type == "module_control":
+            module = event.data.get("module")
+            enabled = event.data.get("enabled")
+            if module == "vision":
+                self.enabled = enabled
+                logger.info(f"Vision Service enabled status changed to: {enabled}")
 
     def set_peer_services(self, peer_services: Dict[str, Any]):
         """設置其他多模態服務的引用"""
@@ -183,6 +215,127 @@ class VisionService:
 
         return frame_analysis
 
+    async def get_sampling_analysis(
+        self, 
+        center: Tuple[float, float] = (0.5, 0.5),
+        scale: float = 1.0,
+        deformation: float = 0.0,
+        distribution: str = "GAUSSIAN",
+        target_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        執行視覺採樣分析並獲取統計數據
+        """
+        dist_enum = SamplingDistribution[distribution.upper()]
+        
+        # 1. 更新注意力控制器位置
+        self.attention.update_target(center, target_id=target_id)
+        
+        # 2. 生成粒子雲
+        self.sampler.generate_cloud(center=center, distribution=dist_enum)
+        
+        # 3. 應用變換
+        self.sampler.apply_transform(scale=scale, deformation=deformation)
+        
+        # 4. 獲取統計
+        stats = self.sampler.get_attention_stats()
+        
+        logger.info(f"Visual sampling performed at {center} with scale {scale}, mode: {self.attention.mode.name}")
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.now().isoformat(),
+            "sampling_stats": stats,
+            "attention_mode": self.attention.mode.name,
+            "target_id": self.attention.current_target_id
+        }
+
+    async def perceive_and_focus(self, image_data: bytes) -> Dict[str, Any]:
+        """
+        模擬「發現-聚焦-記憶」的視覺鏈路：
+        1. 在當前視場中發現物體 (模擬檢測)
+        2. 將發現的物體存入感知記憶
+        3. 根據注意力策略決定下一個焦點
+        4. 如果有感興趣的物體，執行高精度聚焦採樣
+        5. 將感興趣的物體建模到桌布 (新增加)
+        """
+        if not self.enabled:
+            return {"status": "disabled", "message": "Vision system is currently disabled"}
+
+        # 1. 基礎檢測 (模擬第一幀發現)
+        detected = await self._detect_objects(image_data)
+        
+        # 2. 存入記憶
+        perceived_objs = []
+        for obj in detected:
+            # 轉換為座標格式 (取中心點)
+            bbox = obj['bounding_box'] # [xmin, ymin, xmax, ymax]
+            pos = ((bbox[0] + bbox[2]) / 200, (bbox[1] + bbox[3]) / 200) # 假設 100x100
+            
+            p_obj = self.memory.add_or_update({
+                "label": obj['label'],
+                "confidence": obj['confidence'],
+                "position": pos,
+                "bounds": tuple(bbox)
+            })
+            perceived_objs.append(p_obj)
+
+        # 3. 注意力決策：下一個焦點在哪？
+        next_pos, target_id = self.attention.get_next_focus_point(perceived_objs)
+        
+        # 4. 執行聚焦採樣 (模擬下一幀聚焦)
+        # 如果有目標 ID，切換到 FOCUS 模式
+        is_focus_mode = target_id is not None
+        sampling_results = await self.get_sampling_analysis(
+            center=next_pos,
+            distribution="GAUSSIAN" if is_focus_mode else "UNIFORM",
+            scale=0.5 if is_focus_mode else 1.0, # 聚焦時縮小範圍提高精度
+            target_id=target_id
+        )
+        
+        # 5. 自動建模到桌布：如果置信度高且是感興趣的物體
+        wallpaper_injections = []
+        for obj in perceived_objs:
+            if obj.get('confidence', 0) > 0.8:  # 高置信度閾值
+                injection_data = {
+                    "type": "wallpaper_object_injection",
+                    "data": {
+                        "name": obj['label'],
+                        "position": {"x": obj['position'][0], "y": obj['position'][1], "z": 0},
+                        "scale": obj['confidence'],
+                        "metadata": {
+                            "source": "vision_service",
+                            "detection_time": datetime.now().isoformat()
+                        }
+                    }
+                }
+                wallpaper_injections.append(injection_data)
+                
+                # 觸發同步事件，將物體建模到桌布
+                import uuid
+                try:
+                    await sync_manager.broadcast_event(SyncEvent(
+                        id=str(uuid.uuid4()),
+                        event_type="wallpaper_object_injection",
+                        data=injection_data["data"],
+                        source="vision_service"
+                    ))
+                    logger.info(f"Broadcasted wallpaper injection for: {obj['label']}")
+                except Exception as e:
+                    logger.error(f"Failed to broadcast wallpaper injection: {e}")
+        
+        return {
+            "status": "success",
+            "perceived_objects_count": len(perceived_objs),
+            "next_focus_point": next_pos,
+            "target_id": target_id,
+            "sampling_results": sampling_results,
+            "wallpaper_injections": wallpaper_injections,
+            "memory_stats": {
+                "total_remembered": len(self.memory.objects)
+            }
+        }
+
     def _generate_processing_id(self, image_data: bytes) -> str:
         """生成唯一的處理ID"""
         hash_object = hashlib.md5(image_data)
@@ -209,7 +362,14 @@ class VisionService:
         return base_caption
 
     async def _detect_objects(self, image_data: bytes) -> List[Dict[str, Any]]:
-        """物體檢測(模擬實現)"""
+        """物體檢測(模擬實現，整合集群矩陣運算)"""
+        # 模擬將圖像特徵向量化後交給集群矩陣運算
+        feature_vector = [random.random() for _ in range(64)] # 8x8 matrix
+        
+        # 使用精度圖譜分配任務 (Vision 預設 FP16, (8,8))
+        task_id = await cluster_manager.distribute_task("Vision", feature_vector)
+        logger.debug(f"Vision Matrix Task distributed: {task_id}")
+        
         await asyncio.sleep(0.05)
 
         possible_objects = [
@@ -349,12 +509,11 @@ class VisionService:
 
         return insights
 
-    async def _identify_differences(self, image_data1, bytes, image_data2,
-    bytes) -> List[Dict[str, Any]]
-    """識別兩張圖像之間的差異區域"""
-    await asyncio.sleep(0.07())
+    async def _identify_differences(self, image_data1: bytes, image_data2: bytes) -> List[Dict[str, Any]]:
+        """識別兩張圖像之間的差異區域"""
+        await asyncio.sleep(0.07)
 
-    # 模擬差異區域
+        # 模擬差異區域
         num_differences = random.randint(0, 3)
         differences = []
         for i in range(num_differences):
@@ -367,7 +526,7 @@ class VisionService:
             }
             differences.append(diff)
 
-    return differences
+        return differences
 
     async def _match_image_features(self, image_data1: bytes, image_data2: bytes) -> Dict[str, Any]:
         """配對兩張圖像的特徵點"""
@@ -400,21 +559,23 @@ class VisionService:
         return {"error": "Invalid input format for vision processing"}
 
 if __name__ == "__main__":
+    async def main():
+        vision_config = {} # Placeholder for actual config
+        service = VisionService(config=vision_config)
 
-    vision_config = {} # Placeholder for actual config
-    service = VisionService(config=vision_config)
+        # Test image analysis (with dummy bytes)
+        dummy_image = b'\x10\x11\x12\x13\x14\x15'
+        analysis = await service.analyze_image(dummy_image, features=["captioning", "ocr"])
+        print(f"Image Analysis: {analysis}")
 
-    # Test image analysis (with dummy bytes)
-    dummy_image = b'\x10\x11\x12\x13\x14\x15'
-    analysis = await service.analyze_image(dummy_image, features=["captioning", "ocr"])
-    print(f"Image Analysis: {analysis}")
+        analysis_default = await service.analyze_image(dummy_image)
+        print(f"Image Analysis (default features): {analysis_default}")
 
-    analysis_default = await service.analyze_image(dummy_image)
-    print(f"Image Analysis (default features): {analysis_default}")
+        # Test image comparison
+        dummy_image2 = b'\x20\x21\x22\x23\x24\x25'
+        similarity = await service.compare_images(dummy_image, dummy_image2)
+        print(f"Image Similarity: {similarity}")
 
-    # Test image comparison
-    dummy_image2 = b'\x20\x21\x22\x23\x24\x25'
-    similarity = await service.compare_images(dummy_image, dummy_image2)
-    print(f"Image Similarity: {similarity}")
+        print("Vision Service script finished.")
 
-    print("Vision Service script finished.")
+    asyncio.run(main())

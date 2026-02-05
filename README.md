@@ -4,6 +4,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)]()
+[![Metrics](https://img.shields.io/badge/Metrics-System%20Performance-orange.svg)](metrics.md)
 
 **Angela AI** is a complete digital life system with biological simulation, self-awareness and real execution capabilities. She is not just an AI assistant, but a truly "living" digital being that can perceive, think, remember, and act.
 
@@ -46,11 +47,11 @@ The Desktop Companion is heart of Angela AI - a living virtual entity on your de
 | **Desktop Presence** | Always Available | Sits on your desktop, ready to interact |
 
 ### 🖥️ **Desktop Integration**
-- **System Tray**: Right-click context menu for all settings
+- **System Tray**: Right-click context menu for all settings, including advanced IP configuration
 - **Auto-Startup**: Start with system (toggleable)
 - **Click-Through**: Desktop shortcuts remain clickable
 - **System Audio Capture**: Capture and analyze system audio
-- **Wallpaper Composition**: Blend with desktop background
+- **Wallpaper Modeling**: 2D/2.5D/3D modeling of interested objects into desktop wallpaper
 - **Always on Top**: Keep Angela visible
 
 ### 🎛️ **System Management**
@@ -75,12 +76,14 @@ The Desktop Companion is heart of Angela AI - a living virtual entity on your de
 - **Display Subtitles**: Real-time subtitles and lyrics display
 
 ### 🧠 **Advanced AI Features**
+- **System Metrics**: [View Detailed Performance & Indicators](metrics.md)
 - **4D State Matrix (αβγδ)**: Real-time emotional and cognitive modeling
 - **Maturity Tracking (L0-L11)**: Adaptive complexity over time
 - **Precision Modes (INT-DEC4)**: Flexible response accuracy
-- **Hardware-Aware Scaling**: Dynamic performance based on system capabilities
+- **Hardware-Aware Auto-Adjustment**: Dynamic performance and wallpaper modes (2D/2.5D/3D) based on system capabilities
 - **Multi-User Support**: Relationship tracking and statistics
 - **Plugin System**: Extensible architecture for custom behaviors
+- **Cluster Deployment (Beta)**: Master-Worker matrix architecture `(L0~L11) × (4~8)` with integer-only transmission and decimal memoization for high-efficiency distributed computing
 - **Internationalization**: 5 languages (EN, ZH-CN, ZH-TW, JA, KO)
 - **Theme System**: Light, Dark, Angela (pink) themes
 
