@@ -242,13 +242,17 @@ class Live2DManager {
         
         return new Promise(async (resolve) => {
             let isResolved = false;
+            // 根據設備性能動態調整超時時間
+            const isLowEndDevice = navigator.hardwareConcurrency <= 2 || navigator.deviceMemory <= 2;
+            const timeout = isLowEndDevice ? 20000 : 15000;
+            
             const timeoutId = setTimeout(() => {
                 if (!isResolved) {
                     isResolved = true;
-                    console.error('Live2D Manager initialization timed out');
+                    console.error(`Live2D Manager initialization timed out after ${timeout}ms`);
                     resolve(false);
                 }
-            }, 10000); // 10s timeout for SDK loading
+            }, timeout);
 
             try {
                 if (this.sdk && this.cubismSdk) {
@@ -288,13 +292,17 @@ class Live2DManager {
         
         return new Promise(async (resolve) => {
             let isResolved = false;
+            // 根據模型大小和設備性能調整超時時間
+            const isLowEndDevice = navigator.hardwareConcurrency <= 2 || navigator.deviceMemory <= 2;
+            const timeout = isLowEndDevice ? 30000 : 20000; // 低端設備更長超時
+            
             const timeoutId = setTimeout(() => {
                 if (!isResolved) {
                     isResolved = true;
-                    console.error(`Live2D model loading timed out: ${modelPath}`);
+                    console.error(`Live2D model loading timed out after ${timeout}ms: ${modelPath}`);
                     resolve(false);
                 }
-            }, 15000); // 15s timeout for model loading
+            }, timeout);
 
             try {
                 const success = await this.wrapper.loadModel({

@@ -57,14 +57,66 @@ class Live2DCubismWrapper {
     }
     
     async loadCubismScript() {
+        // 嘗試多種CDN源，包括本地備份
+        const cdnSources = [
+            'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',
+            'https://cdn.jsdelivr.net/npm/@live2d/cubism-core@4.0.0/live2dcubismcore.min.js',
+            'https://unpkg.com/@live2d/cubism-core@4.0.0/live2dcubismcore.min.js',
+            '../libs/live2dcubismcore.min.js' // 本地備份
+        ];
+        
+        let lastError = null;
+        
+        for (const src of cdnSources) {
+            try {
+                console.log(`嘗試從 ${src} 加載 Live2D Cubism Core...`);
+                await this._loadScript(src);
+                console.log(`成功從 ${src} 加載 Live2D Cubism Core`);
+                return;
+            } catch (error) {
+                console.warn(`從 ${src} 加載失敗:`, error.message);
+                lastError = error;
+                continue;
+            }
+        }
+        
+        // 所有源都失敗，嘗試加載fallback
+        try {
+            console.log('所有CDN源失敗，嘗試加載本地fallback...');
+            await this._loadScript('../libs/live2d-fallback.js');
+            await window.loadLocalLive2DSDK();
+            console.log('成功加載本地fallback SDK');
+            return;
+        } catch (fallbackError) {
+            console.error('Fallback也失敗:', fallbackError);
+        }
+        
+        // 所有嘗試都失敗
+        throw lastError || new Error('Failed to load Live2D Cubism Core from all sources');
+    }
+    
+    async _loadScript(src) {
         const script = document.createElement('script');
-        script.src = 'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js';
+        script.src = src;
         script.async = true;
         script.crossOrigin = 'anonymous';
+        script.timeout = 8000; // 8秒超時
         
         return new Promise((resolve, reject) => {
-            script.onload = resolve;
-            script.onerror = reject;
+            const timeoutId = setTimeout(() => {
+                reject(new Error(`Script load timeout: ${src}`));
+            }, script.timeout);
+            
+            script.onload = () => {
+                clearTimeout(timeoutId);
+                resolve();
+            };
+            
+            script.onerror = () => {
+                clearTimeout(timeoutId);
+                reject(new Error(`Script load error: ${src}`));
+            };
+            
             document.head.appendChild(script);
         });
     }
@@ -74,14 +126,17 @@ class Live2DCubismWrapper {
             const checkInterval = setInterval(() => {
                 if (window.Live2DCubismCore) {
                     clearInterval(checkInterval);
+                    console.log('Live2D Cubism SDK detected and ready');
                     resolve();
                 }
-            }, 100);
+            }, 200); // 檢查間隔調整為200ms
             
+            // 動態超時：根據網路條件調整
+            const timeout = navigator.onLine ? 8000 : 12000;
             setTimeout(() => {
                 clearInterval(checkInterval);
-                reject(new Error('Failed to load Live2D Cubism SDK'));
-            }, 5000); // 縮短為 5 秒超時
+                reject(new Error(`Failed to load Live2D Cubism SDK within ${timeout}ms`));
+            }, timeout);
         });
     }
     

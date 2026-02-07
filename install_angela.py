@@ -149,6 +149,38 @@ class AngelaInstaller:
             print("❌ Python版本过低，需要 3.9+")
             print(f"   当前: {sys.version_info.major}.{sys.version_info.minor}")
             return False
+        
+        # 检查Node.js
+        try:
+            result = subprocess.run(['node', '--version'], capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                print(f"✅ Node.js: {result.stdout.strip()}")
+            else:
+                print("⚠️ Node.js未找到，桌面应用可能无法运行")
+        except:
+            print("⚠️ Node.js未安装，桌面应用可能无法运行")
+        
+        # 检查Git
+        try:
+            result = subprocess.run(['git', '--version'], capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                print(f"✅ Git: {result.stdout.strip()}")
+            else:
+                print("❌ Git未安装，无法继续安装")
+                return False
+        except:
+            print("❌ Git未安装，无法继续安装")
+            return False
+        
+        # 检查网络连接
+        try:
+            import urllib.request
+            urllib.request.urlopen('https://github.com', timeout=5)
+            print("✅ 网络连接正常")
+        except:
+            print("❌ 无法连接GitHub，请检查网络")
+            return False
+            return False
         checks.append(f"✅ Python {sys.version_info.major}.{sys.version_info.minor}")
 
         try:

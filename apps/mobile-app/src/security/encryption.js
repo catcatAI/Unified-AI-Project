@@ -33,6 +33,26 @@ class SecurityManager {
   }
 
   /**
+   * Generate HMAC-SHA256 signature for data
+   * @param {object|string} data - Data to sign
+   * @returns {string} - Hex signature
+   */
+  generateSignature(data) {
+    if (!this.isReady()) {
+      throw new Error('Security not initialized. Call init() first.');
+    }
+
+    try {
+      const jsonString = typeof data === 'string' ? data : JSON.stringify(data);
+      const signature = CryptoJS.HmacSHA256(jsonString, this.keyB).toString(CryptoJS.enc.Hex);
+      return signature;
+    } catch (error) {
+      console.error('Signature generation error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Encrypt data using AES-256-CBC
    * @param {object|string} data - Data to encrypt
    * @returns {string} - Base64 encoded encrypted data

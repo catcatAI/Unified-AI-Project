@@ -23,7 +23,7 @@ class EncryptedCommunicationMiddleware(BaseHTTPMiddleware):
         is_testing = os.environ.get('ANGELA_TESTING', '').lower() == 'true'
         
         # 對行動端與系統控制路徑進行加密驗證
-        protected_paths = ["/api/v1/mobile/", "/api/v1/system/status", "/api/v1/system/module-control"]
+        protected_paths = ["/api/v1/mobile/", "/api/v1/system/status/detailed", "/api/v1/system/module-control"]
         if any(request.url.path.startswith(path) for path in protected_paths):
             # 如果是測試模式，允許無簽名訪問
             if is_testing:

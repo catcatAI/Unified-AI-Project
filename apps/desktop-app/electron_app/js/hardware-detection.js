@@ -17,17 +17,20 @@ class HardwareDetector {
         return new Promise(async (resolve) => {
             let isResolved = false;
 
-            // 1. 設定總體超時
+            // 1. 根據設備性能設定動態超時
+            const isLowEnd = navigator.hardwareConcurrency <= 2 || (navigator.deviceMemory && navigator.deviceMemory <= 2);
+            const timeout = isLowEnd ? 8000 : 5000;
+            
             const timeoutId = setTimeout(() => {
                 if (!isResolved) {
                     isResolved = true;
-                    console.error('Hardware detection timed out (5s), using fallback');
+                    console.error(`Hardware detection timed out (${timeout}ms), using fallback`);
                     const fallback = this._getFallbackProfile();
                     this.profile = fallback;
                     this.capabilities = this._assessCapabilities(fallback);
                     resolve(fallback);
                 }
-            }, 5000);
+            }, timeout);
 
             try {
                 // 2. 執行檢測 (使用 Promise.resolve().then 確保它是非同步開始的)
@@ -698,21 +701,65 @@ class DynamicPerformanceManager {
         const profile = this.hardwareDetector.profile;
         const capabilities = this.hardwareDetector.capabilities;
         
+        // 智能性能調整
+        const isLowEnd = !profile.gpu_info.available || 
+                        profile.cpu_cores <= 2 || 
+                        (profile.ram_gb && profile.ram_gb <= 4);
+        
+        const isHighEnd = profile.gpu_info.available && 
+                         profile.cpu_cores >= 6 && 
+                         (profile.ram_gb && profile.ram_gb >= 16);
+        
         // 根據性能等級設置
-        const frameRate = capabilities.render_quality.frameRate;
-        const resolution = capabilities.max_resolution;
+        let frameRate, resolution, effects;
+        
+        if (isLowEnd) {
+            frameRate = 30;
+            resolution = 0.6;
+            effects = 1;
+            console.log('檢測到低端配置，應用性能優化');
+        } else if (isHighEnd) {
+            frameRate = 60;
+            resolution = 1.0;
+            effects = 3;
+            console.log('檢測到高端配置，啟用完整功能');
+        } else {
+            frameRate = 45;
+            resolution = 0.8;
+            effects = 2;
+            console.log('檢測到中端配置，應用平衡設置');
+        }
         
         // 設置幀率
-        this.live2dManager.setFrameRate(frameRate);
+        if (this.live2dManager && this.live2dManager.setFrameRate) {
+            this.live2dManager.setFrameRate(frameRate);
+        }
         
         // 設置分辨率（通過 Canvas 縮放）
-        this._setResolutionScale(resolution);
+        this._setResolutionScale({ width: window.screen.width * resolution });
         
         // 設置渲染品質
-        this._setRenderQuality(capabilities.render_quality);
+        this._setRenderQuality({ frameRate, quality: effects });
         
         // 設置特效等級
-        this._setEffectsLevel(capabilities.effects);
+        this._setEffectsLevel(effects);
+        
+        // 設置動態性能調整參數
+        this._configureDynamicAdjustments(isLowEnd, isHighEnd);
+    }
+    
+    _configureDynamicAdjustments(isLowEnd, isHighEnd) {
+        // 配置動態調整參數
+        this.adjustmentConfig = {
+            isLowEnd,
+            isHighEnd,
+            targetFPS: isLowEnd ? 30 : (isHighEnd ? 60 : 45),
+            memoryLimit: isLowEnd ? 100 : (isHighEnd ? 500 : 200), // MB
+            cpuThreshold: isLowEnd ? 70 : (isHighEnd ? 90 : 80), // %
+            gpuThreshold: isLowEnd ? 80 : (isHighEnd ? 95 : 85)  // %
+        };
+        
+        console.log('性能調整配置:', this.adjustmentConfig);
     }
     
     _setResolutionScale(resolution) {
