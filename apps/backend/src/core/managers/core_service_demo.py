@@ -11,7 +11,7 @@ from tests.tools.test_tool_dispatcher_logging import
     ServiceStatus,
     ServiceHealth
 ()
-from apps.backend.src.core.managers.service_monitor import ServiceMonitor
+from src.core.managers.service_monitor import ServiceMonitor
 
 
 # 配置日志

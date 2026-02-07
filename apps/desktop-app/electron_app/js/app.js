@@ -49,7 +49,7 @@ class AngelaApp {
         console.log('Initializing Angela AI Desktop App...');
         
         try {
-            // Initialize core systems first
+            // 1. Initialize core infrastructure (Logger, Data, Security)
             await this._initializeLogger();
             await this._initializeDataPersistence();
             await this._initializeSecurity();
@@ -57,62 +57,75 @@ class AngelaApp {
             await this._initializeThemeManager();
             await this._initializeUserManager();
             
-            // Initialize hardware detection
-            await this._initializeHardwareDetection();
+            // 2. Hardware detection (with timeout protection)
+            const hardware = await this._initializeHardwareDetection();
             
-            // Initialize Angela systems
+            // 3. Initialize Angela logic systems (State, Performance, etc.)
             this._initializeStateMatrix();
-            await this._initializePerformanceManager();
+            this._initializePrecisionManager(); // 先初始化，避免後續引用為空
             this._initializeMaturityTracker();
-            this._initializePrecisionManager();
-            this._initializeBackendWebSocket();
             
-            // Initialize Live2D manager
+            // 4. Initialize Performance Manager (needs hardware info)
+            await this._initializePerformanceManager();
+            
+            // 5. Initialize Hardware-dependent systems (Live2D, Audio, etc.)
             await this._initializeLive2D();
             
-            // Initialize input handler
+            // 6. Connect systems
+            this._linkSystems();
+            
+            // 7. Initialize remaining handlers
+            this._initializeBackendWebSocket();
             this._initializeInputHandler();
-            
-            // Initialize audio handler
             await this._initializeAudioHandler();
-            
-            // Initialize haptic handler
             await this._initializeHapticHandler();
-            
-            // Initialize wallpaper handler
             await this._initializeWallpaperHandler();
-            
-            // Initialize plugin manager
             await this._initializePluginManager();
-            
-            // Initialize performance monitor
             await this._initializePerformanceMonitor();
             
-            // Setup UI controls
+            // 8. Final setup
             this._setupUIControls();
-            
-            // Setup Electron API event listeners
             this._setupElectronEvents();
-            
-            // Load default model
             await this._loadDefaultModel();
-            
-            // Setup idle detection
             this._setupIdleDetection();
-            
-            // Sync with backend
             await this._syncWithBackend();
             
-            // Hide loading overlay
             this._hideLoading();
-            
             this.isInitialized = true;
             this.showStatus('Angela AI is ready!', 3000);
-            
             console.log('Angela AI initialized successfully');
         } catch (error) {
-            console.error('Failed to initialize Angela AI:', error);
-            this.showStatus('Initialization failed. Please check console.', 5000);
+            console.error('CRITICAL: Failed to initialize Angela AI:', error);
+            this.showStatus('Initialization failed. Check console.', 5000);
+            // 即使出錯也嘗試隱藏載入畫面，以免用戶完全無法操作
+            setTimeout(() => this._hideLoading(), 2000);
+        }
+    }
+
+    /**
+     * 將各個系統組件互相關聯
+     */
+    _linkSystems() {
+        console.log('[Init] Linking systems...');
+        
+        if (this.stateMatrix) {
+            this.stateMatrix.setLive2DManager(this.live2dManager);
+            this.stateMatrix.setWebSocket(this.backendWebSocket);
+            this.stateMatrix.setStateMatrix(this.maturityTracker);
+        }
+        
+        if (this.performanceManager) {
+            this.performanceManager.setLive2DManager(this.live2dManager);
+            this.performanceManager.setWebSocket(this.backendWebSocket);
+        }
+        
+        if (this.precisionManager) {
+            this.precisionManager.setPerformanceManager(this.performanceManager);
+            this.precisionManager.setWebSocket(this.backendWebSocket);
+        }
+        
+        if (this.maturityTracker) {
+            this.maturityTracker.setWebSocket(this.backendWebSocket);
         }
     }
 
@@ -151,9 +164,16 @@ class AngelaApp {
         this.updateLoadingText('Initializing security system...');
         
         try {
-            // 從後端獲取實際的 Key C
+            // 從後端獲取實際的 Key C (設定超時避免掛起)
             const backendHost = localStorage.getItem('backend_host') || 'localhost';
-            const response = await fetch(`http://${backendHost}:8000/api/v1/security/sync-key-c`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒超時
+            
+            const response = await fetch(`http://${backendHost}:8000/api/v1/security/sync-key-c`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            
             const data = await response.json();
             
             if (data.key_c) {
@@ -163,20 +183,18 @@ class AngelaApp {
                     this.logger.info('✅ Security system initialized with remote Key C');
                     this._updateSecurityBadge(true);
                     this._updateSyncBadge(true);
-                } else {
-                    throw new Error(result.error);
+                    return; // 成功初始化
                 }
-            } else {
-                throw new Error('Failed to retrieve Key C from backend');
             }
+            throw new Error('Remote Key C unavailable');
         } catch (error) {
-            this.logger.error('Failed to initialize security:', error);
-            // 降級處理：使用本地快取的金鑰或預設金鑰（僅供開發使用）
+            this.logger.warn('Security system using fallback mode:', error.message);
+            // 降級處理：使用本地快取的金鑰或預設金鑰
             const fallbackKey = "Angela-Desktop-Sync-Key-C-Fallback";
             await window.electronAPI.security.init(fallbackKey);
             this.security = window.electronAPI.security;
-            this.showStatus('Security initialized in fallback mode', 3000);
             this._updateSecurityBadge(false);
+            this._updateSyncBadge(false);
         }
     }
 
@@ -260,28 +278,34 @@ class AngelaApp {
     
     async _initializeHardwareDetection() {
         this.updateLoadingText('Detecting hardware...');
+        const startTime = performance.now();
+        console.log('[Init] Starting hardware detection...');
         
         this.hardwareDetector = new HardwareDetector();
         const hardware = await this.hardwareDetector.detect();
         
-        this.logger.info('Hardware detected', hardware);
+        const duration = (performance.now() - startTime).toFixed(2);
+        console.log(`[Init] Hardware detection completed in ${duration}ms:`, hardware);
+        this.logger.info(`Hardware detected in ${duration}ms`, hardware);
+        return hardware;
     }
     
     _initializeStateMatrix() {
         this.updateLoadingText('Initializing state matrix...');
+        console.log('[Init] Initializing state matrix...');
         
         this.stateMatrix = new StateMatrix4D();
     }
     
     async _initializePerformanceManager() {
         this.updateLoadingText('Initializing performance manager...');
+        console.log('[Init] Initializing performance manager...');
         
         this.performanceManager = new PerformanceManager();
         
-        await this.performanceManager.initialize();
-        
-        this.stateMatrix.setLive2DManager(this.live2dManager);
-        this.precisionManager.setPerformanceManager(this.performanceManager);
+        // 將硬體偵測結果傳遞給性能管理器，避免重複偵測導致卡頓
+        const hardwareProfile = this.hardwareDetector ? this.hardwareDetector.profile : null;
+        await this.performanceManager.initialize(hardwareProfile);
     }
     
     _initializeMaturityTracker() {
@@ -312,14 +336,19 @@ class AngelaApp {
     
     async _initializeLive2D() {
         this.updateLoadingText('Initializing Live2D...');
+        const startTime = performance.now();
         
         const canvas = document.getElementById('live2d-canvas');
         this.live2dManager = new Live2DManager(canvas);
         
-        await this.live2dManager.initialize();
+        const success = await this.live2dManager.initialize();
         
-        this.stateMatrix.setLive2DManager(this.live2dManager);
-        this.performanceManager.setLive2DManager(this.live2dManager);
+        const duration = (performance.now() - startTime).toFixed(2);
+        if (success) {
+            console.log(`[Init] Live2D initialized successfully in ${duration}ms`);
+        } else {
+            console.warn(`[Init] Live2D initialization failed or timed out after ${duration}ms`);
+        }
     }
 
     _initializeInputHandler() {
@@ -534,30 +563,38 @@ class AngelaApp {
 
     async _loadDefaultModel() {
         this.updateLoadingText('Loading Live2D model...');
+        const startTime = performance.now();
         
         try {
             // Get available models
             const models = await window.electronAPI?.live2d?.getModels() || [];
             
             if (models.length > 0) {
-                // Load Miara Pro model
+                // Load Miara Pro model or first available
                 const model = models.find(m => m.name === 'miara_pro') || models[0];
                 
                 if (model) {
                     const modelPath = model.path.replace(/\\/g, '/');
                     const success = await this.live2dManager.loadModel(modelPath);
                     
+                    const duration = (performance.now() - startTime).toFixed(2);
                     if (success) {
                         this.currentModel = model.name;
-                        this.updateLoadingText(`Loading ${model.name} model...`);
+                        console.log(`[Init] Default model loaded in ${duration}ms: ${model.name}`);
                         
                         // Initialize clickable regions
-                        this.inputHandler.updateRegions();
+                        if (this.inputHandler) {
+                            this.inputHandler.updateRegions();
+                        }
+                    } else {
+                        console.warn(`[Init] Failed to load default model after ${duration}ms`);
                     }
                 }
+            } else {
+                console.warn('[Init] No Live2D models found');
             }
         } catch (error) {
-            console.error('Failed to load default model:', error);
+            console.error('[Init] Error loading default model:', error);
         }
     }
 

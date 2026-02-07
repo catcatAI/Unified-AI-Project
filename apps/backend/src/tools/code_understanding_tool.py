@@ -2,7 +2,7 @@ import os
 from typing import Optional, Any
 
 # Corrected import path relative to the 'src' directory
-from apps.backend.src.ai.code_understanding.lightweight_code_model import LightweightCodeModel
+from src.ai.code_understanding.lightweight_code_model import LightweightCodeModel
 
 class CodeUnderstandingTool:
     """

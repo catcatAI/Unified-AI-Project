@@ -1,6 +1,6 @@
 from tests.test_json_fix import
 # TODO: Fix import - module 'tensorflow' not found
-from apps.backend.src.tools.csv_tool import
+from src.tools.csv_tool import
 from model import ArithmeticSeq2Seq  # Assuming model.py is in the same directory or \
     accessible
 

@@ -21,6 +21,7 @@ const { width } = Dimensions.get('window');
 const App = () => {
   const [status, setStatus] = useState('OFFLINE');
   const [keyB, setKeyB] = useState('');
+  const [serverAddress, setServerAddress] = useState('127.0.0.1:8000');
   const [showScanner, setShowScanner] = useState(false);
   const [message, setMessage] = useState('');
   const [chatLog, setChatLog] = useState([
@@ -76,7 +77,7 @@ const App = () => {
       interval = setInterval(fetchSystemStatus, 3000);
     }
     return () => clearInterval(interval);
-  }, [isSecure]);
+  }, [isSecure, serverAddress]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -86,26 +87,27 @@ const App = () => {
 
   const fetchSystemStatus = async () => {
     try {
-      const backendHost = 'localhost:8000'; 
-      const data = await security.securePost(`http://${backendHost}/api/v1/system/status`, {
+      const data = await security.securePost(`http://${serverAddress}/api/v1/mobile/status`, {
         action: 'get_status',
         timestamp: Date.now()
       });
       
-      // 這裡模擬從後端獲取矩陣狀態
-      setMatrixState({
-        emotion: 0.4 + Math.random() * 0.2,
-        cognition: 0.6 + Math.random() * 0.3,
-        memory: 0.8 + Math.random() * 0.1,
-        stability: 0.9 + Math.random() * 0.05
-      });
-
-      setSystemStats({
-        cpu: (Math.random() * 15 + 5).toFixed(1) + '%',
-        mem: (Math.random() * 10 + 35).toFixed(1) + '%',
-        nodes: 1 + Math.floor(Math.random() * 3)
-      });
-      setStatus('SECURE LINK ACTIVE');
+      if (data.metrics) {
+        setSystemStats({
+          cpu: data.metrics.cpu,
+          mem: data.metrics.mem,
+          nodes: data.metrics.nodes
+        });
+        
+        // 模擬從後端獲取的矩陣狀態 (未來應由 AGI 核心返回)
+        setMatrixState({
+          emotion: 0.4 + Math.random() * 0.2,
+          cognition: 0.6 + Math.random() * 0.3,
+          memory: 0.8 + Math.random() * 0.1,
+          stability: 0.9 + Math.random() * 0.05
+        });
+        setStatus(data.status || 'SECURE LINK ACTIVE');
+      }
     } catch (error) {
       setStatus('LINK INTERRUPTED');
     }
@@ -129,7 +131,7 @@ const App = () => {
 
     if (isSecure) {
       try {
-        await security.securePost('http://localhost:8000/api/v1/system/module-control', {
+        await security.securePost(`http://${serverAddress}/api/v1/mobile/module-control`, {
           module: modName,
           enabled: newState,
           timestamp: Date.now()
@@ -155,8 +157,17 @@ const App = () => {
 
   const onQRCodeRead = (e) => {
     setShowScanner(false);
-    setKeyB(e.data);
-    handleInit(e.data);
+    // 支援格式 IP:PORT|KEY_B 或僅僅是 KEY_B
+    const data = e.data;
+    if (data.includes('|')) {
+      const [addr, key] = data.split('|');
+      setServerAddress(addr);
+      setKeyB(key);
+      handleInit(key);
+    } else {
+      setKeyB(data);
+      handleInit(data);
+    }
   };
 
   const sendSecureRequest = async () => {
@@ -167,7 +178,7 @@ const App = () => {
     setChatLog(prev => [...prev, { type: 'user', text: userMsg }]);
 
     try {
-      const result = await security.securePost('http://localhost:8000/api/v1/mobile/test', {
+      const result = await security.securePost(`http://${serverAddress}/api/v1/mobile/chat`, {
         message: userMsg,
         timestamp: Date.now(),
         client: 'Angela-Mobile-V6'
@@ -187,7 +198,7 @@ const App = () => {
         {/* Header - Status Bar */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.headerTitle}>ANGELA CORE v6.1</Text>
+            <Text style={styles.headerTitle}>ANGELA CORE v6.2</Text>
             <View style={styles.statusRow}>
               <View style={[styles.statusDot, { backgroundColor: isSecure ? '#00ffcc' : '#ff3366' }]} />
               <Text style={[styles.headerStatus, { color: isSecure ? '#00ffcc' : '#ff3366' }]}>
@@ -232,6 +243,15 @@ const App = () => {
                 <Text style={styles.dividerText}>OR</Text>
                 <View style={styles.dividerLine} />
               </View>
+
+              <TextInput
+                style={styles.keyInput}
+                placeholder="SERVER IP (e.g. 192.168.1.5:8000)"
+                placeholderTextColor="#666"
+                value={serverAddress}
+                onChangeText={setServerAddress}
+                autoCapitalize="none"
+              />
 
               <TextInput
                 style={styles.keyInput}

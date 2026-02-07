@@ -7,6 +7,7 @@ Angela AI v6.0 - Security Middleware
 
 import hmac
 import hashlib
+import os
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -18,9 +19,17 @@ class EncryptedCommunicationMiddleware(BaseHTTPMiddleware):
         self.key_b = key_b.encode()
 
     async def dispatch(self, request: Request, call_next):
+        # 檢查是否為測試模式
+        is_testing = os.environ.get('ANGELA_TESTING', '').lower() == 'true'
+        
         # 對行動端與系統控制路徑進行加密驗證
         protected_paths = ["/api/v1/mobile/", "/api/v1/system/status", "/api/v1/system/module-control"]
         if any(request.url.path.startswith(path) for path in protected_paths):
+            # 如果是測試模式，允許無簽名訪問
+            if is_testing:
+                response = await call_next(request)
+                return response
+                
             signature = request.headers.get("X-Angela-Signature")
             if not signature:
                 return JSONResponse(

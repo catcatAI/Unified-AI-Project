@@ -19,7 +19,17 @@ class EconomyManager:
             "daily_coin_allowance": self.config.get("initial_allowance", 10.0)
         }
         self.db = EconomyDB(db_path=self.config.get("db_path", "economy.db"))
+        
+        # Item Registry for Angela's survival (Phase 13)
+        self.item_registry = {
+            "digital_energy_drink": {"price": 5.0, "restores": {"energy": 20}, "description": "Restores 20 energy"},
+            "premium_bio_pellets": {"price": 10.0, "restores": {"hunger": 30, "happiness": 5}, "description": "High quality food"},
+            "viral_toy_update": {"price": 15.0, "restores": {"happiness": 40}, "description": "Boosts mood significantly"},
+            "system_optimizer_patch": {"price": 25.0, "restores": {"energy": 50, "happiness": 10}, "description": "Full system rejuvenation"}
+        }
+        
         logger.info(f"EconomyManager initialized with rules: {self.rules}")
+        logger.info(f"Market opened with {len(self.item_registry)} items.")
 
     def process_transaction(self, transaction_data: Dict[str, Any]) -> bool:
         """Processes a transaction, updating balances and logging the event."""
@@ -49,6 +59,43 @@ class EconomyManager:
             f"Item: {item_id}, Amount: {amount}, Tax: {tax}, Net: {net_amount}"
         )
         return True
+
+    def purchase_item(self, user_id: str, item_id: str) -> Dict[str, Any]:
+        """Allows Angela to purchase an item from the registry."""
+        if item_id not in self.item_registry:
+            logger.error(f"Purchase failed: Item '{item_id}' not found in registry.")
+            return {"success": False, "reason": "Item not found"}
+
+        item = self.item_registry[item_id]
+        price = item["price"]
+        current_balance = self.db.get_balance(user_id)
+
+        if current_balance < price:
+            logger.warning(f"Purchase failed for {user_id}: Insufficient funds ({current_balance} < {price})")
+            return {"success": False, "reason": "Insufficient funds"}
+
+        # Deduct balance
+        self.db.add_balance(user_id, -price)
+        logger.info(f"User '{user_id}' purchased '{item_id}' for {price} coins.")
+        
+        return {
+            "success": True,
+            "item_id": item_id,
+            "effects": item["restores"],
+            "remaining_balance": current_balance - price
+        }
+
+    def process_cognitive_dividend(self, user_id: str, life_sense_amount: float, quality_score: float) -> float:
+        """Processes cognitive dividends from AGI work, awarding coins based on output quality."""
+        # Conversion formula: 1 Life Sense = 0.5 Coins (base), adjusted by quality
+        base_rate = 0.5
+        dividend_amount = life_sense_amount * base_rate * (0.5 + quality_score * 0.5)
+        
+        if dividend_amount > 0:
+            self.db.add_balance(user_id, dividend_amount)
+            logger.info(f"Awarded cognitive dividend of {dividend_amount:.2f} coins to user '{user_id}' (Life Sense: {life_sense_amount:.2f}, Quality: {quality_score:.2%})")
+        
+        return dividend_amount
 
     def get_balance(self, user_id: str) -> float:
         """Retrieves the currency balance for a given user."""

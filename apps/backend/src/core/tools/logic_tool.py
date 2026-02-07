@@ -1,4 +1,4 @@
-from apps.backend.src.core.managers.dependency_manager import dependency_manager
+from src.core.managers.dependency_manager import dependency_manager
 from .logic_model.logic_parser_eval import
 from diagnose_base_agent import
 from system_test import

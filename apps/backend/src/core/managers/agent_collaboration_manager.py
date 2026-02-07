@@ -5,8 +5,8 @@ from datetime import datetime
 # TODO: Fix import - module 'uuid' not found
 
 from ...core_ai.agent_manager import
-from apps.backend.src.core.hsp.hsp_connector import HSPConnector
-from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
+from src.core.hsp.hsp_connector import HSPConnector
+from src.core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload
 
 logger, Any = logging.getLogger(__name__)
 

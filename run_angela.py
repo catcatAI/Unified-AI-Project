@@ -19,7 +19,7 @@ import signal
 from pathlib import Path
 
 
-def wait_for_server(port=8000, timeout=30):
+def wait_for_server(port=8000, timeout=60):
     """等待服务器启动"""
     import socket
 
@@ -28,7 +28,7 @@ def wait_for_server(port=8000, timeout=30):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(2)
-            result = sock.connect_ex(("localhost", port))
+            result = sock.connect_ex(("127.0.0.1", port))
             sock.close()
             if result == 0:
                 return True
@@ -43,6 +43,20 @@ class Launcher:
         self.project_root = Path(__file__).parent.resolve()
         self.backend_dir = self.project_root / "apps" / "backend"
         self.electron_dir = self.project_root / "apps" / "desktop-app" / "electron_app"
+        self.mode = "user" # Default mode
+
+    def check_dependencies(self):
+        """檢查核心依賴是否安裝"""
+        self.log("正在檢查環境依賴...")
+        try:
+            import fastapi
+            import uvicorn
+            import psutil
+            import yaml
+            return True
+        except ImportError as e:
+            self.log(f"缺失關鍵組件: {e}. 請先運行 python install_angela.py", "❌")
+            return False
 
     def log(self, msg, status="✅"):
         print(f"   {status} {msg}")
@@ -53,34 +67,30 @@ class Launcher:
 
         try:
             python = sys.executable
+            cmd = [
+                python,
+                "-m",
+                "uvicorn",
+                "src.services.main_api_server:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+            ]
+            
+            if self.mode == "user":
+                # 在普通用戶模式下，降低後端日誌級別，不顯示大量偵錯訊息
+                cmd.extend(["--log-level", "warning"])
 
             if sys.platform == "win32":
                 proc = subprocess.Popen(
-                    [
-                        python,
-                        "-m",
-                        "uvicorn",
-                        "src.services.main_api_server:app",
-                        "--host",
-                        "0.0.0.0",
-                        "--port",
-                        "8000",
-                    ],
+                    cmd,
                     cwd=str(self.backend_dir),
-                    creationflags=subprocess.CREATE_NEW_CONSOLE,
+                    creationflags=subprocess.CREATE_NEW_CONSOLE if self.mode == "dev" else 0,
                 )
             else:
                 proc = subprocess.Popen(
-                    [
-                        python,
-                        "-m",
-                        "uvicorn",
-                        "src.services.main_api_server:app",
-                        "--host",
-                        "0.0.0.0",
-                        "--port",
-                        "8000",
-                    ],
+                    cmd,
                     cwd=str(self.backend_dir),
                 )
 
@@ -112,10 +122,13 @@ class Launcher:
                     self.log("请先安装依赖: cd apps/desktop-app && npm install", "⚠️")
                     return None
 
+                # 只在 dev 模式下創建新終端，user 模式下在後台運行
+                creation_flags = subprocess.CREATE_NEW_CONSOLE if self.mode == "dev" else subprocess.CREATE_NO_WINDOW
+                
                 proc = subprocess.Popen(
                     [str(electron), str(self.electron_dir)],
                     cwd=str(self.electron_dir),
-                    creationflags=subprocess.CREATE_NEW_CONSOLE,
+                    creationflags=creation_flags,
                 )
             else:
                 proc = subprocess.Popen(["npm", "start"], cwd=str(self.electron_dir))
@@ -174,6 +187,10 @@ def main():
     parser.add_argument(
         "--install-shortcut", action="store_true", help="创建桌面快捷方式"
     )
+    parser.add_argument(
+        "--mode", type=str, choices=["user", "dev"], default="user",
+        help="運行模式: user (簡潔/普通用戶), dev (詳細/開發者)"
+    )
 
     args = parser.parse_args()
 
@@ -182,10 +199,14 @@ def main():
     print("=" * 50)
 
     launcher = Launcher()
+    launcher.mode = args.mode
 
     if args.install_shortcut:
         launcher.create_shortcut()
         return 0
+    
+    if not launcher.check_dependencies():
+        return 1
 
     backend_proc = None
     desktop_proc = None

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angela AI - Desktop Pet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        #container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #angela-placeholder {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 80px;
+            animation: breathe 3s ease-in-out infinite;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes breathe {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        #live2d-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        #status-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            min-width: 200px;
+        }
+
+        .status-item {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <!-- Live2D Canvas (will replace emoji if SDK loaded) -->
+        <canvas id="live2d-canvas"></canvas>
+        <div id="angela-placeholder">😊</div>
+    </div>
+
+    <div id="status-panel">
+        <div class="status-item">💰 Coins: <span id="coins">0</span></div>
+        <div class="status-item">⚡ Energy: <span id="energy">100</span>/100</div>
+        <div class="status-item">😊 Mood: <span id="mood">Happy</span></div>
+        <div class="status-item">🔌 Backend: <span id="backend-status">Connecting...</span></div>
+    </div>
+
+    <div id="controls">
+        <button class="control-btn" id="btn-minimize" title="Minimize">−</button>
+        <button class="control-btn" id="btn-close" title="Close">✕</button>
+    </div>
+
+    <!-- Live2D Cubism SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.2.4/dist/pixi.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.5.0/dist/index.min.js"></script>
+
+    <!-- Phase F1: Backend Integration -->
+    <script src="js/simple-live2d-loader.js"></script>
+    <script src="js/api-client.js"></script>
+    <script src="js/dialogue-ui.js"></script>
+
+    <script>
+        // Initialize app
+        console.log('Angela Desktop App - Phase F1 MVP + Live2D');
+
+        // Initialize Live2D loader
+        let live2dLoader = null;
+        let live2dEnabled = false;
+
+        async function initLive2D() {
+            try {
+                live2dLoader = new SimpleLive2DLoader('live2d-canvas');
+                const initialized = await live2dLoader.initialize();
+
+                if (initialized) {
+                    // Load Miara Pro model
+                    const modelPath = 'models/miara_pro_en/runtime/miara_pro_t03.model3.json';
+                    const loaded = await live2dLoader.loadModel(modelPath);
+
+                    if (loaded) {
+                        console.log('[Live2D] Model loaded successfully');
+                        live2dEnabled = true;
+                        // Hide emoji placeholder
+                        document.getElementById('angela-placeholder').style.display = 'none';
+                        return true;
+                    }
+                }
+
+                console.warn('[Live2D] Failed to load, using emoji placeholder');
+                return false;
+            } catch (error) {
+                console.error('[Live2D] Error:', error);
+                return false;
+            }
+        }
+
+        // Initialize API client
+        const apiClient = new AngelaAPIClient();
+
+        // Initialize dialogue UI
+        const dialogueUI = new DialogueUI(apiClient);
+
+        // Test backend connection
+        async function init() {
+            const connected = await apiClient.testConnection();
+            const statusEl = document.getElementById('backend-status');
+
+            if (connected) {
+                statusEl.textContent = 'Connected ✅';
+                statusEl.style.color = '#4CAF50';
+
+                // Load initial status
+                const status = await apiClient.getStatus();
+                if (status.success) {
+                    document.getElementById('energy').textContent = status.energy;
+                    document.getElementById('mood').textContent = status.mood;
+                }
+
+                // Load economy
+                const economy = await apiClient.getEconomy();
+                if (economy.success) {
+                    document.getElementById('coins').textContent = economy.coins;
+                }
+            } else {
+                statusEl.textContent = 'Offline ❌';
+                statusEl.style.color = '#f44336';
+            }
+        }
+
+        // Window controls
+        document.getElementById('btn-minimize').addEventListener('click', () => {
+            if (window.electronAPI) {
+                window.electronAPI.window.minimize();
+            }
+        });
+
+        document.getElementById('btn-close').addEventListener('click', () => {
+            if (window.electronAPI) {
+                window.electronAPI.window.close();
+            } else {
+                window.close();
+            }
+        });
+
+        // Start app
+        (async () => {
+            // Try to load Live2D first
+            await initLive2D();
+
+            // Then connect to backend
+            await init();
+        })();
+
+        // Update status every 10 seconds
+        setInterval(async () => {
+            const status = await apiClient.getStatus();
+            if (status.success) {
+                document.getElementById('energy').textContent = status.energy;
+                document.getElementById('mood').textContent = status.mood;
+            }
+        }, 10000);
+    </script>
+</body>
+
+</html>

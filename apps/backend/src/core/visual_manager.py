@@ -27,19 +27,19 @@ import asyncio
 import logging
 import time
 
-from apps.backend.src.core.visual_config import (
+from src.core.visual_config import (
     VisualConfiguration, ModelConfiguration, RenderQuality
 )
-from apps.backend.src.core.visual_effect_generator import (
+from src.core.visual_effect_generator import (
     VisualEffectGenerator, EffectType
 )
 
 # Import biological systems
 try:
-    from apps.backend.src.core.autonomous.live2d_integration import (
+    from src.core.autonomous.live2d_integration import (
         Live2DIntegration, ExpressionType, MotionType, LipSyncState
     )
-    from apps.backend.src.core.autonomous.self_generation import (
+    from src.core.autonomous.self_generation import (
         SelfGeneration, GenerationMode, VisualAttributes
     )
     LIVE2D_AVAILABLE = True
@@ -70,7 +70,7 @@ except ImportError:
         pass
 
 try:
-    from apps.backend.src.core.autonomous.emotional_blending import (
+    from src.core.autonomous.emotional_blending import (
         EmotionalBlendingSystem, BasicEmotion, PADEmotion
     )
     EMOTION_AVAILABLE = True
@@ -79,7 +79,7 @@ except ImportError:
     EmotionalBlendingSystem = None
 
 try:
-    from apps.backend.src.core.autonomous.physiological_tactile import (
+    from src.core.autonomous.physiological_tactile import (
         PhysiologicalTactileSystem, TactileStimulus, BodyPart
     )
     TACTILE_AVAILABLE = True

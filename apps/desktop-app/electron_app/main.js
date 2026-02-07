@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, globalShortcut, systemPreferences, nativeTheme, Menu, Tray } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, systemPreferences, nativeTheme, Menu, Tray, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const securityManager = require('./js/security-manager');
@@ -43,6 +43,11 @@ app.whenReady().then(async () => {
   
   // Initialize system integrations
   initializeSystemIntegrations();
+  
+  // Auto-connect to backend WebSocket
+  const wsUrl = `ws://${backendIP}:8000/ws`;
+  console.log(`[Main] Auto-connecting to backend WebSocket: ${wsUrl}`);
+  connectWebSocket(wsUrl);
   
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -133,9 +138,20 @@ function createMainWindow() {
  * Create system tray with context menu
  */
 function createTray() {
-  // Create tray icon (using base64 for simplicity)
-  const iconPath = getTrayIconPath();
-  tray = new Tray(iconPath);
+  try {
+    const iconPath = getTrayIconPath();
+    if (fs.existsSync(iconPath)) {
+      tray = new Tray(iconPath);
+    } else {
+      // Fallback to an empty image if icon not found
+      tray = new Tray(nativeImage.createEmpty());
+      console.warn('Tray icon not found, using empty placeholder');
+    }
+  } catch (error) {
+    console.error('Failed to create tray:', error);
+    // Don't crash the whole app if tray fails
+    return;
+  }
   
   // Create context menu
   const contextMenu = Menu.buildFromTemplate([
@@ -664,49 +680,41 @@ ipcMain.handle('live2d-load-model', async (event, modelPath) => {
   try {
     // Normalize path separators
     const normalizedModelPath = modelPath.replace(/\\/g, '/');
-    const modelName = normalizedModelPath.split('/').pop();
+    
+    // Correctly resolve models directory relative to project root
+    // apps/desktop-app/electron_app -> ../../../resources/models
+    const modelsDir = path.join(__dirname, '..', '..', '..', 'resources', 'models');
     
     // Handle both direct model paths and model directories
-    let fullPath;
-    if (fs.statSync(path.join(__dirname, '..', '..', 'resources', 'models', normalizedModelPath)).isDirectory()) {
-      // If it's a directory, check for runtime/ subdirectory (for miara_pro_en models)
-      const runtimePath = path.join(__dirname, '..', '..', 'resources', 'models', normalizedModelPath, 'runtime');
+    let fullPath = path.join(modelsDir, normalizedModelPath);
+    
+    if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
+      // If it's a directory, check for runtime/ subdirectory (common for miara models)
+      const runtimePath = path.join(fullPath, 'runtime');
       if (fs.existsSync(runtimePath)) {
         fullPath = runtimePath;
-      } else {
-        fullPath = path.join(__dirname, '..', '..', 'resources', 'models', normalizedModelPath);
       }
-    } else {
-      fullPath = path.join(__dirname, '..', '..', 'resources', 'models', modelPath);
     }
     
     if (fs.existsSync(fullPath)) {
+      console.log(`[Main] Loading Live2D model from: ${fullPath}`);
       return { success: true, path: fullPath };
     }
     
+    console.warn(`[Main] Model path not found: ${fullPath}`);
     return { success: false, error: 'Model file not found' };
   } catch (error) {
+    console.error(`[Main] Error loading Live2D model: ${error.message}`);
     return { success: false, error: error.message };
   }
 });
 
 ipcMain.handle('live2d-get-models', () => {
-  const modelsDir = path.join(__dirname, '..', '..', 'resources', 'models');
-  if (!fs.existsSync(modelsDir)) {
-    return [];
-  }
-  
-  return fs.readdirSync(modelsDir, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => ({
-      name: dirent.name,
-      path: path.join(modelsDir, dirent.name)
-    }));
-});
-
-ipcMain.handle('live2d-get-models', () => {
   const modelsDir = path.join(__dirname, '..', '..', '..', 'resources', 'models');
+  console.log(`[Main] Searching for models in: ${modelsDir}`);
+  
   if (!fs.existsSync(modelsDir)) {
+    console.warn(`[Main] Models directory not found: ${modelsDir}`);
     return [];
   }
   
@@ -865,20 +873,124 @@ ipcMain.handle('file-open-dialog', async (event, options) => {
 });
 
 // Backend API communication (WebSocket)
+const WebSocket = require('ws');
 let wsClient = null;
+let wsReconnectTimer = null;
+let wsReconnectAttempts = 0;
+const WS_MAX_RECONNECT_ATTEMPTS = 5;
+const WS_RECONNECT_DELAY = 3000;
+
+function connectWebSocket(url) {
+  if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+    console.log('[WebSocket] Already connected');
+    return;
+  }
+
+  try {
+    console.log(`[WebSocket] Connecting to ${url}...`);
+    wsClient = new WebSocket(url);
+
+    wsClient.on('open', () => {
+      console.log('[WebSocket] Connected successfully');
+      wsReconnectAttempts = 0;
+      if (mainWindow) {
+        mainWindow.webContents.send('websocket-connected', { success: true });
+      }
+    });
+
+    wsClient.on('message', (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        console.log('[WebSocket] Received:', message);
+        if (mainWindow) {
+          mainWindow.webContents.send('websocket-message', message);
+        }
+      } catch (error) {
+        console.error('[WebSocket] Failed to parse message:', error);
+      }
+    });
+
+    wsClient.on('error', (error) => {
+      console.error('[WebSocket] Error:', error.message);
+      if (mainWindow) {
+        mainWindow.webContents.send('websocket-error', { error: error.message });
+      }
+    });
+
+    wsClient.on('close', (code, reason) => {
+      console.log(`[WebSocket] Closed: ${code} - ${reason}`);
+      wsClient = null;
+      
+      if (mainWindow) {
+        mainWindow.webContents.send('websocket-disconnected', { code, reason: reason.toString() });
+      }
+
+      // Auto-reconnect
+      if (wsReconnectAttempts < WS_MAX_RECONNECT_ATTEMPTS) {
+        wsReconnectAttempts++;
+        console.log(`[WebSocket] Reconnecting in ${WS_RECONNECT_DELAY}ms (attempt ${wsReconnectAttempts}/${WS_MAX_RECONNECT_ATTEMPTS})...`);
+        wsReconnectTimer = setTimeout(() => {
+          connectWebSocket(url);
+        }, WS_RECONNECT_DELAY);
+      } else {
+        console.error('[WebSocket] Max reconnection attempts reached');
+      }
+    });
+  } catch (error) {
+    console.error('[WebSocket] Connection failed:', error);
+    if (mainWindow) {
+      mainWindow.webContents.send('websocket-error', { error: error.message });
+    }
+  }
+}
+
+function disconnectWebSocket() {
+  if (wsReconnectTimer) {
+    clearTimeout(wsReconnectTimer);
+    wsReconnectTimer = null;
+  }
+  
+  if (wsClient) {
+    wsClient.close();
+    wsClient = null;
+  }
+  
+  wsReconnectAttempts = 0;
+}
+
+function sendWebSocketMessage(message) {
+  if (!wsClient || wsClient.readyState !== WebSocket.OPEN) {
+    console.error('[WebSocket] Not connected');
+    return false;
+  }
+
+  try {
+    wsClient.send(JSON.stringify(message));
+    return true;
+  } catch (error) {
+    console.error('[WebSocket] Failed to send message:', error);
+    return false;
+  }
+}
 
 ipcMain.on('websocket-connect', (event, { url }) => {
-  // Connect to backend WebSocket
-  // Will use ws or WebSocket library
-  event.reply('websocket-connected', { success: true });
+  connectWebSocket(url);
 });
 
 ipcMain.on('websocket-disconnect', () => {
-  // Disconnect from backend WebSocket
+  disconnectWebSocket();
 });
 
 ipcMain.on('websocket-send', (event, message) => {
-  // Send message to backend
+  const success = sendWebSocketMessage(message);
+  event.reply('websocket-send-result', { success });
+});
+
+ipcMain.handle('websocket-get-status', () => {
+  return {
+    connected: wsClient && wsClient.readyState === WebSocket.OPEN,
+    reconnectAttempts: wsReconnectAttempts
+  };
 });
 
 // Export for testing

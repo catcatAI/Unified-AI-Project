@@ -19,18 +19,18 @@ if project_root not in sys.path:
 
 try:
     from .base_agent import BaseAgent
-    from apps.backend.src.ai.alignment import (
+    from src.ai.alignment import (
         ReasoningSystem, EmotionSystem, OntologySystem, AlignmentManager,
         DecisionTheorySystem, AdversarialGenerationSystem
     )
-    from apps.backend.src.core.hsp.types import HSPTaskResultPayload # Added missing import
+    from src.core.hsp.types import HSPTaskResultPayload # Added missing import
 except ImportError:
-    from apps.backend.src.agents.base_agent import BaseAgent
-    from apps.backend.src.ai.alignment import (
+    from src.agents.base_agent import BaseAgent
+    from src.ai.alignment import (
         ReasoningSystem, EmotionSystem, OntologySystem, AlignmentManager,
         DecisionTheorySystem, AdversarialGenerationSystem
     )
-    from apps.backend.src.core.hsp.types import HSPTaskResultPayload # Added missing import
+    from src.core.hsp.types import HSPTaskResultPayload # Added missing import
 
 logger = logging.getLogger(__name__)
 
@@ -250,7 +250,7 @@ class AlignedBaseAgent(BaseAgent):
                                         sender_ai_id: str, alignment_result: Dict[str, Any]):
         """发送对齐拒绝响应"""
         if self.hsp_connector and task_payload.get("callback_address"):
-            from apps.backend.src.core.hsp.types import HSPTaskResultPayload
+            from src.core.hsp.types import HSPTaskResultPayload
             
             result_payload = HSPTaskResultPayload(
                 request_id=task_payload.get("request_id", ""),

@@ -16,7 +16,7 @@ The `HSPConnector` is designed to provide a unified and resilient communication 
     *   **`MessageBridge`**: A key component that bridges messages between the external MQTT broker and the internal bus, allowing for seamless communication between the AI's internal components and the external network.
 *   **Structured Messaging**: Defines high-level methods for publishing and subscribing to specific HSP message types, each with a well-defined payload structure (e.g., `HSPFactPayload`, `HSPCapabilityAdvertisementPayload`, `HSPTaskRequestPayload`, `HSPTaskResultPayload`, `HSPAcknowledgementPayload`).
 *   **Resilience and Reliability**:
-    *   **Retry Policy**: Implements a sophisticated retry mechanism with exponential backoff for publishing messages, ensuring that transient network issues do not lead to message loss.
+    *   **Retry Policy**: Implements a sophisticated retry mechanism with exponential backoff for publishing messages. (Updated in Phase 14 to strictly use `max_retries` complying with shared library standards).
     *   **Circuit Breaker**: Utilizes a circuit breaker pattern to prevent the system from repeatedly attempting to publish messages to a failing service, thus preventing cascading failures.
     *   **Acknowledgements (ACKs)**: Supports a Quality of Service (QoS) parameter (`requires_ack`) to ensure guaranteed message delivery for critical messages.
     *   **Fallback Protocols**: Can initialize and use a suite of fallback communication protocols (including in-memory, file-based, and HTTP) if the primary HSP (MQTT) connection fails, ensuring that the AI can maintain communication even in adverse network conditions.

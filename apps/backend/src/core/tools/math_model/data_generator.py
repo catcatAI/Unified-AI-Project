@@ -1,5 +1,5 @@
 # TODO: Fix import - module 'random' not found
-from apps.backend.src.tools.csv_tool import
+from src.tools.csv_tool import
 from tests.test_json_fix import
 from diagnose_base_agent import
 from pathlib import Path

@@ -8,7 +8,7 @@ Angela 的運行狀態由四維張量共同定義，實現了從「版本能力�
 
 | 維度 | 代號 | 範圍 (Range) | 說明 |
 | :--- | :--- | :--- | :--- |
-| **Version Status** | **V** | v6.1.0 - Production | Angela 目前的版本功能狀態與能力邊界 |
+| **Version Status** | **V** | v6.2.0 - Production | Angela 目前的版本功能狀態與能力邊界 |
 | **Maturity Level** | **L** | L0 ~ L11 | 12 個階段的矩陣成熟度，定義認知深度 |
 | **Precision Level** | **P** | FP8 ~ FP128 | 5 個等級的浮點精度，定義數值解析度 |
 | **Precision Mode** | **M** | INT ~ DEC4 | 5 個模式的精度模式，定義整數/小數傳輸策略 |

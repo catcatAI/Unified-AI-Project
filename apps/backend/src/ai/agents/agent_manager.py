@@ -11,9 +11,31 @@ import os
 import subprocess
 import sys
 import threading
-from typing import Dict, Optional, List, Any
+import time
+import multiprocessing as mp
+from typing import Dict, Optional, List, Any, Callable
+from dataclasses import dataclass
+from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+
+class AgentType(Enum):
+    """代理類型"""
+    IN_PROCESS = "in_process"      # 進程內代理（現有實現）
+    SUBPROCESS = "subprocess"       # 子進程代理（Phase 15）
+    REMOTE = "remote"              # 遠程代理（未來擴展）
+
+
+@dataclass
+class ProcessAgentInfo:
+    """進程代理信息"""
+    agent_id: str
+    agent_type: str
+    process: mp.Process
+    start_time: float
+    last_heartbeat: float
+    restart_count: int = 0
 
 class AgentManager:
     """
@@ -22,13 +44,15 @@ class AgentManager:
     """
 
     def __init__(self, python_executable: Optional[str] = None,
-                 agents_dir: Optional[str] = None) -> None:
+                 agents_dir: Optional[str] = None,
+                 enable_process_agents: bool = True) -> None:
         """
         Initializes the AgentManager.
 
         Args:
             python_executable: Python executable path.
             agents_dir: The directory where agent scripts are located.
+            enable_process_agents: 是否啟用進程代理支持（Phase 15）
         """
         self.python_executable = python_executable or sys.executable
         self.agents: Dict[str, Any] = {}
@@ -36,7 +60,16 @@ class AgentManager:
         self.active_agents: Dict[str, subprocess.Popen[Any]] = {}
         self.agent_script_map: Dict[str, str] = self._discover_agent_scripts(agents_dir)
         self.launch_lock = threading.Lock()
+        
+        # Phase 15: 進程代理支持
+        self.enable_process_agents = enable_process_agents
+        self.process_agents: Dict[str, ProcessAgentInfo] = {}
+        self.health_check_interval = 10.0  # 秒
+        self.max_restart_attempts = 3
+        self._health_monitor_task: Optional[asyncio.Task] = None
+        
         logger.info(f"AgentManager initialized. Found agent scripts: {list(self.agent_script_map.keys())}")
+        logger.info(f"Process agents enabled: {self.enable_process_agents}")
 
     def register_agent_factory(self, agent_type: str, factory: Any):
         """注册代理工厂"""

@@ -50,54 +50,47 @@
             pointer-events: none;
         }
 
-        .clickable-area {
-            position: absolute;
-            pointer-events: auto;
-            cursor: pointer;
-            border: 1px solid rgba(255, 0, 0, 0.3);
-            background: rgba(255, 0, 0, 0.1);
-            transition: background 0.2s;
-        }
-
-        .clickable-area:hover {
-            background: rgba(255, 0, 0, 0.3);
-        }
-
         #status-bar {
-            position: fixed;
+            position: absolute;
             top: 10px;
-            right: 10px;
+            left: 10px;
+            padding: 8px 12px;
             background: rgba(0, 0, 0, 0.7);
             color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
+            border-radius: 4px;
             font-size: 12px;
             z-index: 100;
             opacity: 0;
             transition: opacity 0.3s;
-            pointer-events: none;
         }
 
         #status-bar.visible {
             opacity: 1;
         }
 
+        #badge-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+        }
+
         .badge {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
             padding: 6px 12px;
-            border-radius: 20px;
+            border-radius: 16px;
             font-size: 11px;
             font-weight: bold;
             display: flex;
             align-items: center;
             gap: 6px;
-            z-index: 100;
             backdrop-filter: blur(5px);
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.1);
+            pointer-events: auto;
         }
 
         .badge.secure {
@@ -147,22 +140,18 @@
 
         #loading-text {
             margin-top: 20px;
-            font-size: 14px;
+            font-size: 16px;
+            font-weight: 500;
         }
 
         #controls {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
             gap: 8px;
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        #controls.visible {
-            opacity: 1;
+            z-index: 150;
         }
 
         .control-btn {
@@ -257,14 +246,16 @@
 
     <div id="status-bar"></div>
 
-    <div id="security-badge" class="badge unsecure">
-        <span class="icon">🔒</span>
-        <span class="text">Security: Off</span>
-    </div>
-
-    <div id="sync-badge" class="badge unsecure">
-        <span class="icon">🔄</span>
-        <span class="text">Sync: Pending</span>
+    <div id="badge-container">
+        <div id="security-badge" class="badge unsecure">
+            <span class="icon">🔒</span>
+            <span class="text">Security: Off</span>
+        </div>
+    
+        <div id="sync-badge" class="badge unsecure">
+            <span class="icon">🔄</span>
+            <span class="text">Sync: Pending</span>
+        </div>
     </div>
 
     <div id="controls">
@@ -278,17 +269,29 @@
     <!-- Live2D Cubism Web SDK -->
     <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
     
+    <!-- Hardware Detection -->
+    <script src="js/hardware-config.js"></script>
+    <script src="js/hardware-detection-enhanced.js"></script>
+    <script src="js/hardware-detection.js"></script>
+    
     <!-- App Scripts -->
+    <script src="js/hardware-integration.js"></script>
+    <script src="js/hardware-enhancement-patch.js"></script>
+    <script src="js/laptop-optimizer.js"></script>
+    <script src="js/integration-tester.js"></script>
+    <script src="js/hardware-diagnostic.js"></script>
+    <script src="js/quick-diagnosis.js"></script>
+    
     <script src="js/logger.js"></script>
     <script src="js/data-persistence.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/theme-manager.js"></script>
-    <script src="js/hardware-detection.js"></script>
     <script src="js/backend-websocket.js"></script>
     <script src="js/state-matrix.js"></script>
     <script src="js/performance-manager.js"></script>
     <script src="js/maturity-tracker.js"></script>
     <script src="js/precision-manager.js"></script>
+    <script src="js/live2d-cubism-wrapper.js"></script>
     <script src="js/live2d-manager.js"></script>
     <script src="js/input-handler.js"></script>
     <script src="js/audio-handler.js"></script>
@@ -298,4 +301,9 @@
     <script src="js/user-manager.js"></script>
     <script src="js/app.js"></script>
 </body>
-</html>
+</html>< s c r i p t   s r c = " j s / l i v e 2 d - a n a l y z e r . j s " > < / s c r i p t >  
+ < s c r i p t   s r c = " j s / f i n a l - t e s t e r . j s " > < / s c r i p t >  
+ < s c r i p t   s r c = " j s / c u b i s m - t e s t e r . j s " > < / s c r i p t >  
+ < s c r i p t   s r c = " j s / d e e p - l i v e 2 d - d i a g n o s t i c . j s " > < / s c r i p t >  
+ < s c r i p t   s r c = " j s / m o d e l - r e s o u r c e - c h e c k e r . j s " > < / s c r i p t >  
+ 

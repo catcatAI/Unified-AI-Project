@@ -50,20 +50,45 @@ class AngelaInstaller:
             return Path.home() / ".local" / "share" / "AngelaAI"
 
     def detect_hardware(self):
-        """自动检测硬件"""
-        print("\n🔍 检测硬件...")
-        self.hardware_info = {
-            "platform": sys.platform,
-            "architecture": platform.machine(),
-            "processor": platform.processor(),
-            "python_version": sys.version,
-            "cpu_cores": os.cpu_count() or 4,
-            "memory_gb": self._get_memory_gb(),
-            "gpu": self._detect_gpu(),
-        }
-        print(f"   ✅ 平台: {self.hardware_info['platform']}")
-        print(f"   ✅ CPU核心数: {self.hardware_info['cpu_cores']}")
-        print(f"   ✅ 内存: {self.hardware_info['memory_gb']} GB")
+        """自动检测硬件並建立效能分級"""
+        print("\n🔍 正在分析硬體效能 (Hardware Probe)...")
+        
+        # 嘗試導入內部的 HardwareProbe
+        try:
+            # 由於安裝時可能還沒安裝 psutil，這裏做簡單的類比
+            # 但我們可以利用 wmic 獲取足夠數據
+            cores = os.cpu_count() or 4
+            memory = self._get_memory_gb()
+            gpu_name = self._detect_gpu()
+            
+            # 簡單計算 AI 評分 (與 HardwareProbe 邏輯對齊)
+            score = cores * 2 + (memory // 4) * 5
+            if "RTX" in gpu_name or "GTX" in gpu_name:
+                score += 40
+            elif "Apple" in gpu_name:
+                score += 30
+            
+            if score > 80: tier = "Extreme"
+            elif score > 60: tier = "High"
+            elif score > 40: tier = "Medium"
+            else: tier = "Low"
+            
+            self.hardware_info = {
+                "platform": sys.platform,
+                "architecture": platform.machine(),
+                "processor": platform.processor(),
+                "python_version": sys.version,
+                "cpu_cores": cores,
+                "memory_gb": memory,
+                "gpu": gpu_name,
+                "performance_tier": tier,
+                "ai_capability_score": score
+            }
+        except Exception as e:
+            print(f"   ⚠️  硬體偵測異常: {e}")
+            self.hardware_info = {"performance_tier": "Medium", "ai_capability_score": 50}
+
+        print(f"   ✅ 分級: {self.hardware_info['performance_tier']} (Score: {self.hardware_info.get('ai_capability_score', 0)})")
         print(f"   ✅ GPU: {self.hardware_info['gpu']}")
         return self.hardware_info
 
@@ -285,33 +310,46 @@ class AngelaInstaller:
         config_dir = self.install_dir / "config"
         config_dir.mkdir(exist_ok=True)
 
+        tier = self.hardware_info.get("performance_tier", "Medium")
+        
+        # 根據效能等級自動調整 AI 配置
+        precision_modes = {
+            "Extreme": {"mode": "extreme", "scaling": 1.0, "llm": "gemini-1.5-pro-latest"},
+            "High": {"mode": "high", "scaling": 0.8, "llm": "gemini-pro"},
+            "Medium": {"mode": "standard", "scaling": 0.5, "llm": "gemini-pro"},
+            "Low": {"mode": "low-resource", "scaling": 0.3, "llm": "gemini-1.5-flash"},
+        }
+        preset = precision_modes.get(tier, precision_modes["Medium"])
+
         config = {
             "name": "Angela",
-            "version": "6.0.4",
+            "version": "6.1.0",
             "language": "zh-CN",
+            "user_tier": tier,
             "hardware": self.hardware_info,
             "desktop_pet": {
                 "enabled": True,
                 "name": "Angela",
                 "start_position": "bottom-right",
                 "scale": 1.0,
-                "frame_rate": 60,
+                "frame_rate": 60 if tier in ["High", "Extreme"] else 30,
             },
             "api": {
                 "google_api_key": "",
-                "gemini_model": "gemini-pro",
+                "gemini_model": preset["llm"],
             },
             "audio": {
                 "tts_engine": "edge-tts",
                 "voice": "zh-CN-XiaoxiaoNeural",
             },
             "precision": {
-                "default_mode": "standard",
+                "default_mode": preset["mode"],
+                "resource_scaling": preset["scaling"],
                 "auto_optimize": True,
             },
             "maturity": {
                 "start_level": 0,
-                "xp_multiplier": 1.0,
+                "xp_multiplier": 1.2 if tier == "Extreme" else 1.0,
             },
         }
 

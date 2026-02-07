@@ -81,7 +81,7 @@ class Live2DCubismWrapper {
             setTimeout(() => {
                 clearInterval(checkInterval);
                 reject(new Error('Failed to load Live2D Cubism SDK'));
-            }, 30000);
+            }, 5000); // 縮短為 5 秒超時
         });
     }
     
@@ -190,16 +190,13 @@ class Live2DCubismWrapper {
             this.gl.TEXTURE_2D,
             level,
             internalFormat,
-            image.width,
-            image.height,
-            0,
             srcFormat,
             srcType,
-            new Uint8Array([image])
+            image
         );
         
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
         
@@ -321,7 +318,7 @@ class Live2DCubismWrapper {
         
         this.renderer = this.live2dModel.createRenderer();
         this.renderer.setWebGLContext(this.gl);
-        renderer.startAlpha(this.gl);
+        this.renderer.startAlpha(this.gl);
         this.renderer.update(this.live2dModel);
         this.renderer.setRenderLoop(this.gl, () => this.render());
         
@@ -598,4 +595,9 @@ class Live2DCubismWrapper {
         this.isLoaded = false;
         this.isRunning = false;
     }
+}
+
+// Export for use in other files
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Live2DCubismWrapper;
 }

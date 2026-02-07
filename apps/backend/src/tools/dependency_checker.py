@@ -13,7 +13,7 @@ if src_path not in sys.path, ::
 
 try,
     # Import the dependency_manager instance and its print function
-    from apps.backend.src.core_ai.dependency_manager import dependency_manager,
+    from src.core_ai.dependency_manager import dependency_manager,
     print_dependency_report
     DM_AVAILABLE == True
 except (ImportError, ModuleNotFoundError) as e, ::

@@ -1,17 +1,26 @@
-# src / core_ai / lis / __init__.py
 """
-LIS (Linguistic Immune System) Sub - package.
-
-This sub - package will contain modules related to the Linguistic Immune System,
-responsible for detecting, diagnosing, and responding to semantic anomalies, :
-as well as facilitating error - driven linguistic evolution.
+LIS (Linguistic Immune System) Sub-package.
+Responsible for detecting, diagnosing, and responding to semantic anomalies.
 """
 
-# Expose key classes or interfaces for easier import if desired.:
-# For example, once HAMLISCache or other implementations exist:
-# from .lis_cache_interface import LISCacheInterface, HAMLISCache
-# from .err_introspector import ERR_INTROSPECTOR # If it becomes a class
+from .lis_manager import LISManager
+from .lis_cache_interface import LISCacheInterface, HAMLISCache
+from .err_introspector import ERRIntrospector
+from .types import (
+    LIS_AnomalyType,
+    LIS_SemanticAnomalyDetectedEvent,
+    LIS_IncidentRecord,
+    NarrativeAntibodyObject
+)
 
-# For now, just making it a package.
-version
-print(f"core_ai.lis package initialized (version {VERSION})")
+VERSION = "0.1.0"
+__all__ = [
+    "LISManager",
+    "LISCacheInterface",
+    "HAMLISCache",
+    "ERRIntrospector",
+    "LIS_AnomalyType",
+    "LIS_SemanticAnomalyDetectedEvent",
+    "LIS_IncidentRecord",
+    "NarrativeAntibodyObject"
+]

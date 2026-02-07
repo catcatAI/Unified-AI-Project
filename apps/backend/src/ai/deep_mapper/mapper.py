@@ -1,5 +1,5 @@
 from typing import Dict, Any, Optional
-from apps.backend.src.core.shared.types import MappableDataObject
+from src.core.shared.types import MappableDataObject
 from tests.test_json_fix import
 
 class DeepMapper, :

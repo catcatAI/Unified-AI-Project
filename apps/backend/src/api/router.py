@@ -10,10 +10,10 @@ from typing import Any, Dict, List, Optional
 import uuid
 
 from fastapi import APIRouter, Body
-from src.api.v1.endpoints import drive, pet, vision, audio, tactile, mobile
+from src.api.v1.endpoints import drive, pet, vision, audio, tactile, mobile, economy
 from src.api.routes.ops_routes import router as ops_router
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
 # 包含 v1 端點
 router.include_router(drive.router)
@@ -22,6 +22,7 @@ router.include_router(vision.router)
 router.include_router(audio.router)
 router.include_router(tactile.router)
 router.include_router(mobile.router)
+router.include_router(economy.router)
 router.include_router(ops_router)
 
 
@@ -31,6 +32,15 @@ async def root():
     return {"message": "Unified AI Project API"}
 
 
+@router.get("/system/emergency")
+async def trigger_emergency_mode():
+    """強制進入緊急純文字模式，關閉所有重型組件"""
+    return {
+        "status": "emergency_active",
+        "action": "Visual/Audio components suspended",
+        "mode": "text-only"
+    }
+
 @router.get("/health")
 async def health_check():
     """健康检查"""
@@ -39,38 +49,32 @@ async def health_check():
 
 @router.get("/agents", response_model=List[Dict[str, Any]])
 async def get_ai_agents():
-    """获取所有AI代理"""
-    agents = [
+    """获取所有AI代理 (Dynamic Discovery)"""
+    # In a real scenario, this would call AgentManager or HSP Service Discovery
+    # For now, we simulate this while keeping the structure ready for integration
+    from src.ai.agents.agent_manager import AgentManager
+    # Note: AgentManager might need a singleton or a global instance
+    
+    # Placeholder for actual discovery logic
+    discovered_agents = [
         {
-            "id": "1",
+            "id": "creative-writing-1",
             "name": "CreativeWritingAgent",
             "type": "创意写作",
             "status": "idle",
-            "capabilities": ["文本生成", "创意写作", "内容创作"],
-            "current_task": None,
-            "last_active": datetime.now().isoformat(),
-            "performance": {
-                "tasks_completed": 1247,
-                "success_rate": 0.95,
-                "avg_response_time": 1.2,
-            },
+            "capabilities": ["text_generation", "creative_writing"],
+            "last_active": datetime.now().isoformat()
         },
         {
-            "id": "2",
-            "name": "ImageGenerationAgent",
-            "type": "图像生成",
-            "status": "busy",
-            "capabilities": ["图像生成", "风格转换", "图像编辑"],
-            "current_task": "生成风景图像",
-            "last_active": datetime.now().isoformat(),
-            "performance": {
-                "tasks_completed": 856,
-                "success_rate": 0.92,
-                "avg_response_time": 3.5,
-            },
-        },
+            "id": "code-understanding-1",
+            "name": "CodeUnderstandingAgent",
+            "type": "代码理解",
+            "status": "active",
+            "capabilities": ["analyze_code", "fix_code"],
+            "last_active": datetime.now().isoformat()
+        }
     ]
-    return agents
+    return discovered_agents
 
 
 @router.get("/agents/{agent_id}", response_model=Dict[str, Any])

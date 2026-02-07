@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Optional
 from typing_extensions import Literal
 
 from .types import HSPMessageEnvelope, HSPFactPayload, HSPTaskRequestPayload, \
-    HSPTaskResultPayload, HSPCapabilityAdvertisementPayload, HSPAcknowledgementPayload, HSPQoSParameters
+    HSPTaskResultPayload, HSPCapabilityAdvertisementPayload, HSPAcknowledgementPayload, HSPQoSParameters, HSPOpinionPayload
 from .versioning import HSPVersionManager, HSPVersionConverter
 from .extensibility import HSPExtensionManager, HSPMessageRegistry
 from .advanced_performance_optimizer import HSPAdvancedPerformanceOptimizer, HSPAdvancedPerformanceEnhancer
@@ -19,8 +19,13 @@ from .utils.fallback_config_loader import FallbackConfigLoader
 from .retry_policy import RetryPolicy
 from .circuit_breaker import CircuitBreaker
 from .utils.fallback_config_loader import get_config_loader
-from ..shared.network_resilience import NetworkResilienceManager
-from ..shared.error import ErrorHandler
+from src.core.shared.network_resilience import NetworkResilienceManager
+from src.core.shared.error import ErrorHandler
+from src.core.hsp.internal.internal_bus import InternalBus
+from src.core.hsp.bridge.message_bridge import MessageBridge
+from src.core.hsp.bridge.data_aligner import DataAligner
+from src.core.hsp.external.external_connector import ExternalConnector
+from src.core.hsp.fallback.fallback_protocols import InMemoryProtocol, FileBasedProtocol, HTTPProtocol
 from unittest.mock import MagicMock, AsyncMock
 from datetime import datetime, timezone
 
@@ -148,9 +153,8 @@ class HSPConnector:
         self.ack_timeout_sec = 10  # New Default timeout for ACK
         self.max_ack_retries = 3  # New Max retries for messages requiring ACK
         self.retry_policy = RetryPolicy(
-            max_attempts=self.max_ack_retries,
-            backoff_factor=2,
-            max_delay=60
+            max_retries=self.max_ack_retries,
+            backoff_factor=2
         )  # Initialize retry policy
         self.circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=300)  # Initialize circuit breaker
 
@@ -429,8 +433,6 @@ class HSPConnector:
         Initializes the individual fallback protocols based on the provided configuration.
         """
         try:
-            # from .fallback.fallback_protocols import InMemoryProtocol, FileBasedProtocol, HTTPProtocol # Temporarily commented out
-
             protocols_config = config.get("protocols", {})
 
             # Initialize in-memory protocol

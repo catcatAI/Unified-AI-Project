@@ -17,6 +17,7 @@ This document summarizes the current progress, discrepancies between code, docum
 5.  **Skeletal MVP Components:** Core MVP features like the Desktop Pet and Economic System, along with key AGI learning loop components (TaskExecutionEvaluator, AdaptiveLearningController), are either unimplemented or in a skeletal state, despite being documented.
 6.  **Recent Refactoring Success:** The `lightweight_code_model.py` file has been successfully refactored into modular components (`code_analysis_types.py`, `code_complexity_analyzer.py`, `tool_file_parser.py`), improving code organization.
 7.  **Dependency Management Strategy:** A note has been added to `pyproject.toml` explaining the removal of `transformers` and `huggingface-hub` due to installation and TensorFlow-related conflicts, and the implications for core AI functionalities.
+8.  **Phase 14 Completed (Concurrency & Real Execution):** The `UnifiedControlCenter` now implements a real `asyncio.Queue` based worker pool with semaphore-based concurrency limits. The `HSPConnector` has been fully integrated and debugged (including `RetryPolicy` fixes). The "Dark Code" corruption (stray text in files) has been systematically resolved across `ai/`, `hsp/`, and `tools/` directories. Verification script `verify_phase14_concurrency.py` passes successfully.
 
 ## Discrepancy Analysis
 
@@ -24,7 +25,8 @@ This document summarizes the current progress, discrepancies between code, docum
 *   **None identified as fully stable.** While the enabled Python test suite is now functional, the disabled tests and the underlying dependency issues prevent a confident classification of modules as fully tested and stable.
 
 ### 2. Implemented (Code) & Documented (Docs) but Test Coverage Unknown/Incomplete
-*   **HSP Connector:** `apps/backend/src/hsp/connector.py` (modified for retry mechanism), documented in `docs/03-technical-architecture/communication/hsp-connector.md`. Tests like `tests/hsp/test_hsp_connector.py` and `tests/hsp/test_hsp_ack_retry.py` exist, suggesting some coverage.
+*   **HSP Connector:** `apps/backend/src/hsp/connector.py` (Fully integrated and debugged in Phase 14). Confirmed working with `RetryPolicy` and `ExternalConnector` via `verify_phase14_concurrency.py`.
+*   **UnifiedControlCenter:** `apps/backend/src/ai/integration/unified_control_center.py` (Phase 14 Implemented). Features Task Queue, Worker Pool, and Semaphore Concurrency. Verified by `verify_phase14_concurrency.py`.
 *   **HAM Memory Manager:** `apps/backend/src/core_ai/memory/ham_memory_manager.py` (modified for vector store integration and date range query fix), documented in `docs/03-technical-architecture/memory-systems/ham-memory-manager.md`. Tests like `tests/core_ai/memory/test_ham_memory_manager.py` exist.
 *   **Vector Store:** `apps/backend/src/core_ai/memory/vector_store.py` (created), documented in `docs/03-technical-architecture/memory-systems/vector-store.md`. Tests like `tests/core_ai/memory/test_ham_chromadb_integration.py` exist.
 *   **Experience Replay:** `apps/backend/src/ai/learning/experience_replay.py` (created), documented in `docs/03-technical-architecture/ai-components/experience-replay.md`. No obvious direct test file found in the main `tests/` or `apps/backend/tests/` directories, but might be covered by broader integration tests.

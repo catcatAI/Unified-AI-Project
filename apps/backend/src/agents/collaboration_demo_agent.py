@@ -11,10 +11,10 @@ sys.path.insert(0, project_root)
 
 try:
     from .base_agent import BaseAgent
-    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+    from src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 except ImportError:
-    from apps.backend.src.agents.base_agent import BaseAgent
-    from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+    from src.agents.base_agent import BaseAgent
+    from src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
 

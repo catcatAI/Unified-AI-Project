@@ -54,7 +54,7 @@ project_root == Path(__file__).parent.parent.parent.parent()
 sys.path.insert(0, str(project_root))
 
 try,
-    from apps.backend.src.core.knowledge.unified_knowledge_graph import ()
+    from src.core.knowledge.unified_knowledge_graph import ()
         UnifiedKnowledgeGraph, Entity, Relation, KnowledgeTriple
 (    )
 except ImportError, ::

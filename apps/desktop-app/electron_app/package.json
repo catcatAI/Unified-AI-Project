@@ -1,6 +1,6 @@
 {
   "name": "angela-desktop-app",
-  "version": "1.0.0",
+  "version": "6.2.0",
   "description": "Angela AI Desktop Application - Live2D Virtual Companion",
   "main": "main.js",
   "scripts": {
@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "@pixi/utils": "^7.3.2",
-    "axios": "^1.6.5"
+    "axios": "^1.6.5",
+    "ws": "^8.16.0"
   },
   "build": {
     "appId": "com.angelaai.desktop",

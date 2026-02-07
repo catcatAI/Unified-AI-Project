@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/pet", tags=["Desktop Pet"])
 
-# 共享的 PetManager 實例 (實際應用中應由 SystemManager 管理)
+# 共享的 PetManager 實例
 _pet_manager = PetManager(
     pet_id="angela_v1",
     config={
@@ -21,9 +21,19 @@ _pet_manager = PetManager(
     }
 )
 
+def get_pet_manager() -> PetManager:
+    """獲取目前的 PetManager 實例"""
+    return _pet_manager
+
+def set_biological_integrator(integrator):
+    """設置生理整合器並同步"""
+    _pet_manager.biological_integrator = integrator
+    _pet_manager.sync_with_biological_state()
+
 @router.get("/status")
 async def get_pet_status():
-    """獲取寵物當前狀態"""
+    """獲取寵物當前狀態 (同步生理數據後)"""
+    _pet_manager.sync_with_biological_state()
     return {
         "pet_id": _pet_manager.pet_id,
         "state": _pet_manager.get_current_state(),

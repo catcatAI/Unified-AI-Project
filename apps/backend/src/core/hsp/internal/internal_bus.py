@@ -1,13 +1,21 @@
-# TODO: Fix import - module 'asyncio' not found
-# TODO: Fix import - module 'typing' not found
-# TODO: Fix import - module 'inspect' not found
+import logging
+import asyncio
+import inspect
+from typing import Dict, List, Callable, Any
+
+logger = logging.getLogger(__name__)
 
 class InternalBus:
-在函数定义前添加空行
+    """
+    Simulates an internal message bus for testing and local communication.
+    (Restored to fix file corruption)
+    """
+
+    def __init__(self):
         self.subscriptions: Dict[str, List[Callable[[Any], None]]] = {}
 
     def publish(self, channel: str, message: Any):
-        print(f"DEBUG: InternalBus.publish - Channel: {channel}, Message: {message}")
+        logger.debug(f"InternalBus.publish - Channel: {channel}, Message: {message}")
         if channel in self.subscriptions:
             for callback in self.subscriptions[channel]:
                 if inspect.iscoroutinefunction(callback):
@@ -16,12 +24,8 @@ class InternalBus:
                     callback(message)
 
     async def publish_async(self, channel: str, message: Any):
-        """Awaitable version of publish that awaits coroutine callbacks sequentially.
-        Useful in tests to ensure downstream async handlers (e.g.,
-    ACK dispatch) complete before assertions.
-        """
-        print(f"DEBUG: InternalBus.publish_async - Channel: {channel},
-    Message: {message}")
+        """Awaitable version of publish."""
+        logger.debug(f"InternalBus.publish_async - Channel: {channel}, Message: {message}")
         if channel in self.subscriptions:
             for callback in self.subscriptions[channel]:
                 if inspect.iscoroutinefunction(callback):
@@ -36,4 +40,5 @@ class InternalBus:
 
     def unsubscribe(self, channel: str, callback: Callable[[Any], None]):
         if channel in self.subscriptions:
-            self.subscriptions[channel].remove(callback)
+            if callback in self.subscriptions[channel]:
+                self.subscriptions[channel].remove(callback)

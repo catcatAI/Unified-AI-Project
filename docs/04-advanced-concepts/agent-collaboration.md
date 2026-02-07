@@ -24,8 +24,8 @@
 3.  **非同步分派**: 管理器使用 `asyncio.create_task()` 為每個子任務啟動一個 `_execute_subtask()` 的非同步執行個體。
 4.  **子任務執行**:
     - `_execute_subtask()` 方法根據子任務所需的 `capability_needed` 建立一個 `HSPTaskRequestPayload`。
-    - **(未來實現)** 在完整實現中，它將透過服務發現模組找到擁有該能力的最佳代理。
-    - **(目前實現)** 目前程式碼中，此步驟為模擬，會直接返回一個模擬的成功結果。
+    - **(Phase 14 實作)** 此請求會被發送至 `UnifiedControlCenter`，由其工作線程池 (Worker Pool) 處理並透過 HSP 協議分派給真正的 AI 代理。
+    - **(真實執行)** 系統不再使用模擬結果，而是等待目標代理 (如 `did:hsp:agent:web_search_agent`) 的實際 HSP 回應。
 5.  **結果回收**:
     - 當代理完成任務後，會透過 HSP 將結果傳回。
     - `HSPConnector` 觸發已註冊的 `_handle_agent_result()` 回呼函式。

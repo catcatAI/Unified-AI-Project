@@ -5,7 +5,8 @@
 ### 1. 项目概述与入门
 - [README.md](../../README.md) - 项目主要说明 (已更新至 1.0.1)
 - [PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md) - 项目全貌文档 (已更新)
-- [PROJECT_STATUS_SUMMARY_2025_09_06.md](../PROJECT_STATUS_SUMMARY_2025_09_06.md) - 專案狀態總結報告 (最新)
+- [PROJECT_STATUS_SUMMARY_2025_09_06.md](../PROJECT_STATUS_SUMMARY_2025_09_06.md) - 專案狀態總結報告 (2025存檔)
+- [PROJECT_PROGRESS_SUMMARY.md](01-summaries-and-reports/PROJECT_PROGRESS_SUMMARY.md) - **最新專案進度總結 (Phase 14)**
 - [SIMPLE_GUIDE.md](../SIMPLE_GUIDE.md) - 简化后的项目指南
 - [PROJECT_STRUCTURE_ANALYSIS.md](PROJECT_STRUCTURE_ANALYSIS.md) - 项目结构分析
 - [system-architecture-diagram.md](00-overview/system-architecture-diagram.md) - 系統架構圖
@@ -123,5 +124,5 @@
 4. **用户反馈**：根据用户反馈优化文档结构和内容
 
 ---
-*最后更新：2025年9月21日*  
-*更新内容：整合最新專案狀態，添加專案狀態總結報告，更新主要文檔版本資訊，创建端口管理策略文档，更新文档索引以反映项目完成状态*
+*最后更新：2026年2月7日*
+*更新内容：整合 Phase 14 状态，更新 `PROJECT_PROGRESS_SUMMARY.md` 链接，确认 HSP 与并发层文档更新。*

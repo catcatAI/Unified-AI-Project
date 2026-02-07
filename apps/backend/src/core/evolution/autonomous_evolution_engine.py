@@ -42,14 +42,14 @@ try,
 from system_test import
     project_root == Path(__file__).parent.parent.parent()
     sys.path.insert(0, str(project_root))
-    from apps.backend.src.core.knowledge.unified_knowledge_graph import UnifiedKnowledge\
+    from src.core.knowledge.unified_knowledge_graph import UnifiedKnowledge\
     \
     \
     \
     \
     \
     Graph
-    from apps.backend.src.core.cognitive.cognitive_constraint_engine import CognitiveCon\
+    from src.core.cognitive.cognitive_constraint_engine import CognitiveCon\
     \
     \
     \

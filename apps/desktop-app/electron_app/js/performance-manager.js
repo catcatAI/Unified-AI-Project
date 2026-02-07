@@ -105,8 +105,15 @@ class PerformanceManager {
         this.websocket = ws;
     }
     
-    async initialize() {
-        this.detectHardwareCapabilities();
+    async initialize(externalProfile = null) {
+        if (externalProfile) {
+            // Map HardwareDetector profile format to PerformanceManager format if needed
+            this.hardwareProfile = this._mapExternalProfile(externalProfile);
+            console.log('Using external hardware profile for PerformanceManager:', this.hardwareProfile);
+        } else {
+            this.detectHardwareCapabilities();
+        }
+        
         this.recommendPerformanceMode();
         this.startPerformanceMonitoring();
         
@@ -125,6 +132,49 @@ class PerformanceManager {
             hardware: this.hardwareProfile,
             mode: this.currentMode,
             performance: this.performanceModes[this.currentMode]
+        };
+    }
+
+    /**
+     * Maps profile from HardwareDetector to PerformanceManager's internal format
+     * @param {Object} profile External profile from HardwareDetector
+     * @returns {Object} Mapped profile
+     */
+    _mapExternalProfile(profile) {
+        // If it's already in the correct format, return it
+        if (profile.memory && profile.gpu && profile.cores) {
+            return profile;
+        }
+
+        // Map from HardwareDetector format
+        const gpuName = (profile.gpu_info && profile.gpu_info.name) || 'unknown';
+        
+        return {
+            os: profile.platform || 'unknown',
+            browser: this.getBrowserInfo().browser,
+            memory: {
+                total: profile.ram_gb || 4,
+                unit: 'GB',
+                estimated: true
+            },
+            gpu: {
+                name: gpuName,
+                vendor: (profile.gpu_info && profile.gpu_info.vendor) || 'unknown',
+                renderer: (profile.gpu_info && profile.gpu_info.renderer) || 'unknown',
+                vram: this.estimateVRAM(gpuName),
+                webgl2: profile.gpu_info ? !!profile.gpu_info.version?.includes('WebGL 2') : false
+            },
+            cores: {
+                logical: profile.cpu_cores || 4,
+                estimated: false
+            },
+            device: {
+                type: (profile.device_type && profile.device_type.type) || 'desktop',
+                width: window.innerWidth,
+                height: window.innerHeight,
+                pixelRatio: window.devicePixelRatio
+            },
+            timestamp: Date.now()
         };
     }
     

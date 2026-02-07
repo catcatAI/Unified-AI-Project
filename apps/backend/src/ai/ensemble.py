@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, AsyncGenerator
 from datetime import datetime
 
-from apps.backend.src.core.services.multi_llm_service import (
+from src.core.services.multi_llm_service import (
     MultiLLMService, ChatMessage, LLMResponse, ModelConfig
 )
 

@@ -5,21 +5,15 @@ Manages monitoring and health checking for AI agents.
 
 import asyncio
 import logging
-import os
-import sys
 import time
-import psutil # Added missing import
-import random # Added missing import
+import psutil
+import random
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-# Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.insert(0, project_root)
-
-from apps.backend.src.core.hsp.types import HSPCapabilityAdvertisementPayload
-from apps.backend.src.core.hsp.connector import HSPConnector
+from ...core.hsp.types import HSPCapabilityAdvertisementPayload
+from ...core.hsp.connector import HSPConnector
 
 logger = logging.getLogger(__name__)
 
@@ -236,22 +230,23 @@ class AgentMonitoringManager:
             # If this is the first capability, update status to STARTING
             if len(self.agent_health_reports[agent_id].capabilities) == 1:
                 self.agent_health_reports[agent_id].status = AgentStatus.STARTING
-        async def register_agent(self, agent_id: str, agent_name: str, capabilities: List[str]) -> None:
-            """Register an agent for monitoring."""
-            async with self.monitoring_lock:
-                if agent_id not in self.agent_health_reports:
-                    self.agent_health_reports[agent_id] = AgentHealthReport(
-                        agent_id=agent_id,
-                        agent_name=agent_name,
-                        status=AgentStatus.UNKNOWN,
-                        cpu_usage=0.0,
-                        memory_usage=0.0,
-                        last_heartbeat=time.time(),
-                        capabilities=capabilities,
-                        error_count=0,
-                        success_rate=1.0,
-                        task_count=0
-                    )
+    async def register_agent(self, agent_id: str, agent_name: str, capabilities: List[str]) -> None:
+        """Register an agent for monitoring."""
+        async with self.monitoring_lock:
+            if agent_id not in self.agent_health_reports:
+                self.agent_health_reports[agent_id] = AgentHealthReport(
+                    agent_id=agent_id,
+                    agent_name=agent_name,
+                    status=AgentStatus.UNKNOWN,
+                    cpu_usage=0.0,
+                    memory_usage=0.0,
+                    last_heartbeat=time.time(),
+                    capabilities=capabilities,
+                    error_count=0,
+                    success_rate=1.0,
+                    task_count=0
+                )
+
     async def report_error(self, agent_id: str, error_message: str) -> None:
         """Report an error for an agent."""
         async with self.monitoring_lock:
@@ -260,6 +255,7 @@ class AgentMonitoringManager:
                 report.error_count += 1
                 report.last_error = error_message
                 report.status = AgentStatus.ERROR
+
     async def report_task_result(self, agent_id: str, success: bool, response_time_ms: Optional[float] = None) -> None:
         """Report the result of a task for an agent."""
         async with self.monitoring_lock:

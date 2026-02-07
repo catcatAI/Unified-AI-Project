@@ -67,3 +67,6 @@ asyncio-mqtt>=0.13.0
 prometheus-client>=0.20.0
 structlog>=24.1.0
 tenacity>=8.2.0
+
+# Web scraping & parsing
+beautifulsoup4>=4.12.0

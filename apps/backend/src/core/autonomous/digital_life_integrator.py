@@ -29,6 +29,7 @@ from .action_executor import ActionExecutor
 from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
 from .autonomous_life_cycle import AutonomousLifeCycle
 from .dynamic_parameters import DynamicThresholdManager
+from ...ai.integration.unified_control_center import UnifiedControlCenter
 
 
 class LifeCycleState(Enum):
@@ -137,6 +138,9 @@ class DigitalLifeIntegrator:
         self.autonomous_lifecycle: Optional[AutonomousLifeCycle] = None
         self._formula_integration_enabled: bool = self.config.get('enable_formula_integration', True)
         
+        # AGI Control Loop (Phase 11)
+        self.unified_control_center: Optional[UnifiedControlCenter] = None
+        
         # Dynamic Parameters Integration
         self.dynamic_params: Optional[DynamicThresholdManager] = None
         self._dynamic_params_enabled: bool = self.config.get('enable_dynamic_params', True)
@@ -208,6 +212,15 @@ class DigitalLifeIntegrator:
                 )
             except Exception:
                 pass
+        
+        # Initialize AGI Control Center (Phase 11)
+        try:
+            from ...ai.integration.unified_control_center import UnifiedControlCenter
+            self.unified_control_center = UnifiedControlCenter(self.config.get('control_center', {}))
+            self.unified_control_center.start()
+            print("✅ Unified Control Center integrated into Digital Life")
+        except Exception as e:
+            print(f"[DigitalLife] Failed to initialize Unified Control Center: {e}")
         
         # Set initial state
         await self._transition_state(LifeCycleState.AWAKENING)

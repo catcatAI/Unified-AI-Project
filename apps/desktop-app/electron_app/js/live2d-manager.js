@@ -203,6 +203,14 @@ class Live2DManager {
             console.error('WebGL not supported');
             return false;
         }
+
+        // Initialize wrapper
+        if (typeof Live2DCubismWrapper !== 'undefined') {
+            this.wrapper = new Live2DCubismWrapper(this.canvas);
+        } else {
+            console.error('Live2DCubismWrapper not found');
+            return false;
+        }
         
         // Get WebGL extensions
         const ext = this.gl.getExtension('OES_element_index_uint');
@@ -232,47 +240,93 @@ class Live2DManager {
     async initialize() {
         console.log('Initializing Live2D Manager...');
         
-        if (this.sdk && this.cubismSdk) {
-            return true;
-        }
-        
-        if (!this.sdk) {
-            await this._tryLoadSDK();
-            if (!this.sdk) {
-                return false;
+        return new Promise(async (resolve) => {
+            let isResolved = false;
+            const timeoutId = setTimeout(() => {
+                if (!isResolved) {
+                    isResolved = true;
+                    console.error('Live2D Manager initialization timed out');
+                    resolve(false);
+                }
+            }, 10000); // 10s timeout for SDK loading
+
+            try {
+                if (this.sdk && this.cubismSdk) {
+                    isResolved = true;
+                    clearTimeout(timeoutId);
+                    resolve(true);
+                    return;
+                }
+                
+                if (!this.sdk) {
+                    await this._tryLoadSDK();
+                }
+                
+                if (!isResolved) {
+                    isResolved = true;
+                    clearTimeout(timeoutId);
+                    resolve(!!this.sdk);
+                }
+            } catch (error) {
+                if (!isResolved) {
+                    isResolved = true;
+                    clearTimeout(timeoutId);
+                    console.error('Live2D Manager initialization failed:', error);
+                    resolve(false);
+                }
             }
-        }
-        
-        return true;
+        });
     }
     
     async loadModel(modelPath) {
         console.log('Loading Live2D model from:', modelPath);
         
-        if (!this.sdk) {
-            console.error('Live2D Cubism SDK not loaded');
+        if (!this.sdk || !this.wrapper) {
+            console.error('Live2D Cubism SDK or Wrapper not loaded');
             return false;
         }
         
-        try {
-            const success = await this.wrapper.loadModel({
-                modelPath: modelPath
-            });
-            
-            if (success) {
-                this.currentModelPath = modelPath;
-                this.currentModel = this.getModelName(modelPath);
-                this.modelLoaded = true;
+        return new Promise(async (resolve) => {
+            let isResolved = false;
+            const timeoutId = setTimeout(() => {
+                if (!isResolved) {
+                    isResolved = true;
+                    console.error(`Live2D model loading timed out: ${modelPath}`);
+                    resolve(false);
+                }
+            }, 15000); // 15s timeout for model loading
+
+            try {
+                const success = await this.wrapper.loadModel({
+                    modelPath: modelPath
+                });
                 
-                this.startAnimation();
-                
-                console.log('Live2D model loaded successfully:', this.currentModel);
-                return true;
+                if (!isResolved) {
+                    isResolved = true;
+                    clearTimeout(timeoutId);
+                    
+                    if (success) {
+                        this.currentModelPath = modelPath;
+                        this.currentModel = this.getModelName(modelPath);
+                        this.modelLoaded = true;
+                        
+                        this.startAnimation();
+                        
+                        console.log('Live2D model loaded successfully:', this.currentModel);
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                }
+            } catch (error) {
+                if (!isResolved) {
+                    isResolved = true;
+                    clearTimeout(timeoutId);
+                    console.error('Failed to load Live2D model:', error);
+                    resolve(false);
+                }
             }
-        } catch (error) {
-            console.error('Failed to load Live2D model:', error);
-            return false;
-        }
+        });
     }
     
     getModelName(modelPath) {
@@ -423,7 +477,7 @@ class Live2DManager {
         }
     }
     
-    playMotion(groupName, motionName) {
+    async playMotion(groupName, motionName) {
         if (!this.modelLoaded) {
             return false;
         }

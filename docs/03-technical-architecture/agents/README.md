@@ -15,6 +15,8 @@ Unified AI Project的AI代理系统是一个模块化的多代理架构，基于
 - 代理协作、监控和注册功能
 - 任务队列和重试机制
 
+> **注意 (Phase 14 Update)**: 所有代理現在都由 `UnifiedControlCenter` 透過 HSP 統一調度。代理應實現標準的 HSP 任務處理介面以接收來自 UCC 的指令。
+
 ### 专门化代理
 
 #### 1. Creative Writing Agent

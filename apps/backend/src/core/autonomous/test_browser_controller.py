@@ -6,7 +6,7 @@ Run with: python -m apps.backend.src.core.autonomous.test_browser_controller
 
 import asyncio
 import logging
-from apps.backend.src.core.autonomous.browser_controller import (
+from src.core.autonomous.browser_controller import (
     BrowserController,
     BrowserConfig,
     BrowserType,
@@ -121,7 +121,7 @@ async def test_bookmarks():
     """Test bookmark management."""
     print("\n=== Testing Bookmarks ===")
     
-    from apps.backend.src.core.autonomous.browser_controller import InformationExtractor
+    from src.core.autonomous.browser_controller import InformationExtractor
     
     extractor = InformationExtractor(bookmarks_file="test_bookmarks.json")
     

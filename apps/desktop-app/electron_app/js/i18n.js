@@ -241,12 +241,61 @@ class I18nManager {
                 level_up: '레벨 업! L{from} → L{to} ({name})'
             }
         });
+
+        this.registerTranslations('zh-TW', {
+            app: {
+                name: 'Angela AI',
+                loading: '正在載入 Angela AI...',
+                ready: 'Angela AI 已就緒！',
+                error: '發生錯誤'
+            },
+            ui: {
+                settings: '設定',
+                minimize: '最小化',
+                close: '關閉',
+                save: '儲存',
+                cancel: '取消',
+                apply: '套用',
+                reset: '重設'
+            },
+            interaction: {
+                click: '點擊了 {part}',
+                drag: '拖拽 {part}',
+                hover: '懸停在 {part} 上',
+                touch: '觸摸了 {part}'
+            },
+            expression: {
+                happy: '開心',
+                sad: '難過',
+                angry: '生氣',
+                surprised: '驚訝',
+                shy: '害羞',
+                love: '愛',
+                neutral: '平靜'
+            },
+            action: {
+                idle: '待機',
+                greeting: '問候',
+                thinking: '思考',
+                dancing: '跳舞',
+                waving: '揮手',
+                clapping: '鼓掌'
+            },
+            system: {
+                connected: '已連線到後端',
+                disconnected: '已從後端斷開',
+                connecting: '連線中...',
+                reconnecting: '重新連線中...',
+                connection_failed: '連線失敗',
+                level_up: '升級！L{from} → L{to} ({name})'
+            }
+        });
     }
     
     registerTranslations(locale, translations) {
         const normalizedLocale = this._normalizeLocale(locale);
         this.translations[normalizedLocale] = {
-            ...this.translations[normalLocaleLocale],
+            ...this.translations[normalizedLocale],
             ...translations
         };
     }

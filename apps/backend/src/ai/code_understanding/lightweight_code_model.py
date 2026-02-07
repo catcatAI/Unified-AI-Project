@@ -6,7 +6,7 @@ import logging
 import os
 from typing import Any, Dict, List, Optional, Union
 
-from apps.backend.src.ai.compression.alpha_deep_model import DNADataChain
+from src.ai.compression.alpha_deep_model import DNADataChain
 
 from .code_analysis_types import CodeAnalysisResult
 from .code_complexity_analyzer import calculate_complexity

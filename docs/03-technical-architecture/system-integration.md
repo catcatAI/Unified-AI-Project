@@ -2,46 +2,35 @@
 
 ## 總覽 (Overview)
 
-`system_integration.py` 模組是 Unified AI 後端系統的核心，包含了 `UnifiedAISystem` 類別。這個類別扮演著整個系統的中樞神經系統，負責初始化、管理所有主要元件，並作為所有外部請求的統一入口點，將請求路由到相應的內部服務。
+Unified AI 的後端集成架構由兩個核心組件組成，分別負責 **生命週期管理** 與 **認知執行**：
+
+1.  **`UnifiedAISystem` (`enhanced_system_integration.py`)**: 負責系統啟動、自我維護、健康監控與 API 入口路由。
+2.  **`UnifiedControlCenter` (`unified_control_center.py`)**: (Phase 14 新增) 負責 AI 任務的編排、並發執行與代理調度。
 
 ## 主要職責 (Key Responsibilities)
 
-1.  **元件初始化 (`_initialize_components`)**:
-    在系統啟動時，`UnifiedAISystem` 會實例化所有核心 AI 模組、服務、整合工具和安全元件。這確保了所有系統部分都已準備就緒並正確連接。
+### 1. 系統生命週期 (`UnifiedAISystem`)
+- **組件初始化**: 啟動 `SystemSelfMaintenanceManager` 等基礎設施。
+- **健康監控**: 追蹤系統 Uptime 與健康分數。
+- **自動修復**: 觸發緊急維護模式。
 
-2.  **生命週期管理 (`start_system` / `stop_system`)**:
-    提供統一的方法來安全地啟動和關閉所有被管理的服務。它會按照正確的依賴順序啟動和停止各個元件，以確保系統的穩定性。
+### 2. 認知任務編排 (`UnifiedControlCenter`)
+- **任務隊列**: 使用 `asyncio.Queue` 緩衝複雜認知任務。
+- **並發執行**: 維護 Worker Pool 進行多工處理。
+- **HSP 調度**: 透過 HSP 協議將任務分派給專門的 AI 代理 (Agents)。
 
-3.  **請求路由 (`process_request`)**:
-    作為系統的主要進入點，此方法接收所有使用者或外部系統的請求。它會檢查請求的 `type`，並將其分派到對應的內部處理函式。
+## 核心元件架構
 
-4.  **安全與審計 (Security & Auditing)**:
-    整合了 `AuditLogger` 來記錄所有傳入的操作，並設計了與 `PermissionControlSystem` 的掛鉤點，以在未來實現精細的權限控制。工具執行等敏感操作會透過 `EnhancedSandboxExecutor` 進行隔離。
-
-## 核心元件 (`UnifiedAISystem` Class)
-
-`UnifiedAISystem` 類別在初始化時會載入以下主要系統元件：
-
-- **核心 AI 元件**:
-    - `AgentManager`
-    - `ExecutionManager`
-    - `HAMMemoryManager`
-    - `ContinuousLearningManager`
-    - `DialogueManager`
-- **服務 (Services)**:
-    - `MultiLLMService`
-    - `AIEditorService`
-    - `AIVirtualInputService`
-    - `ResourceAwarenessService`
-- **整合 (Integrations)**:
-    - `EnhancedAtlassianBridge`
-    - `RovoDevAgent`
-- **安全 (Security)**:
-    - `PermissionControlSystem`
+- **Lifecycle Layer (`UnifiedAISystem`)**:
+    - `SystemSelfMaintenanceManager`
     - `AuditLogger`
-    - `EnhancedSandboxExecutor`
-- **工具 (Tools)**:
-    - `ToolDispatcher`
+    - `PermissionControlSystem`
+
+- **Execution Layer (`UnifiedControlCenter`)**:
+    - `HSPConnector` (通訊骨幹)
+    - `AgentManager` (代理管理)
+    - `HAMMemoryManager` (記憶存取)
+    - `EconomyManager` (經濟系統)
 
 ## 工作流程：請求處理 (Workflow: Request Processing)
 

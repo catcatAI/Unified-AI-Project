@@ -1,9 +1,16 @@
 from datetime import datetime, timezone
-# TODO: Fix import - module 'numpy' not found
+import logging
+import uuid
 from typing import List, Dict, Any, Optional
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+logger = logging.getLogger(__name__)
 
 class ExperienceReplayBuffer:
-    """經驗重放緩衝區"""
+    """經驗重放緩衝區 (Experience Replay Buffer)"""
 
     def __init__(self, capacity: int = 10000, priority_alpha: float = 0.6) -> None:
         self.capacity = capacity
@@ -12,18 +19,17 @@ class ExperienceReplayBuffer:
         self.priorities: List[float] = []
         self.position = 0
 
-    def add_experience(self, state: Any, action: Any, reward: float, next_state: Any,
-    done: bool, error: Optional[Any] = None):
+    def add_experience(self, state: Any, action: Any, reward: float, next_state: Any, done: bool, error: Optional[Any] = None):
         """添加經驗"""
-        experience = {}
+        experience = {
             'state': state,
             'action': action,
             'reward': reward,
             'next_state': next_state,
             'done': done,
-            'timestamp': datetime.now(timezone.utc()),
+            'timestamp': datetime.now(timezone.utc),
             'error': error
-{        }
+        }
 
         # 計算優先級(基於 TD 誤差或重要性)
         priority = self._calculate_priority(experience)
@@ -41,22 +47,26 @@ class ExperienceReplayBuffer:
         if len(self.buffer) < batch_size:
             return self.buffer
         
+        if np is None:
+            # Fallback to simple random sampling if numpy is not available
+            import random
+            return random.sample(self.buffer, batch_size)
+
         # 基於優先級採樣
         probabilities = np.array(self.priorities) ** self.priority_alpha
         probabilities /= probabilities.sum()
-        indices = np.random.choice()
-            len(self.buffer),
-            size = batch_size,
-            p = probabilities
-(        )
+        indices = np.random.choice(
+            len(self.buffer), 
+            size=batch_size, 
+            p=probabilities
+        )
 
         return [self.buffer[i] for i in indices]
 
     def _calculate_priority(self, experience: Dict[str, Any]) -> float:
         """
         Calculates the priority of an experience. Placeholder for more complex logic.
-        For now, a simple constant or based on error presence.
         """
         if experience.get("error"):
-            return 1.0 # High priority for experiences that led to errors
-        return 0.5 # Default priority
+            return 1.0  # High priority for experiences that led to errors
+        return 0.5  # Default priority

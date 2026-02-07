@@ -14,19 +14,22 @@ class DistillationLoss:
         # For now, a simple placeholder.
         loss = 0.0
         # Example: simple squared error for demonstration
-        if isinstance(student_outputs, (int, float)) and isinstance(teacher_outputs, (int, float)):
-            loss = (student_outputs - teacher_outputs) ** 2
+        try:
+            if isinstance(student_outputs, (int, float)) and isinstance(teacher_outputs, (int, float)):
+                loss = float((student_outputs - teacher_outputs) ** 2)
+        except Exception as e:
+            logger.error(f"Error calculating DistillationLoss: {e}")
+            
         logger.debug(f"DistillationLoss calculated: {loss}")
         return loss
 
 class KnowledgeDistillationManager:
-    """知識蒸餾管理器"""
+    """知識蒸餾管理器 (Knowledge Distillation Manager)"""
     
     def __init__(self, teacher_model: Any, student_model: Any) -> None:
         self.teacher_model = teacher_model
         self.student_model = student_model
         self.distillation_loss = DistillationLoss(temperature=4.0)
-        self.logger = logging.getLogger(__name__)
     
     async def distill_knowledge(self, training_data: List[Any], epochs: int = 10):
         """執行知識蒸餾"""
@@ -42,16 +45,16 @@ class KnowledgeDistillationManager:
                 
                 # 計算蒸餾損失
                 loss = self.distillation_loss(
-                    student_outputs, teacher_outputs, batch.labels if hasattr(batch, 'labels') else None
+                    student_outputs, teacher_outputs, getattr(batch, 'labels', None)
                 )
+                
                 # 反向傳播 (conceptual)
-                # In a real ML framework, this would involve optimizer.step()
                 # await self.student_model.backward(loss)
                 
-                total_loss += loss # Assuming loss is a float
+                total_loss += loss
             
             avg_loss = total_loss / len(training_data) if training_data else 0.0
-            self.logger.info(f"Epoch {epoch} Average Loss: {avg_loss}")
+            logger.info(f"Epoch {epoch} Average Loss: {avg_loss}")
     
     async def evaluate_distillation(self, test_data: List[Any]) -> Dict[str, float]:
         """評估蒸餾效果"""
@@ -67,8 +70,8 @@ class KnowledgeDistillationManager:
 
     async def _evaluate_model(self, model: Any, data: List[Any]) -> float:
         """Placeholder for model evaluation."""
-        # In a real scenario, this would run the model on test data and calculate accuracy.
-        # For now, return a dummy value.
-        self.logger.debug(f"Evaluating model {model.__class__.__name__}")
+        logger.debug(f"Evaluating model {model.__class__.__name__}")
+        if hasattr(model, 'evaluate'):
+             return await model.evaluate(data)
         await asyncio.sleep(0.01) # Simulate work
         return 0.85 # Dummy accuracy

@@ -6,7 +6,7 @@ from diagnose_base_agent import
     
     # 使用我们的兼容性模块
     try:
-        from apps.backend.src.compat.transformers_compat import import_transformers_pipe\
+        from src.compat.transformers_compat import import_transformers_pipe\
     \
     \
     \

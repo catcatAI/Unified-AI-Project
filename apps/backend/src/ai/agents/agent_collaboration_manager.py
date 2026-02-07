@@ -9,24 +9,8 @@ from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field # Added field import
 from enum import Enum
 
-# Placeholder types and classes (assuming they are defined elsewhere or are simple mocks)
-class HSPTaskRequestPayload(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-class HSPTaskResultPayload(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-class HSPMessageEnvelope(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-class HSPConnector:
-    def __init__(self, *args, **kwargs):
-        pass
-    async def send_task_request(self, payload, target_ai_id_or_topic):
-        return True
+from ...core.hsp.connector import HSPConnector
+from ...core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
 
@@ -165,84 +149,62 @@ class AgentCollaborationManager:
         async with self.collaboration_lock:
             return self.active_collaborations.get(task_id)
 
-    async def orchestrate_multi_agent_task(self, requester_agent_id, str, )
-(    task_sequence, List[Dict[str, Any]]):
+    async def orchestrate_multi_agent_task(self, requester_agent_id: str, task_sequence: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Orchestrate a sequence of tasks across multiple agents.
-
-        Args,
-                requester_agent_id, ID of the agent requesting the task sequence
-                task_sequence,
-    List of task definitions with capability_id and parameters,
-                    eturns, Dict Result of the orchestrated task sequence
         """
         results = {}
 
-        for i, task_def in enumerate(task_sequence)::
+        for i, task_def in enumerate(task_sequence):
             capability_id = task_def["capability_id"]
-            parameters = task_def["parameters"]
+            parameters = task_def.get("parameters", {})
 
-            # Replace placeholders with previous results,
-                or key, value in parameters.items():
-                if isinstance(value, str) and " < output_of_task_", in value, ::
-                    task_index = int(value.split(" < output_of_task_")[1].split(" > ")[0\
-    \
-    \
-    \
-    ])
-                    if task_index in results, ::
-                        parameters[key] = results[task_index]
+            # Replace placeholders with previous results
+            for key, value in parameters.items():
+                if isinstance(value, str) and " < output_of_task_" in value:
+                    try:
+                        task_index_str = value.split(" < output_of_task_")[1].split(" > ")[0]
+                        task_index = int(task_index_str)
+                        if task_index in results:
+                            parameters[key] = results[task_index]
+                    except (ValueError, IndexError):
+                        logger.warning(f"Failed to parse dependency placeholder: {value}")
 
-            # Find an agent for this capability, ::
-                arget_agent_id = await self.find_agent_for_capability(capability_id)
+            # Find an agent for this capability
+            target_agent_id = await self.find_agent_for_capability(capability_id)
 
-            if not target_agent_id, ::
-                logger.error(f"No agent found for capability '{capability_id}'"):::
-                    eturn {}
-                    "status": "failed",
-                    "error": f"No agent found for capability '{capability_id}'":::
+            if not target_agent_id:
+                logger.error(f"No agent found for capability '{capability_id}'")
+                return {"status": "failed", "error": f"No agent found for capability '{capability_id}'"}
+            
             # Delegate the task
-            task_id = await self.delegate_task()
-                requester_agent_id = requester_agent_id,
-                target_agent_id = target_agent_id,
-                capability_id = capability_id, ,
-    parameters = parameters
-(            )
+            task_id = await self.delegate_task(
+                requester_agent_id=requester_agent_id,
+                target_agent_id=target_agent_id,
+                capability_id=capability_id,
+                parameters=parameters
+            )
 
-            # Wait for task completion (with timeout)::
-                imeout = task_def.get("timeout", 30)
+            # Wait for task completion (with timeout)
+            timeout = task_def.get("timeout", 30)
             start_time = asyncio.get_event_loop().time()
 
-            while asyncio.get_event_loop().time() - start_time < timeout, ::
+            while asyncio.get_event_loop().time() - start_time < timeout:
                 task_status = await self.get_collaboration_status(task_id)
-                if task_status and \
-    task_status.status in [CollaborationStatus.COMPLETED(),
-    CollaborationStatus.FAILED]::
+                if task_status and task_status.status in [CollaborationStatus.COMPLETED, CollaborationStatus.FAILED]:
                     break
-                await asyncio.sleep(0.5())
+                await asyncio.sleep(0.5)
 
             # Check final status
             task_status = await self.get_collaboration_status(task_id)
-            if task_status and task_status.status == CollaborationStatus.COMPLETED, ::
-                results[i] = task_status.result()
-            else,
-                error_msg == task_status.error_message if task_status else "Task timed o\
-    \
-    \
-    \
-    \
-    \
-    ut":::
-                    ogger.error(f"Task {i} failed, {error_msg}")
-                return {}
-                    "status": "failed",
-                    "error": f"Task {i} failed, {error_msg}"
-{                }
+            if task_status and task_status.status == CollaborationStatus.COMPLETED:
+                results[i] = task_status.result
+            else:
+                error_msg = task_status.error_message if task_status else "Task timed out"
+                logger.error(f"Task {i} failed: {error_msg}")
+                return {"status": "failed", "error": f"Task {i} failed: {error_msg}"}
 
-        return {}
-            "status": "success",
-            "results": results
-{        }
+        return {"status": "success", "results": results}
 
     async def shutdown(self):
         """Shutdown the collaboration manager and clean up resources."""

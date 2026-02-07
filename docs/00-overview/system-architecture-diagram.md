@@ -1,50 +1,45 @@
 ```mermaid
 graph TD
-    subgraph Concepts
-        A[AI]
-        B[HSP]
-        C[HAM]
-        D[Fragmenta]
-        E[LIS]
-        F[MetaFormulas]
-        G[AVIS]
+    subgraph "Lifecycle Management"
+        SYS[UnifiedAISystem]
+        MAINT[Self-Maintenance]
+        AUDIT[AuditLogger]
     end
 
-    subgraph Components
-        H[Dialogue Manager]
-        I[Learning Manager]
-        J[HSP Connector]
-        K[Content Analyzer]
-        L[Tool Dispatcher]
-        M[Sandbox Executor]
-        LM[Logic Model]
-        MM[Math Model]
+    subgraph "Cognitive Execution (Phase 14)"
+        UCC[UnifiedControlCenter]
+        TQ[Task Queue]
+        WP[Worker Pool]
+        HSP[HSPConnector]
     end
 
-    A -- "communicates via" --> B
-    A -- "remembers with" --> C
-    A -- "orchestrates with" --> D
-    A -- "heals with" --> E
-    A -- "evolves with" --> F
-    A -- "acts with" --> G
+    subgraph "AI Agents"
+        A1[Agent: General Worker]
+        A2[Agent: Data Analysis]
+        A3[Agent: Creative]
+    end
 
-    H -- "uses" --> I
-    H -- "uses" --> J
-    H -- "uses" --> K
-    H -- "uses" --> L
+    subgraph "Core Components"
+        AM[AgentManager]
+        HAM[HAMMemoryManager]
+        ECON[EconomyManager]
+        SB[SandboxExecutor]
+    end
 
-    L -- "uses" --> LM
-    L -- "uses" --> MM
-
-    I -- "uses" --> J
-    I -- "uses" --> K
-
-    L -- "uses" --> M
-
-    B -- "enables" --> A
-    C -- "enables" --> A
-    D -- "enables" --> A
-    E -- "enables" --> A
-    F -- "enables" --> A
-    G -- "enables" --> A
+    SYS -->|Initializes| UCC
+    SYS -->|Monitors| MAINT
+    
+    UCC -->|Enqueues| TQ
+    TQ -->|Processed by| WP
+    WP -->|Dispatches via| HSP
+    
+    HSP -->|MQTT/IPC| A1
+    HSP -->|MQTT/IPC| A2
+    HSP -->|MQTT/IPC| A3
+    
+    WP -->|Uses| AM
+    WP -->|Uses| HAM
+    WP -->|Uses| ECON
+    
+    A1 -->|Tools| SB
 ```

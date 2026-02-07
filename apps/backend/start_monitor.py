@@ -30,6 +30,10 @@ def main():
     km = ABCKeyManager()
     monitor = SecurityTrayMonitor(km)
     
+    # 自動啟動後端服務
+    logger.info("正在自動啟動後端服務...")
+    monitor.on_start_backend()
+    
     try:
         # 啟動系統匣圖示 (這會阻塞直到退出)
         monitor.run()

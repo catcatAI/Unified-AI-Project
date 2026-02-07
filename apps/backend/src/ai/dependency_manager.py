@@ -22,8 +22,8 @@ from typing import Any, Dict, List, Optional, Union
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 sys.path.insert(0, project_root)
 
-from apps.backend.src.core.hsp.types import HSPCapabilityAdvertisementPayload
-from apps.backend.src.core.hsp.connector import HSPConnector
+from src.core.hsp.types import HSPCapabilityAdvertisementPayload
+from src.core.hsp.connector import HSPConnector
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

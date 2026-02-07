@@ -6,7 +6,7 @@ Provides policy-based routing for LLM model selection.
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
 
-from apps.backend.src.core.services.multi_llm_service import ModelProvider
+from src.core.services.multi_llm_service import ModelProvider
 
 
 @dataclass

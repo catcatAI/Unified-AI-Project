@@ -14,12 +14,12 @@ def verify_context_system():
     
     try,
         # 导入上下文系统模块
-        from apps.backend.src.ai.context.manager import ContextManager
-        from apps.backend.src.ai.context.storage.base import ContextType
-        from apps.backend.src.ai.context.tool_context import ToolContextManager
-        from apps.backend.src.ai.context.model_context import ModelContextManager
-        from apps.backend.src.ai.context.dialogue_context import DialogueContextManager
-        from apps.backend.src.ai.context.memory_context import MemoryContextManager
+        from src.ai.context.manager import ContextManager
+        from src.ai.context.storage.base import ContextType
+        from src.ai.context.tool_context import ToolContextManager
+        from src.ai.context.model_context import ModelContextManager
+        from src.ai.context.dialogue_context import DialogueContextManager
+        from src.ai.context.memory_context import MemoryContextManager
         
         print("✓ 成功导入所有上下文系统模块")
         

@@ -120,7 +120,7 @@ async def lifespan(app: FastAPI):
     
     # 初始化知识图谱
     try:
-        from core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraph
+        from src.core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraph
         kg = UnifiedKnowledgeGraph({})
         await kg.initialize()
         logger.info("✅ 知识图谱系统初始化完成")
@@ -131,7 +131,7 @@ async def lifespan(app: FastAPI):
     
     # 初始化监控系统
     try:
-        from core.monitoring.enterprise_monitor import enterprise_monitor
+        from src.core.monitoring.enterprise_monitor import enterprise_monitor
         await enterprise_monitor.start()
         logger.info("✅ 企业级监控系统初始化完成")
     except ImportError as e:
@@ -141,6 +141,15 @@ async def lifespan(app: FastAPI):
     
     logger.info("✅ Level 5 AGI后端系统启动成功")
     
+    # Hook PetManager specifically for Live2D sync (Phase 11)
+    try:
+        from src.api.v1.endpoints.pet import get_pet_manager
+        pet_manager = get_pet_manager()
+        pet_manager.broadcast_callback = broadcast_to_clients
+        logger.info("✅ Desktop Pet WebSocket bridge established")
+    except Exception as e:
+        logger.warning(f"Failed to hook Desktop Pet WebSocket: {e}")
+    
     yield
     
     # 关闭时
@@ -149,8 +158,8 @@ async def lifespan(app: FastAPI):
     try:
         from src.core.monitoring.enterprise_monitor import enterprise_monitor
         await enterprise_monitor.stop()
-    except:
-        pass
+    except Exception as e:
+        logger.warning(f"监控系统关闭失败: {e}")
     
     await system_manager.shutdown()
     

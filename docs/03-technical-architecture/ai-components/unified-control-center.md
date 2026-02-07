@@ -2,37 +2,40 @@
 
 ## Overview
 
-This document provides an overview of the `UnifiedControlCenter` module (`src/core_ai/integration/unified_control_center.py`). This module serves as the central orchestrator for the entire AI system, managing component initialization, complex task processing, and inter-component communication.
+This document provides an overview of the `UnifiedControlCenter` module (`src/ai/integration/unified_control_center.py`). This module serves as the central orchestrator for the entire AI system, managing component initialization, concurrent task processing, and inter-component communication via HSP.
 
 ## Purpose
 
-The primary purpose of the `UnifiedControlCenter` is to provide a single, unified point of control and coordination for the complex and modular AI ecosystem. It ensures that all core components are properly initialized, connected, and work together seamlessly to process complex tasks, learn from experience, and maintain overall system health and coherence. It acts as the brain that directs the flow of information and execution across the AI.
+The primary purpose of the `UnifiedControlCenter` is to provide a single, unified point of control and coordination for the complex and modular AI ecosystem. It ensures that all core components are properly initialized, connected, and work together seamlessly to process complex tasks. It acts as the brain that directs the flow of information and execution across the AI.
 
-## Key Responsibilities and Features
+## Key Responsibilities and Features (Phase 14)
 
-*   **System Initialization (`initialize_system`)**:
-    *   Orchestrates the initialization of core AI components (e.g., memory manager, HSP connector, learning manager, world model, reasoning engine, dialogue manager) in a defined dependency order.
-    *   Registers initialized components with a `SystemMonitor` for health and activity tracking.
-    *   Establishes conceptual inter-component connections, laying the groundwork for seamless data and control flow.
-*   **Complex Task Processing (`process_complex_task`)**:
-    *   **Task Decomposition**: Breaks down high-level, complex tasks into smaller, more manageable subtasks.
-    *   **Execution Planning**: Creates an optimized execution plan for these subtasks, leveraging a `ComponentOrchestrator`.
-    *   **Component Selection & Execution**: Dynamically selects the most suitable component for each subtask and orchestrates its execution.
-    *   **Result Integration**: Integrates the results from individual subtask executions to form a comprehensive final outcome for the complex task.
-    *   **System-Level Learning**: Triggers system-level learning processes based on the overall task execution results, contributing to the AI's continuous improvement.
-*   **Component Orchestration**: Utilizes a `ComponentOrchestrator` (currently a placeholder class) to manage the intricate execution flow of subtasks, including dynamic planning and intelligent component selection.
-*   **System Monitoring**: Integrates with a `SystemMonitor` (currently a placeholder class) to register and continuously monitor the health, status, and activity of various AI components, ensuring operational stability.
-*   **Conceptual Learning and World Model Updates**: Includes conceptual hooks and calls to update the AI's internal world model and trigger learning mechanisms based on the outcomes of processed tasks, facilitating adaptive behavior.
+*   **System Initialization**:
+    *   Orchestrates the initialization of core AI components (e.g., `HSPConnector`, `AgentManager`, `HAMMemoryManager`, `EconomyManager`) in a defined dependency order.
+    *   Registers initialized components for health and activity tracking.
+*   **Concurrent Task Processing**:
+    *   **Task Queue**: Utilizes an `asyncio.Queue` to buffer incoming tasks, decoupling submission from execution.
+    *   **Worker Pool**: Maintains a pool of background workers (default 4) to process tasks from the queue in parallel.
+    *   **Semaphore-Based Limits**: Enforces per-agent concurrency limits (e.g., max 1 concurrent reasoning task) to prevent resource exhaustion.
+*   **Real Execution Dispatch**:
+    *   **HSP Integration**: Dispatches tasks to specialized agents (e.g., `did:hsp:agent:general_worker`) using the HSP Protocol (`publish_message`).
+    *   **Agent Orchestration**: Bridges the gap between high-level intent and low-level agent execution via `AgentManager` and `HSPConnector`.
 
 ## How it Works
 
-The `UnifiedControlCenter` functions as the central nervous system of the AI. It begins by initializing all necessary core components in a specific, predefined order to ensure that all dependencies are met and the system is ready for operation. Once initialized, it can receive a complex task, intelligently decompose it into manageable subtasks, and then orchestrate their execution across the various specialized AI components. It also incorporates conceptual mechanisms for learning from these executions and updating its internal world model, allowing the AI to adapt and improve over time.
+The `UnifiedControlCenter` functions as the central nervous system of the AI.
+1.  **Startup**: It initializes all necessary core components, including the `HSPConnector` for external communication.
+2.  **Submission**: Tasks are submitted via `submit_task`, which returns a `task_id` and adds the task to the queue.
+3.  **Processing**: Background workers pick up tasks.
+4.  **Dispatch**: The worker identifies the target agent, acquires the appropriate semaphore, and publishes an HSP Task Request.
+5.  **Result**: The system waits for the agent's response (or local execution) and stores the result.
 
 ## Integration with Other Modules
 
-*   **`ComponentOrchestrator` and `SystemMonitor`**: These are placeholder classes that represent key internal dependencies. In a full implementation, they would be replaced by actual, sophisticated modules responsible for orchestrating and monitoring the AI's components.
-*   **Core AI Components**: The `UnifiedControlCenter` directly interacts with and coordinates a wide array of core AI components, including `HAMMemoryManager`, `HSPConnector`, `LearningManager`, `EnvironmentSimulator`, `CausalReasoningEngine`, and `DialogueManager`, among others.
+*   **`HSPConnector`**: Critical for dispatching tasks to external or isolated agent processes.
+*   **`AgentManager`**: Manages the lifecycle of agent processes.
+*   **Core AI Components**: The `UnifiedControlCenter` directly interacts with `HAMMemoryManager`, `EconomyManager`, and others to maintain system state.
 
 ## Code Location
 
-`src/core_ai/integration/unified_control_center.py`
+`apps/backend/src/ai/integration/unified_control_center.py`

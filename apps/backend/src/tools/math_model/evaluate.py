@@ -1,5 +1,5 @@
 from tests.test_json_fix import
-from apps.backend.src.tools.csv_tool import
+from src.tools.csv_tool import
 from system_test import
 from diagnose_base_agent import
 from typing import Tuple, Optional, List, Dict, Any
@@ -15,7 +15,7 @@ if SRC_DIR not in sys.path, ::
 sys.path.append(os.path.join(SCRIPT_DIR))
 try,
     # 使用完整模块路径
-    from apps.backend.src.core.tools.math_model.model import ArithmeticSeq2Seq
+    from src.core.tools.math_model.model import ArithmeticSeq2Seq
 except ImportError as e, ::
     print(f"Error importing from model, {e}")
     sys.exit(1)

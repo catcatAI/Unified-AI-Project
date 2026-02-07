@@ -21,6 +21,13 @@ from ..core.autonomous.action_executor import ActionExecutor, Action, ActionCate
 from .vision_service import VisionService
 from .audio_service import AudioService
 from .tactile_service import TactileService
+from ..system.security_monitor import ABCKeyManager
+from ..api.router import router as api_v1_router
+from ..api.v1.endpoints import pet, economy
+from ..core.autonomous.digital_life_integrator import DigitalLifeIntegrator
+from ..economy.economy_manager import EconomyManager
+from ..core.cognitive_economy_bridge import initialize_cognitive_bridge
+from .brain_bridge_service import BrainBridgeService
 
 app = FastAPI(
     title="Angela AI API",
@@ -34,18 +41,35 @@ action_executor = ActionExecutor()
 vision_service = VisionService()
 audio_service = AudioService()
 tactile_service = TactileService()
+abc_key_manager = ABCKeyManager()
+digital_life = DigitalLifeIntegrator()
+economy_manager = EconomyManager({})
+brain_bridge = BrainBridgeService(digital_life)
+
+# Link components
+pet.set_biological_integrator(digital_life.biological_integrator)
+economy.set_economy_manager(economy_manager)
 
 @app.on_event("startup")
 async def startup_event():
     await desktop_interaction.initialize()
     await action_executor.initialize()
-    # vision_service doesn't have an async initialize yet, but we can call it if needed
+    await digital_life.initialize()
+    
+    # Initialize Logic Bridge
+    if digital_life.autonomous_lifecycle:
+        initialize_cognitive_bridge(digital_life.autonomous_lifecycle.cdm, economy_manager)
+        
+    await brain_bridge.start()
+    # vision_service doesn't have an async initialize yet
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     await desktop_interaction.shutdown()
     await action_executor.shutdown()
+    await brain_bridge.stop()
+    await digital_life.shutdown()
 
 app.add_middleware(
     CORSMiddleware,
@@ -73,6 +97,15 @@ async def health_check():
 @router.get("/api/v1/status")
 async def api_status():
     return {"status": "running", "version": "6.0.4", "services": ["chat", "health"]}
+
+
+@router.get("/api/v1/security/sync-key-c")
+async def sync_key_c():
+    """Get Key C for desktop app synchronization"""
+    key_c = abc_key_manager.get_key("KeyC")
+    if not key_c:
+        raise HTTPException(status_code=500, detail="Security keys not initialized")
+    return {"key_c": key_c}
 
 
 @router.post("/session/start")
@@ -320,6 +353,20 @@ async def tactile_touch(request: Dict[str, Any] = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/api/v1/brain/metrics")
+async def get_brain_metrics():
+    """Get theoretical AGI metrics (L_s, A_c, etc.)"""
+    return brain_bridge.get_current_status()
+
+@router.post("/api/v1/brain/dividend")
+async def get_brain_dividend():
+    """Get CDM Economic Model data"""
+    summary = digital_life.get_formula_metrics()
+    if summary and "formula_status" in summary:
+        return summary["formula_status"].get("cdm", {})
+    return {"message": "Dividend data not available"}
+
+app.include_router(api_v1_router)
 app.include_router(router)
 
 if __name__ == "__main__":

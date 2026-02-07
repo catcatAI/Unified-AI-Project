@@ -13,119 +13,174 @@ class HardwareDetector {
     async detect() {
         console.log('Detecting hardware capabilities...');
         
-        const profile = {
-            // RAM 檢測
-            ram_gb: this._detectRAM(),
-            // CPU 檢測
-            cpu_cores: navigator.hardwareConcurrency || 4,
-            // GPU 檢測
-            gpu_info: await this._detectGPU(),
-            // 系統檢測
-            platform: this._detectPlatform(),
-            // 設備類型
-            device_type: this._detectDeviceType()
+        // 使用一個外部 Promise 來封裝，確保不會因為同步代碼阻塞而無法啟動超時
+        return new Promise(async (resolve) => {
+            let isResolved = false;
+
+            // 1. 設定總體超時
+            const timeoutId = setTimeout(() => {
+                if (!isResolved) {
+                    isResolved = true;
+                    console.error('Hardware detection timed out (5s), using fallback');
+                    const fallback = this._getFallbackProfile();
+                    this.profile = fallback;
+                    this.capabilities = this._assessCapabilities(fallback);
+                    resolve(fallback);
+                }
+            }, 5000);
+
+            try {
+                // 2. 執行檢測 (使用 Promise.resolve().then 確保它是非同步開始的)
+                const profile = await Promise.resolve().then(async () => {
+                    // 檢測 GPU
+                    const gpu_info = await this._detectGPU();
+                    
+                    // 基於 GPU 資訊檢測其他硬體
+                    const p = {
+                        ram_gb: this._detectRAM(gpu_info),
+                        cpu_cores: navigator.hardwareConcurrency || 4,
+                        gpu_info: gpu_info,
+                        platform: this._detectPlatform(),
+                        device_type: this._detectDeviceType()
+                    };
+                    return p;
+                });
+
+                if (!isResolved) {
+                    clearTimeout(timeoutId);
+                    isResolved = true;
+                    this.profile = profile;
+                    this.capabilities = this._assessCapabilities(profile);
+                    resolve(profile);
+                }
+            } catch (error) {
+                if (!isResolved) {
+                    clearTimeout(timeoutId);
+                    isResolved = true;
+                    console.error('Hardware detection failed, using fallback:', error);
+                    const fallback = this._getFallbackProfile();
+                    this.profile = fallback;
+                    this.capabilities = this._assessCapabilities(fallback);
+                    resolve(fallback);
+                }
+            }
+        });
+    }
+
+    _getFallbackProfile() {
+        return {
+            ram_gb: 4.0,
+            cpu_cores: 4,
+            gpu_info: { available: false, name: 'Fallback GPU' },
+            platform: 'Unknown',
+            device_type: { type: 'desktop', platform: 'Unknown', is_laptop: false }
         };
-        
-        this.profile = profile;
-        console.log('Hardware detected:', profile);
-        
-        // 計備能力
-        this.capabilities = this._assessCapabilities(profile);
-        
-        return profile;
     }
     
-    _detectRAM() {
+    _detectRAM(gpuInfo) {
         // 基於瀏覽器 API 的 RAM 估算
-        // 注意：無法直接獲取確切 RAM，使用性能指標估算
-        const performance = performance;
+        const perf = window.performance;
         
-        // 檢查 WebGL 支援度
-        if (!performance || !performance.memory) {
-            return 4.0; // 默認值
+        // 1. 檢查 navigator.deviceMemory (現代瀏覽器)
+        if (navigator.deviceMemory) {
+            return navigator.deviceMemory;
+        }
+
+        // 2. 檢查 memory API 支援度 (Chrome 特有)
+        if (perf && perf.memory) {
+            return Math.round(perf.memory.jsHeapSizeLimit / (1024 * 1024 * 1024) * 2); 
         }
         
-        // 基於 GPU 估算
-        if (this.capabilities && this.capabilities.gpu_name) {
-            if (this.capabilities.gpu_name.toLowerCase().includes('intel')) {
-                return 8.0;
-            } else if (this.capabilities.gpu_name.toLowerCase().includes('nvidia')) {
-                return 16.0;
-            } else if (this.capabilities.gpu_name.toLowerCase().includes('amd')) {
-                return 8.0;
-            } else if (this.capabilities.gpu_name.includes('Apple') || this.capabilities.gpu_name.includes('M1') || this.capabilities.gpu_name.includes('M2') || this.capabilities.gpu_name.includes('M3')) {
-                return 16.0;
-            }
+        // 3. 基於 GPU 估算
+        if (gpuInfo && gpuInfo.name) {
+            const name = gpuInfo.name.toLowerCase();
+            if (name.includes('rtx') || name.includes('gtx')) return 16.0;
+            if (name.includes('radeon')) return 8.0;
+            if (name.includes('intel')) return 8.0;
+            if (name.includes('apple') || name.includes('m1') || name.includes('m2') || name.includes('m3')) return 16.0;
         }
         
-        // 基於瀏覽器功能
+        // 4. 基於瀏覽器功能
         if (this._hasWebGL2Support()) {
             return 8.0;
-        } else if (this._hasWebGLSupport()) {
-            return 4.0;
         }
         
         return 4.0;
     }
     
     async _detectGPU() {
-        const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-        
-        if (!gl) {
-            return { available: false, name: null };
-        }
-        
-        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-        
-        const gpuInfo = {
-            available: true,
-            vendor: gl.getParameter(gl.VENDOR),
-            renderer: gl.getParameter(gl.RENDERER),
-            name: this._parseGPUName(debugInfo),
-            version: gl.getParameter(gl.VERSION)
-        };
-        
-        console.log('GPU detected:', gpuInfo);
-        return gpuInfo;
+        return new Promise((resolve) => {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+                
+                if (!gl) {
+                    resolve({ available: false, name: 'No WebGL' });
+                    return;
+                }
+                
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                let vendor = gl.getParameter(gl.VENDOR);
+                let renderer = gl.getParameter(gl.RENDERER);
+                let unmaskedRenderer = '';
+                let unmaskedVendor = '';
+
+                if (debugInfo) {
+                    unmaskedVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                    unmaskedRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                }
+                
+                const gpuInfo = {
+                    available: true,
+                    vendor: unmaskedVendor || vendor,
+                    renderer: unmaskedRenderer || renderer,
+                    name: this._parseGPUName(unmaskedRenderer || renderer),
+                    version: gl.getParameter(gl.VERSION)
+                };
+                
+                console.log('GPU detected:', gpuInfo);
+                resolve(gpuInfo);
+            } catch (e) {
+                console.warn('GPU detection error:', e);
+                resolve({ available: false, name: 'Detection Error' });
+            }
+        });
     }
     
-    _parseGPUName(debugInfo) {
-        if (!debugInfo) {
+    _parseGPUName(renderer) {
+        if (!renderer) {
             return 'Unknown GPU';
         }
         
-        const renderer = debugInfo.unmaskedRenderer || '';
+        const r = renderer.toUpperCase();
         
         // NVIDIA
-        if (renderer.includes('NVIDIA') || renderer.includes('GeForce') || renderer.includes('RTX')) {
-            const match = renderer.match(/GeForce (RTX )?\d{4}/);
-            if (match) return match[0];
+        if (r.includes('NVIDIA') || r.includes('GEFORCE') || r.includes('RTX')) {
+            const match = renderer.match(/RTX\s+\d{4}/i) || renderer.match(/GTX\s+\d{4}/i);
+            return match ? match[0] : 'NVIDIA GPU';
         }
         
         // AMD
-        if (renderer.includes('AMD') || renderer.includes('Radeon')) {
-            const match = renderer.match(/Radeon\s+(RX\s+)?\d{4}/);
-            if (match) return match[0];
+        if (r.includes('AMD') || r.includes('RADEON')) {
+            const match = renderer.match(/RX\s+\d{4}/i);
+            return match ? match[0] : 'AMD Radeon';
         }
         
         // Intel
-        if (renderer.includes('Intel')) {
-            if (renderer.includes('Arc') || renderer.includes('HD Graphics') || renderer.includes('Iris')) {
-                return 'Intel Arc / Iris';
-            } else if (renderer.includes('UHD Graphics')) {
-                return 'Intel UHD Graphics';
-            } else {
-                return 'Intel GPU';
-            }
+        if (r.includes('INTEL')) {
+            if (r.includes('ARC')) return 'Intel Arc';
+            if (r.includes('IRIS')) return 'Intel Iris';
+            if (r.includes('UHD')) return 'Intel UHD';
+            return 'Intel GPU';
         }
         
         // Apple
-        if (renderer.includes('Apple') || renderer.includes('M1') || renderer.includes('M2') || renderer.includes('M3')) {
-            return renderer.match(/M[1-3]/)?.[0] || 'Apple Silicon';
+        if (r.includes('APPLE') || r.includes('M1') || r.includes('M2') || r.includes('M3')) {
+            const match = renderer.match(/M[1-3]/i);
+            return match ? match[0] : 'Apple Silicon';
         }
         
-        return debugInfo.renderer || 'Unknown GPU';
+        return renderer;
     }
     
     _detectPlatform() {
@@ -185,28 +240,30 @@ class HardwareDetector {
     
     _hasWebGL2Support() {
         const canvas = document.createElement('canvas');
-        return !!(canvas.getContext('webgl2') === null);
+        return !!canvas.getContext('webgl2');
     }
     
     _hasWebGLSupport() {
         const canvas = document.createElement('canvas');
-        return !!(canvas.getContext('webgl') === null);
+        return !!canvas.getContext('webgl');
     }
     
     _assessCapabilities(profile) {
+        const performanceLevel = this._assessPerformanceLevel(profile);
+        
         const capabilities = {
             // 性能等級
-            performance_level: this._assessPerformanceLevel(profile),
+            performance_level: performanceLevel,
             // 支援的精確度模式
-            precision_mode: this._assessPrecisionMode(profile),
+            precision_mode: this._assessPrecisionMode(performanceLevel),
             // 支援的渲染模式 (2D, 2.5D, 3D)
             wallpaper_mode: this._assessWallpaperMode(profile),
             // 支援的渲染等級
-            render_quality: this._assessRenderQuality(profile),
+            render_quality: this._assessRenderQuality(performanceLevel),
             // 支援的特效
-            effects: this._assessSupportedEffects(profile),
+            effects: this._assessSupportedEffects(performanceLevel),
             // 最大分辨率
-            max_resolution: this._assessMaxResolution(profile),
+            max_resolution: this._assessMaxResolution(performanceLevel),
             // 是否支援物理模擬
             has_physics: this._hasPhysicsSupport(),
             // 是否支援著色器
@@ -274,8 +331,7 @@ class HardwareDetector {
         return 'standard';
     }
     
-    _assessPrecisionMode(profile) {
-        const performanceLevel = this.capabilities.performance_level;
+    _assessPrecisionMode(performanceLevel) {
         const precisionModes = {
             'very-low': 'INT',       // 8-bit integer
             'low': 'DEC1',           // 10-bit decimal
@@ -288,8 +344,7 @@ class HardwareDetector {
         return precisionModes[performanceLevel] || precisionModes['standard'];
     }
     
-    _assessRenderQuality(profile) {
-        const performanceLevel = this.capabilities.performance_level;
+    _assessRenderQuality(performanceLevel) {
         const qualityLevels = {
             'very-low': {
                 resolution: '480p',
@@ -332,8 +387,7 @@ class HardwareDetector {
         return qualityLevels[performanceLevel] || qualityLevels['standard'];
     }
     
-    _assessSupportedEffects(profile) {
-        const performanceLevel = this.capabilities.performance_level;
+    _assessSupportedEffects(performanceLevel) {
         const effectsByPerformance = {
             'very-low': ['basic'],
             'low': ['basic', 'bloom'],
@@ -346,8 +400,7 @@ class HardwareDetector {
         return effectsByPerformance[performanceLevel] || ['basic'];
     }
     
-    _assessMaxResolution(profile) {
-        const performanceLevel = this.capabilities.performance_level;
+    _assessMaxResolution(performanceLevel) {
         const resolutionsByPerformance = {
             'very-low': { width: 1280, height: 720 },
             'low': { width: 1920, height: 1080 },
@@ -715,7 +768,7 @@ class DynamicPerformanceManager {
         if (!this.live2dManager) return;
         
         const qualityParams = {
-            very-low: { antialiasing: 'off', shadowQuality: 'low' },
+            'very-low': { antialiasing: 'off', shadowQuality: 'low' },
             low: { antialiasing: 'fxaa', shadowQuality: 'low' },
             lite: { antialiasing: 'msaa', shadowQuality: 'medium' },
             standard: { antialiasing: 'fxaa', shadowQuality: 'high' },

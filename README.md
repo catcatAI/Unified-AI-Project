@@ -1,6 +1,15 @@
-# 🌟 Angela AI v6.1.0 - Cross-Platform Digital Life System
+# 🌟 Angela AI v6.2.0 - Cross-Platform Digital Life System
 
 [English](#english-version) | [繁體中文](#繁體中文版)
+
+---
+
+### 🚀 Quick Start / 快速開始
+
+| Target Audience | Action |
+| --- | --- |
+| **Normal Users (Windows)** | Download `AngelaLauncher.bat` and run it. |
+| **Developers / Power Users** | `git clone` and run `python install_angela.py` |
 
 ---
 
@@ -34,7 +43,9 @@ The Desktop Companion is the heart of Angela AI - a living virtual entity on you
 - **10 Motions**: idle, greeting, thinking, dancing, waving, clapping, nod, shake.
 - **Physics Simulation**: Realistic hair and clothing movement.
 - **Touch Sensitivity**: 18 body parts with different tactile sensitivities.
-- **Emotional States**: Real emotions that influence her behavior.
+- **Emotional States**: Real emotions that influence her behavior. (Phase 12 [Restored])
+- **Current Status**: 🛠️ Phase 12 Restoration Complete
+- **Completion Percentage**: 99.2%
 - **Autonomous Behaviors**: She initiates interactions, gets bored, curious, sleepy.
 - **Desktop Awareness**: Knows what's happening on your desktop.
 
@@ -132,11 +143,13 @@ Adjusts computational precision based on resource availability, from integer mat
 
 #### Installation
 
-##### 🎯 **Option 1: One-Click Installer**
-Download the prebuilt application for your platform:
-- **Windows**: `AngelaAI-Setup.exe`
-- **macOS**: `AngelaAI.dmg`
-- **Linux**: `AngelaAI.AppImage`
+##### 🎯 **Option 1: One-Click Installer (Coming Soon)**
+Prebuilt installers are currently in development:
+- **Windows**: `AngelaAI-Setup.exe` (Coming Soon)
+- **macOS**: `AngelaAI.dmg` (Coming Soon)
+- **Linux**: `AngelaAI.AppImage` (Coming Soon)
+
+For now, please use Option 2 (Build from Source).
 
 ##### 💻 **Option 2: Build from Source**
 
@@ -318,11 +331,13 @@ Angela 隨用戶共同成長，解鎖更多能力：
 
 #### 安裝步驟
 
-##### 🎯 選項 1: 一鍵安裝 (推薦)
-下載對應平台的預編譯版本：
-- **Windows**: `AngelaAI-Setup.exe`
-- **macOS**: `AngelaAI.dmg`
-- **Linux**: `AngelaAI.AppImage`
+##### 🎯 選項 1: 一鍵安裝 (開發中)
+預編譯安裝包目前正在開發中：
+- **Windows**: `AngelaAI-Setup.exe` (即將推出)
+- **macOS**: `AngelaAI.dmg` (即將推出)
+- **Linux**: `AngelaAI.AppImage` (即將推出)
+
+目前請使用選項 2（從源碼構建）。
 
 ##### 💻 選項 2: 開發者模式 (從源碼構建)
 ```bash
@@ -489,7 +504,7 @@ Unified-AI-Project/
  │  │  ├─ settings.html          # Settings page 
  │  │  ├─ package.json           # Dependencies 
  │  │  ├─ assets/               # Resources (icon, etc.) 
- │  │  └─ js/                   # JavaScript modules (22 files) 
+ │  │  └─ js/                   # JavaScript modules (40 files) 
  │  │     ├─ app.js              # Application coordinator 
  │  │     ├─ live2d-manager.js    # Live2D integration 
  │  │     ├─ live2d-cubism-wrapper.js  # Live2D SDK wrapper 
@@ -543,9 +558,10 @@ Unified-AI-Project/
  │     │  ├─ precision/           # Precision management 
  │     │  ├─ system/             # Hardware detection 
  │     │  └─ knowledge/           # Knowledge/memory 
- │     ├─ ai/                    # AI systems 
- │     │  └─ ops/                # Intelligent operations 
- │     └─ api/                   # API endpoints 
+ │     ├── ai/                          # Level 5 ASI Core
+ │     │  ├── alignment/               # Reasoning, Emotion System [Restored]
+ │     │  ├── lis/                     # Linguistic Immune System [New Proto]
+ │     │  └── integration/             # Unified Control Center (UCC)
  │        ├─ router.py             # RESTful router 
  │        └─ v1/endpoints/        # v1 endpoints (drive, pet) 
  │ 
@@ -663,7 +679,7 @@ npm test
  
 ### Cross-Platform Testing 
  
-See [CROSS_PLATFORM_TESTING.md](CROSS_PLATFORM_TESTING.md) for comprehensive testing procedures. 
+See [CROSS_PLATFORM_TESTING.md](docs/CROSS_PLATFORM_TESTING.md) for comprehensive testing procedures. 
  
 ---
 
@@ -678,10 +694,10 @@ See [CROSS_PLATFORM_TESTING.md](CROSS_PLATFORM_TESTING.md) for comprehensive tes
 | **Security Latency** | **< 2ms (HMAC)** | **5ms** |
 | **ABC Key Sync** | **< 50ms** | **100ms** |
 | Total Lines of Code | ~15,000+ | - |
-| Desktop App Modules | 22 | - |
+| Desktop App JS Files | 40 | - |
 | Mobile App Modules | 5 | - |
 | Native Audio Modules | 3 | - |
-| Project Completion | 99% | 100% |
+| Project Completion | 99.2% | 100% |
 
 > For more detailed system indicators, cluster performance, and precision mapping, please refer to [metrics.md](metrics.md).
 
@@ -738,8 +754,8 @@ Special thanks to the following projects and communities:
 
 ---
 
-**Last Updated**: 2026-02-05  
-**Version**: 6.1.0  
+**Last Updated**: 2026-02-07
+**Version**: 6.2.0 (Phase 14 Complete)  
 **Maintainer**: Angela AI Development Team
 
 ---
@@ -760,7 +776,7 @@ If this project helps you, please give us a ⭐!
 
 <p align="center">
   <b>Angela AI - Cross-Platform Desktop Companion with Live2D</b><br>
-  <i>Production Ready ✅ | 99% Complete</i>
+  <i>Production Ready ✅ | 99.2% Complete</i>
 </p>
 
 <p align="center">
@@ -769,7 +785,7 @@ If this project helps you, please give us a ⭐!
 
 ---
 
-**Version**: 6.1.0  
-**Release Date**: 2026-02-05  
-**Status**: Production Ready ✅  
+**Version**: 6.2.0  
+**Release Date**: 2026-02-07  
+**Status**: Production Ready ✅ | Phase 14 Complete  
 **Platforms**: Windows, macOS, Linux, Android/iOS (Mobile Bridge)  

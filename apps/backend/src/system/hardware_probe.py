@@ -135,13 +135,41 @@ class HardwareProbe:
         )
 
     def _detect_gpu(self) -> List[GPUInfo]:
-        """Detect GPU information (Mock implementation)"""
-        return [GPUInfo(
-            name="Generic GPU",
-            memory_total=4096,
-            memory_available=2048,
-            driver_version="Unknown"
-        )]
+        """Detect GPU information (Improved Windows implementation)"""
+        gpus = []
+        if self.platform_name == "windows":
+            try:
+                import subprocess
+                # Use wmic to get GPU info on Windows
+                cmd = "wmic path win32_VideoController get name,AdapterRAM,DriverVersion /format:list"
+                output = subprocess.check_output(cmd, shell=True).decode('utf-8', errors='ignore')
+                
+                gpu_data = {}
+                for line in output.splitlines():
+                    if '=' in line:
+                        key, value = line.split('=', 1)
+                        gpu_data[key.strip()] = value.strip()
+                    
+                    if 'Name' in gpu_data and 'AdapterRAM' in gpu_data and 'DriverVersion' in gpu_data:
+                        gpus.append(GPUInfo(
+                            name=gpu_data['Name'],
+                            memory_total=int(gpu_data['AdapterRAM']) // (1024 * 1024) if gpu_data['AdapterRAM'].isdigit() else 4096,
+                            memory_available=0, # Hard to get real-time availability via wmic
+                            driver_version=gpu_data['DriverVersion']
+                        ))
+                        gpu_data = {}
+            except Exception as e:
+                logger.debug(f"Failed to detect GPU via wmic: {e}")
+
+        if not gpus:
+            # Fallback mock
+            return [GPUInfo(
+                name="Generic GPU",
+                memory_total=4096,
+                memory_available=2048,
+                driver_version="Unknown"
+            )]
+        return gpus
 
     def _detect_memory(self) -> MemoryInfo:
         """Detect Memory information"""

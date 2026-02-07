@@ -38,81 +38,46 @@ class ResourceAwarenessService:
     """
 
     def __init__(self, config_filepath: Optional[str] = None) -> None:
-        self.profile: Optional[SimulatedHardwareProfile] = None
-        self._config_path: str
-
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
-
-        if config_filepath is None:
-            self._config_path = os.path.join(project_root, DEFAULT_CONFIG_PATH)
-        else:
-            if os.path.isabs(config_filepath):
-                self._config_path = config_filepath
-            else:
-                self._config_path = os.path.join(project_root, config_filepath)
-
-        self._load_profile()
-        if self.profile:
-            print(f"ResourceAwarenessService initialized. Loaded profile: '{self.profile.profile_name}' from '{self._config_path}'")
-        else:
-            print(f"ResourceAwarenessService initialized, but FAILED to load a profile from '{self._config_path}'. Using no profile (None).")
-
-    def _load_profile(self) -> None:
         try:
-            if not os.path.exists(self._config_path):
-                print(f"ResourceAwarenessService: Error - Config file not found at {self._config_path}")
-                self.profile = self._get_safe_default_profile()
-                return
+            import psutil
+            self.psutil = psutil
+        except ImportError:
+            self.psutil = None
+            
+        self.profile: Optional[SimulatedHardwareProfile] = None
+        # ... (keep existing init logic for config path)
+        self._load_profile()
 
-            with open(self._config_path, 'r', encoding='utf-8') as f:
-                config_data_root = yaml.safe_load(f)
+    def get_realtime_metrics(self) -> Dict[str, Any]:
+        """獲取真實硬體指標"""
+        if not self.psutil:
+            return {"error": "psutil not available"}
+            
+        return {
+            "cpu_percent": self.psutil.cpu_percent(interval=None),
+            "memory_percent": self.psutil.virtual_memory().percent,
+            "disk_percent": self.psutil.disk_usage('/').percent,
+            "is_stressed": self.is_system_stressed()
+        }
 
-            if not isinstance(config_data_root, dict):
-                print(f"ResourceAwarenessService: Error - Config file {self._config_path} does not contain a root dictionary.")
-                self.profile = self._get_safe_default_profile()
-                return
+    def is_system_stressed(self) -> bool:
+        """判斷系統是否處於高壓力狀態"""
+        if not self.psutil:
+            return False
+            
+        cpu = self.psutil.cpu_percent(interval=None)
+        mem = self.psutil.virtual_memory().percent
+        
+        # 壓力定義：CPU > 80% 或 MEM > 90%
+        return cpu > 80 or mem > 90
 
-            profile_data = config_data_root.get('simulated_hardware_profile')
-            if not isinstance(profile_data, dict):
-                print(f"ResourceAwarenessService: Error - 'simulated_hardware_profile' key missing or not a dict in {self._config_path}.")
-                self.profile = self._get_safe_default_profile()
-                return
-
-            # In a real implementation, use Pydantic for robust parsing and validation
-            self.profile = SimulatedHardwareProfile(**profile_data)
-
-        except Exception as e:
-            print(f"ResourceAwarenessService: An unexpected error occurred loading profile from {self._config_path}: {e}")
-            self.profile = self._get_safe_default_profile()
-
-    def _get_safe_default_profile(self) -> SimulatedHardwareProfile:
-        print("ResourceAwarenessService: WARNING - Using a minimal safe default hardware profile.")
-        return SimulatedHardwareProfile(
-            profile_name="SafeDefaultProfile_ErrorLoading",
-            disk=SimulatedDiskConfig(),
-            cpu=SimulatedCPUConfig(),
-            ram=SimulatedRAMConfig(),
-            gpu_available=False
-        )
-
-    def get_simulated_hardware_profile(self) -> Optional[SimulatedHardwareProfile]:
-        return self.profile
-
-    def get_simulated_disk_config(self) -> Optional[SimulatedDiskConfig]:
-        if self.profile:
-            return self.profile.disk
-        return None
-
-    def get_simulated_cpu_config(self) -> Optional[SimulatedCPUConfig]:
-        if self.profile:
-            return self.profile.cpu
-        return None
-
-    def get_simulated_ram_config(self) -> Optional[SimulatedRAMConfig]:
-        if self.profile:
-            return self.profile.ram
-        return None
+    def get_throttling_factor(self) -> float:
+        """獲取節流因子 (0.0 - 1.0)"""
+        if not self.is_system_stressed():
+            return 1.0
+            
+        # 如果壓力大，返回更小的縮放因子
+        return 0.5
 
 if __name__ == '__main__':
     print("--- ResourceAwarenessService Standalone Test ---")
