@@ -15,7 +15,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     maximize: () => ipcRenderer.invoke('window-maximize'),
     close: () => ipcRenderer.invoke('window-close'),
     setSize: (width, height) => ipcRenderer.invoke('window-set-size', { width, height }),
+    setSizeAndCenter: (width, height) => ipcRenderer.invoke('window-set-size-and-center', { width, height }),
+    getPosition: () => ipcRenderer.invoke('window-get-position'),
     setPosition: (x, y) => ipcRenderer.invoke('window-set-position', { x, y }),
+    getBounds: () => ipcRenderer.invoke('window-get-bounds'),
     setAlwaysOnTop: (flag) => ipcRenderer.invoke('window-set-always-on-top', flag),
     setIgnoreMouseEvents: (ignore, options) => ipcRenderer.invoke('window-set-ignore-mouse-events', ignore, options),
     setClickThroughRegions: (regions) => ipcRenderer.invoke('set-click-through-regions', regions)

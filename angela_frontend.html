@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angela AI - 控制面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .status-section {
+            margin-bottom: 2rem;
+        }
+        
+        .status-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.warning {
+            background: #FF9800;
+        }
+        
+        .status-indicator.error {
+            background: #F44336;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .status-content {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .endpoint-list {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        
+        .endpoint-item {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .endpoint-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .endpoint-name {
+            font-weight: 600;
+            color: #1976D2;
+            min-width: 80px;
+        }
+        
+        .endpoint-url {
+            color: #666;
+            flex: 1;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🌟</div>
+            <h1>Angela AI</h1>
+            <p>Level 5 AGI - 數位生命系統</p>
+        </div>
+        
+        <div class="status-section">
+            <div class="status-title">
+                <div class="status-indicator" id="status-indicator"></div>
+                系統狀態
+            </div>
+            <div class="status-content" id="status-content">
+                正在檢查服務狀態...
+            </div>
+        </div>
+        
+        <div class="status-section">
+            <div class="status-title">
+                <div class="status-indicator"></div>
+                服務端點
+            </div>
+            <div class="endpoint-list">
+                <div class="endpoint-item">
+                    <span class="endpoint-name">健康檢查</span>
+                    <span class="endpoint-url">http://127.0.0.1:8000/health</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="endpoint-name">系統狀態</span>
+                    <span class="endpoint-url">http://127.0.0.1:8000/api/v1/system/status</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-buttons">
+            <button class="btn" onclick="checkStatus()">刷新狀態</button>
+            <button class="btn secondary" onclick="openHealth()">健康檢查</button>
+        </div>
+    </div>
+    
+    <script>
+        async function checkStatus() {
+            const statusContent = document.getElementById('status-content');
+            const statusIndicator = document.getElementById('status-indicator');
+            
+            statusContent.textContent = '正在檢查...';
+            statusIndicator.className = 'status-indicator warning';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/system/status');
+                const data = await response.json();
+                
+                if (data.status === 'operational') {
+                    statusIndicator.className = 'status-indicator';
+                    statusContent.textContent = `✅ 系統正常運行
+級別: ${data.system_level}
+組件: ${Object.keys(data.components).length} 個活
+模組: ${Object.keys(data.modules).length} 啟用`;
+                } else {
+                    statusIndicator.className = 'status-indicator error';
+                    statusContent.textContent = `❌ 系統異常
+狀態: ${data.status}`;
+                }
+            } catch (error) {
+                statusIndicator.className = 'status-indicator error';
+                statusContent.textContent = `❌ 服務無連接
+錯誤: ${error.message}`;
+            }
+        }
+        
+        function openHealth() {
+            window.open('http://127.0.0.1:8000/health', '_blank');
+        }
+        
+        // 自動檢查狀態
+        checkStatus();
+        
+        // 每10秒檢查一次
+        setInterval(checkStatus, 10000);
+    </script>
+</body>
+</html>

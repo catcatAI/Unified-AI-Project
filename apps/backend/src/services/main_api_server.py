@@ -10,10 +10,11 @@ import os
 import sys
 import uuid
 import random
+import asyncio
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
-from fastapi import FastAPI, HTTPException, APIRouter, Body, BackgroundTasks
+from fastapi import FastAPI, HTTPException, APIRouter, Body, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from ..core.autonomous.desktop_interaction import DesktopInteraction, FileCategory
@@ -62,6 +63,9 @@ async def startup_event():
         
     await brain_bridge.start()
     # vision_service doesn't have an async initialize yet
+    
+    # Start background task to broadcast state updates
+    asyncio.create_task(broadcast_state_updates())
 
 
 @app.on_event("shutdown")
@@ -365,6 +369,116 @@ async def get_brain_dividend():
     if summary and "formula_status" in summary:
         return summary["formula_status"].get("cdm", {})
     return {"message": "Dividend data not available"}
+
+
+# --- WebSocket Endpoint for Desktop App ---
+
+import asyncio
+import json
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: dict):
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except:
+                pass
+
+manager = ConnectionManager()
+
+# Background task to broadcast state updates
+async def broadcast_state_updates():
+    """Periodically broadcast state updates to all connected clients"""
+    while True:
+        try:
+            # Get current state from brain bridge
+            state_data = {
+                "alpha": {
+                    "energy": brain_bridge.get_energy_level() if hasattr(brain_bridge, 'get_energy_level') else 0.5,
+                    "comfort": 0.5,
+                    "arousal": 0.5
+                },
+                "beta": {
+                    "curiosity": 0.5,
+                    "focus": 0.5,
+                    "learning": 0.5
+                },
+                "gamma": {
+                    "happiness": 0.5,
+                    "calm": 0.5
+                },
+                "delta": {
+                    "attention": 0.5,
+                    "engagement": 0.5
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            await manager.broadcast({
+                "type": "state_update",
+                "data": state_data,
+                "timestamp": datetime.now().isoformat()
+            })
+        except Exception as e:
+            print(f"Error broadcasting state update: {e}")
+        
+        # Broadcast every 5 seconds
+        await asyncio.sleep(5)
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """
+    WebSocket endpoint for real-time communication with desktop app
+    """
+    await manager.connect(websocket)
+    try:
+        # Send initial connection confirmation
+        await websocket.send_json({
+            "type": "connected",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        # Keep connection alive and handle incoming messages
+        while True:
+            data = await websocket.receive_json()
+            
+            # Handle different message types
+            if data.get("type") == "heartbeat":
+                await websocket.send_json({
+                    "type": "heartbeat_ack",
+                    "timestamp": datetime.now().isoformat()
+                })
+            elif data.get("type") == "state_update":
+                # Broadcast state updates to all connected clients
+                await manager.broadcast({
+                    "type": "state_update",
+                    "data": data.get("data", {}),
+                    "timestamp": datetime.now().isoformat()
+                })
+            else:
+                # Echo back other messages for now
+                await websocket.send_json({
+                    "type": "echo",
+                    "original": data,
+                    "timestamp": datetime.now().isoformat()
+                })
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        manager.disconnect(websocket)
+
 
 app.include_router(api_v1_router)
 app.include_router(router)

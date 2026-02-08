@@ -203,37 +203,219 @@ class Live2DCubismWrapper {
     }
     
     async loadMoc3File(modelPath) {
-        const moc3Path = this.findFile(modelPath, '.moc3');
+        const moc3Paths = this.findFile(modelPath, '.moc3');
         
-        console.log('Loading MOC3 file:', moc3Path);
+        console.log('Possible MOC3 files:', moc3Paths);
         
-        const response = await fetch(moc3Path);
-        const arrayBuffer = await response.arrayBuffer();
+        // Try each possible path
+        for (const moc3Path of moc3Paths) {
+            try {
+                console.log('Trying to load MOC3 file:', moc3Path);
+                
+                // Try to load the file
+                const arrayBuffer = await this.loadFileAsArrayBuffer(moc3Path);
+                
+                // Debug: Check the structure of Moc
+                if (!this.moc3) {
+                    console.log('CubismCore.Moc:', this.cubismSdk.Moc);
+                    if (this.cubismSdk.Moc) {
+                        console.log('CubismCore.Moc keys:', Object.keys(this.cubismSdk.Moc));
+                    }
+                }
+                
+                // Try different ways to access Moc
+                let MocClass = this.cubismSdk.Moc || this.cubismSdk.MOC3;
+                
+                // Check if MocClass has create method
+                if (typeof MocClass === 'object') {
+                    // Try to find create method in MocClass
+                    if (typeof MocClass.create === 'function') {
+                        this.moc3 = MocClass.create(arrayBuffer);
+                    } else if (MocClass.fromArrayBuffer) {
+                        this.moc3 = MocClass.fromArrayBuffer(arrayBuffer);
+                    } else if (MocClass.fromArrayBuffer) {
+                        this.moc3 = MocClass.fromArrayBuffer(arrayBuffer);
+                    } else {
+                        // Try to find create method in nested properties
+                        for (const key of Object.keys(MocClass)) {
+                            if (typeof MocClass[key] === 'function' && (key.includes('create') || key.includes('load') || key.includes('from'))) {
+                                console.log('Trying to use MocClass.' + key);
+                                this.moc3 = MocClass[key](arrayBuffer);
+                                break;
+                            }
+                        }
+                    }
+                } else if (typeof MocClass === 'function') {
+                    // MocClass is a constructor
+                    this.moc3 = new MocClass(arrayBuffer);
+                }
+                
+                if (!this.moc3) {
+                    throw new Error('Failed to create MOC3 instance');
+                }
+                
+                // Debug: Check if moc3 has _ptr property
+                console.log('MOC3 instance:', this.moc3);
+                console.log('MOC3._ptr:', this.moc3._ptr);
+                
+                if (!this.moc3._ptr) {
+                    throw new Error('MOC3 instance does not have _ptr property');
+                }
+                
+                if (this.moc3.releaseBytes) {
+                    this.moc3.releaseBytes(arrayBuffer);
+                }
+                
+                console.log('MOC3 file loaded successfully:', moc3Path);
+                return;
+            } catch (error) {
+                console.warn('Failed to load MOC3 file:', moc3Path, error.message);
+                continue;
+            }
+        }
         
-        this.moc3 = this.cubismSdk.MOC3.create(arrayBuffer);
-        this.moc3.releaseBytes(arrayBuffer);
-        
-        console.log('MOC3 file loaded');
+        throw new Error('Failed to load MOC3 file from any source');
     }
     
-    async loadTexture(modelPath) {
-        const texturePath = this.findFile(modelPath, '.png') || this.findFile(modelPath, '.jpg') || this.findFile(modelPath, '.jpeg');
-        
-        console.log('Loading texture:', texturePath);
-        
+    async loadFileAsArrayBuffer(filePath) {
         return new Promise((resolve, reject) => {
-            const image = new Image();
-            image.src = texturePath;
-            image.onload = () => {
-                this.createTexture(image);
-                resolve();
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', filePath, true);
+            xhr.responseType = 'arraybuffer';
+            
+            xhr.onload = () => {
+                if (xhr.status === 200 || xhr.status === 0) {
+                    resolve(xhr.response);
+                } else {
+                    reject(new Error(`Failed to load file: ${xhr.status} ${xhr.statusText}`));
+                }
             };
-            image.onerror = reject;
+            
+            xhr.onerror = () => {
+                reject(new Error(`Failed to load file: ${filePath}`));
+            };
+            
+            xhr.send();
         });
     }
     
+    async loadTexture(modelPath) {
+        console.log('Looking for texture files in:', modelPath);
+        
+        // Ensure WebGL context is still valid
+        if (!this.gl) {
+            console.warn('WebGL context is null, attempting to recreate...');
+            const glOptions = {
+                alpha: false,
+                antialias: false,
+                preserveDrawingBuffer: true,
+                powerPreference: 'low-power',
+                desynchronized: true,
+                failIfMajorPerformanceCaveat: false
+            };
+            
+            this.gl = this.canvas.getContext('webgl2', glOptions) || 
+                      this.canvas.getContext('webgl', glOptions) ||
+                      this.canvas.getContext('experimental-webgl', glOptions);
+            
+            if (!this.gl) {
+                throw new Error('Failed to recreate WebGL context');
+            }
+            
+            console.log('WebGL context recreated');
+        }
+        
+        // Normalize modelPath for local:// protocol
+        let normalizedModelPath = modelPath.startsWith('local://') ? modelPath.substring(7) : modelPath;
+        // Remove leading slash to avoid local:/// issue
+        if (normalizedModelPath.startsWith('/')) {
+            normalizedModelPath = normalizedModelPath.substring(1);
+        }
+        const localProtocolPath = `local://${normalizedModelPath}`;
+        
+        // Try different possible texture paths
+        const possiblePaths = [
+            // Direct paths
+            `${localProtocolPath}/texture_00.png`,
+            `${localProtocolPath}/texture.png`,
+            `${localProtocolPath}/texture.jpg`,
+            // In subdirectory (e.g., miara_pro_t03.4096)
+            `${localProtocolPath}/miara_pro_t03.4096/texture_00.png`,
+            `${localProtocolPath}/miara_pro_t03.4096/texture.png`,
+            `${localProtocolPath}/miara_pro_t03.4096/texture.jpg`,
+            // Other variations
+            `${localProtocolPath}/${modelPath.split('/').pop()}_t03.4096/texture_00.png`,
+        ];
+        
+        for (const texturePath of possiblePaths) {
+            try {
+                console.log('Trying to load texture:', texturePath);
+                
+                await new Promise((resolve, reject) => {
+                    const image = new Image();
+                    image.src = texturePath;
+                    image.onload = () => {
+                        this.createTexture(image);
+                        console.log('Texture loaded successfully:', texturePath);
+                        resolve();
+                    };
+                    image.onerror = () => {
+                        reject(new Error('Failed to load texture'));
+                    };
+                });
+                
+                return;  // Successfully loaded texture
+            } catch (error) {
+                console.warn('Failed to load texture:', texturePath, error.message);
+                continue;
+            }
+        }
+        
+        throw new Error('Failed to load texture from any source');
+    }
+    
     createTexture(image) {
+        if (!this.gl) {
+            console.error('WebGL context is null, cannot create texture');
+            return null;
+        }
+        
         const texture = this.gl.createTexture();
+        if (!texture) {
+            console.error('Failed to create texture');
+            return null;
+        }
+        
+        // Get max texture size
+        const maxTextureSize = this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE);
+        console.log('Max texture size:', maxTextureSize);
+        
+        // Auto-scale texture if too large
+        let imageToUse = image;
+        let originalWidth = image.width;
+        let originalHeight = image.height;
+        
+        // Limit texture size to 512x512 for better performance on laptops
+        const maxAllowedSize = 512;
+        
+        if (image.width > maxAllowedSize || image.height > maxAllowedSize) {
+            const scale = Math.min(maxAllowedSize / image.width, maxAllowedSize / image.height);
+            const newWidth = Math.floor(image.width * scale);
+            const newHeight = Math.floor(image.height * scale);
+            
+            console.log(`Scaling texture from ${image.width}x${image.height} to ${newWidth}x${newHeight}`);
+            
+            // Create canvas for scaling
+            const canvas = document.createElement('canvas');
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(image, 0, 0, newWidth, newHeight);
+            
+            // Use canvas directly as texture source (more efficient than toDataURL)
+            imageToUse = canvas;
+        }
+        
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
         
         const level = 0;
@@ -247,7 +429,7 @@ class Live2DCubismWrapper {
             internalFormat,
             srcFormat,
             srcType,
-            image
+            imageToUse
         );
         
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
@@ -256,81 +438,246 @@ class Live2DCubismWrapper {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
         
         this.texture = texture;
-        console.log('Texture created:', image.width, 'x', image.height);
+        
+        // Also add to textures array for renderer
+        if (!this.textures) {
+            this.textures = [];
+        }
+        this.textures.push(texture);
+        
+        const finalWidth = imageToUse.width || imageToUse.naturalWidth || originalWidth;
+        const finalHeight = imageToUse.height || imageToUse.naturalHeight || originalHeight;
+        
+        console.log('Texture created:', finalWidth, 'x', finalHeight, 
+                    (originalWidth !== finalWidth ? `(scaled from ${originalWidth}x${originalHeight})` : ''),
+                    'Total textures:', this.textures.length);
     }
     
     async loadPhysics(modelPath) {
-        const physicsPath = this.findFile(modelPath, '.physics3.json');
+        const physicsPaths = this.findFile(modelPath, '.physics3.json');
         
-        console.log('Loading physics file:', physicsPath);
+        console.log('Possible physics files:', physicsPaths);
         
-        const response = await fetch(physicsPath);
-        this.physicsJson = await response.json();
+        // Try each possible path
+        for (const physicsPath of physicsPaths) {
+            try {
+                console.log('Trying to load physics file:', physicsPath);
+                
+                // Use XMLHttpRequest for local files in Electron
+                const arrayBuffer = await this.loadFileAsArrayBuffer(physicsPath);
+                const textDecoder = new TextDecoder();
+                const jsonString = textDecoder.decode(arrayBuffer);
+                this.physicsJson = JSON.parse(jsonString);
+                
+                console.log('Physics file loaded successfully:', physicsPath);
+                return;
+            } catch (error) {
+                console.warn('Failed to load physics file:', physicsPath, error.message);
+                continue;
+            }
+        }
         
-        console.log('Physics file loaded:', Object.keys(this.physicsJson));
+        throw new Error('Failed to load physics file from any source');
     }
     
     async loadModel3File(modelPath) {
-        const model3Path = this.findFile(modelPath, '.model3.json');
+        const model3Paths = this.findFile(modelPath, '.model3.json');
         
-        console.log('Loading model3 file:', model3Path);
+        console.log('Possible model3 files:', model3Paths);
         
-        const response = await fetch(model3Path);
-        this.model3Json = await response.json();
+        // Try each possible path
+        for (const model3Path of model3Paths) {
+            try {
+                console.log('Trying to load model3 file:', model3Path);
+                
+                // Use XMLHttpRequest for local files in Electron
+                const arrayBuffer = await this.loadFileAsArrayBuffer(model3Path);
+                const textDecoder = new TextDecoder();
+                const jsonString = textDecoder.decode(arrayBuffer);
+                this.model3Json = JSON.parse(jsonString);
+                
+                console.log('Model3 file loaded successfully:', model3Path);
+                return;
+            } catch (error) {
+                console.warn('Failed to load model3 file:', model3Path, error.message);
+                continue;
+            }
+        }
         
-        console.log('Model3 file loaded:', this.model3Json.FileReferences);
+        // Model3.json is optional
+        console.warn('Model3.json not found, using defaults');
+        this.model3Json = {};
     }
     
     async loadCdi3File(modelPath) {
-        const cdi3Path = this.findFile(modelPath, '.cdi3.json');
+        const cdi3Paths = this.findFile(modelPath, '.cdi3.json');
         
-        console.log('Loading CDI3 file:', cdi3Path);
+        console.log('Possible CDI3 files:', cdi3Paths);
         
-        const response = await fetch(cdi3Path);
-        this.cdi3Json = await response.json();
+        // Try each possible path
+        for (const cdi3Path of cdi3Paths) {
+            try {
+                console.log('Trying to load CDI3 file:', cdi3Path);
+                
+                // Use XMLHttpRequest for local files in Electron
+                const arrayBuffer = await this.loadFileAsArrayBuffer(cdi3Path);
+                const textDecoder = new TextDecoder();
+                const jsonString = textDecoder.decode(arrayBuffer);
+                this.cdi3Json = JSON.parse(jsonString);
+                
+                console.log('CDI3 file loaded successfully:', cdi3Path);
+                return;
+            } catch (error) {
+                console.warn('Failed to load CDI3 file:', cdi3Path, error.message);
+                continue;
+            }
+        }
         
-        console.log('CDI3 file loaded');
+        // CDI3.json is optional
+        console.warn('CDI3.json not found, using defaults');
+        this.cdi3Json = {};
     }
     
     findFile(basePath, extension) {
         const normalizedPath = basePath.replace(/\\/g, '/');
-        const dirPath = normalizedPath.substring(0, normalizedPath.lastIndexOf('/'));
-        const fileName = normalizedPath.substring(normalizedPath.lastIndexOf('/'));
+        
+        // Remove trailing slash if present
+        let cleanPath = normalizedPath.endsWith('/') ? normalizedPath.slice(0, -1) : normalizedPath;
+        
+        // Remove leading slash to avoid local:/// issue
+        if (cleanPath.startsWith('/')) {
+            cleanPath = cleanPath.substring(1);
+        }
+        
+        // Get the directory name
+        const dirName = cleanPath.split('/').pop();
         
         if (!extension.startsWith('.')) {
             extension = '.' + extension;
         }
         
-        return `${dirPath}/${fileName}${extension}`;
+        // Return all possible paths
+        const possibleNames = [
+            `${dirName}${extension}`,           // e.g., miara_pro.moc3
+            `${dirName}_t03${extension}`,        // e.g., miara_pro_t03.moc3
+            `${dirName}_t00${extension}`,        // e.g., miara_pro_t00.moc3
+        ];
+        
+        // Return all possible paths with local:// protocol for Electron
+        return possibleNames.map(name => `local://${cleanPath}/${name}`);
     }
     
     async createCubismModel() {
         console.log('Creating Cubism model...');
         
-        this.cubismModel = this.cubismSdk.Model;
-        this.live2dModel = new this.cubismModel();
+        console.log('CubismSdk.Model:', this.cubismSdk.Model);
+        if (this.cubismSdk.Model) {
+            console.log('CubismSdk.Model keys:', Object.keys(this.cubismSdk.Model));
+        }
         
-        await this.cubismModel.loadFromMoc3(this.moc3, this.physicsJson);
+        // Check WebGL context
+        if (!this.gl) {
+            throw new Error('WebGL context is null');
+        }
         
-        this.live2dModel.saveParameters();
-        this.live2dModel.createRenderer(this.gl);
-        this.live2dModel.update();
-        this.live2dModel.releaseMoc3();
-        this.moc3 = null;
-        
-        console.log('Cubism model created');
+        // Try different ways to create model
+        try {
+            if (typeof this.cubismSdk.Model === 'function') {
+                // Model is a constructor
+                console.log('Using Model constructor');
+                this.live2dModel = new this.cubismSdk.Model(this.moc3);
+                
+                // Debug: Check model structure
+                console.log('Model created, checking structure...');
+                if (this.live2dModel.drawables) {
+                    console.log('Drawables object type:', typeof this.live2dModel.drawables);
+                    console.log('Drawables methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(this.live2dModel.drawables)));
+                    console.log('Drawables own methods:', Object.getOwnPropertyNames(this.live2dModel.drawables));
+                }
+                if (this.live2dModel.parameters) {
+                    console.log('Parameters object type:', typeof this.live2dModel.parameters);
+                    console.log('Parameters methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(this.live2dModel.parameters)));
+                }
+            } else if (typeof this.cubismSdk.Model === 'object') {
+                // Model is a namespace
+                console.log('Model is a namespace');
+                
+                // Check if moc is valid
+                if (!this.moc3 || !this.moc3._ptr) {
+                    throw new Error('MOC3 is invalid or missing _ptr');
+                }
+                
+                // Try fromMoc method
+                if (typeof this.cubismSdk.Model.fromMoc === 'function') {
+                    console.log('Using Model.fromMoc');
+                    this.live2dModel = this.cubismSdk.Model.fromMoc(this.moc3);
+                } else if (typeof this.cubismSdk.Model.create === 'function') {
+                    console.log('Using Model.create');
+                    this.live2dModel = this.cubismSdk.Model.create(this.moc3);
+                } else {
+                    throw new Error('No valid method found to create model');
+                }
+            }
+            
+            if (!this.live2dModel) {
+                throw new Error('Failed to create Live2D model instance');
+            }
+            
+            console.log('Live2D model created:', this.live2dModel);
+            console.log('Live2D model._ptr:', this.live2dModel._ptr);
+            
+            // Create renderer if method exists (optional)
+            if (typeof this.live2dModel.createRenderer === 'function') {
+                this.live2dModel.createRenderer(this.gl);
+            } else {
+                console.warn('createRenderer method not found, renderer setup skipped');
+            }
+            
+            // Update model if method exists (optional)
+            if (typeof this.live2dModel.update === 'function') {
+                this.live2dModel.update();
+            } else {
+                console.warn('update method not found, model update skipped');
+            }
+            
+            // Release MOC3 if method exists (optional)
+            if (typeof this.live2dModel.releaseMoc3 === 'function') {
+                this.live2dModel.releaseMoc3();
+            }
+            
+            this.moc3 = null;
+            
+            console.log('Cubism model created successfully');
+        } catch (error) {
+            console.error('Failed to create Cubism model:', error);
+            throw error;
+        }
     }
     
     async setupMotionGroups() {
         console.log('Setting up motion groups...');
         
-        this.motionManager = this.live2dModel.createMotionManager();
+        // Check if live2dModel has createMotionManager method
+        if (typeof this.live2dModel.createMotionManager === 'function') {
+            this.motionManager = this.live2dModel.createMotionManager();
+        } else {
+            console.warn('live2dModel.createMotionManager not found, motion setup skipped');
+            return;
+        }
+        
+        // Check if model3Json has motion data
+        if (!this.model3Json || !this.model3Json.FileReferences || !this.model3Json.FileReferences.Motions) {
+            console.warn('No motion data found in model3.json');
+            return;
+        }
         
         const motionGroups = this.model3Json.FileReferences.Motions;
         
         for (const [groupName, groupData] of Object.entries(motionGroups)) {
             const group = await this.createMotionGroup(groupName, groupData);
-            this.motionManager.addMotionGroup(group);
+            if (this.motionManager && typeof this.motionManager.addMotionGroup === 'function') {
+                this.motionManager.addMotionGroup(group);
+            }
         }
         
         console.log(`Loaded ${Object.keys(motionGroups).length} motion groups`);
@@ -355,13 +702,24 @@ class Live2DCubismWrapper {
     async setupModelParameters() {
         console.log('Setting up model parameters...');
         
+        // Check if model3Json has parameter data
+        if (!this.model3Json || !this.model3Json.FileReferences || !this.model3Json.FileReferences.Parameters) {
+            console.warn('No parameter data found in model3.json');
+            return;
+        }
+        
         const parameters = this.model3Json.FileReferences.Parameters;
         
         for (const [paramName, paramData] of Object.entries(parameters)) {
-            const parameter = this.live2dModel.findModelParameterById(paramData.Id);
-            if (parameter) {
-                parameter.value = paramData.Value;
-                this.live2dModel.addParameter(parameter);
+            // Check if live2dModel has findModelParameterById method
+            if (typeof this.live2dModel.findModelParameterById === 'function') {
+                const parameter = this.live2dModel.findModelParameterById(paramData.Id);
+                if (parameter) {
+                    parameter.value = paramData.Value;
+                    if (typeof this.live2dModel.addParameter === 'function') {
+                        this.live2dModel.addParameter(parameter);
+                    }
+                }
             }
         }
         
@@ -371,16 +729,357 @@ class Live2DCubismWrapper {
     createRenderer() {
         console.log('Creating renderer...');
         
-        this.renderer = this.live2dModel.createRenderer();
-        this.renderer.setWebGLContext(this.gl);
-        this.renderer.startAlpha(this.gl);
-        this.renderer.update(this.live2dModel);
-        this.renderer.setRenderLoop(this.gl, () => this.render());
-        
-        console.log('Renderer created');
+        // Check if live2dModel has createRenderer method
+        if (typeof this.live2dModel.createRenderer === 'function') {
+            this.renderer = this.live2dModel.createRenderer();
+            this.renderer.setWebGLContext(this.gl);
+            this.renderer.startAlpha(this.gl);
+            this.renderer.update(this.live2dModel);
+            if (typeof this.renderer.setRenderLoop === 'function') {
+                this.renderer.setRenderLoop(this.gl, () => this.render());
+            }
+            console.log('Renderer created');
+        } else {
+            console.warn('live2dModel.createRenderer not found, using fallback renderer');
+            // Create a simple fallback renderer using Cubism SDK core methods
+            const self = this;
+            // Don't initialize self.textures here, let it reference this.textures dynamically
+            this.renderer = {
+                update: (model) => {
+                    // Update is handled by model.update()
+                },
+                draw: (gl) => {
+                    if (!self.live2dModel) {
+                        return;
+                    }
+                    
+                    console.log('[Renderer] draw() called');
+                    
+                    try {
+                        // Clear the canvas
+                        gl.clearColor(0.0, 0.0, 0.0, 0.0);
+                        gl.clear(gl.COLOR_BUFFER_BIT);
+                        
+                        // Get canvas dimensions
+                        const width = self.canvas.width;
+                        const height = self.canvas.height;
+                        
+                        // Setup viewport
+                        gl.viewport(0, 0, width, height);
+                        
+                        // Enable blending for transparency
+                        gl.enable(gl.BLEND);
+                        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+                        
+                        // Try to render using actual Live2D drawables
+                        if (self.live2dModel.drawables && self.live2dModel.drawables.count > 0) {
+                            const drawables = self.live2dModel.drawables;
+                            const drawableCount = drawables.count;
+                            
+                            console.log(`drawableCount: ${drawableCount}`);
+                            console.log(`drawables.getDrawableCount: ${typeof drawables.getDrawableCount}`);
+                            
+                            console.log(`Rendering ${drawableCount} drawables`);
+                            
+                            // Create shader program if not exists
+                            if (!self.shaderProgram) {
+                                const vertexShaderSource = `
+                                    attribute vec2 a_position;
+                                    attribute vec2 a_texCoord;
+                                    varying vec2 v_texCoord;
+                                    void main() {
+                                        // Convert from 0-1 to -1 to 1 NDC space
+                                        vec4 position = vec4(a_position * 2.0 - 1.0, 0.0, 1.0);
+                                        // Flip Y axis for proper rendering
+                                        position.y = -position.y;
+                                        gl_Position = position;
+                                        v_texCoord = a_texCoord;
+                                    }
+                                `;
+                                
+                                const fragmentShaderSource = `
+                                    precision mediump float;
+                                    varying vec2 v_texCoord;
+                                    uniform sampler2D u_texture;
+                                    uniform float u_opacity;
+                                    void main() {
+                                        vec4 texColor = texture2D(u_texture, v_texCoord);
+                                        gl_FragColor = vec4(texColor.rgb, texColor.a * u_opacity);
+                                    }
+                                `;
+                                
+                                const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+                                gl.shaderSource(vertexShader, vertexShaderSource);
+                                gl.compileShader(vertexShader);
+                                
+                                const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+                                gl.shaderSource(fragmentShader, fragmentShaderSource);
+                                gl.compileShader(fragmentShader);
+                                
+                                self.shaderProgram = gl.createProgram();
+                                gl.attachShader(self.shaderProgram, vertexShader);
+                                gl.attachShader(self.shaderProgram, fragmentShader);
+                                gl.linkProgram(self.shaderProgram);
+                            }
+                            
+                            gl.useProgram(self.shaderProgram);
+                            
+                            // Render each drawable
+                            // Debug: check self and this
+                            console.log('Debug - self.textures:', self.textures ? self.textures.length : 'undefined');
+                            console.log('Debug - this.textures:', this.textures ? this.textures.length : 'undefined');
+                            const textures = self.textures || this.textures || [];
+                            console.log(`Starting to render ${drawableCount} drawables`);
+                            console.log(`Texture count: ${textures.length}`);
+                            console.log(`About to enter drawable loop`);
+                            
+                            let successfullyRendered = 0;
+                            let skippedInvisible = 0;
+                            let skippedNoTexture = 0;
+                            let skippedNoData = 0;
+                            let loopCount = 0;
+                            
+                            for (let i = 0; i < drawableCount; i++) {
+                                loopCount++;
+                                try {
+                                    // Safe access to opacities
+                                    let opacity = 1.0;
+                                    if (drawables.opacities && typeof drawables.opacities === 'object' && 'length' in drawables.opacities) {
+                                        opacity = drawables.opacities[i] !== undefined ? drawables.opacities[i] : 1.0;
+                                    }
+                                    
+                                    // Skip invisible drawables
+                                    if (opacity <= 0.0) {
+                                        skippedInvisible++;
+                                        continue;
+                                    }
+                                    
+                                    const textureIndex = drawables.textureIndices ? drawables.textureIndices[i] : -1;
+                                    
+                                    // Check if we have texture for this drawable
+                                    if (textureIndex >= 0 && textures[textureIndex]) {
+                                        // Safe access to vertexCounts and indexCounts
+                                        if (!drawables.vertexCounts || typeof drawables.vertexCounts[i] === 'undefined') {
+                                            console.error(`vertexCounts[${i}] is undefined`);
+                                            skippedNoData++;
+                                            continue;
+                                        }
+                                        if (!drawables.indexCounts || typeof drawables.indexCounts[i] === 'undefined') {
+                                            console.error(`indexCounts[${i}] is undefined`);
+                                            skippedNoData++;
+                                            continue;
+                                        }
+                                        
+                                        const vertexCount = drawables.vertexCounts[i];
+                                        const indexCount = drawables.indexCounts[i];
+                                        
+                                        if (vertexCount > 0 && indexCount > 0) {
+                                            // Get vertex positions and UVs - check each property
+                                            if (!drawables.vertexPositions) {
+                                                console.error(`vertexPositions is undefined for drawable ${i}`);
+                                                skippedNoData++;
+                                                continue;
+                                            }
+                                            if (!drawables.vertexUvs) {
+                                                console.error(`vertexUvs is undefined for drawable ${i}`);
+                                                skippedNoData++;
+                                                continue;
+                                            }
+                                            if (!drawables.indices) {
+                                                console.error(`indices is undefined for drawable ${i}`);
+                                                skippedNoData++;
+                                                continue;
+                                            }
+                                            
+                                            const vertexPositions = drawables.vertexPositions;
+                                            const vertexUvs = drawables.vertexUvs;
+                                            const indices = drawables.indices;
+                                            
+                                            // Debug: check data sizes
+                                            if (i < 3) {
+                                                console.log(`Drawable ${i}: vertexCount=${vertexCount}, indexCount=${indexCount}`);
+                                                console.log(`  Drawable ID: ${drawables.ids ? drawables.ids[i] : 'N/A'}`);
+                                                console.log(`  vertexPositions[${i}] type:`, vertexPositions[i] ? vertexPositions[i].constructor.name : 'null', 
+                                                          'length:', vertexPositions[i] ? vertexPositions[i].length : 'null');
+                                                console.log(`  vertexUvs[${i}] type:`, vertexUvs[i] ? vertexUvs[i].constructor.name : 'null',
+                                                          'length:', vertexUvs[i] ? vertexUvs[i].length : 'null');
+                                                console.log(`  indices[${i}] type:`, indices[i] ? indices[i].constructor.name : 'null',
+                                                          'length:', indices[i] ? indices[i].length : 'null');
+                                                if (vertexPositions[i] && vertexPositions[i].length > 0) {
+                                                    const arr = vertexPositions[i];
+                                                    const values = [];
+                                                    for (let k = 0; k < Math.min(6, arr.length); k++) {
+                                                        values.push(arr[k]);
+                                                    }
+                                                    console.log(`  First 3 vertexPositions:`, values);
+                                                }
+                                            }
+                                            
+                                            // Get the actual data for this drawable
+                                            const drawableVertexPositions = vertexPositions[i];
+                                            const drawableVertexUvs = vertexUvs[i];
+                                            const drawableIndices = indices[i];
+                                            
+                                            if (!drawableVertexPositions || !drawableVertexUvs || !drawableIndices) {
+                                                console.error(`Missing data for drawable ${i}`);
+                                                skippedNoData++;
+                                                continue;
+                                            }
+                                            
+                                            // Create vertex buffer
+                                            const vertexData = new Float32Array(vertexCount * 4);
+                                            for (let j = 0; j < vertexCount; j++) {
+                                                const baseIndex = j * 4;
+                                                vertexData[baseIndex] = drawableVertexPositions[j * 2];
+                                                vertexData[baseIndex + 1] = drawableVertexPositions[j * 2 + 1];
+                                                vertexData[baseIndex + 2] = drawableVertexUvs[j * 2];
+                                                vertexData[baseIndex + 3] = drawableVertexUvs[j * 2 + 1];
+                                            }
+                                            
+                                            const vertexBuffer = gl.createBuffer();
+                                            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+                                            gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
+                                            
+                                            // Create index buffer
+                                            let indexArray;
+                                            if (drawableIndices instanceof Uint16Array || drawableIndices instanceof Uint32Array) {
+                                                indexArray = drawableIndices;
+                                            } else if (Array.isArray(drawableIndices)) {
+                                                indexArray = new Uint16Array(drawableIndices);
+                                            } else {
+                                                console.error(`Invalid indices type for drawable ${i}:`, drawableIndices.constructor.name);
+                                                skippedNoData++;
+                                                continue;
+                                            }
+                                            
+                                            // Check if indices reference valid vertices
+                                            let maxIndex = 0;
+                                            for (let j = 0; j < indexCount && j < indexArray.length; j++) {
+                                                if (indexArray[j] > maxIndex) maxIndex = indexArray[j];
+                                            }
+                                            
+                                            if (maxIndex >= vertexCount) {
+                                                console.error(`Drawable ${i}: max index ${maxIndex} >= vertexCount ${vertexCount}`);
+                                                skippedNoData++;
+                                                continue;
+                                            }
+                                            
+                                            const indexBuffer = gl.createBuffer();
+                                            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+                                            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexArray, gl.STATIC_DRAW);
+                                            
+                                            // Set up attributes
+                                            const positionLocation = gl.getAttribLocation(self.shaderProgram, 'a_position');
+                                            const texCoordLocation = gl.getAttribLocation(self.shaderProgram, 'a_texCoord');
+                                            
+                                            gl.enableVertexAttribArray(positionLocation);
+                                            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 16, 0);
+                                            
+                                            gl.enableVertexAttribArray(texCoordLocation);
+                                            gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 16, 8);
+                                            
+                                            // Bind texture
+                                            gl.activeTexture(gl.TEXTURE0);
+                                            gl.bindTexture(gl.TEXTURE_2D, self.textures[textureIndex]);
+                                            gl.uniform1i(gl.getUniformLocation(self.shaderProgram, 'u_texture'), 0);
+                                            gl.uniform1f(gl.getUniformLocation(self.shaderProgram, 'u_opacity'), opacity);
+                                            
+                                            // Draw - use appropriate index type based on max index
+                                            const indexType = (maxIndex > 65535) ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
+                                            gl.drawElements(gl.TRIANGLES, indexCount, indexType, 0);
+                                            
+                                            successfullyRendered++;
+                                            
+                                            // Clean up
+                                            gl.deleteBuffer(vertexBuffer);
+                                            gl.deleteBuffer(indexBuffer);
+                                        }
+                                    } else {
+                                        skippedNoTexture++;
+                                    }
+                                } catch (drawableError) {
+                                    console.error(`Error rendering drawable ${i}:`, drawableError);
+                                    // Skip problematic drawable
+                                    continue;
+                                }
+                            }
+                            
+                            console.log(`Loop completed. Total iterations: ${loopCount}`);
+                            console.log(`Rendering stats: ${successfullyRendered} rendered, ${skippedInvisible} invisible, ${skippedNoTexture} no texture, ${skippedNoData} no data`);
+                        } else {
+                            // Fallback: draw animated placeholder if no drawables
+                            if (!self.placeholderShader) {
+                                const vertexShaderSource = `
+                                    attribute vec2 a_position;
+                                    void main() {
+                                        gl_Position = vec4(a_position, 0.0, 1.0);
+                                    }
+                                `;
+                                
+                                const fragmentShaderSource = `
+                                    precision mediump float;
+                                    uniform float u_time;
+                                    void main() {
+                                        float pulse = sin(u_time * 3.0) * 0.1 + 0.9;
+                                        gl_FragColor = vec4(0.4, 0.6, 0.9, 0.7 * pulse);
+                                    }
+                                `;
+                                
+                                const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+                                gl.shaderSource(vertexShader, vertexShaderSource);
+                                gl.compileShader(vertexShader);
+                                
+                                const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+                                gl.shaderSource(fragmentShader, fragmentShaderSource);
+                                gl.compileShader(fragmentShader);
+                                
+                                self.placeholderShader = gl.createProgram();
+                                gl.attachShader(self.placeholderShader, vertexShader);
+                                gl.attachShader(self.placeholderShader, fragmentShader);
+                                gl.linkProgram(self.placeholderShader);
+                            }
+                            
+                            gl.useProgram(self.placeholderShader);
+                            
+                            const vertices = new Float32Array([
+                                -0.3, -0.3,
+                                 0.3, -0.3,
+                                -0.3,  0.3,
+                                 0.3,  0.3
+                            ]);
+                            
+                            const positionBuffer = gl.createBuffer();
+                            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+                            
+                            const positionLocation = gl.getAttribLocation(self.placeholderShader, 'a_position');
+                            gl.enableVertexAttribArray(positionLocation);
+                            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+                            
+                            gl.uniform1f(gl.getUniformLocation(self.placeholderShader, 'u_time'), Date.now() / 1000.0);
+                            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                        }
+                        
+                        // Update model
+                        if (typeof self.live2dModel.update === 'function') {
+                            self.live2dModel.update();
+                        }
+                        
+                    } catch (error) {
+                        console.error('Renderer draw error:', error);
+                        console.error('Error stack:', error.stack);
+                    }
+                },
+                setWebGLContext: (gl) => {
+                    self.gl = gl;
+                }
+            };
+            console.log('Fallback renderer created with Cubism SDK drawing');
+        }
     }
     
     render() {
+        console.log('[Wrapper] render() called, isLoaded:', this.isLoaded, 'isRunning:', this.isRunning);
         if (!this.isLoaded || !this.isRunning) {
             return;
         }
@@ -541,9 +1240,20 @@ class Live2DCubismWrapper {
             return;
         }
         
+        console.log('[Wrapper] start() called');
         this.isRunning = true;
         this.lastUpdate = Date.now();
         console.log('Renderer started');
+        
+        // Start render loop
+        const self = this;
+        function renderLoop() {
+            if (self.isRunning) {
+                self.render();
+                requestAnimationFrame(renderLoop);
+            }
+        }
+        requestAnimationFrame(renderLoop);
     }
     
     stop() {
@@ -552,24 +1262,45 @@ class Live2DCubismWrapper {
     }
     
     resize(width, height) {
+        console.log(`Resizing to ${width}x${height}`);
+        
+        // Update canvas dimensions
+        this.canvas.width = width;
+        this.canvas.height = height;
+        
+        // Check WebGL context
         if (!this.gl) {
+            console.warn('WebGL context is null in resize');
             return;
         }
         
-        const resizeViewport = this.cubismSdk.Viewport.getViewport(width, height);
+        // Check if live2dModel exists
+        if (!this.live2dModel) {
+            console.warn('live2dModel is null in resize');
+            return;
+        }
         
-        this.gl.viewport(
-            resizeViewport.x,
-            resizeViewport.y,
-            resizeViewport.width,
-            resizeViewport.height
-        );
+        // Check if cubismSdk.Viewport exists
+        if (this.cubismSdk && this.cubismSdk.Viewport) {
+            const resizeViewport = this.cubismSdk.Viewport.getViewport(width, height);
+            
+            this.gl.viewport(
+                resizeViewport.x,
+                resizeViewport.y,
+                resizeViewport.width,
+                resizeViewport.height
+            );
+            
+            this.cubismSdk.Viewport.update(width, height, this.gl);
+        } else {
+            // Fallback: use direct viewport setting
+            this.gl.viewport(0, 0, width, height);
+        }
         
-        this.cubismSdk.Viewport.update(width, height, this.gl);
-        
-        this.renderer.update(this.live2dModel);
-        
-        console.log(`Resized to ${width}x${height}`);
+        // Update renderer if it exists
+        if (this.renderer && typeof this.renderer.update === 'function') {
+            this.renderer.update(this.live2dModel);
+        }
     }
     
     onLoaded(callback) {
@@ -655,4 +1386,10 @@ class Live2DCubismWrapper {
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Live2DCubismWrapper;
+}
+
+// Export to global for browser environment
+if (typeof window !== 'undefined') {
+    window.Live2DCubismWrapper = Live2DCubismWrapper;
+    console.log('Live2DCubismWrapper exported to global');
 }

@@ -627,4 +627,29 @@ class StateMatrix4D {
         
         this.updateGamma({ calm: Math.min(1, this.gamma.values.calm + decayFactor * 0.5) });
     }
+    
+    updateFromBackend(data) {
+        // Update state matrix from backend data
+        if (!data) return;
+        
+        if (data.alpha) {
+            this.updateAlpha(data.alpha);
+        }
+        
+        if (data.beta) {
+            this.updateBeta(data.beta);
+        }
+        
+        if (data.gamma) {
+            this.updateGamma(data.gamma);
+        }
+        
+        if (data.delta) {
+            this.updateDelta(data.delta);
+        }
+        
+        if (data.timestamp) {
+            this.lastUpdate = data.timestamp;
+        }
+    }
 }

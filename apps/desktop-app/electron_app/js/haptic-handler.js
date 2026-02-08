@@ -186,8 +186,14 @@ class HapticHandler {
         this.vibrate(10, 0.5);
     }
 
-    hapticHover() {
-        this.vibrate(5, 0.3);
+    hapticHover(bodyPart = 'hand') {
+        // Light feedback for hover over body parts
+        this.hapticBodyPart(bodyPart, 0.3);
+    }
+
+    hapticTap(bodyPart = 'hand') {
+        // Strong feedback for tap on body parts
+        this.hapticBodyPart(bodyPart, 0.8);
     }
 
     hapticTouch(intensity = 1) {
@@ -249,6 +255,14 @@ class HapticHandler {
 
     getConnectedDevices() {
         return Array.from(this.connectedDevices.values());
+    }
+
+    // Stop ongoing haptic feedback
+    stop() {
+        // Stop any ongoing vibration
+        if (this.vibrationSupported && navigator.vibrate) {
+            navigator.vibrate(0);
+        }
     }
 
     // Enable/disable

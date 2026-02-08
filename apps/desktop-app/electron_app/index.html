@@ -50,6 +50,68 @@
             pointer-events: none;
         }
 
+        /* Draggable title bar */
+        #title-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            -webkit-app-region: drag;
+            z-index: 30;
+            cursor: move;
+            background: transparent;
+        }
+
+        /* Control buttons */
+        .control-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 40;
+            -webkit-app-region: no-drag;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+
+        .control-btn:hover {
+            opacity: 1;
+        }
+
+        #close-btn {
+            background: rgba(255, 0, 0, 0.5);
+        }
+
+        #resize-btn {
+            top: auto;
+            bottom: 5px;
+            right: 5px;
+            cursor: nwse-resize;
+        }
+
+        #scale-down-btn {
+            top: auto;
+            bottom: 5px;
+            left: 5px;
+        }
+
+        #scale-up-btn {
+            top: auto;
+            bottom: 5px;
+            left: 40px;
+        }
+
         #status-bar {
             position: absolute;
             top: 10px;
@@ -240,8 +302,12 @@
     </div>
 
     <div id="container">
+        <div id="title-bar"></div>
         <canvas id="live2d-canvas"></canvas>
         <div id="click-layer"></div>
+        <button class="control-btn" id="scale-down-btn" title="缩小">-</button>
+        <button class="control-btn" id="scale-up-btn" title="放大">+</button>
+        <button class="control-btn" id="resize-btn" title="调整大小">⤢</button>
     </div>
 
     <div id="status-bar"></div>
@@ -268,6 +334,19 @@
 
     <!-- Live2D Cubism Web SDK -->
     <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
+    <!-- Fallback Local SDK -->
+    <script src="libs/live2d-fallback.js"></script>
+    <script>
+        console.log('[Init] Checking Live2D SDK status...');
+        console.log('[Init] window.Live2DCubismCore:', typeof window.Live2DCubismCore);
+        // 如果 CDN 加载失败，使用本地 fallback
+        if (typeof window.Live2DCubismCore === 'undefined') {
+            console.log('[Init] CDN failed, using local fallback SDK');
+            window.loadLocalLive2DSDK();
+        } else {
+            console.log('[Init] CDN loaded successfully');
+        }
+    </script>
     
     <!-- Hardware Detection -->
     <script src="js/hardware-config.js"></script>
@@ -301,9 +380,5 @@
     <script src="js/user-manager.js"></script>
     <script src="js/app.js"></script>
 </body>
-</html>< s c r i p t   s r c = " j s / l i v e 2 d - a n a l y z e r . j s " > < / s c r i p t >  
- < s c r i p t   s r c = " j s / f i n a l - t e s t e r . j s " > < / s c r i p t >  
- < s c r i p t   s r c = " j s / c u b i s m - t e s t e r . j s " > < / s c r i p t >  
- < s c r i p t   s r c = " j s / d e e p - l i v e 2 d - d i a g n o s t i c . j s " > < / s c r i p t >  
- < s c r i p t   s r c = " j s / m o d e l - r e s o u r c e - c h e c k e r . j s " > < / s c r i p t >  
+</html>
  

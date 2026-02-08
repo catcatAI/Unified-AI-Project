@@ -10,8 +10,16 @@ from ..memory.ham_memory.ham_manager import HAMMemoryManager
 from .fact_extractor_module import FactExtractorModule
 from .content_analyzer_module import ContentAnalyzerModule
 from ..trust.trust_manager_module import TrustManager
-from ...core.hsp.payloads import HSPFactPayload, HSPMessageEnvelope
 from ..personality.personality_manager import PersonalityManager
+
+# HSP payloads - 可选依赖
+try:
+    from ...core.hsp.payloads import HSPFactPayload, HSPMessageEnvelope
+    HSP_AVAILABLE = True
+except ImportError:
+    HSP_AVAILABLE = False
+    HSPFactPayload = None
+    HSPMessageEnvelope = None
 
 if TYPE_CHECKING:
     from ...core.hsp.connector import HSPConnector

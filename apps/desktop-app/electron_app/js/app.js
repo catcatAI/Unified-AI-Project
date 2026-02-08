@@ -29,6 +29,8 @@ class AngelaApp {
         this.precisionManager = null;
         this.backendWebSocket = null;
         this.hardwareDetector = null;
+        this.dialogueUI = null;
+        this.touchLayer = null;
         
         // UI elements
         this.loadingOverlay = document.getElementById('loading-overlay');
@@ -66,13 +68,19 @@ class AngelaApp {
             this._initializeMaturityTracker();
             
             // 4. Initialize Performance Manager (needs hardware info)
+            console.log('[App] Before _initializePerformanceManager');
             await this._initializePerformanceManager();
+            console.log('[App] After _initializePerformanceManager');
             
             // 5. Initialize Hardware-dependent systems (Live2D, Audio, etc.)
+            console.log('[App] Before _initializeLive2D');
             await this._initializeLive2D();
+            console.log('[App] After _initializeLive2D');
             
             // 6. Connect systems
+            console.log('[App] Before _linkSystems');
             this._linkSystems();
+            console.log('[App] After _linkSystems');
             
             // 7. Initialize remaining handlers
             this._initializeBackendWebSocket();
@@ -83,7 +91,11 @@ class AngelaApp {
             await this._initializePluginManager();
             await this._initializePerformanceMonitor();
             
-            // 8. Final setup
+            // 8. Initialize UI components
+            await this._initializeDialogueUI();
+            await this._initializeTouchLayer();
+            
+            // 9. Final setup
             this._setupUIControls();
             this._setupElectronEvents();
             await this._loadDefaultModel();
@@ -111,7 +123,6 @@ class AngelaApp {
         if (this.stateMatrix) {
             this.stateMatrix.setLive2DManager(this.live2dManager);
             this.stateMatrix.setWebSocket(this.backendWebSocket);
-            this.stateMatrix.setStateMatrix(this.maturityTracker);
         }
         
         if (this.performanceManager) {
@@ -126,6 +137,7 @@ class AngelaApp {
         
         if (this.maturityTracker) {
             this.maturityTracker.setWebSocket(this.backendWebSocket);
+            this.maturityTracker.setStateMatrix(this.stateMatrix);
         }
     }
 
@@ -313,7 +325,7 @@ class AngelaApp {
         
         this.maturityTracker = new MaturityTracker();
         
-        this.stateMatrix.setStateMatrix(this.maturityTracker);
+        this.maturityTracker.setStateMatrix(this.stateMatrix);
     }
     
     _initializePrecisionManager() {
@@ -325,7 +337,7 @@ class AngelaApp {
     _initializeBackendWebSocket() {
         this.updateLoadingText('Setting up backend connection...');
         
-        this.backendWebSocket = new BackendWebSocket();
+        this.backendWebSocket = new BackendWebSocketClient();
         
         this.stateMatrix.setWebSocket(this.backendWebSocket);
         this.maturityTracker.setWebSocket(this.backendWebSocket);
@@ -335,13 +347,26 @@ class AngelaApp {
     }
     
     async _initializeLive2D() {
+        console.log('[App] _initializeLive2D called');
         this.updateLoadingText('Initializing Live2D...');
         const startTime = performance.now();
         
         const canvas = document.getElementById('live2d-canvas');
-        this.live2dManager = new Live2DManager(canvas);
+        console.log('[App] Canvas element:', canvas);
         
+        try {
+            this.live2dManager = new Live2DManager(canvas);
+            console.log('[App] Live2DManager instance created');
+            console.log('[App] Live2DManager.sdk:', this.live2dManager.sdk);
+            console.log('[App] Live2DManager.wrapper:', this.live2dManager.wrapper);
+        } catch (error) {
+            console.error('[App] Error creating Live2DManager:', error);
+            throw error;
+        }
+        
+        console.log('[App] Calling Live2DManager.initialize()');
         const success = await this.live2dManager.initialize();
+        console.log('[App] Live2DManager.initialize() returned:', success);
         
         const duration = (performance.now() - startTime).toFixed(2);
         if (success) {
@@ -411,6 +436,154 @@ class AngelaApp {
                 this.performanceMonitor.addCustomMetric('performance_mode', mode);
             };
         }
+    }
+    
+    async _initializeDialogueUI() {
+        this.updateLoadingText('Initializing dialogue UI...');
+        
+        // Import and initialize DialogueUI
+        try {
+            // Check if DialogueUI is already loaded
+            if (typeof DialogueUI === 'undefined') {
+                // Try to load the script
+                const script = document.createElement('script');
+                script.src = 'js/dialogue-ui.js';
+                script.onload = () => {
+                    this.dialogueUI = new DialogueUI(this.backendWebSocket);
+                    console.log('[App] Dialogue UI initialized');
+                };
+                document.head.appendChild(script);
+            } else {
+                this.dialogueUI = new DialogueUI(this.backendWebSocket);
+                console.log('[App] Dialogue UI initialized');
+            }
+        } catch (error) {
+            console.error('[App] Failed to initialize dialogue UI:', error);
+        }
+    }
+    
+    async _initializeTouchLayer() {
+        this.updateLoadingText('Initializing touch layer...');
+        
+        // Create touch layer for haptic feedback
+        try {
+            const touchLayer = document.createElement('div');
+            touchLayer.id = 'touch-layer';
+            touchLayer.innerHTML = `
+                <div class="touch-zone touch-head" data-part="head"></div>
+                <div class="touch-zone touch-face" data-part="face"></div>
+                <div class="touch-zone touch-chest" data-part="chest"></div>
+                <div class="touch-zone touch-left-hand" data-part="leftHand"></div>
+                <div class="touch-zone touch-right-hand" data-part="rightHand"></div>
+            `;
+            
+            // Add styles
+            const style = document.createElement('style');
+            style.textContent = `
+                #touch-layer {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    pointer-events: none;
+                    z-index: 15;
+                }
+                
+                .touch-zone {
+                    position: absolute;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 4px;
+                    pointer-events: auto;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                
+                .touch-zone:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                }
+                
+                .touch-head {
+                    top: 15%;
+                    left: 35%;
+                    width: 30%;
+                    height: 25%;
+                }
+                
+                .touch-face {
+                    top: 20%;
+                    left: 40%;
+                    width: 20%;
+                    height: 20%;
+                }
+                
+                .touch-chest {
+                    top: 45%;
+                    left: 40%;
+                    width: 20%;
+                    height: 15%;
+                }
+                
+                .touch-left-hand {
+                    top: 55%;
+                    left: 25%;
+                    width: 20%;
+                    height: 25%;
+                }
+                
+                .touch-right-hand {
+                    top: 55%;
+                    right: 25%;
+                    width: 20%;
+                    height: 25%;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Add to container after live2d-canvas
+            const container = document.getElementById('container');
+            if (container) {
+                container.appendChild(touchLayer);
+                
+                // Bind touch events to haptic handler
+                this._bindTouchEvents(touchLayer);
+                
+                console.log('[App] Touch layer initialized');
+            }
+        } catch (error) {
+            console.error('[App] Failed to initialize touch layer:', error);
+        }
+    }
+    
+    _bindTouchEvents(touchLayer) {
+        const touchZones = touchLayer.querySelectorAll('.touch-zone');
+        
+        touchZones.forEach(zone => {
+            const part = zone.dataset.part;
+            
+            zone.addEventListener('mouseenter', () => {
+                if (this.hapticHandler) {
+                    this.hapticHandler.hapticHover(part);
+                }
+            });
+            
+            zone.addEventListener('mouseleave', () => {
+                if (this.hapticHandler) {
+                    this.hapticHandler.stop();
+                }
+            });
+            
+            zone.addEventListener('click', () => {
+                if (this.hapticHandler) {
+                    this.hapticHandler.hapticTap(part);
+                }
+                
+                // Trigger Live2D motion on body part
+                if (this.live2dManager) {
+                    this.live2dManager.triggerMotionByPart(part);
+                }
+            });
+        });
     }
 
     _setupUIControls() {
@@ -541,19 +714,32 @@ class AngelaApp {
                 break;
             case 'audio':
                 if (this.audioHandler) {
-                    enabled ? this.audioHandler.start() : this.audioHandler.stop();
+                    if (enabled) {
+                        if (typeof this.audioHandler.start === 'function') {
+                            this.audioHandler.start();
+                        }
+                    } else {
+                        if (typeof this.audioHandler.stop === 'function') {
+                            this.audioHandler.stop();
+                        }
+                    }
                 }
                 break;
             case 'tactile':
                 if (this.hapticHandler) {
                     // 觸覺系統控制
-                    this.hapticHandler.setEnabled(enabled);
+                    if (typeof this.hapticHandler.setEnabled === 'function') {
+                        this.hapticHandler.setEnabled(enabled);
+                    }
                 }
                 break;
             case 'action':
                 // 動作執行器控制
+                // 注意：live2dManager 中没有 setActionsEnabled 方法
+                // 可以通过其他方式控制动作功能
                 if (this.live2dManager) {
-                    this.live2dManager.setActionsEnabled(enabled);
+                    // 暂时注释掉不存在的方法
+                    // this.live2dManager.setActionsEnabled(enabled);
                 }
                 break;
         }
@@ -775,7 +961,7 @@ class AngelaApp {
             }
             
             // Send initial state to backend
-            if (this.backendWebSocket.isConnected()) {
+            if (this.backendWebSocket.connected) {
                 this.backendWebSocket.send({
                     type: 'init',
                     state: this.stateMatrix.exportToDict(),
@@ -968,10 +1154,218 @@ class AngelaApp {
     }
 }
 
+// Global UI scale function
+function updateUIScale(scaleFactor) {
+    // Scale control buttons
+    const controlBtns = document.querySelectorAll('.control-btn');
+    controlBtns.forEach(btn => {
+        const baseSize = 30; // Base size in pixels
+        const newSize = Math.floor(baseSize * scaleFactor);
+        btn.style.width = `${newSize}px`;
+        btn.style.height = `${newSize}px`;
+        btn.style.fontSize = `${Math.floor(16 * scaleFactor)}px`;
+        btn.style.padding = '0';
+    });
+    
+    // Scale badges
+    const badges = document.querySelectorAll('.badge');
+    badges.forEach(badge => {
+        const basePadding = '8px 12px';
+        const baseFontSize = '12px';
+        const newPadding = `${Math.floor(8 * scaleFactor)}px ${Math.floor(12 * scaleFactor)}px`;
+        const newFontSize = `${Math.floor(12 * scaleFactor)}px`;
+        badge.style.padding = newPadding;
+        badge.style.fontSize = newFontSize;
+    });
+    
+    // Scale status bar
+    const statusBar = document.getElementById('status-bar');
+    if (statusBar) {
+        statusBar.style.fontSize = `${Math.floor(12 * scaleFactor)}px`;
+    }
+    
+    // Scale audio visualizer
+    const audioVisualizer = document.getElementById('audio-visualizer');
+    if (audioVisualizer) {
+        const bars = audioVisualizer.querySelectorAll('.audio-bar');
+        bars.forEach(bar => {
+            const baseHeight = 20;
+            const baseWidth = 4;
+            bar.style.height = `${Math.floor(baseHeight * scaleFactor)}px`;
+            bar.style.width = `${Math.floor(baseWidth * scaleFactor)}px`;
+        });
+    }
+    
+    // Update title bar height
+    const titleBar = document.getElementById('title-bar');
+    if (titleBar) {
+        titleBar.style.height = `${Math.floor(40 * scaleFactor)}px`;
+    }
+    
+    // Scale touch layer zones
+    const touchLayer = document.getElementById('touch-layer');
+    if (touchLayer) {
+        const zones = touchLayer.querySelectorAll('.touch-zone');
+        zones.forEach(zone => {
+            // Recalculate zone positions and sizes based on scale
+            const part = zone.dataset.part;
+            let top, left, width, height;
+            
+            switch(part) {
+                case 'head':
+                    top = 15; left = 35; width = 30; height = 25;
+                    break;
+                case 'face':
+                    top = 20; left = 40; width = 20; height = 20;
+                    break;
+                case 'chest':
+                    top = 45; left = 40; width = 20; height = 15;
+                    break;
+                case 'leftHand':
+                    top = 55; left = 25; width = 20; height = 25;
+                    break;
+                case 'rightHand':
+                    top = 55; left = 55; width = 20; height = 25;
+                    break;
+            }
+            
+            zone.style.top = `${top * scaleFactor}%`;
+            zone.style.left = `${left * scaleFactor}%`;
+            zone.style.width = `${width * scaleFactor}%`;
+            zone.style.height = `${height * scaleFactor}%`;
+        });
+    }
+    
+    // Scale dialogue UI
+    const dialogueContainer = document.getElementById('dialogue-container');
+    if (dialogueContainer) {
+        const baseWidth = 400;
+        const newWidth = Math.floor(baseWidth * scaleFactor);
+        dialogueContainer.style.width = `${newWidth}px`;
+        dialogueContainer.style.bottom = `${Math.floor(20 * scaleFactor)}px`;
+        dialogueContainer.style.right = `${Math.floor(20 * scaleFactor)}px`;
+        
+        // Scale dialogue panel elements
+        const dialoguePanel = document.getElementById('dialogue-panel');
+        if (dialoguePanel) {
+            dialoguePanel.style.borderRadius = `${Math.floor(12 * scaleFactor)}px`;
+        }
+        
+        // Scale dialogue input
+        const dialogueInput = document.getElementById('dialogue-input');
+        if (dialogueInput) {
+            dialogueInput.style.fontSize = `${Math.floor(14 * scaleFactor)}px`;
+            dialogueInput.style.padding = `${Math.floor(10 * scaleFactor)}px`;
+        }
+        
+        // Scale dialogue buttons
+        const dialogueBtns = dialogueContainer.querySelectorAll('button');
+        dialogueBtns.forEach(btn => {
+            btn.style.fontSize = `${Math.floor(14 * scaleFactor)}px`;
+            btn.style.padding = `${Math.floor(8 * scaleFactor)}px ${Math.floor(16 * scaleFactor)}px`;
+        });
+    }
+}
+
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.angelaApp = new AngelaApp();
+    
+    // Add window control handlers
+    initializeWindowControls();
+    
+    // Listen for window resize events
+    window.addEventListener('resize', () => {
+        const canvas = document.getElementById('live2d-canvas');
+        if (canvas && window.angelaApp && window.angelaApp.live2dManager) {
+            const newScale = canvas.width / 400; // Calculate scale based on current width
+            if (newScale !== 1.0) {
+                updateUIScale(newScale);
+            }
+        }
+    });
 });
+
+function initializeWindowControls() {
+    let scale = 1.0;
+    let isResizing = false;
+    let initialX = 0;
+    let initialY = 0;
+    let initialWidth = 400;
+    let initialHeight = 600;
+    
+    // Initialize UI scale on load
+    updateUIScale(scale);
+    
+    // Scale up
+    const scaleUpBtn = document.getElementById('scale-up-btn');
+    if (scaleUpBtn) {
+        scaleUpBtn.addEventListener('click', async () => {
+            if (scale < 2.0) {
+                scale += 0.1;
+                await updateWindowSize();
+            }
+        });
+    }
+    
+    // Scale down
+    const scaleDownBtn = document.getElementById('scale-down-btn');
+    if (scaleDownBtn) {
+        scaleDownBtn.addEventListener('click', async () => {
+            if (scale > 0.5) {
+                scale -= 0.1;
+                await updateWindowSize();
+            }
+        });
+    }
+    
+    // Resize button
+    const resizeBtn = document.getElementById('resize-btn');
+    if (resizeBtn) {
+        resizeBtn.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            initialX = e.clientX;
+            initialY = e.clientY;
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', async (e) => {
+            if (isResizing && window.electronAPI && window.electronAPI.window) {
+                const deltaX = e.clientX - initialX;
+                const deltaY = e.clientY - initialY;
+                const newWidth = Math.max(200, initialWidth + deltaX);
+                const newHeight = Math.max(300, initialHeight + deltaY);
+                await window.electronAPI.window.setSize(newWidth, newHeight);
+            }
+        });
+        
+        document.addEventListener('mouseup', async () => {
+            if (isResizing && window.electronAPI && window.electronAPI.window) {
+                const bounds = await window.electronAPI.window.getBounds();
+                initialWidth = bounds.width;
+                initialHeight = bounds.height;
+            }
+            isResizing = false;
+        });
+    }
+    
+    async function updateWindowSize() {
+        if (window.electronAPI && window.electronAPI.window) {
+            const newWidth = Math.floor(400 * scale);
+            const newHeight = Math.floor(600 * scale);
+            await window.electronAPI.window.setSize(newWidth, newHeight);
+            
+            // Update Live2D canvas size
+            const canvas = document.getElementById('live2d-canvas');
+            if (canvas && window.angelaApp && window.angelaApp.live2dManager) {
+                window.angelaApp.live2dManager.resize(newWidth, newHeight);
+            }
+            
+            // Update UI elements to match the scale
+            updateUIScale(scale);
+        }
+    }
+}
 
 // Export for testing
 if (typeof module !== 'undefined' && module.exports) {

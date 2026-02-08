@@ -241,8 +241,12 @@ class WallpaperHandler {
             if (this.renderingMode !== '3D') return;
             const rotateY = (e.clientX / window.innerWidth - 0.5) * 20;
             const rotateX = (e.clientY / window.innerHeight - 0.5) * -20;
-            this.compositionCanvas.parentElement.style.perspective = '1000px';
-            this.compositionCanvas.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+            
+            // Check if elements exist before accessing their properties
+            if (this.compositionCanvas && this.compositionCanvas.parentElement) {
+                this.compositionCanvas.parentElement.style.perspective = '1000px';
+                this.compositionCanvas.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+            }
         };
 
         window.addEventListener('mousemove', this._parallaxHandler);

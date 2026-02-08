@@ -1,10 +1,19 @@
-const { app, BrowserWindow, ipcMain, screen, globalShortcut, systemPreferences, nativeTheme, Menu, Tray, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, systemPreferences, nativeTheme, Menu, Tray, nativeImage, protocol } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const securityManager = require('./js/security-manager');
 
 // Import Live2D Cubism Web SDK (will be loaded via CDN or local)
 const LIVE2D_VERSION = '5.0.0';
+
+// 单实例锁 - 防止启动多个实例
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  console.log('[Main] Another instance is already running. Quitting...');
+  app.quit();
+  process.exit(0);
+}
 
 let mainWindow;
 let settingsWindow;
@@ -22,9 +31,43 @@ let moduleStates = {
 };
 let tray = null;
 
+// 当第二个实例尝试启动时，将焦点转移到现有窗口
+app.on('second-instance', (event, commandLine, workingDirectory) => {
+  console.log('[Main] Second instance detected, focusing existing window');
+  
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+});
+
 // App lifecycle
 app.whenReady().then(async () => {
   isDevMode = process.argv.includes('--dev');
+  
+  // Enable GPU acceleration for WebGL
+  app.commandLine.appendSwitch('enable-gpu-rasterization');
+  app.commandLine.appendSwitch('enable-zero-copy');
+  app.commandLine.appendSwitch('ignore-gpu-blacklist');
+  app.commandLine.appendSwitch('enable-webgl2-compute-context');
+  
+  // Register file protocol for loading Live2D model files
+  protocol.registerFileProtocol('local', (request, callback) => {
+    console.log('[Main] Local protocol request:', request.url);
+    // Handle both local://path and local:///path formats
+    let urlPath = request.url.substring(7); // Remove 'local://'
+    if (urlPath.startsWith('/')) {
+      // If path starts with /, it's already an absolute path
+      // But if it's // or more, remove the extra slashes
+      while (urlPath.startsWith('//')) {
+        urlPath = urlPath.substring(1);
+      }
+    }
+    const filePath = path.normalize(urlPath);
+    console.log('[Main] Local protocol resolved to:', filePath);
+    callback({ path: filePath });
+  });
+  console.log('[Main] Local file protocol registered');
   
   // Initialize security manager (Key C sync)
   const userDataPath = app.getPath('userData');
@@ -91,47 +134,83 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 400,
     height: 600,
-    x: width - 450,
-    y: height - 650,
-    transparent: true,
+    x: Math.max(0, width - 450),
+    y: Math.max(0, height - 650),
+    transparent: false,  // Disable transparency for WebGL support
     frame: false,
-    resizable: false,
-    alwaysOnTop: false,
-    skipTaskbar: true,
+    resizable: true,  // Enable resizing
+    alwaysOnTop: true,
+    skipTaskbar: false,
     acceptFirstMouse: true,
     titleBarStyle: 'hiddenInset',
+    show: false,
+    backgroundColor: '#00000000',  // Transparent background color
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
-      webSecurity: true
+      sandbox: false,
+      webSecurity: true,
+      // Enable WebGL
+      experimentalFeatures: true,
+      webgl: true
     }
   });
   
-  // Set click-through regions initially
-  mainWindow.setIgnoreMouseEvents(true);
+  console.log('[Window] Creating window with bounds:', mainWindow.getBounds());
+  
+  // Set minimum size
+  mainWindow.setMinimumSize(200, 300);
+  
+  // Enable draggable region
+  mainWindow.setSkipTaskbar(false);
   
   // Load the app
+  console.log('[Window] Loading index.html...');
   mainWindow.loadFile('index.html');
+  
+  // Log when page is loaded
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('[Window] Page loaded successfully');
+  });
+  
+  // Log any page load errors
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('[Window] Page load failed:', errorCode, errorDescription);
+  });
+  
+  // Log console messages from renderer
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    console.log(`[Renderer] ${message}`);
+  });
+  
+  // Wait for ready-to-show before showing
+  mainWindow.on('ready-to-show', () => {
+    console.log('[Window] Window ready to show, showing now...');
+    mainWindow.show();
+    mainWindow.setAlwaysOnTop(true);
+    mainWindow.focus();
+    console.log('[Window] Window shown with bounds:', mainWindow.getBounds());
+    
+    // Open DevTools for debugging
+    mainWindow.webContents.openDevTools();
+    
+    mainWindow.webContents.send('window-ready', {
+      bounds: mainWindow.getBounds()
+    });
+  });
+  
+  // Handle window position saving
+  mainWindow.on('moved', () => {
+    const bounds = mainWindow.getBounds();
+    console.log('[Window] Window moved to:', bounds);
+    saveWindowPosition(bounds);
+  });
   
   // Open DevTools in development mode
   if (isDevMode) {
     mainWindow.webContents.openDevTools();
   }
-  
-  // Handle window position saving
-  mainWindow.on('moved', () => {
-    const bounds = mainWindow.getBounds();
-    saveWindowPosition(bounds);
-  });
-  
-  // Handle mouse events for click-through
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.webContents.send('window-ready', {
-      bounds: mainWindow.getBounds()
-    });
-  });
 }
 
 /**
@@ -646,6 +725,22 @@ ipcMain.handle('window-set-size', (event, { width, height }) => {
 
 ipcMain.handle('window-set-position', (event, { x, y }) => {
   mainWindow.setPosition(x, y);
+});
+
+ipcMain.handle('window-get-position', () => {
+  const [x, y] = mainWindow.getPosition();
+  return { x, y };
+});
+
+ipcMain.handle('window-get-bounds', () => {
+  return mainWindow.getBounds();
+});
+
+ipcMain.handle('window-set-size-and-center', (event, { width, height }) => {
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const x = Math.max(0, screenWidth - width - 50);
+  const y = Math.max(0, screenHeight - height - 50);
+  mainWindow.setBounds({ x, y, width, height });
 });
 
 ipcMain.handle('window-set-always-on-top', (event, flag) => {

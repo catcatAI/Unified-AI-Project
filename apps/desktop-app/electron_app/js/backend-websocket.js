@@ -73,6 +73,10 @@ class BackendWebSocketClient {
         const data = message.data;
         
         switch (type) {
+            case 'connected':
+                console.log('Backend confirmed connection:', message);
+                this._fireEvent('connected', message);
+                break;
             case 'state_update':
                 this._handleStateUpdate(data);
                 break;
@@ -275,6 +279,10 @@ class BackendWebSocketClient {
             url: this.url,
             reconnectAttempts: this.reconnectAttempts
         };
+    }
+    
+    isConnected() {
+        return this.connected;
     }
 }
 

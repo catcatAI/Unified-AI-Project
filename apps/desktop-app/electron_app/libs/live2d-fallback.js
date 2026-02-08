@@ -5,7 +5,11 @@
  * 當CDN無法訪問時使用本地備份
  */
 
+console.log('[Fallback] Live2D fallback script loaded');
+
 window.loadLocalLive2DSDK = function() {
+    console.log('[Fallback] loadLocalLive2DSDK called');
+    
     return new Promise((resolve, reject) => {
         console.log('嘗試加載本地Live2D SDK...');
         

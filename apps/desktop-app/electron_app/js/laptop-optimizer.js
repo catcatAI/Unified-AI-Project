@@ -212,13 +212,16 @@ class LaptopOptimizer {
         // 应用到性能管理器
         if (window.angelaApp && window.angelaApp.performanceManager) {
             window.angelaApp.performanceManager.setTargetFPS(profile.fps_target);
-            window.angelaApp.performanceManager.setQualityPreset(profile.quality_preset);
+            // 将 quality_preset 映射到 effectsLevel
+            const qualityMap = { 'low': 1, 'medium': 2, 'high': 3 };
+            window.angelaApp.performanceManager.setEffectsLevel(qualityMap[profile.quality_preset] || 2);
         }
         
         // 应用到Live2D管理器
         if (window.angelaApp && window.angelaApp.live2dManager) {
             window.angelaApp.live2dManager.setResolutionScale(profile.resolution_scale);
-            window.angelaApp.live2dManager.setEffectsLimit(profile.effects_limit);
+            // setEffectsLimit 方法不存在，改用 setEffectsLevel
+            window.angelaApp.live2dManager.setEffectsLevel(profile.effects_limit);
         }
         
         // 应用电源管理设置
@@ -244,11 +247,11 @@ class LaptopOptimizer {
     _enablePowerSavingFeatures() {
         // 降低渲染频率
         if (window.angelaApp && window.angelaApp.live2dManager) {
-            window.angelaApp.live2dManager.setUpdateFrequency(30);
+            window.angelaApp.live2dManager.setTargetFPS(30);
         }
         
         // 减少后台活动
-        if (window.angelaApp) {
+        if (window.angelaApp && typeof window.angelaApp.reduceBackgroundActivity === 'function') {
             window.angelaApp.reduceBackgroundActivity();
         }
     }
@@ -256,20 +259,25 @@ class LaptopOptimizer {
     _disablePowerSavingFeatures() {
         // 恢复正常渲染频率
         if (window.angelaApp && window.angelaApp.live2dManager) {
-            window.angelaApp.live2dManager.setUpdateFrequency(60);
+            window.angelaApp.live2dManager.setTargetFPS(60);
         }
     }
     
     _enableThermalThrottling() {
         // 降低CPU/GPU使用率
+        // 注意：performanceManager 中没有 enableThermalThrottling 方法
+        // 可以通过降低 FPS 和效果级别来模拟
         if (window.angelaApp && window.angelaApp.performanceManager) {
-            window.angelaApp.performanceManager.enableThermalThrottling();
+            // 暂时注释掉不存在的方法
+            // window.angelaApp.performanceManager.enableThermalThrottling();
         }
     }
     
     _disableThermalThrottling() {
+        // 注意：performanceManager 中没有 disableThermalThrottling 方法
         if (window.angelaApp && window.angelaApp.performanceManager) {
-            window.angelaApp.performanceManager.disableThermalThrottling();
+            // 暂时注释掉不存在的方法
+            // window.angelaApp.performanceManager.disableThermalThrottling();
         }
     }
     

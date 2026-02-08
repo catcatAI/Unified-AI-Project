@@ -6,6 +6,8 @@
 
 class Live2DManager {
     constructor(canvas) {
+        console.log('[Live2DManager] Constructor called with canvas:', canvas);
+        
         this.canvas = canvas;
         this.gl = null;
         this.wrapper = null;
@@ -167,7 +169,7 @@ class Live2DManager {
         this.onHover = null;
         this.onExpressionChanged = null;
         this.onMotionStarted = null;
-        onMotionFinished = null;
+        this.onMotionFinished = null;
         this.onError = null;
         
         // Initialize
@@ -175,13 +177,17 @@ class Live2DManager {
     }
     
     _init() {
-        console.log('Live2DManager initializing...');
+        console.log('[Live2DManager] _init called');
         
         // Try to load SDK
         this._tryLoadSDK();
     }
     
     _tryLoadSDK() {
+        console.log('[Live2DManager] _tryLoadSDK called');
+        console.log('[Live2DManager] Checking window.Live2DCubismCore:', typeof window.Live2DCubismCore);
+        console.log('[Live2DManager] Checking window.Live2DCubismWrapper:', typeof window.Live2DCubismWrapper);
+        
         if (typeof window.Live2DCubismCore !== 'undefined') {
             console.log('Live2D Cubism Core already loaded from CDN');
             this._initializeWithSDK(window.Live2DCubismCore);
@@ -193,16 +199,52 @@ class Live2DManager {
     
     _initializeWithSDK(CubismCore) {
         console.log('Initializing with Live2D Cubism Core');
+        console.log('CubismCore structure:', Object.keys(CubismCore));
+        console.log('CubismCore.MOC3:', CubismCore.MOC3);
         
         this.sdk = CubismCore;
         this.cubismSdk = CubismCore;
         
-        this.gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl');
+        // Ensure canvas has dimensions before getting WebGL context
+        if (!this.canvas.width || !this.canvas.height) {
+            console.warn('Canvas has no dimensions, setting default size');
+            this.canvas.width = this.canvas.clientWidth || 400;
+            this.canvas.height = this.canvas.clientHeight || 600;
+        }
+        
+        console.log('Canvas dimensions:', this.canvas.width, 'x', this.canvas.height);
+        
+        // Try to get WebGL context with software rendering support
+        const glOptions = {
+            alpha: false,  // Disable alpha for better WebGL support
+            antialias: false,
+            preserveDrawingBuffer: true,
+            powerPreference: 'low-power',
+            desynchronized: true,
+            failIfMajorPerformanceCaveat: false  // Allow software rendering
+        };
+        
+        this.gl = this.canvas.getContext('webgl2', glOptions) || 
+                  this.canvas.getContext('webgl', glOptions) ||
+                  this.canvas.getContext('experimental-webgl', glOptions);
         
         if (!this.gl) {
-            console.error('WebGL not supported');
+            console.error('WebGL not supported - trying with minimal options');
+            // Try with minimal options as fallback
+            this.gl = this.canvas.getContext('webgl2') || 
+                      this.canvas.getContext('webgl') ||
+                      this.canvas.getContext('experimental-webgl');
+        }
+        
+        if (!this.gl) {
+            console.error('WebGL not supported - Live2D requires WebGL');
+            console.error('This may be due to transparent window or software rendering limitations');
             return false;
         }
+
+        console.log('WebGL context created successfully');
+        console.log('WebGL vendor:', this.gl.getParameter(this.gl.VENDOR));
+        console.log('WebGL renderer:', this.gl.getParameter(this.gl.RENDERER));
 
         // Initialize wrapper
         if (typeof Live2DCubismWrapper !== 'undefined') {
@@ -238,13 +280,15 @@ class Live2DManager {
     }
     
     async initialize() {
-        console.log('Initializing Live2D Manager...');
+        console.log('[Live2DManager] initialize called');
         
         return new Promise(async (resolve) => {
             let isResolved = false;
             // 根據設備性能動態調整超時時間
             const isLowEndDevice = navigator.hardwareConcurrency <= 2 || navigator.deviceMemory <= 2;
             const timeout = isLowEndDevice ? 20000 : 15000;
+            
+            console.log('[Live2DManager] initialize timeout:', timeout);
             
             const timeoutId = setTimeout(() => {
                 if (!isResolved) {
@@ -255,6 +299,8 @@ class Live2DManager {
             }, timeout);
 
             try {
+                console.log('[Live2DManager] this.sdk:', !!this.sdk, 'this.cubismSdk:', !!this.cubismSdk);
+                
                 if (this.sdk && this.cubismSdk) {
                     isResolved = true;
                     clearTimeout(timeoutId);
@@ -263,12 +309,15 @@ class Live2DManager {
                 }
                 
                 if (!this.sdk) {
+                    console.log('[Live2DManager] Calling _tryLoadSDK');
                     await this._tryLoadSDK();
+                    console.log('[Live2DManager] After _tryLoadSDK, this.sdk:', !!this.sdk, 'this.wrapper:', !!this.wrapper);
                 }
                 
                 if (!isResolved) {
                     isResolved = true;
                     clearTimeout(timeoutId);
+                    console.log('[Live2DManager] Initialization result:', !!this.sdk);
                     resolve(!!this.sdk);
                 }
             } catch (error) {
@@ -516,6 +565,64 @@ class Live2DManager {
         return false;
     }
     
+    /**
+     * 根据身体部位触发相应的动作和表情
+     * @param {string} bodyPart - 身体部位 (head, face, chest, leftHand, rightHand)
+     */
+    triggerMotionByPart(bodyPart) {
+        if (!this.modelLoaded) {
+            return;
+        }
+        
+        console.log(`[Live2DManager] Triggering motion for body part: ${bodyPart}`);
+        
+        // 根据身体部位映射到表情
+        const partExpressionMap = {
+            'head': 'surprised',
+            'face': 'happy',
+            'chest': 'shy',
+            'leftHand': 'happy',
+            'rightHand': 'happy'
+        };
+        
+        // 根据身体部位映射到动作组
+        const partMotionMap = {
+            'head': 'tap_body',
+            'face': 'tap_face',
+            'chest': 'tap_body',
+            'leftHand': 'tap_body',
+            'rightHand': 'tap_body'
+        };
+        
+        // 设置表情
+        const expression = partExpressionMap[bodyPart] || 'happy';
+        this.setExpression(expression);
+        
+        // 播放动作
+        const motionGroup = partMotionMap[bodyPart] || 'tap_body';
+        this.playMotion(motionGroup, '01');
+        
+        // 参数微调
+        switch(bodyPart) {
+            case 'head':
+                this.setParameter('ParamAngleX', 0);
+                this.setParameter('ParamAngleY', 0);
+                break;
+            case 'face':
+                this.setParameter('ParamBodyAngleX', 10);
+                break;
+            case 'chest':
+                this.setParameter('ParamBodyAngleX', -5);
+                this.setParameter('ParamBreath', 1.0);
+                break;
+            case 'leftHand':
+            case 'rightHand':
+                this.setParameter('ParamArmLA', bodyPart === 'leftHand' ? 10 : 0);
+                this.setParameter('ParamArmRA', bodyPart === 'rightHand' ? 10 : 0);
+                break;
+        }
+    }
+    
     stopAllMotions() {
         if (this.modelLoaded && this.sdk) {
             try {
@@ -539,6 +646,23 @@ class Live2DManager {
         return this.parameters;
     }
     
+    setAnimationParameters() {
+        if (this.wrapper && this.live2dModel) {
+            // Update live2dModel.parameters directly if wrapper.setParameter is not available
+            if (typeof this.wrapper.setParameter === 'function') {
+                // Use wrapper.setParameters to update multiple parameters
+                this.wrapper.setParameters(this.parameters);
+            } else if (this.live2dModel.parameters) {
+                // Fallback: update live2dModel.parameters directly
+                for (const [name, value] of Object.entries(this.parameters)) {
+                    if (this.live2dModel.parameters[name] !== undefined) {
+                        this.live2dModel.parameters[name] = value;
+                    }
+                }
+            }
+        }
+    }
+    
     setParameter(name, value) {
         if (!this.modelLoaded) {
             return;
@@ -547,14 +671,21 @@ class Live2DManager {
         this.parameters[name] = value;
         
         if (this.sdk && this.wrapper) {
-            this.wrapper.setParameter(name, value);
+            if (typeof this.wrapper.setParameter === 'function') {
+                this.wrapper.setParameter(name, value);
+            } else if (this.live2dModel && this.live2dModel.parameters) {
+                // Fallback: update live2dModel.parameters directly
+                if (this.live2dModel.parameters[name] !== undefined) {
+                    this.live2dModel.parameters[name] = value;
+                }
+            }
         }
     }
     
     setResolutionScale(scale) {
         this.resolutionScale = Math.max(0.5, Math.min(2.0, scale));
         
-        if (this.wrapper) {
+        if (this.wrapper && this.wrapper.isLoaded) {
             this.wrapper.resize(
                 Math.floor(this.canvas.width * scale),
                 Math.floor(this.canvas.height * scale)
@@ -580,7 +711,9 @@ class Live2DManager {
     updateAdvancedAnimations() {
         if (this.wrapper) {
             // Physics depends on advanced animations
-            this.wrapper.setPhysicsEnabled(this.advancedAnimations && this.physicsEnabled);
+            if (typeof this.wrapper.setPhysicsEnabled === 'function') {
+                this.wrapper.setPhysicsEnabled(this.advancedAnimations && this.physicsEnabled);
+            }
         }
     }
     
@@ -592,7 +725,7 @@ class Live2DManager {
     setTargetFPS(fps) {
         this.targetFPS = Math.max(30, Math.min(120, fps));
         
-        if (this.wrapper) {
+        if (this.wrapper && typeof this.wrapper.setTargetFPS === 'function') {
             this.wrapper.setTargetFPS(fps);
         }
     }
@@ -673,6 +806,27 @@ class Live2DManager {
     
     getInputHandler(handler) {
         this.inputHandler = handler;
+    }
+    
+    lookAt(x, y) {
+        // Update eye tracking parameters
+        if (this.wrapper && typeof this.wrapper.setParameter === 'function') {
+            // Clamp values to valid range
+            const clampedX = Math.max(-1, Math.min(1, x));
+            const clampedY = Math.max(-1, Math.min(1, y));
+            
+            // Update eye ball position
+            this.wrapper.setParameter('ParamEyeBallX', clampedX * 30);
+            this.wrapper.setParameter('ParamEyeBallY', clampedY * 30);
+            
+            // Update body angle slightly for more natural movement
+            this.wrapper.setParameter('ParamBodyAngleX', clampedX * 10);
+            this.wrapper.setParameter('ParamBodyAngleY', clampedY * 10);
+            
+            // Update head angle
+            this.wrapper.setParameter('ParamAngleX', clampedX * 20);
+            this.wrapper.setParameter('ParamAngleY', clampedY * 20);
+        }
     }
     
     shutdown() {

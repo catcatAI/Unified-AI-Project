@@ -80,7 +80,14 @@ class PetManager:
             self.state["current_animation"] = "sleepy"
 
         logger.debug(f"Pet '{self.pet_id}' synced with biological state. Happiness: {self.state['happiness']}")
-        self._notify_state_change("sync_bio")
+        # Schedule async notification only if there's a running event loop
+        try:
+            import asyncio
+            loop = asyncio.get_running_loop()
+            asyncio.create_task(self._notify_state_change("sync_bio"))
+        except RuntimeError:
+            # No running event loop during module import, skip notification
+            pass
 
     async def _notify_state_change(self, reason: str):
         """Notifies external clients about pet state changes (e.g., via WebSocket)."""
