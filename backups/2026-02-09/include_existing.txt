@@ -1,0 +1,7 @@
+requirements.txt
+setup.py
+pnpm-workspace.yaml
+pnpm-lock.yaml
+apps
+scripts
+.github/workflows
