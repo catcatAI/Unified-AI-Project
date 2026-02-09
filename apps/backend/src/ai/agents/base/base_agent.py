@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Callable, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ....core.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload, HSPTaskResultPayload
+from core.hsp.types import HSPMessageEnvelope, HSPTaskRequestPayload, HSPTaskResultPayload
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class BaseAgent:
             return
 
         try:
-            from ...core.hsp.connector import HSPConnector
+            from core.hsp.connector import HSPConnector
             # Note: These might not exist yet or are incorrectly indexed
             # from ....ai.agent_collaboration_manager import AgentCollaborationManager
             # from ....ai.agent_monitoring_manager import AgentMonitoringManager

@@ -173,11 +173,16 @@ class Live2DCubismWrapper {
         console.log('Loading Live2D model:', settings.modelPath);
         
         try {
-            await this.loadMoc3File(settings.modelPath);
-            await this.loadTexture(settings.modelPath);
-            await this.loadPhysics(settings.modelPath);
+            // Load model metadata first (needed for texture paths)
             await this.loadModel3File(settings.modelPath);
             await this.loadCdi3File(settings.modelPath);
+            
+            // Load model data
+            await this.loadMoc3File(settings.modelPath);
+            await this.loadPhysics(settings.modelPath);
+            
+            // Load textures AFTER model3.json is loaded (so we know texture paths)
+            await this.loadTexture(settings.modelPath);
             
             await this.createCubismModel();
             await this.setupMotionGroups();
@@ -299,81 +304,120 @@ class Live2DCubismWrapper {
         });
     }
     
-    async loadTexture(modelPath) {
-        console.log('Looking for texture files in:', modelPath);
-        
-        // Ensure WebGL context is still valid
-        if (!this.gl) {
-            console.warn('WebGL context is null, attempting to recreate...');
-            const glOptions = {
-                alpha: false,
-                antialias: false,
-                preserveDrawingBuffer: true,
-                powerPreference: 'low-power',
-                desynchronized: true,
-                failIfMajorPerformanceCaveat: false
-            };
-            
-            this.gl = this.canvas.getContext('webgl2', glOptions) || 
-                      this.canvas.getContext('webgl', glOptions) ||
-                      this.canvas.getContext('experimental-webgl', glOptions);
-            
-            if (!this.gl) {
-                throw new Error('Failed to recreate WebGL context');
-            }
-            
-            console.log('WebGL context recreated');
-        }
-        
-        // Normalize modelPath for local:// protocol
-        let normalizedModelPath = modelPath.startsWith('local://') ? modelPath.substring(7) : modelPath;
-        // Remove leading slash to avoid local:/// issue
-        if (normalizedModelPath.startsWith('/')) {
-            normalizedModelPath = normalizedModelPath.substring(1);
-        }
-        const localProtocolPath = `local://${normalizedModelPath}`;
-        
-        // Try different possible texture paths
-        const possiblePaths = [
-            // Direct paths
-            `${localProtocolPath}/texture_00.png`,
-            `${localProtocolPath}/texture.png`,
-            `${localProtocolPath}/texture.jpg`,
-            // In subdirectory (e.g., miara_pro_t03.4096)
-            `${localProtocolPath}/miara_pro_t03.4096/texture_00.png`,
-            `${localProtocolPath}/miara_pro_t03.4096/texture.png`,
-            `${localProtocolPath}/miara_pro_t03.4096/texture.jpg`,
-            // Other variations
-            `${localProtocolPath}/${modelPath.split('/').pop()}_t03.4096/texture_00.png`,
-        ];
-        
-        for (const texturePath of possiblePaths) {
-            try {
-                console.log('Trying to load texture:', texturePath);
+            async loadTexture(modelPath) {
+                console.log('Looking for texture files in:', modelPath);
                 
-                await new Promise((resolve, reject) => {
-                    const image = new Image();
-                    image.src = texturePath;
-                    image.onload = () => {
-                        this.createTexture(image);
-                        console.log('Texture loaded successfully:', texturePath);
-                        resolve();
+                // Ensure WebGL context is still valid
+                if (!this.gl) {
+                    console.warn('WebGL context is null, attempting to recreate...');
+                    const glOptions = {
+                        alpha: false,
+                        antialias: false,
+                        preserveDrawingBuffer: true,
+                        powerPreference: 'low-power',
+                        desynchronized: true,
+                        failIfMajorPerformanceCaveat: false
                     };
-                    image.onerror = () => {
-                        reject(new Error('Failed to load texture'));
-                    };
-                });
+                    
+                    this.gl = this.canvas.getContext('webgl2', glOptions) || 
+                              this.canvas.getContext('webgl', glOptions) ||
+                              this.canvas.getContext('experimental-webgl', glOptions);
+                    
+                    if (!this.gl) {
+                        throw new Error('Failed to recreate WebGL context');
+                    }
+                    
+                    console.log('WebGL context recreated');
+                }
                 
-                return;  // Successfully loaded texture
-            } catch (error) {
-                console.warn('Failed to load texture:', texturePath, error.message);
-                continue;
-            }
-        }
-        
-        throw new Error('Failed to load texture from any source');
-    }
-    
+                // Build base path for textures
+                // Extract directory from modelPath - it points to model3.json file
+                let basePath = modelPath;
+                
+                // Convert to URL-like format for consistent path handling
+                let filePath = modelPath;
+                if (modelPath.startsWith('local://')) {
+                    // Convert local:// URL to file path
+                    filePath = modelPath.startsWith('local:///') 
+                        ? modelPath.substring(9)  // Remove local:///
+                        : modelPath.substring(8);  // Remove local://
+                } else if (!modelPath.startsWith('/') && !modelPath.includes(':')) {
+                    // Relative path, prepend current directory
+                    filePath = '/' + modelPath;
+                } else if (!modelPath.startsWith('/')) {
+                    // Has drive letter (Windows) or other format
+                    filePath = modelPath;
+                }
+                
+                // Use URL to properly handle path separators
+                try {
+                    const url = new URL('file://' + filePath);
+                    filePath = url.pathname;
+                } catch (e) {
+                    // URL parsing failed, use manual parsing
+                    const lastDot = filePath.lastIndexOf('.');
+                    if (lastDot > filePath.lastIndexOf('/')) {
+                        filePath = filePath.substring(0, lastDot);
+                    }
+                }
+                
+                // Get directory by removing the filename
+                basePath = filePath.substring(0, filePath.lastIndexOf('/') + 1);
+                
+                // Ensure basePath ends with /
+                if (!basePath.endsWith('/')) {
+                    basePath = basePath + '/';
+                }
+                
+                // Get texture paths from model3.json if available
+                const texturePaths = [];
+                if (this.model3Json?.FileReferences?.Textures) {
+                    for (const t of this.model3Json.FileReferences.Textures) {
+                        if (!t.startsWith('/') && !t.includes(':')) {
+                            texturePaths.push(basePath + t);
+                        } else {
+                            texturePaths.push(t);
+                        }
+                    }
+                }
+                
+                // Add fallback paths
+                const possiblePaths = [
+                    ...texturePaths,
+                    basePath + 'texture_00.png',
+                    basePath + 'texture.png',
+                    basePath + 'texture.jpg',
+                    basePath + 'miara_pro_t03.4096/texture_00.png',
+                    basePath + 'miara_pro_t03.4096/texture.png',
+                    basePath + 'miara_pro_t03.4096/texture.jpg',
+                ];
+                
+                for (const texturePath of possiblePaths) {
+                    try {
+                        console.log('Trying to load texture:', texturePath);
+                        
+                        await new Promise((resolve, reject) => {
+                            const image = new Image();
+                            image.src = texturePath;
+                            image.onload = () => {
+                                this.createTexture(image);
+                                console.log('Texture loaded successfully:', texturePath);
+                                resolve();
+                            };
+                            image.onerror = () => {
+                                reject(new Error('Failed to load texture'));
+                            };
+                        });
+                        
+                        return;  // Successfully loaded texture
+                    } catch (error) {
+                        console.warn('Failed to load texture:', texturePath, error.message);
+                        continue;
+                    }
+                }
+                
+                throw new Error('Failed to load texture from any source');
+            }    
     createTexture(image) {
         if (!this.gl) {
             console.error('WebGL context is null, cannot create texture');
@@ -540,31 +584,57 @@ class Live2DCubismWrapper {
     
     findFile(basePath, extension) {
         const normalizedPath = basePath.replace(/\\/g, '/');
-        
+
         // Remove trailing slash if present
         let cleanPath = normalizedPath.endsWith('/') ? normalizedPath.slice(0, -1) : normalizedPath;
+
+        // basePath is a file path (e.g., /path/to/model/model3.json)
+        // We need to:
+        // 1. Get the directory path: /path/to/model/
+        // 2. Get the directory name: model
+        // 3. Generate possible file names based on the MODEL NAME (not directory name)
         
-        // Remove leading slash to avoid local:/// issue
-        if (cleanPath.startsWith('/')) {
-            cleanPath = cleanPath.substring(1);
+        // Get the directory path (for finding files)
+        let dirPath;
+        try {
+            const url = new URL(basePath);
+            const pathname = url.pathname;
+            // Remove the filename to get directory
+            const lastSlash = pathname.lastIndexOf('/');
+            dirPath = pathname.substring(0, lastSlash + 1);
+        } catch (e) {
+            const lastSlash = cleanPath.lastIndexOf('/');
+            dirPath = cleanPath.substring(0, lastSlash + 1);
         }
         
-        // Get the directory name
-        const dirName = cleanPath.split('/').pop();
+        // Get the model directory name (not the model file name!)
+        // e.g., from "/path/to/model/model3.json" extract "model"
+        let modelDirName;
+        try {
+            const url = new URL(basePath);
+            const pathname = url.pathname;
+            // Find second-to-last slash to get directory name
+            const secondLastSlash = pathname.substring(0, pathname.length - 1).lastIndexOf('/');
+            modelDirName = pathname.substring(secondLastSlash + 1, pathname.length - 1);
+        } catch (e) {
+            const parts = cleanPath.split('/');
+            // The last part is the model file name, the second-to-last is the directory name
+            modelDirName = parts[parts.length - 2];
+        }
         
         if (!extension.startsWith('.')) {
             extension = '.' + extension;
         }
         
-        // Return all possible paths
+        // Return all possible paths based on model directory name
         const possibleNames = [
-            `${dirName}${extension}`,           // e.g., miara_pro.moc3
-            `${dirName}_t03${extension}`,        // e.g., miara_pro_t03.moc3
-            `${dirName}_t00${extension}`,        // e.g., miara_pro_t00.moc3
+            `${modelDirName}${extension}`,           // e.g., miara_pro.moc3
+            `${modelDirName}_t03${extension}`,      // e.g., miara_pro_t03.moc3
+            `${modelDirName}_t00${extension}`,      // e.g., miara_pro_t00.moc3
         ];
         
         // Return all possible paths with local:// protocol for Electron
-        return possibleNames.map(name => `local://${cleanPath}/${name}`);
+        return possibleNames.map(name => `local://${dirPath}${name}`);
     }
     
     async createCubismModel() {

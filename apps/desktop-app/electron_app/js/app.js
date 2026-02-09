@@ -28,6 +28,7 @@ class AngelaApp {
         this.maturityTracker = null;
         this.precisionManager = null;
         this.backendWebSocket = null;
+        this.apiClient = null;
         this.hardwareDetector = null;
         this.dialogueUI = null;
         this.touchLayer = null;
@@ -72,7 +73,12 @@ class AngelaApp {
             await this._initializePerformanceManager();
             console.log('[App] After _initializePerformanceManager');
             
-            // 5. Initialize Hardware-dependent systems (Live2D, Audio, etc.)
+            // 5. Initialize Unified Detection System (Hardware + Drivers + Availability)
+            console.log('[App] Before _initializeDetectionSystem');
+            await this._initializeDetectionSystem();
+            console.log('[App] After _initializeDetectionSystem');
+            
+            // 6. Initialize Hardware-dependent systems (Live2D, Audio, etc.)
             console.log('[App] Before _initializeLive2D');
             await this._initializeLive2D();
             console.log('[App] After _initializeLive2D');
@@ -84,12 +90,18 @@ class AngelaApp {
             
             // 7. Initialize remaining handlers
             this._initializeBackendWebSocket();
+            this._initializeAPIClient();
             this._initializeInputHandler();
             await this._initializeAudioHandler();
             await this._initializeHapticHandler();
             await this._initializeWallpaperHandler();
             await this._initializePluginManager();
             await this._initializePerformanceMonitor();
+            
+            // 7. Initialize Unified Detection System (Hardware + Drivers + Availability)
+            console.log('[App] Before _initializeDetectionSystem');
+            await this._initializeDetectionSystem();
+            console.log('[App] After _initializeDetectionSystem');
             
             // 8. Initialize UI components
             await this._initializeDialogueUI();
@@ -103,6 +115,9 @@ class AngelaApp {
             await this._syncWithBackend();
             
             this._hideLoading();
+            // 初始化完成，暴露實例到全局
+            window.angelaApp = this;
+            
             this.isInitialized = true;
             this.showStatus('Angela AI is ready!', 3000);
             console.log('Angela AI initialized successfully');
@@ -336,14 +351,24 @@ class AngelaApp {
     
     _initializeBackendWebSocket() {
         this.updateLoadingText('Setting up backend connection...');
-        
+
         this.backendWebSocket = new BackendWebSocketClient();
-        
+
         this.stateMatrix.setWebSocket(this.backendWebSocket);
         this.maturityTracker.setWebSocket(this.backendWebSocket);
         this.precisionManager.setWebSocket(this.backendWebSocket);
-        
+
         this.backendWebSocket.onMessage = (message) => this._handleBackendMessage(message);
+    }
+
+    _initializeAPIClient() {
+        this.updateLoadingText('Setting up API client...');
+
+        // Get backend URL from localStorage or use default
+        const backendIP = localStorage.getItem('backend_ip') || 'http://localhost:8000';
+        this.apiClient = new AngelaAPIClient(backendIP);
+
+        console.log('[App] API Client initialized with base URL:', backendIP);
     }
     
     async _initializeLive2D() {
@@ -440,7 +465,7 @@ class AngelaApp {
     
     async _initializeDialogueUI() {
         this.updateLoadingText('Initializing dialogue UI...');
-        
+
         // Import and initialize DialogueUI
         try {
             // Check if DialogueUI is already loaded
@@ -449,12 +474,12 @@ class AngelaApp {
                 const script = document.createElement('script');
                 script.src = 'js/dialogue-ui.js';
                 script.onload = () => {
-                    this.dialogueUI = new DialogueUI(this.backendWebSocket);
+                    this.dialogueUI = new DialogueUI(this.apiClient);
                     console.log('[App] Dialogue UI initialized');
                 };
                 document.head.appendChild(script);
             } else {
-                this.dialogueUI = new DialogueUI(this.backendWebSocket);
+                this.dialogueUI = new DialogueUI(this.apiClient);
                 console.log('[App] Dialogue UI initialized');
             }
         } catch (error) {
@@ -463,127 +488,12 @@ class AngelaApp {
     }
     
     async _initializeTouchLayer() {
-        this.updateLoadingText('Initializing touch layer...');
+        // NOTE: Directly use InputHandler for Live2D touch binding
+        // No longer using HTML overlay, let InputHandler directly detect Live2D body parts
+        // This implements true "touch Live2D → Angela feels" direct binding
         
-        // Create touch layer for haptic feedback
-        try {
-            const touchLayer = document.createElement('div');
-            touchLayer.id = 'touch-layer';
-            touchLayer.innerHTML = `
-                <div class="touch-zone touch-head" data-part="head"></div>
-                <div class="touch-zone touch-face" data-part="face"></div>
-                <div class="touch-zone touch-chest" data-part="chest"></div>
-                <div class="touch-zone touch-left-hand" data-part="leftHand"></div>
-                <div class="touch-zone touch-right-hand" data-part="rightHand"></div>
-            `;
-            
-            // Add styles
-            const style = document.createElement('style');
-            style.textContent = `
-                #touch-layer {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    pointer-events: none;
-                    z-index: 15;
-                }
-                
-                .touch-zone {
-                    position: absolute;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 4px;
-                    pointer-events: auto;
-                    cursor: pointer;
-                    transition: background 0.2s;
-                }
-                
-                .touch-zone:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                }
-                
-                .touch-head {
-                    top: 15%;
-                    left: 35%;
-                    width: 30%;
-                    height: 25%;
-                }
-                
-                .touch-face {
-                    top: 20%;
-                    left: 40%;
-                    width: 20%;
-                    height: 20%;
-                }
-                
-                .touch-chest {
-                    top: 45%;
-                    left: 40%;
-                    width: 20%;
-                    height: 15%;
-                }
-                
-                .touch-left-hand {
-                    top: 55%;
-                    left: 25%;
-                    width: 20%;
-                    height: 25%;
-                }
-                
-                .touch-right-hand {
-                    top: 55%;
-                    right: 25%;
-                    width: 20%;
-                    height: 25%;
-                }
-            `;
-            document.head.appendChild(style);
-            
-            // Add to container after live2d-canvas
-            const container = document.getElementById('container');
-            if (container) {
-                container.appendChild(touchLayer);
-                
-                // Bind touch events to haptic handler
-                this._bindTouchEvents(touchLayer);
-                
-                console.log('[App] Touch layer initialized');
-            }
-        } catch (error) {
-            console.error('[App] Failed to initialize touch layer:', error);
-        }
-    }
-    
-    _bindTouchEvents(touchLayer) {
-        const touchZones = touchLayer.querySelectorAll('.touch-zone');
-        
-        touchZones.forEach(zone => {
-            const part = zone.dataset.part;
-            
-            zone.addEventListener('mouseenter', () => {
-                if (this.hapticHandler) {
-                    this.hapticHandler.hapticHover(part);
-                }
-            });
-            
-            zone.addEventListener('mouseleave', () => {
-                if (this.hapticHandler) {
-                    this.hapticHandler.stop();
-                }
-            });
-            
-            zone.addEventListener('click', () => {
-                if (this.hapticHandler) {
-                    this.hapticHandler.hapticTap(part);
-                }
-                
-                // Trigger Live2D motion on body part
-                if (this.live2dManager) {
-                    this.live2dManager.triggerMotionByPart(part);
-                }
-            });
-        });
+        this.updateLoadingText('Initializing direct touch binding...');
+        console.log('[App] Using direct Live2D binding system (no HTML overlay)');
     }
 
     _setupUIControls() {
@@ -750,24 +660,44 @@ class AngelaApp {
     async _loadDefaultModel() {
         this.updateLoadingText('Loading Live2D model...');
         const startTime = performance.now();
-        
+
         try {
-            // Get available models
+            // First, try to load the known Miara Pro model directly
+            // Use the correct model path for SDK 5 (.model3.json file)
+            const miaraModelPath = 'models/miara_pro_en/runtime/miara_pro_t03.model3.json';
+            console.log('[Init] Attempting to load Miara Pro model:', miaraModelPath);
+
+            const success = await this.live2dManager.loadModel(miaraModelPath);
+
+            if (success) {
+                this.currentModel = 'miara_pro';
+                const duration = (performance.now() - startTime).toFixed(2);
+                console.log(`[Init] Miara Pro model loaded successfully in ${duration}ms`);
+
+                // Initialize clickable regions
+                if (this.inputHandler) {
+                    this.inputHandler.updateRegions();
+                }
+                return;
+            }
+
+            // If direct loading failed, try electronAPI
+            console.log('[Init] Direct loading failed, trying electronAPI...');
             const models = await window.electronAPI?.live2d?.getModels() || [];
-            
+
             if (models.length > 0) {
                 // Load Miara Pro model or first available
                 const model = models.find(m => m.name === 'miara_pro') || models[0];
-                
+
                 if (model) {
                     const modelPath = model.path.replace(/\\/g, '/');
                     const success = await this.live2dManager.loadModel(modelPath);
-                    
+
                     const duration = (performance.now() - startTime).toFixed(2);
                     if (success) {
                         this.currentModel = model.name;
                         console.log(`[Init] Default model loaded in ${duration}ms: ${model.name}`);
-                        
+
                         // Initialize clickable regions
                         if (this.inputHandler) {
                             this.inputHandler.updateRegions();
@@ -798,7 +728,10 @@ class AngelaApp {
         
         // Update Live2D expression based on region
         this._updateExpressionFromRegion(region);
-        
+
+        // Trigger Live2D motion for body part (direct binding)
+        this.live2dManager.triggerMotionByPart(region.name);
+
         // Update state matrix
         this.stateMatrix.handleInteraction('click', { part: region.name });
         
@@ -954,7 +887,7 @@ class AngelaApp {
     
     async _syncWithBackend() {
         try {
-            const backendUrl = localStorage.getItem('backend_url') || 'ws://localhost:8765';
+            const backendUrl = localStorage.getItem('backend_url') || 'ws://localhost:8000/ws';
             
             if (this.backendWebSocket) {
                 await this.backendWebSocket.connect(backendUrl);
@@ -1152,222 +1085,59 @@ class AngelaApp {
         
         console.log('Angela AI shutdown complete');
     }
-}
-
-// Global UI scale function
-function updateUIScale(scaleFactor) {
-    // Scale control buttons
-    const controlBtns = document.querySelectorAll('.control-btn');
-    controlBtns.forEach(btn => {
-        const baseSize = 30; // Base size in pixels
-        const newSize = Math.floor(baseSize * scaleFactor);
-        btn.style.width = `${newSize}px`;
-        btn.style.height = `${newSize}px`;
-        btn.style.fontSize = `${Math.floor(16 * scaleFactor)}px`;
-        btn.style.padding = '0';
-    });
     
-    // Scale badges
-    const badges = document.querySelectorAll('.badge');
-    badges.forEach(badge => {
-        const basePadding = '8px 12px';
-        const baseFontSize = '12px';
-        const newPadding = `${Math.floor(8 * scaleFactor)}px ${Math.floor(12 * scaleFactor)}px`;
-        const newFontSize = `${Math.floor(12 * scaleFactor)}px`;
-        badge.style.padding = newPadding;
-        badge.style.fontSize = newFontSize;
-    });
-    
-    // Scale status bar
-    const statusBar = document.getElementById('status-bar');
-    if (statusBar) {
-        statusBar.style.fontSize = `${Math.floor(12 * scaleFactor)}px`;
-    }
-    
-    // Scale audio visualizer
-    const audioVisualizer = document.getElementById('audio-visualizer');
-    if (audioVisualizer) {
-        const bars = audioVisualizer.querySelectorAll('.audio-bar');
-        bars.forEach(bar => {
-            const baseHeight = 20;
-            const baseWidth = 4;
-            bar.style.height = `${Math.floor(baseHeight * scaleFactor)}px`;
-            bar.style.width = `${Math.floor(baseWidth * scaleFactor)}px`;
-        });
-    }
-    
-    // Update title bar height
-    const titleBar = document.getElementById('title-bar');
-    if (titleBar) {
-        titleBar.style.height = `${Math.floor(40 * scaleFactor)}px`;
-    }
-    
-    // Scale touch layer zones
-    const touchLayer = document.getElementById('touch-layer');
-    if (touchLayer) {
-        const zones = touchLayer.querySelectorAll('.touch-zone');
-        zones.forEach(zone => {
-            // Recalculate zone positions and sizes based on scale
-            const part = zone.dataset.part;
-            let top, left, width, height;
-            
-            switch(part) {
-                case 'head':
-                    top = 15; left = 35; width = 30; height = 25;
-                    break;
-                case 'face':
-                    top = 20; left = 40; width = 20; height = 20;
-                    break;
-                case 'chest':
-                    top = 45; left = 40; width = 20; height = 15;
-                    break;
-                case 'leftHand':
-                    top = 55; left = 25; width = 20; height = 25;
-                    break;
-                case 'rightHand':
-                    top = 55; left = 55; width = 20; height = 25;
-                    break;
+    /**
+     * Initialize Unified Detection System
+     */
+    async _initializeDetectionSystem() {
+        this.updateLoadingText('Initializing detection system...');
+        try {
+            if (typeof UnifiedDetectionSystem !== "undefined") {
+                this.unifiedDetection = new UnifiedDetectionSystem({
+                    checkInterval: 15000,
+                    autoRecovery: true
+                });
+                await this.unifiedDetection.initialize();
+                this.unifiedDetection.startMonitoring();
+                this.unifiedDetection.onAlert = (alert) => {
+                    console.log("[Detection Alert]", alert);
+                    if (alert.level === "critical") {
+                        this.showStatus("System alert: " + alert.message, 5000);
+                    }
+                };
+                this.unifiedDetection.onRecovery = (subsystem, success) => {
+                    console.log("[Detection] Recovery " + (success ? "success" : "failed") + ": " + subsystem);
+                };
+                console.log("[App] Unified detection system initialized");
+                window.unifiedDetection = this.unifiedDetection;
+            } else {
+                console.warn("[App] UnifiedDetectionSystem not available");
             }
-            
-            zone.style.top = `${top * scaleFactor}%`;
-            zone.style.left = `${left * scaleFactor}%`;
-            zone.style.width = `${width * scaleFactor}%`;
-            zone.style.height = `${height * scaleFactor}%`;
-        });
-    }
-    
-    // Scale dialogue UI
-    const dialogueContainer = document.getElementById('dialogue-container');
-    if (dialogueContainer) {
-        const baseWidth = 400;
-        const newWidth = Math.floor(baseWidth * scaleFactor);
-        dialogueContainer.style.width = `${newWidth}px`;
-        dialogueContainer.style.bottom = `${Math.floor(20 * scaleFactor)}px`;
-        dialogueContainer.style.right = `${Math.floor(20 * scaleFactor)}px`;
-        
-        // Scale dialogue panel elements
-        const dialoguePanel = document.getElementById('dialogue-panel');
-        if (dialoguePanel) {
-            dialoguePanel.style.borderRadius = `${Math.floor(12 * scaleFactor)}px`;
+        } catch (error) {
+            console.error("[App] Detection system initialization error:", error);
         }
-        
-        // Scale dialogue input
-        const dialogueInput = document.getElementById('dialogue-input');
-        if (dialogueInput) {
-            dialogueInput.style.fontSize = `${Math.floor(14 * scaleFactor)}px`;
-            dialogueInput.style.padding = `${Math.floor(10 * scaleFactor)}px`;
+    }
+    
+    getDetectionStatus() {
+        if (this.unifiedDetection) {
+            return this.unifiedDetection.getFullStatus();
         }
-        
-        // Scale dialogue buttons
-        const dialogueBtns = dialogueContainer.querySelectorAll('button');
-        dialogueBtns.forEach(btn => {
-            btn.style.fontSize = `${Math.floor(14 * scaleFactor)}px`;
-            btn.style.padding = `${Math.floor(8 * scaleFactor)}px ${Math.floor(16 * scaleFactor)}px`;
-        });
+        return { status: "not_initialized", message: "Detection system not available" };
     }
-}
-
-// Initialize app when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    window.angelaApp = new AngelaApp();
     
-    // Add window control handlers
-    initializeWindowControls();
-    
-    // Listen for window resize events
-    window.addEventListener('resize', () => {
-        const canvas = document.getElementById('live2d-canvas');
-        if (canvas && window.angelaApp && window.angelaApp.live2dManager) {
-            const newScale = canvas.width / 400; // Calculate scale based on current width
-            if (newScale !== 1.0) {
-                updateUIScale(newScale);
-            }
+    async runDiagnostics() {
+        if (this.unifiedDetection) {
+            return await this.unifiedDetection.runDiagnostics();
         }
-    });
-});
-
-function initializeWindowControls() {
-    let scale = 1.0;
-    let isResizing = false;
-    let initialX = 0;
-    let initialY = 0;
-    let initialWidth = 400;
-    let initialHeight = 600;
-    
-    // Initialize UI scale on load
-    updateUIScale(scale);
-    
-    // Scale up
-    const scaleUpBtn = document.getElementById('scale-up-btn');
-    if (scaleUpBtn) {
-        scaleUpBtn.addEventListener('click', async () => {
-            if (scale < 2.0) {
-                scale += 0.1;
-                await updateWindowSize();
-            }
-        });
+        return { error: "Detection system not available" };
     }
     
-    // Scale down
-    const scaleDownBtn = document.getElementById('scale-down-btn');
-    if (scaleDownBtn) {
-        scaleDownBtn.addEventListener('click', async () => {
-            if (scale > 0.5) {
-                scale -= 0.1;
-                await updateWindowSize();
-            }
-        });
-    }
-    
-    // Resize button
-    const resizeBtn = document.getElementById('resize-btn');
-    if (resizeBtn) {
-        resizeBtn.addEventListener('mousedown', (e) => {
-            isResizing = true;
-            initialX = e.clientX;
-            initialY = e.clientY;
-            e.preventDefault();
-        });
-        
-        document.addEventListener('mousemove', async (e) => {
-            if (isResizing && window.electronAPI && window.electronAPI.window) {
-                const deltaX = e.clientX - initialX;
-                const deltaY = e.clientY - initialY;
-                const newWidth = Math.max(200, initialWidth + deltaX);
-                const newHeight = Math.max(300, initialHeight + deltaY);
-                await window.electronAPI.window.setSize(newWidth, newHeight);
-            }
-        });
-        
-        document.addEventListener('mouseup', async () => {
-            if (isResizing && window.electronAPI && window.electronAPI.window) {
-                const bounds = await window.electronAPI.window.getBounds();
-                initialWidth = bounds.width;
-                initialHeight = bounds.height;
-            }
-            isResizing = false;
-        });
-    }
-    
-    async function updateWindowSize() {
-        if (window.electronAPI && window.electronAPI.window) {
-            const newWidth = Math.floor(400 * scale);
-            const newHeight = Math.floor(600 * scale);
-            await window.electronAPI.window.setSize(newWidth, newHeight);
-            
-            // Update Live2D canvas size
-            const canvas = document.getElementById('live2d-canvas');
-            if (canvas && window.angelaApp && window.angelaApp.live2dManager) {
-                window.angelaApp.live2dManager.resize(newWidth, newHeight);
-            }
-            
-            // Update UI elements to match the scale
-            updateUIScale(scale);
+    generateDetectionReport() {
+        if (this.unifiedDetection) {
+            return this.unifiedDetection.generateReport();
         }
+        return { error: "Detection system not available" };
     }
 }
 
 // Export for testing
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AngelaApp;
-}

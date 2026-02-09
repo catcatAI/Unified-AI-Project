@@ -82,16 +82,27 @@ class Launcher:
                 # 在普通用戶模式下，降低後端日誌級別，不顯示大量偵錯訊息
                 cmd.extend(["--log-level", "warning"])
 
+            # 設置環境變量，確保 src 目錄在 Python 路徑中
+            # PYTHONPATH 必須指向 src 目錄本身，這樣 Python 才能找到 src.core 等模塊
+            env = os.environ.copy()
+            src_path = str(self.backend_dir / "src")  # apps/backend/src
+            if "PYTHONPATH" in env:
+                env["PYTHONPATH"] = src_path + os.pathsep + env["PYTHONPATH"]
+            else:
+                env["PYTHONPATH"] = src_path
+
             if sys.platform == "win32":
                 proc = subprocess.Popen(
                     cmd,
                     cwd=str(self.backend_dir),
                     creationflags=subprocess.CREATE_NEW_CONSOLE if self.mode == "dev" else 0,
+                    env=env,
                 )
             else:
                 proc = subprocess.Popen(
                     cmd,
                     cwd=str(self.backend_dir),
+                    env=env,
                 )
 
             self.log("后端启动中 (端口 8000)...")

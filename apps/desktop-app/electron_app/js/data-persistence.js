@@ -150,13 +150,29 @@ class DataPersistence {
                     const value = localStorage.getItem(key);
                     if (value) {
                         const dataKey = key.substring(prefix.length);
-                        this.data[dataKey] = JSON.parse(value);
+                        
+                        // FIX: Handle non-JSON values (legacy data or corrupted entries)
+                        let parsedValue;
+                        try {
+                            // Try to parse as JSON first
+                            parsedValue = JSON.parse(value);
+                        } catch (jsonError) {
+                            // If JSON parsing fails, use the raw value
+                            // This handles legacy data that wasn't stored as JSON
+                            console.warn(`Key ${key} is not valid JSON, using raw value`);
+                            parsedValue = value;
+                        }
+                        
+                        this.data[dataKey] = parsedValue;
+                        console.log(`Loaded key: ${dataKey}`);
                     }
                 } catch (e) {
                     console.error(`Failed to load key ${key}:`, e);
+                    // Continue loading other keys even if one fails
                 }
             }
         }
+        console.log(`_loadAll complete: ${Object.keys(this.data).length} keys loaded`);
     }
     
     saveAll() {

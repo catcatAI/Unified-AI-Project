@@ -12,8 +12,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from ...core.hsp.types import HSPCapabilityAdvertisementPayload
-from ...core.hsp.connector import HSPConnector
+from core.hsp.types import HSPCapabilityAdvertisementPayload
+from core.hsp.connector import HSPConnector
 
 logger = logging.getLogger(__name__)
 

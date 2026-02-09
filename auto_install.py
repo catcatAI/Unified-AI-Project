@@ -415,6 +415,209 @@ if __name__ == "__main__":
         
         self.print_success("啟動腳本創建完成")
     
+    def detect_hardware(self):
+        """檢測硬件配置"""
+        self.print_step("檢測硬件配置...")
+
+        import psutil
+
+        # 獲取 CPU 核心數
+        cpu_count = psutil.cpu_count(logical=False)
+        self.cpu_cores = cpu_count
+
+        # 獲取內存大小
+        memory = psutil.virtual_memory()
+        ram_gb = memory.total / (1024**3)
+        self.ram_gb = ram_gb
+
+        # 估算 VRAM (使用 CUDA 或 AMD 設備)
+        vram_mb = 0
+        try:
+            # 嘗試檢測 NVIDIA GPU
+            result = subprocess.run(['nvidia-smi', '--query-gpu=memory.total', '--format=csv,noheader,nounits'],
+                                 capture_output=True, text=True)
+            if result.returncode == 0:
+                vram_mb = int(result.stdout.strip().split('\n')[0])
+        except:
+            pass
+
+        self.vram_mb = vram_mb
+
+        self.print_success(f"CPU 核心數: {cpu_count}, RAM: {ram_gb:.1f}GB, VRAM: {vram_mb}MB")
+        return {"cpu_cores": cpu_count, "ram_gb": ram_gb, "vram_mb": vram_mb}
+
+    def detect_ollama(self) -> bool:
+        """檢測 Ollama 是否已安裝"""
+        success, _ = self.run_command(["ollama", "--version"], check=False)
+        return success
+
+    def install_ollama(self) -> bool:
+        """安裝 Ollama"""
+        self.print_step("安裝 Ollama...")
+
+        if self.detect_ollama():
+            self.print_success("Ollama 已安裝")
+            return True
+
+        if self.os_type == "linux":
+            # 安裝 curl 如果需要
+            self.run_command(["sudo", "apt", "install", "-y", "curl"], check=False)
+
+            # 安裝 Ollama
+            curl_command = "curl -fsSL https://ollama.ai/install.sh | sh"
+            success, _ = self.run_command(curl_command, shell=True, check=False)
+
+            if success:
+                self.print_success("Ollama 安裝成功")
+                return True
+            else:
+                self.print_warning("Ollama 安裝失敗，請手動安裝")
+                return False
+
+        elif self.os_type == "macos":
+            success, _ = self.run_command(["brew", "install", "ollama"], check=False)
+            if success:
+                self.print_success("Ollama 安裝成功")
+                return True
+            else:
+                self.print_warning("請手動安裝 Ollama: https://ollama.ai/")
+                return False
+
+        else:
+            self.print_warning("請手動安裝 Ollama: https://ollama.ai/")
+            return False
+
+    def download_ollama_model(self, model_name: str = "llama3") -> bool:
+        """下載 Ollama 模型"""
+        self.print_step(f"下載 Ollama 模型: {model_name}...")
+
+        if not self.detect_ollama():
+            self.print_warning("Ollama 未安裝，無法下載模型")
+            return False
+
+        success, _ = self.run_command(["ollama", "pull", model_name], check=False)
+        if success:
+            self.print_success(f"模型 {model_name} 下載成功")
+            return True
+        else:
+            self.print_warning(f"模型 {model_name} 下載失敗")
+            return False
+
+    def detect_llama_cpp(self) -> bool:
+        """檢測 llama.cpp 是否已安裝"""
+        return self.run_command(["./llama.cpp/llama-server", "--version"], check=False, cwd=self.project_root)[0]
+
+    def install_llama_cpp(self) -> bool:
+        """編譯和安裝 llama.cpp"""
+        self.print_step("編譯 llama.cpp...")
+
+        llama_cpp_path = self.project_root / "llama.cpp"
+        if llama_cpp_path.exists():
+            self.print_warning("llama.cpp 已存在，跳過克隆")
+        else:
+            # 克隆 llama.cpp
+            success, _ = self.run_command([
+                "git", "clone", "https://github.com/ggerganov/llama.cpp", "llama.cpp"
+            ], check=False)
+            if not success:
+                self.print_warning("克隆 llama.cpp 失敗")
+                return False
+
+        # 編譯 llama.cpp
+        self.print_step("編譯 llama.cpp (這可能需要幾分鐘)...")
+
+        success, _ = self.run_command(["make"], cwd=llama_cpp_path, check=False)
+
+        if success:
+            self.print_success("llama.cpp 編譯成功")
+            return True
+        else:
+            self.print_warning("llama.cpp 編譯失敗，請手動編譯")
+            return False
+
+    def download_llama_cpp_model(self, model_url: str = None) -> bool:
+        """下載 llama.cpp 模型"""
+        self.print_step("下載 llama.cpp 模型...")
+
+        models_path = self.project_root / "models"
+        models_path.mkdir(exist_ok=True)
+
+        if model_url:
+            # 下載指定模型
+            success, _ = self.run_command([
+                "wget", "-O", str(models_path / "model.gguf"), model_url
+            ], check=False)
+        else:
+            # 下載較小的量化模型 (Q4_0)
+            model_url = "https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF/resolve/main/llama-2-7b-chat.Q4_0.gguf"
+            success, _ = self.run_command([
+                "wget", "-O", str(models_path / "llama-2-7b-chat.Q4_0.gguf"), model_url
+            ], check=False)
+
+        if success:
+            self.print_success("模型下載成功")
+            return True
+        else:
+            self.print_warning("模型下載失敗")
+            return False
+
+    def start_llm_service(self, service_type: str = "ollama"):
+        """啟動 LLM 服務"""
+        self.print_step(f"啟動 LLM 服務 ({service_type})...")
+
+        if service_type == "ollama":
+            if self.detect_ollama():
+                self.run_command(["ollama", "serve"], check=False)
+                self.print_success("Ollama 服務已啟動 (localhost:11434)")
+                return True
+            else:
+                self.print_warning("Ollama 未安裝，無法啟動服務")
+                return False
+
+        elif service_type == "llama_cpp":
+            llama_cpp_path = self.project_root / "llama.cpp"
+            if (llama_cpp_path / "llama-server").exists():
+                model_path = self.project_root / "models" / "model.gguf"
+                if model_path.exists():
+                    self.run_command([
+                        "./llama-server", "-m", str(model_path), "--port", "8080", "--host", "0.0.0.0"
+                    ], cwd=llama_cpp_path, check=False)
+                    self.print_success("llama.cpp 服務已啟動 (localhost:8080)")
+                    return True
+                else:
+                    self.print_warning("模型文件不存在，無法啟動 llama.cpp")
+                    return False
+            else:
+                self.print_warning("llama.cpp 未編譯，無法啟動服務")
+                return False
+
+        return False
+
+    def install_llm_services(self):
+        """安裝 LLM 服務 (Ollama 或 llama.cpp)"""
+        self.print_step("安裝 LLM 服務...")
+
+        # 檢測硬件
+        hardware = self.detect_hardware()
+
+        # 選擇最佳方案
+        if hardware["ram_gb"] >= 16:
+            # 內存足夠，優先使用 Ollama
+            if self.install_ollama():
+                self.download_ollama_model()
+                self.start_llm_service("ollama")
+        elif hardware["ram_gb"] >= 8:
+            # 內存較少，嘗試 Ollama
+            if not self.install_ollama():
+                self.print_warning("Ollama 安裝失敗，嘗試 llama.cpp...")
+                self.install_llama_cpp()
+        else:
+            # 內存較小，使用較小的模型
+            self.print_warning("可用內存較少，建議使用較小的模型")
+            if self.install_ollama():
+                self.download_ollama_model("llama3:8b-instruct-q4_0")
+                self.start_llm_service("ollama")
+
     def test_installation(self):
         """測試安裝"""
         self.print_step("測試安裝...")
@@ -455,46 +658,49 @@ if __name__ == "__main__":
         print("🌟 Angela AI - 全自動安裝器")
         print("=" * 50)
         print()
-        
+
         # 檢測操作系統
         self.detect_os()
-        
+
         # 檢查 Python
         if not self.check_python():
             self.print_error("Python 環境不滿足要求")
             return False
-        
+
         # 安裝 pip
         if not self.install_pip_if_needed():
             self.print_warning("pip 安裝失敗，可能會影響後續安裝")
-        
+
         # 創建虛擬環境
         if not self.create_virtual_env():
             self.print_error("虛擬環境創建失敗")
             return False
-        
+
         # 安裝 Python 依賴
         if not self.install_python_dependencies():
             self.print_error("Python 依賴安裝失敗")
             return False
-        
+
         # 檢查並安裝 Node.js
         node_available = self.check_nodejs()
         if node_available:
             self.install_npm_dependencies()
-        
+
+        # 安裝 LLM 服務 (Ollama 或 llama.cpp)
+        self.install_llm_services()
+
         # 創建配置文件
         self.create_config_files()
-        
+
         # 創建啟動腳本
         self.create_startup_scripts()
-        
+
         # 測試安裝
         self.test_installation()
-        
+
         # 啟動應用
         self.start_angela()
-        
+
         return True
 
 if __name__ == "__main__":

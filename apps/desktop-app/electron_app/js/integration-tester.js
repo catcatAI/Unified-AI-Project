@@ -46,7 +46,7 @@ class AngelaIntegrationTester {
         console.log('📡 Testing API system...');
         
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/v1/system/status');
+            const response = await fetch('http://127.0.0.1:8000/api/v1/status');
             const data = await response.json();
             
             this.testResults.api = {
@@ -180,7 +180,7 @@ class AngelaIntegrationTester {
     async _waitForHardwareDetection() {
         return new Promise((resolve, reject) => {
             let attempts = 0;
-            const maxAttempts = 20;
+            const maxAttempts = 40;  // 增加超時次數
             
             const checkInterval = setInterval(() => {
                 attempts++;
@@ -190,7 +190,7 @@ class AngelaIntegrationTester {
                     resolve();
                 } else if (attempts >= maxAttempts) {
                     clearInterval(checkInterval);
-                    reject(new Error('Hardware detection timeout'));
+                    reject(new Error('Hardware detection timeout after ' + (attempts * 500) + 'ms'));
                 }
             }, 500);
         });

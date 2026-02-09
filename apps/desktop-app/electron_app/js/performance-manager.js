@@ -16,6 +16,26 @@ class PerformanceManager {
         this.frameCount = 0;
         this.performanceMonitor = null;
         this.autoAdjustEnabled = true;
+        this.isVisible = true; // Page visibility tracking
+        
+        // Add page visibility handling to pause monitoring when hidden
+        document.addEventListener('visibilitychange', () => {
+            this.isVisible = !document.hidden;
+            if (this.isVisible) {
+                // Resume performance monitoring
+                this.lastFrameTime = performance.now();
+                this.frameCount = 0;
+                if (!this.performanceMonitor) {
+                    this.startMonitoring();
+                }
+            } else {
+                // Pause performance monitoring when hidden
+                if (this.performanceMonitor) {
+                    cancelAnimationFrame(this.performanceMonitor);
+                    this.performanceMonitor = null;
+                }
+            }
+        });
         
         this.performanceModes = {
             very_low: {
@@ -479,6 +499,12 @@ class PerformanceManager {
         }
         
         const monitor = (timestamp) => {
+            // Skip monitoring when page is hidden
+            if (!this.isVisible) {
+                this.performanceMonitor = null;
+                return;
+            }
+            
             this.frameCount++;
             
             const elapsed = timestamp - this.lastFrameTime;

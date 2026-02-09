@@ -18,6 +18,7 @@ from src.ai.memory.ham_memory.ham_manager import HAMMemoryManager
 from src.economy.economy_manager import EconomyManager
 from src.ai.agents.agent_manager import AgentManager
 from src.core.hsp.connector import HSPConnector
+from src.core.services.multi_llm_service import MultiLLMService, ChatMessage
 
 logger = logging.getLogger(__name__)
 
@@ -80,10 +81,15 @@ class UnifiedControlCenter:
             # 6. Economy Manager (Phase 13)
             self.components['economy_manager'] = EconomyManager(self.config.get('economy', {}))
 
-            # 7. Cognitive Pillar: Linguistic Immune System (Phase 12)
+            # 7. HAM Memory Manager
+            self.components['ham_memory_manager'] = HAMMemoryManager(
+                core_storage_filename="angela_conversations.json"
+            )
+
+            # 8. Cognitive Pillar: Linguistic Immune System (Phase 12)
             # We initialize HAM specifically for LIS Cache
-            ham = HAMMemoryManager(core_storage_filename="lis_memory.json")
-            cache = HAMLISCache(ham)
+            lis_ham = HAMMemoryManager(core_storage_filename="lis_memory.json")
+            cache = HAMLISCache(lis_ham)
             self.components['lis_manager'] = LISManager(cache, self.config.get('lis', {}))
 
             # 8. Agent Manager (Phase 14)
@@ -92,13 +98,36 @@ class UnifiedControlCenter:
             # 9. HSP Connector (Phase 14)
             # We use a default config for now, assuming environment variables or config file handles details
             self.components['hsp_connector'] = HSPConnector(self.system_id, self.config.get('hsp', {}))
-            # We don't await connect() here because __init__ is sync, 
-            # we should call it in start() or ensure it connects on first use.
+
+            # 10. LLM Service (Phase 15)
+            llm_config_path = self.config.get('llm_config_path')
+            self.components['llm_service'] = MultiLLMService(llm_config_path)
 
             logger.info("✅ All core components initialized successfully.")
         except Exception as e:
             logger.error(f"❌ Error initializing components: {e}")
             raise
+
+    async def initialize_async(self) -> None:
+        """異步初始化需要異步初始化的組件"""
+        logger.info("Initializing async components...")
+        
+        # 初始化 LLM 服務
+        llm_service = self.components.get('llm_service')
+        if llm_service and hasattr(llm_service, 'initialize'):
+            await llm_service.initialize()
+            logger.info(f"LLM Service initialized with {len(llm_service.backends)} backends")
+
+        # 初始化 HSP 連接器
+        hsp_connector = self.components.get('hsp_connector')
+        if hsp_connector and hasattr(hsp_connector, 'connect'):
+            try:
+                await hsp_connector.connect()
+                logger.info("HSP Connector connected")
+            except Exception as e:
+                logger.warning(f"HSP Connector connection failed: {e}")
+
+        logger.info("✅ All async components initialized successfully.")
 
     async def process_complex_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -295,6 +324,101 @@ class UnifiedControlCenter:
             return result
         finally:
             self.pending_futures.pop(task_id, None)
+
+    async def generate_dialogue_response(
+        self,
+        user_message: str,
+        user_name: str = "朋友",
+        conversation_history: Optional[List[ChatMessage]] = None,
+        model_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        使用 LLM 生成對話回應
+
+        整合流程：
+        1. 構建消息（包含對話歷史）
+        2. 調用 LLM
+        3. 分析情感
+        4. 存儲到 HAM 記憶
+        """
+        task_id = str(uuid.uuid4())
+
+        try:
+            llm_service = self.components.get('llm_service')
+            
+            # 確保 LLM 服務已初始化
+            if llm_service and hasattr(llm_service, 'initialize') and not llm_service.backends:
+                await llm_service.initialize()
+
+            # 構建系統提示（Angela 的個性）
+            system_prompt = ChatMessage(
+                role="system",
+                content=f"""你是 Angela，一個有情感的 AI 數字生命。
+你的個性：溫暖、聰明、有同理心。
+用戶名：{user_name}
+請用溫暖、自然的方式回應。"""
+            )
+
+            # 構建消息列表
+            messages = [system_prompt]
+
+            # 添加對話歷史
+            if conversation_history:
+                messages.extend(conversation_history)
+
+            # 添加當前用戶消息
+            messages.append(ChatMessage(role="user", content=user_message))
+
+            # 調用 LLM
+            if llm_service and hasattr(llm_service, 'chat_completion') and llm_service.backends:
+                response = await llm_service.chat_completion(messages, model_id=model_id)
+                response_text = response.content
+                provider = response.provider
+                latency_ms = response.latency_ms
+            else:
+                # 回退到模板
+                from src.services.chat_service import generate_angela_response
+                response_text = generate_angela_response(user_message, user_name)
+                provider = "fallback-template"
+                latency_ms = 1.0
+
+            # 情感分析
+            emotion_sys = self.components.get('emotion_system')
+            if emotion_sys:
+                emotional_state = emotion_sys.analyze_emotional_context({"text": response_text})
+                mood = emotional_state.primary_emotion.value
+            else:
+                mood = "neutral"
+
+            # 存儲到 HAM 記憶
+            ham = self.components.get('ham_memory_manager')
+            if ham and hasattr(ham, 'store_experience'):
+                try:
+                    await ham.store_experience(
+                        raw_data=f"用戶: {user_message}\nAngela: {response_text}",
+                        data_type="conversation"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to store conversation to HAM: {e}")
+
+            return {
+                "status": "success",
+                "task_id": task_id,
+                "response_text": response_text,
+                "mood": mood,
+                "provider": provider,
+                "latency_ms": latency_ms,
+                "timestamp": datetime.now().isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"Error generating dialogue response: {e}")
+            return {
+                "status": "error",
+                "task_id": task_id,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
 
     def start(self):
         """啟動控制中心與 Worker 池"""

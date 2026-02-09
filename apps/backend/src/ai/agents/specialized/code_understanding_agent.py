@@ -6,7 +6,7 @@ import re
 from typing import Dict, Any, List, Optional, Tuple, cast
 
 from ..base.base_agent import BaseAgent
-from ....core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
+from core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
 

@@ -6,8 +6,8 @@ from datetime import datetime
 from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass, field
 
-from ...core.hsp.connector import HSPConnector
-from ...core.hsp.types import HSPCapabilityAdvertisementPayload
+from core.hsp.connector import HSPConnector
+from core.hsp.types import HSPCapabilityAdvertisementPayload
 
 @dataclass
 class RegisteredAgent:

@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 import uuid
 
 from fastapi import APIRouter, Body
+from src.services.chat_service import generate_angela_response
 from src.api.v1.endpoints import drive, pet, vision, audio, tactile, mobile, economy
 from src.api.routes.ops_routes import router as ops_router
 
@@ -233,76 +234,13 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
 # Angela-specific chat endpoint with personality
 @router.post("/angela/chat")
 async def angela_chat(request: Dict[str, Any] = Body(...)):
-    """Angela 智能对话接口 - 带有性格和情感"""
+    """Angela 智能對話接口 - 帶有性格和情感"""
     user_message = request.get("message", request.get("text", ""))
     session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
     user_name = request.get("user_name", "朋友")
 
-    angela_responses = {
-        "greeting": [
-            f"嗨，{user_name}！今天过得怎么样？",
-            f"你好呀，{user_name}！见到你真高兴~",
-            f"欢迎回来，{user_name}！有什么我可以帮你的吗？",
-        ],
-        "happy": ["太棒了！听起来是个好消息！", "真替你高兴！", "哇，太好了！"],
-        "sad": [
-            "我理解你的感受...",
-            "别难过，一切都会好起来的。",
-            "需要我陪你聊聊吗？",
-        ],
-        "question": [
-            "这是个很有意思的问题！让我想想...",
-            "好问题！我来帮你分析一下。",
-            "让我查查资料再回答你~",
-        ],
-        "default": [
-            "我明白了！让我帮你想想...",
-            "这是个很有趣的想法！",
-            "我可以帮你处理这个。",
-            "让我分析一下这个问题...",
-            "没问题，我这就帮你做！",
-            "我理解你的需求了。",
-        ],
-    }
-
-    message_lower = user_message.lower()
-    response_text = ""
-
-    greetings = ["你好", "嗨", "hello", "hi", "早安", "晚安", "在吗"]
-    if any(greet in message_lower for greet in greetings):
-        response_text = random.choice(angela_responses["greeting"])
-    elif any(
-        word in message_lower
-        for word in ["开心", "高兴", "棒", "太好了", "good", "great", "万岁"]
-    ):
-        response_text = random.choice(angela_responses["happy"])
-    elif any(
-        word in message_lower
-        for word in ["难过", "伤心", "不爽", "sad", "坏", "糟糕", "郁闷"]
-    ):
-        response_text = random.choice(angela_responses["sad"])
-    elif (
-        "?" in user_message
-        or "？" in user_message
-        or any(
-            word in message_lower
-            for word in [
-                "什么",
-                "为什么",
-                "如何",
-                "怎么",
-                "who",
-                "what",
-                "why",
-                "how",
-                "能否",
-                "可以",
-            ]
-        )
-    ):
-        response_text = random.choice(angela_responses["question"])
-    else:
-        response_text = random.choice(angela_responses["default"])
+    # Use shared chat service
+    response_text = generate_angela_response(user_message, user_name)
 
     return {
         "session_id": session_id,

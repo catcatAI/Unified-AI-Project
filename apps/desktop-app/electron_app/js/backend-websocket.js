@@ -92,11 +92,17 @@ class BackendWebSocketClient {
             case 'wallpaper_object_injection':
                 this._handleWallpaperObjectInjection(data);
                 break;
-            case 'module_status_changed':
-                this._handleModuleStatusChanged(data);
+            case 'chat_response':
+                this._handleChatResponse(data);
+                break;
+            case 'echo':
+                // FIX: Handle echo message (heartbeat/ping from backend)
+                // Echo is used for keep-alive, respond with pong if needed
+                console.log('Received echo (keep-alive):', message);
                 break;
             default:
-                console.warn('Unknown message type:', type);
+                // Log as debug instead of warning to reduce noise
+                console.debug('Unknown message type:', type, message);
         }
     }
     
@@ -205,18 +211,32 @@ class BackendWebSocketClient {
     }
     
     _handleReconnect() {
-        console.log('Attempting to reconnect...');
+        console.log('Attempting to reconnect... (attempt', this.reconnectAttempts + 1, 'of', this.maxReconnectAttempts + 1, ')');
         
         this._stopHeartbeat();
         
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            
+            // FIX: Exponential backoff with cap at 5 seconds (not 17 minutes!)
+            const maxDelay = 5000; // Max 5 seconds between attempts
+            const baseDelay = 500; // Start with 500ms
+            const exponentialDelay = Math.min(baseDelay * Math.pow(2, this.reconnectAttempts - 1), maxDelay);
+            const jitter = Math.random() * 200; // Add small jitter to prevent thundering herd
+            
+            const reconnectDelay = exponentialDelay + jitter;
+            console.log(`Reconnecting in ${reconnectDelay.toFixed(0)}ms...`);
+            
             this.reconnectInterval = setTimeout(() => {
-                this.reconnectAttempts++;
                 this.connect(this.url || 'ws://localhost:8000/ws');
-            }, Math.pow(2, this.reconnectAttempts) * 1000);
+            }, reconnectDelay);
         } else {
-            console.error('Max reconnect attempts reached');
-            this._fireEvent('disconnected', { reason: 'max_attempts' });
+            console.error('Max reconnect attempts reached, will retry every 10 seconds');
+            // Keep trying every 10 seconds even after max attempts
+            this.reconnectInterval = setTimeout(() => {
+                this.reconnectAttempts = 0; // Reset to try again with shorter delays
+                this._handleReconnect();
+            }, 10000);
         }
     }
     
@@ -232,7 +252,45 @@ class BackendWebSocketClient {
             console.error('Failed to send message:', error);
         }
     }
-    
+
+    /**
+     * Send chat message and wait for response
+     * @param {string} text - Message text
+     * @returns {Promise<{success: boolean, response: string}>}
+     */
+    async sendMessage(text) {
+        if (!this.connected || !this.ws) {
+            console.warn('Not connected, message not sent:', text);
+            return { success: false, response: 'Not connected to backend' };
+        }
+
+        return new Promise((resolve) => {
+            const messageId = Date.now().toString();
+            const timeout = setTimeout(() => {
+                this._pendingResponses.delete(messageId);
+                resolve({ success: false, response: 'Timeout waiting for response' });
+            }, 30000);
+
+            this._pendingResponses = this._pendingResponses || new Map();
+            this._pendingResponses.set(messageId, { timeout, resolve });
+
+            try {
+                this.ws.send(JSON.stringify({
+                    type: 'chat_message',
+                    data: {
+                        message_id: messageId,
+                        content: text,
+                        timestamp: new Date().toISOString()
+                    }
+                }));
+            } catch (error) {
+                clearTimeout(timeout);
+                this._pendingResponses.delete(messageId);
+                resolve({ success: false, response: error.message });
+            }
+        });
+    }
+
     disconnect() {
         if (this.ws) {
             this.ws.close();
@@ -283,6 +341,20 @@ class BackendWebSocketClient {
     
     isConnected() {
         return this.connected;
+    }
+
+    _handleChatResponse(data) {
+        if (!data || !data.message_id) return;
+
+        const pending = this._pendingResponses?.get(data.message_id);
+        if (pending) {
+            clearTimeout(pending.timeout);
+            this._pendingResponses.delete(data.message_id);
+            pending.resolve({
+                success: true,
+                response: data.content || data.response || ''
+            });
+        }
     }
 }
 

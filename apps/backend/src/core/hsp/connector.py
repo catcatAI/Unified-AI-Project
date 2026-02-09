@@ -19,13 +19,13 @@ from .utils.fallback_config_loader import FallbackConfigLoader
 from .retry_policy import RetryPolicy
 from .circuit_breaker import CircuitBreaker
 from .utils.fallback_config_loader import get_config_loader
-from src.core.shared.network_resilience import NetworkResilienceManager
-from src.core.shared.error import ErrorHandler
-from src.core.hsp.internal.internal_bus import InternalBus
-from src.core.hsp.bridge.message_bridge import MessageBridge
-from src.core.hsp.bridge.data_aligner import DataAligner
-from src.core.hsp.external.external_connector import ExternalConnector
-from src.core.hsp.fallback.fallback_protocols import InMemoryProtocol, FileBasedProtocol, HTTPProtocol
+from core.shared.network_resilience import NetworkResilienceManager
+from core.shared.error import ErrorHandler
+from .internal.internal_bus import InternalBus
+from .bridge.message_bridge import MessageBridge
+from .bridge.data_aligner import DataAligner
+from .external.external_connector import ExternalConnector
+from .fallback.fallback_protocols import InMemoryProtocol, FileBasedProtocol, HTTPProtocol
 from unittest.mock import MagicMock, AsyncMock
 from datetime import datetime, timezone
 

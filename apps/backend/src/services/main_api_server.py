@@ -11,8 +11,17 @@ import sys
 import uuid
 import random
 import asyncio
+import httpx
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Any, List, Optional
+
+# 確保 src 目錄在 Python 路徑中
+# 必須添加 src 目錄本身，這樣 Python 才能找到 src.core 等模塊
+_backend_dir = Path(__file__).parent.parent.parent  # /apps/backend
+_src_path = str(_backend_dir / "src")  # /apps/backend/src
+if _src_path not in sys.path:
+    sys.path.insert(0, _src_path)
 
 from fastapi import FastAPI, HTTPException, APIRouter, Body, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,6 +31,8 @@ from ..core.autonomous.action_executor import ActionExecutor, Action, ActionCate
 from .vision_service import VisionService
 from .audio_service import AudioService
 from .tactile_service import TactileService
+from .chat_service import generate_angela_response
+from .angela_llm_service import get_llm_service, angela_llm_response
 from ..system.security_monitor import ABCKeyManager
 from ..api.router import router as api_v1_router
 from ..api.v1.endpoints import pet, economy
@@ -56,14 +67,22 @@ async def startup_event():
     await desktop_interaction.initialize()
     await action_executor.initialize()
     await digital_life.initialize()
-    
+
     # Initialize Logic Bridge
     if digital_life.autonomous_lifecycle:
         initialize_cognitive_bridge(digital_life.autonomous_lifecycle.cdm, economy_manager)
-        
+
     await brain_bridge.start()
     # vision_service doesn't have an async initialize yet
-    
+
+    # Initialize LLM Service (Angela's brain)
+    global _llm_service
+    try:
+        _llm_service = await get_llm_service()
+        print(f"[STARTUP] LLM Service initialized: available={_llm_service.is_available}")
+    except Exception as e:
+        print(f"[STARTUP] LLM Service initialization failed: {e}")
+
     # Start background task to broadcast state updates
     asyncio.create_task(broadcast_state_updates())
 
@@ -159,46 +178,71 @@ async def send_message(session_id: str, request: Dict[str, Any] = Body(...)):
 
 @router.post("/angela/chat")
 async def angela_chat(request: Dict[str, Any] = Body(...)):
+    """
+    Angela 智能對話接口
+    ==================
+    這是 Angela 與用戶對話的核心接口。
+
+    處理流程：
+    1. 接收用戶消息
+    2. 通過 Angela LLM 服務生成回應
+    3. 返回經過 Angela 個性化處理的回應
+
+    用戶不是直接與 LLM 對話，而是透過 Angela。
+    """
     user_message = request.get("message", request.get("text", ""))
     session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
     user_name = request.get("user_name", "朋友")
+    history = request.get("history", [])
 
-    message_lower = user_message.lower()
-
-    greetings = ["你好", "嗨", "hello", "hi", "在吗"]
-    if any(greet in message_lower for greet in greetings):
-        responses = [
-            f"嗨，{user_name}！今天过得怎么样？",
-            f"你好呀，{user_name}！见到你真高兴~",
-            f"欢迎回来，{user_name}！有什么我可以帮你的吗？",
-        ]
-    elif any(word in message_lower for word in ["开心", "高兴", "棒", "太好了"]):
-        responses = ["太棒了！听起来是个好消息！", "真替你高兴！", "哇，太好了！"]
-    elif any(word in message_lower for word in ["难过", "伤心", "不爽"]):
-        responses = [
-            "我理解你的感受...",
-            "别难过，一切都会好起来的。",
-            "需要我陪你聊聊吗？",
-        ]
-    elif "?" in user_message or "？" in user_message:
-        responses = [
-            "这是个很有意思的问题！让我想想...",
-            "好问题！我来帮你分析一下。",
-            "让我查查资料再回答你~",
-        ]
-    else:
-        responses = [
-            "我明白了！让我帮你想想...",
-            "这是个很有趣的想法！",
-            "我可以帮你处理这个。",
-            "让我分析一下...",
-            "没问题，我这就帮你做！",
-        ]
+    # 調用 LLM 服務生成回應
+    try:
+        response_text = await angela_llm_response(
+            user_message=user_message,
+            history=history,
+            user_name=user_name
+        )
+    except Exception as e:
+        # 如果 LLM 服務不可用，使用備份回應
+        print(f"[WARNING] LLM service error: {e}")
+        response_text = generate_angela_response(user_message, user_name)
 
     return {
         "session_id": session_id,
-        "response_text": random.choice(responses),
+        "response_text": response_text,
         "angela_mood": "happy",
+        "source": "llm" if _llm_service and _llm_service.is_available else "fallback"
+    }
+
+
+@router.post("/dialogue")
+async def dialogue(request: Dict[str, Any] = Body(...)):
+    """
+    对話接口 - 與 /angela/chat 相同，為前端兼容性提供
+    """
+    user_message = request.get("message", request.get("text", ""))
+    session_id = request.get("session_id", f"angela-{uuid.uuid4().hex[:8]}")
+    user_name = request.get("user_name", "朋友")
+    history = request.get("history", [])
+
+    # 调用 LLM 服务生成回应
+    try:
+        response_text = await angela_llm_response(
+            user_message=user_message,
+            history=history,
+            user_name=user_name
+        )
+    except Exception as e:
+        print(f"[WARNING] LLM service error: {e}")
+        response_text = generate_angela_response(user_message, user_name)
+
+    return {
+        "session_id": session_id,
+        "response": response_text,
+        "response_text": response_text,
+        "emotion": "happy",
+        "angela_mood": "happy",
+        "source": "llm" if _llm_service and _llm_service.is_available else "fallback"
     }
 
 
@@ -464,6 +508,25 @@ async def websocket_endpoint(websocket: WebSocket):
                 await manager.broadcast({
                     "type": "state_update",
                     "data": data.get("data", {}),
+                    "timestamp": datetime.now().isoformat()
+                })
+            elif data.get("type") == "chat_message":
+                # Handle chat messages from desktop app - use shared service
+                user_message = data.get("data", {}).get("content", "")
+                message_id = data.get("data", {}).get("message_id", "")
+                user_name = data.get("data", {}).get("user_name", "朋友")
+                
+                # Use shared chat service
+                response_text = generate_angela_response(user_message, user_name)
+                
+                # Send response back to the client
+                await websocket.send_json({
+                    "type": "chat_response",
+                    "data": {
+                        "message_id": message_id,
+                        "content": response_text,
+                        "sender": "angela"
+                    },
                     "timestamp": datetime.now().isoformat()
                 })
             else:

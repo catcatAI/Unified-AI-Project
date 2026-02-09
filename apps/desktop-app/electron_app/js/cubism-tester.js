@@ -308,7 +308,7 @@ class CubismIntegrationTester {
         // 显示SDK状态详情
         if (typeof window.cubismSDKManager !== 'undefined') {
             const status = window.cubismSDKManager.getStatus();
-            const validation = await window.cubismSDKManager.validateSDK();
+            const validation = window.cubismSDKManager.validateSDK();
             
             console.log('\n🔍 SDK状态详情:');
             console.log(`加载状态: ${status.loaded ? '✅ 已加载' : '❌ 未加载'}`);

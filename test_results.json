@@ -1,0 +1,242 @@
+{
+  "backend": {
+    "passed": 2,
+    "failed": 0,
+    "tests": [
+      {
+        "status": "PASS",
+        "message": "Backend health check passed",
+        "timestamp": "2026-02-09T00:42:18.136757"
+      },
+      {
+        "status": "PASS",
+        "message": "Backend API version: 6.0.4",
+        "timestamp": "2026-02-09T00:42:18.138069"
+      }
+    ]
+  },
+  "websocket": {
+    "passed": 2,
+    "failed": 0,
+    "tests": [
+      {
+        "status": "PASS",
+        "message": "WebSocket connection established",
+        "timestamp": "2026-02-09T00:42:18.140660"
+      },
+      {
+        "status": "PASS",
+        "message": "WebSocket message received: connected",
+        "timestamp": "2026-02-09T00:42:18.140917"
+      }
+    ]
+  },
+  "api": {
+    "passed": 2,
+    "failed": 1,
+    "tests": [
+      {
+        "status": "PASS",
+        "message": "Pet API working: angela_v1 - animation: idle",
+        "timestamp": "2026-02-09T00:42:18.143113"
+      },
+      {
+        "status": "FAIL",
+        "message": "Pet interact returned status 500",
+        "timestamp": "2026-02-09T00:42:18.157428"
+      },
+      {
+        "status": "PASS",
+        "message": "Economy API working: 0 coins",
+        "timestamp": "2026-02-09T00:42:18.159153"
+      }
+    ]
+  },
+  "ui": {
+    "passed": 27,
+    "failed": 1,
+    "tests": [
+      {
+        "status": "PASS",
+        "message": "index.html exists (10827 bytes)",
+        "timestamp": "2026-02-09T00:42:18.159436"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js exists (30582 bytes)",
+        "timestamp": "2026-02-09T00:42:18.159460"
+      },
+      {
+        "status": "PASS",
+        "message": "preload.js exists (4681 bytes)",
+        "timestamp": "2026-02-09T00:42:18.159476"
+      },
+      {
+        "status": "PASS",
+        "message": "js/app.js exists (49492 bytes)",
+        "timestamp": "2026-02-09T00:42:18.159491"
+      },
+      {
+        "status": "PASS",
+        "message": "js/live2d-manager.js exists (28190 bytes)",
+        "timestamp": "2026-02-09T00:42:18.159507"
+      },
+      {
+        "status": "PASS",
+        "message": "js/input-handler.js exists (9894 bytes)",
+        "timestamp": "2026-02-09T00:42:18.159522"
+      },
+      {
+        "status": "PASS",
+        "message": "js/backend-websocket.js exists (8881 bytes)",
+        "timestamp": "2026-02-09T00:42:18.159536"
+      },
+      {
+        "status": "PASS",
+        "message": "js/dialogue-ui.js exists (8863 bytes)",
+        "timestamp": "2026-02-09T00:42:18.159550"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: id=\"live2d-canvas\"",
+        "timestamp": "2026-02-09T00:42:18.159759"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: id=\"click-layer\"",
+        "timestamp": "2026-02-09T00:42:18.159778"
+      },
+      {
+        "status": "FAIL",
+        "message": "Index.html missing: id=\"dialogue-container\"",
+        "timestamp": "2026-02-09T00:42:18.159790"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: id=\"loading-overlay\"",
+        "timestamp": "2026-02-09T00:42:18.159801"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: backend-websocket.js",
+        "timestamp": "2026-02-09T00:42:18.159811"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: dialogue-ui.js",
+        "timestamp": "2026-02-09T00:42:18.159822"
+      },
+      {
+        "status": "PASS",
+        "message": "Index.html contains: input-handler.js",
+        "timestamp": "2026-02-09T00:42:18.159834"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: class DialogueUI",
+        "timestamp": "2026-02-09T00:42:18.159929"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: sendMessage",
+        "timestamp": "2026-02-09T00:42:18.159942"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: addMessage",
+        "timestamp": "2026-02-09T00:42:18.159951"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: addSystemMessage",
+        "timestamp": "2026-02-09T00:42:18.159958"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: dialogue-input",
+        "timestamp": "2026-02-09T00:42:18.159964"
+      },
+      {
+        "status": "PASS",
+        "message": "DialogueUI has: dialogue-messages",
+        "timestamp": "2026-02-09T00:42:18.159969"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: Single instance lock",
+        "timestamp": "2026-02-09T00:42:18.160230"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: WebSocket server/client",
+        "timestamp": "2026-02-09T00:42:18.160243"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: WebSocket connection",
+        "timestamp": "2026-02-09T00:42:18.160250"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: Window creation",
+        "timestamp": "2026-02-09T00:42:18.160256"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: System tray",
+        "timestamp": "2026-02-09T00:42:18.160262"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: IPC handlers",
+        "timestamp": "2026-02-09T00:42:18.160267"
+      },
+      {
+        "status": "PASS",
+        "message": "main.js: Live2D model loading",
+        "timestamp": "2026-02-09T00:42:18.160278"
+      }
+    ]
+  },
+  "live2d": {
+    "passed": 7,
+    "failed": 0,
+    "tests": [
+      {
+        "status": "PASS",
+        "message": "Live2D: Live2D Manager class",
+        "timestamp": "2026-02-09T00:42:18.160055"
+      },
+      {
+        "status": "PASS",
+        "message": "Live2D: Model loading",
+        "timestamp": "2026-02-09T00:42:18.160069"
+      },
+      {
+        "status": "PASS",
+        "message": "Live2D: Expression control",
+        "timestamp": "2026-02-09T00:42:18.160083"
+      },
+      {
+        "status": "PASS",
+        "message": "Live2D: Body part touch response",
+        "timestamp": "2026-02-09T00:42:18.160097"
+      },
+      {
+        "status": "PASS",
+        "message": "Live2D: Animation loop",
+        "timestamp": "2026-02-09T00:42:18.160109"
+      },
+      {
+        "status": "PASS",
+        "message": "Live2D: Click regions",
+        "timestamp": "2026-02-09T00:42:18.160116"
+      },
+      {
+        "status": "PASS",
+        "message": "Live2D: Eye tracking",
+        "timestamp": "2026-02-09T00:42:18.160121"
+      }
+    ]
+  }
+}

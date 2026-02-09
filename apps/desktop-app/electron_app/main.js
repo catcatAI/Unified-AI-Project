@@ -31,11 +31,40 @@ let moduleStates = {
 };
 let tray = null;
 
+// FIX: Helper function to safely send to mainWindow
+function sendToMainWindow(channel, data) {
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+    try {
+      mainWindow.webContents.send(channel, data);
+      return true;
+    } catch (e) {
+      console.warn(`[Main] Failed to send ${channel}:`, e.message);
+      return false;
+    }
+  }
+  return false;
+}
+
+// FIX: Helper function to safely call mainWindow methods
+function safeMainWindowCall(callback) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    try {
+      callback(mainWindow);
+      return true;
+    } catch (e) {
+      console.warn('[Main] Failed to call method on mainWindow:', e.message);
+      return false;
+    }
+  }
+  return false;
+}
+
 // 当第二个实例尝试启动时，将焦点转移到现有窗口
 app.on('second-instance', (event, commandLine, workingDirectory) => {
   console.log('[Main] Second instance detected, focusing existing window');
   
-  if (mainWindow) {
+  // FIX: Check if mainWindow exists and is valid before accessing
+  if (mainWindow && !mainWindow.isDestroyed()) {
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.focus();
   }
@@ -50,22 +79,75 @@ app.whenReady().then(async () => {
   app.commandLine.appendSwitch('enable-zero-copy');
   app.commandLine.appendSwitch('ignore-gpu-blacklist');
   app.commandLine.appendSwitch('enable-webgl2-compute-context');
+  app.commandLine.appendSwitch('enable-webgl2');  // Enable WebGL 2.0
+  app.commandLine.appendSwitch('enable-accelerated-2d-canvas');  // Accelerated 2D canvas
+  app.commandLine.appendSwitch('enable-gpu-driver-bug-workarounds');  // Driver compatibility
   
   // Register file protocol for loading Live2D model files
   protocol.registerFileProtocol('local', (request, callback) => {
     console.log('[Main] Local protocol request:', request.url);
-    // Handle both local://path and local:///path formats
-    let urlPath = request.url.substring(7); // Remove 'local://'
-    if (urlPath.startsWith('/')) {
-      // If path starts with /, it's already an absolute path
-      // But if it's // or more, remove the extra slashes
-      while (urlPath.startsWith('//')) {
+    
+    let urlPath = request.url;
+    
+    // First, decode the entire URL to handle Chinese characters properly
+    // This must happen BEFORE we extract the path
+    try {
+      urlPath = decodeURIComponent(urlPath);
+    } catch (e) {
+      console.warn('[Main] Failed to decode URL:', urlPath);
+    }
+    
+    console.log('[Main] Decoded URL:', urlPath);
+    
+    // Handle local://, local:///, local://// etc. formats (variable slashes)
+    // After decoding, we need to remove the 'local:' prefix and any leading slashes
+    if (urlPath.startsWith('local:')) {
+      // Remove 'local:' prefix
+      urlPath = urlPath.substring(6);
+      
+      // Remove all leading slashes (there can be 1-3 of them)
+      while (urlPath.startsWith('/')) {
         urlPath = urlPath.substring(1);
       }
     }
-    const filePath = path.normalize(urlPath);
-    console.log('[Main] Local protocol resolved to:', filePath);
-    callback({ path: filePath });
+    
+    // Ensure path starts with /
+    if (!urlPath.startsWith('/') && urlPath.indexOf('/') > -1) {
+      urlPath = '/' + urlPath;
+    }
+    
+    // Use path.normalize to clean the path, then path.resolve for absolute path
+    const normalizedPath = require('path').normalize(urlPath);
+    const filePath = require('path').resolve(normalizedPath);
+    
+    console.log('[Main] Local protocol resolved:', urlPath, '->', filePath);
+    
+    // Verify file exists
+    if (require('fs').existsSync(filePath)) {
+      callback({ path: filePath });
+    } else {
+      console.error('[Main] File not found:', filePath);
+      
+      // Try alternative path resolution for Chinese characters
+      // If the path contains Chinese characters that weren't decoded properly
+      if (urlPath.includes('%')) {
+        console.warn('[Main] Trying alternative decode for remaining encoded characters...');
+        try {
+          const altPath = decodeURIComponent(urlPath);
+          const altFilePath = require('path').resolve(require('path').normalize(altPath));
+          console.warn('[Main] Alternative path:', altFilePath);
+          
+          if (require('fs').existsSync(altFilePath)) {
+            callback({ path: altFilePath });
+            return;
+          }
+        } catch (e2) {
+          console.warn('[Main] Alternative decode failed:', e2);
+        }
+      }
+      
+      callback({ error: -6 }); // FILE_NOT_FOUND
+    }
   });
   console.log('[Main] Local file protocol registered');
   
@@ -102,12 +184,12 @@ app.whenReady().then(async () => {
 app.on('window-all-closed', () => {
   // Don't quit on macOS, just hide to tray
   if (process.platform === 'darwin') {
-    if (mainWindow) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.hide();
     }
   } else {
     // On Windows/Linux, hide to tray instead of quitting
-    if (mainWindow) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.hide();
       // Don't quit, just hide to tray
       return;
@@ -151,9 +233,11 @@ function createMainWindow() {
       nodeIntegration: false,
       sandbox: false,
       webSecurity: true,
-      // Enable WebGL
-      experimentalFeatures: true,
-      webgl: true
+      // Enable WebGL 2.0 and hardware acceleration
+      webgl: true,
+      enableWebGL2: true,
+      hardwareAcceleration: 'force',
+      experimentalFeatures: true
     }
   });
   
@@ -172,6 +256,119 @@ function createMainWindow() {
   // Log when page is loaded
   mainWindow.webContents.on('did-finish-load', () => {
     console.log('[Window] Page loaded successfully');
+  });
+  
+  // Add right-click context menu for main window
+  mainWindow.webContents.on('context-menu', (event, params) => {
+    event.preventDefault();
+    
+    // Safety check
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      console.warn('[ContextMenu] mainWindow is null or destroyed');
+      return;
+    }
+    
+    try {
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Show/Hide Angela',
+        click: () => {
+          if (mainWindow.isVisible()) {
+            mainWindow.hide();
+          } else {
+            mainWindow.show();
+            mainWindow.focus();
+          }
+        }
+      },
+      { type: 'separator' },
+      {
+        label: 'Settings',
+        click: () => {
+          createSettingsWindow();
+        }
+      },
+      {
+        label: 'Reload Model',
+        click: () => {
+          sendToMainWindow('reload-model');
+        }
+      },
+      { type: 'separator' },
+      {
+        label: 'Toggle Always on Top',
+        click: () => {
+          const current = mainWindow.isAlwaysOnTop();
+          mainWindow.setAlwaysOnTop(!current);
+          sendToMainWindow('always-on-top-changed', { alwaysOnTop: !current });
+        }
+      },
+      {
+        label: 'Toggle Frame',
+        click: () => {
+          const current = mainWindow.isFrameless();
+          mainWindow.setFrameable(!current);
+        }
+      },
+      { type: 'separator' },
+      {
+        label: 'Performance Mode',
+        submenu: [
+          { label: 'Lite', type: 'radio', checked: currentPerformanceMode === 'lite', click: () => setPerformanceMode('lite') },
+          { label: 'Standard', type: 'radio', checked: currentPerformanceMode === 'standard', click: () => setPerformanceMode('standard') },
+          { label: 'Extended', type: 'radio', checked: currentPerformanceMode === 'extended', click: () => setPerformanceMode('extended') },
+          { label: 'Ultra', type: 'radio', checked: currentPerformanceMode === 'ultra', click: () => setPerformanceMode('ultra') }
+        ]
+      },
+      {
+        label: 'Wallpaper Mode',
+        submenu: [
+          { label: '2D (Basic)', type: 'radio', checked: currentWallpaperMode === '2D', click: () => setWallpaperMode('2D') },
+          { label: '2.5D (Parallax)', type: 'radio', checked: currentWallpaperMode === '2.5D', click: () => setWallpaperMode('2.5D') },
+          { label: '3D (Full)', type: 'radio', checked: currentWallpaperMode === '3D', click: () => setWallpaperMode('3D') }
+        ]
+      },
+      { type: 'separator' },
+      {
+        label: 'Modules',
+        submenu: [
+          { label: 'Vision System', type: 'checkbox', checked: moduleStates.vision, click: (item) => toggleModule('vision', item.checked) },
+          { label: 'Audio System', type: 'checkbox', checked: moduleStates.audio, click: (item) => toggleModule('audio', item.checked) },
+          { label: 'Tactile System', type: 'checkbox', checked: moduleStates.tactile, click: (item) => toggleModule('tactile', item.checked) },
+          { label: 'Action Executor', type: 'checkbox', checked: moduleStates.action, click: (item) => toggleModule('action', item.checked) }
+        ]
+      },
+      { type: 'separator' },
+      {
+        label: 'Auto-startup',
+        type: 'checkbox',
+        checked: getAutoStartupStatus(),
+        click: (item) => {
+          const currentStatus = getAutoStartupStatus();
+          setAutoStartup(!currentStatus);
+          createTray(); // Refresh tray menu
+        }
+      },
+      { type: 'separator' },
+      {
+        label: 'Restart',
+        click: () => {
+          app.relaunch();
+          app.exit();
+        }
+      },
+      {
+        label: 'Quit',
+        click: () => {
+          app.quit();
+        }
+      }
+    ]);
+    
+    contextMenu.popup(mainWindow);
+    } catch (error) {
+      console.error('[ContextMenu] Error showing context menu:', error.message);
+    }
   });
   
   // Log any page load errors
@@ -195,8 +392,8 @@ function createMainWindow() {
     // Open DevTools for debugging
     mainWindow.webContents.openDevTools();
     
-    mainWindow.webContents.send('window-ready', {
-      bounds: mainWindow.getBounds()
+    sendToMainWindow('window-ready', {
+      bounds: safeMainWindowCall(w => w.getBounds()) || mainWindow.getBounds()
     });
   });
   
@@ -298,7 +495,7 @@ function createTray() {
         },
         { type: 'separator' },
         { label: 'Auto-adjust', type: 'checkbox', checked: true, click: (item) => {
-          mainWindow.webContents.send('performance-auto-adjust', item.checked);
+          sendToMainWindow('performance-auto-adjust', item.checked);
         }}
       ]
     },
@@ -314,9 +511,7 @@ function createTray() {
     {
       label: 'Reload Model',
       click: () => {
-        if (mainWindow) {
-          mainWindow.webContents.send('reload-model');
-        }
+        sendToMainWindow('reload-model');
       }
     },
     {
@@ -337,7 +532,7 @@ function createTray() {
         if (mainWindow) {
           const current = mainWindow.isAlwaysOnTop();
           mainWindow.setAlwaysOnTop(!current);
-          mainWindow.webContents.send('always-on-top-changed', { alwaysOnTop: !current });
+          sendToMainWindow('always-on-top-changed', { alwaysOnTop: !current });
         }
       }
     },
@@ -529,12 +724,12 @@ function initializeSystemIntegrations() {
   // Detect screen size changes
   screen.on('display-metrics-changed', () => {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    mainWindow.webContents.send('screen-changed', { width, height });
+    sendToMainWindow('screen-changed', { width, height });
   });
   
   // Detect system theme changes
   nativeTheme.on('updated', () => {
-    mainWindow.webContents.send('theme-changed', {
+    sendToMainWindow('theme-changed', {
       shouldUseDarkColors: nativeTheme.shouldUseDarkColors
     });
   });
@@ -634,33 +829,25 @@ function cleanupResources() {
  */
 function setPerformanceMode(mode) {
   currentPerformanceMode = mode;
-  if (mainWindow) {
-    mainWindow.webContents.send('performance-mode-changed', mode);
-  }
+  sendToMainWindow('performance-mode-changed', mode);
   createTray(); // Refresh menu
 }
 
 function setWallpaperMode(mode) {
   currentWallpaperMode = mode;
-  if (mainWindow) {
-    mainWindow.webContents.send('wallpaper-mode-changed', mode);
-  }
+  sendToMainWindow('wallpaper-mode-changed', mode);
   createTray(); // Refresh menu
 }
 
 function toggleModule(module, enabled) {
   moduleStates[module] = enabled;
-  if (mainWindow) {
-    mainWindow.webContents.send('module-toggle', { module, enabled });
-  }
+  sendToMainWindow('module-toggle', { module, enabled });
   createTray(); // Refresh menu
 }
 
 function setBackendIP(ip) {
   backendIP = ip;
-  if (mainWindow) {
-    mainWindow.webContents.send('backend-ip-changed', ip);
-  }
+  sendToMainWindow('backend-ip-changed', ip);
   createTray(); // Refresh menu
 }
 
@@ -695,8 +882,7 @@ ipcMain.handle('backend-set-ip', (event, ip) => {
 });
 
 ipcMain.handle('wallpaper-inject-object', (event, objectData) => {
-  if (mainWindow) {
-    mainWindow.webContents.send('wallpaper-inject-object', objectData);
+  if (sendToMainWindow('wallpaper-inject-object', objectData)) {
     return { success: true };
   }
   return { success: false, error: 'Main window not available' };
@@ -767,7 +953,7 @@ ipcMain.handle('set-click-through-regions', (event, regions) => {
   }
   
   // Send regions to renderer for hit testing
-  mainWindow.webContents.send('click-through-regions-updated', regions);
+  sendToMainWindow('click-through-regions-updated', regions);
 });
 
 // Live2D model management
@@ -775,27 +961,66 @@ ipcMain.handle('live2d-load-model', async (event, modelPath) => {
   try {
     // Normalize path separators
     const normalizedModelPath = modelPath.replace(/\\/g, '/');
-    
+
     // Correctly resolve models directory relative to project root
     // apps/desktop-app/electron_app -> ../../../resources/models
-    const modelsDir = path.join(__dirname, '..', '..', '..', 'resources', 'models');
-    
-    // Handle both direct model paths and model directories
-    let fullPath = path.join(modelsDir, normalizedModelPath);
-    
+    const projectRoot = path.join(__dirname, '..', '..', '..');
+    const modelsDir = path.join(projectRoot, 'resources', 'models');
+
+    // Check if modelPath is already a full path or relative
+    let fullPath;
+    if (normalizedModelPath.startsWith('/') || normalizedModelPath.includes(':')) {
+      // Already a full path
+      fullPath = normalizedModelPath;
+    } else if (normalizedModelPath.startsWith('resources/')) {
+      // Relative path starting with resources/
+      fullPath = path.join(projectRoot, normalizedModelPath);
+    } else if (normalizedModelPath.includes('/')) {
+      // Relative path with directory
+      fullPath = path.join(modelsDir, normalizedModelPath);
+    } else {
+      // Just a model name, find in modelsDir
+      const modelDir = path.join(modelsDir, normalizedModelPath);
+      if (fs.existsSync(modelDir) && fs.statSync(modelDir).isDirectory()) {
+        // It's a directory, find the model file
+        const modelFiles = fs.readdirSync(modelDir).filter(f => f.endsWith('.model3.json'));
+        const modelFile = modelFiles.find(f => f.includes('_t03')) || modelFiles[0];
+        if (modelFile) {
+          fullPath = path.join(modelDir, modelFile);
+        } else {
+          fullPath = modelDir;
+        }
+      } else {
+        fullPath = path.join(modelsDir, normalizedModelPath);
+      }
+    }
+
+    // If it's a directory, check for model file
     if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
-      // If it's a directory, check for runtime/ subdirectory (common for miara models)
+      // Check for runtime/ subdirectory or model file
       const runtimePath = path.join(fullPath, 'runtime');
       if (fs.existsSync(runtimePath)) {
         fullPath = runtimePath;
+      } else {
+        // Find model3.json in this directory
+        const modelFiles = fs.readdirSync(fullPath).filter(f => f.endsWith('.model3.json'));
+        const modelFile = modelFiles.find(f => f.includes('_t03')) || modelFiles[0];
+        if (modelFile) {
+          fullPath = path.join(fullPath, modelFile);
+        }
       }
     }
-    
+
     if (fs.existsSync(fullPath)) {
       console.log(`[Main] Loading Live2D model from: ${fullPath}`);
-      return { success: true, path: fullPath };
+
+      // Convert file path to file URL for renderer
+      const fileUrl = `file://${fullPath}`;
+      console.log(`[Main] Converting to URL: ${fileUrl}`);
+
+      return { success: true, path: fullPath, url: fileUrl };
     }
-    
+
     console.warn(`[Main] Model path not found: ${fullPath}`);
     return { success: false, error: 'Model file not found' };
   } catch (error) {
@@ -807,18 +1032,79 @@ ipcMain.handle('live2d-load-model', async (event, modelPath) => {
 ipcMain.handle('live2d-get-models', () => {
   const modelsDir = path.join(__dirname, '..', '..', '..', 'resources', 'models');
   console.log(`[Main] Searching for models in: ${modelsDir}`);
-  
+
   if (!fs.existsSync(modelsDir)) {
     console.warn(`[Main] Models directory not found: ${modelsDir}`);
     return [];
   }
-  
-  return fs.readdirSync(modelsDir, { withFileTypes: true })
+
+  // Helper function to find model3.json recursively
+  function findModelJson(dir, baseName) {
+    // First check root of model dir
+    const rootPath = path.join(dir, String(baseName) + '.model3.json');
+    if (fs.existsSync(rootPath)) {
+      return { foundPath: String(baseName) + '.model3.json', subdir: '' };
+    }
+
+    // Check runtime/ subdirectory (Epsilon style)
+    const runtimePath = path.join(dir, 'runtime', String(baseName) + '.model3.json');
+    if (fs.existsSync(runtimePath)) {
+      return { foundPath: 'runtime/' + String(baseName) + '.model3.json', subdir: 'runtime' };
+    }
+
+    // Try any .model3.json file in root
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    const modelJsonFiles = entries
+      .filter(e => e.isFile() && String(e.name).endsWith('.model3.json'))
+      .map(e => String(e.name));
+
+    if (modelJsonFiles.length > 0 && modelJsonFiles[0]) {
+      return { foundPath: String(modelJsonFiles[0]), subdir: '' };
+    }
+
+    // Try .model3.json in subdirectories
+    const subdirs = entries.filter(e => e.isDirectory()).map(e => String(e.name));
+    for (const subdirName of subdirs) {
+      const subdirPath = path.join(dir, String(subdirName));
+      const files = fs.readdirSync(subdirPath, { withFileTypes: true });
+      const jsonFiles = files
+        .filter(e => e.isFile() && String(e.name).endsWith('.model3.json'))
+        .map(e => String(e.name));
+      if (jsonFiles.length > 0 && jsonFiles[0]) {
+        return { foundPath: path.join(String(subdirName), String(jsonFiles[0])), subdir: String(subdirName) };
+      }
+    }
+
+    return null;
+  }
+
+  const models = fs.readdirSync(modelsDir, { withFileTypes: true })
     .filter(dirent => dirent.isDirectory())
-    .map(dirent => ({
-      name: dirent.name,
-      path: path.join(modelsDir, dirent.name)
-    }));
+    .map(dirent => {
+      const modelDir = path.join(modelsDir, dirent.name);
+      const result = findModelJson(modelDir, dirent.name);
+
+      if (result) {
+        const relativePath = path.join('resources', 'models', dirent.name, result.foundPath);
+        console.log(`[Main] Found model: ${dirent.name}, relative path: ${relativePath}`);
+
+        return {
+          name: dirent.name,
+          path: relativePath,
+          fullPath: path.join(modelDir, result.foundPath)
+        };
+      }
+
+      return {
+        name: dirent.name,
+        path: path.join('resources', 'models', dirent.name),
+        fullPath: modelDir
+      };
+    })
+    .filter(m => m.path.endsWith('.model3.json'));
+
+  console.log(`[Main] Found ${models.length} models`);
+  return models;
 });
 
 // Wallpaper management
@@ -988,18 +1274,14 @@ function connectWebSocket(url) {
     wsClient.on('open', () => {
       console.log('[WebSocket] Connected successfully');
       wsReconnectAttempts = 0;
-      if (mainWindow) {
-        mainWindow.webContents.send('websocket-connected', { success: true });
-      }
+      sendToMainWindow('websocket-connected', { success: true });
     });
 
     wsClient.on('message', (data) => {
       try {
         const message = JSON.parse(data.toString());
         console.log('[WebSocket] Received:', message);
-        if (mainWindow) {
-          mainWindow.webContents.send('websocket-message', message);
-        }
+        sendToMainWindow('websocket-message', message);
       } catch (error) {
         console.error('[WebSocket] Failed to parse message:', error);
       }
@@ -1007,18 +1289,14 @@ function connectWebSocket(url) {
 
     wsClient.on('error', (error) => {
       console.error('[WebSocket] Error:', error.message);
-      if (mainWindow) {
-        mainWindow.webContents.send('websocket-error', { error: error.message });
-      }
+      sendToMainWindow('websocket-error', { error: error.message });
     });
 
     wsClient.on('close', (code, reason) => {
       console.log(`[WebSocket] Closed: ${code} - ${reason}`);
       wsClient = null;
       
-      if (mainWindow) {
-        mainWindow.webContents.send('websocket-disconnected', { code, reason: reason.toString() });
-      }
+      sendToMainWindow('websocket-disconnected', { code, reason: reason.toString() });
 
       // Auto-reconnect
       if (wsReconnectAttempts < WS_MAX_RECONNECT_ATTEMPTS) {
@@ -1033,9 +1311,7 @@ function connectWebSocket(url) {
     });
   } catch (error) {
     console.error('[WebSocket] Connection failed:', error);
-    if (mainWindow) {
-      mainWindow.webContents.send('websocket-error', { error: error.message });
-    }
+    sendToMainWindow('websocket-error', { error: error.message });
   }
 }
 

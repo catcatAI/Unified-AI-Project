@@ -11,6 +11,8 @@ class Live2DManager {
         this.canvas = canvas;
         this.gl = null;
         this.wrapper = null;
+        this.isFramework = false;
+        this.frameworkLoaded = false;
         
         this.modelLoaded = false;
         this.currentModel = null;
@@ -186,11 +188,24 @@ class Live2DManager {
     _tryLoadSDK() {
         console.log('[Live2DManager] _tryLoadSDK called');
         console.log('[Live2DManager] Checking window.Live2DCubismCore:', typeof window.Live2DCubismCore);
+        console.log('[Live2DManager] Checking window.Live2DCubismFramework:', typeof window.Live2DCubismFramework);
         console.log('[Live2DManager] Checking window.Live2DCubismWrapper:', typeof window.Live2DCubismWrapper);
         
+        // Check for Core SDK (required)
         if (typeof window.Live2DCubismCore !== 'undefined') {
-            console.log('Live2D Cubism Core already loaded from CDN');
-            this._initializeWithSDK(window.Live2DCubismCore);
+            console.log('Live2D Cubism Core loaded');
+            
+            // Check for Framework SDK (SDK 5)
+            if (typeof window.Live2DCubismFramework !== 'undefined') {
+                console.log('Live2D Cubism Framework loaded (SDK 5)');
+                this.frameworkLoaded = true;
+            }
+            
+            // Initialize SDK and check return value
+            const initResult = this._initializeWithSDK(window.Live2DCubismCore);
+            if (!initResult) {
+                console.log('SDK initialization failed, fallback will be used');
+            }
         } else {
             console.log('Live2D Cubism Core not available, using fallback');
             this._createFallbackManager();
@@ -198,85 +213,656 @@ class Live2DManager {
     }
     
     _initializeWithSDK(CubismCore) {
-        console.log('Initializing with Live2D Cubism Core');
-        console.log('CubismCore structure:', Object.keys(CubismCore));
-        console.log('CubismCore.MOC3:', CubismCore.MOC3);
+        console.log('Initializing with Live2D Cubism SDK');
+        console.log('CubismCore type:', typeof CubismCore);
         
-        this.sdk = CubismCore;
-        this.cubismSdk = CubismCore;
-        
-        // Ensure canvas has dimensions before getting WebGL context
-        if (!this.canvas.width || !this.canvas.height) {
-            console.warn('Canvas has no dimensions, setting default size');
-            this.canvas.width = this.canvas.clientWidth || 400;
-            this.canvas.height = this.canvas.clientHeight || 600;
+        // Validate Core SDK structure
+        if (!CubismCore || typeof CubismCore !== 'object') {
+            console.error('Invalid CubismCore SDK - not an object');
+            this._createFallbackManager();
+            return false;
         }
         
-        console.log('Canvas dimensions:', this.canvas.width, 'x', this.canvas.height);
+        // Check for Core SDK functions (SDK 5 format)
+        const hasCoreSDK = typeof CubismCore.Moc !== 'undefined' &&
+                          typeof CubismCore.Memory !== 'undefined';
+        console.log('Core SDK has Moc/Memory:', hasCoreSDK);
         
-        // Try to get WebGL context with software rendering support
+        // Check for Framework SDK (SDK 5) - bundle format
+        let hasFramework = false;
+        let CubismFramework = null;
+        
+        if (typeof window.Live2DCubismFramework !== 'undefined') {
+            // Check for nested CubismFramework (bundle format)
+            if (window.Live2DCubismFramework.CubismFramework) {
+                hasFramework = true;
+                CubismFramework = window.Live2DCubismFramework.CubismFramework;
+                console.log('Framework SDK loaded (nested CubismFramework)');
+            }
+            // Or check for direct Framework access
+            else if (typeof window.Live2DCubismFramework.startUp === 'function') {
+                hasFramework = true;
+                CubismFramework = window.Live2DCubismFramework;
+                console.log('Framework SDK loaded (direct)');
+            }
+        }
+        
+        console.log('Framework SDK loaded:', hasFramework);
+        
+        // Check for wrapper (SDK 4 style)
+        const hasWrapper = typeof window.Live2DCubismWrapper !== 'undefined';
+        console.log('Wrapper SDK loaded:', hasWrapper);
+        
+        // SDK 5: Initialize Framework with Core
+        if (hasFramework && hasCoreSDK && CubismFramework) {
+            console.log('Using SDK 5 Framework + Core');
+
+            // Check if Framework was already initialized
+            const alreadyInitialized = window.Live2DCubismFramework?.initialized === true;
+            if (!alreadyInitialized) {
+                // Try to initialize via wrapper function first
+                if (typeof window.initLive2DFramework === 'function') {
+                    console.log('Calling window.initLive2DFramework()');
+                    window.initLive2DFramework();
+                }
+
+                // Verify initialization
+                if (window.Live2DCubismFramework?.initialized !== true) {
+                    // Manual initialization if wrapper didn't work
+                    try {
+                        // Start up Framework
+                        if (typeof CubismFramework.startUp === 'function') {
+                            CubismFramework.startUp();
+                            console.log('Framework.startUp() called');
+                        }
+
+                        // Initialize Framework
+                        if (typeof CubismFramework.initialize === 'function') {
+                            const memorySize = CubismCore.Memory?.getMemorySize?.() || (16 * 1024 * 1024);
+                            CubismFramework.initialize(memorySize);
+                            console.log('Framework.initialize() called with', memorySize, 'bytes');
+                        }
+
+                        // Mark as initialized
+                        window.Live2DCubismFramework.initialized = true;
+                    } catch (e) {
+                        console.error('Framework initialization failed:', e);
+                    }
+                }
+            }
+
+            // Verify and set SDK references
+            if (window.Live2DCubismFramework?.initialized === true || !alreadyInitialized) {
+                this.sdk = CubismFramework;
+                this.cubismSdk = window.Live2DCubismFramework;
+                this.isFramework = true;
+                console.log('SDK 5 initialization successful');
+            } else {
+                console.error('Framework initialization did not complete');
+                this._createFallbackManager();
+                return false;
+            }
+        }
+        // SDK 4 wrapper fallback
+        else if (hasWrapper && typeof window.Live2DCubismWrapper.initialize === 'function') {
+            console.log('Using SDK 4 Wrapper');
+            this.sdk = window.Live2DCubismWrapper;
+            this.cubismSdk = window.Live2DCubismWrapper;
+            window.Live2DCubismWrapper.initialize(CubismCore);
+        }
+        // Core SDK only (limited functionality)
+        else if (hasCoreSDK) {
+            console.log('Using Core SDK only (limited functionality)');
+            this.sdk = CubismCore;
+            this.cubismSdk = CubismCore;
+        }
+        else {
+            console.warn('Live2D SDK incomplete, running in compatibility mode');
+            console.log('hasCoreSDK:', hasCoreSDK, 'hasFramework:', hasFramework, 'hasWrapper:', hasWrapper);
+            this._createFallbackManager();
+            return false;
+        }
+        
+        // Initialize canvas size using FrontendUtils for reliable DOM layout handling
+        const initialSize = FrontendUtils.getElementSize(this.canvas, 800, 600);
+        this.canvas.width = initialSize.width;
+        this.canvas.height = initialSize.height;
+
+        console.log('Canvas dimensions set to:', this.canvas.width, 'x', this.canvas.height);
+        
+        // Get WebGL context - try high-performance first for Live2D
         const glOptions = {
-            alpha: false,  // Disable alpha for better WebGL support
-            antialias: false,
+            alpha: false,
+            antialias: true,
             preserveDrawingBuffer: true,
-            powerPreference: 'low-power',
+            powerPreference: 'high-performance',  // Changed from 'low-power' for Live2D
             desynchronized: true,
-            failIfMajorPerformanceCaveat: false  // Allow software rendering
+            failIfMajorPerformanceCaveat: false
         };
-        
-        this.gl = this.canvas.getContext('webgl2', glOptions) || 
-                  this.canvas.getContext('webgl', glOptions) ||
-                  this.canvas.getContext('experimental-webgl', glOptions);
-        
+
+        this.gl = FrontendUtils.getWebGLContext(this.canvas, glOptions);
+
         if (!this.gl) {
-            console.error('WebGL not supported - trying with minimal options');
-            // Try with minimal options as fallback
-            this.gl = this.canvas.getContext('webgl2') || 
-                      this.canvas.getContext('webgl') ||
-                      this.canvas.getContext('experimental-webgl');
+            console.error('WebGL not supported with high-performance, trying default...');
+            this.gl = FrontendUtils.getWebGLContext(this.canvas, {});
         }
         
         if (!this.gl) {
             console.error('WebGL not supported - Live2D requires WebGL');
             console.error('This may be due to transparent window or software rendering limitations');
+            this._createFallbackManager();
             return false;
         }
 
         console.log('WebGL context created successfully');
         console.log('WebGL vendor:', this.gl.getParameter(this.gl.VENDOR));
         console.log('WebGL renderer:', this.gl.getParameter(this.gl.RENDERER));
-
-        // Initialize wrapper
-        if (typeof Live2DCubismWrapper !== 'undefined') {
+        console.log('WebGL version:', this.gl.getParameter(this.gl.VERSION));
+        
+        // Try to enable required extensions manually
+        this._enableWebGLExtensions();
+        
+        // Add WebGL context lost/restored event handlers
+        this.canvas.addEventListener('webglcontextlost', (event) => {
+            console.error('WebGL context lost!', event);
+            event.preventDefault(); // Prevent the context from being deleted
+            this._onContextLost();
+        });
+        
+        this.canvas.addEventListener('webglcontextrestored', (event) => {
+            console.log('WebGL context restored, reinitializing...');
+            this._onContextRestored();
+        });
+        
+        // Initialize based on SDK type
+        // SDK 5 Framework mode
+        if (this.isFramework && this.sdk) {
+            console.log('Using SDK 5 Framework mode');
+            this._setupLive2DLoop();
+            return true;
+        }
+        // SDK 4 Wrapper mode
+        else if (typeof Live2DCubismWrapper !== 'undefined') {
+            console.log('Using SDK 4 Wrapper mode');
             this.wrapper = new Live2DCubismWrapper(this.canvas);
-        } else {
-            console.error('Live2DCubismWrapper not found');
+            this._setupLive2DLoop();
+            return true;
+        }
+        // Enhanced wrapper fallback
+        else if (typeof EnhancedLive2DCubismWrapper !== 'undefined') {
+            console.log('Using Enhanced Wrapper mode');
+            this.wrapper = new EnhancedLive2DCubismWrapper(this.canvas);
+            this._setupLive2DLoop();
+            return true;
+        }
+        // No SDK available
+        else {
+            console.error('No Live2D wrapper available');
+            this._createFallbackManager();
             return false;
         }
+    }
+    
+    /**
+     * Enable WebGL extensions manually for Live2D
+     */
+    _enableWebGLExtensions() {
+        if (!this.gl) return;
         
-        // Get WebGL extensions
-        const ext = this.gl.getExtension('OES_element_index_uint');
-        const ext2 = this.gl.getExtension('OES_standard_derivatives');
-        const ext3 = this.gl.getExtension('OES_texture_float_linear');
-        const ext4 = this.gl.getExtension('OES_texture_float');
+        const extensionsToEnable = [
+            'OES_element_index_uint',
+            'OES_texture_float',
+            'OES_texture_float_linear',
+            'OES_standard_derivatives',
+            'WEBGL_depth_texture',
+            'EXT_color_buffer_float',
+            'EXT_texture_filter_anisotropic'
+        ];
         
-        if (!ext || !ext2 || !ext3 || !ext4) {
-            console.error('Required WebGL extensions not supported');
-            return false;
+        console.log('Attempting to enable WebGL extensions...');
+        const enabled = [];
+        const failed = [];
+        
+        for (const ext of extensionsToEnable) {
+            try {
+                const extObj = this.gl.getExtension(ext);
+                if (extObj) {
+                    enabled.push(ext);
+                    console.log('  ✅ Enabled:', ext);
+                } else {
+                    // Try enabling it
+                    const extObj2 = this.gl.getExtension(ext);
+                    if (extObj2) {
+                        enabled.push(ext);
+                        console.log('  ✅ Enabled (second try):', ext);
+                    } else {
+                        failed.push(ext);
+                        console.warn('  ❌ Not available:', ext);
+                    }
+                }
+            } catch (e) {
+                failed.push(ext);
+                console.warn('  ❌ Error:', ext, e.message);
+            }
         }
         
-        console.log('WebGL extensions initialized');
-        return true;
+        this.enabledExtensions = enabled;
+        this.failedExtensions = failed;
+        
+        console.log(`WebGL Extensions: ${enabled.length} enabled, ${failed.length} failed`);
+        
+        // Check for critical Live2D requirements
+        const hasElementIndexUint = enabled.includes('OES_element_index_uint');
+        const hasTextureFloat = enabled.includes('OES_texture_float');
+        
+        if (!hasElementIndexUint || !hasTextureFloat) {
+            console.warn('⚠️ Critical Live2D extensions missing - using fallback');
+            this._createFallbackManager();
+        }
+    }
+    
+    /**
+     * Set up the Live2D render loop
+     */
+    _setupLive2DLoop() {
+        console.log('[Live2DManager] Setting up render loop');
+
+        this.isRunning = true;
+        this.lastFrameTime = performance.now();
+
+        // Render loop using requestAnimationFrame
+        const render = (timestamp) => {
+            if (!this.isRunning) return;
+
+            const deltaTime = timestamp - this.lastFrameTime;
+            this.lastFrameTime = timestamp;
+
+            try {
+                if (this.isFramework && this.model) {
+                    // SDK 5 Framework rendering
+                    this._renderFramework();
+                } else if (this.wrapper) {
+                    // SDK 4 Wrapper rendering
+                    this.wrapper.update(deltaTime);
+                    this.wrapper.render();
+                }
+                // Fallback mode doesn't need render loop here - handled by _create2DFallbackCharacter
+            } catch (e) {
+                console.error('Render error:', e);
+            }
+
+            requestAnimationFrame(render);
+        };
+
+        requestAnimationFrame(render);
+        console.log('[Live2DManager] Render loop started (mode:', this.isFallback ? 'fallback' : 'SDK', ')');
+    }
+    
+    /**
+     * Render using SDK 5 Framework
+     */
+    _renderFramework() {
+        // Placeholder for SDK 5 rendering
+        if (this.model) {
+            // Model rendering would go here
+        }
     }
     
     _createFallbackManager() {
-        console.log('Creating fallback Live2D manager');
+        console.log('[Live2DManager] Creating enhanced fallback manager');
         
-        this.sdk = null;
+        // 設置 sdk 為空對象而不是 null，避免 initialize 循環調用
+        this.sdk = {};  
         this.model = null;
         this.modelLoaded = false;
+        this.isFallback = true;
         
-        console.log('Fallback manager created (limited functionality)');
+        // Create 2D canvas fallback with animation
+        this._create2DFallbackCharacter();
+        
+        console.log('[Live2DManager] Enhanced fallback manager created');
+    }
+    
+    /**
+     * Create an animated 2D fallback character that looks like Angela
+     */
+    _create2DFallbackCharacter() {
+        console.log('[Live2DManager] _create2DFallbackCharacter called');
+
+        // Use separate canvas for fallback (main canvas has WebGL context)
+        const fallbackCanvas = document.getElementById('fallback-canvas');
+        const ctx = fallbackCanvas.getContext('2d');
+
+        if (!fallbackCanvas || !ctx) {
+            console.error('[Live2DManager] Failed to get fallback canvas or 2D context');
+            return;
+        }
+
+        // Show fallback canvas, hide WebGL canvas
+        fallbackCanvas.style.display = 'block';
+        this.canvas.style.display = 'none';
+
+        // Set canvas size
+        fallbackCanvas.width = 400;
+        fallbackCanvas.height = 500;
+
+        // Store reference
+        this.fallbackCanvas = fallbackCanvas;
+        this.fallbackCtx = ctx;
+
+        console.log('[Live2DManager] Fallback canvas created:', fallbackCanvas.width, 'x', fallbackCanvas.height);
+        
+        // Character state
+        this.fallbackState = {
+            blinkTimer: 0,
+            blinkInterval: 2000 + Math.random() * 2000,
+            isBlinking: false,
+            blinkDuration: 150,
+            breathePhase: 0,
+            breatheSpeed: 0.03,
+            idlePhase: 0,
+            idleSpeed: 0.02,
+            mouseX: 0,
+            mouseY: 0,
+            eyeOffset: { x: 0, y: 0 },
+            colorHue: 200,  // Blue-purple theme
+            expression: 'neutral',
+            hoverRegion: null
+        };
+        
+        // Animation loop for fallback character
+        const animate = () => {
+            if (this.isFallback && this.fallbackCtx) {
+                this._drawFallbackCharacter(this.fallbackCtx);
+                this._updateFallbackState();
+            }
+            if (this.isFallback) {
+                this.fallbackAnimationId = requestAnimationFrame(animate);
+            }
+        };
+
+        // Start animation
+        this._drawFallbackCharacter(ctx);
+        this.fallbackAnimationId = requestAnimationFrame(animate);
+        
+        console.log('[Live2DManager] 2D fallback character animation started');
+    }
+    
+    /**
+     * Update fallback character state (blinking, breathing, idle motion)
+     */
+    _updateFallbackState() {
+        if (!this.fallbackState) return;
+        
+        const state = this.fallbackState;
+        const now = Date.now();
+        
+        // Update blink
+        state.blinkTimer += 16;
+        if (!state.isBlinking && state.blinkTimer >= state.blinkInterval) {
+            state.isBlinking = true;
+            state.blinkTimer = 0;
+        }
+        if (state.isBlinking && state.blinkTimer >= state.blinkDuration) {
+            state.isBlinking = false;
+            state.blinkTimer = 0;
+        }
+        
+        // Update breathing
+        state.breathePhase += state.breatheSpeed;
+        
+        // Update idle motion
+        state.idlePhase += state.idleSpeed;
+        
+        // Smooth eye tracking towards mouse
+        const targetEyeX = (state.mouseX - 0.5) * 15;
+        const targetEyeY = (state.mouseY - 0.5) * 10;
+        state.eyeOffset.x += (targetEyeX - state.eyeOffset.x) * 0.1;
+        state.eyeOffset.y += (targetEyeY - state.eyeOffset.y) * 0.1;
+    }
+    
+    /**
+     * Draw the fallback character (Angela-style)
+     */
+    _drawFallbackCharacter(ctx) {
+        if (!ctx || !this.fallbackState || !this.fallbackCanvas) return;
+
+        const state = this.fallbackState;
+        const w = this.fallbackCanvas.width;
+        const h = this.fallbackCanvas.height;
+        const cx = w / 2;
+        const cy = h / 2 - 30;
+        
+        // Clear canvas
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, w, h);
+        
+        // Breathing offset
+        const breatheOffset = Math.sin(state.breathePhase) * 3;
+        const idleX = Math.sin(state.idlePhase * 0.7) * 5;
+        const idleY = Math.sin(state.idlePhase * 0.5) * 3;
+        
+        // Draw character
+        ctx.save();
+        ctx.translate(cx + idleX, cy + idleY + breatheOffset);
+        
+        // Colors
+        const skinColor = '#FFE4D0';
+        const hairColor = '#4A90D9';
+        const eyeColor = '#2E5A8B';
+        const lipColor = '#E890A0';
+        const blushColor = '#FFB6C1';
+        const dressColor = '#6B8EB8';
+        
+        // Draw back hair
+        ctx.fillStyle = hairColor;
+        ctx.beginPath();
+        ctx.ellipse(0, 40, 95, 110, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw body/dress
+        ctx.fillStyle = dressColor;
+        ctx.beginPath();
+        ctx.moveTo(-60, 120);
+        ctx.quadraticCurveTo(-80, 180, -70, 220);
+        ctx.lineTo(70, 220);
+        ctx.quadraticCurveTo(80, 180, 60, 120);
+        ctx.fill();
+        
+        // Draw neck
+        ctx.fillStyle = skinColor;
+        ctx.fillRect(-15, 90, 30, 35);
+        
+        // Draw face (head)
+        ctx.fillStyle = skinColor;
+        ctx.beginPath();
+        ctx.ellipse(0, 20, 75, 85, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw bangs/fringe
+        ctx.fillStyle = hairColor;
+        ctx.beginPath();
+        ctx.moveTo(-70, -10);
+        ctx.quadraticCurveTo(-40, 30, 0, 20);
+        ctx.quadraticCurveTo(40, 30, 70, -10);
+        ctx.quadraticCurveTo(50, -40, 0, -50);
+        ctx.quadraticCurveTo(-50, -40, -70, -10);
+        ctx.fill();
+        
+        // Draw side hair
+        ctx.beginPath();
+        ctx.moveTo(-75, 20);
+        ctx.quadraticCurveTo(-100, 80, -90, 150);
+        ctx.lineTo(-70, 150);
+        ctx.quadraticCurveTo(-80, 80, -60, 30);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.moveTo(75, 20);
+        ctx.quadraticCurveTo(100, 80, 90, 150);
+        ctx.lineTo(70, 150);
+        ctx.quadraticCurveTo(80, 80, 60, 30);
+        ctx.fill();
+        
+        // Draw eyes (white part)
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.ellipse(-28, 15, 22, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(28, 15, 22, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw iris
+        ctx.fillStyle = eyeColor;
+        ctx.beginPath();
+        const eyeX = state.eyeOffset.x;
+        const eyeY = state.eyeOffset.y;
+        ctx.ellipse(-28 + eyeX, 15 + eyeY, 12, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(28 + eyeX, 15 + eyeY, 12, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw pupils
+        ctx.fillStyle = '#1a1a2e';
+        ctx.beginPath();
+        ctx.ellipse(-28 + eyeX * 1.2, 15 + eyeY * 1.2, 6, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(28 + eyeX * 1.2, 15 + eyeY * 1.2, 6, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw eye highlights
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.ellipse(-32 + eyeX, 11 + eyeY, 4, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(24 + eyeX, 11 + eyeY, 4, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw eyebrows
+        ctx.strokeStyle = hairColor;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(-45, -5);
+        ctx.quadraticCurveTo(-28, -12, -10, -5);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(45, -5);
+        ctx.quadraticCurveTo(28, -12, 10, -5);
+        ctx.stroke();
+        
+        // Draw nose
+        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 30);
+        ctx.quadraticCurveTo(5, 50, 0, 55);
+        ctx.stroke();
+        
+        // Draw mouth
+        ctx.fillStyle = lipColor;
+        ctx.beginPath();
+        ctx.moveTo(-15, 70);
+        ctx.quadraticCurveTo(0, 78, 15, 70);
+        ctx.quadraticCurveTo(0, 82, -15, 70);
+        ctx.fill();
+        
+        // Draw blush
+        ctx.fillStyle = blushColor + '88';
+        ctx.beginPath();
+        ctx.ellipse(-50, 45, 15, 10, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(50, 45, 15, 10, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw cheeks highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(-55, 40, 8, 5, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(55, 40, 8, 5, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+        
+        // Draw status indicator
+        ctx.fillStyle = state.isBlinking ? '#FFB347' : '#4CAF50';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Fallback Mode', 10, 20);
+        
+        ctx.fillStyle = '#888';
+        ctx.font = '11px Arial';
+        ctx.fillText(`FPS: ~60`, 10, 35);
+        ctx.fillText(`Blink: ${state.isBlinking ? '👁' : '👀'}`, 70, 35);
+    }
+    
+    /**
+     * Set eye tracking for fallback mode
+     */
+    lookAt(x, y) {
+        if (this.isFallback && this.fallbackState) {
+            this.fallbackState.mouseX = x;
+            this.fallbackState.mouseY = y;
+        }
+    }
+    
+    /**
+     * Set expression for fallback mode
+     */
+    setExpression(expr) {
+        if (this.isFallback && this.fallbackState) {
+            this.fallbackState.expression = expr;
+        }
+    }
+    
+    // FIX: WebGL context lost/restored handlers
+    _onContextLost() {
+        console.warn('[Live2DManager] WebGL context lost, model may need reloading');
+        this.modelLoaded = false;
+        
+        // Notify the app about context loss
+        if (this.onContextLost) {
+            this.onContextLost();
+        }
+        
+        // Try to restore context automatically after a short delay
+        setTimeout(() => {
+            console.log('[Live2DManager] Attempting to restore WebGL context...');
+            this._restoreWebGLContext();
+        }, 1000);
+    }
+    
+    _onContextRestored() {
+        console.log('[Live2DManager] WebGL context restored event fired');
+        // Reinitialize WebGL resources
+        this._restoreWebGLContext();
+    }
+    
+    _restoreWebGLContext() {
+        // Try to restore the WebGL context and reload the model
+        if (!this.gl || this.gl.isContextLost()) {
+            console.log('[Live2DManager] Context still lost, waiting...');
+            setTimeout(() => this._restoreWebGLContext(), 500);
+            return;
+        }
+        
+        console.log('[Live2DManager] Restoring WebGL context and reloading model...');
+        
+        // Reload the model if one was loaded
+        if (this.modelPath && this.modelLoaded) {
+            this.loadModel(this.modelPath).then(() => {
+                console.log('[Live2DManager] Model reloaded after context restoration');
+            }).catch((error) => {
+                console.error('[Live2DManager] Failed to reload model:', error);
+            });
+        }
     }
     
     async initialize() {
@@ -284,24 +870,24 @@ class Live2DManager {
         
         return new Promise(async (resolve) => {
             let isResolved = false;
-            // 根據設備性能動態調整超時時間
             const isLowEndDevice = navigator.hardwareConcurrency <= 2 || navigator.deviceMemory <= 2;
             const timeout = isLowEndDevice ? 20000 : 15000;
             
             console.log('[Live2DManager] initialize timeout:', timeout);
+            console.log('[Live2DManager] this.sdk:', !!this.sdk, 'this.cubismSdk:', !!this.cubismSdk, 'this.isFallback:', this.isFallback);
             
             const timeoutId = setTimeout(() => {
                 if (!isResolved) {
                     isResolved = true;
-                    console.error(`Live2D Manager initialization timed out after ${timeout}ms`);
+                    console.error(`[Live2DManager] Initialization timed out after ${timeout}ms`);
                     resolve(false);
                 }
             }, timeout);
 
             try {
-                console.log('[Live2DManager] this.sdk:', !!this.sdk, 'this.cubismSdk:', !!this.cubismSdk);
-                
-                if (this.sdk && this.cubismSdk) {
+                // 如果是 fallback manager 或已經有 sdk，直接返回成功
+                if (this.isFallback || (this.sdk && Object.keys(this.sdk).length >= 0)) {
+                    console.log('[Live2DManager] Using fallback/skipping full initialization');
                     isResolved = true;
                     clearTimeout(timeoutId);
                     resolve(true);
@@ -311,20 +897,20 @@ class Live2DManager {
                 if (!this.sdk) {
                     console.log('[Live2DManager] Calling _tryLoadSDK');
                     await this._tryLoadSDK();
-                    console.log('[Live2DManager] After _tryLoadSDK, this.sdk:', !!this.sdk, 'this.wrapper:', !!this.wrapper);
                 }
                 
                 if (!isResolved) {
                     isResolved = true;
                     clearTimeout(timeoutId);
-                    console.log('[Live2DManager] Initialization result:', !!this.sdk);
-                    resolve(!!this.sdk);
+                    const success = !!(this.sdk && (this.cubismSdk || this.isFallback));
+                    console.log('[Live2DManager] Initialization result:', success);
+                    resolve(success);
                 }
             } catch (error) {
                 if (!isResolved) {
                     isResolved = true;
                     clearTimeout(timeoutId);
-                    console.error('Live2D Manager initialization failed:', error);
+                    console.error('[Live2DManager] Initialization failed:', error);
                     resolve(false);
                 }
             }
@@ -332,54 +918,144 @@ class Live2DManager {
     }
     
     async loadModel(modelPath) {
-        console.log('Loading Live2D model from:', modelPath);
-        
-        if (!this.sdk || !this.wrapper) {
-            console.error('Live2D Cubism SDK or Wrapper not loaded');
+        console.log('[Live2DManager] Loading Live2D model from:', modelPath);
+        console.log('[Live2DManager] SDK 5 mode - using official Framework classes');
+
+        // Check if we're in fallback mode
+        if (this.isFallback) {
+            console.log('[Live2DManager] Fallback mode active - using 2D animated character');
+            return true;
+        }
+
+        // SDK 5 requires Core SDK + Framework
+        if (!window.Live2DCubismCore) {
+            console.error('[Live2DManager] Core SDK not loaded');
             return false;
         }
-        
+        if (!window.Live2DCubismFramework) {
+            console.error('[Live2DManager] Framework SDK not loaded');
+            return false;
+        }
+
+        const C = window.Live2DCubismFramework;
+        const isLowEndDevice = navigator.hardwareConcurrency <= 2 || navigator.deviceMemory <= 2;
+        const timeout = isLowEndDevice ? 30000 : 20000;
+
         return new Promise(async (resolve) => {
             let isResolved = false;
-            // 根據模型大小和設備性能調整超時時間
-            const isLowEndDevice = navigator.hardwareConcurrency <= 2 || navigator.deviceMemory <= 2;
-            const timeout = isLowEndDevice ? 30000 : 20000; // 低端設備更長超時
-            
+
             const timeoutId = setTimeout(() => {
                 if (!isResolved) {
                     isResolved = true;
-                    console.error(`Live2D model loading timed out after ${timeout}ms: ${modelPath}`);
+                    console.error('[Live2DManager] Model loading timed out: ' + modelPath);
                     resolve(false);
                 }
             }, timeout);
 
             try {
-                const success = await this.wrapper.loadModel({
-                    modelPath: modelPath
-                });
-                
+                // Paths
+                const modelJsonPath = modelPath.endsWith('/') ? modelPath + 'miara_pro_t03.model3.json' : modelPath + '/miara_pro_t03.model3.json';
+                const mocPath = modelPath.endsWith('/') ? modelPath + 'miara_pro_t03.moc3' : modelPath + '/miara_pro_t03.moc3';
+
+                console.log('[Live2DManager] Loading MOC3 from:', mocPath);
+
+                // Load MOC3 file as ArrayBuffer
+                const mocResponse = await fetch(mocPath);
+                if (!mocResponse.ok) {
+                    throw new Error('Failed to load MOC3: ' + mocResponse.status);
+                }
+                const mocArrayBuffer = await mocResponse.arrayBuffer();
+                console.log('[Live2DManager] MOC3 loaded, size:', mocArrayBuffer.byteLength);
+
+                // Create model from MOC using official Framework API
+                const cubismModel = C.CubismModel.fromMoc(new Uint8Array(mocArrayBuffer));
+                if (!cubismModel) {
+                    throw new Error('Failed to create CubismModel from MOC');
+                }
+                console.log('[Live2DManager] CubismModel created successfully');
+
+                // Load model3.json
+                let textureUrls = [];
+                let physicsPath = null;
+                let posePath = null;
+                let expressionPaths = [];
+
+                // Get directory of model3.json for relative paths
+                const modelJsonDir = modelJsonPath.substring(0, modelJsonPath.lastIndexOf('/'));
+
+                try {
+                    const response = await fetch(modelJsonPath);
+                    if (response.ok) {
+                        const modelJson = await response.json();
+                        console.log('[Live2DManager] Model JSON loaded');
+
+                        if (modelJson.FileReferences && modelJson.FileReferences.Textures) {
+                            textureUrls = modelJson.FileReferences.Textures.map(function(t) { 
+                                // Texture paths are relative to model3.json location
+                                return modelJsonDir + '/' + t;
+                            });
+                            console.log('[Live2DManager] Texture URLs:', textureUrls);
+                        }
+                        if (modelJson.FileReferences && modelJson.FileReferences.Physics) {
+                            physicsPath = modelJsonDir + '/' + modelJson.FileReferences.Physics;
+                        }
+                        if (modelJson.FileReferences && modelJson.FileReferences.Pose) {
+                            posePath = modelJsonDir + '/' + modelJson.FileReferences.Pose;
+                        }
+                        if (modelJson.FileReferences && modelJson.FileReferences.Expressions) {
+                            expressionPaths = modelJson.FileReferences.Expressions.map(function(e) {
+                                return modelJsonDir + '/' + e.File;
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[Live2DManager] Could not load model3.json:', e);
+                }
+
+                // Fallback textures
+                if (textureUrls.length === 0) {
+                    textureUrls = [modelPath + '/miara_pro_t03.4096/texture_00.png'];
+                }
+
+                // Create WebGL renderer using official Framework
+                const renderer = new C.CubismRenderer_WebGL(this.gl);
+                renderer.startFrame();
+                renderer.setMoc(cubismModel);
+                renderer.initialize();
+
+                // Load textures
+                console.log('[Live2DManager] Loading textures:', textureUrls);
+                for (let i = 0; i < textureUrls.length; i++) {
+                    const texResponse = await fetch(textureUrls[i]);
+                    if (!texResponse.ok) {
+                        console.warn('[Live2DManager] Failed to load texture:', textureUrls[i]);
+                        continue;
+                    }
+                    const blob = await texResponse.blob();
+                    const bitmap = await createImageBitmap(blob);
+                    renderer.bindTexture(i, bitmap);
+                }
+
+                // Store references
+                this.sdkModel = cubismModel;
+                this.sdkRenderer = renderer;
+                this.currentModelPath = modelPath;
+                this.currentModel = 'miara_pro_t03';
+                this.modelLoaded = true;
+
+                console.log('[Live2DManager] SDK 5 model loaded successfully');
+
                 if (!isResolved) {
                     isResolved = true;
                     clearTimeout(timeoutId);
-                    
-                    if (success) {
-                        this.currentModelPath = modelPath;
-                        this.currentModel = this.getModelName(modelPath);
-                        this.modelLoaded = true;
-                        
-                        this.startAnimation();
-                        
-                        console.log('Live2D model loaded successfully:', this.currentModel);
-                        resolve(true);
-                    } else {
-                        resolve(false);
-                    }
                 }
+                resolve(true);
+
             } catch (error) {
                 if (!isResolved) {
                     isResolved = true;
                     clearTimeout(timeoutId);
-                    console.error('Failed to load Live2D model:', error);
+                    console.error('[Live2DManager] Failed to load model:', error);
                     resolve(false);
                 }
             }
@@ -416,15 +1092,13 @@ class Live2DManager {
     }
     
     _startAnimationLoop() {
-        const animate = () => {
+        // Use FrontendUtils throttled animation for consistent FPS control
+        const throttledAnimation = FrontendUtils.createThrottledAnimation(this.targetFPS, () => {
             this.render();
-            this.animationFrameId = requestAnimationFrame(animate);
-            
-            const now = performance.now();
-            this.updateFPS(now);
-        };
-        
-        this.animationFrameId = requestAnimationFrame(animate);
+            this.updateFPS(performance.now());
+        });
+
+        this.animationFrameId = throttledAnimation.frameId;
     }
     
     updateFPS(now) {
@@ -444,6 +1118,14 @@ class Live2DManager {
     }
     
     render() {
+        // SDK 5 mode - use our WebGL renderer
+        if (this.sdkModel && this.sdkRenderer) {
+            this.sdkRenderer.render();
+            this.updateAnimations();
+            return;
+        }
+        
+        // Legacy wrapper mode
         if (!this.sdk || !this.wrapper || !this.wrapper.isLoaded) {
             return;
         }
@@ -834,6 +1516,22 @@ class Live2DManager {
         
         this.stopAnimation();
         
+        // Clean up fallback animation
+        if (this.fallbackAnimationId) {
+            cancelAnimationFrame(this.fallbackAnimationId);
+            this.fallbackAnimationId = null;
+        }
+        
+        // Clean up SDK 5 resources
+        if (this.sdkRenderer) {
+            this.sdkRenderer.destroy();
+            this.sdkRenderer = null;
+        }
+        if (this.sdkModel) {
+            this.sdkModel.release();
+            this.sdkModel = null;
+        }
+        
         if (this.wrapper) {
             this.wrapper.destroy();
         }
@@ -841,11 +1539,14 @@ class Live2DManager {
         this.sdk = null;
         this.modelLoaded = false;
         this.isRunning = false;
+        this.isFallback = false;
         this.currentModel = null;
         
         console.log('Live2D Manager shutdown complete');
     }
 }
+
+// ============================================================================
 
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {

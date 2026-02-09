@@ -38,6 +38,7 @@
             width: 100%;
             height: 100%;
             z-index: 10;
+            background-color: #1a1a2e !important;
         }
 
         #click-layer {
@@ -304,6 +305,7 @@
     <div id="container">
         <div id="title-bar"></div>
         <canvas id="live2d-canvas"></canvas>
+        <canvas id="fallback-canvas" style="display:none;"></canvas>
         <div id="click-layer"></div>
         <button class="control-btn" id="scale-down-btn" title="缩小">-</button>
         <button class="control-btn" id="scale-up-btn" title="放大">+</button>
@@ -333,7 +335,11 @@
     <div id="audio-visualizer"></div>
 
     <!-- Live2D Cubism Web SDK -->
-    <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
+    <script src="libs/live2dcubismcore.min.js"></script>
+    <!-- Live2D Cubism Framework SDK 5 (bundled) -->
+    <script src="libs/live2dframework/dist/live2dcubismframework.bundle.js"></script>
+    <!-- Framework initialization wrapper -->
+    <script src="libs/live2dframework/live2dcubism-init.js"></script>
     <!-- Fallback Local SDK -->
     <script src="libs/live2d-fallback.js"></script>
     <script>
@@ -363,9 +369,11 @@
     
     <script src="js/logger.js"></script>
     <script src="js/data-persistence.js"></script>
+    <script src="js/frontend-utils.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/theme-manager.js"></script>
     <script src="js/backend-websocket.js"></script>
+    <script src="js/api-client.js"></script>
     <script src="js/state-matrix.js"></script>
     <script src="js/performance-manager.js"></script>
     <script src="js/maturity-tracker.js"></script>
@@ -375,10 +383,25 @@
     <script src="js/input-handler.js"></script>
     <script src="js/audio-handler.js"></script>
     <script src="js/haptic-handler.js"></script>
+    <script src="js/dialogue-ui.js"></script>
     <script src="js/wallpaper-handler.js"></script>
     <script src="js/plugin-manager.js"></script>
     <script src="js/user-manager.js"></script>
+    
+    <!-- Detection System -->
+    <script src="js/driver-detector.js"></script>
+    <script src="js/availability-manager.js"></script>
+    <script src="js/unified-detection.js"></script>
+    
     <script src="js/app.js"></script>
+    
+    <!-- Initialize Angela App -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[App] Starting Angela App initialization...');
+            window.angelaApp = new AngelaApp();
+        });
+    </script>
 </body>
 </html>
  

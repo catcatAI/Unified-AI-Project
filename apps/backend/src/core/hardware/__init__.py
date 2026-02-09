@@ -1,87 +1,90 @@
 """
-Angela AI v6.0 - Hardware Support Module
-硬件支持模块
+Hardware Module - Angela AI Matrix
+==================================
+統一硬件資源總控中心
 
-Multi-architecture, multi-hardware, multi-precision support system.
-跨架构、跨硬件、跨精度支持系统。
+主要類:
+- UnifiedHardwareCenter: 總控中心單例
+- HardwareDetector: 硬件檢測
+- PrecisionManager: 精度管理
+- CodeTranspiler: 代碼轉譯
+- ModelRepository: 模型倉庫
 
-Author: Angela AI Development Team
-Version: 6.0.0
-Date: 2026-02-04
+使用方式:
+    from core.hardware import get_hardware_center
+    
+    center = await get_hardware_center()
+    profile = center.get_hardware_profile()
 """
 
-from .hal import (
-    ArchitectureType,
-    InstructionSet,
-    HardwareVendor,
-    ComputeUnit,
-    PrecisionLevel,
-    OperatingSystem,
-    HardwareCapabilities,
-    HardwareMetrics,
+from .unified_hardware_center import (
+    UnifiedHardwareCenter,
     HardwareDetector,
-    HardwareManager,
-    HardwareFactory,
-    detect_hardware,
-    create_hardware_manager,
-)
-
-from .precision_matrix import (
-    PrecisionConfig,
-    PrecisionMatrix,
     PrecisionManager,
-    ConversionInfo,
-    convert_precision,
-    optimize_for_hardware,
-    create_precision_manager,
+    CodeTranspiler,
+    ModelRepository,
+    AcceleratorType,
+    PrecisionLevel,
+    PerformanceMode,
+    ComputeResource,
+    CPUInfo,
+    GPUInfo,
+    MemoryInfo,
+    HardwareProfile,
+    ModelRequirement,
+    get_hardware_center,
+    create_hardware_center
 )
 
-from .compute_matrix import (
-    OptimizationStrategy,
-    MemoryLayout,
-    KernelConfig,
-    OptimizationResult,
-    ComputationMatrix,
-    ComputeOptimizer,
-    get_optimization,
-    create_compute_optimizer,
+from .gpu_accelerator import (
+    GPUAcceleratorService,
+    GPUPriority,
+    RenderQuality,
+    GPUContext,
+    GPUMetrics,
+    get_gpu_service,
+    initialize_gpu_service,
+    gpu_available
 )
 
-__version__ = "6.0.0"
-__author__ = "Angela AI Development Team"
+from .webgl_bridge import (
+    WebGLBridge,
+    WebGLGPUInfo,
+    get_webgl_bridge,
+    handle_gpu_info_message
+)
 
 __all__ = [
-    # Architecture & Hardware
-    "ArchitectureType",
-    "InstructionSet",
-    "HardwareVendor",
-    "ComputeUnit",
-    "PrecisionLevel",
-    "OperatingSystem",
-    "HardwareCapabilities",
-    "HardwareMetrics",
-    "HardwareDetector",
-    "HardwareManager",
-    "HardwareFactory",
-    "detect_hardware",
-    "create_hardware_manager",
-    
-    # Precision Management
-    "PrecisionConfig",
-    "PrecisionMatrix",
-    "PrecisionManager",
-    "ConversionInfo",
-    "convert_precision",
-    "optimize_for_hardware",
-    "create_precision_manager",
-    
-    # Computation Optimization
-    "OptimizationStrategy",
-    "MemoryLayout",
-    "KernelConfig",
-    "OptimizationResult",
-    "ComputationMatrix",
-    "ComputeOptimizer",
-    "get_optimization",
-    "create_compute_optimizer",
+    # 類
+    'UnifiedHardwareCenter',
+    'HardwareDetector',
+    'PrecisionManager',
+    'CodeTranspiler',
+    'ModelRepository',
+    'GPUAcceleratorService',
+    'WebGLBridge',
+    # 枚舉
+    'AcceleratorType',
+    'PrecisionLevel',
+    'PerformanceMode',
+    'GPUPriority',
+    'RenderQuality',
+    # 數據類
+    'ComputeResource',
+    'CPUInfo',
+    'GPUInfo',
+    'MemoryInfo',
+    'HardwareProfile',
+    'ModelRequirement',
+    'GPUContext',
+    'GPUMetrics',
+    'WebGLGPUInfo',
+    # 函數
+    'get_hardware_center',
+    'create_hardware_center',
+    'get_gpu_service',
+    'initialize_gpu_service',
+    'gpu_available',
+    'get_webgl_bridge',
+    'handle_gpu_info_message'
 ]
