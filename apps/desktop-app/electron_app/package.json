@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@pixi/utils": "^7.3.2",
-    "axios": "^1.6.5",
+    "axios": "^1.13.5",
     "ws": "^8.16.0"
   },
   "build": {
