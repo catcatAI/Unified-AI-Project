@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>坐標轉換診斷</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #e94560;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .test-area {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .canvas-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            width: 400px;
+            height: 500px;
+            z-index: 15;
+            display: block;
+            pointer-events: auto;
+            border: 2px dashed rgba(233, 69, 96, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        #fallback-canvas {
+            width: 100%;
+            height: 100%;
+            background: rgba(233, 69, 96, 0.2);
+            border-radius: 10px;
+            cursor: crosshair;
+        }
+
+        .info-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #ff6b6b;
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+
+        .touch-zone {
+            position: absolute;
+            border: 2px solid rgba(0, 255, 0, 0.8);
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 5px;
+            pointer-events: none;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .grid-cell {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .grid-cell.detected {
+            background: rgba(0, 255, 0, 0.3);
+        }
+
+        .formula {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+
+        .formula-title {
+            color: #e94560;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 立繪坐標轉換診斷</h1>
+
+    <div class="controls">
+        <span>縮放: </span>
+        <button onclick="updateScale(-0.1)">-</button>
+        <span id="scale-display">1.0x</span>
+        <button onclick="updateScale(0.1)">+</button>
+        <button onclick="testAllCells()">測試所有網格</button>
+        <button onclick="clearLog()">清除日誌</button>
+    </div>
+
+    <div class="container">
+        <div class="test-area">
+            <h3>測試區域</h3>
+            <div class="canvas-wrapper" id="test-wrapper">
+                <canvas id="fallback-canvas" width="400" height="500"></canvas>
+            </div>
+        </div>
+
+        <div class="test-area" style="flex: 1;">
+            <h3>轉換公式</h3>
+            <div class="formula">
+                <div class="formula-title">1. 點擊 → Wrapper 坐標</div>
+                wrapperX = clientX - rect.left
+                wrapperY = clientY - rect.top
+            </div>
+            <div class="formula">
+                <div class="formula-title">2. Wrapper → Canvas 內部坐標</div>
+                totalScale = canvasWidth / rect.width  // rect 包含 CSS transform
+                canvasX = wrapperX * totalScale
+                canvasY = wrapperY * totalScale
+            </div>
+            <div class="formula">
+                <div class="formula-title">3. Canvas → 圖片坐標</div>
+                imgScale = 0.4  // ctx.scale(0.4)
+                imgX = (canvasX - canvasWidth/2) / imgScale + imgWidth/2
+                imgY = (canvasY - canvasHeight/2) / imgScale + imgHeight/2
+            </div>
+
+            <h3>網格測試 (4x4)</h3>
+            <div class="test-grid" id="test-grid"></div>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <h3>診斷日誌</h3>
+        <div class="log" id="log"></div>
+    </div>
+
+    <div class="info-panel">
+        <h3>當前狀態</h3>
+        <p>CSS Transform: <span id="css-transform"></span></p>
+        <p>JS FallbackScale: <span id="js-scale"></span></p>
+        <p>Wrapper rect: <span id="rect-info"></span></p>
+        <p>Canvas size: <span id="canvas-info"></span></p>
+    </div>
+
+    <script>
+        const wrapper = document.getElementById('test-wrapper');
+        const canvas = document.getElementById('fallback-canvas');
+        const ctx = canvas.getContext('2d');
+        const log = document.getElementById('log');
+        let fallbackScale = 1.0;
+        const characterImage = {
+            width: 768,
+            height: 1024
+        };
+
+        function log(msg) {
+            const line = document.createElement('div');
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            log.appendChild(line);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function updateStatus() {
+            const style = window.getComputedStyle(wrapper);
+            document.getElementById('css-transform').textContent = style.transform;
+            document.getElementById('js-scale').textContent = fallbackScale.toFixed(2);
+            const rect = wrapper.getBoundingClientRect();
+            document.getElementById('rect-info').textContent =
+                `rect.width=${rect.width.toFixed(1)}, rect.height=${rect.height.toFixed(1)}`;
+            document.getElementById('canvas-info').textContent =
+                `canvas.width=${canvas.width}, canvas.height=${canvas.height}`;
+        }
+
+        function updateScale(delta) {
+            fallbackScale = Math.max(0.5, Math.min(2.0, fallbackScale + delta));
+            wrapper.style.transform = `translate(-50%, -50%) scale(${fallbackScale})`;
+            document.getElementById('scale-display').textContent = fallbackScale.toFixed(1) + 'x';
+            log(`縮放更新: ${fallbackScale.toFixed(2)}`);
+            log(`CSS Transform: ${wrapper.style.transform}`);
+            updateStatus();
+        }
+
+        function clearLog() {
+            log.innerHTML = '';
+        }
+
+        // 繪製測試網格
+        function drawTestGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 繪製 4x4 網格
+            const cellW = canvas.width / 4;
+            const cellH = canvas.height / 4;
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+
+            for (let i = 1; i < 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * cellW, 0);
+                ctx.lineTo(i * cellW, canvas.height);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(0, i * cellH);
+                ctx.lineTo(canvas.width, i * cellH);
+                ctx.stroke();
+            }
+
+            // 繪製測試網格 (4x4 = 16 個區域)
+            const testGrid = document.getElementById('test-grid');
+            testGrid.innerHTML = '';
+
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.textContent = `(${col},${row})`;
+                    testGrid.appendChild(cell);
+                }
+            }
+
+            // 繪製圓形測試點
+            const scale = 0.4;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            ctx.fillStyle = '#e94560';
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const imgX = (col * cellW - centerX) / scale + characterImage.width / 2;
+                    const imgY = (row * cellH - centerY) / scale + characterImage.height / 2;
+
+                    const canvasX = col * cellW + cellW / 2;
+                    const canvasY = row * cellH + cellH / 2;
+
+                    ctx.beginPath();
+                    ctx.arc(canvasX, canvasY, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // 計算網格區域
+        function getGridCell(imgX, imgY) {
+            const scale = 0.4;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const cellW = canvas.width / 4;
+            const cellH = canvas.height / 4;
+
+            const canvasX = (imgX - characterImage.width / 2) * scale + centerX;
+            const canvasY = (imgY - characterImage.height / 2) * scale + centerY;
+
+            const col = Math.floor(canvasX / cellW);
+            const row = Math.floor(canvasY / cellH);
+
+            return { row: Math.max(0, Math.min(3, row)), col: Math.max(0, Math.min(3, col)) };
+        }
+
+        // 測試所有網格
+        function testAllCells() {
+            const scale = 0.4;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const cellW = canvas.width / 4;
+            const cellH = canvas.height / 4;
+
+            log('\n========== 測試所有網格區域 ==========');
+
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    // 計算圖片坐標（每個區域的中心）
+                    const imgX = (col * cellW + cellW / 2 - centerX) / scale + characterImage.width / 2;
+                    const imgY = (row * cellH + cellH / 2 - centerY) / scale + characterImage.height / 2;
+
+                    // 反向計算 Canvas 坐標
+                    const canvasX = col * cellW + cellW / 2;
+                    const canvasY = row * cellH + cellH / 2;
+
+                    // 反向計算 Wrapper 坐標
+                    const rect = wrapper.getBoundingClientRect();
+                    const totalScale = canvas.width / rect.width;
+                    const wrapperX = canvasX / totalScale;
+                    const wrapperY = canvasY / totalScale;
+
+                    log(`區域 (${col},${row}):`);
+                    log(`  圖片坐標: (${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
+                    log(`  Canvas 坐標: (${canvasX.toFixed(1)}, ${canvasY.toFixed(1)})`);
+                    log(`  Wrapper 坐標: (${wrapperX.toFixed(1)}, ${wrapperY.toFixed(1)})`);
+                    log(`  rect.width=${rect.width.toFixed(1)}, totalScale=${totalScale.toFixed(4)}`);
+                }
+            }
+
+            log('\n========== 點擊測試 ==========');
+        }
+
+        // 點擊事件處理
+        wrapper.addEventListener('click', (event) => {
+            log('\n===== 點擊事件 =====');
+            log(`fallbackScale: ${fallbackScale}`);
+
+            const rect = wrapper.getBoundingClientRect();
+            log(`rect.width: ${rect.width}, rect.height: ${rect.height}`);
+
+            const wrapperX = event.clientX - rect.left;
+            const wrapperY = event.clientY - rect.top;
+            log(`wrapper 坐標: (${wrapperX.toFixed(1)}, ${wrapperY.toFixed(1)})`);
+
+            // 計算 totalScale（這是關鍵！）
+            const totalScale = canvas.width / rect.width;
+            log(`totalScale (canvas/rect): ${totalScale.toFixed(4)}`);
+
+            // Canvas 內部坐標
+            const canvasX = wrapperX * totalScale;
+            const canvasY = wrapperY * totalScale;
+            log(`Canvas 內部坐標: (${canvasX.toFixed(1)}, ${canvasY.toFixed(1)})`);
+
+            // 圖片坐標
+            const scale = 0.4;
+            const imgX = (canvasX - canvas.width / 2) / scale + characterImage.width / 2;
+            const imgY = (canvasY - canvas.height / 2) / scale + characterImage.height / 2;
+            log(`圖片坐標: (${imgX.toFixed(1)}, ${imgY.toFixed(1)})`);
+
+            // 檢測網格區域
+            const cell = getGridCell(imgX, imgY);
+            log(`檢測到的區域: (${cell.col}, ${cell.row})`);
+
+            // 高亮選中區域
+            document.querySelectorAll('.grid-cell').forEach(c => c.classList.remove('detected'));
+            const targetCell = document.querySelector(`.grid-cell[data-row="${cell.row}"][data-col="${cell.col}"]`);
+            if (targetCell) {
+                targetCell.classList.add('detected');
+                log(`高亮區域: (${cell.col}, ${cell.row})`);
+            }
+
+            // 繪製點擊位置
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+            ctx.beginPath();
+            ctx.arc(canvasX, canvasY, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            updateStatus();
+        });
+
+        // 初始化
+        drawTestGrid();
+        updateStatus();
+        log('診斷頁面已載入，點擊測試區域查看坐標轉換');
+        log(`初始 fallbackScale: ${fallbackScale}`);
+    </script>
+</body>
+</html>

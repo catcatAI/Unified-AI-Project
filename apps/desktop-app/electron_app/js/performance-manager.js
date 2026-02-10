@@ -16,6 +16,10 @@ class PerformanceManager {
         this.frameCount = 0;
         this.performanceMonitor = null;
         this.autoAdjustEnabled = true;
+        this.lastModeChangeTime = 0;
+        this.modeChangeCooldown = 10000; // 10 seconds cooldown between mode changes
+        this.pendingModeChange = null;
+        this.pendingModeChangeTime = 0;
         this.isVisible = true; // Page visibility tracking
         
         // Add page visibility handling to pause monitoring when hidden
@@ -541,14 +545,52 @@ class PerformanceManager {
     }
     
     autoAdjustPerformance() {
+        const now = Date.now();
         const avgFPS = this.getAverageFPS();
         const targetFPS = this.targetFPS;
         const ratio = avgFPS / targetFPS;
         
+        // Check cooldown - prevent rapid mode changes
+        if (now - this.lastModeChangeTime < this.modeChangeCooldown) {
+            return;
+        }
+        
+        // Check pending mode change (delayed decision)
+        if (this.pendingModeChange) {
+            if (now - this.pendingModeChangeTime >= 3000) {
+                // Wait 3 seconds before committing to mode change
+                const pendingMode = this.pendingModeChange;
+                this.pendingModeChange = null;
+                
+                // Verify conditions still met
+                const newAvgFPS = this.getAverageFPS();
+                const newRatio = newAvgFPS / this.targetFPS;
+                
+                if (pendingMode === 'downgrade' && newRatio < 0.85) {
+                    this.downgradePerformance();
+                } else if (pendingMode === 'upgrade' && newRatio > 1.15) {
+                    this.upgradePerformance();
+                }
+            }
+            return;
+        }
+        
+        // Use hysteresis: different thresholds for up vs down
+        // Downgrade if FPS is consistently low (< 80% of target for 2 consecutive checks)
+        // Upgrade only if FPS is consistently high (> 120% of target for 3 consecutive checks)
         if (ratio < 0.8) {
-            this.downgradePerformance();
+            // First low reading - set pending downgrade
+            this.pendingModeChange = 'downgrade';
+            this.pendingModeChangeTime = now;
+            console.log(`FPS low (${avgFPS.toFixed(1)}/${targetFPS}), pending downgrade check...`);
         } else if (ratio > 1.2) {
-            this.upgradePerformance();
+            // First high reading - set pending upgrade
+            this.pendingModeChange = 'upgrade';
+            this.pendingModeChangeTime = now;
+            console.log(`FPS high (${avgFPS.toFixed(1)}/${targetFPS}), pending upgrade check...`);
+        } else {
+            // Cancel pending change if FPS returns to normal
+            this.pendingModeChange = null;
         }
     }
     
@@ -560,6 +602,8 @@ class PerformanceManager {
             const newMode = modes[currentIndex + 1];
             console.log(`Performance too low, downgrading from ${this.currentMode} to ${newMode}`);
             this.setPerformanceMode(newMode);
+            this.lastModeChangeTime = Date.now();
+            this.pendingModeChange = null;
             
             if (this.websocket && this.websocket.isConnected()) {
                 this.websocket.send({
@@ -582,6 +626,8 @@ class PerformanceManager {
             const newMode = modes[currentIndex - 1];
             console.log(`Performance stable, upgrading from ${this.currentMode} to ${newMode}`);
             this.setPerformanceMode(newMode);
+            this.lastModeChangeTime = Date.now();
+            this.pendingModeChange = null;
             
             if (this.websocket && this.websocket.isConnected()) {
                 this.websocket.send({

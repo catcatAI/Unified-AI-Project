@@ -443,29 +443,16 @@ class MultiLLMService:
         self.hardware_info = None
         self.ollama_settings = {}
         
-        # 使用統一的硬件資源總控中心
-        if HARDWARE_CENTER_AVAILABLE:
-            try:
-                center = get_hardware_center()
-                if center.hardware_profile:
-                    self.hardware_info = center.hardware_profile
-                    accelerator = center.hardware_profile.accelerator
-                    if accelerator:
-                        logger.info(f"Hardware detected: {accelerator.type.value} - {accelerator.name}")
-            except Exception as e:
-                logger.warning(f"Hardware center init failed: {e}")
-        
-        # 嘗試舊的硬件檢測作為 fallback
-        if not self.hardware_info:
-            try:
-                from .hardware_detector import HardwareDetector, HardwareAdapter
-                detector = HardwareDetector()
-                self.hardware_info = detector.detect()
-                adapter = HardwareAdapter(self.hardware_info)
-                self.ollama_settings = adapter.get_recommended_settings()
-                logger.info(f"Hardware detected (fallback): {self.hardware_info.accelerator_type.value}")
-            except Exception as e:
-                logger.warning(f"Hardware detection failed: {e}, using default settings")
+        # 嘗試舊的硬件檢測作為 fallback (同步版本)
+        try:
+            from .hardware_detector import HardwareDetector, HardwareAdapter
+            detector = HardwareDetector()
+            self.hardware_info = detector.detect()
+            adapter = HardwareAdapter(self.hardware_info)
+            self.ollama_settings = adapter.get_recommended_settings()
+            logger.info(f"Hardware detected (fallback): {self.hardware_info.accelerator_type.value}")
+        except Exception as e:
+            logger.warning(f"Hardware detection failed: {e}, using default settings")
 
         if config_path:
             self._load_config(config_path)
@@ -569,6 +556,19 @@ class MultiLLMService:
     async def initialize(self) -> None:
         """初始化所有可用的後端"""
         async with self._initialize_lock:
+            # 使用統一的硬件資源總控中心 (異步初始化)
+            if HARDWARE_CENTER_AVAILABLE:
+                try:
+                    center = await get_hardware_center()
+                    if center.hardware_profile:
+                        self.hardware_info = center.hardware_profile
+                        accelerator = center.hardware_profile.accelerator
+                        if accelerator:
+                            logger.info(f"Hardware detected: {accelerator.type.value} - {accelerator.name}")
+                except Exception as e:
+                    logger.warning(f"Hardware center init failed: {e}")
+            
+            # 初始化所有可用的後端
             for model_id, config in self.model_configs.items():
                 if not config.enabled:
                     continue

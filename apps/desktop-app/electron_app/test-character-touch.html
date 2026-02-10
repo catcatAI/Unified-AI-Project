@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angela Character Touch Test - Angela 角色觸摸測試</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ff79c6;
+        }
+        
+        .test-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .character-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 500px;
+            position: relative;
+        }
+        
+        .canvas-wrapper {
+            position: relative;
+            width: 400px;
+            height: 500px;
+        }
+        
+        #fallback-canvas {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            cursor: crosshair;
+            /* 填滿包裝器 */
+            width: 100%;
+            height: 100%;
+            image-rendering: -webkit-optimize-contrast;
+        }
+        
+        .info-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .info-box h3 {
+            color: #8be9fd;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .info-box p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #f8f8f2;
+        }
+        
+        .touch-result {
+            font-size: 16px;
+            font-weight: bold;
+            color: #50fa7b;
+            padding: 10px;
+            background: rgba(80, 250, 123, 0.2);
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .touch-result.error {
+            color: #ff5555;
+            background: rgba(255, 85, 85, 0.2);
+        }
+        
+        .color-display {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            vertical-align: middle;
+            margin-left: 10px;
+            border: 2px solid white;
+        }
+        
+        .matrix-display {
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .matrix-row {
+            display: flex;
+            gap: 10px;
+            margin: 5px 0;
+        }
+        
+        .matrix-value {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 3px;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .debug-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .instructions {
+            background: rgba(139, 233, 253, 0.1);
+            border-left: 4px solid #8be9fd;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .instructions h3 {
+            color: #8be9fd;
+            margin-bottom: 10px;
+        }
+        
+        .zone-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .zone-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        
+        .zone-item:hover {
+            border-color: #ff79c6;
+            background: rgba(255, 121, 198, 0.1);
+        }
+        
+        .zone-item.highlighted {
+            border-color: #50fa7b;
+            background: rgba(80, 250, 123, 0.2);
+        }
+        
+        .zone-priority {
+            font-size: 10px;
+            color: #6272a4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎀 Angela Character Touch Test 🎀</h1>
+        
+        <div class="instructions">
+            <h3>📝 使用說明 / Instructions</h3>
+            <p>
+                <strong>中文：</strong>點擊或拖動角色圖片來測試觸覺檢測。系統會根據像素顏色和座標位置識別觸摸的身體部位。
+                <br>
+                <strong>English:</strong> Click or drag on the character image to test touch detection. The system identifies body parts based on pixel color and coordinate position.
+            </p>
+            <div class="zone-list" id="zoneList"></div>
+        </div>
+        
+        <div class="test-panel">
+            <div class="character-display">
+                <div class="canvas-wrapper">
+                    <canvas id="fallback-canvas" width="400" height="500"></canvas>
+                </div>
+            </div>
+            
+            <div class="touch-result" id="touchResult">
+                <span id="touchMessage"></span>
+                <span id="touchColor" class="color-display"></span>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="info-box">
+                <h3>🎯 觸摸檢測結果 / Touch Detection Result</h3>
+                <div id="detectionInfo">
+                    <p>尚未檢測到觸摸 / No touch detected yet</p>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <h3>🌈 像素顏色 / Pixel Color</h3>
+                <div id="colorInfo">
+                    <p>- / -</p>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <h3>📊 4D 矩陣變化 / 4D Matrix Changes</h3>
+                <div class="matrix-display" id="matrixInfo">
+                    <div class="matrix-row">
+                        <span>α (舒適度):</span>
+                        <div class="matrix-value" id="matrixAlpha">50.0</div>
+                    </div>
+                    <div class="matrix-row">
+                        <span>β (好奇心):</span>
+                        <div class="matrix-value" id="matrixBeta">30.0</div>
+                    </div>
+                    <div class="matrix-row">
+                        <span>γ (愉悅度):</span>
+                        <div class="matrix-value" id="matrixGamma">40.0</div>
+                    </div>
+                    <div class="matrix-row">
+                        <span>δ (注意力):</span>
+                        <div class="matrix-value" id="matrixDelta">60.0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <h3>💝 觸覺類型 / Tactile Type</h3>
+                <div id="tactileInfo">
+                    <p>- / -</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="debug-toggle">
+        <label>
+            <input type="checkbox" id="debugToggle"> 顯示除錯區域
+        </label>
+    </div>
+    
+    <script src="js/angela-character-config.js"></script>
+    <script src="js/character-touch-detector.js"></script>
+    <script>
+        // Global state
+        let touchDetector = null;
+        let debugMode = false;
+        let characterImage = null;
+        
+        // Canvas and display settings
+        const CANVAS_WIDTH = 400;
+        const CANVAS_HEIGHT = 500;
+        const DISPLAY_SCALE = 0.4;  // 圖片縮放到 0.4 倍
+        
+        // Matrix state
+        const matrixState = {
+            alpha: 50.0,  // Comfort/arousal
+            beta: 30.0,   // Curiosity/focus
+            gamma: 40.0,  // Happiness/calm
+            delta: 60.0   // Attention/engagement
+        };
+        
+        // Initialize
+        async function init() {
+            console.log('[TestPage] Initializing...');
+            
+            // Initialize touch detector
+            if (typeof ANGELA_CHARACTER_CONFIG !== 'undefined') {
+                touchDetector = new CharacterTouchDetector(ANGELA_CHARACTER_CONFIG);
+                console.log('[TestPage] Touch detector initialized');
+                
+                // Populate zone list
+                populateZoneList();
+            } else {
+                console.error('[TestPage] Character config not found');
+            }
+            
+            // Load character image
+            await loadCharacterImage();
+            
+            // Setup canvas interaction
+            setupCanvasInteraction();
+            
+            // Setup debug toggle
+            document.getElementById('debugToggle').addEventListener('change', (e) => {
+                debugMode = e.target.checked;
+                redrawCanvas();
+            });
+            
+            console.log('[TestPage] Initialization complete');
+        }
+        
+        // Load character image
+        async function loadCharacterImage() {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    characterImage = img;
+                    console.log('[TestPage] Character image loaded:', img.width, 'x', img.height);
+                    
+                    // Initial draw
+                    redrawCanvas();
+                    resolve();
+                };
+                img.onerror = (e) => {
+                    console.error('[TestPage] Failed to load character image:', e);
+                    reject(e);
+                };
+                img.src = 'resources/angela_character_masked.png';
+            });
+        }
+        
+        // Redraw canvas - 使用與 live2d-manager.js 相同的繪製方式
+        function redrawCanvas() {
+            const canvas = document.getElementById('fallback-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            if (!characterImage) return;
+            
+            const imgWidth = characterImage.width;
+            const imgHeight = characterImage.height;
+            
+            // Calculate scaled dimensions
+            const scaledWidth = imgWidth * DISPLAY_SCALE;
+            const scaledHeight = imgHeight * DISPLAY_SCALE;
+            
+            // Calculate center offset (same as live2d-manager.js)
+            const centerX = CANVAS_WIDTH / 2;
+            const centerY = CANVAS_HEIGHT / 2;
+            const offsetX = centerX - scaledWidth / 2;
+            const offsetY = centerY - scaledHeight / 2;
+            
+            // Store for coordinate conversion
+            window.canvasOffset = { x: offsetX, y: offsetY };
+            window.displayScale = DISPLAY_SCALE;
+            window.originalImageSize = { width: imgWidth, height: imgHeight };
+            
+            // Draw image (same method as live2d-manager.js)
+            ctx.save();
+            ctx.translate(centerX, centerY);  // Center
+            ctx.scale(DISPLAY_SCALE, DISPLAY_SCALE);  // Scale
+            ctx.drawImage(characterImage, -imgWidth / 2, -imgHeight / 2);  // Draw centered
+            ctx.restore();
+            
+            // Draw debug overlay
+            if (debugMode && touchDetector) {
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.scale(DISPLAY_SCALE, DISPLAY_SCALE);
+                touchDetector.drawDebugOverlay(ctx);
+                ctx.restore();
+            }
+        }
+        
+        /**
+         * Convert canvas coordinates to image coordinates
+         * 使用與 live2d-manager.js handleCharacterInteraction 相同的公式
+         */
+        function canvasToImageCoords(canvasX, canvasY) {
+            const scale = window.displayScale || DISPLAY_SCALE;
+            const imgSize = window.originalImageSize || { width: 1408, height: 768 };
+            const centerX = CANVAS_WIDTH / 2;
+            const centerY = CANVAS_HEIGHT / 2;
+            
+            // Same formula as live2d-manager.js
+            const imgX = (canvasX - centerX) / scale + imgSize.width / 2;
+            const imgY = (canvasY - centerY) / scale + imgSize.height / 2;
+            
+            return {
+                x: imgX,
+                y: imgY,
+                inBounds: imgX >= 0 && imgX < imgSize.width && imgY >= 0 && imgY < imgSize.height
+            };
+        }
+        
+        // Populate zone list
+        function populateZoneList() {
+            const zoneList = document.getElementById('zoneList');
+            const zones = ANGELA_CHARACTER_CONFIG.touch_zones;
+            
+            for (const [name, data] of Object.entries(zones)) {
+                const item = document.createElement('div');
+                item.className = 'zone-item';
+                item.dataset.zone = name;
+                item.innerHTML = `
+                    <strong>${data.description}</strong><br>
+                    <span class="zone-priority">優先級: ${data.priority} | 類型: ${data.tactile_type}</span>
+                `;
+                item.addEventListener('click', () => {
+                    highlightZone(name);
+                });
+                zoneList.appendChild(item);
+            }
+        }
+        
+        // Setup canvas interaction
+        function setupCanvasInteraction() {
+            const canvas = document.getElementById('fallback-canvas');
+            let isDragging = false;
+            let dragPath = [];
+            
+            canvas.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                dragPath = [];
+                handleInteraction(e);
+            });
+            
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    handleInteraction(e);
+                }
+            });
+            
+            canvas.addEventListener('mouseup', () => {
+                if (dragPath.length > 1) {
+                    handleDragEnd(dragPath);
+                }
+                isDragging = false;
+                dragPath = [];
+            });
+            
+            canvas.addEventListener('mouseleave', () => {
+                isDragging = false;
+                dragPath = [];
+            });
+            
+            // Touch support
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isDragging = true;
+                dragPath = [];
+                handleTouch(e);
+            });
+            
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (isDragging) {
+                    handleTouch(e);
+                }
+            });
+            
+            canvas.addEventListener('touchend', () => {
+                if (dragPath.length > 1) {
+                    handleDragEnd(dragPath);
+                }
+                isDragging = false;
+                dragPath = [];
+            });
+        }
+        
+        // Handle interaction - with proper browser zoom handling
+        function handleInteraction(e) {
+            const canvas = document.getElementById('fallback-canvas');
+            const wrapper = document.querySelector('.canvas-wrapper');
+            const rect = wrapper.getBoundingClientRect();
+            
+            // Calculate scale factor (canvas internal size / visual size)
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            // Convert to canvas coordinates (considering zoom)
+            const canvasX = (e.clientX - rect.left) * scaleX;
+            const canvasY = (e.clientY - rect.top) * scaleY;
+            
+            // Convert to image coordinates
+            const imgCoords = canvasToImageCoords(canvasX, canvasY);
+            
+            console.log('[TestPage] Wrapper Rect:', rect.width.toFixed(1), 'x', rect.height.toFixed(1));
+            console.log('[TestPage] Canvas coords:', canvasX.toFixed(1), canvasY.toFixed(1));
+            console.log('[TestPage] Scale:', scaleX.toFixed(2), scaleY.toFixed(2));
+            console.log('[TestPage] Image coords:', imgCoords.x.toFixed(1), imgCoords.y.toFixed(1));
+            
+            if (touchDetector && imgCoords.inBounds) {
+                const result = touchDetector.detectTouch(imgCoords.x, imgCoords.y);
+                result.canvasCoords = { x: canvasX, y: canvasY };
+                updateUI(result, imgCoords.x, imgCoords.y);
+                
+                if (result.hit) {
+                    updateMatrix(result);
+                }
+            } else {
+                const result = {
+                    hit: false,
+                    message: imgCoords.inBounds ? 'Detector not ready' : 'Touch outside character area'
+                };
+                result.canvasCoords = { x: canvasX, y: canvasY };
+                updateUI(result, canvasX, canvasY);
+            }
+        }
+        
+        // Handle touch (for mobile) - with proper browser zoom handling
+        function handleTouch(e) {
+            const canvas = document.getElementById('fallback-canvas');
+            const wrapper = document.querySelector('.canvas-wrapper');
+            const rect = wrapper.getBoundingClientRect();
+            const touch = e.touches[0];
+            
+            // Calculate scale factor (canvas internal size / visual size)
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            // Convert to canvas coordinates (considering zoom)
+            const canvasX = (touch.clientX - rect.left) * scaleX;
+            const canvasY = (touch.clientY - rect.top) * scaleY;
+            
+            // Convert to image coordinates
+            const imgCoords = canvasToImageCoords(canvasX, canvasY);
+            
+            if (touchDetector && imgCoords.inBounds) {
+                const result = touchDetector.detectTouch(imgCoords.x, imgCoords.y);
+                result.canvasCoords = { x: canvasX, y: canvasY };
+                updateUI(result, imgCoords.x, imgCoords.y);
+                
+                if (result.hit) {
+                    dragPath.push({ x: imgCoords.x, y: imgCoords.y, result });
+                    updateMatrix(result);
+                }
+            }
+        }
+        
+        // Handle drag end
+        function handleDragEnd(path) {
+            if (path.length < 2) return;
+            
+            const dragResult = touchDetector.detectDragPath(path);
+            console.log('[TestPage] Drag result:', dragResult);
+            
+            const resultEl = document.getElementById('touchResult');
+            resultEl.style.display = 'block';
+            resultEl.className = 'touch-result';
+            document.getElementById('touchMessage').textContent = 
+                `拖動檢測: ${dragResult.bodyPartsHit.join(', ')} | 類型: ${dragResult.dragType}`;
+        }
+        
+        // Update UI
+        function updateUI(result, imgX, imgY) {
+            const resultEl = document.getElementById('touchResult');
+            const detectionInfo = document.getElementById('detectionInfo');
+            const colorInfo = document.getElementById('colorInfo');
+            const tactileInfo = document.getElementById('tactileInfo');
+            
+            resultEl.style.display = 'block';
+            
+            // Show canvas coordinates
+            const canvasCoords = result.canvasCoords || { x: 0, y: 0 };
+            
+            if (result.hit) {
+                resultEl.className = 'touch-result';
+                resultEl.innerHTML = `
+                    檢測到: <strong>${result.description}</strong> 
+                    (${result.bodyPart})
+                    <span class="color-display" style="background: rgb(${result.rawColor.r}, ${result.rawColor.g}, ${result.rawColor.b})"></span>
+                `;
+                
+                detectionInfo.innerHTML = `
+                    <p>部位: ${result.description} (${result.bodyPart})</p>
+                    <p>Canvas: (${Math.round(canvasCoords.x)}, ${Math.round(canvasCoords.y)})</p>
+                    <p>圖片座標: (${Math.round(imgX)}, ${Math.round(imgY)})</p>
+                    <p>顏色匹配: ${result.colorMatch ? '✓' : '✗'}</p>
+                `;
+                
+                colorInfo.innerHTML = `
+                    <p>R: ${result.rawColor.r}</p>
+                    <p>G: ${result.rawColor.g}</p>
+                    <p>B: ${result.rawColor.b}</p>
+                    <p>A: ${result.rawColor.a}</p>
+                    <p>強度: ${(result.intensity * 100).toFixed(1)}%</p>
+                `;
+                
+                tactileInfo.innerHTML = `
+                    <p>觸覺類型: ${result.tactileType}</p>
+                    <p>表情: ${result.expression}</p>
+                    <p>優先級: ${result.priority}</p>
+                `;
+                
+                // Highlight zone
+                highlightZone(result.bodyPart);
+                
+            } else {
+                resultEl.className = 'touch-result error';
+                resultEl.innerHTML = result.message || '未檢測到有效的觸摸';
+                
+                detectionInfo.innerHTML = `
+                    <p>Canvas: (${Math.round(canvasCoords.x)}, ${Math.round(canvasCoords.y)})</p>
+                    <p>圖片座標: (${Math.round(imgX)}, ${Math.round(imgY)})</p>
+                    <p>${result.message || '未檢測到觸摸'}</p>
+                `;
+                colorInfo.innerHTML = '<p>- / -</p>';
+                tactileInfo.innerHTML = '<p>- / -</p>';
+                
+                clearHighlights();
+            }
+        }
+        
+        // Update matrix based on touch
+        function updateMatrix(result) {
+            // Base modifications for each body part
+            const modifications = {
+                'hair': { alpha: 5, beta: 10, gamma: 8, delta: 5 },
+                'face': { alpha: 3, beta: 5, gamma: 10, delta: 8 },
+                'eyes': { alpha: 2, beta: 15, gamma: 5, delta: 12 },
+                'mouth': { alpha: 4, beta: 8, gamma: 12, delta: 6 },
+                'neck': { alpha: 8, beta: 5, gamma: 6, delta: 10 },
+                'shoulders': { alpha: 6, beta: 3, gamma: 5, delta: 8 },
+                'torso': { alpha: 10, beta: 2, gamma: 4, delta: 5 },
+                'right_arm': { alpha: 5, beta: 4, gamma: 6, delta: 7 },
+                'left_arm': { alpha: 5, beta: 4, gamma: 6, delta: 7 },
+                'right_hand': { alpha: 8, beta: 6, gamma: 10, delta: 15 },
+                'left_hand': { alpha: 8, beta: 6, gamma: 10, delta: 15 },
+                'right_leg': { alpha: 4, beta: 3, gamma: 4, delta: 5 },
+                'left_leg': { alpha: 4, beta: 3, gamma: 4, delta: 5 }
+            };
+            
+            const mod = modifications[result.bodyPart] || { alpha: 2, beta: 3, gamma: 3, delta: 3 };
+            const intensity = result.intensity;
+            
+            // Apply modifications
+            matrixState.alpha = Math.min(100, Math.max(0, matrixState.alpha + mod.alpha * intensity));
+            matrixState.beta = Math.min(100, Math.max(0, matrixState.beta + mod.beta * intensity));
+            matrixState.gamma = Math.min(100, Math.max(0, matrixState.gamma + mod.gamma * intensity));
+            matrixState.delta = Math.min(100, Math.max(0, matrixState.delta + mod.delta * intensity));
+            
+            // Decay over time (simulated)
+            setTimeout(() => {
+                matrixState.alpha = Math.max(50, matrixState.alpha - 0.5);
+                matrixState.beta = Math.max(30, matrixState.beta - 0.3);
+                matrixState.gamma = Math.max(40, matrixState.gamma - 0.4);
+                matrixState.delta = Math.max(60, matrixState.delta - 0.6);
+                updateMatrixDisplay();
+            }, 1000);
+            
+            updateMatrixDisplay();
+        }
+        
+        // Update matrix display
+        function updateMatrixDisplay() {
+            document.getElementById('matrixAlpha').textContent = matrixState.alpha.toFixed(1);
+            document.getElementById('matrixBeta').textContent = matrixState.beta.toFixed(1);
+            document.getElementById('matrixGamma').textContent = matrixState.gamma.toFixed(1);
+            document.getElementById('matrixDelta').textContent = matrixState.delta.toFixed(1);
+            
+            // Color coding
+            document.getElementById('matrixAlpha').style.color = 
+                matrixState.alpha > 70 ? '#50fa7b' : matrixState.alpha < 30 ? '#ff5555' : '#f8f8f2';
+        }
+        
+        // Highlight zone
+        function highlightZone(zoneName) {
+            clearHighlights();
+            const item = document.querySelector(`.zone-item[data-zone="${zoneName}"]`);
+            if (item) {
+                item.classList.add('highlighted');
+            }
+            redrawCanvas();
+        }
+        
+        // Clear highlights
+        function clearHighlights() {
+            document.querySelectorAll('.zone-item').forEach(item => {
+                item.classList.remove('highlighted');
+            });
+        }
+        
+        // Redraw canvas (for debug mode)
+        function redrawCanvas() {
+            // In a full implementation, this would redraw the character with debug overlays
+            console.log('[TestPage] Debug mode:', debugMode);
+        }
+        
+        // Start
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

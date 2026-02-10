@@ -100,19 +100,9 @@ class HardwareDetector:
     @staticmethod
     def detect_cpu() -> ComputeResource:
         """Detect CPU - uses unified hardware center if available."""
-        if UNIFIED_HARDWARE_AVAILABLE:
-            try:
-                center = get_hardware_center()
-                if center.hardware_profile and center.hardware_profile.accelerator:
-                    acc = center.hardware_profile.accelerator
-                    return ComputeResource(
-                        type=acc.type,
-                        name=acc.name,
-                        memory_mb=acc.memory_mb,
-                        compute_capability=acc.compute_capability
-                    )
-            except Exception:
-                pass
+        # Note: get_hardware_center() is async, but this is a sync context
+        # We can't await here, so skip and use fallback detection
+        # The async hardware center will be used elsewhere
         
         # Fallback to local detection
         """Detect CPU capabilities."""
@@ -304,38 +294,10 @@ class HardwareDetector:
     def detect_all() -> List[ComputeResource]:
         """Detect all available computing resources - uses unified hardware center."""
         # Use unified hardware center if available
-        if UNIFIED_HARDWARE_AVAILABLE:
-            try:
-                center = get_hardware_center()
-                if center.hardware_profile:
-                    resources = []
-                    
-                    # Add accelerator (CPU or GPU)
-                    if center.hardware_profile.accelerator:
-                        acc = center.hardware_profile.accelerator
-                        resources.append(ComputeResource(
-                            type=acc.type,
-                            name=acc.name,
-                            memory_mb=acc.memory_mb,
-                            compute_capability=acc.compute_capability
-                        ))
-                    
-                    # Add GPUs from profile
-                    for gpu in center.hardware_profile.gpus:
-                        resources.append(ComputeResource(
-                            type=AcceleratorType.NVIDIA_GPU if 'NVIDIA' in gpu.name else 
-                                 AcceleratorType.AMD_GPU if 'AMD' in gpu.name else
-                                 AcceleratorType.INTEL_GPU,
-                            name=gpu.name,
-                            memory_mb=gpu.memory_total_mb,
-                            compute_capability=gpu.compute_cap or 7.0
-                        ))
-                    
-                    return resources
-            except Exception as e:
-                logger.warning(f"Unified hardware center detection failed: {e}")
+        # Note: get_hardware_center() is async but this is sync context
+        # Skip async hardware center here, use local detection
         
-        # Fallback to local detection
+        # Fallback: Local hardware detection
         resources = []
         
         # Always include CPU

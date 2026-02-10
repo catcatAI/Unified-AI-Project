@@ -34,6 +34,10 @@ from .tactile_service import TactileService
 from .chat_service import generate_angela_response
 from .angela_llm_service import get_llm_service, angela_llm_response
 from ..system.security_monitor import ABCKeyManager
+
+# Initialize _llm_service as None to prevent NameError before startup
+_llm_service = None
+
 from ..api.router import router as api_v1_router
 from ..api.v1.endpoints import pet, economy
 from ..core.autonomous.digital_life_integrator import DigitalLifeIntegrator
@@ -197,21 +201,24 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
 
     # 調用 LLM 服務生成回應
     try:
+        service = await get_llm_service()
         response_text = await angela_llm_response(
             user_message=user_message,
             history=history,
             user_name=user_name
         )
+        source = "llm" if service and service.is_available else "fallback"
     except Exception as e:
         # 如果 LLM 服務不可用，使用備份回應
         print(f"[WARNING] LLM service error: {e}")
         response_text = generate_angela_response(user_message, user_name)
+        source = "fallback"
 
     return {
         "session_id": session_id,
         "response_text": response_text,
         "angela_mood": "happy",
-        "source": "llm" if _llm_service and _llm_service.is_available else "fallback"
+        "source": source
     }
 
 
@@ -227,14 +234,17 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
 
     # 调用 LLM 服务生成回应
     try:
+        service = await get_llm_service()
         response_text = await angela_llm_response(
             user_message=user_message,
             history=history,
             user_name=user_name
         )
+        source = "llm" if service and service.is_available else "fallback"
     except Exception as e:
         print(f"[WARNING] LLM service error: {e}")
         response_text = generate_angela_response(user_message, user_name)
+        source = "fallback"
 
     return {
         "session_id": session_id,
@@ -242,7 +252,7 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
         "response_text": response_text,
         "emotion": "happy",
         "angela_mood": "happy",
-        "source": "llm" if _llm_service and _llm_service.is_available else "fallback"
+        "source": source
     }
 
 

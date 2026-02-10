@@ -170,20 +170,64 @@ class Live2DCubismWrapper {
     }
     
     async loadModel(settings) {
-        console.log('Loading Live2D model:', settings.modelPath);
+        const modelPath = settings.modelPath;
+        console.log('[loadModel] Loading from:', modelPath);
         
         try {
-            // Load model metadata first (needed for texture paths)
-            await this.loadModel3File(settings.modelPath);
-            await this.loadCdi3File(settings.modelPath);
+            // Step 1: Load model3.json first to get file references
+            console.log('[loadModel] Step 1: Loading model3.json...');
+            const model3Response = await this.loadFileAsArrayBuffer(`local://${modelPath}`);
+            const textDecoder = new TextDecoder();
+            this.model3Json = JSON.parse(textDecoder.decode(model3Response));
+            console.log('[loadModel] model3.json loaded:', JSON.stringify(this.model3Json.FileReferences, null, 2));
             
-            // Load model data
-            await this.loadMoc3File(settings.modelPath);
-            await this.loadPhysics(settings.modelPath);
+            // Get base directory from model path
+            const lastSlash = modelPath.lastIndexOf('/');
+            const baseDir = modelPath.substring(0, lastSlash + 1);
+            console.log('[loadModel] baseDir:', baseDir);
             
-            // Load textures AFTER model3.json is loaded (so we know texture paths)
-            await this.loadTexture(settings.modelPath);
+            // Step 2: Load MOC3 file using FileReferences
+            const mocFileName = this.model3Json.FileReferences?.Moc || 'miara_pro_t03.moc3';
+            const mocPath = `local://${baseDir}${mocFileName}`;
+            console.log('[loadModel] Step 2: Loading MOC3 from:', mocPath);
+            const mocBuffer = await this.loadFileAsArrayBuffer(mocPath);
+            this.moc3 = new Uint8Array(mocBuffer);
+            console.log('[loadModel] MOC3 loaded, size:', mocBuffer.byteLength);
             
+            // Step 3: Load CDI3 file (optional)
+            const cdiFileName = this.model3Json.FileReferences?.DisplayInfo;
+            if (cdiFileName) {
+                const cdiPath = `local://${baseDir}${cdiFileName}`;
+                console.log('[loadModel] Step 3: Loading CDI3 from:', cdiPath);
+                const cdiBuffer = await this.loadFileAsArrayBuffer(cdiPath);
+                this.cdi3Json = JSON.parse(textDecoder.decode(cdiBuffer));
+            } else {
+                console.log('[loadModel] Step 3: No CDI3 file');
+            }
+            
+            // Step 4: Load Physics (optional)
+            const physicsFileName = this.model3Json.FileReferences?.Physics;
+            if (physicsFileName) {
+                const physicsPath = `local://${baseDir}${physicsFileName}`;
+                console.log('[loadModel] Step 4: Loading Physics from:', physicsPath);
+                const physicsBuffer = await this.loadFileAsArrayBuffer(physicsPath);
+                this.physics3Json = JSON.parse(textDecoder.decode(physicsBuffer));
+            } else {
+                console.log('[loadModel] Step 4: No Physics file');
+            }
+            
+            // Step 5: Load Textures
+            const textureFileNames = this.model3Json.FileReferences?.Textures || ['texture_00.png'];
+            console.log('[loadModel] Step 5: Loading textures:', textureFileNames);
+            this.texturePaths = [];
+            for (const texFile of textureFileNames) {
+                const texPath = `local://${baseDir}${texFile}`;
+                console.log('[loadModel] Texture path:', texPath);
+                this.texturePaths.push(texPath);
+            }
+            
+            // Step 6: Create the model
+            console.log('[loadModel] Step 6: Creating Cubism model...');
             await this.createCubismModel();
             await this.setupMotionGroups();
             await this.setupModelParameters();
@@ -195,9 +239,19 @@ class Live2DCubismWrapper {
                 this.callbacks.onLoaded();
             }
             
-            console.log('Live2D model loaded successfully');
-            
+            console.log('[loadModel] SUCCESS: Live2D model loaded successfully');
             return true;
+        } catch (error) {
+            console.error('[loadModel] FAILED:', error.message);
+            console.error('[loadModel] Stack:', error.stack);
+            this.isLoaded = false;
+            throw error;
+        }
+    }
+            this.isLoaded = false;
+            throw error;
+        }
+    }
         } catch (error) {
             console.error('Failed to load Live2D model:', error);
             if (this.callbacks.onError) {
@@ -583,30 +637,54 @@ class Live2DCubismWrapper {
     }
     
     findFile(basePath, extension) {
+        console.log('[findFile] basePath:', basePath, 'extension:', extension);
+        
         const normalizedPath = basePath.replace(/\\/g, '/');
 
         // Remove trailing slash if present
         let cleanPath = normalizedPath.endsWith('/') ? normalizedPath.slice(0, -1) : normalizedPath;
 
-        // basePath is a file path (e.g., /path/to/model/model3.json)
-        // We need to:
-        // 1. Get the directory path: /path/to/model/
-        // 2. Get the directory name: model
-        // 3. Generate possible file names based on the MODEL NAME (not directory name)
+        // Check if basePath is already a complete file path (ends with the extension)
+        const pathExt = cleanPath.substring(cleanPath.lastIndexOf('.'));
+        const isCompletePath = pathExt === extension;
+        console.log('[findFile] pathExt:', pathExt, 'isCompletePath:', isCompletePath);
         
         // Get the directory path (for finding files)
         let dirPath;
         try {
             const url = new URL(basePath);
             const pathname = url.pathname;
-            // Remove the filename to get directory
-            const lastSlash = pathname.lastIndexOf('/');
-            dirPath = pathname.substring(0, lastSlash + 1);
+            if (isCompletePath) {
+                // Remove the filename to get directory
+                const lastSlash = pathname.lastIndexOf('/');
+                dirPath = pathname.substring(0, lastSlash + 1);
+            } else {
+                const lastSlash = pathname.lastIndexOf('/');
+                dirPath = pathname.endsWith('/') ? pathname : pathname.substring(0, lastSlash + 1);
+            }
         } catch (e) {
-            const lastSlash = cleanPath.lastIndexOf('/');
-            dirPath = cleanPath.substring(0, lastSlash + 1);
+            if (isCompletePath) {
+                const lastSlash = cleanPath.lastIndexOf('/');
+                dirPath = cleanPath.substring(0, lastSlash + 1);
+            } else {
+                const lastSlash = cleanPath.lastIndexOf('/');
+                dirPath = cleanPath.substring(0, lastSlash + 1);
+            }
         }
-        
+
+        if (!extension.startsWith('.')) {
+            extension = '.' + extension;
+        }
+
+        // If basePath is already a complete file path, return it as the first option
+        if (isCompletePath) {
+            const fileName = cleanPath.substring(cleanPath.lastIndexOf('/') + 1);
+            const possibleNames = [fileName];
+            const result = possibleNames.map(name => `local://${dirPath}${name}`);
+            console.log('[findFile] Returning:', result);
+            return result;
+        }
+
         // Get the model directory name (not the model file name!)
         // e.g., from "/path/to/model/model3.json" extract "model"
         let modelDirName;
@@ -621,20 +699,18 @@ class Live2DCubismWrapper {
             // The last part is the model file name, the second-to-last is the directory name
             modelDirName = parts[parts.length - 2];
         }
-        
-        if (!extension.startsWith('.')) {
-            extension = '.' + extension;
-        }
-        
+
         // Return all possible paths based on model directory name
         const possibleNames = [
             `${modelDirName}${extension}`,           // e.g., miara_pro.moc3
             `${modelDirName}_t03${extension}`,      // e.g., miara_pro_t03.moc3
             `${modelDirName}_t00${extension}`,      // e.g., miara_pro_t00.moc3
         ];
-        
+
         // Return all possible paths with local:// protocol for Electron
-        return possibleNames.map(name => `local://${dirPath}${name}`);
+        const result = possibleNames.map(name => `local://${dirPath}${name}`);
+        console.log('[findFile] Returning:', result);
+        return result;
     }
     
     async createCubismModel() {

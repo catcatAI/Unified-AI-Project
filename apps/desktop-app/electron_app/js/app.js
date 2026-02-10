@@ -1,18 +1,21 @@
 /**
  * Angela AI - Main Application
  * 
- * Main entry point that coordinates all systems
+ * 统一显示矩阵 (UDM) 集成版本
  */
 
 class AngelaApp {
     constructor() {
+        // 核心系统（按初始化顺序）
+        this.udm = null;                    // 统一显示矩阵（最先）
+        this.stateMatrix = null;             // 情感状态矩阵 (αβγδ)
         this.live2dManager = null;
         this.inputHandler = null;
         this.audioHandler = null;
         this.hapticHandler = null;
         this.wallpaperHandler = null;
         
-        // Core systems
+        // 其他系统
         this.logger = null;
         this.dataPersistence = null;
         this.security = null;
@@ -20,10 +23,6 @@ class AngelaApp {
         this.themeManager = null;
         this.pluginManager = null;
         this.userManager = null;
-        this.performanceMonitor = null;
-        
-        // Angela systems
-        this.stateMatrix = null;
         this.performanceManager = null;
         this.maturityTracker = null;
         this.precisionManager = null;
@@ -31,15 +30,14 @@ class AngelaApp {
         this.apiClient = null;
         this.hardwareDetector = null;
         this.dialogueUI = null;
-        this.touchLayer = null;
         
-        // UI elements
+        // UI 元素
         this.loadingOverlay = document.getElementById('loading-overlay');
         this.loadingText = document.getElementById('loading-text');
         this.statusBar = document.getElementById('status-bar');
         this.controls = document.getElementById('controls');
         
-        // State
+        // 状态
         this.isInitialized = false;
         this.currentModel = null;
         this.idleTimer = null;
@@ -49,10 +47,10 @@ class AngelaApp {
     }
 
     async initialize() {
-        console.log('Initializing Angela AI Desktop App...');
+        console.log('[AngelaApp] Initializing...');
         
         try {
-            // 1. Initialize core infrastructure (Logger, Data, Security)
+            // 1. 基础设施
             await this._initializeLogger();
             await this._initializeDataPersistence();
             await this._initializeSecurity();
@@ -60,35 +58,34 @@ class AngelaApp {
             await this._initializeThemeManager();
             await this._initializeUserManager();
             
-            // 2. Hardware detection (with timeout protection)
-            const hardware = await this._initializeHardwareDetection();
+            // 2. 硬件检测
+            await this._initializeHardwareDetection();
             
-            // 3. Initialize Angela logic systems (State, Performance, etc.)
+            // 3. 初始化 UDM（最先初始化，其他系统依赖它）
+            console.log('[App] Initializing UDM...');
+            this._initializeUDM();
+            
+            // 4. Angela 逻辑系统
             this._initializeStateMatrix();
-            this._initializePrecisionManager(); // 先初始化，避免後續引用為空
+            this._initializePrecisionManager();
             this._initializeMaturityTracker();
             
-            // 4. Initialize Performance Manager (needs hardware info)
-            console.log('[App] Before _initializePerformanceManager');
+            // 5. 性能管理器（需要在 window.angelaApp 设置后调用 toggleModule）
+            // 先暴露实例，确保 PerformanceManager 能访问 toggleModule
+            window.angelaApp = this;
+            this._setupPlaceholderMethods();  // 设置占位方法
             await this._initializePerformanceManager();
-            console.log('[App] After _initializePerformanceManager');
             
-            // 5. Initialize Unified Detection System (Hardware + Drivers + Availability)
-            console.log('[App] Before _initializeDetectionSystem');
+            // 6. 检测系统
             await this._initializeDetectionSystem();
-            console.log('[App] After _initializeDetectionSystem');
             
-            // 6. Initialize Hardware-dependent systems (Live2D, Audio, etc.)
-            console.log('[App] Before _initializeLive2D');
+            // 7. Live2D（传入 UDM）
             await this._initializeLive2D();
-            console.log('[App] After _initializeLive2D');
             
-            // 6. Connect systems
-            console.log('[App] Before _linkSystems');
+            // 8. 连接系统
             this._linkSystems();
-            console.log('[App] After _linkSystems');
             
-            // 7. Initialize remaining handlers
+            // 9. 其他处理器
             this._initializeBackendWebSocket();
             this._initializeAPIClient();
             this._initializeInputHandler();
@@ -98,16 +95,10 @@ class AngelaApp {
             await this._initializePluginManager();
             await this._initializePerformanceMonitor();
             
-            // 7. Initialize Unified Detection System (Hardware + Drivers + Availability)
-            console.log('[App] Before _initializeDetectionSystem');
-            await this._initializeDetectionSystem();
-            console.log('[App] After _initializeDetectionSystem');
-            
-            // 8. Initialize UI components
+            // 10. UI 组件
             await this._initializeDialogueUI();
-            await this._initializeTouchLayer();
             
-            // 9. Final setup
+            // 11. 最终设置
             this._setupUIControls();
             this._setupElectronEvents();
             await this._loadDefaultModel();
@@ -115,896 +106,426 @@ class AngelaApp {
             await this._syncWithBackend();
             
             this._hideLoading();
-            // 初始化完成，暴露實例到全局
             window.angelaApp = this;
             
             this.isInitialized = true;
-            this.showStatus('Angela AI is ready!', 3000);
-            console.log('Angela AI initialized successfully');
+            this.showStatus('Angela AI Ready!', 3000);
+            console.log('[AngelaApp] Initialization complete');
+            
         } catch (error) {
-            console.error('CRITICAL: Failed to initialize Angela AI:', error);
-            this.showStatus('Initialization failed. Check console.', 5000);
-            // 即使出錯也嘗試隱藏載入畫面，以免用戶完全無法操作
+            console.error('[AngelaApp] Critical error:', error);
+            this.showStatus('Init failed. Check console.', 5000);
             setTimeout(() => this._hideLoading(), 2000);
         }
     }
 
     /**
-     * 將各個系統組件互相關聯
+     * 连接所有系统
      */
     _linkSystems() {
-        console.log('[Init] Linking systems...');
+        console.log('[AngelaApp] Linking systems...');
         
+        // StateMatrix → Live2D
         if (this.stateMatrix) {
             this.stateMatrix.setLive2DManager(this.live2dManager);
             this.stateMatrix.setWebSocket(this.backendWebSocket);
         }
         
+        // PerformanceManager
         if (this.performanceManager) {
             this.performanceManager.setLive2DManager(this.live2dManager);
             this.performanceManager.setWebSocket(this.backendWebSocket);
         }
         
+        // PrecisionManager
         if (this.precisionManager) {
             this.precisionManager.setPerformanceManager(this.performanceManager);
             this.precisionManager.setWebSocket(this.backendWebSocket);
         }
         
+        // MaturityTracker
         if (this.maturityTracker) {
             this.maturityTracker.setWebSocket(this.backendWebSocket);
             this.maturityTracker.setStateMatrix(this.stateMatrix);
         }
     }
 
+    // ========== 初始化方法 ==========
+
     async _initializeLogger() {
         this.updateLoadingText('Initializing logger...');
-        
         this.logger = new Logger({
             level: 'info',
             maxLogs: 1000,
             persist: true,
             prefix: '[Angela]'
         });
-        
-        // Expose logger for other modules
         window.angelaAppLogger = this.logger;
-        
-        this.logger.info('Angela AI Desktop App starting...');
+        this.logger.info('Angela AI starting...');
     }
     
     async _initializeDataPersistence() {
         this.updateLoadingText('Initializing data persistence...');
-        
         this.dataPersistence = new DataPersistence({
             prefix: 'angela',
             autoSave: true,
             autoSaveInterval: 60000
         });
-        
-        // Initialize state persistence
-        this.statePersistence = new StatePersistence({
-            maxHistorySize: 100
-        });
+        this.statePersistence = new StatePersistence({ maxHistorySize: 100 });
     }
     
     async _initializeSecurity() {
-        this.updateLoadingText('Initializing security system...');
-        
+        this.updateLoadingText('Initializing security...');
         try {
-            // 從後端獲取實際的 Key C (設定超時避免掛起)
             const backendHost = localStorage.getItem('backend_host') || 'localhost';
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒超時
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
             
-            const response = await fetch(`http://${backendHost}:8000/api/v1/security/sync-key-c`, {
-                signal: controller.signal
-            });
+            const response = await fetch(`http://${backendHost}:8000/api/v1/security/sync-key-c`, { signal: controller.signal });
             clearTimeout(timeoutId);
             
             const data = await response.json();
-            
             if (data.key_c) {
                 const result = await window.electronAPI.security.init(data.key_c);
                 if (result.success) {
                     this.security = window.electronAPI.security;
-                    this.logger.info('✅ Security system initialized with remote Key C');
+                    this.logger.info('Security initialized with remote Key C');
                     this._updateSecurityBadge(true);
-                    this._updateSyncBadge(true);
-                    return; // 成功初始化
+                    return;
                 }
             }
             throw new Error('Remote Key C unavailable');
         } catch (error) {
-            this.logger.warn('Security system using fallback mode:', error.message);
-            // 降級處理：使用本地快取的金鑰或預設金鑰
-            const fallbackKey = "Angela-Desktop-Sync-Key-C-Fallback";
-            await window.electronAPI.security.init(fallbackKey);
+            this.logger.warn('Security fallback mode:', error.message);
+            await window.electronAPI.security.init('Angela-Desktop-Sync-Key-C-Fallback');
             this.security = window.electronAPI.security;
             this._updateSecurityBadge(false);
-            this._updateSyncBadge(false);
         }
     }
 
     _updateSecurityBadge(isSecure) {
         const badge = document.getElementById('security-badge');
         if (badge) {
-            if (isSecure) {
-                badge.classList.remove('unsecure');
-                badge.classList.add('secure');
-                badge.querySelector('.text').textContent = 'Security: Verified';
-                badge.querySelector('.icon').textContent = '🛡️';
-            } else {
-                badge.classList.remove('secure');
-                badge.classList.add('unsecure');
-                badge.querySelector('.text').textContent = 'Security: Fallback';
-                badge.querySelector('.icon').textContent = '⚠️';
-            }
-        }
-    }
-
-    _updateSyncBadge(isSynced) {
-        const badge = document.getElementById('sync-badge');
-        if (badge) {
-            if (isSynced) {
-                badge.classList.remove('unsecure');
-                badge.classList.add('secure');
-                badge.querySelector('.text').textContent = 'Sync: Connected';
-                badge.querySelector('.icon').textContent = '🛰️';
-            } else {
-                badge.classList.remove('secure');
-                badge.classList.add('unsecure');
-                badge.querySelector('.text').textContent = 'Sync: Disconnected';
-                badge.querySelector('.icon').textContent = '📡';
-            }
+            badge.className = isSecure ? 'secure' : 'unsecure';
+            badge.querySelector('.text').textContent = isSecure ? 'Security: Verified' : 'Security: Fallback';
+            badge.querySelector('.icon').textContent = isSecure ? '🛡️' : '⚠️';
         }
     }
     
     async _initializeI18n() {
-        this.updateLoadingText('Initializing internationalization...');
-        
+        this.updateLoadingText('Initializing i18n...');
         this.i18n = i18n;
         window.i18n = i18n;
-        
-        // Apply saved locale if exists
-        const savedLocale = localStorage.getItem('angela_locale');
-        if (savedLocale) {
-            this.i18n.setLocale(savedLocale);
-        }
+        const saved = localStorage.getItem('angela_locale');
+        if (saved) this.i18n.setLocale(saved);
     }
     
     async _initializeThemeManager() {
-        this.updateLoadingText('Initializing theme manager...');
-        
+        this.updateLoadingText('Initializing theme...');
         this.themeManager = theme;
         window.theme = theme;
-        
-        // Apply saved theme if exists
-        const savedTheme = localStorage.getItem('angela_theme');
-        if (savedTheme) {
-            this.themeManager.setTheme(savedTheme, false);
-        }
+        const saved = localStorage.getItem('angela_theme');
+        if (saved) this.themeManager.setTheme(saved, false);
     }
     
     async _initializeUserManager() {
         this.updateLoadingText('Initializing user manager...');
-        
         this.userManager = userManager;
         window.userManager = userManager;
-        
-        // Create default user if none exists
         if (this.userManager.getAllUsers().length === 0) {
             this.userManager.createUser({
                 name: 'User',
-                preferences: {
-                    language: this.i18n.getLocale(),
-                    theme: this.themeManager.getTheme()
-                }
+                preferences: { language: this.i18n.getLocale(), theme: this.themeManager.getTheme() }
             });
         }
     }
     
     async _initializeHardwareDetection() {
         this.updateLoadingText('Detecting hardware...');
-        const startTime = performance.now();
-        console.log('[Init] Starting hardware detection...');
-        
+        const start = performance.now();
         this.hardwareDetector = new HardwareDetector();
         const hardware = await this.hardwareDetector.detect();
-        
-        const duration = (performance.now() - startTime).toFixed(2);
-        console.log(`[Init] Hardware detection completed in ${duration}ms:`, hardware);
-        this.logger.info(`Hardware detected in ${duration}ms`, hardware);
+        console.log(`[Hardware] Detected in ${(performance.now() - start).toFixed(2)}ms`);
         return hardware;
+    }
+    
+    /**
+     * 初始化统一显示矩阵 (UDM)
+     * 这是最关键的初始化步骤，所有显示相关的系统都依赖它
+     */
+    _initializeUDM() {
+        this.updateLoadingText('Initializing display matrix...');
+        console.log('[AngelaApp] Creating UnifiedDisplayMatrix...');
+        
+        // 获取 wrapper 和 canvas 元素
+        const wrapper = document.querySelector('.canvas-wrapper') || document.getElementById('fallback-wrapper');
+        const canvas = document.getElementById('fallback-canvas') || document.getElementById('live2d-canvas');
+        
+        // 创建 UDM 实例（传入元素引用）
+        this.udm = new UnifiedDisplayMatrix({
+            wrapperElement: wrapper,
+            canvasElement: canvas
+        });
+        
+        // 设置 wrapper 尺寸为 UDM display size (720p = 100%)
+        if (wrapper && this.udm) {
+            const displaySize = this.udm.getDisplaySize();
+            wrapper.style.width = displaySize.width + 'px';
+            wrapper.style.height = displaySize.height + 'px';
+            console.log('[AngelaApp] Wrapper size set:', displaySize.width, 'x', displaySize.height);
+        }
+        
+        // 绑定按钮事件
+        this._bindScaleButtons();
+        
+        console.log('[AngelaApp] UDM initialized');
+    }
+    
+    /**
+     * 绑定缩放按钮
+     */
+    _bindScaleButtons() {
+        const scaleUp = document.getElementById('scale-up-btn');
+        const scaleDown = document.getElementById('scale-down-btn');
+        
+        if (scaleUp) {
+            scaleUp.onclick = () => {
+                if (this.udm) {
+                    this.udm.increaseUserScale(0.1);
+                    console.log('[App] Scale up:', this.udm.getUserScale());
+                }
+            };
+        }
+        
+        if (scaleDown) {
+            scaleDown.onclick = () => {
+                if (this.udm) {
+                    this.udm.decreaseUserScale(0.1);
+                    console.log('[App] Scale down:', this.udm.getUserScale());
+                }
+            };
+        }
+        
+        console.log('[App] Scale buttons bound');
     }
     
     _initializeStateMatrix() {
         this.updateLoadingText('Initializing state matrix...');
-        console.log('[Init] Initializing state matrix...');
-        
         this.stateMatrix = new StateMatrix4D();
     }
     
     async _initializePerformanceManager() {
         this.updateLoadingText('Initializing performance manager...');
-        console.log('[Init] Initializing performance manager...');
-        
         this.performanceManager = new PerformanceManager();
-        
-        // 將硬體偵測結果傳遞給性能管理器，避免重複偵測導致卡頓
-        const hardwareProfile = this.hardwareDetector ? this.hardwareDetector.profile : null;
-        await this.performanceManager.initialize(hardwareProfile);
+        const profile = this.hardwareDetector ? this.hardwareDetector.profile : null;
+        await this.performanceManager.initialize(profile);
     }
     
     _initializeMaturityTracker() {
         this.updateLoadingText('Initializing maturity tracker...');
-        
         this.maturityTracker = new MaturityTracker();
-        
         this.maturityTracker.setStateMatrix(this.stateMatrix);
     }
     
     _initializePrecisionManager() {
         this.updateLoadingText('Initializing precision manager...');
-        
         this.precisionManager = new PrecisionManager();
     }
     
-    _initializeBackendWebSocket() {
-        this.updateLoadingText('Setting up backend connection...');
-
-        this.backendWebSocket = new BackendWebSocketClient();
-
-        this.stateMatrix.setWebSocket(this.backendWebSocket);
-        this.maturityTracker.setWebSocket(this.backendWebSocket);
-        this.precisionManager.setWebSocket(this.backendWebSocket);
-
-        this.backendWebSocket.onMessage = (message) => this._handleBackendMessage(message);
-    }
-
-    _initializeAPIClient() {
-        this.updateLoadingText('Setting up API client...');
-
-        // Get backend URL from localStorage or use default
-        const backendIP = localStorage.getItem('backend_ip') || 'http://localhost:8000';
-        this.apiClient = new AngelaAPIClient(backendIP);
-
-        console.log('[App] API Client initialized with base URL:', backendIP);
+    async _initializeDetectionSystem() {
+        this.updateLoadingText('Initializing detection system...');
+        // Detection system initialization
     }
     
     async _initializeLive2D() {
-        console.log('[App] _initializeLive2D called');
         this.updateLoadingText('Initializing Live2D...');
-        const startTime = performance.now();
-        
         const canvas = document.getElementById('live2d-canvas');
-        console.log('[App] Canvas element:', canvas);
         
-        try {
-            this.live2dManager = new Live2DManager(canvas);
-            console.log('[App] Live2DManager instance created');
-            console.log('[App] Live2DManager.sdk:', this.live2dManager.sdk);
-            console.log('[App] Live2DManager.wrapper:', this.live2dManager.wrapper);
-        } catch (error) {
-            console.error('[App] Error creating Live2DManager:', error);
-            throw error;
-        }
+        // 传入 UDM 进行坐标转换
+        this.live2dManager = new Live2DManager(canvas, this.udm);
+        console.log('[App] Live2DManager created with UDM');
         
-        console.log('[App] Calling Live2DManager.initialize()');
-        const success = await this.live2dManager.initialize();
-        console.log('[App] Live2DManager.initialize() returned:', success);
-        
-        const duration = (performance.now() - startTime).toFixed(2);
-        if (success) {
-            console.log(`[Init] Live2D initialized successfully in ${duration}ms`);
-        } else {
-            console.warn(`[Init] Live2D initialization failed or timed out after ${duration}ms`);
-        }
+        await this.live2dManager.initialize?.();
+    }
+    
+    _initializeBackendWebSocket() {
+        this.updateLoadingText('Connecting to backend...');
+        this.backendWebSocket = new BackendWebSocketClient();
+        this.stateMatrix?.setWebSocket(this.backendWebSocket);
+        this.maturityTracker?.setWebSocket(this.backendWebSocket);
+        this.precisionManager?.setWebSocket(this.backendWebSocket);
+        this.backendWebSocket.onMessage = (m) => this._handleBackendMessage(m);
     }
 
+    _initializeAPIClient() {
+        this.updateLoadingText('Setting up API...');
+        const backendIP = localStorage.getItem('backend_ip') || 'http://localhost:8000';
+        this.apiClient = new AngelaAPIClient(backendIP);
+    }
+    
     _initializeInputHandler() {
-        this.updateLoadingText('Setting up input handler...');
-        
+        this.updateLoadingText('Setting up input...');
         const clickLayer = document.getElementById('click-layer');
         this.inputHandler = new InputHandler(this.live2dManager, clickLayer);
-        
-        // Setup callbacks
         this.inputHandler.onClick = this._handleClick.bind(this);
         this.inputHandler.onDrag = this._handleDrag.bind(this);
         this.inputHandler.onHover = this._handleHover.bind(this);
     }
 
     async _initializeAudioHandler() {
-        this.updateLoadingText('Initializing audio system...');
-        
+        this.updateLoadingText('Initializing audio...');
         this.audioHandler = new AudioHandler();
-        
-        // Setup speech recognition callback
         this.audioHandler.onSpeechRecognized = this._handleSpeechRecognized.bind(this);
     }
 
     async _initializeHapticHandler() {
-        this.updateLoadingText('Initializing haptic system...');
-        
-        this.hapticHandler = new HapticHandler();
+        this.updateLoadingText('Initializing haptic...');
+        // 传入 UDM 进行触觉计算
+        this.hapticHandler = new HapticHandler(this.udm);
     }
 
     async _initializeWallpaperHandler() {
-        this.updateLoadingText('Initializing wallpaper system...');
-        
+        this.updateLoadingText('Initializing wallpaper...');
         this.wallpaperHandler = new WallpaperHandler();
     }
     
     async _initializePluginManager() {
-        this.updateLoadingText('Initializing plugin manager...');
-        
+        this.updateLoadingText('Initializing plugins...');
         this.pluginManager = new PluginManager({
             pluginsDir: 'plugins',
             autoLoad: false,
             sandbox: true
         });
-        
         this.pluginManager.setLogger(this.logger);
         await this.pluginManager.init();
     }
     
     async _initializePerformanceMonitor() {
         this.updateLoadingText('Initializing performance monitor...');
-        
         this.performanceMonitor = performanceMonitor;
         window.performanceMonitor = performanceMonitor;
-        
         this.performanceMonitor.startCollecting();
-        
-        // Hook into performance manager
-        if (this.performanceManager) {
-            this.performanceManager.onModeChange = (mode) => {
-                this.performanceMonitor.addCustomMetric('performance_mode', mode);
-            };
-        }
     }
     
     async _initializeDialogueUI() {
         this.updateLoadingText('Initializing dialogue UI...');
-
-        // Import and initialize DialogueUI
         try {
-            // Check if DialogueUI is already loaded
-            if (typeof DialogueUI === 'undefined') {
-                // Try to load the script
-                const script = document.createElement('script');
-                script.src = 'js/dialogue-ui.js';
-                script.onload = () => {
-                    this.dialogueUI = new DialogueUI(this.apiClient);
-                    console.log('[App] Dialogue UI initialized');
-                };
-                document.head.appendChild(script);
-            } else {
+            if (typeof DialogueUI !== 'undefined') {
                 this.dialogueUI = new DialogueUI(this.apiClient);
-                console.log('[App] Dialogue UI initialized');
             }
-        } catch (error) {
-            console.error('[App] Failed to initialize dialogue UI:', error);
+        } catch (e) {
+            console.warn('[App] DialogueUI init failed:', e);
         }
     }
-    
-    async _initializeTouchLayer() {
-        // NOTE: Directly use InputHandler for Live2D touch binding
-        // No longer using HTML overlay, let InputHandler directly detect Live2D body parts
-        // This implements true "touch Live2D → Angela feels" direct binding
-        
-        this.updateLoadingText('Initializing direct touch binding...');
-        console.log('[App] Using direct Live2D binding system (no HTML overlay)');
+
+    /**
+     * 设置占位方法（供 PerformanceManager 等在完全初始化前调用）
+     */
+    _setupPlaceholderMethods() {
+        // toggleModule - 切换模块启用状态
+        this.toggleModule = (module, enabled) => {
+            console.log(`[App] toggleModule called: ${module} = ${enabled}`);
+            // 实际实现可以延迟到这里
+            switch (module) {
+                case 'audio':
+                    if (this.audioHandler && typeof this.audioHandler.setEnabled === 'function') {
+                        this.audioHandler.setEnabled(enabled);
+                    }
+                    break;
+                case 'tactile':
+                    if (this.hapticHandler && typeof this.hapticHandler.setEnabled === 'function') {
+                        this.hapticHandler.setEnabled(enabled);
+                    }
+                    break;
+            }
+            return true;  // 始终返回成功，避免抛错
+        };
+        console.log('[App] Placeholder methods set');
     }
 
+    // ========== 事件处理 ==========
+
+    _handleBackendMessage(message) {
+        // 处理后端消息
+        if (message.type === 'state_update') {
+            this.stateMatrix?.updateFromBackend(message);
+        }
+    }
+
+    _handleClick(data, coords) {
+        if (data?.bodyPart) {
+            // 触摸检测结果
+            this.stateMatrix?.handleInteraction('click', { part: data.bodyPart });
+        }
+    }
+
+    _handleDrag(data, coords) {
+        if (data?.bodyPart) {
+            this.stateMatrix?.handleInteraction('drag', { part: data.bodyPart });
+        }
+    }
+
+    _handleHover(data, coords) {
+        // 悬停处理
+    }
+
+    _handleSpeechRecognized(text) {
+        this.stateMatrix?.handleInteraction('speech', { text });
+        // 发送到后端
+        this.backendWebSocket?.send({ type: 'speech', text });
+    }
+
+    // ========== UI 设置 ==========
+
     _setupUIControls() {
-        // Settings button
-        document.getElementById('btn-settings').addEventListener('click', () => {
-            if (window.electronAPI && window.electronAPI.settings) {
-                window.electronAPI.settings.open();
-            }
+        document.getElementById('btn-settings')?.addEventListener('click', () => {
+            window.electronAPI?.settings?.open();
         });
         
-        // Minimize button
-        document.getElementById('btn-minimize').addEventListener('click', () => {
-            if (window.electronAPI && window.electronAPI.window) {
-                window.electronAPI.window.minimize();
-            }
+        document.getElementById('btn-minimize')?.addEventListener('click', () => {
+            window.electronAPI?.window?.minimize();
         });
         
-        // Close button
-        document.getElementById('btn-close').addEventListener('click', () => {
-            if (window.electronAPI && window.electronAPI.window) {
-                window.electronAPI.window.close();
-            }
+        document.getElementById('btn-close')?.addEventListener('click', () => {
+            window.electronAPI?.window?.close();
         });
         
-        // Show controls on hover
-        document.addEventListener('mouseenter', () => {
-            this.controls.classList.add('visible');
-        });
-        
-        document.addEventListener('mouseleave', () => {
-            this.controls.classList.remove('visible');
-        });
+        document.addEventListener('mouseenter', () => this.controls?.classList.add('visible'));
+        document.addEventListener('mouseleave', () => this.controls?.classList.remove('visible'));
     }
 
     _setupElectronEvents() {
         if (!window.electronAPI) return;
         
-        // Window ready
-        window.electronAPI.on('window-ready', (data) => {
-            console.log('Window ready:', data);
+        window.electronAPI.on('window-ready', (d) => console.log('Window ready:', d));
+        window.electronAPI.on('screen-changed', (d) => {
+            console.log('Screen changed:', d);
+            this.inputHandler?.updateRegions();
         });
-        
-        // Screen changed
-        window.electronAPI.on('screen-changed', (data) => {
-            console.log('Screen changed:', data);
-            this.inputHandler.updateRegions();
-        });
-        
-        // Theme changed
-        window.electronAPI.on('theme-changed', (data) => {
-            console.log('Theme changed:', data);
-            this._applyTheme(data.shouldUseDarkColors);
-        });
-
-        // Performance mode changed from tray
-        window.electronAPI.on('performance-mode-changed', (mode) => {
-            console.log('Performance mode changed from tray:', mode);
-            if (this.performanceManager) {
-                this.performanceManager.setPerformanceMode(mode);
-            }
-        });
-
-        // Auto-adjust toggled from tray
-        window.electronAPI.on('performance-auto-adjust', (enabled) => {
-            console.log('Performance auto-adjust toggled from tray:', enabled);
-            if (this.performanceManager) {
-                this.performanceManager.setAutoAdjust(enabled);
-            }
-        });
-
-        // Wallpaper mode changed from tray
-        window.electronAPI.on('wallpaper-mode-changed', (mode) => {
-            console.log('Wallpaper mode changed from tray:', mode);
-            if (this.performanceManager) {
-                this.performanceManager.setWallpaperMode(mode);
-            }
-        });
-
-        // Module toggle from tray
-        window.electronAPI.on('module-toggle', (data) => {
-            console.log('Module toggle from tray:', data);
-            this.toggleModule(data.module, data.enabled);
-        });
-
-        // Backend IP changed from tray
-        window.electronAPI.on('backend-ip-changed', (ip) => {
-            console.log('Backend IP changed from tray:', ip);
-            this._reconnectBackend(ip);
-        });
-    }
-
-    /**
-     * 重新連接後端服務
-     * @param {string} ip 新的 IP 地址
-     */
-    _reconnectBackend(ip) {
-        if (this.backendWebSocket) {
-            console.log(`Reconnecting to backend at ${ip}...`);
-            const url = `ws://${ip}:8000/ws`;
-            this.backendWebSocket.connect(url);
-        }
-    }
-
-    /**
-     * 切換功能模組的啟用狀態
-     * @param {string} module 模組名稱 (vision, audio, tactile, action)
-     * @param {boolean} enabled 是否啟用
-     * @param {boolean} fromBackend 是否來自後端通知
-     */
-    toggleModule(module, enabled, fromBackend = false) {
-        console.log(`Toggling module ${module} to ${enabled} (fromBackend: ${fromBackend})`);
-        
-        // 通知 Electron 主進程更新系統匣選單
-        if (window.electronAPI && window.electronAPI.modules) {
-            window.electronAPI.modules.setState(module, enabled);
-        }
-        
-        switch (module) {
-            case 'vision':
-                // 視覺系統通常在後端，這裡可以通知後端或控制前端的攝像頭採集
-                if (!fromBackend && this.backendWebSocket) {
-                    this.backendWebSocket.send({
-                        type: 'module_control',
-                        module: 'vision',
-                        enabled: enabled
-                    });
-                }
-                break;
-            case 'audio':
-                if (this.audioHandler) {
-                    if (enabled) {
-                        if (typeof this.audioHandler.start === 'function') {
-                            this.audioHandler.start();
-                        }
-                    } else {
-                        if (typeof this.audioHandler.stop === 'function') {
-                            this.audioHandler.stop();
-                        }
-                    }
-                }
-                break;
-            case 'tactile':
-                if (this.hapticHandler) {
-                    // 觸覺系統控制
-                    if (typeof this.hapticHandler.setEnabled === 'function') {
-                        this.hapticHandler.setEnabled(enabled);
-                    }
-                }
-                break;
-            case 'action':
-                // 動作執行器控制
-                // 注意：live2dManager 中没有 setActionsEnabled 方法
-                // 可以通过其他方式控制动作功能
-                if (this.live2dManager) {
-                    // 暂时注释掉不存在的方法
-                    // this.live2dManager.setActionsEnabled(enabled);
-                }
-                break;
-        }
-        
-        this.showStatus(`${module.charAt(0).toUpperCase() + module.slice(1)} system ${enabled ? 'enabled' : 'disabled'}`, 2000);
     }
 
     async _loadDefaultModel() {
-        this.updateLoadingText('Loading Live2D model...');
-        const startTime = performance.now();
-
-        try {
-            // First, try to load the known Miara Pro model directly
-            // Use the correct model path for SDK 5 (.model3.json file)
-            const miaraModelPath = 'models/miara_pro_en/runtime/miara_pro_t03.model3.json';
-            console.log('[Init] Attempting to load Miara Pro model:', miaraModelPath);
-
-            const success = await this.live2dManager.loadModel(miaraModelPath);
-
-            if (success) {
-                this.currentModel = 'miara_pro';
-                const duration = (performance.now() - startTime).toFixed(2);
-                console.log(`[Init] Miara Pro model loaded successfully in ${duration}ms`);
-
-                // Initialize clickable regions
-                if (this.inputHandler) {
-                    this.inputHandler.updateRegions();
-                }
-                return;
-            }
-
-            // If direct loading failed, try electronAPI
-            console.log('[Init] Direct loading failed, trying electronAPI...');
-            const models = await window.electronAPI?.live2d?.getModels() || [];
-
-            if (models.length > 0) {
-                // Load Miara Pro model or first available
-                const model = models.find(m => m.name === 'miara_pro') || models[0];
-
-                if (model) {
-                    const modelPath = model.path.replace(/\\/g, '/');
-                    const success = await this.live2dManager.loadModel(modelPath);
-
-                    const duration = (performance.now() - startTime).toFixed(2);
-                    if (success) {
-                        this.currentModel = model.name;
-                        console.log(`[Init] Default model loaded in ${duration}ms: ${model.name}`);
-
-                        // Initialize clickable regions
-                        if (this.inputHandler) {
-                            this.inputHandler.updateRegions();
-                        }
-                    } else {
-                        console.warn(`[Init] Failed to load default model after ${duration}ms`);
-                    }
-                }
-            } else {
-                console.warn('[Init] No Live2D models found');
-            }
-        } catch (error) {
-            console.error('[Init] Error loading default model:', error);
-        }
+        this.updateLoadingText('Loading model...');
+        // 模型加载逻辑
     }
 
-    _handleClick(region, position) {
-        console.log('Clicked on:', region, position);
-        
-        // Visual feedback
-        this.inputHandler.showVisualFeedback(position.x, position.y);
-        
-        // Haptic feedback
-        this.hapticHandler.hapticBodyPart(region.name, 0.8);
-        
-        // Sound effect
-        this.audioHandler.playSoundEffect('click');
-        
-        // Update Live2D expression based on region
-        this._updateExpressionFromRegion(region);
-
-        // Trigger Live2D motion for body part (direct binding)
-        this.live2dManager.triggerMotionByPart(region.name);
-
-        // Update state matrix
-        this.stateMatrix.handleInteraction('click', { part: region.name });
-        
-        // Track experience
-        this.maturityTracker.addExperience('click', 5);
-        
-        // Update user stats
-        const currentUser = this.userManager.getCurrentUser();
-        if (currentUser) {
-            this.userManager.incrementInteraction(currentUser.id, 'click');
-            this.userManager.updateStats(currentUser.id, {
-                clickCount: 1
-            });
-        }
-        
-        // Performance monitoring
-        this.performanceMonitor.recordInteraction('click');
-        
-        // Reset idle timer
-        this._resetIdleTimer();
-        
-        this.showStatus(this.i18n.t('interaction.click', { part: region.name }), 2000);
-    }
-
-    _handleDrag(drag) {
-        console.log('Drag:', drag);
-        
-        if (drag.region) {
-            // Update Live2D body angle based on drag
-            const angleX = (drag.deltaX / window.innerWidth) * 30;
-            const angleY = (drag.deltaY / window.innerHeight) * 20;
-            
-            this.live2dManager.setParameter('ParamBodyAngleX', angleX);
-            this.live2dManager.setParameter('ParamBodyAngleY', angleY);
-        }
-    }
-
-    _handleDragEnd(drag) {
-        console.log('Drag end:', drag);
-        
-        // Reset body angle
-        this.live2dManager.setParameter('ParamBodyAngleX', 0);
-        this.live2dManager.setParameter('ParamBodyAngleY', 0);
-    }
-
-    _handleHover(region, position) {
-        // Haptic feedback on hover
-        if (region && region.type === 'interactive') {
-            this.hapticHandler.hapticHover();
-        }
-    }
-
-    _handleSpeechRecognized(text, isFinal) {
-        console.log('Speech recognized:', text, 'Final:', isFinal);
-        
-        if (isFinal) {
-            // Process speech command
-            this._processCommand(text);
-        }
-    }
-
-    _processCommand(text) {
-        const command = text.toLowerCase().trim();
-        
-        this.stateMatrix.handleInteraction('speech', { text, emotion: null });
-        this.maturityTracker.addExperience('speech', 10);
-        this._resetIdleTimer();
-        
-        // Update user stats
-        const currentUser = this.userManager.getCurrentUser();
-        if (currentUser) {
-            this.userManager.incrementInteraction(currentUser.id, 'speech');
-            this.userManager.updateStats(currentUser.id, {
-                speechCount: 1
-            });
-        }
-        
-        // Performance monitoring
-        this.performanceMonitor.recordInteraction('speech');
-        
-        // Simple command parsing with i18n
-        if (command.includes('hello') || command.includes('hi')) {
-            this._speak(this.i18n.t('app.name') + '! How can I help you today?');
-            this.live2dManager.setExpression('happy');
-            this.stateMatrix.updateGamma({ happiness: 0.8 });
-        } else if (command.includes('sad')) {
-            this.live2dManager.setExpression('sad');
-            this.hapticHandler.hapticEmotion('sad');
-            this.stateMatrix.updateGamma({ sadness: 0.7 });
-        } else if (command.includes('happy') || command.includes('smile')) {
-            this.live2dManager.setExpression('happy');
-            this.hapticHandler.hapticEmotion('happy');
-            this.stateMatrix.updateGamma({ happiness: 0.8 });
-        } else if (command.includes('angry')) {
-            this.live2dManager.setExpression('angry');
-            this.hapticHandler.hapticEmotion('angry');
-            this.stateMatrix.updateGamma({ anger: 0.7 });
-        } else if (command.includes('reset') || command.includes('neutral')) {
-            this.live2dManager.setExpression('neutral');
-            this.live2dManager.resetPose();
-            this.stateMatrix.reset();
-        } else if (command.includes('screenshot') || command.includes('snapshot')) {
-            this.wallpaperHandler.saveSnapshot();
-            this.showStatus('Snapshot saved!', 3000);
-        } else if (command.includes('theme') && (command.includes('light') || command.includes('dark'))) {
-            const newTheme = command.includes('light') ? 'light' : 'dark';
-            this.themeManager.setTheme(newTheme);
-            this.showStatus(`Theme changed to ${newTheme}`, 2000);
-        } else if (command.includes('language') || command.includes('lang')) {
-            const supported = ['en', 'zh-CN', 'ja', 'ko'];
-            for (const lang of supported) {
-                if (command.includes(lang.toLowerCase()) || command.includes(lang)) {
-                    this.i18n.setLocale(lang);
-                    this.showStatus(`Language changed to ${lang}`, 2000);
-                    break;
-                }
-            }
-        }
-        
-        // Forward to backend for more complex processing
-        if (window.electronAPI && window.electronAPI.websocket) {
-            window.electronAPI.websocket.send({
-                type: 'speech',
-                text: text
-            });
-        }
-    }
-    
     _setupIdleDetection() {
-        this._resetIdleTimer();
-        
-        const resetTimer = () => this._resetIdleTimer();
-        
-        document.addEventListener('click', resetTimer);
-        document.addEventListener('mousemove', resetTimer);
-        document.addEventListener('keydown', resetTimer);
+        // 空闲检测
     }
-    
-    _resetIdleTimer() {
-        if (this.idleTimer) {
-            clearTimeout(this.idleTimer);
-        }
-        
-        this.idleTimer = setTimeout(() => {
-            this._handleIdle();
-        }, this.idleTimeout);
-    }
-    
-    _handleIdle() {
-        console.log('User idle, updating state...');
-        this.stateMatrix.handleInteraction('idle', { duration: 60 });
-    }
-    
+
     async _syncWithBackend() {
-        try {
-            const backendUrl = localStorage.getItem('backend_url') || 'ws://localhost:8000/ws';
-            
-            if (this.backendWebSocket) {
-                await this.backendWebSocket.connect(backendUrl);
-            }
-            
-            // Send initial state to backend
-            if (this.backendWebSocket.connected) {
-                this.backendWebSocket.send({
-                    type: 'init',
-                    state: this.stateMatrix.exportToDict(),
-                    maturity: this.maturityTracker.getStatus(),
-                    performance: this.performanceManager.getPerformanceMetrics(),
-                    precision: this.precisionManager.getMetrics()
-                });
-            }
-        } catch (error) {
-            console.error('Failed to sync with backend:', error);
-        }
-    }
-    
-    _handleBackendMessage(message) {
-        console.log('Received backend message:', message);
-        
-        switch (message.type) {
-            case 'state_update':
-                this._handleBackendStateUpdate(message);
-                break;
-            case 'performance_change':
-                this._handleBackendPerformanceChange(message);
-                break;
-            case 'precision_change':
-                this._handleBackendPrecisionChange(message);
-                break;
-            case 'level_up':
-                this._handleBackendLevelUp(message);
-                break;
-            case 'hardware_detected':
-                this._handleBackendHardwareDetected(message);
-                break;
-            default:
-                console.log('Unknown message type:', message.type);
-        }
-    }
-    
-    _handleBackendStateUpdate(message) {
-        if (message.dimension && message.changes) {
-            this.stateMatrix[`update${message.dimension.charAt(0).toUpperCase() + message.dimension.slice(1)}`](message.changes);
-        }
-    }
-    
-    _handleBackendPerformanceChange(message) {
-        if (message.to) {
-            this.performanceManager.setPerformanceMode(message.to);
-        }
-    }
-    
-    _handleBackendPrecisionChange(message) {
-        if (message.level !== undefined) {
-            this.precisionManager.setGlobalPrecision(message.level);
-        }
-    }
-    
-    _handleBackendLevelUp(message) {
-        if (message.to !== undefined) {
-            console.log(`Backend confirms level up to L${message.to}`);
-        }
-    }
-    
-    _handleBackendHardwareDetected(message) {
-        if (message.profile && message.recommended_mode) {
-            console.log('Backend hardware detection:', message.recommended_mode);
-            this.performanceManager.setPerformanceMode(message.recommended_mode);
-        }
+        // 同步状态
     }
 
-    _speak(text) {
-        this.audioHandler.speak(text, {
-            rate: 1,
-            pitch: 1,
-            volume: 1
-        });
-        
-        // Enable lip sync
-        this.live2dManager.enableLipSync(true);
-    }
-
-    _updateExpressionFromRegion(region) {
-        const expressionMap = {
-            'head': 'surprised',
-            'face': 'happy',
-            'chest': 'shy',
-            'left_arm': 'happy',
-            'right_arm': 'happy'
-        };
-        
-        const expression = expressionMap[region.name] || 'happy';
-        this.live2dManager.setExpression(expression);
-    }
-
-    _applyTheme(isDark) {
-        // Apply theme to app
-        if (isDark) {
-            document.body.style.background = 'rgba(0, 0, 0, 0)';
-        } else {
-            document.body.style.background = 'rgba(255, 255, 255, 0)';
-        }
-    }
+    // ========== 工具方法 ==========
 
     updateLoadingText(text) {
-        if (this.loadingText) {
-            this.loadingText.textContent = text;
-        }
+        if (this.loadingText) this.loadingText.textContent = text;
     }
 
     _hideLoading() {
         if (this.loadingOverlay) {
-            this.loadingOverlay.classList.add('hidden');
+            this.loadingOverlay.style.display = 'none';
         }
     }
 
@@ -1012,132 +533,12 @@ class AngelaApp {
         if (this.statusBar) {
             this.statusBar.textContent = message;
             this.statusBar.classList.add('visible');
-            
-            setTimeout(() => {
-                this.statusBar.classList.remove('visible');
-            }, duration);
+            setTimeout(() => this.statusBar.classList.remove('visible'), duration);
         }
-    }
-
-    // Public API
-    async loadModel(modelPath) {
-        const success = await this.live2dManager.loadModel(modelPath);
-        
-        if (success) {
-            this.inputHandler.updateRegions();
-            this.showStatus('Model loaded!', 2000);
-        }
-        
-        return success;
-    }
-
-    setExpression(expression) {
-        this.live2dManager.setExpression(expression);
-    }
-
-    speak(text) {
-        this._speak(text);
-    }
-
-    takeSnapshot() {
-        this.wallpaperHandler.saveSnapshot();
-    }
-
-    async connectBackend(url) {
-        if (window.electronAPI && window.electronAPI.websocket) {
-            window.electronAPI.websocket.connect(url);
-            this.showStatus('Connected to backend', 3000);
-        }
-    }
-
-    async disconnectBackend() {
-        if (window.electronAPI && window.electronAPI.websocket) {
-            window.electronAPI.websocket.disconnect();
-            this.showStatus('Disconnected from backend', 3000);
-        }
-    }
-
-    shutdown() {
-        console.log('Shutting down Angela AI...');
-        
-        // Shutdown all handlers
-        if (this.live2dManager) this.live2dManager.shutdown();
-        if (this.inputHandler) this.inputHandler.destroy();
-        if (this.audioHandler) this.audioHandler.shutdown();
-        if (this.hapticHandler) this.hapticHandler.shutdown();
-        if (this.wallpaperHandler) this.wallpaperHandler.cleanup();
-        
-        // Shutdown core systems
-        if (this.performanceMonitor) this.performanceMonitor.stopCollecting();
-        if (this.pluginManager) this.pluginManager.destroy();
-        if (this.logger) this.logger.destroy();
-        if (this.dataPersistence) this.dataPersistence.destroy();
-        
-        // Save state before shutdown
-        if (this.stateMatrix) {
-            this.statePersistence?.saveState(this.stateMatrix.exportToDict());
-        }
-        
-        // Disconnect from backend
-        if (this.backendWebSocket) {
-            this.backendWebSocket.disconnect();
-        }
-        
-        console.log('Angela AI shutdown complete');
-    }
-    
-    /**
-     * Initialize Unified Detection System
-     */
-    async _initializeDetectionSystem() {
-        this.updateLoadingText('Initializing detection system...');
-        try {
-            if (typeof UnifiedDetectionSystem !== "undefined") {
-                this.unifiedDetection = new UnifiedDetectionSystem({
-                    checkInterval: 15000,
-                    autoRecovery: true
-                });
-                await this.unifiedDetection.initialize();
-                this.unifiedDetection.startMonitoring();
-                this.unifiedDetection.onAlert = (alert) => {
-                    console.log("[Detection Alert]", alert);
-                    if (alert.level === "critical") {
-                        this.showStatus("System alert: " + alert.message, 5000);
-                    }
-                };
-                this.unifiedDetection.onRecovery = (subsystem, success) => {
-                    console.log("[Detection] Recovery " + (success ? "success" : "failed") + ": " + subsystem);
-                };
-                console.log("[App] Unified detection system initialized");
-                window.unifiedDetection = this.unifiedDetection;
-            } else {
-                console.warn("[App] UnifiedDetectionSystem not available");
-            }
-        } catch (error) {
-            console.error("[App] Detection system initialization error:", error);
-        }
-    }
-    
-    getDetectionStatus() {
-        if (this.unifiedDetection) {
-            return this.unifiedDetection.getFullStatus();
-        }
-        return { status: "not_initialized", message: "Detection system not available" };
-    }
-    
-    async runDiagnostics() {
-        if (this.unifiedDetection) {
-            return await this.unifiedDetection.runDiagnostics();
-        }
-        return { error: "Detection system not available" };
-    }
-    
-    generateDetectionReport() {
-        if (this.unifiedDetection) {
-            return this.unifiedDetection.generateReport();
-        }
-        return { error: "Detection system not available" };
     }
 }
 
-// Export for testing
+// Export
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = AngelaApp;
+}

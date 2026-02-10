@@ -41,6 +41,36 @@
             background-color: #1a1a2e !important;
         }
 
+        /* Canvas wrapper for fallback character - supports proper scaling */
+        .canvas-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* 尺寸由 UDM 动态设置 (720p = 1280x720 @ 100%) */
+            width: 1280px;
+            height: 720px;
+            z-index: 15;
+            display: none;
+            pointer-events: auto;
+        }
+
+        .canvas-wrapper.visible {
+            display: block;
+        }
+
+        /* Legacy wrapper for fallback canvas (without proper scaling) */
+        #fallback-wrapper {
+            display: none;
+            /* 继承 canvas-wrapper 的尺寸 (720p = 1280x720) */
+            width: 1280px;
+            height: 720px;
+        }
+
+        #fallback-wrapper.visible {
+            display: block;
+        }
+
         #click-layer {
             position: absolute;
             top: 0;
@@ -82,7 +112,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            opacity: 0.3;
+            opacity: 0.8;  /* 提高可见度 */
             transition: opacity 0.2s;
         }
 
@@ -305,7 +335,9 @@
     <div id="container">
         <div id="title-bar"></div>
         <canvas id="live2d-canvas"></canvas>
-        <canvas id="fallback-canvas" style="display:none;"></canvas>
+        <div class="canvas-wrapper" id="fallback-wrapper">
+            <canvas id="fallback-canvas" style="width: 100%; height: 100%;"></canvas>
+        </div>
         <div id="click-layer"></div>
         <button class="control-btn" id="scale-down-btn" title="缩小">-</button>
         <button class="control-btn" id="scale-up-btn" title="放大">+</button>
@@ -359,14 +391,7 @@
     <script src="js/hardware-detection-enhanced.js"></script>
     <script src="js/hardware-detection.js"></script>
     
-    <!-- App Scripts -->
-    <script src="js/hardware-integration.js"></script>
-    <script src="js/hardware-enhancement-patch.js"></script>
-    <script src="js/laptop-optimizer.js"></script>
-    <script src="js/integration-tester.js"></script>
-    <script src="js/hardware-diagnostic.js"></script>
-    <script src="js/quick-diagnosis.js"></script>
-    
+    <!-- Core Scripts -->
     <script src="js/logger.js"></script>
     <script src="js/data-persistence.js"></script>
     <script src="js/frontend-utils.js"></script>
@@ -374,25 +399,45 @@
     <script src="js/theme-manager.js"></script>
     <script src="js/backend-websocket.js"></script>
     <script src="js/api-client.js"></script>
+    
+    <!-- Angela Systems -->
     <script src="js/state-matrix.js"></script>
     <script src="js/performance-manager.js"></script>
     <script src="js/maturity-tracker.js"></script>
     <script src="js/precision-manager.js"></script>
+    
+    <!-- Live2D Core -->
     <script src="js/live2d-cubism-wrapper.js"></script>
+    
+    <!-- Unified Display Matrix (UDM) - 核心依赖，最先加载 -->
+    <script src="js/unified-display-matrix.js"></script>
+    
+    <!-- Character System -->
+    <script src="js/character-touch-detector.js"></script>
+    <script src="js/haptic-handler.js"></script>
     <script src="js/live2d-manager.js"></script>
+    
+    <!-- Input & Audio -->
     <script src="js/input-handler.js"></script>
     <script src="js/audio-handler.js"></script>
-    <script src="js/haptic-handler.js"></script>
+    
+    <!-- UI & Utils -->
     <script src="js/dialogue-ui.js"></script>
     <script src="js/wallpaper-handler.js"></script>
     <script src="js/plugin-manager.js"></script>
     <script src="js/user-manager.js"></script>
+    
+    <!-- Hardware Integration -->
+    <script src="js/hardware-integration.js"></script>
+    <script src="js/hardware-enhancement-patch.js"></script>
+    <script src="js/laptop-optimizer.js"></script>
     
     <!-- Detection System -->
     <script src="js/driver-detector.js"></script>
     <script src="js/availability-manager.js"></script>
     <script src="js/unified-detection.js"></script>
     
+    <!-- Main App -->
     <script src="js/app.js"></script>
     
     <!-- Initialize Angela App -->

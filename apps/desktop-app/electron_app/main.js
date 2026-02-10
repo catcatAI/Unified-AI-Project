@@ -3,6 +3,15 @@ const path = require('path');
 const fs = require('fs');
 const securityManager = require('./js/security-manager');
 
+// Global error handler for EPIPE (prevents crashes when writing to closed pipes)
+process.on('uncaughtException', (err) => {
+  if (err.code === 'EPIPE' || err.code === 'ECONNRESET') {
+    console.warn('[Main] Ignored pipe error (renderer closed):', err.code);
+  } else {
+    console.error('[Main] Uncaught Exception:', err);
+  }
+});
+
 // Import Live2D Cubism Web SDK (will be loaded via CDN or local)
 const LIVE2D_VERSION = '5.0.0';
 
@@ -378,6 +387,8 @@ function createMainWindow() {
   
   // Log console messages from renderer
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    // Skip if window is destroyed to avoid EPIPE error
+    if (mainWindow.isDestroyed()) return;
     console.log(`[Renderer] ${message}`);
   });
   
@@ -1274,10 +1285,15 @@ function connectWebSocket(url) {
     wsClient.on('open', () => {
       console.log('[WebSocket] Connected successfully');
       wsReconnectAttempts = 0;
+      // Skip sending if window is destroyed
+      if (!mainWindow || mainWindow.isDestroyed()) return;
       sendToMainWindow('websocket-connected', { success: true });
     });
 
     wsClient.on('message', (data) => {
+      // Skip if window is destroyed
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+
       try {
         const message = JSON.parse(data.toString());
         console.log('[WebSocket] Received:', message);
@@ -1289,12 +1305,17 @@ function connectWebSocket(url) {
 
     wsClient.on('error', (error) => {
       console.error('[WebSocket] Error:', error.message);
+      // Skip sending if window is destroyed
+      if (!mainWindow || mainWindow.isDestroyed()) return;
       sendToMainWindow('websocket-error', { error: error.message });
     });
 
     wsClient.on('close', (code, reason) => {
       console.log(`[WebSocket] Closed: ${code} - ${reason}`);
       wsClient = null;
+      
+      // Skip sending if window is destroyed
+      if (!mainWindow || mainWindow.isDestroyed()) return;
       
       sendToMainWindow('websocket-disconnected', { code, reason: reason.toString() });
 

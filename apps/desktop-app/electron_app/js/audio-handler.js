@@ -334,9 +334,37 @@ class AudioHandler {
             return;
         }
         
-        // Get available voices
-        const voices = this.synthesis.getVoices();
-        console.log(`Available voices: ${voices.length}`);
+        // Store voices in a variable
+        this.availableVoices = [];
+        
+        // Function to load voices
+        const loadVoices = () => {
+            const voices = this.synthesis.getVoices();
+            this.availableVoices = voices || [];
+            console.log(`Available voices: ${this.availableVoices.length}`);
+            
+            // Log voice names for debugging
+            if (this.availableVoices.length > 0) {
+                console.log('Voice names:', this.availableVoices.map(v => v.name).join(', '));
+            } else {
+                console.warn('No TTS voices available - will use default speech synthesis');
+            }
+        };
+        
+        // Load voices immediately if available
+        loadVoices();
+        
+        // Listen for voiceschanged event (Chrome needs this)
+        if (this.synthesis.onvoiceschanged !== undefined) {
+            this.synthesis.onvoiceschanged = loadVoices;
+        }
+        
+        // Fallback: try to load voices again after a delay (some browsers need this)
+        setTimeout(() => {
+            if (this.availableVoices.length === 0) {
+                loadVoices();
+            }
+        }, 1000);
     }
 
     speak(text, options = {}) {
@@ -356,8 +384,8 @@ class AudioHandler {
         utterance.volume = options.volume || 1;
         utterance.lang = options.lang || 'en-US';
         
-        // Select voice
-        const voices = this.synthesis.getVoices();
+        // Select voice from cached voices
+        const voices = this.availableVoices || [];
         if (options.voice) {
             const voice = voices.find(v => v.name === options.voice);
             if (voice) {

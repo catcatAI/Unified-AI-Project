@@ -9,11 +9,6 @@
         "model_name": "llama3.2:1b",
         "enabled": true
     },
-    "ollama-tinyllama": {
-        "base_url": "http://localhost:11434",
-        "model_name": "tinyllama",
-        "enabled": false
-    },
     "openai-gpt4": {
         "base_url": "https://api.openai.com/v1",
         "model_name": "gpt-4",

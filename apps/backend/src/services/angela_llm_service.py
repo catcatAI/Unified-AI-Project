@@ -187,8 +187,44 @@ class OllamaBackend(BaseLLMBackend):
                 )
 
                 if response.status_code == 200:
-                    data = response.json()
-                    text = data.get("message", {}).get("content", "")
+                    try:
+                        # Ollama 可能返回 NDJSON 格式（多個 JSON 用換行分隔）
+                        # 先嘗試標準 JSON 解析，如果失敗則處理 NDJSON
+                        try:
+                            data = response.json()
+                        except Exception as json_error:
+                            # 檢查是否是 "Extra data" 錯誤（NDJSON 格式）
+                            if "Extra data" in str(json_error):
+                                data = None
+                                text = ""
+                                # 解析 NDJSON - 逐行解析，取最後一個完整的 JSON
+                                lines = response.text.strip().split('\n')
+                                for line in lines:
+                                    line = line.strip()
+                                    if line:
+                                        try:
+                                            data = json.loads(line)
+                                            # 找到最後一個包含 message.content 的完整回應
+                                            if data.get("message", {}).get("content"):
+                                                text = data.get("message", {}).get("content", "")
+                                        except:
+                                            continue
+                                if data is None:
+                                    raise json_error
+                            else:
+                                raise json_error
+                        
+                        if not text:
+                            text = data.get("message", {}).get("content", "") if data else ""
+                    except Exception as json_error:
+                        logger.warning(f"Ollama JSON 解析錯誤: {json_error}, 原始回應: {response.text[:200]}")
+                        return LLMResponse(
+                            text="",
+                            backend="ollama",
+                            model=self.model,
+                            error=f"JSON parse error: {str(json_error)}",
+                            response_time_ms=(time.time() - start_time) * 1000
+                        )
 
                     return LLMResponse(
                         text=text,
@@ -311,10 +347,12 @@ class AngelaLLMService:
             for backend_type in priority:
                 if backend_type in available_backends:
                     self.active_backend = self.backends[backend_type]
+                    self.active_backend_type = backend_type
                     break
 
             self.is_available = True
-            logger.info(f"Angela LLM 服務初始化完成，使用 {self.active_backend.backend if self.active_backend else 'none'} 後端")
+            backend_name = self.active_backend_type.value if self.active_backend_type else 'none'
+            logger.info(f"Angela LLM 服務初始化完成，使用 {backend_name} 後端")
             return True
         else:
             logger.warning("沒有可用的 LLM 後端，將使用備份回應機制")
@@ -440,9 +478,14 @@ class AngelaLLMService:
 
     def get_status(self) -> Dict[str, Any]:
         """獲取服務狀態"""
+        active_backend_name = getattr(self, 'active_backend_type', None)
+        if active_backend_name and self.active_backend:
+            active_backend_name = active_backend_name.value
+        else:
+            active_backend_name = None
         return {
             "is_available": self.is_available,
-            "active_backend": self.active_backend.backend if self.active_backend else None,
+            "active_backend": active_backend_name,
             "available_backends": [b.value for b in self.backends.keys()],
             "backends_health": {}
         }

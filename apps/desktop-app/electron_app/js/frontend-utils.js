@@ -233,6 +233,48 @@ const FrontendUtils = {
   
   // ==================== WebGL 工具 ====================
   
+  // WebGL Context 管理器
+  _webglContextManager: {
+    contexts: new WeakMap(),
+    maxContexts: 3,
+    _createdContexts: [],
+    
+    register(canvas, gl) {
+      if (!this.contexts.has(canvas)) {
+        if (this._createdContexts.length >= this.maxContexts) {
+          console.warn(`WebGL Context count limit reached (${this.maxContexts}), cleaning up oldest`);
+          this.cleanupOldest();
+        }
+        this.contexts.set(canvas, { gl, createdAt: Date.now() });
+        this._createdContexts.push(canvas);
+        console.log(`WebGL Context registered (${this._createdContexts.length}/${this.maxContexts})`);
+      }
+    },
+    
+    unregister(canvas) {
+      if (this.contexts.has(canvas)) {
+        const ctx = this.contexts.get(canvas);
+        if (ctx.gl) {
+          const ext = ctx.gl.getExtension('WEBGL_lose_context');
+          if (ext) ext.loseContext();
+        }
+        this.contexts.delete(canvas);
+        this._createdContexts = this._createdContexts.filter(c => c !== canvas);
+      }
+    },
+    
+    cleanupOldest() {
+      if (this._createdContexts.length > 0) {
+        const oldest = this._createdContexts[0];
+        this.unregister(oldest);
+      }
+    },
+    
+    getCount() {
+      return this._createdContexts.length;
+    }
+  },
+  
   /**
    * 检查 WebGL 扩展（兼容性模式）
    */
@@ -286,7 +328,11 @@ const FrontendUtils = {
     
     for (const ctxName of contexts) {
       const gl = canvas.getContext(ctxName, glOptions);
-      if (gl) return gl;
+      if (gl) {
+        // 註冊 Context 以追蹤和管理
+        this._webglContextManager.register(canvas, gl);
+        return gl;
+      }
     }
     
     return null;
