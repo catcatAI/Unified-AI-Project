@@ -262,23 +262,82 @@ class AngelaApp {
         const canvas = document.getElementById('fallback-canvas') || document.getElementById('live2d-canvas');
         
         // 创建 UDM 实例（传入元素引用）
-        this.udm = new UnifiedDisplayMatrix({
-            wrapperElement: wrapper,
-            canvasElement: canvas
-        });
-        
-        // 设置 wrapper 尺寸为 UDM display size (720p = 100%)
-        if (wrapper && this.udm) {
-            const displaySize = this.udm.getDisplaySize();
-            wrapper.style.width = displaySize.width + 'px';
-            wrapper.style.height = displaySize.height + 'px';
-            console.log('[AngelaApp] Wrapper size set:', displaySize.width, 'x', displaySize.height);
+        try {
+            this.udm = new UnifiedDisplayMatrix({
+                wrapperElement: wrapper,
+                canvasElement: canvas
+            });
+            
+            // 设置 wrapper 尺寸为 UDM display size (720p = 100%)
+            if (wrapper && this.udm) {
+                const displaySize = this.udm.getDisplaySize();
+                wrapper.style.width = displaySize.width + 'px';
+                wrapper.style.height = displaySize.height + 'px';
+                console.log('[AngelaApp] Wrapper size set:', displaySize.width, 'x', displaySize.height);
+            }
+            
+            // 绑定按钮事件
+            this._bindScaleButtons();
+            
+            console.log('[AngelaApp] UDM initialized successfully');
+        } catch (error) {
+            console.error('[AngelaApp] UDM初始化失败，使用降级方案:', error);
+            
+            // 降级方案：创建简化的UDM
+            this.udm = {
+                // 基本坐标转换
+                screenToCanvas: (sx, sy) => {
+                    if (!canvas) return { x: sx, y: sy };
+                    const rect = canvas.getBoundingClientRect();
+                    return {
+                        x: (sx - rect.left) * (canvas.width / rect.width),
+                        y: (sy - rect.top) * (canvas.height / rect.height)
+                    };
+                },
+                
+                // 基本缩放
+                getUserScale: () => 1.0,
+                setUserScale: (scale) => {},
+                
+                // 基本身体部位检测
+                identifyBodyPart: (x, y) => {
+                    // 简单的中心区域检测
+                    const cx = 640; // 1280/2
+                    const cy = 360; // 720/2
+                    const dx = x - cx;
+                    const dy = y - cy;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 100) {
+                        return { name: 'face', priority: 1, expression: 'neutral' };
+                    }
+                    return null;
+                },
+                
+                // 基本触觉强度计算
+                calculateHapticIntensity: (base, pos, size) => base,
+                
+                // 基本方法
+                handleTouch: (x, y, type) => ({ success: false }),
+                handleClick: (x, y) => ({ success: false }),
+                
+                // 显示尺寸
+                getDisplaySize: () => ({ width: 1280, height: 720 })
+            };
+            
+            // 仍然设置wrapper尺寸
+            if (wrapper) {
+                wrapper.style.width = '1280px';
+                wrapper.style.height = '720px';
+            }
+            
+            console.warn('[AngelaApp] 使用简化的UDM降级方案');
+            
+            // 通知用户
+            if (this._showNotification) {
+                this._showNotification('部分功能受限，使用降级模式', 'warning');
+            }
         }
-        
-        // 绑定按钮事件
-        this._bindScaleButtons();
-        
-        console.log('[AngelaApp] UDM initialized');
     }
     
     /**
