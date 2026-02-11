@@ -27,6 +27,14 @@ class BackendWebSocketClient {
         this.maxReconnectAttempts = 10;
         this.heartbeatInterval = null;
         this.eventHandlers = {};
+        
+        // 离线消息队列
+        this._offlineQueue = [];
+        this._maxQueueSize = 100; // 最大队列大小
+        this._queuePersisted = false; // 是否已持久化到localStorage
+        
+        // 恢复持久化的离线消息
+        this._loadOfflineQueue();
     }
     
     async connect(url) {
@@ -50,6 +58,9 @@ class BackendWebSocketClient {
                 
                 // 通知連接成功
                 this._fireEvent('connected', { url, timestamp: Date.now() });
+                
+                // 发送离线队列中的消息
+                this._flushOfflineQueue();
             };
             
             this.ws.onmessage = (event) => this._handleMessage(event);
@@ -256,7 +267,9 @@ class BackendWebSocketClient {
     
     send(message) {
         if (!this.connected || !this.ws) {
-            console.warn('Not connected, message not sent:', message);
+            // 离线时添加到队列
+            this._addToOfflineQueue(message);
+            console.warn('Not connected, message queued:', message);
             return;
         }
         
@@ -305,6 +318,173 @@ class BackendWebSocketClient {
         });
     }
 
+    /**
+     * 添加消息到离线队列
+     * @param {Object} message - 消息对象
+     */
+    _addToOfflineQueue(message) {
+        const queuedMessage = {
+            ...message,
+            _queuedAt: Date.now(),
+            _id: this._generateQueueId()
+        };
+        
+        this._offlineQueue.push(queuedMessage);
+        
+        // 限制队列大小
+        if (this._offlineQueue.length > this._maxQueueSize) {
+            const removed = this._offlineQueue.shift();
+            console.warn('[BackendWebSocket] 队列已满，移除最旧的消息:', removed._id);
+        }
+        
+        // 持久化到localStorage
+        this._persistOfflineQueue();
+        
+        console.log(`[BackendWebSocket] 消息已加入离线队列 (${this._offlineQueue.length}/${this._maxQueueSize})`);
+    }
+    
+    /**
+     * 发送离线队列中的所有消息
+     */
+    async _flushOfflineQueue() {
+        if (this._offlineQueue.length === 0) {
+            console.log('[BackendWebSocket] 离线队列为空，无需发送');
+            return;
+        }
+        
+        console.log(`[BackendWebSocket] 开始发送 ${this._offlineQueue.length} 条离线消息`);
+        
+        const queue = [...this._offlineQueue];
+        this._offlineQueue = [];
+        this._persistOfflineQueue();
+        
+        let successCount = 0;
+        let failCount = 0;
+        
+        for (const message of queue) {
+            try {
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject(new Error('Timeout'));
+                    }, 5000); // 每条消息5秒超时
+                    
+                    try {
+                        this.ws.send(JSON.stringify(message));
+                        clearTimeout(timeout);
+                        resolve();
+                    } catch (error) {
+                        clearTimeout(timeout);
+                        reject(error);
+                    }
+                });
+                
+                successCount++;
+                
+                // 添加延迟，避免发送过快
+                if (queue.indexOf(message) < queue.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            } catch (error) {
+                console.error('[BackendWebSocket] 发送离线消息失败:', error, message);
+                failCount++;
+                
+                // 重新加入队列（最多重试一次）
+                if (!message._retryCount) {
+                    message._retryCount = 1;
+                    this._offlineQueue.push(message);
+                }
+            }
+        }
+        
+        // 持久化剩余消息
+        if (this._offlineQueue.length > 0) {
+            this._persistOfflineQueue();
+        }
+        
+        console.log(`[BackendWebSocket] 离线消息发送完成: ${successCount} 成功, ${failCount} 失败`);
+        
+        this._fireEvent('offlineQueueFlushed', {
+            successCount,
+            failCount,
+            remaining: this._offlineQueue.length
+        });
+    }
+    
+    /**
+     * 从localStorage加载离线队列
+     */
+    _loadOfflineQueue() {
+        try {
+            const data = localStorage.getItem('angela_offline_queue');
+            if (data) {
+                this._offlineQueue = JSON.parse(data);
+                console.log(`[BackendWebSocket] 从localStorage恢复 ${this._offlineQueue.length} 条离线消息`);
+                
+                // 检查消息是否过期（7天）
+                const expireTime = 7 * 24 * 60 * 60 * 1000;
+                const now = Date.now();
+                this._offlineQueue = this._offlineQueue.filter(msg => {
+                    return !msg._queuedAt || (now - msg._queuedAt) < expireTime;
+                });
+                
+                if (this._offlineQueue.length > 0) {
+                    this._persistOfflineQueue();
+                }
+            }
+        } catch (error) {
+            console.error('[BackendWebSocket] 加载离线队列失败:', error);
+            this._offlineQueue = [];
+        }
+    }
+    
+    /**
+     * 持久化离线队列到localStorage
+     */
+    _persistOfflineQueue() {
+        try {
+            if (this._offlineQueue.length > 0) {
+                localStorage.setItem('angela_offline_queue', JSON.stringify(this._offlineQueue));
+            } else {
+                localStorage.removeItem('angela_offline_queue');
+            }
+            this._queuePersisted = true;
+        } catch (error) {
+            console.error('[BackendWebSocket] 持久化离线队列失败:', error);
+        }
+    }
+    
+    /**
+     * 清空离线队列
+     */
+    clearOfflineQueue() {
+        this._offlineQueue = [];
+        try {
+            localStorage.removeItem('angela_offline_queue');
+        } catch (error) {
+            console.error('[BackendWebSocket] 清空离线队列失败:', error);
+        }
+        console.log('[BackendWebSocket] 离线队列已清空');
+    }
+    
+    /**
+     * 获取离线队列状态
+     */
+    getOfflineQueueStatus() {
+        return {
+            size: this._offlineQueue.length,
+            maxSize: this._maxQueueSize,
+            oldestMessage: this._offlineQueue[0]?._queuedAt || null,
+            newestMessage: this._offlineQueue[this._offlineQueue.length - 1]?._queuedAt || null
+        };
+    }
+    
+    /**
+     * 生成队列ID
+     */
+    _generateQueueId() {
+        return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
+
     disconnect() {
         if (this.ws) {
             this.ws.close();
@@ -317,6 +497,9 @@ class BackendWebSocketClient {
             clearTimeout(this.reconnectInterval);
             this.reconnectInterval = null;
         }
+        
+        // 断开时清理过期的离线消息，但保留其他消息
+        this._loadOfflineQueue();
     }
     
     // 事件註冊
