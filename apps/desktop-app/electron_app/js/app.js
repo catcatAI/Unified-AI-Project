@@ -34,6 +34,7 @@ class AngelaApp {
         // UI 元素
         this.loadingOverlay = document.getElementById('loading-overlay');
         this.loadingText = document.getElementById('loading-text');
+        this.progressBarFill = document.getElementById('progress-bar-fill');
         this.statusBar = document.getElementById('status-bar');
         this.controls = document.getElementById('controls');
         
@@ -42,6 +43,7 @@ class AngelaApp {
         this.currentModel = null;
         this.idleTimer = null;
         this.idleTimeout = 60000;
+        this.loadingProgress = 0;  // 加载进度 0-100
         
         this.initialize();
     }
@@ -49,61 +51,87 @@ class AngelaApp {
     async initialize() {
         console.log('[AngelaApp] Initializing...');
         
+        // 重置进度
+        this.loadingProgress = 0;
+        this.updateLoadingProgress(0, 'Initializing Angela AI...');
+        
         try {
-            // 1. 基础设施
+            // 1. 基础设施 (10%)
             await this._initializeLogger();
+            this.incrementLoadingProgress(2, 'Initializing logger...');
             await this._initializeDataPersistence();
+            this.incrementLoadingProgress(2, 'Initializing data persistence...');
             await this._initializeSecurity();
+            this.incrementLoadingProgress(2, 'Initializing security...');
             await this._initializeI18n();
+            this.incrementLoadingProgress(2, 'Initializing i18n...');
             await this._initializeThemeManager();
+            this.incrementLoadingProgress(1, 'Initializing theme...');
             await this._initializeUserManager();
+            this.incrementLoadingProgress(1, 'Initializing user manager...');
             
-            // 2. 硬件检测
+            // 2. 硬件检测 (15%)
             await this._initializeHardwareDetection();
+            this.incrementLoadingProgress(5, 'Detecting hardware...');
             
-            // 3. 初始化 UDM（最先初始化，其他系统依赖它）
+            // 3. 初始化 UDM（最先初始化，其他系统依赖它）(20%)
             console.log('[App] Initializing UDM...');
             this._initializeUDM();
+            this.incrementLoadingProgress(5, 'Initializing display matrix...');
             
-            // 4. Angela 逻辑系统
+            // 4. Angela 逻辑系统 (35%)
             this._initializeStateMatrix();
+            this.incrementLoadingProgress(5, 'Initializing state matrix...');
             this._initializePrecisionManager();
+            this.incrementLoadingProgress(5, 'Initializing precision manager...');
             this._initializeMaturityTracker();
+            this.incrementLoadingProgress(5, 'Initializing maturity tracker...');
             
-            // 5. 性能管理器（需要在 window.angelaApp 设置后调用 toggleModule）
+            // 5. 性能管理器（需要在 window.angelaApp 设置后调用 toggleModule）(45%)
             // 先暴露实例，确保 PerformanceManager 能访问 toggleModule
             window.angelaApp = this;
             this._setupPlaceholderMethods();  // 设置占位方法
             await this._initializePerformanceManager();
+            this.incrementLoadingProgress(10, 'Initializing performance manager...');
             
-            // 6. 检测系统
+            // 6. 检测系统 (50%)
             await this._initializeDetectionSystem();
+            this.incrementLoadingProgress(5, 'Initializing detection system...');
             
-            // 7. Live2D（传入 UDM）
+            // 7. Live2D（传入 UDM）(65%)
             await this._initializeLive2D();
+            this.incrementLoadingProgress(15, 'Initializing Live2D...');
             
-            // 8. 连接系统
+            // 8. 连接系统 (70%)
             this._linkSystems();
+            this.incrementLoadingProgress(5, 'Connecting systems...');
             
-            // 9. 其他处理器
+            // 9. 其他处理器 (90%)
             this._initializeBackendWebSocket();
             this._initializeAPIClient();
             this._initializeInputHandler();
             await this._initializeAudioHandler();
+            this.incrementLoadingProgress(5, 'Initializing audio...');
             await this._initializeHapticHandler();
+            this.incrementLoadingProgress(5, 'Initializing haptic...');
             await this._initializeWallpaperHandler();
+            this.incrementLoadingProgress(5, 'Initializing wallpaper...');
             await this._initializePluginManager();
             await this._initializePerformanceMonitor();
+            this.incrementLoadingProgress(5, 'Initializing plugins and monitor...');
             
-            // 10. UI 组件
+            // 10. UI 组件 (95%)
             await this._initializeDialogueUI();
+            this.incrementLoadingProgress(5, 'Initializing dialogue UI...');
             
-            // 11. 最终设置
+            // 11. 最终设置 (100%)
             this._setupUIControls();
             this._setupElectronEvents();
             await this._loadDefaultModel();
+            this.incrementLoadingProgress(3, 'Loading model...');
             this._setupIdleDetection();
             await this._syncWithBackend();
+            this.incrementLoadingProgress(2, 'Finalizing...');
             
             this._hideLoading();
             window.angelaApp = this;
@@ -588,6 +616,31 @@ class AngelaApp {
 
     updateLoadingText(text) {
         if (this.loadingText) this.loadingText.textContent = text;
+    }
+
+    updateLoadingProgress(progress, text = null) {
+        // progress: 0-100
+        this.loadingProgress = Math.min(100, Math.max(0, progress));
+        
+        if (this.progressBarFill) {
+            this.progressBarFill.style.width = `${this.loadingProgress}%`;
+            
+            // 完成时添加完成样式
+            if (this.loadingProgress >= 100) {
+                this.progressBarFill.classList.add('complete');
+            } else {
+                this.progressBarFill.classList.remove('complete');
+            }
+        }
+        
+        // 可选地更新文本
+        if (text) {
+            this.updateLoadingText(text);
+        }
+    }
+
+    incrementLoadingProgress(delta, text = null) {
+        this.updateLoadingProgress(this.loadingProgress + delta, text);
     }
 
     _hideLoading() {
