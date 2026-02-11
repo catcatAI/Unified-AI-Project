@@ -117,6 +117,17 @@ class UnifiedDisplayMatrix {
             touch: []  // 触摸事件监听器
         };
 
+        // ============================================================
+        // 触摸事件本地队列
+        // ============================================================
+        this.touchQueue = [];
+        this.maxTouchQueueSize = 50;
+        this.touchQueueProcessing = false;
+        this.touchQueueFlushInterval = null;
+        
+        // 启动触摸队列自动刷新
+        this._startTouchQueueFlush();
+
         console.log('[UDM] UnifiedDisplayMatrix initialized (720p=100%)');
     }
 
@@ -902,7 +913,127 @@ class UnifiedDisplayMatrix {
         return matrices[`${from}→${to}`] || null;
     }
 
-    destroy() {
+    /**
+     * 启动触摸队列自动刷新
+     */
+    _startTouchQueueFlush() {
+        // 每100ms尝试刷新一次队列
+        this.touchQueueFlushInterval = setInterval(() => {
+            this._flushTouchQueue();
+        }, 100);
+    }
+
+    /**
+     * 停止触摸队列刷新
+     */
+    _stopTouchQueueFlush() {
+        if (this.touchQueueFlushInterval) {
+            clearInterval(this.touchQueueFlushInterval);
+            this.touchQueueFlushInterval = null;
+        }
+    }
+
+    /**
+     * 添加触摸事件到队列
+     */
+    _addToTouchQueue(screenX, screenY, touchType) {
+        const touchEvent = {
+            screenX,
+            screenY,
+            touchType,
+            timestamp: Date.now(),
+            id: this._generateTouchId()
+        };
+
+        this.touchQueue.push(touchEvent);
+
+        // 限制队列大小
+        if (this.touchQueue.length > this.maxTouchQueueSize) {
+            const removed = this.touchQueue.shift();
+            console.warn('[UDM] 触摸队列已满，移除最旧的事件:', removed.id);
+        }
+
+        return touchEvent.id;
+    }
+
+    /**
+     * 刷新触摸队列
+     */
+    _flushTouchQueue() {
+        if (this.touchQueue.length === 0 || this.touchQueueProcessing) {
+            return;
+        }
+
+        this.touchQueueProcessing = true;
+
+        try {
+            // 处理队列中的所有触摸事件
+            const events = [...this.touchQueue];
+            this.touchQueue = [];
+
+            for (const event of events) {
+                try {
+                    this._processTouch(event.screenX, event.screenY, event.touchType);
+                } catch (error) {
+                    console.error('[UDM] 处理触摸事件失败:', error, event);
+                }
+            }
+
+            if (events.length > 0) {
+                console.log(`[UDM] 已处理 ${events.length} 个触摸事件`);
+            }
+        } finally {
+            this.touchQueueProcessing = false;
+        }
+    }
+
+    /**
+     * 生成触摸ID
+     */
+    _generateTouchId() {
+        return `touch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    /**
+     * 清空触摸队列
+     */
+    clearTouchQueue() {
+        this.touchQueue = [];
+        console.log('[UDM] 触摸队列已清空');
+    }
+
+    /**
+     * 获取触摸队列状态
+     */
+    getTouchQueueStatus() {
+        return {
+            size: this.touchQueue.length,
+            maxSize: this.maxTouchQueueSize,
+            processing: this.touchQueueProcessing
+        };
+    }
+
+    /**
+     * 修改后的handleTouch方法 - 添加到队列
+     */
+    handleTouch(screenX, screenY, touchType = 'pat') {
+        // 添加到队列
+        const touchId = this._addToTouchQueue(screenX, screenY, touchType);
+        
+        // 返回队列ID
+        return {
+            success: true,
+            queued: true,
+            touchId: touchId,
+            queueSize: this.touchQueue.length
+        };
+    }
+
+    /**
+     * 实际处理触摸事件（内部方法）
+     */
+    _processTouch(screenX, screenY, touchType = 'pat') {
+        const result = {
         this.wrapperElement = null;
         this.canvasElement = null;
         this.angelaSystem = { stateMatrix: null, live2DManager: null, hapticHandler: null };
