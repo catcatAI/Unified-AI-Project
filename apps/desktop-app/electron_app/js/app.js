@@ -481,17 +481,25 @@ class AngelaApp {
         document.getElementById('btn-settings')?.addEventListener('click', () => {
             window.electronAPI?.settings?.open();
         });
-        
+
         document.getElementById('btn-minimize')?.addEventListener('click', () => {
             window.electronAPI?.window?.minimize();
         });
-        
+
         document.getElementById('btn-close')?.addEventListener('click', () => {
             window.electronAPI?.window?.close();
         });
-        
-        document.addEventListener('mouseenter', () => this.controls?.classList.add('visible'));
-        document.addEventListener('mouseleave', () => this.controls?.classList.remove('visible'));
+
+        // 将鼠标事件绑定到 controls 元素本身，而不是 document
+        // 避免全局事件监听器导致的内存泄漏
+        if (this.controls) {
+            this.controls.addEventListener('mouseenter', () => {
+                this.controls.classList.add('visible');
+            });
+            this.controls.addEventListener('mouseleave', () => {
+                this.controls.classList.remove('visible');
+            });
+        }
     }
 
     _setupElectronEvents() {
