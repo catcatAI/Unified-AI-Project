@@ -1034,7 +1034,154 @@ class UnifiedDisplayMatrix {
      */
     _processTouch(screenX, screenY, touchType = 'pat') {
         const result = {
-        this.wrapperElement = null;
+            success: false,
+            coordinates: null,
+            bodyPart: null,
+            hapticIntensity: 0,
+            expression: null,
+            stateUpdate: null,
+            errors: []
+        };
+
+        try {
+            // 1. 坐标转换
+            let canvasCoords, resourceCoords;
+            try {
+                canvasCoords = this.screenToCanvas(screenX, screenY);
+                resourceCoords = this.canvasToResource(canvasCoords.x, canvasCoords.y);
+                result.coordinates = {
+                    screen: { x: screenX, y: screenY },
+                    canvas: canvasCoords,
+                    resource: resourceCoords
+                };
+            } catch (coordError) {
+                console.error('[UDM] 坐标转换失败:', coordError);
+                result.errors.push({
+                    step: 'coordinate_conversion',
+                    error: coordError.message
+                });
+                return result;
+            }
+
+            // 2. 识别人体区域
+            let bodyPart;
+            try {
+                bodyPart = this.identifyBodyPart(resourceCoords.x, resourceCoords.y);
+                result.bodyPart = bodyPart;
+            } catch (detectError) {
+                console.error('[UDM] 人体区域识别失败:', detectError);
+                result.errors.push({
+                    step: 'body_part_detection',
+                    error: detectError.message
+                });
+                return result;
+            }
+
+            if (!bodyPart) {
+                console.log('[UDM] No body part detected at:', resourceCoords);
+                return result;
+            }
+
+            // 3. 计算触觉强度
+            let hapticIntensity = 0;
+            try {
+                hapticIntensity = this.calculateHapticIntensity(0.8, canvasCoords, { width: 20, height: 20 });
+                result.hapticIntensity = hapticIntensity;
+            } catch (hapticError) {
+                console.warn('[UDM] 触觉强度计算失败，使用默认值:', hapticError);
+                result.errors.push({
+                    step: 'haptic_intensity',
+                    error: hapticError.message
+                });
+                hapticIntensity = 0.5;
+            }
+
+            // 4. 更新 StateMatrix4D
+            if (this.angelaSystem && this.angelaSystem.stateMatrix) {
+                try {
+                    const stateData = {
+                        type: touchType,
+                        part: bodyPart.name,
+                        intensity: hapticIntensity,
+                        position: canvasCoords
+                    };
+                    this.angelaSystem.stateMatrix.handleInteraction('touch', stateData);
+                    result.stateUpdate = {
+                        updated: true,
+                        dimension: 'alpha+delta+gamma'
+                    };
+                } catch (stateError) {
+                    console.error('[UDM] 状态矩阵更新失败:', stateError);
+                    result.errors.push({
+                        step: 'state_matrix_update',
+                        error: stateError.message
+                    });
+                }
+            }
+
+            // 5. 触发触觉反馈
+            if (this.angelaSystem && this.angelaSystem.hapticHandler && hapticIntensity > 0.1) {
+                try {
+                    this.angelaSystem.hapticHandler.triggerHaptic(hapticIntensity, touchType);
+                } catch (hapticTriggerError) {
+                    console.warn('[UDM] 触觉反馈触发失败:', hapticTriggerError);
+                    result.errors.push({
+                        step: 'haptic_feedback',
+                        error: hapticTriggerError.message
+                    });
+                }
+            }
+
+            // 6. 触发 Live2D 表情
+            if (this.angelaSystem && this.angelaSystem.live2DManager && bodyPart.expression) {
+                try {
+                    this.angelaSystem.live2DManager.setExpression(bodyPart.expression);
+                    result.expression = bodyPart.expression;
+                } catch (expressionError) {
+                    console.warn('[UDM] Live2D表情设置失败:', expressionError);
+                    result.errors.push({
+                        step: 'live2d_expression',
+                        error: expressionError.message
+                    });
+                }
+            }
+
+            // 7. 通知触摸监听器
+            try {
+                this._notifyListeners('touch', {
+                    type: touchType,
+                    bodyPart: bodyPart,
+                    intensity: hapticIntensity,
+                    coordinates: result.coordinates
+                });
+            } catch (notifyError) {
+                console.warn('[UDM] 触摸监听器通知失败:', notifyError);
+                result.errors.push({
+                    step: 'notify_listeners',
+                    error: notifyError.message
+                });
+            }
+
+            result.success = result.errors.length === 0 || result.errors.every(e => 
+                e.step === 'haptic_feedback' || e.step === 'live2d_expression' || e.step === 'notify_listeners'
+            );
+            
+            if (result.success) {
+                console.log('[UDM] Touch processed:', touchType, bodyPart.name, 'intensity:', hapticIntensity.toFixed(2));
+            } else if (result.errors.length > 0) {
+                console.warn('[UDM] Touch processed with errors:', result.errors);
+            }
+
+        } catch (globalError) {
+            console.error('[UDM] _processTouch 全局错误:', globalError);
+            result.errors.push({
+                step: 'global',
+                error: globalError.message
+            });
+        }
+
+        return result;
+    }
         this.canvasElement = null;
         this.angelaSystem = { stateMatrix: null, live2DManager: null, hapticHandler: null };
         this.listeners = { scaleChange: [], precisionChange: [], resize: [], touch: [] };
