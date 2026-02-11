@@ -287,7 +287,7 @@ class StateMatrix4D {
      * 启动历史清理定时器
      */
     _startHistoryCleanupTimer() {
-        // 每5分钟清理一次历史记录
+        // 每15分钟清理一次历史记录（优化：降低清理频率，减少CPU使用）
         this.historyCleanupInterval = setInterval(() => {
             try {
                 this._trimHistoryByTime();
@@ -301,7 +301,7 @@ class StateMatrix4D {
             } catch (error) {
                 console.error('[StateMatrix4D] 历史清理定时器错误:', error);
             }
-        }, 300000); // 5分钟 = 300000毫秒
+        }, 900000); // 15分钟 = 900000毫秒
     }
     
     /**
