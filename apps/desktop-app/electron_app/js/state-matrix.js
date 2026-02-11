@@ -1,3 +1,20 @@
+/**
+ * =============================================================================
+ * ANGELA-MATRIX: L1-L6[全层] αβγδ [A/B/C] L2+
+ * =============================================================================
+ *
+ * 职责: 管理 4D 状态矩阵 (αβγδ)，实时更新所有维度
+ * 维度: 涉及所有四个维度 (αβγδ)
+ *   - α (Alpha): 生理维度 - energy, comfort, arousal, rest_need, vitality, tension
+ *   - β (Beta): 认知维度 - curiosity, focus, confusion, learning, clarity, creativity
+ *   - γ (Gamma): 物理维度 - happiness, sadness, anger, fear, surprise, disgust
+ *   - δ (Delta): 精神维度 - mood, emotion, personality, wisdom, empathy
+ * 安全: 跨所有安全层级 (A/B/C)
+ * 成熟度: L2+ 等级开始接触状态矩阵概念
+ *
+ * @class StateMatrix4D
+ */
+
 class StateMatrix4D {
     constructor(config = {}) {
         this.config = config;

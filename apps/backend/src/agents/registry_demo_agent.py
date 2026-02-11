@@ -201,4 +201,4 @@ class RegistryDemoAgent(BaseAgent):
             return {
                 "status": "error",
                 "message": f"Unknown discovery type: {discovery_type}"
-            }}
+            }

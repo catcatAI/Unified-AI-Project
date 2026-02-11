@@ -1,413 +1,265 @@
-"""
-企業級日誌系統
-提供結構化日誌、錯誤追蹤和審計功能
-"""
+# =============================================================================
+# ANGELA-MATRIX: L6[执行层] 全层级 [A] L2+
+# =============================================================================
+#
+# 职责: 企业级日志系统，提供结构化日志、错误追踪和审计功能
+# 维度: 涉及所有维度，记录系统事件
+# 安全: 使用 Key A (后端控制) 进行审计日志记录
+# 成熟度: L2+ 等级理解日志的重要性
+#
+# =============================================================================
 
-from tests.tools.test_tool_dispatcher_logging import
-from tests.test_json_fix import
-# TODO: Fix import - module 'traceback' not found
-from system_test import
+import asyncio
+import traceback
+import uuid
+import logging
+import json
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 from pathlib import Path
 from enum import Enum
-# TODO: Fix import - module 'asyncio' not found
 from contextvars import ContextVar
-# TODO: Fix import - module 'uuid' not found
 
 # 上下文變量用於追蹤請求
-request_id, ContextVar[Optional[str]] = ContextVar('request_id', default == None)
-user_id, ContextVar[Optional[str]] = ContextVar('user_id', default == None)
-session_id, ContextVar[Optional[str]] = ContextVar('session_id', default == None)
+request_id_var: ContextVar[Optional[str]] = ContextVar('request_id', default=None)
+user_id_var: ContextVar[Optional[str]] = ContextVar('user_id', default=None)
+session_id_var: ContextVar[Optional[str]] = ContextVar('session_id', default=None)
 
 class LogLevel(Enum):
     """日誌級別"""
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
+    DEBUG = "debug"
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
 
 class LogCategory(Enum):
     """日誌分類"""
     SYSTEM = "system"
-    API = "api"
+    USER = "user"
     AI = "ai"
+    NETWORK = "network"
     DATABASE = "database"
     SECURITY = "security"
     PERFORMANCE = "performance"
-    BUSINESS = "business"
     AUDIT = "audit"
 
-class EnterpriseLogger, :
+class EnterpriseLogger:
     """企業級日誌記錄器"""
     
-    def __init__(self, name, str, log_dir, str == "logs"):
+    def __init__(self, name: str, log_dir: str = "logs"):
         self.name = name
-        self.log_dir == Path(log_dir)
-        self.log_dir.mkdir(exist_ok == True)
+        self.log_dir = Path(log_dir)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         
-        # 創建不同類型的日誌記錄器
-        self.loggers = {}
-        self._setup_loggers()
+        # 創建 Python logger
+        self.logger = logging.getLogger(name)
+        self.logger.setLevel(logging.DEBUG)
         
-        # 錯誤統計
-        self.error_stats = {}
-            'total_errors': 0,
-            'by_category': {category.value, 0 for category in LogCategory}:
-            'by_level': {level.value, 0 for level in LogLevel}:
-            'recent_errors': []
-{        }
+        # 清除現有處理器
+        self.logger.handlers.clear()
+        
+        # 添加文件處理器
+        self._add_file_handler()
+        
+        # 添加控制台處理器
+        self._add_console_handler()
     
-    def _setup_loggers(self):
-        """設置各種日誌記錄器"""
-        # 主日誌記錄器
-        self.loggers['main'] = self._create_logger()
-            'main',
-            self.log_dir / 'app.log', ,
-(    logging.INFO())
+    def _add_file_handler(self):
+        """添加文件處理器"""
+        from logging.handlers import RotatingFileHandler
         
-        # 錯誤日誌記錄器
-        self.loggers['error'] = self._create_logger()
-            'error',
-            self.log_dir / 'error.log', ,
-(    logging.ERROR())
+        # 主日誌文件
+        main_handler = RotatingFileHandler(
+            self.log_dir / f"{self.name}.log",
+            maxBytes=10*1024*1024,  # 10MB
+            backupCount=5
+        )
+        main_handler.setLevel(logging.DEBUG)
         
-        # 審計日誌記錄器
-        self.loggers['audit'] = self._create_logger()
-            'audit',
-            self.log_dir / 'audit.log', ,
-(    logging.INFO())
+        # 錯誤日誌文件
+        error_handler = RotatingFileHandler(
+            self.log_dir / f"{self.name}_error.log",
+            maxBytes=10*1024*1024,
+            backupCount=5
+        )
+        error_handler.setLevel(logging.ERROR)
         
-        # 性能日誌記錄器
-        self.loggers['performance'] = self._create_logger()
-            'performance',
-            self.log_dir / 'performance.log', ,
-(    logging.INFO())
+        # 審計日誌文件
+        audit_handler = RotatingFileHandler(
+            self.log_dir / f"{self.name}_audit.log",
+            maxBytes=10*1024*1024,
+            backupCount=10
+        )
+        audit_handler.setLevel(logging.INFO)
         
-        # 安全日誌記錄器
-        self.loggers['security'] = self._create_logger()
-            'security',
-            self.log_dir / 'security.log', ,
-(    logging.WARNING())
+        # 格式化器
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        
+        main_handler.setFormatter(formatter)
+        error_handler.setFormatter(formatter)
+        audit_handler.setFormatter(formatter)
+        
+        self.logger.addHandler(main_handler)
+        self.logger.addHandler(error_handler)
+        self.logger.addHandler(audit_handler)
     
-    def _create_logger(self, name, str, filepath, Path, level, int) -> logging.Logger, :
-        """創建日誌記錄器"""
-        logger = logging.getLogger(f"{self.name}.{name}")
-        logger.setLevel(level)
+    def _add_console_handler(self):
+        """添加控制台處理器"""
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
         
-        # 避免重複添加處理器
-        if logger.handlers, ::
-            return logger
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s',
+            datefmt='%H:%M:%S'
+        )
         
-        # 文件處理器(JSON 格式)
-        file_handler = logging.FileHandler(filepath, encoding = 'utf - 8')
-        file_handler.setLevel(level)
-        file_handler.setFormatter(JsonFormatter())
-        
-        # 控制台處理器(可讀格式)
-        console_handler = logging.StreamHandler(sys.stdout())
-        console_handler.setLevel(level)
-        console_handler.setFormatter(ReadableFormatter())
-        
-        logger.addHandler(file_handler)
-        logger.addHandler(console_handler)
-        
-        # 防止日誌傳播到根記錄器
-        logger.propagate == False
-        
-        return logger
+        console_handler.setFormatter(formatter)
+        self.logger.addHandler(console_handler)
     
-    def _log(self, level, LogLevel, category, LogCategory, message, str, , :)
-(    extra, Optional[Dict[str, Any]] = None, exc_info, Optional[Exception] = None):
+    def _log(
+        self,
+        level: LogLevel,
+        category: LogCategory,
+        message: str,
+        extra: Optional[Dict[str, Any]] = None,
+        exc_info: Optional[Exception] = None
+    ):
         """記錄日誌"""
-        # 構建日誌數據
-        log_data = {}
-            'timestamp': datetime.now(timezone.utc()).isoformat(),
-            'level': level.value(),
-            'category': category.value(),
-            'message': message,
-            'request_id': request_id.get(),
-            'user_id': user_id.get(),
-            'session_id': session_id.get(),
-            'service': self.name(),
-            * * (extra or {})
-{        }
+        # 獲取上下文
+        request_id = request_id_var.get()
+        user_id = user_id_var.get()
+        session_id = session_id_var.get()
         
-        # 添加異常信息
-        if exc_info, ::
-            log_data['exception'] = {:::}
+        # 構建日誌記錄
+        log_record = {
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'level': level.value,
+            'category': category.value,
+            'message': message,
+            'request_id': request_id,
+            'user_id': user_id,
+            'session_id': session_id,
+            'extra': extra or {}
+        }
+        
+        # 如果有異常，添加異常信息
+        if exc_info:
+            log_record['exception'] = {
                 'type': type(exc_info).__name__,
                 'message': str(exc_info),
                 'traceback': traceback.format_exc()
-{            }
-            
-            # 更新錯誤統計
-            self.error_stats['total_errors'] += 1
-            self.error_stats['by_category'][category.value] += 1
-            self.error_stats['by_level'][level.value] += 1
-            
-            # 記錄最近錯誤
-            error_record = {}
-                'timestamp': log_data['timestamp']
-                'category': category.value(),
-                'level': level.value(),
-                'message': message,
-                'exception_type': type(exc_info).__name__, :
-{            }
-            self.error_stats['recent_errors'].append(error_record)
-            
-            # 只保留最近100個錯誤
-            if len(self.error_stats['recent_errors']) > 100, ::
-                self.error_stats['recent_errors'].pop(0)
+            }
         
-        # 選擇合適的記錄器
-        if category == LogCategory.AUDIT, ::
-            logger = self.loggers['audit']
-        elif category == LogCategory.SECURITY, ::
-            logger = self.loggers['security']
-        elif category == LogCategory.PERFORMANCE, ::
-            logger = self.loggers['performance']
-        elif level in [LogLevel.ERROR(), LogLevel.CRITICAL]::
-            logger = self.loggers['error']
-        else,
-            logger = self.loggers['main']
+        # 記錄到 Python logger
+        log_level_map = {
+            LogLevel.DEBUG: logging.DEBUG,
+            LogLevel.INFO: logging.INFO,
+            LogLevel.WARNING: logging.WARNING,
+            LogLevel.ERROR: logging.ERROR,
+            LogLevel.CRITICAL: logging.CRITICAL
+        }
         
-        # 記錄日誌
-        getattr(logger, level.value.lower())(json.dumps(log_data,
-    ensure_ascii == False))
+        self.logger.log(
+            log_level_map[level],
+            json.dumps(log_record, ensure_ascii=False),
+            extra=log_record
+        )
     
-    def debug(self, message, str, category, LogCategory == LogCategory.SYSTEM(), :)
-(            extra, Optional[Dict[str, Any]] = None):
-        """記錄調試日誌"""
-        self._log(LogLevel.DEBUG(), category, message, extra)
+    def debug(self, message: str, category: LogCategory = LogCategory.SYSTEM, **extra):
+        """記錄 DEBUG 級別日誌"""
+        self._log(LogLevel.DEBUG, category, message, extra)
     
-    def info(self, message, str, category, LogCategory == LogCategory.SYSTEM(), :)
-(            extra, Optional[Dict[str, Any]] = None):
-        """記錄信息日誌"""
-        self._log(LogLevel.INFO(), category, message, extra)
+    def info(self, message: str, category: LogCategory = LogCategory.SYSTEM, **extra):
+        """記錄 INFO 級別日誌"""
+        self._log(LogLevel.INFO, category, message, extra)
     
-    def warning(self, message, str, category, LogCategory == LogCategory.SYSTEM(), :)
-(                extra, Optional[Dict[str, Any]] = None):
-        """記錄警告日誌"""
-        self._log(LogLevel.WARNING(), category, message, extra)
+    def warning(self, message: str, category: LogCategory = LogCategory.SYSTEM, **extra):
+        """記錄 WARNING 級別日誌"""
+        self._log(LogLevel.WARNING, category, message, extra)
     
-    def error(self, message, str, category, LogCategory == LogCategory.SYSTEM(), :)
-(            extra, Optional[Dict[str, Any]] = None, exc_info,
-    Optional[Exception] = None):
-        """記錄錯誤日誌"""
-        self._log(LogLevel.ERROR(), category, message, extra, exc_info)
+    def error(
+        self,
+        message: str,
+        category: LogCategory = LogCategory.SYSTEM,
+        exc_info: Optional[Exception] = None,
+        **extra
+    ):
+        """記錄 ERROR 級別日誌"""
+        self._log(LogLevel.ERROR, category, message, extra, exc_info)
     
-    def critical(self, message, str, category, LogCategory == LogCategory.SYSTEM(), :)
-(                extra, Optional[Dict[str, Any]] = None, exc_info,
-    Optional[Exception] = None):
-        """記錄嚴重錯誤日誌"""
-        self._log(LogLevel.CRITICAL(), category, message, extra, exc_info)
+    def critical(
+        self,
+        message: str,
+        category: LogCategory = LogCategory.SYSTEM,
+        exc_info: Optional[Exception] = None,
+        **extra
+    ):
+        """記錄 CRITICAL 級別日誌"""
+        self._log(LogLevel.CRITICAL, category, message, extra, exc_info)
     
-    def audit(self, action, str, resource, str, user_id, str, , :)
-(    result, str == "success", extra, Optional[Dict[str, Any]] = None):
+    def audit(self, action: str, user_id: Optional[str] = None, **details):
         """記錄審計日誌"""
-        audit_data = {}
-            'action': action,
-            'resource': resource,
-            'user_id': user_id,
-            'result': result,
-            * * (extra or {})
-{        }
-        self._log(LogLevel.INFO(), LogCategory.AUDIT(), f"審計, {action} on {resource}",
-    audit_data)
-    
-    def security(self, event, str, severity, str = "medium", , :)
-(    source, Optional[str] = None, extra, Optional[Dict[str, Any]] = None):
-        """記錄安全日誌"""
-        security_data = {}
-            'security_event': event,
-            'severity': severity,
-            'source': source,
-            * * (extra or {})
-{        }
-        self._log(LogLevel.WARNING(), LogCategory.SECURITY(), f"安全事件, {event}",
-    security_data)
-    
-    def performance(self, operation, str, duration, float, , :)
-(    metrics, Optional[Dict[str, Any]] = None):
-        """記錄性能日誌"""
-        perf_data = {}
-            'operation': operation,
-            'duration_ms': duration * 1000,
-            * * (metrics or {})
-{        }
+        if user_id:
+            user_id_var.set(user_id)
         
-        # 如果性能不佳, 記錄為警告
-        if duration > 1.0,  # 超過1秒, :
-            self._log(LogLevel.WARNING(), LogCategory.PERFORMANCE(), )
-(                    f"性能警告, {operation} 耗時 {"duration":.2f}秒", perf_data)
-        else,
-            self._log(LogLevel.INFO(), LogCategory.PERFORMANCE(), )
-(                    f"性能, {operation} 耗時 {"duration":.2f}秒", perf_data)
-    
-    def api_request(self, method, str, endpoint, str, status_code, int, :)
-                duration, float, user_id, Optional[str] = None, ,
-(    extra, Optional[Dict[str, Any]] = None):
-        """記錄 API 請求日誌"""
-        api_data = {}
-            'method': method,
-            'endpoint': endpoint,
-            'status_code': status_code,
-            'duration_ms': duration * 1000,
-            * * (extra or {})
-{        }
-        
-        level == LogLevel.INFO()
-        if status_code >= 500, ::
-            level == LogLevel.ERROR()
-        elif status_code >= 400, ::
-            level == LogLevel.WARNING()
-        message == f"API {method} {endpoint} - {status_code} ({"duration":.3f}s)"
-        self._log(level, LogCategory.API(), message, api_data)
-    
-    def get_error_stats(self) -> Dict[str, Any]:
-        """獲取錯誤統計"""
-        return {}
-            * * self.error_stats(),
-            'error_rate': self._calculate_error_rate()
-{        }
-    
-    def _calculate_error_rate(self) -> float, :
-        """計算錯誤率"""
-        # 簡化的錯誤率計算
-        total_requests = sum()
-            self.error_stats['by_level'][level.value] ,
-    for level in [LogLevel.ERROR(), LogLevel.CRITICAL]:
-(        )
+        self._log(
+            LogLevel.INFO,
+            LogCategory.AUDIT,
+            f"Audit: {action}",
+            extra=details
+        )
 
-        if total_requests == 0, ::
-            return 0.0()
-        return min(1.0(), total_requests / 1000)  # 假設基準為1000個請求
-    
-    async def cleanup_old_logs(self, days, int == 30):
-        """清理舊日誌"""
-        cutoff_date = datetime.now(timezone.utc()) - timedelta(days = days)
-        
-        for log_file in self.log_dir.glob(" * .log * "):::
-            try,
-                file_time = datetime.fromtimestamp(log_file.stat().st_mtime,
-    timezone.utc())
-                if file_time < cutoff_date, ::
-                    log_file.unlink()
-                    self.info(f"已清理舊日誌文件, {log_file.name}", LogCategory.SYSTEM())
-            except Exception as e, ::
-                self.error(f"清理日誌文件失敗, {log_file.name}", LogCategory.SYSTEM(),
-    exc_info = e)
-
-class JsonFormatter(logging.Formatter()):
-    """JSON 格式化器"""
-    
-    def format(self, record):
-        # 如果記錄的消息已經是 JSON, 直接返回
-        try,
-            json.loads(record.getMessage())
-            return record.getMessage()
-        except, ::
-            # 否則包裝為 JSON
-            log_data = {}
-                'timestamp': datetime.now(timezone.utc()).isoformat(),
-                'level': record.levelname(),
-                'message': record.getMessage(),
-                'module': record.module(),
-                'function': record.funcName(),
-                'line': record.lineno()
-{            }
-            return json.dumps(log_data, ensure_ascii == False)
-
-class ReadableFormatter(logging.Formatter()):
-    """可讀格式化器"""
-    
-    def __init__(self):
-        super().__init__()
-    fmt == '%(asctime)s [%(levelname)s] %(name)s, %(message)s',
-            datefmt == '%Y - %m - %d %H, %M, %S'
-(        )
-
-# 全局日誌記錄器實例
-loggers = {}
-
-def get_logger(name, str) -> EnterpriseLogger, :
-    """獲取日誌記錄器實例"""
-    if name not in loggers, ::
-        loggers[name] = EnterpriseLogger(name)
-    return loggers[name]
-
-# 裝飾器用於自動記錄
-在函数定义前添加空行
-(                level, LogLevel == LogLevel.INFO()):
-    """裝飾器：自動記錄函數執行"""
-在函数定义前添加空行
-        async def async_wrapper( * args, * * kwargs):
-            logger = get_logger(func.__module__())
-            start_time = datetime.now()
-            
-            try,
-                result = await func( * args, * * kwargs)
-                duration = (datetime.now() - start_time).total_seconds()
-                
-                logger._log(level, category, )
-    f"執行完成, {func.__name__} ({"duration":.3f}s)",
-(                        {'function': func.__name__(), 'duration': duration})
-                
-                return result
-            except Exception as e, ::
-                duration = (datetime.now() - start_time).total_seconds()
-                
-                logger.error(f"執行失敗, {func.__name__} ({"duration":.3f}s)")
-                        category, exc_info = e,
-(                        extra == {'function': func.__name__(), 'duration': duration})
-                raise
-        
-        def sync_wrapper( * args, * * kwargs):
-            logger = get_logger(func.__module__())
-            start_time = datetime.now()
-            
-            try,
-                result = func( * args, * * kwargs)
-                duration = (datetime.now() - start_time).total_seconds()
-                
-                logger._log(level, category, )
-    f"執行完成, {func.__name__} ({"duration":.3f}s)",
-(                        {'function': func.__name__(), 'duration': duration})
-                
-                return result
-            except Exception as e, ::
-                duration = (datetime.now() - start_time).total_seconds()
-                
-                logger.error(f"執行失敗, {func.__name__} ({"duration":.3f}s)")
-                        category, exc_info = e,
-(                        extra == {'function': func.__name__(), 'duration': duration})
-                raise
-        
-        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper, :
-    return decorator
-
-# 上下文管理器用於設置請求上下文,
-在类定义前添加空行
+class LogContext:
     """日誌上下文管理器"""
     
-    def __init__(self, req_id, Optional[str] = None, usr_id, Optional[str] = None, , :)
-(    sess_id, Optional[str] = None):
-        self.req_id = req_id or str(uuid.uuid4())
-        self.usr_id = usr_id
-        self.sess_id = sess_id
-        self.token_req == None
-        self.token_usr == None
-        self.token_sess == None
+    def __init__(
+        self,
+        request_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None
+    ):
+        self.request_id = request_id
+        self.user_id = user_id
+        self.session_id = session_id
+        self.tokens = []
     
     def __enter__(self):
-        self.token_req = request_id.set(self.req_id())
-        self.token_usr = user_id.set(self.usr_id())
-        self.token_sess = session_id.set(self.sess_id())
+        if self.request_id:
+            self.tokens.append(request_id_var.set(self.request_id))
+        if self.user_id:
+            self.tokens.append(user_id_var.set(self.user_id))
+        if self.session_id:
+            self.tokens.append(session_id_var.set(self.session_id))
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        request_id.reset(self.token_req())
-        user_id.reset(self.token_usr())
-        session_id.reset(self.token_sess())
+        for token in self.tokens:
+            request_id_var.reset(token)
+        return False
+
+# 全局日誌管理器
+_loggers: Dict[str, EnterpriseLogger] = {}
+
+def get_logger(name: str) -> EnterpriseLogger:
+    """獲取或創建日誌記錄器"""
+    if name not in _loggers:
+        _loggers[name] = EnterpriseLogger(name)
+    return _loggers[name]
+
+def set_request_context(request_id: str, user_id: Optional[str] = None, session_id: Optional[str] = None):
+    """設置請求上下文"""
+    if request_id:
+        request_id_var.set(request_id)
+    if user_id:
+        user_id_var.set(user_id)
+    if session_id:
+        session_id_var.set(session_id)
+
+def clear_request_context():
+    """清除請求上下文"""
+    request_id_var.set(None)
+    user_id_var.set(None)
+    session_id_var.set(None)

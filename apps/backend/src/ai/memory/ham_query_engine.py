@@ -197,9 +197,7 @@ class HAMQueryEngine:
         Optional keyword search on metadata string.
         Does NOT search encrypted content for keywords in this version.
         """
-        logger.debug(f"HAM: Querying core memory (type: {data_type_filter},
-    meta_filters: {metadata_filters}, keywords: {keywords},
-    semantic_query: {semantic_query})")
+        logger.debug(f"HAM: Querying core memory (type: {data_type_filter}, meta_filters: {metadata_filters}, keywords: {keywords}, semantic_query: {semantic_query})")
 
         candidate_mem_ids: List[str] = []
         fallback_semantic = False

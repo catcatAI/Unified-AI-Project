@@ -93,6 +93,14 @@ app.whenReady().then(async () => {
   app.commandLine.appendSwitch('enable-gpu-driver-bug-workarounds');  // Driver compatibility
   
   // Register file protocol for loading Live2D model files
+  // Define allowed directories to prevent path traversal attacks
+  const ALLOWED_DIRECTORIES = [
+    require('path').join(__dirname, 'resources'),
+    require('path').join(__dirname, 'resources/models'),
+    require('path').join(__dirname, 'data'),
+    require('path').join(__dirname, '..', '..', 'resources')
+  ];
+
   protocol.registerFileProtocol('local', (request, callback) => {
     console.log('[Main] Local protocol request:', request.url);
     
@@ -104,6 +112,8 @@ app.whenReady().then(async () => {
       urlPath = decodeURIComponent(urlPath);
     } catch (e) {
       console.warn('[Main] Failed to decode URL:', urlPath);
+      callback({ error: -2 }); // Failed to decode
+      return;
     }
     
     console.log('[Main] Decoded URL:', urlPath);
@@ -130,6 +140,20 @@ app.whenReady().then(async () => {
     const filePath = require('path').resolve(normalizedPath);
     
     console.log('[Main] Local protocol resolved:', urlPath, '->', filePath);
+    
+    // SECURITY: Verify path is within allowed directories
+    const isAllowed = ALLOWED_DIRECTORIES.some(allowedDir => {
+      const relativePath = require('path').relative(allowedDir, filePath);
+      // Path is allowed if it doesn't start with '..' (prevents path traversal)
+      return !relativePath.startsWith('..');
+    });
+    
+    if (!isAllowed) {
+      console.error('[Main] Path traversal attempt blocked:', filePath);
+      console.error('[Main] Requested path is outside allowed directories');
+      callback({ error: -3 }); // Access denied
+      return;
+    }
     
     // Verify file exists
     if (require('fs').existsSync(filePath)) {

@@ -6,6 +6,38 @@ Usage:
     python -m uvicorn src.services.main_api_server:app --host 127.0.0.1 --port 8000
 """
 
+# =============================================================================
+# ANGELA-MATRIX: L6[执行层] 全层级 [A] L2+
+# =============================================================================
+#
+# 职责: 提供 Angela AI 的后端 API 服务，处理所有层级的数据传输
+# 维度: 涉及所有维度 (αβγδ)，管理完整的状态矩阵
+# 安全: 使用 Key A (后端控制) 进行安全通信和权限管理
+# 成熟度: L2+ 等级可以理解 API 的功能和用途
+#
+# 主要端点:
+# - GET /health - 健康检查
+# - POST /dialogue - 对话接口
+# - POST /angela/chat - Angela 聊天接口 (集成 LLM)
+# - WebSocket /ws - 实时双向通信
+# - POST /vision - 视觉分析
+# - POST /audio - 音频处理
+# - POST /tactile - 触觉输入处理
+# - GET /pet - 宠物信息
+# - GET /economy - 经济系统
+#
+# 集成服务:
+# - VisionService: 视觉处理
+# - AudioService: 音频处理
+# - TactileService: 触觉处理
+# - ChatService: 对话生成
+# - AngelaLLMService: LLM 服务 (Ollama/GPT/Gemini)
+# - DigitalLifeIntegrator: 数字生命集成
+# - EconomyManager: 经济系统
+# - BrainBridgeService: 大脑桥接服务
+#
+# =============================================================================
+
 import os
 import sys
 import uuid

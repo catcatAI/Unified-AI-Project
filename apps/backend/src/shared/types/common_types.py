@@ -1,7 +1,19 @@
-# src / shared / types / common_types.py()
-from enum import Enum
+# =============================================================================
+# ANGELA-MATRIX: L6[执行层] 全层级 [A] L2+
+# =============================================================================
+#
+# 职责: 定义常用的数据类型和类型别名
+# 维度: 涉及所有维度，为系统提供统一的数据结构
+# 安全: 使用 Key A (后端控制) 进行类型安全验证
+# 成熟度: L2+ 等级理解类型系统
+#
+# =============================================================================
 
-print("common_types.py (debug version) is being imported and defining ServiceStatus...")
+from enum import Enum
+from typing import TypedDict, Dict, List, Optional, Any, Required
+from typing_extensions import Literal
+
+print("common_types.py is being imported and defining types...")
 
 class ServiceStatus(Enum):
     UNKNOWN = 0
@@ -21,146 +33,137 @@ class ServiceType(Enum):
     HSP_NODE = "hsp_node"
 
 class ServiceAdvertisement(TypedDict):
-    service_id, str
-    service_name, str
-    service_type, ServiceType
-    service_version, str
-    endpoint_url, Optional[str]
-    metadata, Dict[str, Any]
-    status, ServiceStatus
-    last_seen_timestamp, float
-    ttl, int
+    service_id: str
+    service_name: str
+    service_type: ServiceType
+    service_version: str
+    endpoint_url: Optional[str]
+    metadata: Dict[str, Any]
+    status: ServiceStatus
+    last_seen_timestamp: float
+    ttl: int
 
-class ServiceQuery(TypedDict, total == False):
-    service_type, Optional[ServiceType]
-    service_name, Optional[str]
-    min_version, Optional[str]
-    required_capabilities, Optional[List[str]]
-    status_filter, Optional[List[ServiceStatus]]
+class ServiceQuery(TypedDict, total=False):
+    service_type: Optional[ServiceType]
+    service_name: Optional[str]
+    min_version: Optional[str]
+    required_capabilities: Optional[List[str]]
+    status_filter: Optional[List[ServiceStatus]]
 
 class ServiceInstanceHealth(TypedDict):
-    service_id, str
-    instance_id, str
-    status, ServiceStatus
-    last_heartbeat, float
-    metrics, Optional[Dict[str, Any]]
+    service_id: str
+    instance_id: str
+    status: ServiceStatus
+    last_heartbeat: float
+    metrics: Optional[Dict[str, Any]]
 
-# - - - Minimal other types that might be needed immediately downstream - - -
-# For ToolDispatcherResponse as used by ToolDispatcher, imported by DialogueManager
-在类定义前添加空行
-    status, Literal[]
+# ToolDispatcherResponse for ToolDispatcher
+class ToolDispatcherResponse(TypedDict):
+    status: Literal[
         "success",
         "failure_tool_not_found",
         "failure_tool_error",
         "failure_parsing_query",
         "error_dispatcher_issue",
         "unhandled_by_local_tool"
-[    ]
-    payload, Optional[Any]
-    tool_name_attempted, Optional[str]
-    original_query_for_tool, Optional[str]
-    error_message, Optional[str]
+    ]
+    payload: Optional[Any]
+    tool_name_attempted: Optional[str]
+    original_query_for_tool: Optional[str]
+    error_message: Optional[str]
 
-class LLMConfig(TypedDict) # For ToolDispatcher:
-    model_name, str
-    api_key, Optional[str]
-    base_url, Optional[str]
-    temperature, float
-    max_tokens, int
+class LLMConfig(TypedDict):
+    model_name: str
+    api_key: Optional[str]
+    base_url: Optional[str]
+    temperature: float
+    max_tokens: int
 
-class DialogueTurn(TypedDict) # For DialogueManager:
-    speaker, Literal["user", "ai", "system"]
-    text, str
-    timestamp, str
-    metadata, Optional[Dict[str, Any]]
+class DialogueTurn(TypedDict):
+    speaker: Literal["user", "ai", "system"]
+    text: str
+    timestamp: str
+    metadata: Optional[Dict[str, Any]]
 
-class PendingHSPTaskInfo(TypedDict) # For DialogueManager:
-    user_id, Optional[str]
-    session_id, Optional[str]
-    original_query_text, str
-    request_timestamp, str
-    capability_id, str
-    target_ai_id, str
-    expected_callback_topic, str
-    request_type, str
+class PendingHSPTaskInfo(TypedDict):
+    user_id: Optional[str]
+    session_id: Optional[str]
+    original_query_text: str
+    request_timestamp: str
+    capability_id: str
+    target_ai_id: str
+    expected_callback_topic: str
+    request_type: str
 
-class OperationalConfig(TypedDict, total == False) # For DialogueManager:
-    timeouts, Optional[Any]
-    learning_thresholds, Optional[Any]
-    default_hsp_fact_topic, Optional[str]
-    max_dialogue_history, Optional[int]
-    operational_configs, Optional[Dict[str, Any]]
+class OperationalConfig(TypedDict, total=False):
+    timeouts: Optional[Any]
+    learning_thresholds: Optional[Any]
+    default_hsp_fact_topic: Optional[str]
+    max_dialogue_history: Optional[int]
+    operational_configs: Optional[Dict[str, Any]]
 
-class CritiqueResult(TypedDict) # For DialogueMemoryEntryMetadata:
-    score, float
-    reason, Optional[str]
-    suggested_alternative, Optional[str]
+class CritiqueResult(TypedDict):
+    score: float
+    reason: Optional[str]
+    suggested_alternative: Optional[str]
 
-class DialogueMemoryEntryMetadata(TypedDict) # For DialogueManager:
-    speaker, str
-    timestamp, str
-    user_input_ref, Optional[str]
-    sha256_checksum, Optional[str]
-    critique, Optional[CritiqueResult]
-    user_feedback_explicit, Optional[str]
-    learning_weight, Optional[float]
+class DialogueMemoryEntryMetadata(TypedDict):
+    speaker: str
+    timestamp: str
+    user_input_ref: Optional[str]
+    sha256_checksum: Optional[str]
+    critique: Optional[CritiqueResult]
+    user_feedback_explicit: Optional[str]
+    learning_weight: Optional[float]
 
-class ParsedToolIODetails(TypedDict, total == False) # For DialogueManager:
-    suggested_method_name, Required[str]
-    class_docstring_hint, Required[str]
-    method_docstring_hint, Required[str]
-    parameters, Required[List[Dict[str,
-    Any]]]# Simplified from ToolParameterDetail for this test, ::
-        eturn_type, Required[str]
-return_description, Required[str]
+class ParsedToolIODetails(TypedDict, total=False):
+    suggested_method_name: Required[str]
+    class_docstring_hint: Required[str]
+    method_docstring_hint: Required[str]
+    parameters: Required[List[Dict[str, Any]]]
+    return_type: Required[str]
+    return_description: Required[str]
 
-
-class OverwriteDecision(Enum) # For HAMMemoryManager -> DialogueManager:
+class OverwriteDecision(Enum):
     PREVENT_OVERWRITE = "prevent_overwrite"
     OVERWRITE_EXISTING = "overwrite_existing"
     ASK_USER = "ask_user"
     MERGE_IF_APPLICABLE = "merge_if_applicable"
 
-# - - - LLM Interface Types - - -
-在类定义前添加空行
-    base_url, Required[str]
-    # Potentially other Ollama specific params like default_keep_alive, etc.
+# LLM Provider Types
+class LLMProviderOllamaConfig(TypedDict):
+    base_url: Required[str]
 
 class LLMProviderOpenAIConfig(TypedDict):
-    api_key, Required[str]
-    # Potentially other OpenAI specific params like organization, project_id
+    api_key: Required[str]
 
-class LLMModelInfo(TypedDict, total == False):
-    id, Required[str]           # Model ID, typically how it's called / identified
-    provider, Required[str]     # e.g., "ollama", "openai", "mock"
-    name, Optional[str]         # Human - readable name,
-    might be same as ID or more descriptive
-    description, Optional[str]
-    modified_at, Optional[str]  # ISO 8601 timestamp
-    size_bytes, Optional[int]
-    # Future, capabilities (e.g., ["chat", "completion", "embedding"]), context_length,
-    etc.
-
+class LLMModelInfo(TypedDict, total=False):
+    id: Required[str]
+    provider: Required[str]
+    name: Optional[str]
+    description: Optional[str]
+    modified_at: Optional[str]
+    size_bytes: Optional[int]
 
 # HAM Memory Types
 from dataclasses import dataclass
 
 @dataclass
-在类定义前添加空行
+class HAMRecallResult:
     """HAM記憶回憶結果"""
-    memories, List[Dict[str, Any]]
-    confidence_scores, List[float]
-    total_count, int
-    query_metadata, Dict[str, Any]
+    memories: List[Dict[str, Any]]
+    confidence_scores: List[float]
+    total_count: int
+    query_metadata: Dict[str, Any]
 
 class HAMDataPackageInternal(TypedDict):
     """HAM內部數據包"""
-    package_id, str
-    data_type, str
-    content, Dict[str, Any]
-    metadata, Dict[str, Any]
-    timestamp, str
-    source_ai_id, str
-    confidence_score, float
+    package_id: str
+    data_type: str
+    content: Dict[str, Any]
+    metadata: Dict[str, Any]
+    timestamp: str
+    source_ai_id: str
+    confidence_score: float
 
-print("common_types.py (debug version) finished definitions.")
+print("common_types.py finished definitions.")

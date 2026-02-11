@@ -1,69 +1,88 @@
-from diagnose_base_agent import
-from typing import Dict, Any
-from huggingface_hub import hf_hub_download
+"""
+参数提取器 - 从外部模型提取、映射和加载参数
+"""
+
+import os
+from typing import Dict, Any, Optional
+
+# 尝试导入huggingface_hub
+try:
+    from huggingface_hub import hf_hub_download
+    HF_HUB_AVAILABLE = True
+except ImportError:
+    HF_HUB_AVAILABLE = False
 
 
-class ParameterExtractor, :
-    """
-    Extracts, maps, and loads parameters from external models.
-    """
+class ParameterExtractor:
+    """参数提取器"""
 
-    def __init__(self, repo_id, str) -> None, :
-    """
-    Initializes the ParameterExtractor.
+    def __init__(self, repo_id: str) -> None:
+        """
+        初始化参数提取器
 
-    Args,
-            repo_id (str) The ID of the Hugging Face Hub repository.
-    """
-    self.repo_id = repo_id
+        Args:
+            repo_id: Hugging Face Hub仓库ID
+        """
+        self.repo_id = repo_id
 
-    def download_model_parameters(self, filename, str, cache_dir,
-    str == "model_cache") -> str, :
-    """
-    Downloads model parameters from the Hugging Face Hub.
+    def download_model_parameters(self, filename: str, cache_dir: str = "model_cache") -> Optional[str]:
+        """
+        从Hugging Face Hub下载模型参数
 
-    Args,
-            filename (str) The name of the parameter file to download.
-            cache_dir (str) The directory to cache the downloaded file.
+        Args:
+            filename: 参数文件名
+            cache_dir: 缓存目录
 
-    Returns, str The path to the downloaded file.
-    """
-        if not os.path.exists(cache_dir)::
-s.makedirs(cache_dir)
+        Returns:
+            下载文件路径
+        """
+        if not HF_HUB_AVAILABLE:
+            print("huggingface_hub不可用")
+            return None
 
-    return hf_hub_download(repo_id = self.repo_id(), filename = filename,
-    cache_dir = cache_dir)
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
 
-    def map_parameters(self, source_params, Dict[...]:)
-    """
-    Maps parameters from a source model to a target model.
+        try:
+            return hf_hub_download(
+                repo_id=self.repo_id,
+                filename=filename,
+                cache_dir=cache_dir
+            )
+        except Exception as e:
+            print(f"下载失败: {e}")
+            return None
 
-    Args, ,
-    source_params (Dict[str, Any]) The parameters of the source model.
-            mapping_rules (Dict[str, str]) A dictionary defining the mapping rules.
+    def map_parameters(self, source_params: Dict[str, Any], mapping_rules: Dict[str, str]) -> Dict[str, Any]:
+        """
+        将源模型参数映射到目标模型
 
-    Returns, Dict[...] The mapped parameters.
-    """
-    mapped_params == for source_key, target_key in mapping_rules.items, ::
-    if source_key in source_params, ::
-    mapped_params[target_key] = source_params[source_key]
-    return mapped_params
+        Args:
+            source_params: 源模型参数
+            mapping_rules: 映射规则
 
-    def load_parameters_to_model(self, model, Any, params, Dict[str, Any]):
-        ""
-    Loads parameters into a model.
+        Returns:
+            映射后的参数
+        """
+        mapped_params = {}
 
-    Args,
-            model(Any) The model to load the parameters into.
-            params(Dict[str, Any]) The parameters to load.
-    """
-    # This is a simplified implementation. In a real - world scenario, you would
-    # need to handle different model types and parameter loading mechanisms.
-        if hasattr(model, "load_state_dict"):::
-            odel.load_state_dict(params)
-        else,
+        for source_key, target_key in mapping_rules.items():
+            if source_key in source_params:
+                mapped_params[target_key] = source_params[source_key]
 
-            for key, value in params.items, ::
-    if hasattr(model, key)::
-        etattr(model, key, value)
-)
+        return mapped_params
+
+    def load_parameters_to_model(self, model: Any, params: Dict[str, Any]):
+        """
+        将参数加载到模型中
+
+        Args:
+            model: 目标模型
+            params: 参数字典
+        """
+        if hasattr(model, "load_state_dict"):
+            model.load_state_dict(params)
+        else:
+            for key, value in params.items():
+                if hasattr(model, key):
+                    setattr(model, key, value)

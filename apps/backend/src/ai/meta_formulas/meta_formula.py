@@ -1,12 +1,12 @@
 class MetaFormula:
     """
-    Base class for all MetaFormulas.:
+    Base class for all MetaFormulas.
     """
-在函数定义前添加空行
+    def __init__(self, name: str, description: str):
         self.name = name
         self.description = description
 
-    def execute(self, *args, * * kwargs):
+    def execute(self, *args, **kwargs):
         """
         Executes the meta - formula.
         This method should be overridden by subclasses.

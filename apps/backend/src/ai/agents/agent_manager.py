@@ -6,6 +6,35 @@ terminating, and monitoring them.
 Also serves as the central message router for HSP communication.
 """
 
+# =============================================================================
+# ANGELA-MATRIX: L6[执行层] 全层级 [A] L2+
+# =============================================================================
+#
+# 职责: 管理专业子代理的生命周期，包括启动、终止和监控
+# 维度: 涉及所有维度，协调 15 个专业代理的状态矩阵更新
+# 安全: 使用 Key A (后端控制) 进行代理权限管理
+# 成熟度: L2+ 等级可以理解代理系统的基本概念
+#
+# 管理的代理类型:
+# - IN_PROCESS: 进程内代理（现有实现）
+# - SUBPROCESS: 子进程代理（Phase 15）
+# - REMOTE: 远程代理（未来扩展）
+#
+# 管理的专业代理 (15个):
+# 1. CreativeWritingAgent - 创意写作与内容生成
+# 2. ImageGenerationAgent - 图像生成代理
+# 3. WebSearchAgent - 网络搜索代理
+# 4. CodeUnderstandingAgent - 代码理解代理
+# 5. DataAnalysisAgent - 数据分析代理
+# 6. VisionProcessingAgent - 视觉处理代理
+# 7. AudioProcessingAgent - 音频处理代理
+# 8. KnowledgeGraphAgent - 知识图谱代理
+# 9. NLPProcessingAgent - 自然语言处理代理
+# 10. PlanningAgent - 规划代理
+# 11-15. 其他扩展代理
+#
+# =============================================================================
+
 import asyncio
 import logging
 import os

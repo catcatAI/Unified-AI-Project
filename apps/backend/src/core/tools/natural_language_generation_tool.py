@@ -1,61 +1,49 @@
-# 添加兼容性导入
+"""
+自然语言生成工具
+"""
+
+from typing import Dict, Any, Optional
+
+# 尝试导入transformers
 try:
-    # 设置环境变量以解决Keras兼容性问题
-from diagnose_base_agent import
     os.environ['TF_USE_LEGACY_KERAS'] = '1'
-    
-    # 使用我们的兼容性模块
+
     try:
-        from src.compat.transformers_compat import import_transformers_pipe\
-    \
-    \
-    \
-    \
-    \
-    line
-        pipeline, TRANSFORMERS_AVAILABLE = import_transformers_pipeline
-        if not TRANSFORMERS_AVAILABLE:
-            print("Warning: Could not import transformers pipeline")
-    except ImportError as e:
-        print(f"Warning: Could not import transformers_compat: {e}")
-        pipeline = None
-#         TRANSFORMERS_AVAILABLE = False
+        from transformers import pipeline
+        TRANSFORMERS_AVAILABLE = True
+    except ImportError:
+        print("Warning: Could not import transformers pipeline")
+        TRANSFORMERS_AVAILABLE = False
 except Exception as e:
-    print(f"Warning: Error during transformers import: {e}")
-    pipeline = None
-#     TRANSFORMERS_AVAILABLE = False
+    print(f"Warning: Error importing transformers: {e}")
+    TRANSFORMERS_AVAILABLE = False
 
-def generate_text(prompt):
-    """
-    Generates text from a prompt.
 
-    Args:
-        prompt: The prompt to generate text from.
+class NaturalLanguageGenerationTool:
+    """自然语言生成工具"""
 
-    Returns:
-        The generated text.
-    """
-    generator = pipeline("text - generation")
-    return generator(prompt)
+    def __init__(self, model_name: str = "gpt2"):
+        """初始化"""
+        self.model_name = model_name
+        self.pipeline = None
 
-def save_model(model, model_path):
-    """
-    Saves the model to a file.
+        if TRANSFORMERS_AVAILABLE:
+            try:
+                self.pipeline = pipeline("text-generation", model=model_name)
+            except Exception as e:
+                print(f"Error loading pipeline: {e}")
+                self.pipeline = None
 
-    Args:
-        model: The model to be saved.
-        model_path: The path to the file where the model will be saved.
-    """
-    model.save_pretrained(model_path)
+    def generate(self, prompt: str, max_length: int = 100) -> Optional[Dict[str, Any]]:
+        """生成文本"""
+        if not TRANSFORMERS_AVAILABLE or self.pipeline is None:
+            return {"error": "Transformers不可用"}
 
-def load_model(model_path):
-    """
-    Loads the model from a file.
-
-    Args:
-        model_path: The path to the file where the model is saved.
-
-    Returns:
-        The loaded model.
-    """
-    return pipeline("text - generation", model = model_path)
+        try:
+            result = self.pipeline(prompt, max_length=max_length, num_return_sequences=1)
+            return {
+                "status": "success",
+                "generated_text": result[0]["generated_text"]
+            }
+        except Exception as e:
+            return {"error": str(e)}

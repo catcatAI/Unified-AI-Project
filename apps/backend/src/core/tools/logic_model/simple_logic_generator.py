@@ -1,128 +1,94 @@
-from tests.test_json_fix import
-# TODO: Fix import - module 'random' not found
-from diagnose_base_agent import
+"""
+简单逻辑生成器
+"""
+
+import random
+from typing import List, Dict, Any
 
 
-def generate_simple_logic_dataset(num_samples == 1000):
-""
-    Generate a simple logic dataset with basic propositions.:
-        ""
-    dataset =
+def generate_simple_logic_dataset(num_samples: int = 1000) -> List[Dict[str, Any]]:
+    """生成简单逻辑数据集"""
+    dataset = []
     operators = ["AND", "OR"]
     values = ["true", "false"]
 
-    for i in range(num_samples)::
-    # Generate different types of propositions
-    prop_type = random.choice(["simple", "binary", "unary", "complex"])
+    for i in range(num_samples):
+        # 生成不同类型的命题
+        prop_type = random.choice(["simple", "binary", "unary", "complex"])
 
-        if prop_type == "simple":::
-            # Simple value
+        if prop_type == "simple":
+            # 简单值
             prop = random.choice(values)
             answer = prop == "true"
-        elif prop_type == "binary":::
-            # Binary operation A op B
+        elif prop_type == "binary":
+            # 二元操作 A op B
             left = random.choice(values)
             right = random.choice(values)
             op = random.choice(operators)
             prop = f"{left} {op} {right}"
 
-            if op == "AND":::
-    answer = (left == "true") and (right == "true")
-            else,  # OR
+            if op == "AND":
+                answer = (left == "true") and (right == "true")
+            else:  # OR
                 answer = (left == "true") or (right == "true")
-        elif prop_type == "unary":::
-            # NOT operation
+        elif prop_type == "unary":
+            # 一元操作 NOT A
             val = random.choice(values)
             prop = f"NOT {val}"
-            answer = not (val == "true")
-        else,  # complex
-            # More complex (A op B) op C or A op (B op C)
-            a = random.choice(values)
-            b = random.choice(values)
-            c = random.choice(values)
+            answer = val == "false"
+        else:  # complex
+            # 复杂表达式
+            left = random.choice(values)
+            right = random.choice(values)
+            middle = random.choice(values)
             op1 = random.choice(operators)
             op2 = random.choice(operators)
+            prop = f"({left} {op1} {middle}) {op2} {right}"
 
-            if random.choice([True, False]):
-                rop = f"({a} {op1} {b}) {op2} {c}"
-                # Evaluate (a op1 b) first
-                if op1 == "AND":::
-    intermediate = (a == "true") and (b == "true")
-                else,
+            # 简化评估
+            left_val = left == "true"
+            middle_val = middle == "true"
+            right_val = right == "true"
 
-                    intermediate = (a == "true") or (b == "true")
+            if op1 == "AND":
+                first_part = left_val and middle_val
+            else:
+                first_part = left_val or middle_val
 
-                # Then apply op2 with c,
-                    f op2 == "AND":
+            if op2 == "AND":
+                answer = first_part and right_val
+            else:
+                answer = first_part or right_val
 
-    answer = intermediate and (c == "true")
-                else,
-
-                    answer = intermediate or (c == "true")
-            else,
-
-                prop = f"{a} {op1} ({b} {op2} {c})"
-                # Evaluate (b op2 c) first
-                if op2 == "AND":::
-    intermediate = (b == "true") and (c == "true")
-                else,
-
-                    intermediate = (b == "true") or (c == "true")
-
-                # Then apply op1 with a,
-                    f op1 == "AND":
-
-    answer = (a == "true") and intermediate
-                else,
-
-                    answer = (a == "true") or intermediate
-
-    dataset.append({)}
+        dataset.append({
             "proposition": prop,
-            "answer": answer
-{(    })
-
-        if (i + 1) % 100 == 0, ::
-    print(f"Generated {i + 1} / {num_samples} samples...")
+            "answer": answer,
+            "type": prop_type
+        })
 
     return dataset
 
-def main -> None, :
-    # Get project root directory
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root, str = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
-    output_dir = os.path.join(project_root, "data", "raw_datasets")
 
-    # Create output directory if it doesn't exist, ::
-        s.makedirs(output_dir, exist_ok == True)
+def save_dataset(dataset: List[Dict[str, Any]], output_file: str):
+    """保存数据集"""
+    import json
+    import os
 
-    print(f"Output directory, {output_dir}")
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    # Generate training dataset
-    print("\nGenerating training dataset (1000 samples)...")
-    train_data = generate_simple_logic_dataset(1000)
-    train_file = os.path.join(output_dir, "logic_train.json")
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(dataset, f, indent=2, ensure_ascii=False)
 
-    with open(train_file, 'w', encoding == 'utf - 8') as f, :
-    json.dump(train_data, f, indent = 2)
-    print(f"Training dataset saved to, {train_file}")
+    print(f"保存 {len(dataset)} 个样本到 {output_file}")
 
-    # Generate test dataset
-    print("\nGenerating test dataset (200 samples)...")
-    test_data = generate_simple_logic_dataset(200)
-    test_file = os.path.join(output_dir, "logic_test.json")
 
-    with open(test_file, 'w', encoding == 'utf - 8') as f, :
-    json.dump(test_data, f, indent = 2)
-    print(f"Test dataset saved to, {test_file}")
+def main():
+    """主函数"""
+    print("生成简单逻辑数据集...")
+    dataset = generate_simple_logic_dataset(1000)
+    save_dataset(dataset, "data/raw_datasets/simple_logic.json")
+    print("完成!")
 
-    print("\nLogic dataset generation complete!")
 
-    # Show some examples
-    print("\nExample propositions, ")
-    for i in range(5)::
-        xample = train_data[i]
-    print(f"  {example['proposition']} => {example['answer']}")
-
-if __name"__main__":::
-    main
+if __name__ == "__main__":
+    main()

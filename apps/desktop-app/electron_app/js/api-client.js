@@ -1,6 +1,20 @@
 /**
- * Angela AI Desktop App - API Client
- * Handles communication with backend API server
+ * =============================================================================
+ * ANGELA-MATRIX: L6[执行层] 全层级 [A→C] L1+
+# =============================================================================
+ *
+ * 职责: 处理桌面应用与后端 API 服务器的通信
+ * 维度: 涉及所有维度，传输状态矩阵数据
+ * 安全: 使用 Key C (桌面同步) 与后端 Key A 安全通信
+ * 成熟度: L1+ 等级即可使用基本对话功能
+ *
+ * API 端点:
+ * - GET /health - 健康检查
+ * - POST /dialogue - 对话接口
+ * - POST /angela/chat - Angela 聊天接口
+ * - WebSocket /ws - 实时双向通信
+ *
+ * @class AngelaAPIClient
  */
 
 class AngelaAPIClient {

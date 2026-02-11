@@ -58,14 +58,14 @@ class ServiceInstanceHealth(TypedDict):
 
 
 class ToolDispatcherResponse(TypedDict):
-    status: Literal[]
+    status: Literal[
         "success",
         "failure_tool_not_found",
         "failure_tool_error",
         "failure_parsing_query",
         "error_dispatcher_issue",
         "unhandled_by_local_tool"
-[    ]
+    ]
     payload: Optional[Any]
     tool_name_attempted: Optional[str]
     original_query_for_tool: Optional[str]
@@ -126,12 +126,9 @@ class ParsedToolIODetails(TypedDict, total = False):  # For DialogueManager:
     suggested_method_name: Required[str]
     class_docstring_hint: Required[str]
     method_docstring_hint: Required[str]
-    parameters: Required[List[Dict[str,
-    Any]]]  # Simplified from ToolParameterDetail for this test:
-
-
-eturn_type: Required[str]
-return_description: Required[str]
+    parameters: Required[List[Dict[str, Any]]]  # Simplified from ToolParameterDetail for this test:
+    return_type: Required[str]
+    return_description: Required[str]
 
 
 class OverwriteDecision(Enum):  # For HAMMemoryManager -> DialogueManager:
@@ -153,23 +150,21 @@ class LLMProviderOpenAIConfig(TypedDict):
     # Potentially other OpenAI specific params like organization, project_id
 
 
-class LLMModelInfo(TypedDict, total = False):
+class LLMModelInfo(TypedDict, total=False):
     id: Required[str]           # Model ID, typically how it's called / identified
     provider: Required[str]     # e.g., "ollama", "openai", "mock"
-    name: Optional[str]         # Human - readable name,
-    might be same as ID or more descriptive
+    name: Optional[str]         # Human-readable name, might be same as ID or more descriptive
     description: Optional[str]
     modified_at: Optional[str]  # ISO 8601 timestamp
     size_bytes: Optional[int]
-    # Future: capabilities (e.g., ["chat", "completion", "embedding"]), context_length,
-    etc.
+    # Future: capabilities (e.g., ["chat", "completion", "embedding"]), context_length, etc.
 
 
 # HAM Memory Types
 
 
 @dataclass
-在类定义前添加空行
+class HAMMemoryResult:
     """HAM記憶回憶結果"""
     memories: List[Dict[str, Any]]
     confidence_scores: List[float]

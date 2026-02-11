@@ -248,18 +248,6 @@ class Live2DCubismWrapper {
             throw error;
         }
     }
-            this.isLoaded = false;
-            throw error;
-        }
-    }
-        } catch (error) {
-            console.error('Failed to load Live2D model:', error);
-            if (this.callbacks.onError) {
-                this.callbacks.onError(error);
-            }
-            throw error;
-        }
-    }
     
     async loadMoc3File(modelPath) {
         const moc3Paths = this.findFile(modelPath, '.moc3');

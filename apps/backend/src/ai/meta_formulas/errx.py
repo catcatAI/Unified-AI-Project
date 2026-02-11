@@ -1,8 +1,10 @@
+# from typing import Any
+
 class ErrX:
     """
     Represents a semantic error variable.
     """
-在函数定义前添加空行
+    def __init__(self, error_type: str, details):
         self.error_type = error_type
         self.details = details
 

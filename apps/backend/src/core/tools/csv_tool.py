@@ -1,48 +1,52 @@
-# TODO: Fix import - module 'pandas' not found
+"""
+CSV工具 - 用于CSV数据分析
+"""
+
 from typing import Dict, Any, Optional
 
-
-class CsvTool, :
-    """
-    A tool for performing basic analysis on CSV data.:::
-        ""
-在函数定义前添加空行
-    """
-    Initializes the CsvTool.
-    """
-    self.config = config or
-    print(f"{self.__class__.__name__} initialized.")
-
-    def analyze(self, csv_content, str, query, str) -> Dict[str, Any]:
-    """
-    Analyzes CSV data based on a natural language query.
-
-    Args,
-            csv_content(str) The content of the CSV file as a string.
-            query(str) The analysis query(e.g., "summarize", "show columns").
-
-    Returns, Dict[...] A dictionary containing the analysis result.
-    """
-    from io import StringIO
-
-        try,
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
 
 
+class CsvTool:
+    """CSV分析工具"""
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """初始化CsvTool"""
+        self.config = config or {}
+        print(f"{self.__class__.__name__} initialized.")
+
+    def analyze(self, csv_content: str, query: str) -> Dict[str, Any]:
+        """
+        分析CSV数据
+
+        Args:
+            csv_content: CSV文件内容
+            query: 分析查询
+
+        Returns:
+            分析结果
+        """
+        if not PANDAS_AVAILABLE:
+            return {"status": "failure", "error": "pandas not available"}
+
+        from io import StringIO
+
+        try:
             df = pd.read_csv(StringIO(csv_content))
-
             query = query.lower().strip()
 
-            if "summarize" in query, ::
-    return {"status": "success", "result": df.describe().to_string()}
-            elif "columns" in query, ::
-    return {"status": "success", "result": ", ".join(df.columns.tolist())}
-            elif "shape" in query, ::
-    return {"status": "success", "result": f"Rows, {df.shape[0]} Columns,
-    {df.shape[1]}"}
-            else,
+            if "summarize" in query:
+                return {"status": "success", "result": df.describe().to_string()}
+            elif "columns" in query:
+                return {"status": "success", "result": ", ".join(df.columns.tolist())}
+            elif "shape" in query:
+                return {"status": "success", "result": f"Rows: {df.shape[0]}, Columns: {df.shape[1]}"}
+            else:
+                return {"status": "failure", "error": f"Unsupported query: '{query}'. Try 'summarize', 'columns', or 'shape'."}
 
-                return {"status": "failure", "error": f"Unsupported query,
-    '{query}'. Try 'summarize', 'columns', or 'shape'."}
-
-        except Exception as e, ::
+        except Exception as e:
             return {"status": "failure", "error": str(e)}

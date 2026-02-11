@@ -1,7 +1,21 @@
 /**
- * Angela AI - Live2D Manager (UDM 集成版本)
- * 
- * 使用 UnifiedDisplayMatrix 进行坐标转换和缩放管理
+ * =============================================================================
+ * ANGELA-MATRIX: L6[执行层] γ [C] L1+
+ * =============================================================================
+ *
+ * 职责: 控制 Live2D 模型渲染，处理物理模拟和动画
+ * 维度: 主要涉及物理维度 (γ) 的位置、速度、碰撞、表情和动作
+ * 安全: 使用 Key C (桌面同步) 进行本地渲染
+ * 成熟度: L1+ 等级即可看到视觉效果
+ *
+ * 功能:
+ * - Live2D 模型加载和渲染 (60fps)
+ * - 7 种表情: neutral, happy, sad, angry, surprised, confused, sleepy
+ * - 10 种动作: idle, talk, think, happy, sad, angry, surprised, confused, sleepy, dance
+ * - 物理模拟: 头发和衣服律动
+ * - 唇型同步: 实时音频驱动的嘴唇动画
+ *
+ * @class Live2DManager
  */
 
 // 导入 Cubism SDK Wrapper

@@ -2,7 +2,7 @@ class UndefinedField:
     """
     Represents an unknown semantic space.
     """
-在函数定义前添加空行
+    def __init__(self, context: str):
         self.context = context
 
     def probe(self):
@@ -11,10 +11,4 @@ class UndefinedField:
         """
         # This is a placeholder implementation.
         # In a real implementation, this would involve more complex logic.
-        return {"boundary_information": f"Boundary of undefined field related to: {self.\
-    \
-    \
-    \
-    \
-    \
-    context}"}
+        return {"boundary_information": f"Boundary of undefined field related to: {self.context}"}

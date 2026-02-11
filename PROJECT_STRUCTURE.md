@@ -219,11 +219,13 @@ from apps.backend.src.core.autonomous import DesktopPet
 
 ## 📊 Current Statistics
 
-- **Total Python Files**: ~200
-- **Core System Files**: 26
+- **Total Python Files**: ~477 (apps/backend/src/)
+- **JavaScript Modules**: 52 (electron_app/js/)
+- **Core System Files**: 26 (autonomous/)
+- **AI Agent Files**: 20 (agents/)
 - **Scripts**: 50+ (organized in subdirectories)
-- **Tests**: 20+
-- **Lines of Code**: ~16,500
+- **Tests**: 100+ (tests/)
+- **Lines of Code**: ~30,000+
 
 ## 🔍 Quick Reference
 
