@@ -59,6 +59,12 @@ class PerformanceManager {
         this.pendingModeChangeTime = 0;
         this.isVisible = true; // Page visibility tracking
         
+        // 性能变更消息确认机制
+        this._pendingPerformanceChanges = new Map(); // 存储待确认的性能变更
+        this._changeConfirmationTimeout = 5000; // 5秒确认超时
+        this._changeRetryCount = 3; // 最大重试次数
+        
+        
         // Add page visibility handling to pause monitoring when hidden
         this._visibilityChangeHandler = () => {
             this.isVisible = !document.hidden;
@@ -925,7 +931,7 @@ class PerformanceManager {
             this.pendingModeChange = null;
             
             if (this.websocket && this.websocket.isConnected()) {
-                this.websocket.send({
+                this._sendPerformanceChangeWithConfirmation({
                     type: 'performance_change',
                     action: 'downgrade',
                     from: this.currentMode,
@@ -949,7 +955,7 @@ class PerformanceManager {
             this.pendingModeChange = null;
             
             if (this.websocket && this.websocket.isConnected()) {
-                this.websocket.send({
+                this._sendPerformanceChangeWithConfirmation({
                     type: 'performance_change',
                     action: 'upgrade',
                     from: this.currentMode,
@@ -998,6 +1004,94 @@ class PerformanceManager {
         }
     }
     
+    /**
+     * 发送带确认的性能变更消息
+     * @param {Object} message 消息内容
+     */
+    _sendPerformanceChangeWithConfirmation(message) {
+        const changeId = `${message.action}_${message.to}_${Date.now()}`;
+        const messageWithId = { ...message, changeId };
+        
+        // 保存待确认的变更
+        this._pendingPerformanceChanges.set(changeId, {
+            message: messageWithId,
+            retryCount: 0,
+            timestamp: Date.now()
+        });
+        
+        // 发送消息
+        try {
+            const sent = this.websocket.send(messageWithId);
+            if (!sent) {
+                // 发送失败，重试
+                console.warn('[PerformanceManager] 性能变更消息发送失败，重试中...');
+                setTimeout(() => this._retryPerformanceChange(changeId), 1000);
+                return;
+            }
+            
+            // 设置确认超时
+            setTimeout(() => {
+                if (this._pendingPerformanceChanges.has(changeId)) {
+                    console.warn('[PerformanceManager] 性能变更确认超时，重试:', changeId);
+                    this._retryPerformanceChange(changeId);
+                }
+            }, this._changeConfirmationTimeout);
+            
+        } catch (error) {
+            console.error('[PerformanceManager] 发送性能变更消息失败:', error);
+            this._retryPerformanceChange(changeId);
+        }
+    }
+    
+    /**
+     * 重试性能变更消息
+     * @param {string} changeId 变更ID
+     */
+    _retryPerformanceChange(changeId) {
+        const pending = this._pendingPerformanceChanges.get(changeId);
+        if (!pending) {
+            return;
+        }
+        
+        if (pending.retryCount >= this._changeRetryCount) {
+            console.error('[PerformanceManager] 性能变更重试次数已达上限:', changeId);
+            this._pendingPerformanceChanges.delete(changeId);
+            return;
+        }
+        
+        pending.retryCount++;
+        
+        try {
+            const sent = this.websocket.send(pending.message);
+            if (sent) {
+                console.log('[PerformanceManager] 性能变更消息重试成功:', changeId);
+                
+                // 重置超时
+                setTimeout(() => {
+                    if (this._pendingPerformanceChanges.has(changeId)) {
+                        this._retryPerformanceChange(changeId);
+                    }
+                }, this._changeConfirmationTimeout);
+            } else {
+                setTimeout(() => this._retryPerformanceChange(changeId), 1000);
+            }
+        } catch (error) {
+            console.error('[PerformanceManager] 重试性能变更消息失败:', error);
+            setTimeout(() => this._retryPerformanceChange(changeId), 1000);
+        }
+    }
+    
+    /**
+     * 确认性能变更
+     * @param {string} changeId 变更ID
+     */
+    confirmPerformanceChange(changeId) {
+        if (this._pendingPerformanceChanges.has(changeId)) {
+            console.log('[PerformanceManager] 性能变更已确认:', changeId);
+            this._pendingPerformanceChanges.delete(changeId);
+        }
+    }
+    
     destroy() {
         // 停止性能监控
         if (this.performanceMonitor) {
@@ -1010,5 +1104,8 @@ class PerformanceManager {
             document.removeEventListener('visibilitychange', this._visibilityChangeHandler);
             this._visibilityChangeHandler = null;
         }
+        
+        // 清理性能变更确认机制
+        this._pendingPerformanceChanges.clear();
     }
 }
