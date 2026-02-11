@@ -1182,6 +1182,15 @@ class UnifiedDisplayMatrix {
 
         return result;
     }
+
+    destroy() {
+        // 停止触摸队列刷新
+        this._stopTouchQueueFlush();
+        
+        // 清空触摸队列
+        this.touchQueue = [];
+        
+        // 清理引用
         this.canvasElement = null;
         this.angelaSystem = { stateMatrix: null, live2DManager: null, hapticHandler: null };
         this.listeners = { scaleChange: [], precisionChange: [], resize: [], touch: [] };
