@@ -128,6 +128,17 @@ class UnifiedDisplayMatrix {
         // 启动触摸队列自动刷新
         this._startTouchQueueFlush();
 
+        // ============================================================
+        // 触摸去抖配置 (防止快速连续触摸)
+        // ============================================================
+        this.debounceConfig = {
+            enabled: true,
+            interval: 150,        // 去抖间隔（毫秒）
+            lastTouchTime: 0,     // 最后一次触摸时间
+            lastTouchType: null,  // 最后一次触摸类型
+            debounceTimer: null   // 去抖定时器
+        };
+
         console.log('[UDM] UnifiedDisplayMatrix initialized (720p=100%)');
     }
 
@@ -183,8 +194,30 @@ class UnifiedDisplayMatrix {
             hapticIntensity: 0,
             stateUpdate: null,
             expression: null,
-            errors: []
+            errors: [],
+            debounced: false  // 标记是否被去抖
         };
+
+        // 检查去抖配置
+        if (this.debounceConfig.enabled) {
+            const now = Date.now();
+            const timeSinceLastTouch = now - this.debounceConfig.lastTouchTime;
+            
+            // 如果在去抖间隔内，忽略此次触摸
+            if (timeSinceLastTouch < this.debounceConfig.interval) {
+                console.log('[UDM] Touch debounced:', touchType, '(last:', timeSinceLastTouch, 'ms ago)');
+                result.debounced = true;
+                result.errors.push({
+                    step: 'debounce',
+                    error: 'Touch debounced - too soon after last touch'
+                });
+                return result;
+            }
+            
+            // 更新最后触摸时间和类型
+            this.debounceConfig.lastTouchTime = now;
+            this.debounceConfig.lastTouchType = touchType;
+        }
 
         try {
             // 1. 坐标转换: screen → canvas → resource
@@ -1186,6 +1219,12 @@ class UnifiedDisplayMatrix {
     destroy() {
         // 停止触摸队列刷新
         this._stopTouchQueueFlush();
+        
+        // 清理去抖定时器
+        if (this.debounceConfig.debounceTimer) {
+            clearTimeout(this.debounceConfig.debounceTimer);
+            this.debounceConfig.debounceTimer = null;
+        }
         
         // 清空触摸队列
         this.touchQueue = [];
