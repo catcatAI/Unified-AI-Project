@@ -99,6 +99,8 @@ class StateMatrix4D {
         
         this.history = [];
         this.maxHistory = config.max_history || 1000;
+        this.historyTimeWindow = config.history_time_window || 3600000; // 默认1小时（毫秒）
+        this.historyMemoryThreshold = config.history_memory_threshold || 10 * 1024 * 1024; // 默认10MB
         this.updateCount = 0;
         this.createdAt = Date.now();
         this.lastUpdate = Date.now();
@@ -106,6 +108,9 @@ class StateMatrix4D {
         this.thresholdCallbacks = {};
         this.live2DManager = null;
         this.websocket = null;
+        
+        // 启动历史清理定时器（每5分钟清理一次）
+        this._startHistoryCleanupTimer();
     }
     
     setLive2DManager(manager) {
@@ -196,8 +201,115 @@ class StateMatrix4D {
         
         this.history.push(snapshot);
         
+        // LRU清理策略1：基于数量限制
         if (this.history.length > this.maxHistory) {
-            this.history.shift();
+            this._trimHistoryByCount();
+        }
+        
+        // LRU清理策略2：基于时间窗口
+        this._trimHistoryByTime();
+        
+        // LRU清理策略3：基于内存使用
+        this._trimHistoryByMemory();
+    }
+    
+    /**
+     * 基于数量的历史清理
+     */
+    _trimHistoryByCount() {
+        if (this.history.length > this.maxHistory) {
+            const removeCount = this.history.length - this.maxHistory;
+            console.log(`[StateMatrix4D] 清理历史记录：移除 ${removeCount} 条记录（基于数量限制）`);
+            this.history.splice(0, removeCount);
+        }
+    }
+    
+    /**
+     * 基于时间窗口的历史清理
+     */
+    _trimHistoryByTime() {
+        if (this.history.length === 0) return;
+        
+        const now = Date.now();
+        const timeWindow = this.historyTimeWindow;
+        const cutoffTime = new Date(now - timeWindow).toISOString();
+        
+        // 查找时间窗口外的第一条记录索引
+        let cutoffIndex = -1;
+        for (let i = 0; i < this.history.length; i++) {
+            if (this.history[i].timestamp >= cutoffTime) {
+                cutoffIndex = i;
+                break;
+            }
+        }
+        
+        if (cutoffIndex > 0) {
+            const removeCount = cutoffIndex;
+            console.log(`[StateMatrix4D] 清理历史记录：移除 ${removeCount} 条记录（基于时间窗口）`);
+            this.history.splice(0, removeCount);
+        }
+    }
+    
+    /**
+     * 基于内存使用的历史清理
+     */
+    _trimHistoryByMemory() {
+        try {
+            const memoryUsage = this._estimateHistoryMemory();
+            if (memoryUsage > this.historyMemoryThreshold) {
+                // 计算需要移除的比例
+                const removeRatio = 0.3; // 移除30%的记录
+                const removeCount = Math.ceil(this.history.length * removeRatio);
+                
+                console.log(`[StateMatrix4D] 清理历史记录：移除 ${removeCount} 条记录（内存使用 ${memoryUsage} bytes > ${this.historyMemoryThreshold} bytes）`);
+                this.history.splice(0, removeCount);
+            }
+        } catch (error) {
+            console.warn('[StateMatrix4D] 内存估算失败:', error);
+        }
+    }
+    
+    /**
+     * 估算历史记录的内存使用量
+     */
+    _estimateHistoryMemory() {
+        try {
+            const jsonString = JSON.stringify(this.history);
+            return new Blob([jsonString]).size;
+        } catch (error) {
+            console.warn('[StateMatrix4D] 无法估算内存使用:', error);
+            return 0;
+        }
+    }
+    
+    /**
+     * 启动历史清理定时器
+     */
+    _startHistoryCleanupTimer() {
+        // 每5分钟清理一次历史记录
+        this.historyCleanupInterval = setInterval(() => {
+            try {
+                this._trimHistoryByTime();
+                this._trimHistoryByMemory();
+                
+                // 记录清理统计
+                if (this.history.length > 0) {
+                    const memoryUsage = this._estimateHistoryMemory();
+                    console.log(`[StateMatrix4D] 历史记录统计：${this.history.length} 条记录，约 ${memoryUsage} bytes`);
+                }
+            } catch (error) {
+                console.error('[StateMatrix4D] 历史清理定时器错误:', error);
+            }
+        }, 300000); // 5分钟 = 300000毫秒
+    }
+    
+    /**
+     * 停止历史清理定时器
+     */
+    _stopHistoryCleanupTimer() {
+        if (this.historyCleanupInterval) {
+            clearInterval(this.historyCleanupInterval);
+            this.historyCleanupInterval = null;
         }
     }
     
@@ -508,6 +620,17 @@ class StateMatrix4D {
         this.updateCount = 0;
         this.history = [];
         this.lastUpdate = Date.now();
+    }
+    
+    /**
+     * 清理资源
+     */
+    cleanup() {
+        this._stopHistoryCleanupTimer();
+        this.history = [];
+        this.changeCallbacks = [];
+        this.thresholdCallbacks = {};
+        console.log('[StateMatrix4D] 资源已清理');
     }
     
     exportToDict() {
