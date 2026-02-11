@@ -22,7 +22,8 @@
  */
 
 class HapticHandler {
-    constructor(unifiedDisplayMatrix = null) {
+    constructor(unifiedDisplayMatrix = null) {        this.isInitialized = false;
+
         this.udm = unifiedDisplayMatrix;  // 统一显示矩阵
         
         this.devices = [];
@@ -36,6 +37,12 @@ class HapticHandler {
     }
 
     async initialize() {
+        // 幂等性保护：防止重复初始化
+        if (this.isInitialized) {
+            console.log('[HapticHandler] Already initialized, skipping');
+            return true;
+        }
+
         console.log('[HapticHandler] Initializing...');
         
         if (this.vibrationSupported) {
@@ -48,7 +55,8 @@ class HapticHandler {
         }
         
         await this.discoverDevices();
-        console.log('[HapticHandler] Initialized');
+        console.log('[HapticHandler] Initialized')
+        this.isInitialized = true;;
     }
 
     async discoverDevices() {

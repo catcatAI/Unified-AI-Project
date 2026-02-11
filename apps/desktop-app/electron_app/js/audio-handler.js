@@ -28,7 +28,8 @@
  */
 
 class AudioHandler {
-    constructor() {
+    constructor() {        this.isInitialized = false;
+
         this.audioContext = null;
         this.microphoneStream = null;
         this.systemAudioStream = null;
@@ -61,6 +62,12 @@ class AudioHandler {
     }
 
     async initialize() {
+        // 幂等性保护：防止重复初始化
+        if (this.isInitialized) {
+            console.log('[AudioHandler] Already initialized, skipping');
+            return true;
+        }
+
         console.log('Initializing Audio Handler...');
         
         // Detect platform

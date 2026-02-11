@@ -5,7 +5,8 @@
  */
 
 class HardwareDetector {
-    constructor() {
+    constructor() {        this.isInitialized = false;
+
         this.profile = null;
         this.capabilities = null;
     }
@@ -682,6 +683,12 @@ class DynamicPerformanceManager {
     }
     
     async initialize() {
+        // 幂等性保护：防止重复初始化
+        if (this.isInitialized) {
+            console.log('[HardwareDetector] Already initialized, skipping');
+            return true;
+        }
+
         console.log('Initializing dynamic performance manager...');
         
         // 檢測硬體
