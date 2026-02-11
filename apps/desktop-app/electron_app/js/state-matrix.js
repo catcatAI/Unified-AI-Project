@@ -103,6 +103,12 @@ class StateMatrix4D {
         this.historyMemoryThreshold = config.history_memory_threshold || 10 * 1024 * 1024; // 默认10MB
         this.updateCount = 0;
         this.createdAt = Date.now();
+        
+        // WebSocket消息节流
+        this._messageThrottleInterval = 100; // 100ms节流间隔
+        this._lastMessageTime = 0;
+        this._pendingMessage = null;
+        this._messageTimer = null;
         this.lastUpdate = Date.now();
         this.changeCallbacks = [];
         this.thresholdCallbacks = {};
@@ -181,12 +187,7 @@ class StateMatrix4D {
         this.applyLive2DChanges(dimensionName, changes);
         
         if (this.websocket && this.websocket.isConnected()) {
-            this.websocket.send({
-                type: 'state_update',
-                dimension: dimensionName,
-                changes: changes,
-                timestamp: Date.now()
-            });
+            this._throttledSendStateUpdate(dimensionName, changes);
         }
     }
     
@@ -623,10 +624,76 @@ class StateMatrix4D {
     }
     
     /**
+     * 节流发送状态更新消息
+     * @param {string} dimensionName 维度名称
+     * @param {Object} changes 变更内容
+     */
+    _throttledSendStateUpdate(dimensionName, changes) {
+        const now = Date.now();
+        const message = {
+            type: 'state_update',
+            dimension: dimensionName,
+            changes: changes,
+            timestamp: now
+        };
+        
+        // 保存待发送的消息（合并最新的变化）
+        this._pendingMessage = message;
+        
+        // 清除之前的定时器
+        if (this._messageTimer) {
+            clearTimeout(this._messageTimer);
+        }
+        
+        // 检查是否立即发送（距离上次发送超过节流间隔）
+        if (now - this._lastMessageTime >= this._messageThrottleInterval) {
+            this._sendStateUpdateNow();
+        } else {
+            // 设置定时器，在节流间隔后发送
+            this._messageTimer = setTimeout(() => {
+                this._sendStateUpdateNow();
+            }, this._messageThrottleInterval);
+        }
+    }
+    
+    /**
+     * 立即发送状态更新消息
+     */
+    _sendStateUpdateNow() {
+        if (!this._pendingMessage) {
+            return;
+        }
+        
+        try {
+            const sent = this.websocket.send(this._pendingMessage);
+            if (sent) {
+                this._lastMessageTime = Date.now();
+                this._pendingMessage = null;
+            }
+        } catch (error) {
+            console.error('[StateMatrix4D] 发送状态更新失败:', error);
+        }
+        
+        // 清除定时器
+        if (this._messageTimer) {
+            clearTimeout(this._messageTimer);
+            this._messageTimer = null;
+        }
+    }
+    
+    /**
      * 清理资源
      */
     cleanup() {
         this._stopHistoryCleanupTimer();
+        
+        // 清理WebSocket消息节流定时器
+        if (this._messageTimer) {
+            clearTimeout(this._messageTimer);
+            this._messageTimer = null;
+        }
+        this._pendingMessage = null;
+        
         this.history = [];
         this.changeCallbacks = [];
         this.thresholdCallbacks = {};
