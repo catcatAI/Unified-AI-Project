@@ -582,6 +582,251 @@ class StateMatrix4D {
         return filtered;
     }
     
+    /**
+     * 分析情绪趋势
+     * @param {string} dimension - 维度名称 (alpha, beta, gamma, delta)
+     * @param {string} emotion - 情绪名称
+     * @param {number} windowMinutes - 时间窗口（分钟）
+     * @returns {Object} 趋势分析结果
+     */
+    analyzeTrend(dimension = 'gamma', emotion = 'happiness', windowMinutes = 60) {
+        const now = Date.now();
+        const windowStart = new Date(now - windowMinutes * 60 * 1000);
+        
+        // 获取时间窗口内的历史记录
+        const historyData = this.getHistory(windowStart, now);
+        
+        if (historyData.length < 2) {
+            return {
+                trend: 'insufficient_data',
+                message: 'Not enough data points for trend analysis',
+                dataPoints: historyData.length
+            };
+        }
+        
+        // 提取情绪值
+        const values = historyData.map(h => {
+            const dim = h.dimensions[dimension];
+            return dim ? dim.emotions[emotion] || 0 : 0;
+        });
+        
+        // 计算统计信息
+        const sum = values.reduce((a, b) => a + b, 0);
+        const avg = sum / values.length;
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        
+        // 计算趋势（线性回归）
+        const n = values.length;
+        const sumX = n * (n - 1) / 2;
+        const sumXY = values.reduce((sum, y, i) => sum + i * y, 0);
+        const sumX2 = (n - 1) * n * (2 * n - 1) / 6;
+        
+        const slope = (n * sumXY - sumX * sum) / (n * sumX2 - sumX * sumX);
+        
+        // 判断趋势方向
+        let trend, direction;
+        if (Math.abs(slope) < 0.001) {
+            trend = 'stable';
+            direction = 0;
+        } else if (slope > 0) {
+            trend = 'increasing';
+            direction = 1;
+        } else {
+            trend = 'decreasing';
+            direction = -1;
+        }
+        
+        // 计算变化率（百分比）
+        const firstValue = values[0];
+        const lastValue = values[values.length - 1];
+        const changePercent = firstValue !== 0 ? ((lastValue - firstValue) / firstValue) * 100 : 0;
+        
+        // 计算波动性（标准差）
+        const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / n;
+        const stdDev = Math.sqrt(variance);
+        
+        // 判断波动程度
+        let volatility;
+        if (stdDev < 0.05) {
+            volatility = 'low';
+        } else if (stdDev < 0.15) {
+            volatility = 'medium';
+        } else {
+            volatility = 'high';
+        }
+        
+        return {
+            trend,
+            direction,
+            slope,
+            changePercent,
+            volatility,
+            stdDev,
+            stats: {
+                avg,
+                min,
+                max,
+                range: max - min
+            },
+            dataPoints: n,
+            windowMinutes,
+            dimension,
+            emotion,
+            firstValue,
+            lastValue,
+            timestamps: historyData.map(h => h.timestamp)
+        };
+    }
+    
+    /**
+     * 获取情绪综合报告
+     * @param {number} windowMinutes - 时间窗口（分钟）
+     * @returns {Object} 综合情绪报告
+     */
+    getEmotionReport(windowMinutes = 60) {
+        const now = Date.now();
+        const windowStart = new Date(now - windowMinutes * 60 * 1000);
+        const historyData = this.getHistory(windowStart, now);
+        
+        if (historyData.length === 0) {
+            return { status: 'no_data' };
+        }
+        
+        // 分析所有维度的情绪趋势
+        const dimensions = ['alpha', 'beta', 'gamma', 'delta'];
+        const emotions = {
+            alpha: ['energy', 'comfort', 'arousal', 'vitality'],
+            beta: ['curiosity', 'focus', 'clarity', 'creativity'],
+            gamma: ['happiness', 'calm', 'love', 'trust'],
+            delta: ['attention', 'bond', 'intimacy', 'engagement']
+        };
+        
+        const trends = {};
+        const summaries = {};
+        
+        for (const dim of dimensions) {
+            trends[dim] = {};
+            summaries[dim] = {
+                avg: {},
+                trend: {},
+                dominant: null
+            };
+            
+            for (const emo of emotions[dim]) {
+                const analysis = this.analyzeTrend(dim, emo, windowMinutes);
+                trends[dim][emo] = analysis;
+                summaries[dim].avg[emo] = analysis.stats.avg;
+                summaries[dim].trend[emo] = analysis.trend;
+            }
+            
+            // 找出主导情绪（平均最高的）
+            const emotionsAvg = summaries[dim].avg;
+            const dominantEmo = Object.keys(emotionsAvg).reduce((a, b) => 
+                emotionsAvg[a] > emotionsAvg[b] ? a : b
+            );
+            summaries[dim].dominant = {
+                emotion: dominantEmo,
+                value: emotionsAvg[dominantEmo],
+                trend: summaries[dim].trend[dominantEmo]
+            };
+        }
+        
+        // 整体情绪状态
+        const latestState = historyData[historyData.length - 1];
+        const overallMood = this._computeOverallMood(latestState);
+        
+        return {
+            status: 'success',
+            windowMinutes,
+            dataPoints: historyData.length,
+            timestamp: new Date().toISOString(),
+            overallMood,
+            trends,
+            summaries,
+            recommendations: this._generateRecommendations(summaries, overallMood)
+        };
+    }
+    
+    /**
+     * 计算整体情绪状态
+     */
+    _computeOverallMood(state) {
+        if (!state) return { mood: 'unknown', confidence: 0 };
+        
+        // 计算主要情绪维度的平均分
+        const gammaAvg = (state.dimensions.gamma.emotions.happiness + 
+                          state.dimensions.gamma.emotions.calm + 
+                          state.dimensions.gamma.emotions.love + 
+                          state.dimensions.gamma.emotions.trust) / 4;
+        
+        const alphaAvg = (state.dimensions.alpha.emotions.energy + 
+                          state.dimensions.alpha.emotions.comfort + 
+                          state.dimensions.alpha.emotions.arousal + 
+                          state.dimensions.alpha.emotions.vitality) / 4;
+        
+        let mood = 'neutral';
+        let confidence = 0.5;
+        
+        if (gammaAvg > 0.6) {
+            mood = 'happy';
+            confidence = 0.7 + (gammaAvg - 0.6) * 0.3;
+        } else if (gammaAvg < 0.3) {
+            mood = 'sad';
+            confidence = 0.7 + (0.3 - gammaAvg) * 0.3;
+        } else if (alphaAvg > 0.7) {
+            mood = 'energetic';
+            confidence = 0.7 + (alphaAvg - 0.7) * 0.3;
+        } else if (alphaAvg < 0.3) {
+            mood = 'tired';
+            confidence = 0.7 + (0.3 - alphaAvg) * 0.3;
+        } else if (state.dimensions.gamma.emotions.calm > 0.6) {
+            mood = 'calm';
+            confidence = 0.8;
+        }
+        
+        return { mood, confidence: Math.min(1, confidence) };
+    }
+    
+    /**
+     * 生成建议
+     */
+    _generateRecommendations(summaries, overallMood) {
+        const recommendations = [];
+        
+        // 根据整体情绪状态提供建议
+        if (overallMood.mood === 'tired') {
+            recommendations.push({
+                type: 'rest',
+                message: '看起来你需要休息一下',
+                action: 'suggested休息'
+            });
+        } else if (overallMood.mood === 'sad') {
+            recommendations.push({
+                type: 'comfort',
+                message: '注意到你情绪较低落',
+                action: 'offered_comfort'
+            });
+        } else if (overallMood.mood === 'energetic') {
+            recommendations.push({
+                type: 'activity',
+                message: '你充满活力！',
+                action: 'ready_for_activity'
+            });
+        }
+        
+        // 根据情绪趋势提供建议
+        if (summaries.gamma && summaries.gamma.trend.happiness === 'decreasing') {
+            recommendations.push({
+                type: 'attention',
+                message: '你的快乐情绪在下降',
+                action: 'check_in'
+            });
+        }
+        
+        return recommendations;
+    }
+    
     setDimensionWeight(dimension, weight) {
         if (this.dimensions[dimension]) {
             this.dimensions[dimension].weight = weight;
