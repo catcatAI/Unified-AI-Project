@@ -46,6 +46,12 @@ class AudioHandler {
         this.speechRecognition = null;
         this.onSpeechRecognized = null;
         
+        // 支持的语音识别语言
+        this.supportedLanguages = [
+            'en-US', 'en-GB', 'zh-CN', 'zh-TW', 'ja-JP', 'ko-KR',
+            'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-BR', 'ru-RU'
+        ];
+        
         // TTS
         this.synthesis = window.speechSynthesis;
         this.currentUtterance = null;
@@ -298,50 +304,170 @@ class AudioHandler {
 
     // Speech recognition
     _initializeSpeechRecognition() {
+        // 检查浏览器兼容性
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         
         if (!SpeechRecognition) {
-            console.warn('Speech recognition not supported');
-            return;
+            console.warn('[AudioHandler] Speech recognition not supported in this browser');
+            console.warn('[AudioHandler] Supported browsers: Chrome (25+), Edge (79+), Safari (14.1+)');
+            this.speechRecognition = null;
+            return false;
         }
         
-        this.speechRecognition = new SpeechRecognition();
-        this.speechRecognition.continuous = true;
-        this.speechRecognition.interimResults = true;
-        this.speechRecognition.lang = 'en-US';
-        
-        this.speechRecognition.onresult = (event) => {
-            let finalTranscript = '';
-            let interimTranscript = '';
+        try {
+            this.speechRecognition = new SpeechRecognition();
+            this.speechRecognition.continuous = true;
+            this.speechRecognition.interimResults = true;
             
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
+            // 检测用户语言
+            const userLang = navigator.language || 'en-US';
+            console.log('[AudioHandler] Detected user language:', userLang);
+            this.speechRecognition.lang = userLang;
+            
+            // 支持的语言列表
+            this.supportedLanguages = [
+                'en-US', 'en-GB', 'zh-CN', 'zh-TW', 'ja-JP', 'ko-KR',
+                'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-BR', 'ru-RU'
+            ];
+            
+            this.speechRecognition.onresult = (event) => {
+                let finalTranscript = '';
+                let interimTranscript = '';
                 
-                if (event.results[i].isFinal) {
-                    finalTranscript += transcript;
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    const confidence = event.results[i][0].confidence || 0;
                     
-                    if (this.onSpeechRecognized) {
-                        this.onSpeechRecognized(transcript, true);
-                    }
-                } else {
-                    interimTranscript += transcript;
-                    
-                    if (this.onSpeechRecognized) {
-                        this.onSpeechRecognized(transcript, false);
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                        
+                        if (this.onSpeechRecognized) {
+                            this.onSpeechRecognized(transcript, true, confidence);
+                        }
+                    } else {
+                        interimTranscript += transcript;
+                        
+                        if (this.onSpeechRecognized) {
+                            this.onSpeechRecognized(transcript, false, confidence);
+                        }
                     }
                 }
-            }
-        };
+            };
+            
+            this.speechRecognition.onerror = (event) => {
+                const errorTypes = {
+                    'no-speech': '没有检测到语音',
+                    'audio-capture': '音频捕获失败',
+                    'not-allowed': '麦克风权限被拒绝',
+                    'network': '网络错误',
+                    'aborted': '识别被中止',
+                    'service-not-allowed': '语音识别服务被禁用',
+                    'bad-grammar': '语法错误'
+                };
+                
+                const errorMessage = errorTypes[event.error] || event.error;
+                console.error('[AudioHandler] Speech recognition error:', errorMessage);
+                
+                // 根据错误类型采取不同的处理方式
+                if (event.error === 'not-allowed') {
+                    console.warn('[AudioHandler] 请允许麦克风访问权限');
+                    this.isListening = false;
+                } else if (event.error === 'service-not-allowed') {
+                    console.warn('[AudioHandler] 语音识别服务被禁用（可能需要HTTPS）');
+                    this.isListening = false;
+                } else if (event.error === 'network') {
+                    console.warn('[AudioHandler] 网络错误，将在5秒后重试');
+                    setTimeout(() => {
+                        if (this.isListening) {
+                            this.startSpeechRecognition();
+                        }
+                    }, 5000);
+                }
+            };
+            
+            this.speechRecognition.onend = () => {
+                if (this.isListening) {
+                    // 自动重启（保持连续识别）
+                    try {
+                        this.speechRecognition.start();
+                    } catch (restartError) {
+                        console.warn('[AudioHandler] Failed to restart speech recognition:', restartError);
+                        this.isListening = false;
+                    }
+                }
+            };
+            
+            console.log('[AudioHandler] Speech recognition initialized successfully');
+            console.log('[AudioHandler] Language:', this.speechRecognition.lang);
+            return true;
+            
+        } catch (error) {
+            console.error('[AudioHandler] Failed to initialize speech recognition:', error);
+            this.speechRecognition = null;
+            return false;
+        }
+    }
+    
+    /**
+     * 设置语音识别语言
+     * @param {string} lang - 语言代码（如 'en-US', 'zh-CN'）
+     * @returns {boolean} 是否成功设置
+     */
+    setSpeechLanguage(lang) {
+        if (!this.speechRecognition) {
+            console.warn('[AudioHandler] Speech recognition not available');
+            return false;
+        }
         
-        this.speechRecognition.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
-        };
+        // 检查是否支持该语言
+        if (this.supportedLanguages && !this.supportedLanguages.includes(lang)) {
+            console.warn('[AudioHandler] Language may not be supported:', lang);
+        }
         
-        this.speechRecognition.onend = () => {
+        try {
+            // 停止当前识别
+            const wasListening = this.isListening;
             if (this.isListening) {
-                // Restart if still listening
-                this.speechRecognition.start();
+                this.stopSpeechRecognition();
             }
+            
+            // 设置新语言
+            this.speechRecognition.lang = lang;
+            console.log('[AudioHandler] Speech recognition language set to:', lang);
+            
+            // 如果之前在监听，重新开始
+            if (wasListening) {
+                this.startSpeechRecognition();
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('[AudioHandler] Failed to set speech language:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * 获取支持的语音识别语言列表
+     * @returns {Array<string>} 支持的语言代码列表
+     */
+    getSupportedSpeechLanguages() {
+        return this.supportedLanguages || [];
+    }
+    
+    /**
+     * 检查语音识别是否可用
+     * @returns {Object} 可用性信息
+     */
+    getSpeechRecognitionAvailability() {
+        return {
+            available: !!this.speechRecognition,
+            lang: this.speechRecognition ? this.speechRecognition.lang : null,
+            continuous: this.speechRecognition ? this.speechRecognition.continuous : false,
+            interimResults: this.speechRecognition ? this.speechRecognition.interimResults : false,
+            isListening: this.isListening,
+            supportedLanguages: this.getSupportedSpeechLanguages(),
+            browserSupport: !!(window.SpeechRecognition || window.webkitSpeechRecognition)
         };
     }
 
