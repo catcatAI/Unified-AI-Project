@@ -35,6 +35,10 @@ class BackendWebSocketClient {
         
         // 恢复持久化的离线消息
         this._loadOfflineQueue();
+        
+        // 待处理响应清理定时器
+        this._pendingResponsesCleanupInterval = 60000; // 每分钟清理一次
+        this._pendingResponsesCleanupTimer = null;
     }
     
     async connect(url) {
@@ -55,6 +59,9 @@ class BackendWebSocketClient {
                 
                 // 開始心跳
                 this._startHeartbeat();
+                
+                // 启动待处理响应清理
+                this._startPendingResponsesCleanup();
                 
                 // 通知連接成功
                 this._fireEvent('connected', { url, timestamp: Date.now() });
@@ -235,6 +242,43 @@ class BackendWebSocketClient {
         }
     }
     
+    _startPendingResponsesCleanup() {
+        this._pendingResponsesCleanupTimer = setInterval(() => {
+            this._cleanupExpiredPendingResponses();
+        }, this._pendingResponsesCleanupInterval);
+    }
+    
+    _stopPendingResponsesCleanup() {
+        if (this._pendingResponsesCleanupTimer) {
+            clearInterval(this._pendingResponsesCleanupTimer);
+            this._pendingResponsesCleanupTimer = null;
+        }
+    }
+    
+    _cleanupExpiredPendingResponses() {
+        if (!this._pendingResponses || this._pendingResponses.size === 0) {
+            return;
+        }
+        
+        const now = Date.now();
+        let cleanedCount = 0;
+        
+        for (const [messageId, pending] of this._pendingResponses.entries()) {
+            // 检查超时（30秒后清理）
+            const elapsed = now - pending.timestamp;
+            if (elapsed >= 35000) { // 给5秒缓冲时间
+                clearTimeout(pending.timeout);
+                pending.resolve({ success: false, response: 'Response expired and cleaned up' });
+                this._pendingResponses.delete(messageId);
+                cleanedCount++;
+            }
+        }
+        
+        if (cleanedCount > 0) {
+            console.log('[BackendWebSocket] 清理了', cleanedCount, '个过期响应');
+        }
+    }
+    
     _handleReconnect() {
         console.log('Attempting to reconnect... (attempt', this.reconnectAttempts + 1, 'of', this.maxReconnectAttempts + 1, ')');
         
@@ -303,7 +347,7 @@ class BackendWebSocketClient {
             }, 30000);
 
             this._pendingResponses = this._pendingResponses || new Map();
-            this._pendingResponses.set(messageId, { timeout, resolve });
+            this._pendingResponses.set(messageId, { timeout, resolve, timestamp: Date.now() });
 
             try {
                 this.ws.send(JSON.stringify({
@@ -496,6 +540,7 @@ class BackendWebSocketClient {
         
         this.connected = false;
         this._stopHeartbeat();
+        this._stopPendingResponsesCleanup();
         
         if (this.reconnectInterval) {
             clearTimeout(this.reconnectInterval);
