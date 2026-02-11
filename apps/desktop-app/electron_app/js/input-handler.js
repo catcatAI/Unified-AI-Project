@@ -245,16 +245,18 @@ class InputHandler {
     }
 
     _sendClickThroughRegions() {
-        // Convert to format for main process
-        const regions = this.clickableRegions.map(region => ({
-            x: region.x * window.innerWidth,
-            y: region.y * window.innerHeight,
-            width: region.width * window.innerWidth,
-            height: region.height * window.innerHeight
-        }));
+        // 只发送interactive区域作为skipRegions（不穿透的区域）
+        const interactiveRegions = this.clickableRegions
+            .filter(region => region.type === 'interactive')
+            .map(region => ({
+                x: region.x * window.innerWidth,
+                y: region.y * window.innerHeight,
+                width: region.width * window.innerWidth,
+                height: region.height * window.innerHeight
+            }));
         
         if (window.electronAPI && window.electronAPI.window) {
-            window.electronAPI.window.setClickThroughRegions(regions);
+            window.electronAPI.window.setClickThroughRegions(interactiveRegions);
         }
     }
 

@@ -978,18 +978,37 @@ ipcMain.handle('window-set-ignore-mouse-events', (event, ignore, options = {}) =
 
 // Click-through regions
 ipcMain.handle('set-click-through-regions', (event, regions) => {
-  // Set transparent regions (where mouse events pass through)
-  if (regions.length > 0) {
-    mainWindow.setIgnoreMouseEvents(true, {
-      forward: true,
-      translate: false
-    });
-  } else {
+  try {
+    // Set transparent regions (where mouse events pass through)
+    if (regions && regions.length > 0) {
+      // 将穿透区域转换为skipRegions（不穿透的区域）
+      // Electron的skipRegions参数指定哪些区域不忽略鼠标事件
+      const skipRegions = regions.map(region => ({
+        x: Math.floor(region.x),
+        y: Math.floor(region.y),
+        width: Math.ceil(region.width),
+        height: Math.ceil(region.height)
+      }));
+      
+      mainWindow.setIgnoreMouseEvents(true, {
+        forward: true,
+        translate: false,
+        skipRegions: skipRegions
+      });
+      
+      console.log('[Main] 点击穿透区域已设置:', skipRegions.length, '个区域');
+    } else {
+      mainWindow.setIgnoreMouseEvents(false);
+      console.log('[Main] 点击穿透已禁用');
+    }
+    
+    // Send regions to renderer for hit testing
+    sendToMainWindow('click-through-regions-updated', regions);
+  } catch (error) {
+    console.error('[Main] 设置点击穿透区域失败:', error);
+    // 失败时恢复默认行为
     mainWindow.setIgnoreMouseEvents(false);
   }
-  
-  // Send regions to renderer for hit testing
-  sendToMainWindow('click-through-regions-updated', regions);
 });
 
 // Live2D model management
