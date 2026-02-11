@@ -574,75 +574,107 @@ class StateMatrix4D {
     }
     
     handleInteraction(type, data = {}) {
-        switch (type) {
-            case 'click':
-                this.handleInteractionClick(data);
-                break;
-            case 'drag':
-                this.handleInteractionDrag(data);
-                break;
-            case 'speech':
-                this.handleInteractionSpeech(data);
-                break;
-            case 'touch':
-                this.handleInteractionTouch(data);
-                break;
-            case 'idle':
-                this.handleInteractionIdle(data);
-                break;
+        try {
+            switch (type) {
+                case 'click':
+                    this.handleInteractionClick(data);
+                    break;
+                case 'drag':
+                    this.handleInteractionDrag(data);
+                    break;
+                case 'speech':
+                    this.handleInteractionSpeech(data);
+                    break;
+                case 'touch':
+                    this.handleInteractionTouch(data);
+                    break;
+                case 'idle':
+                    this.handleInteractionIdle(data);
+                    break;
+                default:
+                    console.warn('[StateMatrix4D] Unknown interaction type:', type);
+            }
+            
+            this.computeInfluences();
+        } catch (error) {
+            console.error('[StateMatrix4D] Interaction handling failed:', error, 'type:', type, 'data:', data);
+            // 即使出错也尝试计算影响，确保状态不会完全冻结
+            try {
+                this.computeInfluences();
+            } catch (computeError) {
+                console.error('[StateMatrix4D] Influence computation also failed:', computeError);
+            }
         }
-        
-        this.computeInfluences();
     }
     
     handleInteractionClick(data) {
-        this.updateDelta({ attention: 1.0, engagement: 0.8 });
-        this.updateBeta({ curiosity: 0.6 });
-        this.updateGamma({ surprise: Math.min(1, this.gamma.values.surprise + 0.2) });
-        
-        if (data.part === 'head') {
-            this.updateDelta({ intimacy: Math.min(1, this.delta.values.intimacy + 0.1) });
+        try {
+            this.updateDelta({ attention: 1.0, engagement: 0.8 });
+            this.updateBeta({ curiosity: 0.6 });
+            this.updateGamma({ surprise: Math.min(1, this.gamma.values.surprise + 0.2) });
+            
+            if (data.part === 'head') {
+                this.updateDelta({ intimacy: Math.min(1, this.delta.values.intimacy + 0.1) });
+            }
+        } catch (error) {
+            console.error('[StateMatrix4D] Click interaction failed:', error);
         }
     }
     
     handleInteractionDrag(data) {
-        this.updateDelta({ attention: 1.0, engagement: 0.9 });
-        this.updateBeta({ focus: 0.7 });
-        this.updateAlpha({ arousal: Math.min(1, this.alpha.values.arousal + 0.15) });
+        try {
+            this.updateDelta({ attention: 1.0, engagement: 0.9 });
+            this.updateBeta({ focus: 0.7 });
+            this.updateAlpha({ arousal: Math.min(1, this.alpha.values.arousal + 0.15) });
+        } catch (error) {
+            console.error('[StateMatrix4D] Drag interaction failed:', error);
+        }
     }
     
     handleInteractionSpeech(data) {
-        this.updateDelta({ attention: 1.0, engagement: 0.9, bond: Math.min(1, this.delta.values.bond + 0.05) });
-        this.updateBeta({ curiosity: 0.7, learning: Math.min(1, this.beta.values.learning + 0.1) });
-        
-        if (data.emotion) {
-            const gammaUpdate = {};
-            gammaUpdate[data.emotion] = Math.min(1, this.gamma.values[data.emotion] + 0.2);
-            this.updateGamma(gammaUpdate);
+        try {
+            this.updateDelta({ attention: 1.0, engagement: 0.9, bond: Math.min(1, this.delta.values.bond + 0.05) });
+            this.updateBeta({ curiosity: 0.7, learning: Math.min(1, this.beta.values.learning + 0.1) });
+            
+            if (data.emotion) {
+                const gammaUpdate = {};
+                gammaUpdate[data.emotion] = Math.min(1, this.gamma.values[data.emotion] + 0.2);
+                this.updateGamma(gammaUpdate);
+            }
+        } catch (error) {
+            console.error('[StateMatrix4D] Speech interaction failed:', error);
         }
     }
     
     handleInteractionTouch(data) {
-        this.updateAlpha({ comfort: Math.min(1, this.alpha.values.comfort + 0.1) });
-        this.updateDelta({ intimacy: Math.min(1, this.delta.values.intimacy + 0.15) });
-        this.updateGamma({ calm: Math.min(1, this.gamma.values.calm + 0.1) });
+        try {
+            this.updateAlpha({ comfort: Math.min(1, this.alpha.values.comfort + 0.1) });
+            this.updateDelta({ intimacy: Math.min(1, this.delta.values.intimacy + 0.15) });
+            this.updateGamma({ calm: Math.min(1, this.gamma.values.calm + 0.1) });
+        } catch (error) {
+            console.error('[StateMatrix4D] Touch interaction failed:', error);
+        }
     }
     
     handleInteractionIdle(data) {
-        const duration = data.duration || 60;
-        const decayFactor = Math.min(0.05, duration / 1200);
-        
-        this.updateBeta({
-            curiosity: Math.max(0, this.beta.values.curiosity - decayFactor),
-            focus: Math.max(0, this.beta.values.focus - decayFactor)
-        });
-        
-        this.updateDelta({
-            attention: Math.max(0, this.delta.values.attention - decayFactor),
-            engagement: Math.max(0, this.delta.values.engagement - decayFactor)
-        });
-        
-        this.updateGamma({ calm: Math.min(1, this.gamma.values.calm + decayFactor * 0.5) });
+        try {
+            const duration = data.duration || 60;
+            const decayFactor = Math.min(0.05, duration / 1200);
+            
+            this.updateBeta({
+                curiosity: Math.max(0, this.beta.values.curiosity - decayFactor),
+                focus: Math.max(0, this.beta.values.focus - decayFactor)
+            });
+            
+            this.updateDelta({
+                attention: Math.max(0, this.delta.values.attention - decayFactor),
+                engagement: Math.max(0, this.delta.values.engagement - decayFactor)
+            });
+            
+            this.updateGamma({ calm: Math.min(1, this.gamma.values.calm + decayFactor * 0.5) });
+        } catch (error) {
+            console.error('[StateMatrix4D] Idle interaction failed:', error);
+        }
     }
     
     updateFromBackend(data) {

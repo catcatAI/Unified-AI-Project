@@ -444,9 +444,27 @@ class Live2DManager {
     
     // Expression control
     setExpression(expression) {
-        if (this.expressions[expression]) {
-            this.currentExpression = expression;
-            console.log(`[Live2DManager] Expression: ${expression}`);
+        try {
+            if (this.expressions[expression]) {
+                this.currentExpression = expression;
+                console.log(`[Live2DManager] Expression: ${expression}`);
+            } else {
+                console.warn(`[Live2DManager] Unknown expression: ${expression}, available:`, Object.keys(this.expressions));
+                // 回退到neutral表情
+                if (this.expressions['neutral']) {
+                    this.currentExpression = 'neutral';
+                }
+            }
+        } catch (error) {
+            console.error('[Live2DManager] Failed to set expression:', error, 'expression:', expression);
+            // 尝试回退到neutral
+            if (this.expressions && this.expressions['neutral']) {
+                try {
+                    this.currentExpression = 'neutral';
+                } catch (fallbackError) {
+                    console.error('[Live2DManager] Fallback to neutral also failed:', fallbackError);
+                }
+            }
         }
     }
     

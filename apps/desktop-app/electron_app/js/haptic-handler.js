@@ -155,50 +155,111 @@ class HapticHandler {
      * @returns {object} - 触觉结果
      */
     trigger(bodyPart, baseIntensity = 1.0, touchInfo = {}) {
-        // 使用 UDM 计算触觉强度
-        let finalIntensity = baseIntensity;
-        
-        if (this.udm && touchInfo.position) {
-            const udmHaptic = this.udm.calculateHapticIntensity(
-                baseIntensity,
-                touchInfo.position.canvas,
-                touchInfo.touchSize || 40
-            );
-            finalIntensity = udmHaptic.intensity;
+        try {
+            // 使用 UDM 计算触觉强度
+            let finalIntensity = baseIntensity;
+            
+            if (this.udm && touchInfo.position) {
+                try {
+                    const udmHaptic = this.udm.calculateHapticIntensity(
+                        baseIntensity,
+                        touchInfo.position.canvas,
+                        touchInfo.touchSize || 40
+                    );
+                    finalIntensity = udmHaptic.intensity;
+                } catch (udmError) {
+                    console.warn('[HapticHandler] UDM触觉强度计算失败，使用基础强度:', umError);
+                }
+            }
+            
+            // 获取触觉模式
+            const pattern = this._getPattern(bodyPart, finalIntensity);
+            
+            // 触发振动
+            this.vibrate(pattern.duration, pattern.intensity);
+            
+            return {
+                bodyPart,
+                duration: pattern.duration,
+                intensity: pattern.intensity,
+                timestamp: Date.now()
+            };
+        } catch (error) {
+            console.error('[HapticHandler] 触觉反馈触发失败:', error);
+            return {
+                bodyPart,
+                duration: 0,
+                intensity: 0,
+                timestamp: Date.now(),
+                error: error.message
+            };
         }
-        
-        // 获取触觉模式
-        const pattern = this._getPattern(bodyPart, finalIntensity);
-        
-        // 触发振动
-        this.vibrate(pattern.duration, pattern.intensity);
-        
-        return {
-            bodyPart,
-            duration: pattern.duration,
-            intensity: pattern.intensity,
-            timestamp: Date.now()
-        };
+    }
+    
+    /**
+     * 触发触觉反馈 - 兼容接口
+     * @param {number} intensity - 触觉强度 (0-1)
+     * @param {string} touchType - 触摸类型
+     */
+    triggerHaptic(intensity, touchType = 'pat') {
+        try {
+            if (!this.isEnabled) {
+                return { triggered: false, reason: 'disabled' };
+            }
+            
+            // 根据触摸类型选择模式
+            const patterns = {
+                'pat': { duration: 30, intensity: intensity * 0.6 },
+                'poke': { duration: 15, intensity: intensity * 0.8 },
+                'stroke': { duration: 50, intensity: intensity * 0.4 }
+            };
+            
+            const pattern = patterns[touchType] || patterns['pat'];
+            
+            // 触发振动
+            this.vibrate(pattern.duration, pattern.intensity);
+            
+            return {
+                triggered: true,
+                duration: pattern.duration,
+                intensity: pattern.intensity,
+                touchType
+            };
+        } catch (error) {
+            console.error('[HapticHandler] 触觉反馈触发失败:', error);
+            return {
+                triggered: false,
+                error: error.message
+            };
+        }
     }
 
     vibrate(duration, intensity = 1, pattern = []) {
-        if (this.vibrationSupported) {
-            if (pattern.length > 0) {
-                navigator.vibrate(pattern);
-            } else {
-                navigator.vibrate(duration);
+        try {
+            if (this.vibrationSupported) {
+                if (pattern.length > 0) {
+                    navigator.vibrate(pattern);
+                } else {
+                    navigator.vibrate(duration);
+                }
             }
-        }
-        
-        for (const [deviceId, device] of this.connectedDevices) {
-            if (device.type === 'gamepad' && device.hasRumble) {
-                device.vibrationActuator.playEffect('dual-rumble', {
-                    startDelay: 0,
-                    duration,
-                    weakMagnitude: intensity * 0.5,
-                    strongMagnitude: intensity
-                });
+            
+            for (const [deviceId, device] of this.connectedDevices) {
+                try {
+                    if (device.type === 'gamepad' && device.hasRumble) {
+                        device.vibrationActuator.playEffect('dual-rumble', {
+                            startDelay: 0,
+                            duration,
+                            weakMagnitude: intensity * 0.5,
+                            strongMagnitude: intensity
+                        });
+                    }
+                } catch (deviceError) {
+                    console.warn(`[HapticHandler] Device ${deviceId} vibration failed:`, deviceError);
+                }
             }
+        } catch (error) {
+            console.error('[HapticHandler] Vibration failed:', error);
         }
     }
 
@@ -215,47 +276,56 @@ class HapticHandler {
      * @returns {object} - 处理结果
      */
     async handleCharacterTouch(touchInfo) {
-        if (!touchInfo || !touchInfo.hit) return null;
+        try {
+            if (!touchInfo || !touchInfo.hit) return null;
 
-        console.log('[HapticHandler] Character touch:', touchInfo.bodyPart);
+            console.log('[HapticHandler] Character touch:', touchInfo.bodyPart);
 
-        // 触发触觉反馈
-        const hapticResult = this.trigger(
-            touchInfo.bodyPart,
-            touchInfo.intensity,
-            {
+            // 触发触觉反馈
+            const hapticResult = this.trigger(
+                touchInfo.bodyPart,
+                touchInfo.intensity,
+                {
+                    position: touchInfo.position,
+                    touchSize: this._getTouchSize(touchInfo.bodyPart)
+                }
+            );
+
+            // 构建事件
+            const tactileEvent = {
+                type: 'tactile_event',
+                touchType: touchInfo.tactileType,
+                bodyPart: touchInfo.bodyPart,
+                intensity: hapticResult.intensity,
+                expression: touchInfo.expression,
                 position: touchInfo.position,
-                touchSize: this._getTouchSize(touchInfo.bodyPart)
-            }
-        );
+                colorMatch: touchInfo.colorMatch,
+                timestamp: Date.now()
+            };
 
-        // 构建事件
-        const tactileEvent = {
-            type: 'tactile_event',
-            touchType: touchInfo.tactileType,
-            bodyPart: touchInfo.bodyPart,
-            intensity: hapticResult.intensity,
-            expression: touchInfo.expression,
-            position: touchInfo.position,
-            colorMatch: touchInfo.colorMatch,
-            timestamp: Date.now()
-        };
-
-        // 发送到后端
-        const backendWs = window.angelaApp?.backendWebSocket;
-        if (backendWs && backendWs.readyState === WebSocket.OPEN) {
-            try {
-                backendWs.send(JSON.stringify(tactileEvent));
-                console.log('[HapticHandler] Tactile event sent:', touchInfo.bodyPart);
-            } catch (e) {
-                console.warn('[HapticHandler] Failed to send event:', e);
+            // 发送到后端
+            const backendWs = window.angelaApp?.backendWebSocket;
+            if (backendWs && backendWs.readyState === WebSocket.OPEN) {
+                try {
+                    backendWs.send(JSON.stringify(tactileEvent));
+                    console.log('[HapticHandler] Tactile event sent:', touchInfo.bodyPart);
+                } catch (e) {
+                    console.warn('[HapticHandler] Failed to send event:', e);
+                }
             }
+
+            return {
+                haptic: hapticResult,
+                tactileEvent
+            };
+        } catch (error) {
+            console.error('[HapticHandler] 角色触摸处理失败:', error);
+            return {
+                haptic: null,
+                tactileEvent: null,
+                error: error.message
+            };
         }
-
-        return {
-            haptic: hapticResult,
-            tactileEvent
-        };
     }
 
     /**
