@@ -1,3 +1,39 @@
+
+        // 性能能力矩阵 - 三级降级架构
+        this.capabilityMatrix = {
+            // 硬件能力
+            webgl2: { available: false, required: true, fallback: 'webgl' },
+            webgl: { available: false, required: true, fallback: null },
+            gpu: { available: false, required: true, fallback: 'software' },
+            audio: { available: false, required: true, fallback: 'speech' },
+            microphone: { available: false, required: false, fallback: null },
+            haptic: { available: false, required: false, fallback: null },
+            
+            // Live2D 能力
+            live2d_sdk: { available: false, required: true, fallback: 'fallback' },
+            live2d_model: { available: false, required: true, fallback: 'placeholder' },
+            live2d_physics: { available: false, required: false, fallback: null },
+            live2d_lipsync: { available: false, required: false, fallback: null },
+            
+            // 性能能力
+            high_fps: { available: false, required: false, fallback: 'standard' },
+            high_resolution: { available: false, required: false, fallback: 'low' },
+            advanced_effects: { available: false, required: false, fallback: 'basic' },
+            
+            // 系统能力
+            websocket: { available: false, required: true, fallback: 'polling' },
+            localStorage: { available: false, required: true, fallback: 'memory' },
+            indexedDB: { available: false, required: false, fallback: 'memory' },
+        };
+        
+        // 当前能力状态
+        this.capabilityState = {
+            complete: true,      // 完整版：所有必需能力可用
+            degraded: false,      // 降级版：部分能力缺失但有回退
+            basic: false,          // 基础版：只有最基本功能
+            missing_caps: [],     // 缺失的能力列表
+            fallbacks_active: []   // 激活的回退方案
+        };
 class PerformanceManager {
     constructor(config = {}) {
         this.config = config;
@@ -130,7 +166,272 @@ class PerformanceManager {
         this.websocket = ws;
     }
     
+    /**
+     * 检测系统能力并更新能力矩阵
+     * @returns {Object} 能力检测结果
+     */
+    detectCapabilities() {
+        console.log('[PerformanceManager] 开始检测系统能力...');
+        
+        // WebGL2 检测
+        this.capabilityMatrix.webgl2.available = this._checkWebGL2();
+        
+        // WebGL 检测
+        this.capabilityMatrix.webgl.available = this._checkWebGL();
+        
+        // GPU 检测
+        this.capabilityMatrix.gpu.available = this.capabilityMatrix.webgl2.available || this.capabilityMatrix.webgl.available;
+        
+        // 音频检测
+        this.capabilityMatrix.audio.available = this._checkAudio();
+        
+        // 麦克风检测
+        this.capabilityMatrix.microphone.available = this._checkMicrophone();
+        
+        // 触觉反馈检测
+        this.capabilityMatrix.haptic.available = this._checkHaptic();
+        
+        // Live2D SDK 检测
+        this.capabilityMatrix.live2d_sdk.available = this._checkLive2DSDK();
+        
+        // Live2D 模型检测
+        this.capabilityMatrix.live2d_model.available = this._checkLive2DModel();
+        
+        // WebSocket 检测
+        this.capabilityMatrix.websocket.available = this._checkWebSocket();
+        
+        // localStorage 检测
+        this.capabilityMatrix.localStorage.available = this._checkLocalStorage();
+        
+        // indexedDB 检测
+        this.capabilityMatrix.indexedDB.available = this._checkIndexedDB();
+        
+        // 确定能力状态级别
+        this._determineCapabilityState();
+        
+        return {
+            matrix: this.capabilityMatrix,
+            state: this.capabilityState
+        };
+    }
+    
+    _checkWebGL2() {
+        try {
+            const canvas = document.createElement('canvas');
+            return !!canvas.getContext('webgl2');
+        } catch (e) {
+            console.warn('[PerformanceManager] WebGL2 check failed:', e);
+            return false;
+        }
+    }
+    
+    _checkWebGL() {
+        try {
+            const canvas = document.createElement('canvas');
+            return !!(canvas.getContext('webgl') || canvas.getContext('webgl2'));
+        } catch (e) {
+            console.warn('[PerformanceManager] WebGL check failed:', e);
+            return false;
+        }
+    }
+    
+    _checkAudio() {
+        try {
+            return 'AudioContext' in window || 'webkitAudioContext' in window;
+        } catch (e) {
+            console.warn('[PerformanceManager] Audio check failed:', e);
+            return false;
+        }
+    }
+    
+    _checkMicrophone() {
+        try {
+            return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        } catch (e) {
+            console.warn('[PerformanceManager] Microphone check failed:', e);
+            return false;
+        }
+    }
+    
+    _checkHaptic() {
+        try {
+            return 'vibrate' in navigator || ('navigator' in navigator);
+        } catch (e) {
+            console.warn('[PerformanceManager] Haptic check failed:', e);
+            return false;
+        }
+    }
+    
+    _checkLive2DSDK() {
+        try {
+            return 'window.Live2DCubismCore' in window && window.Live2DCubismCore !== null;
+        } catch (e) {
+            console.warn('[PerformanceManager] Live2D SDK check failed:', e);
+            return false;
+        }
+    }
+    
+    _checkLive2DModel() {
+        // 模型检测由Live2DManager执行，这里标记为待检查
+        return 'pending';
+    }
+    
+    _checkWebSocket() {
+        return 'WebSocket' in window;
+    }
+    
+    _checkLocalStorage() {
+        try {
+            const test = '__storage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            return true;
+        } catch (e) {
+            console.warn('[PerformanceManager] localStorage check failed:', e);
+            return false;
+        }
+    }
+    
+    _checkIndexedDB() {
+        return 'indexedDB' in window;
+    }
+    
+    /**
+     * 确定当前能力状态级别
+     */
+    /**
+     * 更新特定能力的状态
+     * @param {string} capability 能力名称
+     * @param {boolean} available 是否可用
+     */
+    updateCapability(capability, available) {
+        if (this.capabilityMatrix[capability]) {
+            this.capabilityMatrix[capability].available = available;
+            console.log(`[PerformanceManager] 更新能力 ${capability}:`, available);
+            
+            // 重新确定能力状态
+            this._determineCapabilityState();
+            
+            // 根据新的能力状态调整性能模式
+            this._adjustModeForCapabilityState();
+        }
+    }
+    
+    /**
+     * 更新Live2D模型可用性
+     * @param {boolean} available 模型是否可用
+     */
+    updateLive2DModelAvailability(available) {
+        this.updateCapability('live2d_model', available);
+    }
+    
+    /**
+     * 更新Live2D物理可用性
+     * @param {boolean} available 物理是否可用
+     */
+    updateLive2DPhysicsAvailability(available) {
+        this.updateCapability('live2d_physics', available);
+    }
+    
+    /**
+     * 更新Live2D唇形同步可用性
+     * @param {boolean} available 唇形同步是否可用
+     */
+    updateLive2DLipsyncAvailability(available) {
+        this.updateCapability('live2d_lipsync', available);
+    }
+    
+    /**
+     * 获取当前能力状态报告
+     * @returns {Object} 能力状态报告
+     */
+    getCapabilityReport() {
+        const report = {
+            state: this.capabilityState.complete ? '完整版' : 
+                    this.capabilityState.degraded ? '降级版' : '基础版',
+            capabilities: {},
+            missing: [],
+            fallbacks: []
+        };
+        
+        for (const [cap, info] of Object.entries(this.capabilityMatrix)) {
+            report.capabilities[cap] = {
+                available: info.available,
+                required: info.required,
+                fallback: info.fallback
+            };
+            
+            if (!info.available && info.available !== 'pending') {
+                if (info.required) {
+                    report.missing.push({
+                        capability: cap,
+                        required: true,
+                        fallback: info.fallback
+                    });
+                } else {
+                    report.missing.push({
+                        capability: cap,
+                        required: false,
+                        fallback: info.fallback
+                    });
+                }
+            }
+        }
+        
+        report.fallbacks = this.capabilityState.fallbacks_active;
+        
+        return report;
+    }
+    
+    
+    _determineCapabilityState() {
+        const missingRequired = [];
+        const missingOptional = [];
+        const fallbacks = [];
+        
+        // 检查必需能力
+        for (const [cap, info] of Object.entries(this.capabilityMatrix)) {
+            if (info.required && !info.available && info.available !== 'pending') {
+                missingRequired.push(cap);
+                if (info.fallback) {
+                    fallbacks.push({ capability: cap, fallback: info.fallback });
+                }
+            } else if (!info.required && !info.available && info.available !== 'pending') {
+                missingOptional.push(cap);
+            }
+        }
+        
+        // 确定状态级别
+        if (missingRequired.length === 0) {
+            this.capabilityState.complete = true;
+            this.capabilityState.degraded = false;
+            this.capabilityState.basic = false;
+        } else if (missingRequired.length > 0 && fallbacks.length > 0) {
+            this.capabilityState.complete = false;
+            this.capabilityState.degraded = true;
+            this.capabilityState.basic = false;
+            this.capabilityState.fallbacks_active = fallbacks;
+        } else {
+            this.capabilityState.complete = false;
+            this.capabilityState.degraded = false;
+            this.capabilityState.basic = true;
+        }
+        
+        this.capabilityState.missing_caps = [...missingRequired, ...missingOptional];
+        
+        console.log('[PerformanceManager] 能力状态:',
+            this.capabilityState.complete ? '完整版' : 
+            this.capabilityState.degraded ? '降级版' : '基础版',
+            this.capabilityState.missing_caps.length > 0 ? `缺失能力: ${this.capabilityState.missing_caps.join(', ')}` : '所有能力正常'
+        );
+    }
+    
+    
     async initialize(externalProfile = null) {
+        // 检测系统能力并更新能力矩阵
+        const capabilityResult = this.detectCapabilities();
+        console.log('[PerformanceManager] 能力检测结果:', capabilityResult);
+        
         if (externalProfile) {
             // Map HardwareDetector profile format to PerformanceManager format if needed
             this.hardwareProfile = this._mapExternalProfile(externalProfile);
@@ -139,7 +440,11 @@ class PerformanceManager {
             this.detectHardwareCapabilities();
         }
         
+        // 推荐性能模式（基于硬件）
         this.recommendPerformanceMode();
+        
+        // 根据能力状态调整推荐模式
+        this._adjustModeForCapabilityState();
         this.startPerformanceMonitoring();
         
         window.addEventListener('resize', () => this.handleResize());
@@ -149,6 +454,8 @@ class PerformanceManager {
                 type: 'hardware_detected',
                 profile: this.hardwareProfile,
                 recommended_mode: this.currentMode,
+                capability_matrix: this.capabilityMatrix,
+                capability_state: this.capabilityState,
                 timestamp: Date.now()
             });
         }
@@ -156,7 +463,9 @@ class PerformanceManager {
         return {
             hardware: this.hardwareProfile,
             mode: this.currentMode,
-            performance: this.performanceModes[this.currentMode]
+            performance: this.performanceModes[this.currentMode],
+            capability_matrix: this.capabilityMatrix,
+            capability_state: this.capabilityState
         };
     }
 
