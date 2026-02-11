@@ -9,7 +9,7 @@
 def test_logic_parser():
     """测试逻辑解析器"""
     try,
-        from apps.backend.src.tools.logic_model.logic_parser_eval import LogicParserEval
+        from tools.logic_model.logic_parser_eval import LogicParserEval
         print("✓ logic_parser_eval imported successfully")
         
         # 测试实例化
@@ -27,7 +27,7 @@ def test_logic_parser():
 def test_logic_tool():
     """测试逻辑工具"""
     try,
-        from apps.backend.src.tools.logic_tool import LogicTool
+        from tools.logic_tool import LogicTool
         print("✓ logic_tool imported successfully")
         
         # 测试实例化
@@ -45,7 +45,7 @@ def test_logic_tool():
 def test_math_model():
     """测试数学模型"""
     try,
-        from apps.backend.src.tools.math_model.lightweight_math_model import LightweightMathModel
+        from tools.math_model.lightweight_math_model import LightweightMathModel
         print("✓ lightweight_math_model imported successfully")
         
         # 测试实例化
@@ -63,7 +63,7 @@ def test_math_model():
 def test_math_tool():
     """测试数学工具"""
     try,
-        from apps.backend.src.tools.math_tool import calculate
+        from tools.math_tool import calculate
         print("✓ math_tool imported successfully")
         
         # 测试简单表达式
@@ -77,7 +77,7 @@ def test_math_tool():
 def test_dependency_manager():
     """测试依赖管理器"""
     try,
-        from apps.backend.src.core.managers.dependency_manager import dependency_manager
+        from core.managers.dependency_manager import dependency_manager
         print("✓ dependency_manager imported successfully")
         
         # 测试实例化
@@ -90,7 +90,7 @@ def test_dependency_manager():
 def test_common_types():
     """测试通用类型定义"""
     try,
-        from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
+        from core.shared.types.common_types import ToolDispatcherResponse
         print("✓ common_types imported successfully")
         return True
     except Exception as e,::

@@ -13,7 +13,7 @@ import asyncio
 # 添加项目路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from apps.backend.src.services.audio_service import AudioService
+from services.audio_service import AudioService
 class TestAudioService(unittest.TestCase()):
     def setUp(self):
         """Set up test fixtures before each test method."""

@@ -7,10 +7,10 @@
 import pytest
 import uuid
 
-from apps.backend.src.core_ai.learning.learning_manager import LearningManager
-from apps.backend.src.core_ai.trust.trust_manager_module import TrustManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.hsp.types import HSPFactPayload, HSPMessageEnvelope
+from core_ai.learning.learning_manager import LearningManager
+from core_ai.trust.trust_manager_module import TrustManager
+from core_ai.memory.ham_memory_manager import HAMMemoryManager
+from hsp.types import HSPFactPayload, HSPMessageEnvelope
 
 class TestLearningAndTrustIntegration,
 

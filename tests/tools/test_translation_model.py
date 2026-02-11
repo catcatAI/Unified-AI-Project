@@ -5,13 +5,13 @@ import json
 import shutil
 from unittest.mock import MagicMock, AsyncMock, patch
 
-from apps.backend.src.tools import translation_tool
-from apps.backend.src.tools.translation_tool import (
+from tools import translation_tool
+from tools.translation_tool import (
     translate,
     _detect_language,
     _load_dictionary,
     request_model_upgrade)
-from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
+from tools.tool_dispatcher import ToolDispatcher
 
 # Define a consistent test output directory for this test suite
 TEST_DATA_DIR = "tests/test_output_data/translation_model_data"

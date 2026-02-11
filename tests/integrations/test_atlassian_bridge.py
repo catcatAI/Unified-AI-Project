@@ -8,8 +8,8 @@ import pytest_asyncio
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio')
 
-from apps.backend.src.integrations.atlassian_bridge import AtlassianBridge
-from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+from integrations.atlassian_bridge import AtlassianBridge
+from integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
 
 class TestAtlassianBridge,

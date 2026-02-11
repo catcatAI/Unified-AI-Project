@@ -16,8 +16,8 @@ from pathlib import Path
 # Add the src directory to the path so we can import the modules
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from apps.backend.src.services.ai_editor import DataProcessor, AIEditorService
-from apps.backend.src.services.ai_editor_config import get_config
+from services.ai_editor import DataProcessor, AIEditorService
+from services.ai_editor_config import get_config
 
 class TestDataProcessor(unittest.TestCase()):
     """Test cases for the DataProcessor class """:::

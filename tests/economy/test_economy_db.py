@@ -7,7 +7,7 @@
 import unittest
 import os
 import sqlite3
-from apps.backend.src.economy.economy_db import EconomyDB
+from economy.economy_db import EconomyDB
 
 class TestEconomyDB(unittest.TestCase()):
     def setUp(self):

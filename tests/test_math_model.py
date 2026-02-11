@@ -5,7 +5,7 @@
 """
 
 try:
-    from apps.backend.src.tools.math_model.lightweight_math_model import LightweightMathModel
+    from tools.math_model.lightweight_math_model import LightweightMathModel
     print("lightweight_math_model imported successfully")
     
     # 测试实例化

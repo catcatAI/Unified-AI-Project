@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src')))
 
-from apps.backend.src.shared.utils import cleanup_utils
+from shared.utils import cleanup_utils
 
 class TestCleanupUtils(unittest.TestCase()):
     def setUp(self):

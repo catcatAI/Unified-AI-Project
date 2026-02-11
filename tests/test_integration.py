@@ -12,7 +12,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from apps.backend.src.system.security_monitor import ABCKeyManager
+from system.security_monitor import ABCKeyManager
 
 def test_full_integration():
     print("🚀 開始全系統整合測試...")

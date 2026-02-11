@@ -75,7 +75,7 @@ class EnterpriseTestSuite,
         """测试API端点"""
         try,
             # 测试导入
-            from apps.backend.src.api.routes import router
+            from api.routes import router
             print("✓ API路由导入成功")
             
             # 测试基本端点
@@ -106,9 +106,9 @@ class EnterpriseTestSuite,
     async def test_ai_agents(self) -> bool,
         """测试AI代理"""
         try,
-            from apps.backend.src.ai.agents.base_agent import BaseAgent
-            from apps.backend.src.ai.agents.creative_writing_agent import CreativeWritingAgent
-            from apps.backend.src.ai.agents.web_search_agent import WebSearchAgent
+            from ai.agents.base_agent import BaseAgent
+            from ai.agents.creative_writing_agent import CreativeWritingAgent
+            from ai.agents.web_search_agent import WebSearchAgent
             
             # 测试基础代理
             base_agent == BaseAgent("test_agent", "test")
@@ -131,7 +131,7 @@ class EnterpriseTestSuite,
     async def test_data_network(self) -> bool,
         """测试数据网络"""
         try,
-            from apps.backend.src.core.data.data_network_manager import DataNetworkManager
+            from core.data.data_network_manager import DataNetworkManager
             
             # 测试数据网络管理器
             manager == DataNetworkManager()
@@ -151,7 +151,7 @@ class EnterpriseTestSuite,
     async def test_knowledge_graph(self) -> bool,
         """测试知识图谱"""
         try,
-            from apps.backend.src.core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraph
+            from core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraph
             
             # 测试知识图谱
             kg == UnifiedKnowledgeGraph({})
@@ -169,7 +169,7 @@ class EnterpriseTestSuite,
     async def test_hsp_protocol(self) -> bool,
         """测试HSP协议"""
         try,
-            from apps.backend.src.core.hsp.hsp_protocol import HSProtocol
+            from core.hsp.hsp_protocol import HSProtocol
             
             # 测试HSP协议
             hsp == HSProtocol()
@@ -184,7 +184,7 @@ class EnterpriseTestSuite,
     async def test_system_manager(self) -> bool,
         """测试系统管理器"""
         try,
-            from apps.backend.src.core.managers.system_manager import SystemManager
+            from core.managers.system_manager import SystemManager
             
             # 测试系统管理器
             manager == SystemManager()
@@ -199,7 +199,7 @@ class EnterpriseTestSuite,
     async def test_memory_manager(self) -> bool,
         """测试记忆管理器"""
         try,
-            from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
+            from ai.memory.ham_memory_manager import HAMMemoryManager
             
             # 测试HAM记忆管理器
             memory_manager == HAMMemoryManager()
@@ -219,7 +219,7 @@ class EnterpriseTestSuite,
     async def test_multimodal_processor(self) -> bool,
         """测试多模态处理器"""
         try,
-            from apps.backend.src.ai.multimodal.multimodal_processor import MultimodalProcessor
+            from ai.multimodal.multimodal_processor import MultimodalProcessor
             
             # 测试多模态处理器
             processor == MultimodalProcessor()
@@ -238,7 +238,7 @@ class EnterpriseTestSuite,
     async def test_atlassian_integration(self) -> bool,
         """测试Atlassian集成"""
         try,
-            from apps.backend.src.integrations.atlassian_bridge import AtlassianBridge
+            from integrations.atlassian_bridge import AtlassianBridge
             
             # 测试Atlassian桥接器
             bridge == AtlassianBridge()
@@ -254,10 +254,10 @@ class EnterpriseTestSuite,
         """测试安全端点"""
         try,
             # 测试认证中间件
-            from apps.backend.src.core.security.auth_middleware import AuthMiddleware
+            from core.security.auth_middleware import AuthMiddleware
             
             # 测试加密工具
-            from apps.backend.src.core.security.encryption import EncryptionUtils
+            from core.security.encryption import EncryptionUtils
             
             # 测试加密解密
             utils == EncryptionUtils()

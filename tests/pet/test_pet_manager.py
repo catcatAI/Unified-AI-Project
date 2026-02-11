@@ -5,7 +5,7 @@
 """
 
 import unittest
-from apps.backend.src.pet.pet_manager import PetManager
+from pet.pet_manager import PetManager
 
 class TestPetManager(unittest.TestCase()):
     def setUp(self):

@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 
 # Correct import paths for DemoLearningManager and ExecutionManager
-from apps.backend.src.ai.learning.demo_learning_manager import DemoLearningManager
-from apps.backend.src.ai.execution.execution_manager import ExecutionManager
+from ai.learning.demo_learning_manager import DemoLearningManager
+from ai.execution.execution_manager import ExecutionManager
 
 class TestTrainingManager:
     """训练系统组件单元测试"""

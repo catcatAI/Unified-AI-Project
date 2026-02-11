@@ -7,7 +7,7 @@
 import unittest
 import pytest
 
-from apps.backend.src.core.services.multi_llm_service import MultiLLMService
+from core.services.multi_llm_service import MultiLLMService
 
 class TestLLMInterface(unittest.TestCase()):
     @pytest.mark.timeout(15)

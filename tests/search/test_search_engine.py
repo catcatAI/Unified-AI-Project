@@ -6,7 +6,7 @@
 
 import unittest
 import pytest
-from apps.backend.src.search.search_engine import SearchEngine
+from search.search_engine import SearchEngine
 
 class TestSearchEngine(unittest.TestCase()):
     """

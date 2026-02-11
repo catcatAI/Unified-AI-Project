@@ -9,8 +9,8 @@ import pytest
 from unittest.mock import AsyncMock
 
 # 修复导入路径
-from apps.backend.src.core_ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
-from apps.backend.src.core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
+from core_ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
+from core.hsp.types import HSPTaskRequestPayload, HSPMessageEnvelope
 
 # 添加重试装饰器以处理不稳定的测试
 # @pytest.mark.flaky(reruns=3, reruns_delay=2)

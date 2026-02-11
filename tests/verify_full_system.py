@@ -11,8 +11,8 @@ import sys
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from apps.backend.src.system.security_monitor import ABCKeyManager
-from apps.backend.src.system.hardware_probe import HardwareProbe
+from system.security_monitor import ABCKeyManager
+from system.hardware_probe import HardwareProbe
 
 def verify_system():
     print("🛡️  Angela AI 全系統就緒度驗證...")

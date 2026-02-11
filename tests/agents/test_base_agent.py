@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock
 
-from apps.backend.src.ai.agents.base.base_agent import BaseAgent
+from ai.agents.base.base_agent import BaseAgent
 
 @pytest.fixture
 def base_agent():

@@ -10,7 +10,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-# from apps.backend.src.core_services import initialize_services, get_services, shutdown_services
+# from core_services import initialize_services, get_services, shutdown_services
 from core_services import initialize_services, get_services, shutdown_services
 
 class TestCoreServices(unittest.TestCase()):

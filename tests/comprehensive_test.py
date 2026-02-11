@@ -11,7 +11,7 @@ import pytest
 @pytest.mark.skip(reason="Depends on broken module: logic_parser_eval")
 def test_logic_parser():
     """Tests the logic parser."""
-    from apps.backend.src.tools.logic_model.logic_parser_eval import LogicParserEval
+    from tools.logic_model.logic_parser_eval import LogicParserEval
     evaluator = LogicParserEval()
     result = evaluator.evaluate("true AND false")
     assert not result
@@ -19,7 +19,7 @@ def test_logic_parser():
 @pytest.mark.skip(reason="Depends on broken module: logic_tool")
 def test_logic_tool():
     """Tests the logic tool."""
-    from apps.backend.src.tools.logic_tool import LogicTool
+    from tools.logic_tool import LogicTool
     tool = LogicTool()
     result = tool.evaluate_expression("true AND false")
     assert "Result: False" in result
@@ -27,7 +27,7 @@ def test_logic_tool():
 @pytest.mark.skip(reason="Depends on broken module: lightweight_math_model")
 def test_math_model():
     """Tests the math model."""
-    from apps.backend.src.tools.math_model.lightweight_math_model import LightweightMathModel
+    from tools.math_model.lightweight_math_model import LightweightMathModel
     model = LightweightMathModel()
     result = model.evaluate_expression("5 + 3")
     assert result == 8
@@ -35,18 +35,18 @@ def test_math_model():
 @pytest.mark.skip(reason="Depends on broken module: math_tool")
 def test_math_tool():
     """Tests the math tool."""
-    from apps.backend.src.tools.math_tool import calculate
+    from tools.math_tool import calculate
     result = calculate("what is 5 + 3?")
     assert "8" in result
 
 @pytest.mark.skip(reason="Depends on broken module: dependency_manager")
 def test_dependency_manager():
     """Tests the dependency manager."""
-    from apps.backend.src.core.managers.dependency_manager import dependency_manager
+    from core.managers.dependency_manager import dependency_manager
     assert dependency_manager is not None
 
 @pytest.mark.skip(reason="Depends on broken module: common_types")
 def test_common_types():
     """Tests the common types definition."""
-    from apps.backend.src.core.shared.types.common_types import ToolDispatcherResponse
+    from core.shared.types.common_types import ToolDispatcherResponse
     assert ToolDispatcherResponse is not None

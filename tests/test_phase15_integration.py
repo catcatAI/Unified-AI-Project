@@ -15,10 +15,10 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 backend_src = os.path.join(project_root, 'apps', 'backend', 'src')
 sys.path.insert(0, backend_src)
 
-from apps.backend.src.ai.integration.local_cluster_manager import LocalClusterManager, ClusterTask
-from apps.backend.src.ai.agents.agent_manager import AgentManager
-from apps.backend.src.ai.agents.agent_manager_extensions import AgentManagerExtensions, example_agent_entry_point
-from apps.backend.src.core.hsp.transport import HSPTransportFactory, HSPTransportMode, LocalIPCTransport
+from ai.integration.local_cluster_manager import LocalClusterManager, ClusterTask
+from ai.agents.agent_manager import AgentManager
+from ai.agents.agent_manager_extensions import AgentManagerExtensions, example_agent_entry_point
+from core.hsp.transport import HSPTransportFactory, HSPTransportMode, LocalIPCTransport
 import multiprocessing as mp
 
 logging.basicConfig(

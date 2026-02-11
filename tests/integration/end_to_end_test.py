@@ -149,7 +149,7 @@ async def test_api_endpoints():
     
     try,
         # 简化测试,只验证API路由导入
-        from apps.backend.src.api.routes.ops_routes import router
+        from api.routes.ops_routes import router
         print("✓ API路由导入成功")
         print("✓ API端点测试跳过(需要运行的服务)")
         return True

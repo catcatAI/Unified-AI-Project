@@ -26,9 +26,9 @@ if str(BACKEND_PATH / "src") not in sys.path:
 
 # Mock external dependencies if necessary
 try:
-    from apps.backend.src.ai.models.trained_model_manager import TrainedModelManager
-    from apps.backend.src.ai.models.model_types import ModelType
-    from apps.backend.src.ai.models.model_data_types import ModelData
+    from ai.models.trained_model_manager import TrainedModelManager
+    from ai.models.model_types import ModelType
+    from ai.models.model_data_types import ModelData
 except ImportError:
     class MockTrainedModelManager:
         def load_model(self, model_type: Any, version: str = "latest"):

@@ -33,7 +33,7 @@ def test_alpha_deep_model_upgrade() -> None,
     
     try,
         # Import the upgraded model
-        from apps.backend.src.ai.concept_models.alpha_deep_model import (
+        from ai.concept_models.alpha_deep_model import (
             AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities, CompressionAlgorithm, DNADataChain
         )
         

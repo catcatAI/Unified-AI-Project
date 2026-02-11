@@ -7,9 +7,9 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from apps.backend.src.services.main_api_server import app as fastapi_app
-from apps.backend.src.services import main_api_server
-from apps.backend.src.core_services import get_services as real_get_services
+from services.main_api_server import app as fastapi_app
+from services import main_api_server
+from core_services import get_services as real_get_services
 
 
 @pytest.fixture()

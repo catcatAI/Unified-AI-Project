@@ -10,8 +10,8 @@ import json
 from pathlib import Path
 import shutil # For cleaning up test directories
 
-from apps.backend.src.core_ai.formula_engine import FormulaEngine
-from apps.backend.src.core_ai.formula_engine.types import FormulaConfigEntry,
+from core_ai.formula_engine import FormulaEngine
+from core_ai.formula_engine.types import FormulaConfigEntry,
 class TestFormulaEngine(unittest.TestCase()):
     def setUp(self):
         """Set up a temporary test directory and dummy formula files."""

@@ -10,7 +10,7 @@ import pytest
 import yaml
 from pathlib import Path
 
-from apps.backend.src.core.services.resource_awareness_service import ResourceAwarenessService, DEFAULT_CONFIG_PATH
+from core.services.resource_awareness_service import ResourceAwarenessService, DEFAULT_CONFIG_PATH
 SimulatedCPUConfig,
 SimulatedRAMConfig)
 

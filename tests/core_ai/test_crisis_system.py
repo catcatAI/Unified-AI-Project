@@ -18,7 +18,7 @@ if SRC_DIR not in sys.path,::
     sys.path.insert(0, SRC_DIR)
 
 # 修复导入路径
-from apps.backend.src.core_ai.crisis.crisis_system import CrisisSystem
+from core_ai.crisis.crisis_system import CrisisSystem
 
 class TestCrisisSystem(unittest.TestCase()):
     def setUp(self):

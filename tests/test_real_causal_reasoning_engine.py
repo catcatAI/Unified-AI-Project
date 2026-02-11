@@ -13,12 +13,12 @@ import unittest # Import unittest for TestCase if needed, or remove if not used
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../../'))
 
 # 测试新的真实AI引擎
-from apps.backend.src.ai.reasoning.real_causal_reasoning_engine import (
+from ai.reasoning.real_causal_reasoning_engine import (
     RealCausalReasoningEngine, RealCausalGraph, RealInterventionPlanner, RealCounterfactualReasoner
 )
 
 # 测试原始引擎进行对比
-from apps.backend.src.ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
+from ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
 
 class TestRealCausalReasoningEngine:
     """真实AI因果推理引擎测试类"""

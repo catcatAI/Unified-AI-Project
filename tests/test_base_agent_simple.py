@@ -30,7 +30,7 @@ def test_
     def test_base_agent_import() -> None,
     """Test that we can import BaseAgent."""
     try,
-        from apps.backend.src.core_ai.agents.base_agent import BaseAgent
+        from core_ai.agents.base_agent import BaseAgent
         print("BaseAgent imported successfully")
         
         # Create a simple agent instance

@@ -17,10 +17,10 @@ sys.modules['smart_executor.detect_import_errors'] = MagicMock()
 sys.modules['smart_executor.detect_path_errors'] = MagicMock()
 
 # Import the modules after setting up the path
-from apps.backend.src.tools.math_model.data_generator import _safe_eval as math_safe_eval
-from apps.backend.src.tools.math_model.lightweight_math_model import LightweightMathModel
-from apps.backend.src.tools.logic_model.logic_data_generator import evaluate_proposition as logic_safe_eval
-from apps.backend.src.tools.logic_model.lightweight_logic_model import LightweightLogicModel
+from tools.math_model.data_generator import _safe_eval as math_safe_eval
+from tools.math_model.lightweight_math_model import LightweightMathModel
+from tools.logic_model.logic_data_generator import evaluate_proposition as logic_safe_eval
+from tools.logic_model.lightweight_logic_model import LightweightLogicModel
 
 class TestSecurityImprovements(unittest.TestCase):
     """Security Improvement Test Class"""

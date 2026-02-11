@@ -47,7 +47,7 @@ class TestPerformanceOptimization(unittest.TestCase):
     def test_system_monitor_initialization(self) -> None:
         """测试系统监控器初始化"""
         try:
-            from apps.backend.src.monitoring.system_monitor import SystemMonitor
+            from monitoring.system_monitor import SystemMonitor
             monitor = SystemMonitor()
             self.assertIsNotNone(monitor)
         except Exception as e:
@@ -56,7 +56,7 @@ class TestPerformanceOptimization(unittest.TestCase):
     def test_hsp_performance_optimizer_initialization(self) -> None:
         """测试HSP性能优化器初始化"""
         try:
-            from apps.backend.src.hsp.performance_optimizer import HSPPerformanceOptimizer
+            from hsp.performance_optimizer import HSPPerformanceOptimizer
             optimizer = HSPPerformanceOptimizer()
             self.assertIsNotNone(optimizer)
         except Exception as e:
@@ -115,7 +115,7 @@ class TestSystemMonitoring(unittest.TestCase):
     def test_system_metrics_collection(self) -> None:
         """测试系统指标收集"""
         try:
-            from apps.backend.src.monitoring.system_monitor import SystemMonitor
+            from monitoring.system_monitor import SystemMonitor
             monitor = SystemMonitor()
             
             # 收集一次指标
@@ -131,7 +131,7 @@ class TestSystemMonitoring(unittest.TestCase):
     def test_resource_recommendations(self) -> None:
         """测试资源使用建议"""
         try:
-            from apps.backend.src.monitoring.system_monitor import SystemMonitor
+            from monitoring.system_monitor import SystemMonitor
             monitor = SystemMonitor()
             
             # 获取资源建议
@@ -146,7 +146,7 @@ class TestHSPPerformanceOptimization(unittest.TestCase):
     def test_message_caching(self) -> None:
         """测试消息缓存"""
         try:
-            from apps.backend.src.hsp.performance_optimizer import HSPPerformanceOptimizer
+            from hsp.performance_optimizer import HSPPerformanceOptimizer
             optimizer = HSPPerformanceOptimizer()
             
             # 测试消息缓存
@@ -162,7 +162,7 @@ class TestHSPPerformanceOptimization(unittest.TestCase):
     def test_message_compression(self) -> None:
         """测试消息压缩"""
         try:
-            from apps.backend.src.hsp.performance_optimizer import HSPPerformanceOptimizer
+            from hsp.performance_optimizer import HSPPerformanceOptimizer
             optimizer = HSPPerformanceOptimizer()
             
             # 测试消息压缩

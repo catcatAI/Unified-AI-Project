@@ -7,8 +7,8 @@
 import unittest
 import os
 from unittest.mock import MagicMock, patch
-from apps.backend.src.economy.economy_manager import EconomyManager
-from apps.backend.src.economy.economy_db import EconomyDB
+from economy.economy_manager import EconomyManager
+from economy.economy_db import EconomyDB
 
 class TestEconomyManager(unittest.TestCase()):
     def setUp(self):

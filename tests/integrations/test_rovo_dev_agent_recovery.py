@@ -7,9 +7,9 @@ import pickle
 from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime, timedelta
 
-from apps.backend.src.integrations.rovo_dev_agent import RovoDevAgent, TaskState, AgentRecoveryState
-from apps.backend.src.integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
-from apps.backend.src.integrations.atlassian_bridge import AtlassianBridge
+from integrations.rovo_dev_agent import RovoDevAgent, TaskState, AgentRecoveryState
+from integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
+from integrations.atlassian_bridge import AtlassianBridge
 
 
 class TestRovoDevAgentRecovery,

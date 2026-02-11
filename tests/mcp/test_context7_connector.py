@@ -12,7 +12,7 @@ import asyncio
     Context7Config,
     UnifiedAIMCPIntegration
 )
-from apps.backend.src.mcp.types import MCPMessage, MCPResponse, MCPCapability
+from mcp.types import MCPMessage, MCPResponse, MCPCapability
 
 class TestContext7Config,
     """Test Context7 configuration."""

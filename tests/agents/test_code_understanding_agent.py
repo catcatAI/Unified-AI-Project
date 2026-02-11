@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import MagicMock, AsyncMock
 
 # Correct import path for CodeUnderstandingAgent
-from apps.backend.src.ai.agents.specialized.code_understanding_agent import CodeUnderstandingAgent
-from apps.backend.src.core.hsp.types_fixed import HSPTaskRequestPayload, HSPMessageEnvelope
+from ai.agents.specialized.code_understanding_agent import CodeUnderstandingAgent
+from core.hsp.types_fixed import HSPTaskRequestPayload, HSPMessageEnvelope
 
 @pytest.fixture
 def code_agent():

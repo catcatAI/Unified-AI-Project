@@ -8,8 +8,8 @@ import unittest
 import os
 import shutil
 import pytest
-from apps.backend.src.core_ai.evaluation.task_evaluator import TaskExecutionEvaluator, MetricsCalculator, FeedbackAnalyzer
-from apps.backend.src.core_ai.evaluation.evaluation_db import EvaluationDB
+from core_ai.evaluation.task_evaluator import TaskExecutionEvaluator, MetricsCalculator, FeedbackAnalyzer
+from core_ai.evaluation.evaluation_db import EvaluationDB
 
 class TestMetricsCalculator(unittest.IsolatedAsyncioTestCase()):
     def setUp(self):

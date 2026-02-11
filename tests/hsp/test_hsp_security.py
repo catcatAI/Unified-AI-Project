@@ -8,9 +8,9 @@ import pytest
 import os
 
 # 修复导入路径,统一使用core.hsp()
-from apps.backend.src.core.hsp.security import HSPSecurityManager, HSPSecurityContext
-from apps.backend.src.core.hsp.connector import HSPConnector
-from apps.backend.src.core.hsp.types import HSPFactPayload
+from core.hsp.security import HSPSecurityManager, HSPSecurityContext
+from core.hsp.connector import HSPConnector
+from core.hsp.types import HSPFactPayload
 
 class TestHSPSecurity,
     """HSP协议安全功能测试"""

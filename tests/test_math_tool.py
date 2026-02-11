@@ -5,7 +5,7 @@
 """
 
 try:
-    from apps.backend.src.tools.math_tool import calculate
+    from tools.math_tool import calculate
     print("math_tool imported successfully")
     
     # 测试简单表达式

@@ -5,7 +5,7 @@
 """
 
 try:
-    from apps.backend.src.tools.logic_model.logic_parser_eval import LogicParserEval
+    from tools.logic_model.logic_parser_eval import LogicParserEval
     print("logic_parser_eval imported successfully")
     
     # 测试实例化

@@ -5,8 +5,8 @@
 """
 
 import unittest
-from apps.backend.src.core_ai.deep_mapper import DeepMapper
-from apps.backend.src.shared.types import MappableDataObject
+from core_ai.deep_mapper import DeepMapper
+from shared.types import MappableDataObject
 
 class TestDeepMapper(unittest.TestCase()):
     def setUp(self):

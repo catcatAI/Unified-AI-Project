@@ -3,8 +3,8 @@ Atlassian API 测试
 """
 import pytest
 from unittest.mock import patch, MagicMock
-from apps.backend.src.integrations.atlassian_cli_bridge import AtlassianCLIBridge
-from apps.backend.src.integrations.enhanced_atlassian_bridge import EnhancedAtlassianBridge
+from integrations.atlassian_cli_bridge import AtlassianCLIBridge
+from integrations.enhanced_atlassian_bridge import EnhancedAtlassianBridge
 
 class TestAtlassianAPI,
     """Atlassian API 测试类"""

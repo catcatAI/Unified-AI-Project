@@ -6,12 +6,15 @@
 
 import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock
+import sys
+from pathlib import Path
 
-# It's better to configure pytest to handle paths than to manipulate sys.path
-# We will assume pytest is run from the project root.
-from apps.backend.src.ai.agent_manager import AgentManager
-from apps.backend.src.core_ai.agents.base.base_agent import BaseAgent
+# 添加源代码路径
+sys.path.insert(0, str(Path(__file__).parent.parent / 'apps' / 'backend' / 'src'))
+
+from unittest.mock import Mock, AsyncMock
+from ai.agents.agent_manager import AgentManager
+from ai.agents.base.base_agent import BaseAgent
 
 @pytest.fixture
 def agent_manager():

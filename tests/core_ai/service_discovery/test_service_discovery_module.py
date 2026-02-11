@@ -11,7 +11,7 @@ import time
 
 from service_discovery.service_discovery_module import ServiceDiscoveryModule
 from trust_manager.trust_manager_module import TrustManager
-from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
+from hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
 
 # --- Mock TrustManager ---
 @pytest.fixture()

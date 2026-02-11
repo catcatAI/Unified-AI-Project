@@ -9,12 +9,12 @@ from unittest.mock import Mock, patch, AsyncMock
 import tempfile
 import os
 
-from apps.backend.src.core.managers.system_manager import SystemManager
-from apps.backend.src.core.orchestrator import CognitiveOrchestrator
-from apps.backend.src.ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.ai.agent_manager import AgentManager
-from apps.backend.src.game.economy_manager import EconomyManager
-from apps.backend.src.game.desktop_pet import DesktopPet
+from core.managers.system_manager import SystemManager
+from core.orchestrator import CognitiveOrchestrator
+from ai.memory.ham_memory_manager import HAMMemoryManager
+from ai.agent_manager import AgentManager
+from game.economy_manager import EconomyManager
+from game.desktop_pet import DesktopPet
 
 
 class TestSystemManager:

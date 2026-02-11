@@ -7,10 +7,10 @@
 import pytest
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock
-from apps.backend.src.hsp.internal.internal_bus import InternalBus
-from apps.backend.src.hsp.bridge.message_bridge import MessageBridge
-from apps.backend.src.hsp.bridge.data_aligner import DataAligner
-from apps.backend.src.hsp.connector import HSPConnector
+from hsp.internal.internal_bus import InternalBus
+from hsp.bridge.message_bridge import MessageBridge
+from hsp.bridge.data_aligner import DataAligner
+from hsp.connector import HSPConnector
 
 class TestHSPIntegration,
     """HSP集成测试"""

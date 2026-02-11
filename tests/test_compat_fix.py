@@ -40,7 +40,7 @@ def test_
     """测试Keras是否可用"""
     print("测试Keras可用性...")
     try,
-        from apps.backend.src.compat.transformers_compat import KERAS_AVAILABLE
+        from compat.transformers_compat import KERAS_AVAILABLE
         print(f"✓ Keras可用性检查, {KERAS_AVAILABLE}")
         return KERAS_AVAILABLE
     except Exception as e,::
@@ -60,7 +60,7 @@ def test_
     
     # 测试SentenceTransformer安全导入
     try,
-        from apps.backend.src.compat.transformers_compat import import_sentence_transformers
+        from compat.transformers_compat import import_sentence_transformers
         SentenceTransformer, success = import_sentence_transformers()
         print(f"✓ SentenceTransformer安全导入, {success}")
         if success,::
@@ -70,7 +70,7 @@ def test_
     
     # 测试Transformers pipeline安全导入
     try,
-        from apps.backend.src.compat.transformers_compat import import_transformers_pipeline
+        from compat.transformers_compat import import_transformers_pipeline
         pipeline, success = import_transformers_pipeline()
         print(f"✓ Transformers pipeline安全导入, {success}")
         if success,::
@@ -90,11 +90,11 @@ def test_
     print("\n测试RAG管理器导入...")
     try,
         # 测试AI RAG管理器
-        from apps.backend.src.core_ai.rag.rag_manager import SENTENCE_TRANSFORMERS_AVAILABLE
+        from core_ai.rag.rag_manager import SENTENCE_TRANSFORMERS_AVAILABLE
         print(f"✓ AI RAG管理器导入成功, SENTENCE_TRANSFORMERS_AVAILABLE={SENTENCE_TRANSFORMERS_AVAILABLE}")
         
         # 测试Core AI RAG管理器
-        from apps.backend.src.core_ai.rag.rag_manager import SENTENCE_TRANSFORMERS_AVAILABLE as core_avail
+        from core_ai.rag.rag_manager import SENTENCE_TRANSFORMERS_AVAILABLE as core_avail
         print(f"✓ Core AI RAG管理器导入成功, SENTENCE_TRANSFORMERS_AVAILABLE={core_avail}")
     except Exception as e,::
         print(f"✗ RAG管理器导入测试失败, {e}")
@@ -111,11 +111,11 @@ def test_
     print("\n测试自然语言生成工具导入...")
     try,
         # 测试核心工具
-        from apps.backend.src.core.tools.natural_language_generation_tool import TRANSFORMERS_AVAILABLE as core_avail
+        from core.tools.natural_language_generation_tool import TRANSFORMERS_AVAILABLE as core_avail
         print(f"✓ 核心自然语言生成工具导入成功, TRANSFORMERS_AVAILABLE={core_avail}")
         
         # 测试工具
-        from apps.backend.src.tools.natural_language_generation_tool import TRANSFORMERS_AVAILABLE as tools_avail
+        from tools.natural_language_generation_tool import TRANSFORMERS_AVAILABLE as tools_avail
         print(f"✓ 自然语言生成工具导入成功, TRANSFORMERS_AVAILABLE={tools_avail}")
     except Exception as e,::
         print(f"✗ 自然语言生成工具导入测试失败, {e}")

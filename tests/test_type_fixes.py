@@ -25,7 +25,7 @@ if str(BACKEND_SRC) not in sys.path:
 
 # Mocking necessary imports for tests that might not have all dependencies
 try:
-    from apps.backend.src.core_ai.memory.vector_store import VectorMemoryStore
+    from core_ai.memory.vector_store import VectorMemoryStore
 except ImportError:
     class MockVectorMemoryStore:
         def __init__(self):

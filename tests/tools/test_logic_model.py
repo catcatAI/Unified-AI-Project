@@ -9,13 +9,13 @@ import pytest # Import pytest
 import logging
 
 # 修复导入路径 - 从正确的路径导入模块
-from apps.backend.src.tools.logic_model import logic_data_generator
-from apps.backend.src.tools.logic_model import logic_model_nn
-from apps.backend.src.tools.logic_model.logic_parser_eval import LogicParserEval
-from apps.backend.src.tools import logic_tool
-from apps.backend.src.tools.logic_tool import evaluate_expression as evaluate_logic_via_tool
-from apps.backend.src.tools.tool_dispatcher import ToolDispatcher
-from apps.backend.src.tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
+from tools.logic_model import logic_data_generator
+from tools.logic_model import logic_model_nn
+from tools.logic_model.logic_parser_eval import LogicParserEval
+from tools import logic_tool
+from tools.logic_tool import evaluate_expression as evaluate_logic_via_tool
+from tools.tool_dispatcher import ToolDispatcher
+from tools.logic_model.logic_model_nn import LogicNNModel, get_logic_char_token_maps, preprocess_logic_data
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class TestLogicModelComponents(unittest.TestCase):
         logger.info("\nRunning test_03_logic_model_nn_structure_and_helpers...")
 
         # Check if TensorFlow is available
-        from apps.backend.src.core_ai.dependency_manager import dependency_manager
+        from core_ai.dependency_manager import dependency_manager
         if not dependency_manager.is_available('tensorflow'):
             logger.info("TensorFlow not available, skipping NN model tests")
             self.skipTest("TensorFlow not available")

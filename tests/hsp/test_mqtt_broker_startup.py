@@ -9,7 +9,7 @@ import asyncio
 import pytest_asyncio
 from amqtt.broker import Broker
 # 修复导入路径
-from apps.backend.src.hsp.connector import HSPConnector
+from hsp.connector import HSPConnector
 
 MQTT_BROKER_ADDRESS = "127.0.0.1"
 MQTT_BROKER_PORT = 1883

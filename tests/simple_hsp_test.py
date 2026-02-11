@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 try:
     # 修复导入路径
-    from apps.backend.src.core.hsp.connector import HSPConnector
+    from core.hsp.connector import HSPConnector
     from apps.backend.tests.hsp.test_hsp_integration import MockMqttBroker
     HSP_AVAILABLE = True
 except ImportError as e:

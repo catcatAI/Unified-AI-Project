@@ -15,7 +15,7 @@ sys.path.insert(0, project_root)
 sys.path.insert(0, backend_src_path)
 
 try,
-    from apps.backend.src.core.hsp.external.external_connector import ExternalConnector
+    from core.hsp.external.external_connector import ExternalConnector
     print("成功导入ExternalConnector")
 except ImportError as e,::
     print(f"导入ExternalConnector失败, {e}")

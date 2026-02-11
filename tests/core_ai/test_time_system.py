@@ -17,7 +17,7 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path,::
     sys.path.insert(0, SRC_DIR)
 
-from apps.backend.src.core_ai.time.time_system import TimeSystem
+from core_ai.time.time_system import TimeSystem
 from unittest.mock import patch # For mocking datetime
 
 class TestTimeSystem(unittest.TestCase()):

@@ -5,7 +5,7 @@
 """
 
 try:
-    from apps.backend.src.tools.logic_tool import LogicTool
+    from tools.logic_tool import LogicTool
     print("logic_tool imported successfully")
     
     # 测试实例化

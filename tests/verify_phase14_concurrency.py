@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from apps.backend.src.ai.integration.unified_control_center import UnifiedControlCenter
+from ai.integration.unified_control_center import UnifiedControlCenter
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

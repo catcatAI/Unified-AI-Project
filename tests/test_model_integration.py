@@ -31,7 +31,7 @@ def test_math_model() -> None:
     print("\n=测试数学模型 ===")
     
     try:
-        from apps.backend.src.core.tools.math_tool import calculate
+        from core.tools.math_tool import calculate
         
         # 测试一些数学计算
         test_cases = [
@@ -66,7 +66,7 @@ def test_logic_model() -> None:
         print("\n=测试逻辑模型 ===")
         
         try:
-            from apps.backend.src.core.tools.logic_tool import evaluate_expression
+            from core.tools.logic_tool import evaluate_expression
             
             # 测试一些逻辑表达式
             test_cases = [
@@ -101,7 +101,7 @@ def test_tool_dispatcher() -> None:
     print("\n=测试工具调度器 ===")
     
     try:
-        from apps.backend.src.core.tools.tool_dispatcher import ToolDispatcher
+        from core.tools.tool_dispatcher import ToolDispatcher
         
         # 创建工具调度器实例
         dispatcher = ToolDispatcher()

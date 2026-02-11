@@ -55,7 +55,7 @@ def test_
     def test_external_connector_import() -> None,
     """Test that ExternalConnector can be imported."""
     try,
-        from apps.backend.src.core.hsp.external.external_connector import ExternalConnector  # type, ignore
+        from core.hsp.external.external_connector import ExternalConnector  # type, ignore
         ExternalConnector  # noqa, F841
         print("✅ ExternalConnector imported successfully")
         return True
@@ -73,7 +73,7 @@ def test_
     def test_external_connector_creation() -> None,
     """Test that ExternalConnector can be instantiated."""
     try,
-        from apps.backend.src.core.hsp.external.external_connector import ExternalConnector  # type, ignore
+        from core.hsp.external.external_connector import ExternalConnector  # type, ignore
         connector == ExternalConnector(
             ai_id="test_ai",
             broker_address="localhost",,

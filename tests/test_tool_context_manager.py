@@ -4,9 +4,9 @@ from unittest.mock import Mock, patch
 from typing import Any, List, Dict, Optional, Tuple
 
 # Assuming ToolContextManager is in the parent directory or properly installed
-from apps.backend.src.core.managers.tool_context_manager import ToolContextManager
+from core.managers.tool_context_manager import ToolContextManager
 # Temporarily comment out missing imports until they are properly defined elsewhere or in tool_context_manager.py
-# from apps.backend.src.core.managers.tool_context_manager import ToolCategory, Tool, ToolUsageRecord, ToolPerformanceMetrics # Assuming these are also defined
+# from core.managers.tool_context_manager import ToolCategory, Tool, ToolUsageRecord, ToolPerformanceMetrics # Assuming these are also defined
 
 logger = logging.getLogger(__name__)
 

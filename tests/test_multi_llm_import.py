@@ -22,7 +22,7 @@ class TestMultiLLMImport(unittest.TestCase):
     def test_multi_llm_import(self):
         """测试MultiLLMService导入"""
         try:
-            from apps.backend.src.core.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider
+            from core.services.multi_llm_service import MultiLLMService, ModelConfig, ModelProvider
             print("✓ MultiLLMService imported successfully")
             
             # 测试基本功能

@@ -8,8 +8,8 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock
 
 # Correct the import path based on the file's actual location
-from apps.backend.src.ai.agents.specialized.audio_processing_agent import AudioProcessingAgent
-from apps.backend.src.core.hsp.types_fixed import HSPTaskRequestPayload, HSPMessageEnvelope
+from ai.agents.specialized.audio_processing_agent import AudioProcessingAgent
+from core.hsp.types_fixed import HSPTaskRequestPayload, HSPMessageEnvelope
 
 @pytest.fixture
 def audio_agent():

@@ -7,7 +7,7 @@
 import unittest
 import pytest
 
-from apps.backend.src.services.vision_service import VisionService
+from services.vision_service import VisionService
 
 class TestVisionService(unittest.TestCase()):
     @pytest.mark.timeout(15)

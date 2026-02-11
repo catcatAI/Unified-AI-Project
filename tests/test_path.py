@@ -37,7 +37,7 @@ except ImportError as e:
 
 # Check if we can import the specific module we need:
 try:
-    from apps.backend.src.hsp.connector import HSPConnector
+    from hsp.connector import HSPConnector
     print("\nSuccessfully imported apps.backend.src.hsp.connector module")
     print(f"HSPConnector location: {HSPConnector.__module__}")
 except ImportError as e:

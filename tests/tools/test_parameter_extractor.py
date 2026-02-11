@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from apps.backend.src.tools.parameter_extractor.extractor import ParameterExtractor
+from tools.parameter_extractor.extractor import ParameterExtractor
 
 @pytest.fixture
 def extractor():

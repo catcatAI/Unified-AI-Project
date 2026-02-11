@@ -9,9 +9,9 @@ import asyncio
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, Optional, Any
-from apps.backend.src.hsp.internal.internal_bus import InternalBus
-from apps.backend.src.hsp.bridge.message_bridge import MessageBridge
-from apps.backend.src.hsp.connector import HSPConnector, get_schema_uri
+from hsp.internal.internal_bus import InternalBus
+from hsp.bridge.message_bridge import MessageBridge
+from hsp.connector import HSPConnector, get_schema_uri
 from trust_manager.trust_manager_module import TrustManager
 
 # Test constants

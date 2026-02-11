@@ -8,7 +8,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 import json
 
-from apps.backend.src.core.hsp.bridge.message_bridge import MessageBridge
+from core.hsp.bridge.message_bridge import MessageBridge
 from ..external.external_connector import ExternalConnector
 from ..internal.internal_bus import InternalBus
 from .data_aligner import DataAligner

@@ -1,6 +1,6 @@
 import pytest
-from apps.backend.src.core_ai.trust.trust_manager_module import TrustManager
-from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
+from core_ai.trust.trust_manager_module import TrustManager
+from hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
 
 # --- Mock TrustManager ---
 @pytest.fixture

@@ -4,7 +4,7 @@
 自动生成的测试模块,用于验证系统功能。
 """
 
-from apps.backend.src.automated_defect_detector import DefectDetector
+from automated_defect_detector import DefectDetector
 
 # 初始化缺陷检测器
 detector = DefectDetector()

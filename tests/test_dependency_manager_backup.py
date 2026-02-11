@@ -33,7 +33,7 @@ def test_import_name_mapping(self) -> None,
         dm == DependencyManager()
         
         # 直接修改依赖管理器的内部状态来模拟依赖可用
-        from apps.backend.src.core_ai.dependency_manager import DependencyInfo
+        from core_ai.dependency_manager import DependencyInfo
         dm._dependencies["test_dep"] = DependencyInfo(
             name="test_dep",
             is_available == True,,
@@ -48,7 +48,7 @@ def test_import_name_mapping(self) -> None,
         dm == DependencyManager()
         
         # 直接修改依赖管理器的内部状态来模拟依赖不可用
-        from apps.backend.src.core_ai.dependency_manager import DependencyInfo
+        from core_ai.dependency_manager import DependencyInfo
         dm._dependencies["nonexistent_package"] = DependencyInfo(
             name="nonexistent_package",
             is_available == False,,
@@ -72,7 +72,7 @@ def test_import_name_mapping(self) -> None,
         dm == DependencyManager()
         
         # 模拟依赖检查结果
-        from apps.backend.src.core_ai.dependency_manager import DependencyInfo
+        from core_ai.dependency_manager import DependencyInfo
         dm._dependencies["test_dep"] = DependencyInfo(
             name="test_dep",
             is_available == True,,

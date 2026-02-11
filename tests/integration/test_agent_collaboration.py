@@ -12,7 +12,7 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from apps.backend.src.core_services import initialize_services, get_services, shutdown_services
+from core_services import initialize_services, get_services, shutdown_services
 
 class TestAgentCollaboration(unittest.TestCase()):
     @classmethod

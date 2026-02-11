@@ -8,7 +8,7 @@ import asyncio
 import unittest
 
 # 修复导入路径
-from apps.backend.src.core.managers.core_service_manager import (
+from core.managers.core_service_manager import (
     CoreServiceManager,
     ServiceConfig,
     ServiceStatus,
@@ -327,7 +327,7 @@ class TestServiceInfo(unittest.TestCase):
 
     def test_service_info_creation(self):
         """测试服务信息"""
-        from apps.backend.src.core.managers.core_service_manager import ServiceConfig, ServiceInfo, ServiceStatus, ServiceHealth
+        from core.managers.core_service_manager import ServiceConfig, ServiceInfo, ServiceStatus, ServiceHealth
 
         config = ServiceConfig(
             name="test_service",

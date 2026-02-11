@@ -32,13 +32,13 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # 原始问题1 core_ai模块导入问题
-from apps.backend.src.core_ai.agent_manager import AgentManager
+from core_ai.agent_manager import AgentManager
 
 # 原始问题2 HSPConnector导入问题(在TYPE_CHECKING外)
-from apps.backend.src.core.hsp.connector import HSPConnector
+from core.hsp.connector import HSPConnector
 
 # 原始问题3 相对导入问题
-from apps.backend.src.core_ai.dialogue.dialogue_manager import DialogueManager
+from core_ai.dialogue.dialogue_manager import DialogueManager
 
 
     def setUp(self):

@@ -7,7 +7,7 @@
 import unittest
 import pytest
 
-from apps.backend.src.modules_fragmenta.element_layer import ElementLayer
+from modules_fragmenta.element_layer import ElementLayer
 
 class TestElementLayer(unittest.TestCase()):
     @pytest.mark.timeout(5)

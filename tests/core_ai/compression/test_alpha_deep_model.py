@@ -3,7 +3,7 @@ Tests for the AlphaDeepModel, focusing on compression and data handling.
 """
 
 import pytest
-from apps.backend.src.core_ai.compression.alpha_deep_model import (
+from core_ai.compression.alpha_deep_model import (
     AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities, CompressionAlgorithm
 )
 

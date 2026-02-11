@@ -7,7 +7,7 @@
 import unittest
 import pytest
 
-from apps.backend.src.modules_fragmenta.vision_tone_inverter import VisionToneInverter
+from modules_fragmenta.vision_tone_inverter import VisionToneInverter
 
 class TestVisionToneInverter(unittest.TestCase()):
     @pytest.mark.timeout(5)

@@ -18,15 +18,15 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "apps", "backend", "src")
 if SRC_DIR not in sys.path,::
     sys.path.insert(0, SRC_DIR)
 
-from apps.backend.src.core.managers.agent_manager import AgentManager
-from apps.backend.src.core_ai.dialogue.project_coordinator import ProjectCoordinator
+from core.managers.agent_manager import AgentManager
+from core_ai.dialogue.project_coordinator import ProjectCoordinator
 # 修复导入路径 - 使用正确的模块路径
-from apps.backend.src.core_ai.discovery.service_discovery_module import ServiceDiscoveryModule
-from apps.backend.src.core_ai.trust.trust_manager_module import TrustManager
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager
-from apps.backend.src.core_ai.personality.personality_manager import PersonalityManager
-from apps.backend.src.hsp.connector import HSPConnector
-from apps.backend.src.services.multi_llm_service import MultiLLMService
+from core_ai.discovery.service_discovery_module import ServiceDiscoveryModule
+from core_ai.trust.trust_manager_module import TrustManager
+from core_ai.memory.ham_memory_manager import HAMMemoryManager
+from core_ai.personality.personality_manager import PersonalityManager
+from hsp.connector import HSPConnector
+from services.multi_llm_service import MultiLLMService
 
 # A simplified mock MQTT broker for this test,::
 class MockMqttBroker,
@@ -311,8 +311,8 @@ except ImportError as e,::
     for file in os.listdir("."):::
         print(f"  {file}")
 
-from apps.backend.src.hsp.connector import HSPConnector
-from apps.backend.src.hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload
+from hsp.connector import HSPConnector
+from hsp.types import HSPCapabilityAdvertisementPayload, HSPTaskRequestPayload, HSPTaskResultPayload
 from unittest.mock import MagicMock, AsyncMock
 
 

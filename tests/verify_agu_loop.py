@@ -7,8 +7,8 @@ from datetime import datetime
 # Add project root to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from apps.backend.src.ai.integration.unified_control_center import UnifiedControlCenter
-from apps.backend.src.pet.pet_manager import PetManager
+from ai.integration.unified_control_center import UnifiedControlCenter
+from pet.pet_manager import PetManager
 
 # Setup Logging
 logging.basicConfig(

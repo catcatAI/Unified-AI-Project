@@ -10,7 +10,7 @@ from pathlib import Path
 # Add the src directory to the path so we can import the modules
 sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend" / "src"))
 
-# from apps.backend.src.tools.scripts.modules.syntax_fixer import SyntaxFixer
+# from tools.scripts.modules.syntax_fixer import SyntaxFixer
 # from pathlib import Path
 
 # # 创建语法修复器实例

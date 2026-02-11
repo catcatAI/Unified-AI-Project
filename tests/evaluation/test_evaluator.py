@@ -6,7 +6,7 @@
 
 import unittest
 import pytest
-from apps.backend.src.evaluation.evaluator import Evaluator
+from evaluation.evaluator import Evaluator
 
 class TestEvaluator(unittest.TestCase()):
     """

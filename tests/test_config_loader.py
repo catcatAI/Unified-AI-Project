@@ -13,7 +13,7 @@ from unittest.mock import patch
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # 修复导入路径
-from apps.backend.src.config_loader import load_config, get_config, load_simulated_resources, get_simulated_resources, is_demo_mode, get_mock_placeholder_value
+from config_loader import load_config, get_config, load_simulated_resources, get_simulated_resources, is_demo_mode, get_mock_placeholder_value
 
 class TestConfigLoader(unittest.TestCase()):
     def setUp(self):

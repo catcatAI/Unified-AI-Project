@@ -5,7 +5,7 @@
 """
 
 import pytest
-from apps.backend.src.game.main import Game
+from game.main import Game
 from unittest.mock import MagicMock
 
 @pytest.mark.timeout(5)

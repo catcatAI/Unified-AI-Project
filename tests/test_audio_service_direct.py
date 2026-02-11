@@ -11,8 +11,8 @@ from unittest.mock import patch
 # Add the backend to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'backend', 'src'))
 
-from apps.backend.src.services.audio_service import AudioService
-from apps.backend.src.config_loader import is_demo_mode
+from services.audio_service import AudioService
+from config_loader import is_demo_mode
 
 
     def setUp(self):

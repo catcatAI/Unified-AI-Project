@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import MagicMock, AsyncMock
 
 # Correct import path for DataAnalysisAgent
-from apps.backend.src.ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
-from apps.backend.src.core.hsp.types_fixed import HSPTaskRequestPayload, HSPMessageEnvelope
+from ai.agents.specialized.data_analysis_agent import DataAnalysisAgent
+from core.hsp.types_fixed import HSPTaskRequestPayload, HSPMessageEnvelope
 
 @pytest.fixture
 def data_agent():

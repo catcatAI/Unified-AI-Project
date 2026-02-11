@@ -3,7 +3,7 @@ Simple agent test to verify imports and basic instantiation.
 """
 
 import pytest
-from apps.backend.src.ai.agents.base.base_agent import BaseAgent
+from ai.agents.base.base_agent import BaseAgent
 
 def test_simple_agent_creation():
     """Tests if a BaseAgent can be imported and instantiated."""

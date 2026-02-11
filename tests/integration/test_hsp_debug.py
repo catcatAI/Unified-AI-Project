@@ -6,9 +6,9 @@
 
 import pytest
 import asyncio
-from apps.backend.src.hsp.connector import HSPConnector
-from apps.backend.src.hsp.internal.internal_bus import InternalBus
-from apps.backend.src.hsp.bridge.message_bridge import MessageBridge
+from hsp.connector import HSPConnector
+from hsp.internal.internal_bus import InternalBus
+from hsp.bridge.message_bridge import MessageBridge
 
 @pytest.mark.asyncio()
 async 

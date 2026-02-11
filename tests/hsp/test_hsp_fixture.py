@@ -14,11 +14,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 # 修复导入路径
 from apps.backend.tests.hsp.mock_mqtt_broker import MockMqttBroker
-from apps.backend.src.core.hsp.internal.internal_bus import InternalBus
-from apps.backend.src.core.hsp.bridge.data_aligner import DataAligner
+from core.hsp.internal.internal_bus import InternalBus
+from core.hsp.bridge.data_aligner import DataAligner
 
 # 修复hsp_connector导入路径
-from apps.backend.src.core.hsp.connector import HSPConnector
+from core.hsp.connector import HSPConnector
 
 @pytest_asyncio.fixture()
 async def mock_broker():

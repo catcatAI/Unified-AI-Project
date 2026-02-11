@@ -12,10 +12,10 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../../'))
 
 # 测试新的真实AI引擎(简化版本)
-from apps.backend.src.ai.reasoning.real_causal_reasoning_engine import (
+from ai.reasoning.real_causal_reasoning_engine import (
     RealCausalGraph, RealInterventionPlanner, RealCounterfactualReasoner
 )
-from apps.backend.src.ai.reasoning.real_causal_reasoning_engine import RealCausalReasoningEngine # Import the main engine for _calculate_real_correlation
+from ai.reasoning.real_causal_reasoning_engine import RealCausalReasoningEngine # Import the main engine for _calculate_real_correlation
 
 class TestRealCausalEngineSimplified:
     """真实AI因果推理引擎简化测试类"""

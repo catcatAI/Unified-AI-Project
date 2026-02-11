@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 def main() -> None,
     print("Starting simple test...")
     try,
-        from apps.backend.src.core_ai.agents.base_agent import BaseAgent
+        from core_ai.agents.base_agent import BaseAgent
         print("✓ BaseAgent imported successfully")
         
         # Create a simple agent instance

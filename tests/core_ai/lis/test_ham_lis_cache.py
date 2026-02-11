@@ -11,7 +11,7 @@ import json
 from typing import Dict, Any, Optional, List, cast
 from datetime import datetime, timezone, timedelta # Added timedelta
 
-from apps.backend.src.core_ai.lis.lis_cache_interface import (
+from core_ai.lis.lis_cache_interface import (
     HAMLISCache,
     LISCacheInterface,
     HAM_META_LIS_OBJECT_ID,
@@ -23,8 +23,8 @@ from apps.backend.src.core_ai.lis.lis_cache_interface import (
     LIS_ANTIBODY_DATA_TYPE_PREFIX,
     HAM_META_ANTIBODY_FOR_ANOMALY,
     HAM_META_ANTIBODY_EFFECTIVENESS)
-from apps.backend.src.core_ai.memory.ham_memory_manager import HAMMemoryManager, HAMRecallResult
-from apps.backend.src.core_ai.lis.types import (
+from core_ai.memory.ham_memory_manager import HAMMemoryManager, HAMRecallResult
+from core_ai.lis.types import (
     LIS_IncidentRecord,
     LIS_SemanticAnomalyDetectedEvent,
     LIS_AnomalyType,

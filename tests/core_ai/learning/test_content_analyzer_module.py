@@ -6,7 +6,7 @@
 
 import unittest
 import pytest
-from apps.backend.src.core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
 import networkx as nx
 
 class TestContentAnalyzerModule(unittest.TestCase()):

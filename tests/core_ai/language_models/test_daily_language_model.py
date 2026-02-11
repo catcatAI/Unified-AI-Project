@@ -8,7 +8,7 @@ import pytest
 from unittest.mock import AsyncMock # Added for AsyncMock,:
     import json
 from language_models.daily_language_model import DailyLanguageModel
-from apps.backend.src.core.services.multi_llm_service import MultiLLMService, ModelProvider
+from core.services.multi_llm_service import MultiLLMService, ModelProvider
 from datetime import datetime
 
 class TestDailyLanguageModel,

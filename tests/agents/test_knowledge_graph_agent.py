@@ -5,8 +5,8 @@ Tests for the KnowledgeGraphAgent.
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 
-from apps.backend.src.ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
-from apps.backend.src.core.hsp.types_fixed import HSPTaskRequestPayload, HSPMessageEnvelope
+from ai.agents.specialized.knowledge_graph_agent import KnowledgeGraphAgent
+from core.hsp.types_fixed import HSPTaskRequestPayload, HSPMessageEnvelope
 
 @pytest.fixture
 def mock_hsp_connector():

@@ -17,7 +17,7 @@ if SRC_DIR not in sys.path,::
     sys.path.insert(0, SRC_DIR)
 
 # 修复导入路径
-from apps.backend.src.core_ai.emotion.emotion_system import EmotionSystem
+from core_ai.emotion.emotion_system import EmotionSystem
 
 class TestEmotionSystem(unittest.TestCase()):
     def setUp(self):

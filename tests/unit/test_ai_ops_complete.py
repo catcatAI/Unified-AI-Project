@@ -12,11 +12,11 @@ from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta, timezone
 
 # Import necessary modules from the project structure
-from apps.backend.src.ai.ops.ai_ops_engine import AIOpsEngine
-from apps.backend.src.ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
-from apps.backend.src.ai.ops.performance_optimizer import PerformanceOptimizer
-from apps.backend.src.ai.ops.capacity_planner import CapacityPlanner, ResourceUsage
-from apps.backend.src.ai.ops.intelligent_ops_manager import IntelligentOpsManager, OpsInsight
+from ai.ops.ai_ops_engine import AIOpsEngine
+from ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
+from ai.ops.performance_optimizer import PerformanceOptimizer
+from ai.ops.capacity_planner import CapacityPlanner, ResourceUsage
+from ai.ops.intelligent_ops_manager import IntelligentOpsManager, OpsInsight
 
 @pytest.fixture
 def ai_ops_engine():

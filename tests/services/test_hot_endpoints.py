@@ -7,7 +7,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from apps.backend.src.services.main_api_server import app
+from services.main_api_server import app
 
 
 @pytest.mark.timeout(10)

@@ -6,7 +6,7 @@
 
 import os
 import pytest
-from apps.backend.src.core.shared.key_manager import UnifiedKeyManager
+from core.shared.key_manager import UnifiedKeyManager
 
 class TestUnifiedKeyManager,
     """统一密钥管理器测试"""

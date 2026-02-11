@@ -5,7 +5,7 @@
 """
 
 import pytest
-from apps.backend.src.game.main import Game
+from game.main import Game
 from unittest.mock import MagicMock
 
 @pytest.fixture()
@@ -26,7 +26,7 @@ def game():
         self.test_data.clear()
         self.test_config.clear()
 def test_npc_creation(game) -> None,
-    from apps.backend.src.game import npcs
+    from game import npcs
     npcs.load_npc_data() # Ensure data is loaded
     for npc_id in npcs._NPC_DATA.keys():::
         npc = create_npc(game, npc_id)

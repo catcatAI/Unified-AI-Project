@@ -7,7 +7,7 @@ import pytest
 import asyncio
 import logging
 from unittest.mock import MagicMock, AsyncMock
-from apps.backend.src.hsp.connector import HSPConnector
+from hsp.connector import HSPConnector
 import uuid
 
 # Configure logging for tests,:
