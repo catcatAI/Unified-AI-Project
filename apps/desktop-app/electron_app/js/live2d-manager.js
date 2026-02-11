@@ -22,11 +22,12 @@
 // Live2DCubismWrapper 在 live2d-cubism-wrapper.js 中定义
 
 class Live2DManager {
-    constructor(canvas, unifiedDisplayMatrix = null) {
-        console.log('[Live2DManager] Constructor with UDM:', !!unifiedDisplayMatrix);
+    constructor(canvas, unifiedDisplayMatrix = null, performanceManager = null) {
+        console.log('[Live2DManager] Constructor with UDM:', !!unifiedDisplayMatrix, 'PM:', !!performanceManager);
         
         this.canvas = canvas;
         this.udm = unifiedDisplayMatrix;
+        this.performanceManager = performanceManager;
         
         // Core state
         this.gl = null;
@@ -184,11 +185,52 @@ class Live2DManager {
             this.canvas.style.display = 'block';
             
             console.log('[Live2DManager] Live2D model loaded successfully:', modelPath);
+            
+            // 更新PerformanceManager中的能力状态
+            this._updateCapabilityStates();
         } catch (error) {
             console.error('[Live2DManager] Failed to load Live2D model:', error);
             console.log('[Live2DManager] Falling back to 2D rendering');
             this.isFallback = true;
+            
+            // 更新PerformanceManager中的能力状态（模型不可用）
+            this._updateCapabilityStates();
+            
             this._createFallbackManager();
+        }
+    }
+    
+    /**
+     * 更新PerformanceManager中的Live2D能力状态
+     */
+    _updateCapabilityStates() {
+        if (!this.performanceManager) {
+            return;
+        }
+        
+        try {
+            // 更新Live2D SDK状态
+            this.performanceManager.updateCapability('live2d_sdk', this.isFramework && !this.isFallback);
+            
+            // 更新Live2D模型状态
+            this.performanceManager.updateLive2DModelAvailability(this.modelLoaded && !this.isFallback);
+            
+            // 更新Live2D物理状态
+            const physicsAvailable = this.isFramework && this.modelLoaded && !this.isFallback;
+            this.performanceManager.updateLive2DPhysicsAvailability(physicsAvailable);
+            
+            // 更新Live2D唇型同步状态
+            const lipsyncAvailable = this.isFramework && this.modelLoaded && !this.isFallback;
+            this.performanceManager.updateLive2DLipsyncAvailability(lipsyncAvailable);
+            
+            console.log('[Live2DManager] 能力状态已更新:', {
+                live2d_sdk: this.isFramework && !this.isFallback,
+                live2d_model: this.modelLoaded && !this.isFallback,
+                live2d_physics: physicsAvailable,
+                live2d_lipsync: lipsyncAvailable
+            });
+        } catch (error) {
+            console.error('[Live2DManager] 更新能力状态失败:', error);
         }
     }
     
@@ -486,6 +528,20 @@ class Live2DManager {
     
     getParameter(param) {
         return this.parameters[param] || 0;
+    }
+    
+    /**
+     * 设置PerformanceManager引用
+     * @param {PerformanceManager} pm - PerformanceManager实例
+     */
+    setPerformanceManager(pm) {
+        this.performanceManager = pm;
+        console.log('[Live2DManager] PerformanceManager已设置:', !!pm);
+        
+        // 如果模型已加载，立即更新能力状态
+        if (this.modelLoaded || this.isFallback) {
+            this._updateCapabilityStates();
+        }
     }
     
     // Eye tracking
