@@ -477,8 +477,13 @@ class ConnectionManager:
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
-            except:
-                pass
+            except (ConnectionError, RuntimeError, Exception) as e:
+                # 連接失敗，從活動連接中移除
+                logger.debug(f"廣播消息失敗（可忽略）: {e}")
+                try:
+                    self.active_connections.remove(connection)
+                except ValueError:
+                    pass
 
 manager = ConnectionManager()
 

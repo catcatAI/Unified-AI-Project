@@ -367,7 +367,9 @@ class ClusterManager:
             profile = self.probe.get_hardware_profile()
             if profile.gpu:
                 hardware_usage["gpu_load"] = profile.gpu[0].load if hasattr(profile.gpu[0], 'load') else 0
-        except:
+        except (OSError, AttributeError, IndexError) as e:
+            # 硬件探测失敗，使用默認值
+            logger.debug(f"硬件探測失敗（可忽略）: {e}")
             pass
         
         metric = PerformanceMetrics(

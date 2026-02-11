@@ -520,9 +520,10 @@ class HSPConnector:
             try:
                 # 可以添加实际的健康检查逻辑
                 health["hsp_healthy"] = True
-            except:
+            except (ConnectionError, RuntimeError) as e:
                 health["hsp_healthy"] = False
                 self.hsp_available = False
+                logger.debug(f"HSP健康檢查失敗（可忽略）: {e}")
 
         # 检查fallback健康状态
         if self.fallback_manager:
@@ -531,8 +532,9 @@ class HSPConnector:
                 if hasattr(self.fallback_manager, 'get_status') and callable(self.fallback_manager.get_status):
                     fallback_status = self.fallback_manager.get_status()
                     health["fallback_healthy"] = fallback_status.get("active_protocol") is not None
-            except:
+            except (AttributeError, KeyError, RuntimeError) as e:
                 health["fallback_healthy"] = False
+                logger.debug(f"Fallback健康檢查失敗（可忽略）: {e}")
 
         health["overall_healthy"] = health["hsp_healthy"] or health["fallback_healthy"]
         return health

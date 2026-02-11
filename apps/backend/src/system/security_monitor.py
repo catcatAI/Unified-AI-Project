@@ -148,8 +148,8 @@ class SecurityTrayMonitor:
             if hasattr(self, 'log_stream') and self.log_stream:
                 try:
                     self.log_stream.close()
-                except:
-                    pass
+                except (OSError, IOError) as e:
+                    logger.debug(f"關閉日誌流時發生錯誤（可忽略）: {e}")
             self.backend_process = None
 
     def on_restart_backend(self):

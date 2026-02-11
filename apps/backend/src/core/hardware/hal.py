@@ -289,7 +289,9 @@ class HardwareManager:
                     for name, entries in temps.items():
                         if entries:
                             return entries[0].current
-        except:
+        except (AttributeError, OSError, IndexError) as e:
+            # 溫度傳感器探測失敗，使用默認值
+            logger.debug(f"溫度探測失敗（可忽略）: {e}")
             pass
         return None
     

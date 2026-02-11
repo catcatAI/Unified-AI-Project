@@ -775,7 +775,8 @@ class ArtLearningSystem:
             if "layer count" in feature.feature_type.lower():
                 try:
                     layer_count = int(re.search(r'\d+', feature.description).group())
-                except:
+                except (AttributeError, ValueError) as e:
+                    logger.debug(f"層數提取失敗（可忽略）: {e}")
                     pass
         
         analysis.has_live2d_structure = has_live2d_markers

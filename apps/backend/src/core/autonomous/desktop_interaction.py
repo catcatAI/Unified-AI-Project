@@ -417,7 +417,8 @@ class DesktopInteraction:
                 # Get size
                 try:
                     total_size += file_path.stat().st_size
-                except:
+                except (OSError, AttributeError) as e:
+                    logger.debug(f"文件大小獲取失敗（可忽略）: {e}")
                     pass
                 
                 # Update cache

@@ -207,7 +207,8 @@ class OllamaBackend(BaseLLMBackend):
                                             # 找到最後一個包含 message.content 的完整回應
                                             if data.get("message", {}).get("content"):
                                                 text = data.get("message", {}).get("content", "")
-                                        except:
+                                        except json.JSONDecodeError:
+                                            # JSON解析失敗，跳過該行
                                             continue
                                 if data is None:
                                     raise json_error

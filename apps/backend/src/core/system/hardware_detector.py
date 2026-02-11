@@ -147,7 +147,8 @@ class HardwareDetector:
         try:
             import os
             return os.cpu_count() or 4
-        except:
+        except (OSError, AttributeError) as e:
+            logger.debug(f"CPU核數探測失敗（可忽略）: {e}")
             return 4
     
     def _detect_gpu(self) -> Tuple[bool, float, Optional[str]]:
@@ -294,7 +295,8 @@ class HardwareDetector:
             battery = psutil.sensors_battery()
             if battery is not None:
                 return True
-        except:
+        except (ImportError, OSError, AttributeError) as e:
+            logger.debug(f"電池探測失敗（可忽略）: {e}")
             pass
         
         return False
@@ -305,7 +307,8 @@ class HardwareDetector:
             import shutil
             stat = shutil.disk_usage('.')
             return stat.free / (1024 ** 3)
-        except:
+        except (OSError, AttributeError) as e:
+            logger.debug(f"磁盤空間探測失敗（可忽略）: {e}")
             return 100.0  # Default assumption
 
 

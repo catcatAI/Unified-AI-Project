@@ -134,13 +134,15 @@ class LocalClusterManager:
                     if control_msg.get("command") == "shutdown":
                         logger.info(f"[Worker-{worker_id}] Received shutdown command")
                         break
-                except:
+                except (queue.Empty, RuntimeError) as e:
+                    # 隊列空或運行時錯誤，繼續運行
                     pass
                 
                 # 獲取任務（超時 1 秒）
                 try:
                     task: ClusterTask = task_queue.get(timeout=1.0)
-                except:
+                except (queue.Empty, RuntimeError):
+                    # 隊列為空或運行時錯誤，繼續等待
                     continue
                 
                 logger.info(f"[Worker-{worker_id}] Processing task {task.task_id}")
@@ -194,7 +196,8 @@ class LocalClusterManager:
             result = self.result_queue.get(timeout=timeout)
             self.total_tasks_completed += 1
             return result
-        except:
+        except (queue.Empty, RuntimeError):
+            # 隊列為空或運行時錯誤，返回None
             return None
 
     def get_cluster_status(self) -> Dict[str, Any]:

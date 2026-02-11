@@ -1,5 +1,7 @@
 import logging
 import random
+import logging
+import statistics
 from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -55,10 +57,10 @@ class RealCausalReasoningEngine(CausalReasoningEngine):
     def _calculate_real_correlation(self, x: List[float], y: List[float]) -> float:
         if len(x) != len(y) or len(x) < 2: return 0.0
         # Simple Pearson correlation implementation
-        import statistics
         try:
             return statistics.correlation(x, y)
-        except:
+        except (ValueError, TypeError, AttributeError, StatisticsError) as e:
+            logger.debug(f"相關性計算失敗（可忽略）: {e}")
             return 0.0
 
     async def _detect_temporal_patterns(self, observation: Dict[str, Any]) -> Dict[str, Any]:

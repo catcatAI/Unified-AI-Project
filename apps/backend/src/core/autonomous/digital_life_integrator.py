@@ -411,7 +411,8 @@ class DigitalLifeIntegrator:
                 stats = self.memory_bridge.get_memory_stats()
                 self.life_stats.memories_formed = stats.get("total_memories", 0)
                 self.life_stats.memories_consolidated = stats.get("consolidated_memories", 0)
-            except:
+            except (AttributeError, KeyError, RuntimeError) as e:
+                logger.debug(f"記憶統計更新失敗（可忽略）: {e}")
                 pass
     
     async def _update_dynamic_parameters(self):

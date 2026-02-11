@@ -912,8 +912,9 @@ class CapacityPlanner:
                 return 'decreasing'
             else:
                 return 'stable'
-                
-        except:
+
+        except (ZeroDivisionError, ValueError, TypeError, IndexError) as e:
+            logger.debug(f"趨勢分析失敗（可忽略）: {e}")
             return 'unknown'
     
     def _analyze_utilization_trends(self, data: List[Dict]) -> Dict[str, str]:

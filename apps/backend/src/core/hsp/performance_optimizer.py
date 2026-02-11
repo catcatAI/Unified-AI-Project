@@ -146,8 +146,8 @@ class HSPPerformanceOptimizer:
             # 如果解压缩失败, 假设数据未压缩
             try:
                 return json.loads(compressed_data.decode('utf-8'))
-            except:
-                raise ValueError("无法解码消息数据")
+            except (json.JSONDecodeError, UnicodeDecodeError) as decode_error:
+                raise ValueError(f"无法解码消息数据: {decode_error}") from decode_error
 
     def record_message_metrics(self, metrics: MessageMetrics) -> None:
         """记录消息指标"""

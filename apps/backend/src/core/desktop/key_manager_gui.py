@@ -35,13 +35,15 @@ class KeyManagerGUI:
         # Try to set icon
         try:
             icon_path = Path(__file__).parent.parent.parent.parent / "resources" / "angela_icon.png"
-            if icon_path.exists():
+try:
                 from PIL import Image, ImageTk
                 icon = Image.open(icon_path)
                 icon = icon.resize((32, 32))
                 photo = ImageTk.PhotoImage(icon)
                 self.root.iconphoto(True, photo)
-        except:
+        except (FileNotFoundError, ImportError, OSError) as e:
+            # 圖標加載失敗，使用默認圖標
+            logger.debug(f"圖標加載失敗（可忽略）: {e}")
             pass
         
         # Providers configuration
@@ -175,7 +177,9 @@ class KeyManagerGUI:
                                         'secure': False,
                                         'warning': f'Key found in config file. For better security, move to environment variable.'
                                     }
-                except:
+                except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+                    # 配置文件讀取失敗，跳過
+                    logger.debug(f"配置文件讀取失敗（可忽略）: {e}")
                     pass
     
     def _create_widgets(self):

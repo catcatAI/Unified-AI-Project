@@ -571,7 +571,8 @@ class SystemStateMonitor:
             load_avg = None
             try:
                 load_avg = psutil.getloadavg()
-            except:
+            except (AttributeError, OSError) as e:
+                logger.debug(f"負載平均值獲取失敗（可忽略）: {e}")
                 pass
             
             # Process count

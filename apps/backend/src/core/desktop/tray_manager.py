@@ -437,8 +437,10 @@ class LinuxTrayManager(BaseTrayManager):
             Notify.init("Angela AI")
             notification = Notify.Notification.new(title, message, "dialog-information")
             notification.show()
-        except:
-            logger.warning("Could not show notification")
+        except (ImportError, AttributeError, Exception) as e:
+            # 通知系統不可用，使用日志記錄
+            logger.debug(f"通知顯示失敗（可忽略）: {e}")
+            logger.info(f"通知: {title} - {message}")
     
     def run(self):
         """Run the tray"""

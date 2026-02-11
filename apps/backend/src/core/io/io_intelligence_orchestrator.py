@@ -399,7 +399,8 @@ class IOIntelligenceOrchestrator:
             try:
                 import numpy as np
                 analysis['average_interaction_time'] = np.mean(interaction_times)
-            except:
+            except (ImportError, ZeroDivisionError, TypeError) as e:
+                logger.debug(f"numpy計算失敗（可忽略）: {e}")
                 analysis['average_interaction_time'] = sum(interaction_times) / len(interaction_times)
 
         # 计算效率分数 (0 - 1)
@@ -542,7 +543,8 @@ class IOIntelligenceOrchestrator:
                 import numpy as np
                 avg_time = np.mean(completion_times)
                 std_time = np.std(completion_times)
-            except:
+            except (ImportError, ZeroDivisionError, TypeError) as e:
+                logger.debug(f"numpy計算失敗（可忽略）: {e}")
                 avg_time = sum(completion_times) / len(completion_times)
                 std_time = 0.0
 
@@ -560,7 +562,8 @@ class IOIntelligenceOrchestrator:
             try:
                 import numpy as np
                 current_success_rate = np.mean(success_rates)
-            except:
+            except (ImportError, ZeroDivisionError, TypeError) as e:
+                logger.debug(f"numpy計算失敗（可忽略）: {e}")
                 current_success_rate = sum(success_rates) / len(success_rates)
             if current_success_rate < 0.95:  # 如果成功率低于95%
                 optimization_results['recommended_changes'].append({
