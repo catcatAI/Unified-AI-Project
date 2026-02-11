@@ -27,10 +27,10 @@ import asyncio
 import logging
 import time
 
-from src.core.visual_config import (
+from core.visual_config import (
     VisualConfiguration, ModelConfiguration, RenderQuality
 )
-from src.core.visual_effect_generator import (
+from core.visual_effect_generator import (
     VisualEffectGenerator, EffectType
 )
 

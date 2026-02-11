@@ -17,7 +17,7 @@ from .types import (
     NarrativeAntibodyObject,
     LIS_IncidentStatus
 )
-from ..memory.ham_memory.ham_manager import HAMMemoryManager
+from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 
 logger = logging.getLogger(__name__)
 

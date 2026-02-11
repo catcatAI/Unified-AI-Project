@@ -8,15 +8,15 @@ import yaml
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional, Tuple, Type, TYPE_CHECKING
 
-from src.core.hsp.connector import HSPConnector
-from src.core.hsp.payloads import (
+from core.hsp.connector import HSPConnector
+from core.hsp.payloads import (
     HSPTaskRequestPayload,
     HSPTaskResultPayload,
     HSPCapabilityAdvertisementPayload,
     HSPMessageEnvelope
 )
-from src.ai.agents.agent_manager import AgentManager
-from ...core.shared.types.common_types import PendingHSPTaskInfo
+from ai.agents.agent_manager import AgentManager
+from core.shared.types.common_types import PendingHSPTaskInfo
 import networkx as nx
 
 if TYPE_CHECKING:

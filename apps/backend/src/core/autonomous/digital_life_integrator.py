@@ -29,7 +29,7 @@ from .action_executor import ActionExecutor
 from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
 from .autonomous_life_cycle import AutonomousLifeCycle
 from .dynamic_parameters import DynamicThresholdManager
-from ...ai.integration.unified_control_center import UnifiedControlCenter
+from ai.integration.unified_control_center import UnifiedControlCenter
 
 
 class LifeCycleState(Enum):

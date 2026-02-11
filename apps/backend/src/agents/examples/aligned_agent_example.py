@@ -7,8 +7,8 @@ import asyncio
 import logging
 from typing import Dict, Any
 
-from ..aligned_base_agent import AlignedBaseAgent
-from src.core.hsp.types import HSPMessageEnvelope
+from agents.aligned_base_agent import AlignedBaseAgent
+from core.hsp.types import HSPMessageEnvelope
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)

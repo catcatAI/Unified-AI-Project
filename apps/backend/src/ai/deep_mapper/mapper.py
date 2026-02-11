@@ -11,7 +11,7 @@ supporting complex transformations and bidirectional mapping.
 
 import json
 from typing import Dict, Any, Optional
-from src.core.shared.types import MappableDataObject
+from core.shared.types import MappableDataObject
 
 
 class DeepMapper:

@@ -11,7 +11,7 @@ from datetime import datetime
 
 import asyncio
 
-from ...ai.ops.intelligent_ops_manager import IntelligentOpsManager, get_intelligent_ops_manager
+from ai.ops.intelligent_ops_manager import IntelligentOpsManager, get_intelligent_ops_manager
 
 router = APIRouter(prefix="/ops", tags=["AI运维"])
 

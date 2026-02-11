@@ -6,11 +6,11 @@ import re
 from datetime import datetime
 from typing import Optional, List, Dict, Any, TYPE_CHECKING, Tuple
 
-from ..memory.ham_memory.ham_manager import HAMMemoryManager
+from ai.memory.ham_memory.ham_manager import HAMMemoryManager
 from .fact_extractor_module import FactExtractorModule
 from .content_analyzer_module import ContentAnalyzerModule
-from ..trust.trust_manager_module import TrustManager
-from ..personality.personality_manager import PersonalityManager
+from ai.trust.trust_manager_module import TrustManager
+from ai.personality.personality_manager import PersonalityManager
 
 # HSP payloads - 可选依赖
 try:

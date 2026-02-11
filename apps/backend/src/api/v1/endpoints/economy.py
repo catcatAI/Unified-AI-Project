@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 from typing import Dict, Any, Optional
-from src.economy.economy_manager import EconomyManager
+from economy.economy_manager import EconomyManager
 import logging
 
 logger = logging.getLogger(__name__)

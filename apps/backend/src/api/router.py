@@ -4,15 +4,15 @@ API路由模块
 
 import random
 import psutil
-from src.system.cluster_manager import cluster_manager
+from system.cluster_manager import cluster_manager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 import uuid
 
 from fastapi import APIRouter, Body
-from src.services.chat_service import generate_angela_response
-from src.api.v1.endpoints import drive, pet, vision, audio, tactile, mobile, economy
-from src.api.routes.ops_routes import router as ops_router
+from services.chat_service import generate_angela_response
+from api.v1.endpoints import drive, pet, vision, audio, tactile, mobile, economy
+from api.routes.ops_routes import router as ops_router
 
 router = APIRouter(prefix="/api/v1")
 

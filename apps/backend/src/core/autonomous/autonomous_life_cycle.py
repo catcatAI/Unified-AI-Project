@@ -28,11 +28,11 @@ if TYPE_CHECKING:
     from .dynamic_parameters import DynamicThresholdManager
 
 # Import all formula systems
-from ..hsm_formula_system import HSMFormulaSystem, CognitiveGap, ExplorationResult
-from ..cdm_dividend_model import CDMCognitiveDividendModel, CognitiveActivity
-from ..life_intensity_formula import LifeIntensityFormula, KnowledgeDomain
-from ..active_cognition_formula import ActiveCognitionFormula, StressSource, OrderType
-from ..non_paradox_existence import NonParadoxExistence, GrayZoneVariableType
+from core.hsm_formula_system import HSMFormulaSystem, CognitiveGap, ExplorationResult
+from core.cdm_dividend_model import CDMCognitiveDividendModel, CognitiveActivity
+from core.life_intensity_formula import LifeIntensityFormula, KnowledgeDomain
+from core.active_cognition_formula import ActiveCognitionFormula, StressSource, OrderType
+from core.non_paradox_existence import NonParadoxExistence, GrayZoneVariableType
 
 
 class LifePhase(Enum):

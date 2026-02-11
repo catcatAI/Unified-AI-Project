@@ -6,7 +6,7 @@ Audio API 端點
 from fastapi import APIRouter, HTTPException, Body
 from typing import Dict, Any, List, Optional
 import logging
-from ....services.audio_service import AudioService
+from services.audio_service import AudioService
 
 logger = logging.getLogger(__name__)
 

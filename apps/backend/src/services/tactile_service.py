@@ -4,9 +4,9 @@ import time
 from datetime import datetime
 from typing import Any, Dict, Optional, List, Tuple
 
-from ..core.perception.tactile_sampler import TactileSampler, TactileProperties, TactileContactPoint
-from ..core.perception.tactile_memory import TactileMemory
-from ..core.sync.realtime_sync import sync_manager, SyncEvent
+from core.perception.tactile_sampler import TactileSampler, TactileProperties, TactileContactPoint
+from core.perception.tactile_memory import TactileMemory
+from core.sync.realtime_sync import sync_manager, SyncEvent
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,6 @@ class TactileService:
 
     def _init_standard_materials(self):
         """初始化一些標準材質的記憶"""
-        from ..core.perception.tactile_sampler import TactileProperties
         self.memory.learn_material("polished_steel", TactileProperties(roughness=0.05, hardness=0.95, temperature=18.0))
         self.memory.learn_material("oak_wood", TactileProperties(roughness=0.4, hardness=0.7, temperature=24.0))
         self.memory.learn_material("soft_cotton", TactileProperties(roughness=0.8, hardness=0.1, temperature=27.0))
@@ -91,7 +90,6 @@ class TactileService:
         props = self.memory.get_known_properties(f"material_{object_id}")
         if not props:
             # 如果沒有記憶，使用中性屬性
-            from ..core.perception.tactile_sampler import TactileProperties
             props = TactileProperties()
 
         # 2. 建立觸摸點對象

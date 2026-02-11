@@ -22,7 +22,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 
-from ..base.base_agent import BaseAgent
+from ai.agents.base.base_agent import BaseAgent
 from core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)

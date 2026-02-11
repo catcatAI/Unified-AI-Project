@@ -16,7 +16,7 @@ from typing import Optional, Dict, Any, Callable
 from datetime import datetime, timedelta
 from enum import Enum
 
-from src.core.system.hardware_detector import HardwareDetector, ModeRecommender
+from core.system.hardware_detector import HardwareDetector, ModeRecommender
 
 logger = logging.getLogger(__name__)
 

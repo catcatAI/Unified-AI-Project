@@ -15,8 +15,8 @@ try:
 except ImportError:
     yaml = None
 
-from ..knowledge_graph.types import KnowledgeGraph, KGEntity, KGRelationship, KnowledgeGraphMetadata
-from ...core.hsp.payloads import HSPFactPayload
+from ai.knowledge_graph.types import KnowledgeGraph, KGEntity, KGRelationship, KnowledgeGraphMetadata
+from core.hsp.payloads import HSPFactPayload
 
 logger = logging.getLogger(__name__)
 

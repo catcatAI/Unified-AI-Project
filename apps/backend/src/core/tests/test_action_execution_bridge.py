@@ -24,7 +24,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from src.core.action_execution_bridge import (
+from core.action_execution_bridge import (
     ActionExecutionBridge,
     ActionType,
     ExecutionResult,

@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Any, Dict, Optional
 
-from ..vector_store import VectorMemoryStore # Assuming vector_store is one level up
+from ai.memory.vector_store import VectorMemoryStore # Assuming vector_store is one level up
 
 logger = logging.getLogger(__name__)
 

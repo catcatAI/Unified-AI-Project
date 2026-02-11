@@ -6,7 +6,7 @@ Vision API 端點
 from fastapi import APIRouter, HTTPException, Body
 from typing import Dict, Any, List, Optional
 import logging
-from ....services.vision_service import VisionService
+from services.vision_service import VisionService
 
 logger = logging.getLogger(__name__)
 

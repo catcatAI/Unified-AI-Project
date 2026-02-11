@@ -6,7 +6,7 @@ Run with: python -m apps.backend.src.core.autonomous.test_browser_controller
 
 import asyncio
 import logging
-from src.core.autonomous.browser_controller import (
+from core.autonomous.browser_controller import (
     BrowserController,
     BrowserConfig,
     BrowserType,

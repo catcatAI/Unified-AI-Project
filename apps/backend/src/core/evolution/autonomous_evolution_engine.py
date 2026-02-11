@@ -34,10 +34,8 @@ except ImportError:
 
 # 导入现有组件(可选)
 try:
-    project_root = Path(__file__).parent.parent.parent()
-    sys.path.insert(0, str(project_root))
-    from src.core.knowledge.unified_knowledge_graph import UnifiedKnowledgeGraph
-    from src.core.cognitive.cognitive_constraint_engine import CognitiveConstraintEngine
+    from core.knowledge.unified_knowledge_graph import UnifiedKnowledgeGraph
+    from core.cognitive.cognitive_constraint_engine import CognitiveConstraintEngine
 except ImportError:
     # 占位符实现
     class UnifiedKnowledgeGraph:

@@ -58,24 +58,24 @@ if _src_path not in sys.path:
 from fastapi import FastAPI, HTTPException, APIRouter, Body, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from ..core.autonomous.desktop_interaction import DesktopInteraction, FileCategory
-from ..core.autonomous.action_executor import ActionExecutor, Action, ActionCategory, ActionPriority
-from .vision_service import VisionService
-from .audio_service import AudioService
-from .tactile_service import TactileService
-from .chat_service import generate_angela_response
-from .angela_llm_service import get_llm_service, angela_llm_response
-from ..system.security_monitor import ABCKeyManager
+from core.autonomous.desktop_interaction import DesktopInteraction, FileCategory
+from core.autonomous.action_executor import ActionExecutor, Action, ActionCategory, ActionPriority
+from services.vision_service import VisionService
+from services.audio_service import AudioService
+from services.tactile_service import TactileService
+from services.chat_service import generate_angela_response
+from services.angela_llm_service import get_llm_service, angela_llm_response
+from system.security_monitor import ABCKeyManager
 
 # Initialize _llm_service as None to prevent NameError before startup
 _llm_service = None
 
-from ..api.router import router as api_v1_router
-from ..api.v1.endpoints import pet, economy
-from ..core.autonomous.digital_life_integrator import DigitalLifeIntegrator
-from ..economy.economy_manager import EconomyManager
-from ..core.cognitive_economy_bridge import initialize_cognitive_bridge
-from .brain_bridge_service import BrainBridgeService
+from api.router import router as api_v1_router
+from api.v1.endpoints import pet, economy
+from core.autonomous.digital_life_integrator import DigitalLifeIntegrator
+from economy.economy_manager import EconomyManager
+from core.cognitive_economy_bridge import initialize_cognitive_bridge
+from services.brain_bridge_service import BrainBridgeService
 
 app = FastAPI(
     title="Angela AI API",

@@ -6,7 +6,7 @@ Desktop Pet API 端點
 from fastapi import APIRouter, HTTPException, Body
 from typing import Dict, Any, Optional
 import logging
-from ....pet.pet_manager import PetManager
+from pet.pet_manager import PetManager
 
 logger = logging.getLogger(__name__)
 

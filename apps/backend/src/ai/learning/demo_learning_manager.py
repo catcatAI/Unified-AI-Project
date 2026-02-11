@@ -8,9 +8,9 @@ from datetime import datetime
 from typing import Dict, List, Optional, TYPE_CHECKING, Any
 
 # 导入测试所需的类
-from ..memory.ham_memory.ham_manager import HAMMemoryManager
-from ..hsp.connector import HSPConnector
-from ...shared.utils.cleanup_utils import cleanup_temp_files, cleanup_cache_data, cleanup_log_files, cleanup_demo_artifacts
+from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+from ai.hsp.connector import HSPConnector
+from shared.utils.cleanup_utils import cleanup_temp_files, cleanup_cache_data, cleanup_log_files, cleanup_demo_artifacts
 
 # 用于类型检查的导入
 if TYPE_CHECKING:

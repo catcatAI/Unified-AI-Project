@@ -10,8 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-from ..core.autonomous.digital_life_integrator import DigitalLifeIntegrator
-from ..system.hardware_probe import HardwareProbe
+from core.autonomous.digital_life_integrator import DigitalLifeIntegrator
+from system.hardware_probe import HardwareProbe
 
 logger = logging.getLogger(__name__)
 

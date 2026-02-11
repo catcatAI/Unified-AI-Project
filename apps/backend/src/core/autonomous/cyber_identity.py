@@ -25,10 +25,10 @@ from datetime import datetime, timedelta
 import asyncio
 
 # Import theoretical frameworks
-from ..life_intensity_formula import (
+from core.life_intensity_formula import (
     LifeIntensityFormula, KnowledgeDomain, LifeIntensitySnapshot
 )
-from ..active_cognition_formula import ActiveCognitionFormula, OrderType
+from core.active_cognition_formula import ActiveCognitionFormula, OrderType
 
 
 class IdentityAspect(Enum):

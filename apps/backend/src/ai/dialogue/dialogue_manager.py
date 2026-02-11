@@ -9,20 +9,20 @@ import json
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 from datetime import datetime, timezone
 
-from src.ai.personality.personality_manager import PersonalityManager
-from src.ai.memory.ham_memory.ham_manager import HAMMemoryManager
-from src.core.services.multi_llm_service import MultiLLMService, ChatMessage
-from src.ai.emotion.emotion_system import EmotionSystem
-from src.ai.crisis.crisis_system import CrisisSystem
-from src.ai.time.time_system import TimeSystem
-from src.ai.formula_engine import FormulaEngine
-from src.ai.learning.learning_manager import LearningManager
-from src.ai.discovery.service_discovery_module import ServiceDiscoveryModule
-from src.core.shared.types.common_types import OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
-from src.core.hsp.payloads import HSPTaskResultPayload, HSPMessageEnvelope
-from src.ai.dialogue.project_coordinator import ProjectCoordinator
-from src.managers.agent_manager import AgentManager
-from src.core.hsp.connector import HSPConnector
+from ai.personality.personality_manager import PersonalityManager
+from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+from core.services.multi_llm_service import MultiLLMService, ChatMessage
+from ai.emotion.emotion_system import EmotionSystem
+from ai.crisis.crisis_system import CrisisSystem
+from ai.time.time_system import TimeSystem
+from ai.formula_engine import FormulaEngine
+from ai.learning.learning_manager import LearningManager
+from ai.discovery.service_discovery_module import ServiceDiscoveryModule
+from core.shared.types.common_types import OperationalConfig, DialogueTurn, DialogueMemoryEntryMetadata
+from core.hsp.payloads import HSPTaskResultPayload, HSPMessageEnvelope
+from ai.dialogue.project_coordinator import ProjectCoordinator
+from managers.agent_manager import AgentManager
+from core.hsp.connector import HSPConnector
 
 # ToolDispatcher import might be needed if not provided by components
 try:

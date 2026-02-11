@@ -8,7 +8,7 @@ Treats AGI cognitive output as a form of labor/value generation.
 import logging
 from typing import Dict, Any, Optional
 from .cdm_dividend_model import CDMCognitiveDividendModel, LifeSenseOutput
-from ..economy.economy_manager import EconomyManager
+from economy.economy_manager import EconomyManager
 
 logger = logging.getLogger(__name__)
 

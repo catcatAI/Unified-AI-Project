@@ -2,8 +2,8 @@ import logging
 import json
 from typing import Dict, Any, Optional
 from .data_aligner import DataAligner
-from ..external.external_connector import ExternalConnector
-from ..internal.internal_bus import InternalBus
+from core.hsp.external.external_connector import ExternalConnector
+from core.hsp.internal.internal_bus import InternalBus
 
 logger = logging.getLogger(__name__)
 

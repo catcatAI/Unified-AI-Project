@@ -11,11 +11,11 @@ import io
 from datetime import datetime
 from typing import Any, Dict, Optional, List, Tuple
 
-from ..core.perception.auditory_sampler import AuditorySampler, AudioFeatureType
-from ..core.perception.auditory_memory import AuditoryMemory, VoiceprintProfile
-from ..core.perception.auditory_attention import AuditoryAttentionController, AuditoryAttentionMode
-from ..core.sync.realtime_sync import sync_manager, SyncEvent
-from ..system.cluster_manager import cluster_manager, PrecisionLevel
+from core.perception.auditory_sampler import AuditorySampler, AudioFeatureType
+from core.perception.auditory_memory import AuditoryMemory, VoiceprintProfile
+from core.perception.auditory_attention import AuditoryAttentionController, AuditoryAttentionMode
+from core.sync.realtime_sync import sync_manager, SyncEvent
+from system.cluster_manager import cluster_manager, PrecisionLevel
 
 logger = logging.getLogger(__name__)
 

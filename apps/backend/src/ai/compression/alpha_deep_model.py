@@ -19,8 +19,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.ai.symbolic_space.unified_symbolic_space import UnifiedSymbolicSpace
-from src.ai.memory.ham_memory.ham_types import HAMDataPackageInternal as HAMGist
+from ai.symbolic_space.unified_symbolic_space import UnifiedSymbolicSpace
+from ai.memory.ham_memory.ham_types import HAMDataPackageInternal as HAMGist
 
 
 class CompressionAlgorithm(Enum):

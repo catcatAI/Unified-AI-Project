@@ -6,19 +6,19 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 # Core AI Component Imports
-from ..compression.alpha_deep_model import AlphaDeepModel, DeepParameter, RelationalContext, Modalities
-from ..world_model.environment_simulator import EnvironmentSimulator
-from ..evaluation.task_evaluator import TaskExecutionEvaluator
-from ..meta.adaptive_learning_controller import AdaptiveLearningController
-from ..alignment.reasoning_system import ReasoningSystem
-from src.ai.alignment.emotion_system import EmotionSystem
-from src.ai.lis.lis_manager import LISManager
-from src.ai.lis.lis_cache_interface import HAMLISCache
-from src.ai.memory.ham_memory.ham_manager import HAMMemoryManager
-from src.economy.economy_manager import EconomyManager
-from src.ai.agents.agent_manager import AgentManager
-from src.core.hsp.connector import HSPConnector
-from src.core.services.multi_llm_service import MultiLLMService, ChatMessage
+from ai.compression.alpha_deep_model import AlphaDeepModel, DeepParameter, RelationalContext, Modalities
+from ai.world_model.environment_simulator import EnvironmentSimulator
+from ai.evaluation.task_evaluator import TaskExecutionEvaluator
+from ai.meta.adaptive_learning_controller import AdaptiveLearningController
+from ai.alignment.reasoning_system import ReasoningSystem
+from ai.alignment.emotion_system import EmotionSystem
+from ai.lis.lis_manager import LISManager
+from ai.lis.lis_cache_interface import HAMLISCache
+from ai.memory.ham_memory.ham_manager import HAMMemoryManager
+from economy.economy_manager import EconomyManager
+from ai.agents.agent_manager import AgentManager
+from core.hsp.connector import HSPConnector
+from core.services.multi_llm_service import MultiLLMService, ChatMessage
 
 logger = logging.getLogger(__name__)
 

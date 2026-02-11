@@ -4,11 +4,11 @@ import threading
 from datetime import datetime, timezone
 from typing import Dict, Optional, List, Tuple, Any
 
-from src.core.hsp.payloads import (
+from core.hsp.payloads import (
     HSPCapabilityAdvertisementPayload,
     HSPMessageEnvelope
 )
-from ..trust.trust_manager_module import TrustManager
+from ai.trust.trust_manager_module import TrustManager
 
 logger = logging.getLogger(__name__)
 

@@ -21,8 +21,8 @@ if str(BACKEND_SRC) not in sys.path:
     sys.path.insert(0, str(BACKEND_SRC))
 
 # Corrected import paths
-from src.ai.dependency_manager import dependency_manager
-from src.ai.compression.alpha_deep_model import DNADataChain
+from ai.dependency_manager import dependency_manager
+from ai.compression.alpha_deep_model import DNADataChain
 
 # Global variables for lazy - loaded TensorFlow components
 tf_module: Optional[Any] = None

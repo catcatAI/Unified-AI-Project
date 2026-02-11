@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
 # Assuming the import path is correct relative to the project structure
-from ..core_ai.memory.ham_manager import HAMMemoryManager
+from fragmenta.core_ai.memory.ham_manager import HAMMemoryManager
 
 class FragmentaOrchestrator:
     """Orchestrates complex tasks using memory fragments from HAM."""

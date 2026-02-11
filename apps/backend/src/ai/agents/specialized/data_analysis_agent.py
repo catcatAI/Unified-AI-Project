@@ -28,7 +28,7 @@ try:
 except ImportError:
     pd = None
 
-from ..base.base_agent import BaseAgent
+from ai.agents.base.base_agent import BaseAgent
 from core.hsp.types import HSPTaskRequestPayload, HSPTaskResultPayload, HSPMessageEnvelope
 
 logger = logging.getLogger(__name__)
