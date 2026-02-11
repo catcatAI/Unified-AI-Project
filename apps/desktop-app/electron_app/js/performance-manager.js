@@ -60,7 +60,7 @@ class PerformanceManager {
         this.isVisible = true; // Page visibility tracking
         
         // Add page visibility handling to pause monitoring when hidden
-        document.addEventListener('visibilitychange', () => {
+        this._visibilityChangeHandler = () => {
             this.isVisible = !document.hidden;
             if (this.isVisible) {
                 // Resume performance monitoring
@@ -76,7 +76,9 @@ class PerformanceManager {
                     this.performanceMonitor = null;
                 }
             }
-        });
+        };
+        document.addEventListener('visibilitychange', this._visibilityChangeHandler);
+        
         
         this.performanceModes = {
             very_low: {
@@ -997,9 +999,16 @@ class PerformanceManager {
     }
     
     destroy() {
+        // 停止性能监控
         if (this.performanceMonitor) {
             cancelAnimationFrame(this.performanceMonitor);
             this.performanceMonitor = null;
+        }
+        
+        // 清理visibilitychange事件监听器
+        if (this._visibilityChangeHandler) {
+            document.removeEventListener('visibilitychange', this._visibilityChangeHandler);
+            this._visibilityChangeHandler = null;
         }
     }
 }

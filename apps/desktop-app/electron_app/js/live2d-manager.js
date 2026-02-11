@@ -289,8 +289,13 @@ class Live2DManager {
     _setupClickHandlers() {
         const wrapper = document.querySelector('.canvas-wrapper') || this.fallbackWrapper;
         if (wrapper) {
-            wrapper.addEventListener('click', (e) => this._onClick(e));
-            wrapper.addEventListener('mousemove', (e) => this._onHover(e));
+            // 保存事件监听器引用以便清理
+            this._clickHandler = (e) => this._onClick(e);
+            this._hoverHandler = (e) => this._onHover(e);
+            this._wrapperElement = wrapper;
+            
+            wrapper.addEventListener('click', this._clickHandler);
+            wrapper.addEventListener('mousemove', this._hoverHandler);
         }
     }
     
@@ -627,6 +632,24 @@ class Live2DManager {
     
     destroy() {
         this.isRunning = false;
+        
+        // 停止动画循环
+        this._stopAnimation();
+        
+        // 清理事件监听器
+        if (this._wrapperElement) {
+            if (this._clickHandler) {
+                this._wrapperElement.removeEventListener('click', this._clickHandler);
+            }
+            if (this._hoverHandler) {
+                this._wrapperElement.removeEventListener('mousemove', this._hoverHandler);
+            }
+        }
+        
+        // 清理引用
+        this._clickHandler = null;
+        this._hoverHandler = null;
+        this._wrapperElement = null;
         this.characterImage = null;
     }
     
