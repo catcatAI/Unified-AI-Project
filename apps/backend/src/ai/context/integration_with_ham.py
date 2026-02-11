@@ -109,7 +109,7 @@ class ContextHAMIntegration:
             #     try:
             #         import json
             #         ham_content = json.loads(ham_content)
-            #     except:
+            #     except json.JSONDecodeError:
             #         ham_content = {"content": ham_content}
 
             # 创建上下文
