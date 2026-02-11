@@ -30,6 +30,9 @@
  └─────────────────────────────────────────────────────────────────┘
  */
 
+// 导入Angela角色配置
+import ANGELA_CHARACTER_CONFIG from './angela-character-config.js';
+
 class UnifiedDisplayMatrix {
     constructor(options = {}) {
         // ============================================================
@@ -650,22 +653,46 @@ class UnifiedDisplayMatrix {
     }
 
     _getBodyZones() {
-        // 默认人体区域 (基于 angela_character_config.json)
-        // 这些坐标是 720p 基准 (1280x720)
-        // 原始资源配置是 1408x768，需要按比例转换
-        const originalTo720p = (x, y) => ({
-            x: x * 1280 / 1408,
-            y: y * 720 / 768
-        });
+        // 使用angela-character-config中的完整身体部位配置
+        // 确保配置已加载
+        if (!ANGELA_CHARACTER_CONFIG || !ANGELA_CHARACTER_CONFIG.body_parts) {
+            console.warn('[UDM] angela-character-config未加载，使用默认配置');
+            return this._getDefaultBodyZones();
+        }
 
-        const face = originalTo720p(630, 71, 777, 156);
-        const eyes = originalTo720p(660, 99, 748, 117);
-        const mouth = originalTo720p(682, 124, 726, 135);
+        // 转换配置中的rect格式 [x1, y1, x2, y2] 为我们的格式
+        const zones = [];
+        for (const [name, config] of Object.entries(ANGELA_CHARACTER_CONFIG.body_parts)) {
+            if (config.rect && config.rect.length === 4) {
+                zones.push({
+                    name: name,
+                    rect: config.rect, // [x1, y1, x2, y2]
+                    description: config.description || name,
+                    priority: config.priority || 10,
+                    param_id: config.param_id || null,
+                    expression: config.expression || 'neutral',
+                    tactile_type: config.tactile_type || 'pat',
+                    color_range: config.color_range || null
+                });
+            }
+        }
 
+        // 按优先级排序（优先级1最高）
+        zones.sort((a, b) => a.priority - b.priority);
+
+        console.log(`[UDM] 加载了 ${zones.length} 个身体部位区域:`, zones.map(z => z.name).join(', '));
+        
+        return zones;
+    }
+
+    /**
+     * 获取默认身体部位（当angela-character-config不可用时）
+     */
+    _getDefaultBodyZones() {
         return [
             {
                 name: 'face',
-                rect: [face.x, face.y, 777 * 1280 / 1408, 156 * 720 / 768],
+                rect: [630, 71, 777, 156],
                 description: '臉部',
                 priority: 1,
                 param_id: 'PARAM_CHEEK',
@@ -674,7 +701,7 @@ class UnifiedDisplayMatrix {
             },
             {
                 name: 'eyes',
-                rect: [eyes.x, eyes.y, 748 * 1280 / 1408, 117 * 720 / 768],
+                rect: [660, 99, 748, 117],
                 description: '眼睛',
                 priority: 1,
                 param_id: 'PARAM_EYE_OPEN',
@@ -683,12 +710,39 @@ class UnifiedDisplayMatrix {
             },
             {
                 name: 'mouth',
-                rect: [mouth.x, mouth.y, 726 * 1280 / 1408, 135 * 720 / 768],
+                rect: [682, 124, 726, 135],
                 description: '嘴巴',
                 priority: 1,
                 param_id: 'PARAM_MOUTH_OPEN',
                 expression: 'smile',
                 tactile_type: 'poke'
+            },
+            {
+                name: 'hair',
+                rect: [528, 46, 879, 320],
+                description: '頭髮',
+                priority: 10,
+                param_id: 'PARAM_HAIR_FRONT',
+                expression: 'happy',
+                tactile_type: 'stroke'
+            },
+            {
+                name: 'neck',
+                rect: [652, 152, 755, 184],
+                description: '脖子',
+                priority: 2,
+                param_id: null,
+                expression: 'neutral',
+                tactile_type: 'pat'
+            },
+            {
+                name: 'shoulders',
+                rect: [630, 181, 777, 213],
+                description: '肩膀',
+                priority: 2,
+                param_id: null,
+                expression: 'neutral',
+                tactile_type: 'pat'
             }
         ];
     }
