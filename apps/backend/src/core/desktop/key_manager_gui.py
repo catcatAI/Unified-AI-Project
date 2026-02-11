@@ -31,19 +31,22 @@ class KeyManagerGUI:
         self.root.title("🔑 Angela AI - API Key Manager")
         self.root.geometry("700x600")
         self.root.minsize(600, 500)
-        
+
         # Try to set icon
         try:
             icon_path = Path(__file__).parent.parent.parent.parent / "resources" / "angela_icon.png"
-try:
+            try:
                 from PIL import Image, ImageTk
                 icon = Image.open(icon_path)
                 icon = icon.resize((32, 32))
                 photo = ImageTk.PhotoImage(icon)
                 self.root.iconphoto(True, photo)
-        except (FileNotFoundError, ImportError, OSError) as e:
-            # 圖標加載失敗，使用默認圖標
-            logger.debug(f"圖標加載失敗（可忽略）: {e}")
+            except (FileNotFoundError, ImportError, OSError) as e:
+                # 圖標加載失敗，使用默認圖標
+                logger.debug(f"圖標加載失敗（可忽略）: {e}")
+                pass
+        except Exception as e:
+            logger.debug(f"圖標路徑解析失敗（可忽略）: {e}")
             pass
         
         # Providers configuration
