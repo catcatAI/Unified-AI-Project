@@ -10,6 +10,7 @@ from typing import Dict, Any, Optional, Callable
 from enum import Enum
 from multiprocessing import Queue
 import asyncio
+from .mqtt_subscription_manager import MQTTSubscriptionManager
 
 logger = logging.getLogger(__name__)
 
@@ -219,6 +220,16 @@ class MQTTTransport(HSPTransport):
             )
             
             result = await self._external_connector.connect()
+            
+            if result:
+                # 初始化订阅管理器
+                self._subscription_manager = MQTTSubscriptionManager()
+                if hasattr(self._external_connector, 'mqtt_client'):
+                    await self._subscription_manager.set_mqtt_client(
+                        self._external_connector.mqtt_client
+                    )
+                logger.info("MQTT subscription manager initialized")
+            
             logger.info(f"MQTT connection {'successful' if result else 'failed'}")
             return result
             
@@ -228,6 +239,11 @@ class MQTTTransport(HSPTransport):
     
     async def disconnect(self) -> bool:
         """斷開 MQTT 連接"""
+        # 清理订阅管理器
+        if self._subscription_manager:
+            await self._subscription_manager.destroy()
+            self._subscription_manager = None
+        
         if self._external_connector:
             result = await self._external_connector.disconnect()
             logger.info("MQTT disconnected")
@@ -242,15 +258,62 @@ class MQTTTransport(HSPTransport):
         
         return await self._external_connector.publish(topic, payload)
     
-    async def subscribe(self, topic: str, callback: Callable) -> bool:
+    async def subscribe(self, topic: str, callback: Callable, qos: int = 0) -> bool:
         """訂閱 MQTT 主題"""
-        if not self._external_connector:
-            logger.error("Not connected to MQTT broker")
+        if not self._external_connector or not self._subscription_manager:
+            logger.error("Not connected to MQTT broker or subscription manager not initialized")
             return False
         
-        # TODO: 實現 MQTT 訂閱（需要擴展 ExternalConnector）
-        logger.warning("MQTT subscribe not fully implemented yet")
-        return True
+        try:
+            result = await self._subscription_manager.subscribe(topic, callback, qos)
+            if result:
+                logger.info(f"Successfully subscribed to topic: {topic}")
+            else:
+                logger.error(f"Failed to subscribe to topic: {topic}")
+            return result
+        except Exception as e:
+            logger.error(f"Error subscribing to topic {topic}: {e}")
+            return False
+    
+    async def unsubscribe(self, topic: str) -> bool:
+        """取消訂閱 MQTT 主題"""
+        if not self._subscription_manager:
+            logger.error("Subscription manager not initialized")
+            return False
+        
+        try:
+            result = await self._subscription_manager.unsubscribe(topic)
+            return result
+        except Exception as e:
+            logger.error(f"Error unsubscribing from topic {topic}: {e}")
+            return False
+    
+    async def batch_subscribe(self, topics: list, callback: Callable, qos: int = 0) -> dict:
+        """批量訂閱 MQTT 主題"""
+        if not self._subscription_manager:
+            logger.error("Subscription manager not initialized")
+            return {}
+        
+        try:
+            results = await self._subscription_manager.batch_subscribe(topics, callback, qos)
+            return results
+        except Exception as e:
+            logger.error(f"Error in batch subscribe: {e}")
+            return {}
+    
+    def list_subscriptions(self) -> list:
+        """列出所有訂閱"""
+        if not self._subscription_manager:
+            return []
+        
+        return self._subscription_manager.list_subscriptions()
+    
+    def get_subscription_stats(self) -> dict:
+        """獲取訂閱統計"""
+        if not self._subscription_manager:
+            return {}
+        
+        return self._subscription_manager.get_stats()
     
     def is_connected(self) -> bool:
         """檢查 MQTT 連接狀態"""
