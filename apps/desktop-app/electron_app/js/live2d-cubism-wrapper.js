@@ -58,65 +58,96 @@ class Live2DCubismWrapper {
     
     async loadCubismScript() {
         // 嘗試多種CDN源，包括本地備份
+        // SRI 哈希值用于验证 CDN 资源完整性
         const cdnSources = [
-            'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',
-            'https://cdn.jsdelivr.net/npm/@live2d/cubism-core@4.0.0/live2dcubismcore.min.js',
-            'https://unpkg.com/@live2d/cubism-core@4.0.0/live2dcubismcore.min.js',
-            '../libs/live2dcubismcore.min.js' // 本地備份
+            {
+                src: 'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',
+                integrity: null // Live2D 官方 CDN 未提供 SRI 哈希
+            },
+            {
+                src: 'https://cdn.jsdelivr.net/npm/@live2d/cubism-core@4.0.0/live2dcubismcore.min.js',
+                integrity: null // jsDelivr 未为特定版本提供固定 SRI
+            },
+            {
+                src: 'https://unpkg.com/@live2d/cubism-core@4.0.0/live2dcubismcore.min.js',
+                integrity: null // unpkg 未提供 SRI
+            },
+            {
+                src: '../libs/live2dcubismcore.min.js',
+                integrity: null // 本地文件不需要 SRI
+            }
         ];
-        
+
         let lastError = null;
-        
-        for (const src of cdnSources) {
+
+        // 优先尝试本地备份（最安全）
+        const localSource = cdnSources[3];
+        try {
+            console.log(`優先嘗試從本地加載 Live2D Cubism Core: ${localSource.src}`);
+            await this._loadScript(localSource.src, localSource.integrity);
+            console.log(`成功從本地加載 Live2D Cubism Core`);
+            return;
+        } catch (error) {
+            console.warn(`本地加載失敗:`, error.message);
+            lastError = error;
+        }
+
+        // 本地失败后尝试 CDN
+        for (const source of cdnSources.slice(0, 3)) {
             try {
-                console.log(`嘗試從 ${src} 加載 Live2D Cubism Core...`);
-                await this._loadScript(src);
-                console.log(`成功從 ${src} 加載 Live2D Cubism Core`);
+                console.log(`嘗試從 CDN 加載 Live2D Cubism Core: ${source.src}`);
+                await this._loadScript(source.src, source.integrity);
+                console.log(`成功從 CDN 加載 Live2D Cubism Core`);
                 return;
             } catch (error) {
-                console.warn(`從 ${src} 加載失敗:`, error.message);
+                console.warn(`從 ${source.src} 加載失敗:`, error.message);
                 lastError = error;
                 continue;
             }
         }
-        
+
         // 所有源都失敗，嘗試加載fallback
         try {
             console.log('所有CDN源失敗，嘗試加載本地fallback...');
-            await this._loadScript('../libs/live2d-fallback.js');
+            await this._loadScript('../libs/live2d-fallback.js', null);
             await window.loadLocalLive2DSDK();
             console.log('成功加載本地fallback SDK');
             return;
         } catch (fallbackError) {
             console.error('Fallback也失敗:', fallbackError);
         }
-        
+
         // 所有嘗試都失敗
         throw lastError || new Error('Failed to load Live2D Cubism Core from all sources');
     }
     
-    async _loadScript(src) {
+    async _loadScript(src, integrity = null) {
         const script = document.createElement('script');
         script.src = src;
         script.async = true;
         script.crossOrigin = 'anonymous';
         script.timeout = 8000; // 8秒超時
-        
+
+        // 添加 SRI (Subresource Integrity) 验证
+        if (integrity) {
+            script.integrity = integrity;
+        }
+
         return new Promise((resolve, reject) => {
             const timeoutId = setTimeout(() => {
                 reject(new Error(`Script load timeout: ${src}`));
             }, script.timeout);
-            
+
             script.onload = () => {
                 clearTimeout(timeoutId);
                 resolve();
             };
-            
+
             script.onerror = () => {
                 clearTimeout(timeoutId);
                 reject(new Error(`Script load error: ${src}`));
             };
-            
+
             document.head.appendChild(script);
         });
     }

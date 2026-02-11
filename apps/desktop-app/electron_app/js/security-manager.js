@@ -123,40 +123,53 @@ class SecurityManager {
     }
 
     /**
-     * 數據加密 (AES-256-CBC)
+     * 數據加密 (AES-256-CBC) - 使用隨機鹽增強安全性
      * @param {string} data - 要加密的數據
-     * @returns {string} 加密後的數據 (base64)
+     * @returns {string} 加密後的數據 (salt:iv:data)
      */
     encrypt(data) {
         if (!this.keyC) throw new Error('Security not initialized');
-        
+
+        // 生成隨機鹽值，增強安全性
+        const salt = crypto.randomBytes(32);
+
         // 衍生密鑰
-        const derivedKey = crypto.scryptSync(this.keyC, 'salt', 32);
+        const derivedKey = crypto.scryptSync(this.keyC, salt, 32);
         const iv = crypto.randomBytes(16);
         const cipher = crypto.createCipheriv('aes-256-cbc', derivedKey, iv);
-        
+
         let encrypted = cipher.update(data, 'utf8', 'base64');
         encrypted += cipher.final('base64');
-        
-        return iv.toString('base64') + ':' + encrypted;
+
+        // 返回格式: salt:iv:encryptedData
+        return salt.toString('base64') + ':' + iv.toString('base64') + ':' + encrypted;
     }
 
     /**
      * 數據解密
-     * @param {string} encryptedData - 加密數據 (iv:data)
+     * @param {string} encryptedData - 加密數據 (salt:iv:data)
      * @returns {string} 解密後的數據
      */
     decrypt(encryptedData) {
         if (!this.keyC) throw new Error('Security not initialized');
-        
-        const [ivBase64, dataBase64] = encryptedData.split(':');
-        const iv = Buffer.from(ivBase64, 'base64');
-        const derivedKey = crypto.scryptSync(this.keyC, 'salt', 32);
+
+        // 解析格式: salt:iv:encryptedData
+        const parts = encryptedData.split(':');
+        if (parts.length !== 3) {
+            throw new Error('Invalid encrypted data format');
+        }
+
+        const salt = Buffer.from(parts[0], 'base64');
+        const iv = Buffer.from(parts[1], 'base64');
+        const dataBase64 = parts[2];
+
+        // 使用相同的鹽值衍生密鑰
+        const derivedKey = crypto.scryptSync(this.keyC, salt, 32);
         const decipher = crypto.createDecipheriv('aes-256-cbc', derivedKey, iv);
-        
+
         let decrypted = decipher.update(dataBase64, 'base64', 'utf8');
         decrypted += decipher.final('utf8');
-        
+
         return decrypted;
     }
 }
