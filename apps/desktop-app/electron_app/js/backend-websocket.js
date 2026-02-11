@@ -270,13 +270,17 @@ class BackendWebSocketClient {
             // 离线时添加到队列
             this._addToOfflineQueue(message);
             console.warn('Not connected, message queued:', message);
-            return;
+            return false;
         }
         
         try {
             this.ws.send(JSON.stringify(message));
+            return true;
         } catch (error) {
-            console.error('Failed to send message:', error);
+            console.error('Failed to send message, adding to queue:', error);
+            // 发送失败，添加到离线队列
+            this._addToOfflineQueue(message);
+            return false;
         }
     }
 
