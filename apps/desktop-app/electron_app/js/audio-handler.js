@@ -129,6 +129,10 @@ class AudioHandler {
             }
         } catch (error) {
             console.warn(`Could not load native module for ${this.platform}:`, error.message);
+            // 原生模块未编译是正常的，将使用Web Audio API
+            if (error.message.includes('require')) {
+                console.info(`Native module for ${this.platform} not compiled, falling back to Web Audio API`);
+            }
             return null;
         }
     }

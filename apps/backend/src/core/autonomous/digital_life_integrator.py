@@ -215,7 +215,7 @@ class DigitalLifeIntegrator:
         
         # Initialize AGI Control Center (Phase 11)
         try:
-            from ...ai.integration.unified_control_center import UnifiedControlCenter
+            from ai.integration.unified_control_center import UnifiedControlCenter
             self.unified_control_center = UnifiedControlCenter(self.config.get('control_center', {}))
             self.unified_control_center.start()
             print("✅ Unified Control Center integrated into Digital Life")

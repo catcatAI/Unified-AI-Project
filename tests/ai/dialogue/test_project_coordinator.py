@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch, call
 import asyncio
 
-from core_ai.dialogue.project_coordinator import ProjectCoordinator
+from ai.dialogue.project_coordinator import ProjectCoordinator
 
 @pytest.fixture
 def project_coordinator():

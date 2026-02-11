@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional, Tuple, Type, TYPE_CHECKING
 
 from core.hsp.connector import HSPConnector
-from core.hsp.payloads import (
+from core.hsp.types import (
     HSPTaskRequestPayload,
     HSPTaskResultPayload,
     HSPCapabilityAdvertisementPayload,

@@ -132,7 +132,7 @@ async def test_code_agent_handle_task_request_code_review(code_agent) -> None:
     )
     
     # Call the handler
-    await code agent.handle_task_request(task_payload, "sender_101", envelope)
+    await code_agent.handle_task_request(task_payload, "sender_101", envelope)
     
     # Verify that a response was sent
     code_agent.hsp_connector.send_task_result.assert_called_once()

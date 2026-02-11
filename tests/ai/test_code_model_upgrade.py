@@ -6,7 +6,7 @@ import pytest
 import os
 
 # Assuming the test is run from the project root, so imports should be relative to that.
-from core_ai.code_understanding.lightweight_code_model import (
+from ai.code_understanding.lightweight_code_model import (
     LightweightCodeModel, CodeAnalysisResult
 )
 

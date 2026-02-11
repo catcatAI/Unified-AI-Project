@@ -18,6 +18,7 @@ class PerformanceManager {
         this.autoAdjustEnabled = true;
         this.lastModeChangeTime = 0;
         this.modeChangeCooldown = 10000; // 10 seconds cooldown between mode changes
+        this.lastAutoConfigureTime = 0; // 防止短时间内重复自动配置
         this.pendingModeChange = null;
         this.pendingModeChangeTime = 0;
         this.isVisible = true; // Page visibility tracking
@@ -441,6 +442,13 @@ class PerformanceManager {
     
     _autoConfigureModules() {
         if (!this.hardwareProfile) return;
+        
+        // 防止短时间内重复执行（500ms内）
+        const now = performance.now();
+        if (now - this.lastAutoConfigureTime < 500) {
+            return;
+        }
+        this.lastAutoConfigureTime = now;
         
         const ram = this.hardwareProfile.ram_gb || 4;
         const gpu = this.hardwareProfile.gpu_info ? this.hardwareProfile.gpu_info.name : '';

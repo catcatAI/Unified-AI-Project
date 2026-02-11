@@ -130,7 +130,7 @@ class BaseAgent:
     def is_healthy(self) -> bool:
         """A basic health check for the agent."""
         return self.is_running and self.hsp_connector is not None and \
-    self.hsp_connector.is_connected()
+    self.hsp_connector.is_connected
 
     async def handle_task_request(self, task_payload: HSPTaskRequestPayload, sender_ai_id: str, envelope: HSPMessageEnvelope):
         """The primary handler for incoming HSP task requests."""

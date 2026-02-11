@@ -3,7 +3,8 @@ import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Union, Tuple
 
-from .ham_types import HAMMemory, HAMRecallResult, HAMDataPackageInternal, HAMMemoryError
+from .ham_types import HAMMemory, HAMRecallResult, HAMDataPackageInternal
+from .ham_errors import HAMMemoryError
 from .vector_store import VectorMemoryStore
 
 logger = logging.getLogger(__name__)

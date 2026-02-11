@@ -98,6 +98,7 @@ app.whenReady().then(async () => {
     require('path').join(__dirname, 'resources'),
     require('path').join(__dirname, 'resources/models'),
     require('path').join(__dirname, 'data'),
+    require('path').join(__dirname, 'models'),
     require('path').join(__dirname, '..', '..', 'resources')
   ];
 
