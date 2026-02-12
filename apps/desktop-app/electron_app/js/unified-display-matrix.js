@@ -30,8 +30,10 @@
  └─────────────────────────────────────────────────────────────────┘
  */
 
-// 导入Angela角色配置
-import ANGELA_CHARACTER_CONFIG from './angela-character-config.js';
+// 获取Angela角色配置（如果已加载）
+const ANGELA_CONFIG = typeof window.ANGELA_CHARACTER_CONFIG !== 'undefined' 
+    ? window.ANGELA_CHARACTER_CONFIG 
+    : null;
 
 class UnifiedDisplayMatrix {
     constructor(options = {}) {
