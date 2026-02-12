@@ -18,7 +18,7 @@
   "author": "Unified AI Project",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^40.2.1",
+    "electron": "^35.7.5",
     "electron-builder": "^26.7.0"
   },
   "dependencies": {
