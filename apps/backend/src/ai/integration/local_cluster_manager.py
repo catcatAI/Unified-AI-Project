@@ -7,6 +7,7 @@ Local Cluster Manager - Simulates distributed cluster on a single machine
 import os
 import time
 import logging
+import random
 import multiprocessing as mp
 from multiprocessing import Process, Queue, Event
 from typing import Dict, Any, List, Optional, Callable
@@ -53,16 +54,19 @@ class LocalClusterManager:
     """
 
     def __init__(self, max_workers: Optional[int] = None, 
-                 resource_service: Optional[Any] = None):
+                 resource_service: Optional[Any] = None,
+                 task_executor: Optional[Callable] = None):
         """
         初始化本地集群管理器
         
         Args:
             max_workers: 最大 Worker 數量（None 則自動檢測）
             resource_service: ResourceAwarenessService 實例（用於動態調整）
+            task_executor: 自定義任務執行器函數（簽名：Callable[[ClusterTask], Dict]）
         """
         self.max_workers = max_workers or self._detect_optimal_workers()
         self.resource_service = resource_service
+        self.task_executor = task_executor  # 允許注入自定義執行器
         
         # 進程間通信隊列
         self.task_queue: Queue = mp.Queue()
@@ -103,7 +107,7 @@ class LocalClusterManager:
         process = Process(
             target=self._worker_loop,
             args=(worker_id, self.task_queue, self.result_queue, 
-                  self.control_queue, self.shutdown_event),
+                  self.control_queue, self.shutdown_event, self.task_executor),
             name=f"Worker-{worker_id}"
         )
         process.start()
@@ -119,10 +123,19 @@ class LocalClusterManager:
 
     @staticmethod
     def _worker_loop(worker_id: int, task_queue: Queue, result_queue: Queue,
-                     control_queue: Queue, shutdown_event: Event):
+                     control_queue: Queue, shutdown_event: Event, 
+                     task_executor: Optional[Callable] = None):
         """
         Worker 進程主循環
         在獨立進程中運行，處理任務隊列中的任務
+        
+        Args:
+            worker_id: Worker ID
+            task_queue: 任務隊列
+            result_queue: 結果隊列
+            control_queue: 控制隊列
+            shutdown_event: 關閉事件
+            task_executor: 自定義任務執行器
         """
         logger.info(f"[Worker-{worker_id}] Started (PID: {os.getpid()})")
         
@@ -147,8 +160,8 @@ class LocalClusterManager:
                 
                 logger.info(f"[Worker-{worker_id}] Processing task {task.task_id}")
                 
-                # 執行任務（這裡是模擬，實際應調用 Agent）
-                result = LocalClusterManager._execute_task(worker_id, task)
+                # 執行任務（使用可擴展的執行架構）
+                result = LocalClusterManager._execute_task(worker_id, task, task_executor)
                 
                 # 返回結果
                 result_queue.put({
@@ -166,19 +179,154 @@ class LocalClusterManager:
         logger.info(f"[Worker-{worker_id}] Shutting down")
 
     @staticmethod
-    def _execute_task(worker_id: int, task: ClusterTask) -> Dict[str, Any]:
+    def _execute_task(worker_id: int, task: ClusterTask, task_executor: Optional[Callable] = None) -> Dict[str, Any]:
         """
         執行單個任務（在 Worker 進程中調用）
-        TODO: 集成真實的 Agent 執行邏輯
+        
+        Args:
+            worker_id: Worker ID
+            task: 要執行的任務
+            task_executor: 自定義任務執行器（如果提供）
+        
+        Returns:
+            執行結果字典
+        
+        支持三種執行模式：
+        1. 自定義執行器（通過 task_executor 注入）
+        2. 內置任務類型處理
+        3. 默認模擬執行（向後兼容）
         """
-        # 模擬任務處理
+        start_time = time.time()
+        
+        # 模式1：使用自定義執行器
+        if task_executor is not None and callable(task_executor):
+            try:
+                logger.debug(f"[Worker-{worker_id}] Using custom executor for {task.task_id}")
+                result = task_executor(task)
+                result.update({
+                    "worker_id": worker_id,
+                    "processed_at": time.time(),
+                    "executor": "custom",
+                    "duration": time.time() - start_time
+                })
+                return result
+            except Exception as e:
+                logger.error(f"[Worker-{worker_id}] Custom executor failed: {e}")
+                return {
+                    "status": "error",
+                    "worker_id": worker_id,
+                    "error": str(e),
+                    "processed_at": time.time(),
+                    "executor": "custom"
+                }
+        
+        # 模式2：內置任務類型處理
+        try:
+            if task.task_type == "agent_execute":
+                # 執行 Agent 任務
+                return LocalClusterManager._execute_agent_task(worker_id, task, start_time)
+            elif task.task_type == "training":
+                # 執行訓練任務
+                return LocalClusterManager._execute_training_task(worker_id, task, start_time)
+            elif task.task_type == "inference":
+                # 執行推理任務
+                return LocalClusterManager._execute_inference_task(worker_id, task, start_time)
+        except Exception as e:
+            logger.error(f"[Worker-{worker_id}] Built-in executor failed: {e}")
+            return {
+                "status": "error",
+                "worker_id": worker_id,
+                "task_type": task.task_type,
+                "error": str(e),
+                "processed_at": time.time()
+            }
+        
+        # 模式3：默認模擬執行（向後兼容）
+        logger.debug(f"[Worker-{worker_id}] Using default simulator for {task.task_id}")
         time.sleep(0.1)  # 模擬工作負載
         
         return {
             "status": "success",
             "worker_id": worker_id,
             "task_type": task.task_type,
-            "processed_at": time.time()
+            "payload": task.payload,
+            "processed_at": time.time(),
+            "duration": time.time() - start_time,
+            "executor": "simulator"
+        }
+    
+    @staticmethod
+    def _execute_agent_task(worker_id: int, task: ClusterTask, start_time: float) -> Dict[str, Any]:
+        """執行 Agent 任務"""
+        # 這裡可以集成真實的 Agent 執行邏輯
+        # 例如：調用 AgentManager 或相關服務
+        
+        payload = task.payload or {}
+        agent_id = payload.get("agent_id", "unknown")
+        action = payload.get("action", "unknown")
+        
+        # 模擬 Agent 執行
+        logger.debug(f"[Worker-{worker_id}] Executing agent {agent_id} action {action}")
+        
+        # 真實場景中會執行類似：
+        # result = agent_manager.execute(agent_id, action, payload.get("params", {}))
+        
+        return {
+            "status": "success",
+            "worker_id": worker_id,
+            "task_type": task.task_type,
+            "agent_id": agent_id,
+            "action": action,
+            "processed_at": time.time(),
+            "duration": time.time() - start_time,
+            "executor": "agent_builtin"
+        }
+    
+    @staticmethod
+    def _execute_training_task(worker_id: int, task: ClusterTask, start_time: float) -> Dict[str, Any]:
+        """執行訓練任務"""
+        payload = task.payload or {}
+        model_id = payload.get("model_id", "unknown")
+        epochs = payload.get("epochs", 1)
+        
+        logger.debug(f"[Worker-{worker_id}] Training model {model_id} for {epochs} epochs")
+        
+        # 模擬訓練
+        time.sleep(0.2)  # 訓練通常需要更長時間
+        
+        return {
+            "status": "success",
+            "worker_id": worker_id,
+            "task_type": task.task_type,
+            "model_id": model_id,
+            "epochs": epochs,
+            "loss": 0.5 - (random.random() * 0.3),  # 模擬損失值
+            "processed_at": time.time(),
+            "duration": time.time() - start_time,
+            "executor": "training_builtin"
+        }
+    
+    @staticmethod
+    def _execute_inference_task(worker_id: int, task: ClusterTask, start_time: float) -> Dict[str, Any]:
+        """執行推理任務"""
+        payload = task.payload or {}
+        model_id = payload.get("model_id", "unknown")
+        input_data = payload.get("input", {})
+        
+        logger.debug(f"[Worker-{worker_id}] Running inference on {model_id}")
+        
+        # 模擬推理
+        time.sleep(0.05)
+        
+        return {
+            "status": "success",
+            "worker_id": worker_id,
+            "task_type": task.task_type,
+            "model_id": model_id,
+            "output": {"prediction": "simulated_result"},
+            "processed_at": time.time(),
+            "duration": time.time() - start_time,
+            "executor": "inference_builtin"
         }
 
     def submit_task(self, task: ClusterTask):
@@ -254,12 +402,13 @@ if __name__ == "__main__":
     
     print("=== Local Cluster Manager Test ===\n")
     
-    # 使用 with 語句自動管理生命週期
+    # 測試1：使用默認執行器
+    print("Test 1: Default executor (simulator)\n")
     with LocalClusterManager(max_workers=2) as cluster:
         print(f"Cluster started: {cluster.get_cluster_status()}\n")
         
         # 提交測試任務
-        for i in range(5):
+        for i in range(3):
             task = ClusterTask(
                 task_id=f"test_task_{i}",
                 task_type="test",
@@ -267,17 +416,49 @@ if __name__ == "__main__":
             )
             cluster.submit_task(task)
         
-        print(f"Submitted 5 tasks: {cluster.get_cluster_status()}\n")
+        print(f"Submitted 3 tasks: {cluster.get_cluster_status()}\n")
         
         # 收集結果
-        results = []
-        for _ in range(5):
+        for _ in range(3):
             result = cluster.get_result(timeout=5.0)
             if result:
-                results.append(result)
-                print(f"Got result: {result['task_id']}")
+                print(f"Got result: {result['task_id']} (executor: {result.get('executor', 'unknown')})")
+    
+    print("\n" + "="*50 + "\n")
+    
+    # 測試2：使用內置任務類型
+    print("Test 2: Built-in task types\n")
+    
+    def test_task_executor(task: ClusterTask) -> Dict[str, Any]:
+        """自定義任務執行器示例"""
+        return {
+            "status": "success",
+            "custom_result": f"Processed {task.task_id}",
+            "payload": task.payload
+        }
+    
+    with LocalClusterManager(max_workers=2, task_executor=test_task_executor) as cluster:
+        print(f"Cluster started: {cluster.get_cluster_status()}\n")
         
-        print(f"\nFinal status: {cluster.get_cluster_status()}")
-        print(f"Collected {len(results)} results")
+        # 提交不同類型的任務
+        tasks = [
+            ClusterTask(task_id="agent_1", task_type="agent_execute", 
+                       payload={"agent_id": "agent1", "action": "chat"}),
+            ClusterTask(task_id="train_1", task_type="training",
+                       payload={"model_id": "model1", "epochs": 5}),
+            ClusterTask(task_id="infer_1", task_type="inference",
+                       payload={"model_id": "model1", "input": {"text": "hello"}})
+        ]
+        
+        for task in tasks:
+            cluster.submit_task(task)
+        
+        print(f"Submitted 3 tasks: {cluster.get_cluster_status()}\n")
+        
+        # 收集結果
+        for _ in range(3):
+            result = cluster.get_result(timeout=5.0)
+            if result:
+                print(f"Got result: {result['task_id']} (executor: {result.get('executor', 'unknown')})")
     
     print("\n=== Test Complete ===")

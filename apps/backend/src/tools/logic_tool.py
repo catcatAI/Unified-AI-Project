@@ -4,6 +4,10 @@ Logic Tool - 逻辑工具
 """
 
 import os
+
+# 禁用 TensorFlow 導入以避免 CPU 指令集不兼容問題
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+TENSORFLOW_IMPORT_DISABLED = os.environ.get('DISABLE_TENSORFLOW', 'false').lower() == 'true'
 import json
 import logging
 import sys
@@ -56,6 +60,12 @@ class LogicTool:
         return self.parser_evaluator
 
     def _get_nn_model_evaluator(self) -> Tuple[Optional[Any], Optional[Dict[str, int]]]:
+        # 檢查是否禁用 TensorFlow
+        if TENSORFLOW_IMPORT_DISABLED:
+            self.tensorflow_import_error = "TensorFlow 已被環境變量禁用"
+            logger.critical("TensorFlow 已被環境變量 DISABLE_TENSORFLOW=true 禁用")
+            return None, None
+        
         """加载LogicNNModel，处理TensorFlow导入错误"""
         if self.nn_model_evaluator is not None or self.tensorflow_import_error is not None:
             return self.nn_model_evaluator, self.nn_char_to_token
