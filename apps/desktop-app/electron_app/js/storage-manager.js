@@ -637,6 +637,191 @@ class UnifiedStorageManager {
             return false;
         }
     }
+
+    /**
+     * 初始化版本控制
+     * @returns {boolean} 是否成功
+     */
+    initVersionControl() {
+        if (!this.storageAvailable) {
+            return false;
+        }
+
+        const versionKey = `${this.namespace}_version`;
+        const storedVersion = localStorage.getItem(versionKey);
+
+        if (!storedVersion) {
+            // 首次运行，写入当前版本
+            localStorage.setItem(versionKey, this.currentVersion);
+            console.log('[StorageManager] Version control initialized:', this.currentVersion);
+            return true;
+        }
+
+        // 检查版本兼容性
+        const compatibility = this._checkVersionCompatibility(storedVersion, this.currentVersion);
+
+        if (!compatibility.compatible) {
+            console.warn('[StorageManager] Version incompatible:', {
+                stored: storedVersion,
+                current: this.currentVersion,
+                message: compatibility.message
+            });
+
+            // 尝试迁移
+            const migrationResult = this._migrateData(storedVersion, this.currentVersion);
+
+            if (migrationResult.success) {
+                // 迁移成功，更新版本
+                localStorage.setItem(versionKey, this.currentVersion);
+                console.log('[StorageManager] Migration successful:', this.currentVersion);
+                return true;
+            } else {
+                console.error('[StorageManager] Migration failed:', migrationResult.error);
+                return false;
+            }
+        } else if (storedVersion !== this.currentVersion) {
+            // 版本兼容但不是最新，更新版本号
+            localStorage.setItem(versionKey, this.currentVersion);
+            console.log('[StorageManager] Version updated:', this.currentVersion);
+            return true;
+        }
+
+        return true;
+    }
+
+    /**
+     * 检查版本兼容性
+     * @param {string} storedVersion 存储的版本
+     * @param {string} currentVersion 当前版本
+     * @returns {Object} 兼容性检查结果
+     */
+    _checkVersionCompatibility(storedVersion, currentVersion) {
+        // 简单的版本比较
+        const storedParts = storedVersion.split('.').map(Number);
+        const currentParts = currentVersion.split('.').map(Number);
+        const minParts = this.minimumCompatibleVersion.split('.').map(Number);
+
+        // 检查是否低于最低兼容版本
+        for (let i = 0; i < Math.max(storedParts.length, minParts.length); i++) {
+            const s = storedParts[i] || 0;
+            const m = minParts[i] || 0;
+            if (s < m) {
+                return {
+                    compatible: false,
+                    message: `Version ${storedVersion} is below minimum compatible version ${this.minimumCompatibleVersion}`
+                };
+            }
+        }
+
+        // 检查是否需要迁移
+        for (let i = 0; i < Math.max(storedParts.length, currentParts.length); i++) {
+            const s = storedParts[i] || 0;
+            const c = currentParts[i] || 0;
+            if (c > s) {
+                return {
+                    compatible: true,
+                    needsMigration: true,
+                    message: `Version ${storedVersion} can be migrated to ${currentVersion}`
+                };
+            }
+        }
+
+        return {
+            compatible: true,
+            needsMigration: false,
+            message: `Version ${storedVersion} is compatible with ${currentVersion}`
+        };
+    }
+
+    /**
+     * 迁移数据
+     * @param {string} fromVersion 源版本
+     * @param {string} toVersion 目标版本
+     * @returns {Object} 迁移结果
+     */
+    _migrateData(fromVersion, toVersion) {
+        try {
+            const backup = this.exportData();
+            let currentData = backup;
+            const versionPath = this._getVersionPath(fromVersion, toVersion);
+
+            console.log('[StorageManager] Starting migration:', versionPath);
+
+            // 按顺序执行迁移
+            for (const version of versionPath) {
+                const migration = this.migrations.find(m => m.version === version);
+                if (migration) {
+                    console.log('[StorageManager] Running migration:', version);
+                    currentData = migration.migrate(currentData);
+                }
+            }
+
+            // 应用迁移后的数据
+            localStorage.clear();
+            this.importData(currentData);
+
+            return {
+                success: true,
+                fromVersion,
+                toVersion,
+                versionPath
+            };
+        } catch (error) {
+            console.error('[StorageManager] Migration error:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * 获取版本迁移路径
+     * @param {string} fromVersion 源版本
+     * @param {string} toVersion 目标版本
+     * @returns {Array} 版本路径
+     */
+    _getVersionPath(fromVersion, toVersion) {
+        const versions = this.migrations.map(m => m.version);
+        const fromIndex = versions.indexOf(fromVersion);
+        const toIndex = versions.indexOf(toVersion);
+
+        if (fromIndex === -1 || toIndex === -1) {
+            return [];
+        }
+
+        return versions.slice(fromIndex + 1, toIndex + 1);
+    }
+
+    /**
+     * 迁移到 1.1.0
+     * @param {Object} data 数据
+     * @returns {Object} 迁移后的数据
+     */
+    _migrateTo110(data) {
+        // 示例迁移逻辑
+        return data;
+    }
+
+    /**
+     * 迁移到 1.2.0
+     * @param {Object} data 数据
+     * @returns {Object} 迁移后的数据
+     */
+    _migrateTo120(data) {
+        // 示例迁移逻辑
+        return data;
+    }
+
+    /**
+     * 生成安全密钥
+     * @private
+     */
+    _generateSecurityKey() {
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substring(2);
+        return `angela_${timestamp}_${random}`;
+    }
 }
 
 // 创建全局单例

@@ -349,20 +349,102 @@ class PluginManager {
     }
     
     _getPublicAPI() {
+        const angelaApp = window.angelaApp;
+
+        // 定義安全的 API 接口
         return {
-            stateMatrix: window.angelaApp?.stateMatrix,
-            performanceManager: window.angelaApp?.performanceManager,
-            maturityTracker: window.angelaApp?.maturityTracker,
-            precisionManager: window.angelaApp?.precisionManager,
-            live2DManager: window.angelaApp?.live2dManager,
-            inputHandler: window.angelaApp?.inputHandler,
-            audioHandler: window.angelaApp?.audioHandler,
-            hapticHandler: window.angelaApp?.hapticHandler,
-            wallpaperHandler: window.angelaApp?.wallpaperHandler,
-            i18n: window.i18n,
-            theme: window.theme,
-            logger: window.angelaApp?.logger
+            // ✅ 允許訪問的只讀數據
+            stateMatrix: this._createSafeProxy(angelaApp?.stateMatrix, {
+                read: ['getAlpha', 'getBeta', 'getGamma', 'getDelta', 'getValues', 'getAll'],
+                write: []
+            }),
+            
+            // ✅ 允許訪問的性能管理器（只讀）
+            performanceManager: this._createSafeProxy(angelaApp?.performanceManager, {
+                read: ['getFPS', 'getMemoryUsage', 'getSystemStatus'],
+                write: []
+            }),
+            
+            // ✅ 允許訪問的成熟度追蹤器（只讀）
+            maturityTracker: this._createSafeProxy(angelaApp?.maturityTracker, {
+                read: ['getLevel', 'getExperience', 'getProgress'],
+                write: []
+            }),
+            
+            // ✅ 允許訪問的 Live2D 管理器（有限操作）
+            live2DManager: this._createSafeProxy(angelaApp?.live2DManager, {
+                read: ['getMode', 'getExpressions', 'getMotions', 'getParameters'],
+                write: ['setExpression', 'setMotion', 'lookAt']
+            }),
+            
+            // ✅ 允許訪問的 i18n（只讀）
+            i18n: {
+                t: (key, params) => window.i18n?.t(key, params) || key,
+                getLocale: () => window.i18n?.locale || 'en'
+            },
+            
+            // ✅ 允許訪問的主題管理器（只讀）
+            theme: {
+                getCurrentTheme: () => window.theme?.getCurrentTheme?.() || null,
+                getThemes: () => window.theme?.getThemes?.() || []
+            },
+            
+            // ✅ 日誌記錄器
+            logger: {
+                info: (msg, data) => angelaApp?.logger?.info(msg, data),
+                warn: (msg, data) => angelaApp?.logger?.warn(msg, data),
+                error: (msg, data) => angelaApp?.logger?.error(msg, data),
+                debug: (msg, data) => angelaApp?.logger?.debug(msg, data)
+            }
         };
+    }
+
+    /**
+     * 創建安全代理，限制對象的可訪問方法
+     * @param {object} obj - 要代理的對象
+     * @param {object} permissions - 權限配置
+     * @returns {object} - 安全代理對象
+     */
+    _createSafeProxy(obj, permissions) {
+        if (!obj) return null;
+
+        const safeObj = {};
+        const allowedRead = permissions.read || [];
+        const allowedWrite = permissions.write || [];
+
+        // 允許的讀取方法
+        allowedRead.forEach(method => {
+            if (typeof obj[method] === 'function') {
+                safeObj[method] = (...args) => {
+                    try {
+                        return obj[method](...args);
+                    } catch (error) {
+                        this._log('error', `Error calling ${method} on safe proxy:`, error);
+                        return null;
+                    }
+                };
+            }
+        });
+
+        // 允許的寫入方法
+        allowedWrite.forEach(method => {
+            if (typeof obj[method] === 'function') {
+                safeObj[method] = (...args) => {
+                    try {
+                        return obj[method](...args);
+                    } catch (error) {
+                        this._log('error', `Error calling ${method} on safe proxy:`, error);
+                        return false;
+                    }
+                };
+            }
+        });
+
+        // 禁止訪問的危險方法列表
+        const dangerousMethods = ['destroy', 'cleanup', 'reset', 'clear', 'delete'];
+        
+        // 返回凍結的對象，防止添加新屬性
+        return Object.freeze(safeObj);
     }
     
     async exportPlugins() {
