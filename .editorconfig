@@ -1,0 +1,75 @@
+# EditorConfig 配置文件
+# 统一不同编辑器的代码风格
+# 大多数现代编辑器都原生支持 EditorConfig
+
+root = true
+
+# 所有文件的默认配置
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Python 文件
+[*.py]
+indent_style = space
+indent_size = 4
+max_line_length = 100
+
+# JavaScript/TypeScript 文件
+[*.{js,jsx,ts,tsx}]
+indent_style = space
+indent_size = 2
+max_line_length = 100
+
+# JSON 文件
+[*.json]
+indent_style = space
+indent_size = 2
+
+# YAML 文件
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# Markdown 文件
+[*.md]
+trim_trailing_whitespace = false
+indent_style = space
+indent_size = 2
+max_line_length = 80
+
+# HTML 文件
+[*.html]
+indent_style = space
+indent_size = 2
+
+# CSS/SCSS 文件
+[*.{css,scss,less}]
+indent_style = space
+indent_size = 2
+
+# Shell 脚本
+[*.{sh,bash}]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+# 批处理文件 (Windows)
+[*.bat]
+end_of_line = crlf
+
+# Makefile
+[Makefile]
+indent_style = tab
+
+# 特定项目配置
+[apps/backend/src/**.py]
+indent_size = 4
+
+[apps/desktop-app/**.js]
+indent_size = 2
+
+[packages/cli/**.ts]
+indent_size = 2

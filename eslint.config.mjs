@@ -11,6 +11,25 @@ const compat = new FlatCompat({
 });
 
 export default [
+  {
+    ignores: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/.next/**",
+      "**/out/**",
+      "**/venv/**",
+      "**/.venv/**",
+      "**/.pytest_cache/**",
+      "**/__pycache__/**",
+      "**/*.min.js",
+      "**/*.bundle.js",
+      "**/coverage/**",
+      "**/.cache/**",
+      "**/temp/**",
+      "**/temp_miara_extract/**",
+    ],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     languageOptions: {

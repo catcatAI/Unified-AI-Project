@@ -1,0 +1,43 @@
+# Angela AI - Optional Dependencies
+# Python 3.9+ required
+#
+# This file contains optional dependencies that enhance functionality
+# but are not required for core operation.
+#
+# Install these dependencies with:
+#   pip install -r requirements-optional.txt
+
+# ============================================================================
+# Machine Learning Frameworks (Alternative to PyTorch)
+# ============================================================================
+# Note: PyTorch is the primary ML framework. TensorFlow is optional.
+#tensorflow>=2.16.0
+
+# ============================================================================
+# Redis Cache
+# ============================================================================
+redis>=5.0.0
+# Provides distributed caching for improved performance in production deployments
+
+# ============================================================================
+# Computer Vision
+# ============================================================================
+opencv-python>=4.9.0
+# Provides advanced image processing and computer vision features
+
+# ============================================================================
+# Natural Language Processing
+# ============================================================================
+jieba>=0.42.1
+# Chinese text segmentation for improved NLP support
+
+# ============================================================================
+# Model Hub
+# ============================================================================
+huggingface_hub>=0.21.0
+# Access to pre-trained models from Hugging Face model hub
+
+# ============================================================================
+# Additional Libraries
+# ============================================================================
+# Additional optional dependencies can be added here as needed

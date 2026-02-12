@@ -16,14 +16,14 @@ Thank you for your interest in contributing to Angela AI! This document provides
 
 ## 🤝 Code of Conduct
 
-This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code of conduct.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Python 3.11+
-- Node.js 18+
+- Python 3.9+
+- Node.js 16+
 - Git
 - Live2D Cubism SDK (for desktop pet features)
 
@@ -45,28 +45,47 @@ git remote add upstream https://github.com/catcatAI/Unified-AI-Project.git
 
 ```bash
 # Create virtual environment
-python -m venv myenv
+python3 -m venv venv
 
 # Activate
 # Windows:
-myenv\Scripts\activate
+venv\Scripts\activate
 # macOS/Linux:
-source myenv/bin/activate
+source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Set up credentials
-cp apps/backend/config/credentials.example.json apps/backend/config/credentials.json
-# Edit credentials.json with your actual credentials
+cp .env.example .env
+# Edit .env with your actual credentials
 ```
 
 ### Frontend Setup
 
 ```bash
-cd apps/frontend
+cd apps/desktop-app/electron_app
 npm install
-npm run dev
+
+# For web dashboard
+cd apps/frontend-dashboard
+npm install
+```
+
+### Start Development Environment
+
+```bash
+# Using unified launcher (recommended)
+./start_angela_complete.sh
+
+# Or manually:
+# Backend
+cd apps/backend
+python3 -m uvicorn src.services.main_api_server:app --host 127.0.0.1 --port 8000
+
+# Desktop App
+cd apps/desktop-app/electron_app
+npm start
 ```
 
 ## 🛠️ How to Contribute
@@ -103,14 +122,14 @@ npm run dev
 
 3. **Test your changes**
    ```bash
-   # Run tests
-   python -m pytest tests/
+   # Run comprehensive test
+   python3 comprehensive_test.py
+   
+   # Run pytest tests
+   python3 -m pytest tests/
    
    # Run linting
-   python -m flake8 apps/
-   
-   # Check types
-   python -m mypy apps/backend/
+   python3 -m flake8 apps/backend/src/
    ```
 
 4. **Commit and push**
@@ -174,33 +193,41 @@ def process_user_input(
 ### Running Tests
 
 ```bash
-# All tests
-python -m pytest
+# Comprehensive test suite
+python3 comprehensive_test.py
+
+# pytest tests
+python3 -m pytest tests/
 
 # Specific test file
-python -m pytest tests/test_memory.py
+python3 -m pytest tests/ai/test_ham_importance_scorer.py
 
 # With coverage
-python -m pytest --cov=apps/backend --cov-report=html
+python3 -m pytest --cov=apps/backend/src --cov-report=html
 ```
 
 ### Writing Tests
 
 ```python
 import pytest
-from apps.backend.memory import MemoryManager
+from ai.memory.ham_memory.ham_importance_scorer import ImportanceScorer
 
-class TestMemoryManager:
-    def test_store_memory(self):
-        manager = MemoryManager()
-        result = manager.store("test content", {"type": "test"})
-        assert result is True
-        
-    def test_retrieve_memory(self):
-        manager = MemoryManager()
-        manager.store("test content", {"type": "test"})
-        memories = manager.retrieve("test", limit=1)
-        assert len(memories) == 1
+class TestImportanceScorer:
+    @pytest.fixture
+    def scorer(self):
+        return ImportanceScorer()
+    
+    @pytest.mark.asyncio
+    async def test_basic_score(self, scorer):
+        metadata = {}
+        score = await scorer.calculate("普通消息", metadata)
+        assert 0.0 <= score <= 1.0
+    
+    @pytest.mark.asyncio
+    async def test_keyword_boost(self, scorer):
+        score_urgent = await scorer.calculate("这是一个urgent消息", {})
+        score_normal = await scorer.calculate("这是一个普通消息", {})
+        assert score_urgent > score_normal
 ```
 
 ## 📚 Documentation
@@ -217,11 +244,34 @@ class TestMemoryManager:
 Located in `docs/` directory:
 - `docs/00-overview/` - Project overview and vision
 - `docs/01-summaries-and-reports/` - Project reports and summaries
-- `docs/02-api-docs/` - API documentation
+- `docs/02-game-design/` - Game design documentation
 - `docs/03-technical-architecture/` - Technical architecture docs
-- `docs/04-deployment/` - Deployment guides
+- `docs/04-advanced-concepts/` - Advanced concepts
 - `docs/05-development/` - Development guides
 - `docs/06-project-management/` - Project management docs
+- `docs/api/` - API documentation
+- `docs/architecture/` - Architecture documentation
+- `docs/deployment/` - Deployment guides
+- `docs/developer-guide/` - Developer guides
+- `docs/testing/` - Testing guides
+- `docs/user-guide/` - User guides
+
+### API Endpoints
+
+Main API endpoints:
+
+**Backend API (FastAPI)**
+- `GET /health` - Health check
+- `POST /angela/chat` - Chat endpoint (uses LLM)
+- `POST /dialogue` - Dialogue management
+- `GET /status` - System status
+- WebSocket `/ws` - Real-time communication
+
+**Key Services**
+- LLM Service: Multi-backend support (Ollama, OpenAI, Anthropic)
+- HAM Memory System: Hierarchical associative memory
+- AI Agents: 15 specialized agents
+- Live2D Manager: Character rendering and animation
 
 ## 💬 Commit Messages
 
@@ -246,18 +296,28 @@ Types:
 
 Examples:
 ```
-feat(memory): add episodic memory compression
+feat(ham): add episodic memory compression
 
 Implement compression algorithm for episodic memories
 to reduce storage requirements by 60%.
 
 Closes #123
+
+fix(audio): resolve speech recognition timeout
+
+Add proper timeout handling for speech recognition
+to prevent infinite waiting on audio input.
+
+refactor(logging): upgrade to enhanced logger system
+
+Replace console statements with AngelaLogger for better
+log management and filtering.
 ```
 
 ## 🔍 Pull Request Process
 
 1. **Before submitting:**
-   - All tests pass
+   - All tests pass (`python3 comprehensive_test.py`)
    - Code follows style guidelines
    - Documentation updated
    - Commit messages follow convention
@@ -279,15 +339,13 @@ Closes #123
 
 ## 🆘 Getting Help
 
-- **Discord**: [Join our community](https://discord.gg/catcatai)
-- **Discussions**: Use GitHub Discussions for questions
+- **Documentation**: Check `docs/` directory for detailed guides
 - **Issues**: For bugs and feature requests
 
 ## 🏆 Recognition
 
 Contributors will be:
-- Listed in CONTRIBUTORS.md
-- Mentioned in release notes
+- Listed in release notes
 - Credited in documentation
 
 ## 📜 License

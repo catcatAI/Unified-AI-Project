@@ -14,7 +14,11 @@ myenv/
 venv_py311/
 *.egg-info/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
+.coverage.*
+htmlcov/
 .tox/
 *.egg
 
@@ -24,6 +28,10 @@ pnpm-debug.log*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Pre-commit
+.pre-commit-cache/
+.pre-commit-config.yaml.lock
 
 # Build
 build/

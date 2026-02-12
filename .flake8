@@ -1,0 +1,30 @@
+[flake8]
+max-line-length = 100
+max-complexity = 10
+exclude =
+    .git,
+    __pycache__,
+    venv,
+    .venv,
+    build,
+    dist,
+    node_modules,
+    .pytest_cache,
+    migrations,
+    .tox,
+    .mypy_cache,
+    .cache
+ignore =
+    E203,  # 空格之前冒号 (与 Black 冲突)
+    W503,  # 二进制运算符之前换行 (与 Black 冲突)
+    E501,  # 行太长 (由 Black 处理)
+    F401,  # 导入未使用 (常见于 __init__.py)
+per-file-ignores =
+    __init__.py:F401
+    test_*.py:S101
+    conftest.py:F401
+# 启用特定插件
+# 需要安装: flake8-bugbear, flake8-comprehensions, flake8-simplify
+# extend-ignore =
+#     B901  # return x in a generator
+#     C400  # Unnecessary generator (rewrite as a set comprehension)
