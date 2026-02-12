@@ -396,9 +396,82 @@ window.ANGELA_CHARACTER_IMAGES = {
   }
 };
 
+/**
+ * 密度調整輔助函數
+ * 根據屏幕密度（devicePixelRatio）調整坐標和尺寸
+ * @param {object} position - 原始位置坐標
+ * @param {number} density - 屏幕密度（默認為 1）
+ * @returns {object} 調整後的位置坐標
+ */
+function adjustPositionForDensity(position, density = 1) {
+  if (!position || typeof density !== 'number' || density <= 0) {
+    return position;
+  }
+
+  const adjusted = { ...position };
+
+  // 調整所有坐標和尺寸
+  if (typeof adjusted.x === 'number') adjusted.x *= density;
+  if (typeof adjusted.y === 'number') adjusted.y *= density;
+  if (typeof adjusted.width === 'number') adjusted.width *= density;
+  if (typeof adjusted.height === 'number') adjusted.height *= density;
+  if (typeof adjusted.sourceX === 'number') adjusted.sourceX *= density;
+  if (typeof adjusted.sourceY === 'number') adjusted.sourceY *= density;
+  if (typeof adjusted.targetX === 'number') adjusted.targetX *= density;
+  if (typeof adjusted.targetY === 'number') adjusted.targetY *= density;
+  if (typeof adjusted.targetWidth === 'number') adjusted.targetWidth *= density;
+  if (typeof adjusted.targetHeight === 'number') adjusted.targetHeight *= density;
+
+  return adjusted;
+}
+
+/**
+ * 調整所有表達式疊加位置以適應屏幕密度
+ * @param {object} overlayPositions - 原始疊加位置
+ * @param {number} density - 屏幕密度
+ * @returns {object} 調整後的疊加位置
+ */
+function adjustOverlayPositionsForDensity(overlayPositions, density = 1) {
+  if (!overlayPositions || typeof density !== 'number' || density <= 0) {
+    return overlayPositions;
+  }
+
+  const adjusted = {};
+
+  for (const [expression, position] of Object.entries(overlayPositions)) {
+    adjusted[expression] = adjustPositionForDensity(position, density);
+  }
+
+  return adjusted;
+}
+
+/**
+ * 獲取當前屏幕密度
+ * @returns {number} devicePixelRatio
+ */
+function getCurrentDensity() {
+  return typeof window !== 'undefined' && window.devicePixelRatio
+    ? window.devicePixelRatio
+    : 1;
+}
+
+/**
+ * 獲取調整後的表達式疊加位置（使用當前屏幕密度）
+ * @param {object} overlayPositions - 原始疊加位置
+ * @returns {object} 調整後的疊加位置
+ */
+function getDensityAdjustedOverlayPositions(overlayPositions) {
+  const density = getCurrentDensity();
+  return adjustOverlayPositionsForDensity(overlayPositions, density);
+}
+
 // 導出到全局
 if (typeof window !== 'undefined') {
   window.ANGELA_CHARACTER_IMAGES = ANGELA_CHARACTER_IMAGES;
+  window.adjustPositionForDensity = adjustPositionForDensity;
+  window.adjustOverlayPositionsForDensity = adjustOverlayPositionsForDensity;
+  window.getCurrentDensity = getCurrentDensity;
+  window.getDensityAdjustedOverlayPositions = getDensityAdjustedOverlayPositions;
 }
 
 // ES6 模塊導出

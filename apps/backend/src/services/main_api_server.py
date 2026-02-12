@@ -246,11 +246,15 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
         response_text = generate_angela_response(user_message, user_name)
         source = "fallback"
 
+    # 統一響應格式
     return {
         "session_id": session_id,
-        "response_text": response_text,
-        "angela_mood": "happy",
-        "source": source
+        "response": response_text,
+        "response_text": response_text,  # 保留此字段以向後兼容
+        "emotion": "happy",
+        "angela_mood": "happy",  # 保留此字段以向後兼容
+        "source": source,
+        "timestamp": datetime.now().isoformat()
     }
 
 
@@ -278,13 +282,15 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
         response_text = generate_angela_response(user_message, user_name)
         source = "fallback"
 
+    # 統一響應格式（與 /angela/chat 相同）
     return {
         "session_id": session_id,
         "response": response_text,
-        "response_text": response_text,
+        "response_text": response_text,  # 保留此字段以向後兼容
         "emotion": "happy",
-        "angela_mood": "happy",
-        "source": source
+        "angela_mood": "happy",  # 保留此字段以向後兼容
+        "source": source,
+        "timestamp": datetime.now().isoformat()
     }
 
 

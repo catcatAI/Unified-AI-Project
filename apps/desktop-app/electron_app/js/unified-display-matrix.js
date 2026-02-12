@@ -931,14 +931,16 @@ class UnifiedDisplayMatrix {
             touchAreaRatio = Math.max(0.5, Math.min(2.0, currentTouchArea / baseTouchArea));
         }
 
-        // DPI 调整因子 (保证物理触感一致)
-        const dpiRatio = this.currentState.devicePixelRatio;
+        // DPI 调整因子 (保证物理触感一致，限制范围)
+        const dpiRatio = Math.max(0.8, Math.min(1.5, this.currentState.devicePixelRatio));
 
-        // 缩放调整因子
+        // 缩放调整因子 (使用線性插值而非平方根，更準確反映視覺變化)
         const scaleRatio = this.currentState.userScale;
+        const scaleAdjustment = 0.8 + (scaleRatio - 0.5) * 0.4; // 範圍: 0.6 - 1.8
 
-        // 综合计算
-        const adjustedIntensity = baseIntensity * touchAreaRatio * dpiRatio * Math.sqrt(scaleRatio);
+        // 综合计算 (使用加權平均而非直接相乘)
+        const weightedAverage = (touchAreaRatio * 0.4 + dpiRatio * 0.3 + scaleAdjustment * 0.3);
+        const adjustedIntensity = baseIntensity * weightedAverage;
 
         // 限制在合理范围
         return Math.max(0.1, Math.min(1.0, adjustedIntensity));

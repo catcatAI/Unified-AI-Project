@@ -225,47 +225,64 @@ class Live2DManager {
         
         // 無論 Live2D 是否加載成功，都先加載立繪圖片
         await this._loadCharacterImage();
-        
-        // 使用完整文件路径
-        const modelPath = 'models/miara_pro_en/runtime/miara_pro_t03.model3.json';
+
+        // 從配置文件讀取模型路徑
+        const modelPath = this._getModelPath();
         const settings = { modelPath: modelPath };
-        
+
         try {
             // 确保 wrapper 已创建
             if (!this.wrapper) {
                 console.log('[Live2DManager] Creating Live2DCubismWrapper...');
                 this.wrapper = new Live2DCubismWrapper(this.canvas);
             }
-            
+
             // 加载模型
             await this.wrapper.loadModel(settings);
             await this.wrapper.start();
-            
+
             this.modelLoaded = true;
             this.isFallback = false;
             this.currentModel = modelPath;
-            
+
             // 隐藏 fallback canvas，显示 live2d canvas
             const fallbackCanvas = document.getElementById('fallback-canvas');
             const fallbackWrapper = document.getElementById('fallback-wrapper');
             if (fallbackCanvas) fallbackCanvas.style.display = 'none';
             if (fallbackWrapper) fallbackWrapper.classList.remove('visible');
             this.canvas.style.display = 'block';
-            
+
             console.log('[Live2DManager] Live2D model loaded successfully:', modelPath);
-            
+
             // 更新PerformanceManager中的能力状态
             this._updateCapabilityStates();
         } catch (error) {
             console.error('[Live2DManager] Failed to load Live2D model:', error);
             console.log('[Live2DManager] Falling back to 2D rendering');
             this.isFallback = true;
-            
+
             // 更新PerformanceManager中的能力状态（模型不可用）
             this._updateCapabilityStates();
-            
+
             this._createFallbackManager();
         }
+    }
+
+    /**
+     * 從配置獲取模型路徑
+     * @returns {string} 模型路徑
+     */
+    _getModelPath() {
+        // 優先使用 ANGELA_CHARACTER_CONFIG 中的配置
+        if (typeof ANGELA_CHARACTER_CONFIG !== 'undefined' &&
+            ANGELA_CHARACTER_CONFIG.live2d_config &&
+            ANGELA_CHARACTER_CONFIG.live2d_config.model_path) {
+            return ANGELA_CHARACTER_CONFIG.live2d_config.model_path;
+        }
+
+        // 降級到默認路徑
+        console.warn('[Live2DManager] 使用默認模型路徑（未在配置中找到）');
+        return 'models/miara_pro_en/runtime/miara_pro_t03.model3.json';
     }
     
     /**

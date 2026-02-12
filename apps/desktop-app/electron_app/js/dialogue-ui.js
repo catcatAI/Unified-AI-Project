@@ -37,7 +37,7 @@ class DialogueUI {
                 right: 20px;
                 width: 400px;
                 max-width: 90vw;
-                z-index: 1000;
+                z-index: var(--z-index-dialogue, 1000);
             }
 
             #dialogue-panel {

@@ -6,6 +6,17 @@
 const ANGELA_CHARACTER_CONFIG = {
   "version": "1.1.0",
   "image_path": "resources/angela_character_masked.png",
+  "live2d_config": {
+    "enabled": true,
+    "fallback_enabled": true,
+    "model_path": "models/miara_pro_en/runtime/miara_pro_t03.model3.json",
+    "fallback_models": [
+      "models/miara_pro_en/runtime/miara_pro_t03.model3.json",
+      "models/miara_pro/runtime/miara_pro_t03.model3.json"
+    ],
+    "auto_retry": true,
+    "max_retries": 3
+  },
   "original_size": {
     "width": 1408,
     "height": 768

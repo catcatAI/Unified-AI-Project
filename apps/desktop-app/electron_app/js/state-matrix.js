@@ -103,19 +103,22 @@ class StateMatrix4D {
         this.historyMemoryThreshold = config.history_memory_threshold || 10 * 1024 * 1024; // 默认10MB
         this.updateCount = 0;
         this.createdAt = Date.now();
-        
-        // WebSocket消息节流
-        this._messageThrottleInterval = 100; // 100ms节流间隔
+
+        // WebSocket消息节流（自適應）
+        this._messageThrottleInterval = 50; // 基礎節流間隔（降低至 50ms）
+        this._adaptiveThrottleInterval = 50; // 自適應節流間隔
         this._lastMessageTime = 0;
         this._pendingMessage = null;
         this._messageTimer = null;
+        this._updateRateHistory = []; // 記錄更新速率
+        this._maxHistorySize = 10; // 最多記錄 10 次更新速率
         this.lastUpdate = Date.now();
         this.changeCallbacks = [];
         this.thresholdCallbacks = {};
         this.live2DManager = null;
         this.websocket = null;
-        
-        // 启动历史清理定时器（每5分钟清理一次）
+
+        // 啟動歷史清理定時器（每5分鐘清理一次）
         this._startHistoryCleanupTimer();
     }
     
@@ -933,9 +936,9 @@ class StateMatrix4D {
     }
     
     /**
-     * 节流发送状态更新消息
-     * @param {string} dimensionName 维度名称
-     * @param {Object} changes 变更内容
+     * 節流發送狀態更新消息（自適應）
+     * @param {string} dimensionName 維度名稱
+     * @param {Object} changes 變更內容
      */
     _throttledSendStateUpdate(dimensionName, changes) {
         const now = Date.now();
@@ -945,23 +948,45 @@ class StateMatrix4D {
             changes: changes,
             timestamp: now
         };
-        
-        // 保存待发送的消息（合并最新的变化）
+
+        // 計算更新速率
+        const timeSinceLastUpdate = now - this.lastUpdate;
+        this._updateRateHistory.push(timeSinceLastUpdate);
+        if (this._updateRateHistory.length > this._maxHistorySize) {
+            this._updateRateHistory.shift();
+        }
+
+        // 計算平均更新間隔
+        const avgInterval = this._updateRateHistory.reduce((a, b) => a + b, 0) / this._updateRateHistory.length;
+
+        // 自適應調整節流間隔
+        // 快速更新（平均間隔 < 30ms）→ 使用更短的節流間隔（50ms）
+        // 中速更新（30-100ms）→ 使用標準節流間隔（75ms）
+        // 慢速更新（> 100ms）→ 使用更長的節流間隔（100ms）
+        if (avgInterval < 30) {
+            this._adaptiveThrottleInterval = 50; // 快速更新：50ms
+        } else if (avgInterval < 100) {
+            this._adaptiveThrottleInterval = 75; // 中速更新：75ms
+        } else {
+            this._adaptiveThrottleInterval = 100; // 慢速更新：100ms
+        }
+
+        // 保存待發送的消息（合併最新的變化）
         this._pendingMessage = message;
-        
-        // 清除之前的定时器
+
+        // 清除之前的定時器
         if (this._messageTimer) {
             clearTimeout(this._messageTimer);
         }
-        
-        // 检查是否立即发送（距离上次发送超过节流间隔）
-        if (now - this._lastMessageTime >= this._messageThrottleInterval) {
+
+        // 檢查是否立即發送（距離上次發送超過自適應節流間隔）
+        if (now - this._lastMessageTime >= this._adaptiveThrottleInterval) {
             this._sendStateUpdateNow();
         } else {
-            // 设置定时器，在节流间隔后发送
+            // 設置定時器，在自適應節流間隔後發送
             this._messageTimer = setTimeout(() => {
                 this._sendStateUpdateNow();
-            }, this._messageThrottleInterval);
+            }, this._adaptiveThrottleInterval);
         }
     }
     

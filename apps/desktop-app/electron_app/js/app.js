@@ -101,12 +101,12 @@ class AngelaApp {
             // 2. 硬件检测 (15%)
             await this._initializeHardwareDetection();
             this.incrementLoadingProgress(5, 'Detecting hardware...');
-            
+
             // 3. 初始化 UDM（最先初始化，其他系统依赖它）(20%)
             console.log('[App] Initializing UDM...');
-            this._initializeUDM();
+            await this._initializeUDM();  // 改為 async 確保完全初始化
             this.incrementLoadingProgress(5, 'Initializing display matrix...');
-            
+
             // 4. Angela 逻辑系统 (35%)
             this._initializeStateMatrix();
             this.incrementLoadingProgress(5, 'Initializing state matrix...');
@@ -114,19 +114,24 @@ class AngelaApp {
             this.incrementLoadingProgress(5, 'Initializing precision manager...');
             this._initializeMaturityTracker();
             this.incrementLoadingProgress(5, 'Initializing maturity tracker...');
-            
+
             // 5. 性能管理器（需要在 window.angelaApp 设置后调用 toggleModule）(45%)
             // 先暴露实例，确保 PerformanceManager 能访问 toggleModule
             window.angelaApp = this;
             this._setupPlaceholderMethods();  // 设置占位方法
             await this._initializePerformanceManager();
             this.incrementLoadingProgress(10, 'Initializing performance manager...');
-            
+
             // 6. 检测系统 (50%)
             await this._initializeDetectionSystem();
             this.incrementLoadingProgress(5, 'Initializing detection system...');
-            
+
             // 7. Live2D（传入 UDM）(65%)
+            // 確保 UDM 已完全初始化
+            if (!this.udm) {
+                console.error('[App] UDM 未初始化，無法初始化 Live2D');
+                throw new Error('UDM initialization failed');
+            }
             await this._initializeLive2D();
             this.incrementLoadingProgress(15, 'Initializing Live2D...');
             
@@ -395,27 +400,28 @@ async _initializeLogger() {
     }
     
     /**
-     * 初始化统一显示矩阵 (UDM)
-     * 这是最关键的初始化步骤，所有显示相关的系统都依赖它
+     * 初始化統一顯示矩陣 (UDM)
+     * 這是最關鍵的初始化步驟，所有顯示相關的系統都依賴它
+     * @returns {Promise<void>}
      */
-    _initializeUDM() {
+    async _initializeUDM() {
         this.updateLoadingText('Initializing display matrix...');
         console.log('[AngelaApp] Creating UnifiedDisplayMatrix...');
 
-        // 获取 wrapper 和 canvas 元素
+        // 獲取 wrapper 和 canvas 元素
         const wrapper = document.querySelector('.canvas-wrapper') || document.getElementById('fallback-wrapper');
         const canvas = document.getElementById('fallback-canvas') || document.getElementById('live2d-canvas');
 
-        // 确保两个 canvas 都有正确的尺寸
+        // 確保兩個 canvas 都有正確的尺寸
         const live2dCanvas = document.getElementById('live2d-canvas');
         const fallbackCanvas = document.getElementById('fallback-canvas');
 
-        // 基准尺寸 (720p)
+        // 基準尺寸 (720p)
         const baseWidth = 1280;
         const baseHeight = 720;
         const devicePixelRatio = window.devicePixelRatio || 1;
 
-        // 设置 canvas 尺寸，考虑 devicePixelRatio
+        // 設置 canvas 尺寸，考慮 devicePixelRatio
         const setCanvasSize = (canvasEl) => {
             if (canvasEl) {
                 // 物理像素尺寸
@@ -433,14 +439,14 @@ async _initializeLogger() {
         setCanvasSize(live2dCanvas);
         setCanvasSize(fallbackCanvas);
 
-        // 创建 UDM 实例（传入元素引用）
+        // 創建 UDM 實例（傳入元素引用）
         try {
             this.udm = new UnifiedDisplayMatrix({
                 wrapperElement: wrapper,
                 canvasElement: canvas
             });
 
-            // 设置 wrapper 尺寸为 UDM display size (720p = 100%)
+            // 設置 wrapper 尺寸為 UDM display size (720p = 100%)
             if (wrapper && this.udm) {
                 const displaySize = this.udm.getDisplaySize();
                 wrapper.style.width = displaySize.width + 'px';
@@ -448,16 +454,21 @@ async _initializeLogger() {
                 console.log('[AngelaApp] Wrapper size set:', displaySize.width, 'x', displaySize.height);
             }
 
-            // 绑定按钮事件
+            // 綁定按鈕事件
             this._bindScaleButtons();
+
+            // 確保 UDM 已完全初始化
+            if (!this.udm || typeof this.udm.screenToCanvas !== 'function') {
+                throw new Error('UDM initialization incomplete');
+            }
 
             console.log('[AngelaApp] UDM initialized successfully');
         } catch (error) {
-            console.error('[AngelaApp] UDM初始化失败，使用降级方案:', error);
+            console.error('[AngelaApp] UDM初始化失敗，使用降級方案:', error);
 
-            // 降级方案：创建简化的UDM
+            // 降級方案：創建簡化的UDM
             this.udm = {
-                // 基本坐标转换（修正版本）
+                // 基本坐標轉換（修正版本）
                 screenToCanvas: (sx, sy) => {
                     if (!canvas) return { x: sx, y: sy };
                     const rect = canvas.getBoundingClientRect();
@@ -467,13 +478,13 @@ async _initializeLogger() {
                     };
                 },
 
-                // 基本缩放
+                // 基本縮放
                 getUserScale: () => 1.0,
                 setUserScale: (scale) => {},
 
-                // 基本身体部位检测
+                // 基本身體部位檢測
                 identifyBodyPart: (x, y) => {
-                    // 简单的中心区域检测
+                    // 簡單的中心區域檢測
                     const cx = baseWidth / 2;
                     const cy = baseHeight / 2;
                     const dx = x - cx;

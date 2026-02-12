@@ -13,13 +13,73 @@
 
         body {
             width: 100vw;
-            height: 100vh;
+            height:  100vh;
             overflow: hidden;
             background: transparent;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             cursor: default;
             user-select: none;
             -webkit-user-select: none;
+        }
+
+        /* 主題變量 */
+        :root {
+            --bg-primary: transparent;
+            --bg-overlay: rgba(0, 0, 0, 0.5);
+            --bg-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --accent-color: #4facfe;
+            --danger-color: #ff4040;
+            --success-color: #00ff80;
+            --warning-color: #ffcc00;
+            --control-bg: rgba(0, 0, 0, 0.5);
+            --control-bg-hover: rgba(255, 255, 255, 0.8);
+            --control-bg-disabled: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 暗色主題 */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a2e;
+            --bg-overlay: rgba(0, 0, 0, 0.7);
+            --bg-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #ffffff;
+            --accent-color: #4facfe;
+            --danger-color: #ff4040;
+            --success-color: #00ff80;
+            --warning-color: #ffcc00;
+            --control-bg: rgba(0, 0, 0, 0.5);
+            --control-bg-hover: rgba(255, 255, 255, 0.8);
+            --control-bg-disabled: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 亮色主題 */
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-overlay: rgba(255, 255, 255, 0.7);
+            --bg-hover: rgba(0, 0, 0, 0.05);
+            --text-primary: #333333;
+            --accent-color: #0077cc;
+            --danger-color: #ff4040;
+            --success-color: #00cc66;
+            --warning-color: #ff9900;
+            --control-bg: rgba(255, 255, 255, 0.7);
+            --control-bg-hover: rgba(255, 255, 255, 0.9);
+            --control-bg-disabled: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 自定義主題 */
+        [data-theme="custom"] {
+            --bg-primary: #1a1a2e;
+            --bg-overlay: rgba(0, 0, 0, 0.7);
+            --bg-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --accent-color: #9b59b6;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --control-bg: rgba(155, 89, 182, 0.5);
+            --control-bg-hover: rgba(155, 89, 182, 0.7);
+            --control-bg-disabled: rgba(155, 89, 182, 0.3);
         }
 
         #container {
@@ -485,6 +545,8 @@
     <script src="js/audio-handler.js"></script>
     
     <!-- UI & Utils -->
+    <script src="js/z-index-manager.js"></script>
+    <script src="js/error-handler.js"></script>
     <script src="js/dialogue-ui.js"></script>
     <script src="js/wallpaper-handler.js"></script>
     <script src="js/plugin-manager.js"></script>
