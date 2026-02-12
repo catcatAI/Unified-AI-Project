@@ -499,7 +499,12 @@ class UnifiedDisplayMatrix {
     }
 
     getUserScale() {
-        return this.currentState.userScale;
+        // ✅ 修正：考慮 devicePixelRatio 和系統 DPI 縮放
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        const userScale = this.currentState.userScale;
+        
+        // 結合用戶縮放和設備像素比
+        return userScale * devicePixelRatio;
     }
 
     increaseUserScale(delta = null) {

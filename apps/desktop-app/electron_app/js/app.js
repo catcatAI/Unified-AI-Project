@@ -441,6 +441,13 @@ class AngelaApp {
         console.log('[App] Live2DManager created with UDM');
         
         await this.live2dManager.initialize?.();
+        
+        // 恢復上次選擇的模式
+        const savedMode = localStorage.getItem('render_mode') || 'live2d';
+        if (savedMode === 'fallback') {
+            await this.live2dManager.switchToFallback();
+            console.log('[App] 恢復到立繫模式');
+        }
     }
     
     _initializeBackendWebSocket() {
@@ -606,6 +613,21 @@ class AngelaApp {
             this.inputHandler?.updateRegions();
         });
         
+        // 處理渲染模式切換
+        window.electronAPI.on('render-mode', (mode) => {
+            if (this.live2dManager) {
+                if (mode === 'live2d' && this.live2dManager.getMode() === 'fallback') {
+                    this.live2dManager.switchToLive2D();
+                    this.showStatus('切換到 Live2D 模式', 2000);
+                } else if (mode === 'fallback' && this.live2dManager.getMode() === 'live2d') {
+                    this.live2dManager.switchToFallback();
+                    this.showStatus('切換到立繫模式', 2000);
+                }
+                // 保存到本地存儲
+                localStorage.setItem('render_mode', mode);
+            }
+        });
+        
         // 設置鍵盤快捷鍵
         this._setupKeyboardShortcuts();
     }
@@ -621,99 +643,21 @@ class AngelaApp {
             }
 
             switch (e.key) {
-                case '1':
-                    // 切換到表情包 1
-                    this._switchToCharacterImage('expression_pack_1', '表情包 1');
-                    break;
-                case '2':
-                    // 切換到 AI 助手
-                    this._switchToCharacterImage('fullbody_ai_assistant', 'AI 助手');
-                    break;
-                case '3':
-                    // 切換到姿態序列 1
-                    this._switchToCharacterImage('pose_sequence_1', '姿態序列 1');
-                    break;
-                case '4':
-                    // 切換到默認立繪
-                    this._switchToCharacterImage('default', '默認立繪');
-                    break;
                 case '0':
-                    // 切換到 Live2D 模式
+                    // 雙向切換：Live2D ↔ 立繫模式
                     if (this.live2dManager?.getMode() === 'fallback') {
                         this.live2dManager.switchToLive2D();
                         this.showStatus('切換到 Live2D 模式', 2000);
-                    }
-                    break;
-                case '[':
-                    // 上一張立繪
-                    if (this.live2dManager?.getMode() === 'fallback') {
-                        if (this.live2dManager?.previousCharacterImage()) {
-                            const images = this.live2dManager?.getAvailableCharacterImages() || [];
-                            const current = images.find(img => img.id === this.live2dManager?.currentCharacterImageId);
-                            this.showStatus(`立繪: ${current?.name || 'Unknown'}`, 2000);
-                        }
-                    }
-                    break;
-                case ']':
-                    // 下一張立繪
-                    if (this.live2dManager?.getMode() === 'fallback') {
-                        if (this.live2dManager?.nextCharacterImage()) {
-                            const images = this.live2dManager?.getAvailableCharacterImages() || [];
-                            const current = images.find(img => img.id === this.live2dManager?.currentCharacterImageId);
-                            this.showStatus(`立繪: ${current?.name || 'Unknown'}`, 2000);
-                        }
-                    }
-                    break;
-                case '-':
-                    // 上一個表情/姿態（適用於 sprite sheet）
-                    if (this.live2dManager?.getMode() === 'fallback') {
-                        const imageData = this.live2dManager?.characterImages[this.live2dManager?.currentCharacterImageId];
-                        if (imageData?.config?.type === 'sprite_sheet') {
-                            const config = imageData.config;
-                            const totalCells = config.grid.rows * config.cols;
-                            const currentIndex = this.live2dManager?.spriteSheetIndex || 0;
-                            const newIndex = (currentIndex - 1 + totalCells) % totalCells;
-                            this.live2dManager?.setSpriteSheetIndex(newIndex);
-                            
-                            const expressions = this.live2dManager?.getAvailableExpressions() || [];
-                            const currentExpr = expressions[newIndex];
-                            this.showStatus(`表情/姿態: ${currentExpr?.name || newIndex}`, 2000);
-                        }
-                    }
-                    break;
-                case '=':
-                case '+':
-                    // 下一個表情/姿態（適用於 sprite sheet）
-                    if (this.live2dManager?.getMode() === 'fallback') {
-                        const imageData2 = this.live2dManager?.characterImages[this.live2dManager?.currentCharacterImageId];
-                        if (imageData2?.config?.type === 'sprite_sheet') {
-                            const newIndex = this.live2dManager?.nextSpriteSheetIndex();
-                            const expressions = this.live2dManager?.getAvailableExpressions() || [];
-                            const currentExpr = expressions[newIndex];
-                            this.showStatus(`表情/姿態: ${currentExpr?.name || newIndex}`, 2000);
-                        }
+                    } else {
+                        this.live2dManager.switchToFallback();
+                        this.showStatus('切換到立繫模式', 2000);
                     }
                     break;
             }
         });
         
         console.log('[App] Keyboard shortcuts configured');
-        console.log('[App] 0: 切換到 Live2D 模式 | 1-4: 切換立繪 | []: 上一張/下一張立繪 | -+: 上一個/下一個表情');
-    }
-
-    /**
-     * 切換到指定的立繪圖片（自動切換到 fallback 模式）
-     */
-    async _switchToCharacterImage(imageId, imageName) {
-        // 如果當前是 Live2D 模式，先切換到 fallback 模式
-        if (this.live2dManager?.getMode() === 'live2d') {
-            await this.live2dManager.switchToFallback();
-        }
-        
-        // 切換立繪
-        if (this.live2dManager?.setCharacterImage(imageId)) {
-            this.showStatus(`切換到 ${imageName}`, 2000);
-        }
+        console.log('[App] 0: 切換 Live2D/立繫 模式');
     }
 
     async _loadDefaultModel() {

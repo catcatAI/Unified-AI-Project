@@ -387,6 +387,31 @@
                 </div>
 
                 <div class="setting-group">
+                    <h3>Rendering Mode</h3>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Current Mode</label>
+                            <p>Select rendering mode: Live2D (animated) or Static Image (立繫)</p>
+                        </div>
+                        <div class="setting-control">
+                            <select id="render-mode">
+                                <option value="live2d">Live2D (Animated)</option>
+                                <option value="fallback">Static Image (立繫)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <label>Auto-switch on Low Performance</label>
+                            <p>Automatically switch to fallback mode when performance is low</p>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="auto-switch-fallback">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
                     <h3>Wallpaper</h3>
                     <div class="setting-item">
                         <div class="setting-label">

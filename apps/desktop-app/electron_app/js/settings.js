@@ -140,6 +140,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (scaleValue) scaleValue.textContent = `${(settings.modelScale || 1).toFixed(1)}x`;
         }
         
+        const renderMode = document.getElementById('render-mode');
+        if (renderMode) renderMode.value = settings.renderMode || 'live2d';
+        
+        const autoSwitchFallback = document.getElementById('auto-switch-fallback');
+        if (autoSwitchFallback) autoSwitchFallback.checked = settings.autoSwitchFallback || false;
+        
         const wallpaperMode = document.getElementById('wallpaper-mode');
         if (wallpaperMode) wallpaperMode.value = settings.wallpaperMode || 'overlay';
         
@@ -516,6 +522,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Appearance
             model: document.getElementById('model-select')?.value || 'miara_pro',
             modelScale: parseFloat(document.getElementById('model-scale')?.value || 1),
+            renderMode: document.getElementById('render-mode')?.value || 'live2d',
+            autoSwitchFallback: document.getElementById('auto-switch-fallback')?.checked || false,
             wallpaperMode: document.getElementById('wallpaper-mode')?.value || 'overlay',
             wallpaperEffect: document.getElementById('wallpaper-effect')?.value || 'none',
             
@@ -558,6 +566,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Apply to Live2D manager
         if (window.angelaApp && window.angelaApp.live2dManager) {
+            // 應用渲染模式設置
+            if (settings.renderMode) {
+                if (settings.renderMode === 'live2d' && window.angelaApp.live2dManager.getMode() === 'fallback') {
+                    window.angelaApp.live2dManager.switchToLive2D();
+                    console.log('[Settings] 切換到 Live2D 模式');
+                } else if (settings.renderMode === 'fallback' && window.angelaApp.live2dManager.getMode() === 'live2d') {
+                    window.angelaApp.live2dManager.switchToFallback();
+                    console.log('[Settings] 切換到立繫模式');
+                }
+                // 保存到本地存儲
+                localStorage.setItem('render_mode', settings.renderMode);
+            }
+            
             // Load selected model
             if (settings.model) {
                 const modelPath = 'resources/models/' + settings.model;

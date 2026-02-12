@@ -341,6 +341,7 @@ class StateMatrix4D {
         const mappings = this.getStateToLive2DMappings();
         const dimChanges = changes || {};
         
+        // 處理 Live2D 模式
         for (const [key, value] of Object.entries(dimChanges)) {
             const paramKey = `${dimensionName}_${key}`;
             if (mappings[paramKey]) {
@@ -352,8 +353,71 @@ class StateMatrix4D {
         if (dominantEmotion && mappings[dominantEmotion]) {
             this.live2DManager.setExpression(dominantEmotion);
         }
+        
+        // 處理 Fallback 模式 - 根據主導情緒切換立繫
+        if (this.live2DManager.isFallback) {
+            this._applyFallbackLayers();
+        }
     }
     
+    /**
+         * 根據主導情緒應用 fallback 模式的三層立繫渲染
+         */
+        _applyFallbackLayers() {
+            if (!this.live2DManager || !this.live2DManager.isFallback) {
+                return;
+            }
+            
+            const dominantEmotion = this.getDominantEmotion();
+            
+            // 根據情感維度 (γ) 選擇表情索引
+            const emotionToIndex = {
+                'happy': 1,
+                'sad': 2,
+                'surprised': 3,
+                'angry': 4,
+                'shy': 5,
+                'love': 6,
+                'calm': 7,
+                'neutral': 0
+            };
+            
+            // 根據認知維度 (β) 和生理維度 (α) 選擇姿態索引
+            let poseIndex = 0;  // 默认: idle
+            
+            const curiosity = this.beta.values.curiosity || 0.5;
+            const arousal = this.alpha.values.arousal || 0.5;
+            const focus = this.beta.values.focus || 0.5;
+            
+            // 根據狀態選擇姿態
+            if (arousal > 0.7) {
+                poseIndex = 2;  // dancing
+            } else if (curiosity > 0.7) {
+                poseIndex = 1;  // thinking
+            } else if (focus > 0.7) {
+                poseIndex = 1;  // thinking
+            } else if (arousal < 0.3) {
+                poseIndex = 5;  // nodding
+            }
+            
+            // 設置表情索引
+            if (dominantEmotion && emotionToIndex[dominantEmotion] !== undefined) {
+                this.live2DManager.expressionIndex = emotionToIndex[dominantEmotion];
+            }
+            
+            // 設置姿態索引
+            this.live2DManager.poseIndex = poseIndex;
+            
+            console.log(`[StateMatrix] Applied fallback layers: expression=${this.live2DManager.expressionIndex}, pose=${this.live2DManager.poseIndex}`);
+        }
+        
+        /**
+         * 根據主導情緒應用 fallback 模式的立繫表情（舊版，保留兼容）
+         */
+        _applyFallbackExpression(dominantEmotion) {
+            // 使用新的三層渲染系統
+            this._applyFallbackLayers();
+        }    
     getStateToLive2DMappings() {
         return {
             alpha_energy: 'ParamEnergy',

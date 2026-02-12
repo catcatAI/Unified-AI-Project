@@ -353,6 +353,14 @@ function createMainWindow() {
       },
       { type: 'separator' },
       {
+        label: 'Rendering Mode',
+        submenu: [
+          { label: 'Live2D (Animated)', type: 'radio', checked: true, click: () => setRenderMode('live2d') },
+          { label: 'Static Image (立繫)', type: 'radio', checked: false, click: () => setRenderMode('fallback') }
+        ]
+      },
+      { type: 'separator' },
+      {
         label: 'Performance Mode',
         submenu: [
           { label: 'Lite', type: 'radio', checked: currentPerformanceMode === 'lite', click: () => setPerformanceMode('lite') },
@@ -534,6 +542,13 @@ function createTray() {
             { label: '2D (Basic)', type: 'radio', checked: currentWallpaperMode === '2D', click: () => setWallpaperMode('2D') },
             { label: '2.5D (Parallax)', type: 'radio', checked: currentWallpaperMode === '2.5D', click: () => setWallpaperMode('2.5D') },
             { label: '3D (Full)', type: 'radio', checked: currentWallpaperMode === '3D', click: () => setWallpaperMode('3D') }
+          ]
+        },
+        {
+          label: 'Rendering Mode',
+          submenu: [
+            { label: 'Live2D (Animated)', type: 'radio', checked: true, click: () => setRenderMode('live2d') },
+            { label: 'Static Image (立繫)', type: 'radio', checked: false, click: () => setRenderMode('fallback') }
           ]
         },
         { type: 'separator' },
@@ -879,6 +894,11 @@ function setPerformanceMode(mode) {
 function setWallpaperMode(mode) {
   currentWallpaperMode = mode;
   sendToMainWindow('wallpaper-mode-changed', mode);
+  createTray(); // Refresh menu
+}
+
+function setRenderMode(mode) {
+  sendToMainWindow('render-mode', mode);
   createTray(); // Refresh menu
 }
 
