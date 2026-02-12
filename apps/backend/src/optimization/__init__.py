@@ -2,9 +2,10 @@
 性能优化模块初始化文件
 """
 
-from .performance_optimizer import (
 import logging
 logger = logging.getLogger(__name__)
+
+from .performance_optimizer import (
     PerformanceOptimizer,
     get_performance_optimizer,
     cache_result,

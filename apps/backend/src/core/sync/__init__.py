@@ -7,9 +7,10 @@ Version: 6.0.0
 Date: 2026-02-04
 """
 
-from .cloud_sync import (
 import logging
 logger = logging.getLogger(__name__)
+
+from .cloud_sync import (
     CloudSyncManager,
     CloudSyncConfig,
     SyncItem,

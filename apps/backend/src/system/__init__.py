@@ -4,10 +4,11 @@ This module provides hardware detection, deployment management, and system optim
 capabilities for the Unified AI Project.
 """
 
-# Hardware Detection
-from .hardware_probe import (
 import logging
 logger = logging.getLogger(__name__)
+
+# Hardware Detection
+from .hardware_probe import (
     HardwareProbe,
     HardwareProfile,
     CPUInfo,

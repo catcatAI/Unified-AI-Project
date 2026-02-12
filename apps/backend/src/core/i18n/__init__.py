@@ -7,9 +7,10 @@ Version: 6.0.0
 Date: 2026-02-04
 """
 
-from .i18n_manager import (
 import logging
 logger = logging.getLogger(__name__)
+
+from .i18n_manager import (
     I18nManager,
     I18nConfig,
     I18nContext,

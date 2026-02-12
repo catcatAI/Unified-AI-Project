@@ -12,14 +12,15 @@ Hardware Module - Angela AI Matrix
 
 使用方式:
     from core.hardware import get_hardware_center
-    
+
     center = await get_hardware_center()
     profile = center.get_hardware_profile()
 """
 
-from .unified_hardware_center import (
 import logging
 logger = logging.getLogger(__name__)
+
+from .unified_hardware_center import (
     UnifiedHardwareCenter,
     HardwareDetector,
     PrecisionManager,

@@ -3,9 +3,10 @@ Security Module for Unified AI Project:
 Provides comprehensive security controls for AI operations:
 """
 
-from .permission_control import (
 import logging
 logger = logging.getLogger(__name__)
+
+from .permission_control import (
     PermissionControlSystem,
     PermissionType,
     PermissionLevel,

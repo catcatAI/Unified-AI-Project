@@ -113,9 +113,9 @@ class QueryOptimizer:
                 return data
 
         except Exception as e:
-           logger.error(f'Error in {__name__}: {e}', exc_info=True)
-           
-# 记录错误指标
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+
+            # 记录错误指标
             execution_time = time.time() - start_time
             await self._record_query_metrics(query_hash, execution_time, False)
             logger.error(f"查询执行失败: {e}")

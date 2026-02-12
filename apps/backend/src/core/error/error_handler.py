@@ -475,9 +475,9 @@ def handle_errors(
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-               logger.error(f'Error in {__name__}: {e}', exc_info=True)
-               
-# 同步函數中的錯誤處理
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+
+                # 同步函數中的錯誤處理
                 error = asyncio.run(error_handler.handle_error(
                     e, category, severity,
                     context={'function': func.__name__, 'args': str(args)[:100]}

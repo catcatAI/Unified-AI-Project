@@ -243,9 +243,9 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
         )
         source = "llm" if service and service.is_available else "fallback"
     except Exception as e:
-       logger.error(f'Error in {__name__}: {e}', exc_info=True)
-       
-# 如果 LLM 服務不可用，使用備份回應
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+
+        # 如果 LLM 服務不可用，使用備份回應
         print(f"[WARNING] LLM service error: {e}")
         response_text = generate_angela_response(user_message, user_name)
         source = "fallback"

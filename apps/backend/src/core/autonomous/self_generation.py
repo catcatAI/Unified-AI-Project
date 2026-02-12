@@ -340,9 +340,9 @@ class SelfGeneration:
                 
                 return
             except Exception as e:
-               logger.error(f'Error in {__name__}: {e}', exc_info=True)
-               
-# Fallback to simple generation if workflow fails
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+
+                # Fallback to simple generation if workflow fails
                 pass
         
         # Use Live2D generator directly if available
@@ -366,9 +366,9 @@ class SelfGeneration:
                 
                 return
             except Exception as e:
-               logger.error(f'Error in {__name__}: {e}', exc_info=True)
-               
-# Fallback to placeholder
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+
+                # Fallback to placeholder
                 pass
         
         # Fallback: Simulate processing time for backwards compatibility

@@ -10,9 +10,10 @@ Version: 6.0.0
 Date: 2026-02-04
 """
 
-from .soul_core import (
 import logging
 logger = logging.getLogger(__name__)
+
+from .soul_core import (
     SoulCore,
     SoulSignature,
     IdentityCore,
