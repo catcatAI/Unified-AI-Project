@@ -26,6 +26,8 @@ import asyncio
 import os
 import shutil
 import json
+import subprocess
+import shlex
 
 
 class FileOperationType(Enum):
@@ -667,16 +669,67 @@ class DesktopInteraction:
                 
             elif system == "Darwin":  # macOS
                 script = f'tell application "Finder" to set desktop picture to POSIX file "{image_path.absolute()}"'
-                os.system(f"osascript -e '{script}'")
-                return True
-                
+                # 使用 subprocess.run() 替代 os.system() 防止命令注入
+                try:
+                    subprocess.run(
+                        ["osascript", "-e", script],
+                        check=True,
+                        capture_output=True,
+                        text=True
+                    )
+                    return True
+                except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                    print(f"macOS 壁紙設置失敗: {e}")
+                    return False
+
             elif system == "Linux":
                 # Try various desktop environments
                 de = os.environ.get("DESKTOP_SESSION", "").lower()
-                if "gnome" in de or "unity" in de:
-                    os.system(f"gsettings set org.gnome.desktop.background picture-uri file://{image_path.absolute()}")
-                elif "kde" in de:
-                    os.system(f"qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript 'var allDesktops = desktops(); for (i=0;i<allDesktops.length;i++) {{ d = allDesktops[i]; d.wallpaperPlugin = \"org.kde.image\"; d.currentConfigGroup = Array(\"Wallpaper\", \"org.kde.image\", \"General\"); d.writeConfig(\"Image\", \"file://{image_path.absolute()}\") }}'")
+                try:
+                    if "gnome" in de or "unity" in de:
+                        # 使用 subprocess.run() 替代 os.system() 防止命令注入
+                        image_uri = f"file://{image_path.absolute()}"
+                        subprocess.run(
+                            [
+                                "gsettings",
+                                "set",
+                                "org.gnome.desktop.background",
+                                "picture-uri",
+                                image_uri
+                            ],
+                            check=True,
+                            capture_output=True,
+                            text=True
+                        )
+                        return True
+                    elif "kde" in de:
+                        # 使用 subprocess.run() 替代 os.system() 防止命令注入
+                        image_path_str = str(image_path.absolute())
+                        kde_script = (
+                            'var allDesktops = desktops(); '
+                            'for (i=0;i<allDesktops.length;i++) { '
+                            'd = allDesktops[i]; '
+                            'd.wallpaperPlugin = "org.kde.image"; '
+                            'd.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General"); '
+                            'd.writeConfig("Image", "file://' + image_path_str + '") '
+                            '}'
+                        )
+                        subprocess.run(
+                            [
+                                "qdbus",
+                                "org.kde.plasmashell",
+                                "/PlasmaShell",
+                                "org.kde.PlasmaShell.evaluateScript",
+                                kde_script
+                            ],
+                            check=True,
+                            capture_output=True,
+                            text=True
+                        )
+                        return True
+                except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                    print(f"Linux 壁紙設置失敗: {e}")
+                    return False
                 return True
                 
         except Exception:

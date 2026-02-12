@@ -471,7 +471,44 @@ def main():
         print(f"\n⚠️  缺失依赖: {', '.join(missing)}")
         print("请运行: python install_angela.py")
         return 1
-    
+
+    # 安全检查: 验证密钥
+    print("\n🔒 安全检查: 验证系统密钥...")
+    try:
+        # 添加 src 到路径
+        sys.path.insert(0, str(Path(__file__).parent / "apps" / "backend"))
+        from src.core.security.key_validator import validate_system_keys
+
+        keys_valid, key_results = validate_system_keys()
+        if not keys_valid:
+            print("\n⚠️  密钥安全检查失败！")
+            print("请确保:")
+            print("1. 复制 .env.example 为 .env")
+            print("2. 使用强随机生成器创建密钥")
+            print("3. 运行: python -m src.core.security.key_generator")
+            print("4. 不要使用占位符或默认值")
+            print()
+            print("详细报告:")
+            for result in key_results:
+                if not result.is_valid:
+                    for issue in result.issues:
+                        print(f"  - {issue}")
+            print("\n是否继续启动? (不推荐 - 安全风险) [y/N]: ", end="")
+            try:
+                response = input().strip().lower()
+                if response != 'y':
+                    print("启动已取消。")
+                    return 1
+                print("⚠️  警告: 使用不安全的密钥启动系统！")
+            except (EOFError, KeyboardInterrupt):
+                print("\n启动已取消。")
+                return 1
+        else:
+            print("✅ 密钥安全检查通过")
+    except Exception as e:
+        print(f"⚠️  密钥验证模块加载失败: {e}")
+        print("将跳过密钥验证继续启动（不推荐）")
+
     backend_proc = None
     desktop_proc = None
 

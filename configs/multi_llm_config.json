@@ -12,13 +12,17 @@
     "openai-gpt4": {
         "base_url": "https://api.openai.com/v1",
         "model_name": "gpt-4",
-        "api_key": "YOUR_API_KEY",
-        "enabled": false
+        "api_key": "",
+        "api_key_env": "OPENAI_API_KEY",
+        "enabled": false,
+        "note": "從環境變量 OPENAI_API_KEY 讀取 API 密鑰"
     },
     "anthropic-claude": {
         "base_url": "https://api.anthropic.com/v1",
         "model_name": "claude-3-opus-20240229",
-        "api_key": "YOUR_API_KEY",
-        "enabled": false
+        "api_key": "",
+        "api_key_env": "ANTHROPIC_API_KEY",
+        "enabled": false,
+        "note": "從環境變量 ANTHROPIC_API_KEY 讀取 API 密鑰"
     }
 }

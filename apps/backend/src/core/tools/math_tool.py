@@ -1,10 +1,20 @@
 """
-数学工具 - 进行算术计算
+數學工具 - 進行算術計算
 """
 
 import os
 import re
+import logging
 from typing import Optional
+
+# 導入安全求值器
+try:
+    from src.core.security.secure_eval import safe_eval_arithmetic, EvalResult
+    SECURE_EVAL_AVAILABLE = True
+except ImportError:
+    SECURE_EVAL_AVAILABLE = False
+
+logger = logging.getLogger("math_tool")
 
 # 尝试导入TensorFlow
 try:
@@ -104,17 +114,44 @@ def calculate(input_string: str) -> ToolDispatcherResponse:
             tool_name_attempted="calculate"
         )
 
-    # 计算结果
+    # 計算結果
     try:
-        result = eval(problem)
-        return ToolDispatcherResponse(
-            status="success",
-            payload=str(result),
-            tool_name_attempted="calculate"
-        )
+        if SECURE_EVAL_AVAILABLE:
+            # 使用安全求值器
+            eval_result = safe_eval_arithmetic(problem)
+
+            if eval_result.success:
+                return ToolDispatcherResponse(
+                    status="success",
+                    payload=str(eval_result.result),
+                    tool_name_attempted="calculate"
+                )
+            else:
+                return ToolDispatcherResponse(
+                    status="failure_tool_error",
+                    payload=f"計算錯誤: {eval_result.error}",
+                    tool_name_attempted="calculate"
+                )
+        else:
+            # 備用方案：使用受限的 eval（僅允許數學運算）
+            # 注意：這不是完全安全的，僅作為臨時備用
+            allowed_names = {
+                'abs': abs,
+                'round': round,
+                'pow': pow,
+                'min': min,
+                'max': max,
+            }
+            result = eval(problem, {"__builtins__": None}, allowed_names)
+            return ToolDispatcherResponse(
+                status="success",
+                payload=str(result),
+                tool_name_attempted="calculate"
+            )
     except Exception as e:
+        logger.error(f"計算錯誤: {e}, 問題: {problem}")
         return ToolDispatcherResponse(
             status="failure_tool_error",
-            payload=f"计算错误: {str(e)}",
+            payload=f"計算錯誤: {str(e)}",
             tool_name_attempted="calculate"
         )
