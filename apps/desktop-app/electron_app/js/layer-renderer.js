@@ -236,15 +236,15 @@ class LayerRenderer {
         offsetX *= displayScale;
         offsetY *= displayScale;
         
-        // ✅ 添加坐標四捨五入到整數，確保像素對齊
-        targetWidth = Math.round(targetWidth);
-        targetHeight = Math.round(targetHeight);
-        offsetX = Math.round(offsetX);
-        offsetY = Math.round(offsetY);
+        // ✅ 使用 Math.ceil 避免亞像素間隙
+        targetWidth = Math.ceil(targetWidth);
+        targetHeight = Math.ceil(targetHeight);
+        offsetX = Math.floor(offsetX);
+        offsetY = Math.floor(offsetY);
         
-        // 居中顯示
-        const x = Math.round((this.canvas.width - targetWidth) / 2 + offsetX);
-        const y = Math.round((this.canvas.height - targetHeight) / 2 + offsetY);
+        // 居中顯示（確保坐標為整數）
+        const x = Math.floor((this.canvas.width - targetWidth) / 2 + offsetX);
+        const y = Math.floor((this.canvas.height - targetHeight) / 2 + offsetY);
         
         this.ctx.drawImage(img, x, y, targetWidth, targetHeight);
     }
@@ -295,11 +295,11 @@ class LayerRenderer {
             let targetWidth = pos.targetWidth * displayScale;
             let targetHeight = pos.targetHeight * displayScale;
             
-            // ✅ 添加坐標四捨五入到整數，確保像素對齊
-            targetX = Math.round(targetX);
-            targetY = Math.round(targetY);
-            targetWidth = Math.round(targetWidth);
-            targetHeight = Math.round(targetHeight);
+            // ✅ 使用 Math.ceil/Floor 避免亞像素間隙
+            targetX = Math.floor(targetX);
+            targetY = Math.floor(targetY);
+            targetWidth = Math.ceil(targetWidth);
+            targetHeight = Math.ceil(targetHeight);
             
             // ✅ 完整的邊界檢查（確保坐標和尺寸都在畫布範圍內）
             if (targetX < 0) targetX = 0;
@@ -582,10 +582,10 @@ class LayerRenderer {
         // 1. 應用頭部遮罩（如果有配置）
         if (poseConfig.headMaskRect) {
             const mask = poseConfig.headMaskRect;
-            const x = Math.round(mask.x * displayScale);
-            const y = Math.round(mask.y * displayScale);
-            const width = Math.round(mask.width * displayScale);
-            const height = Math.round(mask.height * displayScale);
+            const x = Math.floor(mask.x * displayScale);
+            const y = Math.floor(mask.y * displayScale);
+            const width = Math.ceil(mask.width * displayScale);
+            const height = Math.ceil(mask.height * displayScale);
             
             // 繪製頭部遮罩（完全透明）
             this.ctx.fillStyle = 'rgba(0, 0, 0, 1)';
@@ -597,10 +597,10 @@ class LayerRenderer {
         // 2. 應用手部遮罩（如果有配置）
         if (poseConfig.handMaskRects && poseConfig.handMaskRects.length > 0) {
             for (const maskRect of poseConfig.handMaskRects) {
-                const x = Math.round(maskRect.x * displayScale);
-                const y = Math.round(maskRect.y * displayScale);
-                const width = Math.round(maskRect.width * displayScale);
-                const height = Math.round(maskRect.height * displayScale);
+                const x = Math.floor(maskRect.x * displayScale);
+                const y = Math.floor(maskRect.y * displayScale);
+                const width = Math.ceil(maskRect.width * displayScale);
+                const height = Math.ceil(maskRect.height * displayScale);
                 
                 // 繪製手部遮罩（完全透明）
                 this.ctx.fillStyle = 'rgba(0, 0, 0, 1)';

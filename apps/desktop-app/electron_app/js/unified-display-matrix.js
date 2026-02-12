@@ -588,6 +588,62 @@ class UnifiedDisplayMatrix {
     // ================================================================
 
     /**
+     * 驗證坐標是否在有效範圍內
+     * @param {number} x - X 坐標
+     * @param {number} y - Y 坐標
+     * @param {string} type - 坐標類型（'screen', 'canvas', 'resource'）
+     * @returns {object} - 驗證結果
+     */
+    validateCoordinate(x, y, type = 'canvas') {
+        const result = {
+            valid: true,
+            x: x,
+            y: y,
+            error: null
+        };
+
+        // 檢查坐標是否為數字
+        if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
+            result.valid = false;
+            result.error = '坐標必須是有效數字';
+            return result;
+        }
+
+        // 檢查坐標是否為有限數
+        if (!isFinite(x) || !isFinite(y)) {
+            result.valid = false;
+            result.error = '坐標必須是有限數';
+            return result;
+        }
+
+        // 根據坐標類型檢查範圍
+        switch (type) {
+            case 'screen':
+                // 屏幕坐標通常沒有明確範圍限制
+                break;
+            case 'canvas':
+                // Canvas 坐標應在 0 到 baseWidth/baseHeight 之間
+                const baseWidth = this.currentState.baseWidth;
+                const baseHeight = this.currentState.baseHeight;
+                if (x < 0 || x > baseWidth || y < 0 || y > baseHeight) {
+                    result.valid = false;
+                    result.error = `坐標超出 Canvas 範圍 [0,0]-[${baseWidth},${baseHeight}]`;
+                }
+                break;
+            case 'resource':
+                // 資源坐標範圍取決於當前精度
+                const precision = this.resourceMatrix[this.currentState.resourcePrecision];
+                if (x < 0 || x > precision.width || y < 0 || y > precision.height) {
+                    result.valid = false;
+                    result.error = `坐標超出資源範圍 [0,0]-[${precision.width},${precision.height}]`;
+                }
+                break;
+        }
+
+        return result;
+    }
+
+    /**
      * 屏幕坐标 → 画布坐标
      * 
      * 公式:
