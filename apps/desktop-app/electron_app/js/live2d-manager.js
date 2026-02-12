@@ -71,6 +71,9 @@ class Live2DManager {
         this.fallbackCtx = null;
         this.fallbackWrapper = null;
         this.characterImage = null;  // 只加载美术资源
+        this.characterImages = {};  // 存储所有加载的立繪圖片
+        this.currentCharacterImageId = 'default';  // 當前選擇的立繪ID
+        this.spriteSheetIndex = 0;  // 當前表情/姿態索引（用於 sprite sheet）
         
         // Expressions
         this.expressions = {
@@ -372,17 +375,97 @@ class Live2DManager {
         const canvas = this.fallbackCanvas;
         
         // Clear
-        ctx.fillStyle = '#1a1a2e';
+        ctx.fillStyle = '#1a1a1e';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // 只绘制美术资源，没有就不绘制
-        if (this.characterImage) {
-            const scale = this.udm ? this.udm.getResourceToBaseScale() : 1.0;
-            ctx.drawImage(
-                this.characterImage,
-                508 * scale, 26 * scale,
-                391 * scale, 491 * scale
-            );
+        // 繪制當前選擇的立繪
+        const imageData = this.characterImages[this.currentCharacterImageId];
+        if (!imageData) {
+            console.warn('[Live2DManager] No character image loaded:', this.currentCharacterImageId);
+            return;
+        }
+
+        const img = imageData.image;
+        const config = imageData.config;
+        const params = config.renderParams;
+        const scale = this.udm ? this.udm.getResourceToBaseScale() : 1.0;
+
+        if (config.type === 'single_image') {
+            // 單張圖片渲染
+            const targetWidth = params.targetWidth * scale;
+            const targetHeight = params.targetHeight * scale;
+            
+            // 如果有 scaleToHeight，計算縮放比例
+            if (params.scaleToHeight) {
+                const scaleFactor = params.scaleToHeight / params.targetHeight;
+                const scaledWidth = params.targetWidth * scaleFactor * scale;
+                const scaledHeight = params.scaleToHeight * scale;
+                
+                // 水平居中
+                const offsetX = params.offsetX * scale;
+                const centerY = canvas.height / 2;
+                const startY = centerY - scaledHeight / 2;
+                
+                ctx.drawImage(
+                    img,
+                    offsetX, startY,
+                    scaledWidth, scaledHeight
+                );
+            } else {
+                ctx.drawImage(
+                    img,
+                    params.offsetX * scale,
+                    params.offsetY * scale,
+                    targetWidth, targetHeight
+                );
+            }
+            
+            console.log('[Live2DManager] Rendered single image:', config.name);
+        } else if (config.type === 'sprite_sheet') {
+            // Sprite sheet 渲染
+            const cellSize = config.cellSize;
+            const grid = config.grid;
+            
+            // 計算當前格子的位置
+            const colIndex = this.spriteSheetIndex % grid.cols;
+            const rowIndex = Math.floor(this.spriteSheetIndex / grid.cols);
+            
+            const sourceX = colIndex * cellSize.width;
+            const sourceY = rowIndex * cellSize.height;
+            
+            const targetWidth = params.targetWidth * scale;
+            const targetHeight = params.targetHeight * scale;
+            
+            // 如果有 scaleToHeight，計算縮放比例
+            if (params.scaleToHeight) {
+                const scaleFactor = params.scaleToHeight / params.targetHeight;
+                const scaledWidth = cellSize.width * scaleFactor * scale;
+                const scaledHeight = params.scaleToHeight * scale;
+                
+                // 水平居中
+                const centerX = canvas.width / 2;
+                const startY = (canvas.height - scaledHeight) / 2;
+                
+                ctx.drawImage(
+                    img,
+                    sourceX, sourceY,
+                    cellSize.width, cellSize.height,
+                    centerX - scaledWidth / 2, startY,
+                    scaledWidth, scaledHeight
+                );
+            } else {
+                ctx.drawImage(
+                    img,
+                    sourceX, sourceY,
+                    cellSize.width, cellSize.height,
+                    params.offsetX * scale,
+                    params.offsetY * scale,
+                    targetWidth, targetHeight
+                );
+            }
+            
+            console.log('[Live2DManager] Rendered sprite sheet cell:', config.name, 
+                        `index=${this.spriteSheetIndex}, pos=(${colIndex}, ${rowIndex})`);
         }
     }
     

@@ -605,6 +605,89 @@ class AngelaApp {
             console.log('Screen changed:', d);
             this.inputHandler?.updateRegions();
         });
+        
+        // 設置鍵盤快捷鍵
+        this._setupKeyboardShortcuts();
+    }
+
+    /**
+     * 設置鍵盤快捷鍵
+     */
+    _setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // 如果在輸入框中，不處理快捷鍵
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            switch (e.key) {
+                case '1':
+                    // 切換到表情包 1
+                    this.live2dManager?.setCharacterImage('expression_pack_1');
+                    this.showStatus('切換到表情包 1', 2000);
+                    break;
+                case '2':
+                    // 切換到 AI 助手
+                    this.live2dManager?.setCharacterImage('fullbody_ai_assistant');
+                    this.showStatus('切換到 AI 助手', 2000);
+                    break;
+                case '3':
+                    // 切換到姿態序列 1
+                    this.live2dManager?.setCharacterImage('pose_sequence_1');
+                    this.showStatus('切換到姿態序列 1', 2000);
+                    break;
+                case '4':
+                    // 切換到默認立繪
+                    this.live2dManager?.setCharacterImage('default');
+                    this.showStatus('切換到默認立繪', 2000);
+                    break;
+                case '[':
+                    // 上一張立繪
+                    if (this.live2dManager?.previousCharacterImage()) {
+                        const images = this.live2dManager?.getAvailableCharacterImages() || [];
+                        const current = images.find(img => img.id === this.live2dManager?.currentCharacterImageId);
+                        this.showStatus(`立繪: ${current?.name || 'Unknown'}`, 2000);
+                    }
+                    break;
+                case ']':
+                    // 下一張立繪
+                    if (this.live2dManager?.nextCharacterImage()) {
+                        const images = this.live2dManager?.getAvailableCharacterImages() || [];
+                        const current = images.find(img => img.id === this.live2dManager?.currentCharacterImageId);
+                        this.showStatus(`立繪: ${current?.name || 'Unknown'}`, 2000);
+                    }
+                    break;
+                case '-':
+                    // 上一個表情/姿態（適用於 sprite sheet）
+                    const imageData = this.live2dManager?.characterImages[this.live2dManager?.currentCharacterImageId];
+                    if (imageData?.config?.type === 'sprite_sheet') {
+                        const config = imageData.config;
+                        const totalCells = config.grid.rows * config.cols;
+                        const currentIndex = this.live2dManager?.spriteSheetIndex || 0;
+                        const newIndex = (currentIndex - 1 + totalCells) % totalCells;
+                        this.live2dManager?.setSpriteSheetIndex(newIndex);
+                        
+                        const expressions = this.live2dManager?.getAvailableExpressions() || [];
+                        const currentExpr = expressions[newIndex];
+                        this.showStatus(`表情/姿態: ${currentExpr?.name || newIndex}`, 2000);
+                    }
+                    break;
+                case '=':
+                case '+':
+                    // 下一個表情/姿態（適用於 sprite sheet）
+                    const imageData2 = this.live2dManager?.characterImages[this.live2dManager?.currentCharacterImageId];
+                    if (imageData2?.config?.type === 'sprite_sheet') {
+                        const newIndex = this.live2dManager?.nextSpriteSheetIndex();
+                        const expressions = this.live2dManager?.getAvailableExpressions() || [];
+                        const currentExpr = expressions[newIndex];
+                        this.showStatus(`表情/姿態: ${currentExpr?.name || newIndex}`, 2000);
+                    }
+                    break;
+            }
+        });
+        
+        console.log('[App] Keyboard shortcuts configured');
+        console.log('[App] 1-4: 切換立繪 | []: 上一張/下一張立繪 | -+: 上一個/下一個表情');
     }
 
     async _loadDefaultModel() {
