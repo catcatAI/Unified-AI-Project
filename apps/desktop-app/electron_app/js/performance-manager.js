@@ -1,4 +1,35 @@
 
+
+class PerformanceManager {
+    constructor(config = {}) {
+        this.config = config;
+        this.hardwareProfile = null;
+        this.currentMode = 'standard';
+        this.wallpaperMode = '2D'; // 預設 2D
+        this.targetFPS = 60;
+        this.currentFPS = 60;
+        this.resolutionScale = 1.0;
+        this.effectsLevel = 2;
+        this.live2DManager = null;
+        this.websocket = null;
+        this.fpsHistory = [];
+        this.maxFpsHistory = 60;
+        this.lastFrameTime = performance.now();
+        this.frameCount = 0;
+        this.performanceMonitor = null;
+        this.autoAdjustEnabled = true;
+        this.lastModeChangeTime = 0;
+        this.modeChangeCooldown = 10000; // 10 seconds cooldown between mode changes
+        this.lastAutoConfigureTime = 0; // 防止短时间内重复自动配置
+        this.pendingModeChange = null;
+        this.pendingModeChangeTime = 0;
+        this.isVisible = true; // Page visibility tracking
+        
+        // 性能变更消息确认机制
+        this._pendingPerformanceChanges = new Map(); // 存储待确认的性能变更
+        this._changeConfirmationTimeout = 5000; // 5秒确认超时
+        this._changeRetryCount = 3; // 最大重试次数
+        
         // 性能能力矩阵 - 三级降级架构
         this.capabilityMatrix = {
             // 硬件能力
@@ -34,36 +65,6 @@
             missing_caps: [],     // 缺失的能力列表
             fallbacks_active: []   // 激活的回退方案
         };
-class PerformanceManager {
-    constructor(config = {}) {
-        this.config = config;
-        this.hardwareProfile = null;
-        this.currentMode = 'standard';
-        this.wallpaperMode = '2D'; // 預設 2D
-        this.targetFPS = 60;
-        this.currentFPS = 60;
-        this.resolutionScale = 1.0;
-        this.effectsLevel = 2;
-        this.live2DManager = null;
-        this.websocket = null;
-        this.fpsHistory = [];
-        this.maxFpsHistory = 60;
-        this.lastFrameTime = performance.now();
-        this.frameCount = 0;
-        this.performanceMonitor = null;
-        this.autoAdjustEnabled = true;
-        this.lastModeChangeTime = 0;
-        this.modeChangeCooldown = 10000; // 10 seconds cooldown between mode changes
-        this.lastAutoConfigureTime = 0; // 防止短时间内重复自动配置
-        this.pendingModeChange = null;
-        this.pendingModeChangeTime = 0;
-        this.isVisible = true; // Page visibility tracking
-        
-        // 性能变更消息确认机制
-        this._pendingPerformanceChanges = new Map(); // 存储待确认的性能变更
-        this._changeConfirmationTimeout = 5000; // 5秒确认超时
-        this._changeRetryCount = 3; // 最大重试次数
-        
         
         // Add page visibility handling to pause monitoring when hidden
         this._visibilityChangeHandler = () => {
@@ -272,7 +273,7 @@ class PerformanceManager {
     
     _checkLive2DSDK() {
         try {
-            return 'window.Live2DCubismCore' in window && window.Live2DCubismCore !== null;
+            return window.Live2DCubismCore !== undefined && window.Live2DCubismCore !== null;
         } catch (e) {
             console.warn('[PerformanceManager] Live2D SDK check failed:', e);
             return false;
@@ -432,6 +433,33 @@ class PerformanceManager {
             this.capabilityState.degraded ? '降级版' : '基础版',
             this.capabilityState.missing_caps.length > 0 ? `缺失能力: ${this.capabilityState.missing_caps.join(', ')}` : '所有能力正常'
         );
+    }
+
+    /**
+     * 根据能力状态调整推荐模式
+     * 根据缺失的能力降低性能模式，确保系统能够运行
+     */
+    _adjustModeForCapabilityState() {
+        if (!this.capabilityState) {
+            return;
+        }
+        
+        // 如果是完整版，使用当前推荐模式
+        if (this.capabilityState.complete) {
+            return;
+        }
+        
+        // 降级版或基础版，降低模式
+        if (this.capabilityState.degraded) {
+            console.log('[PerformanceManager] 降级模式启用，调整性能配置');
+            // 根据缺失能力降低模式
+            if (this.currentMode === 'ultra' || this.currentMode === 'high') {
+                this.setPerformanceMode('medium');
+            }
+        } else if (this.capabilityState.basic) {
+            console.log('[PerformanceManager] 基础模式启用，使用最低性能配置');
+            this.setPerformanceMode('low');
+        }
     }
     
     

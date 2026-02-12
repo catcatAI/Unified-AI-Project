@@ -257,8 +257,21 @@ class Live2DCubismWrapper {
                 this.texturePaths.push(texPath);
             }
             
-            // Step 6: Create the model
-            console.log('[loadModel] Step 6: Creating Cubism model...');
+            // Step 6: Initialize WebGL context
+            console.log('[loadModel] Step 6: Initializing WebGL context...');
+            
+            // Set canvas dimensions if not set
+            if (!this.canvas.width || this.canvas.width === 0) {
+                this.canvas.width = 1280;
+                this.canvas.height = 720;
+                console.log('[loadModel] Canvas dimensions set to:', this.canvas.width, 'x', this.canvas.height);
+            }
+            
+            // Initialize WebGL context
+            await this.initializeWebGL();
+            
+            // Step 7: Create the model
+            console.log('[loadModel] Step 7: Creating Cubism model...');
             await this.createCubismModel();
             await this.setupMotionGroups();
             await this.setupModelParameters();

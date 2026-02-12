@@ -162,3 +162,8 @@ const ANGELA_CHARACTER_CONFIG = {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ANGELA_CHARACTER_CONFIG;
 }
+
+// 浏览器环境导出
+if (typeof window !== 'undefined') {
+    window.ANGELA_CHARACTER_CONFIG = ANGELA_CHARACTER_CONFIG;
+}

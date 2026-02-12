@@ -289,6 +289,14 @@ class AngelaApp {
         const wrapper = document.querySelector('.canvas-wrapper') || document.getElementById('fallback-wrapper');
         const canvas = document.getElementById('fallback-canvas') || document.getElementById('live2d-canvas');
         
+        // 确保两个 canvas 都有正确的尺寸
+        const live2dCanvas = document.getElementById('live2d-canvas');
+        if (live2dCanvas) {
+            live2dCanvas.width = 1280;
+            live2dCanvas.height = 720;
+            console.log('[AngelaApp] live2d-canvas dimensions set to 1280x720');
+        }
+        
         // 创建 UDM 实例（传入元素引用）
         try {
             this.udm = new UnifiedDisplayMatrix({

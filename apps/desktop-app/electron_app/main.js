@@ -93,13 +93,18 @@ app.whenReady().then(async () => {
   app.commandLine.appendSwitch('enable-gpu-driver-bug-workarounds');  // Driver compatibility
   
   // Register file protocol for loading Live2D model files
+  // Get absolute application directory path
+  const appDir = path.dirname(path.resolve(__filename));
+  
   // Define allowed directories to prevent path traversal attacks
   const ALLOWED_DIRECTORIES = [
-    require('path').join(__dirname, 'resources'),
-    require('path').join(__dirname, 'resources/models'),
-    require('path').join(__dirname, 'data'),
-    require('path').join(__dirname, 'models'),
-    require('path').join(__dirname, '..', '..', 'resources')
+    path.join(appDir, 'resources'),
+    path.join(appDir, '..'), // Parent directory for resources/
+    path.join(appDir, '..', '..'), // Two levels up for root resources/
+    path.join(appDir, 'resources/models'),
+    path.join(appDir, 'data'),
+    path.join(appDir, 'models'),
+    path.join(appDir, '..', '..', 'resources')
   ];
 
   protocol.registerFileProtocol('local', (request, callback) => {
@@ -131,14 +136,16 @@ app.whenReady().then(async () => {
       }
     }
     
-    // Ensure path starts with /
-    if (!urlPath.startsWith('/') && urlPath.indexOf('/') > -1) {
-      urlPath = '/' + urlPath;
+    // CRITICAL: Resolve relative to appDir (app directory), not current working directory
+    // This ensures the path is always resolved correctly regardless of where Node.js is run from
+    
+    // Remove leading slash to prevent path.resolve from treating it as absolute from root
+    if (urlPath.startsWith('/')) {
+      urlPath = urlPath.substring(1);
     }
     
-    // Use path.normalize to clean the path, then path.resolve for absolute path
-    const normalizedPath = require('path').normalize(urlPath);
-    const filePath = require('path').resolve(normalizedPath);
+    const normalizedPath = path.normalize(urlPath);
+    const filePath = path.resolve(appDir, normalizedPath);
     
     console.log('[Main] Local protocol resolved:', urlPath, '->', filePath);
     

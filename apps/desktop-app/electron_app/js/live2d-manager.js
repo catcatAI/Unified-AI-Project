@@ -171,7 +171,7 @@ class Live2DManager {
             
             // 加载模型
             await this.wrapper.loadModel(settings);
-            await this.wrapper.startRendering();
+            await this.wrapper.start();
             
             this.modelLoaded = true;
             this.isFallback = false;
