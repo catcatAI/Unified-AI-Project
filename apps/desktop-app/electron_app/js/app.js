@@ -14,7 +14,7 @@ class AngelaApp {
         this.audioHandler = null;
         this.hapticHandler = null;
         this.wallpaperHandler = null;
-        
+
         // 其他系统
         this.logger = null;
         this.dataPersistence = null;
@@ -30,21 +30,49 @@ class AngelaApp {
         this.apiClient = null;
         this.hardwareDetector = null;
         this.dialogueUI = null;
-        
+
         // UI 元素
         this.loadingOverlay = document.getElementById('loading-overlay');
         this.loadingText = document.getElementById('loading-text');
         this.progressBarFill = document.getElementById('progress-bar-fill');
         this.statusBar = document.getElementById('status-bar');
         this.controls = document.getElementById('controls');
-        
+
         // 状态
         this.isInitialized = false;
         this.currentModel = null;
         this.idleTimer = null;
         this.idleTimeout = 60000;
         this.loadingProgress = 0;  // 加载进度 0-100
-        
+
+        // 初始化顺序追蹤
+        this.initializationOrder = [];
+        this.initializationDependencies = {
+            'logger': [],                     // 無依賴
+            'dataPersistence': [],             // 無依賴
+            'security': [],                    // 無依賴
+            'i18n': [],                        // 無依賴
+            'themeManager': [],                // 無依賴
+            'userManager': [],                 // 無依賴
+            'hardwareDetection': [],           // 無依賴
+            'udm': [],                         // 無依賴
+            'stateMatrix': [],                 // 無依賴
+            'precisionManager': [],            // 無依賴
+            'maturityTracker': [],             // 無依賴
+            'performanceManager': ['window.angelaApp'],  // 需要全局實例
+            'detectionSystem': ['hardwareDetection'],    // 需要硬件檢測
+            'live2D': ['udm'],                 // 需要 UDM
+            'backendWebSocket': [],             // 無依賴
+            'apiClient': [],                   // 無依賴
+            'inputHandler': ['live2D'],        // 需要 Live2D
+            'audioHandler': [],                // 無依賴
+            'hapticHandler': [],               // 無依賴
+            'wallpaperHandler': [],            // 無依賴
+            'pluginManager': [],               // 無依賴
+            'performanceMonitor': [],          // 無依賴
+            'dialogueUI': []                   // 無依賴
+        };
+
         this.initialize();
     }
 
@@ -180,9 +208,98 @@ class AngelaApp {
 
     // ========== 初始化方法 ==========
 
-    async _initializeLogger() {
+    /**
+     * 記錄初始化步驟
+     * @param {string} component 組件名稱
+     */
+    _trackInitialization(component) {
+        this.initializationOrder.push({
+            component: component,
+            timestamp: Date.now()
+        });
+        console.log(`[AngelaApp] Initialized: ${component}`);
+    }
+
+    /**
+     * 驗證初始化順序和依賴關係
+     * @param {string} component 當前初始化的組件
+     */
+    _validateInitializationOrder(component) {
+        const dependencies = this.initializationDependencies[component] || [];
+
+        for (const dependency of dependencies) {
+            // 檢查是否是依賴於全局變量
+            if (dependency.startsWith('window.')) {
+                const globalVar = dependency.replace('window.', '');
+                if (!window[globalVar]) {
+                    console.error(`[AngelaApp] Initialization order error: ${component} requires ${dependency} to be set first`);
+                    throw new Error(`Missing dependency: ${dependency}`);
+                }
+            } else {
+                // 檢查是否是依賴於其他組件
+                const initialized = this.initializationOrder.some(step => step.component === dependency);
+                if (!initialized) {
+                    console.error(`[AngelaApp] Initialization order error: ${component} requires ${dependency} to be initialized first`);
+                    throw new Error(`Missing dependency: ${dependency}`);
+                }
+            }
+        }
+    }
+
+    /**
+     * 驗證初始化是否成功
+     * @returns {Object} 驗證結果
+     */
+    _validateInitialization() {
+        const result = {
+            success: true,
+            errors: [],
+            warnings: []
+        };
+
+        // 檢查所有必要組件是否已初始化
+        const requiredComponents = [
+            'logger', 'dataPersistence', 'security', 'i18n', 'themeManager',
+            'userManager', 'hardwareDetection', 'udm', 'stateMatrix',
+            'precisionManager', 'maturityTracker', 'performanceManager',
+            'detectionSystem', 'live2D', 'backendWebSocket', 'apiClient',
+            'inputHandler', 'audioHandler', 'hapticHandler', 'wallpaperHandler',
+            'pluginManager', 'performanceMonitor', 'dialogueUI'
+        ];
+
+        for (const component of requiredComponents) {
+            const initialized = this.initializationOrder.some(step => step.component === component);
+            if (!initialized) {
+                result.errors.push(`Component not initialized: ${component}`);
+                result.success = false;
+            }
+        }
+
+        // 檢查是否有重複初始化
+        const componentCounts = {};
+        for (const step of this.initializationOrder) {
+            componentCounts[step.component] = (componentCounts[step.component] || 0) + 1;
+        }
+
+        for (const [component, count] of Object.entries(componentCounts)) {
+            if (count > 1) {
+                result.warnings.push(`Component initialized multiple times: ${component} (${count} times)`);
+            }
+        }
+
+        return result;
+    }
+
+async _initializeLogger() {
         this.updateLoadingText('Initializing logger...');
-        this.logger = new Logger({
+
+        // 驗證初始化順序
+        this._validateInitializationOrder('logger');
+
+        this.logger = logger;
+
+        // 追蹤初始化
+        this._trackInitialization('logger');
             level: 'info',
             maxLogs: 1000,
             persist: true,

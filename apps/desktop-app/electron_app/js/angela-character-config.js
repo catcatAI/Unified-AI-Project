@@ -167,3 +167,149 @@ if (typeof module !== 'undefined' && module.exports) {
 if (typeof window !== 'undefined') {
     window.ANGELA_CHARACTER_CONFIG = ANGELA_CHARACTER_CONFIG;
 }
+
+/**
+ * 驗證 ANGELA_CHARACTER_CONFIG 的完整性
+ * @returns {Object} 驗證結果 { valid: boolean, errors: Array, warnings: Array }
+ */
+function validateCharacterConfig() {
+    const result = {
+        valid: true,
+        errors: [],
+        warnings: []
+    };
+
+    // 檢查必需的頂級屬性
+    const requiredTopLevelProps = ['version', 'image_path', 'original_size', 'character_bbox', 'touch_zones', 'body_parts'];
+    for (const prop of requiredTopLevelProps) {
+        if (!ANGELA_CHARACTER_CONFIG[prop]) {
+            result.errors.push(`Missing required top-level property: ${prop}`);
+            result.valid = false;
+        }
+    }
+
+    // 驗證版本號格式
+    if (ANGELA_CHARACTER_CONFIG.version) {
+        const versionRegex = /^\d+\.\d+\.\d+$/;
+        if (!versionRegex.test(ANGELA_CHARACTER_CONFIG.version)) {
+            result.warnings.push(`Version number may be invalid: ${ANGELA_CHARACTER_CONFIG.version}`);
+        }
+    }
+
+    // 驗證 original_size
+    if (ANGELA_CHARACTER_CONFIG.original_size) {
+        const { width, height } = ANGELA_CHARACTER_CONFIG.original_size;
+        if (!width || !height || width <= 0 || height <= 0) {
+            result.errors.push('Invalid original_size: width and height must be positive numbers');
+            result.valid = false;
+        }
+    }
+
+    // 驗證 character_bbox
+    if (ANGELA_CHARACTER_CONFIG.character_bbox) {
+        const { x, y, width, height } = ANGELA_CHARACTER_CONFIG.character_bbox;
+        if (typeof x !== 'number' || typeof y !== 'number' || typeof width !== 'number' || typeof height !== 'number') {
+            result.errors.push('Invalid character_bbox: x, y, width, height must be numbers');
+            result.valid = false;
+        }
+        if (width <= 0 || height <= 0) {
+            result.errors.push('Invalid character_bbox: width and height must be positive');
+            result.valid = false;
+        }
+    }
+
+    // 驗證 touch_zones
+    if (ANGELA_CHARACTER_CONFIG.touch_zones) {
+        const requiredZoneProps = ['rect', 'description', 'priority', 'param_id'];
+        const validExpressions = ['neutral', 'happy', 'sad', 'angry', 'surprised', 'confused', 'sleepy', 'blush', 'wink', 'smile', 'excited'];
+        const validTactileTypes = ['pat', 'poke', 'stroke'];
+
+        for (const [zoneName, zoneData] of Object.entries(ANGELA_CHARACTER_CONFIG.touch_zones)) {
+            // 檢查必需屬性
+            for (const prop of requiredZoneProps) {
+                if (!zoneData[prop]) {
+                    result.errors.push(`Touch zone "${zoneName}" missing required property: ${prop}`);
+                    result.valid = false;
+                }
+            }
+
+            // 驗證 rect 格式
+            if (zoneData.rect) {
+                if (!Array.isArray(zoneData.rect) || zoneData.rect.length !== 4) {
+                    result.errors.push(`Touch zone "${zoneName}" has invalid rect format: expected [x1, y1, x2, y2]`);
+                    result.valid = false;
+                }
+            }
+
+            // 驗證 priority
+            if (typeof zoneData.priority !== 'number') {
+                result.errors.push(`Touch zone "${zoneName}" has invalid priority: must be a number`);
+                result.valid = false;
+            }
+
+            // 驗證 expression
+            if (zoneData.expression && !validExpressions.includes(zoneData.expression)) {
+                result.warnings.push(`Touch zone "${zoneName}" has unknown expression: ${zoneData.expression}`);
+            }
+
+            // 驗證 tactile_type
+            if (zoneData.tactile_type && !validTactileTypes.includes(zoneData.tactile_type)) {
+                result.warnings.push(`Touch zone "${zoneName}" has unknown tactile_type: ${zoneData.tactile_type}`);
+            }
+        }
+    }
+
+    // 驗證 body_parts（應該與 touch_zones 一致）
+    if (ANGELA_CHARACTER_CONFIG.body_parts) {
+        const touchZoneNames = Object.keys(ANGELA_CHARACTER_CONFIG.touch_zones || {});
+        const bodyPartNames = Object.keys(ANGELA_CHARACTER_CONFIG.body_parts);
+
+        for (const partName of bodyPartNames) {
+            if (!touchZoneNames.includes(partName)) {
+                result.warnings.push(`Body part "${partName}" exists in body_parts but not in touch_zones`);
+            }
+        }
+
+        for (const zoneName of touchZoneNames) {
+            if (!bodyPartNames.includes(zoneName)) {
+                result.warnings.push(`Touch zone "${zoneName}" exists in touch_zones but not in body_parts`);
+            }
+        }
+    }
+
+    // 檢查圖片路徑是否存在
+    if (ANGELA_CHARACTER_CONFIG.image_path && typeof window !== 'undefined') {
+        // 在瀏覽器環境中檢查圖片是否可加載
+        const img = new Image();
+        img.onload = () => console.log(`[CharacterConfig] Image found: ${ANGELA_CHARACTER_CONFIG.image_path}`);
+        img.onerror = () => {
+            result.warnings.push(`Image not found or cannot be loaded: ${ANGELA_CHARACTER_CONFIG.image_path}`);
+        };
+        img.src = ANGELA_CHARACTER_CONFIG.image_path;
+    }
+
+    return result;
+}
+
+// 導出驗證函數
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports.validateCharacterConfig = validateCharacterConfig;
+}
+
+// 浏览器环境导出
+if (typeof window !== 'undefined') {
+    window.validateCharacterConfig = validateCharacterConfig;
+}
+
+// 自動驗證（在開發模式下）
+if (typeof window !== 'undefined' && window.location && window.location.hostname === 'localhost') {
+    const validation = validateCharacterConfig();
+    if (!validation.valid) {
+        console.error('[CharacterConfig] Validation failed:', validation.errors);
+    } else {
+        console.log('[CharacterConfig] Validation passed');
+    }
+    if (validation.warnings.length > 0) {
+        console.warn('[CharacterConfig] Validation warnings:', validation.warnings);
+    }
+}

@@ -34,9 +34,26 @@ class UnifiedStorageManager {
             getOperations: 0,
             setOperations: 0,
             deleteOperations: 0,
-            errors: 0
+            errors: 0,
+            validationErrors: 0,
+            securityErrors: 0
         };
-        
+
+        // 数据验证配置
+        this.validationConfig = {
+            enableChecksum: config.enableChecksum !== false,
+            enableSizeValidation: config.enableSizeValidation !== false,
+            enableTypeValidation: config.enableTypeValidation !== false,
+            maxSizePerItem: config.maxSizePerItem || 1024 * 1024, // 1MB per item
+            maxSizePerString: config.maxSizePerString || 100 * 1024, // 100KB per string
+            allowedTypes: config.allowedTypes || [
+                'string', 'number', 'boolean', 'object', 'array', 'null'
+            ]
+        };
+
+        // 安全密钥（用于数据签名）
+        this.securityKey = config.securityKey || this._generateSecurityKey();
+
         console.log('[StorageManager] Initialized with namespace:', this.namespace);
     }
     
@@ -53,6 +70,199 @@ class UnifiedStorageManager {
             console.error('[StorageManager] localStorage not available:', error);
             return false;
         }
+    }
+
+    /**
+     * 生成安全密钥
+     * @returns {string} 安全密钥
+     */
+    _generateSecurityKey() {
+        return 'angela_storage_security_' + Date.now();
+    }
+
+    /**
+     * 计算数据的 checksum
+     * @param {string} data 数据字符串
+     * @returns {string} checksum
+     */
+    _calculateChecksum(data) {
+        let hash = 0;
+        for (let i = 0; i < data.length; i++) {
+            const char = data.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return hash.toString(16);
+    }
+
+    /**
+     * 验证数据完整性
+     * @param {Object} data 数据对象
+     * @returns {boolean} 是否有效
+     */
+    _validateIntegrity(data) {
+        if (!this.validationConfig.enableChecksum) {
+            return true;
+        }
+
+        if (!data || !data.checksum || !data.value) {
+            return false;
+        }
+
+        const serialized = JSON.stringify(data.value);
+        const calculatedChecksum = this._calculateChecksum(serialized);
+
+        return calculatedChecksum === data.checksum;
+    }
+
+    /**
+     * 验证数据类型
+     * @param {*} value 数据值
+     * @returns {boolean} 是否有效
+     */
+    _validateType(value) {
+        if (!this.validationConfig.enableTypeValidation) {
+            return true;
+        }
+
+        const type = typeof value;
+        const arrayType = Array.isArray(value) ? 'array' : type;
+
+        return this.validationConfig.allowedTypes.includes(arrayType);
+    }
+
+    /**
+     * 验证数据大小
+     * @param {*} value 数据值
+     * @returns {boolean} 是否有效
+     */
+    _validateSize(value) {
+        if (!this.validationConfig.enableSizeValidation) {
+            return true;
+        }
+
+        try {
+            const serialized = JSON.stringify(value);
+
+            // 检查总大小
+            if (serialized.length > this.validationConfig.maxSizePerItem) {
+                console.warn('[StorageManager] Data size exceeds limit:', serialized.length, '>', this.validationConfig.maxSizePerItem);
+                return false;
+            }
+
+            // 检查字符串长度
+            if (typeof value === 'string' && value.length > this.validationConfig.maxSizePerString) {
+                console.warn('[StorageManager] String length exceeds limit:', value.length, '>', this.validationConfig.maxSizePerString);
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            console.error('[StorageManager] Failed to validate size:', error);
+            return false;
+        }
+    }
+
+    /**
+     * 检测恶意数据
+     * @param {*} value 数据值
+     * @returns {boolean} 是否安全
+     */
+    _detectMaliciousData(value) {
+        if (typeof value === 'string') {
+            // 检测潜在的 XSS 攻击
+            const xssPatterns = [
+                /<script/i,
+                /javascript:/i,
+                /onerror=/i,
+                /onload=/i,
+                /onclick=/i,
+                /<iframe/i,
+                /<object/i,
+                /<embed/i
+            ];
+
+            for (const pattern of xssPatterns) {
+                if (pattern.test(value)) {
+                    console.warn('[StorageManager] Potential XSS detected in string data');
+                    this.metrics.securityErrors++;
+                    return false;
+                }
+            }
+        }
+
+        // 检测过深的嵌套（可能导致栈溢出）
+        if (typeof value === 'object' && value !== null) {
+            const depth = this._getObjectDepth(value);
+            if (depth > 20) {
+                console.warn('[StorageManager] Object nesting too deep:', depth);
+                this.metrics.securityErrors++;
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * 获取对象的嵌套深度
+     * @param {*} obj 对象
+     * @param {number} depth 当前深度
+     * @returns {number} 深度
+     */
+    _getObjectDepth(obj, depth = 1) {
+        if (typeof obj !== 'object' || obj === null) {
+            return depth;
+        }
+
+        let maxDepth = depth;
+        for (const value of Object.values(obj)) {
+            if (typeof value === 'object' && value !== null) {
+                const childDepth = this._getObjectDepth(value, depth + 1);
+                maxDepth = Math.max(maxDepth, childDepth);
+            }
+        }
+
+        return maxDepth;
+    }
+
+    /**
+     * 验证数据
+     * @param {*} value 数据值
+     * @returns {Object} 验证结果 { valid: boolean, error: string }
+     */
+    validateData(value) {
+        // 类型验证
+        if (!this._validateType(value)) {
+            this.metrics.validationErrors++;
+            return {
+                valid: false,
+                error: 'Invalid data type'
+            };
+        }
+
+        // 大小验证
+        if (!this._validateSize(value)) {
+            this.metrics.validationErrors++;
+            return {
+                valid: false,
+                error: 'Data size exceeds limit'
+            };
+        }
+
+        // 恶意数据检测
+        if (!this._detectMaliciousData(value)) {
+            this.metrics.securityErrors++;
+            return {
+                valid: false,
+                error: 'Potential malicious data detected'
+            };
+        }
+
+        return {
+            valid: true,
+            error: null
+        };
     }
     
     /**
@@ -79,24 +289,39 @@ class UnifiedStorageManager {
             console.warn('[StorageManager] localStorage not available');
             return false;
         }
-        
+
+        // 验证数据
+        const validation = this.validateData(value);
+        if (!validation.valid) {
+            console.error('[StorageManager] Data validation failed:', validation.error, component, key);
+            this.metrics.errors++;
+            return false;
+        }
+
         try {
             const fullKey = this._generateKey(component, key);
+
+            // 序列化值以计算 checksum
+            const serializedValue = JSON.stringify(value);
+            const checksum = this._calculateChecksum(serializedValue);
+
             const data = {
                 value: value,
+                checksum: checksum,
                 timestamp: Date.now(),
                 expires: options.expires ? Date.now() + options.expires : null,
-                version: options.version || 1
+                version: options.version || 1,
+                validated: true
             };
-            
+
             const serialized = JSON.stringify(data);
-            
+
             // 检查存储空间
             if (serialized.length > this.storageQuota) {
-                console.error('[StorageManager] Data too large:', fullKey);
+                console.error('[StorageManager] Data too large:', fullKey, serialized.length, '>', this.storageQuota);
                 return false;
             }
-            
+
             localStorage.setItem(fullKey, serialized);
             this.metrics.setOperations++;
             return true;
@@ -119,23 +344,31 @@ class UnifiedStorageManager {
             console.warn('[StorageManager] localStorage not available');
             return defaultValue;
         }
-        
+
         try {
             const fullKey = this._generateKey(component, key);
             const serialized = localStorage.getItem(fullKey);
-            
+
             if (!serialized) {
                 return defaultValue;
             }
-            
+
             const data = JSON.parse(serialized);
-            
+
             // 检查数据是否过期
             if (data.expires && Date.now() > data.expires) {
                 this.delete(component, key);
                 return defaultValue;
             }
-            
+
+            // 验证数据完整性
+            if (data.validated && !this._validateIntegrity(data)) {
+                console.error('[StorageManager] Data integrity check failed:', fullKey);
+                this.metrics.validationErrors++;
+                this.delete(component, key);
+                return defaultValue;
+            }
+
             this.metrics.getOperations++;
             return data.value;
         } catch (error) {

@@ -638,6 +638,147 @@ class LayerRenderer {
         this.imagesLoaded = false;
         this.imageTransparency = {};
     }
+
+    /**
+     * 驗證 LayerRenderer 的完整性
+     * @returns {Object} 驗證結果 { valid: boolean, errors: Array, warnings: Array }
+     */
+    validate() {
+        const result = {
+            valid: true,
+            errors: [],
+            warnings: []
+        };
+
+        // 檢查 canvas 是否存在
+        if (!this.canvas) {
+            result.errors.push('Canvas element is not set');
+            result.valid = false;
+        } else {
+            // 檢查 canvas context
+            if (!this.ctx) {
+                result.errors.push('Canvas 2D context is not available');
+                result.valid = false;
+            }
+        }
+
+        // 檢查圖層存儲結構
+        const requiredLayers = ['base', 'expression', 'pose'];
+        for (const layerType of requiredLayers) {
+            if (!this.layers.hasOwnProperty(layerType)) {
+                result.errors.push(`Missing layer storage: ${layerType}`);
+                result.valid = false;
+            }
+        }
+
+        // 檢查當前狀態
+        if (!this.currentState) {
+            result.errors.push('Current state is not initialized');
+            result.valid = false;
+        } else {
+            const requiredStateProps = ['expressionIndex', 'poseIndex', 'baseImageId'];
+            for (const prop of requiredStateProps) {
+                if (this.currentState[prop] === undefined) {
+                    result.errors.push(`Missing state property: ${prop}`);
+                    result.valid = false;
+                }
+            }
+        }
+
+        // 檢查圖層配置
+        if (!this.layerConfig) {
+            result.errors.push('Layer configuration is not initialized');
+            result.valid = false;
+        } else {
+            const requiredConfigProps = ['base', 'expression', 'pose'];
+            for (const layerType of requiredConfigProps) {
+                if (!this.layerConfig[layerType]) {
+                    result.errors.push(`Missing layer config: ${layerType}`);
+                    result.valid = false;
+                } else {
+                    // 檢查配置屬性
+                    const requiredConfigValues = ['zIndex', 'opacity', 'blendMode', 'enabled'];
+                    for (const prop of requiredConfigValues) {
+                        if (this.layerConfig[layerType][prop] === undefined) {
+                            result.errors.push(`Layer ${layerType} missing config property: ${prop}`);
+                            result.valid = false;
+                        }
+                    }
+
+                    // 驗證 opacity 值範圍
+                    if (this.layerConfig[layerType].opacity < 0 || this.layerConfig[layerType].opacity > 1) {
+                        result.warnings.push(`Layer ${layerType} opacity out of range [0,1]: ${this.layerConfig[layerType].opacity}`);
+                    }
+
+                    // 驗證 blendMode
+                    const validBlendModes = ['source-over', 'multiply', 'screen', 'overlay', 'darken', 'lighten'];
+                    if (!validBlendModes.includes(this.layerConfig[layerType].blendMode)) {
+                        result.warnings.push(`Layer ${layerType} has unknown blendMode: ${this.layerConfig[layerType].blendMode}`);
+                    }
+                }
+            }
+        }
+
+        // 檢查圖片加載狀態
+        if (!this.imagesLoaded) {
+            result.warnings.push('Layer images have not been loaded yet');
+        } else {
+            // 檢查每個圖層的圖片
+            for (const layerType of requiredLayers) {
+                const layer = this.layers[layerType];
+                if (!layer || !layer.image) {
+                    result.errors.push(`Layer ${layerType} image is not loaded`);
+                    result.valid = false;
+                } else {
+                    // 檢查圖片尺寸
+                    if (layer.image.width === 0 || layer.image.height === 0) {
+                        result.errors.push(`Layer ${layerType} image has invalid dimensions: ${layer.image.width}x${layer.image.height}`);
+                        result.valid = false;
+                    }
+
+                    // 檢查圖片配置
+                    if (!layer.config) {
+                        result.warnings.push(`Layer ${layerType} has no configuration`);
+                    } else {
+                        if (!layer.config.layer) {
+                            result.warnings.push(`Layer ${layerType} configuration missing 'layer' property`);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 檢查透明度緩存
+        if (this.imagesLoaded && Object.keys(this.imageTransparency).length === 0) {
+            result.warnings.push('Image transparency cache is empty despite images being loaded');
+        }
+
+        // 檢查 UDM（可選）
+        if (this.udm === null) {
+            result.warnings.push('UDM is not set (optional)');
+        }
+
+        return result;
+    }
+
+    /**
+     * 獲取渲染系統狀態
+     * @returns {Object} 渲染系統狀態
+     */
+    getStatus() {
+        return {
+            canvasSize: this.canvas ? { width: this.canvas.width, height: this.canvas.height } : null,
+            imagesLoaded: this.imagesLoaded,
+            layers: {
+                base: this.layers.base ? { loaded: true, imageId: this.layers.base.imageId } : { loaded: false },
+                expression: this.layers.expression ? { loaded: true, imageId: this.layers.expression.imageId } : { loaded: false },
+                pose: this.layers.pose ? { loaded: true, imageId: this.layers.pose.imageId } : { loaded: false }
+            },
+            currentState: { ...this.currentState },
+            layerConfig: { ...this.layerConfig },
+            transparencyCache: Object.keys(this.imageTransparency)
+        };
+    }
 }
 
 // 導出到全局

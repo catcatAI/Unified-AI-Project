@@ -46,19 +46,29 @@ class InputHandler {
     }
 
     initialize() {
+        // Store bound functions for proper cleanup
+        this._boundOnMouseMove = this._onMouseMove.bind(this);
+        this._boundOnMouseDown = this._onMouseDown.bind(this);
+        this._boundOnMouseUp = this._onMouseUp.bind(this);
+        this._boundOnClick = this._onClick.bind(this);
+        this._boundOnTouchStart = this._onTouchStart.bind(this);
+        this._boundOnTouchMove = this._onTouchMove.bind(this);
+        this._boundOnTouchEnd = this._onTouchEnd.bind(this);
+        this._boundOnResize = this._onResize.bind(this);
+
         // Listen to mouse events on window
-        window.addEventListener('mousemove', this._onMouseMove.bind(this));
-        window.addEventListener('mousedown', this._onMouseDown.bind(this));
-        window.addEventListener('mouseup', this._onMouseUp.bind(this));
-        window.addEventListener('click', this._onClick.bind(this));
+        window.addEventListener('mousemove', this._boundOnMouseMove);
+        window.addEventListener('mousedown', this._boundOnMouseDown);
+        window.addEventListener('mouseup', this._boundOnMouseUp);
+        window.addEventListener('click', this._boundOnClick);
         
         // Touch events
-        window.addEventListener('touchstart', this._onTouchStart.bind(this));
-        window.addEventListener('touchmove', this._onTouchMove.bind(this));
-        window.addEventListener('touchend', this._onTouchEnd.bind(this));
+        window.addEventListener('touchstart', this._boundOnTouchStart);
+        window.addEventListener('touchmove', this._boundOnTouchMove);
+        window.addEventListener('touchend', this._boundOnTouchEnd);
         
         // Window resize
-        window.addEventListener('resize', this._onResize.bind(this));
+        window.addEventListener('resize', this._boundOnResize);
         
         console.log('Input Handler initialized');
     }
@@ -294,15 +304,59 @@ class InputHandler {
     }
 
     destroy() {
-        // Remove event listeners
-        window.removeEventListener('mousemove', this._onMouseMove);
-        window.removeEventListener('mousedown', this._onMouseDown);
-        window.removeEventListener('mouseup', this._onMouseUp);
-        window.removeEventListener('click', this._onClick);
-        window.removeEventListener('touchstart', this._onTouchStart);
-        window.removeEventListener('touchmove', this._onTouchMove);
-        window.removeEventListener('touchend', this._onTouchEnd);
-        window.removeEventListener('resize', this._onResize);
+        // Check if already destroyed
+        if (this._isDestroyed) {
+            return;
+        }
+        this._isDestroyed = true;
+
+        // Remove event listeners using stored bound functions
+        if (this._boundOnMouseMove) {
+            window.removeEventListener('mousemove', this._boundOnMouseMove);
+        }
+        if (this._boundOnMouseDown) {
+            window.removeEventListener('mousedown', this._boundOnMouseDown);
+        }
+        if (this._boundOnMouseUp) {
+            window.removeEventListener('mouseup', this._boundOnMouseUp);
+        }
+        if (this._boundOnClick) {
+            window.removeEventListener('click', this._boundOnClick);
+        }
+        if (this._boundOnTouchStart) {
+            window.removeEventListener('touchstart', this._boundOnTouchStart);
+        }
+        if (this._boundOnTouchMove) {
+            window.removeEventListener('touchmove', this._boundOnTouchMove);
+        }
+        if (this._boundOnTouchEnd) {
+            window.removeEventListener('touchend', this._boundOnTouchEnd);
+        }
+        if (this._boundOnResize) {
+            window.removeEventListener('resize', this._boundOnResize);
+        }
+
+        // Clear references
+        this._boundOnMouseMove = null;
+        this._boundOnMouseDown = null;
+        this._boundOnMouseUp = null;
+        this._boundOnClick = null;
+        this._boundOnTouchStart = null;
+        this._boundOnTouchMove = null;
+        this._boundOnTouchEnd = null;
+        this._boundOnResize = null;
+
+        // Clear other references
+        this.live2dManager = null;
+        this.clickLayer = null;
+        this.onClick = null;
+        this.onDrag = null;
+        this.onHover = null;
+        this.onDragEnd = null;
+        this.clickableRegions = [];
+        this.nonClickableRegions = [];
+
+        console.log('[InputHandler] Destroyed successfully');
     }
 }
 

@@ -281,31 +281,47 @@ class BackendWebSocketClient {
     
     _handleReconnect() {
         console.log('Attempting to reconnect... (attempt', this.reconnectAttempts + 1, 'of', this.maxReconnectAttempts + 1, ')');
-        
+
         this._stopHeartbeat();
-        
+
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++;
-            
-            // FIX: Exponential backoff with cap at 5 seconds (not 17 minutes!)
-            const maxDelay = 5000; // Max 5 seconds between attempts
-            const baseDelay = 500; // Start with 500ms
+
+            // 改进的指數退避策略
+            const maxDelay = 30000; // 最大30秒
+            const baseDelay = 1000; // 起始1秒
             const exponentialDelay = Math.min(baseDelay * Math.pow(2, this.reconnectAttempts - 1), maxDelay);
-            const jitter = Math.random() * 200; // Add small jitter to prevent thundering herd
-            
+            const jitter = Math.random() * 1000; // 添加隨機抖動，防止雷群效應
+
             const reconnectDelay = exponentialDelay + jitter;
-            console.log(`Reconnecting in ${reconnectDelay.toFixed(0)}ms...`);
-            
+            console.log(`Reconnecting in ${reconnectDelay.toFixed(0)}ms (${(reconnectDelay / 1000).toFixed(1)}s)...`);
+
+            // 清理舊的 WebSocket 連接
+            if (this.ws) {
+                try {
+                    this.ws.onopen = null;
+                    this.ws.onmessage = null;
+                    this.ws.onerror = null;
+                    this.ws.onclose = null;
+                    if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+                        this.ws.close();
+                    }
+                    this.ws = null;
+                } catch (error) {
+                    console.warn('[BackendWebSocket] Error cleaning up old WebSocket:', error);
+                }
+            }
+
             this.reconnectInterval = setTimeout(() => {
                 this.connect(this.url || 'ws://localhost:8000/ws');
             }, reconnectDelay);
         } else {
-            console.error('Max reconnect attempts reached, will retry every 10 seconds');
-            // Keep trying every 10 seconds even after max attempts
+            console.error('[BackendWebSocket] Max reconnect attempts reached, entering long-poll mode');
+            // 達到最大重試次數後，進入長輪詢模式，每30秒重試一次
             this.reconnectInterval = setTimeout(() => {
-                this.reconnectAttempts = 0; // Reset to try again with shorter delays
+                this.reconnectAttempts = 0; // 重置計數器，以便重新使用指數退避
                 this._handleReconnect();
-            }, 10000);
+            }, 30000);
         }
     }
     
@@ -371,86 +387,195 @@ class BackendWebSocketClient {
      * @param {Object} message - 消息对象
      */
     _addToOfflineQueue(message) {
+        // 消息去重：檢查是否已存在相同的消息
+        const messageKey = this._getMessageKey(message);
+        const existingIndex = this._offlineQueue.findIndex(msg => this._getMessageKey(msg) === messageKey);
+
+        if (existingIndex !== -1) {
+            // 消息已存在，更新時間戳和重試次數
+            console.log('[BackendWebSocket] 消息已在队列中，更新时间戳:', messageKey);
+            this._offlineQueue[existingIndex]._queuedAt = Date.now();
+            this._offlineQueue[existingIndex]._retryCount = (this._offlineQueue[existingIndex]._retryCount || 0) + 1;
+            this._persistOfflineQueue();
+            return;
+        }
+
         const queuedMessage = {
             ...message,
             _queuedAt: Date.now(),
-            _id: this._generateQueueId()
+            _id: this._generateQueueId(),
+            _priority: this._getMessagePriority(message),
+            _retryCount: 0
         };
-        
-        this._offlineQueue.push(queuedMessage);
-        
-        // 限制队列大小
+
+        // 按優先級插入隊列
+        this._insertByPriority(queuedMessage);
+
+        // 限制隊列大小
         if (this._offlineQueue.length > this._maxQueueSize) {
-            const removed = this._offlineQueue.shift();
-            console.warn('[BackendWebSocket] 队列已满，移除最旧的消息:', removed._id);
+            // 移除優先級最低且最舊的消息
+            this._offlineQueue.sort((a, b) => {
+                if (a._priority !== b._priority) {
+                    return b._priority - a._priority; // 高優先級在前
+                }
+                return a._queuedAt - b._queuedAt; // 舊消息在前
+            });
+
+            const removed = this._offlineQueue.pop();
+            console.warn('[BackendWebSocket] 队列已满，移除優先級最低/最舊的消息:', removed._id);
         }
-        
+
         // 持久化到localStorage
         this._persistOfflineQueue();
-        
-        console.log(`[BackendWebSocket] 消息已加入离线队列 (${this._offlineQueue.length}/${this._maxQueueSize})`);
+
+        console.log(`[BackendWebSocket] 消息已加入離線隊列 (${this._offlineQueue.length}/${this._maxQueueSize}), 優先級: ${queuedMessage._priority}`);
+    }
+
+    /**
+     * 獲取消息的標識符（用於去重）
+     * @param {Object} message 消息對象
+     * @returns {string} 消息標識符
+     */
+    _getMessageKey(message) {
+        if (!message) return '';
+
+        const keyParts = [];
+        if (message.type) keyParts.push(message.type);
+        if (message.action) keyParts.push(message.action);
+        if (message.data) {
+            if (message.data.id) keyParts.push(`id:${message.data.id}`);
+            if (message.data.message_id) keyParts.push(`msg:${message.data.message_id}`);
+            if (message.data.user_id) keyParts.push(`user:${message.data.user_id}`);
+        }
+
+        return keyParts.join('|');
+    }
+
+    /**
+     * 獲取消息的優先級
+     * @param {Object} message 消息對象
+     * @returns {number} 優先級（數字越大優先級越高）
+     */
+    _getMessagePriority(message) {
+        if (!message || !message.type) return 0;
+
+        // 高優先級消息
+        const highPriorityTypes = ['emergency', 'alert', 'critical'];
+        // 中等優先級消息
+        const mediumPriorityTypes = ['state_update', 'tactile_response', 'performance_update'];
+        // 低優先級消息
+        const lowPriorityTypes = ['chat_message', 'log', 'info'];
+
+        if (highPriorityTypes.includes(message.type)) return 3;
+        if (mediumPriorityTypes.includes(message.type)) return 2;
+        if (lowPriorityTypes.includes(message.type)) return 1;
+
+        return 0; // 默認優先級
+    }
+
+    /**
+     * 按優先級插入消息
+     * @param {Object} message 消息對象
+     */
+    _insertByPriority(message) {
+        // 找到插入位置（第一個優先級低於當前消息的位置）
+        let insertIndex = this._offlineQueue.findIndex(msg => msg._priority < message._priority);
+
+        if (insertIndex === -1) {
+            // 沒有找到優先級更低的消息，插入到末尾
+            this._offlineQueue.push(message);
+        } else {
+            // 插入到找到的位置
+            this._offlineQueue.splice(insertIndex, 0, message);
+        }
     }
     
     /**
-     * 发送离线队列中的所有消息
+     * 發送離線隊列中的所有消息
      */
     async _flushOfflineQueue() {
         if (this._offlineQueue.length === 0) {
-            console.log('[BackendWebSocket] 离线队列为空，无需发送');
+            console.log('[BackendWebSocket] 離線隊列為空，無需發送');
             return;
         }
-        
-        console.log(`[BackendWebSocket] 开始发送 ${this._offlineQueue.length} 条离线消息`);
-        
-        const queue = [...this._offlineQueue];
+
+        console.log(`[BackendWebSocket] 開始發送 ${this._offlineQueue.length} 條離線消息`);
+
+        // 保持優先級順序：高優先級先發送
+        const queue = [...this._offlineQueue].sort((a, b) => {
+            if (a._priority !== b._priority) {
+                return b._priority - a._priority; // 高優先級在前
+            }
+            return a._queuedAt - b._queuedAt; // 舊消息在前
+        });
+
         this._offlineQueue = [];
         this._persistOfflineQueue();
-        
+
         let successCount = 0;
         let failCount = 0;
-        
-        for (const message of queue) {
-            try {
-                await new Promise((resolve, reject) => {
-                    const timeout = setTimeout(() => {
-                        reject(new Error('Timeout'));
-                    }, 5000); // 每条消息5秒超时
-                    
-                    try {
-                        this.ws.send(JSON.stringify(message));
-                        clearTimeout(timeout);
-                        resolve();
-                    } catch (error) {
-                        clearTimeout(timeout);
-                        reject(error);
+
+        // 批處理發送：每批最多10條消息
+        const batchSize = 10;
+        for (let i = 0; i < queue.length; i += batchSize) {
+            const batch = queue.slice(i, i + batchSize);
+
+            for (const message of batch) {
+                try {
+                    await new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => {
+                            reject(new Error('Timeout'));
+                        }, 5000); // 每條消息5秒超時
+
+                        try {
+                            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                                this.ws.send(JSON.stringify(message));
+                                clearTimeout(timeout);
+                                resolve();
+                            } else {
+                                clearTimeout(timeout);
+                                reject(new Error('WebSocket not ready'));
+                            }
+                        } catch (error) {
+                            clearTimeout(timeout);
+                            reject(error);
+                        }
+                    });
+
+                    successCount++;
+
+                    // 添加延遲，避免發送過快
+                    if (queue.indexOf(message) < queue.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
                     }
-                });
-                
-                successCount++;
-                
-                // 添加延迟，避免发送过快
-                if (queue.indexOf(message) < queue.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                }
-            } catch (error) {
-                console.error('[BackendWebSocket] 发送离线消息失败:', error, message);
-                failCount++;
-                
-                // 重新加入队列（最多重试一次）
-                if (!message._retryCount) {
-                    message._retryCount = 1;
-                    this._offlineQueue.push(message);
+                } catch (error) {
+                    console.error('[BackendWebSocket] 發送離線消息失敗:', error, message);
+                    failCount++;
+
+                    // 重新加入隊列（最多重試3次）
+                    if ((message._retryCount || 0) < 3) {
+                        message._retryCount = (message._retryCount || 0) + 1;
+                        message._queuedAt = Date.now(); // 更新時間戳
+                        this._insertByPriority(message);
+                    } else {
+                        console.warn('[BackendWebSocket] 消息已達最大重試次數，丟棄:', message._id);
+                    }
                 }
             }
+
+            // 批次之間添加延遲
+            if (i + batchSize < queue.length) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
         }
-        
-        // 持久化剩余消息
+
+        // 持久化剩餘消息
         if (this._offlineQueue.length > 0) {
             this._persistOfflineQueue();
         }
-        
-        console.log(`[BackendWebSocket] 离线消息发送完成: ${successCount} 成功, ${failCount} 失败`);
-        
+
+        console.log(`[BackendWebSocket] 離線消息發送完成: ${successCount} 成功, ${failCount} 失敗, ${this._offlineQueue.length} 剩餘`);
+
         this._fireEvent('offlineQueueFlushed', {
             successCount,
             failCount,
@@ -534,21 +659,78 @@ class BackendWebSocketClient {
     }
 
     disconnect() {
-        if (this.ws) {
-            this.ws.close();
-        }
-        
-        this.connected = false;
-        this._stopHeartbeat();
-        this._stopPendingResponsesCleanup();
-        
+        console.log('[BackendWebSocket] Disconnecting...');
+
+        // Stop reconnection attempts
         if (this.reconnectInterval) {
             clearTimeout(this.reconnectInterval);
             this.reconnectInterval = null;
         }
-        
-        // 断开时清理过期的离线消息，但保留其他消息
-        this._loadOfflineQueue();
+
+        // Close WebSocket connection
+        if (this.ws) {
+            // Clear event handlers before closing
+            this.ws.onopen = null;
+            this.ws.onmessage = null;
+            this.ws.onerror = null;
+            this.ws.onclose = null;
+
+            // Close connection
+            if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+                this.ws.close();
+            }
+
+            this.ws = null;
+        }
+
+        this.connected = false;
+
+        // Stop heartbeat
+        this._stopHeartbeat();
+
+        // Stop pending responses cleanup
+        this._stopPendingResponsesCleanup();
+
+        // Clear all pending responses
+        if (this._pendingResponses && this._pendingResponses.size > 0) {
+            console.log(`[BackendWebSocket] Clearing ${this._pendingResponses.size} pending responses`);
+            for (const [messageId, pending] of this._pendingResponses.entries()) {
+                clearTimeout(pending.timeout);
+                pending.reject(new Error('Connection closed'));
+            }
+            this._pendingResponses.clear();
+            this._pendingResponses = null;
+        }
+
+        // Persist offline queue before disconnecting
+        this._persistOfflineQueue();
+
+        console.log('[BackendWebSocket] Disconnected successfully');
+    }
+
+    /**
+     * 完全銷毀 WebSocket 客戶端，清理所有資源
+     * 用於應用程序退出或不再需要 WebSocket 連接時
+     */
+    destroy() {
+        console.log('[BackendWebSocket] Destroying...');
+
+        // Disconnect first
+        this.disconnect();
+
+        // Clear offline queue
+        this.clearOfflineQueue();
+
+        // Clear all event handlers
+        this.eventHandlers = {};
+
+        // Clear references
+        this.url = null;
+        this.reconnectAttempts = 0;
+        this._maxQueueSize = 0;
+        this._pendingResponsesCleanupInterval = 0;
+
+        console.log('[BackendWebSocket] Destroyed successfully');
     }
     
     // 事件註冊
