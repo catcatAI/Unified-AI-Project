@@ -21,6 +21,16 @@ class AngelaAPIClient {
     constructor(baseURL = 'http://localhost:8000') {
         this.baseURL = baseURL;
         this.connected = false;
+        
+        // 超時配置（毫秒）
+        this.timeouts = {
+            connection: 5000,      // 連接超時
+            dialogue: 10000,        // 對話超時
+            chat: 10000,            // 聊天超時
+            status: 3000,           // 狀態查詢超時
+            economy: 3000,          // 經濟查詢超時
+            action: 5000            // 動作超時
+        };
     }
 
     /**
@@ -152,6 +162,17 @@ class AngelaAPIClient {
      * @returns {Promise<Object>} Angela's response
      */
     async sendMessage(message) {
+        // 參數驗證
+        const validation = this._validateMessage(message);
+        if (!validation.valid) {
+            return {
+                success: false,
+                response: `Error: ${validation.error}`,
+                emotion: 'confused',
+                timestamp: new Date().toISOString()
+            };
+        }
+
         try {
             const response = await fetch(`${this.baseURL}/dialogue`, {
                 method: 'POST',
@@ -160,7 +181,8 @@ class AngelaAPIClient {
                     message: message,
                     user_id: 'desktop_user',
                     session_id: this.getSessionId()
-                })
+                }),
+                signal: AbortSignal.timeout(this.timeouts.dialogue)
             });
 
             if (!response.ok) {
@@ -183,6 +205,56 @@ class AngelaAPIClient {
                 timestamp: new Date().toISOString()
             };
         }
+    }
+
+    /**
+     * 驗證消息參數
+     * @param {string} message - 用戶消息
+     * @returns {object} - 驗證結果
+     */
+    _validateMessage(message) {
+        const result = {
+            valid: true,
+            error: null
+        };
+
+        // 檢查是否為字符串
+        if (typeof message !== 'string') {
+            result.valid = false;
+            result.error = 'Message must be a string';
+            return result;
+        }
+
+        // 檢查是否為空
+        if (!message || message.trim().length === 0) {
+            result.valid = false;
+            result.error = 'Message cannot be empty';
+            return result;
+        }
+
+        // 檢查長度限制
+        if (message.length > 10000) {
+            result.valid = false;
+            result.error = 'Message too long (max 10000 characters)';
+            return result;
+        }
+
+        // 檢查是否包含潛在的惡意內容
+        const dangerousPatterns = [
+            /<script[^>]*>/i,
+            /javascript:/i,
+            /on\w+\s*=/i
+        ];
+
+        for (const pattern of dangerousPatterns) {
+            if (pattern.test(message)) {
+                result.valid = false;
+                result.error = 'Message contains potentially malicious content';
+                return result;
+            }
+        }
+
+        return result;
     }
 
     /**

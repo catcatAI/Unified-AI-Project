@@ -130,15 +130,23 @@ class UnifiedDisplayMatrix {
         // 启动触摸队列自动刷新
         this._startTouchQueueFlush();
 
-        // ============================================================
+// ================================================================
         // 触摸去抖配置 (防止快速连续触摸)
-        // ============================================================
+        // ================================================================
         this.debounceConfig = {
             enabled: true,
             interval: 150,        // 去抖间隔（毫秒）
             lastTouchTime: 0,     // 最后一次触摸时间
             lastTouchType: null,  // 最后一次触摸类型
-            debounceTimer: null   // 去抖定时器
+            debounceTimer: null,  // 去抖定时器
+            adaptiveMode: true,   // 自適應模式：根據觸摸類型動態調整間隔
+            typeIntervals: {       // 不同觸摸類型的間隔配置
+                'pat': 200,         // 拍摸：較長間隔
+                'poke': 100,       // 戳擊：較短間隔
+                'stroke': 150,     // 撫摸：中等間隔
+                'drag': 50,        // 拖拽：最短間隔
+                'default': 150     // 默認間隔
+            }
         };
 
         console.log('[UDM] UnifiedDisplayMatrix initialized (720p=100%)');
