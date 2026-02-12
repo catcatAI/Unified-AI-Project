@@ -161,6 +161,9 @@ class Live2DManager {
     async _loadLive2DModel() {
         console.log('[Live2DManager] Loading Live2D model...');
         
+        // 無論 Live2D 是否加載成功，都先加載立繪圖片
+        await this._loadCharacterImage();
+        
         // 使用完整文件路径
         const modelPath = 'models/miara_pro_en/runtime/miara_pro_t03.model3.json';
         const settings = { modelPath: modelPath };
@@ -514,7 +517,103 @@ class Live2DManager {
 
         return [];
     }
-    
+
+    /**
+     * 切換到 fallback 模式（立繪模式）
+     */
+    async switchToFallback() {
+        if (this.isFallback) {
+            console.log('[Live2DManager] Already in fallback mode');
+            return true;
+        }
+
+        console.log('[Live2DManager] Switching to fallback mode...');
+        
+        // 停止 Live2D
+        if (this.wrapper) {
+            try {
+                this.wrapper.stop();
+            } catch (e) {
+                console.warn('[Live2DManager] Error stopping Live2D:', e);
+            }
+        }
+
+        // 切換到 fallback 模式
+        this.isFallback = true;
+        this.modelLoaded = false;
+
+        // 顯示 fallback canvas，隱藏 live2d canvas
+        const fallbackCanvas = document.getElementById('fallback-canvas');
+        const fallbackWrapper = document.getElementById('fallback-wrapper');
+        if (fallbackCanvas) fallbackCanvas.style.display = 'block';
+        if (fallbackWrapper) fallbackWrapper.classList.add('visible');
+        this.canvas.style.display = 'none';
+
+        // 如果還沒有創建 fallback manager，創建它
+        if (!this.fallbackCanvas || !this.fallbackCtx) {
+            await this._createFallbackManager();
+        } else {
+            // 啟動動畫循環
+            if (!this.isRunning) {
+                this._startAnimation();
+            }
+        }
+
+        console.log('[Live2DManager] Switched to fallback mode');
+        return true;
+    }
+
+    /**
+     * 切換到 Live2D 模式
+     */
+    async switchToLive2D() {
+        if (!this.isFallback) {
+            console.log('[Live2DManager] Already in Live2D mode');
+            return true;
+        }
+
+        console.log('[Live2DManager] Switching to Live2D mode...');
+
+        // 停止 fallback 動畫
+        this.isRunning = false;
+
+        // 嘗試加載 Live2D 模型
+        try {
+            // 顯示 live2d canvas，隱藏 fallback canvas
+            const fallbackCanvas = document.getElementById('fallback-canvas');
+            const fallbackWrapper = document.getElementById('fallback-wrapper');
+            if (fallbackCanvas) fallbackCanvas.style.display = 'none';
+            if (fallbackWrapper) fallbackWrapper.classList.remove('visible');
+            this.canvas.style.display = 'block';
+
+            // 如果 wrapper 已經存在，重新啟動
+            if (this.wrapper) {
+                await this.wrapper.start();
+            } else {
+                // 否則重新加載模型
+                await this._loadLive2DModel();
+            }
+
+            this.isFallback = false;
+            this.modelLoaded = true;
+
+            console.log('[Live2DManager] Switched to Live2D mode');
+            return true;
+        } catch (error) {
+            console.error('[Live2DManager] Failed to switch to Live2D mode:', error);
+            // 回退到 fallback 模式
+            await this.switchToFallback();
+            return false;
+        }
+    }
+
+    /**
+     * 獲取當前模式
+     */
+    getMode() {
+        return this.isFallback ? 'fallback' : 'live2d';
+    }
+
     _initTouchDetector() {
         // 使用 angela_character_config.json 中的区域定义
         this.clickableRegions = [
