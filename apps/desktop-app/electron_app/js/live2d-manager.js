@@ -74,6 +74,8 @@ class Live2DManager {
         this.characterImages = {};  // 存储所有加载的立繪圖片
         this.currentCharacterImageId = 'default';  // 當前選擇的立繪ID
         this.spriteSheetIndex = 0;  // 當前表情/姿態索引（用於 sprite sheet）
+        this.lastRenderedImageId = '';  // 跟踪上次渲染的圖片
+        this.lastRenderedSpriteIndex = -1;  // 跟踪上次渲染的 sprite sheet 索引
         
         // Expressions
         this.expressions = {
@@ -703,7 +705,11 @@ class Live2DManager {
                 );
             }
             
-            console.log('[Live2DManager] Rendered single image:', config.name);
+            // 只在切換圖片時輸出日誌
+            if (this.lastRenderedImageId !== this.currentCharacterImageId) {
+                console.log('[Live2DManager] Rendered single image:', config.name);
+                this.lastRenderedImageId = this.currentCharacterImageId;
+            }
         } else if (config.type === 'sprite_sheet') {
             // Sprite sheet 渲染
             const cellSize = config.cellSize;
@@ -747,8 +753,14 @@ class Live2DManager {
                 );
             }
             
-            console.log('[Live2DManager] Rendered sprite sheet cell:', config.name, 
-                        `index=${this.spriteSheetIndex}, pos=(${colIndex}, ${rowIndex})`);
+            // 只在切換表情時輸出日誌
+            if (this.lastRenderedImageId !== this.currentCharacterImageId || 
+                this.lastRenderedSpriteIndex !== this.spriteSheetIndex) {
+                console.log('[Live2DManager] Rendered sprite sheet cell:', config.name, 
+                            `index=${this.spriteSheetIndex}, pos=(${colIndex}, ${rowIndex})`);
+                this.lastRenderedImageId = this.currentCharacterImageId;
+                this.lastRenderedSpriteIndex = this.spriteSheetIndex;
+            }
         }
     }
     
