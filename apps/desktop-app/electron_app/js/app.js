@@ -715,7 +715,6 @@ class AngelaApp {
             this.showStatus(`切換到 ${imageName}`, 2000);
         }
     }
-    }
 
     async _loadDefaultModel() {
         this.updateLoadingText('Loading model...');
