@@ -301,15 +301,16 @@ async _initializeLogger() {
         // 驗證初始化順序
         this._validateInitializationOrder('logger');
 
-        this.logger = logger;
-
-        // 追蹤初始化
-        this._trackInitialization('logger');
+        this.logger = new Logger({
             level: 'info',
             maxLogs: 1000,
             persist: true,
             prefix: '[Angela]'
         });
+
+        // 追蹤初始化
+        this._trackInitialization('logger');
+
         window.angelaAppLogger = this.logger;
         this.logger.info('Angela AI starting...');
     }

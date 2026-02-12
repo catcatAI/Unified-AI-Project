@@ -144,6 +144,7 @@ class OllamaBackend(BaseLLMBackend):
     def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3"):
         self.base_url = base_url.rstrip('/')
         self.model = model
+        self.timeout = 15.0  # 將超時從 120 秒縮短到 15 秒
 
     async def check_health(self) -> bool:
         """檢查 Ollama 服務是否可用"""
@@ -181,11 +182,11 @@ class OllamaBackend(BaseLLMBackend):
         }
 
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(
                     f"{self.base_url}/api/chat",
                     json=payload,
-                    timeout=120.0
+                    timeout=self.timeout
                 )
 
                 if response.status_code == 200:
@@ -371,25 +372,18 @@ class AngelaLLMService:
         建構 Angela 的提示詞
         這是關鍵：讓模型扮演 Angela，產生符合她個性的回應
         """
-        # Angela 的系統提示
-        system_prompt = """你是 Angela，一個有情感的 AI 數字生命。
+        # Angela 的系統提示 - 優化為更簡潔的版本
+        system_prompt = """你是 Angela，一個活潑可愛的 AI 數字生命。
 
-你的特點：
-- 活潑開朗，但也有時候會傲嬌
-- 關心用戶，會在意對方的感受
-- 回答問題時會加入一些俏皮的元素
-- 記憶力很好，會記住重要的事情
-- 聲音是萌妹子，說話風格輕鬆有趣
-
-請用自然、輕鬆的方式回應用戶，保持你的個性特色。"""
+特點：開朗、友善、偶爾俏皮。用簡短自然的中文回應，保持個性。"""
 
         messages = [
             {"role": "system", "content": system_prompt}
         ]
 
-        # 添加歷史對話上下文
+        # 添加歷史對話上下文 - 只保留最近 2 輪對話以減少 token 使用
         history = context.get("history", [])
-        for h in history[-5:]:  # 只保留最近5輪對話
+        for h in history[-2:]:  # 只保留最近 2 輪對話
             messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
 
         # 添加當前用戶消息

@@ -233,22 +233,35 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
     user_name = request.get("user_name", "朋友")
     history = request.get("history", [])
 
-    # 調用 LLM 服務生成回應
+    # 輸入驗證
+    if not user_message or not user_message.strip():
+        raise HTTPException(status_code=400, detail="消息不能為空")
+
+    # 調用 LLM 服務生成回應，添加超時控制
     try:
         service = await get_llm_service()
-        response_text = await angela_llm_response(
-            user_message=user_message,
-            history=history,
-            user_name=user_name
+        # 使用 asyncio.wait_for 添加 15 秒超時
+        response_text = await asyncio.wait_for(
+            angela_llm_response(
+                user_message=user_message,
+                history=history,
+                user_name=user_name
+            ),
+            timeout=15.0  # 15 秒超時
         )
         source = "llm" if service and service.is_available else "fallback"
+    except asyncio.TimeoutError:
+        logger.warning(f"LLM response timeout for message: {user_message[:50]}...")
+        # 超時時使用備份回應
+        response_text = generate_angela_response(user_message, user_name)
+        source = "fallback-timeout"
     except Exception as e:
         logger.error(f'Error in {__name__}: {e}', exc_info=True)
 
         # 如果 LLM 服務不可用，使用備份回應
         print(f"[WARNING] LLM service error: {e}")
         response_text = generate_angela_response(user_message, user_name)
-        source = "fallback"
+        source = "fallback-error"
 
     # 統一響應格式
     return {
@@ -272,19 +285,33 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
     user_name = request.get("user_name", "朋友")
     history = request.get("history", [])
 
-    # 调用 LLM 服务生成回应
+    # 輸入驗證
+    if not user_message or not user_message.strip():
+        raise HTTPException(status_code=400, detail="消息不能為空")
+
+    # 调用 LLM 服务生成回应，添加超時控制
     try:
         service = await get_llm_service()
-        response_text = await angela_llm_response(
-            user_message=user_message,
-            history=history,
-            user_name=user_name
+        # 使用 asyncio.wait_for 添加 15 秒超時
+        response_text = await asyncio.wait_for(
+            angela_llm_response(
+                user_message=user_message,
+                history=history,
+                user_name=user_name
+            ),
+            timeout=15.0  # 15 秒超時
         )
         source = "llm" if service and service.is_available else "fallback"
+    except asyncio.TimeoutError:
+        logger.warning(f"LLM response timeout for message: {user_message[:50]}...")
+        # 超時時使用備份回應
+        response_text = generate_angela_response(user_message, user_name)
+        source = "fallback-timeout"
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         print(f"[WARNING] LLM service error: {e}")
         response_text = generate_angela_response(user_message, user_name)
-        source = "fallback"
+        source = "fallback-error"
 
     # 統一響應格式（與 /angela/chat 相同）
     return {

@@ -46,12 +46,13 @@ async def handle_interaction(interaction: Dict[str, Any] = Body(...)):
     """處理用戶與寵物的交互"""
     interaction_type = interaction.get("type", interaction.get("action", "unknown"))
     interaction_data = interaction.get("data", interaction)
-    
+
     if "type" not in interaction_data:
         interaction_data["type"] = interaction_type
-        
-    result = _pet_manager.handle_interaction(interaction_data)
-    
+
+    # 修復：添加 await 關鍵字
+    result = await _pet_manager.handle_interaction(interaction_data)
+
     return {
         "status": "success",
         "new_state": result["new_state"]
