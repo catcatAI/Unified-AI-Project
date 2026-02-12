@@ -1376,6 +1376,26 @@ function connectWebSocket(url) {
 
     wsClient.on('error', (error) => {
       console.error('[WebSocket] Error:', error.message);
+
+      // Handle EPIPE errors specifically
+      if (error.code === 'EPIPE' || error.message.includes('EPIPE')) {
+        console.warn('[WebSocket] EPIPE error detected - connection may be broken');
+        // Force close and reconnect
+        if (wsClient) {
+          wsClient.terminate();
+          wsClient = null;
+        }
+        // Trigger immediate reconnection
+        if (wsReconnectAttempts < WS_MAX_RECONNECT_ATTEMPTS) {
+          wsReconnectAttempts++;
+          console.log(`[WebSocket] Reconnecting after EPIPE (attempt ${wsReconnectAttempts}/${WS_MAX_RECONNECT_ATTEMPTS})...`);
+          wsReconnectTimer = setTimeout(() => {
+            connectWebSocket(url);
+          }, WS_RECONNECT_DELAY);
+        }
+        return;
+      }
+
       // Skip sending if window is destroyed
       if (!mainWindow || mainWindow.isDestroyed()) return;
       sendToMainWindow('websocket-error', { error: error.message });

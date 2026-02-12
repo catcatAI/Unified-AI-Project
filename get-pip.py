@@ -21,6 +21,8 @@
 # `scripts/generate.py` in https://github.com/pypa/get-pip.
 
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 this_python = sys.version_info[:2]
 min_version = (3, 9)

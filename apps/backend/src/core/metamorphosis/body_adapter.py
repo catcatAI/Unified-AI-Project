@@ -22,6 +22,8 @@ from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
 from enum import Enum
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 
 class TransferStatus(Enum):
@@ -211,7 +213,9 @@ class BodyAdapter:
             return True, adapted_state
         
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             record.mark_failed(str(e))
+
             
             if record.rollback_point:
                 return False, record.rollback_point

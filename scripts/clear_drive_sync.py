@@ -1,5 +1,7 @@
 import sqlite3
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 def clear_sync():
     db_path = "data/drive_sync.db"

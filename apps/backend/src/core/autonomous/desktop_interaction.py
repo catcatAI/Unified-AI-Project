@@ -28,6 +28,8 @@ import shutil
 import json
 import subprocess
 import shlex
+import logging
+logger = logging.getLogger(__name__)
 
 
 class FileOperationType(Enum):
@@ -458,8 +460,10 @@ class DesktopInteraction:
         for callback in self._file_change_callbacks:
             try:
                 callback(file_path, change_type)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     async def _check_auto_organize(self):
         """Check if auto-organization is needed"""
@@ -512,11 +516,15 @@ class DesktopInteraction:
                     for callback in self._operation_callbacks:
                         try:
                             callback(operation)
-                        except Exception:
+                        except Exception as e:
+                            logger.error(f'Error in {__name__}: {e}', exc_info=True)
                             pass
+
                     
                 except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     operation = FileOperation(
+
                         operation_id=f"org_{datetime.now().timestamp()}",
                         operation_type=FileOperationType.MOVE,
                         source_path=file_path,
@@ -567,7 +575,9 @@ class DesktopInteraction:
                             operations.append(operation)
                             self.operation_history.append(operation)
                     except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
         
         return operations
     
@@ -609,7 +619,9 @@ class DesktopInteraction:
             return file_path
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return None
+
     
     async def delete_file(self, file_path: Path) -> bool:
         """Delete a file"""
@@ -626,8 +638,10 @@ class DesktopInteraction:
                 self.operation_history.append(operation)
                 
                 return True
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         
         return False
     
@@ -637,8 +651,10 @@ class DesktopInteraction:
             if source.exists():
                 shutil.move(str(source), str(target))
                 return True
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         return False
     
     async def set_wallpaper(self, image_path: Path) -> bool:
@@ -732,8 +748,10 @@ class DesktopInteraction:
                     return False
                 return True
                 
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         
         return False
     
@@ -752,8 +770,10 @@ class DesktopInteraction:
                 next_wallpaper = random.choice(wallpapers)
                 return await self.set_wallpaper(next_wallpaper)
                 
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         
         return False
     
@@ -888,8 +908,10 @@ class DesktopInteraction:
                         os.chmod(operation.source_path, stat.S_IWRITE | stat.S_IREAD)
                         results["recovery_action"] = "attempt_permission_fix"
                         results["handled"] = True
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         results["recovery_action"] = "permission_fix_failed"
+
                 
                 if not results["handled"]:
                     # Log the permission error for manual intervention
@@ -966,8 +988,10 @@ class DesktopInteraction:
             for callback in self._operation_callbacks:
                 try:
                     callback(operation)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
             
         except Exception as handling_error:
             # Error handling itself failed
@@ -990,10 +1014,14 @@ class DesktopInteraction:
                         size = temp_file.stat().st_size
                         temp_file.unlink()
                         freed_space += size
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
-        except Exception:
+
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         
         return freed_space
     
@@ -1079,13 +1107,17 @@ class DesktopInteraction:
                 for callback in self._operation_callbacks:
                     try:
                         callback(operation)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
                 
                 return results
                 
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 last_error = e
+
                 operation.status = "failed"
                 operation.error_message = str(e)
                 

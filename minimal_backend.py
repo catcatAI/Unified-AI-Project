@@ -15,6 +15,8 @@ import threading
 import hashlib
 import hmac
 import secrets
+import logging
+logger = logging.getLogger(__name__)
 
 class AngelaMinimalHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):

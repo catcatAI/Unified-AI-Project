@@ -10,6 +10,8 @@ from .agent_manager import AgentManager
 from .agent_collaboration_manager import AgentCollaborationManager
 from .agent_monitoring_manager import AgentMonitoringManager
 from .dynamic_agent_registry import DynamicAgentRegistry
+import logging
+logger = logging.getLogger(__name__)
 
 __all__ = [
     'BaseAgent',

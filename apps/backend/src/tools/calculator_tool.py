@@ -78,4 +78,6 @@ class CalculatorTool:
             result = calculate(expression)
             return {"success": True, "result": result}
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {"success": False, "error": str(e)}
+

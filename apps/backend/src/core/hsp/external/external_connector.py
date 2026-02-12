@@ -125,7 +125,9 @@ class MessageRouter:
                         )
                         results.append({"agent": agent_id, "status": "delivered"})
                 except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     results.append({"agent": agent_id, "status": "failed", "error": str(e)})
+
             return {"status": "broadcast", "results": results}
         
         self._server = uvicorn.Server(uvicorn.Config(app, host=self.host, port=self.port, log_level="error"))

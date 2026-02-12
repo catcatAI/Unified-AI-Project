@@ -11,6 +11,8 @@ import subprocess
 import os
 import sys
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 class AngelaAISystemTest:
     def __init__(self):
@@ -69,7 +71,9 @@ class AngelaAISystemTest:
                         self.add_result("API", False, f"对话 API 失败: {resp.status}")
                         
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.add_result("API", False, f"错误: {str(e)[:60]}")
+
     
     async def test_websocket(self):
         print("\n" + "=" * 60)
@@ -94,7 +98,9 @@ class AngelaAISystemTest:
                         self.add_result("WebSocket", False, "连接超时")
                         
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.add_result("WebSocket", False, f"错误: {str(e)[:60]}")
+
     
     def test_frontend_code(self):
         print("\n" + "=" * 60)

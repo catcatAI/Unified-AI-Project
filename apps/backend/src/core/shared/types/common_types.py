@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TypedDict, Optional, Dict, Any, List, Literal
 from typing_extensions import Required
+import logging
+logger = logging.getLogger(__name__)
 
 print("common_types.py (debug version) is being imported and defining ServiceStatus...")
 

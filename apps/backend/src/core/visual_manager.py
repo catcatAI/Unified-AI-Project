@@ -612,8 +612,10 @@ class VisualManager:
                 for callback in self._expression_callbacks:
                     try:
                         callback(self.current_presentation.current_expression)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
     
     async def _update_eye_tracking(self):
         """Update eye tracking"""
@@ -683,8 +685,10 @@ class VisualManager:
         for callback in self._motion_callbacks:
             try:
                 callback(motion)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         logger.debug(f"Motion played: {motion.name}")
     
@@ -861,8 +865,10 @@ class VisualManager:
             for callback in self._state_callbacks:
                 try:
                     callback(state)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
             
             logger.debug(f"Visual state: {state.value}")
     

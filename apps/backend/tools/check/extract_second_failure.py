@@ -1,4 +1,6 @@
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 # 读取测试结果文件
 with open(r'D:\Projects\Unified-AI-Project\apps\backend\test_results\test_results_20250923_170534.json', 'r', encoding='utf-8') as f:

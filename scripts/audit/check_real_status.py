@@ -7,6 +7,8 @@ import subprocess
 import time
 import json
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 def clean_ollama_output(output):
     """清理Ollama输出的控制字符"""
@@ -62,8 +64,10 @@ def test_ollama_real():
                     parsed = json.loads(cleaned_output)
                     if isinstance(parsed, dict) and 'response' in parsed:
                         response = parsed['response']
-                except:
+                except Exception as e:
+                    logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
                     pass
+
                 
                 print(f"✅ 成功: {len(response)} 字符")
                 print(f"⏱️  时间: {processing_time:.1f}ms")

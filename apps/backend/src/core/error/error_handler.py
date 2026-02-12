@@ -97,7 +97,9 @@ class RetryRecoveryStrategy(RecoveryStrategy):
             await self.retry_func()
             return True
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             error.context['retry_error'] = str(e)
+
             return False
 
 class FallbackRecoveryStrategy(RecoveryStrategy):
@@ -113,7 +115,9 @@ class FallbackRecoveryStrategy(RecoveryStrategy):
             await self.fallback_func()
             return True
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             error.context['fallback_error'] = str(e)
+
             return False
 
 class CircuitBreakerRecoveryStrategy(RecoveryStrategy):
@@ -147,8 +151,10 @@ class CircuitBreakerRecoveryStrategy(RecoveryStrategy):
                 self.state = "closed"
                 self.failure_count = 0
                 return True
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 self.failure_count += 1
+
                 if self.failure_count >= self.failure_threshold:
                     self.state = "open"
                     self.last_failure_time = datetime.now()
@@ -454,7 +460,9 @@ def handle_errors(
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 error = await error_handler.handle_error(
+
                     e, category, severity,
                     context={'function': func.__name__, 'args': str(args)[:100]}
                 )
@@ -467,7 +475,9 @@ def handle_errors(
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                # 同步函數中的錯誤處理
+               logger.error(f'Error in {__name__}: {e}', exc_info=True)
+               
+# 同步函數中的錯誤處理
                 error = asyncio.run(error_handler.handle_error(
                     e, category, severity,
                     context={'function': func.__name__, 'args': str(args)[:100]}

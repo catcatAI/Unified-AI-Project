@@ -6,6 +6,8 @@ Defines the core data structures and types used by the HAM system.
 from datetime import datetime
 from typing import Any, Dict, List, Optional, TypedDict, Union
 from typing_extensions import NotRequired
+import logging
+logger = logging.getLogger(__name__)
 
 
 class HAMDataPackage:

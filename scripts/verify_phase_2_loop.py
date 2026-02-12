@@ -1,6 +1,8 @@
 import requests
 import time
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 BASE_URL = "http://localhost:8000/api/v1"
 

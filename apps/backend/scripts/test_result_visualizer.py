@@ -2,6 +2,8 @@ import json
 import os
 from pathlib import Path
 from typing import Dict, Any, List
+import logging
+logger = logging.getLogger(__name__)
 
 class ResultVisualizer:
     """

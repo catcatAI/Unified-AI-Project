@@ -1,5 +1,7 @@
 import asyncio
 import sys
+import logging
+logger = logging.getLogger(__name__)
 sys.path.insert(0, '.')
 from apps.backend.src.core.ethics.ethics_manager import EthicsManager, EthicsLevel
 

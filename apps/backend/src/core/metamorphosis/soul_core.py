@@ -23,6 +23,8 @@ from datetime import datetime
 from enum import Enum
 import hashlib
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 
 class SoulComponent(Enum):

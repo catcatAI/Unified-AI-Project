@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple
 import uuid
+import logging
+logger = logging.getLogger(__name__)
 
 @dataclass
 class VoiceprintProfile:

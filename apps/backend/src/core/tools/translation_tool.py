@@ -7,6 +7,8 @@ import os
 import re
 from datetime import datetime
 from typing import Optional
+import logging
+logger = logging.getLogger(__name__)
 
 # 定义路径
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

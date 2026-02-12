@@ -1,5 +1,7 @@
 from typing import Callable, Any
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 class RetryPolicy:
     """
@@ -18,7 +20,9 @@ class RetryPolicy:
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 if attempt < self.max_retries - 1:
+
                     delay = self.initial_delay * (self.backoff_factor ** attempt)
                     print(f"Attempt {attempt + 1} failed. Retrying in {delay:.2f} seconds... Error: {e}")
                     await asyncio.sleep(delay)

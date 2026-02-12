@@ -10,6 +10,8 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional, Dict, Union, Literal
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent.parent

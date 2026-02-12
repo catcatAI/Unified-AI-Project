@@ -13,6 +13,8 @@ This script tests:
 import json
 import os
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # Paths
 BASE_DIR = Path("/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app")

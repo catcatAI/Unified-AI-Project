@@ -2,6 +2,8 @@
 
 import os
 from typing import Dict, Any, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 _loaded_models: Dict[str, Any] = {}
 _model_load_errors: Dict[str, str] = {}
@@ -23,7 +25,9 @@ def load_math_model():
         _loaded_models[model_name] = {"name": "math_model", "loaded": True}
         return _loaded_models[model_name]
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         _model_load_errors[model_name] = str(e)
+
         return None
 
 
@@ -38,7 +42,9 @@ def load_logic_model():
         _loaded_models[model_name] = {"name": "logic_model", "loaded": True}
         return _loaded_models[model_name]
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         _model_load_errors[model_name] = str(e)
+
         return None
 
 

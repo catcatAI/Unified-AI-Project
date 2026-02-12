@@ -104,7 +104,9 @@ class DependencyManager:
             status.error = str(e)
             logger.warning(f"Primary dependency '{dep_name}' not available: {e}")
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             status.error = f"An unexpected error occurred: {e}"
+
             logger.error(f"Failed to import '{dep_name}': {e}", exc_info=True)
 
         env_config = self._config.get('environments', {}).get(self._environment, {})

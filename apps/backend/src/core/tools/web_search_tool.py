@@ -4,6 +4,8 @@
 
 import os
 from typing import Optional, Dict, Any, List
+import logging
+logger = logging.getLogger(__name__)
 
 # 尝试导入requests和beautifulsoup4
 try:
@@ -84,4 +86,5 @@ class WebSearchTool:
             return results
 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return [{"error": str(e)}]

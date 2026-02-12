@@ -5,6 +5,8 @@ import json
 import time
 import sys
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 def get_server_status():
     """獲取服務器狀態"""
@@ -13,7 +15,9 @@ def get_server_status():
         if response.status_code == 200:
             return response.json()
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         return {'status': 'error', 'message': str(e)}
+
 
 def get_system_status():
     """獲取系統狀態"""
@@ -22,7 +26,9 @@ def get_system_status():
         if response.status_code == 200:
             return response.json()
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         return {'status': 'error', 'message': str(e)}
+
 
 def show_dashboard():
     """顯示狀態儀表板"""

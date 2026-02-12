@@ -13,6 +13,8 @@ import json
 import zipfile
 import shutil
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 class AngelaNoSudoInstaller:
     def __init__(self):
@@ -46,7 +48,9 @@ class AngelaNoSudoInstaller:
             return get_pip_path
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.print_error(f"pip 下載失敗: {e}")
+
             return None
     
     def install_pip_user(self):
@@ -72,7 +76,9 @@ class AngelaNoSudoInstaller:
                 return False
                 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.print_error(f"pip 安裝異常: {e}")
+
             return False
     
     def get_user_pip(self):
@@ -104,8 +110,10 @@ class AngelaNoSudoInstaller:
         try:
             result = subprocess.run(cmd, capture_output=True, text=True)
             return result.returncode == 0
-        except:
+        except Exception as e:
+            logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
             return False
+
     
     def create_user_venv(self):
         """創建用戶級別虛擬環境"""
@@ -127,7 +135,9 @@ class AngelaNoSudoInstaller:
             return venv_path
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.print_error(f"虛擬環境創建失敗: {e}")
+
             return None
     
     def setup_venv_pip(self, venv_path):
@@ -146,7 +156,9 @@ class AngelaNoSudoInstaller:
             self.print_success("pip 升級完成")
             return pip_exe
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.print_error(f"pip 升級失敗: {e}")
+
             return None
     
     def install_basic_dependencies(self, pip_exe):
@@ -184,7 +196,9 @@ class AngelaNoSudoInstaller:
                 self.print_warning(f"{dep} 安裝超時")
                 failed_deps.append(dep)
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 self.print_warning(f"{dep} 安裝異常: {e}")
+
                 failed_deps.append(dep)
         
         return len(failed_deps) == 0
@@ -236,14 +250,18 @@ class AngelaNoSudoInstaller:
                             
                             node_link.symlink_to(node_dir / "node.exe")
                             npm_link.symlink_to(node_dir / "npm.cmd")
-                        except:
+                        except Exception as e:
+                            logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
                             pass
+
                     
                     self.print_success("Node.js 安裝完成")
                     return True
                     
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 self.print_error(f"Node.js 安裝失敗: {e}")
+
                 return False
         
         elif self.os_type == "posix":
@@ -286,7 +304,9 @@ class AngelaNoSudoInstaller:
                     return True
                     
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 self.print_error(f"Node.js 安裝失敗: {e}")
+
                 return False
         
         return False

@@ -9,6 +9,8 @@ import os
 import json
 import csv
 from typing import Tuple, Optional, List, Dict, Any
+import logging
+logger = logging.getLogger(__name__)
 
 # Add src directory to sys.path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

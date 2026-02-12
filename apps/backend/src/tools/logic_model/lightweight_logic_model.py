@@ -4,6 +4,8 @@ import json
 import os
 import ast
 from typing import Optional, List, Dict, Any, Union, Callable, cast
+import logging
+logger = logging.getLogger(__name__)
 
 class LightweightLogicModel:
     """
@@ -60,8 +62,10 @@ class LightweightLogicModel:
             # Evaluate using safe eval
             return self._safe_eval_logic(normalized)
 
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return None
+
 
     def _normalize_proposition(self, proposition: str) -> Optional[str]:
         """
@@ -114,8 +118,10 @@ class LightweightLogicModel:
 
             return ' '.join(result_tokens)
 
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return None
+
 
     def _safe_eval_logic(self, expression: str) -> Optional[bool]:
         """
@@ -154,8 +160,10 @@ class LightweightLogicModel:
                 return result
             return None
 
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return None
+
 
     def solve_logic_problem(self, problem: str) -> str:
         """
@@ -277,7 +285,9 @@ class LightweightLogicModel:
             }
 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {
+
                 'error': str(e),
                 'accuracy': 0,
                 'correct': 0,
@@ -304,8 +314,10 @@ class LightweightLogicModel:
 
             return True
 
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return False
+
 
     @classmethod
     def load_model(cls, model_path: str):

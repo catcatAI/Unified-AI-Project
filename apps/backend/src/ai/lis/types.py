@@ -1,4 +1,6 @@
 from typing import TypedDict, Optional, List, Literal, Dict, Any
+import logging
+logger = logging.getLogger(__name__)
 
 LIS_AnomalyType = Literal[
     "RHYTHM_BREAK", 

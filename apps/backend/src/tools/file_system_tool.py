@@ -94,4 +94,6 @@ class FileSystemTool:
             else:
                 return {"success": False, "error": f"Unknown action: {action}"}
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {"success": False, "error": str(e)}
+

@@ -26,6 +26,8 @@ import asyncio
 import random
 import math
 from enum import Enum
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ExplorationResult(Enum):
@@ -285,8 +287,10 @@ class HSMFormulaSystem:
         for callback in self._gap_callbacks:
             try:
                 callback(gap)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return gap
     
@@ -416,8 +420,10 @@ class HSMFormulaSystem:
         for callback in self._exploration_callbacks:
             try:
                 callback(exploration)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return exploration
     
@@ -464,8 +470,10 @@ class HSMFormulaSystem:
         for callback in self._governance_callbacks:
             try:
                 callback(blueprint)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return blueprint
     

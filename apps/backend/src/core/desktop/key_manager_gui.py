@@ -21,6 +21,8 @@ from tkinter import ttk, messagebox, filedialog
 from pathlib import Path
 from typing import Dict, Optional, List
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 
 class KeyManagerGUI:
@@ -572,7 +574,9 @@ class KeyManagerGUI:
                 self._refresh_display()
                 
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 messagebox.showerror("Error", f"Failed to save key: {e}")
+
         
         tk.Button(
             btn_frame,

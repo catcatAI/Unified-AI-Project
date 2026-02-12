@@ -8,5 +8,7 @@ Manages discovery and registry of capabilities advertised by other AIs on the HS
 """
 
 from .service_discovery_module import ServiceDiscoveryModule
+import logging
+logger = logging.getLogger(__name__)
 
 __all__ = ['ServiceDiscoveryModule']

@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Optional, Dict, Any, Callable
 import asyncio
 import importlib
+import logging
+logger = logging.getLogger(__name__)
 
 # Add the backend src directory to the Python path
 project_root == Path(__file__).parent.parent.parent.parent()

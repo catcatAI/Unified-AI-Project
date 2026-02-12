@@ -11,6 +11,8 @@ Angela Character Touch Coordinate System Test
 
 import json
 import math
+import logging
+logger = logging.getLogger(__name__)
 
 # ============= 配置 =============
 # Canvas 內部尺寸（固定）

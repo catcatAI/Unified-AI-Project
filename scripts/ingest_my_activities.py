@@ -9,6 +9,8 @@ import os
 import sys
 import asyncio
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # Adjust import paths for the project structure
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

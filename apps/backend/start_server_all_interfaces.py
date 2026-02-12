@@ -1,6 +1,8 @@
 from src.services.main_api_server import app
 import uvicorn
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 if __name"__main__":::
     try,

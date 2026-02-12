@@ -5,6 +5,8 @@
 from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
+import logging
+logger = logging.getLogger(__name__)
 
 # 尝试导入TensorFlow
 try:
@@ -74,8 +76,10 @@ class MathModel:
         # 简化实现
         try:
             predicted_result = str(eval(expression))
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             predicted_result = "Error"
+
 
         result = MathModelResult(
             input_expression=expression,

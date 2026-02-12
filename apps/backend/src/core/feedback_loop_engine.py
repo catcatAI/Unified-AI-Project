@@ -31,6 +31,8 @@ import uuid
 import json
 import time
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ..action_execution_bridge import ActionExecutionBridge
@@ -447,8 +449,10 @@ class FeedbackLoopEngine:
         if self.hsm and hasattr(self.hsm, 'get_relevant_context'):
             try:
                 context = await self.hsm.get_relevant_context(perception_event.data)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         # Use CDM for decision making if available
         if self.cdm and hasattr(self.cdm, 'generate_decision'):
@@ -469,8 +473,10 @@ class FeedbackLoopEngine:
                     timestamp=datetime.now(),
                     expected_outcome=decision_data.get("expected_outcome")
                 )
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         # Fallback: simple rule-based decision
         return await self._generate_fallback_decision(perception_event)

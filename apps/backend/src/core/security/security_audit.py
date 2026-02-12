@@ -79,7 +79,9 @@ class SecurityAudit:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {
+
                 'file': file_path,
                 'error': str(e),
                 'vulnerabilities': []

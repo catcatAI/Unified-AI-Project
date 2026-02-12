@@ -567,8 +567,10 @@ class Level5ASISystem:
                     if status.get("alignment_enabled", False):
                         healthy_agents += 1
                     agent_details[agent_id] = status
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     agent_details[agent_id] = {"error": "Failed to get status"}
+
             
             score = healthy_agents / len(self.aligned_agents)
             

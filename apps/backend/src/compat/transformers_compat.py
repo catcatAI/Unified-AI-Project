@@ -42,7 +42,9 @@ def ensure_transformers_compatibility():
         logging.error(f"Transformers library not found: {e}")
         return False
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         logging.error(f"Error ensuring transformers compatibility: {e}")
+
         return False
 
 # 在模块加载时自动执行兼容性检查

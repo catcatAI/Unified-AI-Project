@@ -1,5 +1,7 @@
 from typing import List, Any, Optional
 from unittest.mock import Mock
+import logging
+logger = logging.getLogger(__name__)
 
 # Mock Hugging Face API for syntax validation
 try:

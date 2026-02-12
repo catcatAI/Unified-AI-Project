@@ -165,7 +165,9 @@ class MQTTSubscriptionManager:
                 return True
                 
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 last_error = e
+
                 logger.warning(f"[MQTTSubManager] Subscribe attempt {attempt + 1} failed: {e}")
                 if attempt < retry - 1:
                     await asyncio.sleep(1 * (attempt + 1))  # 指数退避
@@ -308,7 +310,9 @@ class MQTTSubscriptionManager:
                     self.stats["callbacks_executed"] += 1
                     
                 except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     self.stats["callback_errors"] += 1
+
                     subscription.error_count += 1
                     logger.error(f"[MQTTSubManager] Callback error for {matched_topic}: {e}")
     

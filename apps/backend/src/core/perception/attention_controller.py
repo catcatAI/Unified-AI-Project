@@ -2,6 +2,8 @@ from enum import Enum, auto
 from typing import Dict, List, Any, Optional, Tuple
 import time
 import random
+import logging
+logger = logging.getLogger(__name__)
 
 class AttentionMode(Enum):
     EXPLORE = auto() # 隨機/全局探索

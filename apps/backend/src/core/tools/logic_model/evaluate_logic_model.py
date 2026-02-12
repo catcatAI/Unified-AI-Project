@@ -5,6 +5,8 @@
 import json
 import os
 from typing import Dict, Any, List, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 try:
     from sklearn.metrics import classification_report, accuracy_score
@@ -50,8 +52,10 @@ def evaluate_logic_model(model, test_data: List[Dict[str, Any]]) -> Dict[str, An
         # 使用模型进行预测
         try:
             prediction = model.evaluate(proposition)
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             prediction = None
+
 
         if prediction is not None:
             predictions.append(prediction)

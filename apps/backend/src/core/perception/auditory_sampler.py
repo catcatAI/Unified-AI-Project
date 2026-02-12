@@ -2,6 +2,8 @@ import numpy as np
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum, auto
+import logging
+logger = logging.getLogger(__name__)
 
 class AudioFeatureType(Enum):
     VOICEPRINT = auto()  # 聲紋特徵 (User/Speaker ID)

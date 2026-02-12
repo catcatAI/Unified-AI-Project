@@ -142,7 +142,9 @@ class AgentCollaborationManagerEnhanced:
                 collaboration_task.status = CollaborationStatus.FAILED
                 collaboration_task.error_message = "Failed to send HSP request"
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             collaboration_task.status = CollaborationStatus.FAILED
+
             collaboration_task.error_message = str(e)
             logger.error(f"Error delegating task '{task_id}': {e}")
             

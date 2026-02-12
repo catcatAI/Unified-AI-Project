@@ -9,6 +9,8 @@ import json
 import asyncio
 import time
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 # ANSI colors
 GREEN = "\033[92m"
@@ -94,7 +96,9 @@ class DesktopAppTester:
             else:
                 self.add_result("backend", False, f"Backend health check failed: {result.stderr}")
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.add_result("backend", False, f"Backend test error: {str(e)[:80]}")
+
 
     async def test_pet_api(self):
         print_header("Pet API Tests")
@@ -131,7 +135,9 @@ class DesktopAppTester:
                         self.add_result("api", False, f"Economy status returned status {resp.status}")
 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.add_result("api", False, f"API test error: {str(e)[:80]}")
+
 
     async def test_websocket(self):
         print_header("WebSocket Tests")
@@ -162,7 +168,9 @@ class DesktopAppTester:
         except ImportError:
             self.add_result("websocket", False, "aiohttp not installed for WebSocket tests")
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.add_result("websocket", False, f"WebSocket test error: {str(e)[:80]}")
+
 
     def test_frontend_code(self):
         print_header("Frontend Code Tests")

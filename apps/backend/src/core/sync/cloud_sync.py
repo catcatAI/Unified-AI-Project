@@ -24,6 +24,8 @@ from enum import Enum
 import hashlib
 import json
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 
 class SyncStatus(Enum):
@@ -317,8 +319,10 @@ class CloudSyncManager:
                 item.remote_version = item.local_version
                 return True
                 
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 await asyncio.sleep(self.config.retry_delay)
+
         
         return False
     

@@ -305,7 +305,9 @@ class AngelaRealCreator:
             results["showcase"] = await self._create_showcase(results, learn_results)
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             results["errors"].append(str(e))
+
             logger.error(f"创作流程错误: {e}")
         
         finally:

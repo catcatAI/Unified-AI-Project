@@ -27,6 +27,8 @@ import asyncio
 import json
 import math
 import random
+import logging
+logger = logging.getLogger(__name__)
 
 
 class GenerationStage(Enum):
@@ -480,8 +482,10 @@ class Live2DAvatarGenerator:
         for callback in self._progress_callbacks:
             try:
                 callback(progress_obj)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     async def generate_avatar(
         self,
@@ -541,7 +545,9 @@ class Live2DAvatarGenerator:
             self._notify_progress(GenerationStage.FINALIZING, 100, "Generation complete!")
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self._notify_progress(GenerationStage.FINALIZING, 0, f"Generation failed: {str(e)}")
+
             raise
         
         finally:

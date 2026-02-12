@@ -8,6 +8,8 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 import asyncio
 
@@ -27,7 +29,9 @@ async def get_ops_dashboard(ops_manager: IntelligentOpsManager = Depends(get_ops
         dashboard_data = await ops_manager.get_ops_dashboard_data()
         return JSONResponse(content=dashboard_data)
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise HTTPException(status_code=500, detail=f"获取仪表板数据失败: {str(e)}")
+
 
 @router.get("/insights")
 async def get_insights(
@@ -56,7 +60,9 @@ async def get_insights(
             "auto_actionable": insight.auto_actionable
         } for insight in insights])
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise HTTPException(status_code=500, detail=f"获取洞察失败: {str(e)}")
+
 
 @router.post("/insights/{insight_id}/action")
 async def execute_manual_action(
@@ -78,7 +84,9 @@ async def execute_manual_action(
         else:
             return JSONResponse(content={"status": "error", "message": "操作执行失败"})
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise HTTPException(status_code=500, detail=f"执行操作失败: {str(e)}")
+
 
 @router.post("/metrics")
 async def collect_system_metrics(
@@ -99,4 +107,6 @@ async def collect_system_metrics(
         )
         return {"status": "success", "message": "指标收集任务已提交"}
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise HTTPException(status_code=500, detail=f"提交指标收集任务失败: {str(e)}")
+

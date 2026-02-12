@@ -3,6 +3,8 @@ import json
 import re
 from datetime import datetime
 from typing import Union, Dict, Callable, Type, List
+import logging
+logger = logging.getLogger(__name__)
 
 # Define paths relative to the project root
 # Assuming this script is in src/tools/

@@ -1,4 +1,6 @@
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 print("Python path:")
 for path in sys.path:

@@ -31,6 +31,8 @@ import time
 import json
 from pathlib import Path
 from collections import deque
+import logging
+logger = logging.getLogger(__name__)
 
 
 class MonitorType(Enum):
@@ -376,8 +378,10 @@ class FileSystemMonitor:
                         
                         self._file_states[item_str] = current_state
                         
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
             
             # Check for deleted files
             for old_file in list(self._file_states.keys()):

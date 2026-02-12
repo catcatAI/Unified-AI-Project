@@ -5,6 +5,8 @@ Provides model registration and profile management.
 
 from dataclasses import dataclass, asdict
 from typing import Dict, Any, List
+import logging
+logger = logging.getLogger(__name__)
 
 
 @dataclass

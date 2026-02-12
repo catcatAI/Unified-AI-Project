@@ -7,6 +7,8 @@ import asyncio
 import sys
 from pathlib import Path
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 sys.path.insert(0, 'apps/backend')
 
@@ -132,7 +134,9 @@ async def test_components():
             "details": f"Stored 1, Retrieved {len(memories)}"
         }
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         results["HAMMemoryManager"] = {
+
             "status": "❌ FAIL",
             "error": str(e)
         }
@@ -151,7 +155,9 @@ async def test_components():
             "details": f"Balance: {balance}"
         }
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         results["EconomyManager"] = {
+
             "status": "❌ FAIL",
             "error": str(e)
         }
@@ -173,7 +179,9 @@ async def test_components():
             "details": f"Response: {result.get('response', 'N/A')[:30]}..."
         }
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         results["CognitiveOrchestrator"] = {
+
             "status": "❌ FAIL",
             "error": str(e)
         }
@@ -191,7 +199,9 @@ async def test_components():
             "details": f"Mode: {result.get('mode', 'N/A')}"
         }
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         results["UniversalCreationEngine"] = {
+
             "status": "❌ FAIL",
             "error": str(e)
         }

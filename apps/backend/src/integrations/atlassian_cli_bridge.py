@@ -39,7 +39,9 @@ class AtlassianCLIBridge:
                 "stdout": "", "stderr": "Command timed out after 30 seconds"
             }
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {"success": False, "error": str(e), "stdout": "", "stderr": str(e)}
+
 
     def get_jira_projects(self) -> Dict[str, Any]:
         """Gets the list of Jira projects."""

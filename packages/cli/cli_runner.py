@@ -5,6 +5,8 @@ CLI运行器 - 解决模块路径问题的统一入口
 import sys
 import os
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 def main():
     """主函数 - 处理CLI命令"""

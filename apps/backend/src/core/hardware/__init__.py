@@ -18,6 +18,8 @@ Hardware Module - Angela AI Matrix
 """
 
 from .unified_hardware_center import (
+import logging
+logger = logging.getLogger(__name__)
     UnifiedHardwareCenter,
     HardwareDetector,
     PrecisionManager,

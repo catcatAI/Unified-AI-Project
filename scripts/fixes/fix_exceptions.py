@@ -6,6 +6,8 @@ Intelligent Exception Handler Fixer
 
 import re
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # 定义常见操作和对应的异常类型
 EXCEPTION_MAPPING = {

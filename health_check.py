@@ -4,6 +4,8 @@ import os
 import sys
 import subprocess
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 def check_python():
     """检查Python环境"""

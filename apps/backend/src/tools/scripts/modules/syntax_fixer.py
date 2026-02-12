@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 class SyntaxFixer:
     def __init__(self, project_root: Path):

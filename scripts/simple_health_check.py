@@ -1,4 +1,6 @@
 import requests
+import logging
+logger = logging.getLogger(__name__)
 try:
     r = requests.get("http://127.0.0.1:8000/api/v1/health")
     print(f"Status: {r.status_code}")

@@ -6,6 +6,8 @@
 import json
 import os
 from typing import Optional, Dict, Any
+import logging
+logger = logging.getLogger(__name__)
 
 # 尝试导入Keras
 try:

@@ -504,7 +504,9 @@ def handle_errors(
             try:
                 return func(*args, **kwargs)
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 if log_errors:
+
                     error = capture_exception(e)
                     error.log()
                 
@@ -527,7 +529,9 @@ def safe_execute(
     try:
         return func(*args, **kwargs)
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         if log_errors:
+
             error = capture_exception(e)
             error.log()
         return default_return
@@ -554,4 +558,5 @@ if __name__ == "__main__":
     try:
         raise error
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         handler.handle(e)

@@ -23,6 +23,8 @@ from enum import Enum, auto
 from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 # Import theoretical frameworks
 from core.life_intensity_formula import (
@@ -346,8 +348,10 @@ class CyberIdentity:
             for callback in self._milestone_callbacks:
                 try:
                     callback(milestone)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
         
         # Record in history
         self.growth_history.append({
@@ -363,8 +367,10 @@ class CyberIdentity:
             for callback in self._growth_callbacks[aspect]:
                 try:
                     callback(growth_record.previous_level, growth_record.level)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
         
         # Update self-description if significant growth
         if growth_record.level - growth_record.previous_level > 0.1:

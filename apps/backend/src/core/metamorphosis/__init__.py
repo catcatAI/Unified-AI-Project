@@ -11,6 +11,8 @@ Date: 2026-02-04
 """
 
 from .soul_core import (
+import logging
+logger = logging.getLogger(__name__)
     SoulCore,
     SoulSignature,
     IdentityCore,

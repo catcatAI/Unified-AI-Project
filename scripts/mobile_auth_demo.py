@@ -10,6 +10,8 @@ import hashlib
 import json
 import time
 import requests
+import logging
+logger = logging.getLogger(__name__)
 
 def sign_request(key_b: str, body: dict) -> str:
     """使用 Key B 對請求內容進行 HMAC-SHA256 簽名"""

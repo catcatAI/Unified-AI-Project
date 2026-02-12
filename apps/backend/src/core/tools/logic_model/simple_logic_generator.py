@@ -4,6 +4,8 @@
 
 import random
 from typing import List, Dict, Any
+import logging
+logger = logging.getLogger(__name__)
 
 
 def generate_simple_logic_dataset(num_samples: int = 1000) -> List[Dict[str, Any]]:

@@ -8,6 +8,8 @@ import uuid
 import base64
 import os
 from typing import List, Tuple, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 # Optional cryptography import
 try:
@@ -89,8 +91,10 @@ class GenesisManager:
                 secret_hex = parts[1]
                 secret_bytes = bytes.fromhex(secret_hex)
                 return secret_bytes.decode('utf-8')
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         
         return None
 

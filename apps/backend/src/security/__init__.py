@@ -4,6 +4,8 @@ Provides comprehensive security controls for AI operations:
 """
 
 from .permission_control import (
+import logging
+logger = logging.getLogger(__name__)
     PermissionControlSystem,
     PermissionType,
     PermissionLevel,

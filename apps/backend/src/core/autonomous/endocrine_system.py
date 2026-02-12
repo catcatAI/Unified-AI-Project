@@ -49,6 +49,8 @@ from typing import Dict, List, Optional, Tuple, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
 import math
+import logging
+logger = logging.getLogger(__name__)
 
 
 class HormoneType(Enum):
@@ -508,8 +510,10 @@ class EndocrineSystem:
             for callback in self._callbacks:
                 try:
                     callback(hormone_type, old_level, hormone.current_level)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
     
     def get_hormone_level(self, hormone_type: HormoneType) -> float:
         """Get current level of a specific hormone"""

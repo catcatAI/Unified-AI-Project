@@ -3,6 +3,8 @@
 """
 
 from typing import Dict, Any, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 
 class LightweightLogicModel:
@@ -50,8 +52,10 @@ class LightweightLogicModel:
             py_expr = self._convert_to_python(proposition)
             result = eval(py_expr, {"__builtins__": {}}, {})
             return bool(result)
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return None
+
 
     def _convert_to_python(self, proposition: str) -> str:
         """转换为Python表达式"""

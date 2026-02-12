@@ -243,8 +243,10 @@ class OpenAIBackend(BaseLLMBackend):
                     headers={"Authorization": f"Bearer {self.config.api_key}"}
                 )
                 return response.status_code == 200
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return False
+
 
 
 class AnthropicBackend(BaseLLMBackend):
@@ -310,8 +312,10 @@ class AnthropicBackend(BaseLLMBackend):
                     "x-api-key": self.config.api_key
                 })
                 return response.status_code == 200
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return False
+
 
 
 class OllamaBackend(BaseLLMBackend):
@@ -364,8 +368,10 @@ class OllamaBackend(BaseLLMBackend):
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(f"{base_url}/api/tags")
                 return response.status_code == 200
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return False
+
 
 
 class LlamaCppBackend(BaseLLMBackend):
@@ -417,8 +423,10 @@ class LlamaCppBackend(BaseLLMBackend):
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(f"{base_url}/v1/models")
                 return response.status_code == 200
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return False
+
 
 
 class MultiLLMService:

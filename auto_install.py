@@ -12,6 +12,8 @@ import urllib.request
 import json
 import time
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 class AngelaAutoInstaller:
     def __init__(self):
@@ -46,7 +48,9 @@ class AngelaAutoInstaller:
             return True, result.stdout
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.print_error(f"命令執行異常: {e}")
+
             return False, str(e)
     
     def detect_os(self):
@@ -68,8 +72,10 @@ class AngelaAutoInstaller:
                         self.distro = "arch"
                     else:
                         self.distro = "unknown"
-            except:
+            except Exception as e:
+                logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
                 self.distro = "unknown"
+
                 
             self.print_success(f"Linux ({self.distro})")
             
@@ -400,8 +406,10 @@ def main():
                 pid = proc.info['pid']
                 os.kill(pid, signal.SIGTERM)
                 print(f"✅ 已停止進程 {pid}")
-        except:
+        except Exception as e:
+            logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
             pass
+
     
     print("👋 Angela AI 已停止")
 
@@ -438,8 +446,10 @@ if __name__ == "__main__":
                                  capture_output=True, text=True)
             if result.returncode == 0:
                 vram_mb = int(result.stdout.strip().split('\n')[0])
-        except:
+        except Exception as e:
+            logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
             pass
+
 
         self.vram_mb = vram_mb
 
@@ -630,8 +640,10 @@ if __name__ == "__main__":
                 python_exe, "-c", 
                 "import fastapi, uvicorn, pydantic; print('✅ Python 依賴測試通過')"
             ])
-        except:
+        except Exception as e:
+            logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
             self.print_warning("Python 依賴測試失敗")
+
     
     def start_angela(self):
         """啟動 Angela"""

@@ -76,7 +76,9 @@ class MCPConnector:
             if self.enable_fallback:
                 await self._initialize_fallback_protocols()
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             project_error_handler(ProjectError(f"MCP MQTT connection failed: {e}", code=503))
+
             self.is_connected = False
             self.mcp_available = False
             if self.enable_fallback:
@@ -115,7 +117,9 @@ class MCPConnector:
         except json.JSONDecodeError:
             project_error_handler(ProjectError("Failed to decode MCP message payload as JSON.", code=400))
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             project_error_handler(ProjectError(f"Error processing MCP message: {e}", code=500))
+
 
     async def send_command(self, target_id: str, command_name: str, parameters: Dict[str, Any]) -> str:
         request_id = str(uuid.uuid4())
@@ -168,7 +172,9 @@ class MCPConnector:
                 self.logger.error("Failed to initialize MCP fallback protocols")
                 self.fallback_initialized = False
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             project_error_handler(ProjectError(f"Error initializing MCP fallback protocols: {e}", code=500))
+
             self.fallback_initialized = False
 
     async def _send_via_fallback(self, target_id: str, command_name: str, parameters: Dict[str, Any], request_id: str):
@@ -223,16 +229,20 @@ class MCPConnector:
                 # Simulate a ping or simple check
                 # self.client.publish("mcp/ping", "ping")
                 health["mcp_healthy"] = True
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 health["mcp_healthy"] = False
+
                 self.mcp_available = False
 
         if self.fallback_manager:
             try:
                 fallback_status = self.fallback_manager.get_status()
                 health["fallback_healthy"] = fallback_status.get("active_protocol") is not None
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 health["fallback_healthy"] = False
+
 
         health["overall_healthy"] = health["mcp_healthy"] or health["fallback_healthy"]
         return health

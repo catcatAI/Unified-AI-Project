@@ -9,6 +9,8 @@ running the full test suite.
 import asyncio
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # Add path for imports
 sys.path.insert(0, 'apps/backend/src/core')

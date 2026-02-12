@@ -23,6 +23,8 @@ from datetime import datetime, timedelta
 import asyncio
 import math
 from enum import Enum
+import logging
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from .dynamic_parameters import DynamicThresholdManager
@@ -320,8 +322,10 @@ class AutonomousLifeCycle:
         for callback in self._metrics_callbacks:
             try:
                 callback(metrics)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return metrics
     
@@ -495,8 +499,10 @@ class AutonomousLifeCycle:
         for callback in self._decision_callbacks:
             try:
                 callback(decision)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     async def _check_phase_transition(self, metrics: FormulaMetrics):
         """Check if life phase should transition"""
@@ -522,8 +528,10 @@ class AutonomousLifeCycle:
             for callback in self._phase_callbacks:
                 try:
                     callback(old_phase, new_phase)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
     
     def get_current_metrics(self) -> FormulaMetrics:
         """Get current formula metrics"""

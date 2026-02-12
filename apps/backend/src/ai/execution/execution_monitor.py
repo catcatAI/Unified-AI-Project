@@ -352,7 +352,9 @@ class ExecutionMonitor:
                 )
 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             execution_time = time.time() - start_time
+
             return ExecutionResult(
                 status=ExecutionStatus.ERROR,
                 execution_time=execution_time,

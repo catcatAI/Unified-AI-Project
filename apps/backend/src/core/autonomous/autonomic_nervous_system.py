@@ -24,6 +24,8 @@ from typing import Dict, List, Optional, Tuple, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
 import math
+import logging
+logger = logging.getLogger(__name__)
 
 
 class NerveType(Enum):
@@ -238,16 +240,20 @@ class AutonomicNervousSystem:
             for callback in self._state_change_callbacks:
                 try:
                     callback(self._last_state, current_state)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
             self._last_state = current_state
         
         # Arousal level callbacks
         for callback in self._arousal_callbacks:
             try:
                 callback(self.arousal_level)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     async def apply_stimulus(
         self, 

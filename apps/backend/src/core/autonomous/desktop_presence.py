@@ -23,6 +23,8 @@ from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Callable, Any
 from datetime import datetime
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 
 class PresenceMode(Enum):
@@ -241,8 +243,10 @@ class DesktopPresence:
                 for callback in self.collision_callbacks:
                     try:
                         callback(collision)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
     
     def _calculate_collision(
         self, 
@@ -320,8 +324,10 @@ class DesktopPresence:
         for callback in self._position_callbacks:
             try:
                 callback(old_position, position)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     def move_by(self, delta: Position):
         """Move by relative amount"""
@@ -370,8 +376,10 @@ class DesktopPresence:
         for callback in self._mode_change_callbacks:
             try:
                 callback(old_mode, mode)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     def set_layer_mode(self, mode: LayerMode):
         """
@@ -387,8 +395,10 @@ class DesktopPresence:
         for callback in self._mode_change_callbacks:
             try:
                 callback(old_mode, mode)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     def set_opacity(self, opacity: float):
         """Set opacity level (0-1)"""
@@ -513,8 +523,10 @@ class MouseTracker:
             for callback in self._callbacks:
                 try:
                     callback(position)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
 
 
 # Example usage

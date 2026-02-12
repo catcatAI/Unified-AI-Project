@@ -22,6 +22,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any
 from dataclasses import dataclass
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 @dataclass
 class AuditIssue:
@@ -282,7 +284,9 @@ class ComprehensiveAuditor:
             with open(file_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.add_issue(
+
                 category, "low", str(file_path), 0,
                 f"Could not read file: {e}", "", "file_io"
             )
@@ -347,7 +351,9 @@ class ComprehensiveAuditor:
                         f"Service may not be registered in component registry: {service_name}", "", "services"
                     )
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.add_issue(
+
                 "integration", "low", str(service_file), 0,
                 f"Could not analyze service: {e}", "", "services"
             )
@@ -372,7 +378,9 @@ class ComprehensiveAuditor:
                     "API endpoint may lack request/response models", "", "api"
                 )
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.add_issue(
+
                 "api_endpoints", "low", str(route_file), 0,
                 f"Could not analyze API route: {e}", "", "api"
             )
@@ -388,7 +396,9 @@ class ComprehensiveAuditor:
                 with open(config_path, 'r') as f:
                     yaml.safe_load(f)
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.add_issue(
+
                 "configuration", "high", str(config_path), 0,
                 f"Configuration file invalid: {e}", "", "config"
             )
@@ -413,7 +423,9 @@ class ComprehensiveAuditor:
                     "API endpoint file lacks route definitions", "", "api"
                 )
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.add_issue(
+
                 "api_endpoints", "low", str(endpoint_file), 0,
                 f"Could not analyze endpoint: {e}", "", "api"
             )

@@ -348,7 +348,9 @@ class HSPPerformanceEnhancer:
                 result = await original_publish_func(*args, **kwargs)
                 success = True
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 result = None
+
                 success = False
                 logger.error(f"消息发布失败: {e}")
             
@@ -386,7 +388,9 @@ class HSPPerformanceEnhancer:
                 result = await original_receive_func(*args, **kwargs)
                 success = True
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 result = None
+
                 success = False
                 logger.error(f"消息接收失败: {e}")
             

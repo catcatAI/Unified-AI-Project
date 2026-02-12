@@ -2,6 +2,8 @@ import sys
 import importlib
 import os
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # 设置路径
 sys.path.insert(0, 'apps/backend/src')
@@ -26,7 +28,9 @@ for py_file in py_files:
     except ImportError as e:
         errors.append((str(rel_path), str(e)))
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         errors.append((str(rel_path), f"Non-ImportError: {type(e).__name__}: {e}"))
+
 
 if errors:
     print(f"❌ 发现 {len(errors)} 个文件有导入错误:")

@@ -128,7 +128,9 @@ class LlamaCppBackend(BaseLLMBackend):
                         error=f"HTTP {response.status_code}: {response.text}"
                     )
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return LLMResponse(
+
                 text="",
                 backend="llama.cpp",
                 model=self.model,
@@ -242,7 +244,9 @@ class OllamaBackend(BaseLLMBackend):
                         error=f"HTTP {response.status_code}"
                     )
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return LLMResponse(
+
                 text="",
                 backend="ollama",
                 model=self.model,
@@ -295,8 +299,10 @@ class AngelaLLMService:
             with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
                 return config
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {
+
                 "llamacpp-local": {
                     "base_url": "http://localhost:8080",
                     "model_name": "llama-3-8b-instruct",
@@ -469,7 +475,9 @@ class AngelaLLMService:
                 metadata={"fallback": True}
             )
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return LLMResponse(
+
                 text="抱歉，我現在有點困惑...能再說一次嗎？",
                 backend="fallback-error",
                 model="error",

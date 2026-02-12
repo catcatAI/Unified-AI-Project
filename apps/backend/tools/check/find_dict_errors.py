@@ -1,4 +1,6 @@
 import re
+import logging
+logger = logging.getLogger(__name__)
 
 # 读取文件
 with open(r'D:\Projects\Unified-AI-Project\apps\backend\src\hsp\connector.py', 'r', encoding='utf-8') as f:

@@ -5,6 +5,8 @@ with Context7 and other MCP-compatible services.
 """
 
 from typing import Any, Dict, Optional, TypedDict, Literal, List
+import logging
+logger = logging.getLogger(__name__)
 
 # Original MCP Types (Legacy)
 class MCPEnvelope(TypedDict):

@@ -273,7 +273,9 @@ class ExecutionManager:
             recovery_action['status'] = 'completed'
             self.logger.info(f"Recovery action completed for {resource_type}")
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             recovery_action['status'] = 'failed'
+
             recovery_action['error'] = str(e)
             self.logger.error(f"Recovery action failed for {resource_type}: {e}", exc_info=True)
         finally:

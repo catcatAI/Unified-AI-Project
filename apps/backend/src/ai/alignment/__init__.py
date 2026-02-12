@@ -5,6 +5,8 @@ AGI / ASI 对齐系统包, 包含理智、感性和存在三大支柱系统,
 """
 
 from .reasoning_system import ReasoningSystem
+import logging
+logger = logging.getLogger(__name__)
 
 # Placeholders for other systems to satisfy the package structure
 class EmotionSystem: pass

@@ -10,6 +10,8 @@ import tracemalloc
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 @dataclass
 class MemorySnapshot:

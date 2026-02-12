@@ -1,6 +1,8 @@
 from typing import TypedDict, Dict, Any, List, Optional
 from typing_extensions import Required
 from enum import Enum
+import logging
+logger = logging.getLogger(__name__)
 
 class AgentStatus(Enum):
     """Enumeration of different agent statuses."""

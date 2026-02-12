@@ -1,4 +1,6 @@
 from typing import TypedDict, Required, Optional, List, Dict, Any, Literal
+import logging
+logger = logging.getLogger(__name__)
 
 # Virtual Input types
 class VirtualInputElementDescription(TypedDict, total=False):

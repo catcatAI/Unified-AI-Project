@@ -17,6 +17,8 @@ from enum import Enum
 import platform
 import cpuinfo
 import psutil
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ArchitectureType(Enum):

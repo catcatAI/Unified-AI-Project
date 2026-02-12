@@ -1,5 +1,7 @@
 import os
 from typing import Any, Dict, Callable, Type, List
+import logging
+logger = logging.getLogger(__name__)
 
 # from huggingface_hub import hf_hub_download # Uncomment when huggingface_hub is available
 

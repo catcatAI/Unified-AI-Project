@@ -1,5 +1,7 @@
 from typing import Dict, Any, TypedDict
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 class HAMDataPackageInternal(TypedDict):
     timestamp: str

@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Optional
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ReleasePhase(Enum):

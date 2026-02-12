@@ -21,6 +21,8 @@ from typing import Dict, List, Optional, Tuple, Any, Callable
 from datetime import datetime, timedelta
 import asyncio
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -232,8 +234,10 @@ class StateMatrix4D:
         for callback in self._change_callbacks:
             try:
                 callback(dimension_name, dim_state.values.copy())
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         # Check thresholds
         self._check_thresholds(dimension_name)
@@ -266,8 +270,10 @@ class StateMatrix4D:
             if avg >= threshold:
                 try:
                     callback()
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
     
     def compute_influences(self) -> Dict[str, Dict[str, float]]:
         """

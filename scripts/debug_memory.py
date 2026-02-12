@@ -2,6 +2,8 @@
 import sys
 import os
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # Setup path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

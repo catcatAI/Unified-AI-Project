@@ -1,5 +1,7 @@
 import time
 from typing import Any, Dict, Iterable, Tuple
+import logging
+logger = logging.getLogger(__name__)
 
 class Evaluator:
     """
@@ -74,7 +76,9 @@ class Evaluator:
             try:
                 model_or_tool.evaluate(input_data)
                 no_exception += 1
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return no_exception / len(dataset_list)

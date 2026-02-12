@@ -24,6 +24,8 @@ import tempfile
 import argparse
 import json
 import platform
+import logging
+logger = logging.getLogger(__name__)
 
 
 from typing import Optional
@@ -97,8 +99,10 @@ class AngelaInstaller:
             import psutil
 
             return psutil.virtual_memory().total // (1024**3)
-        except:
+        except Exception as e:
+            logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
             return 8
+
 
     def _detect_gpu(self):
         try:
@@ -123,8 +127,10 @@ class AngelaInstaller:
                 for line in result.stdout.split("\n"):
                     if "VGA" in line or "3D" in line:
                         return line.split(":")[-1].strip()
-        except:
+        except Exception as e:
+            logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
             pass
+
         return "Unknown/Software"
 
     def print_header(self):
@@ -249,8 +255,10 @@ class AngelaInstaller:
             if self.temp_dir and self.temp_dir.exists():
                 try:
                     shutil.rmtree(self.temp_dir)
-                except:
+                except Exception as e:
+                    logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
                     pass
+
 
     def _download_zip(self) -> bool:
         try:
@@ -392,8 +400,10 @@ class AngelaInstaller:
             with open(config_file, "w", encoding="utf-8") as f:
                 yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
             print(f"   ✅ 配置已生成: {config_file}")
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             config_file = config_dir / "angela_config.json"
+
             with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
             print(f"   ✅ 配置已生成: {config_file}")

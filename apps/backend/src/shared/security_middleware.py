@@ -12,6 +12,8 @@ from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from typing import Optional
+import logging
+logger = logging.getLogger(__name__)
 
 class EncryptedCommunicationMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, key_b: str):

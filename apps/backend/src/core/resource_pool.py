@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from contextlib import contextmanager
 from enum import Enum
 import weakref
+import logging
+logger = logging.getLogger(__name__)
 
 
 T = TypeVar('T')
@@ -226,7 +228,9 @@ class ResourcePool(Generic[T]):
             self._stats.idle_size += 1
             return pooled
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self._stats.failed += 1
+
             raise RuntimeError(f"创建资源失败: {e}")
     
     def _destroy_resource(self, resource: PooledResource[T]) -> None:
@@ -234,7 +238,9 @@ class ResourcePool(Generic[T]):
         try:
             self.closer(resource.resource)
         except Exception as e:
-            pass  # 忽略关闭错误
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            pass
+# 忽略关闭错误
         
         self._resources.remove(resource)
         self._stats.destroyed += 1
@@ -282,7 +288,9 @@ class ResourcePool(Generic[T]):
                     self._validate_resources()
                     time.sleep(self.config.validation_interval)
                 except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
         
         self._cleanup_thread = threading.Thread(target=cleanup_loop, daemon=True)
         self._cleanup_thread.start()
@@ -385,7 +393,9 @@ class ThreadPool:
                     future.set_result(result)
                     self._stats.completed += 1
                 except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     future.set_exception(e)
+
                     self._stats.failed += 1
             except queue.Empty:
                 continue

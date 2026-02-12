@@ -1,4 +1,6 @@
 from setuptools import setup, find_packages
+import logging
+logger = logging.getLogger(__name__)
 
 # Core dependencies - essential for basic functionality,::
 core_requirements = [

@@ -3,6 +3,8 @@ import asyncio
 import os
 import sys
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # Add project root to sys.path
 PROJECT_ROOT = Path(__file__).parent.parent

@@ -6,6 +6,8 @@ Angela AI - 桌面端问题检测与修复报告
 import os
 import json
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 def generate_verification_report():
     report = {

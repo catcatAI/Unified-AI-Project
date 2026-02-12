@@ -1,6 +1,8 @@
 """图像生成工具"""
 
 from typing import Dict, Any, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ImageGenerationTool:

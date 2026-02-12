@@ -10,6 +10,8 @@ import hashlib
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, Any
+import logging
+logger = logging.getLogger(__name__)
 
 
 def _atomic_write_text(path: Path, content: str) -> None:
@@ -42,8 +44,10 @@ def generate_problem(max_digits: int = 3, operations: list = None) -> tuple:
             answer = int(answer)
     except ZeroDivisionError:
         return generate_problem(max_digits, operations)
-    except Exception:
+    except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         return generate_problem(max_digits, operations)
+
 
     return problem_str, answer
 

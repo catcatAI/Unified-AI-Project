@@ -11,6 +11,8 @@
 
 import re
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 udm_file = '/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js/unified-display-matrix.js'
 

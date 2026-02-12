@@ -72,14 +72,18 @@ class HotReloadService:
         try:
             if hsp is not None and hasattr(hsp, "get_communication_status"):
                 hsp_status = hsp.get_communication_status()
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             hsp_status = {"error": "failed to get HSP status"}
+
 
         try:
             if mcp is not None and hasattr(mcp, "get_communication_status"):
                 mcp_status = mcp.get_communication_status()
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             mcp_status = {"error": "failed to get MCP status"}
+
 
         metrics: Dict[str, Any] = {"hsp": {}, "mcp": {}, "learning": {}, "memory": {}, "lis": {}}
         
@@ -98,13 +102,17 @@ class HotReloadService:
             if old_llm:
                 try:
                     await old_llm.close()
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     close_ok = False
+
 
             try:
                 new_llm = core_services.get_multi_llm_service()
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 return {"reloaded": False, "error": f"Failed to construct new LLM service: {e}"}
+
 
             core_services.llm_interface_instance = new_llm
 
@@ -115,8 +123,10 @@ class HotReloadService:
                         td.set_llm_service(new_llm)  # type ignore[attr-defined]
                     else:
                         setattr(td, "llm_service", new_llm)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
 
             dm = core_services.dialogue_manager_instance
             if dm is not None:
@@ -125,8 +135,10 @@ class HotReloadService:
                         dm.set_llm_interface(new_llm)  # type ignore[attr-defined]
                     else:
                         setattr(dm, "llm_interface", new_llm)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
 
             return {"reloaded": True, "old_closed": close_ok}
 
@@ -144,11 +156,15 @@ class HotReloadService:
                 if es is not None and hasattr(es, "personality_profile") and hasattr(pm, "current_personality"):
                     try:
                         es.personality_profile = pm.current_personality()
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
                 return {"reloaded": bool(ok), "profile": (pm.current_personality or {}).get("profile_name")}
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 return {"reloaded": False, "error": str(e)}
+
 
     async def reload_hsp(self) -> Dict[str, Any]:
         async with self._lock:
@@ -184,9 +200,13 @@ class HotReloadService:
 
                 try:
                     await old_hsp.disconnect()
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
 
                 return {"reloaded": True}
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 return {"reloaded": False, "error": str(e)}
+

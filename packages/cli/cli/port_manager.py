@@ -10,6 +10,8 @@ import psutil
 import socket
 from typing import Dict, List, Optional
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 class PortManager,
     # 统一端口配置

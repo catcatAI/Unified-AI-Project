@@ -25,6 +25,8 @@ from datetime import datetime, timedelta
 import asyncio
 import math
 import random
+import logging
+logger = logging.getLogger(__name__)
 
 
 class SynapticState(Enum):
@@ -519,8 +521,10 @@ class NeuroplasticitySystem:
             for callback in self._memory_callbacks[memory_id]:
                 try:
                     callback(trace)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
         
         return trace
     
@@ -602,8 +606,10 @@ class NeuroplasticitySystem:
                         for callback in self._consolidation_callbacks:
                             try:
                                 callback(memory_id)
-                            except Exception:
+                            except Exception as e:
+                                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                                 pass
+
     
     def associate_memories(self, memory_id_1: str, memory_id_2: str):
         """
@@ -1400,7 +1406,9 @@ class TraumaMemorySystem:
             results["error"] = str(e)
             results["error_type"] = "ValueError"
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             results["status"] = "error"
+
             results["error"] = str(e)
             results["error_type"] = type(e).__name__
         

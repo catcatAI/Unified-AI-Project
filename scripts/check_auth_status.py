@@ -1,4 +1,6 @@
 import requests
+import logging
+logger = logging.getLogger(__name__)
 
 def check_auth():
     url = "http://localhost:8000/api/v1/drive/auth/status"

@@ -7,6 +7,8 @@
 import re
 from pathlib import Path
 from typing import List, Dict, Tuple
+import logging
+logger = logging.getLogger(__name__)
 
 class AngelaIssueScanner:
     """问题扫描器"""
@@ -25,7 +27,9 @@ class AngelaIssueScanner:
                 content = f.read()
                 lines = content.split('\n')
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return
+
         
         for i, line in enumerate(lines, 1):
             self._check_line(filepath, i, line, content)

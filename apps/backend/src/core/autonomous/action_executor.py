@@ -433,7 +433,9 @@ class ActionExecutor:
                     logger.warning(f"Post-execution callback failed: {e}")
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             action.status = ActionStatus.FAILED
+
             action.result = ActionResult(
                 success=False,
                 action_id=action.action_id,
@@ -736,7 +738,9 @@ class ActionExecutor:
                 )
         
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+
             return ExecutionResult(
                 action_id=action_id,
                 action_type=ActionType.SYSTEM_QUERY,
@@ -862,7 +866,9 @@ class ActionExecutor:
                 if not validator(result):
                     return False, f"Result validation failed: {validator.__name__}"
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 return False, f"Validation error: {str(e)}"
+
         
         return True, None
 

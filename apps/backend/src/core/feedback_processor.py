@@ -28,6 +28,8 @@ import json
 import uuid
 from pathlib import Path
 from collections import deque
+import logging
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from .feedback_loop_engine import FeedbackSignal, FeedbackLayer, FeedbackType
@@ -263,8 +265,10 @@ class FeedbackProcessor:
                 for callback in self._learning_callbacks:
                     try:
                         callback(learning_signal)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
                 
                 # Update HSM and CDM
                 await self._update_memory_systems(learning_signal)
@@ -280,8 +284,10 @@ class FeedbackProcessor:
                     for callback in self._strategy_callbacks:
                         try:
                             callback(adjustment)
-                        except Exception:
+                        except Exception as e:
+                            logger.error(f'Error in {__name__}: {e}', exc_info=True)
                             pass
+
             
         except Exception as e:
             print(f"[FeedbackProcessor] Error processing feedback: {e}")

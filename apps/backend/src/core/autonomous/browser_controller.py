@@ -22,6 +22,8 @@ from enum import Enum, auto
 from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 
 class SearchEngine(Enum):
@@ -182,8 +184,10 @@ class BrowserController:
             for callback in self._state_change_callbacks:
                 try:
                     callback(old_state, new_state)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
     
     async def search(
         self, 
@@ -225,7 +229,9 @@ class BrowserController:
             return results
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self._set_state(BrowserState.IDLE)
+
             return []
     
     async def _perform_mock_search(
@@ -271,8 +277,10 @@ class BrowserController:
             self._set_state(BrowserState.IDLE)
             return content
             
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self._set_state(BrowserState.IDLE)
+
             return None
     
     async def _perform_mock_extraction(self, url: str) -> ExtractedContent:
@@ -319,8 +327,10 @@ class BrowserController:
                     for callback in self._game_detection_callbacks:
                         try:
                             callback(self.current_game)
-                        except Exception:
+                        except Exception as e:
+                            logger.error(f'Error in {__name__}: {e}', exc_info=True)
                             pass
+
                 
                 self._set_state(BrowserState.PLAYING_GAME)
                 return True

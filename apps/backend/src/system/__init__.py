@@ -6,6 +6,8 @@ capabilities for the Unified AI Project.
 
 # Hardware Detection
 from .hardware_probe import (
+import logging
+logger = logging.getLogger(__name__)
     HardwareProbe,
     HardwareProfile,
     CPUInfo,

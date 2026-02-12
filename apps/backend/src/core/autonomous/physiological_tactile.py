@@ -25,6 +25,8 @@ from datetime import datetime, timedelta
 import asyncio
 import random
 import math
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ReceptorType(Enum):
@@ -429,8 +431,10 @@ class PhysiologicalTactileSystem:
         for callback in self._on_stimulus_callbacks:
             try:
                 callback(stimulus)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         # Check thresholds
         self._check_thresholds(stimulus.location, perceived_intensity)
@@ -449,8 +453,10 @@ class PhysiologicalTactileSystem:
             for callback in self._on_threshold_callbacks[body_part]:
                 try:
                     callback(intensity)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
     
     def register_stimulus_callback(self, callback: Callable[[TactileStimulus], None]):
         """Register a callback for stimulus events"""

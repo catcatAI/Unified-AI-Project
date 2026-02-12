@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # Add backend src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'apps', 'backend', 'src'))

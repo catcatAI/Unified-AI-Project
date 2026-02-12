@@ -6,6 +6,8 @@ Angela AI v6.0 - Mobile Endpoints
 from fastapi import APIRouter, Body, Depends
 from typing import Dict, Any
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/mobile", tags=["Mobile"])
 
@@ -55,7 +57,9 @@ async def mobile_module_control(data: Dict[str, Any] = Body(...)):
         ))
         return {"status": "success", "module": module, "enabled": enabled}
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         return {"status": "error", "message": str(e)}
+
 
 @router.post("/chat")
 async def mobile_chat(data: Dict[str, Any] = Body(...)):

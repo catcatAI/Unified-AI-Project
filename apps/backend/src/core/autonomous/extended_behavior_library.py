@@ -22,6 +22,8 @@ from enum import Enum, auto
 from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 
 class BehaviorCategory(Enum):
@@ -667,8 +669,10 @@ class ExtendedBehaviorLibrary:
             for callback in self._behavior_start_callbacks[behavior_id]:
                 try:
                     callback()
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
         
         return True
     
@@ -679,8 +683,10 @@ class ExtendedBehaviorLibrary:
             for callback in self._behavior_end_callbacks[behavior.behavior_id]:
                 try:
                     callback()
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
         
         self.active_behavior = None
     

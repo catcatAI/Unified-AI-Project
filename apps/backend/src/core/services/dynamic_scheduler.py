@@ -223,8 +223,10 @@ class HardwareDetector:
                         memory_mb=4096,
                         compute_capability=9.0
                     )
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         
         return None
     
@@ -287,8 +289,10 @@ class HardwareDetector:
                 'available_mb': available,
                 'used_mb': total - available
             }
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {'total_mb': 1024, 'available_mb': 512, 'used_mb': 512}
+
     
     @staticmethod
     def detect_all() -> List[ComputeResource]:
@@ -340,8 +344,10 @@ class ModelRepository:
             try:
                 from core.hardware import ModelRepository as UnifiedRepo
                 return UnifiedRepo.get_requirement(model_name)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         # Fallback to local requirements
         local_requirements = {
@@ -675,7 +681,9 @@ class DynamicScheduler:
                     }
                     
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {"success": False, "error": str(e)}
+
     
     def get_status(self) -> Dict[str, Any]:
         """Get current scheduler status."""

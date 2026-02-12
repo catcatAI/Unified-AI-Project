@@ -24,6 +24,8 @@ from typing import Dict, List, Optional, Callable, Any, Tuple
 from datetime import datetime
 import asyncio
 import math
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ExpressionType(Enum):
@@ -358,8 +360,10 @@ class Live2DIntegration:
         for callback in self._expression_callbacks:
             try:
                 callback(expression)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     def _get_expression_parameters(self, expression: ExpressionType) -> Dict[str, float]:
         """Get parameter values for an expression"""
@@ -439,8 +443,10 @@ class Live2DIntegration:
         for callback in self._motion_callbacks:
             try:
                 callback(motion)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return True
     
@@ -492,8 +498,10 @@ class Live2DIntegration:
                 for callback in self._parameter_callbacks[name]:
                     try:
                         callback(value)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
     
     def get_parameter(self, name: str) -> float:
         """Get current parameter value"""

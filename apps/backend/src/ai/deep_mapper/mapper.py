@@ -12,6 +12,8 @@ supporting complex transformations and bidirectional mapping.
 import json
 from typing import Dict, Any, Optional
 from core.shared.types import MappableDataObject
+import logging
+logger = logging.getLogger(__name__)
 
 
 class DeepMapper:

@@ -2,6 +2,8 @@
 
 from typing import List, Dict
 import random
+import logging
+logger = logging.getLogger(__name__)
 
 
 def generate_simple_logic_dataset(num_samples: int = 1000) -> List[Dict]:

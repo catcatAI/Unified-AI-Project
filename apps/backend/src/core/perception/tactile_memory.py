@@ -1,6 +1,8 @@
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 from .tactile_sampler import TactileProperties, MaterialType
+import logging
+logger = logging.getLogger(__name__)
 
 class TactileMemory:
     """觸覺記憶：存儲材質屬性檔案與物體表面的觸覺地圖 (Tactile Maps)"""

@@ -2,6 +2,8 @@
 
 import os
 from typing import Dict, Any, List
+import logging
+logger = logging.getLogger(__name__)
 
 
 def check_dependencies() -> Dict[str, Any]:

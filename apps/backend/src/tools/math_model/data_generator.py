@@ -5,6 +5,8 @@ import operator
 import ast
 import csv
 from typing import Union, Dict, Callable, Type, List
+import logging
+logger = logging.getLogger(__name__)
 
 # from huggingface_hub import hf_hub_download # Uncomment when huggingface_hub is available
 
@@ -67,7 +69,9 @@ def _safe_eval(expression: str) -> Union[int, float]:
         tree = ast.parse(expression, mode='eval')
         return eval_node(tree.body)
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise ValueError(f"Cannot evaluate expression: {expression} error: {str(e)}")
+
 
 def generate_problem(max_digits: int = 3, operations: List[str] = None):
     """Generates a random arithmetic problem."""
@@ -93,8 +97,10 @@ def generate_problem(max_digits: int = 3, operations: List[str] = None):
 
     except ZeroDivisionError:
         return generate_problem(max_digits, operations)
-    except Exception:
+    except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         return generate_problem(max_digits, operations)
+
 
     return problem_str, answer
 

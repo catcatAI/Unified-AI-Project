@@ -8,6 +8,8 @@ Date: 2026-02-04
 """
 
 from .i18n_manager import (
+import logging
+logger = logging.getLogger(__name__)
     I18nManager,
     I18nConfig,
     I18nContext,

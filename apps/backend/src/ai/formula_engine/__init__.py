@@ -8,6 +8,8 @@
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 # Consistent import assuming 'src' is in PYTHONPATH,
 # making 'shared' a top-level package.

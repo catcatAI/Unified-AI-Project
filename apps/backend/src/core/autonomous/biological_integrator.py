@@ -21,6 +21,8 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 from .physiological_tactile import PhysiologicalTactileSystem, TactileType, BodyPart
 from .endocrine_system import EndocrineSystem, HormoneType
@@ -251,8 +253,10 @@ class BiologicalIntegrator:
         for callback in self._state_callbacks:
             try:
                 callback(integrated_state)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     async def process_stress_event(self, intensity: float, duration: float = 10.0):
         """
@@ -570,7 +574,9 @@ class BiologicalIntegrator:
             results["status"] = "success"
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             results["status"] = "error"
+
             results["error"] = str(e)
             results["error_type"] = type(e).__name__
         

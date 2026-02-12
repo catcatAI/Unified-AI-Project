@@ -8,6 +8,8 @@ from system.cluster_manager import cluster_manager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 import uuid
+import logging
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Body
 from services.chat_service import generate_angela_response

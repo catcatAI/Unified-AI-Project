@@ -1,4 +1,6 @@
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 # Read the file
 with open('apps/backend/src/core/action_executor.py', 'r', encoding='utf-8') as f:

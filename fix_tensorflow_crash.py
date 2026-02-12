@@ -8,6 +8,8 @@
 
 import os
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加 src 目錄到路徑
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

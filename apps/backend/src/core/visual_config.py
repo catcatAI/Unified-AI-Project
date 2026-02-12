@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 
 class RenderQuality(Enum):

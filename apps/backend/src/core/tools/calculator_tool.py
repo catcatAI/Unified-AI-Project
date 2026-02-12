@@ -6,6 +6,8 @@ Calculator Tool - Safe mathematical expression evaluator
 import ast
 import operator
 from typing import Any
+import logging
+logger = logging.getLogger(__name__)
 
 operators = {
     ast.Add: operator.add,
@@ -26,8 +28,10 @@ def eval_expr(expr: str) -> Any:
     try:
         node = ast.parse(expr, mode='eval')
         return _eval(node.body)
-    except Exception:
+    except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         return None
+
 
 
 def _eval(node: ast.AST) -> Any:

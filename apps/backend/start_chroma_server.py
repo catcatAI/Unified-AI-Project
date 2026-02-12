@@ -6,6 +6,8 @@
 import subprocess
 import os
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 def start_chroma_server():
     """

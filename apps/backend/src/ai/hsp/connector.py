@@ -1,5 +1,7 @@
 from typing import Any, Dict, Optional
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 class HSPConnector:
     """

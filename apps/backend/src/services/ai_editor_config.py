@@ -4,6 +4,8 @@ Configuration for the AI Editor Service.
 
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
+import logging
+logger = logging.getLogger(__name__)
 
 @dataclass
 class DataProcessingConfig:

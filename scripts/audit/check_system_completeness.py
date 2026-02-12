@@ -7,6 +7,8 @@
 import ast
 import os
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 AUTONOMOUS_DIR = Path("apps/backend/src/core/autonomous")
 
@@ -33,8 +35,10 @@ def check_class_in_file(filename, class_name):
                 if node.name == class_name:
                     return True
         return False
-    except:
+    except Exception as e:
+        logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
         return False
+
 
 def check_method_in_class(filename, class_name, method_name):
     """检查类中是否包含特定方法"""
@@ -52,8 +56,10 @@ def check_method_in_class(filename, class_name, method_name):
                     if isinstance(item, ast.FunctionDef) and item.name == method_name:
                         return True
         return False
-    except:
+    except Exception as e:
+        logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
         return False
+
 
 def main():
     print("=" * 70)

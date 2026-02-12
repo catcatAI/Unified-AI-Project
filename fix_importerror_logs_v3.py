@@ -5,6 +5,8 @@ ImportError 警告日志修复脚本 v3
 """
 
 import re
+import logging
+logger = logging.getLogger(__name__)
 
 def fix_importerror_warnings(file_path: str) -> None:
     """

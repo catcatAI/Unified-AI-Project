@@ -4,6 +4,8 @@
 
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 def fix_import_path():
     """修复Python导入路径以包含项目根目录"""

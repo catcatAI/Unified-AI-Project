@@ -12,6 +12,8 @@ Live2D 模型加载稳定性改进方案
 import os
 import json
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 def create_improved_live2d_manager():
     """创建改进的 Live2DManager 代码"""

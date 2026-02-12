@@ -23,6 +23,8 @@ from enum import Enum, auto
 from typing import Dict, List, Optional, Callable, Any, Tuple
 from datetime import datetime, timedelta
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 
 class TriggerDimension(Enum):
@@ -373,8 +375,10 @@ class MultidimensionalTriggerSystem:
             for callback in self._dimension_change_callbacks[dimension]:
                 try:
                     callback(self.dimension_values[dimension])
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
     
     def update_dimensions(self, values: Dict[TriggerDimension, Tuple[float, Any]]):
         """Update multiple dimensions at once"""
@@ -401,8 +405,10 @@ class MultidimensionalTriggerSystem:
                     for callback in self._trigger_callbacks[trigger.trigger_id]:
                         try:
                             callback(score)
-                        except Exception:
+                        except Exception as e:
+                            logger.error(f'Error in {__name__}: {e}', exc_info=True)
                             pass
+
         
         # Sort by score descending
         results.sort(key=lambda x: x[1], reverse=True)

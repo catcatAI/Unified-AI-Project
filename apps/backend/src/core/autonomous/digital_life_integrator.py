@@ -23,6 +23,8 @@ from enum import Enum, auto
 from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 from .biological_integrator import BiologicalIntegrator
 from .action_executor import ActionExecutor
@@ -197,8 +199,10 @@ class DigitalLifeIntegrator:
             from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
             self.memory_bridge = MemoryNeuroplasticityBridge()
             await self.memory_bridge.initialize()
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         
         # Initialize theoretical frameworks (AutonomousLifeCycle)
         if self._formula_integration_enabled:
@@ -210,8 +214,10 @@ class DigitalLifeIntegrator:
                 self.autonomous_lifecycle.register_decision_callback(
                     self._on_formula_decision
                 )
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         # Initialize AGI Control Center (Phase 11)
         try:
@@ -268,8 +274,10 @@ class DigitalLifeIntegrator:
         if self.dynamic_params:
             try:
                 await self.dynamic_params.stop()
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         # Record final stats
         self._update_active_time()
@@ -345,8 +353,10 @@ class DigitalLifeIntegrator:
         for callback in self._state_change_callbacks:
             try:
                 callback(old_state, new_state)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     async def _apply_state_behaviors(self, state: LifeCycleState):
         """Apply behaviors specific to life cycle state"""
@@ -390,7 +400,9 @@ class DigitalLifeIntegrator:
                     status_message="Healthy"
                 )
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 self.systems_health[name] = SystemHealth(
+
                     system_name=name,
                     is_healthy=False,
                     error_count=self.systems_health.get(name, SystemHealth(name, True)).error_count + 1,
@@ -488,8 +500,10 @@ class DigitalLifeIntegrator:
         for callback in self._event_callbacks:
             try:
                 callback(event)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     def get_age(self) -> timedelta:
         """Get age of Angela's digital life"""

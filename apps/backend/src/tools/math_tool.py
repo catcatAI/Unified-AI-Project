@@ -2,6 +2,8 @@ import operator
 import ast
 import re
 from typing import Union, Dict, Callable, Type, List
+import logging
+logger = logging.getLogger(__name__)
 
 def extract_arithmetic_problem(text: str) -> str:
     """
@@ -74,7 +76,9 @@ def calculate(expression: str) -> Union[int, float]:
         tree = ast.parse(expression, mode='eval')
         return eval_node(tree.body)
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise ValueError(f"Cannot evaluate expression: {expression} error: {str(e)}")
+
 
 if __name__ == "__main__":
     print("--- Math Tool Example Usage ---")

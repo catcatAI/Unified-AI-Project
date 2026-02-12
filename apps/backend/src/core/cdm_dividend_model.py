@@ -24,6 +24,8 @@ from datetime import datetime, timedelta
 import asyncio
 import math
 from enum import Enum
+import logging
+logger = logging.getLogger(__name__)
 
 
 class CognitiveActivity(Enum):
@@ -224,8 +226,10 @@ class CDMCognitiveDividendModel:
         for callback in self._investment_callbacks:
             try:
                 callback(investment)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return investment
     
@@ -344,8 +348,10 @@ class CDMCognitiveDividendModel:
         for callback in self._output_callbacks:
             try:
                 callback(output)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return output
     

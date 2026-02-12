@@ -27,6 +27,8 @@ from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 import math
 from enum import Enum
+import logging
+logger = logging.getLogger(__name__)
 
 
 class StressSource(Enum):
@@ -219,8 +221,10 @@ class ActiveCognitionFormula:
         for callback in self._stress_callbacks:
             try:
                 callback(vector)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return vector
     
@@ -406,15 +410,19 @@ class ActiveCognitionFormula:
                 for callback in self._threshold_callbacks:
                     try:
                         callback(a_c, True)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
             elif prev_a_c >= self.min_a_c_threshold > a_c:
                 # Crossed below threshold
                 for callback in self._threshold_callbacks:
                     try:
                         callback(a_c, False)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
         
         # Trigger construction event if A_c is high
         if a_c > self.min_a_c_threshold:
@@ -476,8 +484,10 @@ class ActiveCognitionFormula:
         for callback in self._construction_callbacks:
             try:
                 callback(construction)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return construction
     

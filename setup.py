@@ -16,6 +16,8 @@ import sys
 import subprocess
 from pathlib import Path
 import argparse
+import logging
+logger = logging.getLogger(__name__)
 
 
 def check_prerequisites() -> bool:

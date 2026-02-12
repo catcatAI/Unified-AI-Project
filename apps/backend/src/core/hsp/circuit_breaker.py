@@ -1,5 +1,7 @@
 from typing import Callable, Any
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 class CircuitBreaker:
     """

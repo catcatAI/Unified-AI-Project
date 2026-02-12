@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List, Literal
+import logging
+logger = logging.getLogger(__name__)
 
 class UserInput(BaseModel):
     user_id: str

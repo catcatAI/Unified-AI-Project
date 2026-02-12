@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import List, Dict
 from datetime import datetime
+import logging
+logger = logging.getLogger(__name__)
 
 class PlaceholderScanner,
     def __init__(self, root_dir, str == ".") -> None,

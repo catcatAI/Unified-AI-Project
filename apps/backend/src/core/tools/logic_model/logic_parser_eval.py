@@ -3,6 +3,8 @@
 """
 
 from typing import List, Tuple, Any, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 
 class LogicParserEval:
@@ -49,8 +51,10 @@ class LogicParserEval:
             py_expr = self._convert_to_python(expression)
             result = eval(py_expr, {"__builtins__": {}})
             return bool(result)
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return None
+
 
     def _convert_to_python(self, expression: str) -> str:
         """转换为Python表达式"""

@@ -26,6 +26,8 @@ from typing import Dict, List, Optional, Callable, Any, Set
 from datetime import datetime
 import math
 from enum import Enum
+import logging
+logger = logging.getLogger(__name__)
 
 
 class GrayZoneVariableType(Enum):
@@ -222,8 +224,10 @@ class NonParadoxExistence:
             for callback in self._gap_threshold_callbacks:
                 try:
                     callback(self.global_cognitive_gap, True)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
         elif old_gap >= self.min_gap_for_coexistence > self.global_cognitive_gap:
             # Crossed down - deactivate coexistence
             if self.coexistence_start:
@@ -239,8 +243,10 @@ class NonParadoxExistence:
             for callback in self._gap_threshold_callbacks:
                 try:
                     callback(self.global_cognitive_gap, False)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
     
     def create_gray_zone(
         self,
@@ -363,8 +369,10 @@ class NonParadoxExistence:
         for callback in self._coexistence_callbacks:
             try:
                 callback(variable_id, True)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return True
     
@@ -381,8 +389,10 @@ class NonParadoxExistence:
             for callback in self._coexistence_callbacks:
                 try:
                     callback(variable_id, False)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
         
         return True
     

@@ -6,6 +6,8 @@ import sys
 import os
 from datetime import datetime
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # Setup paths
 sys.path.insert(0, str(Path(__file__).parent))

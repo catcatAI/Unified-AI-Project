@@ -7,6 +7,8 @@ import requests
 import json
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # 使用绝对导入而不是相对导入
 try,

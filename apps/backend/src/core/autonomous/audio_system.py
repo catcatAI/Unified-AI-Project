@@ -24,6 +24,8 @@ from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 from pathlib import Path
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 
 class AudioState(Enum):
@@ -233,8 +235,10 @@ class AudioSystem:
             for callback in self._state_callbacks:
                 try:
                     callback(old_state, new_state)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
     
     async def speak(
         self, 
@@ -277,8 +281,10 @@ class AudioSystem:
             self._set_state(AudioState.IDLE)
             return True
             
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self._set_state(AudioState.IDLE)
+
             return False
     
     async def speak_with_emotion(
@@ -430,8 +436,10 @@ class AudioSystem:
                     for callback in self.lyrics_callbacks:
                         try:
                             callback(current_line, next_line)
-                        except Exception:
+                        except Exception as e:
+                            logger.error(f'Error in {__name__}: {e}', exc_info=True)
                             pass
+
                     
                     last_line = current_line
             
@@ -449,8 +457,10 @@ class AudioSystem:
         for callback in self.subtitle_callbacks:
             try:
                 callback(subtitle)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     async def pause(self):
         """Pause current playback"""

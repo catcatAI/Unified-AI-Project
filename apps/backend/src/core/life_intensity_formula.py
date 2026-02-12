@@ -24,6 +24,8 @@ from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 import math
 from enum import Enum
+import logging
+logger = logging.getLogger(__name__)
 
 
 class KnowledgeDomain(Enum):
@@ -510,15 +512,19 @@ class LifeIntensityFormula:
                 for callback in self._threshold_callbacks:
                     try:
                         callback(prev_l_s, l_s)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
         
         # Notify callbacks
         for callback in self._intensity_callbacks:
             try:
                 callback(snapshot)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return l_s
     

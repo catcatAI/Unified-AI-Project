@@ -7,6 +7,8 @@
 import re
 import os
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 def fix_bare_exceptions_in_file(filepath):
     """修复文件中的裸异常处理"""

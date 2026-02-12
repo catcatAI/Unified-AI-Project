@@ -1,6 +1,8 @@
 # Angela Matrix: Genesis Manager - α=β=0.9, γ=0.5, δ=0.4 (V×L×P×M)
 import uuid
 import sys
+import logging
+logger = logging.getLogger(__name__)
 try:
     from cryptography.fernet import Fernet
 except ImportError:

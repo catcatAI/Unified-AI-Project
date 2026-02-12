@@ -24,6 +24,8 @@ from datetime import datetime, timedelta
 import asyncio
 import math
 import random
+import logging
+logger = logging.getLogger(__name__)
 
 
 class EffectType(Enum):

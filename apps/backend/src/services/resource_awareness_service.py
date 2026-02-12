@@ -4,6 +4,8 @@ import yaml # type: ignore
 from pathlib import Path
 from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
+import logging
+logger = logging.getLogger(__name__)
 
 # Mock types for syntax validation
 @dataclass

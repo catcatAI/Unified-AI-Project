@@ -1,6 +1,8 @@
 """Angela Chat Service - 智能對話生成"""
 import random
 from typing import Tuple
+import logging
+logger = logging.getLogger(__name__)
 
 
 # 情感與語義分析

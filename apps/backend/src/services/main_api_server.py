@@ -47,6 +47,8 @@ import httpx
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 # 確保 src 目錄在 Python 路徑中
 # 必須添加 src 目錄本身，這樣 Python 才能找到 src.core 等模塊
@@ -241,7 +243,9 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
         )
         source = "llm" if service and service.is_available else "fallback"
     except Exception as e:
-        # 如果 LLM 服務不可用，使用備份回應
+       logger.error(f'Error in {__name__}: {e}', exc_info=True)
+       
+# 如果 LLM 服務不可用，使用備份回應
         print(f"[WARNING] LLM service error: {e}")
         response_text = generate_angela_response(user_message, user_name)
         source = "fallback"
@@ -360,7 +364,9 @@ async def execute_action(action_data: Dict[str, Any]):
             "error": result.error
         }
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
+
 
 
 # --- Vision API ---
@@ -384,7 +390,9 @@ async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
         )
         return result
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.post("/api/v1/vision/perceive")
@@ -396,7 +404,9 @@ async def vision_perceive(image_data: bytes = Body(...)):
         result = await vision_service.perceive_and_focus(image_data)
         return result
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.post("/api/v1/audio/scan")
@@ -408,7 +418,9 @@ async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0):
         result = await audio_service.scan_and_identify(audio_data, duration)
         return result
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.post("/api/v1/audio/register_user")
@@ -420,7 +432,9 @@ async def audio_register_user(audio_data: bytes = Body(...)):
         result = await audio_service.register_user_voice(audio_data)
         return result
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.post("/api/v1/tactile/model")
@@ -432,7 +446,9 @@ async def tactile_model(visual_data: Dict[str, Any] = Body(...)):
         result = await tactile_service.model_object_tactile(visual_data)
         return result
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.post("/api/v1/tactile/touch")
@@ -446,7 +462,9 @@ async def tactile_touch(request: Dict[str, Any] = Body(...)):
         result = await tactile_service.simulate_touch(object_id, contact_point)
         return result
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.post("/api/v1/brain/metrics")

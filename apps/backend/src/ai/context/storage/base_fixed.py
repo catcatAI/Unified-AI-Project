@@ -12,6 +12,8 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from enum import Enum
+import logging
+logger = logging.getLogger(__name__)
 
 class ContextType(Enum):
     TOOL = "tool"

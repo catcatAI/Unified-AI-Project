@@ -23,6 +23,8 @@ from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime
 from pathlib import Path
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 
 class AvatarStyle(Enum):
@@ -301,8 +303,10 @@ class SelfGeneration:
         for callback in self._generation_callbacks:
             try:
                 callback(avatar)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return avatar
     
@@ -336,7 +340,9 @@ class SelfGeneration:
                 
                 return
             except Exception as e:
-                # Fallback to simple generation if workflow fails
+               logger.error(f'Error in {__name__}: {e}', exc_info=True)
+               
+# Fallback to simple generation if workflow fails
                 pass
         
         # Use Live2D generator directly if available
@@ -360,7 +366,9 @@ class SelfGeneration:
                 
                 return
             except Exception as e:
-                # Fallback to placeholder
+               logger.error(f'Error in {__name__}: {e}', exc_info=True)
+               
+# Fallback to placeholder
                 pass
         
         # Fallback: Simulate processing time for backwards compatibility
@@ -555,8 +563,10 @@ class SelfGeneration:
             for callback in self._evolution_callbacks:
                 try:
                     callback(self.current_avatar, avatar)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
         
         return avatar
     

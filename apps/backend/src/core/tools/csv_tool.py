@@ -3,6 +3,8 @@ CSV工具 - 用于CSV数据分析
 """
 
 from typing import Dict, Any, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 try:
     import pandas as pd
@@ -49,4 +51,5 @@ class CsvTool:
                 return {"status": "failure", "error": f"Unsupported query: '{query}'. Try 'summarize', 'columns', or 'shape'."}
 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {"status": "failure", "error": str(e)}

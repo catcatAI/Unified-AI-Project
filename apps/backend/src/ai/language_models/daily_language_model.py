@@ -7,6 +7,8 @@ import re
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from dataclasses import dataclass, field
+import logging
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -145,7 +147,9 @@ class DailyLanguageModel:
                 }])
                 record.response = response
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 record.response = f"Sorry, I encountered an error: {str(e)}"
+
         else:
             record.response = "I'm listening, but I don't have a language model connected yet."
         

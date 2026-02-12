@@ -2,6 +2,8 @@ import os
 import json
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
+import logging
+logger = logging.getLogger(__name__)
 
 class AngelaMinimalHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):

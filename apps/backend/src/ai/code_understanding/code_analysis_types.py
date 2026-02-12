@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
+import logging
+logger = logging.getLogger(__name__)
 
 @dataclass
 class CodeAnalysisResult:

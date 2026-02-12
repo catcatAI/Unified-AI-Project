@@ -8,6 +8,8 @@ Date: 2026-02-04
 """
 
 from .cloud_sync import (
+import logging
+logger = logging.getLogger(__name__)
     CloudSyncManager,
     CloudSyncConfig,
     SyncItem,

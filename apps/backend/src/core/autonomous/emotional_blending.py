@@ -25,6 +25,8 @@ from typing import Dict, List, Optional, Tuple, Callable, Any, Set
 from datetime import datetime, timedelta
 import asyncio
 import math
+import logging
+logger = logging.getLogger(__name__)
 
 
 class BasicEmotion(Enum):
@@ -313,8 +315,10 @@ class EmotionalBlendingSystem:
                 for callback in self._emotion_change_callbacks:
                     try:
                         callback(prev, curr)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
     
     async def _decay_influences(self):
         """Decay influence strengths over time"""
@@ -333,8 +337,10 @@ class EmotionalBlendingSystem:
         for callback in self._expression_callbacks:
             try:
                 callback(self.current_expression)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     def _interpolate_emotions(
         self, 

@@ -1,5 +1,7 @@
 import os
 from typing import Optional, Any
+import logging
+logger = logging.getLogger(__name__)
 
 # Corrected import path relative to the 'src' directory
 from ai.code_understanding.lightweight_code_model import LightweightCodeModel

@@ -9,6 +9,8 @@ Implements Level 5 ASI hybrid distributed architecture for Angela AI
 
 from .distributed_coordinator import DistributedCoordinator
 from .hyperlinked_parameters import HyperlinkedParameterCluster
+import logging
+logger = logging.getLogger(__name__)
 
 __all__ = [
     'DistributedCoordinator',

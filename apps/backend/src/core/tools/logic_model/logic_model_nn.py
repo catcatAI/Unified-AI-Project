@@ -5,6 +5,8 @@
 from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional, Dict, List
+import logging
+logger = logging.getLogger(__name__)
 
 # 尝试导入TensorFlow
 try:

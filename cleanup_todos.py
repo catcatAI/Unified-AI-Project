@@ -6,6 +6,8 @@
 import re
 from pathlib import Path
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 # 这些模块是 Python 标准库，不需要 try-except 或 TODO
 STANDARD_LIBS = {

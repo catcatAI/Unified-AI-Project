@@ -177,7 +177,9 @@ class LocalIPCTransport(HSPTransport):
                         logger.debug(f"No subscription for topic: {topic}")
                         
             except Exception as e:
-                if self._connected:  # 只在連接時記錄錯誤
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
+                if self._connected:
+# 只在連接時記錄錯誤
                     logger.debug(f"Listener error (may be timeout): {e}")
                 await asyncio.sleep(0.1)
         

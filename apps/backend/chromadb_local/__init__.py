@@ -1,6 +1,8 @@
 # Lightweight shim for chromadb to support tests in environments where only the HTTP client is available,:
 # Provides PersistentClient, EphemeralClient, HttpClient, and a minimal in-memory Collection API
 from typing import Any, Dict, List, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 # Re-export config submodule
 from . import config  # noqa F401

@@ -7,6 +7,8 @@ from .lis_manager import LISManager
 from .lis_cache_interface import LISCacheInterface, HAMLISCache
 from .err_introspector import ERRIntrospector
 from .types import (
+import logging
+logger = logging.getLogger(__name__)
     LIS_AnomalyType,
     LIS_SemanticAnomalyDetectedEvent,
     LIS_IncidentRecord,

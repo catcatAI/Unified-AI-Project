@@ -27,6 +27,8 @@ import asyncio
 import json
 import math
 import re
+import logging
+logger = logging.getLogger(__name__)
 
 
 class LearningType(Enum):
@@ -727,7 +729,9 @@ class ArtLearningSystem:
             self.learning_stats["total_images_analyzed"] += 1
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             analysis.analysis_confidence = 0.0
+
         
         return analysis
     

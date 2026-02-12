@@ -20,6 +20,8 @@ import signal
 import json
 from pathlib import Path
 from typing import Optional, Tuple, List
+import logging
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -123,8 +125,10 @@ class ErrorRecovery:
             try:
                 with open(self.error_log_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         return []
     
     def suggest_recovery(self, component: str) -> List[str]:
@@ -175,8 +179,10 @@ def wait_for_server(port=8000, timeout=60, progress: Optional[ProgressDisplay] =
             sock.close()
             if result == 0:
                 return True
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         
         if progress:
             elapsed = time.time() - start
@@ -205,8 +211,10 @@ class Launcher:
             result = sock.connect_ex(("127.0.0.1", port))
             sock.close()
             return result != 0
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return False
+
     
     def check_dependencies(self) -> Tuple[bool, List[str]]:
         """检查核心依赖是否安装"""
@@ -251,8 +259,10 @@ class Launcher:
                 timeout=5
             )
             return result.returncode == 0
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return False
+
     
     def start_backend(self) -> Optional[subprocess.Popen]:
         """启动后端"""
@@ -304,7 +314,9 @@ class Launcher:
                 return None
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.progress.error(f"后端启动失败: {e}")
+
             self.recovery.log_error("backend", e, {"mode": self.mode})
             return None
     
@@ -343,7 +355,9 @@ class Launcher:
             return proc
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.progress.error(f"桌面启动失败: {e}")
+
             self.recovery.log_error("desktop", e)
             return None
     
@@ -373,7 +387,9 @@ class Launcher:
             return True
 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.progress.error(f"快捷方式创建失败: {e}")
+
             self.recovery.log_error("shortcut", e)
             return False
     
@@ -386,11 +402,15 @@ class Launcher:
                 try:
                     proc.terminate()
                     proc.wait(timeout=5)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     try:
+
                         proc.kill()
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
         
         self.progress.finish("已关闭")
     

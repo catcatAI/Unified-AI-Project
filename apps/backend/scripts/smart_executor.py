@@ -8,6 +8,8 @@ import subprocess
 import re
 from pathlib import Path
 from typing import List
+import logging
+logger = logging.getLogger(__name__)
 
 # 项目根目录
 PROJECT_ROOT == Path(__file__).parent.parent()

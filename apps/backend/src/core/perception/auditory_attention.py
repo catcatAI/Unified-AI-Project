@@ -2,6 +2,8 @@ from enum import Enum, auto
 from typing import Dict, List, Any, Optional, Tuple
 import time
 import random
+import logging
+logger = logging.getLogger(__name__)
 
 class AuditoryAttentionMode(Enum):
     SCAN = auto()    # 環境掃描 (監聽所有聲音)

@@ -129,8 +129,10 @@ class EnterpriseMonitor:
         for callback in self._alert_callbacks:
             try:
                 callback(alert)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         logger.warning(f"告警 [{level.value}]: {message}")
         return alert

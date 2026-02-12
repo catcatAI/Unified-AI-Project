@@ -3,6 +3,8 @@
 
 import datetime
 from typing import List, Dict, Optional, Any
+import logging
+logger = logging.getLogger(__name__)
 
 class TimeSystem:
     """Manages time-related functions for the AI."""

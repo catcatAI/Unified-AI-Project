@@ -1,4 +1,6 @@
 from typing import List, Any, Dict, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 class ElementLayer:
     """

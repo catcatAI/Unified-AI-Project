@@ -216,7 +216,9 @@ class SafeEvaluator:
                 expression=expression
             )
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return EvalResult(
+
                 success=False,
                 error=f"評估錯誤: {str(e)}",
                 expression=expression

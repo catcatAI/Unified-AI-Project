@@ -1,4 +1,6 @@
 import sys
+import logging
+logger = logging.getLogger(__name__)
 sys.path.insert(0, 'src')
 from ai.memory.ham_memory_manager import HAMMemoryManager
 import inspect

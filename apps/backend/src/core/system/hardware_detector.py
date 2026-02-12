@@ -202,8 +202,10 @@ class HardwareDetector:
                     vram_str = parts[1].strip().replace(' MiB', '').replace(' MB', '')
                     vram_gb = int(vram_str) / 1024
                     return True, vram_gb, gpu_name
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         return False, 0.0, None
     
     def _detect_gpu_platform_specific(self) -> Tuple[bool, float, Optional[str]]:
@@ -236,8 +238,10 @@ class HardwareDetector:
                                 return True, vram_gb, gpu_name
                             except ValueError:
                                 continue
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         return False, 0.0, None
     
     def _detect_gpu_macos(self) -> Tuple[bool, float, Optional[str]]:
@@ -255,8 +259,10 @@ class HardwareDetector:
                     return True, 8.0, "Apple Silicon GPU"
                 else:
                     return True, 4.0, "Discrete GPU"
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         return False, 0.0, None
     
     def _detect_gpu_linux(self) -> Tuple[bool, float, Optional[str]]:
@@ -268,8 +274,10 @@ class HardwareDetector:
             # Check for AMD GPU
             if os.path.exists('/sys/class/drm/card0/device'):
                 return True, 4.0, "AMD GPU"
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         return False, 0.0, None
     
     def _detect_laptop(self) -> bool:
@@ -286,8 +294,10 @@ class HardwareDetector:
                 for line in result.stdout.split('\n'):
                     if any(t in line for t in laptop_types):
                         return True
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         # Default assumption: if it has battery, it's likely a laptop
         try:

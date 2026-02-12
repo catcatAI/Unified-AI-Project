@@ -4,6 +4,8 @@ import json
 import os
 import ast
 from typing import Optional, Dict, List, Union, Callable, Any, cast
+import logging
+logger = logging.getLogger(__name__)
 
 class LightweightMathModel:
     """
@@ -66,8 +68,10 @@ class LightweightMathModel:
             # Fallback, try safe_eval for more complex expressions
             return self._safe_eval(expression)
 
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return None
+
 
     def _safe_eval(self, expression: str) -> Optional[float]:
         """
@@ -141,8 +145,10 @@ class LightweightMathModel:
                 return float(result.real)
             return None
             
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return None
+
 
     def solve_problem(self, problem: str) -> str:
         """
@@ -243,7 +249,9 @@ class LightweightMathModel:
             }
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {
+
                 'error': str(e),
                 'accuracy': 0,
                 'correct': 0,
@@ -269,8 +277,10 @@ class LightweightMathModel:
             
             return True
             
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return False
+
 
     @classmethod
     def load_model(cls, model_path: str):

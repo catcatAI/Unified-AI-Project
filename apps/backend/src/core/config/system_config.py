@@ -4,6 +4,8 @@
 
 import os
 from typing import Dict, Any
+import logging
+logger = logging.getLogger(__name__)
 
 def get_system_config() -> Dict[str, Any]:
     """获取系统配置"""

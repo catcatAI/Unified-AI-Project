@@ -12,6 +12,8 @@
 from enum import Enum
 from typing import TypedDict, Dict, List, Optional, Any, Required
 from typing_extensions import Literal
+import logging
+logger = logging.getLogger(__name__)
 
 print("common_types.py is being imported and defining types...")
 

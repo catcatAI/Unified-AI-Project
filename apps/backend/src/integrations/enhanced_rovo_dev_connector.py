@@ -55,7 +55,9 @@ class CircuitBreaker:
             self.reset()
             return result
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.record_failure()
+
             raise e
 
     def record_failure(self):

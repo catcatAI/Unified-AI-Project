@@ -1,5 +1,7 @@
 import json
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 def check_last_memories():
     store_path = Path("data/vector_store/default_collection.json")

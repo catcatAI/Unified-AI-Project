@@ -317,7 +317,9 @@ class DemoLearningManager:
         except ImportError:
             return {'error': 'psutil not available'}
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {'error': str(e)}
+
 
     def _get_storage_usage(self) -> Dict[str, Any]:
         """獲取存儲使用情況"""
@@ -335,7 +337,9 @@ class DemoLearningManager:
                 'file_count': file_count
             }
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {'error': str(e)}
+
 
     def _get_active_connections(self) -> int:
         """獲取活躍連接數"""

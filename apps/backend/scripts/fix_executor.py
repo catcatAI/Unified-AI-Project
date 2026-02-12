@@ -120,7 +120,9 @@ class FixExecutor:
                     logger.info("[FIX] ✗ 修复失败或无需修复")
                     
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 fail_count += 1
+
                 logger.error(f"[FIX] ✗ 修复过程中发生错误: {e}", exc_info=True)
             
             print("-" * 30)

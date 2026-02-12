@@ -126,7 +126,9 @@ class CodeUnderstandingAgent(BaseAgent):
                     "class_count": len([n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)])
                 })
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 analysis["syntax_valid"] = False
+
                 analysis["error"] = str(e)
         return analysis
 

@@ -3,6 +3,8 @@
 """
 
 from typing import Dict, Any, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 # 尝试导入transformers
 try:
@@ -46,4 +48,5 @@ class NaturalLanguageGenerationTool:
                 "generated_text": result[0]["generated_text"]
             }
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {"error": str(e)}

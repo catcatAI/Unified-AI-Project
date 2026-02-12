@@ -11,6 +11,8 @@ import time
 import json
 import urllib.request
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 class AngelaStarter:
     def __init__(self):
@@ -193,8 +195,10 @@ if __name__ == '__main__':
                     if data.get('status') == 'ok':
                         self.print_success("後端服務啟動成功")
                         return True
-            except:
+            except Exception as e:
+                logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
                 pass
+
             
             self.print_warning("後端服務可能未正常啟動，正在檢查...")
             
@@ -208,7 +212,9 @@ if __name__ == '__main__':
                 return False
                 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.print_error(f"啟動後端失敗: {e}")
+
             return False
     
     def create_frontend_launcher(self):

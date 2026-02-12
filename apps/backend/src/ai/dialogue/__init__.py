@@ -7,6 +7,8 @@ Angela AI - Dialogue Module
 
 from .dialogue_manager import DialogueManager
 from .project_coordinator import ProjectCoordinator
+import logging
+logger = logging.getLogger(__name__)
 
 __all__ = [
     'DialogueManager',

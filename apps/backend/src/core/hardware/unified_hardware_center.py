@@ -254,8 +254,10 @@ class HardwareDetector:
                             driver_version=parts[4],
                             vendor="NVIDIA"
                         ))
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         
         # Intel (via lspci)
         if not gpus:
@@ -267,8 +269,10 @@ class HardwareDetector:
                         memory_total_mb=2048,
                         vendor="Intel"
                     ))
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         # AMD (via sysfs)
         if not gpus:
@@ -282,8 +286,10 @@ class HardwareDetector:
                                 vendor="AMD"
                             ))
                             break
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
         
         return gpus
     
@@ -298,8 +304,10 @@ class HardwareDetector:
                 used_mb=int(mem.used / 1024 / 1024),
                 percent_used=mem.percent
             )
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return MemoryInfo()
+
     
     @staticmethod
     def get_compute_resource(gpu: GPUInfo = None, cpu_info: CPUInfo = None) -> ComputeResource:
@@ -770,7 +778,9 @@ class UnifiedHardwareCenter:
                     }
                 return {"success": False, "error": response.status_code}
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {"success": False, "error": str(e)}
+
     
     # ==================== 精度管理 ====================
     

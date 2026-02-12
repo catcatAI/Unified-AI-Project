@@ -121,7 +121,9 @@ class CollaborationDemoAgent(BaseAgent):
                     "message": "Multi-agent task orchestration completed"
                 }
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 return {
+
                     "status": "error",
                     "message": f"Failed to orchestrate tasks: {str(e)}"
                 }
@@ -145,7 +147,9 @@ class CollaborationDemoAgent(BaseAgent):
                         "message": f"Task delegated to {target_agent}"
                     }
                 except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     return {
+
                         "status": "error",
                         "message": f"Failed to delegate task: {str(e)}"
                     }

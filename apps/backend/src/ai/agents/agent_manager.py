@@ -169,7 +169,9 @@ async def send_message(data: dict):
                 await client.post(f"http://127.0.0.1:{target['port']}/message", json=message, timeout=5.0)
             return {"status": "delivered", "target": target_id}
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return {"status": "failed", "error": str(e)}
+
     return {"status": "failed", "error": "Target not found"}
 
 @app.post("/broadcast")
@@ -182,7 +184,9 @@ async def broadcast_message(data: dict):
                 await client.post(f"http://127.0.0.1:{info['port']}/message", json=message, timeout=5.0)
             results.append({"agent": agent_id, "status": "delivered"})
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             results.append({"agent": agent_id, "status": "failed", "error": str(e)})
+
     return {"status": "broadcast", "results": results}
 
 @app.get("/health")

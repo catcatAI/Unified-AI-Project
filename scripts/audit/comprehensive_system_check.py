@@ -12,6 +12,8 @@ import time
 import traceback
 from datetime import datetime
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加路徑
 sys.path.append('apps/backend')
@@ -68,7 +70,9 @@ class ComprehensiveSystemChecker:
                 import_time
             )
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.results["components"]["core_import"] = self.log_test(
+
                 "Core Components Import", "FAIL", str(e)
             )
             self.results["errors"].append(f"Core import failed: {e}")
@@ -87,7 +91,9 @@ class ComprehensiveSystemChecker:
             )
             return True
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.results["components"]["core_init"] = self.log_test(
+
                 "Core Components Initialization", "FAIL", str(e)
             )
             self.results["errors"].append(f"Core init failed: {e}")
@@ -131,7 +137,9 @@ class ComprehensiveSystemChecker:
                         )
                         
                 except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     self.results["components"][f"dialogue_test_{i+1}"] = self.log_test(
+
                         f"Dialogue Test {i+1}: '{user_input}'", "FAIL", str(e)
                     )
                     
@@ -143,7 +151,9 @@ class ComprehensiveSystemChecker:
             )
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.results["components"]["dialogue_system"] = self.log_test(
+
                 "Dialogue System", "FAIL", str(e)
             )
             self.results["errors"].append(f"Dialogue system failed: {e}")
@@ -188,7 +198,9 @@ class ComprehensiveSystemChecker:
                 )
                 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.results["components"]["memory_system"] = self.log_test(
+
                 "Memory System", "FAIL", str(e)
             )
             self.results["errors"].append(f"Memory system failed: {e}")
@@ -234,7 +246,9 @@ class ComprehensiveSystemChecker:
                 )
                 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.results["components"]["llm_integration"] = self.log_test(
+
                 "LLM Integration", "FAIL", str(e)
             )
             self.results["errors"].append(f"LLM integration failed: {e}")
@@ -276,7 +290,9 @@ class ComprehensiveSystemChecker:
                         "Angela Dialogue System", "FAIL", "No dialogue response"
                     )
             except Exception as e:
-                # 檢查是否是因為DialogueManager不存在
+               logger.error(f'Error in {__name__}: {e}', exc_info=True)
+               
+# 檢查是否是因為DialogueManager不存在
                 if "DialogueManager" in str(e) or "placeholder" in str(e):
                     self.results["components"]["angela_dialogue"] = self.log_test(
                         "Angela Dialogue System", "WARNING", "Using placeholder DialogueManager"
@@ -299,7 +315,9 @@ class ComprehensiveSystemChecker:
                 )
                 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.results["components"]["angela_character"] = self.log_test(
+
                 "Angela Character System", "FAIL", str(e)
             )
             self.results["errors"].append(f"Angela character failed: {e}")
@@ -322,8 +340,10 @@ class ComprehensiveSystemChecker:
                     response = await orchestrator.process_user_input(f"Test message {i+1}")
                     if response and "response" in response:
                         successful_responses += 1
-                except:
+                except Exception as e:
+                    logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
                     pass
+
                     
             total_time = (time.time() - start_time) * 1000
             avg_time = total_time / pressure_test_count
@@ -361,7 +381,9 @@ class ComprehensiveSystemChecker:
                 )
                 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.results["performance"]["stability_test"] = self.log_test(
+
                 "Performance and Stability", "FAIL", str(e)
             )
             self.results["errors"].append(f"Performance test failed: {e}")
@@ -415,7 +437,9 @@ class ComprehensiveSystemChecker:
                 )
                 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.results["components"]["error_handling"] = self.log_test(
+
                 "Error Handling", "FAIL", str(e)
             )
             self.results["errors"].append(f"Error handling test failed: {e}")

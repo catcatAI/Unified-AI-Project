@@ -7,6 +7,8 @@ import json
 import os
 import random
 from typing import Optional, Dict, Any
+import logging
+logger = logging.getLogger(__name__)
 
 # 定义输出目录和文件名
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

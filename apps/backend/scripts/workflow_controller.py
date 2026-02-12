@@ -9,6 +9,8 @@ import sys
 import time
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+import logging
+logger = logging.getLogger(__name__)
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent.parent.parent

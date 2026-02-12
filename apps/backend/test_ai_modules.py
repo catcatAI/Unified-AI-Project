@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """深度检查脚本"""
 import sys
+import logging
+logger = logging.getLogger(__name__)
 sys.path.insert(0, '/home/cat/桌面/Unified-AI-Project/apps/backend')
 
 print('=' * 60)

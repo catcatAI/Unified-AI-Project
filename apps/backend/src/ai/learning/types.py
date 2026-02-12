@@ -1,5 +1,7 @@
 from typing import List, Dict, Optional, Any, Union, TypedDict
 from typing_extensions import Required
+import logging
+logger = logging.getLogger(__name__)
 
 # Fact Extractor Types
 

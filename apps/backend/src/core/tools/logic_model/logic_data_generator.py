@@ -6,6 +6,8 @@ import json
 import os
 import random
 from typing import Optional, Dict, Any
+import logging
+logger = logging.getLogger(__name__)
 
 # 定义输出目录
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -61,8 +63,10 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
         py_prop_str = py_prop_str.replace("not", " not ")
 
         return eval(py_prop_str, {"__builtins__": {}})
-    except Exception:
+    except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         return None
+
 
 
 def generate_dataset(num_samples: int = 1000, max_nesting: int = 2) -> list:

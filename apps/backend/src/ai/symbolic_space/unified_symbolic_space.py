@@ -2,6 +2,8 @@ import sqlite3
 import json
 from typing import Dict, Any, List, Optional
 import os # Added missing import
+import logging
+logger = logging.getLogger(__name__)
 
 class UnifiedSymbolicSpace:
     """

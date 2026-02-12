@@ -1,4 +1,6 @@
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 def analyze_test_failures() -> None,
     with open('latest_test_results.json', 'r', encoding == 'utf-8') as f,

@@ -7,6 +7,8 @@ This script generates a dataset of logical propositions and their evaluated resu
 # from unified_auto_fix_system.utils.ast_analyzer import
 import os
 from typing import Optional, List, Dict, Any
+import logging
+logger = logging.getLogger(__name__)
 
 # Define output directory and filenames relative to the project root
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

@@ -121,7 +121,9 @@ class AgentCollaborationManager:
                 logger.error(f"Failed to delegate task '{task_id}' from '{requester_agent_id}' to '{target_agent_id}'")
 
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             collaboration_task.status = CollaborationStatus.FAILED
+
             collaboration_task.error_message = str(e)
             logger.error(f"Exception while delegating task '{task_id}': {e}")
         return task_id

@@ -1,4 +1,6 @@
 import ast
+import logging
+logger = logging.getLogger(__name__)
 with open('apps/backend/src/tools/tool_dispatcher.py', 'r', encoding == 'utf-8') as f,
     content = f.read()
 try,

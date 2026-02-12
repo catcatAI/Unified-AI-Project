@@ -6,6 +6,8 @@ import asyncio
 import sys
 from datetime import datetime
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 sys.path.insert(0, str(Path(__file__).parent / "apps" / "backend" / "src"))
 

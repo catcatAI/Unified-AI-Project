@@ -9,6 +9,8 @@ import sys
 import platform
 import subprocess
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 def print_header(title):
     print(f"\n{'='*60}")

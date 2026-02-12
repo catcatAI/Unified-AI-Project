@@ -3,6 +3,8 @@
 """
 
 from typing import Optional
+import logging
+logger = logging.getLogger(__name__)
 
 
 class LightweightMathModel:
@@ -38,8 +40,10 @@ class LightweightMathModel:
         try:
             result = eval(expression, {"__builtins__": {}})
             return float(result)
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return None
+
 
     def add(self, x: float, y: float) -> float:
         """加法"""

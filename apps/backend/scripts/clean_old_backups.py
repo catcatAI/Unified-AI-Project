@@ -6,6 +6,8 @@
 import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
+import logging
+logger = logging.getLogger(__name__)
 
 def clean_old_backups(backup_dir, days_to_keep == 30):
     """清理超过指定天数的备份目录"""

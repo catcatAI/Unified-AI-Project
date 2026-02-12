@@ -1,5 +1,7 @@
 import requests
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 def exchange_code(code):
     url = "http://localhost:8000/api/v1/drive/auth/callback"

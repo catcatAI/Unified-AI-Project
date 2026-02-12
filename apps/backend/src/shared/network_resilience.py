@@ -66,7 +66,9 @@ class CircuitBreaker:
                 self._success()
                 return result
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 self._fail()
+
                 raise  # Re-raise original exception
         return wrapper
 

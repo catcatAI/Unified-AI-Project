@@ -23,6 +23,8 @@ import asyncio
 import uuid
 import json
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # Type imports to avoid circular dependencies
 if TYPE_CHECKING:
@@ -466,7 +468,9 @@ class ActionExecutionBridge:
                 execution_time_ms=execution_time
             )
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
+
             result = ExecutionResult(
                 action_id=action_id,
                 action_type=context.action_type,
@@ -631,7 +635,9 @@ class ActionExecutionBridge:
                     )
                     result["orchestrator_response"] = response
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 result["orchestrator_error"] = str(e)
+
         
         # Show in desktop pet if available
         if self.desktop_pet:
@@ -642,7 +648,9 @@ class ActionExecutionBridge:
                     self.desktop_pet.display_bubble(message)
                 result["displayed"] = True
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 result["display_error"] = str(e)
+
         
         return result
     
@@ -672,7 +680,9 @@ class ActionExecutionBridge:
                 )
                 result["exploration_data"]["search_results"] = search_results
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 result["search_error"] = str(e)
+
         
         # Search local files
         if source in ["local", "mixed"] and self.file_manager:
@@ -682,7 +692,9 @@ class ActionExecutionBridge:
                     local_results = await self.file_manager.search_files(topic)
                     result["exploration_data"]["local_files"] = local_results
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 result["local_search_error"] = str(e)
+
         
         # Integrate into CDM
         if self.cdm and result["exploration_data"]:
@@ -696,7 +708,9 @@ class ActionExecutionBridge:
                         )
                 result["integrated_to_cdm"] = True
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 result["cdm_integration_error"] = str(e)
+
         
         return result
     
@@ -794,7 +808,9 @@ class ActionExecutionBridge:
                     self.desktop_pet.display_bubble(message)
                 result["displayed"] = True
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 result["display_error"] = str(e)
+
         
         # Update Live2D if available
         if self.live2d_integration:
@@ -803,7 +819,9 @@ class ActionExecutionBridge:
                     await self.live2d_integration.set_expression(emotion, intensity)
                     result["live2d_updated"] = True
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 result["live2d_error"] = str(e)
+
         
         return result
     
@@ -858,7 +876,9 @@ class ActionExecutionBridge:
                 result["error"] = "Download manager missing download_file method"
         
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             result["error"] = str(e)
+
         
         return result
     
@@ -899,7 +919,9 @@ class ActionExecutionBridge:
                     result["applied"] = True
         
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             result["error"] = str(e)
+
         
         return result
     
@@ -956,7 +978,9 @@ class ActionExecutionBridge:
                     result["success"] = success
         
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             result["error"] = str(e)
+
         
         return result
     
@@ -993,7 +1017,9 @@ class ActionExecutionBridge:
                 result["error"] = "Web search tool missing search method"
         
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             result["error"] = str(e)
+
         
         return result
     

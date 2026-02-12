@@ -9,6 +9,8 @@ import zlib
 import bz2
 import lzma
 from datetime import datetime, timezone
+import logging
+logger = logging.getLogger(__name__)
 
 # Add project root to path to allow absolute imports
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))

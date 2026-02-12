@@ -5,6 +5,8 @@ Provides policy-based routing for LLM model selection.
 
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
+import logging
+logger = logging.getLogger(__name__)
 
 from core.services.multi_llm_service import ModelProvider
 

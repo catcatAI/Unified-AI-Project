@@ -5,6 +5,8 @@
 
 import re
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 def add_error_return_to_methods(file_path, methods_info):
     """

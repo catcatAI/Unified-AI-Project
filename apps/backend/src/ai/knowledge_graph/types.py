@@ -1,5 +1,7 @@
 from typing import List, Dict, Optional, Any, TypedDict
 from typing_extensions import Required
+import logging
+logger = logging.getLogger(__name__)
 
 class KGEntityAttributes(TypedDict, total=False):
     start_char: int

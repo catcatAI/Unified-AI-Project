@@ -150,8 +150,10 @@ class HAMMemoryManager:
             if hasattr(metadata, 'to_dict') and callable(getattr(metadata, 'to_dict', None)):
                 try:
                     current_metadata = metadata.to_dict()
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     current_metadata = dict(metadata) if isinstance(metadata, dict) else {}
+
             elif isinstance(metadata, dict):
                 # For dict-like objects, copy the metadata
                 current_metadata = dict(metadata)

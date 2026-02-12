@@ -8,6 +8,8 @@ import json
 import os
 import sys
 import re
+import logging
+logger = logging.getLogger(__name__)
 
 # 配置路徑
 CONFIG_DIR = "/home/cat/桌面/Unified-AI-Project/apps/desktop-app/electron_app/js"

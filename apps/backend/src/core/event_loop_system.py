@@ -29,6 +29,8 @@ import heapq
 from collections import defaultdict, deque
 import json
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 
 class EventPriority(Enum):

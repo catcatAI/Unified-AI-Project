@@ -6,6 +6,8 @@
 import re
 import os
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 def add_idempotency_protection(file_path, class_name, has_async=True):
     """

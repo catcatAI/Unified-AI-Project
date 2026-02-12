@@ -15,6 +15,8 @@ from pathlib import Path
 from datetime import datetime
 from PIL import Image, ImageDraw
 import shutil
+import logging
+logger = logging.getLogger(__name__)
 
 
 async def generate_and_save_to_desktop():

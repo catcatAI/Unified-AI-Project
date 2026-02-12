@@ -9,6 +9,8 @@ import sys
 import importlib.util
 from pathlib import Path
 from typing import List, Dict, Tuple, Set
+import logging
+logger = logging.getLogger(__name__)
 
 # 颜色代码
 RED = '\033[91m'
@@ -48,7 +50,9 @@ class AngelaCodeChecker:
             self.log_issue(f"语法错误在 {filepath}: {e}")
             return False
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.log_issue(f"无法解析 {filepath}: {e}")
+
             return False
     
     def check_imports(self, filepath: Path) -> List[str]:
@@ -75,7 +79,9 @@ class AngelaCodeChecker:
                             broken_imports.append(f"{module_name} in {filepath}")
                             self.log_issue(f"无法导入模块: {module_name} 在 {filepath}", "warning")
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.log_issue(f"检查导入时出错 {filepath}: {e}", "warning")
+
         
         return broken_imports
     
@@ -111,7 +117,9 @@ class AngelaCodeChecker:
                     if class_issues:
                         issues[class_name] = class_issues
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self.log_issue(f"检查类结构时出错 {filepath}: {e}", "warning")
+
         
         return issues
     
@@ -139,7 +147,9 @@ class AngelaCodeChecker:
                                                 if method_name not in defined_methods and not method_name.startswith('_'):
                                                     undefined_calls.append(f"{method_name} in {method_node.name}")
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         
         return undefined_calls
     
@@ -210,8 +220,10 @@ class AngelaCodeChecker:
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef):
                     exports.append(node.name)
-        except:
+        except Exception as e:
+            logger.error(f'Unexpected error in {__name__}: {e}', exc_info=True)
             pass
+
         return exports
     
     def check_tech_stack(self) -> Dict[str, bool]:

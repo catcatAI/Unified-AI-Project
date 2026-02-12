@@ -12,6 +12,8 @@ Date: 2026-02-11
 
 # Action Execution Layer
 from .action_execution_bridge import (
+import logging
+logger = logging.getLogger(__name__)
     ActionExecutionBridge,
     ActionExecutionBridgeFactory,
     ActionType,

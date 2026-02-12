@@ -3,6 +3,8 @@
 import os
 import sys
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # 設置環境變量
 os.environ['ANGELA_TESTING'] = 'true'

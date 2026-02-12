@@ -2,6 +2,8 @@ import os
 import json
 import requests
 from typing import Optional
+import logging
+logger = logging.getLogger(__name__)
 
 class UnifiedAIClient,
     def __init__(self, base_url, Optional[str] = None, token, Optional[str] = None, timeout, Optional[int] = None):

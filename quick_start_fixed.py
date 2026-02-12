@@ -8,6 +8,8 @@ import json
 import time
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+import logging
+logger = logging.getLogger(__name__)
 
 class AngelaQuickHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):

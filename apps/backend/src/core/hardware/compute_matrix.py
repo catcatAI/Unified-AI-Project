@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Callable, Tuple
 from enum import Enum
 import numpy as np
+import logging
+logger = logging.getLogger(__name__)
 
 
 class OptimizationStrategy(Enum):

@@ -11,6 +11,8 @@ import sys
 import shutil
 from pathlib import Path
 from cryptography.fernet import Fernet
+import logging
+logger = logging.getLogger(__name__)
 
 
 def print_header(text: str) -> None:
@@ -151,7 +153,9 @@ def validate_config() -> bool:
         print_error(f"无法导入配置模块: {e}")
         return False
     except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         print_error(f"配置验证出错: {e}")
+
         return False
 
 
@@ -179,7 +183,9 @@ def main():
             if not step_func():
                 all_success = False
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             print_error(f"{step_name} 失败: {e}")
+
             all_success = False
     
     print_header("初始化完成")

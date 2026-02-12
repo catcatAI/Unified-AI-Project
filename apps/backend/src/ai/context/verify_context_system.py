@@ -4,6 +4,8 @@
 import sys
 import os
 import traceback
+import logging
+logger = logging.getLogger(__name__)
 # from system_test import  # Commented out - incomplete import
 # from diagnose_base_agent import  # Commented out - incomplete import
 

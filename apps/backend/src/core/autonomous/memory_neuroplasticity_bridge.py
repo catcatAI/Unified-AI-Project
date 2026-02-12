@@ -21,6 +21,8 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Callable, Any, Set
 from datetime import datetime, timedelta
 import asyncio
+import logging
+logger = logging.getLogger(__name__)
 
 from .neuroplasticity import NeuroplasticitySystem
 
@@ -155,8 +157,10 @@ class MemoryNeuroplasticityBridge:
                 for callback in self._forgetting_callbacks:
                     try:
                         callback(memory_id, retention)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
     
     def register_memory(
         self,
@@ -315,8 +319,10 @@ class MemoryNeuroplasticityBridge:
                 for callback in self._consolidation_callbacks:
                     try:
                         callback(mid)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
     
     def get_memory_retention(self, memory_id: str) -> float:
         """
@@ -572,8 +578,10 @@ class MemoryNeuroplasticityBridge:
                 for callback in self._consolidation_callbacks:
                     try:
                         callback(memory_id)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f'Error in {__name__}: {e}', exc_info=True)
                         pass
+
             else:
                 results["is_fully_consolidated"] = False
                 # Add to queue if not already there
@@ -593,7 +601,9 @@ class MemoryNeuroplasticityBridge:
             results["error"] = str(e)
             results["error_type"] = "ValueError"
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             results["error"] = str(e)
+
             results["error_type"] = type(e).__name__
         
         return results
@@ -787,7 +797,9 @@ class MemoryNeuroplasticityBridge:
             results["error"] = str(e)
             results["error_type"] = "ValueError"
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             results["error"] = str(e)
+
             results["error_type"] = type(e).__name__
         
         return results

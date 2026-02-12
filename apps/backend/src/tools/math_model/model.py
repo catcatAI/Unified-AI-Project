@@ -8,6 +8,8 @@ import hashlib
 from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional, Dict, List, Callable, Type, Union, Any, Tuple
+import logging
+logger = logging.getLogger(__name__)
 
 # Add the src directory to the path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

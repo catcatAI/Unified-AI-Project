@@ -218,8 +218,10 @@ class HardwareDetector:
                 for line in f:
                     if 'flags' in line:
                         return line.split(':')[-1].strip().split()
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             pass
+
         return []
     
     def _detect_memory(self) -> tuple[float, float]:
@@ -234,15 +236,19 @@ class HardwareDetector:
                     elif 'MemAvailable' in line:
                         available = int(line.split()[1]) / 1024 / 1024  # GB
                 return total, available
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return 0, 0
+
     
     def _detect_cpu_cores(self) -> int:
         """檢測 CPU 核心數"""
         try:
             return os.cpu_count() or 1
-        except Exception:
+        except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             return 1
+
     
     def _detect_virtual(self) -> bool:
         """檢測是否為虛擬環境"""

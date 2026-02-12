@@ -2,6 +2,8 @@
 
 import json
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 
 def load_logic_test_dataset(file_path: str):
@@ -67,8 +69,10 @@ def evaluate_proposition(proposition: str) -> bool:
         py_prop = py_prop.replace("not", " not ")
 
         return eval(py_prop)
-    except Exception:
+    except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
         return False
+
 
 
 def main():

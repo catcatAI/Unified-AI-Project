@@ -3,6 +3,8 @@
 """
 
 from .performance_optimizer import (
+import logging
+logger = logging.getLogger(__name__)
     PerformanceOptimizer,
     get_performance_optimizer,
     cache_result,

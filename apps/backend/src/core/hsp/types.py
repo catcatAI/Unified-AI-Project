@@ -1,6 +1,8 @@
 from typing_extensions import TypedDict, Required, NotRequired  # Import TypedDict from typing_extensions
 from typing import Dict, Any, Optional, List, Literal, Union
 import os # Added missing import
+import logging
+logger = logging.getLogger(__name__)
 
 # For TypedDict, 'Required' is implicitly all keys unless total=False.
 # For explicit Required / Optional with total=False, Python 3.9+ can use:

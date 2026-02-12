@@ -25,6 +25,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import asyncio
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 
 class WorkflowStage(Enum):
@@ -193,8 +195,10 @@ class ArtLearningWorkflow:
             for callback in self._stage_change_callbacks:
                 try:
                     callback(old_stage, new_stage)
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     pass
+
     
     def _update_progress(self, task: str, progress_percent: float, estimated_minutes: float = 0):
         """Update workflow progress"""
@@ -205,8 +209,10 @@ class ArtLearningWorkflow:
         for callback in self._progress_callbacks:
             try:
                 callback(self.progress)
-            except Exception:
+            except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 pass
+
     
     async def initialize(self):
         """Initialize workflow and subsystems"""
@@ -300,7 +306,9 @@ class ArtLearningWorkflow:
             return result
             
         except Exception as e:
+            logger.error(f'Error in {__name__}: {e}', exc_info=True)
             self._set_stage(WorkflowStage.ERROR)
+
             self.progress.failed_tasks.append(f"Workflow failed: {str(e)}")
             raise
     
@@ -544,7 +552,9 @@ class ArtLearningWorkflow:
                             test_results["touch_types_tested"].append(touch_type)
                         
                 except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     test_results["failed_tests"].append(f"{body_part}-{touch_type}: {str(e)}")
+
         
         # Update generation result
         if self.generation_result:

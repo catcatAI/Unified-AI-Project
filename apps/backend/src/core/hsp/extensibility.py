@@ -143,7 +143,9 @@ class HSPSecurityMiddleware(HSPProtocolMiddleware):
                 decrypted_payload = self.security_manager.decrypt_message(encrypted_data)
                 message['payload'] = decrypted_payload
             except Exception as e:
+                logger.error(f'Error in {__name__}: {e}', exc_info=True)
                 raise ValueError(f"Message decryption failed: {e}")
+
 
         # 调用下一个中间件
         return await next_middleware(message)

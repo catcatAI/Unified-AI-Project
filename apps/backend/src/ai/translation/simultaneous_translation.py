@@ -5,6 +5,8 @@ Mock implementation for testing purposes. This can be swapped out later.
 
 import time
 from typing import Dict, List, Optional, Tuple, Union, Iterator
+import logging
+logger = logging.getLogger(__name__)
 
 # Placeholder for a potential monitoring import
 # from enhanced_realtime_monitoring import

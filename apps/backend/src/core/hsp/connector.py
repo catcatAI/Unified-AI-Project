@@ -409,8 +409,10 @@ class HSPConnector:
                 # Reflect underlying state or force false
                 try:
                     self.is_connected = bool(getattr(self.external_connector, 'is_connected', False))
-                except Exception:
+                except Exception as e:
+                    logger.error(f'Error in {__name__}: {e}', exc_info=True)
                     self.is_connected = False
+
 
         if self.fallback_manager and self.fallback_initialized:
             try:
