@@ -1,5 +1,0 @@
-@echo off
-cd /d d:\Projects\Unified-AI-Project\apps\backend
-call venv\Scripts\activate.bat
-set PYTHONPATH=%cd%\src;%PYTHONPATH%
-python -m pytest tests/tools/test_math_model.py::MathModelTest::test_data_generator_csv -v
