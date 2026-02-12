@@ -126,6 +126,65 @@ class Live2DManager {
         this.modelLoaded = true;
         return true;
     }
+
+    /**
+     * 驗證模型尺寸
+     * @param {number} width - 模型寬度
+     * @param {number} height - 模型高度
+     * @returns {object} - 驗證結果
+     */
+    validateModelSize(width, height) {
+        const baseWidth = 1280;  // 720p 基準寬度
+        const baseHeight = 720;  // 720p 基準高度
+
+        // 檢查基本有效性
+        if (!width || !height || width <= 0 || height <= 0) {
+            return {
+                valid: false,
+                error: '無效的模型尺寸',
+                expected: { width: baseWidth, height: baseHeight },
+                actual: { width, height }
+            };
+        }
+
+        // 計算寬高比
+        const expectedRatio = baseWidth / baseHeight;
+        const actualRatio = width / height;
+        const ratioDiff = Math.abs(actualRatio - expectedRatio);
+
+        // 檢查寬高比（允許 ±5% 偏差）
+        if (ratioDiff > expectedRatio * 0.05) {
+            return {
+                valid: false,
+                error: '模型寬高比超出允許範圍',
+                expectedRatio: expectedRatio.toFixed(2),
+                actualRatio: actualRatio.toFixed(2),
+                expected: { width: baseWidth, height: baseHeight },
+                actual: { width, height }
+            };
+        }
+
+        // 檢查尺寸範圍（允許 ±20% 偏差）
+        const widthDiff = Math.abs(width - baseWidth) / baseWidth;
+        const heightDiff = Math.abs(height - baseHeight) / baseHeight;
+
+        if (widthDiff > 0.2 || heightDiff > 0.2) {
+            console.warn('[Live2DManager] 模型尺寸超出建議範圍（±20%）', {
+                expected: { width: baseWidth, height: baseHeight },
+                actual: { width, height },
+                widthDiff: (widthDiff * 100).toFixed(1) + '%',
+                heightDiff: (heightDiff * 100).toFixed(1) + '%'
+            });
+        }
+
+        return {
+            valid: true,
+            message: '模型尺寸驗證通過',
+            expected: { width: baseWidth, height: baseHeight },
+            actual: { width, height },
+            ratioDiff: ratioDiff.toFixed(4)
+        };
+    }
     
     _init() {
         console.log('[Live2DManager] Initializing...');

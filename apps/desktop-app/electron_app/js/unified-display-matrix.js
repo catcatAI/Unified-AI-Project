@@ -499,12 +499,26 @@ class UnifiedDisplayMatrix {
     }
 
     getUserScale() {
-        // ✅ 修正：考慮 devicePixelRatio 和系統 DPI 縮放
-        const devicePixelRatio = window.devicePixelRatio || 1;
-        const userScale = this.currentState.userScale;
-        
-        // 結合用戶縮放和設備像素比
-        return userScale * devicePixelRatio;
+        // ✅ 修正：getUserScale 只返回用戶顯示縮放（50%-300%）
+        // devicePixelRatio 應該在計算物理像素時單獨使用
+        return this.currentState.userScale;
+    }
+
+    /**
+     * 獲取設備像素比（物理像素與邏輯像素的比率）
+     * @returns {number} - devicePixelRatio
+     */
+    getDevicePixelRatio() {
+        return this.currentState.devicePixelRatio;
+    }
+
+    /**
+     * 獲取總體縮放比例（用戶縮放 × 設備像素比）
+     * 用於計算物理像素尺寸
+     * @returns {number} - 總體縮放比例
+     */
+    getTotalScale() {
+        return this.currentState.userScale * this.currentState.devicePixelRatio;
     }
 
     increaseUserScale(delta = null) {
@@ -670,24 +684,34 @@ class UnifiedDisplayMatrix {
     // ================================================================
 
     /**
-     * 识别人体区域
-     * 
-     * 使用方法:
-     *   const part = udm.identifyBodyPart(resourceX, resourceY);
-     *   // part = { name: 'face', description: '臉部', priority: 1, expression: 'blush', ... }
-     * 
-     * @param {number} resourceX - 原始资源 X 坐标
-     * @param {number} resourceY - 原始资源 Y 坐标
-     * @returns {object|null} - 区域信息或 null
+     * 識別身體部位
+     *
+     * @param {number} resourceX - 資源坐標 X
+     * @param {number} resourceY - 資源坐標 Y
+     * @returns {object|null} - 區域信息或 null
      */
     identifyBodyPart(resourceX, resourceY) {
+        // 驗證坐標有效性
+        if (resourceX === null || resourceX === undefined || resourceY === null || resourceY === undefined) {
+            console.warn('[UDM] identifyBodyPart: 無效坐標', { resourceX, resourceY });
+            return null;
+        }
+
+        // 輸入坐標轉換為數字
+        const x = parseFloat(resourceX);
+        const y = parseFloat(resourceY);
+
+        if (isNaN(x) || isNaN(y)) {
+            console.warn('[UDM] identifyBodyPart: 坐標不是有效數字', { resourceX, resourceY });
+            return null;
+        }
+
         // 人体区域配置 (与 angela_character_config.json 对应)
         // 注意: 这些坐标是针对原始资源 (1408x768) 的
-        // 需要根据当前精度进行转换
         const bodyZones = this._getBodyZones();
 
         for (const zone of bodyZones) {
-            if (this._isInZone(resourceX, resourceY, zone.rect)) {
+            if (this._isInZone(x, y, zone.rect)) {
                 return {
                     name: zone.name,
                     description: zone.description,
@@ -701,6 +725,19 @@ class UnifiedDisplayMatrix {
         }
 
         return null;
+    }
+
+    /**
+     * 從屏幕坐標識別身體部位（便捷方法）
+     *
+     * @param {number} screenX - 屏幕坐標 X
+     * @param {number} screenY - 屏幕坐標 Y
+     * @returns {object|null} - 區域信息或 null
+     */
+    identifyBodyPartFromScreen(screenX, screenY) {
+        // 轉換為資源坐標
+        const resourceCoords = this.screenToResource(screenX, screenY);
+        return this.identifyBodyPart(resourceCoords.x, resourceCoords.y);
     }
 
     _getBodyZones() {

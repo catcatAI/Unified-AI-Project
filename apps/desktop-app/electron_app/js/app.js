@@ -401,26 +401,45 @@ async _initializeLogger() {
     _initializeUDM() {
         this.updateLoadingText('Initializing display matrix...');
         console.log('[AngelaApp] Creating UnifiedDisplayMatrix...');
-        
+
         // 获取 wrapper 和 canvas 元素
         const wrapper = document.querySelector('.canvas-wrapper') || document.getElementById('fallback-wrapper');
         const canvas = document.getElementById('fallback-canvas') || document.getElementById('live2d-canvas');
-        
+
         // 确保两个 canvas 都有正确的尺寸
         const live2dCanvas = document.getElementById('live2d-canvas');
-        if (live2dCanvas) {
-            live2dCanvas.width = 1280;
-            live2dCanvas.height = 720;
-            console.log('[AngelaApp] live2d-canvas dimensions set to 1280x720');
-        }
-        
+        const fallbackCanvas = document.getElementById('fallback-canvas');
+
+        // 基准尺寸 (720p)
+        const baseWidth = 1280;
+        const baseHeight = 720;
+        const devicePixelRatio = window.devicePixelRatio || 1;
+
+        // 设置 canvas 尺寸，考虑 devicePixelRatio
+        const setCanvasSize = (canvasEl) => {
+            if (canvasEl) {
+                // 物理像素尺寸
+                canvasEl.width = baseWidth * devicePixelRatio;
+                canvasEl.height = baseHeight * devicePixelRatio;
+
+                // CSS 尺寸
+                canvasEl.style.width = baseWidth + 'px';
+                canvasEl.style.height = baseHeight + 'px';
+
+                console.log(`[AngelaApp] ${canvasEl.id} dimensions set: ${canvasEl.width}x${canvasEl.height} (physical), ${baseWidth}x${baseHeight} (CSS), DPR: ${devicePixelRatio}`);
+            }
+        };
+
+        setCanvasSize(live2dCanvas);
+        setCanvasSize(fallbackCanvas);
+
         // 创建 UDM 实例（传入元素引用）
         try {
             this.udm = new UnifiedDisplayMatrix({
                 wrapperElement: wrapper,
                 canvasElement: canvas
             });
-            
+
             // 设置 wrapper 尺寸为 UDM display size (720p = 100%)
             if (wrapper && this.udm) {
                 const displaySize = this.udm.getDisplaySize();
@@ -428,64 +447,64 @@ async _initializeLogger() {
                 wrapper.style.height = displaySize.height + 'px';
                 console.log('[AngelaApp] Wrapper size set:', displaySize.width, 'x', displaySize.height);
             }
-            
+
             // 绑定按钮事件
             this._bindScaleButtons();
-            
+
             console.log('[AngelaApp] UDM initialized successfully');
         } catch (error) {
             console.error('[AngelaApp] UDM初始化失败，使用降级方案:', error);
-            
+
             // 降级方案：创建简化的UDM
             this.udm = {
-                // 基本坐标转换
+                // 基本坐标转换（修正版本）
                 screenToCanvas: (sx, sy) => {
                     if (!canvas) return { x: sx, y: sy };
                     const rect = canvas.getBoundingClientRect();
                     return {
-                        x: (sx - rect.left) * (canvas.width / rect.width),
-                        y: (sy - rect.top) * (canvas.height / rect.height)
+                        x: (sx - rect.left) * (baseWidth / rect.width),
+                        y: (sy - rect.top) * (baseHeight / rect.height)
                     };
                 },
-                
+
                 // 基本缩放
                 getUserScale: () => 1.0,
                 setUserScale: (scale) => {},
-                
+
                 // 基本身体部位检测
                 identifyBodyPart: (x, y) => {
                     // 简单的中心区域检测
-                    const cx = 640; // 1280/2
-                    const cy = 360; // 720/2
+                    const cx = baseWidth / 2;
+                    const cy = baseHeight / 2;
                     const dx = x - cx;
                     const dy = y - cy;
                     const distance = Math.sqrt(dx * dx + dy * dy);
-                    
+
                     if (distance < 100) {
                         return { name: 'face', priority: 1, expression: 'neutral' };
                     }
                     return null;
                 },
-                
+
                 // 基本触觉强度计算
                 calculateHapticIntensity: (base, pos, size) => base,
-                
+
                 // 基本方法
                 handleTouch: (x, y, type) => ({ success: false }),
                 handleClick: (x, y) => ({ success: false }),
-                
+
                 // 显示尺寸
-                getDisplaySize: () => ({ width: 1280, height: 720 })
+                getDisplaySize: () => ({ width: baseWidth, height: baseHeight })
             };
-            
+
             // 仍然设置wrapper尺寸
             if (wrapper) {
-                wrapper.style.width = '1280px';
-                wrapper.style.height = '720px';
+                wrapper.style.width = baseWidth + 'px';
+                wrapper.style.height = baseHeight + 'px';
             }
-            
+
             console.warn('[AngelaApp] 使用简化的UDM降级方案');
-            
+
             // 通知用户
             if (this._showNotification) {
                 this._showNotification('部分功能受限，使用降级模式', 'warning');
@@ -832,6 +851,97 @@ async _initializeLogger() {
             this.statusBar.textContent = message;
             this.statusBar.classList.add('visible');
             setTimeout(() => this.statusBar.classList.remove('visible'), duration);
+        }
+    }
+
+    /**
+     * 清理所有資源
+     * 確保所有事件監聽器、WebSocket 連接等都被正確釋放
+     */
+    cleanup() {
+        console.log('[AngelaApp] Cleaning up resources...');
+
+        try {
+            // 清理 InputHandler
+            if (this.inputHandler && typeof this.inputHandler.destroy === 'function') {
+                this.inputHandler.destroy();
+                this.inputHandler = null;
+                console.log('[AngelaApp] InputHandler cleaned up');
+            }
+
+            // 清理 WebSocket
+            if (this.backendWebSocket) {
+                if (typeof this.backendWebSocket.destroy === 'function') {
+                    this.backendWebSocket.destroy();
+                } else if (typeof this.backendWebSocket.disconnect === 'function') {
+                    this.backendWebSocket.disconnect();
+                }
+                this.backendWebSocket = null;
+                console.log('[AngelaApp] WebSocket cleaned up');
+            }
+
+            // 清理 Live2D Manager
+            if (this.live2dManager) {
+                // 停止渲染循環
+                if (typeof this.live2dManager.stop === 'function') {
+                    this.live2dManager.stop();
+                }
+                this.live2dManager = null;
+                console.log('[AngelaApp] Live2DManager cleaned up');
+            }
+
+            // 清理 AudioHandler
+            if (this.audioHandler) {
+                if (typeof this.audioHandler.destroy === 'function') {
+                    this.audioHandler.destroy();
+                }
+                this.audioHandler = null;
+                console.log('[AngelaApp] AudioHandler cleaned up');
+            }
+
+            // 清理 HapticHandler
+            if (this.hapticHandler) {
+                if (typeof this.hapticHandler.destroy === 'function') {
+                    this.hapticHandler.destroy();
+                }
+                this.hapticHandler = null;
+                console.log('[AngelaApp] HapticHandler cleaned up');
+            }
+
+            // 清理 PluginManager
+            if (this.pluginManager) {
+                if (typeof this.pluginManager.destroy === 'function') {
+                    this.pluginManager.destroy();
+                }
+                this.pluginManager = null;
+                console.log('[AngelaApp] PluginManager cleaned up');
+            }
+
+            // 清理 PerformanceManager
+            if (this.performanceManager) {
+                if (typeof this.performanceManager.destroy === 'function') {
+                    this.performanceManager.destroy();
+                }
+                this.performanceManager = null;
+                console.log('[AngelaApp] PerformanceManager cleaned up');
+            }
+
+            // 清理定時器
+            if (this.idleTimer) {
+                clearTimeout(this.idleTimer);
+                this.idleTimer = null;
+            }
+
+            // 清理 UI 引用
+            this.loadingOverlay = null;
+            this.loadingText = null;
+            this.progressBarFill = null;
+            this.statusBar = null;
+            this.controls = null;
+
+            console.log('[AngelaApp] All resources cleaned up successfully');
+        } catch (error) {
+            console.error('[AngelaApp] Error during cleanup:', error);
         }
     }
 }
