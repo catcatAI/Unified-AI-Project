@@ -273,14 +273,28 @@
             background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
         }
 
-        #controls {
+#controls {
             position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 10px;
+            right: 10px;
             display: flex;
-            gap: 8px;
-            z-index: 150;
+            gap: 5px;
+            z-index: 40;
+            opacity: 0.8;
+            transition: opacity 0.3s, transform 0.3s;
+            transform: translateY(0);
+        }
+
+        #controls.controls-hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+        }
+
+        #controls.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
         }
 
         .control-btn {

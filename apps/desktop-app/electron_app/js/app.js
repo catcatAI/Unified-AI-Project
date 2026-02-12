@@ -731,11 +731,22 @@ async _initializeLogger() {
         // 将鼠标事件绑定到 controls 元素本身，而不是 document
         // 避免全局事件监听器导致的内存泄漏
         if (this.controls) {
+            // 初始時隱藏 controls
+            this.controls.classList.add('controls-hidden');
+            
             this.controls.addEventListener('mouseenter', () => {
+                this.controls.classList.remove('controls-hidden');
                 this.controls.classList.add('visible');
             });
+            
             this.controls.addEventListener('mouseleave', () => {
                 this.controls.classList.remove('visible');
+                // 延遲隱藏，避免快速移動導致閃爍
+                setTimeout(() => {
+                    if (!this.controls.matches(':hover')) {
+                        this.controls.classList.add('controls-hidden');
+                    }
+                }, 300);
             });
         }
     }
