@@ -1,4 +1,3 @@
-# TODO: Fix import - module 'numpy' not found
 
 # Default English stopwords
 stopwords = {

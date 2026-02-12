@@ -4,14 +4,12 @@
 當檢測到演示金鑰時自動啟動學習、初始化、清除功能
 """
 
-# TODO: Fix import - module 'asyncio' not found
 import asyncio
 import logging
 import json
 import re
 # from tests.tools.test_tool_dispatcher_logging import
 # from tests.test_json_fix import
-# TODO: Fix import - module 'yaml' not found
 # import yaml
 from typing import Dict, Any, List, Optional
 from pathlib import Path
@@ -258,7 +256,6 @@ class DemoLearningManager:
     def _get_memory_usage(self) -> Dict[str, Any]:
         """獲取內存使用情況"""
         try:
-            # TODO: Fix import - module 'psutil' not found
             # import psutil
             process = psutil.Process()
             return {

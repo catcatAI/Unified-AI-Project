@@ -1,4 +1,3 @@
-# TODO: Fix import - module 'typing' not found
 
 class FormulaConfigEntry(TypedDict, total = False):
     name: Required[str]

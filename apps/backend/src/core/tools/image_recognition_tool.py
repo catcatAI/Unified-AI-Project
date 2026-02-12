@@ -1,5 +1,3 @@
-# TODO: Fix import - module 'skimage.feature' not found
-# TODO: Fix import - module 'numpy' not found
 
 def recognize_image(image, template):
     """

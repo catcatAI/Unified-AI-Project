@@ -6,11 +6,8 @@ import hashlib
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union, Tuple
 
-# Optional imports
-try:
-    from cryptography.fernet import Fernet
-except ImportError:
-    Fernet = None
+# Required imports
+from cryptography.fernet import Fernet
 
 # Internal imports
 from .ham_types import HAMDataPackageInternal, HAMMemory, HAMRecallResult, HAMMemoryError
@@ -66,11 +63,8 @@ class HAMMemoryManager:
         key_str = os.environ.get("MIKO_HAM_KEY")
         self.fernet: Optional[Any] = None
         self.fernet_key: Optional[bytes] = None
-        
-        if Fernet is None:
-            logger.warning("cryptography library not installed. Encryption DISABLED.")
-            logger.warning("Install with: pip install cryptography")
-        elif key_str:
+
+        if key_str:
             self.fernet_key = key_str.encode()
             try:
                 self.fernet = Fernet(self.fernet_key)

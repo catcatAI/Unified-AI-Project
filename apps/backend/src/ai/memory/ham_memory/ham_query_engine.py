@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union, Tuple
 
@@ -111,23 +112,135 @@ class HAMQueryEngine:
     async def retrieve_relevant_memories(self, query: str, limit: int = 10) -> List[HAMMemory]:
         """
         Retrieves memories semantically relevant to the query using the vector store.
+        
+        Args:
+            query: The search query string
+            limit: Maximum number of results to return
+            
+        Returns:
+            List of semantically relevant memories with relevance scores
         """
-        if self.vector_store_manager.vector_store:
-            # Assuming vector_store.query_memories returns a list of HAMMemory
-            # with content, metadata, and a relevance score.
-            # The query itself might need to be embedded first.
-            # For now, this is a placeholder for actual semantic search.
-            logger.info(f"Performing semantic search for query: '{query}'")
-            # Mocking a result for now
-            mock_results = []
-            for i in range(min(limit, 3)): # Return up to 3 mock results
-                mock_results.append(HAMMemory(
-                    memory_id=f"semantic_mem_{i}",
-                    content=f"This is a semantically relevant memory to '{query}' (mock data {i})",
-                    metadata={"source": "semantic_search", "query": query},
-                    relevance=0.9 - (i * 0.1)
-                ))
-            return mock_results
-        else:
+        if not self.vector_store_manager.vector_store:
             logger.warning("Vector store not initialized. Cannot perform semantic search.")
+            # Fallback to keyword-based search in core memory
+            return await self._fallback_keyword_search(query, limit)
+        
+        try:
+            logger.info(f"Performing semantic search for query: '{query}'")
+            
+            # Embed the query using the vector store
+            query_embedding = await self.vector_store_manager.embed_text(query)
+            
+            if query_embedding is None:
+                logger.error("Failed to embed query for semantic search")
+                return await self._fallback_keyword_search(query, limit)
+            
+            # Query the vector store for similar memories
+            results = await self.vector_store_manager.query_similar(
+                query_embedding=query_embedding,
+                n_results=limit
+            )
+            
+            if not results:
+                logger.info("No semantic matches found, falling back to keyword search")
+                return await self._fallback_keyword_search(query, limit)
+            
+            # Convert vector store results to HAMMemory format
+            memories = []
+            for result in results:
+                memory_id = result.get("id")
+                
+                # Retrieve full memory from core storage if available
+                if memory_id and memory_id in self.core_memory_store:
+                    data_package = self.core_memory_store[memory_id]
+                    
+                    try:
+                        decrypted_data = self.data_processor._decrypt(data_package["encrypted_package"])
+                        decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
+                        decompressed_data_str = decompressed_data_bytes.decode('utf-8')
+                        
+                        # Parse the data based on type
+                        if "dialogue_text" in data_package["data_type"]:
+                            abstracted = json.loads(decompressed_data_str)
+                            content = self.data_processor._rehydrate_text_gist(abstracted)
+                        else:
+                            content = decompressed_data_str
+                        
+                        memories.append(HAMMemory(
+                            memory_id=memory_id,
+                            content=content,
+                            metadata=data_package.get("metadata", {}),
+                            relevance=result.get("distance", 0.0)  # Distance-based relevance
+                        ))
+                        
+                    except Exception as e:
+                        logger.error(f"Error processing memory {memory_id}: {e}")
+                        continue
+            
+            logger.info(f"Semantic search returned {len(memories)} results")
+            return memories[:limit]
+            
+        except Exception as e:
+            logger.error(f"Error during semantic search: {e}")
+            return await self._fallback_keyword_search(query, limit)
+
+    async def _fallback_keyword_search(self, query: str, limit: int = 10) -> List[HAMMemory]:
+        """
+        Fallback keyword-based search when vector store is unavailable.
+        
+        Args:
+            query: The search query string
+            limit: Maximum number of results to return
+            
+        Returns:
+            List of keyword-matching memories with relevance scores
+        """
+        logger.info(f"Performing fallback keyword search for query: '{query}'")
+        
+        # Extract keywords from query
+        query_words = set(re.findall(r'\b[a-zA-Z\u4e00-\u9fff]{2,}\b', query.lower()))
+        
+        if not query_words:
             return []
+        
+        results = []
+        
+        for mem_id, data_package in self.core_memory_store.items():
+            try:
+                decrypted_data = self.data_processor._decrypt(data_package["encrypted_package"])
+                decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
+                decompressed_data_str = decompressed_data_bytes.decode('utf-8')
+                
+                # Get content
+                if "dialogue_text" in data_package["data_type"]:
+                    abstracted = json.loads(decompressed_data_str)
+                    content = abstracted.get("gist", "") + " " + " ".join(abstracted.get("keywords", []))
+                else:
+                    content = decompressed_data_str
+                
+                # Calculate keyword match score
+                content_lower = content.lower()
+                match_count = sum(1 for word in query_words if word in content_lower)
+                
+                if match_count > 0:
+                    # Calculate relevance based on match ratio
+                    relevance = min(1.0, match_count / max(1, len(query_words)))
+                    
+                    # Apply stored relevance
+                    stored_relevance = data_package.get("relevance", 0.5)
+                    final_score = (relevance * 0.7) + (stored_relevance * 0.3)
+                    
+                    results.append(HAMMemory(
+                        memory_id=mem_id,
+                        content=self.data_processor._rehydrate_text_gist(abstracted) if "dialogue_text" in data_package["data_type"] else decompressed_data_str[:200],
+                        metadata=data_package.get("metadata", {}),
+                        relevance=final_score
+                    ))
+                    
+            except Exception as e:
+                logger.error(f"Error processing memory {mem_id} in keyword search: {e}")
+                continue
+        
+        # Sort by relevance and return top results
+        results.sort(key=lambda x: x["relevance"], reverse=True)
+        return results[:limit]

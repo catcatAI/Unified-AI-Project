@@ -1,4 +1,3 @@
-# TODO: Fix import - module 'shutil' not found
 
 import logging # Import logging module
 from pathlib import Path

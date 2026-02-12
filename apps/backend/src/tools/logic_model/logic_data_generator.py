@@ -3,7 +3,6 @@ This script generates a dataset of logical propositions and their evaluated resu
 """
 
 # from tests.test_json_fix import
-# TODO: Fix import - module 'random' not found
 # from diagnose_base_agent import
 # from unified_auto_fix_system.utils.ast_analyzer import
 import os

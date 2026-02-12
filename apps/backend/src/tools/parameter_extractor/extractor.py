@@ -1,7 +1,6 @@
 import os
 from typing import Any, Dict, Callable, Type, List
 
-# TODO: Fix import - module 'huggingface_hub' not found
 # from huggingface_hub import hf_hub_download # Uncomment when huggingface_hub is available
 
 class ParameterExtractor:

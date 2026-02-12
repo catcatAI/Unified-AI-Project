@@ -27,6 +27,7 @@ import time
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Union
+import yaml
 
 from .execution_monitor import (
     ExecutionMonitor, ExecutionConfig, ExecutionResult,
@@ -134,10 +135,8 @@ class ExecutionManager:
             # Try to load from config file
             config_path = Path("configs/system_config.yaml")
             if config_path.exists():
-                # TODO: Import yaml when available
-                # with open(config_path, 'r', encoding='utf-8') as f:
-                #     system_config = yaml.safe_load(f)
-                pass
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    system_config = yaml.safe_load(f)
 
             # Using default configuration
             print("System config not found, using default configuration")

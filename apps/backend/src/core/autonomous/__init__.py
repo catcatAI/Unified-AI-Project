@@ -12,6 +12,9 @@ Version: 6.0.0
 Date: 2026-02-02
 """
 
+import logging
+logger = logging.getLogger(__name__)
+
 # Biological Simulation Systems
 try:
     from .physiological_tactile import (
@@ -19,7 +22,8 @@ try:
         TrajectoryAnalyzer, TrajectoryPoint, TrajectoryAnalysis,
         AdaptationMechanism, ReceptorAdaptationState
     )
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import physiological_tactile: {e}")
     PhysiologicalTactileSystem = None
     Receptor = None
     BodyPart = None
@@ -35,7 +39,8 @@ try:
         HormoneKinetics, ReceptorStatus,
         FeedbackLoop, FeedbackNode
     )
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import endocrine_system: {e}")
     EndocrineSystem = None
     Hormone = None
     HormoneType = None
@@ -46,7 +51,8 @@ except ImportError:
 
 try:
     from .autonomic_nervous_system import AutonomicNervousSystem, ANSState, NerveType
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import autonomic_nervous_system: {e}")
     AutonomicNervousSystem = None
     ANSState = None
     NerveType = None
@@ -59,7 +65,8 @@ try:
         TraumaMemorySystem, TraumaMemory,
         ExplicitImplicitLearning, LearningEvent
     )
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import neuroplasticity: {e}")
     NeuroplasticitySystem = None
     MemoryTrace = None
     HebbianRule = None
@@ -77,7 +84,8 @@ try:
         EmotionalBlendingSystem, PADEmotion, EmotionalExpression,
         MultidimensionalStateMatrix, StateDimension
     )
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import emotional_blending: {e}")
     EmotionalBlendingSystem = None
     PADEmotion = None
     EmotionalExpression = None
@@ -86,7 +94,8 @@ except ImportError:
 
 try:
     from .state_matrix import StateMatrix4D, DimensionState
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import state_matrix: {e}")
     StateMatrix4D = None
     DimensionState = None
 
@@ -96,7 +105,8 @@ try:
         ActionExecutor, ActionQueue, ActionPriority,
         Action, ActionResult, ActionStatus, ActionCategory
     )
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import action_executor: {e}")
     ActionExecutor = None
     ActionQueue = None
     ActionPriority = None
@@ -107,34 +117,39 @@ except ImportError:
 
 try:
     from .desktop_interaction import DesktopInteraction, FileOperation, DesktopState
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import desktop_interaction: {e}")
     DesktopInteraction = None
     FileOperation = None
     DesktopState = None
 
 try:
     from .browser_controller import BrowserController, SearchResult, BrowserState
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import browser_controller: {e}")
     BrowserController = None
     SearchResult = None
     BrowserState = None
 
 try:
     from .audio_system import AudioSystem, TTSConfig, LyricsSync
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import audio_system: {e}")
     AudioSystem = None
     TTSConfig = None
     LyricsSync = None
 
 try:
     from .desktop_presence import DesktopPresence, MouseTracker
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import desktop_presence: {e}")
     DesktopPresence = None
     MouseTracker = None
 
 try:
     from .live2d_integration import Live2DIntegration, Live2DExpression, Live2DAction
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import live2d_integration: {e}")
     Live2DIntegration = None
     Live2DExpression = None
     Live2DAction = None
@@ -142,44 +157,51 @@ except ImportError:
 # Integration Systems
 try:
     from .biological_integrator import BiologicalIntegrator, SystemInteraction
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import biological_integrator: {e}")
     BiologicalIntegrator = None
     SystemInteraction = None
 
 try:
     from .digital_life_integrator import DigitalLifeIntegrator, LifeCycleState
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import digital_life_integrator: {e}")
     DigitalLifeIntegrator = None
     LifeCycleState = None
 
 try:
     from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge, MemoryConsolidation
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import memory_neuroplasticity_bridge: {e}")
     MemoryNeuroplasticityBridge = None
     MemoryConsolidation = None
 
 try:
     from .extended_behavior_library import ExtendedBehaviorLibrary, BehaviorDefinition
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import extended_behavior_library: {e}")
     ExtendedBehaviorLibrary = None
     BehaviorDefinition = None
 
 try:
     from .multidimensional_trigger import MultidimensionalTriggerSystem, TriggerDimension
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import multidimensional_trigger: {e}")
     MultidimensionalTriggerSystem = None
     TriggerDimension = None
 
 try:
     from .cyber_identity import CyberIdentity, SelfModel, IdentityGrowth
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import cyber_identity: {e}")
     CyberIdentity = None
     SelfModel = None
     IdentityGrowth = None
 
 try:
     from .self_generation import SelfGeneration, AvatarBuilder
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import self_generation: {e}")
     SelfGeneration = None
     AvatarBuilder = None
 
@@ -190,7 +212,8 @@ try:
         TutorialContent, ImageAnalysis, LearningSession,
         BodyPartMapping, Live2DParameter, LearningType
     )
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import art_learning_system: {e}")
     ArtLearningSystem = None
     ArtKnowledge = None
     ArtDomain = None
@@ -206,7 +229,8 @@ try:
         Live2DAvatarGenerator, GeneratedAvatar, Live2DModelConfig,
         GenerationStage, ViewAngle, BodyLayer
     )
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import live2d_avatar_generator: {e}")
     Live2DAvatarGenerator = None
     GeneratedAvatar = None
     Live2DModelConfig = None
@@ -220,7 +244,8 @@ try:
         WorkflowProgress, SkillAssessment, GenerationResult,
         WorkflowConfig
     )
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import art_learning_workflow: {e}")
     ArtLearningWorkflow = None
     WorkflowStage = None
     LearningObjective = None
@@ -231,7 +256,8 @@ except ImportError:
 
 try:
     from .autonomous_life_cycle import AutonomousLifeCycle, LifePhase, LifeDecision, FormulaMetrics
-except ImportError:
+except ImportError as e:
+    logger.warning(f"Failed to import autonomous_life_cycle: {e}")
     AutonomousLifeCycle = None
     LifePhase = None
     LifeDecision = None

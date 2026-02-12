@@ -1,13 +1,13 @@
 """
-Angela AI v6.0 - Core Module
+Angela AI v6.2.0 - Core Module
 核心模块
 
 Contains core systems including action execution, orchestration,
 theoretical formulas for digital life, and system management components.
 
 Author: Angela AI Development Team
-Version: 6.0.0
-Date: 2026-02-02
+Version: 6.2.0
+Date: 2026-02-11
 """
 
 # Action Execution Layer
@@ -219,13 +219,21 @@ from .hardware.compute_matrix import (
     create_compute_optimizer,
 )
 
-__version__ = "6.0.0"
+# Version Management
+from .version import (
+    get_version,
+    get_version_info,
+    __version__,
+)
+
 __author__ = "Angela AI Development Team"
 
 __all__ = [
     # Version
     "__version__",
     "__author__",
+    "get_version",
+    "get_version_info",
     
     # Action Execution Bridge
     "ActionExecutionBridge",

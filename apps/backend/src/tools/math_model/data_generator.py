@@ -6,7 +6,6 @@ import ast
 import csv
 from typing import Union, Dict, Callable, Type, List
 
-# TODO: Fix import - module 'huggingface_hub' not found
 # from huggingface_hub import hf_hub_download # Uncomment when huggingface_hub is available
 
 def _safe_eval(expression: str) -> Union[int, float]:

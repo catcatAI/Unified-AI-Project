@@ -32,8 +32,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, List, Dict, Any, Union
 
-# TODO: Import psutil when available
-# import psutil
+import psutil
 
 
 class ExecutionStatus(Enum):

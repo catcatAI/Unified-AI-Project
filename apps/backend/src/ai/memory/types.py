@@ -1,5 +1,3 @@
-# TODO: Fix import - module 'typing' not found
-# TODO: Fix import - module 'enum' not found
 
 class MemoryType(Enum):
     """Enumeration of different memory types."""

@@ -1,4 +1,3 @@
-# TODO: Fix import - module 'speech_recognition' not found
 
 def recognize_speech(audio_file):
     """
