@@ -66,14 +66,15 @@ class Live2DManager {
             idle_motion: true
         };
         
-        // Fallback rendering - 只使用美术资源
+        // Fallback rendering - 三層渲染系統
         this.fallbackCanvas = null;
         this.fallbackCtx = null;
         this.fallbackWrapper = null;
-        this.characterImage = null;  // 只加载美术资源
+        this.layerRenderer = null;  // LayerRenderer 實例
         this.characterImages = {};  // 存储所有加载的立繪圖片
-        this.currentCharacterImageId = 'default';  // 當前選擇的立繪ID
-        this.spriteSheetIndex = 0;  // 當前表情/姿態索引（用於 sprite sheet）
+        this.currentCharacterImageId = 'fullbody_ai_assistant';  // 當前選擇的主立繪ID
+        this.expressionIndex = 0;  // 當前表情索引
+        this.poseIndex = 0;  // 當前姿態索引
         this.lastRenderedImageId = '';  // 跟踪上次渲染的圖片
         this.lastRenderedSpriteIndex = -1;  // 跟踪上次渲染的 sprite sheet 索引
         
@@ -281,8 +282,20 @@ class Live2DManager {
             fallbackCanvas.height = 720;
         }
         
+        // 初始化 LayerRenderer（三層渲染系統）
+        if (typeof window.LayerRenderer !== 'undefined') {
+            this.layerRenderer = new window.LayerRenderer(fallbackCanvas, this.udm);
+            console.log('[Live2DManager] LayerRenderer initialized');
+        }
+        
         // 加载美术资源
         await this._loadCharacterImage();
+        
+        // 如果 LayerRenderer 可用，將圖片加載到 LayerRenderer
+        if (this.layerRenderer) {
+            await this.layerRenderer.loadLayerImages(this.characterImages);
+            console.log('[Live2DManager] Layer images loaded into LayerRenderer');
+        }
         
         // 设置点击事件
         this._setupClickHandlers();
@@ -656,6 +669,18 @@ class Live2DManager {
     _renderFallback() {
         if (!this.fallbackCtx || !this.fallbackCanvas) return;
         
+        // 如果 LayerRenderer 可用，使用三層渲染
+        if (this.layerRenderer) {
+            // 更新 LayerRenderer 的狀態
+            this.layerRenderer.setExpressionIndex(this.expressionIndex);
+            this.layerRenderer.setPoseIndex(this.poseIndex);
+            
+            // 渲染三層
+            this.layerRenderer.render();
+            return;
+        }
+        
+        // 否則使用舊的單層渲染（降級方案）
         const ctx = this.fallbackCtx;
         const canvas = this.fallbackCanvas;
         
@@ -673,87 +698,100 @@ class Live2DManager {
         const img = imageData.image;
         const config = imageData.config;
         const params = config.renderParams;
-        const scale = this.udm ? this.udm.getResourceToBaseScale() : 1.0;
+        const udmScale = this.udm ? this.udm.getResourceToBaseScale() : 1.0;
 
         if (config.type === 'single_image') {
             // 單張圖片渲染
-            const targetWidth = params.targetWidth * scale;
-            const targetHeight = params.targetHeight * scale;
+            const imgWidth = img.width;
+            const imgHeight = img.height;
             
-            // 如果有 scaleToHeight，計算縮放比例
+            let renderWidth, renderHeight, renderX, renderY;
+            
             if (params.scaleToHeight) {
-                const scaleFactor = params.scaleToHeight / params.targetHeight;
-                const scaledWidth = params.targetWidth * scaleFactor * scale;
-                const scaledHeight = params.scaleToHeight * scale;
+                const scale = params.scaleToHeight / imgHeight;
+                renderHeight = params.scaleToHeight * udmScale;
+                renderWidth = imgWidth * scale * udmScale;
                 
-                // 水平居中
-                const offsetX = params.offsetX * scale;
-                const centerY = canvas.height / 2;
-                const startY = centerY - scaledHeight / 2;
+                if (renderWidth > canvas.width) {
+                    const widthScale = canvas.width / renderWidth;
+                    renderWidth = canvas.width;
+                    renderHeight = renderHeight * widthScale;
+                }
                 
-                ctx.drawImage(
-                    img,
-                    offsetX, startY,
-                    scaledWidth, scaledHeight
-                );
+                renderX = (canvas.width - renderWidth) / 2;
+                renderY = params.offsetY ? params.offsetY * udmScale : (canvas.height - renderHeight) / 2;
             } else {
-                ctx.drawImage(
-                    img,
-                    params.offsetX * scale,
-                    params.offsetY * scale,
-                    targetWidth, targetHeight
-                );
+                renderWidth = params.targetWidth * udmScale;
+                renderHeight = params.targetHeight * udmScale;
+                
+                if (renderWidth > canvas.width) renderWidth = canvas.width;
+                if (renderHeight > canvas.height) renderHeight = canvas.height;
+                
+                renderX = params.offsetX ? params.offsetX * udmScale : (canvas.width - renderWidth) / 2;
+                renderY = params.offsetY ? params.offsetY * udmScale : (canvas.height - renderHeight) / 2;
             }
             
-            // 只在切換圖片時輸出日誌
+            ctx.drawImage(img, renderX, renderY, renderWidth, renderHeight);
+            
             if (this.lastRenderedImageId !== this.currentCharacterImageId) {
-                console.log('[Live2DManager] Rendered single image:', config.name);
+                console.log('[Live2DManager] Rendered single image:', config.name, 
+                            `size=${renderWidth.toFixed(0)}x${renderHeight.toFixed(0)}, pos=(${renderX.toFixed(0)}, ${renderY.toFixed(0)})`);
                 this.lastRenderedImageId = this.currentCharacterImageId;
             }
         } else if (config.type === 'sprite_sheet') {
             // Sprite sheet 渲染
             const cellSize = config.cellSize;
+            const totalSize = config.totalSize;
             const grid = config.grid;
             
-            // 計算當前格子的位置
             const colIndex = this.spriteSheetIndex % grid.cols;
             const rowIndex = Math.floor(this.spriteSheetIndex / grid.cols);
             
             const sourceX = colIndex * cellSize.width;
             const sourceY = rowIndex * cellSize.height;
             
-            const targetWidth = params.targetWidth * scale;
-            const targetHeight = params.targetHeight * scale;
+            let renderWidth, renderHeight, renderX, renderY;
             
-            // 如果有 scaleToHeight，計算縮放比例
             if (params.scaleToHeight) {
-                const scaleFactor = params.scaleToHeight / params.targetHeight;
-                const scaledWidth = cellSize.width * scaleFactor * scale;
-                const scaledHeight = params.scaleToHeight * scale;
+                const scale = params.scaleToHeight / totalSize.height;
+                renderHeight = params.scaleToHeight * udmScale;
+                renderWidth = totalSize.width * scale * udmScale;
                 
-                // 水平居中
-                const centerX = canvas.width / 2;
-                const startY = (canvas.height - scaledHeight) / 2;
+                if (renderWidth > canvas.width) {
+                    const widthScale = canvas.width / renderWidth;
+                    renderWidth = canvas.width;
+                    renderHeight = renderHeight * widthScale;
+                }
+                
+                const cellRenderWidth = renderWidth / grid.cols;
+                const cellRenderHeight = renderHeight / grid.rows;
+                
+                renderX = (canvas.width - cellRenderWidth) / 2;
+                renderY = (canvas.height - cellRenderHeight) / 2;
                 
                 ctx.drawImage(
                     img,
                     sourceX, sourceY,
                     cellSize.width, cellSize.height,
-                    centerX - scaledWidth / 2, startY,
-                    scaledWidth, scaledHeight
+                    renderX, renderY,
+                    cellRenderWidth, cellRenderHeight
                 );
             } else {
+                const cellRenderWidth = params.targetWidth * udmScale;
+                const cellRenderHeight = params.targetHeight * udmScale;
+                
+                renderX = params.offsetX ? params.offsetX * udmScale : (canvas.width - cellRenderWidth) / 2;
+                renderY = params.offsetY ? params.offsetY * udmScale : (canvas.height - cellRenderHeight) / 2;
+                
                 ctx.drawImage(
                     img,
                     sourceX, sourceY,
                     cellSize.width, cellSize.height,
-                    params.offsetX * scale,
-                    params.offsetY * scale,
-                    targetWidth, targetHeight
+                    renderX, renderY,
+                    cellRenderWidth, cellRenderHeight
                 );
             }
             
-            // 只在切換表情時輸出日誌
             if (this.lastRenderedImageId !== this.currentCharacterImageId || 
                 this.lastRenderedSpriteIndex !== this.spriteSheetIndex) {
                 console.log('[Live2DManager] Rendered sprite sheet cell:', config.name, 
