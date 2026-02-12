@@ -120,6 +120,16 @@
             opacity: 1;
         }
 
+        .control-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .control-btn:disabled:hover {
+            opacity: 0.3;
+        }
+
         #close-btn {
             background: rgba(255, 0, 0, 0.5);
         }
@@ -184,6 +194,11 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.1);
             pointer-events: auto;
+            max-width: 200px;  /* 防止溢出 */
+            min-width: 100px;  /* 確保最小寬度 */
+            white-space: nowrap;  /* 防止文字換行 */
+            overflow: hidden;  /* 隱溢出內容 */
+            text-overflow: ellipsis;  /* 溢出時顯示省略號 */
         }
 
         .badge.secure {
