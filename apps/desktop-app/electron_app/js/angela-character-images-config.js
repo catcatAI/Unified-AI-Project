@@ -99,19 +99,31 @@ window.ANGELA_CHARACTER_IMAGES = {
     }
   },
 
-  // 默認立繪（舊版，保持兼容）
+  // 默認立繪（舊版 Angela）
+  // 來源: angela_character_masked.png
+  // 實際尺寸: 1408×768 px
+  // 角色實際區域: x=508, y=26, width=391, height=491
+  // 角色中心: (703, 271)，畫布中心: (704, 384)
+  // 偏移: 水平-1（幾乎居中），垂直-113（偏上）
   'default': {
     name: '默認立繪',
     path: 'resources/angela_character_masked.png',
     type: 'single_image',
-    totalSize: { width: 512, height: 720 },
+    totalSize: { width: 1408, height: 768 },
+    characterRegion: {
+      x: 508,
+      y: 26,
+      width: 391,
+      height: 491
+    },
     renderParams: {
-      targetWidth: 512,
-      targetHeight: 720,
-      offsetX: 0,
-      offsetY: 0,
+      targetWidth: 391,    // 角色實際寬度
+      targetHeight: 491,   // 角色實際高度
+      offsetX: 508,        // 角色實際偏移
+      offsetY: 26,         // 角色實際偏移
       scaleX: 1.0,
-      scaleY: 1.0
+      scaleY: 1.0,
+      scaleToHeight: 720   // 目標高度 720（與 canvas 一致）
     }
   }
 };

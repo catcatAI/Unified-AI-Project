@@ -303,32 +303,216 @@ class Live2DManager {
     }
     
     async _loadCharacterImage() {
-        // 只加载美术资源，不生成占位图
-        // 使用 local:// 协议加载
-        const imagePaths = [
-            'local://models/miara_pro_en/runtime/angela_character_masked.png',
-            'local://resources/angela_character_masked.png',
-            'models/miara_pro_en/runtime/angela_character_masked.png',
-            'resources/angela_character_masked.png'
-        ];
+        // 從配置中加載所有立繪圖片
+        if (typeof window.ANGELA_CHARACTER_IMAGES === 'undefined') {
+            console.warn('[Live2DManager] ANGELA_CHARACTER_IMAGES not loaded, loading default only');
+            await this._loadSingleImage('resources/angela_character_masked.png', 'default');
+            return;
+        }
+
+        const config = window.ANGELA_CHARACTER_IMAGES;
+        console.log('[Live2DManager] Loading character images from config...');
         
-        for (const path of imagePaths) {
+        // 嘗試加載所有配置的圖片
+        for (const [imageId, imageConfig] of Object.entries(config)) {
             try {
                 const img = new Image();
-                img.src = path;
+                img.src = `local://${imageConfig.path}`;
+                
                 await new Promise((resolve, reject) => {
-                    img.onload = () => resolve(img);
+                    img.onload = () => {
+                        console.log(`[Live2DManager] Loaded image: ${imageId} (${img.width}x${img.height})`);
+                        resolve(img);
+                    };
                     img.onerror = () => reject(new Error('Failed'));
                 });
-                this.characterImage = img;
-                console.log('[Live2DManager] Character image loaded:', path);
-                return;
+                
+                this.characterImages[imageId] = {
+                    image: img,
+                    config: imageConfig
+                };
             } catch (e) {
-                console.warn('[Live2DManager] Could not load:', path);
+                console.warn(`[Live2DManager] Could not load image: ${imageId}`, e.message);
             }
         }
+
+        // 設置當前圖片（優先使用非默認的圖片）
+        const availableIds = Object.keys(this.characterImages);
+        if (availableIds.length > 1) {
+            // 選擇第一個非默認的圖片
+            for (const id of availableIds) {
+                if (id !== 'default') {
+                    this.currentCharacterImageId = id;
+                    break;
+                }
+            }
+        } else if (availableIds.length === 1) {
+            this.currentCharacterImageId = availableIds[0];
+        }
+
+        // 如果當前選擇的圖片不可用，切換到可用的圖片
+        if (!this.characterImages[this.currentCharacterImageId]) {
+            const firstAvailable = availableIds[0];
+            this.currentCharacterImageId = firstAvailable;
+        }
+
+        console.log('[Live2DManager] Current character image:', this.currentCharacterImageId);
+    }
+
+    async _loadSingleImage(path, imageId) {
+        try {
+            const img = new Image();
+            img.src = `local://${path}`;
+            
+            await new Promise((resolve, reject) => {
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error('Failed'));
+            });
+            
+            this.characterImages[imageId] = {
+                image: img,
+                config: {
+                    name: imageId,
+                    path: path,
+                    type: 'single_image',
+                    totalSize: { width: img.width, height: img.height },
+                    renderParams: {
+                        targetWidth: img.width,
+                        targetHeight: img.height,
+                        offsetX: 0,
+                        offsetY: 0,
+                        scaleX: 1.0,
+                        scaleY: 1.0
+                    }
+                }
+            };
+            
+            if (this.currentCharacterImageId === 'default') {
+                this.currentCharacterImageId = imageId;
+            }
+            
+            console.log('[Live2DManager] Character image loaded:', path);
+        } catch (e) {
+            console.warn('[Live2DManager] Could not load:', path, e.message);
+        }
+    }
+
+    /**
+     * 切換立繪圖片
+     * @param {string} imageId - 圖片ID
+     */
+    setCharacterImage(imageId) {
+        if (!this.characterImages[imageId]) {
+            console.warn(`[Live2DManager] Image not found: ${imageId}`);
+            return false;
+        }
+
+        this.currentCharacterImageId = imageId;
+        console.log(`[Live2DManager] Switched to image: ${imageId}`);
+
+        // 如果是 sprite sheet，重置索引
+        const config = this.characterImages[imageId].config;
+        if (config.type === 'sprite_sheet') {
+            this.spriteSheetIndex = 0;
+        }
+
+        return true;
+    }
+
+    /**
+     * 切換到下一張立繪
+     */
+    nextCharacterImage() {
+        const availableIds = Object.keys(this.characterImages);
+        if (availableIds.length <= 1) return false;
+
+        const currentIndex = availableIds.indexOf(this.currentCharacterImageId);
+        const nextIndex = (currentIndex + 1) % availableIds.length;
+        return this.setCharacterImage(availableIds[nextIndex]);
+    }
+
+    /**
+     * 切換到上一張立繪
+     */
+    previousCharacterImage() {
+        const availableIds = Object.keys(this.characterImages);
+        if (availableIds.length <= 1) return false;
+
+        const currentIndex = availableIds.indexOf(this.currentCharacterImageId);
+        const prevIndex = (currentIndex - 1 + availableIds.length) % availableIds.length;
+        return this.setCharacterImage(availableIds[prevIndex]);
+    }
+
+    /**
+     * 獲取當前可用的立繪列表
+     */
+    getAvailableCharacterImages() {
+        return Object.keys(this.characterImages).map(id => ({
+            id: id,
+            name: this.characterImages[id]?.config?.name || id,
+            type: this.characterImages[id]?.config?.type || 'unknown'
+        }));
+    }
+
+    /**
+     * 切換 Sprite Sheet 表情/姿態
+     * @param {number} index - 表情/姿態索引
+     */
+    setSpriteSheetIndex(index) {
+        const imageData = this.characterImages[this.currentCharacterImageId];
+        if (!imageData || imageData.config.type !== 'sprite_sheet') {
+            console.warn('[Live2DManager] Current image is not a sprite sheet');
+            return false;
+        }
+
+        const config = imageData.config;
+        const totalCells = config.grid.rows * config.cols;
         
-        console.log('[Live2DManager] No character image found');
+        if (index < 0 || index >= totalCells) {
+            console.warn(`[Live2DManager] Invalid index: ${index} (0-${totalCells-1})`);
+            return false;
+        }
+
+        this.spriteSheetIndex = index;
+        console.log(`[Live2DManager] Set sprite sheet index: ${index}`);
+
+        return true;
+    }
+
+    /**
+     * 下一個表情/姿態（適用於 sprite sheet）
+     */
+    nextSpriteSheetIndex() {
+        const imageData = this.characterImages[this.currentCharacterImageId];
+        if (!imageData || imageData.config.type !== 'sprite_sheet') {
+            return false;
+        }
+
+        const config = imageData.config;
+        const totalCells = config.grid.rows * config.cols;
+        this.spriteSheetIndex = (this.spriteSheetIndex + 1) % totalCells;
+
+        console.log(`[Live2DManager] Next sprite sheet index: ${this.spriteSheetIndex}`);
+        return this.spriteSheetIndex;
+    }
+
+    /**
+     * 獲取當前圖片的可用表情/姿態列表（適用於 sprite sheet）
+     */
+    getAvailableExpressions() {
+        const imageData = this.characterImages[this.currentCharacterImageId];
+        if (!imageData || imageData.config.type !== 'sprite_sheet') {
+            return [];
+        }
+
+        const config = imageData.config;
+        if (config.expressions) {
+            return config.expressions;
+        } else if (config.poses) {
+            return config.poses;
+        }
+
+        return [];
     }
     
     _initTouchDetector() {
