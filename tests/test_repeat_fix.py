@@ -28,7 +28,7 @@
 #     pass
 
     # def test_function():
-# if True,::
+# if True,:
 #     print("缩进错误")
 
 # # 测试语法错误
@@ -40,7 +40,7 @@
 #     return "多余的冒号"
 # # 测试混合缩进
 # def mixed_indent():
-#     if True,  # 制表符,::
+#     if True,  # 制表符,:
 #         rint("混合缩进")  # 空格
 
 
@@ -51,7 +51,7 @@
 #     def method():
 #         pass
 
-# if __name"__main__":::
+# if __name"__main__"::
 #     test_function()
 #     another_function()
 #     third_function()

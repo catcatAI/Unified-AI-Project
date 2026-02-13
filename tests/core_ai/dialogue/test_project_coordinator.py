@@ -24,11 +24,11 @@ def project_coordinator():
     mock_llm_interface = AsyncMock()
     mock_service_discovery = AsyncMock()  # 修改为AsyncMock
     mock_service_discovery.get_all_capabilities_async = AsyncMock(return_value=[])
-    mock_hsp_connector == MagicMock()
-    mock_agent_manager == MagicMock()
-    mock_memory_manager == MagicMock()
-    mock_learning_manager == AsyncMock()
-    mock_personality_manager == MagicMock()
+    mock_hsp_connector = MagicMock()
+    mock_agent_manager = MagicMock()
+    mock_memory_manager = MagicMock()
+    mock_learning_manager = AsyncMock()
+    mock_personality_manager = MagicMock()
     mock_personality_manager.get_current_personality_trait.return_value = "TestAI"
 
     # Mock the config dictionary
@@ -126,7 +126,7 @@ def project_coordinator():
 # 添加重试装饰器以处理不稳定的测试
 async def test_handle_project_decomposition_fails(project_coordinator) -> None:
     """
-    Tests that if task decomposition fails, a user-friendly message is returned.::
+    Tests that if task decomposition fails, a user-friendly message is returned.:
     """
     # Arrange
     pc = project_coordinator
@@ -184,7 +184,7 @@ async def test_execute_task_graph_with_dependencies(project_coordinator) -> None
 # 添加重试装饰器以处理不稳定的测试
 async def test_dispatch_single_subtask_agent_not_found(project_coordinator) -> None:
     """
-    Tests that if an agent cannot be found or launched, an error is returned.::
+    Tests that if an agent cannot be found or launched, an error is returned.:
     """
     # Arrange
     pc = project_coordinator
@@ -203,7 +203,7 @@ async def test_dispatch_single_subtask_agent_not_found(project_coordinator) -> N
 # 添加重试装饰器以处理不稳定的测试,
 async def test_dispatch_single_subtask_agent_launch_and_discovery(project_coordinator) -> None:
     """
-    Tests the logic for launching a new agent when a capability is not initially found.::
+    Tests the logic for launching a new agent when a capability is not initially found.:
     """
     # Arrange
     pc = project_coordinator

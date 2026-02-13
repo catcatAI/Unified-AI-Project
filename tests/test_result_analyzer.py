@@ -186,7 +186,7 @@ class TestResultAnalyzer:
 TestResultAnalyzer.__test__ = False
 def main() -> None:
     """主函数"""
-    analyzer == TestResultAnalyzer()
+    analyzer = TestResultAnalyzer()
 
     # 示例使用方式
     # 加载测试结果

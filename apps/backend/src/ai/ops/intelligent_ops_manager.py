@@ -26,6 +26,16 @@ from .capacity_planner import CapacityPlanner
 
 logger = logging.getLogger(__name__)
 
+# ========== 修复：安全的 datetime 辅助函数 ==========
+def get_utc_now() -> datetime:
+    """获取当前 UTC 时间（安全的跨平台实现）"""
+    try:
+        # 优先使用 timezone.utc
+        return datetime.now(timezone.utc)
+    except (AttributeError, TypeError):
+        # 回退到 UTC 偏移量
+        return datetime.utcnow()
+
 @dataclass
 class OpsInsight:
     """运维洞察"""
@@ -237,7 +247,7 @@ class IntelligentOpsManager:
                 for anomaly in anomalies:
                     if anomaly.severity in ['high', 'critical']:
                         insight = OpsInsight(
-                            insight_id=f"anomaly_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                            insight_id=f"anomaly_{get_utc_now().strftime('%Y%m%d_%H%M%S')}_{component_id}",
                             insight_type="anomaly",
                             severity=anomaly.severity,
                             title=f"检测到异常: {anomaly.anomaly_type}",
@@ -245,7 +255,7 @@ class IntelligentOpsManager:
                             affected_components=[component_id],
                             recommendations=anomaly.recommended_actions,
                             confidence=anomaly.confidence,
-                            timestamp=datetime.now(timezone.utc()),
+                            timestamp=get_utc_now(),
                             auto_actionable=anomaly.confidence > self.auto_action_threshold
                         )
                         insights.append(insight)
@@ -272,7 +282,7 @@ class IntelligentOpsManager:
 
                 for rec in high_priority_recs[-3:]:
                     insight = OpsInsight(
-                        insight_id=f"perf_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                        insight_id=f"perf_{get_utc_now().strftime('%Y%m%d_%H%M%S')}_{component_id}",
                         insight_type="performance",
                         severity=rec.priority,
                         title=f"性能优化建议: {rec.optimization_type}",
@@ -280,7 +290,7 @@ class IntelligentOpsManager:
                         affected_components=[component_id],
                         recommendations=[rec.description],
                         confidence=0.8,
-                        timestamp=datetime.now(timezone.utc()),
+                        timestamp=get_utc_now(),
                         auto_actionable=rec.priority == 'critical'
                     )
                     insights.append(insight)
@@ -307,7 +317,7 @@ class IntelligentOpsManager:
 
                 for pred in urgent_predictions:
                     insight = OpsInsight(
-                        insight_id=f"capacity_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                        insight_id=f"capacity_{get_utc_now().strftime('%Y%m%d_%H%M%S')}_{component_id}",
                         insight_type="capacity",
                         severity=pred.urgency,
                         title=f"容量预警: {pred.resource_type}",
@@ -315,7 +325,7 @@ class IntelligentOpsManager:
                         affected_components=[component_id],
                         recommendations=[pred.recommendation],
                         confidence=pred.confidence,
-                        timestamp=datetime.now(timezone.utc()),
+                        timestamp=get_utc_now(),
                         auto_actionable=pred.urgency == 'critical'
                     )
                     insights.append(insight)
@@ -336,7 +346,7 @@ class IntelligentOpsManager:
                 
                 if health and health.health_score < 60:  # 健康分数低于60
                     insight = OpsInsight(
-                        insight_id=f"maint_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}_{component_id}",
+                        insight_id=f"maint_{get_utc_now().strftime('%Y%m%d_%H%M%S')}_{component_id}",
                         insight_type="maintenance",
                         severity="high" if health.health_score < 40 else "medium",
                         title=f"维护需求: {component_id}",
@@ -344,7 +354,7 @@ class IntelligentOpsManager:
                         affected_components=[component_id],
                         recommendations=[health.maintenance_recommendation],
                         confidence=0.9,
-                        timestamp=datetime.now(timezone.utc()),
+                        timestamp=get_utc_now(),
                         auto_actionable=health.health_score < 40
                     )
                     insights.append(insight)
@@ -413,7 +423,7 @@ class IntelligentOpsManager:
             action_record = {
                 'insight_id': insight.insight_id,
                 'action_type': 'auto_execution',
-                'execution_time': datetime.now(timezone.utc()).isoformat(),
+                'execution_time': get_utc_now().isoformat(),
                 'status': 'initiated'
             }
             
@@ -592,7 +602,7 @@ class IntelligentOpsManager:
             
             if system_health['overall_score'] < 70:
                 insight = OpsInsight(
-                    insight_id=f"system_health_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    insight_id=f"system_health_{get_utc_now().strftime('%Y%m%d_%H%M%S')}",
                     insight_type="system_health",
                     severity="high" if system_health['overall_score'] < 50 else "medium",
                     title="系统健康状态预警",
@@ -604,7 +614,7 @@ class IntelligentOpsManager:
                         "优化系统配置"
                     ],
                     confidence=0.85,
-                    timestamp=datetime.now(timezone.utc()),
+                    timestamp=datetime.now(timezone.utc),
                     auto_actionable=system_health['overall_score'] < 50
                 )
                 
@@ -670,7 +680,7 @@ class IntelligentOpsManager:
             # 基于模式生成洞察
             for pattern in patterns:
                 insight = OpsInsight(
-                    insight_id=f"pattern_{datetime.now(timezone.utc()).strftime('%Y%m%d_%H%M%S')}",
+                    insight_id=f"pattern_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                     insight_type="pattern",
                     severity=pattern['severity'],
                     title=f"模式识别: {pattern['name']}",
@@ -678,7 +688,7 @@ class IntelligentOpsManager:
                     affected_components=pattern['affected_components'],
                     recommendations=pattern['recommendations'],
                     confidence=pattern['confidence'],
-                    timestamp=datetime.now(timezone.utc()),
+                    timestamp=datetime.now(timezone.utc),
                     auto_actionable=False
                 )
                 
@@ -740,7 +750,7 @@ class IntelligentOpsManager:
                 await asyncio.sleep(86400)  # 每天执行一次
                 
                 # 清理过期洞察
-                cutoff_time = datetime.now(timezone.utc()) - timedelta(days=self.insight_retention_days)
+                cutoff_time = datetime.now(timezone.utc) - timedelta(days=self.insight_retention_days)
                 
                 # 清理内存中的洞察
                 self.ops_insights = [
@@ -814,7 +824,7 @@ class IntelligentOpsManager:
                 'active_alerts': active_alerts,
                 'auto_actions_24h': auto_actions,
                 'total_insights': len(self.ops_insights),
-                'last_update': datetime.now(timezone.utc()).isoformat()
+                'last_update': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -852,7 +862,7 @@ class IntelligentOpsManager:
             action_record = {
                 'insight_id': insight_id,
                 'action_type': action_type,
-                'execution_time': datetime.now(timezone.utc()).isoformat(),
+                'execution_time': datetime.now(timezone.utc).isoformat(),
                 'status': 'completed' if success else 'failed',
                 'parameters': parameters,
                 'trigger': 'manual'

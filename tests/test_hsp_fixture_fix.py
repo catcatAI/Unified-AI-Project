@@ -14,10 +14,10 @@ from hsp.connector import HSPConnector
 @pytest.fixture()
 async def hsp_connector_fixture():
     # 创建一个mock的MQTT客户端
-    mock_mqtt_client == AsyncMock()
-    mock_mqtt_client.connect == AsyncMock()
-    mock_mqtt_client.disconnect == AsyncMock()
-    mock_mqtt_client.subscribe == AsyncMock()
+    mock_mqtt_client = AsyncMock()
+    mock_mqtt_client.connect = AsyncMock()
+    mock_mqtt_client.disconnect = AsyncMock()
+    mock_mqtt_client.subscribe = AsyncMock()
     mock_mqtt_client.publish = AsyncMock(return_value=True)
     
     # 创建HSPConnector实例

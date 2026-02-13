@@ -21,21 +21,21 @@ sys.path.insert(0, project_root)
 sys.path.insert(0, src_path)
 
 print("Python path,")
-for path in sys.path,::
+for path in sys.path,:
     print(f"  {path}")
 
-print(f"\nPython version, {sys.version}")
-print(f"Python executable, {sys.executable}")
+print(f"\nPython version: {sys.version}")
+print(f"Python executable: {sys.executable}")
 
-try,
+try:
     import pytest
-    print(f"Pytest version, {pytest.__version__}")
-except ImportError as e,::
-    print(f"Failed to import pytest, {e}")
+    print(f"Pytest version: {pytest.__version__}")
+except ImportError as e:
+    print(f"Failed to import pytest: {e}")
 
-try,
+try:
     print("Successfully imported HSPConnector")
-except ImportError as e,::
-    print(f"Failed to import HSPConnector, {e}")
+except ImportError as e:
+    print(f"Failed to import HSPConnector: {e}")
 
 print("\nEnvironment check completed.")

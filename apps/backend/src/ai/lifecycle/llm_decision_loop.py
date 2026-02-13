@@ -84,12 +84,14 @@ class LLMDecisionLoop:
         user_monitor: UserMonitor,
         loop_interval: float = 3.0,  # 決策循環間隔（秒）
         min_loop_interval: float = 2.0,
-        max_loop_interval: float = 5.0
+        max_loop_interval: float = 5.0,
+        broadcast_callback: Optional[callable] = None
     ):
         self.llm_service = llm_service
         self.state_manager = state_manager
         self.memory_manager = memory_manager
         self.user_monitor = user_monitor
+        self.broadcast_callback = broadcast_callback
 
         self.loop_interval = loop_interval
         self.min_loop_interval = min_loop_interval
@@ -467,33 +469,92 @@ class LLMDecisionLoop:
 
     async def _execute_greet(self, decision: Decision) -> Dict[str, Any]:
         """執行問候"""
-        # 這裡可以通過 WebSocket 或其他方式發送消息給前端
         logger.info(f"[GREET] {decision.message}")
-        # TODO: 實際發送到前端
+        # 通過 WebSocket 發送消息給前端
+        if self.broadcast_callback:
+            try:
+                await self.broadcast_callback({
+                    'type': 'angela_action',
+                    'action': 'greet',
+                    'message': decision.message,
+                    'priority': decision.priority,
+                    'timestamp': decision.timestamp.isoformat()
+                })
+                logger.debug(f"Message sent via WebSocket: {decision.message}")
+            except Exception as e:
+                logger.warning(f"Failed to send message via WebSocket: {e}")
         return {'success': True, 'sent': True}
 
     async def _execute_comfort(self, decision: Decision) -> Dict[str, Any]:
         """執行安慰"""
         logger.info(f"[COMFORT] {decision.message}")
-        # TODO: 實際發送到前端
+        # 通過 WebSocket 發送消息給前端
+        if self.broadcast_callback:
+            try:
+                await self.broadcast_callback({
+                    'type': 'angela_action',
+                    'action': 'comfort',
+                    'message': decision.message,
+                    'priority': decision.priority,
+                    'timestamp': decision.timestamp.isoformat()
+                })
+                logger.debug(f"Message sent via WebSocket: {decision.message}")
+            except Exception as e:
+                logger.warning(f"Failed to send message via WebSocket: {e}")
         return {'success': True, 'sent': True}
 
     async def _execute_remind(self, decision: Decision) -> Dict[str, Any]:
         """執行提醒"""
         logger.info(f"[REMIND] {decision.message}")
-        # TODO: 實際發送到前端
+        # 通過 WebSocket 發送消息給前端
+        if self.broadcast_callback:
+            try:
+                await self.broadcast_callback({
+                    'type': 'angela_action',
+                    'action': 'remind',
+                    'message': decision.message,
+                    'priority': decision.priority,
+                    'timestamp': decision.timestamp.isoformat()
+                })
+                logger.debug(f"Message sent via WebSocket: {decision.message}")
+            except Exception as e:
+                logger.warning(f"Failed to send message via WebSocket: {e}")
         return {'success': True, 'sent': True}
 
     async def _execute_share(self, decision: Decision) -> Dict[str, Any]:
         """執行分享"""
         logger.info(f"[SHARE] {decision.message}")
-        # TODO: 實際發送到前端
+        # 通過 WebSocket 發送消息給前端
+        if self.broadcast_callback:
+            try:
+                await self.broadcast_callback({
+                    'type': 'angela_action',
+                    'action': 'share',
+                    'message': decision.message,
+                    'priority': decision.priority,
+                    'timestamp': decision.timestamp.isoformat()
+                })
+                logger.debug(f"Message sent via WebSocket: {decision.message}")
+            except Exception as e:
+                logger.warning(f"Failed to send message via WebSocket: {e}")
         return {'success': True, 'sent': True}
 
     async def _execute_question(self, decision: Decision) -> Dict[str, Any]:
         """執行提問"""
         logger.info(f"[QUESTION] {decision.message}")
-        # TODO: 實際發送到前端
+        # 通過 WebSocket 發送消息給前端
+        if self.broadcast_callback:
+            try:
+                await self.broadcast_callback({
+                    'type': 'angela_action',
+                    'action': 'question',
+                    'message': decision.message,
+                    'priority': decision.priority,
+                    'timestamp': decision.timestamp.isoformat()
+                })
+                logger.debug(f"Message sent via WebSocket: {decision.message}")
+            except Exception as e:
+                logger.warning(f"Failed to send message via WebSocket: {e}")
         return {'success': True, 'sent': True}
 
     async def _execute_observe(self, decision: Decision) -> Dict[str, Any]:

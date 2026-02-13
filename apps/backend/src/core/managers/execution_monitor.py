@@ -228,25 +228,35 @@ class ExecutionMonitor:
         """資源使用監控線程"""
         while self._is_monitoring:
             try:
-                # TODO: Implement resource monitoring when psutil is available
-                # For now, provide mock data
-                cpu_percent = 0.0
-                memory_percent = 0.0
-                disk_percent = 0.0
+                # 使用 psutil 獲取真實的資源使用情況
+                cpu_percent = psutil.cpu_percent(interval=0.5)
+                memory_info = psutil.virtual_memory()
+                memory_percent = memory_info.percent
+
+                # 獲取磁盤使用情況（當前目錄所在的磁盤）
+                disk_info = psutil.disk_usage(os.getcwd())
+                disk_percent = (disk_info.used / disk_info.total) * 100
 
                 self._resource_usage = {
                     'cpu_percent': cpu_percent,
                     'memory_percent': memory_percent,
                     'disk_percent': disk_percent,
+                    'memory_used_mb': memory_info.used / (1024 * 1024),
+                    'memory_total_mb': memory_info.total / (1024 * 1024),
+                    'disk_used_gb': disk_info.used / (1024 * 1024 * 1024),
+                    'disk_total_gb': disk_info.total / (1024 * 1024 * 1024),
                     'timestamp': time.time()
                 }
 
                 # 檢查資源警告
                 if cpu_percent > self.config.cpu_threshold:
-                    self.logger.warning(f"High CPU usage: {cpu_percent}%")
+                    self.logger.warning(f"High CPU usage: {cpu_percent:.1f}%")
 
                 if memory_percent > self.config.memory_threshold:
-                    self.logger.warning(f"High memory usage: {memory_percent}%")
+                    self.logger.warning(f"High memory usage: {memory_percent:.1f}% ({memory_info.used / (1024 * 1024):.0f} MB used)")
+
+                if disk_percent > self.config.disk_threshold:
+                    self.logger.warning(f"High disk usage: {disk_percent:.1f}% ({disk_info.used / (1024 * 1024 * 1024):.1f} GB used)")
 
                 time.sleep(self.config.check_interval)
 
@@ -504,8 +514,28 @@ class ExecutionMonitor:
         Returns:
             是否卡住
         """
-        # TODO: Implement when psutil is available
-        return False
+        try:
+            process = psutil.Process(pid)
+
+            # 檢查進程狀態
+            if process.status() == psutil.STATUS_ZOMBIE:
+                return True
+
+            # 檢查 CPU 使用率（如果持續 0% 可能表示卡住）
+            cpu_usage_1 = process.cpu_percent(interval=0.1)
+            time.sleep(check_duration / 2)
+            cpu_usage_2 = process.cpu_percent(interval=0.1)
+
+            if cpu_usage_1 == 0 and cpu_usage_2 == 0:
+                # CPU 使用率為 0，檢查 I/O 狀態
+                io_counters = process.io_counters()
+                if io_counters.read_bytes == 0 and io_counters.write_bytes == 0:
+                    return True
+
+            return False
+
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            return False
 
     def get_system_health(self) -> Dict[str, Any]:
         """
@@ -515,19 +545,24 @@ class ExecutionMonitor:
             系統健康信息
         """
         try:
-            # TODO: Implement with psutil when available
-            cpu_percent = 0.0
-            memory_percent = 0.0
-            disk_percent = 0.0
+            # 使用 psutil 獲取真實的系統健康狀態
+            cpu_percent = psutil.cpu_percent(interval=0.5)
+            memory_info = psutil.virtual_memory()
+            disk_info = psutil.disk_usage(os.getcwd())
 
             return {
                 'cpu_percent': cpu_percent,
-                'memory_percent': memory_percent,
-                'memory_available_gb': 0.0,
-                'disk_percent': disk_percent,
-                'disk_free_gb': 0.0,
+                'memory_percent': memory_info.percent,
+                'memory_available_gb': memory_info.available / (1024 * 1024 * 1024),
+                'memory_used_gb': memory_info.used / (1024 * 1024 * 1024),
+                'memory_total_gb': memory_info.total / (1024 * 1024 * 1024),
+                'disk_percent': (disk_info.used / disk_info.total) * 100,
+                'disk_free_gb': disk_info.free / (1024 * 1024 * 1024),
+                'disk_used_gb': disk_info.used / (1024 * 1024 * 1024),
+                'disk_total_gb': disk_info.total / (1024 * 1024 * 1024),
                 'terminal_status': self._terminal_status.value,
                 'load_average': os.getloadavg() if hasattr(os, 'getloadavg') else None,
+                'process_count': len(psutil.pids()),
                 'timestamp': time.time()
             }
         except Exception as e:

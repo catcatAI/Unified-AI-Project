@@ -209,6 +209,7 @@ class ProcessAgentInfo:
     start_time: float
     last_heartbeat: float
     restart_count: int = 0
+    entry_point: Optional[Callable] = None  # 代理入口函數，用於重啟
 
 class AgentManager:
     """
@@ -358,22 +359,31 @@ if __name__ == "__main__":
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
-            
-            # Wait for router to start
+
+            # Wait for router to start with retry mechanism
             import time
-            time.sleep(1)
-            
+            import httpx
+
             # Check if router is running
             if self.router_process.poll() is None:
                 logger.info(f"HSP Router started on port {self.router_port}")
-                # Verify router is responding
-                import httpx
-                try:
-                    response = httpx.get(f"{self.router_url}/health", timeout=2)
-                    if response.status_code == 200:
-                        logger.info("HSP Router health check passed")
-                except Exception:
-                    logger.warning("HSP Router health check failed")
+
+                # Verify router is responding with retries
+                max_retries = 5
+                retry_delay = 1
+
+                for attempt in range(max_retries):
+                    try:
+                        response = httpx.get(f"{self.router_url}/health", timeout=2)
+                        if response.status_code == 200:
+                            logger.info("HSP Router health check passed")
+                            break
+                    except Exception as e:
+                        if attempt < max_retries - 1:
+                            logger.warning(f"HSP Router health check attempt {attempt + 1} failed: {e}, retrying in {retry_delay}s...")
+                            time.sleep(retry_delay)
+                        else:
+                            logger.warning(f"HSP Router health check failed after {max_retries} attempts")
             else:
                 logger.error("Failed to start HSP Router")
                 

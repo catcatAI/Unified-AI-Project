@@ -5,7 +5,7 @@
 """
 
 #!/usr/bin/env python3
-# -*- coding, utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 测试质量评估器
 用于评估测试结果的质量和覆盖率
@@ -130,7 +130,7 @@ class TestQualityAssessor:
 TestQualityAssessor.__test__ = False
 def main() -> None:
     """主函数"""
-    assessor == TestQualityAssessor()
+    assessor = TestQualityAssessor()
     
     # 示例使用方式
     # 加载测试结果

@@ -210,10 +210,17 @@ class MemoryTemplate:
     def is_suitable_for(self, angela_state: AngelaState, user_impression: UserImpression) -> bool:
         """
         判断模板是否适合当前状态
-        简化版本：只检查基本条件
+        使用复杂的相似度计算
         """
-        # TODO: 实现更复杂的相似度计算
-        return True
+        # 計算匹配分數，使用閾值決定是否適合
+        score = self.calculate_match_score(
+            query="",  # 空查詢，僅基於狀態判斷
+            angela_state=angela_state,
+            user_impression=user_impression
+        )
+
+        # 使用閾值 0.5（50% 匹配度）作為適合與否的標準
+        return score >= 0.5
 
     def calculate_match_score(
         self,

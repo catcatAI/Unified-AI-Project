@@ -45,17 +45,18 @@ class AgentManagerExtensions:
                 name=f"Agent-{agent_id}"
             )
             process.start()
-            
-            # 記錄進程信息
+
+            # 記錄進程信息（包括入口函數）
             from src.ai.agents.agent_manager import ProcessAgentInfo
             agent_manager.process_agents[agent_id] = ProcessAgentInfo(
                 agent_id=agent_id,
                 agent_type=agent_type,
                 process=process,
                 start_time=time.time(),
-                last_heartbeat=time.time()
+                last_heartbeat=time.time(),
+                entry_point=agent_entry_point  # 保存入口函數
             )
-            
+
             logger.info(f"Launched process agent {agent_id} (PID: {process.pid})")
             return True
             
@@ -136,13 +137,39 @@ class AgentManagerExtensions:
             return False
         
         logger.info(f"Attempting to restart agent {agent_id} (attempt {agent_info.restart_count + 1})")
-        
-        # TODO: 需要保存代理的入口函數才能重啟
-        # 目前僅記錄，實際重啟需要額外的元數據
-        agent_info.restart_count += 1
-        
-        logger.warning(f"Auto-restart not fully implemented for {agent_id}")
-        return False
+
+        # 使用保存的入口函數重啟代理
+        if agent_info.entry_point is None:
+            logger.error(f"Cannot restart agent {agent_id}: no entry point saved")
+            return False
+
+        try:
+            # 創建新進程
+            new_process = mp.Process(
+                target=agent_info.entry_point,
+                args=(agent_id,),
+                name=f"Agent-{agent_id}"
+            )
+            new_process.start()
+
+            # 更新進程信息
+            from src.ai.agents.agent_manager import ProcessAgentInfo
+            agent_manager.process_agents[agent_id] = ProcessAgentInfo(
+                agent_id=agent_id,
+                agent_type=agent_info.agent_type,
+                process=new_process,
+                start_time=time.time(),
+                last_heartbeat=time.time(),
+                restart_count=agent_info.restart_count + 1,
+                entry_point=agent_info.entry_point
+            )
+
+            logger.info(f"Successfully restarted agent {agent_id} (new PID: {new_process.pid})")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to restart agent {agent_id}: {e}")
+            return False
     
     @staticmethod
     def get_process_agent_status(agent_manager, agent_id: str) -> Optional[Dict[str, Any]]:

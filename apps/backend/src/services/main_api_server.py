@@ -48,7 +48,194 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 import logging
+
+# 加载环境变量
+env_path = None
+try:
+    from dotenv import load_dotenv
+    # 从项目根目录加载 .env 文件
+    # main_api_server.py 在 apps/backend/src/services/
+    # 项目根目录是 apps/backend/src/services 的向上5级 (services -> src -> backend -> apps -> Unified-AI-Project)
+    env_path = Path(__file__).parent.parent.parent.parent.parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path, override=False)
+except ImportError:
+    pass
+except Exception:
+    pass
+
 logger = logging.getLogger(__name__)
+
+# 现在可以安全地记录环境变量加载状态
+try:
+    from dotenv import load_dotenv
+    if env_path and env_path.exists():
+        logger.info(f"Environment variables loaded from: {env_path}")
+    else:
+        if env_path:
+            logger.warning(f".env file not found at: {env_path}")
+except ImportError:
+    logger.warning("python-dotenv not installed, environment variables will not be loaded from .env file")
+
+# ========== 修复：系统指标管理器 ==========
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    logger.warning("psutil not available, system metrics will use fallback values")
+
+class SystemMetricsManager:
+    """系统指标管理器
+
+    修复版本：统一的系统指标管理
+    - 统一数据源（使用 psutil）
+    - 统一计算方法
+    - 添加缓存机制
+    """
+
+    def __init__(self, cache_ttl: float = 5.0):
+        self.cache_ttl = cache_ttl  # 缓存生存时间（秒）
+        self._cache = {}
+        self._cache_timestamp = {}
+
+    def _is_cache_valid(self, key: str) -> bool:
+        """检查缓存是否有效"""
+        if key not in self._cache_timestamp:
+            return False
+        return (datetime.now() - self._cache_timestamp[key]).total_seconds() < self.cache_ttl
+
+    def _get_cached_or_compute(self, key: str, compute_func) -> Any:
+        """获取缓存值或计算新值"""
+        if self._is_cache_valid(key):
+            return self._cache[key]
+
+        value = compute_func()
+        self._cache[key] = value
+        self._cache_timestamp[key] = datetime.now()
+        return value
+
+    def get_cpu_percent(self) -> float:
+        """获取 CPU 使用率（统一数据源）"""
+        if not PSUTIL_AVAILABLE:
+            return 0.0
+
+        def compute():
+            return psutil.cpu_percent(interval=0.1)
+
+        return self._get_cached_or_compute("cpu_percent", compute)
+
+    def get_memory_percent(self) -> float:
+        """获取内存使用率（统一数据源）"""
+        if not PSUTIL_AVAILABLE:
+            return 0.0
+
+        def compute():
+            return psutil.virtual_memory().percent
+
+        return self._get_cached_or_compute("memory_percent", compute)
+
+    def get_disk_percent(self) -> float:
+        """获取磁盘使用率（统一数据源）"""
+        if not PSUTIL_AVAILABLE:
+            return 0.0
+
+        def compute():
+            return psutil.disk_usage('/').percent
+
+        return self._get_cached_or_compute("disk_percent", compute)
+
+    def get_all_metrics(self) -> Dict[str, float]:
+        """获取所有系统指标"""
+        return {
+            "cpu_percent": self.get_cpu_percent(),
+            "memory_percent": self.get_memory_percent(),
+            "disk_percent": self.get_disk_percent()
+        }
+
+    def clear_cache(self):
+        """清除缓存"""
+        self._cache.clear()
+        self._cache_timestamp.clear()
+
+# 创建全局系统指标管理器实例
+system_metrics_manager = SystemMetricsManager()
+
+# ========== 修复：消息管理器 ==========
+class MessageManager:
+    """消息管理器
+
+    修复版本：添加消息序列号、状态合并和去重机制
+    - 消息序列号
+    - 状态合并
+    - 消息去重
+    """
+
+    def __init__(self):
+        self.message_counter = 0  # 消息序列号计数器
+        self.message_cache = {}  # 消息缓存（用于去重）
+        self.max_cache_size = 1000  # 最大缓存大小
+        self.state_history = {}  # 状态历史
+        self.max_state_history = 100  # 最大状态历史记录数
+
+    def get_next_message_id(self) -> str:
+        """获取下一个消息序列号"""
+        self.message_counter += 1
+        return f"msg_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{self.message_counter:06d}"
+
+    def is_duplicate_message(self, message_id: str) -> bool:
+        """检查消息是否重复"""
+        return message_id in self.message_cache
+
+    def cache_message(self, message_id: str, message_data: Dict[str, Any]):
+        """缓存消息"""
+        self.message_cache[message_id] = {
+            "data": message_data,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        # 限制缓存大小
+        if len(self.message_cache) > self.max_cache_size:
+            # 删除最旧的 10% 的消息
+            items_to_remove = int(self.max_cache_size * 0.1)
+            for _ in range(items_to_remove):
+                if self.message_cache:
+                    self.message_cache.pop(next(iter(self.message_cache)))
+
+    def merge_state(self, current_state: Dict[str, Any], new_state: Dict[str, Any]) -> Dict[str, Any]:
+        """合并状态"""
+        merged = current_state.copy()
+
+        for key, value in new_state.items():
+            if isinstance(value, dict) and key in merged and isinstance(merged[key], dict):
+                # 递归合并嵌套字典
+                merged[key] = self.merge_state(merged[key], value)
+            else:
+                # 直接替换
+                merged[key] = value
+
+        return merged
+
+    def record_state(self, state_id: str, state_data: Dict[str, Any]):
+        """记录状态历史"""
+        if state_id not in self.state_history:
+            self.state_history[state_id] = []
+
+        self.state_history[state_id].append({
+            "data": state_data,
+            "timestamp": datetime.now().isoformat()
+        })
+
+        # 限制历史记录大小
+        if len(self.state_history[state_id]) > self.max_state_history:
+            self.state_history[state_id] = self.state_history[state_id][-self.max_state_history:]
+
+    def get_state_history(self, state_id: str) -> List[Dict[str, Any]]:
+        """获取状态历史"""
+        return self.state_history.get(state_id, [])
+
+# 创建全局消息管理器实例
+message_manager = MessageManager()
 
 # 確保 src 目錄在 Python 路徑中
 # 必須添加 src 目錄本身，這樣 Python 才能找到 src.core 等模塊
@@ -160,6 +347,42 @@ async def api_status():
     return {"status": "running", "version": "6.0.4", "services": ["chat", "health"]}
 
 
+@router.get("/api/v1/system/status")
+async def system_status():
+    """
+    獲取系統狀態信息
+
+    修复版本：使用统一的系统指标管理器
+    - 统一数据源
+    - 统一计算方法
+    - 添加缓存机制
+    """
+    try:
+        # 獲取服務狀態
+        services_status = {
+            "llm_service": _llm_service.is_available if _llm_service else False,
+            "digital_life": digital_life.is_initialized if hasattr(digital_life, 'is_initialized') else False,
+            "brain_bridge": brain_bridge.is_running if hasattr(brain_bridge, 'is_running') else False,
+            "economy": _economy_manager is not None if '_economy_manager' in globals() else False
+        }
+
+        # ========== 修复：使用统一的系统指标管理器 ==========
+        system_resources = system_metrics_manager.get_all_metrics()
+
+        return {
+            "status": "running",
+            "version": "6.0.4",
+            "timestamp": datetime.now().isoformat(),
+            "services": services_status,
+            "system_resources": system_resources,
+            "active_sessions": len(sessions),
+            "message": "System operational"
+        }
+    except Exception as e:
+        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/api/v1/security/sync-key-c")
 async def sync_key_c():
     """Get Key C for desktop app synchronization"""
@@ -224,7 +447,8 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
     處理流程：
     1. 接收用戶消息
     2. 通過 Angela LLM 服務生成回應
-    3. 返回經過 Angela 個性化處理的回應
+    3. 分析用戶情感（修复：使用新的情感识别系统）
+    4. 返回經過 Angela 個性化處理的回應
 
     用戶不是直接與 LLM 對話，而是透過 Angela。
     """
@@ -240,21 +464,36 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
     # 調用 LLM 服務生成回應，添加超時控制
     try:
         service = await get_llm_service()
-        # 使用 asyncio.wait_for 添加 15 秒超時
+        # 使用 asyncio.wait_for 添加 30 秒超時（增加以適應慢速模型）
         response_text = await asyncio.wait_for(
             angela_llm_response(
                 user_message=user_message,
                 history=history,
                 user_name=user_name
             ),
-            timeout=15.0  # 15 秒超時
+            timeout=30.0  # 30 秒超時
         )
         source = "llm" if service and service.is_available else "fallback"
+
+        # ========== 修复：使用情感识别系统分析情感 ==========
+        if service and hasattr(service, 'analyze_emotion'):
+            emotion_analysis = service.analyze_emotion(user_message, response_text)
+            emotion = emotion_analysis.get("emotion", "happy")
+            emotion_confidence = emotion_analysis.get("confidence", 0.5)
+            emotion_intensity = emotion_analysis.get("intensity", 0.5)
+        else:
+            emotion = "happy"
+            emotion_confidence = 0.5
+            emotion_intensity = 0.5
+
     except asyncio.TimeoutError:
         logger.warning(f"LLM response timeout for message: {user_message[:50]}...")
         # 超時時使用備份回應
         response_text = generate_angela_response(user_message, user_name)
         source = "fallback-timeout"
+        emotion = "neutral"
+        emotion_confidence = 0.5
+        emotion_intensity = 0.5
     except Exception as e:
         logger.error(f'Error in {__name__}: {e}', exc_info=True)
 
@@ -262,14 +501,19 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
         print(f"[WARNING] LLM service error: {e}")
         response_text = generate_angela_response(user_message, user_name)
         source = "fallback-error"
+        emotion = "neutral"
+        emotion_confidence = 0.5
+        emotion_intensity = 0.5
 
-    # 統一響應格式
+    # 統一響應格式（修复：添加情感分析结果）
     return {
         "session_id": session_id,
         "response": response_text,
         "response_text": response_text,  # 保留此字段以向後兼容
-        "emotion": "happy",
-        "angela_mood": "happy",  # 保留此字段以向後兼容
+        "emotion": emotion,
+        "angela_mood": emotion,  # 保留此字段以向後兼容
+        "emotion_confidence": emotion_confidence,
+        "emotion_intensity": emotion_intensity,
         "source": source,
         "timestamp": datetime.now().isoformat()
     }
@@ -292,34 +536,54 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
     # 调用 LLM 服务生成回应，添加超時控制
     try:
         service = await get_llm_service()
-        # 使用 asyncio.wait_for 添加 15 秒超時
+        # 使用 asyncio.wait_for 添加 30 秒超時（增加以適應慢速模型）
         response_text = await asyncio.wait_for(
             angela_llm_response(
                 user_message=user_message,
                 history=history,
                 user_name=user_name
             ),
-            timeout=15.0  # 15 秒超時
+            timeout=30.0  # 30 秒超時
         )
         source = "llm" if service and service.is_available else "fallback"
+
+        # ========== 修复：使用情感识别系统分析情感 ==========
+        if service and hasattr(service, 'analyze_emotion'):
+            emotion_analysis = service.analyze_emotion(user_message, response_text)
+            emotion = emotion_analysis.get("emotion", "happy")
+            emotion_confidence = emotion_analysis.get("confidence", 0.5)
+            emotion_intensity = emotion_analysis.get("intensity", 0.5)
+        else:
+            emotion = "happy"
+            emotion_confidence = 0.5
+            emotion_intensity = 0.5
+
     except asyncio.TimeoutError:
         logger.warning(f"LLM response timeout for message: {user_message[:50]}...")
         # 超時時使用備份回應
         response_text = generate_angela_response(user_message, user_name)
         source = "fallback-timeout"
+        emotion = "neutral"
+        emotion_confidence = 0.5
+        emotion_intensity = 0.5
     except Exception as e:
         logger.error(f'Error in {__name__}: {e}', exc_info=True)
         print(f"[WARNING] LLM service error: {e}")
         response_text = generate_angela_response(user_message, user_name)
         source = "fallback-error"
+        emotion = "neutral"
+        emotion_confidence = 0.5
+        emotion_intensity = 0.5
 
-    # 統一響應格式（與 /angela/chat 相同）
+    # 統一響應格式（与 /angela/chat 相同，修复情感分析）
     return {
         "session_id": session_id,
         "response": response_text,
         "response_text": response_text,  # 保留此字段以向後兼容
-        "emotion": "happy",
-        "angela_mood": "happy",  # 保留此字段以向後兼容
+        "emotion": emotion,
+        "angela_mood": emotion,  # 保留此字段以向後兼容
+        "emotion_confidence": emotion_confidence,
+        "emotion_intensity": emotion_intensity,
         "source": source,
         "timestamp": datetime.now().isoformat()
     }
@@ -514,27 +778,153 @@ import asyncio
 import json
 
 class ConnectionManager:
+    """连接管理器
+
+    修复版本：改进的 WebSocket 连接管理
+    - 添加心跳机制
+    - 改进重连逻辑
+    - 添加连接状态监控
+    - 实现状态缓冲和重发
+    """
+
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+        self.connection_info: Dict[WebSocket, Dict[str, Any]] = {}  # 连接信息
+        self.message_buffer: Dict[WebSocket, List[Dict[str, Any]]] = {}  # 消息缓冲
+        self.max_buffer_size = 10  # 最大缓冲消息数
+        self.heartbeat_interval = 30  # 心跳间隔（秒）
+        self.heartbeat_timeout = 60  # 心跳超时（秒）
 
     async def connect(self, websocket: WebSocket):
+        """接受新连接"""
         await websocket.accept()
         self.active_connections.append(websocket)
 
+        # 记录连接信息
+        self.connection_info[websocket] = {
+            "connected_at": datetime.now().isoformat(),
+            "last_heartbeat": datetime.now(),
+            "heartbeat_missed": 0,
+            "client_id": str(uuid.uuid4())
+        }
+
+        # 初始化消息缓冲
+        self.message_buffer[websocket] = []
+
+        logger.info(f"WebSocket 连接已建立 (ID: {self.connection_info[websocket]['client_id']})")
+
+        # 启动心跳检测
+        asyncio.create_task(self._heartbeat_monitor(websocket))
+
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        """断开连接"""
+        if websocket in self.active_connections:
+            client_id = self.connection_info.get(websocket, {}).get("client_id", "unknown")
+            self.active_connections.remove(websocket)
+            self.connection_info.pop(websocket, None)
+            self.message_buffer.pop(websocket, None)
+            logger.info(f"WebSocket 连接已断开 (ID: {client_id})")
+
+    async def _heartbeat_monitor(self, websocket: WebSocket):
+        """心跳监控"""
+        while websocket in self.active_connections:
+            try:
+                # 检查心跳超时
+                info = self.connection_info.get(websocket)
+                if info:
+                    time_since_last_heartbeat = (datetime.now() - info["last_heartbeat"]).total_seconds()
+
+                    if time_since_last_heartbeat > self.heartbeat_timeout:
+                        logger.warning(f"心跳超时，断开连接 (ID: {info['client_id']})")
+                        self.disconnect(websocket)
+                        break
+
+                # 等待心跳间隔
+                await asyncio.sleep(self.heartbeat_interval)
+
+            except Exception as e:
+                logger.error(f"心跳监控错误: {e}")
+                break
 
     async def broadcast(self, message: dict):
-        for connection in self.active_connections:
+        """广播消息到所有连接"""
+        for connection in self.active_connections[:]:  # 使用副本遍历
             try:
                 await connection.send_json(message)
+
+                # 清除该连接的消息缓冲（成功发送）
+                if connection in self.message_buffer:
+                    self.message_buffer[connection].clear()
+
             except (ConnectionError, RuntimeError, Exception) as e:
-                # 連接失敗，從活動連接中移除
-                logger.debug(f"廣播消息失敗（可忽略）: {e}")
+                # 连接失败，添加到消息缓冲
+                logger.warning(f"广播消息失败，添加到缓冲 (ID: {self.connection_info.get(connection, {}).get('client_id', 'unknown')}): {e}")
+
+                if connection in self.message_buffer:
+                    self.message_buffer[connection].append(message)
+                    # 限制缓冲大小
+                    if len(self.message_buffer[connection]) > self.max_buffer_size:
+                        self.message_buffer[connection].pop(0)
+
+                # 尝试重发缓冲的消息
+                await self._retry_buffered_messages(connection)
+
+                # 如果仍然失败，断开连接
                 try:
-                    self.active_connections.remove(connection)
-                except ValueError:
+                    await connection.close()
+                except:
                     pass
+                finally:
+                    self.disconnect(connection)
+
+    async def _retry_buffered_messages(self, websocket: WebSocket):
+        """重发缓冲的消息"""
+        if websocket not in self.message_buffer:
+            return
+
+        buffered_messages = self.message_buffer[websocket].copy()
+        self.message_buffer[websocket].clear()
+
+        for message in buffered_messages:
+            try:
+                await websocket.send_json(message)
+                logger.debug(f"成功重发缓冲消息")
+            except Exception as e:
+                # 重发失败，重新添加到缓冲
+                self.message_buffer[websocket].append(message)
+                logger.warning(f"重发消息失败: {e}")
+                break
+
+    async def send_personal_message(self, message: dict, websocket: WebSocket):
+        """发送个人消息"""
+        try:
+            await websocket.send_json(message)
+            # 清除该连接的消息缓冲（成功发送）
+            if websocket in self.message_buffer:
+                self.message_buffer[websocket].clear()
+        except Exception as e:
+            # 发送失败，添加到缓冲
+            logger.warning(f"发送个人消息失败，添加到缓冲: {e}")
+            if websocket in self.message_buffer:
+                self.message_buffer[websocket].append(message)
+                # 限制缓冲大小
+                if len(self.message_buffer[websocket]) > self.max_buffer_size:
+                    self.message_buffer[websocket].pop(0)
+
+    def get_connection_stats(self) -> Dict[str, Any]:
+        """获取连接统计信息"""
+        return {
+            "active_connections": len(self.active_connections),
+            "connections": [
+                {
+                    "client_id": info.get("client_id", "unknown"),
+                    "connected_at": info.get("connected_at", "unknown"),
+                    "last_heartbeat": info.get("last_heartbeat").isoformat() if info.get("last_heartbeat") else "unknown",
+                    "heartbeat_missed": info.get("heartbeat_missed", 0)
+                }
+                for info in self.connection_info.values()
+            ]
+        }
 
 manager = ConnectionManager()
 
@@ -582,62 +972,105 @@ async def broadcast_state_updates():
 async def websocket_endpoint(websocket: WebSocket):
     """
     WebSocket endpoint for real-time communication with desktop app
+
+    修复版本：改进的 WebSocket 端点
+    - 改进心跳处理
+    - 添加错误处理
+    - 支持消息重发
     """
     await manager.connect(websocket)
+    client_id = manager.connection_info.get(websocket, {}).get("client_id", "unknown")
+
     try:
         # Send initial connection confirmation
         await websocket.send_json({
             "type": "connected",
-            "timestamp": datetime.now().isoformat()
+            "client_id": client_id,
+            "timestamp": datetime.now().isoformat(),
+            "server_version": "6.0.4"
         })
-        
-        # Keep connection alive and handle incoming messages
+
+        # ========== 修复：改进的消息处理循环 ==========
         while True:
-            data = await websocket.receive_json()
-            
-            # Handle different message types
-            if data.get("type") == "heartbeat":
-                await websocket.send_json({
-                    "type": "heartbeat_ack",
-                    "timestamp": datetime.now().isoformat()
-                })
-            elif data.get("type") == "state_update":
-                # Broadcast state updates to all connected clients
-                await manager.broadcast({
-                    "type": "state_update",
-                    "data": data.get("data", {}),
-                    "timestamp": datetime.now().isoformat()
-                })
-            elif data.get("type") == "chat_message":
-                # Handle chat messages from desktop app - use shared service
-                user_message = data.get("data", {}).get("content", "")
-                message_id = data.get("data", {}).get("message_id", "")
-                user_name = data.get("data", {}).get("user_name", "朋友")
-                
-                # Use shared chat service
-                response_text = generate_angela_response(user_message, user_name)
-                
-                # Send response back to the client
-                await websocket.send_json({
-                    "type": "chat_response",
-                    "data": {
-                        "message_id": message_id,
-                        "content": response_text,
-                        "sender": "angela"
-                    },
-                    "timestamp": datetime.now().isoformat()
-                })
-            else:
-                # Echo back other messages for now
-                await websocket.send_json({
-                    "type": "echo",
-                    "original": data,
-                    "timestamp": datetime.now().isoformat()
-                })
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-    except Exception as e:
-        print(f"WebSocket error: {e}")
+            try:
+                # 接收消息（带超时）
+                data = await asyncio.wait_for(
+                    websocket.receive_json(),
+                    timeout=manager.heartbeat_interval
+                )
+
+                # 更新心跳时间
+                if websocket in manager.connection_info:
+                    manager.connection_info[websocket]["last_heartbeat"] = datetime.now()
+                    manager.connection_info[websocket]["heartbeat_missed"] = 0
+
+                # Handle different message types
+                if data.get("type") == "heartbeat":
+                    # 心跳响应
+                    await websocket.send_json({
+                        "type": "heartbeat_ack",
+                        "timestamp": datetime.now().isoformat()
+                    })
+
+                elif data.get("type") == "state_update":
+                    # Broadcast state updates to all connected clients
+                    await manager.broadcast({
+                        "type": "state_update",
+                        "data": data.get("data", {}),
+                        "timestamp": datetime.now().isoformat()
+                    })
+
+                elif data.get("type") == "chat_message":
+                    # Handle chat messages from desktop app - use shared service
+                    user_message = data.get("data", {}).get("content", "")
+                    message_id = data.get("data", {}).get("message_id", "")
+                    user_name = data.get("data", {}).get("user_name", "朋友")
+
+                    # Use shared chat service
+                    response_text = generate_angela_response(user_message, user_name)
+
+                    # Send response back to the client
+                    await manager.send_personal_message({
+                        "type": "chat_response",
+                        "data": {
+                            "message_id": message_id,
+                            "content": response_text,
+                            "sender": "angela"
+                        },
+                        "timestamp": datetime.now().isoformat()
+                    }, websocket)
+
+                else:
+                    # Echo back other messages for now
+                    await websocket.send_json({
+                        "type": "echo",
+                        "original": data,
+                        "timestamp": datetime.now().isoformat()
+                    })
+
+            except asyncio.TimeoutError:
+                # 超时，检查是否需要断开连接
+                if websocket in manager.connection_info:
+                    manager.connection_info[websocket]["heartbeat_missed"] += 1
+                    logger.warning(f"心跳超时 ({manager.connection_info[websocket]['heartbeat_missed']}次): {client_id}")
+
+                    # 如果连续错过多次心跳，断开连接
+                    if manager.connection_info[websocket]["heartbeat_missed"] >= 2:
+                        logger.warning(f"连续心跳超时，断开连接: {client_id}")
+                        break
+                else:
+                    break
+
+            except WebSocketDisconnect:
+                logger.info(f"WebSocket 客户端主动断开: {client_id}")
+                break
+
+            except Exception as e:
+                logger.error(f"WebSocket 处理错误: {e}")
+                break
+
+    finally:
+        # 确保连接被清理
         manager.disconnect(websocket)
 
 

@@ -36,9 +36,9 @@ class TestMultiLLMImport(unittest.TestCase):
             print("✓ MultiLLMService has required attributes")
             
         except ImportError as e:
-            self.fail(f"Failed to import MultiLLMService, {e}")
+            self.fail(f"Failed to import MultiLLMService: {e}")
         except Exception as e:
-            self.fail(f"Failed to create MultiLLMService, {e}")
+            self.fail(f"Failed to create MultiLLMService: {e}")
 
 if __name__ == "__main__":
     unittest.main()

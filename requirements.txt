@@ -20,6 +20,7 @@ lxml>=5.1.0
 numpy>=1.26.4
 pandas>=2.2.0
 scipy>=1.12.0
+scikit-learn>=1.4.0  # 修复：添加 Scikit-learn 用于 AI 运维系统的预测能力
 
 # AI/ML Core
 openai>=1.14.0

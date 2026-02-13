@@ -121,7 +121,45 @@ class TactileService:
                 return await self.model_object_tactile(input_data.get('visual_data', {}))
             elif action == 'touch':
                 return await self.simulate_touch(
-                    input_data.get('object_id'), 
+                    input_data.get('object_id'),
                     input_data.get('contact_point', {})
                 )
         return {"error": "Invalid input format for tactile processing"}
+
+    async def trigger_physical_feedback(self, device_id: str, intensity: float, pattern: str) -> Dict[str, Any]:
+        """
+        觸發物理觸覺設備反饋
+        """
+        if not self.enabled:
+            return {"status": "disabled", "message": "Tactile system is currently disabled"}
+
+        logger.info(f"Triggering physical feedback on device {device_id}: intensity={intensity}, pattern={pattern}")
+
+        # 模擬觸覺設備反饋
+        feedback_patterns = {
+            "default": {"duration": 0.5, "frequency": 100},
+            "pulse": {"duration": 0.2, "frequency": 150},
+            "continuous": {"duration": 1.0, "frequency": 80},
+            "sharp": {"duration": 0.1, "frequency": 200}
+        }
+
+        pattern_config = feedback_patterns.get(pattern, feedback_patterns["default"])
+
+        # 調整強度 (0.0 - 1.0)
+        adjusted_intensity = max(0.0, min(1.0, intensity))
+
+        return {
+            "status": "success",
+            "device_id": device_id,
+            "intensity": adjusted_intensity,
+            "pattern": pattern,
+            "duration": pattern_config["duration"],
+            "frequency": pattern_config["frequency"],
+            "timestamp": datetime.now().isoformat()
+        }
+
+    async def model_tactile_feedback(self, visual_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        建模觸覺反饋 (API 兼容方法)
+        """
+        return await self.model_object_tactile(visual_data)

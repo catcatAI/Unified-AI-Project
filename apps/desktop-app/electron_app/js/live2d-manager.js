@@ -1098,6 +1098,60 @@ class Live2DManager {
     }
     
     setFrameRate(fps) {
+        this.targetFPS = fps;
+    }
+
+    // ========== Touch Methods (delegated to UDM) ==========
+
+    /**
+     * 处理触摸事件（委托给 UDM）
+     * @param {number} x - 屏幕坐标 X
+     * @param {number} y - 屏幕坐标 Y
+     * @param {string} touchType - 触摸类型 ('pat', 'poke', 'stroke')
+     * @returns {object} 触摸结果
+     */
+    handleTouch(x, y, touchType = 'pat') {
+        if (!this.udm) {
+            console.warn('[Live2DManager] UDM not initialized');
+            return { success: false, error: 'UDM not initialized' };
+        }
+
+        return this.udm.handleTouch(x, y, touchType);
+    }
+
+    /**
+     * 检测触摸（委托给 UDM）
+     * @param {number} x - 屏幕坐标 X
+     * @param {number} y - 屏幕坐标 Y
+     * @returns {object} 触摸结果
+     */
+    detectTouch(x, y) {
+        if (!this.udm) {
+            console.warn('[Live2DManager] UDM not initialized');
+            return { hit: false, error: 'UDM not initialized' };
+        }
+
+        return this.udm.handleTouch(x, y, 'pat');
+    }
+
+    /**
+     * 设置触摸检测器
+     * @param {CharacterTouchDetector} touchDetector - 触摸检测器
+     */
+    setTouchDetector(touchDetector) {
+        this.touchDetector = touchDetector;
+        console.log('[Live2DManager] Touch detector set');
+    }
+
+    /**
+     * 获取当前触摸检测器
+     * @returns {CharacterTouchDetector|null} 触摸检测器实例
+     */
+    getTouchDetector() {
+        return this.touchDetector || null;
+    }
+
+    setFrameRate(fps) {
         this.frameRate = fps;
     }
     

@@ -47,7 +47,7 @@ def demonstrate_fixes():
     
     # 修复方法1：将返回值赋值给变量
     result1 = problematic_function()
-    print(f"修复方法1 - 赋值给变量, {result1}")
+    print(f"修复方法1 - 赋值给变量: {result1}")
     
     # 修复方法2：如果确实不需要返回值,赋值给下划线变量
     _ = problematic_function()

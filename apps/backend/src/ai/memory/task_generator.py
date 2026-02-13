@@ -14,7 +14,8 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from collections import Counter, defaultdict
 
-from .memory_template import MemoryTemplate, ResponseCategory, AngelaState, UserImpression, PrecomputeTask
+from .memory_template import MemoryTemplate, ResponseCategory, AngelaState, UserImpression
+from .precompute_service import PrecomputeTask
 
 logger = logging.getLogger(__name__)
 

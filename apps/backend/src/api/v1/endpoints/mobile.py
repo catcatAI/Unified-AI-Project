@@ -21,35 +21,84 @@ async def mobile_sync(data: Dict[str, Any] = Body(...)):
         "message": "Angela 安全同步已完成"
     }
 
+@router.get("/status")
+async def get_mobile_status_get():
+    """獲取移動端狀態 (GET 方法支持)"""
+    try:
+        import psutil
+        from system.cluster_manager import cluster_manager
+
+        cpu_usage = psutil.cpu_percent()
+        memory = psutil.virtual_memory()
+        cluster_status = cluster_manager.get_cluster_status()
+
+        return {
+            "status": "SECURE LINK ACTIVE",
+            "metrics": {
+                "cpu": f"{cpu_usage}%",
+                "mem": f"{memory.percent}%",
+                "nodes": cluster_status["cluster"]["active_nodes"]
+            },
+            "backend_version": "6.0.4",
+            "server_time": datetime.now().isoformat()
+        }
+    except ImportError as e:
+        logger.error(f"Mobile status import error: {e}")
+        return {
+            "status": "partial",
+            "metrics": {
+                "cpu": "N/A",
+                "mem": "N/A",
+                "nodes": 0
+            },
+            "backend_version": "6.0.4",
+            "server_time": datetime.now().isoformat(),
+            "error": "Some modules not available"
+        }
+
 @router.post("/status")
 async def get_mobile_status(data: Dict[str, Any] = Body(...)):
     """獲取實時系統狀態 (CPU, Memory, Cluster)"""
-    import psutil
-    from ....system.cluster_manager import cluster_manager
-    
-    cpu_usage = psutil.cpu_percent()
-    memory = psutil.virtual_memory()
-    cluster_status = cluster_manager.get_cluster_status()
-    
-    return {
-        "status": "SECURE LINK ACTIVE",
-        "metrics": {
-            "cpu": f"{cpu_usage}%",
-            "mem": f"{memory.percent}%",
-            "nodes": cluster_status["cluster"]["active_nodes"]
-        },
-        "backend_version": "6.0.4",
-        "server_time": datetime.now().isoformat()
-    }
+    try:
+        import psutil
+        from system.cluster_manager import cluster_manager
+
+        cpu_usage = psutil.cpu_percent()
+        memory = psutil.virtual_memory()
+        cluster_status = cluster_manager.get_cluster_status()
+
+        return {
+            "status": "SECURE LINK ACTIVE",
+            "metrics": {
+                "cpu": f"{cpu_usage}%",
+                "mem": f"{memory.percent}%",
+                "nodes": cluster_status["cluster"]["active_nodes"]
+            },
+            "backend_version": "6.0.4",
+            "server_time": datetime.now().isoformat()
+        }
+    except ImportError as e:
+        logger.error(f"Mobile status import error: {e}")
+        return {
+            "status": "partial",
+            "metrics": {
+                "cpu": "N/A",
+                "mem": "N/A",
+                "nodes": 0
+            },
+            "backend_version": "6.0.4",
+            "server_time": datetime.now().isoformat(),
+            "error": "Some modules not available"
+        }
 
 @router.post("/module-control")
 async def mobile_module_control(data: Dict[str, Any] = Body(...)):
     """行動端控制後端模組"""
     module = data.get("module")
     enabled = data.get("enabled")
-    
+
     try:
-        from ....core.sync.realtime_sync import sync_manager, SyncEvent
+        from core.sync.realtime_sync import sync_manager, SyncEvent
         await sync_manager.broadcast_event(SyncEvent(
             event_type="module_control",
             data={"module": module, "enabled": enabled},

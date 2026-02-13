@@ -250,7 +250,7 @@ class TestToolContextManager(unittest.TestCase):
     #             success = j < (9 - i)  # tool1成功率100%, tool2成功率90%, tool3成功率80%
     #             duration = 0.1 * (i + 1) + 0.01 * j  # tool1最快, tool3最慢
     #             self.tool_context_manager.record_tool_usage(
-    #                 tool_id, {"param": f"value{j}"}, {"result": f"output{j}"}, duration, success
+    #                 tool_id: {"param": f"value{j}"}, {"result": f"output{j}"}, duration, success
     #             )
                 
     #     # 获取性能最好的工具
@@ -274,7 +274,7 @@ class TestToolContextManager(unittest.TestCase):
     #         # 记录指定次数的使用
     #         for j in range(count):
     #             self.tool_context_manager.record_tool_usage(
-    #                 tool_id, {"param": f"value{j}"}, {"result": f"output{j}"}, 0.1, True
+    #                 tool_id: {"param": f"value{j}"}, {"result": f"output{j}"}, 0.1, True
     #             )
                 
     #     # 获取使用最频繁的工具

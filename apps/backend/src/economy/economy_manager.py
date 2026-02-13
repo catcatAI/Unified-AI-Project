@@ -118,3 +118,53 @@ class EconomyManager:
 
         self.rules.update(new_rules)
         logger.info("Economic rules updated successfully.")
+
+    def add_transaction(self, user_id: str, amount: float, description: str = "") -> bool:
+        """
+        添加交易記錄並更新餘額
+
+        Args:
+            user_id: 用戶ID
+            amount: 交易金額（正數為收入，負數為支出）
+            description: 交易描述
+
+        Returns:
+            bool: 交易是否成功
+        """
+        try:
+            if not user_id:
+                logger.error("Transaction failed: Missing user_id")
+                return False
+
+            if amount == 0:
+                logger.warning("Transaction amount is zero, skipping")
+                return True
+
+            # 獲取當前餘額
+            current_balance = self.db.get_balance(user_id)
+
+            # 檢查支出是否有足夠餘額
+            if amount < 0 and current_balance < abs(amount):
+                logger.warning(f"Transaction failed for {user_id}. Insufficient funds. Current: {current_balance}, Attempted: {abs(amount)}")
+                return False
+
+            # 計算稅費（僅對正交易）
+            tax = 0.0
+            if amount > 0:
+                tax = amount * self.rules.get("transaction_tax_rate", 0.05)
+                net_amount = amount - tax
+            else:
+                net_amount = amount
+
+            # 更新餘額
+            self.db.add_balance(user_id, net_amount)
+
+            logger.info(
+                f"Transaction added for user '{user_id}': "
+                f"Amount: {amount}, Tax: {tax}, Net: {net_amount}, Description: {description}"
+            )
+
+            return True
+        except Exception as e:
+            logger.error(f"Error adding transaction for user '{user_id}': {e}")
+            return False

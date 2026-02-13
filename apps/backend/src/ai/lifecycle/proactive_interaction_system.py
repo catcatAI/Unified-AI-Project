@@ -75,12 +75,14 @@ class ProactiveInteractionSystem:
         user_monitor: UserMonitor,
         check_interval: float = 15.0,  # 檢查間隔（秒）
         min_check_interval: float = 10.0,
-        max_check_interval: float = 30.0
+        max_check_interval: float = 30.0,
+        broadcast_callback: Optional[callable] = None
     ):
         self.llm_service = llm_service
         self.state_manager = state_manager
         self.memory_manager = memory_manager
         self.user_monitor = user_monitor
+        self.broadcast_callback = broadcast_callback
 
         self.check_interval = check_interval
         self.min_check_interval = min_check_interval
@@ -447,11 +449,23 @@ class ProactiveInteractionSystem:
     async def _execute_proactive_action(self, plan: InteractionPlan) -> Dict[str, Any]:
         """執行主動行動"""
         try:
-            # 這裡可以通過 WebSocket 或其他方式發送消息給前端
+            # 通過 WebSocket 發送消息給前端
             logger.info(f"[PROACTIVE] {plan.opportunity}: {plan.message}")
 
-            # TODO: 實際發送到前端
-            # 可以通過 state_manager 或事件總線發送
+            # 實際發送到前端
+            if self.broadcast_callback:
+                try:
+                    await self.broadcast_callback({
+                        'type': 'proactive_action',
+                        'opportunity': plan.opportunity,
+                        'action': plan.action,
+                        'message': plan.message,
+                        'priority': plan.priority,
+                        'scheduled_time': plan.scheduled_time.isoformat()
+                    })
+                    logger.debug(f"Proactive action sent via WebSocket: {plan.opportunity}")
+                except Exception as e:
+                    logger.warning(f"Failed to send proactive action via WebSocket: {e}")
 
             return {
                 'success': True,

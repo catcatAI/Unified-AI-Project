@@ -50,13 +50,15 @@ class DigitalLifeIntegrator:
         state_manager: Any,
         memory_manager: Any,
         learning_engine: Optional[Any] = None,
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
+        broadcast_callback: Optional[callable] = None
     ):
         self.llm_service = llm_service
         self.state_manager = state_manager
         self.memory_manager = memory_manager
         self.learning_engine = learning_engine
         self.config = config or {}
+        self.broadcast_callback = broadcast_callback
 
         self.is_running = False
         self.start_time: Optional[datetime] = None
@@ -86,7 +88,8 @@ class DigitalLifeIntegrator:
             user_monitor=self.user_monitor,
             loop_interval=self.config.get('decision_interval', 3.0),
             min_loop_interval=2.0,
-            max_loop_interval=5.0
+            max_loop_interval=5.0,
+            broadcast_callback=self.broadcast_callback
         )
 
         # 3. 主動交互系統 - 主動社交能力
@@ -97,7 +100,8 @@ class DigitalLifeIntegrator:
             user_monitor=self.user_monitor,
             check_interval=self.config.get('proactive_interval', 15.0),
             min_check_interval=10.0,
-            max_check_interval=30.0
+            max_check_interval=30.0,
+            broadcast_callback=self.broadcast_callback
         )
 
         # 4. 行為反饋循環 - 學習能力
@@ -191,10 +195,40 @@ class DigitalLifeIntegrator:
         def on_user_input(input_text, metadata=None):
             self.user_monitor.record_input(input_text, metadata)
 
-        # TODO: 添加更多協調邏輯
-        # - LLM 決策時，更新行為反饋
-        # - 主動交互執行後，評估效果
-        # 等等
+        # 協調邏輯：LLM 決策時更新行為反饋
+        if hasattr(self.llm_decision_loop, 'decision_history'):
+            def on_llm_decision(decision):
+                """當 LLM 做出決策時，記錄到行為反饋系統"""
+                self.behavior_feedback.record_behavior(
+                    action=decision.action,
+                    message=decision.message,
+                    priority=decision.priority,
+                    confidence=decision.confidence
+                )
+
+        # 協調邏輯：主動交互執行後評估效果
+        if hasattr(self.proactive_interaction, 'interaction_queue'):
+            def on_proactive_action_executed(plan):
+                """當主動交互執行後，評估效果並記錄到記憶"""
+                if plan.executed and plan.execution_result:
+                    # 記錄成功的主動交互
+                    self.memory_manager.add_memory(
+                        content=f"主動執行 {plan.opportunity}: {plan.message}",
+                        importance=0.7,
+                        tags=['proactive', plan.opportunity, plan.action]
+                    )
+
+        # 協調邏輯：狀態變化時觸發適應
+        if hasattr(self.state_manager, 'state'):
+            def on_state_change(old_state, new_state):
+                """當狀態發生變化時，觸發適應性調整"""
+                # 如果情緒發生顯著變化，記錄到記憶
+                if old_state.get('emotion') != new_state.get('emotion'):
+                    self.memory_manager.add_memory(
+                        content=f"情緒從 {old_state.get('emotion')} 變為 {new_state.get('emotion')}",
+                        importance=0.5,
+                        tags=['emotion', 'state_change']
+                    )
 
     def record_user_input(self, input_text: str, metadata: Optional[Dict[str, Any]] = None):
         """記錄用戶輸入"""

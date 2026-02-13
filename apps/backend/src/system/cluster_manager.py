@@ -214,6 +214,59 @@ class ClusterManager:
             "timestamp": time.time()
         }
 
+    def get_all_nodes(self) -> List[Dict[str, Any]]:
+        """
+        获取所有节点列表
+
+        Returns:
+            List[Dict[str, Any]]: 节点列表，每个节点包含 id, type, status, load 等信息
+        """
+        status = self.get_cluster_status()
+        return status.get('cluster', {}).get('nodes', [])
+
+    def get_node_status(self, node_id: str) -> Optional[Dict[str, Any]]:
+        """
+        获取特定节点的状态
+
+        Args:
+            node_id: 节点 ID
+
+        Returns:
+            Optional[Dict[str, Any]]: 节点状态信息，如果节点不存在则返回 None
+        """
+        for node in self.get_all_nodes():
+            if node['id'] == node_id:
+                return node
+        return None
+
+    async def restart_node(self, node_id: str) -> bool:
+        """
+        重启指定节点
+
+        Args:
+            node_id: 节点 ID
+
+        Returns:
+            bool: 是否成功重启
+        """
+        node = self.get_node_status(node_id)
+        if not node:
+            logger.warning(f"Node {node_id} not found")
+            return False
+
+        if node['type'] == 'master':
+            logger.warning(f"Cannot restart master node")
+            return False
+
+        # 重启节点
+        logger.info(f"Restarting node {node_id}")
+        if node_id in self.workers:
+            self.workers[node_id]['status'] = 'online'
+            logger.info(f"Node {node_id} restarted successfully")
+            return True
+
+        return False
+
     async def distribute_task(self, module_name: str, matrix_data: List[float], custom_precision: Optional[PrecisionLevel] = None) -> str:
         """主機分配任務：根據精度圖譜切分數據並封裝狀態張量"""
         if self.node_type != NodeType.MASTER:

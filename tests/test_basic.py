@@ -17,7 +17,7 @@ def test_basic_imports():
         import asyncio
         assert True
     except ImportError as e:
-        pytest.fail(f"基础模块导入失败, {e}")
+        pytest.fail(f"基础模块导入失败: {e}")
 
 def test_project_structure():
     """测试项目结构"""
