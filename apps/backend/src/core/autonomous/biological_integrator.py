@@ -22,6 +22,7 @@ from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime
 import asyncio
 import logging
+from enum import Enum
 logger = logging.getLogger(__name__)
 
 from .physiological_tactile import PhysiologicalTactileSystem, TactileType, BodyPart
@@ -29,6 +30,18 @@ from .endocrine_system import EndocrineSystem, HormoneType
 from .autonomic_nervous_system import AutonomicNervousSystem, NerveType
 from .neuroplasticity import NeuroplasticitySystem
 from .emotional_blending import EmotionalBlendingSystem, BasicEmotion
+
+
+# P0-2: 生物事件定义
+class BiologicalEvent(Enum):
+    """生物事件类型"""
+    EMOTION_CHANGED = "emotion_changed"
+    STRESS_CHANGED = "stress_changed"
+    ENERGY_CHANGED = "energy_changed"
+    MOOD_CHANGED = "mood_changed"
+    AROUSAL_CHANGED = "arousal_changed"
+    HORMONE_CHANGED = "hormone_changed"
+    TACTILE_STIMULUS = "tactile_stimulus"
 
 
 @dataclass
@@ -39,6 +52,75 @@ class SystemInteraction:
     interaction_type: str
     influence_strength: float  # 0-1
     bidirectional: bool = False
+
+
+# P0-2: 生物事件发布器
+class BiologicalEventPublisher:
+    """
+    生物事件发布器
+    负责发布生物系统事件给订阅者
+    """
+
+    def __init__(self):
+        self.subscribers: Dict[str, List[Callable]] = {}
+
+    def subscribe(self, event_type: str, callback: Callable):
+        """
+        订阅生物事件
+
+        Args:
+            event_type: 事件类型
+            callback: 回调函数
+        """
+        if event_type not in self.subscribers:
+            self.subscribers[event_type] = []
+        self.subscribers[event_type].append(callback)
+        logger.debug(f"Subscribed to event: {event_type}")
+
+    def unsubscribe(self, event_type: str, callback: Callable):
+        """
+        取消订阅
+
+        Args:
+            event_type: 事件类型
+            callback: 回调函数
+        """
+        if event_type in self.subscribers and callback in self.subscribers[event_type]:
+            self.subscribers[event_type].remove(callback)
+            logger.debug(f"Unsubscribed from event: {event_type}")
+
+    async def publish(self, event: BiologicalEvent, data: Dict[str, Any]):
+        """
+        发布生物事件
+
+        Args:
+            event: 生物事件
+            data: 事件数据
+        """
+        event_type = event.value
+        if event_type in self.subscribers:
+            for callback in self.subscribers[event_type]:
+                try:
+                    result = callback(event, data)
+                    # 如果回调返回协程，则等待它
+                    if asyncio.iscoroutine(result):
+                        await result
+                except Exception as e:
+                    logger.error(f"Error in biological event callback: {e}", exc_info=True)
+
+    def get_subscribers_count(self, event_type: Optional[str] = None) -> Dict[str, int]:
+        """
+        获取订阅者数量
+
+        Args:
+            event_type: 事件类型（可选）
+
+        Returns:
+            订阅者数量字典
+        """
+        if event_type:
+            return {event_type: len(self.subscribers.get(event_type, []))}
+        return {k: len(v) for k, v in self.subscribers.items()}
 
 
 class BiologicalIntegrator:
@@ -71,18 +153,21 @@ class BiologicalIntegrator:
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
-        
+
         # Biological subsystems
         self.tactile_system: PhysiologicalTactileSystem = PhysiologicalTactileSystem()
         self.endocrine_system: EndocrineSystem = EndocrineSystem()
         self.nervous_system: AutonomicNervousSystem = AutonomicNervousSystem()
         self.neuroplasticity_system: NeuroplasticitySystem = NeuroplasticitySystem()
         self.emotional_system: EmotionalBlendingSystem = EmotionalBlendingSystem()
-        
+
+        # P0-2: 生物事件发布器
+        self.event_publisher = BiologicalEventPublisher()
+
         # Interactions
         self.interactions: List[SystemInteraction] = []
         self._setup_default_interactions()
-        
+
         # State tracking
         self._last_update: datetime = datetime.now()
         # Configurable homeostatic targets (from config or use defaults)
@@ -91,14 +176,14 @@ class BiologicalIntegrator:
             "stress": 20.0,
             "mood": 0.6,
         })
-        
+
         # Update interval from config (default 5 seconds)
         self._update_interval = self.config.get('update_interval', 5.0)
-        
+
         # Running state
         self._running = False
         self._integration_task: Optional[asyncio.Task] = None
-        
+
         # Callbacks
         self._state_callbacks: List[Callable[[Dict[str, Any]], None]] = []
     
@@ -180,15 +265,35 @@ class BiologicalIntegrator:
         """Handle arousal level changes"""
         # Affect tactile sensitivity
         self.tactile_system.set_arousal_level(arousal)
-        
+
         # High arousal triggers adrenaline
         if arousal > 70:
             asyncio.create_task(
                 self.endocrine_system.trigger_stress_response(
-                    (arousal - 70) / 30, 
+                    (arousal - 70) / 30,
                     stress_type="acute"
                 )
             )
+
+        # P0-2: 发布唤醒水平变化事件
+        asyncio.create_task(self.event_publisher.publish(
+            BiologicalEvent.AROUSAL_CHANGED,
+            {
+                "arousal": arousal,
+                "energy": arousal / 100.0,  # 归一化到 0-1
+                "timestamp": datetime.now().isoformat()
+            }
+        ))
+
+        # P0-2: 发布能量变化事件
+        asyncio.create_task(self.event_publisher.publish(
+            BiologicalEvent.ENERGY_CHANGED,
+            {
+                "energy": arousal / 100.0,  # 归一化到 0-1
+                "arousal": arousal,
+                "timestamp": datetime.now().isoformat()
+            }
+        ))
     
     def _on_hormone_change(self, hormone_type: HormoneType, old_val: float, new_val: float):
         """Handle hormone level changes"""
@@ -218,7 +323,7 @@ class BiologicalIntegrator:
         self.nervous_system.set_arousal_directly(
             max(0, min(100, current_arousal + arousal_impact))
         )
-        
+
         # Emotional touch preferences
         if new_emotion.pleasure > 0.5:
             # Positive emotions prefer gentle touch
@@ -226,6 +331,30 @@ class BiologicalIntegrator:
         elif new_emotion.pleasure < -0.3:
             # Negative emotions
             self.tactile_system.apply_emotional_context("anxiety", new_emotion.intensity)
+
+        # P0-2: 发布情绪变化事件
+        asyncio.create_task(self.event_publisher.publish(
+            BiologicalEvent.EMOTION_CHANGED,
+            {
+                "old_emotion": old_emotion.en_name if old_emotion else "unknown",
+                "new_emotion": new_emotion.en_name,
+                "arousal": new_emotion.arousal,
+                "pleasure": new_emotion.pleasure,
+                "intensity": new_emotion.intensity,
+                "timestamp": datetime.now().isoformat()
+            }
+        ))
+
+        # P0-2: 发布心情变化事件
+        asyncio.create_task(self.event_publisher.publish(
+            BiologicalEvent.MOOD_CHANGED,
+            {
+                "mood": new_emotion.pleasure,
+                "arousal": new_emotion.arousal,
+                "dominant_emotion": new_emotion.en_name,
+                "timestamp": datetime.now().isoformat()
+            }
+        ))
     
     async def _integration_loop(self):
         """Background loop for system integration - Configurable"""

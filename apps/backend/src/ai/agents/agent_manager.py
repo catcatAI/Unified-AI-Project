@@ -46,8 +46,151 @@ import multiprocessing as mp
 from typing import Dict, Optional, List, Any, Callable
 from dataclasses import dataclass
 from enum import Enum
+from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
+
+
+# P0-3: 代理结果影响定义
+@dataclass
+class StateImpact:
+    """代理执行结果对状态的影响"""
+    alpha: Dict[str, float] = None  # 生理维度影响
+    beta: Dict[str, float] = None   # 认知维度影响
+    gamma: Dict[str, float] = None  # 情感维度影响
+    delta: Dict[str, float] = None  # 社交维度影响
+
+    def __post_init__(self):
+        if self.alpha is None:
+            self.alpha = {}
+        if self.beta is None:
+            self.beta = {}
+        if self.gamma is None:
+            self.gamma = {}
+        if self.delta is None:
+            self.delta = {}
+
+
+@dataclass
+class AgentResult:
+    """代理执行结果"""
+    agent_type: str
+    agent_id: str
+    success: bool
+    result_data: Any = None
+    execution_time: float = 0.0
+    error: Optional[str] = None
+
+
+# P0-3: 代理结果评估器接口
+class AgentResultEvaluator(ABC):
+    """代理结果评估器接口"""
+
+    @abstractmethod
+    async def evaluate(self, result: AgentResult) -> StateImpact:
+        """
+        评估代理执行结果对状态的影响
+
+        Args:
+            result: 代理执行结果
+
+        Returns:
+            StateImpact: 状态影响对象
+        """
+        pass
+
+
+# P0-3: 默认评估器实现
+class DefaultAgentResultEvaluator(AgentResultEvaluator):
+    """默认代理结果评估器"""
+
+    async def evaluate(self, result: AgentResult) -> StateImpact:
+        """
+        评估代理执行结果对状态的影响
+
+        Args:
+            result: 代理执行结果
+
+        Returns:
+            StateImpact: 状态影响对象
+        """
+        impact = StateImpact()
+
+        # 如果执行失败，给予负面影响
+        if not result.success:
+            impact.alpha['tension'] = 0.2
+            impact.gamma['sadness'] = 0.1
+            impact.beta['confusion'] = 0.1
+            return impact
+
+        # 根据代理类型评估影响
+        if result.agent_type == "CreativeWritingAgent":
+            # 创意写作成功会增加创造力和满意度
+            impact.gamma['creativity'] = 0.1
+            impact.delta['satisfaction'] = 0.05
+            impact.beta['creativity'] = 0.1
+
+        elif result.agent_type == "DataAnalysisAgent":
+            # 数据分析成功会增加逻辑和分析能力
+            impact.beta['logic'] = 0.1
+            impact.beta['analytical'] = 0.05
+            impact.alpha['focus'] = 0.05
+
+        elif result.agent_type == "WebSearchAgent":
+            # 网络搜索成功会增加好奇心和学习
+            impact.beta['curiosity'] = 0.1
+            impact.beta['learning'] = 0.05
+            impact.alpha['focus'] = 0.05
+
+        elif result.agent_type == "ImageGenerationAgent":
+            # 图像生成成功会增加创造力和快乐
+            impact.gamma['creativity'] = 0.1
+            impact.gamma['happiness'] = 0.05
+            impact.beta['creativity'] = 0.1
+
+        elif result.agent_type == "CodeUnderstandingAgent":
+            # 代码理解成功会增加逻辑和清晰度
+            impact.beta['logic'] = 0.1
+            impact.beta['clarity'] = 0.05
+            impact.alpha['focus'] = 0.05
+
+        elif result.agent_type == "VisionProcessingAgent":
+            # 视觉处理成功会增加专注和分析能力
+            impact.beta['focus'] = 0.1
+            impact.beta['analytical'] = 0.05
+            impact.alpha['energy'] = 0.05
+
+        elif result.agent_type == "AudioProcessingAgent":
+            # 音频处理成功会增加专注和感知能力
+            impact.beta['focus'] = 0.1
+            impact.alpha['energy'] = 0.05
+            impact.gamma['attention'] = 0.05
+
+        elif result.agent_type == "KnowledgeGraphAgent":
+            # 知识图谱成功会增加学习和理解能力
+            impact.beta['learning'] = 0.1
+            impact.beta['clarity'] = 0.05
+            impact.alpha['focus'] = 0.05
+
+        elif result.agent_type == "NLPProcessingAgent":
+            # NLP 处理成功会增加理解和表达能力
+            impact.beta['clarity'] = 0.1
+            impact.beta['learning'] = 0.05
+            impact.delta['engagement'] = 0.05
+
+        elif result.agent_type == "PlanningAgent":
+            # 规划成功会增加逻辑和计划能力
+            impact.beta['logic'] = 0.1
+            impact.beta['clarity'] = 0.05
+            impact.alpha['focus'] = 0.05
+
+        # 根据执行时间调整影响
+        if result.execution_time > 10.0:
+            # 长时间执行会消耗能量
+            impact.alpha['energy'] = -0.1
+            impact.alpha['rest_need'] = 0.1
+
+        return impact
 
 
 class AgentType(Enum):
@@ -76,7 +219,8 @@ class AgentManager:
     def __init__(self, python_executable: Optional[str] = None,
                  agents_dir: Optional[str] = None,
                  enable_process_agents: bool = True,
-                 enable_router: bool = True) -> None:
+                 enable_router: bool = True,
+                 state_manager: Optional[Any] = None) -> None:
         """
         Initializes the AgentManager.
 
@@ -85,6 +229,7 @@ class AgentManager:
             agents_dir: The directory where agent scripts are located.
             enable_process_agents: 是否啟用進程代理支持（Phase 15）
             enable_router: 是否啟用消息路由器
+            state_manager: 狀態管理器（P0-3）
         """
         self.python_executable = python_executable or sys.executable
         self.agents: Dict[str, Any] = {}
@@ -92,27 +237,32 @@ class AgentManager:
         self.active_agents: Dict[str, subprocess.Popen[Any]] = {}
         self.agent_script_map: Dict[str, str] = self._discover_agent_scripts(agents_dir)
         self.launch_lock = threading.Lock()
-        
+
         # Phase 15: 進程代理支持
         self.enable_process_agents = enable_process_agents
         self.process_agents: Dict[str, ProcessAgentInfo] = {}
         self.health_check_interval = 10.0  # 秒
         self.max_restart_attempts = 3
         self._health_monitor_task: Optional[asyncio.Task] = None
-        
+
         # HSP Message Router
         self.enable_router = enable_router
         self.router_process: Optional[subprocess.Popen] = None
         self.router_port = 11435
         self.router_url = f"http://127.0.0.1:{self.router_port}"
-        
+
+        # P0-3: 状态管理器和结果评估器
+        self.state_manager = state_manager
+        self.result_evaluator = DefaultAgentResultEvaluator()
+
         # Start router if enabled
         if self.enable_router:
             self._start_router()
-        
+
         logger.info(f"AgentManager initialized. Found agent scripts: {list(self.agent_script_map.keys())}")
         logger.info(f"Process agents enabled: {self.enable_process_agents}")
         logger.info(f"Router enabled: {self.enable_router} (port {self.router_port})")
+        logger.info(f"State manager: {state_manager is not None}")
 
     def _start_router(self):
         """Start the HSP Message Router as a background process."""
@@ -263,6 +413,129 @@ if __name__ == "__main__":
         if agent:
             return await agent.start()
         return False
+
+    # P0-3: 执行代理并应用状态影响
+    async def execute_agent(self, agent_name: str, task: Dict[str, Any]) -> AgentResult:
+        """
+        执行代理并应用状态影响
+
+        Args:
+            agent_name: 代理名称
+            task: 任务字典
+
+        Returns:
+            AgentResult: 代理执行结果
+        """
+        start_time = time.time()
+
+        try:
+            # 获取代理
+            agent = self.agents.get(agent_name)
+            if not agent:
+                raise ValueError(f"Agent not found: {agent_name}")
+
+            # 执行代理
+            if hasattr(agent, 'execute'):
+                result_data = await agent.execute(task)
+                success = True
+                error = None
+            else:
+                raise ValueError(f"Agent {agent_name} does not have execute method")
+
+            execution_time = time.time() - start_time
+
+            # 创建结果对象
+            result = AgentResult(
+                agent_type=agent_name,
+                agent_id=getattr(agent, 'agent_id', agent_name),
+                success=success,
+                result_data=result_data,
+                execution_time=execution_time,
+                error=error
+            )
+
+            # P0-3: 评估影响并更新状态
+            if self.state_manager:
+                impact = await self.result_evaluator.evaluate(result)
+                await self._apply_state_impact(impact)
+
+            return result
+
+        except Exception as e:
+            execution_time = time.time() - start_time
+            logger.error(f"Error executing agent {agent_name}: {e}", exc_info=True)
+
+            # 创建失败结果
+            result = AgentResult(
+                agent_type=agent_name,
+                agent_id=agent_name,
+                success=False,
+                result_data=None,
+                execution_time=execution_time,
+                error=str(e)
+            )
+
+            # P0-3: 评估失败影响并更新状态
+            if self.state_manager:
+                impact = await self.result_evaluator.evaluate(result)
+                await self._apply_state_impact(impact)
+
+            return result
+
+    # P0-3: 应用状态影响
+    async def _apply_state_impact(self, impact: StateImpact):
+        """
+        应用状态影响
+
+        Args:
+            impact: 状态影响对象
+        """
+        if not self.state_manager:
+            return
+
+        try:
+            # 应用 Alpha 维度影响
+            if impact.alpha:
+                await self.state_manager.update_alpha(impact.alpha)
+
+            # 应用 Beta 维度影响
+            if impact.beta:
+                await self.state_manager.update_beta(impact.beta)
+
+            # 应用 Gamma 维度影响
+            if impact.gamma:
+                await self.state_manager.update_gamma(impact.gamma)
+
+            # 应用 Delta 维度影响
+            if impact.delta:
+                await self.state_manager.update_delta(impact.delta)
+
+            logger.debug(f"Applied state impact: {impact}")
+
+        except Exception as e:
+            logger.error(f"Error applying state impact: {e}", exc_info=True)
+
+    # P0-3: 设置自定义评估器
+    def set_result_evaluator(self, evaluator: AgentResultEvaluator):
+        """
+        设置自定义结果评估器
+
+        Args:
+            evaluator: 代理结果评估器
+        """
+        self.result_evaluator = evaluator
+        logger.info(f"Custom result evaluator set: {evaluator.__class__.__name__}")
+
+    # P0-3: 设置状态管理器
+    def set_state_manager(self, state_manager: Any):
+        """
+        设置状态管理器
+
+        Args:
+            state_manager: 状态管理器
+        """
+        self.state_manager = state_manager
+        logger.info("State manager set")
 
     async def stop_agent(self, agent_id: str) -> bool:
         """停止代理"""

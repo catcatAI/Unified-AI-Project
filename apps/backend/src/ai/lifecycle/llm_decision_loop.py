@@ -283,6 +283,25 @@ class LLMDecisionLoop:
         """構建決策提示詞"""
         state_matrix = state.get('state_matrix', {})
 
+        # P0-4: 获取情感记忆
+        emotional_memories_text = ""
+        if hasattr(self.memory_manager, 'retrieve_emotional_memories'):
+            try:
+                # 获取当前主导情绪
+                dominant_emotion = state_matrix.get('dominant_emotion', 'neutral')
+                emotional_memories = asyncio.run(self.memory_manager.retrieve_emotional_memories(
+                    emotion=dominant_emotion,
+                    min_intensity=0.5,
+                    limit=3
+                ))
+
+                if emotional_memories:
+                    emotional_memories_text = "\n情感記憶：\n"
+                    for mem in emotional_memories:
+                        emotional_memories_text += f"- {mem.content}\n"
+            except Exception as e:
+                logger.warning(f"Error retrieving emotional memories: {e}")
+
         prompt = f"""你是 Angela，一個 AI 數字生命。
 
 當前狀態：
@@ -290,6 +309,7 @@ class LLMDecisionLoop:
 - 行為傾向（β）：{state_matrix.get('beta', 0.5):.2f}
 - 認知狀態（γ）：{state_matrix.get('gamma', 0.5):.2f}
 - 意志力（δ）：{state_matrix.get('delta', 0.5):.2f}
+- 主導情緒：{state_matrix.get('dominant_emotion', 'neutral')}
 
 用戶狀態：
 - 在線狀態：{user_state.online}
@@ -302,6 +322,7 @@ class LLMDecisionLoop:
 
 最近記憶：
 {memory_context}
+{emotional_memories_text}
 
 請決定下一步行動（如果需要）：
 1. 如果用戶在線且長時間無響應（>60秒），主動關心（greet）
@@ -326,6 +347,7 @@ class LLMDecisionLoop:
 - 消息要自然、溫暖、符合Angela的個性
 - 不要過度打擾用戶
 - 優先考慮用戶的情緒和需求
+- 參考情感記憶做出更符合過往經驗的決策
 - 用戶不在线時，除非必要，否則選擇none"""
 
         return prompt

@@ -236,6 +236,125 @@ class HAMMemoryManager:
             # Alternatively, decrement self.next_memory_id here if strict ID sequence is vital.
             return None
 
+    # P0-4: 情感记忆存储
+    async def store_emotional_memory(
+        self,
+        content: str,
+        emotion: str,
+        intensity: float,
+        context: Optional[Dict[str, Any]] = None
+    ) -> Optional[str]:
+        """
+        存储情感记忆
+
+        Args:
+            content: 记忆内容
+            emotion: 情感类型
+            intensity: 情感强度 (0-1)
+            context: 情感上下文
+
+        Returns:
+            Optional[str]: 记忆ID
+        """
+        try:
+            # 扩展元数据（避免嵌套字典）
+            emotional_metadata = {
+                "type": "emotional",
+                "emotion": emotion,  # 直接存储情感类型
+                "emotional_tags": emotion,  # 使用字符串而不是列表
+                "emotional_intensity": float(intensity),
+                "importance_score": float(intensity * 0.8),  # 情感强度影响重要性
+            }
+
+            # 添加上下文信息（扁平化）
+            if context:
+                for key, value in context.items():
+                    # 只添加简单类型的上下文
+                    if isinstance(value, (str, int, float, bool)):
+                        emotional_metadata[f"context_{key}"] = value
+                    else:
+                        emotional_metadata[f"context_{key}"] = str(value)
+
+            # 存储记忆
+            memory_id = await self.store_experience(
+                raw_data=content,
+                data_type="emotional_memory",
+                metadata=emotional_metadata
+            )
+
+            logger.info(f"HAM: Stored emotional memory {memory_id} with emotion {emotion} (intensity={intensity})")
+            return memory_id
+
+        except Exception as e:
+            logger.error(f"Error storing emotional memory: {e}", exc_info=True)
+            return None
+
+    # P0-4: 情感记忆检索
+    async def retrieve_emotional_memories(
+        self,
+        emotion: Optional[str] = None,
+        min_intensity: float = 0.0,
+        limit: int = 10,
+        context_filter: Optional[Dict[str, Any]] = None
+    ) -> List[HAMRecallResult]:
+        """
+        检索情感记忆
+
+        Args:
+            emotion: 情感类型（可选）
+            min_intensity: 最小情感强度
+            limit: 返回数量限制
+            context_filter: 上下文过滤器（可选）
+
+        Returns:
+            List[HAMRecallResult]: 情感记忆列表
+        """
+        try:
+            # 使用关键词查询情感记忆
+            keywords = []
+            if emotion:
+                keywords.append(emotion)
+            keywords.append("emotional")
+
+            # 查询记忆
+            results = await self.query_engine.query_core_memory(
+                keywords=keywords,
+                data_type_filter="emotional_memory",
+                limit=limit
+            )
+
+            # 过滤结果（在内存中过滤）
+            filtered_results = []
+            for result in results:
+                # 检查情感类型
+                if emotion and result.metadata.get("emotion") != emotion:
+                    continue
+
+                # 检查情感强度
+                result_intensity = result.metadata.get("emotional_intensity", 0.0)
+                if result_intensity < min_intensity:
+                    continue
+
+                # 检查上下文过滤
+                if context_filter:
+                    match = True
+                    for key, value in context_filter.items():
+                        context_key = f"context_{key}"
+                        if context_key not in result.metadata or result.metadata[context_key] != str(value):
+                            match = False
+                            break
+                    if not match:
+                        continue
+
+                filtered_results.append(result)
+
+            logger.info(f"HAM: Retrieved {len(filtered_results)} emotional memories for emotion {emotion}")
+            return filtered_results
+
+        except Exception as e:
+            logger.error(f"Error retrieving emotional memories: {e}", exc_info=True)
+            return []
+
 
     def recall_gist(self, memory_id: str) -> Optional[HAMRecallResult]:
         """

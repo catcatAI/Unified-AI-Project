@@ -700,6 +700,144 @@ async _initializeLogger() {
         if (message.type === 'state_update') {
             this.stateMatrix?.updateFromBackend(message);
         }
+
+        // P0-2: 处理生物事件
+        if (message.type === 'biological_event') {
+            this._handleBiologicalEvent(message.data);
+        }
+    }
+
+    /**
+     * P0-2: 处理生物事件
+     */
+    _handleBiologicalEvent(data) {
+        console.log('[App] Biological event received:', data);
+
+        const eventType = data.event;
+        const eventData = data.data || {};
+
+        switch (eventType) {
+            case 'emotion_changed':
+                this._handleEmotionChanged(eventData);
+                break;
+            case 'stress_changed':
+                this._handleStressChanged(eventData);
+                break;
+            case 'energy_changed':
+                this._handleEnergyChanged(eventData);
+                break;
+            case 'mood_changed':
+                this._handleMoodChanged(eventData);
+                break;
+            case 'arousal_changed':
+                this._handleArousalChanged(eventData);
+                break;
+            case 'hormone_changed':
+                this._handleHormoneChanged(eventData);
+                break;
+            case 'tactile_stimulus':
+                this._handleTactileStimulus(eventData);
+                break;
+            default:
+                console.warn('[App] Unknown biological event:', eventType);
+        }
+    }
+
+    /**
+     * P0-2: 处理情绪变化
+     */
+    _handleEmotionChanged(data) {
+        if (this.live2dManager) {
+            // 更新 Live2D 表情
+            const emotionMap = {
+                'happy': 'happy',
+                'sad': 'sad',
+                'angry': 'angry',
+                'fear': 'fear',
+                'surprised': 'surprised',
+                'love': 'love',
+                'calm': 'calm',
+                'disgust': 'disgust'
+            };
+
+            const expression = emotionMap[data.new_emotion] || 'neutral';
+            this.live2dManager.setExpression(expression);
+
+            // 更新情绪强度参数
+            if (this.live2dManager.setParameter) {
+                this.live2dManager.setParameter('ParamEmotionIntensity', data.intensity || 0.5);
+            }
+        }
+    }
+
+    /**
+     * P0-2: 处理压力变化
+     */
+    _handleStressChanged(data) {
+        if (this.stateMatrix) {
+            this.stateMatrix.updateAlpha({
+                tension: data.stress || 0.5,
+                energy: 1.0 - (data.stress || 0.5) * 0.3
+            });
+        }
+    }
+
+    /**
+     * P0-2: 处理能量变化
+     */
+    _handleEnergyChanged(data) {
+        if (this.stateMatrix) {
+            this.stateMatrix.updateAlpha({
+                energy: data.energy || 0.5,
+                vitality: data.energy || 0.5
+            });
+        }
+    }
+
+    /**
+     * P0-2: 处理心情变化
+     */
+    _handleMoodChanged(data) {
+        if (this.stateMatrix) {
+            this.stateMatrix.updateGamma({
+                happiness: Math.max(0, data.mood),
+                calm: Math.max(0, 1 - Math.abs(data.mood))
+            });
+        }
+    }
+
+    /**
+     * P0-2: 处理唤醒水平变化
+     */
+    _handleArousalChanged(data) {
+        if (this.stateMatrix) {
+            this.stateMatrix.updateAlpha({
+                arousal: data.arousal / 100.0
+            });
+        }
+
+        if (this.live2dManager && this.live2dManager.setParameter) {
+            // 更新 Live2D 唤醒参数
+            this.live2dManager.setParameter('ParamArousal', data.arousal / 100.0);
+        }
+    }
+
+    /**
+     * P0-2: 处理激素变化
+     */
+    _handleHormoneChanged(data) {
+        // 可以根据激素类型调整行为
+        console.log('[App] Hormone changed:', data);
+    }
+
+    /**
+     * P0-2: 处理触觉刺激
+     */
+    _handleTactileStimulus(data) {
+        // 触发触觉反馈
+        if (this.hapticHandler) {
+            this.hapticHandler.trigger(data.intensity || 0.5);
+        }
     }
 
     _handleClick(data, coords) {

@@ -39,6 +39,15 @@ class BackendWebSocketClient {
         // 待处理响应清理定时器
         this._pendingResponsesCleanupInterval = 60000; // 每分钟清理一次
         this._pendingResponsesCleanupTimer = null;
+
+        // P0-1: 4D 状态矩阵同步优化
+        this.messageSequence = 0; // 消息序列号
+        this.expectedSequence = 0; // 期望的序列号
+        this.pendingUpdates = new Map(); // 待处理的消息缓存
+        this.updateBatchSize = 5; // 批处理大小
+        this.updateBatchInterval = 100; // 批处理间隔 (ms)
+        this.updateBatchTimer = null; // 批处理定时器
+        this.pendingStateUpdates = []; // 待批处理的状态更新
     }
     
     async connect(url) {
@@ -103,7 +112,7 @@ class BackendWebSocketClient {
     _routeMessage(message) {
         const type = message.type;
         const data = message.data;
-        
+
         switch (type) {
             case 'connected':
                 console.log('Backend confirmed connection:', message);
@@ -132,10 +141,24 @@ class BackendWebSocketClient {
                 // Echo is used for keep-alive, respond with pong if needed
                 console.log('Received echo (keep-alive):', message);
                 break;
+            // P0-2: 处理生物事件
+            case 'biological_event':
+                this._handleBiologicalEvent(data);
+                break;
             default:
                 // Log as debug instead of warning to reduce noise
                 console.debug('Unknown message type:', type, message);
         }
+    }
+
+    /**
+     * P0-2: 处理生物事件
+     */
+    _handleBiologicalEvent(data) {
+        console.log('Biological event received:', data);
+
+        // 触发事件
+        this._fireEvent('biologicalEvent', data);
     }
     
     _handleModuleStatusChanged(data) {
@@ -164,14 +187,111 @@ class BackendWebSocketClient {
     
     _handleStateUpdate(data) {
         console.log('State update received:', data);
-        
+
+        // P0-1: 消息顺序保证
+        if (data.sequence !== undefined) {
+            if (data.sequence < this.expectedSequence) {
+                console.warn(`[BackendWebSocket] 收到过期消息: ${data.sequence} < ${this.expectedSequence}`);
+                return;
+            }
+
+            // 如果收到乱序消息，缓存起来
+            if (data.sequence > this.expectedSequence) {
+                console.log(`[BackendWebSocket] 收到乱序消息: ${data.sequence}, 期望: ${this.expectedSequence}`);
+                this.pendingUpdates.set(data.sequence, data);
+                return;
+            }
+
+            // 消息顺序正确，处理并更新期望序列号
+            this.expectedSequence = data.sequence + 1;
+
+            // 处理缓存的消息
+            while (this.pendingUpdates.has(this.expectedSequence)) {
+                const pendingData = this.pendingUpdates.get(this.expectedSequence);
+                this.pendingUpdates.delete(this.expectedSequence);
+                this._processStateUpdate(pendingData);
+                this.expectedSequence++;
+            }
+        }
+
+        // 处理当前消息
+        this._processStateUpdate(data);
+    }
+
+    /**
+     * P0-1: 处理状态更新（内部方法）
+     */
+    _processStateUpdate(data) {
+        // P0-1: 状态合并机制
+        const mergedData = this._mergeStateData(data);
+
         // 更新 StateMatrix4D
         if (window.angelaApp && window.angelaApp.stateMatrix) {
-            window.angelaApp.stateMatrix.updateFromBackend(data);
+            window.angelaApp.stateMatrix.updateFromBackend(mergedData);
         }
-        
+
         // 觸發事件
-        this._fireEvent('stateUpdated', data);
+        this._fireEvent('stateUpdated', mergedData);
+    }
+
+    /**
+     * P0-1: 状态数据合并（避免覆盖）
+     */
+    _mergeStateData(updateData) {
+        if (!window.angelaApp || !window.angelaApp.stateMatrix) {
+            return updateData;
+        }
+
+        const currentState = window.angelaApp.stateMatrix.getState();
+        const merged = {
+            alpha: { ...currentState.alpha, ...(updateData.alpha || {}) },
+            beta: { ...currentState.beta, ...(updateData.beta || {}) },
+            gamma: { ...currentState.gamma, ...(updateData.gamma || {}) },
+            delta: { ...currentState.delta, ...(updateData.delta || {}) }
+        };
+
+        return merged;
+    }
+
+    /**
+     * P0-1: 批处理状态更新
+     */
+    _addToUpdateBatch(data) {
+        this.pendingStateUpdates.push(data);
+
+        // 如果达到批处理大小或没有定时器，立即发送
+        if (this.pendingStateUpdates.length >= this.updateBatchSize || !this.updateBatchTimer) {
+            this._flushUpdateBatch();
+            return;
+        }
+
+        // 设置批处理定时器
+        if (!this.updateBatchTimer) {
+            this.updateBatchTimer = setTimeout(() => {
+                this._flushUpdateBatch();
+            }, this.updateBatchInterval);
+        }
+    }
+
+    /**
+     * P0-1: 刷新批处理队列
+     */
+    _flushUpdateBatch() {
+        if (this.pendingStateUpdates.length === 0) {
+            return;
+        }
+
+        // 合并所有更新
+        const mergedUpdate = this.pendingStateUpdates.reduce((acc, update) => {
+            return this._mergeStateData({ ...acc, ...update });
+        }, {});
+
+        // 发送合并后的更新
+        this._processStateUpdate(mergedUpdate);
+
+        // 清空批处理队列
+        this.pendingStateUpdates = [];
+        this.updateBatchTimer = null;
     }
     
     _handleTactileResponse(data) {
