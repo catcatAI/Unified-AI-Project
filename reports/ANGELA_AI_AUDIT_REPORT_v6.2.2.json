@@ -1,0 +1,1931 @@
+{
+  "total_issues": 240,
+  "priority_counts": {
+    "P0": 238,
+    "P1": 1,
+    "P2": 0,
+    "P3": 1
+  },
+  "issues": [
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_content_analyzer.py",
+      "line_num": 38,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 38 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/run_tests_with_compat.py",
+      "line_num": 28,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 28 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/run_simple_hsp_test.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_performance_benchmark.py",
+      "line_num": 333,
+      "message": "語法錯誤: unexpected unindent",
+      "fix_suggestion": "檢查第 333 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_core_services_module.py",
+      "line_num": 25,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 25 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_apple_inc.py",
+      "line_num": 13,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 13 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_capital_of.py",
+      "line_num": 14,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 14 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/verify_all_agents.py",
+      "line_num": 7,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 7 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/maintain_test_suite.py",
+      "line_num": 19,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 19 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/continuous_test_improvement.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/run_fixed_tests.py",
+      "line_num": 15,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/simple_test_optimizer.py",
+      "line_num": 14,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 14 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/demo_test_result_processing.py",
+      "line_num": 17,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 17 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/automated_integration_test_pipeline.py",
+      "line_num": 24,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 24 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/intelligent_test_generator.py",
+      "line_num": 520,
+      "message": "語法錯誤: unterminated triple-quoted string literal (detected at line 551)",
+      "fix_suggestion": "檢查第 520 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/simple_agent_test.py",
+      "line_num": 7,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 7 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/debug_patch_test.py",
+      "line_num": 7,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 7 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_config_loader.py",
+      "line_num": 77,
+      "message": "語法錯誤: unterminated string literal (detected at line 77)",
+      "fix_suggestion": "檢查第 77 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_debug.py",
+      "line_num": 14,
+      "message": "語法錯誤: unterminated triple-quoted string literal (detected at line 55)",
+      "fix_suggestion": "檢查第 14 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_core_service_manager.py",
+      "line_num": 21,
+      "message": "語法錯誤: expected an indented block after class definition on line 20",
+      "fix_suggestion": "檢查第 21 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/enable_commented_tests.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/simple_enterprise_test.py",
+      "line_num": 31,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 31 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/final_test.py",
+      "line_num": 20,
+      "message": "語法錯誤: closing parenthesis ')' does not match opening parenthesis '[' on line 16",
+      "fix_suggestion": "檢查第 20 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/quick_test_concept_models.py",
+      "line_num": 16,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/enterprise_test_suite.py",
+      "line_num": 21,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 21 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/run_verification_test.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/simple_unittest.py",
+      "line_num": 9,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 9 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_env.py",
+      "line_num": 24,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 24 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_fix_debug.py",
+      "line_num": 16,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/process_test_results.py",
+      "line_num": 27,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 27 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_capital_of_debug.py",
+      "line_num": 16,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_alpha_upgrade.py",
+      "line_num": 21,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 21 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_automated_defect_detector.py",
+      "line_num": 26,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 26 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/smart_test_runner.py",
+      "line_num": 22,
+      "message": "語法錯誤: expected an indented block after function definition on line 19",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/check_test_results.py",
+      "line_num": 4,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 4 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_compat_fix.py",
+      "line_num": 23,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 23 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/verify_base_agent.py",
+      "line_num": 7,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 7 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/optimize_test_suite.py",
+      "line_num": 20,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 20 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/run_test_direct.py",
+      "line_num": 11,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 11 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_intelligent_test_generator.py",
+      "line_num": 10,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 10 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/run_integration_tests.py",
+      "line_num": 17,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 17 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/simple_pytest_test.py",
+      "line_num": 3,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 3 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/project_function_test_mapping.py",
+      "line_num": 19,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 19 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/debug_test.py",
+      "line_num": 24,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 24 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/generate_test_report.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_agi_integration.py",
+      "line_num": 345,
+      "message": "語法錯誤: unterminated string literal (detected at line 345)",
+      "fix_suggestion": "檢查第 345 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_fixes.py",
+      "line_num": 22,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_base_agent_simple.py",
+      "line_num": 14,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 14 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_concept_models_training.py",
+      "line_num": 29,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 29 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_fix_demo.py",
+      "line_num": 152,
+      "message": "語法錯誤: unterminated triple-quoted string literal (detected at line 175)",
+      "fix_suggestion": "檢查第 152 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/final_comprehensive_test.py",
+      "line_num": 11,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 11 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/deadlock_detector.py",
+      "line_num": 27,
+      "message": "語法錯誤: expected an indented block after class definition on line 26",
+      "fix_suggestion": "檢查第 27 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_core_services.py",
+      "line_num": 62,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 62 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_data_analysis_debug.py",
+      "line_num": 29,
+      "message": "語法錯誤: expected '('",
+      "fix_suggestion": "檢查第 29 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_chromadb_fix.py",
+      "line_num": 29,
+      "message": "語法錯誤: invalid syntax. Perhaps you forgot a comma?",
+      "fix_suggestion": "檢查第 29 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/run_test_fix.py",
+      "line_num": 14,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 14 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/simple_path_test.py",
+      "line_num": 7,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 7 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_dependency_manager_backup.py",
+      "line_num": 23,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 23 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_gmqtt_import.py",
+      "line_num": 21,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 21 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_fix.py",
+      "line_num": 16,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_dependency_manager.py",
+      "line_num": 23,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 23 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_data_manager.py",
+      "line_num": 36,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 36 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_audio_service_direct.py",
+      "line_num": 18,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 18 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/run_hsp_test.py",
+      "line_num": 11,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 11 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration_test.py",
+      "line_num": 15,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_coverage_report.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax. Perhaps you forgot a comma?",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_atlassian_integration.py",
+      "line_num": 109,
+      "message": "語法錯誤: unterminated triple-quoted string literal (detected at line 132)",
+      "fix_suggestion": "檢查第 109 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/test_coverage_analyzer.py",
+      "line_num": 27,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 27 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/e2e/test_training_workflow.py",
+      "line_num": 12,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 12 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/e2e/test_atlassian_workflow.py",
+      "line_num": 10,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 10 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/mcp/test_mcp_connector.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/mcp/test_context7_connector.py",
+      "line_num": 11,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 11 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/cli/test_cli.py",
+      "line_num": 15,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integrations/test_atlassian_api.py",
+      "line_num": 9,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 9 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integrations/test_atlassian_bridge_fallback.py",
+      "line_num": 11,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 11 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integrations/test_rovo_dev_agent_recovery.py",
+      "line_num": 15,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integrations/test_rovo_dev_connector.py",
+      "line_num": 13,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 13 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integrations/test_atlassian_bridge.py",
+      "line_num": 15,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integrations/test_rovo_dev_agent.py",
+      "line_num": 14,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 14 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_basic.py",
+      "line_num": 8,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 8 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_mqtt_broker_startup.py",
+      "line_num": 21,
+      "message": "語法錯誤: invalid syntax. Perhaps you forgot a comma?",
+      "fix_suggestion": "檢查第 21 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/mock_mqtt_broker.py",
+      "line_num": 7,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 7 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_hsp_connector.py",
+      "line_num": 33,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 33 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_debug.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_external_connector_stability.py",
+      "line_num": 17,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 17 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_hsp_enhanced_integration.py",
+      "line_num": 12,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 12 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/run_hsp_tests.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_hsp_integration.py",
+      "line_num": 49,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 49 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_hsp_refactored.py",
+      "line_num": 30,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 30 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_hsp_security.py",
+      "line_num": 15,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_hsp_ack_retry.py",
+      "line_num": 19,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 19 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_hsp_fixture.py",
+      "line_num": 27,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 27 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_message_bridge.py",
+      "line_num": 35,
+      "message": "語法錯誤: invalid syntax. Perhaps you forgot a comma?",
+      "fix_suggestion": "檢查第 35 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/hsp/test_hsp_advanced_integration.py",
+      "line_num": 11,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 11 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/economy/test_economy_manager.py",
+      "line_num": 17,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 17 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/economy/test_economy_db.py",
+      "line_num": 15,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/shared/test_key_manager.py",
+      "line_num": 11,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 11 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/evaluation/test_evaluator.py",
+      "line_num": 27,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 27 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/evaluation/test_task_evaluator.py",
+      "line_num": 21,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 21 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/evaluation/test_evaluation_db.py",
+      "line_num": 17,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 17 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/performance/benchmark_test.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/performance/stress_test.py",
+      "line_num": 19,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 19 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_performance_benchmark.py",
+      "line_num": 10,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 10 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_self_improvement.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_hsp_protocol_integration.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_system_level_integration.py",
+      "line_num": 15,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/end_to_end_test.py",
+      "line_num": 21,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 21 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/comprehensive_test_framework.py",
+      "line_num": 6,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 6 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_utils.py",
+      "line_num": 11,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 11 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_hsp_debug.py",
+      "line_num": 14,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 14 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_core_services_integration.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_data_factory.py",
+      "line_num": 10,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 10 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_training_system_integration.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_performance_benchmarks.py",
+      "line_num": 8,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 8 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_example_integration.py",
+      "line_num": 9,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 9 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_ai_agent_integration.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/simple_e2e_test.py",
+      "line_num": 19,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 19 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_memory_system_integration.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/simple_integration_test.py",
+      "line_num": 17,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 17 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_agent_collaboration.py",
+      "line_num": 19,
+      "message": "語法錯誤: unexpected unindent",
+      "fix_suggestion": "檢查第 19 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/quick_e2e_test.py",
+      "line_num": 19,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 19 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/conftest.py",
+      "line_num": 12,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 12 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_hsp_simple.py",
+      "line_num": 11,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 11 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/ai_ops_integration_test.py",
+      "line_num": 28,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 28 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_knowledge_update.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_learning_and_trust.py",
+      "line_num": 15,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/integration/test_atlassian_integration.py",
+      "line_num": 13,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 13 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/meta/test_learning_log_db.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/modules_fragmenta/test_vision_tone_inverter.py",
+      "line_num": 24,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 24 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/modules_fragmenta/test_element_layer.py",
+      "line_num": 24,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 24 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/game/test_main.py",
+      "line_num": 13,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 13 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/game/test_assets.py",
+      "line_num": 13,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 13 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/game/test_npcs.py",
+      "line_num": 13,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 13 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/test_time_system.py",
+      "line_num": 17,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 17 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/test_emotion_system.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/test_agent_manager.py",
+      "line_num": 20,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 20 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/test_crisis_system.py",
+      "line_num": 17,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 17 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/test_deep_mapper.py",
+      "line_num": 21,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 21 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/fragmenta/test_fragmenta_orchestrator.py",
+      "line_num": 25,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 25 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/search/test_search_engine.py",
+      "line_num": 27,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 27 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_node_services.py",
+      "line_num": 10,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 10 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_health_ready_endpoints.py",
+      "line_num": 19,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 19 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_hot_endpoints.py",
+      "line_num": 15,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_audio_service.py",
+      "line_num": 26,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 26 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_models_endpoints.py",
+      "line_num": 18,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 18 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_vision_service.py",
+      "line_num": 24,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 24 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_resource_awareness_service.py",
+      "line_num": 15,
+      "message": "語法錯誤: unmatched ')'",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_sandbox_executor.py",
+      "line_num": 22,
+      "message": "語法錯誤: expected an indented block after function definition on line 20",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_main_api_server.py",
+      "line_num": 13,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 13 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_llm_interface.py",
+      "line_num": 24,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 24 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_ai_virtual_input_service.py",
+      "line_num": 12,
+      "message": "語法錯誤: unmatched ')'",
+      "fix_suggestion": "檢查第 12 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/services/test_hsp_endpoints.py",
+      "line_num": 14,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 14 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/creation/test_creation_engine.py",
+      "line_num": 27,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 27 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/shared/utils/test_cleanup_utils.py",
+      "line_num": 20,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 20 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/formula_engine/test_formula_engine.py",
+      "line_num": 14,
+      "message": "語法錯誤: trailing comma not allowed without surrounding parentheses",
+      "fix_suggestion": "檢查第 14 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/language_models/test_daily_language_model.py",
+      "line_num": 9,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 9 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/memory/test_ham_memory_manager.py",
+      "line_num": 13,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 13 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/memory/test_ham_chromadb_integration.py",
+      "line_num": 17,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 17 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/service_discovery/test_service_discovery_module.py",
+      "line_num": 25,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 25 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/personality/test_personality_manager.py",
+      "line_num": 23,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 23 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/meta_formulas/test_meta_formulas.py",
+      "line_num": 25,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 25 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/dialogue/test_project_coordinator_fix.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/learning/conftest.py",
+      "line_num": 6,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 6 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/learning/test_learning_manager.py",
+      "line_num": 18,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 18 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/lis/test_tonal_repair_engine.py",
+      "line_num": 23,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 23 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "tests/core_ai/lis/test_ham_lis_cache.py",
+      "line_num": 40,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 40 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "packages/cli/__init__.py",
+      "line_num": 2,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 2 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "packages/cli/cli_runner.py",
+      "line_num": 20,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 20 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "packages/cli/cli/port_manager.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "packages/cli/cli/error_handler.py",
+      "line_num": 18,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 18 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "packages/cli/cli/unified_cli.py",
+      "line_num": 14,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 14 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "packages/cli/cli/client.py",
+      "line_num": 8,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 8 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "packages/cli/cli/ai_models_cli.py",
+      "line_num": 26,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 26 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "packages/cli/cli/main.py",
+      "line_num": 22,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/debug/debug_syntax.py",
+      "line_num": 4,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 4 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/debug/debug_ethics.py",
+      "line_num": 20,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 20 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/debug/debug_real_training.py",
+      "line_num": 20,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 20 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/tests/real_tools_integration_test.py",
+      "line_num": 24,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 24 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/tests/quick_performance_test.py",
+      "line_num": 23,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 23 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/tests/real_system_test.py",
+      "line_num": 16,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/tests/simplified_tools_integration_test.py",
+      "line_num": 12,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 12 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/tests/performance_benchmark_test.py",
+      "line_num": 29,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 29 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/tests/systematic_import_test.py",
+      "line_num": 21,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 21 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/tests/real_complete_global_test.py",
+      "line_num": 23,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 23 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/tests/global_system_test.py",
+      "line_num": 28,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 28 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/audit/comprehensive_system_check.py",
+      "line_num": 296,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 296 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "scripts/audit/comprehensive_component_audit.py",
+      "line_num": 248,
+      "message": "語法錯誤: invalid syntax. Perhaps you forgot a comma?",
+      "fix_suggestion": "檢查第 248 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/start_server.py",
+      "line_num": 6,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 6 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/setup.py",
+      "line_num": 21,
+      "message": "語法錯誤: invalid syntax. Perhaps you forgot a comma?",
+      "fix_suggestion": "檢查第 21 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/simple_verify.py",
+      "line_num": 6,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 6 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/start_chroma_server.py",
+      "line_num": 31,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 31 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/start_server_all_interfaces.py",
+      "line_num": 7,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 7 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_person_title_pattern.py",
+      "line_num": 18,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 18 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/detailed_debug.py",
+      "line_num": 16,
+      "message": "語法錯誤: '[' was never closed",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_matcher_patterns.py",
+      "line_num": 23,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 23 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_spacy.py",
+      "line_num": 23,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 23 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_matcher.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_detailed_analysis.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_content_analyzer.py",
+      "line_num": 2,
+      "message": "語法錯誤: unterminated triple-quoted string literal (detected at line 78)",
+      "fix_suggestion": "檢查第 2 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_simple.py",
+      "line_num": 26,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 26 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_person_title.py",
+      "line_num": 52,
+      "message": "語法錯誤: unmatched ')'",
+      "fix_suggestion": "檢查第 52 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_content_analyzer_detailed.py",
+      "line_num": 20,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 20 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_based_in.py",
+      "line_num": 22,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_content_analyzer_issues.py",
+      "line_num": 26,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 26 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_relationship_extraction.py",
+      "line_num": 26,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 26 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_relationships.py",
+      "line_num": 76,
+      "message": "語法錯誤: unterminated triple-quoted string literal (detected at line 96)",
+      "fix_suggestion": "檢查第 76 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_mock_v2.py",
+      "line_num": 12,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 12 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_detailed.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/diagnose_components.py",
+      "line_num": 108,
+      "message": "語法錯誤: closing parenthesis '}' does not match opening parenthesis '(' on line 105",
+      "fix_suggestion": "檢查第 108 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_mock.py",
+      "line_num": 15,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/debug/debug_relationships_v2.py",
+      "line_num": 26,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 26 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/chromadb_local/__init__.py",
+      "line_num": 10,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 10 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/chromadb_local/config.py",
+      "line_num": 2,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 2 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/cleanup_backup_dirs.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/coverage_analyzer.py",
+      "line_num": 18,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 18 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/fix_import_paths.py",
+      "line_num": 13,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 13 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/smart_executor.py",
+      "line_num": 21,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 21 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/clean_old_backups.py",
+      "line_num": 12,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 12 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/coverage_monitor.py",
+      "line_num": 347,
+      "message": "語法錯誤: unterminated string literal (detected at line 347)",
+      "fix_suggestion": "檢查第 347 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/performance_regression_detector.py",
+      "line_num": 17,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 17 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/final_validation.py",
+      "line_num": 18,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 18 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/smart_dev_runner.py",
+      "line_num": 29,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 29 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/analyze_failures.py",
+      "line_num": 5,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 5 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/final_import_fix.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/performance_benchmark_framework.py",
+      "line_num": 234,
+      "message": "語法錯誤: unterminated string literal (detected at line 234)",
+      "fix_suggestion": "檢查第 234 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/execute_smart_fix.py",
+      "line_num": 23,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 23 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/performance_benchmark_workflow.py",
+      "line_num": 15,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 15 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/manage_backup_dirs.py",
+      "line_num": 14,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 14 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/scripts/integration_fixer.py",
+      "line_num": 22,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 22 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/tools/check/check_patterns.py",
+      "line_num": 18,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 18 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/tools/check/check_matcher_patterns.py",
+      "line_num": 18,
+      "message": "語法錯誤: unexpected indent",
+      "fix_suggestion": "檢查第 18 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/tools/check/check_person_title.py",
+      "line_num": 26,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 26 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/tools/check/find_underscore_assign.py",
+      "line_num": 6,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 6 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/tools/check/scan_placeholders.py",
+      "line_num": 107,
+      "message": "語法錯誤: unterminated triple-quoted string literal (detected at line 134)",
+      "fix_suggestion": "檢查第 107 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/tools/check/check_ham_methods.py",
+      "line_num": 9,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 9 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/tools/check/check_person_title_v2.py",
+      "line_num": 17,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 17 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/tools/fix/fix_hsp_integration.py",
+      "line_num": 18,
+      "message": "語法錯誤: expected ':'",
+      "fix_suggestion": "檢查第 18 行附近的語法"
+    },
+    {
+      "priority": "P0",
+      "category": "syntax",
+      "file_path": "apps/backend/tools/fix/fix_import_path.py",
+      "line_num": 16,
+      "message": "語法錯誤: invalid syntax",
+      "fix_suggestion": "檢查第 16 行附近的語法"
+    },
+    {
+      "priority": "P1",
+      "category": "missing_config",
+      "file_path": "apps/backend/configs/hsp_fallback_config.json",
+      "line_num": 0,
+      "message": "配置文件不存在",
+      "fix_suggestion": "創建配置文件: apps/backend/configs/hsp_fallback_config.json"
+    },
+    {
+      "priority": "P3",
+      "category": "doc_version_inconsistency",
+      "file_path": "README.md, CHANGELOG.md, AGENTS.md, QUICKSTART.md",
+      "line_num": 0,
+      "message": "文檔版本號不一致: {'README.md': '6.2.0', 'CHANGELOG.md': '1.0.0', 'AGENTS.md': '6.2.0', 'QUICKSTART.md': '6.2.0'}",
+      "fix_suggestion": "統一所有文檔中的版本號"
+    }
+  ]
+}

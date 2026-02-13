@@ -1,0 +1,218 @@
+[
+  {
+    "path": "/",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.004,
+    "response_size": 45,
+    "response_preview": "{'message': 'Angela AI API', 'version': '6.0.4'}"
+  },
+  {
+    "path": "/health",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 61,
+    "response_preview": "{'status': 'healthy', 'timestamp': '2026-02-13T01:10:42.748241'}"
+  },
+  {
+    "path": "/api/v1/health",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 20,
+    "response_preview": "{'status': 'healthy'}"
+  },
+  {
+    "path": "/api/v1/status",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 67,
+    "response_preview": "{'status': 'running', 'version': '6.0.4', 'services': ['chat', 'health']}"
+  },
+  {
+    "path": "/docs",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 1012,
+    "response_preview": "\n    <!DOCTYPE html>\n    <html>\n    <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <link type=\"text/css\" rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css\">\n    <link rel=\"shortcut icon\" href=\"https://fastapi.tiangolo.com/img/"
+  },
+  {
+    "path": "/angela/chat",
+    "method": "POST",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 5.598,
+    "response_size": 167,
+    "response_preview": "{'session_id': 'angela-5270c299', 'response': '。', 'response_text': '。', 'emotion': 'happy', 'angela_mood': 'happy', 'source': 'llm', 'timestamp': '2026-02-13T01:10:48.352239'}"
+  },
+  {
+    "path": "/api/v1/angela/chat",
+    "method": "POST",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.003,
+    "response_size": 126,
+    "response_preview": "{'session_id': 'angela-64adb755', 'response_text': '這是個不錯的話題！', 'angela_mood': 'happy', 'personality': 'Angela AI'}"
+  },
+  {
+    "path": "/dialogue",
+    "method": "POST",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 5.844,
+    "response_size": 167,
+    "response_preview": "{'session_id': 'angela-896035cd', 'response': '？', 'response_text': '？', 'emotion': 'happy', 'angela_mood': 'happy', 'source': 'llm', 'timestamp': '2026-02-13T01:10:54.199320'}"
+  },
+  {
+    "path": "/api/v1/agents",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.016,
+    "response_size": 382,
+    "response_preview": "[{'id': 'creative-writing-1', 'name': 'CreativeWritingAgent', 'type': '创意写作', 'status': 'idle', 'capabilities': ['text_generation', 'creative_writing'], 'last_active': '2026-02-13T01:10:54.215241'}, {'id': 'code-understanding-1', 'name': 'CodeUnderstandingAgent', 'type': '代码理解', 'status': 'active', "
+  },
+  {
+    "path": "/api/v1/agents/1",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 27,
+    "response_preview": "{'error': 'Agent not found'}"
+  },
+  {
+    "path": "/api/v1/pet/status",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 229,
+    "response_preview": "{'pet_id': 'angela_v1', 'state': {'happiness': 10, 'hunger': 0, 'energy': 100, 'position': {'x': 0, 'y': 0}, 'scale': 1.0, 'current_animation': 'idle', 'current_expression': 'neutral'}, 'personality': {'curiosity': 0.8, 'playfulness': 0.9}, 'actions': []}"
+  },
+  {
+    "path": "/api/v1/pet/config",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 104,
+    "response_preview": "{'name': 'Angela', 'version': '1.0.0', 'live2d_enabled': True, 'model_path': 'assets/models/angela/model.json'}"
+  },
+  {
+    "path": "/api/v1/pet/interaction",
+    "method": "POST",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 168,
+    "response_preview": "{'status': 'success', 'new_state': {'happiness': 10, 'hunger': 0, 'energy': 100, 'position': {'x': 0, 'y': 0}, 'scale': 1.0, 'current_animation': 'idle', 'current_expression': 'neutral'}}"
+  },
+  {
+    "path": "/api/v1/system/metrics/detailed",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 1.004,
+    "response_size": 271,
+    "response_preview": "{'cpu': {'value': 5.0, 'max': 100, 'status': 'normal'}, 'memory': {'value': 68.4, 'max': 100, 'status': 'normal'}, 'disk': {'value': 11.8213521032074, 'max': 100, 'status': 'normal'}, 'network': {'value': 10.894828257633073, 'max': 100, 'status': 'normal'}, 'timestamp': '2026-02-13T01:10:55.227743'}"
+  },
+  {
+    "path": "/api/v1/system/cluster/status",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.004,
+    "response_size": 621,
+    "response_preview": "{'node_type': 'master', 'hardware': {'cpu': {'brand': 'x86_64', 'usage': 0.0, 'cores': 4}, 'memory': {'total': 7682, 'used': 4716, 'usage_percent': 68.4}, 'performance_tier': 'Extreme', 'ai_capability_score': 85.509765625}, 'cluster': {'active_nodes': 2, 'total_nodes': 4, 'nodes': [{'id': 'master-no"
+  },
+  {
+    "path": "/api/v1/economy/status",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 71,
+    "response_preview": "{'status': 'active', 'service': 'Angela Economy System', 'version': '1.0.0'}"
+  },
+  {
+    "path": "/api/v1/mobile/status",
+    "method": "GET",
+    "status_code": 405,
+    "status": "ERROR",
+    "response_time": 0.002,
+    "response_size": 31,
+    "response_preview": "{'detail': 'Method Not Allowed'}"
+  },
+  {
+    "path": "/api/v1/vision/control",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 73,
+    "response_preview": "{'status': 'success', 'module': 'vision', 'enabled': True, 'mode': 'get_method'}"
+  },
+  {
+    "path": "/api/v1/tactile/model",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 64,
+    "response_preview": "{'status': 'active', 'model': 'tactile_feedback_v1', 'enabled': True}"
+  },
+  {
+    "path": "/api/v1/audio/control",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.003,
+    "response_size": 72,
+    "response_preview": "{'status': 'success', 'module': 'audio', 'enabled': True, 'mode': 'get_method'}"
+  },
+  {
+    "path": "/api/v1/models",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.003,
+    "response_size": 168,
+    "response_preview": "[{'id': '1', 'name': 'GPT-4', 'type': '语言模型', 'status': 'ready', 'version': '4.0', 'created_at': '2023-03-14', 'last_trained': '2023-09-01', 'accuracy': 0.94, 'size': '1760GB'}]"
+  },
+  {
+    "path": "/api/v1/actions/status",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 62,
+    "response_preview": "{'pending': 0, 'executing': 0, 'completed': 0, 'failed': 0, 'total': 0}"
+  },
+  {
+    "path": "/api/v1/ops/dashboard",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.003,
+    "response_size": 2,
+    "response_preview": "{}"
+  },
+  {
+    "path": "/api/v1/desktop/state",
+    "method": "GET",
+    "status_code": 200,
+    "status": "SUCCESS",
+    "response_time": 0.002,
+    "response_size": 199,
+    "response_preview": "{'total_files': 0, 'total_size': 0, 'clutter_level': 0.0, 'files_by_category': {'DOCUMENTS': 0, 'IMAGES': 0, 'VIDEOS': 0, 'AUDIO': 0, 'ARCHIVES': 0, 'CODE': 0, 'EXECUTABLES': 0, 'DATA': 0, 'OTHER': 0}, 'last_organized': None}"
+  }
+]

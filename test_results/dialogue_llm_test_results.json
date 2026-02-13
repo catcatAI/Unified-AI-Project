@@ -1,0 +1,102 @@
+{
+  "total": 6,
+  "passed": 6,
+  "failed": 0,
+  "success_rate": 100.0,
+  "results": [
+    {
+      "test": "dialogue_/angela/chat",
+      "status": "pass",
+      "message": "對話成功: 嗨嗨！今天想聊什麼呢？",
+      "full_response": {
+        "session_id": "angela-634ab312",
+        "response": "嗨嗨！今天想聊什麼呢？",
+        "response_text": "嗨嗨！今天想聊什麼呢？",
+        "emotion": "happy",
+        "angela_mood": "happy",
+        "source": "fallback-error",
+        "timestamp": "2026-02-13T14:31:07.168653"
+      }
+    },
+    {
+      "test": "dialogue_/dialogue",
+      "status": "pass",
+      "message": "對話成功: 你好呀！有什麼我可以幫你的嗎？",
+      "full_response": {
+        "session_id": "angela-fe9abe90",
+        "response": "你好呀！有什麼我可以幫你的嗎？",
+        "response_text": "你好呀！有什麼我可以幫你的嗎？",
+        "emotion": "happy",
+        "angela_mood": "happy",
+        "source": "fallback-error",
+        "timestamp": "2026-02-13T14:31:07.172729"
+      }
+    },
+    {
+      "test": "dialogue_/api/v1/angela/chat",
+      "status": "pass",
+      "message": "對話成功: 嗨！很高興見到你！",
+      "full_response": {
+        "session_id": "angela-11b920b7",
+        "response_text": "嗨！很高興見到你！",
+        "angela_mood": "happy",
+        "personality": "Angela AI"
+      }
+    },
+    {
+      "test": "multiple_conversations",
+      "status": "pass",
+      "message": "多輪對話全部成功"
+    },
+    {
+      "test": "emotion_detection",
+      "status": "pass",
+      "message": "情感識別測試完成",
+      "emotions": [
+        [
+          "我很開心",
+          "happy"
+        ],
+        [
+          "我很難過",
+          "happy"
+        ],
+        [
+          "我很平靜",
+          "happy"
+        ],
+        [
+          "我很憤怒",
+          "happy"
+        ],
+        [
+          "我很興奮",
+          "happy"
+        ]
+      ]
+    },
+    {
+      "test": "response_time",
+      "status": "pass",
+      "message": "平均響應時間 0.00秒，在可接受範圍內",
+      "response_times": [
+        [
+          "你好",
+          0.005364656448364258
+        ],
+        [
+          "簡單的問題",
+          0.0054972171783447266
+        ],
+        [
+          "這是一個稍微長一點的問題",
+          0.0034623146057128906
+        ],
+        [
+          "這是一個非常長的問題，用來測試系統處理長文本的能力，看看響應時間是否在可接受範圍內",
+          0.00511932373046875
+        ]
+      ]
+    }
+  ]
+}

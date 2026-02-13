@@ -1,0 +1,104 @@
+{
+  "summary": {
+    "total_tests": 15,
+    "passed": 9,
+    "failed": 6,
+    "skipped": 0,
+    "success_rate": "60.0%",
+    "duration_seconds": 0.985302,
+    "start_time": "2026-02-13T12:40:38.488402",
+    "end_time": "2026-02-13T12:40:39.473704"
+  },
+  "results": [
+    {
+      "test_name": "P0-1 消息序列號",
+      "status": "pass",
+      "message": "消息序列號機制已實現",
+      "timestamp": "2026-02-13T12:40:38.488674"
+    },
+    {
+      "test_name": "P0-1 狀態合併",
+      "status": "pass",
+      "message": "狀態合併機制已實現",
+      "timestamp": "2026-02-13T12:40:38.488696"
+    },
+    {
+      "test_name": "P0-1 待處理消息緩存",
+      "status": "pass",
+      "message": "待處理消息緩存已實現",
+      "timestamp": "2026-02-13T12:40:38.488706"
+    },
+    {
+      "test_name": "P0-1 消息序列號",
+      "status": "fail",
+      "message": "缺少消息序列號機制",
+      "timestamp": "2026-02-13T12:40:38.488961"
+    },
+    {
+      "test_name": "P0-1 狀態合併",
+      "status": "fail",
+      "message": "缺少狀態合併機制",
+      "timestamp": "2026-02-13T12:40:38.489002"
+    },
+    {
+      "test_name": "P0-1 待處理消息緩存",
+      "status": "fail",
+      "message": "缺少待處理消息緩存",
+      "timestamp": "2026-02-13T12:40:38.489025"
+    },
+    {
+      "test_name": "P0-2 生物事件定義",
+      "status": "pass",
+      "message": "定義了 5 種生物事件",
+      "timestamp": "2026-02-13T12:40:38.489042"
+    },
+    {
+      "test_name": "P0-2 事件發布器",
+      "status": "fail",
+      "message": "事件發布器無法發布事件",
+      "timestamp": "2026-02-13T12:40:38.489079"
+    },
+    {
+      "test_name": "P0-2 前端生物事件監聽",
+      "status": "pass",
+      "message": "前端已實現生物事件監聽",
+      "timestamp": "2026-02-13T12:40:38.489323"
+    },
+    {
+      "test_name": "P0-3 成功結果評估",
+      "status": "pass",
+      "message": "成功結果正確評估創造力影響",
+      "timestamp": "2026-02-13T12:40:38.489359"
+    },
+    {
+      "test_name": "P0-3 失敗結果評估",
+      "status": "pass",
+      "message": "失敗結果正確評估緊張影響",
+      "timestamp": "2026-02-13T12:40:38.489374"
+    },
+    {
+      "test_name": "P0-3 AgentManager 集成",
+      "status": "pass",
+      "message": "AgentManager 已集成執行和評估功能",
+      "timestamp": "2026-02-13T12:40:38.489504"
+    },
+    {
+      "test_name": "P0-4 情感記憶存儲",
+      "status": "fail",
+      "message": "情感記憶存儲失敗",
+      "timestamp": "2026-02-13T12:40:39.473475"
+    },
+    {
+      "test_name": "P0-4 情感記憶檢索",
+      "status": "fail",
+      "message": "情感記憶檢索失敗",
+      "timestamp": "2026-02-13T12:40:39.473539"
+    },
+    {
+      "test_name": "P0-4 決策循環集成",
+      "status": "pass",
+      "message": "決策循環已集成情感記憶",
+      "timestamp": "2026-02-13T12:40:39.473688"
+    }
+  ]
+}

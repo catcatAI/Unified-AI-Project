@@ -3,8 +3,6 @@
 import os
 import sys
 from pathlib import Path
-import logging
-logger = logging.getLogger(__name__)
 
 # 設置環境變量
 os.environ['ANGELA_TESTING'] = 'true'
@@ -64,8 +62,9 @@ try:
     try:
         server.serve_forever()
     except KeyboardInterrupt:
+        print('
+🛑 Shutting down Angela AI...')
         server.shutdown()
-        print('\n🛑 Shutting down Angela AI...')
         print('✅ Angela AI stopped')
         
 except Exception as e:

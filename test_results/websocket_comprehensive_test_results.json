@@ -1,0 +1,33 @@
+{
+  "total": 5,
+  "passed": 5,
+  "failed": 0,
+  "success_rate": 100.0,
+  "results": [
+    {
+      "test": "connection",
+      "status": "pass",
+      "message": "WebSocket 連接成功"
+    },
+    {
+      "test": "message_send_receive",
+      "status": "pass",
+      "message": "消息發送和接收成功"
+    },
+    {
+      "test": "multiple_messages",
+      "status": "pass",
+      "message": "多條消息連續發送成功"
+    },
+    {
+      "test": "connection_stability",
+      "status": "pass",
+      "message": "連接穩定，在 10 秒內收到 3 條消息"
+    },
+    {
+      "test": "reconnection",
+      "status": "pass",
+      "message": "重連能力測試成功"
+    }
+  ]
+}

@@ -1,0 +1,467 @@
+{
+  "total": 24,
+  "passed": 23,
+  "failed": 1,
+  "success_rate": 95.83333333333334,
+  "results": [
+    {
+      "endpoint": "/health",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.002009,
+      "response": {
+        "status": "healthy",
+        "timestamp": "2026-02-13T14:33:04.529117"
+      }
+    },
+    {
+      "endpoint": "/api/v1/health",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.001767,
+      "response": {
+        "status": "healthy"
+      }
+    },
+    {
+      "endpoint": "/api/v1/status",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.00154,
+      "response": {
+        "status": "running",
+        "version": "6.0.4",
+        "services": [
+          "chat",
+          "health"
+        ]
+      }
+    },
+    {
+      "endpoint": "/angela/chat",
+      "method": "POST",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.00367,
+      "response": {
+        "session_id": "angela-b34cd66c",
+        "response": "哈囉哈囉！期待我們的對話~",
+        "response_text": "哈囉哈囉！期待我們的對話~",
+        "emotion": "happy",
+        "angela_mood": "happy",
+        "source": "fallback-error",
+        "timestamp": "2026-02-13T14:33:04.538321"
+      }
+    },
+    {
+      "endpoint": "/dialogue",
+      "method": "POST",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.002959,
+      "response": {
+        "session_id": "angela-28f26db3",
+        "response": "嗨嗨！今天想聊什麼呢？",
+        "response_text": "嗨嗨！今天想聊什麼呢？",
+        "emotion": "happy",
+        "angela_mood": "happy",
+        "source": "fallback-error",
+        "timestamp": "2026-02-13T14:33:04.541952"
+      }
+    },
+    {
+      "endpoint": "/api/v1/angela/chat",
+      "method": "POST",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.00178,
+      "response": {
+        "session_id": "angela-0f789106",
+        "response_text": "嗨嗨！今天想聊什麼呢？",
+        "angela_mood": "happy",
+        "personality": "Angela AI"
+      }
+    },
+    {
+      "endpoint": "/api/v1/pet/status",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.00183,
+      "response": {
+        "pet_id": "angela_v1",
+        "state": {
+          "happiness": 12,
+          "hunger": 0,
+          "energy": 100,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "scale": 1.0,
+          "current_animation": "idle",
+          "current_expression": "neutral"
+        },
+        "personality": {
+          "curiosity": 0.8,
+          "playfulness": 0.9
+        },
+        "actions": []
+      }
+    },
+    {
+      "endpoint": "/api/v1/pet/config",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.001373,
+      "response": {
+        "name": "Angela",
+        "version": "1.0.0",
+        "live2d_enabled": true,
+        "model_path": "assets/models/angela/model.json"
+      }
+    },
+    {
+      "endpoint": "/api/v1/pet/interaction",
+      "method": "POST",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.001785,
+      "response": {
+        "status": "success",
+        "new_state": {
+          "happiness": 12,
+          "hunger": 0,
+          "energy": 100,
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "scale": 1.0,
+          "current_animation": "idle",
+          "current_expression": "neutral"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/v1/vision/control",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.002009,
+      "response": {
+        "status": "success",
+        "module": "vision",
+        "enabled": true,
+        "mode": "get_method"
+      }
+    },
+    {
+      "endpoint": "/api/v1/audio/control",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.002032,
+      "response": {
+        "status": "success",
+        "module": "audio",
+        "enabled": true,
+        "mode": "get_method"
+      }
+    },
+    {
+      "endpoint": "/api/v1/tactile/model",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.002262,
+      "response": {
+        "status": "active",
+        "model": "tactile_feedback_v1",
+        "enabled": true
+      }
+    },
+    {
+      "endpoint": "/api/v1/economy/status",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.001843,
+      "response": {
+        "status": "active",
+        "service": "Angela Economy System",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "endpoint": "/api/v1/economy/transaction",
+      "method": "POST",
+      "status_code": 422,
+      "success": false,
+      "response_time": 0.002151,
+      "response": {
+        "detail": [
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "user_id"
+            ],
+            "msg": "Field required",
+            "input": null
+          },
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "amount"
+            ],
+            "msg": "Field required",
+            "input": null
+          }
+        ]
+      }
+    },
+    {
+      "endpoint": "/api/v1/mobile/status",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.002742,
+      "response": {
+        "status": "SECURE LINK ACTIVE",
+        "metrics": {
+          "cpu": "7.8%",
+          "mem": "62.1%",
+          "nodes": 2
+        },
+        "backend_version": "6.0.4",
+        "server_time": "2026-02-13T14:33:04.568139"
+      }
+    },
+    {
+      "endpoint": "/api/v1/mobile/sync",
+      "method": "POST",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.001582,
+      "response": {
+        "status": "synchronized",
+        "received_data": {
+          "data": "test"
+        },
+        "server_time": "2026-02-13T14:33:04.570387",
+        "message": "Angela 安全同步已完成"
+      }
+    },
+    {
+      "endpoint": "/api/v1/agents",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.01106,
+      "response": [
+        {
+          "id": "creative-writing-1",
+          "name": "CreativeWritingAgent",
+          "type": "创意写作",
+          "status": "idle",
+          "capabilities": [
+            "text_generation",
+            "creative_writing"
+          ],
+          "last_active": "2026-02-13T14:33:04.581768"
+        },
+        {
+          "id": "code-understanding-1",
+          "name": "CodeUnderstandingAgent",
+          "type": "代码理解",
+          "status": "active",
+          "capabilities": [
+            "analyze_code",
+            "fix_code"
+          ],
+          "last_active": "2026-02-13T14:33:04.581789"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v1/agents/1",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.001747,
+      "response": {
+        "error": "Agent not found"
+      }
+    },
+    {
+      "endpoint": "/api/v1/system/metrics/detailed",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 1.002897,
+      "response": {
+        "cpu": {
+          "value": 6.1,
+          "max": 100,
+          "status": "normal"
+        },
+        "memory": {
+          "value": 62.1,
+          "max": 100,
+          "status": "normal"
+        },
+        "disk": {
+          "value": 11.845496644052844,
+          "max": 100,
+          "status": "normal"
+        },
+        "network": {
+          "value": 10.90843702272953,
+          "max": 100,
+          "status": "normal"
+        },
+        "timestamp": "2026-02-13T14:33:05.587538"
+      }
+    },
+    {
+      "endpoint": "/api/v1/system/cluster/status",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.002763,
+      "response": {
+        "node_type": "master",
+        "hardware": {
+          "cpu": {
+            "brand": "x86_64",
+            "usage": 50.0,
+            "cores": 4
+          },
+          "memory": {
+            "total": 7682,
+            "used": 4089,
+            "usage_percent": 62.1
+          },
+          "performance_tier": "Extreme",
+          "ai_capability_score": 85.509765625
+        },
+        "cluster": {
+          "active_nodes": 2,
+          "total_nodes": 4,
+          "nodes": [
+            {
+              "id": "master-node (Self)",
+              "type": "master",
+              "status": "online",
+              "load": 0.0
+            },
+            {
+              "id": "worker-alpha",
+              "type": "worker",
+              "status": "online",
+              "precision": "FP16",
+              "load": 0.45
+            },
+            {
+              "id": "worker-beta",
+              "type": "worker",
+              "status": "online",
+              "precision": "FP8",
+              "load": 0.12
+            },
+            {
+              "id": "worker-gamma",
+              "type": "worker",
+              "status": "offline",
+              "precision": "FP32",
+              "load": 0.0
+            }
+          ]
+        },
+        "timestamp": 1770964385.5912645
+      }
+    },
+    {
+      "endpoint": "/api/v1/ops/dashboard",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.001367,
+      "response": {
+        "system_health": {
+          "overall_score": 75.0,
+          "unhealthy_components": []
+        },
+        "recent_insights": [],
+        "active_alerts": 0,
+        "auto_actions_24h": 0,
+        "total_insights": 0,
+        "last_update": "2026-02-13T06:33:05.593392+00:00"
+      }
+    },
+    {
+      "endpoint": "/api/v1/desktop/state",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.001564,
+      "response": {
+        "total_files": 0,
+        "total_size": 0,
+        "clutter_level": 0.0,
+        "files_by_category": {
+          "DOCUMENTS": 0,
+          "IMAGES": 0,
+          "VIDEOS": 0,
+          "AUDIO": 0,
+          "ARCHIVES": 0,
+          "CODE": 0,
+          "EXECUTABLES": 0,
+          "DATA": 0,
+          "OTHER": 0
+        },
+        "last_organized": null
+      }
+    },
+    {
+      "endpoint": "/api/v1/actions/status",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.001404,
+      "response": {
+        "pending": 0,
+        "executing": 0,
+        "completed": 0,
+        "failed": 0,
+        "total": 0
+      }
+    },
+    {
+      "endpoint": "/api/v1/models",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.001562,
+      "response": [
+        {
+          "id": "1",
+          "name": "GPT-4",
+          "type": "语言模型",
+          "status": "ready",
+          "version": "4.0",
+          "created_at": "2023-03-14",
+          "last_trained": "2023-09-01",
+          "accuracy": 0.94,
+          "size": "1760GB"
+        }
+      ]
+    }
+  ]
+}

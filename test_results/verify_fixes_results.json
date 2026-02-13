@@ -1,0 +1,45 @@
+{
+  "total": 3,
+  "passed": 3,
+  "failed": 0,
+  "success_rate": 100.0,
+  "results": [
+    {
+      "test": "economy_transaction_correct_params",
+      "success": true,
+      "data": {
+        "status": "success",
+        "new_balance": 114.0
+      }
+    },
+    {
+      "test": "mobile_status_get",
+      "success": true,
+      "data": {
+        "status": "SECURE LINK ACTIVE",
+        "metrics": {
+          "cpu": "15.0%",
+          "mem": "62.0%",
+          "nodes": 2
+        },
+        "backend_version": "6.0.4",
+        "server_time": "2026-02-13T14:32:42.763128"
+      }
+    },
+    {
+      "test": "ops_dashboard",
+      "success": true,
+      "data": {
+        "system_health": {
+          "overall_score": 75.0,
+          "unhealthy_components": []
+        },
+        "recent_insights": [],
+        "active_alerts": 0,
+        "auto_actions_24h": 0,
+        "total_insights": 0,
+        "last_update": "2026-02-13T06:32:42.765761+00:00"
+      }
+    }
+  ]
+}
