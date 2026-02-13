@@ -40,11 +40,11 @@ def check_nodejs():
     print("\n🔍 检查Node.js环境...")
     try:
         result = subprocess.run(["node", "--version"], 
-                              capture_output=True, text=True)
+                              capture_output=True, text=True, shell=True)
         print(f"✅ Node.js版本: {result.stdout.strip()}")
         
         result = subprocess.run(["npm", "--version"], 
-                              capture_output=True, text=True)
+                              capture_output=True, text=True, shell=True)
         print(f"✅ npm版本: {result.stdout.strip()}")
         return True
     except Exception as e:

@@ -1,6 +1,7 @@
 packages:
-  - packages/*
-  - apps/*
+  - 'packages/*'
+  - 'apps/*'
+  - 'apps/desktop-app/electron_app'
 
 onlyBuiltDependencies:
   - '@prisma/client'
