@@ -452,7 +452,7 @@ if __name__ == '__main__':
             keywords: List of keywords to search for
             data_type_filter: Filter by data type
             limit: Maximum number of results
-            
+
         Returns:
             List of matching HAMRecallResult objects
         """
@@ -461,6 +461,200 @@ if __name__ == '__main__':
         else:
             logger.warning("Query engine not available")
             return []
+
+    # ========== 记忆增强系统 - 模板管理 ==========
+
+    async def store_template(self, template) -> bool:
+        """
+        存储回應模板到记忆系统
+
+        Args:
+            template: MemoryTemplate 对象
+
+        Returns:
+            bool: 是否成功存储
+        """
+        try:
+            # 将模板序列化为 JSON
+            template_json = template.to_dict()
+
+            # 将 JSON 转换为字符串
+            content = json.dumps(template_json, ensure_ascii=False)
+
+            # 创建元数据
+            metadata = {
+                "data_type": "response_template",
+                "template_id": template.id,
+                "category": template.category.value,
+                "keywords": template.keywords,
+                "usage_count": template.usage_count,
+                "success_rate": template.success_rate,
+                "is_template": True
+            }
+
+            # 存储到核心记忆
+            memory_id = await self.store_experience(
+                content=content,
+                data_type="response_template",
+                metadata=metadata
+            )
+
+            if memory_id:
+                logger.info(f"Stored template {template.id} with memory ID {memory_id}")
+                return True
+            else:
+                logger.error(f"Failed to store template {template.id}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error storing template: {e}", exc_info=True)
+            return False
+
+    async def get_template(self, template_id: str):
+        """
+        获取单个模板
+
+        Args:
+            template_id: 模板 ID
+
+        Returns:
+            MemoryTemplate 对象，如果不存在返回 None
+        """
+        try:
+            # 通过元数据查询模板
+            results = await self.query_engine.query_core_memory(
+                metadata_filters={"template_id": template_id},
+                data_type_filter="response_template",
+                limit=1
+            )
+
+            if results and len(results) > 0:
+                # 反序列化模板
+                content = results[0].content
+                template_json = json.loads(content)
+                return template.from_dict(template_json)
+            else:
+                return None
+
+        except Exception as e:
+            logger.error(f"Error getting template {template_id}: {e}", exc_info=True)
+            return None
+
+    async def update_template(self, template) -> bool:
+        """
+        更新模板（包括使用统计）
+
+        Args:
+            template: MemoryTemplate 对象
+
+        Returns:
+            bool: 是否成功更新
+        """
+        try:
+            # 先删除旧模板（简化处理）
+            # 在生产环境中，应该直接更新而不是删除重建
+            await self._delete_template_by_id(template.id)
+
+            # 重新存储更新后的模板
+            return await self.store_template(template)
+
+        except Exception as e:
+            logger.error(f"Error updating template {template.id}: {e}", exc_info=True)
+            return False
+
+    async def _delete_template_by_id(self, template_id: str) -> bool:
+        """
+        通过 ID 删除模板
+
+        Args:
+            template_id: 模板 ID
+
+        Returns:
+            bool: 是否成功删除
+        """
+        try:
+            # 查找模板的记忆 ID
+            results = await self.query_engine.query_core_memory(
+                metadata_filters={"template_id": template_id},
+                data_type_filter="response_template",
+                limit=1
+            )
+
+            if results and len(results) > 0:
+                memory_id = results[0].memory_id
+                # 删除记忆
+                if memory_id in self.core_memory_store:
+                    del self.core_memory_store[memory_id]
+                    logger.info(f"Deleted template {template_id} with memory ID {memory_id}")
+                    return True
+
+            return False
+
+        except Exception as e:
+            logger.error(f"Error deleting template {template_id}: {e}", exc_info=True)
+            return False
+
+    async def get_all_templates(self) -> List:
+        """
+        获取所有模板
+
+        Returns:
+            List[MemoryTemplate]: 所有模板列表
+        """
+        try:
+            # 查询所有模板类型的记忆
+            results = await self.query_engine.query_core_memory(
+                data_type_filter="response_template",
+                limit=1000
+            )
+
+            # 反序列化所有模板
+            templates = []
+            for result in results:
+                try:
+                    content = result.content
+                    template_json = json.loads(content)
+                    # 导入 MemoryTemplate 以避免循环导入
+                    from ..memory_template import MemoryTemplate
+                    template = MemoryTemplate.from_dict(template_json)
+                    templates.append(template)
+                except Exception as e:
+                    logger.warning(f"Failed to deserialize template: {e}")
+
+            return templates
+
+        except Exception as e:
+            logger.error(f"Error getting all templates: {e}", exc_info=True)
+            return []
+
+    async def retrieve_response_templates(
+        self,
+        query: str,
+        angela_state,
+        user_impression,
+        limit: int = 5,
+        min_score: float = 0.7
+    ):
+        """
+        检索回應模板（便捷方法）
+
+        Args:
+            query: 用户查询
+            angela_state: Angela 当前状态
+            user_impression: 用户印象
+            limit: 返回的最大模板数量
+            min_score: 最小匹配分数阈值
+
+        Returns:
+            List[Tuple[MemoryTemplate, float]]: (模板, 匹配分数) 列表
+        """
+        return await self.query_engine.retrieve_response_templates(
+            query=query,
+            angela_state=angela_state,
+            user_impression=user_impression,
+            limit=limit,
+            min_score=min_score
+        )
 
     # Test querying memory
     print("\n--- Querying Memory (keywords in metadata) ---")

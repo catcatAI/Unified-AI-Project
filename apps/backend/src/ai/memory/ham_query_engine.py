@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Union, Tuple
 from .ham_types import HAMMemory, HAMRecallResult, HAMDataPackageInternal
 from .ham_errors import HAMMemoryError
 from .vector_store import VectorMemoryStore
+from .memory_template import MemoryTemplate, AngelaState, UserImpression, ResponseCategory
 
 logger = logging.getLogger(__name__)
 
@@ -315,3 +316,254 @@ class HAMQueryEngine:
 
         logger.debug(f"HAM: Query returned {len(results)} results (limit was {limit}).")
         return results
+
+    # ========== 记忆增强系统 - 模板检索 ==========
+
+    async def retrieve_response_templates(
+        self,
+        query: str,
+        angela_state: AngelaState,
+        user_impression: UserImpression,
+        limit: int = 5,
+        min_score: float = 0.7
+    ) -> List[Tuple[MemoryTemplate, float]]:
+        """
+        智能检索回應模板
+        =================
+        检索逻辑：
+        1. 语义搜索（使用现有向量嵌入）
+        2. 状态匹配（αβγδ 维度）
+        3. 用户印象匹配
+        4. 综合评分（状态 40% + 印象 30% + 成功率 30%）
+        5. 返回 Top K 模板
+
+        Args:
+            query: 用户查询
+            angela_state: Angela 当前状态
+            user_impression: 用户印象
+            limit: 返回的最大模板数量
+            min_score: 最小匹配分数阈值
+
+        Returns:
+            List[Tuple[MemoryTemplate, float]]: (模板, 匹配分数) 列表，按分数降序排序
+        """
+        logger.debug(f"HAM: Retrieving response templates for query: '{query}'")
+
+        # 1. 语义搜索
+        semantic_templates = await self._semantic_template_search(query, limit * 2)
+
+        # 2. 计算每个模板的匹配分数
+        scored_templates = []
+        for template in semantic_templates:
+            score = template.calculate_match_score(query, angela_state, user_impression)
+
+            if score >= min_score:
+                scored_templates.append((template, score))
+
+        # 3. 按分数排序
+        scored_templates.sort(key=lambda x: x[1], reverse=True)
+
+        # 4. 应用限制
+        results = scored_templates[:limit]
+
+        logger.info(f"HAM: Retrieved {len(results)} response templates (min_score={min_score})")
+        return results
+
+    async def _semantic_template_search(
+        self,
+        query: str,
+        limit: int
+    ) -> List[MemoryTemplate]:
+        """
+        语义搜索模板
+        使用向量嵌入查找相关模板
+        """
+        templates = []
+
+        # 如果有 ChromaDB 集合，使用语义搜索
+        if self.chroma_collection is not None:
+            try:
+                # 查询向量数据库
+                chroma_results = self.chroma_collection.query(
+                    query_texts=[query],
+                    n_results=limit,
+                    include=['metadatas', 'documents']
+                )
+
+                # 从结果中提取模板
+                if chroma_results and chroma_results['ids']:
+                    for i, mem_id in enumerate(chroma_results['ids'][0]):
+                        if mem_id in self.core_memory_store:
+                            data_package = self.core_memory_store[mem_id]
+
+                            # 检查是否是模板类型
+                            metadata = data_package.get("metadata", {})
+                            if metadata.get("data_type") == "response_template":
+                                try:
+                                    # 反序列化为 MemoryTemplate
+                                    template = self._deserialize_template(mem_id, data_package)
+                                    templates.append(template)
+                                except Exception as e:
+                                    logger.warning(f"Failed to deserialize template {mem_id}: {e}")
+
+            except Exception as e:
+                logger.error(f"Error during semantic template search: {e}")
+
+        # 如果没有找到足够的模板，尝试关键词匹配
+        if len(templates) < limit:
+            keyword_templates = self._keyword_template_search(query, limit - len(templates))
+            templates.extend(keyword_templates)
+
+        return templates
+
+    def _keyword_template_search(
+        self,
+        query: str,
+        limit: int
+    ) -> List[MemoryTemplate]:
+        """
+        关键词搜索模板
+        在元数据中搜索匹配的模板
+        """
+        templates = []
+        query_lower = query.lower()
+
+        for mem_id, data_package in self.core_memory_store.items():
+            if len(templates) >= limit:
+                break
+
+            metadata = data_package.get("metadata", {})
+
+            # 检查是否是模板类型
+            if metadata.get("data_type") != "response_template":
+                continue
+
+            # 关键词匹配
+            keywords = metadata.get("keywords", [])
+            if any(kw.lower() in query_lower for kw in keywords):
+                try:
+                    template = self._deserialize_template(mem_id, data_package)
+                    templates.append(template)
+                except Exception as e:
+                    logger.warning(f"Failed to deserialize template {mem_id}: {e}")
+
+        return templates
+
+    def _deserialize_template(
+        self,
+        memory_id: str,
+        data_package: HAMDataPackageInternal
+    ) -> MemoryTemplate:
+        """
+        反序列化数据包为 MemoryTemplate 对象
+        """
+        encrypted_package = data_package["encrypted_package"]
+
+        try:
+            # 解密和解压
+            decrypted_data = self.data_processor._decrypt(encrypted_package)
+            decompressed_data_bytes = self.data_processor._decompress(decrypted_data)
+            content = decompressed_data_bytes.decode('utf-8')
+
+            # 解析 JSON
+            import json
+            template_data = json.loads(content)
+
+            # 创建 MemoryTemplate 对象
+            template = MemoryTemplate.from_dict(template_data)
+            return template
+
+        except Exception as e:
+            logger.error(f"Error deserializing template {memory_id}: {e}")
+            raise HAMMemoryError(f"Failed to deserialize template {memory_id}: {e}")
+
+    def _calculate_state_similarity(
+        self,
+        current_state: AngelaState,
+        template_state: AngelaState
+    ) -> float:
+        """
+        计算状态相似度
+        比较 αβγδ 四个维度的相似度
+
+        Returns:
+            float: 0-1 之间的相似度分数
+        """
+        total_score = 0.0
+        weight_sum = 0.0
+
+        # Alpha (意识水平) - 权重 30%
+        alpha_score = self._calculate_dict_similarity(
+            current_state.alpha,
+            template_state.alpha
+        )
+        total_score += alpha_score * 0.30
+        weight_sum += 0.30
+
+        # Beta (情绪状态) - 权重 40%
+        beta_score = self._calculate_dict_similarity(
+            current_state.beta,
+            template_state.beta
+        )
+        total_score += beta_score * 0.40
+        weight_sum += 0.40
+
+        # Gamma (认知负荷) - 权重 15%
+        gamma_score = self._calculate_dict_similarity(
+            current_state.gamma,
+            template_state.gamma
+        )
+        total_score += gamma_score * 0.15
+        weight_sum += 0.15
+
+        # Delta (生理状态) - 权重 15%
+        delta_score = self._calculate_dict_similarity(
+            current_state.delta,
+            template_state.delta
+        )
+        total_score += delta_score * 0.15
+        weight_sum += 0.15
+
+        # 归一化
+        if weight_sum > 0:
+            return total_score / weight_sum
+        return 0.5  # 默认中等相似度
+
+    def _calculate_dict_similarity(
+        self,
+        dict1: Dict[str, float],
+        dict2: Dict[str, float]
+    ) -> float:
+        """
+        计算两个字典的相似度
+        使用余弦相似度
+        """
+        if not dict1 or not dict2:
+            return 0.5  # 默认中等相似度
+
+        # 获取所有键
+        all_keys = set(dict1.keys()) | set(dict2.keys())
+
+        if not all_keys:
+            return 1.0  # 空字典，完全相似
+
+        # 计算向量
+        vec1 = [dict1.get(k, 0.0) for k in all_keys]
+        vec2 = [dict2.get(k, 0.0) for k in all_keys]
+
+        # 计算点积
+        dot_product = sum(v1 * v2 for v1, v2 in zip(vec1, vec2))
+
+        # 计算模
+        norm1 = sum(v ** 2 for v in vec1) ** 0.5
+        norm2 = sum(v ** 2 for v in vec2) ** 0.5
+
+        # 避免除以零
+        if norm1 == 0 or norm2 == 0:
+            return 0.0
+
+        # 余弦相似度
+        similarity = dot_product / (norm1 * norm2)
+
+        # 归一化到 0-1
+        return max(0.0, min(1.0, similarity))

@@ -21,6 +21,19 @@ from abc import ABC, abstractmethod
 
 import httpx
 
+# 记忆增强系统导入
+try:
+    from ..ai.memory.ham_memory.ham_manager import HAMMemoryManager
+    from ..ai.memory.memory_template import AngelaState, UserImpression, MemoryTemplate
+    from ..ai.memory.precompute_service import PrecomputeService, PrecomputeTask
+    from ..ai.memory.template_library import get_template_library
+    from ..ai.memory.task_generator import TaskGenerator
+    MEMORY_ENHANCED = True
+except ImportError as e:
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Memory enhancement modules not available: {e}")
+    MEMORY_ENHANCED = False
+
 # 簡單日誌設置
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("angela_llm")
@@ -291,6 +304,49 @@ class AngelaLLMService:
         # 初始化各後端
         self._init_backends()
 
+        # ========== 记忆增强系统初始化 ==========
+        if MEMORY_ENHANCED:
+            try:
+                # 初始化记忆管理器
+                self.memory_manager = HAMMemoryManager()
+                self.enable_memory_enhancement = True
+
+                # 初始化预计算服务
+                self.precompute_service = PrecomputeService(
+                    llm_service=self,
+                    memory_manager=self.memory_manager,
+                    idle_threshold=5.0,
+                    cpu_threshold=70.0,
+                    max_queue_size=50,
+                    llm_timeout=180.0
+                )
+
+                # 初始化模板库
+                self.template_library = get_template_library()
+
+                # 初始化任务生成器
+                self.task_generator = TaskGenerator(max_tasks=10)
+
+                # 统计信息
+                self.stats = {
+                    "total_requests": 0,
+                    "memory_hits": 0,
+                    "llm_calls": 0,
+                    "memory_hit_rate": 0.0,
+                    "average_response_time": 0.0,
+                    "total_response_time": 0.0
+                }
+
+                # 对话历史（用于任务生成）
+                self.conversation_history: List[Dict[str, str]] = []
+
+                logger.info("Memory enhancement system initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize memory enhancement: {e}")
+                self.enable_memory_enhancement = False
+        else:
+            self.enable_memory_enhancement = False
+
     def _get_default_config(self) -> Dict[str, Any]:
         """從配置文件讀取預設配置"""
         try:
@@ -405,36 +461,84 @@ class AngelaLLMService:
         3. 回應經過 Angela 的處理
 
         用戶不是直接與模型對話，而是透過 Angela。
+
+        增强功能（如果启用）：
+        1. 先尝试从记忆系统检索模板
+        2. 如果命中记忆，直接返回模板回應
+        3. 否则调用 LLM 生成
+        4. 将新回應存储为模板候选
         """
 
         context = context or {}
+        start_time = time.time()
+
+        # 更新统计信息
+        self.stats["total_requests"] += 1
+
+        # 记录活动（用于预计算）
+        if hasattr(self, 'precompute_service') and self.precompute_service.is_running:
+            self.precompute_service.record_activity()
+
+        # 更新对话历史
+        if hasattr(self, 'conversation_history'):
+            self.conversation_history.append({"role": "user", "content": user_message})
+            # 限制历史长度
+            if len(self.conversation_history) > 50:
+                self.conversation_history = self.conversation_history[-50:]
+
+        # ========== 记忆检索（如果启用）==========
+        if self.enable_memory_enhancement:
+            try:
+                # 尝试从记忆检索
+                memory_response = await self._try_memory_retrieval(user_message, context)
+
+                if memory_response:
+                    # 记忆命中
+                    self.stats["memory_hits"] += 1
+                    response_time = (time.time() - start_time) * 1000
+
+                    # 更新统计
+                    self.stats["total_response_time"] += response_time
+                    self.stats["average_response_time"] = (
+                        self.stats["total_response_time"] / self.stats["total_requests"]
+                    )
+                    self.stats["memory_hit_rate"] = (
+                        self.stats["memory_hits"] / self.stats["total_requests"]
+                    )
+
+                    logger.info(f"Memory hit: {response_time:.0f}ms")
+                    return memory_response
+            except Exception as e:
+                logger.warning(f"Memory retrieval failed: {e}")
 
         # 如果沒有可用的後端，使用備份機制
         if not self.is_available or self.active_backend is None:
             return await self._fallback_response(user_message, context)
 
+        # ========== LLM 生成 ==========
         try:
-            # 建構提示詞
-            messages = self._construct_angela_prompt(user_message, context)
+            response = await self._generate_with_llm(user_message, context)
 
-            # 調用 LLM
-            response = await self.active_backend.generate(
-                prompt=messages[-1]["content"],
-                messages=messages,
-                temperature=0.7,
-                max_tokens=512
+            # 更新对话历史
+            if hasattr(self, 'conversation_history'):
+                self.conversation_history.append({"role": "assistant", "content": response.text})
+
+            # 更新统计
+            self.stats["llm_calls"] += 1
+            response_time = (time.time() - start_time) * 1000
+            self.stats["total_response_time"] += response_time
+            self.stats["average_response_time"] = (
+                self.stats["total_response_time"] / self.stats["total_requests"]
+            )
+            self.stats["memory_hit_rate"] = (
+                self.stats["memory_hits"] / self.stats["total_requests"]
             )
 
-            if response.error:
-                logger.warning(f"LLM 回應錯誤: {response.error}")
-                return await self._fallback_response(user_message, context)
+            # 将新回應存储为模板候选
+            if self.enable_memory_enhancement and not response.error:
+                await self._store_response_as_template(user_message, response, context)
 
-            # 這裡可以添加後處理，例如：
-            # - 情感分析
-            # - 內容過濾
-            # - 個性化調整
-
-            logger.info(f"Angela 回應生成完成 ({response.response_time_ms:.0f}ms)")
+            logger.info(f"Angela 回應生成完成 ({response_time:.0f}ms)")
             return response
 
         except Exception as e:
@@ -478,6 +582,197 @@ class AngelaLLMService:
                 confidence=0.1,
                 error=str(e)
             )
+
+    # ========== 记忆增强系统 - 辅助方法 ==========
+
+    async def _try_memory_retrieval(
+        self,
+        user_message: str,
+        context: Dict[str, Any]
+    ) -> Optional[LLMResponse]:
+        """
+        尝试从记忆系统检索回應
+
+        Args:
+            user_message: 用户消息
+            context: 上下文
+
+        Returns:
+            Optional[LLMResponse]: 如果找到匹配的模板，返回回應；否则返回 None
+        """
+        try:
+            # 1. 获取 Angela 当前状态
+            angela_state = AngelaState()  # 简化版本，使用默认状态
+
+            # 2. 获取用户印象
+            user_impression = UserImpression()  # 简化版本，使用默认印象
+
+            # 3. 检索模板
+            results = await self.memory_manager.retrieve_response_templates(
+                query=user_message,
+                angela_state=angela_state,
+                user_impression=user_impression,
+                limit=5,
+                min_score=0.7
+            )
+
+            if results and len(results) > 0:
+                # 4. 选择最佳匹配
+                best_template, score = results[0]
+
+                # 5. 更新使用统计
+                best_template.record_usage(success=True)
+                await self.memory_manager.update_template(best_template)
+
+                # 6. 返回模板回應
+                return LLMResponse(
+                    text=best_template.content,
+                    backend="memory-template",
+                    model="template-based",
+                    confidence=score,
+                    metadata={
+                        "template_id": best_template.id,
+                        "template_score": score,
+                        "memory_hit": True
+                    }
+                )
+
+            return None
+
+        except Exception as e:
+            logger.warning(f"Memory retrieval error: {e}")
+            return None
+
+    async def _generate_with_llm(
+        self,
+        user_message: str,
+        context: Dict[str, Any]
+    ) -> LLMResponse:
+        """
+        使用 LLM 生成回應
+
+        Args:
+            user_message: 用户消息
+            context: 上下文
+
+        Returns:
+            LLMResponse: LLM 生成的回應
+        """
+        start_time = time.time()
+
+        try:
+            # 建構提示詞
+            messages = self._construct_angela_prompt(user_message, context)
+
+            # 調用 LLM（超时 30 秒）
+            response = await asyncio.wait_for(
+                self.active_backend.generate(
+                    prompt=messages[-1]["content"],
+                    messages=messages,
+                    temperature=0.7,
+                    max_tokens=512
+                ),
+                timeout=30.0
+            )
+
+            if response.error:
+                logger.warning(f"LLM 回應錯誤: {response.error}")
+                return await self._fallback_response(user_message, context)
+
+            return response
+
+        except asyncio.TimeoutError:
+            logger.warning("LLM generation timeout")
+            return await self._fallback_response(user_message, context)
+        except Exception as e:
+            logger.error(f"LLM generation error: {e}")
+            return await self._fallback_response(user_message, context)
+
+    async def _store_response_as_template(
+        self,
+        user_message: str,
+        response: LLMResponse,
+        context: Dict[str, Any]
+    ):
+        """
+        将新回應存储为模板候选
+
+        Args:
+            user_message: 用户消息
+            response: LLM 回應
+            context: 上下文
+        """
+        try:
+            # 只有当回應质量较高时才存储
+            if response.confidence < 0.5:
+                return
+
+            # 创建模板
+            from ..ai.memory.memory_template import ResponseCategory, create_template
+
+            template = create_template(
+                content=response.text,
+                category=ResponseCategory.SMALL_TALK,  # 默认类别
+                keywords=self._extract_keywords(user_message),
+                metadata={
+                    "llm_generated": True,
+                    "llm_backend": response.backend,
+                    "llm_model": response.model,
+                    "original_query": user_message,
+                    "created_at": time.time()
+                }
+            )
+
+            # 存储到记忆系统
+            await self.memory_manager.store_template(template)
+
+            logger.debug(f"Stored new template for query: '{user_message}'")
+
+        except Exception as e:
+            logger.warning(f"Failed to store response as template: {e}")
+
+    def _extract_keywords(self, text: str) -> List[str]:
+        """提取关键词"""
+        stopwords = {"你", "我", "他", "她", "的", "了", "吗", "呢", "吧", "啊", "是", "在", "有"}
+        words = text.split()
+        keywords = [w for w in words if w not in stopwords and len(w) > 1]
+        return keywords[:5]
+
+    async def start_precompute(self):
+        """启动预计算服务"""
+        if self.enable_memory_enhancement and hasattr(self, 'precompute_service'):
+            await self.precompute_service.start()
+            logger.info("Precompute service started")
+
+    async def stop_precompute(self):
+        """停止预计算服务"""
+        if self.enable_memory_enhancement and hasattr(self, 'precompute_service'):
+            await self.precompute_service.stop()
+            logger.info("Precompute service stopped")
+
+    async def add_precompute_task(self, task: PrecomputeTask):
+        """添加预计算任务"""
+        if self.enable_memory_enhancement and hasattr(self, 'precompute_service'):
+            return self.precompute_service.add_precompute_task(task)
+        return False
+
+    def get_memory_stats(self) -> Dict[str, Any]:
+        """获取记忆系统统计信息"""
+        stats = {
+            "enable_memory_enhancement": self.enable_memory_enhancement,
+            "llm_stats": self.stats.copy()
+        }
+
+        if self.enable_memory_enhancement:
+            if hasattr(self, 'precompute_service'):
+                stats["precompute"] = self.precompute_service.get_stats()
+            if hasattr(self, 'template_library'):
+                stats["templates"] = {
+                    "total": self.template_library.get_template_count(),
+                    "by_category": {cat.value: count for cat, count in self.template_library.get_category_counts().items()}
+                }
+
+        return stats
 
     def get_status(self) -> Dict[str, Any]:
         """獲取服務狀態"""
