@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   window: {
     minimize: () => ipcRenderer.invoke('window-minimize'),
     maximize: () => ipcRenderer.invoke('window-maximize'),
+    restore: () => ipcRenderer.invoke('window-restore'),
     close: () => ipcRenderer.invoke('window-close'),
     setSize: (width, height) => ipcRenderer.invoke('window-set-size', { width, height }),
     setSizeAndCenter: (width, height) => ipcRenderer.invoke('window-set-size-and-center', { width, height }),
@@ -20,16 +21,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setPosition: (x, y) => ipcRenderer.invoke('window-set-position', { x, y }),
     getBounds: () => ipcRenderer.invoke('window-get-bounds'),
     setAlwaysOnTop: (flag) => ipcRenderer.invoke('window-set-always-on-top', flag),
-    setIgnoreMouseEvents: (ignore, options) => ipcRenderer.invoke('window-set-ignore-mouse-events', ignore, options),
-    setClickThroughRegions: (regions) => ipcRenderer.invoke('set-click-through-regions', regions)
+    setIgnoreMouseEvents: (ignore, options) => ipcRenderer.send('set-ignore-mouse-events', { ignore, options }),
+    setClickThroughRegions: (regions) => ipcRenderer.send('set-click-through-regions', { regions }),
+    setBounds: (bounds) => ipcRenderer.send('window-set-bounds', bounds)
   },
-  
+
   // Live2D model management
   live2d: {
     loadModel: (modelPath) => ipcRenderer.invoke('live2d-load-model', modelPath),
     getModels: () => ipcRenderer.invoke('live2d-get-models')
   },
-  
+
   // Wallpaper management
   wallpaper: {
     set: (imagePath) => ipcRenderer.invoke('wallpaper-set', imagePath),
@@ -44,52 +46,52 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getMode: () => ipcRenderer.invoke('performance-get-mode'),
     setMode: (mode) => ipcRenderer.invoke('performance-set-mode', mode)
   },
-  
+
   // Module management
   modules: {
     setState: (module, enabled) => ipcRenderer.invoke('module-set-state', { module, enabled })
   },
-  
+
   // Backend settings
   backend: {
     getIP: () => ipcRenderer.invoke('backend-get-ip'),
     setIP: (ip) => ipcRenderer.invoke('backend-set-ip', ip)
   },
-  
+
   // Screen information
   screen: {
     getDisplays: () => ipcRenderer.invoke('screen-get-displays'),
     getPrimaryDisplay: () => ipcRenderer.invoke('screen-get-primary-display')
   },
-  
+
   // System theme
   theme: {
     getCurrent: () => ipcRenderer.invoke('theme-get-current'),
     setSource: (source) => ipcRenderer.send('theme-set-source', source)
   },
-  
+
   // Settings window
   settings: {
     open: () => ipcRenderer.send('settings-open'),
     close: () => ipcRenderer.send('settings-close')
   },
-  
+
   // Audio system
   audio: {
     getDevices: () => ipcRenderer.invoke('audio-get-devices')
   },
-  
+
   // Haptic system
   haptic: {
     getDevices: () => ipcRenderer.invoke('haptic-get-devices')
   },
-  
+
   // File operations
   file: {
     saveDialog: (options) => ipcRenderer.invoke('file-save-dialog', options),
     openDialog: (options) => ipcRenderer.invoke('file-open-dialog', options)
   },
-  
+
   // Security management
   security: {
     init: (keyC) => ipcRenderer.invoke('security:init', keyC),
@@ -98,14 +100,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     encrypt: (data) => ipcRenderer.invoke('security:encrypt', data),
     decrypt: (encryptedData) => ipcRenderer.invoke('security:decrypt', encryptedData)
   },
-  
+
   // WebSocket communication with backend
   websocket: {
     connect: (url) => ipcRenderer.send('websocket-connect', { url }),
     disconnect: () => ipcRenderer.send('websocket-disconnect'),
     send: (message) => ipcRenderer.send('websocket-send', message)
   },
-  
+
   // Event listeners (receive messages from main process)
   on: (channel, callback) => {
     const validChannels = [
@@ -121,12 +123,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'wallpaper-inject-object',
       'module-toggle'
     ];
-    
+
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, (event, ...args) => callback(...args));
     }
   },
-  
+
   off: (channel, callback) => {
     ipcRenderer.removeListener(channel, callback);
   }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,13 +14,15 @@
 
         body {
             width: 100vw;
-            height:  100vh;
+            height: 100vh;
             overflow: hidden;
             background: transparent;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             cursor: default;
             user-select: none;
             -webkit-user-select: none;
+            /* FIX: Allow pointer events by default, child elements can override if needed */
+            pointer-events: auto;
         }
 
         /* 主題變量 */
@@ -98,7 +101,7 @@
             width: 100%;
             height: 100%;
             z-index: 10;
-            background-color: #1a1a2e !important;
+            pointer-events: none;
         }
 
         /* Canvas wrapper for fallback character - supports proper scaling */
@@ -112,7 +115,7 @@
             height: 720px;
             z-index: 15;
             display: none;
-            pointer-events: auto;
+            pointer-events: none;
         }
 
         .canvas-wrapper.visible {
@@ -141,76 +144,271 @@
             pointer-events: none;
         }
 
-        /* Draggable title bar */
-        #title-bar {
+        /* Auto-hiding top title bar */
+        #top-bar {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
+            right: 0;
             height: 40px;
-            -webkit-app-region: drag;
-            z-index: 30;
-            cursor: move;
-            background: transparent;
-        }
-
-        /* Control buttons */
-        .control-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 30px;
-            height: 30px;
-            border: none;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            z-index: 40;
-            -webkit-app-region: no-drag;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+            backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
-            justify-content: center;
-            opacity: 0.8;  /* 提高可见度 */
-            transition: opacity 0.2s;
+            justify-content: space-between;
+            padding: 0 10px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            -webkit-app-region: drag;
         }
 
-        .control-btn:hover {
+        #top-bar:hover {
             opacity: 1;
         }
 
-        .control-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            pointer-events: none;
+        #top-bar.visible {
+            opacity: 1;
         }
 
-        .control-btn:disabled:hover {
-            opacity: 0.3;
+        .window-controls {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
         }
 
-        #close-btn {
-            background: rgba(255, 0, 0, 0.5);
+        .window-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
         }
 
-        #resize-btn {
-            top: auto;
-            bottom: 5px;
-            right: 5px;
+        .window-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .window-btn.close:hover {
+            background: rgba(255, 0, 0, 0.8);
+        }
+
+        /* Auto-hiding bottom toolbar */
+        #bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            opacity: 0;
+            transition: height 0.3s ease, opacity 0.3s ease;
+        }
+
+        #bottom-bar:hover {
+            opacity: 1;
+        }
+
+        #bottom-bar.visible {
+            opacity: 1;
+        }
+
+        #bottom-bar .toolbar-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 15px;
+            height: 60px;
+            min-height: 60px;
+        }
+
+        #dialogue-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 8px 15px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        #dialogue-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        #dialogue-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(79, 172, 254, 0.6);
+        }
+
+        .toolbar-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Expandable dialogue panel */
+        #bottom-bar {
+            transition: height 0.3s ease, opacity 0.3s ease;
+        }
+
+        #bottom-bar.expanded {
+            height: 400px;
+        }
+
+        #dialogue-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #bottom-bar.expanded #dialogue-messages {
+            display: flex;
+        }
+
+        #dialogue-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #dialogue-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .message {
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 70%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .message.angela {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            align-self: flex-start;
+        }
+
+        .message-time {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        /* 8-direction resize handles */
+        .resize-handle {
+            position: absolute;
+            z-index: 95;
+            pointer-events: auto;
+            -webkit-app-region: no-drag;
+        }
+
+        .resize-handle.top,
+        .resize-handle.bottom {
+            left: 0;
+            right: 0;
+            height: 5px;
+            cursor: ns-resize;
+        }
+
+        .resize-handle.left,
+        .resize-handle.right {
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            cursor: ew-resize;
+        }
+
+        .resize-handle.top {
+            top: 0;
+        }
+
+        .resize-handle.bottom {
+            bottom: 0;
+        }
+
+        .resize-handle.left {
+            left: 0;
+        }
+
+        .resize-handle.right {
+            right: 0;
+        }
+
+        .resize-handle.corner {
+            width: 10px;
+            height: 10px;
+        }
+
+        .resize-handle.top-left {
+            top: 0;
+            left: 0;
             cursor: nwse-resize;
         }
 
-        #scale-down-btn {
-            top: auto;
-            bottom: 5px;
-            left: 5px;
+        .resize-handle.top-right {
+            top: 0;
+            right: 0;
+            cursor: nesw-resize;
         }
 
-        #scale-up-btn {
-            top: auto;
-            bottom: 5px;
-            left: 40px;
+        .resize-handle.bottom-left {
+            bottom: 0;
+            left: 0;
+            cursor: nesw-resize;
+        }
+
+        .resize-handle.bottom-right {
+            bottom: 0;
+            right: 0;
+            cursor: nwse-resize;
         }
 
         #status-bar {
@@ -251,14 +449,19 @@
             gap: 6px;
             backdrop-filter: blur(5px);
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             pointer-events: auto;
-            max-width: 200px;  /* 防止溢出 */
-            min-width: 100px;  /* 確保最小寬度 */
-            white-space: nowrap;  /* 防止文字換行 */
-            overflow: hidden;  /* 隱溢出內容 */
-            text-overflow: ellipsis;  /* 溢出時顯示省略號 */
+            max-width: 200px;
+            /* 防止溢出 */
+            min-width: 100px;
+            /* 確保最小寬度 */
+            white-space: nowrap;
+            /* 防止文字換行 */
+            overflow: hidden;
+            /* 隱溢出內容 */
+            text-overflow: ellipsis;
+            /* 溢出時顯示省略號 */
         }
 
         .badge.secure {
@@ -302,8 +505,13 @@
         }
 
         @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         #loading-text {
@@ -333,7 +541,7 @@
             background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
         }
 
-#controls {
+        #controls {
             position: absolute;
             bottom: 10px;
             right: 10px;
@@ -399,6 +607,7 @@
                 height: 20px;
                 opacity: 1;
             }
+
             100% {
                 width: 100px;
                 height: 100px;
@@ -431,11 +640,17 @@
         }
 
         @keyframes audio-wave {
-            0% { height: 10px; }
-            100% { height: 30px; }
+            0% {
+                height: 10px;
+            }
+
+            100% {
+                height: 30px;
+            }
         }
     </style>
 </head>
+
 <body>
     <div id="loading-overlay">
         <div class="loader"></div>
@@ -446,36 +661,46 @@
     </div>
 
     <div id="container">
-        <div id="title-bar"></div>
+        <!-- Auto-hiding top title bar -->
+        <div id="top-bar">
+            <div class="window-title">Angela AI</div>
+            <div class="window-controls">
+                <button class="window-btn minimize" id="btn-minimize" title="Minimize">−</button>
+                <button class="window-btn maximize" id="btn-maximize" title="Maximize">□</button>
+                <button class="window-btn close" id="btn-close" title="Close">✕</button>
+            </div>
+        </div>
+
+        <!-- Canvas layers -->
         <canvas id="live2d-canvas"></canvas>
         <div class="canvas-wrapper" id="fallback-wrapper">
             <canvas id="fallback-canvas" style="width: 100%; height: 100%;"></canvas>
         </div>
         <div id="click-layer"></div>
-        <button class="control-btn" id="scale-down-btn" title="缩小">-</button>
-        <button class="control-btn" id="scale-up-btn" title="放大">+</button>
-        <button class="control-btn" id="resize-btn" title="调整大小">⤢</button>
+
+        <!-- Auto-hiding bottom toolbar with dialogue -->
+        <div id="bottom-bar">
+            <div id="dialogue-messages"></div>
+            <div class="toolbar-content">
+                <button class="toolbar-btn" id="btn-toggle-dialogue" title="Toggle Chat">💬</button>
+                <button class="toolbar-btn" id="btn-settings" title="Settings">⚙️</button>
+                <input type="text" id="dialogue-input" placeholder="與 Angela 對話..." />
+                <button class="toolbar-btn" id="btn-send" title="Send">📤</button>
+            </div>
+        </div>
+
+        <!-- 8-direction resize handles -->
+        <div class="resize-handle top"></div>
+        <div class="resize-handle bottom"></div>
+        <div class="resize-handle left"></div>
+        <div class="resize-handle right"></div>
+        <div class="resize-handle corner top-left"></div>
+        <div class="resize-handle corner top-right"></div>
+        <div class="resize-handle corner bottom-left"></div>
+        <div class="resize-handle corner bottom-right"></div>
     </div>
 
     <div id="status-bar"></div>
-
-    <div id="badge-container">
-        <div id="security-badge" class="badge unsecure">
-            <span class="icon">🔒</span>
-            <span class="text">Security: Off</span>
-        </div>
-    
-        <div id="sync-badge" class="badge unsecure">
-            <span class="icon">🔄</span>
-            <span class="text">Sync: Pending</span>
-        </div>
-    </div>
-
-    <div id="controls">
-        <button class="control-btn" id="btn-settings" title="Settings">⚙️</button>
-        <button class="control-btn" id="btn-minimize" title="Minimize">−</button>
-        <button class="control-btn" id="btn-close" title="Close">✕</button>
-    </div>
 
     <div id="audio-visualizer"></div>
 
@@ -498,7 +723,7 @@
             console.log('[Init] CDN loaded successfully');
         }
     </script>
-    
+
     <!-- Hardware Detection -->
     <script src="js/hardware-config.js"></script>
     <script src="js/hardware-detection-enhanced.js"></script>
@@ -516,22 +741,22 @@
     <script src="js/theme-manager.js"></script>
     <script src="js/backend-websocket.js"></script>
     <script src="js/api-client.js"></script>
-    
+
     <!-- Angela Systems -->
     <script src="js/state-matrix.js"></script>
     <script src="js/performance-manager.js"></script>
     <script src="js/maturity-tracker.js"></script>
     <script src="js/precision-manager.js"></script>
-    
+
     <!-- Live2D Core -->
     <script src="js/live2d-cubism-wrapper.js"></script>
-    
+
     <!-- Character Configuration - UDM 依赖 -->
     <script src="js/angela-character-config.js"></script>
-    
+
     <!-- Unified Display Matrix (UDM) - 核心依赖，最先加载 -->
     <script src="js/unified-display-matrix.js"></script>
-    
+
     <!-- Character System -->
     <script src="js/character-touch-detector.js"></script>
     <script src="js/haptic-handler.js"></script>
@@ -539,39 +764,39 @@
     <script src="js/angela-character-images-config.js"></script>
     <script src="js/layer-renderer.js"></script>
     <script src="js/live2d-manager.js"></script>
-    
+
     <!-- Input & Audio -->
     <script src="js/input-handler.js"></script>
     <script src="js/audio-handler.js"></script>
-    
+
     <!-- UI & Utils -->
     <script src="js/z-index-manager.js"></script>
     <script src="js/error-handler.js"></script>
-    <script src="js/dialogue-ui.js"></script>
     <script src="js/wallpaper-handler.js"></script>
     <script src="js/plugin-manager.js"></script>
     <script src="js/user-manager.js"></script>
-    
+
     <!-- Hardware Integration -->
     <script src="js/hardware-integration.js"></script>
     <script src="js/hardware-enhancement-patch.js"></script>
     <script src="js/laptop-optimizer.js"></script>
-    
+
     <!-- Detection System -->
     <script src="js/driver-detector.js"></script>
     <script src="js/availability-manager.js"></script>
     <script src="js/unified-detection.js"></script>
-    
+
     <!-- Main App -->
     <script src="js/app.js"></script>
-    
+
     <!-- Initialize Angela App -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             console.log('[App] Starting Angela App initialization...');
             window.angelaApp = new AngelaApp();
         });
     </script>
 </body>
+
 </html>
  

@@ -78,11 +78,11 @@ class AngelaApp {
 
     async initialize() {
         console.log('[AngelaApp] Initializing...');
-        
+
         // 重置进度
         this.loadingProgress = 0;
         this.updateLoadingProgress(0, 'Initializing Angela AI...');
-        
+
         try {
             // 1. 基础设施 (10%)
             await this._initializeLogger();
@@ -97,7 +97,7 @@ class AngelaApp {
             this.incrementLoadingProgress(1, 'Initializing theme...');
             await this._initializeUserManager();
             this.incrementLoadingProgress(1, 'Initializing user manager...');
-            
+
             // 2. 硬件检测 (15%)
             await this._initializeHardwareDetection();
             this.incrementLoadingProgress(5, 'Detecting hardware...');
@@ -134,11 +134,11 @@ class AngelaApp {
             }
             await this._initializeLive2D();
             this.incrementLoadingProgress(15, 'Initializing Live2D...');
-            
+
             // 8. 连接系统 (70%)
             this._linkSystems();
             this.incrementLoadingProgress(5, 'Connecting systems...');
-            
+
             // 9. 其他处理器 (90%)
             this._initializeBackendWebSocket();
             this._initializeAPIClient();
@@ -152,11 +152,11 @@ class AngelaApp {
             await this._initializePluginManager();
             await this._initializePerformanceMonitor();
             this.incrementLoadingProgress(5, 'Initializing plugins and monitor...');
-            
+
             // 10. UI 组件 (95%)
             await this._initializeDialogueUI();
             this.incrementLoadingProgress(5, 'Initializing dialogue UI...');
-            
+
             // 11. 最终设置 (100%)
             this._setupUIControls();
             this._setupElectronEvents();
@@ -165,14 +165,14 @@ class AngelaApp {
             this._setupIdleDetection();
             await this._syncWithBackend();
             this.incrementLoadingProgress(2, 'Finalizing...');
-            
+
             this._hideLoading();
             window.angelaApp = this;
-            
+
             this.isInitialized = true;
             this.showStatus('Angela AI Ready!', 3000);
             console.log('[AngelaApp] Initialization complete');
-            
+
         } catch (error) {
             console.error('[AngelaApp] Critical error:', error);
             this.showStatus('Init failed. Check console.', 5000);
@@ -185,25 +185,25 @@ class AngelaApp {
      */
     _linkSystems() {
         console.log('[AngelaApp] Linking systems...');
-        
+
         // StateMatrix → Live2D
         if (this.stateMatrix) {
             this.stateMatrix.setLive2DManager(this.live2dManager);
             this.stateMatrix.setWebSocket(this.backendWebSocket);
         }
-        
+
         // PerformanceManager
         if (this.performanceManager) {
             this.performanceManager.setLive2DManager(this.live2dManager);
             this.performanceManager.setWebSocket(this.backendWebSocket);
         }
-        
+
         // PrecisionManager
         if (this.precisionManager) {
             this.precisionManager.setPerformanceManager(this.performanceManager);
             this.precisionManager.setWebSocket(this.backendWebSocket);
         }
-        
+
         // MaturityTracker
         if (this.maturityTracker) {
             this.maturityTracker.setWebSocket(this.backendWebSocket);
@@ -295,7 +295,7 @@ class AngelaApp {
         return result;
     }
 
-async _initializeLogger() {
+    async _initializeLogger() {
         this.updateLoadingText('Initializing logger...');
 
         // 驗證初始化順序
@@ -314,7 +314,7 @@ async _initializeLogger() {
         window.angelaAppLogger = this.logger;
         this.logger.info('Angela AI starting...');
     }
-    
+
     async _initializeDataPersistence() {
         this.updateLoadingText('Initializing data persistence...');
         this.dataPersistence = new DataPersistence({
@@ -324,17 +324,17 @@ async _initializeLogger() {
         });
         this.statePersistence = new StatePersistence({ maxHistorySize: 100 });
     }
-    
+
     async _initializeSecurity() {
         this.updateLoadingText('Initializing security...');
         try {
             const backendHost = localStorage.getItem('backend_host') || 'localhost';
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000);
-            
+
             const response = await fetch(`http://${backendHost}:8000/api/v1/security/sync-key-c`, { signal: controller.signal });
             clearTimeout(timeoutId);
-            
+
             const data = await response.json();
             if (data.key_c) {
                 const result = await window.electronAPI.security.init(data.key_c);
@@ -362,7 +362,7 @@ async _initializeLogger() {
             badge.querySelector('.icon').textContent = isSecure ? '🛡️' : '⚠️';
         }
     }
-    
+
     async _initializeI18n() {
         this.updateLoadingText('Initializing i18n...');
         this.i18n = i18n;
@@ -370,7 +370,7 @@ async _initializeLogger() {
         const saved = localStorage.getItem('angela_locale');
         if (saved) this.i18n.setLocale(saved);
     }
-    
+
     async _initializeThemeManager() {
         this.updateLoadingText('Initializing theme...');
         this.themeManager = theme;
@@ -378,7 +378,7 @@ async _initializeLogger() {
         const saved = localStorage.getItem('angela_theme');
         if (saved) this.themeManager.setTheme(saved, false);
     }
-    
+
     async _initializeUserManager() {
         this.updateLoadingText('Initializing user manager...');
         this.userManager = userManager;
@@ -390,7 +390,7 @@ async _initializeLogger() {
             });
         }
     }
-    
+
     async _initializeHardwareDetection() {
         this.updateLoadingText('Detecting hardware...');
         const start = performance.now();
@@ -399,7 +399,7 @@ async _initializeLogger() {
         console.log(`[Hardware] Detected in ${(performance.now() - start).toFixed(2)}ms`);
         return hardware;
     }
-    
+
     /**
      * 初始化統一顯示矩陣 (UDM)
      * 這是最關鍵的初始化步驟，所有顯示相關的系統都依賴它
@@ -481,7 +481,7 @@ async _initializeLogger() {
 
                 // 基本縮放
                 getUserScale: () => 1.0,
-                setUserScale: (scale) => {},
+                setUserScale: (scale) => { },
 
                 // 基本身體部位檢測
                 identifyBodyPart: (x, y) => {
@@ -523,14 +523,14 @@ async _initializeLogger() {
             }
         }
     }
-    
+
     /**
      * 绑定缩放按钮
      */
     _bindScaleButtons() {
         const scaleUp = document.getElementById('scale-up-btn');
         const scaleDown = document.getElementById('scale-down-btn');
-        
+
         if (scaleUp) {
             scaleUp.onclick = () => {
                 if (this.udm) {
@@ -539,7 +539,7 @@ async _initializeLogger() {
                 }
             };
         }
-        
+
         if (scaleDown) {
             scaleDown.onclick = () => {
                 if (this.udm) {
@@ -548,48 +548,48 @@ async _initializeLogger() {
                 }
             };
         }
-        
+
         console.log('[App] Scale buttons bound');
     }
-    
+
     _initializeStateMatrix() {
         this.updateLoadingText('Initializing state matrix...');
         this.stateMatrix = new StateMatrix4D();
     }
-    
+
     async _initializePerformanceManager() {
         this.updateLoadingText('Initializing performance manager...');
         this.performanceManager = new PerformanceManager();
         const profile = this.hardwareDetector ? this.hardwareDetector.profile : null;
         await this.performanceManager.initialize(profile);
     }
-    
+
     _initializeMaturityTracker() {
         this.updateLoadingText('Initializing maturity tracker...');
         this.maturityTracker = new MaturityTracker();
         this.maturityTracker.setStateMatrix(this.stateMatrix);
     }
-    
+
     _initializePrecisionManager() {
         this.updateLoadingText('Initializing precision manager...');
         this.precisionManager = new PrecisionManager();
     }
-    
+
     async _initializeDetectionSystem() {
         this.updateLoadingText('Initializing detection system...');
         // Detection system initialization
     }
-    
+
     async _initializeLive2D() {
         this.updateLoadingText('Initializing Live2D...');
         const canvas = document.getElementById('live2d-canvas');
-        
+
         // 传入 UDM 进行坐标转换
         this.live2dManager = new Live2DManager(canvas, this.udm);
         console.log('[App] Live2DManager created with UDM');
-        
+
         await this.live2dManager.initialize?.();
-        
+
         // 恢復上次選擇的模式
         const savedMode = localStorage.getItem('render_mode') || 'live2d';
         if (savedMode === 'fallback') {
@@ -597,7 +597,7 @@ async _initializeLogger() {
             console.log('[App] 恢復到立繫模式');
         }
     }
-    
+
     _initializeBackendWebSocket() {
         this.updateLoadingText('Connecting to backend...');
         this.backendWebSocket = new BackendWebSocketClient();
@@ -612,7 +612,7 @@ async _initializeLogger() {
         const backendIP = localStorage.getItem('backend_ip') || 'http://localhost:8000';
         this.apiClient = new AngelaAPIClient(backendIP);
     }
-    
+
     _initializeInputHandler() {
         this.updateLoadingText('Setting up input...');
         const clickLayer = document.getElementById('click-layer');
@@ -638,7 +638,7 @@ async _initializeLogger() {
         this.updateLoadingText('Initializing wallpaper...');
         this.wallpaperHandler = new WallpaperHandler();
     }
-    
+
     async _initializePluginManager() {
         this.updateLoadingText('Initializing plugins...');
         this.pluginManager = new PluginManager({
@@ -649,14 +649,14 @@ async _initializeLogger() {
         this.pluginManager.setLogger(this.logger);
         await this.pluginManager.init();
     }
-    
+
     async _initializePerformanceMonitor() {
         this.updateLoadingText('Initializing performance monitor...');
         this.performanceMonitor = performanceMonitor;
         window.performanceMonitor = performanceMonitor;
         this.performanceMonitor.startCollecting();
     }
-    
+
     async _initializeDialogueUI() {
         this.updateLoadingText('Initializing dialogue UI...');
         try {
@@ -874,42 +874,130 @@ async _initializeLogger() {
             window.electronAPI?.window?.minimize();
         });
 
+        document.getElementById('btn-maximize')?.addEventListener('click', () => {
+            window.electronAPI?.window?.maximize();
+        });
+
         document.getElementById('btn-close')?.addEventListener('click', () => {
             window.electronAPI?.window?.close();
         });
 
-        // 将鼠标事件绑定到 controls 元素本身，而不是 document
-        // 避免全局事件监听器导致的内存泄漏
-        if (this.controls) {
-            // 初始時隱藏 controls
-            this.controls.classList.add('controls-hidden');
-            
-            this.controls.addEventListener('mouseenter', () => {
-                this.controls.classList.remove('controls-hidden');
-                this.controls.classList.add('visible');
+        // Dialogue system
+        const dialogueInput = document.getElementById('dialogue-input');
+        const btnSend = document.getElementById('btn-send');
+        const btnToggle = document.getElementById('btn-toggle-dialogue');
+        const bottomBar = document.getElementById('bottom-bar');
+        const messagesContainer = document.getElementById('dialogue-messages');
+
+        // Toggle dialogue panel
+        btnToggle?.addEventListener('click', () => {
+            bottomBar?.classList.toggle('expanded');
+            if (bottomBar?.classList.contains('expanded')) {
+                dialogueInput?.focus();
+            }
+        });
+
+        // Add message to display
+        const addMessage = (sender, text) => {
+            if (!messagesContainer) return;
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const time = new Date().toLocaleTimeString('zh-TW', {
+                hour: '2-digit',
+                minute: '2-digit'
             });
-            
-            this.controls.addEventListener('mouseleave', () => {
-                this.controls.classList.remove('visible');
-                // 延遲隱藏，避免快速移動導致閃爍
-                setTimeout(() => {
-                    if (!this.controls.matches(':hover')) {
-                        this.controls.classList.add('controls-hidden');
-                    }
-                }, 300);
+
+            const escapeHtml = (str) => {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            };
+
+            messageDiv.innerHTML = `
+                <div class="message-text">${escapeHtml(text)}</div>
+                <div class="message-time">${time}</div>
+            `;
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        };
+
+        const sendMessage = () => {
+            const message = dialogueInput?.value?.trim();
+            if (!message) return;
+
+            console.log('[App] Sending message:', message);
+
+            // Add user message to display
+            addMessage('user', message);
+
+            // Send to backend via WebSocket
+            if (this.backendClient && this.backendClient.isConnected()) {
+                this.backendClient.sendMessage({
+                    type: 'user_message',
+                    content: message,
+                    timestamp: new Date().toISOString()
+                });
+            }
+
+            // Clear input
+            dialogueInput.value = '';
+        };
+
+        btnSend?.addEventListener('click', sendMessage);
+
+        dialogueInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Listen for backend responses
+        if (this.backendClient) {
+            this.backendClient.on('angela_response', (data) => {
+                if (data.response) {
+                    addMessage('angela', data.response);
+                }
             });
         }
+
+        console.log('[App] Dialogue system initialized');
     }
+
 
     _setupElectronEvents() {
         if (!window.electronAPI) return;
-        
+
         window.electronAPI.on('window-ready', (d) => console.log('Window ready:', d));
         window.electronAPI.on('screen-changed', (d) => {
             console.log('Screen changed:', d);
             this.inputHandler?.updateRegions();
         });
-        
+
+        // Listen for WebSocket messages from Main process
+        window.electronAPI.on('websocket-message', (message) => {
+            if (this.backendWebSocket) {
+                // Ensure the message is routed correctly
+                this.backendWebSocket._routeMessage(message);
+            }
+        });
+
+        window.electronAPI.on('websocket-connected', () => {
+            if (this.backendWebSocket) {
+                this.backendWebSocket.connected = true;
+                this.backendWebSocket._fireEvent('connected', { success: true });
+            }
+        });
+
+        window.electronAPI.on('websocket-disconnected', () => {
+            if (this.backendWebSocket) {
+                this.backendWebSocket.connected = false;
+                this.backendWebSocket._fireEvent('disconnected', { success: false });
+            }
+        });
+
         // 處理渲染模式切換
         window.electronAPI.on('render-mode', (mode) => {
             if (this.live2dManager) {
@@ -924,7 +1012,7 @@ async _initializeLogger() {
                 localStorage.setItem('render_mode', mode);
             }
         });
-        
+
         // 設置鍵盤快捷鍵
         this._setupKeyboardShortcuts();
     }
@@ -952,7 +1040,7 @@ async _initializeLogger() {
                     break;
             }
         });
-        
+
         console.log('[App] Keyboard shortcuts configured');
         console.log('[App] 0: 切換 Live2D/立繫 模式');
     }
@@ -979,10 +1067,10 @@ async _initializeLogger() {
     updateLoadingProgress(progress, text = null) {
         // progress: 0-100
         this.loadingProgress = Math.min(100, Math.max(0, progress));
-        
+
         if (this.progressBarFill) {
             this.progressBarFill.style.width = `${this.loadingProgress}%`;
-            
+
             // 完成时添加完成样式
             if (this.loadingProgress >= 100) {
                 this.progressBarFill.classList.add('complete');
@@ -990,7 +1078,7 @@ async _initializeLogger() {
                 this.progressBarFill.classList.remove('complete');
             }
         }
-        
+
         // 可选地更新文本
         if (text) {
             this.updateLoadingText(text);
