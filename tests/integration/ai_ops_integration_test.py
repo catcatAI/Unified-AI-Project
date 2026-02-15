@@ -30,11 +30,11 @@ class AIOpsIntegrationTest:
     
     def __init__(self):
         self.test_results = {}
-        self.ops_manager == None
-        self.ai_ops == None
-        self.maintenance == None
-        self.optimizer == None
-        self.planner == None
+        self.ops_manager = None
+        self.ai_ops = None
+        self.maintenance = None
+        self.optimizer = None
+        self.planner = None
         
     async def setup(self):
         """设置测试环境"""
@@ -60,7 +60,7 @@ class AIOpsIntegrationTest:
             logger.info("AI运维组件初始化完成")
             return True
             
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"初始化失败, {e}")
             return False
     
@@ -81,14 +81,14 @@ class AIOpsIntegrationTest:
             all_initialized = all(components_status.values())
             
             self.test_results["component_initialization"] = {
-                "status": "PASS" if all_initialized else "FAIL",:::
+                "status": "PASS" if all_initialized else "FAIL",::
                 "details": components_status
             }
             
-            logger.info(f"组件初始化测试, {'通过' if all_initialized else '失败'}")::
+            logger.info(f"组件初始化测试, {'通过' if all_initialized else '失败'}"):
             return all_initialized
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"组件初始化测试失败, {e}")
             self.test_results["component_initialization"] = {
                 "status": "FAIL",
@@ -130,15 +130,15 @@ class AIOpsIntegrationTest:
             success = len(insights) >= 0  # 至少应该有洞察生成
             
             self.test_results["metrics_collection"] = {
-                "status": "PASS" if success else "FAIL",:::
+                "status": "PASS" if success else "FAIL",::
                 "insights_generated": len(insights),
                 "metrics_processed": test_metrics
             }
             
-            logger.info(f"指标收集测试, {'通过' if success else '失败'}")::
+            logger.info(f"指标收集测试, {'通过' if success else '失败'}"):
             return success
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"指标收集测试失败, {e}")
             self.test_results["metrics_collection"] = {
                 "status": "FAIL",
@@ -180,15 +180,15 @@ class AIOpsIntegrationTest:
             success = len(anomalies) > 0
             
             self.test_results["anomaly_detection"] = {
-                "status": "PASS" if success else "FAIL",:::
+                "status": "PASS" if success else "FAIL",::
                 "anomalies_detected": len(anomalies),
                 "anomaly_data": [a.__dict__ for a in anomalies[:3]]  # 前3个异常,:
             }
             
-            logger.info(f"异常检测测试, {'通过' if success else '失败'}")::
+            logger.info(f"异常检测测试, {'通过' if success else '失败'}"):
             return success
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"异常检测测试失败, {e}")
             self.test_results["anomaly_detection"] = {
                 "status": "FAIL",
@@ -217,11 +217,11 @@ class AIOpsIntegrationTest:
             }
             
             # 多次收集指标以建立历史数据
-            for i in range(5)::
+            for i in range(5):
                 await self.maintenance.collect_component_metrics(
                     "test_component_3", "cache", maintenance_metrics
                 )
-                await asyncio.sleep(0.5())
+                await asyncio.sleep(0.5))
             
             # 检查健康状态
             health = await self.maintenance.get_component_health("test_component_3")
@@ -232,16 +232,16 @@ class AIOpsIntegrationTest:
             success = health is not None and health.health_score < 80
             
             self.test_results["predictive_maintenance"] = {
-                "status": "PASS" if success else "FAIL",:::
-                "health_score": health.health_score if health else None,::
+                "status": "PASS" if success else "FAIL",::
+                "health_score": health.health_score if health else None,:
                 "maintenance_schedules": len(schedules),
                 "health_data": health.__dict__ if health else None,:
             }
 
-            logger.info(f"预测性维护测试, {'通过' if success else '失败'}")::
+            logger.info(f"预测性维护测试, {'通过' if success else '失败'}"):
             return success
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"预测性维护测试失败, {e}")
             self.test_results["predictive_maintenance"] = {
                 "status": "FAIL",
@@ -270,11 +270,11 @@ class AIOpsIntegrationTest:
             }
             
             # 收集性能数据
-            for i in range(3)::
+            for i in range(3):
                 await self.optimizer.collect_performance_metrics(
                     "test_component_4", "ai_model", performance_metrics
                 )
-                await asyncio.sleep(0.5())
+                await asyncio.sleep(0.5))
             
             # 获取优化建议
             recommendations = await self.optimizer.get_optimization_recommendations("test_component_4")
@@ -282,15 +282,15 @@ class AIOpsIntegrationTest:
             success = len(recommendations) > 0
             
             self.test_results["performance_optimization"] = {
-                "status": "PASS" if success else "FAIL",:::
+                "status": "PASS" if success else "FAIL",::
                 "recommendations_count": len(recommendations),
                 "recommendations": [rec.__dict__ for rec in recommendations[:3]]:
             }
             
-            logger.info(f"性能优化测试, {'通过' if success else '失败'}")::
+            logger.info(f"性能优化测试, {'通过' if success else '失败'}"):
             return success
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"性能优化测试失败, {e}")
             self.test_results["performance_optimization"] = {
                 "status": "FAIL",
@@ -316,9 +316,9 @@ class AIOpsIntegrationTest:
             }
             
             # 收集容量数据
-            for i in range(3)::
+            for i in range(3):
                 await self.planner.collect_resource_usage(capacity_metrics)
-                await asyncio.sleep(0.5())
+                await asyncio.sleep(0.5))
             
             # 获取容量预测
             predictions = await self.planner.get_capacity_predictions()
@@ -329,16 +329,16 @@ class AIOpsIntegrationTest:
             success = len(predictions) > 0 or len(plans) > 0
             
             self.test_results["capacity_planning"] = {
-                "status": "PASS" if success else "FAIL",:::
+                "status": "PASS" if success else "FAIL",::
                 "predictions_count": len(predictions),
                 "plans_count": len(plans),
                 "predictions": [pred.__dict__ for pred in predictions[:3]]:
             }
             
-            logger.info(f"容量规划测试, {'通过' if success else '失败'}")::
+            logger.info(f"容量规划测试, {'通过' if success else '失败'}"):
             return success
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"容量规划测试失败, {e}")
             self.test_results["capacity_planning"] = {
                 "status": "FAIL",
@@ -358,9 +358,9 @@ class AIOpsIntegrationTest:
                 ("response_slow", "cache", {"cpu_usage": 70, "memory_usage": 60, "response_time": 800, "error_rate": 0.5})
             ]
             
-            for component_id, component_type, metrics in test_scenarios,::
+            for component_id, component_type, metrics in test_scenarios,:
                 await self.ops_manager.collect_system_metrics(component_id, component_type, metrics)
-                await asyncio.sleep(0.5())
+                await asyncio.sleep(0.5))
             
             # 等待洞察生成
             await asyncio.sleep(3)
@@ -369,20 +369,20 @@ class AIOpsIntegrationTest:
             insights = await self.ops_manager.get_insights(limit=20)
             
             # 验证洞察类型多样性
-            insight_types = set(insight.insight_type for insight in insights)::
+            insight_types = set(insight.insight_type for insight in insights):
             success = len(insights) >= 3 and len(insight_types) >= 2
             
             self.test_results["intelligent_insights"] = {:
-                "status": "PASS" if success else "FAIL",:::
+                "status": "PASS" if success else "FAIL",::
                 "total_insights": len(insights),
                 "insight_types": list(insight_types),
                 "insight_samples": [insight.__dict__ for insight in insights[:5]]:
             }
             
-            logger.info(f"智能洞察测试, {'通过' if success else '失败'}")::
+            logger.info(f"智能洞察测试, {'通过' if success else '失败'}"):
             return success
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"智能洞察测试失败, {e}")
             self.test_results["intelligent_insights"] = {
                 "status": "FAIL",
@@ -423,15 +423,15 @@ class AIOpsIntegrationTest:
             success = len(action_history) > 0
             
             self.test_results["auto_actions"] = {
-                "status": "PASS" if success else "FAIL",:::
+                "status": "PASS" if success else "FAIL",::
                 "actions_executed": len(action_history),
                 "recent_actions": action_history[-3,] if action_history else []:
             }
 
-            logger.info(f"自动操作测试, {'通过' if success else '失败'}")::
+            logger.info(f"自动操作测试, {'通过' if success else '失败'}"):
             return success
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"自动操作测试失败, {e}")
             self.test_results["auto_actions"] = {
                 "status": "FAIL",
@@ -453,11 +453,11 @@ class AIOpsIntegrationTest:
                 "auto_actions_24h", "total_insights", "last_update"
             ]
             
-            has_all_fields = all(field in dashboard_data for field in required_fields)::
+            has_all_fields = all(field in dashboard_data for field in required_fields):
             success = has_all_fields and dashboard_data["total_insights"] >= 0
             
             self.test_results["dashboard_data"] = {:
-                "status": "PASS" if success else "FAIL",:::
+                "status": "PASS" if success else "FAIL",::
                 "fields_present": required_fields,
                 "dashboard_summary": {
                     "total_insights": dashboard_data.get("total_insights", 0),
@@ -466,10 +466,10 @@ class AIOpsIntegrationTest:
                 }
             }
             
-            logger.info(f"仪表板数据测试, {'通过' if success else '失败'}")::
+            logger.info(f"仪表板数据测试, {'通过' if success else '失败'}"):
             return success
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"仪表板数据测试失败, {e}")
             self.test_results["dashboard_data"] = {
                 "status": "FAIL",
@@ -496,11 +496,11 @@ class AIOpsIntegrationTest:
             self.test_dashboard_data()
         ]
         
-        results = await asyncio.gather(*tests, return_exceptions == True)::
+        results = await asyncio.gather(*tests, return_exceptions == True):
         end_time = time.time()
         
         # 统计结果
-        passed = sum(1 for result in results if result is True)::
+        passed = sum(1 for result in results if result is True):
         total = len(results)
 
         summary = {:
@@ -522,7 +522,7 @@ class AIOpsIntegrationTest:
         try:
             # 这里可以添加清理逻辑
             logger.info("清理测试环境...")
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"清理失败, {e}")
 
 async def main():
@@ -531,7 +531,7 @@ async def main():
     
     try:
         # 设置测试环境
-        if not await test.setup():::
+        if not await test.setup()::
             logger.error("测试环境设置失败")
             return
         
@@ -551,11 +551,11 @@ async def main():
         print(f"执行时间, {summary['execution_time']}")
         
         print("\n详细结果,")
-        for test_name, result in results["detailed_results"].items():::
+        for test_name, result in results["detailed_results"].items()::
             status = result["status"]
-            status_symbol = "✓" if status == "PASS" else "✗":::
+            status_symbol = "✓" if status == "PASS" else "✗"::
             print(f"  {status_symbol} {test_name} {status}")
-            if status == "FAIL" and "error" in result,::
+            if status == "FAIL" and "error" in result,:
                 print(f"    错误, {result['error']}")
         
         print("\n" + "="*50)
@@ -566,10 +566,10 @@ async def main():
         
         print("测试报告已保存到, ai_ops_integration_test_report.json")
         
-    except Exception as e,::
+    except Exception as e,:
         logger.error(f"测试执行失败, {e}")
     finally:
         await test.cleanup()
 
-if __name"__main__":::
+if __name"__main__"::
     asyncio.run(main())

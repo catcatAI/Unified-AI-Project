@@ -14,7 +14,7 @@ class TestCoreServicesIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_core_services_test(self, setup_system_test):
         """设置核心服务测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -56,14 +56,14 @@ def test_service_initialization_integration(self) -> None:
         }
         
         init_results = {}
-        for service_name, service_mock in services.items():::
+        for service_name, service_mock in services.items()::
             result = await service_mock.return_value.initialize()
             init_results[service_name] = result
         
         # 2. 验证所有服务都已初始化
-        assert all(result is True for result in init_results.values())::
+        assert all(result is True for result in init_results.values()):
         # 验证mock调用,
-        for service_mock in services.values():::
+        for service_mock in services.values()::
             service_mock.return_value.initialize.assert_called_once()
     
     @pytest.mark.system_integration()
@@ -133,9 +133,9 @@ def test_service_initialization_integration(self) -> None:
         )
         
         # 4. 生成响应(代理使用LLM服务)
-        if dialogue_result["agent_used"] == agent_config["agent_id"]::
+        if dialogue_result["agent_used"] == agent_config["agent_id"]:
             agent_response = await llm_service.return_value.generate_response(
-                "Generate response for user"::
+                "Generate response for user":
             )
         
         # 验证结果
@@ -162,7 +162,7 @@ def test_service_initialization_integration(self) -> None:
         )
         
         llm_service.return_value.generate_response.assert_called_once_with(
-            "Generate response for user"::
+            "Generate response for user":
         )
     
     @pytest.mark.system_integration()
@@ -196,28 +196,28 @@ def test_service_initialization_integration(self) -> None:
             "learning_manager": learning_manager
         }
         
-        for service_name, service_mock in services.items():::
+        for service_name, service_mock in services.items()::
             result = await service_mock.return_value.start()
             start_results[service_name] = result
         
         # 2. 检查服务状态
         status_results = {}
-        for service_name, service_mock in services.items():::
+        for service_name, service_mock in services.items()::
             status = await service_mock.return_value.get_status()
             status_results[service_name] = status
         
         # 3. 停止所有服务
         stop_results = {}
-        for service_name, service_mock in services.items():::
+        for service_name, service_mock in services.items()::
             result = await service_mock.return_value.stop()
             stop_results[service_name] = result
         
         # 验证结果
-        assert all(result is True for result in start_results.values())::
-        assert all(status == "running" for status in status_results.values())::
-        assert all(result is True for result in stop_results.values())::
+        assert all(result is True for result in start_results.values()):
+        assert all(status == "running" for status in status_results.values()):
+        assert all(result is True for result in stop_results.values()):
         # 验证mock调用,
-        for service_mock in services.values():::
+        for service_mock in services.values()::
             service_mock.return_value.start.assert_called_once()
             service_mock.return_value.get_status.assert_called_once()
             service_mock.return_value.stop.assert_called_once()
@@ -229,7 +229,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_coordination_test(self, setup_system_test):
         """设置协调测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -247,9 +247,9 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         agent_configs = [
             self.data_factory.create_agent_config(
                 agent_id=f"specialist_{i}",,
-    agent_type = "data_analysis" if i=0 else "creative_writing" if i=1 else "text_editing"::
+    agent_type = "data_analysis" if i=0 else "creative_writing" if i=1 else "text_editing":
             )
-            for i in range(3)::
+            for i in range(3):
         ]
         
         # 获取mock服务
@@ -293,7 +293,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         # 执行多服务协调测试
         # 1. 创建专业代理
         created_agents = []
-        for config in agent_configs,::
+        for config in agent_configs,:
             agent = await agent_manager.return_value.create_agent(
                 config["agent_id"],
     config["agent_type"]
@@ -318,11 +318,11 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         
         # 5. 分配任务给代理
         task_assignments = []
-        for agent_id in request_result["assigned_agents"]::
+        for agent_id in request_result["assigned_agents"]:
             assignment_result = await agent_manager.return_value.assign_task(,
     agent_id,
                 {
-                    "task_type": "analysis" if "analysis" in agent_id else "writing" if "writing" in agent_id else "editing",:::
+                    "task_type": "analysis" if "analysis" in agent_id else "writing" if "writing" in agent_id else "editing",::
                     "content": complex_request["content"]
                 }
             )
@@ -347,7 +347,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
         assert len(user_preferences) > 0
         assert request_result is not None
         assert request_result["status"] == "processing"
-        assert all(assignment_result is True for assignment_result in task_assignments)::
+        assert all(assignment_result is True for assignment_result in task_assignments):
         assert final_response is not None
         assert store_result is True
         
@@ -374,7 +374,7 @@ class TestServiceFailureRecoveryIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_failure_recovery_test(self, setup_system_test):
         """设置故障恢复测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -457,5 +457,5 @@ class TestServiceFailureRecoveryIntegration(SystemIntegrationTest):
         llm_service.return_value.switch_to_backup_model.assert_called_once()
 
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__, "-v"])

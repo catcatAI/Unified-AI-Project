@@ -10,7 +10,7 @@ from creation.creation_engine import CreationEngine
 
 class TestCreationEngine(unittest.TestCase):
     """
-    A class for testing the CreationEngine class.::
+    A class for testing the CreationEngine class.:
     """
 
     @pytest.mark.timeout(5)
@@ -41,5 +41,5 @@ def test_create_model(self) -> None,
         tool_code = creation_engine.create("create my_tool tool")
         self.assertIn("def my_tool(input)", tool_code)
 
-if __name"__main__":::
+if __name"__main__"::
     unittest.main()

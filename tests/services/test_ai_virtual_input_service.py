@@ -13,8 +13,8 @@ VirtualInputElementDescription)
 
 class TestAIVirtualInputService(unittest.TestCase):
     def setUp(self):
-        """Set up for each test method."""::
-self.avis == = AIVirtualInputService(initial_mode =="simulation_only")
+        """Set up for each test method.""":
+self.avis =  = AIVirtualInputService(initial_mode =="simulation_only")
 
     def tearDown(self):
     """Clean up after each test method."""
@@ -115,7 +115,7 @@ mock_ui_structure, List[VirtualInputElementDescription] = [
 self.avis.load_virtual_ui(mock_ui_structure)
 
     # Retest with UI loaded
-self.avis.clear_action_log() # Clear log from load_virtual_ui if any (though it doesn't log)::
+self.avis.clear_action_log() # Clear log from load_virtual_ui if any (though it doesn't log):
 self.avis.virtual_focused_element_id == None # Reset focus
 
 response_with_ui = self.avis.process_keyboard_command(command)
@@ -206,7 +206,7 @@ self.assertIsNot(retrieved_ui, self.avis.virtual_ui_elements(), "get_current_vir
 self.assertEqual(retrieved_ui[0].get("children", [])[0]["label_text"] "OK")
 
     # Test that modifying retrieved UI doesn't affect internal state
-        if retrieved_ui and retrieved_ui[0].get("children")::
+        if retrieved_ui and retrieved_ui[0].get("children"):
     retrieved_ui[0]["children"][0]["label_text"] = "Cancel" # type ignore
 
 original_internal_label = self.avis.virtual_ui_elements[0].get("children", [])[0].get("label_text")

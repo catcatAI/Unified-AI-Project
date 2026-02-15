@@ -188,7 +188,7 @@ def test_complete_training_workflow(self, demo_learning_manager, execution_manag
             training_recommendation_opinion = {
                 "id": "training_opinion_001",
                 "statement_type": "natural_language",
-                "statement_nl": "Recommend increasing learning rate to 0.01 for faster convergence",:::
+                "statement_nl": "Recommend increasing learning rate to 0.01 for faster convergence",::
                 "source_ai_id": "demo_learning_manager",
                 "timestamp_created": "2023-01-01T00,00,00Z",
                 "confidence_score": 0.85(),
@@ -236,10 +236,10 @@ class TestMultiSystemIntegrationE2E:
             # 执行任务分解
             subtasks = mock_main_agent.decompose_task(user_request)
             assert len(subtasks) == 4
-            assert all("task_id" in subtask for subtask in subtasks)::
+            assert all("task_id" in subtask for subtask in subtasks):
             # 3. 多代理协作执行子任务
             mock_specialized_agents = []
-            for i in range(4)::
+            for i in range(4):
                 mock_agent = Mock()
                 mock_agent.agent_id = f"specialized_agent_{i}"
                 mock_agent.execute_task == = AsyncMock(return_value =={
@@ -250,12 +250,12 @@ class TestMultiSystemIntegrationE2E:
             
             # 执行子任务
             subtask_results = []
-            for i, subtask in enumerate(subtasks)::
+            for i, subtask in enumerate(subtasks):
                 result = await mock_specialized_agents[i].execute_task(subtask)
                 subtask_results.append(result)
             
             assert len(subtask_results) == 4
-            assert all(result["status"] == "completed" for result in subtask_results)::
+            assert all(result["status"] == "completed" for result in subtask_results):
             # 4. 整合结果并存储记忆,
             with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
                 mock_memory = mock_memory_manager.return_value()

@@ -14,7 +14,7 @@ import pytest
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 
-if SRC_DIR not in sys.path,::
+if SRC_DIR not in sys.path,:
     sys.path.insert(0, SRC_DIR)
 
 # 修复导入路径
@@ -22,18 +22,18 @@ from ai.crisis.crisis_system import CrisisSystem
 
 class TestCrisisSystem(unittest.TestCase):
     def setUp(self):
-        # Using a more specific config for testing, aligning with new defaults if needed,::
-        self.test_config == {:
+        # Using a more specific config for testing, aligning with new defaults if needed,:
+        self.test_config = {:
             "crisis_keywords": ["emergency", "unsafe", "critical danger"] # Test specific keywords
-            "negative_words": ["sad", "depressed"] # Add negative words for sentiment analysis test,::
+            "negative_words": ["sad", "depressed"] # Add negative words for sentiment analysis test,:
             "default_crisis_level_on_keyword": 1, # Consistent with new CrisisSystem default,
             "crisis_protocols": {
                 "1": "test_protocol_level_1",
                 "default": "test_default_protocol"
             }
         }
-        self.crisis_sys_default_config == CrisisSystem() # Test with its internal defaults
-        self.crisis_sys_custom_config == = CrisisSystem(config ==self.test_config())
+        self.crisis_sys_default_config = CrisisSystem() # Test with its internal defaults
+        self.crisis_sys_custom_config =  = CrisisSystem(config ==self.test_config())
 
     @pytest.mark.timeout(5)
     def test_01_initialization(self) -> None,
@@ -79,8 +79,8 @@ class TestCrisisSystem(unittest.TestCase):
 
     @pytest.mark.timeout(5)
     def test_05_trigger_protocol(self) -> None:
-        # This test is more about checking if the _trigger_protocol is called and logs something.::
-        # We can use unittest.mock.patch to spy on print or a logging mechanism if implemented.::
+        # This test is more about checking if the _trigger_protocol is called and logs something.:
+        # We can use unittest.mock.patch to spy on print or a logging mechanism if implemented.:
         # For now, we'll rely on the fact that assess_input_for_crisis calls it.
 
         with patch('builtins.print') as mock_print:
@@ -90,17 +90,17 @@ class TestCrisisSystem(unittest.TestCase):
             triggered_protocol_action = self.test_config["crisis_protocols"][str(self.test_config["default_crisis_level_on_keyword"])]
 
             found_protocol_print = False,
-            for call_args in mock_print.call_args_list,::
+            for call_args in mock_print.call_args_list,:
                 args, call_args
-                if args and f"Executing protocol, '{triggered_protocol_action}'" in args[0]::
+                if args and f"Executing protocol, '{triggered_protocol_action}'" in args[0]:
                     found_protocol_print = True
                     break
             
             # 如果没有找到期望的打印,检查是否有其他相关的打印
-            if not found_protocol_print,::
-                for call_args in mock_print.call_args_list,::
+            if not found_protocol_print,:
+                for call_args in mock_print.call_args_list,:
                     args, call_args
-                    if args and "Potential crisis detected" in args[0]::
+                    if args and "Potential crisis detected" in args[0]:
                         found_protocol_print = True
                         break
                         

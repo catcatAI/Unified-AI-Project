@@ -22,11 +22,11 @@ class TestLearningManager:
         """测试前准备"""
         # 创建模拟依赖
         self.mock_ai_id = "test_ai_123"
-        self.mock_ham_memory_manager == Mock()
-        self.mock_fact_extractor == Mock()
-        self.mock_personality_manager == Mock()
-        self.mock_content_analyzer == Mock()
-        self.mock_hsp_connector == AsyncMock()  # Changed to AsyncMock
+        self.mock_ham_memory_manager = Mock()
+        self.mock_fact_extractor = Mock()
+        self.mock_personality_manager = Mock()
+        self.mock_content_analyzer = Mock()
+        self.mock_hsp_connector = AsyncMock()  # Changed to AsyncMock
         
         # 配置模拟对象的返回值
         self.mock_ham_memory_manager.query_core_memory.return_value = []
@@ -119,7 +119,7 @@ class TestFactExtractorModule:
     
     def setup_method(self):
         """测试前准备"""
-        self.mock_llm_service == Mock()
+        self.mock_llm_service = Mock()
         # Create a proper mock response with content attribute
         mock_response = Mock():
         mock_response.content == '{"facts": []}'
@@ -169,5 +169,5 @@ class TestFactExtractorModule:
         assert isinstance(result, list)
         self.mock_llm_service.chat_completion.assert_called_once()
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__])

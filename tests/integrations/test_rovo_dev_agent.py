@@ -295,7 +295,7 @@ def test_agent_initialization(self, agent, mock_config) -> None,
                 'processing_time': 1.0 + i,
                 'timestamp': datetime.now().isoformat()
             }
-            for i in range(10)::
+            for i in range(10):
     ]
 
     # Test default limit

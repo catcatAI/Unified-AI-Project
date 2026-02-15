@@ -14,7 +14,7 @@ import os
 # Add the src directory to the path so we can import the module
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps', 'backend', 'src'))
 
-# Add type checking ignore for the entire file,::
+# Add type checking ignore for the entire file,:
 # pyright, reportMissingImports=false
 
 
@@ -41,7 +41,7 @@ def test_
         gmqtt  # noqa, F841
         print("✅ gmqtt imported successfully")
         return True
-    except ImportError as e,::
+    except ImportError as e,:
         print(f"❌ Failed to import gmqtt, {e}")
         return False
 
@@ -59,7 +59,7 @@ def test_
         ExternalConnector  # noqa, F841
         print("✅ ExternalConnector imported successfully")
         return True
-    except ImportError as e,::
+    except ImportError as e,:
         print(f"❌ Failed to import ExternalConnector, {e}")
         return False
 
@@ -82,11 +82,11 @@ def test_
         connector  # noqa, F841
         print("✅ ExternalConnector created successfully")
         return True
-    except Exception as e,::
+    except Exception as e,:
         print(f"❌ Failed to create ExternalConnector, {e}")
         return False
 
-if __name"__main__":::
+if __name"__main__"::
     print("Testing gmqtt and ExternalConnector functionality...")
     
     success = True
@@ -94,7 +94,7 @@ if __name"__main__":::
     success &= test_external_connector_import()
     success &= test_external_connector_creation()
     
-    if success,::
+    if success,:
         print("\n🎉 All tests passed!")
         sys.exit(0)
     else:

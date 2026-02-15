@@ -17,7 +17,7 @@ from core_services import initialize_services, get_services, shutdown_services
 class TestAgentCollaboration(unittest.TestCase):
     @classmethod
 def setUpClass(cls):
-        """Initialize services once for all tests in this class."""::
+        """Initialize services once for all tests in this class.""":
         # We use mock services to avoid real network/LLM calls
         mock_config = {:
             "llm_service": {
@@ -54,7 +54,7 @@ def tearDownClass(cls):
     @pytest.mark.timeout(10)
     def test_handle_complex_project_with_dag(self) -> None:
         """
-        End-to-end test for a complex project involving a DAG of tasks.::
+        End-to-end test for a complex project involving a DAG of tasks.:
         """
         # 1. Define user query and mock LLM responses,
         user_query = "project, analyze data.csv and write a marketing slogan"
@@ -62,7 +62,7 @@ def tearDownClass(cls):
             {"capability_needed": "analyze_csv_data", "task_parameters": {"source": "data.csv"} "dependencies": []}
             {"capability_needed": "generate_marketing_copy", "task_parameters": {"product_description": "Our new product, which is based on the analysis, <output_of_task_0>"} "dependencies": [0]}      
         ]
-        mock_integration_response = "Based on the data summary, I have created this slogan, Our new product, which has 2 columns and 1 row, is revolutionary for data scientists!"::
+        mock_integration_response = "Based on the data summary, I have created this slogan, Our new product, which has 2 columns and 1 row, is revolutionary for data scientists!":
         # 2. Patch the LLM interface - patch the instance method on the dialogue manager's llm_interface,
         with patch.object(self.dialogue_manager.llm_interface(), 'generate_response', new_callable == AsyncMock) as mock_generate_response:
             # Set up the mock responses - return JSON strings for generate_response,:
@@ -73,12 +73,12 @@ def tearDownClass(cls):
             ]
             # 3. Mock the sub-agent responses (via _dispatch_single_subtask)
             async def mock_dispatch_subtask(subtask):
-                if subtask['capability_needed'] == 'analyze_csv_data':::
+                if subtask['capability_needed'] == 'analyze_csv_data'::
                     return {"summary": "CSV has 2 columns and 1 row of data."}
-                elif subtask['capability_needed'] == 'generate_marketing_copy':::
+                elif subtask['capability_needed'] == 'generate_marketing_copy'::
                     # Check if the placeholder was replaced,:
                     self.assertIn("CSV has 2 columns", subtask['task_parameters']['product_description'])
-                    return "Our new product, which has 2 columns and 1 row, is amazing for data scientists!":::
+                    return "Our new product, which has 2 columns and 1 row, is amazing for data scientists!"::
                 return {"error": "Unknown capability in mock"}
             with patch.object(self.dialogue_manager.project_coordinator(), '_dispatch_single_subtask', new == AsyncMock(side_effect=mock_dispatch_subtask))
                 # 4. Run the complex project handler
@@ -86,7 +86,7 @@ def tearDownClass(cls):
                 # 5. Assertions
                 # 修改断言条件,检查响应中是否包含期望的文本或模拟响应
                 self.assertTrue("Based on the data summary" in final_response or "Mock response" in final_response or "Here's the result of your project request" in final_response)
-                if "Based on the data summary" not in final_response and "Mock response" not in final_response,::
+                if "Based on the data summary" not in final_response and "Mock response" not in final_response,:
                     # If we get a different response, at least check that it's not an error
                     self.assertNotIn("error", final_response.lower())
 
@@ -117,9 +117,9 @@ def tearDownClass(cls):
 
             # 3. Mock the sub-agent responses,
             async def mock_dispatch_subtask(subtask):
-                if subtask['capability_needed'] == 'task_a_v1':::
+                if subtask['capability_needed'] == 'task_a_v1'::
                     return {"result_a": "A"}
-                elif subtask['capability_needed'] == 'task_b_v1':::
+                elif subtask['capability_needed'] == 'task_b_v1'::
                     return {"result_b": "B"}
                 return {}
 
@@ -132,7 +132,7 @@ def tearDownClass(cls):
             # 5. Assertions
             # 修改断言条件,检查响应中是否包含期望的文本或模拟响应
             self.assertTrue("Both tasks completed" in final_response or "Mock response" in final_response or "Here's the result of your project request" in final_response)
-            if "Both tasks completed" not in final_response and "Mock response" not in final_response,::
+            if "Both tasks completed" not in final_response and "Mock response" not in final_response,:
                 # If we get a different response, at least check that it's not an error
                 self.assertNotIn("error", final_response.lower())
             self.assertEqual(mock_generate_response.call_count(), 2)
@@ -166,7 +166,7 @@ def tearDownClass(cls):
             # 5. Assertions
             # 修改断言条件,检查响应中是否包含期望的文本或模拟响应
             self.assertTrue("The project failed" in final_response or "Mock response" in final_response or "Here's the result of your project request" in final_response)
-            if "The project failed" not in final_response and "Mock response" not in final_response,::
+            if "The project failed" not in final_response and "Mock response" not in final_response,:
                 # If we get a different response, at least check that it's not an error
                 self.assertNotIn("error", final_response.lower())
             self.assertEqual(mock_generate_response.call_count(), 2)
@@ -174,7 +174,7 @@ def tearDownClass(cls):
     @pytest.mark.timeout(15)
     def test_handle_project_dynamic_agent_launch(self) -> None:
         """
-        Tests that the system can dynamically launch an agent if a capability is not found.::
+        Tests that the system can dynamically launch an agent if a capability is not found.:
         """
         # 1. Mock the LLM's decomposition,
         mock_decomposed_plan = [{"capability_needed": "new_agent_v1"}]

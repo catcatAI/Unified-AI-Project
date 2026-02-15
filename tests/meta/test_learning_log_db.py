@@ -13,11 +13,11 @@ from ai.meta.learning_log_db import LearningLogDB
 class TestLearningLogDB(unittest.TestCase):
     def setUp(self):
         self.db_path = "test_learning_logs.db"
-        self.db == = LearningLogDB(db_path ==self.db_path())
+        self.db =  = LearningLogDB(db_path ==self.db_path())
 
     def tearDown(self):
         self.db.close()
-        if os.path.exists(self.db_path())::
+        if os.path.exists(self.db_path()):
             os.remove(self.db_path())
 
     def test_init_db(self) -> None,

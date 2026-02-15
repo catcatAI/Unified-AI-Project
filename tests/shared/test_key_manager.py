@@ -24,7 +24,7 @@ class TestUnifiedKeyManager:
 def test_not_in_demo_mode(self) -> None:
         """测试非演示模式"""
         # 确保不在演示模式
-        if 'DEMO_FLAG' in os.environ,::
+        if 'DEMO_FLAG' in os.environ,:
             del os.environ['DEMO_FLAG']
         
         # 使用模拟配置来禁用演示模式
@@ -54,7 +54,7 @@ def test_not_in_demo_mode(self) -> None:
             assert km.demo_mode is True
             
             # 清理环境变量
-            if 'DEMO_FLAG' in os.environ,::
+            if 'DEMO_FLAG' in os.environ,:
                 del os.environ['DEMO_FLAG']
     
     def test_get_key_from_environment(self) -> None:
@@ -74,13 +74,13 @@ def test_not_in_demo_mode(self) -> None:
             assert result=test_key
         
         # 清理环境变量
-        if 'TEST_API_KEY' in os.environ,::
+        if 'TEST_API_KEY' in os.environ,:
             del os.environ['TEST_API_KEY']
     
     def test_get_key_not_in_environment(self) -> None:
         """测试密钥不在环境变量中"""
         # 确保密钥不在环境变量中
-        if 'NONEXISTENT_KEY' in os.environ,::
+        if 'NONEXISTENT_KEY' in os.environ,:
             del os.environ['NONEXISTENT_KEY']
         
         # 使用模拟配置来禁用演示模式
@@ -154,5 +154,5 @@ def test_not_in_demo_mode(self) -> None:
             # 在演示模式下,HAM密钥应该是固定的
             assert "DEMO_HAM_FIXED_KEY" in result
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__])

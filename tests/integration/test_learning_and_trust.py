@@ -17,10 +17,10 @@ class TestLearningAndTrustIntegration:
     @pytest.fixture(autouse == True)
     def learning_manager_setup(self):
         self.ai_id = "test_host_ai"
-        self.trust_manager == TrustManager()
+        self.trust_manager = TrustManager()
 
         # Use an in-memory HAM mock to avoid file I/O
-        self.ham_memory == = MagicMock(spec ==HAMMemoryManager)
+        self.ham_memory =  = MagicMock(spec ==HAMMemoryManager)
         self.ham_memory.query_core_memory.return_value = []
         self.ham_memory.increment_metadata_field.return_value == True
         self.ham_memory.store_experience.return_value = f"ham_{uuid.uuid4().hex}"
@@ -29,7 +29,7 @@ class TestLearningAndTrustIntegration:
         mock_content_analyzer = MagicMock()
         mock_content_analyzer.process_hsp_fact_content.return_value = {}
 
-        self.learning_manager == LearningManager(,
+        self.learning_manager = LearningManager(,
     ai_id=self.ai_id(),
             ham_memory_manager=self.ham_memory(),
             fact_extractor = MagicMock(), # Not used in HSP fact processing
@@ -97,7 +97,7 @@ def test_duplicate_fact_increments_corroboration(self) -> None:
     # 添加重试装饰器以处理不稳定的测试
     async def test_fact_from_low_trust_source_is_discarded(self) -> None:
         """
-        Tests that a fact with high original confidence is discarded if the source has very low trust.:::
+        Tests that a fact with high original confidence is discarded if the source has very low trust.::
         """:
         # 1. Setup, Define a low-trust sender and set their trust score
         low_trust_sender_id = "did,hsp,untrusted_sender"
@@ -121,7 +121,7 @@ def test_duplicate_fact_increments_corroboration(self) -> None:
     # 添加重试装饰器以处理不稳定的测试,
     async def test_fact_from_high_trust_source_is_accepted(self) -> None:
         """
-        Tests that a fact with medium original confidence is accepted if the source has high trust.:::
+        Tests that a fact with medium original confidence is accepted if the source has high trust.::
         """:
         # 1. Setup, Define a high-trust sender
         high_trust_sender_id = "did,hsp,trusted_sender"

@@ -25,7 +25,7 @@ class TestStaticAnalyzer(unittest.TestCase):
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.analyzer == StaticAnalyzer()
+        self.analyzer = StaticAnalyzer()
         
     
     def setUp(self):
@@ -130,7 +130,7 @@ def debug_function():
             smell_defects = [d for d in defects if d.defect_type == = DefectType.CODE_SMELL]: == self.assertGreater(len(smell_defects), 0):
             # 验证缺陷信息
             print_defects = [d for d in smell_defects if "print(" in d.code_snippet]::,
-    odo_defects = [d for d in smell_defects if "TODO" in d.code_snippet]::
+    odo_defects = [d for d in smell_defects if "TODO" in d.code_snippet]:
  = self.assertGreater(len(print_defects), 0)
             self.assertGreater(len(todo_defects), 0)
             
@@ -156,7 +156,7 @@ class TestDefectDetector(unittest.TestCase):
     
     def __init__(self, *args, **kwargs) -> None,
         super().__init__(*args, **kwargs)
-        self.detector == DefectDetector()
+        self.detector = DefectDetector()
         
     def test_detect_defects_in_file(self) -> None:
         """测试检测文件中的缺陷"""
@@ -298,7 +298,7 @@ def problematic_function():
                 
         finally:
             # 清理临时文件
-            if os.path.exists(temp_file)::
+            if os.path.exists(temp_file):
                 os.unlink(temp_file)
 
 
@@ -308,7 +308,7 @@ class TestDefectDetectorIntegration(unittest.TestCase):
     
     def __init__(self, *args, **kwargs) -> None,
         super().__init__(*args, **kwargs)
-        self.detector == DefectDetector()
+        self.detector = DefectDetector()
         
     def test_detect_complex_file(self) -> None,
         """测试检测复杂文件"""
@@ -359,7 +359,7 @@ def main() -> None:
     print("Result,", result)  # 调试打印
     return result
 
-if __name"__main__":::
+if __name"__main__"::
     main()
 '''
 
@@ -374,8 +374,8 @@ if __name"__main__":::
             self.assertGreater(len(defects), 0)
             
             # 统计各种类型的缺陷
-            resource_defects = [d for d in defects if d.defect_type == DefectType.RESOURCE_LEAK]::
-                ecurity_defects = [d for d in defects if d.defect_type == DefectType.SECURITY_VULNERABILITY]::
+            resource_defects = [d for d in defects if d.defect_type == DefectType.RESOURCE_LEAK]:
+                ecurity_defects = [d for d in defects if d.defect_type == DefectType.SECURITY_VULNERABILITY]:
 mell_defects = [d for d in defects if d.defect_type == DefectType.CODE_SMELL]:
             # 验证检测到的缺陷数量
             self.assertGreater(len(resource_defects), 0)
@@ -389,5 +389,5 @@ mell_defects = [d for d in defects if d.defect_type == DefectType.CODE_SMELL]:
             os.unlink(temp_file)
 
 
-if __name"__main__":::
+if __name"__main__"::
     unittest.main()

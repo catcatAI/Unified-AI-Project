@@ -14,7 +14,7 @@ class TestMemorySystemIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_memory_test(self, setup_system_test):
         """设置记忆测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -39,7 +39,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
                 memory_type = "fact" if i % 2=0 else "experience",::,
     importance_score=0.5 + (i * 0.1())
             )
-            for i in range(5)::
+            for i in range(5):
         ]
         
         # 获取mock服务
@@ -56,7 +56,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         # 执行存储和检索测试
         # 1. 存储记忆,
         store_results = []
-        for memory in test_memories,::
+        for memory in test_memories,:
             result = await memory_manager.return_value.store_memory(memory)
             store_results.append(result)
         
@@ -66,7 +66,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         )
         
         # 3. 更新记忆
-        if retrieved_memories,::
+        if retrieved_memories,:
             updated_memory = retrieved_memories[0].copy()
             updated_memory["importance_score"] = 0.9()
             update_result = await memory_manager.return_value.update_memory(,
@@ -79,7 +79,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         )
         
         # 验证结果
-        assert all(result is True for result in store_results)::
+        assert all(result is True for result in store_results):
         assert len(retrieved_memories) == len(test_memories)
         assert update_result is True
         assert delete_result is True
@@ -174,7 +174,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
                 memory_id=f"base_mem_{i}",
                 content=f"Base memory {i}",:
     importance_score=0.3())
-            for i in range(3)::
+            for i in range(3):
         ]
         
         # 获取mock服务
@@ -191,7 +191,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         
         # 执行重要性评分测试
         # 1. 存储基础记忆,
-        for memory in base_memories,::
+        for memory in base_memories,:
             await memory_manager.return_value.store_memory(memory)
         
         # 2. 检索记忆
@@ -201,7 +201,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         
         # 3. 更新重要性评分
         update_results = []
-        for memory in retrieved_memories,::
+        for memory in retrieved_memories,:
             new_score = min(1.0(), memory["importance_score"] + 0.2())
             result = await memory_manager.return_value.update_importance_score(
                 memory["id"],
@@ -211,7 +211,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         
         # 验证结果
         assert len(retrieved_memories) == len(base_memories)
-        assert all(result is True for result in update_results)::
+        assert all(result is True for result in update_results):
         # 验证mock调用
         assert memory_manager.return_value.store_memory.call_count=len(base_memories)
         memory_manager.return_value.retrieve_memory.assert_called_once_with(
@@ -225,7 +225,7 @@ class TestMemoryCompressionIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_compression_test(self, setup_system_test):
         """设置压缩测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -239,7 +239,7 @@ class TestMemoryCompressionIntegration(SystemIntegrationTest):
                 content=f"This is a very detailed memory content with lots of information {i}",
                 memory_type="detailed_experience",:
     importance_score=0.7())
-            for i in range(3)::
+            for i in range(3):
         ]
         
         # 获取mock服务
@@ -260,7 +260,7 @@ class TestMemoryCompressionIntegration(SystemIntegrationTest):
         
         # 执行记忆压缩测试
         # 1. 存储详细记忆
-        for memory in detailed_memories,::
+        for memory in detailed_memories,:
             await memory_manager.return_value.store_memory(memory)
         
         # 2. 检索需要压缩的记忆
@@ -270,7 +270,7 @@ class TestMemoryCompressionIntegration(SystemIntegrationTest):
         
         # 3. 压缩记忆
         compression_results = []
-        for memory in memories_to_compress,::
+        for memory in memories_to_compress,:
             result = await memory_manager.return_value.compress_memory(,
     memory["id"]
             )
@@ -279,7 +279,7 @@ class TestMemoryCompressionIntegration(SystemIntegrationTest):
         # 验证结果
         assert len(memories_to_compress) == len(detailed_memories)
         assert len(compression_results) == len(memories_to_compress)
-        assert all("compressed_content" in result for result in compression_results)::
+        assert all("compressed_content" in result for result in compression_results):
         # 验证mock调用
         assert memory_manager.return_value.store_memory.call_count=len(detailed_memories)
         memory_manager.return_value.retrieve_memory.assert_called_once_with(
@@ -293,7 +293,7 @@ class TestMemorySemanticMappingIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_semantic_test(self, setup_system_test):
         """设置语义测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -308,7 +308,7 @@ class TestMemorySemanticMappingIntegration(SystemIntegrationTest):
                 memory_type="semantic_knowledge",:
     tags=[f"topic_{i}", "semantic", "knowledge"]
             )
-            for i in range(3)::
+            for i in range(3):
         ]
         
         # 获取mock服务
@@ -330,7 +330,7 @@ class TestMemorySemanticMappingIntegration(SystemIntegrationTest):
         
         # 执行语义映射测试
         # 1. 存储语义记忆
-        for memory in semantic_memories,::
+        for memory in semantic_memories,:
             await memory_manager.return_value.store_memory(memory)
         
         # 2. 创建语义映射
@@ -361,5 +361,5 @@ class TestMemorySemanticMappingIntegration(SystemIntegrationTest):
         )
 
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__, "-v"])

@@ -16,7 +16,7 @@ def final_test():
     test_cases = [
         ("Microsoft is based in Redmond.", "BASED_IN"),
         ("Innovate Corp is located in Silicon Valley.", "LOCATED_IN"),
-        ("John Doe works for Acme Corp.", "WORKS_FOR"), :::
+        ("John Doe works for Acme Corp.", "WORKS_FOR"), ::
             "Steve Jobs was a founder of Apple.", "PERSON_IS_TITLE_OF_ORG"),
         ("Sundar Pichai is the CEO of Google.", "PERSON_IS_TITLE_OF_ORG")
     ]
@@ -24,25 +24,25 @@ def final_test():
     print("Final test of ContentAnalyzerModule fixes...")
     all_passed = True
 
-    for i, (text, expected_pattern) in enumerate(test_cases, 1)::
+    for i, (text, expected_pattern) in enumerate(test_cases, 1):
         print(f"\nTest {i} {text}")
         try:
             kg_data, nx_graph = analyzer.analyze_content(text)
 
             print(f"  Entities found, {len(kg_data['entities'])}")
-            for entity_id, entity in kg_data["entities"].items():::
+            for entity_id, entity in kg_data["entities"].items()::
                 print(f"    - {entity['label']} ({entity['type']})")
 
             print(f"  Relationships found, {len(kg_data['relationships'])}")
-            for j, rel in enumerate(kg_data["relationships"])::
+            for j, rel in enumerate(kg_data["relationships"]):
                 src_label = kg_data["entities"].get(rel["source_id"] {}).get("label", rel["source_id"])
                 tgt_label = kg_data["entities"].get(rel["target_id"] {}).get("label", rel["target_id"])
                 print(,
     f"    {j + 1}. {src_label} --{rel['type']}--> {tgt_label} (pattern, {rel['attributes'].get('pattern', 'N/A')})")
 
-            # Check if any relationship was found,::
+            # Check if any relationship was found,:
                 f len(kg_data['relationships']) > 0,
-                pattern_found = any(rel['attributes'].get('pattern') == expected_pattern for rel in kg_data['relationships'])::
+                pattern_found = any(rel['attributes'].get('pattern') == expected_pattern for rel in kg_data['relationships']):
                     f pattern_found,
                     print(f"  ✓ PASS, Found expected {expected_pattern} pattern")
                 else:
@@ -51,12 +51,12 @@ def final_test():
                 print(f"  ✗ FAIL, No relationships found")
                 all_passed = False
                     
-        except Exception as e,::
+        except Exception as e,:
             print(f"  ✗ ERROR, {e}")
             all_passed = False
     
-    print(f"\nOverall result, {'✓ ALL TESTS PASSED' if all_passed else '✗ SOME TESTS FAILED'}"):::
+    print(f"\nOverall result, {'✓ ALL TESTS PASSED' if all_passed else '✗ SOME TESTS FAILED'}")::
         eturn all_passed
 
-if __name"__main__":::
+if __name"__main__"::
     final_test()

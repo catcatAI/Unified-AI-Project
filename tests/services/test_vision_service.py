@@ -47,7 +47,7 @@ def test_01_initialization(self) -> None,
         self.assertIsInstance(analysis["objects"] list)
 
         self.assertIn("ocr_text", analysis)
-        self.assertIn("Mock OCR text for image with length", analysis["ocr_text"])::
+        self.assertIn("Mock OCR text for image with length", analysis["ocr_text"]):
         analysis_none = await service.analyze_image(None) # Test with None input
         self.assertIn("error", analysis_none)
         print("TestVisionService.test_02_analyze_image PASSED")
@@ -61,7 +61,7 @@ def test_01_initialization(self) -> None,
         dummy_image2 = b"dummy2"
 
         results = set()
-        for _ in range(10)::
+        for _ in range(10):
             # Fix, properly await the coroutine
             similarity = await service.compare_images(dummy_image1, dummy_image2)
             self.assertIsInstance(similarity, dict)  # compare_images now returns a dict

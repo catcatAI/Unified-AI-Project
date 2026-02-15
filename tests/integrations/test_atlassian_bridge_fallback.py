@@ -405,7 +405,7 @@ def test_endpoint_config_loading(self, bridge) -> None,
             urls_to_try = [bridge.endpoints[service].primary_url] + bridge.endpoints[service].backup_urls
 
             # 模擬所有端點失敗
-            for base_url in urls_to_try,::
+            for base_url in urls_to_try,:
                 # 更新端點健康狀態
                 bridge.endpoint_health[f"{service}_{base_url}"] = {
                     'status': 'unhealthy',
@@ -414,7 +414,7 @@ def test_endpoint_config_loading(self, bridge) -> None,
                 }
 
             # 如果是離線模式,返回過期緩存
-            if bridge.offline_mode and method.upper() == 'GET':::
+            if bridge.offline_mode and method.upper() == 'GET'::
     return test_data
 
             # 否則拋出異常

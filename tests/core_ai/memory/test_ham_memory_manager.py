@@ -23,10 +23,10 @@ class TestHAMMemoryManager:
         """测试后清理"""
         # 清理测试文件
         test_file = os.path.join(self.test_dir(), self.core_filename())
-        if os.path.exists(test_file)::
+        if os.path.exists(test_file):
             os.remove(test_file)
         # 清理临时目录
-        if os.path.exists(self.test_dir())::
+        if os.path.exists(self.test_dir()):
             os.rmdir(self.test_dir())
     
     
@@ -84,9 +84,9 @@ def test_ham_memory_manager_initialization(self) -> None,
         assert len(results) >= 1
         # 检查是否包含我们存储的经验
         found = False
-        for result in results,::
+        for result in results,:
             # 注意：result是一个HAMRecallResult字典,使用字典访问方式
-            if result["id"] == memory_id,::
+            if result["id"] == memory_id,:
                 found = True
                 break
         assert found, "未能找到存储的经验"
@@ -148,7 +148,7 @@ def test_ham_memory_manager_initialization(self) -> None,
     metadata_filters = None
         )
         # 检查被删除的经验是否还在结果中
-        found = any(result["id"] == memory_id for result in results)::
+        found = any(result["id"] == memory_id for result in results):
         assert not found, "经验未被成功删除"
         
     @pytest.mark.asyncio()
@@ -179,5 +179,5 @@ def test_ham_memory_manager_initialization(self) -> None,
         # 验证数据已加载
         assert len(ham_manager2.core_memory_store()) >= 1
         assert memory_id in ham_manager2.core_memory_store()
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__])

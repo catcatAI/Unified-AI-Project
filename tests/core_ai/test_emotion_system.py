@@ -13,7 +13,7 @@ import pytest
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 
-if SRC_DIR not in sys.path,::
+if SRC_DIR not in sys.path,:
     sys.path.insert(0, SRC_DIR)
 
 # 修复导入路径
@@ -25,7 +25,7 @@ class TestEmotionSystem(unittest.TestCase):
             "profile_name": "test_base",
             "communication_style": {"default_tone": "neutral"}
         }
-        self.emotion_sys == = EmotionSystem(personality_profile ==self.example_personality())
+        self.emotion_sys =  = EmotionSystem(personality_profile ==self.example_personality())
 
     @pytest.mark.timeout(5)
     def test_01_initialization(self) -> None,
@@ -48,7 +48,7 @@ class TestEmotionSystem(unittest.TestCase):
         self.assertEqual(new_emotion, "playful")
         self.assertEqual(self.emotion_sys.current_emotion(), "playful")
 
-        # Test neutral input (should revert to default from personality if different)::
+        # Test neutral input (should revert to default from personality if different):
         neutral_input = {"text": "The sky is blue."}
         default_personality_tone = self.emotion_sys.personality.get("communication_style", {}).get("default_tone", "neutral")
         new_emotion = self.emotion_sys.update_emotion_based_on_input(neutral_input)

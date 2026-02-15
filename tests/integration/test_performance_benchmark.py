@@ -75,7 +75,7 @@ def test_hsp_message_publish_performance(self, benchmark) -> None,
             async def concurrent_operations():
                 agent_manager = mock_agent_manager()
                 tasks = []
-                for i in range(10)::
+                for i in range(10):
                     task = agent_manager.start_agent(f"test_agent_{i}")
                     tasks.append(task)
                 results = await asyncio.gather(*tasks)
@@ -130,13 +130,13 @@ class TestSystemLoadBenchmark:
                 agent_manager = mock_agent_manager()
                 agents = []
                 # 创建100个代理
-                for i in range(100)::
+                for i in range(100):
                     agent = await agent_manager.create_agent(f"agent_{i}", f"Agent {i}")
                     agents.append(agent)
                 # 启动所有代理
-                start_results = await asyncio.gather(*[agent_manager.start_agent(f"agent_{i}") for i in range(100)])::
+                start_results = await asyncio.gather(*[agent_manager.start_agent(f"agent_{i}") for i in range(100)]):
                 # 停止所有代理
-                stop_results = await asyncio.gather(*[agent_manager.stop_agent(f"agent_{i}") for i in range(100)])::
+                stop_results = await asyncio.gather(*[agent_manager.stop_agent(f"agent_{i}") for i in range(100)]):
                 return len([r for r in start_results if r]), len([r for r in stop_results if r]):
             # 使用benchmark.pedantic来正确处理异步函数()
             start_count, stop_count = await benchmark.pedantic(high_load_operations, iterations=1, rounds=2)
@@ -163,7 +163,7 @@ class TestSystemLoadBenchmark:
                 hsp_connector = mock_hsp_connector("test_ai", "localhost", 1883)
                 # 并发发布100条消息
                 tasks = []
-                for i in range(100)::
+                for i in range(100):
                     task = hsp_connector.publish(f"test_topic_{i}", f"test_message_{i}")
                     tasks.append(task)
                 results = await asyncio.gather(*tasks)

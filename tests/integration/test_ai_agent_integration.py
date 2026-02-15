@@ -14,7 +14,7 @@ class TestAIAgentIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_agent_test(self, setup_system_test):
         """设置代理测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -74,9 +74,9 @@ def test_agent_lifecycle_integration(self) -> None,
         )
         
         # 4. 使用代理执行任务
-        if retrieved_agent,::
+        if retrieved_agent,:
             llm_response = await llm_service.return_value.generate_response(
-                "Test prompt for agent"::
+                "Test prompt for agent":
             )
         
         # 5. 停止代理
@@ -112,7 +112,7 @@ def test_agent_lifecycle_integration(self) -> None,
         )
         
         llm_service.return_value.generate_response.assert_called_once_with(
-            "Test prompt for agent"::
+            "Test prompt for agent":
         )
     
     @pytest.mark.system_integration()
@@ -210,7 +210,7 @@ def test_agent_lifecycle_integration(self) -> None,
         )
         
         memory_item = self.data_factory.create_memory_item(
-            content = "This is a test memory for agent integration",::
+            content = "This is a test memory for agent integration",:
             memory_type="fact",,
     importance_score=0.8())
         
@@ -351,7 +351,7 @@ class TestAgentCollaborationIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_collaboration_test(self, setup_system_test):
         """设置协作测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -471,5 +471,5 @@ class TestAgentCollaborationIntegration(SystemIntegrationTest):
         )
 
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__, "-v"])

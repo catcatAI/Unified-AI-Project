@@ -209,7 +209,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
         
         # 验证回调被调用
         assert callback.called()
-if __name"__main__":::
+if __name"__main__"::
     # 设置测试模式
     os.environ['TESTING_MODE'] = 'true'
     pytest.main([__file__])

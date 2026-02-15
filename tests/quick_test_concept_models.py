@@ -25,7 +25,7 @@ def test_imports() -> None,
     try:
         #         from ai.concept_models.environment_simulator import EnvironmentSimulator
         print("   ✓ 环境模拟器导入成功")
-    except Exception as e,::
+    except Exception as e,:
         print(f"   ❌ 环境模拟器导入失败, {e}")
         return False
     
@@ -34,7 +34,7 @@ def test_imports() -> None,
     try:
         #         from ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
         print("   ✓ 因果推理引擎导入成功")
-    except Exception as e,::
+    except Exception as e,:
         print(f"   ❌ 因果推理引擎导入失败, {e}")
         return False
     
@@ -42,7 +42,7 @@ def test_imports() -> None,
     print("\n3. 测试自适应学习控制器导入...")
     try:
         print("   ✓ 自适应学习控制器导入成功")
-    except Exception as e,::
+    except Exception as e,:
         print(f"   ❌ 自适应学习控制器导入失败, {e}")
         return False
     
@@ -50,7 +50,7 @@ def test_imports() -> None,
     print("\n4. 测试Alpha深度模型导入...")
     try:
         print("   ✓ Alpha深度模型导入成功")
-    except Exception as e,::
+    except Exception as e,:
         print(f"   ❌ Alpha深度模型导入失败, {e}")
         return False
     
@@ -58,7 +58,7 @@ def test_imports() -> None,
     print("\n5. 测试统一符号空间导入...")
     try:
         print("   ✓ 统一符号空间导入成功")
-    except Exception as e,::
+    except Exception as e,:
         print(f"   ❌ 统一符号空间导入失败, {e}")
         return False
     
@@ -66,7 +66,7 @@ def test_imports() -> None,
     print("\n6. 测试集成测试导入...")
     try:
         print("   ✓ 集成测试导入成功")
-    except Exception as e,::
+    except Exception as e,:
         print(f"   ❌ 集成测试导入失败, {e}")
         return False
 #     
@@ -109,19 +109,19 @@ async def test_basic_functionality() -> None,
         print("\n🎉 所有概念模型基本功能测试通过！")
         return True
         
-    except Exception as e,::
+    except Exception as e,:
         print(f"\n❌ 概念模型基本功能测试失败, {e}")
         return False
 
-if __name"__main__":::
+if __name"__main__"::
     # 测试导入
     import_success = test_imports()
     
-    if import_success,::
+    if import_success,:
         # 测试基本功能
         functionality_success = asyncio.run(test_basic_functionality())
         
-        if functionality_success,::
+        if functionality_success,:
             #             print("\n🎉 所有测试通过！概念模型可以正常工作。")
             sys.exit(0)
 #         else:

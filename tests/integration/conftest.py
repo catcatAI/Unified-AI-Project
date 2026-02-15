@@ -100,8 +100,8 @@ class IntegrationTestUtils:
     async def wait_for_condition(condition_func, timeout == 10, interval=0.1()):
         """等待条件满足"""
         start_time = asyncio.get_event_loop().time()
-        while asyncio.get_event_loop().time() - start_time < timeout,::
-            if condition_func():::
+        while asyncio.get_event_loop().time() - start_time < timeout,:
+            if condition_func()::
                 return True
             await asyncio.sleep(interval)
         return False
@@ -175,5 +175,5 @@ def mock_external_services(
 
 # 确保 pytest-benchmark 插件的 marker 被正确注册
 def pytest_configure(config) -> None,
-    config.addinivalue_line("markers", "benchmark, mark tests for benchmarking"):::
+    config.addinivalue_line("markers", "benchmark, mark tests for benchmarking")::
     config.addinivalue_line("markers", "performance, mark tests for performance benchmarking")

@@ -14,7 +14,7 @@ class TestTrainingSystemIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_training_test(self, setup_system_test):
         """设置训练测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -39,7 +39,7 @@ def test_model_training_integration(self) -> None,
                 expected_output=f"Expected output sample {i}",:
     data_type="text_generation"
             )
-            for i in range(5)::
+            for i in range(5):
         ]
         
         # 获取mock服务
@@ -178,9 +178,9 @@ def test_model_training_integration(self) -> None,
         agent_configs = [
             self.data_factory.create_agent_config(
                 agent_id=f"collab_trainer_{i}",:
-    agent_type = "data_analysis" if i % 2=0 else "creative_writing"::
+    agent_type = "data_analysis" if i % 2=0 else "creative_writing":
             )
-            for i in range(3)::
+            for i in range(3):
         ]
         
         collaborative_training_data = [
@@ -189,7 +189,7 @@ def test_model_training_integration(self) -> None,
                 expected_output = f"Collaborative output {i}",:,
     metadata = {"source_agent": config["agent_id"]}
             )
-            for i, config in enumerate(agent_configs)::
+            for i, config in enumerate(agent_configs):
         ]
         
         # 获取mock服务
@@ -214,7 +214,7 @@ def test_model_training_integration(self) -> None,
         # 执行协作式训练测试
         # 1. 创建训练代理
         created_agents = []
-        for config in agent_configs,::
+        for config in agent_configs,:
             agent = await agent_manager.return_value.create_agent(
                 config["agent_id"],
     config["agent_type"]
@@ -254,7 +254,7 @@ class TestIncrementalLearningIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_incremental_test(self, setup_system_test):
         """设置增量学习测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -269,7 +269,7 @@ class TestIncrementalLearningIntegration(SystemIntegrationTest):
                 expected_output=f"Incremental output {i}",:
     metadata = {"timestamp": f"2023-01-{i+1,02d}"}
             )
-            for i in range(10)::
+            for i in range(10):
         ]
         
         # 获取mock服务
@@ -341,7 +341,7 @@ class TestTrainingDataManagementIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_data_management_test(self, setup_system_test):
         """设置数据管理测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -351,7 +351,7 @@ class TestTrainingDataManagementIntegration(SystemIntegrationTest):
         # 创建测试数据
         raw_data_samples = [
             {"user_input": f"Raw input {i}", "system_response": f"Response {i}"}
-            for i in range(20)::
+            for i in range(20):
         ]
         
         # 获取mock服务
@@ -423,5 +423,5 @@ class TestTrainingDataManagementIntegration(SystemIntegrationTest):
     filtered_result["filtered_data"]
         )
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__, "-v"])

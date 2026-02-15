@@ -28,20 +28,20 @@ try:
     print(f"Entities, {kg_data['entities']}")
     print(f"NetworkX nodes, {nx_graph.number_of_nodes()}")
     
-    # Check for specific entities,::
+    # Check for specific entities,:
     found_apple = False
     found_steve = False
     for entity_id, entity_details in kg_data["entities"].items():
         print(f"Entity: {entity_details['label']} ({entity_details['type']})")
         if entity_details["label"] == "Apple Inc.":
             found_apple = True
-        if entity_details["label"] == "Steve Jobs":::
+        if entity_details["label"] == "Steve Jobs"::
             found_steve = True
     
     print(f"Found Apple Inc.: {found_apple}")
     print(f"Found Steve Jobs, {found_steve}")
     
-except Exception as e,::
+except Exception as e,:
     print(f"Error, {e}")
     import traceback
     traceback.print_exc()

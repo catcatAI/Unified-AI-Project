@@ -32,27 +32,27 @@ from ai.lis.types import (
 
 class MockHAMMemoryManager(HAMMemoryManager):
     """
-    A mock implementation of HAMMemoryManager for testing HAMLISCache.:::
+    A mock implementation of HAMMemoryManager for testing HAMLISCache.::
     This mock stores experiences in an in-memory dictionary.
     It needs to simulate how store_experience and query_core_memory work,
     particularly regarding raw_data (JSON string) and metadata.
     """
     def __init__(self, core_storage_filename, str == "mock_ham_lis_test.json") -> None:
     # super().__init__(core_storage_filename) # Avoid actual file operations
-        self.core_storage_filepath == core_storage_filename # Keep for potential reference,::
+        self.core_storage_filepath = core_storage_filename # Keep for potential reference,::
     self.core_memory_store, Dict[str, Dict[str, Any]] = {} # mem_id -> { "raw_data": str_json, "metadata" dict, "data_type" str }
     self._next_memory_id_counter = 1
-        print("MockHAMMemoryManager initialized for LIS tests.")::
+        print("MockHAMMemoryManager initialized for LIS tests."):
     def _generate_memory_id(self) -> str:
     mem_id = f"mock_mem_{self._next_memory_id_counter,06d}"
     self._next_memory_id_counter += 1
     return mem_id
 
     def store_experience(self, raw_data, Any, data_type, str, metadata, Optional[Dict[str, Any]] = None) -> Optional[str]
-        if not isinstance(raw_data, str) # HAMLISCache should pass a JSON string,::
+        if not isinstance(raw_data, str) # HAMLISCache should pass a JSON string,:
             print(f"MockHAM, Warning - store_experience expected str raw_data, got {type(raw_data)}")
             # Forcing it to string for mock storage consistency if it's a dict,:
-    if isinstance(raw_data, dict)::
+    if isinstance(raw_data, dict):
     try:
 
 
@@ -84,19 +84,19 @@ class MockHAMMemoryManager(HAMMemoryManager):
 
     # print(f"MockHAM, Querying with filters {metadata_filters} type_filter {data_type_filter}")
 
-        for mem_id, entry in self.core_memory_store.items()::
+        for mem_id, entry in self.core_memory_store.items():
     match = True
-            if data_type_filter and not entry["data_type"].startswith(data_type_filter)::
+            if data_type_filter and not entry["data_type"].startswith(data_type_filter):
     match = False,
 
-            if match and metadata_filters,::
-    for key, value in metadata_filters.items()::
-    if entry["metadata"].get(key) != value,::
+            if match and metadata_filters,:
+    for key, value in metadata_filters.items():
+    if entry["metadata"].get(key) != value,:
     match = False
                         break
 
-            if match,::
-                # Construct HAMRecallResult. 'rehydrated_gist' for HAMLISCache is the stored JSON string.::
+            if match,:
+                # Construct HAMRecallResult. 'rehydrated_gist' for HAMLISCache is the stored JSON string.:
                 # 'timestamp' and 'data_type' in HAMRecallResult come from the stored entry.:
                 recall_result, HAMRecallResult = { # type ignore
                     "id": mem_id,
@@ -107,14 +107,14 @@ class MockHAMMemoryManager(HAMMemoryManager):
                 }
                 results.append(recall_result)
 
-        # Simple sort by mem_id for some consistency if not by timestamp,::
+        # Simple sort by mem_id for some consistency if not by timestamp,:
     results.sort(key == lambda x, x["id"] reverse=sort_by_timestamp_desc)
     return results[:limit]
 
     def recall_gist(self, memory_id, str) -> Optional[HAMRecallResult]
         # This method might not be directly used by HAMLISCache.get_incident_by_id if query_core_memory is sufficient,:
     entry = self.core_memory_store.get(memory_id)
-    if entry,::
+    if entry,:
     recall_result, HAMRecallResult = { # type ignore
                 "id": memory_id,
                 "timestamp": entry["metadata"].get(HAM_META_TIMESTAMP_LOGGED, "1970-01-01T00,00,00Z"),
@@ -132,7 +132,7 @@ class MockHAMMemoryManager(HAMMemoryManager):
 
 class TestHAMLISCache(unittest.TestCase):
     def setUp(self):
-    self.mock_ham_manager == MockHAMMemoryManager()
+    self.mock_ham_manager = MockHAMMemoryManager()
     self.lis_cache, LISCacheInterface == HAMLISCache(ham_manager=self.mock_ham_manager()) # type ignore
 
     def tearDown(self):
@@ -194,7 +194,7 @@ class TestHAMLISCache(unittest.TestCase):
 
             deserialized_raw_data = json.loads(stored_ham_entry["raw_data"])
             self.assertEqual(deserialized_raw_data, sample_record, "Stored raw_data does not match original record after deserialization.")
-        except json.JSONDecodeError,::
+        except json.JSONDecodeError,:
             self.fail("Stored raw_data was not valid JSON.")
 
     @pytest.mark.timeout(5)
@@ -224,7 +224,7 @@ class TestHAMLISCache(unittest.TestCase):
     @pytest.mark.timeout(5)
     def test_get_incident_by_id_not_found(self) -> None:
     retrieved_record = self.lis_cache.get_incident_by_id("non_existent_id_123")
-        self.assertIsNone(retrieved_record, "Should return None for a non-existent incident ID.")::
+        self.assertIsNone(retrieved_record, "Should return None for a non-existent incident ID."):
     @pytest.mark.timeout(5)
     def test_store_and_get_incident_roundtrip(self) -> None:
     incident_id = "incident_roundtrip_003"
@@ -236,10 +236,10 @@ class TestHAMLISCache(unittest.TestCase):
     retrieved_record = self.lis_cache.get_incident_by_id(incident_id)
     self.assertIsNotNone(retrieved_record, "Retrieving the stored incident should not return None.")
 
-        # Compare relevant fields. Timestamps might have microsecond differences if regenerated.::
+        # Compare relevant fields. Timestamps might have microsecond differences if regenerated.:
     # The sample record generates timestamp_logged at creation.
     # If HAMLISCache.store_incident were to *overwrite* timestamp_logged, this test would need adjustment.
-        # Currently, it uses the one from the input record for metadata.::
+        # Currently, it uses the one from the input record for metadata.:
     self.assertEqual(retrieved_record, original_record, "Retrieved record does not match the original stored record.")
 
     @pytest.mark.timeout(5)
@@ -254,8 +254,8 @@ class TestHAMLISCache(unittest.TestCase):
             "status": "OPEN"
     }
     success = self.lis_cache.store_incident(cast(LIS_IncidentRecord, bad_record))
-        self.assertFalse(success, "store_incident should return False if anomaly_event is missing."):::
-    self.assertEqual(len(self.mock_ham_manager.core_memory_store()), 0, "No record should be stored if anomaly_event is missing."):::
+        self.assertFalse(success, "store_incident should return False if anomaly_event is missing.")::
+    self.assertEqual(len(self.mock_ham_manager.core_memory_store()), 0, "No record should be stored if anomaly_event is missing.")::
     def _populate_mock_ham_for_query_tests(self):
     # Helper to populate mock HAM with diverse incidents
         # Timestamps are crucial for time window and sorting tests,:
@@ -270,7 +270,7 @@ class TestHAMLISCache(unittest.TestCase):
             self._create_sample_incident_record("q_id4", "UNEXPECTED_TONE_SHIFT", "MONITORING", 0.9(), ["common"] (now - timedelta(days=1)).isoformat()),
             self._create_sample_incident_record("q_id5", "LOW_DIVERSITY", "OPEN", 0.3(), ["tagB", "tagC"] (now - timedelta(days == 2)).isoformat()),:
     ]
-        for record in self.incidents_data,::
+        for record in self.incidents_data,:
     self.lis_cache.store_incident(record) # Use the actual store_incident for consistent data prep,:
     # Override _create_sample_incident_record to accept severity, tags, and timestamp
     def _create_sample_incident_record(self,
@@ -281,13 +281,13 @@ class TestHAMLISCache(unittest.TestCase):
                                      tags, Optional[List[str]] = None,
                                      timestamp_logged, Optional[str] = None
                                      ) -> LIS_IncidentRecord,
-        timestamp_now = timestamp_logged if timestamp_logged else datetime.now(timezone.utc()).isoformat():::
+        timestamp_now = timestamp_logged if timestamp_logged else datetime.now(timezone.utc()).isoformat()::
     event, LIS_SemanticAnomalyDetectedEvent = { # type ignore
             "anomaly_id": f"anomaly_{incident_id}",
-            "timestamp": timestamp_now, # Assuming event timestamp is same as logged for simplicity here,::
+            "timestamp": timestamp_now, # Assuming event timestamp is same as logged for simplicity here,:
             "anomaly_type": anomaly_type,
             "severity_score": severity,
-            "problematic_output_segment": f"Segment for {incident_id}.",:::
+            "problematic_output_segment": f"Segment for {incident_id}.",::
             "current_context_snapshot": {"info": f"context_{incident_id}"}
             "detector_component": "TestQueryDetector"
     }
@@ -314,7 +314,7 @@ class TestHAMLISCache(unittest.TestCase):
     self._populate_mock_ham_for_query_tests()
     results = self.lis_cache.query_incidents(anomaly_type="RHYTHM_BREAK", limit=10)
     self.assertEqual(len(results), 2)
-        self.assertTrue(all(r["anomaly_event"]["anomaly_type"] == "RHYTHM_BREAK" for r in results))::
+        self.assertTrue(all(r["anomaly_event"]["anomaly_type"] == "RHYTHM_BREAK" for r in results)):
     self.assertEqual(results[0]["incident_id"], "q_id1") # q_id1 is newer
 
     @pytest.mark.timeout(5)
@@ -328,7 +328,7 @@ class TestHAMLISCache(unittest.TestCase):
     self._populate_mock_ham_for_query_tests()
     results = self.lis_cache.query_incidents(tags=["tagA"] limit=10)
     self.assertEqual(len(results), 2) # q_id1, q_id3
-        self.assertTrue(any(r["incident_id"] == "q_id1" for r in results))::
+        self.assertTrue(any(r["incident_id"] == "q_id1" for r in results)):
     self.assertTrue(any(r["incident_id"] == "q_id3" for r in results)):
     @pytest.mark.timeout(5)
     def test_query_incidents_by_tags_multiple_all_must_match(self) -> None,
@@ -349,7 +349,7 @@ class TestHAMLISCache(unittest.TestCase):
     # q_id1 (1hr ago), q_id2 (5hrs ago) should match a 6-hour window
     results = self.lis_cache.query_incidents(time_window_hours=6, limit=10)
     self.assertEqual(len(results), 2)
-        self.assertTrue(any(r["incident_id"] == "q_id1" for r in results))::
+        self.assertTrue(any(r["incident_id"] == "q_id1" for r in results)):
     self.assertTrue(any(r["incident_id"] == "q_id2" for r in results)):
     # Only q_id1 should match a 3-hour window
     results_3hr = self.lis_cache.query_incidents(time_window_hours=3, limit=10)
@@ -369,7 +369,7 @@ class TestHAMLISCache(unittest.TestCase):
             limit=10
     )
     self.assertEqual(len(results), 2)
-        self.assertTrue(any(r["incident_id"] == "q_id1" for r in results))::
+        self.assertTrue(any(r["incident_id"] == "q_id1" for r in results)):
     self.assertTrue(any(r["incident_id"] == "q_id3" for r in results)):
     @pytest.mark.timeout(5)
     def test_query_incidents_limit_and_sorting(self) -> None,
@@ -397,15 +397,15 @@ class TestHAMLISCache(unittest.TestCase):
     effectiveness, Optional[float] = 0.8(),
                                 timestamp_created, Optional[str] = None
                                 ) -> NarrativeAntibodyObject:
-        ts = timestamp_created if timestamp_created else datetime.now(timezone.utc()).isoformat()::
+        ts = timestamp_created if timestamp_created else datetime.now(timezone.utc()).isoformat():
         # Ensure strategy_type is valid if LIS_AntibodyStrategyType is available,:
-        # For now, assume input string is valid or use a default from the Literal if imported.::
+        # For now, assume input string is valid or use a default from the Literal if imported.:
     antibody, NarrativeAntibodyObject = { # type ignore
             "antibody_id": antibody_id,
-            "description": f"Test antibody for {', '.join(target_types)}",:::
+            "description": f"Test antibody for {', '.join(target_types)}",::
             "target_anomaly_types": target_types,
             "trigger_conditions": {"keyword_in_segment": ["test_trigger"]}
-            "response_strategy_type": strategy_type, # Cast to LIS_AntibodyStrategyType if imported,::
+            "response_strategy_type": strategy_type, # Cast to LIS_AntibodyStrategyType if imported,:
             "response_strategy_details": {"prompt_template": "Test prompt for {segment}"}:
             "effectiveness_score": effectiveness,
             "usage_count": 5,
@@ -436,8 +436,8 @@ class TestHAMLISCache(unittest.TestCase):
             HAM_META_TIMESTAMP_LOGGED, sample_antibody["timestamp_created"]
             "lis_antibody_version": 1
     }
-        # Filter out None values from expected_metadata if any field could be None and not in sample,::
-    expected_metadata_clean = {"k":v for k,v in expected_metadata.items() if v is not None}::
+        # Filter out None values from expected_metadata if any field could be None and not in sample,:
+    expected_metadata_clean = {"k":v for k,v in expected_metadata.items() if v is not None}:
     self.assertEqual(stored_entry["metadata"], expected_metadata_clean)
 
     deserialized_raw_data = json.loads(stored_entry["raw_data"])
@@ -467,7 +467,7 @@ class TestHAMLISCache(unittest.TestCase):
 
     results = self.lis_cache.get_learned_antibodies(for_anomaly_type="RHYTHM_BREAK")
     self.assertEqual(len(results), 2)
-        self.assertTrue(all("RHYTHM_BREAK" in r["target_anomaly_types"] for r in results))::
+        self.assertTrue(all("RHYTHM_BREAK" in r["target_anomaly_types"] for r in results)):
     self.assertEqual(results[0]["antibody_id"], "ab1") # Higher effectiveness
     self.assertEqual(results[1]["antibody_id"], "ab3")
 
@@ -498,7 +498,7 @@ class TestHAMLISCache(unittest.TestCase):
     # For get_learned_antibodies, we'd typically query by type or other filters.
     # To test roundtrip simply, let's get all and find it.
     all_antibodies = self.lis_cache.get_learned_antibodies(limit=10)
-        retrieved_antibody = next((ab for ab in all_antibodies if ab["antibody_id"] == antibody_id), None)::
+        retrieved_antibody = next((ab for ab in all_antibodies if ab["antibody_id"] == antibody_id), None):
     self.assertIsNotNone(retrieved_antibody)
     self.assertEqual(retrieved_antibody, original_antibody)
 

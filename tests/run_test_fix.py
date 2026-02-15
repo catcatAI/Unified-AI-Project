@@ -32,7 +32,7 @@ async def test_mock_core_services() -> None,
 
     ]
     
-    for service in required_services,::
+    for service in required_services,:
         assert service in mock_services, f"Missing service, {service}"
         print(f"✓ {service} is present")
     
@@ -66,5 +66,5 @@ async def test_mock_core_services() -> None,
     
     print("All tests passed!")
 
-if __name"__main__":::
+if __name"__main__"::
     asyncio.run(test_mock_core_services())

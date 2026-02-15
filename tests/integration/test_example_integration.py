@@ -150,6 +150,6 @@ def test_agent_hsp_integration(self) -> None:
             assert disconnect_result is True
 
 
-if __name"__main__":::
+if __name"__main__"::
     # 可以直接运行测试
     pytest.main([__file__, "-v"])

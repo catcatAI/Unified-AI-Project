@@ -16,7 +16,7 @@ class TestAtlassianEndToEndWorkflow:
         try:
             response = requests.get(f"{BASE_URL}/health")
             assert response.status_code == 200
-        except requests.exceptions.ConnectionError,::
+        except requests.exceptions.ConnectionError,:
             pytest.skip("后端服务未运行,跳过端到端测试")
     
     
@@ -56,7 +56,7 @@ def test_atlassian_full_workflow(self) -> None:
         # 在测试环境中,我们可能需要模拟这个行为
         
         # 3. 获取 Jira 项目(如果服务可用)
-        if status_result.get("connected", False)::
+        if status_result.get("connected", False):
             response = requests.get(f"{BASE_URL}/api/v1/atlassian/jira/projects")
             assert response.status_code == 200
             
@@ -66,7 +66,7 @@ def test_atlassian_full_workflow(self) -> None:
             assert "count" in projects_result
         
         # 4. 获取 Confluence 空间(如果服务可用)
-        if status_result.get("connected", False)::
+        if status_result.get("connected", False):
             response = requests.get(f"{BASE_URL}/api/v1/atlassian/confluence/spaces")
             assert response.status_code == 200
             
@@ -94,5 +94,5 @@ def test_atlassian_full_workflow(self) -> None:
         response = requests.get(f"{BASE_URL}/api/v1/atlassian/status")
         assert response.status_code == 200
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__])

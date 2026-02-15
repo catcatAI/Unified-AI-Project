@@ -1,0 +1,197 @@
+tests\agents\test_creative_writing_agent.py:32:21: F821 undefined name 'Mock'
+tests\agents\test_creative_writing_agent.py:79:21: F821 undefined name 'Mock'
+tests\agents\test_creative_writing_agent.py:159:21: F821 undefined name 'Mock'
+tests\agents\test_creative_writing_agent.py:182:21: F821 undefined name 'Mock'
+tests\api_test_report.py:88:5: F824 `global test_results` is unused: name is never assigned in scope
+tests\automated_integration_test_pipeline.py:30:43: E999 SyntaxError: invalid syntax
+tests\check_test_results.py:4:64: E999 SyntaxError: invalid syntax
+tests\cli\test_cli.py:16:41: E999 SyntaxError: invalid syntax
+tests\continuous_test_improvement.py:16:22: E999 SyntaxError: invalid syntax
+tests\core_ai\dialogue\test_project_coordinator_fix.py:16:8: E999 SyntaxError: invalid syntax
+tests\core_ai\formula_engine\test_formula_engine.py:14:57: E999 SyntaxError: trailing comma not allowed without surrounding parentheses
+tests\core_ai\language_models\test_daily_language_model.py:9:5: E999 IndentationError: unexpected indent
+tests\core_ai\learning\conftest.py:6:85: E999 SyntaxError: invalid syntax
+tests\core_ai\learning\test_learning_manager.py:33:52: E999 SyntaxError: invalid syntax
+tests\core_ai\lis\test_ham_lis_cache.py:40:52: E999 SyntaxError: invalid syntax
+tests\core_ai\memory\test_ham_chromadb_integration.py:136:25: E999 SyntaxError: unmatched ')'
+tests\core_ai\memory\test_ham_memory_manager.py:42:58: E999 SyntaxError: expected ':'
+tests\core_ai\meta_formulas\test_meta_formulas.py:25:37: E999 SyntaxError: expected ':'
+tests\core_ai\personality\test_personality_manager.py:23:123: E999 SyntaxError: invalid syntax
+tests\core_ai\service_discovery\test_service_discovery_module.py:37:68: E999 SyntaxError: expected ':'
+tests\core_ai\test_agent_manager.py:20:37: E999 SyntaxError: invalid syntax
+tests\core_ai\test_crisis_system.py:17:28: E999 SyntaxError: invalid syntax
+tests\core_ai\test_deep_mapper.py:25:18: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\core_ai\test_emotion_system.py:16:28: E999 SyntaxError: invalid syntax
+tests\core_ai\test_time_system.py:17:28: E999 SyntaxError: invalid syntax
+tests\creation\test_creation_engine.py:27:37: E999 SyntaxError: expected ':'
+tests\deadlock_detector.py:27:2: E999 IndentationError: expected an indented block after class definition on line 26
+tests\e2e\test_atlassian_workflow.py:19:52: E999 SyntaxError: invalid syntax
+tests\e2e\test_training_workflow.py:28:12: E999 SyntaxError: invalid syntax
+tests\economy\test_economy_db.py:15:21: E999 SyntaxError: invalid syntax
+tests\economy\test_economy_manager.py:17:26: E999 SyntaxError: invalid syntax
+tests\enable_commented_tests.py:17:51: E999 SyntaxError: expected ':'
+tests\enterprise_test_suite.py:26:25: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\evaluation\test_evaluation_db.py:17:21: E999 SyntaxError: invalid syntax
+tests\evaluation\test_evaluator.py:27:33: E999 SyntaxError: expected ':'
+tests\evaluation\test_task_evaluator.py:103:28: E999 SyntaxError: invalid syntax
+tests\final_comprehensive_test.py:23:27: E999 SyntaxError: invalid syntax
+tests\final_test.py:20:76: E999 SyntaxError: closing parenthesis ')' does not match opening parenthesis '[' on line 16
+tests\fragmenta\test_fragmenta_orchestrator.py:31:30: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\game\test_assets.py:19:5: E999 IndentationError: unexpected indent
+tests\game\test_main.py:13:5: E999 IndentationError: unexpected indent
+tests\game\test_npcs.py:19:5: E999 IndentationError: unexpected indent
+tests\generate_test_report.py:16:22: E999 SyntaxError: invalid syntax
+tests\hsp\mock_mqtt_broker.py:8:82: E999 SyntaxError: invalid syntax
+tests\hsp\run_hsp_tests.py:16:11: E999 SyntaxError: invalid syntax
+tests\hsp\temp_test_gmqtt_mock.py:4:24: F821 undefined name 'AsyncMock'
+tests\hsp\test_basic.py:8:5: E999 IndentationError: unexpected indent
+tests\hsp\test_debug.py:28:30: E999 SyntaxError: unmatched ')'
+tests\hsp\test_external_connector_stability.py:20:25: E999 SyntaxError: invalid syntax
+tests\hsp\test_hsp_ack_retry.py:19:60: E999 SyntaxError: invalid syntax
+tests\hsp\test_hsp_advanced_integration.py:11:5: E999 IndentationError: unexpected indent
+tests\hsp\test_hsp_connector.py:38:6: E999 IndentationError: expected an indented block after function definition on line 37
+tests\hsp\test_hsp_enhanced_integration.py:12:5: E999 IndentationError: unexpected indent
+tests\hsp\test_hsp_fixture.py:33:8: E999 SyntaxError: invalid syntax
+tests\hsp\test_hsp_integration.py:49:41: E999 SyntaxError: invalid syntax
+tests\hsp\test_hsp_refactored.py:30:13: E999 SyntaxError: invalid syntax
+tests\hsp\test_hsp_security.py:38:31: E999 SyntaxError: invalid syntax
+tests\hsp\test_message_bridge.py:35:41: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\hsp\test_mqtt_broker_startup.py:21:21: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\integration\ai_ops_integration_test.py:224:42: E999 SyntaxError: unmatched ')'
+tests\integration\base_test.py:11:9: F821 undefined name 'Any'
+tests\integration\base_test.py:41:75: F821 undefined name 'Dict'
+tests\integration\base_test.py:41:85: F821 undefined name 'Any'
+tests\integration\base_test.py:53:101: F821 undefined name 'Dict'
+tests\integration\base_test.py:53:111: F821 undefined name 'Any'
+tests\integration\base_test.py:66:80: F821 undefined name 'Dict'
+tests\integration\base_test.py:66:90: F821 undefined name 'Any'
+tests\integration\base_test.py:174:63: F821 undefined name 'Dict'
+tests\integration\base_test.py:174:84: F821 undefined name 'Dict'
+tests\integration\base_test.py:174:99: F821 undefined name 'Dict'
+tests\integration\comprehensive_test_framework.py:9:35: E999 SyntaxError: unmatched ')'
+tests\integration\conftest.py:12:39: E999 SyntaxError: expected ':'
+tests\integration\end_to_end_test.py:30:14: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\integration\quick_e2e_test.py:50:27: E999 SyntaxError: invalid syntax
+tests\integration\test_agent_collaboration.py:19:1: E999 IndentationError: unexpected unindent
+tests\integration\test_ai_agent_integration.py:22:12: E999 SyntaxError: invalid syntax
+tests\integration\test_atlassian_integration.py:24:29: E999 SyntaxError: expected ':'
+tests\integration\test_core_services_integration.py:22:12: E999 SyntaxError: invalid syntax
+tests\integration\test_data_factory.py:14:1: E999 IndentationError: unexpected unindent
+tests\integration\test_example_integration.py:13:12: E999 SyntaxError: invalid syntax
+tests\integration\test_hsp_debug.py:14:8: E999 SyntaxError: invalid syntax
+tests\integration\test_hsp_protocol_integration.py:22:12: E999 SyntaxError: invalid syntax
+tests\integration\test_hsp_simple.py:101:38: E999 SyntaxError: unmatched ')'
+tests\integration\test_knowledge_update.py:22:11: E999 SyntaxError: invalid syntax
+tests\integration\test_learning_and_trust.py:23:29: E999 SyntaxError: invalid syntax
+tests\integration\test_memory_system_integration.py:22:12: E999 SyntaxError: invalid syntax
+tests\integration\test_performance_benchmark.py:15:12: E999 SyntaxError: invalid syntax
+tests\integration\test_performance_benchmarks.py:35:31: E999 SyntaxError: unmatched ')'
+tests\integration\test_self_improvement.py:22:11: E999 SyntaxError: invalid syntax
+tests\integration\test_system_level_integration.py:15:75: E999 SyntaxError: expected ':'
+tests\integration\test_training_system_integration.py:22:12: E999 SyntaxError: invalid syntax
+tests\integration\test_utils.py:15:6: E999 IndentationError: expected an indented block after function definition on line 14
+tests\integration_test.py:18:32: E999 SyntaxError: expected ':'
+tests\integrations\test_atlassian_api.py:22:47: E999 SyntaxError: expected ':'
+tests\integrations\test_atlassian_bridge.py:25:32: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\integrations\test_atlassian_bridge_fallback.py:16:6: E999 IndentationError: expected an indented block after function definition on line 15
+tests\integrations\test_rovo_dev_agent.py:19:6: E999 IndentationError: expected an indented block after function definition on line 18
+tests\integrations\test_rovo_dev_agent_recovery.py:20:6: E999 IndentationError: expected an indented block after function definition on line 19
+tests\integrations\test_rovo_dev_connector.py:23:26: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\intelligent_test_generator.py:520:25: E999 SyntaxError: unterminated triple-quoted string literal (detected at line 551)
+tests\maintain_test_suite.py:20:51: E999 SyntaxError: expected ':'
+tests\mcp\test_context7_connector.py:11:5: E999 IndentationError: unexpected indent
+tests\mcp\test_mcp_connector.py:25:8: E999 SyntaxError: invalid syntax
+tests\meta\test_learning_log_db.py:16:21: E999 SyntaxError: invalid syntax
+tests\modules_fragmenta\test_element_layer.py:24:42: E999 SyntaxError: expected ':'
+tests\modules_fragmenta\test_vision_tone_inverter.py:24:42: E999 SyntaxError: expected ':'
+tests\optimize_test_suite.py:21:51: E999 SyntaxError: expected ':'
+tests\performance\benchmark_test.py:21:27: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\performance\stress_test.py:24:32: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\process_test_results.py:27:49: E999 SyntaxError: invalid syntax
+tests\project_function_test_mapping.py:20:51: E999 SyntaxError: expected ':'
+tests\quick_test_concept_models.py:16:28: E999 SyntaxError: expected ':'
+tests\run_fixed_tests.py:15:28: E999 SyntaxError: expected ':'
+tests\run_hsp_test.py:11:11: E999 SyntaxError: invalid syntax
+tests\run_integration_tests.py:17:31: E999 SyntaxError: invalid syntax
+tests\run_test_direct.py:11:11: E999 SyntaxError: invalid syntax
+tests\run_test_fix.py:14:45: E999 SyntaxError: expected ':'
+tests\run_tests_with_compat.py:31:29: E999 SyntaxError: invalid syntax
+tests\run_verification_test.py:16:11: E999 SyntaxError: invalid syntax
+tests\search\test_search_engine.py:33:120: E999 SyntaxError: unexpected character after line continuation character
+tests\services\test_ai_virtual_input_service.py:12:32: E999 SyntaxError: unmatched ')'
+tests\services\test_audio_service.py:26:46: E999 SyntaxError: expected ':'
+tests\services\test_health_ready_endpoints.py:20:40: E999 SyntaxError: expected ':'
+tests\services\test_hot_endpoints.py:15:5: E999 IndentationError: unexpected indent
+tests\services\test_hsp_endpoints.py:15:32: E999 SyntaxError: expected ':'
+tests\services\test_llm_interface.py:24:42: E999 SyntaxError: expected ':'
+tests\services\test_main_api_server.py:13:21: F821 undefined name 'app'
+tests\services\test_models_endpoints.py:19:36: E999 SyntaxError: expected ':'
+tests\services\test_node_services.py:16:34: E999 SyntaxError: invalid syntax
+tests\services\test_resource_awareness_service.py:15:20: E999 SyntaxError: unmatched ')'
+tests\services\test_sandbox_executor.py:22:1: E999 IndentationError: expected an indented block after function definition on line 20
+tests\services\test_vision_service.py:24:42: E999 SyntaxError: expected ':'
+tests\shared\test_key_manager.py:27:38: E999 SyntaxError: invalid syntax
+tests\shared\utils\test_cleanup_utils.py:20:67: E999 SyntaxError: invalid syntax
+tests\smart_test_runner.py:22:2: E999 IndentationError: expected an indented block after function definition on line 19
+tests\temp_async_test.py:8:15: F821 undefined name 'MagicMock'
+tests\temp_async_test.py:14:39: F821 undefined name 'MagicMock'
+tests\temp_async_test.py:15:11: F821 undefined name 'ServiceDiscoveryModule'
+tests\temp_async_test.py:34:73: F821 undefined name 'MagicMock'
+tests\temp_async_test.py:39:60: F821 undefined name 'ServiceDiscoveryModule'
+tests\test_agi_integration.py:37:38: E999 SyntaxError: unmatched ')'
+tests\test_alpha_upgrade.py:47:38: E999 SyntaxError: invalid syntax
+tests\test_api_with_delay.py:19:24: F821 undefined name 'response'
+tests\test_apple_inc.py:45:71: E999 SyntaxError: invalid syntax
+tests\test_atlassian_integration.py:109:36: E999 SyntaxError: unterminated triple-quoted string literal (detected at line 132)
+tests\test_audio_service_direct.py:18:5: E999 IndentationError: unexpected indent
+tests\test_automated_defect_detector.py:51:85: E999 SyntaxError: positional argument follows keyword argument
+tests\test_capital_of.py:31:11: E999 SyntaxError: expected '('
+tests\test_capital_of_debug.py:16:5: E999 IndentationError: unexpected indent
+tests\test_chromadb_fix.py:29:10: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\test_compat_fix.py:23:5: E999 IndentationError: unexpected indent
+tests\test_concept_models_training.py:29:5: E999 IndentationError: unexpected indent
+tests\test_config_loader.py:77:25: E999 SyntaxError: unterminated string literal (detected at line 77)
+tests\test_content_analyzer.py:38:53: E999 SyntaxError: invalid syntax
+tests\test_core_service_manager.py:21:2: E999 IndentationError: expected an indented block after class definition on line 20
+tests\test_core_services.py:66:13: E999 IndentationError: unexpected indent
+tests\test_core_services_module.py:30:35: E999 SyntaxError: invalid syntax
+tests\test_coverage_analyzer.py:27:33: E999 SyntaxError: expected ':'
+tests\test_coverage_report.py:16:21: E999 SyntaxError: invalid syntax. Perhaps you forgot a comma?
+tests\test_data_manager.py:36:62: E999 SyntaxError: invalid syntax
+tests\test_dependency_manager.py:23:44: E999 SyntaxError: expected ':'
+tests\test_dependency_manager_backup.py:23:44: E999 SyntaxError: expected ':'
+tests\test_gmqtt_import.py:21:5: E999 IndentationError: unexpected indent
+tests\test_hsp_fixture_fix.py:17:24: F821 undefined name 'AsyncMock'
+tests\test_hsp_fixture_fix.py:18:32: F821 undefined name 'AsyncMock'
+tests\test_hsp_fixture_fix.py:19:35: F821 undefined name 'AsyncMock'
+tests\test_hsp_fixture_fix.py:20:34: F821 undefined name 'AsyncMock'
+tests\test_hsp_fixture_fix.py:21:32: F821 undefined name 'AsyncMock'
+tests\test_intelligent_test_generator.py:10:5: E999 IndentationError: unexpected indent
+tests\test_performance_benchmark.py:333:5: E999 IndentationError: unexpected unindent
+tests\test_quality_assessor.py:85:98: F821 undefined name 'List'
+tests\test_result_analyzer.py:25:66: F821 undefined name 'List'
+tests\test_result_analyzer.py:53:54: F821 undefined name 'Dict'
+tests\test_result_analyzer.py:53:73: F821 undefined name 'List'
+tests\test_result_analyzer.py:98:26: F821 undefined name 'failure_patterns'
+tests\test_result_analyzer.py:101:5: F706 'return' outside function
+tests\test_result_analyzer.py:103:63: F821 undefined name 'Dict'
+tests\test_result_analyzer.py:104:56: F821 undefined name 'Dict'
+tests\test_result_analyzer.py:105:65: F821 undefined name 'List'
+tests\test_result_analyzer.py:119:26: F821 undefined name 'current_results'
+tests\test_result_analyzer.py:120:27: F821 undefined name 'baseline_results'
+tests\test_result_analyzer.py:135:31: F821 undefined name 'threshold'
+tests\test_result_analyzer.py:139:5: F706 'return' outside function
+tests\test_result_analyzer.py:141:54: F821 undefined name 'Dict'
+tests\test_result_analyzer.py:142:50: F821 undefined name 'List'
+tests\test_result_analyzer.py:143:78: F821 undefined name 'Dict'
+tests\test_result_processing_test.py:213:27: F821 undefined name 'TestResultVisualizer'
+tests\test_tool_call_chain.py:18:32: F821 undefined name 'Mock'
+tests\test_tool_call_chain.py:18:42: F821 undefined name 'ContextManager'
+tests\test_tool_call_chain.py:20:24: F821 undefined name 'ToolCallChainTracker'
+tests\test_tool_call_chain.py:206:24: F821 undefined name 'ToolCallChainContext'
+tests\verify_all_agents.py:7:31: E999 SyntaxError: expected ':'
+143   E999 SyntaxError: invalid syntax
+2     F706 'return' outside function
+46    F821 undefined name 'Mock'
+1     F824 `global test_results` is unused: name is never assigned in scope
+192

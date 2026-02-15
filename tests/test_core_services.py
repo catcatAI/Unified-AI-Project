@@ -62,7 +62,7 @@ class TestCoreServices(unittest.TestCase):
     def test_get_services(self) -> None:
         """Test getting services."""
         services = get_services()
-        # Should return a dictionary, even if services aren't initialized,::
+        # Should return a dictionary, even if services aren't initialized,:
             elf.assertIsInstance(services, dict)
         # Check that all expected keys are present
         expected_keys = [
@@ -73,7 +73,7 @@ class TestCoreServices(unittest.TestCase):
             "ai_virtual_input_service", "audio_service", "vision_service",
             "resource_awareness_service", "economy_manager", "pet_manager"
         ]
-        for key in expected_keys,::
+        for key in expected_keys,:
             self.assertIn(key, services)
 
     def test_shutdown_services(self) -> None:

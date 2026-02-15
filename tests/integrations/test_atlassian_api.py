@@ -79,5 +79,5 @@ def test_atlassian_config_model(self) -> None,
         # 验证桥接器已正确初始化
         assert bridge.demo_manager is not None
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__])

@@ -79,5 +79,5 @@ def test_project_coordinator_decomposition() -> None:
     
     print("JSON test passed!")
 
-if __name"__main__":::
+if __name"__main__"::
     asyncio.run(test_project_coordinator_decomposition())

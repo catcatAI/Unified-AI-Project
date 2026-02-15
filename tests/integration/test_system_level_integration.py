@@ -14,8 +14,8 @@ class TestSystemLevelIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_test_data(self, setup_test, mock_external_services) -> None,
         """设置测试数据"""
-        self.data_factory == TestDataFactory()
-        self.test_data_set == TestDataSet()
+        self.data_factory = TestDataFactory()
+        self.test_data_set = TestDataSet()
         self.mock_services = mock_external_services
         yield
     
@@ -103,7 +103,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         # 1. 系统初始化
         system_services = [memory_manager, dialogue_manager, learning_manager, llm_service]
         init_results = []
-        for service in system_services,::
+        for service in system_services,:
             result = await service.return_value.initialize()
             init_results.append(result)
         
@@ -112,7 +112,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         
         # 3. 创建代理
         created_agents = []
-        for agent_config in test_data["agents"]::
+        for agent_config in test_data["agents"]:
             agent = await agent_manager.return_value.create_agent(
                 agent_config["agent_id"]
                 agent_config["agent_type"],
@@ -174,7 +174,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         )
         
         # 验证结果
-        assert all(result is True for result in init_results)::
+        assert all(result is True for result in init_results):
         assert hsp_connect_result is True
         assert len(created_agents) == len(test_data["agents"])
         assert dialogue_response is not None
@@ -185,7 +185,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         assert feedback_result is True
         
         # 验证mock调用,
-        for service in system_services,::
+        for service in system_services,:
             service.return_value.initialize.assert_called_once()
         
         hsp_connector.return_value.connect.assert_called_once()
@@ -292,7 +292,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         # 执行多代理协作任务测试
         # 1. 创建专业代理
         created_specialists = []
-        for config in specialist_configs,::
+        for config in specialist_configs,:
             specialist = await agent_manager.return_value.create_agent(
                 config["agent_id"]
                 config["agent_type"],
@@ -307,7 +307,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         
         # 3. 分配任务给代理
         task_assignments = []
-        for agent_id in coordination_result["assigned_agents"]::
+        for agent_id in coordination_result["assigned_agents"]:
             assignment_result = await agent_manager.return_value.assign_collaborative_task(
                 agent_id,,
     task_request
@@ -326,7 +326,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         ]
         
         message_results = []
-        for message in collaboration_messages,::
+        for message in collaboration_messages,:
             result = await hsp_connector.return_value.publish(
                 message,,
     coordination_result["coordination_channel"]
@@ -340,7 +340,7 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         
         # 6. 生成最终报告
         final_report = await llm_service.return_value.generate_response(,
-    f"Generate comprehensive report for task, {task_request['content']}"::
+    f"Generate comprehensive report for task, {task_request['content']}":
         )
         
         # 7. 存储任务结果
@@ -359,8 +359,8 @@ def test_end_to_end_user_interaction_integration(self) -> None:
         assert coordination_result is not None
         assert "task_id" in coordination_result
         assert "assigned_agents" in coordination_result
-        assert all(assignment_result is True for assignment_result in task_assignments)::
-        assert all(result is True for result in message_results)::
+        assert all(assignment_result is True for assignment_result in task_assignments):
+        assert all(result is True for result in message_results):
         assert progress_result is not None
         assert progress_result["status"] == "completed"
         assert final_report is not None
@@ -387,7 +387,7 @@ class TestSystemIntegrationWithExternalServices(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_external_services_test(self, setup_test, mock_external_services):
         """设置外部服务测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         self.mock_services = mock_external_services
         yield
     
@@ -553,5 +553,5 @@ class TestSystemIntegrationWithExternalServices(SystemIntegrationTest):
         )
 
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__, "-v"])

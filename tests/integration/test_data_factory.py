@@ -29,13 +29,13 @@ def create_agent_config(
         Returns:
             Dict, 代理配置
         """
-        if agent_id is None,::
+        if agent_id is None,:
             agent_id = f"agent_{uuid.uuid4().hex[:8]}"
         
-        if capabilities is None,::
+        if capabilities is None,:
             capabilities = ["text_generation", "data_analysis"]
             
-        if config is None,::
+        if config is None,:
             config = {
                 "max_concurrent_tasks": 5,
                 "timeout": 30,
@@ -76,10 +76,10 @@ def create_hsp_message(
         Returns:
             Dict, HSP消息
         """
-        if message_id is None,::
+        if message_id is None,:
             message_id = f"msg_{uuid.uuid4().hex[:8]}"
             
-        if metadata is None,::
+        if metadata is None,:
             metadata = {
                 "timestamp": datetime.now().isoformat(),
                 "priority": "normal",
@@ -118,13 +118,13 @@ def create_memory_item(
         Returns,
             Dict, 记忆项
         """
-        if memory_id is None,::
+        if memory_id is None,:
             memory_id = f"mem_{uuid.uuid4().hex[:8]}"
             
-        if tags is None,::
+        if tags is None,:
             tags = ["test", "integration"]
             
-        if metadata is None,::
+        if metadata is None,:
             metadata = {
                 "created_at": datetime.now().isoformat(),
                 "last_accessed": datetime.now().isoformat(),
@@ -161,10 +161,10 @@ def create_training_data(
         Returns:
             Dict, 训练数据
         """
-        if data_id is None,::
+        if data_id is None,:
             data_id = f"train_{uuid.uuid4().hex[:8]}"
             
-        if metadata is None,::
+        if metadata is None,:
             metadata = {
                 "created_at": datetime.now().isoformat(),
                 "source": "integration_test",
@@ -200,16 +200,16 @@ def create_dialogue_context(
         Returns:
             Dict, 对话上下文
         """
-        if context_id is None,::
+        if context_id is None,:
             context_id = f"context_{uuid.uuid4().hex[:8]}"
             
-        if session_id is None,::
+        if session_id is None,:
             session_id = f"session_{uuid.uuid4().hex[:8]}"
             
-        if history is None,::
+        if history is None,:
             history = []
             
-        if metadata is None,::
+        if metadata is None,:
             metadata = {
                 "created_at": datetime.now().isoformat(),
                 "language": "en",
@@ -228,7 +228,7 @@ def create_dialogue_context(
 def create_test_scenario(
         scenario_id, str == None,
         name, str = "Test Scenario",
-        description, str == "Test scenario for integration testing",:::
+        description, str == "Test scenario for integration testing",::
         steps, List[Dict] = None,,
     expected_results, List[str] = None
     ) -> Dict[str, Any]
@@ -245,10 +245,10 @@ def create_test_scenario(
         Returns:
             Dict, 测试场景
         """
-        if scenario_id is None,::
+        if scenario_id is None,:
             scenario_id = f"scenario_{uuid.uuid4().hex[:8]}"
             
-        if steps is None,::
+        if steps is None,:
             steps = [
                 {
                     "step": 1,
@@ -257,7 +257,7 @@ def create_test_scenario(
                 }
             ]
             
-        if expected_results is None,::
+        if expected_results is None,:
             expected_results = ["System initializes successfully"]
             
         return {
@@ -274,7 +274,7 @@ class TestDataSet:
     """测试数据集类"""
     
     def __init__(self) -> None,
-        self.factory == TestDataFactory()
+        self.factory = TestDataFactory()
         self.data_sets = {}
     
     def create_standard_test_data(self) -> Dict[str, Any]
@@ -342,8 +342,8 @@ class TestDataSet:
         Returns:
             Dict, 数据集
         """
-        if name not in self.data_sets,::
-            if name == "standard":::
+        if name not in self.data_sets,:
+            if name == "standard"::
                 self.data_sets[name] = self.create_standard_test_data()
             else:
                 raise ValueError(f"Unknown dataset, {name}")

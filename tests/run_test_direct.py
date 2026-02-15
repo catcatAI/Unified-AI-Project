@@ -8,7 +8,7 @@ sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, 'src'))
 
 # 运行一个简单的测试
-if __name"__main__":::
+if __name"__main__"::
     # 改变当前工作目录到项目根目录
     os.chdir(project_root)
     

@@ -48,7 +48,7 @@ def test_
         audio_data = service.text_to_speech("Hello, this is a test.")
         print(f"Audio data, {audio_data}")
         print(f"Audio data type, {type(audio_data)}")
-        if audio_data,::
+        if audio_data,:
             print(f"Audio data length, {len(audio_data)}")
         else:
             print("Audio data is None!")
@@ -60,5 +60,5 @@ def test_
         result = asyncio.run(service.speech_to_text(dummy_audio))
         print(f"Speech to text result, {result}")
 
-if __name"__main__":::
+if __name"__main__"::
     test_audio_service()

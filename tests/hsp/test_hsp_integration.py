@@ -119,7 +119,7 @@ def configured_learning_manager(
         "default_hsp_fact_topic": FACT_TOPIC_GENERAL
     }
     lm = Mock()  # 使用Mock而不是实际的LearningManager
-    if main_ai_hsp_connector,::
+    if main_ai_hsp_connector,:
         main_ai_hsp_connector.register_on_fact_callback(lm.process_and_store_hsp_fact())
     yield lm
 
@@ -267,7 +267,7 @@ class TestHSPIntegration:
         results = []
 
         # 创建多个并发任务
-        for i in range(5)::
+        for i in range(5):
             task_payload = {
                 "task_id": f"task_{i}",
                 "operation": "test_operation",
@@ -280,14 +280,14 @@ class TestHSPIntegration:
             tasks.append(task)
 
         # 等待所有任务完成
-        for task in tasks,::
+        for task in tasks,:
             result = await task
             results.append(result)
 
         # 验证结果
         assert len(results) == 5
         # 验证所有任务都返回了correlation_id
-        assert all(result is not None for result in results)::
+        assert all(result is not None for result in results):
     async def _send_simple_task_request(self, connector, HSPConnector, payload, Dict[str, Any] target_ai_id, str) -> Optional[str]
         """
         发送简单的任务请求,不等待ACK确认

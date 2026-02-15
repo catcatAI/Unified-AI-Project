@@ -51,7 +51,7 @@
 #     def method():
 #         pass
 
-# if __name"__main__"::
+# if __name"__main__":
 #     test_function()
 #     another_function()
 #     third_function()

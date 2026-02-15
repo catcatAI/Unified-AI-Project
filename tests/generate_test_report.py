@@ -30,7 +30,7 @@ class TestReportGenerator:
     Args,
             report_dir, 报告目录
     """
-    self.report_dir == Path(report_dir)
+    self.report_dir = Path(report_dir)
     self.report_dir.mkdir(exist_ok == True)
 
     def generate_html_report(self, test_results, Dict[str, Any] output_file, str == None) -> str,
@@ -43,7 +43,7 @@ class TestReportGenerator:
 
     Returns, str 生成的HTML报告路径
     """
-        if output_file is None,::
+        if output_file is None,:
     output_file = self.report_dir / f"integration_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         else:
 
@@ -57,7 +57,7 @@ class TestReportGenerator:
     f.write(html_content)
             logger.info(f"HTML report generated, {output_file}")
             return str(output_file)
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Error generating HTML report, {e}")
             return None
 
@@ -69,11 +69,11 @@ class TestReportGenerator:
 
     # 计算统计信息
     total_tests = len(test_cases)
-        passed_tests = len([tc for tc in test_cases if tc.get("outcome") == "passed"])::
-    failed_tests = len([tc for tc in test_cases if tc.get("outcome") == "failed"])::
-    skipped_tests = len([tc for tc in test_cases if tc.get("outcome") == "skipped"])::
+        passed_tests = len([tc for tc in test_cases if tc.get("outcome") == "passed"]):
+    failed_tests = len([tc for tc in test_cases if tc.get("outcome") == "failed"]):
+    skipped_tests = len([tc for tc in test_cases if tc.get("outcome") == "skipped"]):
     # 计算通过率,
-        pass_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0,::
+        pass_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0,:
     html_template = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -216,7 +216,7 @@ class TestReportGenerator:
 """
 
     # 添加测试用例
-        for test_case in test_cases,::
+        for test_case in test_cases,:
     name = test_case.get("name", "Unknown")
             module = test_case.get("module", "Unknown")
             outcome = test_case.get("outcome", "unknown")
@@ -235,7 +235,7 @@ class TestReportGenerator:
                     <td>
 """
 
-            if error_message,::
+            if error_message,:
     html_template += f"""
                         <div class="error-details">{error_message}</div>
 """
@@ -281,9 +281,9 @@ class TestReportGenerator:
             }
 
             # 解析测试套件
-            for testsuite in root.findall(".//testsuite")::
+            for testsuite in root.findall(".//testsuite"):
                 # 解析测试用例,
-                for testcase in testsuite.findall("testcase"):::
+                for testcase in testsuite.findall("testcase")::
                     est_case_data = {
                         "name": testcase.get("name", ""),
                         "module": testcase.get("classname", ""),
@@ -296,13 +296,13 @@ class TestReportGenerator:
                     error = testcase.find("error")
                     skipped = testcase.find("skipped")
 
-                    if failure is not None,::
+                    if failure is not None,:
     test_case_data["outcome"] = "failed"
                         test_case_data["error_message"] = failure.text or failure.get("message", "")
-                    elif error is not None,::
+                    elif error is not None,:
     test_case_data["outcome"] = "failed"
                         test_case_data["error_message"] = error.text or error.get("message", "")
-                    elif skipped is not None,::
+                    elif skipped is not None,:
     test_case_data["outcome"] = "skipped"
                         test_case_data["error_message"] = skipped.text or skipped.get("message", "")
 
@@ -310,7 +310,7 @@ class TestReportGenerator:
 
             return test_results
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Error parsing JUnit XML file {xml_file} {e}")
             return {}
 
@@ -324,7 +324,7 @@ class TestReportGenerator:
 
     Returns, str 生成的性能报告路径
     """
-        if output_file is None,::
+        if output_file is None,:
     output_file = self.report_dir / f"performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         else:
 
@@ -339,7 +339,7 @@ class TestReportGenerator:
     f.write(html_content)
             logger.info(f"Performance report generated, {output_file}")
             return str(output_file)
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Error generating performance report, {e}")
             return None
 
@@ -432,7 +432,7 @@ class TestReportGenerator:
 """
 
     # 添加基准测试结果
-        for benchmark in benchmarks,::
+        for benchmark in benchmarks,:
     name = benchmark.get("name", "Unknown")
             stats = benchmark.get("stats", {})
 
@@ -478,7 +478,7 @@ def main() -> None,
     )
     parser.add_argument(
     "--input",,
-    help = "Input file (XML for parse-xml, JSON for performance)":::
+    help = "Input file (XML for parse-xml, JSON for performance)"::
     parser.add_argument(
     "--output",,
     help="Output HTML file path"
@@ -490,7 +490,7 @@ def main() -> None,
     report_generator = TestReportGenerator()
 
     # 执行操作
-    if args.action == "html":::
+    if args.action == "html"::
     # 生成HTML报告(需要测试结果数据)
     test_results = {
             "timestamp": datetime.now().isoformat(),
@@ -513,10 +513,10 @@ def main() -> None,
     }
     report_generator.generate_html_report(test_results, args.output())
 
-    elif args.action == "performance":::
+    elif args.action == "performance"::
     # 生成性能报告
-        if not args.input,::
-    print("Error, --input is required for performance action"):::
+        if not args.input,:
+    print("Error, --input is required for performance action")::
         ys.exit(1)
 
         try:
@@ -525,25 +525,25 @@ def main() -> None,
             with open(args.input(), "r", encoding == "utf-8") as f,
     benchmark_results = json.load(f)
             report_generator.generate_performance_report(benchmark_results, args.output())
-        except Exception as e,::
+        except Exception as e,:
             print(f"Error reading benchmark results, {e}")
             sys.exit(1)
 
-    elif args.action == "parse-xml":::
+    elif args.action == "parse-xml"::
     # 解析JUnit XML文件
-        if not args.input,::
-    print("Error, --input is required for parse-xml action"):::
+        if not args.input,:
+    print("Error, --input is required for parse-xml action")::
         ys.exit(1)
 
     test_results = report_generator.parse_junit_xml(args.input())
-        if test_results,::
+        if test_results,:
     output_file = args.output or "parsed_test_results.json"
             try:
 
                 with open(output_file, "w", encoding == "utf-8") as f,
     json.dump(test_results, f, indent=2, ensure_ascii == False)
                 print(f"Parsed test results saved to, {output_file}")
-            except Exception as e,::
+            except Exception as e,:
                 print(f"Error saving parsed results, {e}")
                 sys.exit(1)
         else:
@@ -552,7 +552,7 @@ def main() -> None,
             sys.exit(1)
 
 
-if __name"__main__":::
+if __name"__main__"::
     main()
 
 # 添加pytest标记,防止被误认为测试类

@@ -14,12 +14,12 @@ from ai.evaluation.evaluation_db import EvaluationDB
 class TestEvaluationDB(unittest.TestCase):
     def setUp(self):
         self.db_path = "test_evaluations.db"
-        self.db == = EvaluationDB(db_path ==self.db_path())
+        self.db =  = EvaluationDB(db_path ==self.db_path())
 
     def tearDown(self):
         self.db.close()
         self.db.close()
-        if os.path.exists(self.db_path())::
+        if os.path.exists(self.db_path()):
             os.remove(self.db_path())
 
     def test_init_db(self) -> None,

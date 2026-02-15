@@ -82,7 +82,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
                 "sender_ai_id": "test_sender",
                 "recipient_ai_id": "all",
                 "timestamp_sent": "2023-01-01T00,00,00Z",
-                "message_type": "HSP,Fact_v0.1",  # This is important for routing,::
+                "message_type": "HSP,Fact_v0.1",  # This is important for routing,:
                 "protocol_version": "0.1",
                 "communication_pattern": "publish",
                 "security_parameters": None,
@@ -100,7 +100,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
         # Wait for all publishes to complete,:
     await asyncio.gather(*tasks)
-        await asyncio.sleep(1.0())  # Give more time for processing,:
+        await asyncio.sleep(1.0))  # Give more time for processing,:
     # Verify messages were received (may not be all due to overflow handling)
     assert len(received_messages) > 0,
     print(f"Test passed, HSP connector handled message queue overflow, received {len(received_messages)} messages")
@@ -124,11 +124,11 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
     # Simulate network disconnection
     await mock_broker.shutdown()
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Restart broker
     await mock_broker.start()
-        await asyncio.sleep(1.0())  # Give time for reconnection,:
+        await asyncio.sleep(1.0))  # Give time for reconnection,:
     # Verify reconnection occurred
     assert len(connection_events) >= 2  # At least initial connect and reconnect,
     print("Test passed, HSP connector recovered from network disconnection")
@@ -163,7 +163,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
             "sender_ai_id": "test_sender",
             "recipient_ai_id": "all",
             "timestamp_sent": "2023-01-01T00,00,00Z",
-            "message_type": "HSP,Fact_v0.1",  # This is important for routing,::
+            "message_type": "HSP,Fact_v0.1",  # This is important for routing,:
             "protocol_version": "0.1",
             "communication_pattern": "publish",
             "security_parameters": None,
@@ -178,7 +178,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     json.dumps(envelope).encode('utf-8')
     )
 
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Verify large message was received
     assert len(received_messages) == 1
@@ -208,7 +208,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     tasks = []
 
     # Send facts
-        for i in range(5)::
+        for i in range(5):
             # Create a proper HSP fact payload with message envelope,
     payload = {:
                 "id": f"fact_{i}",
@@ -224,7 +224,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
                 "sender_ai_id": "test_sender",
                 "recipient_ai_id": "all",
                 "timestamp_sent": "2023-01-01T00,00,00Z",
-                "message_type": "HSP,Fact_v0.1",  # This is important for routing,::
+                "message_type": "HSP,Fact_v0.1",  # This is important for routing,:
                 "protocol_version": "0.1",
                 "communication_pattern": "publish",
                 "security_parameters": None,
@@ -241,7 +241,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
             tasks.append(task)
 
     # Send opinions
-        for i in range(5)::
+        for i in range(5):
             # Create a proper HSP opinion payload with message envelope,
     payload = {:
                 "id": f"opinion_{i}",
@@ -258,7 +258,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
                 "sender_ai_id": "test_sender",
                 "recipient_ai_id": "all",
                 "timestamp_sent": "2023-01-01T00,00,00Z",
-                "message_type": "HSP,Opinion_v0.1",  # This is important for routing,::
+                "message_type": "HSP,Opinion_v0.1",  # This is important for routing,:
                 "protocol_version": "0.1",
                 "communication_pattern": "publish",
                 "security_parameters": None,
@@ -276,7 +276,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
         # Wait for all publishes to complete,:
     await asyncio.gather(*tasks)
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Verify both facts and opinions were received
     assert len(received_facts) == 5
@@ -298,7 +298,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
     # Send messages in sequence with small delays
     message_ids = []
-        for i in range(10)::
+        for i in range(10):
     payload = {:
                 "id": f"ordered_fact_{i}",
                 "content": f"Ordered message {i}",
@@ -313,7 +313,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
                 "sender_ai_id": "test_sender",
                 "recipient_ai_id": "all",
                 "timestamp_sent": "2023-01-01T00,00,00Z",
-                "message_type": "HSP,Fact_v0.1",  # This is important for routing,::
+                "message_type": "HSP,Fact_v0.1",  # This is important for routing,:
                 "protocol_version": "0.1",
                 "communication_pattern": "publish",
                 "security_parameters": None,
@@ -328,20 +328,20 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
                 "hsp/knowledge/facts/test",,
     json.dumps(envelope).encode('utf-8')
             )
-            await asyncio.sleep(0.1())  # Small delay between messages
+            await asyncio.sleep(0.1))  # Small delay between messages
 
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Verify messages were received in order
     assert len(received_messages) == 10
-        for i, (payload, sender, envelope) in enumerate(received_messages)::
+        for i, (payload, sender, envelope) in enumerate(received_messages):
     assert payload["id"] == f"ordered_fact_{i}":
     print("Test passed, HSP connector preserved message ordering")
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(30)
     async def test_hsp_connector_error_handling(self, hsp_connector_fixture, mock_broker) -> None:
-        """Test HSP connector error handling for malformed messages.""":::
+        """Test HSP connector error handling for malformed messages."""::
     connector = hsp_connector_fixture
 
     # Track received messages
@@ -379,7 +379,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
             "sender_ai_id": "test_sender",
             "recipient_ai_id": "all",
             "timestamp_sent": "2023-01-01T00,00,00Z",
-            "message_type": "HSP,Fact_v0.1",  # This is important for routing,::
+            "message_type": "HSP,Fact_v0.1",  # This is important for routing,:
             "protocol_version": "0.1",
             "communication_pattern": "publish",
             "security_parameters": None,
@@ -394,7 +394,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
     json.dumps(envelope).encode('utf-8')
     )
 
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Verify valid message was received (malformed message should be handled gracefully)
     assert len(received_messages) == 1

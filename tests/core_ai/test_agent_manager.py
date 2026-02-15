@@ -17,7 +17,7 @@ from agent_manager import AgentManager
 
 class TestAgentManager(unittest.TestCase):
     def setUp(self):
-        """Set up for each test.""":::
+        """Set up for each test."""::
     self.python_executable = sys.executable()
     # Mock the _discover_agent_scripts to return a predictable set of agents
     self.mock_agent_scripts = {
@@ -26,14 +26,14 @@ class TestAgentManager(unittest.TestCase):
     }
 
         # Ensure the dummy agent scripts exist for the test to run,:
-    for path in self.mock_agent_scripts.values()::
-    if not os.path.exists(os.path.dirname(path))::
+    for path in self.mock_agent_scripts.values():
+    if not os.path.exists(os.path.dirname(path)):
     os.makedirs(os.path.dirname(path))
-            if not os.path.exists(path)::
+            if not os.path.exists(path):
     with open(path, 'w') as f:
     f.write("import time\nprint('Agent started')\ntime.sleep(10)\nprint('Agent stopped')")
 
-    self.manager == = AgentManager(python_executable ==self.python_executable())
+    self.manager =  = AgentManager(python_executable ==self.python_executable())
     self.manager.agent_script_map = self.mock_agent_scripts()
     def tearDown(self):
     """Clean up after each test."""
@@ -77,7 +77,7 @@ class TestAgentManager(unittest.TestCase):
     self.manager.active_agents[agent_name].poll == MagicMock(return_value == None)
 
     second_pid = self.manager.launch_agent(agent_name)
-        self.assertEqual(first_pid, second_pid, "Should return the same PID if already running")::
+        self.assertEqual(first_pid, second_pid, "Should return the same PID if already running"):
     @pytest.mark.timeout(5)
     def test_shutdown_agent_success(self) -> None,
     """Test shutting down a running agent."""

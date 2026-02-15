@@ -14,7 +14,7 @@ import pytest
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 
-if SRC_DIR not in sys.path,::
+if SRC_DIR not in sys.path,:
     sys.path.insert(0, SRC_DIR)
 
 from ai.time.time_system import TimeSystem
@@ -22,7 +22,7 @@ from unittest.mock import patch # For mocking datetime
 
 class TestTimeSystem(unittest.TestCase):
     def setUp(self):
-        self.time_sys == TimeSystem()
+        self.time_sys = TimeSystem()
 
     @pytest.mark.timeout(5)
     def test_01_initialization(self) -> None,
@@ -92,15 +92,15 @@ class TestTimeSystem(unittest.TestCase):
             (datetime(2023, 1, 1, 0, 0, 0), "night")     # Midnight
         ]
 
-        for mock_time, expected_segment in test_cases,::
+        for mock_time, expected_segment in test_cases,:
             # Patch TimeSystem's get_current_time to control the time it sees
-            # Or, if TimeSystem directly calls datetime.datetime.now(), patch that.::
-            # TimeSystem.get_current_time() calls datetime.datetime.now() if no override.::
+            # Or, if TimeSystem directly calls datetime.datetime.now(), patch that.:
+            # TimeSystem.get_current_time() calls datetime.datetime.now() if no override.:
             # So we patch datetime.datetime.now within the scope of time_system module.:
             with patch('apps.backend.src.ai.time.time_system.datetime') as mock_datetime_module:
                 mock_datetime_module.datetime.now.return_value = mock_time
                 segment = self.time_sys.get_time_of_day_segment()
-                self.assertEqual(segment, expected_segment, f"Failed for time {mock_time.hour}h. Got {segment} expected {expected_segment}")::
+                self.assertEqual(segment, expected_segment, f"Failed for time {mock_time.hour}h. Got {segment} expected {expected_segment}"):
         print("TestTimeSystem.test_06_get_time_of_day_segment PASSED")
 
 if __name__ == "__main__":

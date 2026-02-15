@@ -50,7 +50,7 @@ def process_test_results(results_file, str,
         # 1. 加载测试结果
         logger.info("正在加载测试结果...")
         results_data = visualizer.load_test_results(results_file)
-        if not results_data,::
+        if not results_data,:
             logger.error("无法加载测试结果数据")
             return False
         
@@ -61,14 +61,14 @@ def process_test_results(results_file, str,
         visualizer.visualize_test_distribution(results_data)
         
         # 如果有历史数据,生成趋势图
-        if historical_files,::
+        if historical_files,:
             historical_results = []
-            for file in historical_files,::
+            for file in historical_files,:
                 hist_data = visualizer.load_test_results(file)
-                if hist_data,::
+                if hist_data,:
                     historical_results.append(hist_data)
             
-            if historical_results,::
+            if historical_results,:
                 # 添加当前结果到历史数据中
                 historical_results.append(results_data)
                 visualizer.visualize_test_trends(historical_results)
@@ -84,22 +84,22 @@ def process_test_results(results_file, str,
         
         # 检测性能回归
         performance_regressions = []
-        if baseline_file,::
+        if baseline_file,:
             baseline_data = analyzer.load_test_results(baseline_file)
-            if baseline_data,::
+            if baseline_data,:
                 performance_regressions = analyzer.detect_performance_regressions(,
     results_data, baseline_data)
         
         # 分析覆盖率趋势
         coverage_trends = {}
-        if historical_files,::
+        if historical_files,:
             historical_results = []
-            for file in historical_files,::
+            for file in historical_files,:
                 hist_data = analyzer.load_test_results(file)
-                if hist_data,::
+                if hist_data,:
                     historical_results.append(hist_data)
             
-            if historical_results,::
+            if historical_results,:
                 coverage_trends = analyzer.analyze_test_coverage_trends(historical_results)
         
          # 生成分析报告
@@ -121,7 +121,7 @@ def process_test_results(results_file, str,
         
          # 5. 发送邮件通知(如果需要)
 
-        if send_email and recipient_emails and feedback_report_path,::
+        if send_email and recipient_emails and feedback_report_path,:
             logger.info("正在发送邮件通知...")
 
             feedback_system.send_email_notification(,
@@ -139,7 +139,7 @@ def process_test_results(results_file, str,
         
         return True
         
-    except Exception as e,::
+    except Exception as e,:
         logger.error(f"处理测试结果时发生错误, {e}")
         return False
 
@@ -168,12 +168,12 @@ def main() -> None,
         send_email=args.send_email(),
         recipient_emails=args.recipients())
     
-    if success,::
+    if success,:
         logger.info("测试结果处理成功完成")
         sys.exit(0)
     else:
         logger.error("测试结果处理失败")
         sys.exit(1)
 
-if __name"__main__":::
+if __name"__main__"::
     main()

@@ -26,7 +26,7 @@ def run_command(command, cwd == None, capture_output == True):
     Returns,
         subprocess.CompletedProcess, 命令执行结果
     """
-    print(f"Executing, {' '.join(command) if isinstance(command, list) else command}"):::
+    print(f"Executing, {' '.join(command) if isinstance(command, list) else command}")::
 ry,
         result = subprocess.run(
             command,
@@ -36,13 +36,13 @@ ry,
     check = False
         )
 
-        if result.stdout,::
+        if result.stdout,:
             print(f"STDOUT,\n{result.stdout}")
-        if result.stderr,::
+        if result.stderr,:
             print(f"STDERR,\n{result.stderr}")
 
         return result
-    except Exception as e,::
+    except Exception as e,:
         print(f"Error executing command, {e}")
         return None
 
@@ -63,12 +63,12 @@ def setup_test_environment() -> None,
     # 安装测试依赖
     print("Installing test dependencies...")
     result = run_command([sys.executable(), "-m", "pip", "install", "-e", ".[test]"])
-    if result and result.returncode != 0,::
+    if result and result.returncode != 0,:
         print("Warning, Failed to install test dependencies")
     
     # 检查pytest是否可用
     result = run_command([sys.executable(), "-m", "pytest", "--version"])
-    if not result or result.returncode != 0,::
+    if not result or result.returncode != 0,:
         print("Installing pytest...")
         run_command([sys.executable(), "-m", "pip", "install", "pytest"])
     
@@ -93,22 +93,22 @@ def run_integration_tests(test_type == "all", markers == None, parallel == False
     cmd = [sys.executable(), "-m", "pytest"]
     
     # 设置测试路径
-    if test_type == "all":::
+    if test_type == "all"::
         cmd.extend(["tests/integration/", "-v"])
-    elif test_type == "system":::
+    elif test_type == "system"::
         cmd.extend(["tests/integration/test_system_level_integration.py", "-v"])
-    elif test_type == "performance":::
+    elif test_type == "performance"::
         cmd.extend(["tests/integration/test_performance_benchmark.py", "-v"])
     else:
         # 特定模块测试
         cmd.extend([f"tests/integration/test_{test_type}_integration.py", "-v"])
     
     # 添加标记
-    if markers,::
+    if markers,:
         cmd.extend(["-m", markers])
     
     # 添加并行执行选项
-    if parallel,::
+    if parallel,:
         cmd.extend(["-n", "auto"])
     
     # 添加覆盖率选项
@@ -125,10 +125,10 @@ def run_integration_tests(test_type == "all", markers == None, parallel == False
     # 解析结果
     test_result = {
         "success": result is not None and result.returncode=0,
-        "return_code": result.returncode if result else -1,::
+        "return_code": result.returncode if result else -1,:
             execution_time": end_time - start_time,
-        "stdout": result.stdout if result else "",:::
-            stderr": result.stderr if result else "":::
+        "stdout": result.stdout if result else "",::
+            stderr": result.stderr if result else ""::
     return test_result
 
 
@@ -168,14 +168,14 @@ def generate_test_report(test_results, output_dir == "test_reports") -> None,
     print("INTEGRATION TEST SUMMARY")
     print("="*50)
     print(f"Execution Time, {test_results.get('execution_time', 0).2f} seconds")
-    print(f"Status, {'PASSED' if test_results.get('success', False) else 'FAILED'}"):::
+    print(f"Status, {'PASSED' if test_results.get('success', False) else 'FAILED'}")::
         rint(f"Return Code, {test_results.get('return_code', 'N/A')}")
     print("="*50)
 
 
 def main() -> None,
     """主函数"""
-    parser = argparse.ArgumentParser(description="Run integration tests for Unified AI Project"):::
+    parser = argparse.ArgumentParser(description="Run integration tests for Unified AI Project")::
         arser.add_argument(
         "--type",
         choices=["all", "system", "performance", "agent", "hsp", "memory", "training", "core"]
@@ -203,8 +203,8 @@ def main() -> None,
     print("="*50)
     
     # 设置测试环境
-    if not args.no_setup,::
-        if not setup_test_environment():::
+    if not args.no_setup,:
+        if not setup_test_environment()::
             print("Failed to setup test environment")
             return 1
     
@@ -218,6 +218,6 @@ def main() -> None,
     generate_test_report(test_results)
     
     # 返回执行结果
-    return 0 if test_results.get("success", False) else 1,::
+    return 0 if test_results.get("success", False) else 1,:
         f __name"__main__":
     sys.exit(main())

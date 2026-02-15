@@ -16,10 +16,10 @@ class ConceptModelIntegrationTest:
     """概念模型集成测试"""
 
     def __init__(self) -> None,
-        self.environment_simulator == EnvironmentSimulator
-        self.causal_reasoning_engine == CausalReasoningEngine
-        self.adaptive_learning_controller == AdaptiveLearningController
-        self.alpha_deep_model == AlphaDeepModel("integration_test_symbolic_space.db")
+        self.environment_simulator = EnvironmentSimulator
+        self.causal_reasoning_engine = CausalReasoningEngine
+        self.adaptive_learning_controller = AdaptiveLearningController
+        self.alpha_deep_model = AlphaDeepModel("integration_test_symbolic_space.db")
         self.symbolic_space = self.alpha_deep_model.get_symbolic_space()
     async def test_environment_causal_integration(self) -> None,
         """测试环境模拟器与因果推理引擎的集成"""
@@ -83,7 +83,7 @@ class ConceptModelIntegrationTest:
         )
 
         # 记录一些性能数据
-        for i in range(5)::
+        for i in range(5):
             record = PerformanceRecord(,
     timestamp=datetime.now.timestamp - (5 - i) * 60,
                 task_id="comfort_optimization",
@@ -162,7 +162,7 @@ class ConceptModelIntegrationTest:
         # 验证符号空间中的数据
         memory_symbol = await self.symbolic_space.get_symbol_by_name("mem_000123")
         gist_symbol = await self.symbolic_space.get_symbol_by_name("User asked about weather")
-        relationships = await self.symbolic_space.get_relationships_by_symbol(memory_symbol.id if memory_symbol else 0)::
+        relationships = await self.symbolic_space.get_relationships_by_symbol(memory_symbol.id if memory_symbol else 0):
 rint(f"内存符号, {memory_symbol is not None}")
         print(f"摘要符号, {gist_symbol is not None}")
         print(f"关系数量, {len(relationships)}")
@@ -275,7 +275,7 @@ rint(f"内存符号, {memory_symbol is not None}")
             print("\n=所有概念模型集成测试通过 ===")
             return True
             
-        except Exception as e,::
+        except Exception as e,:
             print(f"\n=概念模型集成测试失败 ===")
             print(f"错误, {e}")
             return False
@@ -291,7 +291,7 @@ async def run_integration_tests():
     
     # 运行所有测试
     success = await tester.run_all_tests()
-    if success,::
+    if success,:
         print("\n🎉 所有概念模型集成测试成功完成！")
     else:
         print("\n❌ 概念模型集成测试失败！")
@@ -299,7 +299,7 @@ async def run_integration_tests():
     return success
 
 # 测试入口点
-if __name"__main__":::
+if __name"__main__"::
     # 运行集成测试
     asyncio.run(run_integration_tests)
 

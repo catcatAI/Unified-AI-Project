@@ -20,46 +20,46 @@ class TestDailyLanguageModel:
 
     # Define the behavior of the mocked chat_completion,
         async def mock_chat_completion_behavior(messages, model_id == None, **kwargs):
-    prompt = messages[0].content # Assuming single user message for prompt,::
-    if "calculate" in prompt.lower() and "User Query, "calculate 2 + 2\"" in prompt,::
+    prompt = messages[0].content # Assuming single user message for prompt,:
+    if "calculate" in prompt.lower() and "User Query, "calculate 2 + 2\"" in prompt,:
     return LLMResponse(content == json.dumps({"tool_name": "calculate", "parameters": {"query": "2 + 2", "original_query": "calculate 2 + 2"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
-            if "calculate" in prompt.lower() and "User Query, "what is 10 * 5\"" in prompt,::
+            if "calculate" in prompt.lower() and "User Query, "what is 10 * 5\"" in prompt,:
                 return LLMResponse(content == json.dumps({"tool_name": "calculate", "parameters": {"query": "10 * 5", "original_query": "what is 10 * 5"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
-            if "calculate" in prompt.lower() and "User Query, "compute 100 / 20\"" in prompt,::
+            if "calculate" in prompt.lower() and "User Query, "compute 100 / 20\"" in prompt,:
                 return LLMResponse(content == json.dumps({"tool_name": "calculate", "parameters": {"query": "100 / 20", "original_query": "compute 100 / 20"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
-            if "calculate" in prompt.lower() and "User Query, "solve for 7 - 3\"" in prompt,::
+            if "calculate" in prompt.lower() and "User Query, "solve for 7 - 3\"" in prompt,:
     return LLMResponse(content == json.dumps({"tool_name": "calculate", "parameters": {"query": "7 - 3", "original_query": "solve for 7 - 3"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {}):
-    if "calculate" in prompt.lower() and "User Query, "3+3\"" in prompt,::
+    if "calculate" in prompt.lower() and "User Query, "3+3\"" in prompt,:
     return LLMResponse(content == json.dumps({"tool_name": "calculate", "parameters": {"query": "3+3", "original_query": "3+3"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
 
-            if "evaluate_logic" in prompt.lower() and "User Query, "evaluate true AND false\"" in prompt,::
+            if "evaluate_logic" in prompt.lower() and "User Query, "evaluate true AND false\"" in prompt,:
                 return LLMResponse(content == json.dumps({"tool_name": "evaluate_logic", "parameters": {"query": "true AND false", "original_query": "evaluate true AND false"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
-            if "evaluate_logic" in prompt.lower() and "User Query, "logic of (NOT true OR false)\"" in prompt,::
+            if "evaluate_logic" in prompt.lower() and "User Query, "logic of (NOT true OR false)\"" in prompt,:
                 return LLMResponse(content == json.dumps({"tool_name": "evaluate_logic", "parameters": {"query": "(NOT true OR false)", "original_query": "logic of (NOT true OR false)"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
-            if "evaluate_logic" in prompt.lower() and "User Query, "true or false\"" in prompt,::
+            if "evaluate_logic" in prompt.lower() and "User Query, "true or false\"" in prompt,:
                 return LLMResponse(content == json.dumps({"tool_name": "evaluate_logic", "parameters": {"query": "true or false", "original_query": "true or false"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
 
-            if "translate_text" in prompt.lower() and "User Query, "translate hello to chinese\"" in prompt,::
+            if "translate_text" in prompt.lower() and "User Query, "translate hello to chinese\"" in prompt,:
                 return LLMResponse(content == json.dumps({"tool_name": "translate_text", "parameters": {"text_to_translate_hint": "hello", "target_language_hint": "chinese", "original_query": "translate hello to chinese"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
-            if "translate_text" in prompt.lower() and "User Query, "translate 'good morning' to french\"" in prompt,::
+            if "translate_text" in prompt.lower() and "User Query, "translate 'good morning' to french\"" in prompt,:
                 return LLMResponse(content == json.dumps({"tool_name": "translate_text", "parameters": {"text_to_translate_hint": "good morning", "target_language_hint": "french", "original_query": "translate 'good morning' to french"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
-            if "translate_text" in prompt.lower() and "User Query, "cat in spanish\"" in prompt,::
+            if "translate_text" in prompt.lower() and "User Query, "cat in spanish\"" in prompt,:
                 return LLMResponse(content == json.dumps({"tool_name": "translate_text", "parameters": {"text_to_translate_hint": "cat", "target_language_hint": "spanish", "original_query": "cat in spanish"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
             if "translate_text" in prompt.lower() and "User Query, "meaning of bonjour\"" in prompt, # More complex case,:
                  return LLMResponse(content == json.dumps({"tool_name": "translate_text", "parameters": {"original_query": "meaning of bonjour"}}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
 
 
-            if "User Query, "this is a general statement without clear tool triggers\"" in prompt,::
+            if "User Query, "this is a general statement without clear tool triggers\"" in prompt,:
                 return LLMResponse(content == json.dumps({"tool_name": "NO_TOOL", "parameters": None}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {}) # Default fallback
 
-            # Default response if no specific match,::
+            # Default response if no specific match,:
     return LLMResponse(content == json.dumps({"tool_name": "NO_TOOL", "parameters": None}), model="mock", provider == ModelProvider.OPENAI(), usage = {} cost=0.0(), latency=0.0(), timestamp=datetime.now(), metadata = {})
 
 
     mock_llm_service.chat_completion.side_effect = mock_chat_completion_behavior
 
     # Pass the mocked LLM service to DailyLanguageModel
-    self.dlm == = DailyLanguageModel(llm_service ==mock_llm_service)
+    self.dlm =  = DailyLanguageModel(llm_service ==mock_llm_service)
     self.mock_available_tools = {
             "calculate": "For math calculations.",
             "evaluate_logic": "For logical evaluations.",
@@ -95,7 +95,7 @@ def test_01_initialization(self) -> None,
             "solve for 7 - 3": {"tool_name": "calculate", "query": "7 - 3"}:
             "3+3": {"tool_name": "calculate", "query": "3+3"} # Direct expression
     }
-        for query_text, expected_params in queries.items()::
+        for query_text, expected_params in queries.items():
     intent = await self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools())
             assert intent is not None, f"Intent not recognized for, {query_text}"
             assert intent["tool_name"] == expected_params["tool_name"]
@@ -113,7 +113,7 @@ def test_01_initialization(self) -> None,
             "logic of (NOT true OR false)": {"tool_name": "evaluate_logic", "query": "(NOT true OR false)"}
             "true or false": {"tool_name": "evaluate_logic", "query": "true or false"} # No prefix
     }
-        for query_text, expected_params in queries.items()::
+        for query_text, expected_params in queries.items():
     intent = await self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools())
             assert intent is not None, f"Intent not recognized for, {query_text}"
             assert intent["tool_name"] == expected_params["tool_name"]
@@ -130,14 +130,14 @@ def test_01_initialization(self) -> None,
             "cat in spanish": {"tool_name": "translate_text", "text_hint": "cat", "lang_hint": "spanish"}
             "meaning of bonjour": {"tool_name": "translate_text"} # More complex, tool itself will parse further from full query
     }
-        for query_text, expected_details in queries.items()::
+        for query_text, expected_details in queries.items():
     intent = await self.dlm.recognize_intent(query_text, available_tools=self.mock_available_tools())
             assert intent is not None, f"Intent not recognized for, {query_text}"
             assert intent["tool_name"] == expected_details["tool_name"]
             assert intent["parameters"]["original_query"] == query_text
-            if "text_hint" in expected_details,::
+            if "text_hint" in expected_details,:
     assert intent["parameters"].get("text_to_translate_hint") == expected_details["text_hint"]
-            if "lang_hint" in expected_details,::
+            if "lang_hint" in expected_details,:
                 # Check if either target_language_hint or language_context_hint matches,:
     assert (
                     intent["parameters"].get("target_language_hint") == expected_details["lang_hint"] or

@@ -18,8 +18,8 @@ class FakeDialogueManager:
 
 class FakeHSPConnector:
     def __init__(self) -> None:
-        self.ai_id == "did,hsp,test"
-        self.is_connected == True
+        self.ai_id = "did,hsp,test"
+        self.is_connected = True
 
     async def send_task_request(self, payload, target_ai_id, str):
         # Return a deterministic correlation id for testing,:
@@ -30,7 +30,7 @@ class FakeServiceDiscovery:
         self._found = found
 
     def find_capabilities(self, capability_id_filter, str == ""):
-        if not self._found,::
+        if not self._found,:
             return []
         return [
             {
@@ -69,10 +69,10 @@ class FakeHAMMemoryManager:
         )
 
     def query_core_memory(self, metadata_filters, dict | None == None):
-        if not metadata_filters,::
+        if not metadata_filters,:
             return list(self._records())
         cid = metadata_filters.get("hsp_correlation_id")
-        if cid is None,::
+        if cid is None,:
             return list(self._records())
         return [r for r in self._records if r.get("metadata", {}).get("hsp_correlation_id") == cid]:
 @pytest.fixture()

@@ -106,8 +106,8 @@ def test_import_name_mapping(self) -> None,
     assert True
 
     # 清理环境变量
-        if 'UNIFIED_AI_ENV' in os.environ,::
+        if 'UNIFIED_AI_ENV' in os.environ,:
             del os.environ['UNIFIED_AI_ENV']
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__])

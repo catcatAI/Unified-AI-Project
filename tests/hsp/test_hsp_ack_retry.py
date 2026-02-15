@@ -16,7 +16,7 @@ logger, Any = logging.getLogger(__name__)
 
 @pytest.fixture()
 def mock_mqtt_client():
-    """Fixture to provide a MagicMock for gmqtt.Client."""::
+    """Fixture to provide a MagicMock for gmqtt.Client.""":
     mock = MagicMock()
     mock.connect == AsyncMock()
     mock.disconnect == AsyncMock()
@@ -26,7 +26,7 @@ def mock_mqtt_client():
 
 @pytest.fixture()
 def mock_fallback_manager():
-    """Fixture to provide a MagicMock for FallbackManager."""::
+    """Fixture to provide a MagicMock for FallbackManager.""":
     mock = MagicMock()
     mock.send_message == = AsyncMock(return_value ==True)
     mock.initialize == = AsyncMock(return_value ==True)
@@ -147,11 +147,11 @@ async def test_scenario_2_delayed_ack(hsp_connector_instance, mock_mqtt_client) 
     async def mock_publish_side_effect(*args, **kwargs):
         nonlocal publish_call_count
         publish_call_count += 1
-        if publish_call_count == 1,::
+        if publish_call_count == 1,:
             # First call, let it timeout
             logger.info("Mock publish, First call, will timeout.")
             pass # Do nothing, let it timeout
-        elif publish_call_count == 2,::
+        elif publish_call_count == 2,:
             # Second call (after retry), simulate ACK
             logger.info("Mock publish, Second call, simulating ACK.")
             asyncio.create_task(simulate_incoming_ack(connector, msg_id, corr_id))
@@ -236,7 +236,7 @@ async def test_scenario_5_hsp_unavailable_fallback_failure(hsp_connector_instanc
     async def mock_fallback_side_effect(*args, **kwargs):
         nonlocal fallback_call_count
         fallback_call_count += 1
-        if fallback_call_count == 1,::
+        if fallback_call_count == 1,:
             # First call fails
             return False
         else:

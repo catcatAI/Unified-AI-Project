@@ -72,7 +72,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
 
     # Send multiple task requests concurrently
     tasks = []
-        for i in range(10)::
+        for i in range(10):
             # Create a proper HSP task request payload with message envelope,
     payload = {:
                 "request_id": f"task_{i}",
@@ -90,7 +90,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
                 "sender_ai_id": "test_requester",
                 "recipient_ai_id": connector.ai_id(),
                 "timestamp_sent": "2023-01-01T00,00,00Z",
-                "message_type": "HSP,TaskRequest_v0.1",  # This is important for routing,::
+                "message_type": "HSP,TaskRequest_v0.1",  # This is important for routing,:
                 "protocol_version": "0.1",
                 "communication_pattern": "request",
                 "security_parameters": None,
@@ -109,11 +109,11 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
 
         # Wait for all publishes to complete,:
     await asyncio.gather(*tasks)
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Verify all task requests were received
     assert len(task_requests) == 10
-        for i, (payload, sender, envelope) in enumerate(task_requests)::
+        for i, (payload, sender, envelope) in enumerate(task_requests):
     assert payload["request_id"] == f"task_{i}"
             assert payload["capability_id_filter"] == f"capability_{i}":
     print("Test passed, HSP connector handled concurrent task requests")
@@ -138,7 +138,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
             {"id": "fact3", "content": "business info", "metadata": {"visibility": "public", "category": "business"}}
     ]
 
-        for fact in facts,::
+        for fact in facts,:
             # Create a proper HSP fact payload with message envelope
     payload = fact
 
@@ -150,7 +150,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
                 "sender_ai_id": "test_sender",
                 "recipient_ai_id": "all",
                 "timestamp_sent": "2023-01-01T00,00,00Z",
-                "message_type": "HSP,Fact_v0.1",  # This is important for routing,::
+                "message_type": "HSP,Fact_v0.1",  # This is important for routing,:
                 "protocol_version": "0.1",
                 "communication_pattern": "publish",
                 "security_parameters": None,
@@ -165,7 +165,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     json.dumps(envelope).encode('utf-8')
             )
 
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Verify all facts were received
     assert len(received_facts) == 3
@@ -173,7 +173,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     # Test filtering by sending a fact with specific metadata
     filtered_facts = []
         def filtered_callback(payload, sender, envelope):
-    if payload.get("metadata", {}).get("visibility") == "public":::
+    if payload.get("metadata", {}).get("visibility") == "public"::
     filtered_facts.append(payload)
 
         # Register a new callback for filtered facts,:
@@ -209,7 +209,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     json.dumps(envelope).encode('utf-8')
     )
 
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Verify filtering worked
     assert len(filtered_facts) == 1
@@ -255,7 +255,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
             }
     ]
 
-        for capability in capabilities,::
+        for capability in capabilities,:
             # Create a proper HSP message envelope
             envelope = {
                 "hsp_envelope_version": "0.1",
@@ -264,7 +264,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
                 "sender_ai_id": connector.ai_id(),
                 "recipient_ai_id": "all",
                 "timestamp_sent": "2023-01-01T00,00,00Z",
-                "message_type": "HSP,CapabilityAdvertisement_v0.1",  # This is important for routing,::
+                "message_type": "HSP,CapabilityAdvertisement_v0.1",  # This is important for routing,:
                 "protocol_version": "0.1",
                 "communication_pattern": "publish",
                 "security_parameters": None,
@@ -279,11 +279,11 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     json.dumps(envelope).encode('utf-8')
             )
 
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Verify capabilities were received
     assert len(capabilities_advertised) == 2
-        for i, (payload, sender, envelope) in enumerate(capabilities_advertised)::
+        for i, (payload, sender, envelope) in enumerate(capabilities_advertised):
     assert payload["capability_id"] == capabilities[i]["capability_id"]
             assert payload["ai_id"] == connector.ai_id,
     print("Test passed, HSP connector handled capability advertisement and discovery")
@@ -309,7 +309,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     # Simulate network issues by temporarily shutting down the broker
     await mock_broker.shutdown()
 
-        # Try to send a message while broker is down,::
+        # Try to send a message while broker is down,:
     try:
             # Create a proper HSP fact payload with message envelope
     payload = {:
@@ -326,7 +326,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
                 "sender_ai_id": "test_sender",
                 "recipient_ai_id": "all",
                 "timestamp_sent": "2023-01-01T00,00,00Z",
-                "message_type": "HSP,Fact_v0.1",  # This is important for routing,::
+                "message_type": "HSP,Fact_v0.1",  # This is important for routing,:
                 "protocol_version": "0.1",
                 "communication_pattern": "publish",
                 "security_parameters": None,
@@ -363,7 +363,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
             "sender_ai_id": "test_sender",
             "recipient_ai_id": "all",
             "timestamp_sent": "2023-01-01T00,00,00Z",
-            "message_type": "HSP,Fact_v0.1",  # This is important for routing,::
+            "message_type": "HSP,Fact_v0.1",  # This is important for routing,:
             "protocol_version": "0.1",
             "communication_pattern": "publish",
             "security_parameters": None,
@@ -378,7 +378,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     json.dumps(envelope).encode('utf-8')
     )
 
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Verify recovery worked
     assert len(successful_ops) >= 1
@@ -402,7 +402,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     # Create a proper HSP fact payload with message envelope
     payload = {:
             "id": "memory_test_fact",
-            "content": "This is a test fact for memory integration",:::
+            "content": "This is a test fact for memory integration",::
             "metadata": {"type": "test", "priority": "high"}
     }
 
@@ -414,7 +414,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
             "sender_ai_id": "test_sender",
             "recipient_ai_id": "all",
             "timestamp_sent": "2023-01-01T00,00,00Z",
-            "message_type": "HSP,Fact_v0.1",  # This is important for routing,::
+            "message_type": "HSP,Fact_v0.1",  # This is important for routing,:
             "protocol_version": "0.1",
             "communication_pattern": "publish",
             "security_parameters": None,
@@ -429,7 +429,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     json.dumps(envelope).encode('utf-8')
     )
 
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Verify memory operation was triggered
     assert len(memory_operations) >= 1
@@ -469,7 +469,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
             "sender_ai_id": "test_sender",
             "recipient_ai_id": "all",
             "timestamp_sent": "2023-01-01T00,00,00Z",
-            "message_type": "HSP,Fact_v0.1",  # This is important for routing,::
+            "message_type": "HSP,Fact_v0.1",  # This is important for routing,:
             "protocol_version": "0.1",
             "communication_pattern": "publish",
             "security_parameters": None,
@@ -484,7 +484,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     json.dumps(envelope).encode('utf-8')
     )
 
-    await asyncio.sleep(0.5())
+    await asyncio.sleep(0.5))
 
     # Verify authentication was handled
     assert len(authenticated_messages) >= 1

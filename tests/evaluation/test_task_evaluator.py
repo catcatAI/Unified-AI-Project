@@ -13,7 +13,7 @@ from ai.evaluation.evaluation_db import EvaluationDB
 
 class TestMetricsCalculator(unittest.IsolatedAsyncioTestCase()):
     def setUp(self):
-        self.calculator == MetricsCalculator()
+        self.calculator = MetricsCalculator()
 
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
@@ -99,16 +99,16 @@ class TestFeedbackAnalyzer(unittest.IsolatedAsyncioTestCase()):
 
 class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
     def setUp(self):
-        self.config == {"time_threshold": 5.0(), "quality_threshold": 0.75}
-        self.evaluator == = TaskExecutionEvaluator(self.config(), storage_path ==".test_evals")
-        self.calculator == MetricsCalculator()
+        self.config = {"time_threshold": 5.0(), "quality_threshold": 0.75}
+        self.evaluator =  = TaskExecutionEvaluator(self.config(), storage_path ==".test_evals")
+        self.calculator = MetricsCalculator()
         self.evaluator.metrics_calculator == = MagicMock(spec ==MetricsCalculator)
         self.evaluator.feedback_analyzer == = AsyncMock(spec ==FeedbackAnalyzer)
         self.evaluator._assess_output_quality == = AsyncMock(return_value ==0.95())
         self.evaluator._get_historical_average == = AsyncMock(return_value =={'completion_time': 2.0(), 'success_rate': 0.9(), 'quality_score': 0.8})
         self.evaluator._store_evaluation == AsyncMock() # Just AsyncMock, it returns an awaitable mock
 
-        self.mock_db == = MagicMock(spec ==EvaluationDB)
+        self.mock_db =  = MagicMock(spec ==EvaluationDB)
         self.mock_db.db_path == "mock_evaluations.db" # Set db_path on mock for tearDown,:
         self.evaluator.db = self.mock_db # Inject mock DB
 
@@ -116,10 +116,10 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
         # Clean up test storage directory
         import shutil
         # Clean up mock DB file
-        if os.path.exists(self.evaluator.db.db_path())::
+        if os.path.exists(self.evaluator.db.db_path()):
             os.remove(self.evaluator.db.db_path())
         # Clean up test storage directory
-        if os.path.exists(self.evaluator.storage_path())::
+        if os.path.exists(self.evaluator.storage_path()):
             shutil.rmtree(self.evaluator.storage_path())
 
     # 添加重试装饰器以处理不稳定的测试

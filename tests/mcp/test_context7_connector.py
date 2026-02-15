@@ -145,7 +145,7 @@ class TestContext7MCPConnector:
     assert isinstance(context_items, list)
     assert len(context_items) > 0
 
-        for item in context_items,::
+        for item in context_items,:
     assert "id" in item
             assert "content" in item
             assert "relevance" in item
@@ -181,7 +181,7 @@ class TestContext7MCPConnector:
     await connector.connect()
 
     large_context = {
-            "conversation": ["Message " + str(i) for i in range(1000)]::
+            "conversation": ["Message " + str(i) for i in range(1000)]:
             "metadata": {"key" + str(i) "value" + str(i) for i in range(100)}:
     }
 
@@ -212,8 +212,8 @@ class TestContext7MCPConnector:
     capabilities = connector.get_capabilities()
     assert len(capabilities) > 0
 
-        # Check for expected capabilities,::
-    capability_names = [cap["name"] for cap in capabilities]::
+        # Check for expected capabilities,:
+    capability_names = [cap["name"] for cap in capabilities]:
     assert "context_management" in capability_names
     assert "model_collaboration" in capability_names
 
@@ -385,7 +385,7 @@ class TestContext7Performance:
     await connector_instance.connect()
     # Create multiple concurrent requests
     tasks = []
-        for i in range(10)::
+        for i in range(10):
     task = connector_instance.send_context(:
                 context_data = {"test_id": i, "data": f"test_data_{i}"}
                 context_type="test",,
@@ -398,7 +398,7 @@ class TestContext7Performance:
 
     # Verify all succeeded
     assert len(responses) == 10
-        for response in responses,::
+        for response in responses,:
     assert response["success"] is True
 
     @pytest.mark.timeout(5)
@@ -424,5 +424,5 @@ class TestContext7Performance:
     assert response["success"] is True
 
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__, "-v", "--tb=short"])

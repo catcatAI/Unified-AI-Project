@@ -67,7 +67,7 @@ class CodeAnalyzer:
                 "functions": functions,
                 "classes": classes
             }
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Failed to analyze file {file_path} {e}")
             return {}
 
@@ -75,15 +75,15 @@ class CodeAnalyzer:
         """提取函数信息"""
         functions = {}
 
-        for node in ast.walk(tree)::
-            if isinstance(node, ast.FunctionDef())::
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef()):
                 func_info = {
                     "name": node.name(),
                     "parameters": self._extract_parameters(node),
                     "return_type": self._extract_return_type(node),
                     "docstring": ast.get_docstring(node),
                     "line_number": node.lineno(),
-                    "decorators": [self._extract_decorator(d) for d in node.decorator_list]::
+                    "decorators": [self._extract_decorator(d) for d in node.decorator_list]:
                 functions[node.name] = func_info
 
         return functions
@@ -92,14 +92,14 @@ class CodeAnalyzer:
         """提取类信息"""
         classes = {}
 
-        for node in ast.walk(tree)::
-            if isinstance(node, ast.ClassDef())::
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef()):
                 class_info = {
                     "name": node.name(),
                     "methods": self._extract_functions(node),
                     "docstring": ast.get_docstring(node),
                     "line_number": node.lineno(),
-                    "bases": [self._extract_base(b) for b in node.bases]::
+                    "bases": [self._extract_base(b) for b in node.bases]:
                 classes[node.name] = class_info
 
         return classes
@@ -115,12 +115,12 @@ class CodeAnalyzer:
         num_args = len(args.args())
 
         # 处理位置参数
-        for i, arg in enumerate(args.args())::
+        for i, arg in enumerate(args.args()):
             param_info = {
                 "name": arg.arg(),
-                "type_annotation": self._extract_type_annotation(arg.annotation()) if arg.annotation else None,::
+                "type_annotation": self._extract_type_annotation(arg.annotation()) if arg.annotation else None,:
             # 处理默认值
-            if i >= num_args - num_defaults,::
+            if i >= num_args - num_defaults,:
                 default_idx = i - (num_args - num_defaults)
                 param_info["default"] = self._extract_default_value(,
     defaults[default_idx])
@@ -130,18 +130,18 @@ class CodeAnalyzer:
             parameters.append(param_info)
 
         # 处理*args
-        if args.vararg,::
+        if args.vararg,:
             parameters.append({
                 "name": "*" + args.vararg.arg(),
-                "type_annotation": self._extract_type_annotation(args.vararg.annotation()) if args.vararg.annotation else None,::
+                "type_annotation": self._extract_type_annotation(args.vararg.annotation()) if args.vararg.annotation else None,:
                 "default": None
             })
 
         # 处理**kwargs
-        if args.kwarg,::
+        if args.kwarg,:
             parameters.append({
                 "name": "**" + args.kwarg.arg(),
-                "type_annotation": self._extract_type_annotation(args.kwarg.annotation()) if args.kwarg.annotation else None,::
+                "type_annotation": self._extract_type_annotation(args.kwarg.annotation()) if args.kwarg.annotation else None,:
                 "default": None
             })
 
@@ -149,22 +149,22 @@ class CodeAnalyzer:
 
     def _extract_type_annotation(self, annotation, ast.AST()) -> str,
         """提取类型注解"""
-        if isinstance(annotation, ast.Name())::
+        if isinstance(annotation, ast.Name()):
             # 修复, 确保ast.Name节点有id属性()
             return getattr(annotation, 'id', 'Any')
-        elif isinstance(annotation, ast.Constant())::
+        elif isinstance(annotation, ast.Constant()):
             return str(annotation.value())
-        elif isinstance(annotation, ast.Subscript())::
-            if isinstance(annotation.value(), ast.Name())::
+        elif isinstance(annotation, ast.Subscript()):
+            if isinstance(annotation.value(), ast.Name()):
                 # 修复, 确保ast.Name节点有id属性()
                 base = getattr(annotation.value(), 'id', 'Any')
-                if isinstance(annotation.slice(), ast.Name())::
+                if isinstance(annotation.slice(), ast.Name()):
                     # 修复, 确保ast.Name节点有id属性()
                     return f"{base}[{getattr(annotation.slice(), 'id', 'Any')}]"
-                elif isinstance(annotation.slice(), ast.Tuple())::
+                elif isinstance(annotation.slice(), ast.Tuple()):
                     slice_items = []
-                    for elt in annotation.slice.elts,::
-                        if isinstance(elt, ast.Name())::
+                    for elt in annotation.slice.elts,:
+                        if isinstance(elt, ast.Name()):
                             # 修复, 确保ast.Name节点有id属性()
                             slice_items.append(getattr(elt, 'id', 'Any'))
                     return f"{base}[{', '.join(slice_items)}]"
@@ -172,32 +172,32 @@ class CodeAnalyzer:
 
     def _extract_return_type(self, func_node, ast.FunctionDef()) -> str,
         """提取返回类型"""
-        if func_node.returns,::
+        if func_node.returns,:
             return self._extract_type_annotation(func_node.returns())
         return "Any"
 
     def _extract_default_value(self, default_node, Optional[ast.AST]) -> Any,
         """提取默认值"""
-        if default_node is None,::
+        if default_node is None,:
             return None
-        elif isinstance(default_node, ast.Constant())::
+        elif isinstance(default_node, ast.Constant()):
             return default_node.value()
-        elif isinstance(default_node, ast.NameConstant())::
+        elif isinstance(default_node, ast.NameConstant()):
             return default_node.value()
-        elif isinstance(default_node, ast.Num())::
+        elif isinstance(default_node, ast.Num()):
             return default_node.n()
-        elif isinstance(default_node, ast.Str())::
+        elif isinstance(default_node, ast.Str()):
             return default_node.s()
-        elif isinstance(default_node, ast.List())::
+        elif isinstance(default_node, ast.List()):
             result = []
-            for elt in default_node.elts,::
+            for elt in default_node.elts,:
                 result.append(self._extract_default_value(elt))
             return result
-        elif isinstance(default_node, ast.Dict())::
+        elif isinstance(default_node, ast.Dict()):
             keys = []
             values = []
-            for key, value in zip(default_node.keys(), default_node.values())::
-                if key is not None,::
+            for key, value in zip(default_node.keys(), default_node.values()):
+                if key is not None,:
                     keys.append(self._extract_default_value(key))
                 else:
                     keys.append(None)
@@ -207,31 +207,31 @@ class CodeAnalyzer:
 
     def _extract_decorator(self, decorator_node, ast.AST()) -> str,
         """提取装饰器"""
-        if isinstance(decorator_node, ast.Name())::
+        if isinstance(decorator_node, ast.Name()):
             # 修复, 确保ast.Name节点有id属性()
             return getattr(decorator_node, 'id', 'unknown')
-        elif isinstance(decorator_node, ast.Attribute())::
+        elif isinstance(decorator_node, ast.Attribute()):
             # 修复, 确保ast.Attribute节点的value有id属性()
-            value_id = getattr(decorator_node.value(), 'id', 'unknown') if hasattr(decorator_node.value(), 'id') else 'unknown':::
+            value_id = getattr(decorator_node.value(), 'id', 'unknown') if hasattr(decorator_node.value(), 'id') else 'unknown'::
                 eturn f"{value_id}.{decorator_node.attr}"
-        elif isinstance(decorator_node, ast.Call())::
-            if isinstance(decorator_node.func(), ast.Name())::
+        elif isinstance(decorator_node, ast.Call()):
+            if isinstance(decorator_node.func(), ast.Name()):
                 # 修复, 确保ast.Name节点有id属性()
                 return getattr(decorator_node.func(), 'id', 'unknown')
-            elif isinstance(decorator_node.func(), ast.Attribute())::
+            elif isinstance(decorator_node.func(), ast.Attribute()):
                 # 修复, 确保ast.Attribute节点的value有id属性()
-                value_id = getattr(decorator_node.func.value(), 'id', 'unknown') if hasattr(decorator_node.func.value(), 'id') else 'unknown':::
+                value_id = getattr(decorator_node.func.value(), 'id', 'unknown') if hasattr(decorator_node.func.value(), 'id') else 'unknown'::
                     eturn f"{value_id}.{decorator_node.func.attr}"
         return "unknown"
 
     def _extract_base(self, base_node, ast.AST()) -> str,
         """提取基类"""
-        if isinstance(base_node, ast.Name())::
+        if isinstance(base_node, ast.Name()):
             # 修复, 确保ast.Name节点有id属性()
             return getattr(base_node, 'id', 'object')
-        elif isinstance(base_node, ast.Attribute())::
+        elif isinstance(base_node, ast.Attribute()):
             # 修复, 确保ast.Attribute节点的value有id属性()
-            value_id = getattr(base_node.value(), 'id', 'unknown') if hasattr(base_node.value(), 'id') else 'unknown':::
+            value_id = getattr(base_node.value(), 'id', 'unknown') if hasattr(base_node.value(), 'id') else 'unknown'::
                 eturn f"{value_id}.{base_node.attr}"
         return "object"
 
@@ -259,20 +259,20 @@ class TestPatternAnalyzer:
         func_name = function_info["name"].lower()
 
         # 根据函数名识别模式
-        for pattern, keywords in self.common_patterns.items():::
-            if any(keyword in func_name for keyword in keywords)::
+        for pattern, keywords in self.common_patterns.items()::
+            if any(keyword in func_name for keyword in keywords):
                 patterns.append(pattern)
 
         # 根据参数识别模式
         params = function_info.get("parameters", [])
-        param_names = [p["name"].lower() for p in params]::
+        param_names = [p["name"].lower() for p in params]:
             f "password" in param_names or "token" in param_names,
             patterns.append("authentication")
 
-        if "file" in param_names or "path" in param_names,::
+        if "file" in param_names or "path" in param_names,:
             patterns.append("file_operations")
 
-        if "url" in param_names or "host" in param_names,::
+        if "url" in param_names or "host" in param_names,:
             patterns.append("network_operations")
 
         return list(set(patterns))  # 去重
@@ -282,8 +282,8 @@ class IntelligentTestGenerator:
     """智能化测试用例生成器"""
 
     def __init__(self) -> None,
-        self.code_analyzer == CodeAnalyzer()
-        self.pattern_analyzer == TestPatternAnalyzer()
+        self.code_analyzer = CodeAnalyzer()
+        self.pattern_analyzer = TestPatternAnalyzer()
         self.generated_tests, List[TestCase] = []
 
     def generate_tests_for_file(self, file_path, str) -> List[TestCase]
@@ -291,19 +291,19 @@ class IntelligentTestGenerator:
         try:
             # 分析代码
             analysis_result = self.code_analyzer.analyze_file(file_path)
-            if not analysis_result,::
+            if not analysis_result,:
                 return []
 
             test_cases = []
 
             # 为每个函数生成测试用例
-            for func_name, func_info in analysis_result["functions"].items():::
+            for func_name, func_info in analysis_result["functions"].items()::
                 func_test_cases = self._generate_function_tests(,
     func_info, analysis_result)
                 test_cases.extend(func_test_cases)
 
             # 为每个类生成测试用例
-            for class_name, class_info in analysis_result["classes"].items():::
+            for class_name, class_info in analysis_result["classes"].items()::
                 class_test_cases = self._generate_class_tests(,
     class_info, analysis_result)
                 test_cases.extend(class_test_cases)
@@ -311,10 +311,10 @@ class IntelligentTestGenerator:
             # 保存生成的测试用例
             self.generated_tests.extend(test_cases)
 
-            logger.info(f"Generated {len(test_cases)} test cases for {file_path}"):::
+            logger.info(f"Generated {len(test_cases)} test cases for {file_path}")::
                 eturn test_cases
-        except Exception as e,::
-            logger.error(f"Failed to generate tests for {file_path} {e}"):::
+        except Exception as e,:
+            logger.error(f"Failed to generate tests for {file_path} {e}")::
                 eturn[]
 
     def _generate_function_tests(,
@@ -328,11 +328,11 @@ class IntelligentTestGenerator:
 
         # 生成基本功能测试
         basic_test = self._create_basic_function_test(func_info)
-        if basic_test,::
+        if basic_test,:
             test_cases.append(basic_test)
 
         # 根据模式生成特定测试
-        for pattern in patterns,::
+        for pattern in patterns,:
             pattern_tests = self._create_pattern_specific_tests(,
     func_info, pattern)
             test_cases.extend(pattern_tests)
@@ -355,12 +355,12 @@ class IntelligentTestGenerator:
 
         # 创建测试参数
         test_params = []
-        for param in parameters,::
+        for param in parameters,:
             test_param = TestParameter(
                 name=param["name"],
     type_hint=param.get("type_annotation", "Any"),
                 default_value=param.get("default"),
-                description = f"Parameter for {func_name}":::
+                description = f"Parameter for {func_name}"::
             test_params.append(test_param)
 
         # 创建测试用例
@@ -382,7 +382,7 @@ class IntelligentTestGenerator:
         test_cases = []
         func_name=func_info["name"]
 
-        if pattern == "validation":::
+        if pattern == "validation"::
             # 验证函数测试
             invalid_test = TestCase(
                 name=f"test_{func_name}_invalid_input",
@@ -390,12 +390,12 @@ class IntelligentTestGenerator:
     est_type = TestType.UNIT_TEST(),
                 function_name=func_name,
                 parameters = []
-                expected_behavior = f"Function {func_name} raises appropriate exception for invalid input",:::
+                expected_behavior = f"Function {func_name} raises appropriate exception for invalid input",::
                     riority=4
             )
             test_cases.append(invalid_test)
 
-        elif pattern == "calculation":::
+        elif pattern == "calculation"::
             # 计算函数测试
             edge_case_test = TestCase(
                 name=f"test_{func_name}_edge_cases",
@@ -408,7 +408,7 @@ class IntelligentTestGenerator:
             )
             test_cases.append(edge_case_test)
 
-        elif pattern == "file_operations":::
+        elif pattern == "file_operations"::
             # 文件操作测试
             file_not_found_test = TestCase(
                 name=f"test_{func_name}_file_not_found",
@@ -431,7 +431,7 @@ class IntelligentTestGenerator:
         parameters=func_info.get("parameters", [])
 
         # 为空参数生成测试
-        if parameters,::
+        if parameters,:
             empty_params_test = TestCase(
                 name=f"test_{func_name}_empty_parameters",
                 description = f"Test {func_name} with empty parameters",:,
@@ -472,11 +472,11 @@ class IntelligentTestGenerator:
         class_name=class_info["name"]
 
         # 为每个方法生成测试
-        for method_name, method_info in class_info["methods"].items():::
+        for method_name, method_info in class_info["methods"].items()::
             method_test_cases=self._generate_function_tests(,
     method_info, analysis_result)
             # 为类方法测试添加类前缀
-            for test_case in method_test_cases,::
+            for test_case in method_test_cases,:
                 test_case.name=f"test_{class_name}_{method_name}" +
                     test_case.name[len(f"test_{method_name}"):]
             test_cases.extend(method_test_cases)
@@ -491,7 +491,7 @@ class IntelligentTestGenerator:
 def {test_case.name}() -> None,
     \""\"{test_case.description}"\""
     # 测试 {test_case.function_name} 函数
-    # 参数, {', '.join([p.name for p in test_case.parameters])}::
+    # 参数, {', '.join([p.name for p in test_case.parameters])}:
     # 预期行为, {test_case.expected_behavior}
 
     # Arrange
@@ -506,14 +506,14 @@ def {test_case.name}() -> None,
             return test_code.strip():
                 ""
             return test_code.strip()
-        except Exception as e,::
+        except Exception as e,:
             logger.error(,
-    f"Failed to generate test code for {test_case.name} {e}")::
-            return f"# Failed to generate test code for {test_case.name}"::
+    f"Failed to generate test code for {test_case.name} {e}"):
+            return f"# Failed to generate test code for {test_case.name}":
     def get_generated_tests(:,
     self, limit, Optional[int] = None) -> List[TestCase]
         """获取生成的测试用例"""
-        if limit,::
+        if limit,:
             return self.generated_tests[-limit,]
         return self.generated_tests()
     def save_generated_tests(self, output_file, str) -> bool,
@@ -522,7 +522,7 @@ def {test_case.name}() -> None,
             with open(output_file, 'w', encoding == 'utf-8') as f,
                 f.write("# Auto-generated test cases\n\n")
                 
-                for test_case in self.generated_tests,::
+                for test_case in self.generated_tests,:
                     f.write(f"# {test_case.name}\n")
                     f.write(f"# Description, {test_case.description}\n")
                     f.write(f"# Type, {test_case.test_type.value}\n")
@@ -532,13 +532,13 @@ def {test_case.name}() -> None,
                     
             logger.info(f"Saved {len(self.generated_tests())} test cases to {output_file}")
             return True
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Failed to save test cases to {output_file} {e}")
             return False
 
 
 # 使用示例
-if __name"__main__":::
+if __name"__main__"::
     # 创建测试生成器
     generator = IntelligentTestGenerator()
     

@@ -12,7 +12,7 @@ from ai.dialogue.dialogue_manager import DialogueManager
 
 class TestKnowledgeUpdate(aiounittest.AsyncTestCase()):
     """
-    A class for testing the knowledge update capabilities of the system.::
+    A class for testing the knowledge update capabilities of the system.:
     """
 
     @pytest.mark.timeout(10)
@@ -53,13 +53,13 @@ def test_knowledge_update(self) -> None,
         class DummyModel:
             def __init__(self) -> None:
                 self.name = "DummyModel"
-                self.trained == False
+                self.trained = False
 
             def evaluate(self, input):
                 return input
 
             def train(self, dataset):
-                self.trained == True
+                self.trained = True
 
         dialogue_manager.tool_dispatcher.models = [DummyModel()]
         dialogue_manager.tool_dispatcher.tools = []
@@ -75,6 +75,6 @@ def test_knowledge_update(self) -> None,
 
         self.assertTrue(dialogue_manager.tool_dispatcher.models[0].trained)
 
-if __name"__main__":::
+if __name"__main__"::
     import asyncio
     asyncio.run(unittest.main())

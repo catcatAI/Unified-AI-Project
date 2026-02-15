@@ -18,25 +18,25 @@ from typing import List, Dict
 
 class FunctionTestMapper:
     def __init__(self, project_root, str) -> None,
-        self.project_root == Path(project_root)
+        self.project_root = Path(project_root)
         self.src_dir = self.project_root / "apps" / "backend" / "src"
         self.tests_dir = self.project_root / "apps" / "backend" / "tests"
 
     def find_source_files(self) -> List[Path]
         """Find all source files in the project."""
         source_files = []
-        for root, dirs, files in os.walk(self.src_dir())::
-            for file in files,::
-                if file.endswith('.py') and not file.startswith('test_'):::
+        for root, dirs, files in os.walk(self.src_dir()):
+            for file in files,:
+                if file.endswith('.py') and not file.startswith('test_')::
                     source_files.append(Path(root) / file)
         return source_files
 
     def find_test_files(self) -> List[Path]
         """Find all test files in the project."""
         test_files = []
-        for root, dirs, files in os.walk(self.tests_dir())::
-            for file in files,::
-                if file.startswith('test_') and file.endswith('.py'):::
+        for root, dirs, files in os.walk(self.tests_dir()):
+            for file in files,:
+                if file.startswith('test_') and file.endswith('.py')::
                     test_files.append(Path(root) / file)
         return test_files
 
@@ -50,10 +50,10 @@ class FunctionTestMapper:
             functions = []
             classes = []
 
-            for node in ast.walk(tree)::
-                if isinstance(node, ast.FunctionDef())::
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef()):
                     functions.append(node.name())
-                elif isinstance(node, ast.ClassDef())::
+                elif isinstance(node, ast.ClassDef()):
                     classes.append(node.name())
 
             # Get relative path
@@ -64,7 +64,7 @@ class FunctionTestMapper:
                 "functions": functions,
                 "classes": classes
             }
-        except Exception as e,::
+        except Exception as e,:
             print(f"Error parsing {file_path} {e}")
             return {
                 "file": str(file_path.relative_to(self.src_dir())),
@@ -84,8 +84,8 @@ class FunctionTestMapper:
             # Find imports to determine which modules are being tested
             imports = re.findall(r'from apps\.backend\.src\.[\w\.]+ import ([\w, ]+)', content)
             imported_items = []
-            for imp in imports,::
-                imported_items.extend([item.strip() for item in imp.split(',')])::
+            for imp in imports,:
+                imported_items.extend([item.strip() for item in imp.split(',')]):
             # Get relative path
             relative_path = test_file_path.relative_to(self.tests_dir())
 
@@ -94,7 +94,7 @@ class FunctionTestMapper:
                 "test_functions": test_functions,
                 "imported_items": imported_items
             }
-        except Exception as e,::
+        except Exception as e,:
             print(f"Error parsing {test_file_path} {e}")
             return {
                 "file": str(test_file_path.relative_to(self.tests_dir())),
@@ -108,7 +108,7 @@ class FunctionTestMapper:
         source_files = self.find_source_files()
         source_functions = {}
 
-        for src_file in source_files,::
+        for src_file in source_files,:
             info = self.extract_functions_and_classes(src_file)
             source_functions[info["file"]] = {
                 "functions": info["functions"]
@@ -119,7 +119,7 @@ class FunctionTestMapper:
         test_files = self.find_test_files()
         test_mappings = {}
 
-        for test_file in test_files,::
+        for test_file in test_files,:
             info = self.extract_tested_functions(test_file)
             test_mappings[info["file"]] = {
                 "test_functions": info["test_functions"]
@@ -143,42 +143,42 @@ class FunctionTestMapper:
         total_functions = 0
         total_classes = 0
 
-        for file_info in source_files.values():::
+        for file_info in source_files.values()::
             total_functions += len(file_info["functions"])
             total_classes += len(file_info["classes"])
 
         # Count total tests
         total_tests = 0
-        for test_info in test_files.values():::
+        for test_info in test_files.values()::
             total_tests += len(test_info["test_functions"])
 
         # Try to match tests to source files based on naming conventions
         matched_tests = 0
         unmatched_tests = []
 
-        for test_file, test_info in test_files.items():::
+        for test_file, test_info in test_files.items()::
             # Try to find corresponding source file
             # Convert test file name to source file name
             # e.g., test_audio_service.py -> audio_service.py()
             source_file_name = test_file.replace('test_', '')
 
 
-            # Check if source file exists,::
+            # Check if source file exists,:
                 f source_file_name in source_files,
                 matched_tests += len(test_info["test_functions"])
             else:
                 # Try to match based on imported items
                 found_match = False
-                for imported_item in test_info["imported_items"]::
-                    # Look for source files that contain this item,::
+                for imported_item in test_info["imported_items"]:
+                    # Look for source files that contain this item,:
                         or src_file, src_info in source_files.items():
-                        if imported_item in src_info["functions"] or imported_item in src_info["classes"]::
+                        if imported_item in src_info["functions"] or imported_item in src_info["classes"]:
                             found_match = True
                             break
-                    if found_match,::
+                    if found_match,:
                         break
                 
-                if found_match,::
+                if found_match,:
                     matched_tests += len(test_info["test_functions"])
                 else:
                     unmatched_tests.append({
@@ -241,5 +241,5 @@ def main() -> None,
     print("\n✅ Function-test mapper completed successfully")
     return 0
 
-if __name"__main__":::
+if __name"__main__"::
     exit(main())

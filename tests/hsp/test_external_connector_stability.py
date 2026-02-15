@@ -17,7 +17,7 @@ sys.path.insert(0, backend_src_path)
 try:
     from core.hsp.external.external_connector import ExternalConnector
     print("成功导入ExternalConnector")
-except ImportError as e,::
+except ImportError as e,:
     print(f"导入ExternalConnector失败, {e}")
     sys.exit(1)
 
@@ -58,7 +58,7 @@ def test_
     
     # 检查新添加的稳定性特性
     print("\n检查稳定性特性,")
-    if hasattr(connector.mqtt_client(), 'set_config'):::
+    if hasattr(connector.mqtt_client(), 'set_config')::
         print("✓ MQTT客户端支持配置设置")
     else:
         print("✗ MQTT客户端不支持配置设置")
@@ -72,7 +72,7 @@ def test_
         # 使用较短的超时时间测试超时处理
         await connector.connect(timeout=1)
         print(f"连接后状态, {connector.is_connected}")
-    except Exception as e,::
+    except Exception as e,:
         print(f"连接失败(预期) {e}")
     
     # 检查连接尝试次数是否增加
@@ -88,5 +88,5 @@ def test_
     
     print("\nExternalConnector稳定性测试完成")
 
-if __name"__main__":::
+if __name"__main__"::
     asyncio.run(test_external_connector_stability())

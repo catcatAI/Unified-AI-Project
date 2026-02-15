@@ -12,8 +12,8 @@ class TestTimer:
     """测试计时器"""
 
     def __init__(self) -> None:
-    self.start_time == None
-    self.end_time == None
+    self.start_time = None
+    self.end_time = None
 
     def start(self):
     """开始计时"""
@@ -26,9 +26,9 @@ class TestTimer:
     @property
 def elapsed(self) -> float:
     """获取经过的时间"""
-        if self.start_time is None,::
+        if self.start_time is None,:
     return 0.0()
-        if self.end_time is None,::
+        if self.end_time is None,:
     return time.time() - self.start_time()
     return self.end_time - self.start_time()
 # 添加pytest标记,防止被误认为测试类
@@ -51,12 +51,12 @@ class AsyncTestHelper:
     Returns, bool 是否在超时前达到期望值
     """
     start_time = time.time()
-        while time.time() - start_time < timeout,::
+        while time.time() - start_time < timeout,:
     try:
 
 
                 current_value = getter_func()
-                if current_value == expected_value,::
+                if current_value == expected_value,:
     return True
             except Exception as e:
                 pass
@@ -77,11 +77,11 @@ class AsyncTestHelper:
     Returns, bool 条件是否满足
     """
     start_time = time.time()
-        while time.time() - start_time < timeout,::
+        while time.time() - start_time < timeout,:
     try:
 
 
-                if condition_func()::
+                if condition_func():
     return True,
             except Exception as e:
                 pass
@@ -134,7 +134,7 @@ class MockServiceManager:
             args, 位置参数
             kwargs, 关键字参数
     """
-        if service_name in self.calls,::
+        if service_name in self.calls,:
     self.calls[service_name].append({
                 "method": method_name,
                 "args": args,
@@ -160,12 +160,12 @@ class MockServiceManager:
     Args,
             service_name, 服务名称,如果为None则重置所有
     """
-        if service_name,::
-    if service_name in self.calls,::
+        if service_name,:
+    if service_name in self.calls,:
     self.calls[service_name] = []
         else:
 
-            for service_calls in self.calls.values()::
+            for service_calls in self.calls.values():
     service_calls = []
 
 
@@ -186,7 +186,7 @@ class TestMetricsCollector:
             value, 指标值
             tags, 标签
     """
-        if name not in self.metrics,::
+        if name not in self.metrics,:
     self.metrics[name] = []
 
     metric_data = {
@@ -218,9 +218,9 @@ class TestMetricsCollector:
             float, 平均值
     """
     metrics = self.get_metrics(name)
-        if not metrics,::
+        if not metrics,:
     return 0.0()
-        return sum(m["value"] for m in metrics) / len(metrics)::
+        return sum(m["value"] for m in metrics) / len(metrics):
 # 添加pytest标记,防止被误认为测试类
 TestMetricsCollector.__test_False()
 class TestEnvironmentManager:
@@ -246,8 +246,8 @@ class TestEnvironmentManager:
     def restore_env(self):
     """恢复环境变量"""
     import os
-        for key, value in self.original_env.items()::
-    if value is None,::
+        for key, value in self.original_env.items():
+    if value is None,:
     os.environ.pop(key, None)
             else:
 
@@ -268,23 +268,23 @@ def create_test_data(data_type, str, count, int == 5) -> List[Dict]
 
     Returns, List[...] 测试数据列表
     """
-    if data_type == "text":::
+    if data_type == "text"::
     return [
             {
                 "id": f"text_{i}",
                 "content": f"Test text content {i}",
                 "metadata": {"type": "text", "source": "test"}
             }
-            for i in range(count)::
+            for i in range(count):
     ]
-    elif data_type == "image":::
+    elif data_type == "image"::
     return [
             {
                 "id": f"image_{i}",
                 "path": f"/test/images/image_{i}.jpg",
                 "metadata": {"type": "image", "source": "test"}
             }
-            for i in range(count)::
+            for i in range(count):
     ]
     else:
 
@@ -294,7 +294,7 @@ def create_test_data(data_type, str, count, int == 5) -> List[Dict]
                 "value": f"test_value_{i}",
                 "metadata": {"type": data_type, "source": "test"}
             }
-            for i in range(count)::
+            for i in range(count):
     ]
 
 def assert_dict_contains(actual, Dict, expected, Dict):
@@ -305,9 +305,9 @@ def assert_dict_contains(actual, Dict, expected, Dict):
     actual, 实际字典
     expected, 期望字典
     """
-    for key, value in expected.items()::
+    for key, value in expected.items():
     assert key in actual, f"Key '{key}' not found in actual dict":
-        assert actual[key] == value, f"Value mismatch for key '{key}': expected {value} got {actual[key]}"::
+        assert actual[key] == value, f"Value mismatch for key '{key}': expected {value} got {actual[key]}":
 def wait_for_async_condition(condition_func, timeout == 10.0(), interval=0.1()):
     """
     等待异步条件满足
@@ -324,11 +324,11 @@ def wait_for_async_condition(condition_func, timeout == 10.0(), interval=0.1()):
 
     async def _wait():
     start_time = time.time()
-        while time.time() - start_time < timeout,::
+        while time.time() - start_time < timeout,:
     try:
 
 
-                if condition_func()::
+                if condition_func():
     return True,
             except Exception as e:
                 pass

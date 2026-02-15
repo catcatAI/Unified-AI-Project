@@ -49,35 +49,35 @@ def test_
     try:
         logger.info("✅ 环境模拟器导入成功")
         return True
-    except Exception as e,::
+    except Exception as e,:
         logger.error(f"❌ 环境模拟器导入失败, {e}")
         return False
     
     try:
         logger.info("✅ 因果推理引擎导入成功")
         return True
-    except Exception as e,::
+    except Exception as e,:
         logger.error(f"❌ 因果推理引擎导入失败, {e}")
         return False
     
     try:
         logger.info("✅ 自适应学习控制器导入成功")
         return True
-    except Exception as e,::
+    except Exception as e,:
         logger.error(f"❌ 自适应学习控制器导入失败, {e}")
         return False
     
     try:
         logger.info("✅ Alpha深度模型导入成功")
         return True
-    except Exception as e,::
+    except Exception as e,:
         logger.error(f"❌ Alpha深度模型导入失败, {e}")
         return False
     
     try:
         logger.info("✅ 统一符号空间导入成功")
         return True
-    except Exception as e,::
+    except Exception as e,:
         logger.error(f"❌ 统一符号空间导入失败, {e}")
         return False
 
@@ -99,7 +99,7 @@ def test_
         
         # 测试获取概念模型训练场景
         scenario = trainer.get_preset_scenario("concept_models_training")
-        if scenario,::
+        if scenario,:
             logger.info("✅ 概念模型训练场景配置加载成功")
             logger.info(f"  场景描述, {scenario.get('description')}")
             logger.info(f"  数据集, {scenario.get('datasets')}")
@@ -109,7 +109,7 @@ def test_
             return False
             
         return True
-    except Exception as e,::
+    except Exception as e,:
         logger.error(f"❌ 训练配置测试失败, {e}")
         return False
 
@@ -132,14 +132,14 @@ def test_
             str(project_root / "tools" / "prepare_concept_models_training_data.py")
         ] cwd=project_root, capture_output == True, text == True)
         
-        if result.returncode == 0,::
+        if result.returncode == 0,:
             logger.info("✅ 文档处理脚本执行成功")
             logger.info(f"  输出, {result.stdout}")
             return True
         else:
             logger.error(f"❌ 文档处理脚本执行失败, {result.stderr}")
             return False
-    except Exception as e,::
+    except Exception as e,:
         logger.error(f"❌ 文档处理测试失败, {e}")
         return False
 
@@ -148,23 +148,23 @@ def main() -> bool:
     logger.info("开始测试概念模型训练集成...")
     
     # 测试概念模型导入
-    if not test_concept_models_import():::
+    if not test_concept_models_import()::
         logger.error("概念模型导入测试失败")
         return False
     
     # 测试训练配置
-    if not test_training_config():::
+    if not test_training_config()::
         logger.error("训练配置测试失败")
         return False
     
     # 测试文档处理
-    if not test_document_processing():::
+    if not test_document_processing()::
         logger.error("文档处理测试失败")
         return False
     
     logger.info("🎉 所有测试通过！概念模型训练集成成功")
     return True
 
-if __name"__main__":::
+if __name"__main__"::
     success = main()
     sys.exit(0 if success else 1)

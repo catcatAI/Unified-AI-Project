@@ -21,8 +21,8 @@ def client():
 
     class HSPConnector:
         def __init__(self) -> None,
-            self.ai_id == "did,hsp,test"
-            self.is_connected == False
+            self.ai_id = "did,hsp,test"
+            self.is_connected = False
 
     class TrustManager:
         def get_all_trust_scores(self):
@@ -91,11 +91,11 @@ def test_models_route(client, TestClient, monkeypatch, pytest.MonkeyPatch()) -> 
 
     class FakeRouter:
         def __init__(self, registry) -> None,
-            self._registry == registry:
+            self._registry = registry:
         def route(self, policy):
             # Echo a simplified routing decision using policy fields
             return {
-                "selected_model": "gpt-4" if getattr(policy, "needs_tools", False) else "llama3",:::
+                "selected_model": "gpt-4" if getattr(policy, "needs_tools", False) else "llama3",::
                 "policy": {
                     "task_type": getattr(policy, "task_type", None),
                     "input_chars": getattr(policy, "input_chars", None),
@@ -109,7 +109,7 @@ def test_models_route(client, TestClient, monkeypatch, pytest.MonkeyPatch()) -> 
     # get_multi_llm_service is used to build a registry; keep minimal config
     class FakeMultiLLM:
         def __init__(self) -> None:
-            self.model_configs == {"gpt-4": {} "llama3": {}}
+            self.model_configs = {"gpt-4": {} "llama3": {}}
 
     monkeypatch.setattr(main_api_server, "get_multi_llm_service", lambda, FakeMultiLLM())
     monkeypatch.setattr(main_api_server, "ModelRegistry", FakeRegistry)

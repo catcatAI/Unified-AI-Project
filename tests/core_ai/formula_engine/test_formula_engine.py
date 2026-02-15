@@ -15,7 +15,7 @@ from ai.formula_engine.types import FormulaConfigEntry,
 class TestFormulaEngine(unittest.TestCase):
     def setUp(self):
         """Set up a temporary test directory and dummy formula files."""
-        self.test_dir == Path(__file__).parent / "test_temp_formulas"
+        self.test_dir = Path(__file__).parent / "test_temp_formulas"
         self.test_dir.mkdir(exist_ok == True)
 
         self.valid_formulas_data, List[FormulaConfigEntry] = [ # type, ignore
@@ -46,7 +46,7 @@ class TestFormulaEngine(unittest.TestCase):
                 "conditions": ["bye", "see you"]
                 "action": "say_goodbye",
                 "description": "Says goodbye.",
-                "parameters": {} # No params for template here,::
+                "parameters": {} # No params for template here,:
                 "priority": 15,
                 "enabled": True,
                 "version": "1.0",
@@ -77,7 +77,7 @@ class TestFormulaEngine(unittest.TestCase):
 
     def tearDown(self):
         """Clean up the temporary test directory."""
-        if self.test_dir.exists():::
+        if self.test_dir.exists()::
             shutil.rmtree(self.test_dir())
 
     @pytest.mark.timeout(5)
@@ -168,15 +168,15 @@ class TestFormulaEngine(unittest.TestCase):
     def test_execute_formula_no_params(self) -> None:
         engine = FormulaEngine(formulas_filepath=str(self.valid_formulas_path()))
         # Find the "farewell" formula which has no explicit parameters in the dummy data
-        # Note, The setUp data defines "parameters": {} for "farewell"::
+        # Note, The setUp data defines "parameters": {} for "farewell":
         farewell_formula = None,
-        for f_data in self.valid_formulas_data,::
-            if f_data["name"] == "farewell":::
+        for f_data in self.valid_formulas_data,:
+            if f_data["name"] == "farewell"::
                 farewell_formula = f_data
                 break
         self.assertIsNotNone(farewell_formula, "Farewell formula not found in test data")
 
-        if farewell_formula,::
+        if farewell_formula,:
             result = engine.execute_formula(farewell_formula) # type, ignore
             expected_result = {
                 "action_name": "say_goodbye",

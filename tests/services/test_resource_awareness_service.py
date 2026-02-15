@@ -22,12 +22,12 @@ class TestResourceAwarenessService(unittest.TestCase):
     def setUp(self):
     # Ensure test config directory exists
 TEST_CONFIGS_DIR.mkdir(parents == True, exist_ok == True)
-self.valid_config_path == TEST_CONFIGS_DIR / "valid_simulated_resources.yaml"
-self.malformed_config_path == TEST_CONFIGS_DIR / "malformed_simulated_resources.yaml"
-self.incomplete_config_path == TEST_CONFIGS_DIR / "incomplete_simulated_resources.yaml"
-self.non_existent_config_path == TEST_CONFIGS_DIR / "i_do_not_exist.yaml"
+self.valid_config_path = TEST_CONFIGS_DIR / "valid_simulated_resources.yaml"
+self.malformed_config_path = TEST_CONFIGS_DIR / "malformed_simulated_resources.yaml"
+self.incomplete_config_path = TEST_CONFIGS_DIR / "incomplete_simulated_resources.yaml"
+self.non_existent_config_path = TEST_CONFIGS_DIR / "i_do_not_exist.yaml"
 
-        # Create a valid config file for testing,::
+        # Create a valid config file for testing,:
             self.sample_profile_data, SimulatedHardwareProfile = { # type ignore
 "profile_name": "TestProfile_Valid",
 "disk": {
@@ -55,19 +55,19 @@ self.non_existent_config_path == TEST_CONFIGS_DIR / "i_do_not_exist.yaml"
 
     def tearDown(self):
     # Clean up created test files
-        if self.valid_config_path.exists()::
+        if self.valid_config_path.exists():
     self.valid_config_path.unlink()
-        if self.malformed_config_path.exists()::
+        if self.malformed_config_path.exists():
     self.malformed_config_path.unlink()
-        if self.incomplete_config_path.exists()::
+        if self.incomplete_config_path.exists():
     self.incomplete_config_path.unlink()
-        # Attempt to remove the directory if it's empty (optional)::
+        # Attempt to remove the directory if it's empty (optional):
     try:
 
-        if TEST_CONFIGS_DIR.exists() and not any(TEST_CONFIGS_DIR.iterdir()):::
+        if TEST_CONFIGS_DIR.exists() and not any(TEST_CONFIGS_DIR.iterdir())::
     TEST_CONFIGS_DIR.rmdir()
         except OSError as e:
-            pass # Ignore if dir removal fails (e.g. other test files present)::
+            pass # Ignore if dir removal fails (e.g. other test files present):
     @pytest.mark.timeout(15)
     def test_load_valid_config(self) -> None,
         service = ResourceAwarenessService(config_filepath=str(self.valid_config_path()))
@@ -94,7 +94,7 @@ self.assertTrue(service.profile.get("gpu_available"))
     # Ensure the default path doesn't accidentally exist from other tests or real config
     # For a truly isolated test of non-existent, we use a unique path.
     # The service's default path logic will try to find DEFAULT_CONFIG_PATH relative to project root.
-        # If that default file exists, this test might not reflect a true "file not found" for *that* path.::
+        # If that default file exists, this test might not reflect a true "file not found" for *that* path.:
     # However, the constructor is passed a specific non-existent path here.
 
 service = ResourceAwarenessService(config_filepath=str(self.non_existent_config_path()))
@@ -112,7 +112,7 @@ self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorL
 
     @pytest.mark.timeout(15)
     def test_load_incomplete_yaml_falls_back_to_default(self) -> None:
-        # Tests if the profile data is missing required keys after YAML parsing.::
+        # Tests if the profile data is missing required keys after YAML parsing.:
 service = ResourceAwarenessService(config_filepath=str(self.incomplete_config_path()))
 self.assertIsNotNone(service.profile())
 self.assertEqual(service.profile.get("profile_name"), "SafeDefaultProfile_ErrorLoading",:
@@ -129,7 +129,7 @@ f"Profile loaded, {service.profile}")
     default_path_abs.parent.mkdir(parents == True, exist_ok == True) # Ensure dir exists
 
 original_content = None
-        if default_path_abs.exists():::
+        if default_path_abs.exists()::
     with open(default_path_abs, 'r') as f_orig:
         original_content = f_orig.read()
 
@@ -148,12 +148,12 @@ self.assertIsNotNone(service.profile())
 self.assertEqual(service.profile.get("profile_name"), "TemporaryDefaultTestProfile")
 
     # Clean up / restore,
-        if original_content is not None,::
+        if original_content is not None,:
     with open(default_path_abs, 'w') as f_orig_write:
         f_orig_write.write(original_content)
         else:
 
-            if default_path_abs.exists()::
+            if default_path_abs.exists():
     default_path_abs.unlink()
 
 if __name__ == "__main__":

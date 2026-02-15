@@ -42,7 +42,7 @@ def test_01_initialization(self) -> None,
         self.assertEqual(processed_data[1]["id"], test_data[1]["id"])
         
         # Verify processing adds expected metadata,
-        for item in processed_data,::
+        for item in processed_data,:
             # 修正断言,检查实际添加的字段
             self.assertIn("processed_by_element_layer", item)
             self.assertTrue(item["processed_by_element_layer"])

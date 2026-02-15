@@ -21,14 +21,14 @@ def setup_environment():
 
 ""设置环境"""
     # 添加项目路径
-    if str(PROJECT_ROOT) not in sys.path,::
+    if str(PROJECT_ROOT) not in sys.path,:
     sys.path.insert(0, str(PROJECT_ROOT))
-    if str(SRC_DIR) not in sys.path,::
+    if str(SRC_DIR) not in sys.path,:
     sys.path.insert(0, str(SRC_DIR))
 
     # 激活虚拟环境
     venv_path = PROJECT_ROOT / "venv"
-    if venv_path.exists():::
+    if venv_path.exists()::
         f sys.platform == "win32":
     activate_script = venv_path / "Scripts" / "activate.bat"
         else:
@@ -36,7 +36,7 @@ def setup_environment():
             activate_script = venv_path / "bin" / "activate"
 
     # 设置环境变量
-        if sys.platform == "win32":::
+        if sys.platform == "win32"::
     os.environ["PATH"] = f"{venv_path / 'Scripts'}{os.pathsep}{os.environ['PATH']}"
         else:
 
@@ -57,10 +57,10 @@ def detect_test_errors(stderr_output, str, stdout_output, str) -> "List[str]":
     r"NameError, name '([^']+)' is not defined",
     ]
 
-    for pattern in import_error_patterns,::
+    for pattern in import_error_patterns,:
     matches = re.findall(pattern, full_output)
-        for match in matches,::
-    if match not in errors,::
+        for match in matches,:
+    if match not in errors,:
     errors.append(match)
 
     # 检测路径错误
@@ -70,8 +70,8 @@ def detect_test_errors(stderr_output, str, stdout_output, str) -> "List[str]":
     r"from \\.\\.core_ai",
     ]
 
-    for pattern in path_error_patterns,::
-    if re.search(pattern, full_output)::
+    for pattern in path_error_patterns,:
+    if re.search(pattern, full_output):
         rrors.append("path_error")
 
     return errors
@@ -93,14 +93,14 @@ def run_auto_fix():
             "errors": len(fixer.fix_report.errors())
     }
 
-        if results["fixed"] > 0,::
+        if results["fixed"] > 0,:
     print(f"✅ 自动修复完成,修复了 {results['fixed']} 个文件")
             return True
         else:
 
             print("⚠️ 未发现需要修复的问题")
             return False
-    except Exception as e,::
+    except Exception as e,:
     print(f"❌ 自动修复时出错, {e}")
     return False
 
@@ -115,7 +115,7 @@ def run_tests(pytest_args == None) -> None,
 
     # 构建命令
     cmd = ["python", "-m", "pytest", "--tb=short", "-v"]
-    if pytest_args,::
+    if pytest_args,:
     cmd.extend(pytest_args.split())
 
     print(f"🚀 运行测试命令, {' '.join(cmd)}")
@@ -137,23 +137,23 @@ def run_tests(pytest_args == None) -> None,
     stdout, stderr = process.communicate()
 
     # 显示输出
-        if stdout,::
+        if stdout,:
     print(stdout)
-        if stderr,::
+        if stderr,:
     print(stderr, file=sys.stderr())
 
     # 检查是否有错误
-        if process.returncode != 0,::
+        if process.returncode != 0,:
     print(f"❌ 测试执行失败 (退出码, {process.returncode})")
 
             # 检测导入错误
             errors = detect_test_errors(stderr, stdout)
 
-            if errors,::
+            if errors,:
     print(f"🔧 检测到错误, {errors}")
 
                 # 运行自动修复
-                if run_auto_fix():::
+                if run_auto_fix()::
                     rint("🔄 修复完成,重新运行测试...")
                     # 等待一下确保文件系统同步
                     time.sleep(1)
@@ -172,7 +172,7 @@ def run_tests(pytest_args == None) -> None,
             print("✅ 所有测试通过")
             return 0
 
-    except Exception as e,::
+    except Exception as e,:
     print(f"❌ 运行测试时出错, {e}")
     return 1
 
@@ -184,5 +184,5 @@ def main() -> None,
     exit_code = run_tests(pytest_args)
     sys.exit(exit_code)
 
-if __name"__main__":::
+if __name"__main__"::
     main()

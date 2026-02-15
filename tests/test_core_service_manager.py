@@ -1,6 +1,6 @@
 """Test Core Service Manager - 核心服务管理器测试
 
-This module contains tests for the CoreServiceManager functionality.:::
+This module contains tests for the CoreServiceManager functionality.::
     此模块包含核心服务管理器功能的测试。
 """
 
@@ -22,12 +22,12 @@ class TestCoreServiceManager(unittest.TestCase):
 
     def setUp(self):
         ""测试设置"""
-    self.manager == CoreServiceManager()
+    self.manager = CoreServiceManager()
 
     def tearDown(self):
         ""测试清理"""
     # 清理所有服务
-        for service_name in list(self.manager._services.keys()):::
+        for service_name in list(self.manager._services.keys())::
     asyncio.run(self.manager.unload_service(service_name, force == True))
 
     def test_register_service(self) -> None,
@@ -350,5 +350,5 @@ class TestServiceInfo(unittest.TestCase):
         self.assertIsNone(service_info.health_check_task)
 
 
-if __name"__main__":::
+if __name"__main__"::
     unittest.main()

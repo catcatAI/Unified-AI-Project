@@ -21,8 +21,8 @@ def client():
                 self.pending_hsp_task_requests = {}
         class HSPConnector:
             def __init__(self) -> None,
-                self.ai_id == "did,hsp,test"
-                self.is_connected == False
+                self.ai_id = "did,hsp,test"
+                self.is_connected = False
         class TrustManager:
             def get_all_trust_scores(self):
                 return {}

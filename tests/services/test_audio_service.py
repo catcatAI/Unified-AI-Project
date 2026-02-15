@@ -18,7 +18,7 @@ class TestAudioService(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
         # Ensure demo mode is enabled for all tests,:
-        self.audio_service == AudioService()
+        self.audio_service = AudioService()
         self.test_audio_data = b"dummy_audio_bytes_for_testing"
         self.test_text = "Hello, this is a test message."
 
@@ -147,6 +147,6 @@ class TestAudioService(unittest.TestCase):
         print("TestAudioService.test_05_audio_service_config_loading PASSED")
 
 if __name__ == "__main__":
-    # Enable demo mode for direct script execution,::
+    # Enable demo mode for direct script execution,:
     with patch('config_loader.is_demo_mode', return_value == True)
         unittest.main(verbosity=2)

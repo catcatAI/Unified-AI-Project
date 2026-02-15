@@ -9,11 +9,11 @@ import pytest
 # Mock the Node.js service communication
 class MockNodeJSService:
     def __init__(self) -> None:
-        self.is_available == True
+        self.is_available = True
     
     async def send_data_to_python_api(self, data):
         """Simulate Node.js service sending data to Python API"""
-        if not self.is_available,::
+        if not self.is_available,:
             raise ConnectionError("Node.js service is not available")
         
         # Simulate data processing
@@ -33,8 +33,8 @@ class TestNodeServicesIntegration(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures before each test method."""
-        self.node_service == MockNodeJSService()
-        self.test_data == {"message": "Hello from Node.js", "value": 42}
+        self.node_service = MockNodeJSService()
+        self.test_data = {"message": "Hello from Node.js", "value": 42}
 
     @pytest.mark.timeout(15)
     def test_node_service_sends_data_to_python_api(self) -> None:
@@ -97,7 +97,7 @@ class TestNodeServicesIntegration(unittest.TestCase):
         with self.assertRaises(ConnectionError) as context:
             asyncio.run(self.node_service.send_data_to_python_api(self.test_data()))
         
-        self.assertIn("Node.js service is not available", str(context.exception()))::
+        self.assertIn("Node.js service is not available", str(context.exception())):
     @pytest.mark.timeout(15)
     def test_node_service_with_empty_data(self) -> None:
         """Test Node.js service handling of empty data."""

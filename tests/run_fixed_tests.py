@@ -24,7 +24,7 @@ def test_imports() -> None,
         print("✅ PersonalityManager 导入成功")
         
         return True
-    except Exception as e,::
+    except Exception as e,:
         print(f"❌ 导入失败, {e}")
         return False
 
@@ -50,7 +50,7 @@ def test_ham_memory_manager() -> None,
             print("✅ HAMMemoryManager ID生成正常")
             
         return True
-    except Exception as e,::
+    except Exception as e,:
         print(f"❌ HAMMemoryManager 测试失败, {e}")
         return False
 
@@ -68,7 +68,7 @@ def test_personality_manager() -> None,
         print(f"✅ PersonalityManager 获取初始提示, {prompt}")
         
         return True
-    except Exception as e,::
+    except Exception as e,:
         print(f"❌ PersonalityManager 测试失败, {e}")
         return False
 
@@ -77,21 +77,21 @@ def main() -> None,
     print("🚀 开始测试修复后的模块...")
     
     # 测试导入
-    if not test_imports():::
+    if not test_imports()::
         return False
     
     # 测试HAMMemoryManager
-    if not test_ham_memory_manager():::
+    if not test_ham_memory_manager()::
         return False
     
     # 测试PersonalityManager
-    if not test_personality_manager():::
+    if not test_personality_manager()::
         return False
     
     print("🎉 所有测试通过！模块修复成功。")
     return True
 
-if __name"__main__":::
+if __name"__main__"::
     success = main()
 
     sys.exit(0 if success else 1)

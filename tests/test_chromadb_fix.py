@@ -39,7 +39,7 @@ def start_chroma_server():
     # 註冊退出時關閉服務器
     def cleanup():
         print("關閉 ChromaDB 服務器...")
-        if server_process.poll() is None,  # 如果進程仍在運行,::
+        if server_process.poll() is None,  # 如果進程仍在運行,:
             f os.name == 'nt':  # Windows
                 server_process.terminate()
             else:  # Linux/Mac
@@ -75,7 +75,7 @@ def test_
         store = VectorMemoryStore(persist_directory=temp_dir)
         print("✓ VectorMemoryStore 初始化成功")
         return True
-    except Exception as e,::
+    except Exception as e,:
         print(f"✗ VectorMemoryStore 初始化失敗, {e}")
         return False
     finally:
@@ -100,7 +100,7 @@ def test_
         store = VectorMemoryStore(persist_directory=temp_dir)
         print("✓ VectorMemoryStore 初始化成功")
         return True
-    except Exception as e,::
+    except Exception as e,:
         print(f"✗ VectorMemoryStore 初始化失敗, {e}")
         return False
     finally:
@@ -109,7 +109,7 @@ def test_
         except Exception as e:
             pass
 
-if __name"__main__":::
+if __name"__main__"::
     print("測試 ChromaDB 修復...")
     
     # 啟動 ChromaDB 服務器
@@ -120,7 +120,7 @@ if __name"__main__":::
         success1 = test_vector_memory_store()
         success2 = test_vector_store()
         
-        if success1 and success2,::
+        if success1 and success2,:
             print("\n🎉 所有測試通過！ChromaDB HTTP-only 模式問題已修復。")
             sys.exit(0)
         else:
@@ -129,7 +129,7 @@ if __name"__main__":::
     finally:
         # 確保服務器被關閉
         print("清理資源...")
-        if server_process.poll() is None,  # 如果進程仍在運行,::
+        if server_process.poll() is None,  # 如果進程仍在運行,:
             f os.name == 'nt':  # Windows
                 server_process.terminate()
             else:  # Linux/Mac

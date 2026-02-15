@@ -32,7 +32,7 @@ def test_agent_creation_performance(self, benchmark) -> None:
             """创建代理的测试函数"""
             agent_config = data_factory.create_agent_config()
             # 模拟代理创建过程
-            time.sleep(0.001())  # 模拟创建延迟
+            time.sleep(0.001))  # 模拟创建延迟
             return agent_config
         
         # 运行基准测试
@@ -50,13 +50,13 @@ def test_agent_creation_performance(self, benchmark) -> None:
         data_factory = TestDataFactory()
         test_task = data_factory.create_training_data(
             input_data = "Test input for performance benchmark",::,
-    expected_output = "Expected output for performance benchmark"::
+    expected_output = "Expected output for performance benchmark":
         )
 
         def execute_task():
             """执行任务的测试函数"""
             # 模拟任务执行
-            time.sleep(0.002())  # 模拟执行延迟
+            time.sleep(0.002))  # 模拟执行延迟
             return {"status": "completed", "result": "Task executed successfully"}
         
         # 运行基准测试
@@ -74,8 +74,8 @@ def test_agent_creation_performance(self, benchmark) -> None:
             import time
             start_time = time.time()
             # 模拟10个并发操作,每个操作耗时0.001秒()
-            for _ in range(10)::
-                time.sleep(0.001())  # 模拟操作延迟
+            for _ in range(10):
+                time.sleep(0.001))  # 模拟操作延迟
             end_time = time.time()
             return end_time - start_time
     
@@ -103,7 +103,7 @@ class TestHSPPerformanceBenchmarks:
         def publish_message():
             """发布消息的测试函数"""
             # 模拟消息发布
-            time.sleep(0.0005())  # 模拟发布延迟
+            time.sleep(0.0005))  # 模拟发布延迟
             return True
         
         # 运行基准测试
@@ -121,15 +121,15 @@ class TestHSPPerformanceBenchmarks:
         data_factory = TestDataFactory()
         messages = [
             data_factory.create_hsp_message(content=f"Message {i}")
-            for i in range(100)::
+            for i in range(100):
         ]
 
         def process_messages():
             """处理消息的测试函数"""
             processed_count = 0
-            for message in messages,::
+            for message in messages,:
                 # 模拟消息处理
-                time.sleep(0.0001())  # 模拟处理延迟
+                time.sleep(0.0001))  # 模拟处理延迟
                 processed_count += 1
             return processed_count
         
@@ -157,7 +157,7 @@ class TestMemoryPerformanceBenchmarks:
         def store_memory():
             """存储记忆的测试函数"""
             # 模拟记忆存储
-            time.sleep(0.0002())  # 模拟存储延迟
+            time.sleep(0.0002))  # 模拟存储延迟
             return True
         
         # 运行基准测试
@@ -175,13 +175,13 @@ class TestMemoryPerformanceBenchmarks:
         data_factory = TestDataFactory()
         test_memories = [
             data_factory.create_memory_item(content=f"Memory item {i}")
-            for i in range(1000)::
+            for i in range(1000):
         ]
 
         def retrieve_memory():
             """检索记忆的测试函数"""
             # 模拟记忆检索
-            time.sleep(0.0003())  # 模拟检索延迟
+            time.sleep(0.0003))  # 模拟检索延迟
             return test_memories[:10]  # 返回前10个记忆
         
         # 运行基准测试
@@ -212,7 +212,7 @@ class TestTrainingPerformanceBenchmarks:
         def training_iteration():
             """训练迭代的测试函数"""
             # 模拟训练迭代
-            time.sleep(0.01())  # 模拟训练延迟
+            time.sleep(0.01))  # 模拟训练延迟
             return {"loss": 0.1(), "accuracy": 0.95}
         
         # 运行基准测试
@@ -231,15 +231,15 @@ class TestTrainingPerformanceBenchmarks:
         data_factory = TestDataFactory()
         raw_data = [
             {"input": f"Raw input {i}", "output": f"Raw output {i}"}
-            for i in range(1000)::
+            for i in range(1000):
         ]
 
         def preprocess_data():
             """预处理数据的测试函数"""
             processed_data = []
-            for item in raw_data,::
+            for item in raw_data,:
                 # 模拟数据预处理
-                time.sleep(0.00001())  # 模拟预处理延迟
+                time.sleep(0.00001))  # 模拟预处理延迟
                 processed_item = {
                     "input": item["input"].upper(),
                     "output": item["output"].upper()
@@ -274,7 +274,7 @@ class TestSystemLevelPerformanceBenchmarks:
         def process_request():
             """处理请求的测试函数"""
             # 模拟端到端请求处理
-            time.sleep(0.005())  # 模拟处理延迟
+            time.sleep(0.005))  # 模拟处理延迟
             return {
                 "status": "success",
                 "response": "Performance test response",
@@ -294,7 +294,7 @@ class TestSystemLevelPerformanceBenchmarks:
             """处理并发请求的测试函数"""
             # 模拟并发请求处理
             # 在基准测试中,我们简化处理
-            time.sleep(0.05())  # 模拟并发处理时间
+            time.sleep(0.05))  # 模拟并发处理时间
             return {"processed_requests": 20, "success_rate": 1.0}
         
         # 运行基准测试
@@ -314,11 +314,11 @@ class TestResourceUsageBenchmarks:
             """内存密集型操作的测试函数"""
             # 创建大量数据
             data = []
-            for i in range(10000)::
+            for i in range(10000):
                 data.append({"id": i, "value": f"Value {i}"})
             
             # 模拟处理
-            time.sleep(0.001())
+            time.sleep(0.001))
             return len(data)
         
         # 运行基准测试
@@ -334,10 +334,10 @@ class TestResourceUsageBenchmarks:
             """CPU密集型操作的测试函数"""
             # 执行计算密集型任务
             result = 0
-            for i in range(100000)::
+            for i in range(100000):
                 result += i * i
             
-            time.sleep(0.001())
+            time.sleep(0.001))
             return result
         
         # 运行基准测试
@@ -345,5 +345,5 @@ class TestResourceUsageBenchmarks:
         assert result >= 0
 
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__, "-v", "-m", "performance"])

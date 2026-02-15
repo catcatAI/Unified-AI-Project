@@ -32,7 +32,7 @@ def test_simple_hsp_flow() -> None,
             return True
         async def mock_publish_fact(fact_payload, topic, qos == 1):
             # 模拟消息发布后立即触发回调
-            if hasattr(mock_hsp_instance, '_fact_callback'):::
+            if hasattr(mock_hsp_instance, '_fact_callback')::
                 # 创建一个模拟的事实载荷
                 mock_fact = {
                     "id": fact_payload.get("id", "fact_001"),
@@ -98,11 +98,11 @@ def test_simple_hsp_flow() -> None,
         # 等待消息处理完成(现在应该立即完成,因为我们在publish_fact中模拟了回调)
         try:
             # 给一点时间确保回调被执行
-            await asyncio.sleep(0.1())
+            await asyncio.sleep(0.1))
             # 验证消息是否正确接收
             assert len(received_messages) == 1
             received_fact = received_messages[0]["payload"]
             assert received_fact["id"] == test_fact["id"]
             assert received_fact["statement_nl"] == test_fact["statement_nl"]
-        except Exception as e,::
+        except Exception as e,:
             pytest.fail(f"Error waiting for fact message, {e}")

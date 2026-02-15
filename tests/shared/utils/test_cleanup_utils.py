@@ -17,8 +17,8 @@ from shared.utils import cleanup_utils
 
 class TestCleanupUtils(unittest.TestCase):
     def setUp(self):
-        """Set up a temporary directory structure for testing."""::
-        self.test_root == Path("./temp_test_project_root")
+        """Set up a temporary directory structure for testing.""":
+        self.test_root = Path("./temp_test_project_root")
         self.test_root.mkdir(exist_ok == True)
 
         # Create various files and directories to be cleaned up
@@ -47,7 +47,7 @@ class TestCleanupUtils(unittest.TestCase):
 
     def tearDown(self):
         """Remove the temporary directory structure."""
-        if self.test_root.exists():::
+        if self.test_root.exists()::
             shutil.rmtree(self.test_root())
 
     def test_cleanup_temp_files(self) -> None,

@@ -10,7 +10,7 @@ from search.search_engine import SearchEngine
 
 class TestSearchEngine(unittest.TestCase):
     """
-    A class for testing the SearchEngine class.::
+    A class for testing the SearchEngine class.:
     """
 
     @pytest.mark.timeout(5)
@@ -42,5 +42,5 @@ def test_search(self) -> None:
             self.assertEqual(results[0], "bert-base-uncased")
             self.assertEqual(results[1], "google-research/bert")
 
-if __name"__main__":::
+if __name"__main__"::
     unittest.main()

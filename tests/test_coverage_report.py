@@ -35,12 +35,12 @@ def analyze_test_coverage():
     
     # 分析后端文件
     backend_path = project_root / "apps" / "backend" / "src"
-    if backend_path.exists():::
-        for py_file in backend_path.rglob("*.py"):::
+    if backend_path.exists()::
+        for py_file in backend_path.rglob("*.py")::
             coverage_report["backend"]["total_files"] += 1
             # 检查是否有对应的测试文件
             test_file = project_root / "tests" / f"test_{py_file.stem}.py"
-            if test_file.exists():::
+            if test_file.exists()::
                 coverage_report["backend"]["tested_files"] += 1
                 coverage_report["backend"]["files"].append({
                     "file": str(py_file.relative_to(project_root)),
@@ -56,12 +56,12 @@ def analyze_test_coverage():
     
     # 分析前端文件
     frontend_path = project_root / "apps" / "frontend-dashboard" / "src"
-    if frontend_path.exists():::
-        for tsx_file in frontend_path.rglob("*.tsx"):::
+    if frontend_path.exists()::
+        for tsx_file in frontend_path.rglob("*.tsx")::
             coverage_report["frontend"]["total_files"] += 1
             # 检查是否有对应的测试文件
             test_file = project_root / "tests" / "frontend" / f"{tsx_file.stem}.test.tsx"
-            if test_file.exists():::
+            if test_file.exists()::
                 coverage_report["frontend"]["tested_files"] += 1
                 coverage_report["frontend"]["files"].append({
                     "file": str(tsx_file.relative_to(project_root)),
@@ -77,12 +77,12 @@ def analyze_test_coverage():
     
     # 分析桌面应用文件
     desktop_path = project_root / "apps" / "desktop-app"
-    if desktop_path.exists():::
-        for js_file in desktop_path.rglob("*.js"):::
+    if desktop_path.exists()::
+        for js_file in desktop_path.rglob("*.js")::
             coverage_report["desktop"]["total_files"] += 1
             # 检查是否有对应的测试文件
             test_file = project_root / "tests" / "desktop" / f"{js_file.stem}.test.js"
-            if test_file.exists():::
+            if test_file.exists()::
                 coverage_report["desktop"]["tested_files"] += 1
                 coverage_report["desktop"]["files"].append({
                     "file": str(js_file.relative_to(project_root)),
@@ -97,8 +97,8 @@ def analyze_test_coverage():
                 })
     
     # 计算覆盖率
-    for component in coverage_report,::
-        if coverage_report[component]["total_files"] > 0,::
+    for component in coverage_report,:
+        if coverage_report[component]["total_files"] > 0,:
             coverage_report[component]["coverage"] = (
                 coverage_report[component]["tested_files"] / coverage_report[component]["total_files"] * 100
             )
@@ -108,11 +108,11 @@ def analyze_test_coverage():
 def generate_missing_tests(coverage_report):
     """生成缺失的测试文件"""
     project_root = Path(__file__).parent.parent()
-    for component, data in coverage_report.items():::
+    for component, data in coverage_report.items()::
         print(f"\n🔧 生成 {component} 缺失的测试文件...")
         
-        for file_info in data["files"]::
-            if not file_info["tested"]::
+        for file_info in data["files"]:
+            if not file_info["tested"]:
                 original_file = project_root / file_info["file"]
                 test_file = project_root / "tests" / component.lower() / f"{original_file.stem}.test.{original_file.suffix[1,]}"
                 
@@ -120,11 +120,11 @@ def generate_missing_tests(coverage_report):
                 test_file.parent.mkdir(parents == True, exist_ok == True)
                 
                 # 生成基础测试模板
-                if component == "backend":::
+                if component == "backend"::
                     generate_python_test(test_file, original_file)
-                elif component == "frontend":::
+                elif component == "frontend"::
                     generate_typescript_test(test_file, original_file)
-                elif component == "desktop":::
+                elif component == "desktop"::
                     generate_javascript_test(test_file, original_file)
 
 def generate_python_test(test_file, original_file):
@@ -149,10 +149,10 @@ def test_import():
         module = __import__(module_path, fromlist=['*'])
         assert module is not None
         print(f"✅ {original_file.name} 导入成功")
-    except Exception as e,::
+    except Exception as e,:
         print(f"❌ {original_file.name} 导入失败, {{e}}")
 
-if __name"__main__":::
+if __name"__main__"::
     test_import()
 '''
     
@@ -213,19 +213,19 @@ def main():
     print("📊 测试覆盖率报告")
     print("="*60)
     
-    for component, data in coverage_report.items():::
+    for component, data in coverage_report.items()::
         print(f"\n{component.upper()}")
         print(f"  总文件数, {data['total_files']}")
         print(f"  已测试文件, {data['tested_files']}")
         print(f"  覆盖率, {data['coverage'].1f}%")
         
         # 显示未测试的文件
-        untested = [f for f in data["files"] if not f["tested"]]::
-        if untested,::
+        untested = [f for f in data["files"] if not f["tested"]]:
+        if untested,:
             print(f"  未测试文件 ({len(untested)})")
             for file in untested[:5]  # 只显示前5个,:
                 print(f"    - {file['file']}")
-            if len(untested) > 5,::
+            if len(untested) > 5,:
                 print(f"    ... 还有 {len(untested) - 5} 个文件")
     
     # 生成缺失的测试文件
@@ -239,5 +239,5 @@ def main():
     
     print(f"\n📄 报告已保存到, {report_path}")
 
-if __name"__main__":::
+if __name"__main__"::
     main()

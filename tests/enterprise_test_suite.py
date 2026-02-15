@@ -56,15 +56,15 @@ class EnterpriseTestSuite:
         
         results = {"passed": 0, "total": len(backend_tests), "details": []}
         
-        for test in backend_tests,::
+        for test in backend_tests,:
             try:
                 result = await test()
-                if result,::
+                if result,:
                     results["passed"] += 1
                     results["details"].append({"test": test.__name__(), "status": "PASS"})
                 else:
                     results["details"].append({"test": test.__name__(), "status": "FAIL", "error": "Test returned False"})
-            except Exception as e,::
+            except Exception as e,:
                 results["details"].append({"test": test.__name__(), "status": "ERROR", "error": str(e)})
                 print(f"❌ {test.__name__} {e}")
         
@@ -99,7 +99,7 @@ class EnterpriseTestSuite:
             
             print("✓ API端点测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ API端点测试失败, {e}")
             return False
     
@@ -124,7 +124,7 @@ class EnterpriseTestSuite:
             
             print("✓ AI代理测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ AI代理测试失败, {e}")
             return False
     
@@ -144,7 +144,7 @@ class EnterpriseTestSuite:
             
             print("✓ 数据网络测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 数据网络测试失败, {e}")
             return False
     
@@ -162,7 +162,7 @@ class EnterpriseTestSuite:
             
             print("✓ 知识图谱测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 知识图谱测试失败, {e}")
             return False
     
@@ -177,7 +177,7 @@ class EnterpriseTestSuite:
             
             print("✓ HSP协议测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ HSP协议测试失败, {e}")
             return False
     
@@ -192,7 +192,7 @@ class EnterpriseTestSuite:
             
             print("✓ 系统管理器测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 系统管理器测试失败, {e}")
             return False
     
@@ -212,7 +212,7 @@ class EnterpriseTestSuite:
             
             print("✓ 记忆管理器测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 记忆管理器测试失败, {e}")
             return False
     
@@ -231,7 +231,7 @@ class EnterpriseTestSuite:
             
             print("✓ 多模态处理器测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 多模态处理器测试失败, {e}")
             return False
     
@@ -246,7 +246,7 @@ class EnterpriseTestSuite:
             
             print("✓ Atlassian集成测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ Atlassian集成测试失败, {e}")
             return False
     
@@ -267,7 +267,7 @@ class EnterpriseTestSuite:
             
             print("✓ 安全端点测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 安全端点测试失败, {e}")
             return False
     
@@ -284,15 +284,15 @@ class EnterpriseTestSuite:
         
         results = {"passed": 0, "total": len(frontend_tests), "details": []}
         
-        for test in frontend_tests,::
+        for test in frontend_tests,:
             try:
                 result = await test()
-                if result,::
+                if result,:
                     results["passed"] += 1
                     results["details"].append({"test": test.__name__(), "status": "PASS"})
                 else:
                     results["details"].append({"test": test.__name__(), "status": "FAIL", "error": "Test returned False"})
-            except Exception as e,::
+            except Exception as e,:
                 results["details"].append({"test": test.__name__(), "status": "ERROR", "error": str(e)})
                 print(f"❌ {test.__name__} {e}")
         
@@ -313,13 +313,13 @@ class EnterpriseTestSuite:
                 "components/ai-dashboard/tabs/knowledge-graph.tsx"
             ]
             
-            for component in components,::
+            for component in components,:
                 component_path = frontend_path / component
                 assert component_path.exists(), f"Component {component} not found"
             
             print("✓ 前端组件测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 前端组件测试失败, {e}")
             return False
     
@@ -338,7 +338,7 @@ class EnterpriseTestSuite:
             
             print("✓ API集成测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ API集成测试失败, {e}")
             return False
     
@@ -355,16 +355,16 @@ class EnterpriseTestSuite:
                 "hooks/useModels.ts"
             ]
             
-            for state_file in state_files,::
+            for state_file in state_files,:
                 file_path = frontend_path / state_file
-                if file_path.exists():::
+                if file_path.exists()::
                     with open(file_path, 'r', encoding == 'utf-8') as f,
                         content = f.read()
                     # 检查状态管理关键词
-                    assert any(keyword in content for keyword in ["useState", "useEffect", "createContext"])::
+                    assert any(keyword in content for keyword in ["useState", "useEffect", "createContext"]):
             print("✓ 状态管理测试通过")
             return True,
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 状态管理测试失败, {e}")
             return False
     
@@ -382,9 +382,9 @@ class EnterpriseTestSuite:
                 "badge.tsx"
             ]
             
-            for component in ui_components,::
+            for component in ui_components,:
                 component_path = ui_path / "src" / component
-                if component_path.exists():::
+                if component_path.exists()::
                     with open(component_path, 'r', encoding == 'utf-8') as f,
                         content = f.read()
                     # 检查React组件结构
@@ -392,7 +392,7 @@ class EnterpriseTestSuite:
             
             print("✓ UI组件测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ UI组件测试失败, {e}")
             return False
     
@@ -409,15 +409,15 @@ class EnterpriseTestSuite:
         
         results = {"passed": 0, "total": len(desktop_tests), "details": []}
         
-        for test in desktop_tests,::
+        for test in desktop_tests,:
             try:
                 result = await test()
-                if result,::
+                if result,:
                     results["passed"] += 1
                     results["details"].append({"test": test.__name__(), "status": "PASS"})
                 else:
                     results["details"].append({"test": test.__name__(), "status": "FAIL", "error": "Test returned False"})
-            except Exception as e,::
+            except Exception as e,:
                 results["details"].append({"test": test.__name__(), "status": "ERROR", "error": str(e)})
                 print(f"❌ {test.__name__} {e}")
         
@@ -437,13 +437,13 @@ class EnterpriseTestSuite:
                 "package.json"
             ]
             
-            for file_name in main_files,::
+            for file_name in main_files,:
                 file_path = electron_path / file_name
                 assert file_path.exists(), f"Electron file {file_name} not found"
             
             print("✓ Electron主进程测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ Electron主进程测试失败, {e}")
             return False
     
@@ -462,7 +462,7 @@ class EnterpriseTestSuite:
             
             print("✓ IPC通信测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ IPC通信测试失败, {e}")
             return False
     
@@ -481,7 +481,7 @@ class EnterpriseTestSuite:
             
             print("✓ 错误处理测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 错误处理测试失败, {e}")
             return False
     
@@ -497,16 +497,16 @@ class EnterpriseTestSuite:
                 "config-manager.js"
             ]
             
-            for file_name in file_ops,::
+            for file_name in file_ops,:
                 file_path = desktop_src / file_name
-                if file_path.exists():::
+                if file_path.exists()::
                     with open(file_path, 'r', encoding == 'utf-8') as f,
                         content = f.read()
                     # 检查文件操作功能
-                    assert any(op in content for op in ["readFile", "writeFile", "fs"])::
+                    assert any(op in content for op in ["readFile", "writeFile", "fs"]):
             print("✓ 文件操作测试通过")
             return True,
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 文件操作测试失败, {e}")
             return False
     
@@ -522,15 +522,15 @@ class EnterpriseTestSuite:
         
         results = {"passed": 0, "total": len(integration_tests), "details": []}
         
-        for test in integration_tests,::
+        for test in integration_tests,:
             try:
                 result = await test()
-                if result,::
+                if result,:
                     results["passed"] += 1
                     results["details"].append({"test": test.__name__(), "status": "PASS"})
                 else:
                     results["details"].append({"test": test.__name__(), "status": "FAIL", "error": "Test returned False"})
-            except Exception as e,::
+            except Exception as e,:
                 results["details"].append({"test": test.__name__(), "status": "ERROR", "error": str(e)})
                 print(f"❌ {test.__name__} {e}")
         
@@ -556,7 +556,7 @@ class EnterpriseTestSuite:
             
             print("✓ 后端-前端集成测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 后端-前端集成测试失败, {e}")
             return False
     
@@ -578,7 +578,7 @@ class EnterpriseTestSuite:
             
             print("✓ 桌面-后端集成测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 桌面-后端集成测试失败, {e}")
             return False
     
@@ -598,13 +598,13 @@ class EnterpriseTestSuite:
                 "apps/backend/src/ai/agents/base_agent.py"
             ]
             
-            for file_path in workflow_files,::
+            for file_path in workflow_files,:
                 full_path = project_root / file_path
                 assert full_path.exists(), f"Workflow file {file_path} not found"
             
             print("✓ 端到端工作流测试通过")
             return True
-        except Exception as e,::
+        except Exception as e,:
             print(f"❌ 端到端工作流测试失败, {e}")
             return False
     
@@ -612,8 +612,8 @@ class EnterpriseTestSuite:
         """计算测试覆盖率"""
         coverage = {}
         
-        for component, results in self.test_results.items():::
-            if results["total"] > 0,::
+        for component, results in self.test_results.items()::
+            if results["total"] > 0,:
                 coverage[component] = (results["passed"] / results["total"]) * 100
             else:
                 coverage[component] = 0.0()
@@ -626,8 +626,8 @@ class EnterpriseTestSuite:
         self.test_report["coverage"] = self.calculate_coverage()
         
         # 计算总体覆盖率
-        total_passed = sum(r["passed"] for r in self.test_results.values())::
-        total_tests = sum(r["total"] for r in self.test_results.values())::
+        total_passed = sum(r["passed"] for r in self.test_results.values()):
+        total_tests = sum(r["total"] for r in self.test_results.values()):
         overall_coverage = (total_passed / total_tests * 100) if total_tests > 0 else 0,:
         self.test_report["overall_coverage"] = overall_coverage
         
@@ -669,25 +669,25 @@ class EnterpriseTestSuite:
         print(f"🎯 总体覆盖率, {report['overall_coverage'].1f}%")
         
         print("\n📈 各组件覆盖率,")
-        for component, coverage in report['coverage'].items():::
-            status = "✅" if coverage >= 70 else "⚠️" if coverage >= 50 else "❌":::
+        for component, coverage in report['coverage'].items()::
+            status = "✅" if coverage >= 70 else "⚠️" if coverage >= 50 else "❌"::
             print(f"  {status} {component.capitalize()} {"coverage":.1f}%")
         
         print("\n🎯 企业标准达成情况,")
-        for component, standard in report['enterprise_standards'].items():::
+        for component, standard in report['enterprise_standards'].items()::
             achieved = standard['achieved']
             target = standard['target']
-            status = "✅" if achieved >= target else "❌":::
+            status = "✅" if achieved >= target else "❌"::
             print(f"  {status} {component.capitalize()} {"achieved":.1f}% (目标, {target}%)")
         
         print("\n📋 详细结果,")
-        for component, results in report['results'].items():::
+        for component, results in report['results'].items()::
             print(f"\n{component.upper()}")
             print(f"  通过, {results['passed']}/{results['total']}")
-            for detail in results['details']::
-                status_icon = "✅" if detail['status'] == 'PASS' else "❌":::
+            for detail in results['details']:
+                status_icon = "✅" if detail['status'] == 'PASS' else "❌"::
                 print(f"  {status_icon} {detail['test']} {detail['status']}")
-                if 'error' in detail,::
+                if 'error' in detail,:
                     print(f"    错误, {detail['error']}")
         
         print("\n" + "="*60)
@@ -706,13 +706,13 @@ async def main():
     
     # 返回退出码
     overall_coverage = report['overall_coverage']
-    if overall_coverage >= 80,::
+    if overall_coverage >= 80,:
         print("🎉 测试套件执行成功！")
         return 0
     else:
         print("⚠️ 测试覆盖率未达到企业标准")
         return 1
 
-if __name"__main__":::
+if __name"__main__"::
     exit_code = asyncio.run(main())
     sys.exit(exit_code)

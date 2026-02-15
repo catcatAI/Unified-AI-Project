@@ -31,15 +31,15 @@ try:
 
         def __init__(self, config) -> None:
             self.config = config
-            self.initialized == False
+            self.initialized = False
 
         async def initialize_system(self):
-            await asyncio.sleep(0.1())
-            self.initialized == True
+            await asyncio.sleep(0.1))
+            self.initialized = True
             print("Unified Control Center initialized (mock)")
 
         async def process_complex_task(self, task):
-            await asyncio.sleep(0.2())
+            await asyncio.sleep(0.2))
             return {
                 'status': 'success',
                 'task_id': task.get('id'),
@@ -54,7 +54,7 @@ try:
     from src.core_ai.reasoning.causal_reasoning_engine import CausalReasoningEngine
     from src.core.services.vision_service import VisionService
     from src.core.services.audio_service import AudioService
-except ImportError as e,::
+except ImportError as e,:
     print(f"Import error, {e}")
     print("Please ensure you're running this from the backend directory")
     # 不退出,而是跳过测试
@@ -73,12 +73,12 @@ class TestAGIIntegration:
     def __init__(self):
         ""初始化测试类"""
     self.test_results = []
-    self.unified_control_center == None
+    self.unified_control_center = None
 
     def setup_method(self):
         ""每个测试方法执行前的设置"""
     self.test_results = []
-    self.unified_control_center == None
+    self.unified_control_center = None
 
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.asyncio()
@@ -106,7 +106,7 @@ def test_unified_control_center(self) -> None:
                 }
             }
 
-            self.unified_control_center == UnifiedControlCenter(config)
+            self.unified_control_center = UnifiedControlCenter(config)
             await self.unified_control_center.initialize_system()
 
             # 测试复杂任务处理
@@ -117,7 +117,7 @@ def test_unified_control_center(self) -> None:
                 'description': 'Analyze multimodal data and provide insights',
                 'audio_data': b'mock_audio_data_for_testing',
                 'image_data': b'mock_image_data_for_testing',
-                'text_data': 'This is a test text for multimodal analysis':::
+                'text_data': 'This is a test text for multimodal analysis'::
             result = await self.unified_control_center.process_complex_task(complex_task)
 
             assert result.get('status') != 'error', f"Task processing failed, {result.get('error')}"
@@ -131,7 +131,7 @@ def test_unified_control_center(self) -> None:
 
             logger.info("✅ Unified Control Center test passed")
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"❌ Unified Control Center test failed, {e}")
             raise
 
@@ -178,7 +178,7 @@ def test_unified_control_center(self) -> None:
 
             logger.info("✅ Multimodal Processing test passed")
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"❌ Multimodal Processing test failed, {e}")
             raise
 
@@ -192,7 +192,7 @@ def test_unified_control_center(self) -> None:
             vector_store = VectorMemoryStore(persist_directory="./test_vector_store")
 
             # 检查向量存储是否正确初始化
-            if not vector_store.collection,::
+            if not vector_store.collection,:
                 pytest.skip("Vector store not initialized, skipping test")
 
             # 测试添加记忆
@@ -209,7 +209,7 @@ def test_unified_control_center(self) -> None:
                 }
             ]
 
-            for memory in test_memories,::
+            for memory in test_memories,:
                 add_result = await vector_store.add_memory(
                     memory['id']
                     memory['content'],
@@ -220,8 +220,8 @@ def test_unified_control_center(self) -> None:
             # 测试语义搜索
             search_result = await vector_store.semantic_search("artificial intelligence", n_results=5)
             # 检查搜索结果是否包含预期字段
-            has_documents = 'documents' in search_result if search_result else False,::
-                as_ids = 'ids' in search_result if search_result else False,::
+            has_documents = 'documents' in search_result if search_result else False,:
+                as_ids = 'ids' in search_result if search_result else False,:
 ssert has_documents or has_ids, "Search result missing expected fields"
 
             # 测试统计信息
@@ -239,7 +239,7 @@ ssert has_documents or has_ids, "Search result missing expected fields"
 
             logger.info("✅ Vector Storage System test passed")
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"❌ Vector Storage System test failed, {e}")
             raise
 
@@ -300,7 +300,7 @@ ssert has_documents or has_ids, "Search result missing expected fields"
 
             logger.info("✅ Causal Reasoning Engine test passed")
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"❌ Causal Reasoning Engine test failed, {e}")
             raise
 
@@ -320,7 +320,7 @@ ssert has_documents or has_ids, "Search result missing expected fields"
                 }
             }
 
-            self.unified_control_center == UnifiedControlCenter(config)
+            self.unified_control_center = UnifiedControlCenter(config)
             await self.unified_control_center.initialize_system()
 
             # 创建一个复杂的AGI任务,整合所有组件
@@ -368,6 +368,6 @@ ssert has_documents or has_ids, "Search result missing expected fields"
 
             logger.info("✅ End-to-End AGI Workflow test passed")
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"❌ End-to-End AGI Workflow test failed, {e}")
             raise

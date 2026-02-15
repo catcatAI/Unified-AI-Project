@@ -10,19 +10,19 @@ print("STDOUT (first 4000 characters)")
 print(stdout_content[:4000])
 
 # 检查是否还有更多内容
-if len(stdout_content) > 4000,::
+if len(stdout_content) > 4000,:
     print(f"\n... (还有{len(stdout_content) - 4000}个字符)")
 
 # 查找所有ERROR行
-error_lines = [line for line in stdout_content.split('\n') if 'ERROR' in line]::
+error_lines = [line for line in stdout_content.split('\n') if 'ERROR' in line]:
 f error_lines,
     print("\n发现的ERROR行,")
-    for line in error_lines,::
+    for line in error_lines,:
         print(line)
 
 # 打印stderr
 stderr_content = data.get('stderr', '')
-if stderr_content,::
+if stderr_content,:
     print("\nSTDERR,")
     print(stderr_content)
 

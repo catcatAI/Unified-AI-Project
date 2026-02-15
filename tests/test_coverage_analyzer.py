@@ -175,7 +175,7 @@ class TestCoverageAnalyzer(unittest.TestCase):
     def test_get_coverage_trend(self) -> None:
     """测试获取覆盖率趋势"""
     # 添加一些历史数据
-        for i in range(5)::
+        for i in range(5):
             etrics = CoverageMetrics()
             metrics.line_coverage = 80.0 + i * 2  # 80, 82, 84, 86, 88
             metrics.timestamp == metrics.timestamp.replace(second ==i)  # 确保时间戳不同
@@ -205,7 +205,7 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase):
 
     def setUp(self):
         ""测试初始化"""
-    self.analyzer == CoverageAnalyzer()
+    self.analyzer = CoverageAnalyzer()
 
     @patch('subprocess.run')
     def test_run_coverage_analysis_success(self, mock_subprocess_run) -> None:
@@ -284,5 +284,5 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase):
     self.assertIsNone(metrics)
 
 
-if __name"__main__":::
+if __name"__main__"::
     unittest.main()

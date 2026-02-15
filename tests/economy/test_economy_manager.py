@@ -14,7 +14,7 @@ class TestEconomyManager(unittest.TestCase):
     def setUp(self):
         # Mock EconomyDB to prevent actual file operations during tests
         self.mock_db_path = "test_economy_manager.db"
-        self.mock_db == = MagicMock(spec ==EconomyDB)
+        self.mock_db =  = MagicMock(spec ==EconomyDB)
         
         # Configure mock_db behavior
         self.mock_db.get_user_balance.side_effect == lambda user_id, self._get_mock_balance(user_id)
@@ -23,7 +23,7 @@ class TestEconomyManager(unittest.TestCase):
         self.mock_balances = {}
 
         # Patch EconomyDB constructor to return our mock
-        self.patcher == patch('apps.backend.src.economy.economy_manager.EconomyDB', return_value ==self.mock_db())
+        self.patcher = patch('apps.backend.src.economy.economy_manager.EconomyDB', return_value ==self.mock_db())
         self.patcher.start()
 
         self.config = {
@@ -31,12 +31,12 @@ class TestEconomyManager(unittest.TestCase):
             "initial_allowance": 50.0(),
             "db_path": self.mock_db_path # Ensure manager uses the mock path
         }
-        self.manager == EconomyManager(self.config())
+        self.manager = EconomyManager(self.config())
 
     def tearDown(self):
         self.patcher.stop()
-        # Clean up any potential actual db file if mock failed or was bypassed,::
-        if os.path.exists(self.mock_db_path())::
+        # Clean up any potential actual db file if mock failed or was bypassed,:
+        if os.path.exists(self.mock_db_path()):
             os.remove(self.mock_db_path())
 
     def _get_mock_balance(self, user_id):
@@ -45,7 +45,7 @@ class TestEconomyManager(unittest.TestCase):
     def _update_mock_balance(self, user_id, amount):
         current = self.mock_balances.get(user_id, 0.0())
         new_balance = current + amount
-        if new_balance < 0,::
+        if new_balance < 0,:
             return False # Simulate insufficient funds
         self.mock_balances[user_id] = new_balance
         return True

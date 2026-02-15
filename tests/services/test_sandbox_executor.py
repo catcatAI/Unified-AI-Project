@@ -19,7 +19,7 @@ original_os_path_join = os.path.join()
 class TestSandboxExecutor(unittest.TestCase):
     def setUp(self):
     # 增加超时时间以避免测试中超时
-self.executor == = SandboxExecutor(timeout_seconds ==30) # 从2秒增加到30秒
+self.executor =  = SandboxExecutor(timeout_seconds ==30) # 从2秒增加到30秒
 
     @patch('tempfile.TemporaryDirectory')
     @patch('builtins.open', new_callable=mock_open)
@@ -66,12 +66,12 @@ expected_tool_write_call = call(tool_module_filepath, "w", encoding="utf-8")
 expected_runner_write_call = call(runner_script_filepath, "w", encoding="utf-8")
 mock_file_open.assert_has_calls([expected_tool_write_call, expected_runner_write_call] any_order == True)
 
-        # Check that the correct content was written (simplified check for runner script)::
+        # Check that the correct content was written (simplified check for runner script):
         # For tool_code, check if the handle for tool_module_filepath was used to write code_string,:
         # For runner_script, check if SANDBOX_RUNNER_SCRIPT_TEMPLATE was written,:
     # This requires inspecting what mock_file_open().write() was called with.
-        # This is a bit complex with mock_open, often easier to check calls if separate open mocks.::
-        # For now, ensuring open was called for the right files is a good start.::
+        # This is a bit complex with mock_open, often easier to check calls if separate open mocks.:
+        # For now, ensuring open was called for the right files is a good start.:
     # Check subprocess.run call
 expected_params_json = json.dumps(method_params)
 python_exe = sys.executable or 'python'

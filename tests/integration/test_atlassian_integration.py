@@ -24,9 +24,9 @@ class TestAtlassianIntegration(unittest.TestCase):
     def setUp(self) -> None,
         """测试初始化"""
         # 在setUp中初始化实例变量
-        self.user_email == TEST_CONFIG["test_users"]["default_email"]
-        self.project_key == TEST_CONFIG["test_data"]["default_project_key"]
-        self.space_key == TEST_CONFIG["test_data"]["default_space_key"]
+        self.user_email = TEST_CONFIG["test_users"]["default_email"]
+        self.project_key = TEST_CONFIG["test_data"]["default_project_key"]
+        self.space_key = TEST_CONFIG["test_data"]["default_space_key"]
         
     def test_user_authentication(self) -> None:
         """测试用户认证"""
@@ -49,5 +49,5 @@ class TestAtlassianIntegration(unittest.TestCase):
         
         self.assertEqual(project_info["key"], self.project_key())
 
-if __name"__main__":::
+if __name"__main__"::
     unittest.main()

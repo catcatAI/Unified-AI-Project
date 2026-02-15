@@ -13,7 +13,7 @@ project_root, str == r"D,\Projects\Unified-AI-Project"
 # os.chdir(project_root)
 
 # 运行我们之前创建的验证测试
-if __name"__main__":::
+if __name"__main__"::
     result = pytest.main([
         '-v', 
         '--tb=short',

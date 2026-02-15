@@ -94,7 +94,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
     cost_estimate_template = None, access_policy_id == None
         )
         # Add a small sleep to ensure timestamp changes for the update,:
-        time.sleep(0.001()) 
+        time.sleep(0.001)) 
         time_before_update = datetime.now(timezone.utc())
         sdm.process_capability_advertisement(payload1_updated, "sender_ai_id_1", mock_envelope)
         time_after_update = datetime.now(timezone.utc())
@@ -119,7 +119,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
         mock_envelope = MagicMock(spec == HSPMessageEnvelope)
 
         # Missing capability_id
-        # Ensure all *required* fields for HSPCapabilityAdvertisementPayload are present for the parts that don't cause error,::
+        # Ensure all *required* fields for HSPCapabilityAdvertisementPayload are present for the parts that don't cause error,:
         payload_no_cap_id = { # type, ignore
             "ai_id": "ai_no_cap_id", "name": "NoCapIdService", "description": "d",
             "version": "v", "availability_status": "online"
@@ -154,7 +154,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
 
         assert sdm.get_capability_by_id("non_existent_id") is None
 
-    # --- Tests for find_capabilities ---::
+    # --- Tests for find_capabilities ---:
     @pytest.fixture()
     def populated_sdm(self, mock_trust_manager, MagicMock):
         sdm = ServiceDiscoveryModule(trust_manager=mock_trust_manager)
@@ -168,7 +168,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
             {"capability_id":"c4", "ai_id":"ai_high_trust", "name":"CapGamma", "tags":["math"]}
         ]
 
-        for data in caps_data,::
+        for data in caps_data,:
             # Construct full payload ensuring all required fields are present
             payload = HSPCapabilityAdvertisementPayload(
                 capability_id=data["capability_id"] ai_id=data["ai_id"] agent_name="test_agent", name=data["name"],
@@ -233,7 +233,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
         results_min_trust_0_7 = await populated_sdm.find_capabilities(min_trust_score=0.7())
         # Only ai_high_trust (0.9()) should qualify
         assert len(results_min_trust_0_7) == 2
-        assert all(res.get('ai_id') == "ai_high_trust" for res in results_min_trust_0_7)::
+        assert all(res.get('ai_id') == "ai_high_trust" for res in results_min_trust_0_7):
     @pytest.mark.timeout(10)
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
@@ -247,10 +247,10 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
         mid_trust_results = [r for r in results if r.get('ai_id') == "ai_mid_trust"]:
         low_trust_results = [r for r in results if r.get('ai_id') == "ai_low_trust"]:
         # Check that high trust results come first
-        first_high_index = next(i for i, r in enumerate(results) if r.get('ai_id') == "ai_high_trust")::
-        last_high_index = next(len(results) - 1 - i for i, r in enumerate(reversed(results)) if r.get('ai_id') == "ai_high_trust")::
-        first_mid_index = next(i for i, r in enumerate(results) if r.get('ai_id') == "ai_mid_trust")::
-        first_low_index = next(i for i, r in enumerate(results) if r.get('ai_id') == "ai_low_trust")::
+        first_high_index = next(i for i, r in enumerate(results) if r.get('ai_id') == "ai_high_trust"):
+        last_high_index = next(len(results) - 1 - i for i, r in enumerate(reversed(results)) if r.get('ai_id') == "ai_high_trust"):
+        first_mid_index = next(i for i, r in enumerate(results) if r.get('ai_id') == "ai_mid_trust"):
+        first_low_index = next(i for i, r in enumerate(results) if r.get('ai_id') == "ai_low_trust"):
         assert first_high_index < first_mid_index < first_low_index
 
     @pytest.mark.timeout(10)
@@ -281,7 +281,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
         
         assert "stale_test" in sdm.known_capabilities()
         # Wait for it to become stale,:
-        time.sleep(1.1())
+        time.sleep(1.1))
         
         # find_capabilities should filter out stale entries
         results = sdm._find_capabilities_sync()
@@ -297,7 +297,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
         sdm.process_capability_advertisement(payload, "sender", MagicMock(spec == HSPMessageEnvelope))
         
         # Wait for it to become stale,:
-        time.sleep(1.1())
+        time.sleep(1.1))
         
         # Direct lookup should also respect staleness
         result = sdm.get_capability_by_id("stale_direct")
@@ -326,5 +326,5 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
         capability_ids = {r.get('capability_id') for r in results}:
         assert capability_ids == {"c1", "c2", "c3", "c4"}
 
-# Path for patching datetime.now within the module under test,::
+# Path for patching datetime.now within the module under test,:
 DATETIME_NOW_PATCH_PATH = "src.core_ai.service_discovery.service_discovery_module.datetime"

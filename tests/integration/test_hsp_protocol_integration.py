@@ -14,7 +14,7 @@ class TestHSPProtocolIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_hsp_test(self, setup_system_test):
         """设置HSP测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -79,12 +79,12 @@ def test_hsp_connection_integration(self) -> None:
         # 创建测试数据
         test_fact = self.data_factory.create_hsp_message(
             message_type="fact",:
-    content = "This is a test fact for HSP integration"::
+    content = "This is a test fact for HSP integration":
         )
         
         test_opinion = self.data_factory.create_hsp_message(
             message_type="opinion",,
-    content = "This is a test opinion for HSP integration"::
+    content = "This is a test opinion for HSP integration":
         )
         
         # 获取mock服务
@@ -248,7 +248,7 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_routing_test(self, setup_system_test):
         """设置路由测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -262,7 +262,7 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
                 message_type="fact",:
     content=f"Test fact message {i}"
             )
-            for i in range(5)::
+            for i in range(5):
         ]
         
         # 获取mock服务
@@ -281,25 +281,25 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         ]
         
         subscribe_results = []
-        for topic in topics,::
+        for topic in topics,:
             result = await hsp_connector.return_value.subscribe(topic)
             subscribe_results.append(result)
         
         # 2. 发布消息到不同主题
         publish_results = []
-        for i, message in enumerate(routing_messages)::
+        for i, message in enumerate(routing_messages):
             topic = topics[i % len(topics)]
             result = await hsp_connector.return_value.publish(message, topic)
             publish_results.append(result)
         
         # 验证结果
-        assert all(result is True for result in subscribe_results)::
-        assert all(result is True for result in publish_results)::
+        assert all(result is True for result in subscribe_results):
+        assert all(result is True for result in publish_results):
         # 验证mock调用,
-        for topic in topics,::
+        for topic in topics,:
             hsp_connector.return_value.subscribe.assert_any_call(topic)
         
-        for i, message in enumerate(routing_messages)::
+        for i, message in enumerate(routing_messages):
             topic = topics[i % len(topics)]
             hsp_connector.return_value.publish.assert_any_call(message, topic)
     
@@ -318,7 +318,7 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
                 agent_id=f"broadcast_agent_{i}",:
     agent_type="base_agent"
             )
-            for i in range(3)::
+            for i in range(3):
         ]
         
         # 获取mock服务
@@ -334,7 +334,7 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         # 执行广播测试
         # 1. 创建代理
         created_agents = []
-        for config in agent_configs,::
+        for config in agent_configs,:
             agent = await agent_manager.return_value.create_agent(
                 config["agent_id"],
     config["agent_type"]
@@ -374,7 +374,7 @@ class TestHSPQualityOfServiceIntegration(SystemIntegrationTest):
     @pytest.fixture(autouse == True)
     def setup_qos_test(self, setup_system_test):
         """设置QoS测试"""
-        self.data_factory == TestDataFactory()
+        self.data_factory = TestDataFactory()
         yield
     
     @pytest.mark.system_integration()
@@ -440,5 +440,5 @@ class TestHSPQualityOfServiceIntegration(SystemIntegrationTest):
         )
 
 
-if __name"__main__":::
+if __name"__main__"::
     pytest.main([__file__, "-v"])

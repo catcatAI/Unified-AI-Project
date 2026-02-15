@@ -25,14 +25,31 @@ class TestSyntaxFixer:
         self.errors = []
         
         self.patterns = [
+            # Basic syntax fixes
             (r'\btry\s*,', 'try:', 'try, → try:'),
             (r'^(\s*)(class\s+\w+)\s*,\s*$', r'\1\2:', 'class Name, → class Name:'),
             (r'^(\s*)(def\s+\w+\s*\([^)]*\))\s*,\s*$', r'\1\2:', 'def func(), → def func():'),
-            (r'^(\s*)(def|class)\s+\w+.*::$', r'\1\2 \3:', ':: → :'),
-            (r'^(\s*)(\w+)\s*==\s*([^=])', r'\1\2 = \3', '== → = (assignment)'),
-            (r'\bwait\s+asyncio\.', 'await asyncio.', 'wait asyncio → await asyncio'),
-            (r'#\s*-\*-\s*coding\s*,\s*utf-8\s*-\*-', '# -*- coding: utf-8 -*-', 'coding, utf-8 → coding: utf-8'),
-            (r'#\s*coding\s*,\s*utf-8', '# coding: utf-8', 'coding, utf-8 → coding: utf-8')
+            
+            # Double colon fixes
+            (r'::\s*$', ':', ':: → : (line end)'),
+            (r'\)\s*::\s*$', '):', '):: → ):'),
+            (r':\s*:\s*$', ':', ': : → : (duplicate)'),
+            
+            # Assignment fixes
+            (r'^(\s*)(self\.\w+)\s*==\s*([^=])', r'\1\2 = \3', 'self.attr == → ='),
+            (r'^(\s*)(\w+)\s*==\s*([^=])', r'\1\2 = \3', 'var == → ='),
+            
+            # Async/await fixes
+            (r'\bwait\s+asyncio\.', 'await asyncio.', 'wait → await'),
+            (r'\bwait\s+(\w+\()', r'await \1', 'wait func() → await'),
+            
+            # Sleep/parentheses fixes
+            (r'asyncio\.sleep\(([0-9.]+)\(\)', r'asyncio.sleep(\1)', 'sleep(n() → sleep(n)'),
+            (r'\.sleep\(([0-9.]+)\(\)', r'.sleep(\1)', 'sleep(n() → sleep(n)'),
+            
+            # Encoding fixes
+            (r'#\s*-\*-\s*coding\s*,\s*utf-8\s*-\*-', '# -*- coding: utf-8 -*-', 'coding, → coding:'),
+            (r'#\s*coding\s*,\s*utf-8', '# coding: utf-8', 'coding, → coding:')
         ]
 
     def fix_file(self, file_path: Path) -> Tuple[bool, List[str]]:
@@ -117,7 +134,7 @@ class TestSyntaxFixer:
         report.append("=" * 80)
         report.append(f"Mode: {'DRY RUN' if self.dry_run else 'LIVE'}")
         report.append(f"Files fixed: {len(self.fixes_applied)}")
-        report.append()
+        report.append("")
         
         for file_path, fixes in self.fixes_applied:
             report.append(f"\n{file_path}:")

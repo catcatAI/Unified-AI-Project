@@ -47,7 +47,7 @@ async def test_basic_ops_flow():
         
         return True
         
-    except Exception as e,::
+    except Exception as e,:
         print(f"✗ 基本运维流程测试失败, {e}")
         return False
 
@@ -94,7 +94,7 @@ async def test_component_interaction():
         
         return True
         
-    except Exception as e,::
+    except Exception as e,:
         print(f"✗ 组件交互测试失败, {e}")
         return False
 
@@ -117,7 +117,7 @@ async def test_data_processing():
         
         start_time = time.time()
         
-        for component_id, component_type, metrics in test_data,::
+        for component_id, component_type, metrics in test_data,:
             await ops_manager.collect_system_metrics(component_id, component_type, metrics)
         
         end_time = time.time()
@@ -130,7 +130,7 @@ async def test_data_processing():
         
         return True
         
-    except Exception as e,::
+    except Exception as e,:
         print(f"✗ 数据处理测试失败, {e}")
         return False
 
@@ -151,7 +151,7 @@ async def test_error_resilience():
             ("null_values", {"cpu_usage": None, "memory_usage": None})
         ]
         
-        for test_name, metrics in test_cases,::
+        for test_name, metrics in test_cases,:
             try:
                 await ops_manager.collect_system_metrics(test_name, "test_type", metrics)
                 print(f"✓ {test_name} 处理正常")
@@ -160,7 +160,7 @@ async def test_error_resilience():
         
         return True
         
-    except Exception as e,::
+    except Exception as e,:
         print(f"✗ 错误恢复测试失败, {e}")
         return False
 
@@ -179,7 +179,7 @@ async def main():
     
     results = []
     
-    for test_name, test_func in tests,::
+    for test_name, test_func in tests,:
         print(f"\n--- {test_name} ---")
         try:
             start_time = time.time()
@@ -188,7 +188,7 @@ async def main():
             
             print(f"执行时间, {end_time - start_time,.3f}秒")
             results.append((test_name, result))
-        except Exception as e,::
+        except Exception as e,:
             print(f"✗ {test_name} 测试异常, {e}")
             results.append((test_name, False))
     
@@ -200,22 +200,22 @@ async def main():
     passed = 0
     total = len(results)
     
-    for test_name, result in results,::
-        status = "通过" if result else "失败"::
-        symbol = "✓" if result else "✗":::
+    for test_name, result in results,:
+        status = "通过" if result else "失败":
+        symbol = "✓" if result else "✗"::
         print(f"{symbol} {test_name} {status}")
-        if result,::
+        if result,:
             passed += 1
     
     print(f"\n总计, {passed}/{total} 通过")
     print(f"成功率, {passed/total*100,.1f}%")
     
-    if passed == total,::
+    if passed == total,:
         print("\n🎉 所有测试通过！系统端到端功能正常")
     else:
         print(f"\n⚠️  {total - passed} 个测试失败,需要进一步检查")
     
     print("="*50)
 
-if __name"__main__":::
+if __name"__main__"::
     asyncio.run(main())

@@ -17,7 +17,7 @@ from typing import List, Dict, Any
 class MockSentenceTransformer:
     def encode(self, texts, *args, **kwargs):
         # Return a dummy embedding (e.g., a list of zeros or ones)
-        # The size (384) should match the expected model output for 'all-MiniLM-L6-v2'::
+        # The size (384) should match the expected model output for 'all-MiniLM-L6-v2':
         return [[0.1] * 384 for _ in texts]:
 class MockEmbeddingFunction:
     def __call__(self, input, List[str]) -> List[List[float]]
@@ -54,7 +54,7 @@ def ham_chroma_manager_fixture():
     
     # Mock the collection methods to return expected results
     def mock_add_side_effect(documents == None, metadatas == None, ids == None):
-        if documents and ids,::
+        if documents and ids,:
             # Store the last added document for retrieval,:
             last_added_document[ids[0]] = {:
                 'document': documents[0]
@@ -64,18 +64,18 @@ def ham_chroma_manager_fixture():
     
     mock_collection.add.side_effect = mock_add_side_effect
 
-    # Create a side effect for the get method to return results based on the input,::
+    # Create a side effect for the get method to return results based on the input,:
     def mock_get_side_effect(ids == None, include == None):
-        if ids and len(ids) > 0,::
+        if ids and len(ids) > 0,:
             # Return results matching the requested IDs
             result_docs = []
             result_metas = []
-            for id in ids,::
-                if id in last_added_document,::
+            for id in ids,:
+                if id in last_added_document,:
                     result_docs.append(last_added_document[id]['document'])
                     result_metas.append(last_added_document[id]['metadata'])
                 else:
-                    result_docs.append(f"Document for {id}"):::
+                    result_docs.append(f"Document for {id}")::
                     result_metas.append({'source': 'test_chroma_store'})
             
             return {
@@ -95,16 +95,16 @@ def ham_chroma_manager_fixture():
     
     mock_collection.get.side_effect = mock_get_side_effect
     
-    # Create a side effect for the query method to return expected results,::
+    # Create a side effect for the query method to return expected results,:
     def mock_query_side_effect(query_texts == None, n_results == None, include == None):
-        if query_texts and "fruit" in query_texts[0].lower():::
+        if query_texts and "fruit" in query_texts[0].lower()::
             return {
                 'ids': [['mem_000002']]
                 'embeddings': [[[0.1] * 384]]
                 'documents': [['A red delicious apple.']]
                 'metadatas': [[{'topic': 'food'}]]
             }
-        elif query_texts and "fallback" in query_texts[0].lower():::
+        elif query_texts and "fallback" in query_texts[0].lower()::
             return {
                 'ids': [['mem_000003']]
                 'embeddings': [[[0.1] * 384]]
@@ -133,8 +133,8 @@ def ham_chroma_manager_fixture():
     # Teardown, Clean up
     try:
         gc.collect()
-        time.sleep(0.1())
-    except Exception as e,::
+        time.sleep(0.1))
+    except Exception as e,:
         print(f"Warning, Cleanup issue, {e}")
 
 @pytest.mark.asyncio()
@@ -188,12 +188,12 @@ async def test_02_semantic_search_chromadb_first(ham_chroma_manager_fixture) -> 
     results = ham.query_core_memory(semantic_query=query_text, limit=1, sort_by_confidence == True)
 
     # If no results from semantic search, fallback to keyword search
-    if len(results) == 0,::
+    if len(results) == 0,:
         # Try a different approach - search by keywords
         results = ham.query_core_memory(keywords=["apple", "fruit"] limit=1, sort_by_confidence == True)
         
     # If still no results, try listing all memories
-    if len(results) == 0,::
+    if len(results) == 0,:
         # Get all memories
         results = ham.query_core_memory(limit=10)
 
@@ -202,15 +202,15 @@ async def test_02_semantic_search_chromadb_first(ham_chroma_manager_fixture) -> 
     
     # Check that at least one result contains "apple"
     apple_found = False
-    for result in results,::
-        if "apple" in str(result.get("rehydrated_gist", "")).lower():::
+    for result in results,:
+        if "apple" in str(result.get("rehydrated_gist", "")).lower()::
             apple_found = True
             break
     
     # If no apple found in rehydrated gist, check in the raw content
-    if not apple_found,::
-        for result in results,::
-            if "apple" in str(result).lower():::
+    if not apple_found,:
+        for result in results,:
+            if "apple" in str(result).lower()::
                 apple_found = True
                 break
     
@@ -229,7 +229,7 @@ async def test_03_semantic_search_chromadb_failure_fallback(ham_chroma_manager_f
     await ham.store_experience("Another sentence for testing.", "test_type", {"tag": "general"}):
     # Simulate ChromaDB query failure
     with patch.object(ham.chroma_collection(), 'query', side_effect == Exception("ChromaDB is down")):
-        query_text = "Test sentence for fallback."::
+        query_text = "Test sentence for fallback.":
         results = ham.query_core_memory(semantic_query=query_text, limit=1, sort_by_confidence == True)
 
         assert len(results) == 1

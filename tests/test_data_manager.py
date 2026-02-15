@@ -30,7 +30,7 @@ class TestDataManager:
         Args,
             data_dir, 测试数据目录
         """
-        self.data_dir == Path(data_dir)
+        self.data_dir = Path(data_dir)
         self.data_dir.mkdir(exist_ok == True)
     
     def generate_test_data(self, data_type, str, count, int == 10) -> List[Dict[str, Any]]
@@ -45,15 +45,15 @@ class TestDataManager:
             生成的测试数据列表
         """
         data = []
-        for i in range(count)::
-            if data_type == "user":::
+        for i in range(count):
+            if data_type == "user"::
                 data.append({
                     "id": f"user_{i}",
                     "name": f"Test User {i}",
                     "email": f"user{i}@test.com",
                     "created_at": datetime.now().isoformat()
                 })
-            elif data_type == "product":::
+            elif data_type == "product"::
                 data.append({
                     "id": f"product_{i}",
                     "name": f"Test Product {i}",
@@ -82,7 +82,7 @@ class TestDataManager:
             with open(self.data_dir / filename, 'w', encoding == 'utf-8') as f:
                 json.dump(data, f, ensure_ascii == False, indent=2)
             logger.info(f"测试数据已保存到, {self.data_dir / filename}")
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"保存测试数据失败, {e}")
     
     def load_test_data(self, filename, str) -> List[Dict[str, Any]]
@@ -101,7 +101,7 @@ class TestDataManager:
         except FileNotFoundError as e:
             logger.error(f"测试数据文件未找到, {filename}")
             return []
-        except json.JSONDecodeError as e,::
+        except json.JSONDecodeError as e,:
             logger.error(f"解析测试数据文件失败, {e}")
             return []
 
@@ -123,5 +123,5 @@ def main() -> None:
     
     logger.info("测试数据管理器已准备就绪")
 
-if __name"__main__":::
+if __name"__main__"::
     main()

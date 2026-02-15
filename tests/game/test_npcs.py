@@ -28,7 +28,7 @@ def game():
 def test_npc_creation(game) -> None:
     from game import npcs
     npcs.load_npc_data() # Ensure data is loaded
-    for npc_id in npcs._NPC_DATA.keys():::
+    for npc_id in npcs._NPC_DATA.keys()::
         npc = create_npc(game, npc_id)
         assert npc is not None
         assert npc.name=npcs._NPC_DATA[npc_id]['name']

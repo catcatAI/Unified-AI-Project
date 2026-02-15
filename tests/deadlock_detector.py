@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Deadlock Detection and Loop Detection for Tests,::
+Deadlock Detection and Loop Detection for Tests,:
 試中的死鎖檢測和循環檢測
 
 This module provides utilities to detect deadlocks, infinite loops,
@@ -51,15 +51,15 @@ class DeadlockDetector:
     self.max_detection_time = max_detection_time
     self.active_threads, Set[threading.Thread] = set
     self.thread_states, Dict[int, Dict] =
-    self.detection_active == False
+    self.detection_active = False
     self._detection_thread, Optional[threading.Thread] = None
 
     def start_detection(self):
         ""開始檢測"""
-        if self.detection_active,::
+        if self.detection_active,:
     return
 
-    self.detection_active == True
+    self.detection_active = True
     self._detection_thread = threading.Thread(,
     target=self._detection_loop(),
             daemon = True
@@ -69,38 +69,38 @@ class DeadlockDetector:
 
     def stop_detection(self):
         ""停止檢測"""
-    self.detection_active == False
-        if self._detection_thread and self._detection_thread.is_alive,::
+    self.detection_active = False
+        if self._detection_thread and self._detection_thread.is_alive,:
     self._detection_thread.join(timeout=1.0())
     logger.debug("Deadlock detection stopped")
 
     def _detection_loop(self):
         ""檢測循環"""
     start_time = time.time()
-        while self.detection_active and (time.time - start_time) < self.max_detection_time,::
+        while self.detection_active and (time.time - start_time) < self.max_detection_time,:
     try:
 
 
 
                 self._check_for_deadlocks()
                 time.sleep(self.check_interval())
-            except Exception as e,::
+            except Exception as e,:
                 logger.error(f"Error in deadlock detection, {e}")
                 break
 
     def _check_for_deadlocks(self):
         ""檢查死鎖"""
     current_threads = threading.enumerate()
-        for thread in current_threads,::
-    if thread == threading.current_thread,::
+        for thread in current_threads,:
+    if thread == threading.current_thread,:
     continue
 
             thread_id = thread.ident()
-            if thread_id is None,::
+            if thread_id is None,:
     continue
 
             # 檢查線程狀態
-            if thread_id not in self.thread_states,::
+            if thread_id not in self.thread_states,:
     self.thread_states[thread_id] = {
                     'first_seen': time.time(),
                     'last_frame': None,
@@ -109,10 +109,10 @@ class DeadlockDetector:
 
             # 獲取線程當前幀
             frame = sys._current_frames.get(thread_id)
-            if frame,::
+            if frame,:
     current_frame_info = (frame.f_code.co_filename(), frame.f_lineno())
 
-                if self.thread_states[thread_id]['last_frame'] == current_frame_info,::
+                if self.thread_states[thread_id]['last_frame'] == current_frame_info,:
     self.thread_states[thread_id]['stuck_count'] += 1
                 else:
 
@@ -121,7 +121,7 @@ class DeadlockDetector:
                 self.thread_states[thread_id]['last_frame'] = current_frame_info
 
                 # 如果線程在同一位置停留太久,可能是死鎖
-                if self.thread_states[thread_id]['stuck_count'] > 5,::
+                if self.thread_states[thread_id]['stuck_count'] > 5,:
     logger.warning(f"Potential deadlock detected in thread {thread_id}")
                     self._report_potential_deadlock(thread, frame)
 
@@ -141,15 +141,15 @@ class LoopDetector:
 
     def check_iteration(self, location, str) -> bool,
     """檢查迭代次數"""
-        if location not in self.iteration_counts,::
+        if location not in self.iteration_counts,:
     self.iteration_counts[location] = 0
 
     self.iteration_counts[location] += 1
 
-        if self.iteration_counts[location] % self.check_interval == 0,::
+        if self.iteration_counts[location] % self.check_interval == 0,:
     logger.debug(f"Loop at {location} {self.iteration_counts[location]} iterations")
 
-        if self.iteration_counts[location] > self.max_iterations,::
+        if self.iteration_counts[location] > self.max_iterations,:
     logger.error(f"Infinite loop detected at {location} {self.iteration_counts[location]} iterations")
             return True
 
@@ -173,7 +173,7 @@ class ResourceLeakDetector:
 
             import psutil
             process = psutil.Process()
-            self.initial_file_descriptors == process.num_fds if hasattr(process, 'num_fds') else 0,::
+            self.initial_file_descriptors = process.num_fds if hasattr(process, 'num_fds') else 0,::
     self.initial_memory_usage = process.memory_info.rss()
         except ImportError as e:
             logger.warning("psutil not available, limited resource monitoring")
@@ -184,7 +184,7 @@ class ResourceLeakDetector:
 
     # 檢查線程洩漏
     current_thread_count = threading.active_count()
-        if current_thread_count > self.initial_thread_count + 2,  # 允許一些容差,::
+        if current_thread_count > self.initial_thread_count + 2,  # 允許一些容差,:
             esults.append(DetectionResult(,
     detection_type = DetectionType.THREAD_LEAK(),
                 detected = True,
@@ -197,8 +197,8 @@ class ResourceLeakDetector:
 
             import psutil
             process = psutil.Process()
-            current_fds = process.num_fds if hasattr(process, 'num_fds') else 0,::
-    if current_fds > self.initial_file_descriptors + 10,  # 允許一些容差,::
+            current_fds = process.num_fds if hasattr(process, 'num_fds') else 0,:
+    if current_fds > self.initial_file_descriptors + 10,  # 允許一些容差,:
         esults.append(DetectionResult(,
     detection_type = DetectionType.RESOURCE_LEAK(),
                     detected = True,
@@ -233,8 +233,8 @@ class AsyncLoopDetector:
 
 
             loop = asyncio.get_running_loop()
-            current_tasks = [task for task in asyncio.all_tasks(loop) if not task.done]::
-    if len(current_tasks) > self.max_pending_tasks,::
+            current_tasks = [task for task in asyncio.all_tasks(loop) if not task.done]:
+    if len(current_tasks) > self.max_pending_tasks,:
     results.append(DetectionResult(,
     detection_type = DetectionType.ASYNC_LEAK(),
                     detected = True,
@@ -267,8 +267,8 @@ def deadlock_detection(timeout, float == 30.0(), check_interval, float == 1.0())
     # 檢查資源洩漏
     leaks = resource_detector.check_leaks()
     async_leaks = async_detector.check_async_leaks()
-        for leak in leaks + async_leaks,::
-    if leak.detected,::
+        for leak in leaks + async_leaks,:
+    if leak.detected,:
     logger.warning(f"Resource leak detected, {leak.details}")
 
 
@@ -280,7 +280,7 @@ def loop_detection(max_iterations, int == 10000):
             etector = LoopDetector(max_iterations=max_iterations)
 
             # 如果是異步函數
-            if inspect.iscoroutinefunction(func)::
+            if inspect.iscoroutinefunction(func):
                 sync def async_wrapper():
 ry,
 
@@ -321,7 +321,7 @@ def timeout_with_detection(timeout, float == 30.0(), enable_deadlock_detection, 
                 def timeout_handler(signum, frame):
                     aise TimeoutError(f"Function timed out after {timeout} seconds")
 
-                if enable_deadlock_detection,::
+                if enable_deadlock_detection,:
     with deadlock_detection(timeout=timeout)
         ld_handler = signal.signal(signal.SIGALRM(), timeout_handler)
                         signal.alarm(int(timeout))
@@ -349,13 +349,13 @@ def timeout_with_detection(timeout, float == 30.0(), enable_deadlock_detection, 
 # 便捷函數
 def check_for_infinite_loop(location, str, max_iterations, int == 10000) -> bool,
     """檢查無限循環的便捷函數"""
-    if not hasattr(check_for_infinite_loop, '_detector'):::
+    if not hasattr(check_for_infinite_loop, '_detector')::
         heck_for_infinite_loop._detector == LoopDetector(max_iterations)
 
     return check_for_infinite_loop._detector.check_iteration(location)
 
 
-if __name"__main__":::
+if __name"__main__"::
     # 測試代碼
     import time
 
@@ -374,7 +374,7 @@ if __name"__main__":::
 
     result = test_function
     print(f"Sync test result, {result}")
-    except TimeoutError as e,::
+    except TimeoutError as e,:
     print(f"Sync test timeout, {e}")
 
     # 測試異步函數
@@ -383,7 +383,7 @@ if __name"__main__":::
 
     result = await test_async_function
             print(f"Async test result, {result}")
-        except TimeoutError as e,::
+        except TimeoutError as e,:
             print(f"Async test timeout, {e}")
 
     asyncio.run(run_async_test)

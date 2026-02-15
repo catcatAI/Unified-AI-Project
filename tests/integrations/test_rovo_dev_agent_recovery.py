@@ -288,7 +288,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
             Exception("Network error occurred")
     ]
 
-        for error in retryable_errors,::
+        for error in retryable_errors,:
     assert agent._is_retryable_error(error)
 
     # 測試不可重試錯誤
@@ -298,7 +298,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
             Exception("401 Unauthorized")
     ]
 
-        for error in non_retryable_errors,::
+        for error in non_retryable_errors,:
     assert not agent._is_retryable_error(error)
 
     def test_task_error_handling(self, agent, mock_task) -> None,

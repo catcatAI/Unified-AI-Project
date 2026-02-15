@@ -12,7 +12,7 @@ from ai.dialogue.dialogue_manager import DialogueManager
 
 class TestSelfImprovement(aiounittest.AsyncTestCase()):
     """
-    A class for testing the self-improvement capabilities of the system.::
+    A class for testing the self-improvement capabilities of the system.:
     """
 
     @pytest.mark.timeout(10)
@@ -72,5 +72,5 @@ def test_self_improvement(self) -> None,
 
         self.assertNotEqual(dialogue_manager.tool_dispatcher.models[0] model)
 
-if __name"__main__":::
+if __name"__main__"::
     unittest.main()

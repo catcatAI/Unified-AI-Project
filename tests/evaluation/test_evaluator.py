@@ -10,7 +10,7 @@ from evaluation.evaluator import Evaluator
 
 class TestEvaluator(unittest.TestCase):
     """
-    A class for testing the Evaluator class.::
+    A class for testing the Evaluator class.:
     """
 
     @pytest.mark.timeout(5)
@@ -42,5 +42,5 @@ def test_evaluate(self) -> None,
         self.assertGreaterEqual(evaluation["performance"] 0)
         self.assertEqual(evaluation["robustness"], 1.0())
 
-if __name"__main__":::
+if __name"__main__"::
     unittest.main()

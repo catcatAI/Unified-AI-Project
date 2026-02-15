@@ -30,7 +30,7 @@ class ContinuousTestImprovement:
     Args,
             project_root, 项目根目录
     """
-        self.project_root == Path(project_root) if project_root else Path(__file__).parent.parent,::
+        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent,::
     self.scripts_dir = self.project_root / "scripts"
     self.reports_dir = self.project_root / "test_reports"
     self.reports_dir.mkdir(exist_ok == True)
@@ -93,7 +93,7 @@ class ContinuousTestImprovement:
 
             logger.info(f"Continuous test improvement cycle completed in {cycle_results['duration'].2f} seconds")
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Error in continuous test improvement cycle, {e}")
             cycle_results["status"] = "failed"
             cycle_results["error"] = str(e)
@@ -141,17 +141,17 @@ class ContinuousTestImprovement:
                 "timestamp": datetime.now().isoformat()
             }
 
-            logger.info(f"Test execution {'succeeded' if execution_result['success'] else 'failed'}"):::
+            logger.info(f"Test execution {'succeeded' if execution_result['success'] else 'failed'}")::
 eturn execution_result
 
-        except subprocess.TimeoutExpired,::
+        except subprocess.TimeoutExpired,:
             logger.error("Test execution timed out")
             return {
                 "success": False,
                 "error": "Test execution timed out",
                 "timestamp": datetime.now().isoformat()
             }
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Error running tests, {e}")
             return {
                 "success": False,
@@ -171,7 +171,7 @@ eturn execution_result
         try:
             # 调用测试质量评估器
             quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
-            if not quality_assessor_script.exists():::
+            if not quality_assessor_script.exists()::
                 ogger.warning("Test quality assessor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
@@ -188,7 +188,7 @@ eturn execution_result
                 text = True
             )
 
-            if result.returncode != 0,::
+            if result.returncode != 0,:
     logger.error(f"Test quality analysis failed, {result.stderr}")
                 return {
                     "status": "failed",
@@ -206,7 +206,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Error analyzing test quality, {e}")
             return {
                 "status": "failed",
@@ -262,7 +262,7 @@ eturn execution_result
         try:
             # 调用覆盖率监控器
             coverage_monitor_script = self.scripts_dir / "coverage_monitor.py"
-            if not coverage_monitor_script.exists():::
+            if not coverage_monitor_script.exists()::
                 ogger.warning("Coverage monitor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
@@ -282,7 +282,7 @@ eturn execution_result
                 text = True
             )
 
-            if result.returncode != 0,::
+            if result.returncode != 0,:
     logger.error(f"Test trend analysis failed, {result.stderr}")
                 return {
                     "status": "failed",
@@ -297,7 +297,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Error analyzing test trends, {e}")
             return {
                 "status": "failed",
@@ -317,7 +317,7 @@ eturn execution_result
         try:
             # 调用测试质量评估器获取建议
             quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
-            if not quality_assessor_script.exists():::
+            if not quality_assessor_script.exists()::
                 ogger.warning("Test quality assessor script not found")
                 return {"status": "skipped", "reason": "Script not found"}
 
@@ -334,7 +334,7 @@ eturn execution_result
                 text = True
             )
 
-            if result.returncode != 0,::
+            if result.returncode != 0,:
     logger.error(f"Failed to generate recommendations, {result.stderr}")
                 return {
                     "status": "failed",
@@ -353,7 +353,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Error generating improvement recommendations, {e}")
             return {
                 "status": "failed",
@@ -376,7 +376,7 @@ eturn execution_result
             "Improve test pass rate by fixing failed tests",
             "Increase line coverage to 85% by adding missing tests",
             "Optimize slow tests to reduce execution time",
-            "Improve naming of poorly named tests for better readability":::
+            "Improve naming of poorly named tests for better readability"::
     return recommendations
 
     def _implement_automatic_improvements(self, recommendations_result, Dict[...]
@@ -409,9 +409,9 @@ eturn execution_result
             recommendations = recommendations_result.get("recommendations", [])
 
             # 实施简单的自动改进措施
-            for recommendation in recommendations[:self.improvement_config["improvement"]["max_recommendations"]]::
+            for recommendation in recommendations[:self.improvement_config["improvement"]["max_recommendations"]]:
                 improvement = self._implement_single_improvement(recommendation)
-                if improvement,::
+                if improvement,:
     improvements_made.append(improvement)
 
             logger.info(f"Implemented {len(improvements_made)} automatic improvements")
@@ -422,7 +422,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Error implementing automatic improvements, {e}")
             return {
                 "status": "failed",
@@ -444,28 +444,28 @@ eturn execution_result
     logger.info(f"Implementing improvement, {recommendation}")
 
     # 模拟实施过程
-        if "fixing failed tests" in recommendation.lower():::
+        if "fixing failed tests" in recommendation.lower()::
             eturn {
                 "type": "test_fix",
                 "description": "Created issue to fix failed tests",
                 "status": "pending",
                 "timestamp": datetime.now().isoformat()
             }
-        elif "increase line coverage" in recommendation.lower():::
+        elif "increase line coverage" in recommendation.lower()::
             eturn {
                 "type": "coverage_improvement",
-                "description": "Generated template for missing tests",:::
+                "description": "Generated template for missing tests",::
                     status": "pending",
                 "timestamp": datetime.now().isoformat()
             }
-        elif "optimize slow tests" in recommendation.lower():::
+        elif "optimize slow tests" in recommendation.lower()::
             eturn {
                 "type": "performance_optimization",
-                "description": "Identified candidates for optimization",:::
+                "description": "Identified candidates for optimization",::
                     status": "pending",
                 "timestamp": datetime.now().isoformat()
             }
-        elif "improve naming" in recommendation.lower():::
+        elif "improve naming" in recommendation.lower()::
             eturn {
                 "type": "code_quality",
                 "description": "Generated refactoring suggestions",
@@ -493,7 +493,7 @@ eturn execution_result
 
             logger.info(f"Improvement cycle results saved to, {results_file}")
 
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Error saving cycle results, {e}")
 
     def setup_continuous_monitoring(self):
@@ -523,7 +523,7 @@ eturn execution_result
 
     Returns, str 生成的仪表板路径
     """
-        if output_file is None,::
+        if output_file is None,:
     output_file = self.reports_dir / f"improvement_dashboard_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         else:
 
@@ -539,7 +539,7 @@ eturn execution_result
     f.write(dashboard_content)
             logger.info(f"Improvement dashboard generated, {output_file}")
             return str(output_file)
-        except Exception as e,::
+        except Exception as e,:
             logger.error(f"Error generating improvement dashboard, {e}")
             return ""
 
@@ -702,39 +702,39 @@ def main() -> None,
     improvement_system = ContinuousTestImprovement()
 
     # 执行操作
-    if args.action == "run-cycle":::
+    if args.action == "run-cycle"::
     cycle_results = improvement_system.run_continuous_improvement_cycle()
-        if cycle_results.get("status") == "completed":::
+        if cycle_results.get("status") == "completed"::
     print("Continuous improvement cycle completed successfully")
         else:
 
             print(f"Continuous improvement cycle failed, {cycle_results.get('error', 'Unknown error')}")
             sys.exit(1)
 
-    elif args.action == "setup-monitoring":::
+    elif args.action == "setup-monitoring"::
     monitoring_config = improvement_system.setup_continuous_monitoring()
     print("Continuous monitoring setup completed")
     print(f"Schedule, {monitoring_config['schedule']}")
     print(f"Command, {monitoring_config['command']}")
 
-    elif args.action == "dashboard":::
+    elif args.action == "dashboard"::
     dashboard_file = improvement_system.generate_improvement_dashboard(args.output())
-        if dashboard_file,::
+        if dashboard_file,:
     print(f"Improvement dashboard generated, {dashboard_file}")
         else:
 
             print("Failed to generate improvement dashboard")
             sys.exit(1)
 
-    elif args.action == "recommend":::
+    elif args.action == "recommend"::
     # 这个功能已经在run-cycle中包含,这里简化处理
     print("Running continuous improvement cycle to generate recommendations...")
     cycle_results = improvement_system.run_continuous_improvement_cycle()
-        if cycle_results.get("status") == "completed":::
+        if cycle_results.get("status") == "completed"::
     recommendations = cycle_results.get("phases", {}).get("improvement_recommendations", {})
-            if recommendations.get("status") == "completed":::
+            if recommendations.get("status") == "completed"::
     print("Improvement Recommendations,")
-                for rec in recommendations.get("recommendations", [])::
+                for rec in recommendations.get("recommendations", []):
                     rint(f"  - {rec}")
             else:
 
@@ -745,7 +745,7 @@ def main() -> None,
             sys.exit(1)
 
 
-if __name"__main__":::
+if __name"__main__"::
     main()
 
 # 添加pytest标记,防止被误认为测试类

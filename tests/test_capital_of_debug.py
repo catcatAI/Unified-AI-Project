@@ -47,11 +47,11 @@ def test_
     # 检查实体
     paris_found = False
     france_found = False
-    for entity_id, entity in kg_data["entities"].items():::
+    for entity_id, entity in kg_data["entities"].items()::
         print(f"实体, {entity_id} -> {entity}")
-        if entity["label"] == "Paris" and entity["type"] == "GPE":::
+        if entity["label"] == "Paris" and entity["type"] == "GPE"::
             paris_found = True
-        if entity["label"] == "France" and entity["type"] == "GPE":::
+        if entity["label"] == "France" and entity["type"] == "GPE"::
             france_found = True
     
     print(f"Paris实体找到, {paris_found}")
@@ -59,14 +59,14 @@ def test_
     
     # 检查关系
     relationship_found = False
-    for rel in kg_data["relationships"]::
+    for rel in kg_data["relationships"]:
         src_label = kg_data["entities"].get(rel["source_id"] {}).get("label")
         tgt_label = kg_data["entities"].get(rel["target_id"] {}).get("label")
         rel_type = rel["type"]
         print(f"关系, {src_label} --[{rel_type}]--> {tgt_label}")
         
         # 检查France --[has_capital]--> Paris关系
-        if src_label == "France" and tgt_label == "Paris" and rel_type == "has_capital":::
+        if src_label == "France" and tgt_label == "Paris" and rel_type == "has_capital"::
             relationship_found = True
     
     print(f"France --[has_capital]--> Paris关系找到, {relationship_found}")
@@ -78,20 +78,20 @@ def test_
     # 查找Paris和France节点
     paris_node = None
     france_node = None
-    for node, data in nx_graph.nodes(data == True)::
+    for node, data in nx_graph.nodes(data == True):
         print(f"NetworkX节点, {node} -> {data}")
-        if data.get("label") == "Paris":::
+        if data.get("label") == "Paris"::
             paris_node = node
-        if data.get("label") == "France":::
+        if data.get("label") == "France"::
             france_node = node
     
     # 检查边
-    if paris_node and france_node,::
+    if paris_node and france_node,:
         # 检查France -> Paris的边
-        if nx_graph.has_edge(france_node, paris_node)::
+        if nx_graph.has_edge(france_node, paris_node):
             edge_data = nx_graph.get_edge_data(france_node, paris_node)
             print(f"NetworkX边, {france_node} -> {paris_node} 数据, {edge_data}")
-            if edge_data.get("type") == "has_capital":::
+            if edge_data.get("type") == "has_capital"::
                 print("NetworkX图中找到France --[has_capital]--> Paris关系")
             else:
                 print(f"NetworkX图中找到France -> Paris边,但类型是, {edge_data.get('type')}")
@@ -100,5 +100,5 @@ def test_
     else:
         print(f"NetworkX图中Paris节点, {paris_node} France节点, {france_node}")
 
-if __name"__main__":::
+if __name"__main__"::
     test_capital_of_pattern()
