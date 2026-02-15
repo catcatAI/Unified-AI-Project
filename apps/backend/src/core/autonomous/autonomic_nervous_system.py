@@ -441,50 +441,50 @@ if __name__ == "__main__":
         ans = AutonomicNervousSystem()
         await ans.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 自主神经系统演示")
-        print("Autonomic Nervous System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 自主神经系统演示")
+        logger.info("Autonomic Nervous System Demo")
+        logger.info("=" * 60)
         
         # Initial state
-        print("\n初始状态 / Initial state:")
+        logger.info("\n初始状态 / Initial state:")
         summary = ans.get_system_summary()
-        print(f"  唤醒水平: {summary['arousal_level']:.1f}")
-        print(f"  状态: {summary['state']}")
+        logger.info(f"  唤醒水平: {summary['arousal_level']:.1f}")
+        logger.info(f"  状态: {summary['state']}")
         
         # Apply stress
-        print("\n应用压力刺激 / Applying stress stimulus:")
+        logger.info("\n应用压力刺激 / Applying stress stimulus:")
         await ans.apply_stimulus(*StimulusTemplates.stress(intensity=0.8))
         await asyncio.sleep(1)
         
         phys, emo, cog = ans.get_current_effects()
-        print(f"  唤醒水平: {ans.arousal_level:.1f}")
-        print(f"  心率: {phys.heart_rate:.0f} bpm")
-        print(f"  焦虑: {emo.anxiety:.2f}")
-        print(f"  专注度: {cog.focus:.2f}")
+        logger.info(f"  唤醒水平: {ans.arousal_level:.1f}")
+        logger.info(f"  心率: {phys.heart_rate:.0f} bpm")
+        logger.info(f"  焦虑: {emo.anxiety:.2f}")
+        logger.info(f"  专注度: {cog.focus:.2f}")
         
         # Apply meditation
-        print("\n应用冥想刺激 / Applying meditation stimulus:")
+        logger.info("\n应用冥想刺激 / Applying meditation stimulus:")
         await ans.apply_stimulus(*StimulusTemplates.meditation(intensity=0.7))
         await asyncio.sleep(1)
         
         phys, emo, cog = ans.get_current_effects()
-        print(f"  唤醒水平: {ans.arousal_level:.1f}")
-        print(f"  平静度: {emo.calmness:.2f}")
-        print(f"  消化功能: {phys.digestion:.2f}")
+        logger.info(f"  唤醒水平: {ans.arousal_level:.1f}")
+        logger.info(f"  平静度: {emo.calmness:.2f}")
+        logger.info(f"  消化功能: {phys.digestion:.2f}")
         
         # Full summary
-        print("\n系统摘要 / System summary:")
+        logger.info("\n系统摘要 / System summary:")
         summary = ans.get_system_summary()
         for key, value in summary.items():
             if isinstance(value, dict):
-                print(f"  {key}:")
+                logger.info(f"  {key}:")
                 for k, v in value.items():
-                    print(f"    - {k}: {v:.2f}")
+                    logger.info(f"    - {k}: {v:.2f}")
             else:
-                print(f"  {key}: {value}")
+                logger.info(f"  {key}: {value}")
         
         await ans.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

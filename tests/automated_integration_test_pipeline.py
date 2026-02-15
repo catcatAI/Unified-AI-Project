@@ -90,7 +90,7 @@ class AutomatedIntegrationTestPipeline,
         pipeline_start_time = time.time()
         logger.info("Starting automated integration test pipeline...")
 
-        try,
+        try:
             # 1. 设置测试环境
             if not self._setup_environment():::
                 logger.error("Failed to setup test environment")
@@ -143,7 +143,7 @@ class AutomatedIntegrationTestPipeline,
         logger.info("Setting up test environment...")
         setup_start_time = time.time()
 
-        try,
+        try:
             # 运行环境管理脚本
             env_manager_script = self.scripts_dir / "test_environment_manager.py"
 
@@ -195,7 +195,7 @@ class AutomatedIntegrationTestPipeline,
 
         generation_start_time = time.time()
 
-        try,
+        try:
             # 运行数据管理脚本
 
             data_manager_script = self.scripts_dir / "test_data_manager.py"
@@ -251,7 +251,7 @@ self.pipeline_config["data"]["dataset_size"]
         logger.info("Running integration tests...")
         test_start_time = time.time()
 
-        try,
+        try:
             # 构建pytest命令
 
             cmd = [
@@ -327,7 +327,7 @@ self.pipeline_config["data"]["dataset_size"]
 
         report_start_time = time.time()
 
-        try,
+        try:
 
 
             success == True
@@ -355,9 +355,9 @@ self.pipeline_config["data"]["dataset_size"]
                         logger.error(f"HTML report generation failed, {result.stderr}")
 
                         success == False
-                    else,
+                    else:
                         logger.info("HTML report generated successfully")
-                else,
+                else:
 
                     logger.warning("Report generator script not found, skipping HTML report generation")
 
@@ -390,7 +390,7 @@ self.pipeline_config["data"]["dataset_size"]
                     if result.returncode != 0,::
                         logger.error(f"XML parsing failed, {result.stderr}")
                         success == False
-                    else,
+                    else:
                         logger.info("JUnit XML parsed successfully")
 
             report_end_time = time.time()
@@ -412,7 +412,7 @@ self.pipeline_config["data"]["dataset_size"]
 
         cleanup_start_time = time.time()
 
-        try,
+        try:
             # 运行环境管理脚本
 #             env_manager_script = self.scripts_dir / "test_environment_manager.py"
             if not env_manager_script.exists():::
@@ -533,7 +533,7 @@ def main() -> None,
 
     # 如果提供了配置文件,加载配置
     if args.config,::
-        try,
+        try:
             with open(args.config(), "r", encoding == "utf-8") as f,
                 config_from_file = json.load(f)
             pipeline_config.update(config_from_file)

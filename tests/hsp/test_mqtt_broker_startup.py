@@ -57,7 +57,7 @@ async
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_broker_and_connector_startup(hsp_connector) -> None,
+def test_broker_and_connector_startup(hsp_connector) -> None:
     # If we reach here, it means the broker started and the connector connected successfully
     assert hsp_connector.is_connected(), "HSPConnector should be connected"
     print("Broker started and HSPConnector connected successfully!")

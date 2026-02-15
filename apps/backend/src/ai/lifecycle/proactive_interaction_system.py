@@ -550,8 +550,8 @@ if __name__ == "__main__":
         await asyncio.sleep(15)
 
         # 打印統計
-        print(f"\n=== 主動交互統計 ===")
-        print(json.dumps(proactive_system.get_stats(), indent=2, ensure_ascii=False))
+        logger.info(f"\n=== 主動交互統計 ===")
+        logger.info(json.dumps(proactive_system.get_stats(), indent=2, ensure_ascii=False))
 
         # 停止
         await proactive_system.stop()

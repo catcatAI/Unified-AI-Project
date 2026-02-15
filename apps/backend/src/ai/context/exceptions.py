@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 """上下文系统异常定义"""
 # Angela Matrix: [L2:MEM] [L4:CTX] Context system exceptions
 
@@ -134,10 +137,10 @@ if __name__ == "__main__":
         raise ContextNotFoundError("test_context_001")
     except ContextNotFoundError as e:
         friendly_message = handle_context_exception(e, "test_context_001")
-        print(f"捕获异常: {friendly_message}")
+        logger.info(f"捕获异常: {friendly_message}")
 
     try:
         raise ContextCreationError("存储空间不足")
     except ContextCreationError as e:
         friendly_message = handle_context_exception(e)
-        print(f"捕获异常: {friendly_message}")
+        logger.info(f"捕获异常: {friendly_message}")

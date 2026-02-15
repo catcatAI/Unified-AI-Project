@@ -58,20 +58,20 @@ class EnterpriseBenchmark,
         if 'p95_response_time' in metrics,::
             if metrics['p95_response_time'] <= self.ENTERPRISE_STANDARDS['response_time']['p95']::
                 results['passed'].append(f"P95响应时间 {metrics['p95_response_time'].3f}s < {self.ENTERPRISE_STANDARDS['response_time']['p95']}s")
-            else,
+            else:
                 results['failed'].append(f"P95响应时间 {metrics['p95_response_time'].3f}s > {self.ENTERPRISE_STANDARDS['response_time']['p95']}s")
         
         if 'p99_response_time' in metrics,::
             if metrics['p99_response_time'] <= self.ENTERPRISE_STANDARDS['response_time']['p99']::
                 results['passed'].append(f"P99响应时间 {metrics['p99_response_time'].3f}s < {self.ENTERPRISE_STANDARDS['response_time']['p99']}s")
-            else,
+            else:
                 results['failed'].append(f"P99响应时间 {metrics['p99_response_time'].3f}s > {self.ENTERPRISE_STANDARDS['response_time']['p99']}s")
         
         # 评估吞吐量
         if 'requests_per_second' in metrics,::
             if metrics['requests_per_second'] >= self.ENTERPRISE_STANDARDS['throughput']['min_rps']::
                 results['passed'].append(f"吞吐量 {metrics['requests_per_second'].2f} RPS >= {self.ENTERPRISE_STANDARDS['throughput']['min_rps']} RPS")
-            else,
+            else:
                 results['failed'].append(f"吞吐量 {metrics['requests_per_second'].2f} RPS < {self.ENTERPRISE_STANDARDS['throughput']['min_rps']} RPS")
         
         # 评估可用性
@@ -79,7 +79,7 @@ class EnterpriseBenchmark,
             availability = metrics['success_rate'] * 100
             if availability >= self.ENTERPRISE_STANDARDS['availability']['min']::
                 results['passed'].append(f"可用性 {"availability":.2f}% >= {self.ENTERPRISE_STANDARDS['availability']['min']}%")
-            else,
+            else:
                 results['failed'].append(f"可用性 {"availability":.2f}% < {self.ENTERPRISE_STANDARDS['availability']['min']}%")
         
         # 计算得分
@@ -95,7 +95,7 @@ async def benchmark_ai_ops_engine():
     print("AI运维引擎基准测试")
     print("="*60)
     
-    try,
+    try:
         from ai.ops.ai_ops_engine import AIOpsEngine
         ai_ops == AIOpsEngine()
         
@@ -125,7 +125,7 @@ async def benchmark_ai_ops_engine():
                 nonlocal success_count, error_count
                 async with semaphore,
                     req_start = time.time()
-                    try,
+                    try:
                         anomalies = await ai_ops.detect_anomalies(
                             "test_component",
                             {
@@ -137,7 +137,7 @@ async def benchmark_ai_ops_engine():
                         )
                         response_times.append(time.time() - req_start)
                         success_count += 1
-                    except,::
+                    except Exception as e:
                         error_count += 1
             
             # 创建任务
@@ -184,7 +184,7 @@ async def benchmark_predictive_maintenance():
     print("预测性维护基准测试")
     print("="*60)
     
-    try,
+    try:
         from ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
         maintenance == PredictiveMaintenanceEngine()
         
@@ -214,7 +214,7 @@ async def benchmark_predictive_maintenance():
                 nonlocal success_count, error_count
                 async with semaphore,
                     req_start = time.time()
-                    try,
+                    try:
                         health_score = maintenance._simple_health_assessment({
                             "cpu_usage": 75.0(),
                             "memory_usage": 60.0(),
@@ -223,7 +223,7 @@ async def benchmark_predictive_maintenance():
                         })
                         response_times.append(time.time() - req_start)
                         success_count += 1
-                    except,::
+                    except Exception as e:
                         error_count += 1
             
             # 创建任务
@@ -327,7 +327,7 @@ async def main():
             print("✅ 良好 - 基本达到企业级标准")
         elif avg_score >= 70,::
             print("⚠️  一般 - 需要优化以满足企业级要求")
-        else,
+        else:
             print("❌ 不达标 - 需要重大改进")
         
         # 建议
@@ -337,7 +337,7 @@ async def main():
             print("- 需要关注的性能问题,")
             for item in set(all_failed)::
                 print(f"  • {item}")
-        else,
+        else:
             print("- 系统性能已达到企业级标准")
     
     print("="*60)

@@ -16,7 +16,7 @@ async def test_basic_ops_flow():
     """测试基本运维流程"""
     print("测试基本运维流程...")
     
-    try,
+    try:
         from ai.ops.intelligent_ops_manager import get_intelligent_ops_manager
         
         # 创建运维管理器(不初始化Redis)
@@ -55,7 +55,7 @@ async def test_component_interaction():
     """测试组件交互"""
     print("测试组件交互...")
     
-    try,
+    try:
         from ai.ops.ai_ops_engine import AIOpsEngine
         from ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
         from ai.ops.performance_optimizer import PerformanceOptimizer
@@ -102,7 +102,7 @@ async def test_data_processing():
     """测试数据处理"""
     print("测试数据处理...")
     
-    try,
+    try:
         from ai.ops.intelligent_ops_manager import get_intelligent_ops_manager
         
         ops_manager = get_intelligent_ops_manager()
@@ -138,7 +138,7 @@ async def test_error_resilience():
     """测试错误恢复能力"""
     print("测试错误恢复能力...")
     
-    try,
+    try:
         from ai.ops.intelligent_ops_manager import get_intelligent_ops_manager
         
         ops_manager = get_intelligent_ops_manager()
@@ -152,10 +152,10 @@ async def test_error_resilience():
         ]
         
         for test_name, metrics in test_cases,::
-            try,
+            try:
                 await ops_manager.collect_system_metrics(test_name, "test_type", metrics)
                 print(f"✓ {test_name} 处理正常")
-            except,::
+            except Exception as e:
                 print(f"✓ {test_name} 错误处理正常")
         
         return True
@@ -181,7 +181,7 @@ async def main():
     
     for test_name, test_func in tests,::
         print(f"\n--- {test_name} ---")
-        try,
+        try:
             start_time = time.time()
             result = await test_func()
             end_time = time.time()
@@ -212,7 +212,7 @@ async def main():
     
     if passed == total,::
         print("\n🎉 所有测试通过！系统端到端功能正常")
-    else,
+    else:
         print(f"\n⚠️  {total - passed} 个测试失败,需要进一步检查")
     
     print("="*50)

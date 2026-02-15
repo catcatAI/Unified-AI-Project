@@ -439,19 +439,19 @@ async def main():
 
     # 获取缓存
     result = await cache_manager.get("test_key")
-    print(f"缓存结果: {result}")
+    logger.info(f"缓存结果: {result}")
 
     # 使用装饰器
     result = await expensive_computation(5, 10)
-    print(f"计算结果: {result}")
+    logger.info(f"计算结果: {result}")
 
     # 再次调用将使用缓存
     result = await expensive_computation(5, 10)
-    print(f"缓存结果: {result}")
+    logger.info(f"缓存结果: {result}")
 
     # 查看统计
     stats = cache_manager.get_stats()
-    print(f"缓存统计: {stats}")
+    logger.info(f"缓存统计: {stats}")
 
 if __name__ == "__main__":
     asyncio.run(main())

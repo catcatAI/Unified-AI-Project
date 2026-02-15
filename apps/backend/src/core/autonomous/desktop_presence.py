@@ -535,42 +535,42 @@ if __name__ == "__main__":
         presence = DesktopPresence()
         await presence.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 桌面存在系统演示")
-        print("Desktop Presence System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 桌面存在系统演示")
+        logger.info("Desktop Presence System Demo")
+        logger.info("=" * 60)
         
         # Set position
-        print("\n设置位置 / Setting position:")
+        logger.info("\n设置位置 / Setting position:")
         presence.set_position(Position(500, 300))
-        print(f"  位置: ({presence.current_position.x}, {presence.current_position.y})")
+        logger.info(f"  位置: ({presence.current_position.x}, {presence.current_position.y})")
         
         # Check bounding box
         bounds = presence.get_bounding_box()
-        print(f"  边界框: x={bounds.x}, y={bounds.y}, w={bounds.width}, h={bounds.height}")
+        logger.info(f"  边界框: x={bounds.x}, y={bounds.y}, w={bounds.width}, h={bounds.height}")
         
         # Collision detection
-        print("\n碰撞检测 / Collision detection:")
+        logger.info("\n碰撞检测 / Collision detection:")
         icon_box = BoundingBox(400, 250, 64, 64)
         collision = presence.check_collision(icon_box)
-        print(f"  与图标碰撞: {collision.is_colliding}")
+        logger.info(f"  与图标碰撞: {collision.is_colliding}")
         if collision.is_colliding and collision.collision_point:
-            print(f"  碰撞点: ({collision.collision_point.x}, {collision.collision_point.y})")
+            logger.info(f"  碰撞点: ({collision.collision_point.x}, {collision.collision_point.y})")
         
         # Change modes
-        print("\n模式切换 / Mode switching:")
+        logger.info("\n模式切换 / Mode switching:")
         presence.set_presence_mode(PresenceMode.WALLPAPER)
-        print(f"  壁纸模式: opacity={presence.opacity}, layer={presence.layer_mode.name}")
+        logger.info(f"  壁纸模式: opacity={presence.opacity}, layer={presence.layer_mode.name}")
         
         presence.set_presence_mode(PresenceMode.INTERACTIVE)
-        print(f"  交互模式: opacity={presence.opacity}, layer={presence.layer_mode.name}")
+        logger.info(f"  交互模式: opacity={presence.opacity}, layer={presence.layer_mode.name}")
         
         # Layer mode
-        print("\n图层模式 / Layer modes:")
+        logger.info("\n图层模式 / Layer modes:")
         for mode in LayerMode:
-            print(f"  {mode.value[0]} ({mode.value[1]})")
+            logger.info(f"  {mode.value[0]} ({mode.value[1]})")
         
         await presence.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

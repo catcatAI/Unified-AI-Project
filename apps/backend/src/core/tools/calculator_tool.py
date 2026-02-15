@@ -83,12 +83,12 @@ def demo():
         "round(3.14159, 2)",
     ]
     
-    print("🧮 Calculator Tool Demo")
-    print("=" * 40)
+    logger.info("🧮 Calculator Tool Demo")
+    logger.info("=" * 40)
     
     for expr in expressions:
         result = calculate(expr)
-        print(f"  {expr} = {result}")
+        logger.info(f"  {expr} = {result}")
 
 
 if __name__ == "__main__":

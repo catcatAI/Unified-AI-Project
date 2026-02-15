@@ -343,8 +343,8 @@ def create_body_adapter(version: str = "6.0.0") -> BodyAdapter:
 
 def demo():
     """演示 / Demo"""
-    print("🦾 肉身适配器系统演示")
-    print("=" * 50)
+    logger.info("🦾 肉身适配器系统演示")
+    logger.info("=" * 50)
     
     adapter = BodyAdapter()
     
@@ -356,24 +356,24 @@ def demo():
         skill_states={"coding": {"level": 5, "exp": 1500}}
     )
     
-    print(f"✅ 快照版本: {snapshot.version}")
-    print(f"📊 状态数据: {snapshot.state_data}")
-    print(f"😊 情绪状态: {snapshot.emotional_state}")
-    print(f"🧠 认知状态: {snapshot.cognitive_state}")
-    print(f"💾 记忆状态: {snapshot.memory_state}")
-    print(f"⚡ 技能状态: {snapshot.skill_states}")
+    logger.info(f"✅ 快照版本: {snapshot.version}")
+    logger.info(f"📊 状态数据: {snapshot.state_data}")
+    logger.info(f"😊 情绪状态: {snapshot.emotional_state}")
+    logger.info(f"🧠 认知状态: {snapshot.cognitive_state}")
+    logger.info(f"💾 记忆状态: {snapshot.memory_state}")
+    logger.info(f"⚡ 技能状态: {snapshot.skill_states}")
     
     transfer = adapter.prepare_transfer("6.0.0", "6.0.0", snapshot)
-    print(f"\n📋 转移记录: {transfer.source_version} -> {transfer.target_version}")
+    logger.info(f"\n📋 转移记录: {transfer.source_version} -> {transfer.target_version}")
     
     success, new_snapshot = adapter.execute_transfer(transfer, snapshot)
-    print(f"🔄 转移成功: {success}")
-    print(f"📦 新快照版本: {new_snapshot.version}")
+    logger.info(f"🔄 转移成功: {success}")
+    logger.info(f"📦 新快照版本: {new_snapshot.version}")
     
     compatibility = adapter.check_compatibility("6.0.0", "6.0.0")
-    print(f"🔗 兼容性级别: {compatibility.value}")
+    logger.info(f"🔗 兼容性级别: {compatibility.value}")
     
-    print("\n✅ 演示完成!")
+    logger.info("\n✅ 演示完成!")
 
 
 if __name__ == "__main__":

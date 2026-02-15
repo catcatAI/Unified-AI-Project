@@ -13,25 +13,16 @@ import sys
 import os
 
 # Add the project root to the Python path
-project_root, str = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
-backend_path, str = os.path.join(project_root, 'apps', 'backend')
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
+backend_path = os.path.join(project_root, 'apps', 'backend')
 sys.path.insert(0, backend_path)
 
 
-    def setUp(self):
-        """测试前设置"""
-        self.test_data = {}
-        self.test_config = {}
-    
-    def tearDown(self):
-        """测试后清理"""
-        self.test_data.clear()
-        self.test_config.clear()
-def test_alpha_deep_model_upgrade() -> None,
+def test_alpha_deep_model_upgrade() -> None:
     """Test the upgraded AlphaDeepModel functionality."""
     print("Testing upgraded AlphaDeepModel...")
     
-    try,
+    try:
         # Import the upgraded model
         from ai.concept_models.alpha_deep_model import (
             AlphaDeepModel, DeepParameter, HAMGist, RelationalContext, Modalities, CompressionAlgorithm, DNADataChain

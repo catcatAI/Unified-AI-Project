@@ -19,7 +19,7 @@ class CsvTool:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """初始化CsvTool"""
         self.config = config or {}
-        print(f"{self.__class__.__name__} initialized.")
+        logger.info(f"{self.__class__.__name__} initialized.")
 
     def analyze(self, csv_content: str, query: str) -> Dict[str, Any]:
         """

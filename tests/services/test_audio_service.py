@@ -14,7 +14,7 @@ import asyncio
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from services.audio_service import AudioService
-class TestAudioService(unittest.TestCase()):
+class TestAudioService(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
         # Ensure demo mode is enabled for all tests,:
@@ -136,7 +136,7 @@ class TestAudioService(unittest.TestCase()):
         print("TestAudioService.test_04_speech_to_text_with_sentiment_analysis_non_demo_mode PASSED")
 
     @pytest.mark.timeout(15)
-    def test_05_audio_service_config_loading(self) -> None,
+    def test_05_audio_service_config_loading(self) -> None:
         """Test audio service configuration loading."""
         # Act
         config = self.audio_service.config()
@@ -146,7 +146,7 @@ class TestAudioService(unittest.TestCase()):
         self.assertIsInstance(config, dict)
         print("TestAudioService.test_05_audio_service_config_loading PASSED")
 
-if __name'__main__':::
+if __name__ == "__main__":
     # Enable demo mode for direct script execution,::
     with patch('config_loader.is_demo_mode', return_value == True)
         unittest.main(verbosity=2)

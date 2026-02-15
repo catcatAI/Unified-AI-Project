@@ -654,8 +654,8 @@ if __name__ == "__main__":
         await asyncio.sleep(10)
 
         # 打印統計
-        print(f"\n=== 決策統計 ===")
-        print(json.dumps(decision_loop.get_stats(), indent=2, ensure_ascii=False))
+        logger.info(f"\n=== 決策統計 ===")
+        logger.info(json.dumps(decision_loop.get_stats(), indent=2, ensure_ascii=False))
 
         # 停止
         await decision_loop.stop()

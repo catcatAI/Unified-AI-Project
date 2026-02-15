@@ -32,16 +32,22 @@ try:
     from ai.memory.precompute_service import PrecomputeService, PrecomputeTask
     from ai.memory.template_library import get_template_library
     from ai.memory.task_generator import TaskGenerator
+
     MEMORY_ENHANCED = True
     logger.info("Memory enhancement modules loaded successfully")
 except ImportError as e:
     # 尝试相对导入
     try:
         from ..ai.memory.ham_memory.ham_manager import HAMMemoryManager
-        from ..ai.memory.memory_template import AngelaState, UserImpression, MemoryTemplate
+        from ..ai.memory.memory_template import (
+            AngelaState,
+            UserImpression,
+            MemoryTemplate,
+        )
         from ..ai.memory.precompute_service import PrecomputeService, PrecomputeTask
         from ..ai.memory.template_library import get_template_library
         from ..ai.memory.task_generator import TaskGenerator
+
         MEMORY_ENHANCED = True
         logger.info("Memory enhancement modules loaded (relative import)")
     except ImportError as e2:
@@ -52,6 +58,7 @@ except ImportError as e:
 
 class LLMBackend(Enum):
     """支援的 LLM 後端"""
+
     LLAMA_CPP = "llamacpp"
     OLLAMA = "ollama"
     OPENAI = "openai"
@@ -64,6 +71,7 @@ class LLMBackend(Enum):
 @dataclass
 class LLMResponse:
     """LLM 回應結構"""
+
     text: str
     backend: str
     model: str
@@ -92,7 +100,7 @@ class LlamaCppBackend(BaseLLMBackend):
     """llama.cpp 後端"""
 
     def __init__(self, base_url: str = "http://localhost:8080", model: str = None):
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = 120.0
 
@@ -120,7 +128,7 @@ class LlamaCppBackend(BaseLLMBackend):
             "messages": messages,
             "max_tokens": kwargs.get("max_tokens", 512),
             "temperature": kwargs.get("temperature", 0.7),
-            "stream": False
+            "stream": False,
         }
 
         try:
@@ -128,7 +136,7 @@ class LlamaCppBackend(BaseLLMBackend):
                 response = await client.post(
                     f"{self.base_url}/v1/chat/completions",
                     json=payload,
-                    timeout=self.timeout
+                    timeout=self.timeout,
                 )
 
                 if response.status_code == 200:
@@ -142,23 +150,19 @@ class LlamaCppBackend(BaseLLMBackend):
                         model=self.model or "unknown",
                         tokens_used=tokens,
                         response_time_ms=(time.time() - start_time) * 1000,
-                        confidence=0.9
+                        confidence=0.9,
                     )
                 else:
                     return LLMResponse(
                         text="",
                         backend="llama.cpp",
                         model=self.model,
-                        error=f"HTTP {response.status_code}: {response.text}"
+                        error=f"HTTP {response.status_code}: {response.text}",
                     )
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return LLMResponse(
-
-                text="",
-                backend="llama.cpp",
-                model=self.model,
-                error=str(e)
+                text="", backend="llama.cpp", model=self.model, error=str(e)
             )
 
 
@@ -166,7 +170,7 @@ class OllamaBackend(BaseLLMBackend):
     """Ollama 後端"""
 
     def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3"):
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = 30.0  # 增加超時到 30 秒，以適應慢速模型
 
@@ -202,15 +206,13 @@ class OllamaBackend(BaseLLMBackend):
             "options": {
                 "temperature": kwargs.get("temperature", 0.7),
                 "num_predict": kwargs.get("max_tokens", 512),
-            }
+            },
         }
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(
-                    f"{self.base_url}/api/chat",
-                    json=payload,
-                    timeout=self.timeout
+                    f"{self.base_url}/api/chat", json=payload, timeout=self.timeout
                 )
 
                 if response.status_code == 200:
@@ -225,7 +227,7 @@ class OllamaBackend(BaseLLMBackend):
                                 data = None
                                 text = ""
                                 # 解析 NDJSON - 逐行解析，取最後一個完整的 JSON
-                                lines = response.text.strip().split('\n')
+                                lines = response.text.strip().split("\n")
                                 for line in lines:
                                     line = line.strip()
                                     if line:
@@ -233,7 +235,9 @@ class OllamaBackend(BaseLLMBackend):
                                             data = json.loads(line)
                                             # 找到最後一個包含 message.content 的完整回應
                                             if data.get("message", {}).get("content"):
-                                                text = data.get("message", {}).get("content", "")
+                                                text = data.get("message", {}).get(
+                                                    "content", ""
+                                                )
                                         except json.JSONDecodeError:
                                             # JSON解析失敗，跳過該行
                                             continue
@@ -241,17 +245,23 @@ class OllamaBackend(BaseLLMBackend):
                                     raise json_error
                             else:
                                 raise json_error
-                        
+
                         if not text:
-                            text = data.get("message", {}).get("content", "") if data else ""
+                            text = (
+                                data.get("message", {}).get("content", "")
+                                if data
+                                else ""
+                            )
                     except Exception as json_error:
-                        logger.warning(f"Ollama JSON 解析錯誤: {json_error}, 原始回應: {response.text[:200]}")
+                        logger.warning(
+                            f"Ollama JSON 解析錯誤: {json_error}, 原始回應: {response.text[:200]}"
+                        )
                         return LLMResponse(
                             text="",
                             backend="ollama",
                             model=self.model,
                             error=f"JSON parse error: {str(json_error)}",
-                            response_time_ms=(time.time() - start_time) * 1000
+                            response_time_ms=(time.time() - start_time) * 1000,
                         )
 
                     return LLMResponse(
@@ -259,23 +269,19 @@ class OllamaBackend(BaseLLMBackend):
                         backend="ollama",
                         model=self.model,
                         response_time_ms=(time.time() - start_time) * 1000,
-                        confidence=0.9
+                        confidence=0.9,
                     )
                 else:
                     return LLMResponse(
                         text="",
                         backend="ollama",
                         model=self.model,
-                        error=f"HTTP {response.status_code}"
+                        error=f"HTTP {response.status_code}",
                     )
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return LLMResponse(
-
-                text="",
-                backend="ollama",
-                model=self.model,
-                error=str(e)
+                text="", backend="ollama", model=self.model, error=str(e)
             )
 
 
@@ -324,7 +330,7 @@ class AngelaLLMService:
             "llm_calls": 0,
             "memory_hit_rate": 0.0,
             "average_response_time": 0.0,
-            "total_response_time": 0.0
+            "total_response_time": 0.0,
         }
 
         # 对话历史（无条件初始化）
@@ -347,7 +353,7 @@ class AngelaLLMService:
                     idle_threshold=5.0,
                     cpu_threshold=70.0,
                     max_queue_size=50,
-                    llm_timeout=180.0
+                    llm_timeout=180.0,
                 )
 
                 # 初始化模板库
@@ -370,110 +376,266 @@ class AngelaLLMService:
             "happy": {
                 "positive": [
                     # 简体
-                    "开心", "快乐", "高兴", "喜欢", "爱", "棒", "好", "赞", "哈哈", "美好", "幸福", "满意", "欣赏", "感谢", "谢谢",
+                    "开心",
+                    "快乐",
+                    "高兴",
+                    "喜欢",
+                    "爱",
+                    "棒",
+                    "好",
+                    "赞",
+                    "哈哈",
+                    "美好",
+                    "幸福",
+                    "满意",
+                    "欣赏",
+                    "感谢",
+                    "谢谢",
                     # 繁体
-                    "開心", "快樂", "高興", "喜歡", "愛", "棒", "好", "讚", "哈哈", "美好", "幸福", "滿意", "欣賞", "感謝", "謝謝",
+                    "開心",
+                    "快樂",
+                    "高興",
+                    "喜歡",
+                    "愛",
+                    "棒",
+                    "好",
+                    "讚",
+                    "哈哈",
+                    "美好",
+                    "幸福",
+                    "滿意",
+                    "欣賞",
+                    "感謝",
+                    "謝謝",
                     # 程度词
-                    "好开心", "好喜欢", "太开心", "太喜欢", "真开心", "真喜欢",
-                    "好開心", "好喜歡", "太開心", "太喜歡", "真開心", "真喜歡",
+                    "好开心",
+                    "好喜欢",
+                    "太开心",
+                    "太喜欢",
+                    "真开心",
+                    "真喜欢",
+                    "好開心",
+                    "好喜歡",
+                    "太開心",
+                    "太喜歡",
+                    "真開心",
+                    "真喜歡",
                     # 表情
-                    "😊", "😄", "🎉"
+                    "😊",
+                    "😄",
+                    "🎉",
                 ],
-                "weight": 1.0
+                "weight": 1.0,
             },
             "sad": {
                 "negative": [
                     # 简体
-                    "难过", "伤心", "悲伤", "哭", "痛苦", "难受", "失望", "遗憾", "郁闷", "糟糕", "不开心", "不喜欢", "讨厌",
+                    "难过",
+                    "伤心",
+                    "悲伤",
+                    "哭",
+                    "痛苦",
+                    "难受",
+                    "失望",
+                    "遗憾",
+                    "郁闷",
+                    "糟糕",
+                    "不开心",
+                    "不喜欢",
+                    "讨厌",
                     # 繁体
-                    "難過", "傷心", "悲傷", "哭", "痛苦", "難受", "失望", "遺憾", "鬱悶", "糟糕", "不開心", "不喜歡", "討厭",
+                    "難過",
+                    "傷心",
+                    "悲傷",
+                    "哭",
+                    "痛苦",
+                    "難受",
+                    "失望",
+                    "遺憾",
+                    "鬱悶",
+                    "糟糕",
+                    "不開心",
+                    "不喜歡",
+                    "討厭",
                     # 程度词
-                    "好难过", "好伤心", "好悲伤", "好難過", "好傷心", "好悲傷",
+                    "好难过",
+                    "好伤心",
+                    "好悲伤",
+                    "好難過",
+                    "好傷心",
+                    "好悲傷",
                     # 表情
-                    "😢", "😭"
+                    "😢",
+                    "😭",
                 ],
-                "weight": 1.0
+                "weight": 1.0,
             },
             "angry": {
                 "negative": [
                     # 简体
-                    "生气", "愤怒", "讨厌", "恨", "烦", "气死", "火大", "愤怒", "生气", "讨厌",
+                    "生气",
+                    "愤怒",
+                    "讨厌",
+                    "恨",
+                    "烦",
+                    "气死",
+                    "火大",
+                    "愤怒",
+                    "生气",
+                    "讨厌",
                     # 繁体
-                    "生氣", "憤怒", "討厭", "恨", "煩", "氣死", "火大", "憤怒", "生氣", "討厭",
+                    "生氣",
+                    "憤怒",
+                    "討厭",
+                    "恨",
+                    "煩",
+                    "氣死",
+                    "火大",
+                    "憤怒",
+                    "生氣",
+                    "討厭",
                     # 程度词
-                    "好生气", "好愤怒", "好生氣", "好憤怒",
+                    "好生气",
+                    "好愤怒",
+                    "好生氣",
+                    "好憤怒",
                     # 表情
-                    "😡", "😠"
+                    "😡",
+                    "😠",
                 ],
-                "weight": 1.2  # 愤怒情感权重更高
+                "weight": 1.2,  # 愤怒情感权重更高
             },
             "fear": {
                 "negative": [
                     # 简体
-                    "害怕", "恐惧", "担心", "焦虑", "紧张",
+                    "害怕",
+                    "恐惧",
+                    "担心",
+                    "焦虑",
+                    "紧张",
                     # 繁体
-                    "害怕", "恐懼", "擔心", "焦慮", "緊張",
+                    "害怕",
+                    "恐懼",
+                    "擔心",
+                    "焦慮",
+                    "緊張",
                     # 表情
-                    "😨", "😱"
+                    "😨",
+                    "😱",
                 ],
-                "weight": 1.1
+                "weight": 1.1,
             },
             "surprise": {
                 "neutral": [
                     # 简体
-                    "惊讶", "意外", "哇", "天哪",
+                    "惊讶",
+                    "意外",
+                    "哇",
+                    "天哪",
                     # 繁体
-                    "驚訝", "意外", "哇", "天哪",
+                    "驚訝",
+                    "意外",
+                    "哇",
+                    "天哪",
                     # 表情
-                    "😲", "😮"
+                    "😲",
+                    "😮",
                 ],
-                "weight": 0.9
+                "weight": 0.9,
             },
             "curious": {
                 "neutral": [
                     # 简体
-                    "好奇", "想知道", "问", "什么", "怎么", "为什么", "想了解", "好奇宝宝", "很好奇",
+                    "好奇",
+                    "想知道",
+                    "问",
+                    "什么",
+                    "怎么",
+                    "为什么",
+                    "想了解",
+                    "好奇宝宝",
+                    "很好奇",
                     # 繁体
-                    "好奇", "想知道", "問", "什麼", "怎麼", "為什麼", "想了解", "好奇寶寶", "很好奇"
+                    "好奇",
+                    "想知道",
+                    "問",
+                    "什麼",
+                    "怎麼",
+                    "為什麼",
+                    "想了解",
+                    "好奇寶寶",
+                    "很好奇",
                 ],
-                "weight": 1.0  # 提高权重，避免被误识别为 happy
+                "weight": 1.0,  # 提高权重，避免被误识别为 happy
             },
             "calm": {
                 "neutral": [
                     # 简体
-                    "平静", "安静", "放松", "休息",
+                    "平静",
+                    "安静",
+                    "放松",
+                    "休息",
                     # 繁体
-                    "平靜", "安靜", "放鬆", "休息"
+                    "平靜",
+                    "安靜",
+                    "放鬆",
+                    "休息",
                 ],
-                "weight": 0.7
-            }
+                "weight": 0.7,
+            },
         }
 
-        logger.info("Emotion recognition system initialized (supporting Simplified and Traditional Chinese)")
+        logger.info(
+            "Emotion recognition system initialized (supporting Simplified and Traditional Chinese)"
+        )
 
     def _get_default_config(self) -> Dict[str, Any]:
-        """從配置文件讀取預設配置"""
+        """從配置文件讀取預設配置，並從環境變量加載 API 密鑰"""
         try:
             import os
-            config_path = os.environ.get("MULTI_LLM_CONFIG",
-                                        "configs/multi_llm_config.json")
+
+            config_path = os.environ.get(
+                "MULTI_LLM_CONFIG", "configs/multi_llm_config.json"
+            )
             with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
-                return config
-        except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
-            return {
 
+            # 從環境變量加載 API 密鑰
+            for backend_name, backend_config in config.items():
+                if "api_key_env" in backend_config:
+                    env_var = backend_config["api_key_env"]
+                    api_key = os.environ.get(env_var)
+                    if api_key:
+                        backend_config["api_key"] = api_key
+                        logger.info(
+                            f"Loaded API key from environment variable {env_var} for {backend_name}"
+                        )
+                    else:
+                        logger.warning(
+                            f"Environment variable {env_var} not set for {backend_name}"
+                        )
+                elif (
+                    "api_key" in backend_config
+                    and backend_config["api_key"] == "YOUR_API_KEY"
+                ):
+                    # 移除佔位符 API 密鑰
+                    logger.warning(f"Removing placeholder API key for {backend_name}")
+                    del backend_config["api_key"]
+
+            return config
+        except Exception as e:
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
+            return {
                 "llamacpp-local": {
                     "base_url": "http://localhost:8080",
                     "model_name": "llama-3-8b-instruct",
-                    "enabled": True
+                    "enabled": True,
                 },
                 "ollama-llama3": {
                     "base_url": "http://localhost:11434",
                     "model_name": "llama3",
-                    "enabled": True
-                }
+                    "enabled": True,
+                },
             }
 
     def _init_backends(self):
@@ -483,7 +645,7 @@ class AngelaLLMService:
         if llm_config.get("enabled", False):
             self.backends[LLMBackend.LLAMA_CPP] = LlamaCppBackend(
                 base_url=llm_config.get("base_url", "http://localhost:8080"),
-                model=llm_config.get("model_name")
+                model=llm_config.get("model_name"),
             )
 
         # Ollama
@@ -491,7 +653,7 @@ class AngelaLLMService:
         if ollama_config.get("enabled", False):
             self.backends[LLMBackend.OLLAMA] = OllamaBackend(
                 base_url=ollama_config.get("base_url", "http://localhost:11434"),
-                model=ollama_config.get("model_name", "llama3")
+                model=ollama_config.get("model_name", "llama3"),
             )
 
     async def initialize(self) -> bool:
@@ -519,7 +681,9 @@ class AngelaLLMService:
                     break
 
             self.is_available = True
-            backend_name = self.active_backend_type.value if self.active_backend_type else 'none'
+            backend_name = (
+                self.active_backend_type.value if self.active_backend_type else "none"
+            )
             logger.info(f"Angela LLM 服務初始化完成，使用 {backend_name} 後端")
             return True
         else:
@@ -527,7 +691,9 @@ class AngelaLLMService:
             self.is_available = False
             return False
 
-    def _construct_angela_prompt(self, user_message: str, context: Dict[str, Any]) -> List[Dict[str, str]]:
+    def _construct_angela_prompt(
+        self, user_message: str, context: Dict[str, Any]
+    ) -> List[Dict[str, str]]:
         """
         建構 Angela 的提示詞
         這是關鍵：讓模型扮演 Angela，產生符合她個性的回應
@@ -537,14 +703,14 @@ class AngelaLLMService:
 
 特點：開朗、友善、偶爾俏皮。用簡短自然的中文回應，保持個性。"""
 
-        messages = [
-            {"role": "system", "content": system_prompt}
-        ]
+        messages = [{"role": "system", "content": system_prompt}]
 
         # 添加歷史對話上下文 - 只保留最近 2 輪對話以減少 token 使用
         history = context.get("history", [])
         for h in history[-2:]:  # 只保留最近 2 輪對話
-            messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+            messages.append(
+                {"role": h.get("role", "user"), "content": h.get("content", "")}
+            )
 
         # 添加當前用戶消息
         messages.append({"role": "user", "content": user_message})
@@ -552,9 +718,7 @@ class AngelaLLMService:
         return messages
 
     async def generate_response(
-        self,
-        user_message: str,
-        context: Dict[str, Any] = None
+        self, user_message: str, context: Dict[str, Any] = None
     ) -> LLMResponse:
         """
         生成 Angela 的回應
@@ -580,11 +744,11 @@ class AngelaLLMService:
         self.stats["total_requests"] += 1
 
         # 记录活动（用于预计算）
-        if hasattr(self, 'precompute_service') and self.precompute_service.is_running:
+        if hasattr(self, "precompute_service") and self.precompute_service.is_running:
             self.precompute_service.record_activity()
 
         # 更新对话历史
-        if hasattr(self, 'conversation_history'):
+        if hasattr(self, "conversation_history"):
             self.conversation_history.append({"role": "user", "content": user_message})
             # 限制历史长度
             if len(self.conversation_history) > 50:
@@ -594,7 +758,9 @@ class AngelaLLMService:
         if self.enable_memory_enhancement:
             try:
                 # 尝试从记忆检索
-                memory_response = await self._try_memory_retrieval(user_message, context)
+                memory_response = await self._try_memory_retrieval(
+                    user_message, context
+                )
 
                 if memory_response:
                     # 记忆命中
@@ -624,8 +790,10 @@ class AngelaLLMService:
             response = await self._generate_with_llm(user_message, context)
 
             # 更新对话历史
-            if hasattr(self, 'conversation_history'):
-                self.conversation_history.append({"role": "assistant", "content": response.text})
+            if hasattr(self, "conversation_history"):
+                self.conversation_history.append(
+                    {"role": "assistant", "content": response.text}
+                )
 
             # 更新统计
             self.stats["llm_calls"] += 1
@@ -650,9 +818,7 @@ class AngelaLLMService:
             return await self._fallback_response(user_message, context)
 
     async def _fallback_response(
-        self,
-        user_message: str,
-        context: Dict[str, Any]
+        self, user_message: str, context: Dict[str, Any]
     ) -> LLMResponse:
         """
         備份回應機制
@@ -662,6 +828,7 @@ class AngelaLLMService:
         try:
             from .chat_service import generate_angela_response
         except ImportError:
+
             def generate_angela_response(msg, name):
                 return f"嗨{name}！我現在有點困惑...能再說一次嗎？"
 
@@ -674,25 +841,22 @@ class AngelaLLMService:
                 backend="fallback-template",
                 model="template-based",
                 confidence=0.5,
-                metadata={"fallback": True}
+                metadata={"fallback": True},
             )
         except Exception as e:
-            logger.error(f'Error in {__name__}: {e}', exc_info=True)
+            logger.error(f"Error in {__name__}: {e}", exc_info=True)
             return LLMResponse(
-
                 text="抱歉，我現在有點困惑...能再說一次嗎？",
                 backend="fallback-error",
                 model="error",
                 confidence=0.1,
-                error=str(e)
+                error=str(e),
             )
 
     # ========== 记忆增强系统 - 辅助方法 ==========
 
     async def _try_memory_retrieval(
-        self,
-        user_message: str,
-        context: Dict[str, Any]
+        self, user_message: str, context: Dict[str, Any]
     ) -> Optional[LLMResponse]:
         """
         尝试从记忆系统检索回應
@@ -717,7 +881,7 @@ class AngelaLLMService:
                 angela_state=angela_state,
                 user_impression=user_impression,
                 limit=5,
-                min_score=0.7
+                min_score=0.7,
             )
 
             if results and len(results) > 0:
@@ -737,8 +901,8 @@ class AngelaLLMService:
                     metadata={
                         "template_id": best_template.id,
                         "template_score": score,
-                        "memory_hit": True
-                    }
+                        "memory_hit": True,
+                    },
                 )
 
             return None
@@ -748,9 +912,7 @@ class AngelaLLMService:
             return None
 
     async def _generate_with_llm(
-        self,
-        user_message: str,
-        context: Dict[str, Any]
+        self, user_message: str, context: Dict[str, Any]
     ) -> LLMResponse:
         """
         使用 LLM 生成回應
@@ -774,9 +936,9 @@ class AngelaLLMService:
                     prompt=messages[-1]["content"],
                     messages=messages,
                     temperature=0.7,
-                    max_tokens=512
+                    max_tokens=512,
                 ),
-                timeout=30.0
+                timeout=30.0,
             )
 
             if response.error:
@@ -793,10 +955,7 @@ class AngelaLLMService:
             return await self._fallback_response(user_message, context)
 
     async def _store_response_as_template(
-        self,
-        user_message: str,
-        response: LLMResponse,
-        context: Dict[str, Any]
+        self, user_message: str, response: LLMResponse, context: Dict[str, Any]
     ):
         """
         将新回應存储为模板候选
@@ -823,8 +982,8 @@ class AngelaLLMService:
                     "llm_backend": response.backend,
                     "llm_model": response.model,
                     "original_query": user_message,
-                    "created_at": time.time()
-                }
+                    "created_at": time.time(),
+                },
             )
 
             # 存储到记忆系统
@@ -837,26 +996,40 @@ class AngelaLLMService:
 
     def _extract_keywords(self, text: str) -> List[str]:
         """提取关键词"""
-        stopwords = {"你", "我", "他", "她", "的", "了", "吗", "呢", "吧", "啊", "是", "在", "有"}
+        stopwords = {
+            "你",
+            "我",
+            "他",
+            "她",
+            "的",
+            "了",
+            "吗",
+            "呢",
+            "吧",
+            "啊",
+            "是",
+            "在",
+            "有",
+        }
         words = text.split()
         keywords = [w for w in words if w not in stopwords and len(w) > 1]
         return keywords[:5]
 
     async def start_precompute(self):
         """启动预计算服务"""
-        if self.enable_memory_enhancement and hasattr(self, 'precompute_service'):
+        if self.enable_memory_enhancement and hasattr(self, "precompute_service"):
             await self.precompute_service.start()
             logger.info("Precompute service started")
 
     async def stop_precompute(self):
         """停止预计算服务"""
-        if self.enable_memory_enhancement and hasattr(self, 'precompute_service'):
+        if self.enable_memory_enhancement and hasattr(self, "precompute_service"):
             await self.precompute_service.stop()
             logger.info("Precompute service stopped")
 
-    async def add_precompute_task(self, task: 'PrecomputeTask'):
+    async def add_precompute_task(self, task: "PrecomputeTask"):
         """添加预计算任务"""
-        if self.enable_memory_enhancement and hasattr(self, 'precompute_service'):
+        if self.enable_memory_enhancement and hasattr(self, "precompute_service"):
             return self.precompute_service.add_precompute_task(task)
         return False
 
@@ -864,23 +1037,26 @@ class AngelaLLMService:
         """获取记忆系统统计信息"""
         stats = {
             "enable_memory_enhancement": self.enable_memory_enhancement,
-            "llm_stats": self.stats.copy()
+            "llm_stats": self.stats.copy(),
         }
 
         if self.enable_memory_enhancement:
-            if hasattr(self, 'precompute_service'):
+            if hasattr(self, "precompute_service"):
                 stats["precompute"] = self.precompute_service.get_stats()
-            if hasattr(self, 'template_library'):
+            if hasattr(self, "template_library"):
                 stats["templates"] = {
                     "total": self.template_library.get_template_count(),
-                    "by_category": {cat.value: count for cat, count in self.template_library.get_category_counts().items()}
+                    "by_category": {
+                        cat.value: count
+                        for cat, count in self.template_library.get_category_counts().items()
+                    },
                 }
 
         return stats
 
     def get_status(self) -> Dict[str, Any]:
         """獲取服務狀態"""
-        active_backend_name = getattr(self, 'active_backend_type', None)
+        active_backend_name = getattr(self, "active_backend_type", None)
         if active_backend_name and self.active_backend:
             active_backend_name = active_backend_type.value
         else:
@@ -889,7 +1065,7 @@ class AngelaLLMService:
             "is_available": self.is_available,
             "active_backend": active_backend_name,
             "available_backends": [b.value for b in self.backends.keys()],
-            "backends_health": {}
+            "backends_health": {},
         }
 
     # ========== 情感识别系统（新增）==========
@@ -913,7 +1089,21 @@ class AngelaLLMService:
         negation_words = ["不", "沒", "没", "别", "別", "非", "無", "无", "未"]
 
         # 程度词列表（增强情感强度）
-        intensifier_words = ["好", "很", "太", "非常", "超级", "特別", "特别", "真", "超", "極", "极", "格外", "尤其"]
+        intensifier_words = [
+            "好",
+            "很",
+            "太",
+            "非常",
+            "超级",
+            "特別",
+            "特别",
+            "真",
+            "超",
+            "極",
+            "极",
+            "格外",
+            "尤其",
+        ]
 
         emotion_scores = {}
 
@@ -930,7 +1120,11 @@ class AngelaLLMService:
                     has_negation = False
                     for neg_word in negation_words:
                         neg_pos = text.find(neg_word)
-                        if neg_pos != -1 and neg_pos < keyword_pos and (keyword_pos - neg_pos) <= 3:
+                        if (
+                            neg_pos != -1
+                            and neg_pos < keyword_pos
+                            and (keyword_pos - neg_pos) <= 3
+                        ):
                             has_negation = True
                             break
 
@@ -938,7 +1132,11 @@ class AngelaLLMService:
                     has_intensifier = False
                     for int_word in intensifier_words:
                         int_pos = text.find(int_word)
-                        if int_pos != -1 and int_pos < keyword_pos and (keyword_pos - int_pos) <= 3:
+                        if (
+                            int_pos != -1
+                            and int_pos < keyword_pos
+                            and (keyword_pos - int_pos) <= 3
+                        ):
                             has_intensifier = True
                             break
 
@@ -961,7 +1159,11 @@ class AngelaLLMService:
                     has_negation = False
                     for neg_word in negation_words:
                         neg_pos = text.find(neg_word)
-                        if neg_pos != -1 and neg_pos < keyword_pos and (keyword_pos - neg_pos) <= 3:
+                        if (
+                            neg_pos != -1
+                            and neg_pos < keyword_pos
+                            and (keyword_pos - neg_pos) <= 3
+                        ):
                             has_negation = True
                             break
 
@@ -969,7 +1171,11 @@ class AngelaLLMService:
                     has_intensifier = False
                     for int_word in intensifier_words:
                         int_pos = text.find(int_word)
-                        if int_pos != -1 and int_pos < keyword_pos and (keyword_pos - int_pos) <= 3:
+                        if (
+                            int_pos != -1
+                            and int_pos < keyword_pos
+                            and (keyword_pos - int_pos) <= 3
+                        ):
                             has_intensifier = True
                             break
 
@@ -1001,7 +1207,7 @@ class AngelaLLMService:
                 "emotion": "calm",
                 "confidence": 0.5,
                 "intensity": 0.3,
-                "secondary_emotions": []
+                "secondary_emotions": [],
             }
 
         # 排序情感分数（只保留正分数）
@@ -1011,10 +1217,12 @@ class AngelaLLMService:
                 "emotion": "calm",
                 "confidence": 0.5,
                 "intensity": 0.3,
-                "secondary_emotions": []
+                "secondary_emotions": [],
             }
 
-        sorted_emotions = sorted(positive_emotions.items(), key=lambda x: x[1], reverse=True)
+        sorted_emotions = sorted(
+            positive_emotions.items(), key=lambda x: x[1], reverse=True
+        )
 
         # 主要情感
         primary_emotion, primary_score = sorted_emotions[0]
@@ -1040,7 +1248,7 @@ class AngelaLLMService:
             "emotion": primary_emotion,
             "confidence": confidence,
             "intensity": intensity,
-            "secondary_emotions": secondary_emotions
+            "secondary_emotions": secondary_emotions,
         }
 
     def analyze_response_emotion(self, response_text: str) -> Dict[str, Any]:
@@ -1073,9 +1281,7 @@ async def get_llm_service() -> AngelaLLMService:
 
 # 便捷函數：生成 Angela 回應
 async def angela_llm_response(
-    user_message: str,
-    history: List[Dict[str, str]] = None,
-    user_name: str = "朋友"
+    user_message: str, history: List[Dict[str, str]] = None, user_name: str = "朋友"
 ) -> str:
     """
     生成 Angela 的回應（便捷接口）
@@ -1091,10 +1297,7 @@ async def angela_llm_response(
     """
     service = await get_llm_service()
 
-    context = {
-        "history": history or [],
-        "user_name": user_name
-    }
+    context = {"history": history or [], "user_name": user_name}
 
     response = await service.generate_response(user_message, context)
 

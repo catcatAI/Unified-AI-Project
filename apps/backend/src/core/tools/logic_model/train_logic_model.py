@@ -18,7 +18,7 @@ try:
     from tensorflow.keras.optimizers import Adam
     KERAS_AVAILABLE = True
 except ImportError as e:
-    print(f"Warning: Could not import keras: {e}")
+    logger.warning(f"Warning: Could not import keras: {e}")
     EarlyStopping = ModelCheckpoint = ReduceLROnPlateau = None
     Sequential = Dense = Dropout = BatchNormalization = None
     Adam = None
@@ -53,11 +53,11 @@ def load_logic_dataset(file_path: str) -> Optional[List[Dict[str, Any]]]:
         return dataset
 
     except FileNotFoundError:
-        print(f"错误: 数据集文件未找到 {file_path}")
+        logger.info(f"错误: 数据集文件未找到 {file_path}")
     except json.JSONDecodeError:
-        print(f"错误: 无法解码JSON {file_path}")
+        logger.info(f"错误: 无法解码JSON {file_path}")
     except ValueError as e:
-        print(f"错误: {e}")
+        logger.info(f"错误: {e}")
 
     return None
 
@@ -95,21 +95,21 @@ def build_model(vocab_size: int, max_len: int) -> Optional[Any]:
 
 def main():
     """主函数"""
-    print("开始逻辑模型训练...")
+    logger.info("开始逻辑模型训练...")
 
     # 加载数据
     dataset = load_logic_dataset(TRAIN_DATA_PATH)
     if dataset is None:
-        print("无法加载数据集，退出")
+        logger.info("无法加载数据集，退出")
         return
 
-    print(f"加载了 {len(dataset)} 个样本")
+    logger.info(f"加载了 {len(dataset)} 个样本")
 
     # 准备数据
     propositions, answers = prepare_dataset(dataset)
 
     # 简化实现
-    print("训练完成（简化版本）")
+    logger.info("训练完成（简化版本）")
 
     return {"status": "success", "samples": len(dataset)}
 

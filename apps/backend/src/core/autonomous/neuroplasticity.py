@@ -1577,13 +1577,13 @@ if __name__ == "__main__":
         np_system = NeuroplasticitySystem()
         await np_system.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 神经可塑性系统演示")
-        print("Neuroplasticity System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 神经可塑性系统演示")
+        logger.info("Neuroplasticity System Demo")
+        logger.info("=" * 60)
         
         # Create memories
-        print("\n创建记忆痕迹 / Creating memory traces:")
+        logger.info("\n创建记忆痕迹 / Creating memory traces:")
         memories = [
             np_system.create_memory_trace(
                 f"mem_{i:03d}", 
@@ -1594,86 +1594,86 @@ if __name__ == "__main__":
         ]
         
         for mem in memories:
-            print(f"  {mem.memory_id}: weight={mem.current_weight:.2f}")
+            logger.info(f"  {mem.memory_id}: weight={mem.current_weight:.2f}")
         
         # Associate memories
-        print("\n建立记忆关联 / Creating memory associations:")
+        logger.info("\n建立记忆关联 / Creating memory associations:")
         np_system.associate_memories("mem_000", "mem_001")
         np_system.associate_memories("mem_001", "mem_002")
-        print("  mem_000 <-> mem_001")
-        print("  mem_001 <-> mem_002")
+        logger.info("  mem_000 <-> mem_001")
+        logger.info("  mem_001 <-> mem_002")
         
         # Apply LTP
-        print("\n应用LTP增强 / Applying LTP:")
+        logger.info("\n应用LTP增强 / Applying LTP:")
         np_system.apply_ltp("mem_000", frequency=15.0, duration=10.0)
         mem = np_system.memory_traces["mem_000"]
-        print(f"  mem_000 new weight: {mem.current_weight:.2f}")
+        logger.info(f"  mem_000 new weight: {mem.current_weight:.2f}")
         
         # Access memory (Hebbian)
-        print("\n访问记忆（Hebbian学习）/ Accessing memory (Hebbian):")
+        logger.info("\n访问记忆（Hebbian学习）/ Accessing memory (Hebbian):")
         np_system.access_memory("mem_000")
-        print(f"  mem_000 access count: {mem.access_count}")
+        logger.info(f"  mem_000 access count: {mem.access_count}")
         
         # Check retention
-        print("\n记忆保持率 / Memory retention:")
+        logger.info("\n记忆保持率 / Memory retention:")
         for mem in memories:
             retention = np_system.get_memory_retention(mem.memory_id)
-            print(f"  {mem.memory_id}: {retention:.2%}")
+            logger.info(f"  {mem.memory_id}: {retention:.2%}")
         
         # Consolidate memories
-        print("\n记忆巩固 / Memory consolidation:")
+        logger.info("\n记忆巩固 / Memory consolidation:")
         np_system.consolidate_memories()
         consolidated = sum(1 for m in np_system.memory_traces.values() if m.is_consolidated)
-        print(f"  Consolidated: {consolidated}/{len(memories)}")
+        logger.info(f"  Consolidated: {consolidated}/{len(memories)}")
         
         # System stats
-        print("\n系统统计 / System stats:")
+        logger.info("\n系统统计 / System stats:")
         stats = np_system.get_system_stats()
         for key, value in stats.items():
-            print(f"  {key}: {value}")
+            logger.info(f"  {key}: {value}")
         
         await np_system.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
         
         # Skill Acquisition Demo
-        print("\n" + "=" * 60)
-        print("技能习得演示 / Skill Acquisition Demo")
-        print("=" * 60)
+        logger.info("\n" + "=" * 60)
+        logger.info("技能习得演示 / Skill Acquisition Demo")
+        logger.info("=" * 60)
         
         skill_system = SkillAcquisition()
         skill_system.start_skill("typing", "Typing Skill", initial_performance=0.2)
         
-        print("\n1. 幂律学习曲线 / Power law learning curve:")
+        logger.info("\n1. 幂律学习曲线 / Power law learning curve:")
         for i in range(10):
             skill_system.practice("typing", success=True, difficulty=0.5)
             if i % 3 == 0 or i == 9:
                 perf = skill_system.get_performance("typing")
-                print(f"   练习 {i+1} 次后 / after {i+1} practices: {perf:.2%}")
+                logger.info(f"   练习 {i+1} 次后 / after {i+1} practices: {perf:.2%}")
         
-        print("\n2. 学习曲线预测 / Learning curve prediction:")
+        logger.info("\n2. 学习曲线预测 / Learning curve prediction:")
         curve = skill_system.get_learning_curve("typing", n_points=5)
-        print(f"   预测表现 / Predicted performance: {[f'{c:.2%}' for c in curve]}")
+        logger.info(f"   预测表现 / Predicted performance: {[f'{c:.2%}' for c in curve]}")
         
         # Habit Formation Demo
-        print("\n" + "=" * 60)
-        print("习惯形成演示 / Habit Formation Demo")
-        print("=" * 60)
+        logger.info("\n" + "=" * 60)
+        logger.info("习惯形成演示 / Habit Formation Demo")
+        logger.info("=" * 60)
         
         habit_system = HabitFormation()
         habit_system.start_habit("morning_exercise", "晨间锻炼")
         
-        print("\n3. 66次重复理论 / 66 repetitions theory:")
+        logger.info("\n3. 66次重复理论 / 66 repetitions theory:")
         for day in range(1, 71):
             habit_system.reinforce("morning_exercise", context="bedroom", reward=0.8)
             if day in [1, 21, 42, 66, 70]:
                 auto = habit_system.get_automaticity("morning_exercise")
                 formed = habit_system.is_habit_formed("morning_exercise")
-                print(f"   第 {day} 天 / Day {day}: 自动化={auto:.2%}, 已形成={formed}")
+                logger.info(f"   第 {day} 天 / Day {day}: 自动化={auto:.2%}, 已形成={formed}")
         
         # Trauma Memory Demo
-        print("\n" + "=" * 60)
-        print("创伤记忆演示 / Trauma Memory Demo")
-        print("=" * 60)
+        logger.info("\n" + "=" * 60)
+        logger.info("创伤记忆演示 / Trauma Memory Demo")
+        logger.info("=" * 60)
         
         trauma_system = TraumaMemorySystem()
         trauma = trauma_system.encode_trauma(
@@ -1682,44 +1682,44 @@ if __name__ == "__main__":
             intensity=0.85
         )
         
-        print("\n4. 创伤记忆70%减缓遗忘 / 70% slower forgetting:")
+        logger.info("\n4. 创伤记忆70%减缓遗忘 / 70% slower forgetting:")
         hours_list = [1, 24, 168, 720]  # 1 hour, 1 day, 1 week, 1 month
         trauma = trauma_system.trauma_memories.get("trauma_001")
         for hours in hours_list:
             retention = trauma_system.get_retention("trauma_001")
-            print(f"   {hours}小时后 / after {hours}h: 保持率={retention:.2%}")
+            logger.info(f"   {hours}小时后 / after {hours}h: 保持率={retention:.2%}")
             # Advance time for next check
             if trauma and hasattr(trauma, 'encoding_timestamp'):
                 trauma.encoding_timestamp -= timedelta(hours=hours)
         
-        print("\n5. 侵入性回忆可能性 / Intrusion likelihood:")
+        logger.info("\n5. 侵入性回忆可能性 / Intrusion likelihood:")
         for stress in [0.2, 0.5, 0.8]:
             likelihood = trauma_system.get_intrusion_likelihood("trauma_001", stress)
-            print(f"   压力水平 / stress {stress}: 侵入可能性={likelihood:.2%}")
+            logger.info(f"   压力水平 / stress {stress}: 侵入可能性={likelihood:.2%}")
         
         # Explicit/Implicit Learning Demo
-        print("\n" + "=" * 60)
-        print("显性/隐性学习演示 / Explicit/Implicit Learning Demo")
-        print("=" * 60)
+        logger.info("\n" + "=" * 60)
+        logger.info("显性/隐性学习演示 / Explicit/Implicit Learning Demo")
+        logger.info("=" * 60)
         
         learning = ExplicitImplicitLearning()
         
-        print("\n6. 显性学习（易受干扰）/ Explicit learning (vulnerable to interference):")
+        logger.info("\n6. 显性学习（易受干扰）/ Explicit learning (vulnerable to interference):")
         for i in range(3):
             learning.learn_explicit(f"fact_{i}", f"Fact number {i}", "study_session")
             stats = learning.get_consolidation_stats()
-            print(f"   学习事实 {i} 后 / after fact {i}: 平均巩固度={stats['avg_explicit_consolidation']:.2%}")
+            logger.info(f"   学习事实 {i} 后 / after fact {i}: 平均巩固度={stats['avg_explicit_consolidation']:.2%}")
         
-        print("\n7. 隐性学习（抗干扰）/ Implicit learning (resistant to interference):")
+        logger.info("\n7. 隐性学习（抗干扰）/ Implicit learning (resistant to interference):")
         for i in range(3):
             learning.learn_implicit(f"skill_{i}", f"Skill number {i}", "practice_session")
             stats = learning.get_consolidation_stats()
-            print(f"   学习技能 {i} 后 / after skill {i}: 平均巩固度={stats['avg_implicit_consolidation']:.2%}")
+            logger.info(f"   学习技能 {i} 后 / after skill {i}: 平均巩固度={stats['avg_implicit_consolidation']:.2%}")
         
-        print("\n8. 巩固进度 / Consolidation progress:")
+        logger.info("\n8. 巩固进度 / Consolidation progress:")
         learning.consolidate(hours_elapsed=24)
         stats = learning.get_consolidation_stats()
-        print(f"   显性记忆 / Explicit: {stats['avg_explicit_consolidation']:.2%}")
-        print(f"   隐性记忆 / Implicit: {stats['avg_implicit_consolidation']:.2%}")
+        logger.info(f"   显性记忆 / Explicit: {stats['avg_explicit_consolidation']:.2%}")
+        logger.info(f"   隐性记忆 / Implicit: {stats['avg_implicit_consolidation']:.2%}")
     
     asyncio.run(demo())

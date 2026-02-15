@@ -26,7 +26,7 @@ def create_agent_config(
             capabilities, 代理能力列表
             config, 配置参数
             
-        Returns,
+        Returns:
             Dict, 代理配置
         """
         if agent_id is None,::
@@ -73,7 +73,7 @@ def create_hsp_message(
             target, 消息目标
             metadata, 元数据
             
-        Returns,
+        Returns:
             Dict, HSP消息
         """
         if message_id is None,::
@@ -100,7 +100,7 @@ def create_memory_item(
         memory_id, str == None,
         content, str = "Test memory content",
         memory_type, str = "fact",,
-    importance_score, float = 0.5(),
+    importance_score, float = 0.5():
         tags, List[str] = None,
         metadata, Dict[str, Any] = None
     ) -> Dict[str, Any]
@@ -158,7 +158,7 @@ def create_training_data(
             data_type, 数据类型
             metadata, 元数据
             
-        Returns,
+        Returns:
             Dict, 训练数据
         """
         if data_id is None,::
@@ -197,7 +197,7 @@ def create_dialogue_context(
             history, 对话历史
             metadata, 元数据
             
-        Returns,
+        Returns:
             Dict, 对话上下文
         """
         if context_id is None,::
@@ -242,7 +242,7 @@ def create_test_scenario(
             steps, 测试步骤
             expected_results, 期望结果
             
-        Returns,
+        Returns:
             Dict, 测试场景
         """
         if scenario_id is None,::
@@ -281,7 +281,7 @@ class TestDataSet,
         """
         创建标准测试数据集
         
-        Returns,
+        Returns:
             Dict, 标准测试数据集
         """
         return {
@@ -339,13 +339,13 @@ class TestDataSet,
         Args,
             name, 数据集名称
             
-        Returns,
+        Returns:
             Dict, 数据集
         """
         if name not in self.data_sets,::
             if name == "standard":::
                 self.data_sets[name] = self.create_standard_test_data()
-            else,
+            else:
                 raise ValueError(f"Unknown dataset, {name}")
                 
         return self.data_sets[name]

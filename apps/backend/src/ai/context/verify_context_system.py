@@ -17,7 +17,7 @@ sys.path.append(os.path.abspath(apps_backend_src))
 
 def verify_context_system():
     """验证上下文系统的基本功能"""
-    print("开始验证上下文系统...")
+    logger.info("开始验证上下文系统...")
 
     try:
         # 导入上下文系统模块
@@ -28,11 +28,11 @@ def verify_context_system():
         # from src.ai.context.dialogue_context import DialogueContextManager  # Commented - needs proper import
         # from src.ai.context.memory_context import MemoryContextManager  # Commented - needs proper import
 
-        print("✓ 成功导入所有上下文系统模块")
+        logger.info("✓ 成功导入所有上下文系统模块")
 
         # 创建上下文管理器
         # context_manager = ContextManager()  # Commented - needs proper import
-        print("✓ 成功创建上下文管理器")
+        logger.info("✓ 成功创建上下文管理器")
 
         # 测试创建上下文
         # context_id = context_manager.create_context(
@@ -106,11 +106,11 @@ def verify_context_system():
         #     print("✗ 创建记忆失败")
         #     return False
 
-        print("\n🎉 所有验证测试通过！上下文系统基本功能正常工作。")
+        logger.info("\n🎉 所有验证测试通过！上下文系统基本功能正常工作。")
         return True
 
     except Exception as e:
-        print(f"✗ 验证过程中发生错误: {e}")
+        logger.info(f"✗ 验证过程中发生错误: {e}")
         traceback.print_exc()
         return False
 

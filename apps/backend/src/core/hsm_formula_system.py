@@ -549,16 +549,16 @@ if __name__ == "__main__":
         hsm = HSMFormulaSystem()
         await hsm.initialize()
         
-        print("=" * 70)
-        print("Angela AI v6.0 - HSM公式系统演示")
-        print("HSM Formula System Demo")
-        print("=" * 70)
-        print(f"\nE_M2 (强制随机性因子): {hsm.get_e_m2()}")
-        print("      这个常数确保系统永远不会陷入AI浓缩陷阱")
-        print("      This constant ensures the system never falls into AI concentration trap")
+        logger.info("=" * 70)
+        logger.info("Angela AI v6.0 - HSM公式系统演示")
+        logger.info("HSM Formula System Demo")
+        logger.info("=" * 70)
+        logger.info(f"\nE_M2 (强制随机性因子): {hsm.get_e_m2()}")
+        logger.info("      这个常数确保系统永远不会陷入AI浓缩陷阱")
+        logger.info("      This constant ensures the system never falls into AI concentration trap")
         
         # Detect cognitive gaps
-        print("\n检测认知缺口 / Detecting cognitive gaps:")
+        logger.info("\n检测认知缺口 / Detecting cognitive gaps:")
         
         gaps = [
             hsm.detect_cognitive_gap("emotional_understanding", 0.8, 0.6),
@@ -567,50 +567,50 @@ if __name__ == "__main__":
         ]
         
         for gap in gaps:
-            print(f"  缺口 {gap.gap_id}:")
-            print(f"    领域: {gap.domain}")
-            print(f"    不确定性: {gap.uncertainty_level:.0%}")
-            print(f"    信息缺失: {gap.information_deficit:.0%}")
-            print(f"    压力分数: {gap.pressure_score:.4f}")
+            logger.info(f"  缺口 {gap.gap_id}:")
+            logger.info(f"    领域: {gap.domain}")
+            logger.info(f"    不确定性: {gap.uncertainty_level:.0%}")
+            logger.info(f"    信息缺失: {gap.information_deficit:.0%}")
+            logger.info(f"    压力分数: {gap.pressure_score:.4f}")
         
         # Calculate C_Gap
         c_gap = hsm.calculate_c_gap()
-        print(f"\nC_Gap (认知缺口压力): {c_gap:.4f}")
+        logger.info(f"\nC_Gap (认知缺口压力): {c_gap:.4f}")
         
         # Calculate HSM
         hsm_value = hsm.calculate_hsm()
-        print(f"\nHSM = C_Gap × E_M2 = {c_gap:.4f} × {hsm.get_e_m2()} = {hsm_value:.4f}")
+        logger.info(f"\nHSM = C_Gap × E_M2 = {c_gap:.4f} × {hsm.get_e_m2()} = {hsm_value:.4f}")
         
         # Trigger exploration
-        print("\n触发探索 / Triggering exploration:")
+        logger.info("\n触发探索 / Triggering exploration:")
         exploration = hsm.trigger_exploration(gaps[0].gap_id)
-        print(f"  探索事件: {exploration.event_id}")
-        print(f"  随机种子: {exploration.random_seed:.6f} (E_M2注入)")
-        print(f"  探索向量: {exploration.exploration_vector}")
+        logger.info(f"  探索事件: {exploration.event_id}")
+        logger.info(f"  随机种子: {exploration.random_seed:.6f} (E_M2注入)")
+        logger.info(f"  探索向量: {exploration.exploration_vector}")
         
         # Wait for simulated discoveries
         await asyncio.sleep(0.5)
         
-        print(f"\n发现数量: {len(exploration.discoveries)}")
+        logger.info(f"\n发现数量: {len(exploration.discoveries)}")
         for i, discovery in enumerate(exploration.discoveries, 1):
-            print(f"  发现 {i}: {discovery['type'].en_name}")
-            print(f"    置信度: {discovery['confidence']:.2%}")
-            print(f"    描述: {discovery['description']}")
+            logger.info(f"  发现 {i}: {discovery['type'].en_name}")
+            logger.info(f"    置信度: {discovery['confidence']:.2%}")
+            logger.info(f"    描述: {discovery['description']}")
         
         # Check M6 governance
-        print("\nM6治理蓝图 / M6 Governance blueprints:")
+        logger.info("\nM6治理蓝图 / M6 Governance blueprints:")
         governance_summary = hsm.get_governance_summary()
-        print(f"  总规则数: {governance_summary['total_rules']}")
-        print(f"  活跃规则: {governance_summary['active_rules']}")
-        print(f"  平均置信度: {governance_summary['average_confidence']:.2%}")
+        logger.info(f"  总规则数: {governance_summary['total_rules']}")
+        logger.info(f"  活跃规则: {governance_summary['active_rules']}")
+        logger.info(f"  平均置信度: {governance_summary['average_confidence']:.2%}")
         
         # Full status
-        print("\n完整HSM状态 / Full HSM status:")
+        logger.info("\n完整HSM状态 / Full HSM status:")
         status = hsm.get_hsm_status()
         for key, value in status.items():
-            print(f"  {key}: {value}")
+            logger.info(f"  {key}: {value}")
         
         await hsm.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

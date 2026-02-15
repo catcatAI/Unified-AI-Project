@@ -22,7 +22,7 @@ def check_python():
 def check_dependencies():
     """检查核心依赖"""
     print("\n🔍 检查核心依赖...")
-    required_modules = ["fastapi", "uvicorn", "pydantic", "numpy", "pandas"]
+    required_modules = ["fastapi", "uvicorn", "pydantic", "numpy", "pandas", "cpuinfo", "psutil"]
     all_ok = True
     
     for module in required_modules:

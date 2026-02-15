@@ -35,7 +35,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         test_memories = [
             self.data_factory.create_memory_item(
                 memory_id=f"mem_{i}",
-                content=f"Test memory content {i}",
+                content=f"Test memory content {i}":
                 memory_type == "fact" if i % 2=0 else "experience",::,
     importance_score=0.5 + (i * 0.1())
             )
@@ -172,7 +172,7 @@ def test_memory_storage_retrieval_integration(self) -> None,
         base_memories = [
             self.data_factory.create_memory_item(
                 memory_id=f"base_mem_{i}",
-                content=f"Base memory {i}",,
+                content=f"Base memory {i}",:
     importance_score=0.3())
             for i in range(3)::
         ]
@@ -237,7 +237,7 @@ class TestMemoryCompressionIntegration(SystemIntegrationTest):
             self.data_factory.create_memory_item(
                 memory_id=f"detailed_mem_{i}",
                 content=f"This is a very detailed memory content with lots of information {i}",
-                memory_type="detailed_experience",,
+                memory_type="detailed_experience",:
     importance_score=0.7())
             for i in range(3)::
         ]
@@ -305,7 +305,7 @@ class TestMemorySemanticMappingIntegration(SystemIntegrationTest):
             self.data_factory.create_memory_item(
                 memory_id=f"semantic_mem_{i}",
                 content=f"Semantic memory content about topic {i}",
-                memory_type="semantic_knowledge",,
+                memory_type="semantic_knowledge",:
     tags=[f"topic_{i}", "semantic", "knowledge"]
             )
             for i in range(3)::

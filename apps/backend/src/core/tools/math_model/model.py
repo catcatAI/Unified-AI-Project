@@ -38,7 +38,7 @@ class MathModel:
         self.model = None
 
         if not TF_AVAILABLE:
-            print("TensorFlow不可用，使用简化模型")
+            logger.info("TensorFlow不可用，使用简化模型")
 
     def build_model(self):
         """构建模型"""
@@ -64,7 +64,7 @@ class MathModel:
     def train(self, x_train, y_train, epochs: int = 10):
         """训练模型"""
         if not TF_AVAILABLE or self.model is None:
-            print("模型不可用，无法训练")
+            logger.info("模型不可用，无法训练")
             return
 
         self.model.fit(x_train, y_train, epochs=epochs, verbose=1)
@@ -106,4 +106,4 @@ class MathModel:
         try:
             self.model = tf.keras.models.load_model(path)
         except Exception as e:
-            print(f"加载模型失败: {e}")
+            logger.info(f"加载模型失败: {e}")

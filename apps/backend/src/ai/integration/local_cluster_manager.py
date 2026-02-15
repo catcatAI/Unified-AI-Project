@@ -400,12 +400,12 @@ if __name__ == "__main__":
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
-    print("=== Local Cluster Manager Test ===\n")
+    logger.info("=== Local Cluster Manager Test ===\n")
     
     # 測試1：使用默認執行器
-    print("Test 1: Default executor (simulator)\n")
+    logger.info("Test 1: Default executor (simulator)\n")
     with LocalClusterManager(max_workers=2) as cluster:
-        print(f"Cluster started: {cluster.get_cluster_status()}\n")
+        logger.info(f"Cluster started: {cluster.get_cluster_status()}\n")
         
         # 提交測試任務
         for i in range(3):
@@ -416,18 +416,18 @@ if __name__ == "__main__":
             )
             cluster.submit_task(task)
         
-        print(f"Submitted 3 tasks: {cluster.get_cluster_status()}\n")
+        logger.info(f"Submitted 3 tasks: {cluster.get_cluster_status()}\n")
         
         # 收集結果
         for _ in range(3):
             result = cluster.get_result(timeout=5.0)
             if result:
-                print(f"Got result: {result['task_id']} (executor: {result.get('executor', 'unknown')})")
+                logger.info(f"Got result: {result['task_id']} (executor: {result.get('executor', 'unknown')})")
     
-    print("\n" + "="*50 + "\n")
+    logger.info("\n" + "="*50 + "\n")
     
     # 測試2：使用內置任務類型
-    print("Test 2: Built-in task types\n")
+    logger.info("Test 2: Built-in task types\n")
     
     def test_task_executor(task: ClusterTask) -> Dict[str, Any]:
         """自定義任務執行器示例"""
@@ -438,7 +438,7 @@ if __name__ == "__main__":
         }
     
     with LocalClusterManager(max_workers=2, task_executor=test_task_executor) as cluster:
-        print(f"Cluster started: {cluster.get_cluster_status()}\n")
+        logger.info(f"Cluster started: {cluster.get_cluster_status()}\n")
         
         # 提交不同類型的任務
         tasks = [
@@ -453,12 +453,12 @@ if __name__ == "__main__":
         for task in tasks:
             cluster.submit_task(task)
         
-        print(f"Submitted 3 tasks: {cluster.get_cluster_status()}\n")
+        logger.info(f"Submitted 3 tasks: {cluster.get_cluster_status()}\n")
         
         # 收集結果
         for _ in range(3):
             result = cluster.get_result(timeout=5.0)
             if result:
-                print(f"Got result: {result['task_id']} (executor: {result.get('executor', 'unknown')})")
+                logger.info(f"Got result: {result['task_id']} (executor: {result.get('executor', 'unknown')})")
     
-    print("\n=== Test Complete ===")
+    logger.info("\n=== Test Complete ===")

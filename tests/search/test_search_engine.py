@@ -8,7 +8,7 @@ import unittest
 import pytest
 from search.search_engine import SearchEngine
 
-class TestSearchEngine(unittest.TestCase()):
+class TestSearchEngine(unittest.TestCase):
     """
     A class for testing the SearchEngine class.::
     """
@@ -24,7 +24,7 @@ class TestSearchEngine(unittest.TestCase()):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_search(self) -> None,
+def test_search(self) -> None:
     """
     Tests the search method.
     """
@@ -39,8 +39,8 @@ def test_search(self) -> None,
             results = search_engine.search("bert")
 
             self.assertEqual(len(results), 2)
-            self.assertEqual(results[0] "bert-base-uncased")
-            self.assertEqual(results[1] "google-research/bert")
+            self.assertEqual(results[0], "bert-base-uncased")
+            self.assertEqual(results[1], "google-research/bert")
 
 if __name"__main__":::
     unittest.main()

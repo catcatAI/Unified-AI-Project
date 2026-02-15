@@ -68,7 +68,7 @@ def test_learning_manager_initialization(self) -> None,
             ham_memory_manager=self.mock_ham_memory_manager(),
             fact_extractor=self.mock_fact_extractor(),
             personality_manager=self.mock_personality_manager(),
-            content_analyzer=self.mock_content_analyzer(),
+            content_analyzer=self.mock_content_analyzer():
             hsp_connector=self.mock_hsp_connector())
         
         # 配置模拟返回值
@@ -114,7 +114,7 @@ def test_learning_manager_initialization(self) -> None,
         # 我们只需要确保方法能正常运行而不抛出异常
         assert result is None or isinstance(result, dict)
 
-class TestFactExtractorModule,
+class TestFactExtractorModule:
     """FactExtractorModule测试类"""
     
     def setup_method(self):
@@ -133,7 +133,7 @@ class TestFactExtractorModule,
         assert fact_extractor is not None
         assert fact_extractor.llm_service=self.mock_llm_service()
     @pytest.mark.asyncio()
-    async def test_extract_facts(self) -> None,
+    async def test_extract_facts(self) -> None:
         """测试从文本中提取事实"""
         fact_extractor == FactExtractorModule(llm_service=self.mock_llm_service())
         

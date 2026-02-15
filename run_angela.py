@@ -164,7 +164,30 @@ class ErrorRecovery:
 # 启动器
 # ============================================
 
-def wait_for_server(port=8000, timeout=60, progress: Optional[ProgressDisplay] = None) -> bool:
+def _load_env_file(env_file: Path) -> None:
+    """加载 .env 文件"""
+    if env_file.exists():
+        try:
+            with open(env_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        parts = line.split('=', 1)
+                        if len(parts) == 2:
+                            key, value = parts
+                            # 处理注释
+                            if '#' in value:
+                                value = value.split('#', 1)[0]
+                            val = value.strip()
+                            # 处理引号
+                            if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+                                val = val[1:-1]
+                            os.environ[key.strip()] = val
+        except Exception as e:
+            logger.error(f"Error loading .env file: {e}")
+
+
+def wait_for_server(port=8000, timeout=180, progress: Optional[ProgressDisplay] = None) -> bool:
     """等待服务器启动"""
     import socket
 
@@ -201,6 +224,13 @@ class Launcher:
         self.mode = "user"  # Default mode
         self.progress = ProgressDisplay(total_steps=100)
         self.recovery = ErrorRecovery(self.project_root)
+        
+        # 加载 .env 文件
+        env_file = self.project_root / ".env"
+        if env_file.exists():
+            _load_env_file(env_file)
+        elif (self.project_root / ".env.example").exists():
+             _load_env_file(self.project_root / ".env.example")
     
     def check_port_available(self, port: int) -> bool:
         """检查端口是否可用"""
@@ -274,7 +304,7 @@ class Launcher:
                 python,
                 "-m",
                 "uvicorn",
-                "src.services.main_api_server:app",
+                "services.main_api_server:app",
                 "--host",
                 "0.0.0.0",
                 "--port",
@@ -495,8 +525,14 @@ def main():
     # 安全检查: 验证密钥
     print("\n🔒 安全检查: 验证系统密钥...")
     try:
-        # 添加 src 到路径
-        sys.path.insert(0, str(Path(__file__).parent / "apps" / "backend"))
+        # 添加 backend 和 src 到路径
+        backend_path = str(Path(__file__).parent / "apps" / "backend")
+        src_path = str(Path(__file__).parent / "apps" / "backend" / "src")
+        if backend_path not in sys.path:
+            sys.path.insert(0, backend_path)
+        if src_path not in sys.path:
+            sys.path.insert(0, src_path)
+            
         from src.core.security.key_validator import validate_system_keys
 
         keys_valid, key_results = validate_system_keys()

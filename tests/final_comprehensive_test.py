@@ -8,7 +8,7 @@
 
 def test_logic_parser():
     """测试逻辑解析器"""
-    try,
+    try:
         from tools.logic_model.logic_parser_eval import LogicParserEval
         print("✓ logic_parser_eval imported successfully")
         
@@ -26,7 +26,7 @@ def test_logic_parser():
 
 def test_logic_tool():
     """测试逻辑工具"""
-    try,
+    try:
         from tools.logic_tool import LogicTool
         print("✓ logic_tool imported successfully")
         
@@ -44,7 +44,7 @@ def test_logic_tool():
 
 def test_math_model():
     """测试数学模型"""
-    try,
+    try:
         from tools.math_model.lightweight_math_model import LightweightMathModel
         print("✓ lightweight_math_model imported successfully")
         
@@ -62,7 +62,7 @@ def test_math_model():
 
 def test_math_tool():
     """测试数学工具"""
-    try,
+    try:
         from tools.math_tool import calculate
         print("✓ math_tool imported successfully")
         
@@ -76,7 +76,7 @@ def test_math_tool():
 
 def test_dependency_manager():
     """测试依赖管理器"""
-    try,
+    try:
         from core.managers.dependency_manager import dependency_manager
         print("✓ dependency_manager imported successfully")
         
@@ -89,7 +89,7 @@ def test_dependency_manager():
 
 def test_common_types():
     """测试通用类型定义"""
-    try,
+    try:
         from core.shared.types.common_types import ToolDispatcherResponse
         print("✓ common_types imported successfully")
         return True
@@ -99,7 +99,7 @@ def test_common_types():
 
 def test_math_model_module():
     """测试数学模型模块"""
-    try,
+    try:
         import apps.backend.src.tools.math_model.model()
         print("✓ math_model.model imported successfully")
         return True
@@ -109,7 +109,7 @@ def test_math_model_module():
 
 def test_alpha_deep_model():
     """测试Alpha深度模型"""
-    try,
+    try:
         import apps.backend.src.core_ai.compression.alpha_deep_model()
         print("✓ alpha_deep_model imported successfully")
         return True
@@ -119,7 +119,7 @@ def test_alpha_deep_model():
 
 def test_unified_symbolic_space():
     """测试统一符号空间"""
-    try,
+    try:
         import apps.backend.src.core_ai.symbolic_space.unified_symbolic_space()
         print("✓ unified_symbolic_space imported successfully")
         return True
@@ -157,7 +157,7 @@ def main():
     if passed == total,::
         print("🎉 所有测试通过！项目语法修复工作圆满完成。")
 
-    else,
+    else:
         print(f"❌ {total - passed} 个测试失败。")
 
 if __name"__main__":::

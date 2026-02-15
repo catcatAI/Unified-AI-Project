@@ -332,7 +332,7 @@ class DynamicThresholdManager:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                print(f"[DynamicParams] Update error: {e}")
+                logger.error(f"[DynamicParams] Update error: {e}")
                 await asyncio.sleep(10)
     
     def _build_context(self) -> Dict[str, float]:
@@ -442,43 +442,43 @@ class DynamicThresholdManager:
 # 使用示例和演示
 async def demo_dynamic_parameters():
     """动态参数系统演示"""
-    print("=" * 60)
-    print("Angela AI 动态参数系统演示")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("Angela AI 动态参数系统演示")
+    logger.info("=" * 60)
     
     manager = DynamicThresholdManager()
     
     # 启动更新循环
     await manager.start()
     
-    print("\n1. 初始参数状态：")
+    logger.info("\n1. 初始参数状态：")
     for name, param in manager.parameters.items():
         print(f"   {name}: {param.current_value:.2f} "
               f"(base: {param.base_value:.2f}, "
               f"volatility: {param.volatility:.2f})")
     
     # 模拟一些行为结果
-    print("\n2. 模拟成功行为：")
+    logger.info("\n2. 模拟成功行为：")
     manager.record_outcome('conversation', success=True, intensity=0.8)
-    print(f"   action_success_rate base: {manager.parameters['action_success_rate'].base_value:.2f}")
+    logger.info(f"   action_success_rate base: {manager.parameters['action_success_rate'].base_value:.2f}")
     
-    print("\n3. 模拟失败行为：")
+    logger.info("\n3. 模拟失败行为：")
     manager.record_outcome('file_operation', success=False, intensity=0.6)
-    print(f"   action_success_rate base: {manager.parameters['action_success_rate'].base_value:.2f}")
-    print(f"   volatility increased: {manager.parameters['action_success_rate'].volatility:.2f}")
+    logger.info(f"   action_success_rate base: {manager.parameters['action_success_rate'].base_value:.2f}")
+    logger.info(f"   volatility increased: {manager.parameters['action_success_rate'].volatility:.2f}")
     
     # 等待并观察参数变化
-    print("\n4. 等待参数自然波动（60秒）...")
+    logger.info("\n4. 等待参数自然波动（60秒）...")
     await asyncio.sleep(60)
     
-    print("\n5. 参数变化后：")
+    logger.info("\n5. 参数变化后：")
     for name, param in manager.parameters.items():
         if abs(param.current_value - param.base_value) > 0.05:
             print(f"   {name}: {param.current_value:.2f} "
                   f"(changed from base: {param.base_value:.2f})")
     
     # 获取当前情绪阈值
-    print("\n6. 当前情绪阈值（考虑上下文）：")
+    logger.info("\n6. 当前情绪阈值（考虑上下文）：")
     context = {
         'energy': 0.7,
         'recent_success': 0.8,
@@ -491,8 +491,8 @@ async def demo_dynamic_parameters():
     # 停止更新循环
     await manager.stop()
     
-    print("\n演示完成！")
-    print("=" * 60)
+    logger.info("\n演示完成！")
+    logger.info("=" * 60)
 
 
 if __name__ == "__main__":

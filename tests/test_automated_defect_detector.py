@@ -19,11 +19,11 @@ logging.basicConfig(level=logging.INFO())
 logger = logging.getLogger(__name__)
 
 
-class TestStaticAnalyzer(unittest.TestCase()):
+class TestStaticAnalyzer(unittest.TestCase):
     """静态分析器测试类"""
     analyzer, StaticAnalyzer
     
-    def __init__(self, *args, **kwargs) -> None,
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.analyzer == StaticAnalyzer()
         
@@ -37,21 +37,21 @@ class TestStaticAnalyzer(unittest.TestCase()):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_analyze_resource_leak(self) -> None,
+def test_analyze_resource_leak(self) -> None:
         """测试分析资源泄漏"""
         # 创建包含资源泄漏的代码
         test_code = '''
 def read_file(filename):
-    with open(filename, 'r') as f,
+    with open(filename, 'r') as f:
         content = f.read()
     return content
     # 正确关闭文件
 '''
         
-        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f,
+        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f:
             f.write(test_code)
             temp_file = f.name()
-        try,
+        try:
             # 分析文件
             defects = self.analyzer.analyze_file(temp_file)
             
@@ -66,24 +66,24 @@ def read_file(filename):
     # 忘记关闭文件
 '''
             
-            with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f2,
+            with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f2:
                 f2.write(problematic_code)
                 temp_file2 = f2.name()
-            try,
+            try:
                 defects2 = self.analyzer.analyze_file(temp_file2)
                 resource_leak_defects2 == [d for d in defects2 if d.defect_type == = DefectType.RESOURCE_LEAK]: == self.assertGreater(len(resource_leak_defects2), 0):
                 # 验证缺陷信息
                 defect = resource_leak_defects2[0]
                 self.assertEqual(defect.severity(), DefectSeverity.HIGH())
                 self.assertIn("open(", defect.code_snippet())
-            finally,
+            finally:
                 os.unlink(temp_file2)
             
-        finally,
+        finally:
             # 清理临时文件
             os.unlink(temp_file)
             
-    def test_analyze_security_vulnerability(self) -> None,
+    def test_analyze_security_vulnerability(self) -> None:
         """测试分析安全漏洞"""
         # 创建包含安全漏洞的代码
         test_code = '''
@@ -91,10 +91,10 @@ def dangerous_eval(user_input):
     return eval(user_input)  # 使用eval是危险的
 '''
         
-        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f,
+        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f:
             f.write(test_code)
             temp_file = f.name()
-        try,
+        try:
             # 分析文件
             defects = self.analyzer.analyze_file(temp_file)
             
@@ -105,11 +105,11 @@ def dangerous_eval(user_input):
             self.assertEqual(defect.severity(), DefectSeverity.HIGH())
             self.assertIn("eval(", defect.code_snippet())
             
-        finally,
+        finally:
             # 清理临时文件
             os.unlink(temp_file)
             
-    def test_analyze_code_smell(self) -> None,
+    def test_analyze_code_smell(self) -> None:
         """测试分析代码异味"""
         # 创建包含代码异味的代码
         test_code = '''
@@ -119,10 +119,10 @@ def debug_function():
     return True
 '''
         
-        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f,
+        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f:
             f.write(test_code)
             temp_file = f.name()
-        try,
+        try:
             # 分析文件
             defects = self.analyzer.analyze_file(temp_file)
             
@@ -134,7 +134,7 @@ def debug_function():
  = self.assertGreater(len(print_defects), 0)
             self.assertGreater(len(todo_defects), 0)
             
-        finally,
+        finally:
             # 清理临时文件
             os.unlink(temp_file)
             
@@ -150,7 +150,7 @@ def debug_function():
             DefectSeverity.LOW())
 
 
-class TestDefectDetector(unittest.TestCase()):
+class TestDefectDetector(unittest.TestCase):
     """缺陷检测器测试类"""
     detector, DefectDetector
     
@@ -158,7 +158,7 @@ class TestDefectDetector(unittest.TestCase()):
         super().__init__(*args, **kwargs)
         self.detector == DefectDetector()
         
-    def test_detect_defects_in_file(self) -> None,
+    def test_detect_defects_in_file(self) -> None:
         """测试检测文件中的缺陷"""
         # 创建包含多种缺陷的代码
         test_code = '''
@@ -175,10 +175,10 @@ def problematic_function():
     return result
 '''
         
-        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f,
+        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f:
             f.write(test_code)
             temp_file = f.name()
-        try,
+        try:
             # 检测缺陷
             defects = self.detector.detect_defects_in_file(temp_file)
             
@@ -194,7 +194,7 @@ def problematic_function():
             self.assertGreater(len(security_defects), 0)
             self.assertGreater(len(smell_defects), 0)
             
-        finally,
+        finally:
             # 清理临时文件
             os.unlink(temp_file)
             
@@ -283,26 +283,26 @@ def problematic_function():
         self.detector.detected_defects = [defect]
         
         # 保存报告到临时文件
-        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.txt', delete == False) as f,
+        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.txt', delete == False) as f:
             temp_file = f.name()
-        try,
+        try:
             result = self.detector.save_defect_report(temp_file)
             self.assertTrue(result)
             
             # 验证文件内容
-            with open(temp_file, 'r') as f,
+            with open(temp_file, 'r') as f:
                 content = f.read()
                 self.assertIn("Defect Detection Report", content)
                 self.assertIn("Debug print statement", content)
                 self.assertIn("print('debug')", content)
                 
-        finally,
+        finally:
             # 清理临时文件
             if os.path.exists(temp_file)::
                 os.unlink(temp_file)
 
 
-class TestDefectDetectorIntegration(unittest.TestCase()):
+class TestDefectDetectorIntegration(unittest.TestCase):
     """缺陷检测器集成测试类"""
     detector, DefectDetector
     
@@ -320,7 +320,7 @@ import subprocess
 class DataManager,
     """数据管理器"""
     
-    def __init__(self) -> None,
+    def __init__(self) -> None:
         self.data = []
         
     def load_data(self, filename):
@@ -331,9 +331,9 @@ class DataManager,
     def process_data(self, data):
         """处理数据"""
         # 实现适当的数据处理逻辑
-        try,
+        try:
             result = int(data)  # 使用更安全的方法替代eval
-        except ValueError,::
+        except ValueError as e:
             result = 0
         print("Processing,", result)  # 调试打印
         return result
@@ -348,13 +348,13 @@ class DataManager,
         # 安全漏洞：使用shell == True
         result = subprocess.run(cmd, shell == True, capture_output == True)
         return result.stdout()
-def main() -> None,
+def main() -> None:
     """主函数"""
     manager == DataManager()
     user_input == input("Enter command, ")  # 用户输入
-    try,
+    try:
         result = int(user_input)  # 使用更安全的方法替代eval
-    except ValueError,::
+    except ValueError as e:
         result = 0
     print("Result,", result)  # 调试打印
     return result
@@ -363,10 +363,10 @@ if __name"__main__":::
     main()
 '''
 
-        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f,
+        with tempfile.NamedTemporaryFile(mode == 'w', suffix='.py', delete == False) as f:
             f.write(test_code)
             temp_file = f.name()
-        try,
+        try:
             # 检测缺陷
             defects = self.detector.detect_defects_in_file(temp_file)
             
@@ -384,7 +384,7 @@ mell_defects == [d for d in defects if d.defect_type == DefectType.CODE_SMELL]:
 
             # 验证严重程度,
             high_severity_defects == [d for d in defects if d.severity == = DefectSeverity.HIGH]: == self.assertGreater(len(high_severity_defects), 0):
-        finally,
+        finally:
             # 清理临时文件
             os.unlink(temp_file)
 

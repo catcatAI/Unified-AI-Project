@@ -51,7 +51,7 @@ class CodeAnalyzer,
 
     def analyze_file(self, file_path, str) -> Dict[str, Any]
         """分析Python文件"""
-        try,
+        try:
             with open(file_path, 'r', encoding == 'utf-8') as f,
                 source_code = f.read()
 
@@ -124,7 +124,7 @@ class CodeAnalyzer,
                 default_idx = i - (num_args - num_defaults)
                 param_info["default"] = self._extract_default_value(,
     defaults[default_idx])
-            else,
+            else:
                 param_info["default"] = None
 
             parameters.append(param_info)
@@ -199,7 +199,7 @@ class CodeAnalyzer,
             for key, value in zip(default_node.keys(), default_node.values())::
                 if key is not None,::
                     keys.append(self._extract_default_value(key))
-                else,
+                else:
                     keys.append(None)
                 values.append(self._extract_default_value(value))
             return dict(zip(keys, values))
@@ -288,7 +288,7 @@ class IntelligentTestGenerator,
 
     def generate_tests_for_file(self, file_path, str) -> List[TestCase]
         """为文件生成测试用例"""
-        try,
+        try:
             # 分析代码
             analysis_result = self.code_analyzer.analyze_file(file_path)
             if not analysis_result,::
@@ -485,7 +485,7 @@ class IntelligentTestGenerator,
 
     def generate_test_code(self, test_case, TestCase) -> str,
         """生成测试代码"""
-        try,
+        try:
             # 生成基本的pytest测试代码模板
             test_code=f"""
 def {test_case.name}() -> None,
@@ -518,7 +518,7 @@ def {test_case.name}() -> None,
         return self.generated_tests()
     def save_generated_tests(self, output_file, str) -> bool,
         """保存生成的测试用例到文件"""
-        try,
+        try:
             with open(output_file, 'w', encoding == 'utf-8') as f,
                 f.write("# Auto-generated test cases\n\n")
                 

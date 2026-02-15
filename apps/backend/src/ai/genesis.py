@@ -101,24 +101,24 @@ class GenesisManager:
 
 # Test code
 if __name__ == '__main__':
-    print("--- Genesis Manager Test ---")
+    logger.info("--- Genesis Manager Test ---")
     
     # Test creating genesis secret
     genesis_secret, uid = GenesisManager.create_genesis_secret()
-    print(f"Created secret: {genesis_secret}")
-    print(f"UID: {uid}")
+    logger.info(f"Created secret: {genesis_secret}")
+    logger.info(f"UID: {uid}")
     
     # Test splitting
     shards = GenesisManager.split_secret_into_shards(genesis_secret)
-    print(f"Created {len(shards)} shards")
+    logger.info(f"Created {len(shards)} shards")
     
     # Test recovery
     recovered = GenesisManager.recover_secret_from_shards(shards[:2])
-    print(f"Recovered secret: {recovered}")
+    logger.info(f"Recovered secret: {recovered}")
     
     if recovered == genesis_secret:
-        print("✅ Recovery successful!")
+        logger.info("✅ Recovery successful!")
     else:
-        print("❌ Recovery failed!")
+        logger.error("❌ Recovery failed!")
     
-    print("--- Test Complete ---")
+    logger.info("--- Test Complete ---")

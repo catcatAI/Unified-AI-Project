@@ -1,0 +1,58 @@
+{
+    "servers": [
+      {
+        "name": "redis_memory_server",
+        "type": "url",
+        "url": "redis://localhost:6379",
+        "description": "A Redis server for short-term and medium-term memory.",
+        "tools": [
+          {
+            "name": "set_memory",
+            "description": "Stores a key-value pair in Redis memory.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "The key under which to store the value."
+                },
+                "value": {
+                  "type": "string",
+                  "description": "The string value to store."
+                }
+              },
+              "required": ["key", "value"]
+            }
+          },
+          {
+            "name": "get_memory",
+            "description": "Retrieves a value from Redis memory using its key.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "The key of the value to retrieve."
+                }
+              },
+              "required": ["key"]
+            }
+          },
+          {
+              "name": "delete_memory",
+              "description": "Deletes a key-value pair from Redis memory.",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "The key to delete."
+                  }
+                },
+                "required": ["key"]
+              }
+            }
+        ]
+      }
+    ]
+  }

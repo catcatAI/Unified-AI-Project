@@ -69,7 +69,7 @@ def test_agent_lifecycle_integration(self) -> None,
         )
         
         # 3. 验证代理状态
-        retrieved_agent = await agent_manager.return_value.get_agent(,
+        retrieved_agent = await agent_manager.return_value.get_agent(:
     agent_config["agent_id"]
         )
         
@@ -205,7 +205,7 @@ def test_agent_lifecycle_integration(self) -> None,
         """测试代理与记忆系统集成"""
         # 创建测试数据
         agent_config = self.data_factory.create_agent_config(
-            agent_id="memory_test_agent",,
+            agent_id="memory_test_agent",:
     agent_type="creative_writing"
         )
         
@@ -312,7 +312,7 @@ def test_agent_lifecycle_integration(self) -> None,
         learning_result = await learning_manager.return_value.start_learning()
         
         # 3. 代理使用LLM生成内容
-        generated_content = await llm_service.return_value.generate_response(,
+        generated_content = await llm_service.return_value.generate_response(:
     training_data["input"]
         )
         
@@ -423,7 +423,7 @@ class TestAgentCollaborationIntegration(SystemIntegrationTest):
         
         # 2. 发起协作请求
         publish_result = await hsp_connector.return_value.publish(,
-    collaboration_request,
+    collaboration_request:
             "hsp/agents/collaboration/requests"
         )
         

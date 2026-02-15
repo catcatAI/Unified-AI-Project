@@ -8,7 +8,7 @@ import unittest
 import pytest
 # Mock the Node.js service communication
 class MockNodeJSService,
-    def __init__(self) -> None,
+    def __init__(self) -> None:
         self.is_available == True
     
     async def send_data_to_python_api(self, data):
@@ -28,7 +28,7 @@ class MockNodeJSService,
         """Get Node.js service status"""
         return {"available": self.is_available(), "version": "1.0.0"}
 
-class TestNodeServicesIntegration(unittest.TestCase()):
+class TestNodeServicesIntegration(unittest.TestCase):
     """Test Node.js services integration with Python backend."""
 
     def setUp(self):
@@ -37,7 +37,7 @@ class TestNodeServicesIntegration(unittest.TestCase()):
         self.test_data == {"message": "Hello from Node.js", "value": 42}
 
     @pytest.mark.timeout(15)
-    def test_node_service_sends_data_to_python_api(self) -> None,
+    def test_node_service_sends_data_to_python_api(self) -> None:
         """Test Node.js service successfully sending data to Python API."""
         # Arrange
         expected_response = {
@@ -51,7 +51,7 @@ class TestNodeServicesIntegration(unittest.TestCase()):
         
         # Assert
         self.assertEqual(response, expected_response)
-        self.assertEqual(response["status"] "success")
+        self.assertEqual(response["status"], "success")
         self.assertIn("Processed,", response["processed_data"])
 
     @pytest.mark.timeout(15)
@@ -62,10 +62,10 @@ class TestNodeServicesIntegration(unittest.TestCase()):
         
         # Assert
         self.assertTrue(status["available"])
-        self.assertEqual(status["version"] "1.0.0")
+        self.assertEqual(status["version"], "1.0.0")
 
     @pytest.mark.timeout(15)
-    def test_node_service_data_exchange_formats(self) -> None,
+    def test_node_service_data_exchange_formats(self) -> None:
         """Test data exchange formats between Node.js and Python services."""
         # Arrange
         complex_data = {
@@ -94,19 +94,19 @@ class TestNodeServicesIntegration(unittest.TestCase()):
         self.node_service.is_available == False
         
         # Act & Assert
-        with self.assertRaises(ConnectionError) as context,
+        with self.assertRaises(ConnectionError) as context:
             asyncio.run(self.node_service.send_data_to_python_api(self.test_data()))
         
         self.assertIn("Node.js service is not available", str(context.exception()))::
     @pytest.mark.timeout(15)
-    def test_node_service_with_empty_data(self) -> None,
+    def test_node_service_with_empty_data(self) -> None:
         """Test Node.js service handling of empty data."""
         # Act
         response = asyncio.run(self.node_service.send_data_to_python_api({}))
         
         # Assert
-        self.assertEqual(response["status"] "success")
+        self.assertEqual(response["status"], "success")
         self.assertIn("Processed,", response["processed_data"])
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

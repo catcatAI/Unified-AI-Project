@@ -232,31 +232,31 @@ def create_precision_system(max_cells: int = 1000000) -> PrecisionMemorySystem:
 
 def demo():
     """演示"""
-    print("🎯 精度-记忆联动系统演示")
-    print("=" * 50)
+    logger.info("🎯 精度-记忆联动系统演示")
+    logger.info("=" * 50)
     
     system = create_precision_system()
     
-    print("\n📝 编码测试:")
+    logger.info("\n📝 编码测试:")
     encoded = system.encode("test_1", 1.23456789, layer=1)
-    print(f"  原始值: 1.23456789")
-    print(f"  整数部分: {encoded['integer_part']}")
-    print(f"  精度等级: DEC{encoded['precision']}")
-    print(f"  小数引用: {encoded['decimal_ref'][:30] if encoded['decimal_ref'] else 'None'}...")
+    logger.info(f"  原始值: 1.23456789")
+    logger.info(f"  整数部分: {encoded['integer_part']}")
+    logger.info(f"  精度等级: DEC{encoded['precision']}")
+    logger.info(f"  小数引用: {encoded['decimal_ref'][:30] if encoded['decimal_ref'] else 'None'}...")
     
-    print("\n📖 解码测试:")
+    logger.info("\n📖 解码测试:")
     context = {encoded['decimal_ref']: 2345}
     decoded = system.decode(encoded, context)
-    print(f"  解码值: {decoded}")
-    print(f"  精度损失: {abs(1.23456789 - decoded):.6f}")
+    logger.info(f"  解码值: {decoded}")
+    logger.info(f"  精度损失: {abs(1.23456789 - decoded):.6f}")
     
-    print("\n🔄 压缩测试:")
+    logger.info("\n🔄 压缩测试:")
     system.compress("test_1", PrecisionMode.DEC2)
     metrics = system.get_metrics()
-    print(f"  单元格数: {metrics['total_cells']}")
-    print(f"  记忆条目: {metrics['memory_entries']}")
+    logger.info(f"  单元格数: {metrics['total_cells']}")
+    logger.info(f"  记忆条目: {metrics['memory_entries']}")
     
-    print("\n✅ 演示完成!")
+    logger.info("\n✅ 演示完成!")
     return system
 
 

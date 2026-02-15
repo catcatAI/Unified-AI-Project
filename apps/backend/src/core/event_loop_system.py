@@ -446,7 +446,7 @@ class EventLoopSystem:
     
     async def initialize(self):
         """Initialize the event loop system"""
-        print(f"[EventLoopSystem] Initializing with {self.latency_target_ms}ms target latency...")
+        logger.info(f"[EventLoopSystem] Initializing with {self.latency_target_ms}ms target latency...")
         
         self._running = True
         
@@ -458,11 +458,11 @@ class EventLoopSystem:
         self._processor_task = asyncio.create_task(self._event_processor())
         self._metrics_task = asyncio.create_task(self._metrics_collector())
         
-        print("[EventLoopSystem] Initialization complete")
+        logger.info("[EventLoopSystem] Initialization complete")
     
     async def shutdown(self):
         """Shutdown the event loop system"""
-        print("[EventLoopSystem] Shutting down...")
+        logger.info("[EventLoopSystem] Shutting down...")
         
         self._running = False
         
@@ -481,7 +481,7 @@ class EventLoopSystem:
             except asyncio.CancelledError:
                 pass
         
-        print("[EventLoopSystem] Shutdown complete")
+        logger.info("[EventLoopSystem] Shutdown complete")
     
     def _setup_default_aggregations(self):
         """Setup default event aggregation rules"""
@@ -562,7 +562,7 @@ class EventLoopSystem:
                 # No events, continue
                 pass
             except Exception as e:
-                print(f"[EventLoopSystem] Processor error: {e}")
+                logger.error(f"[EventLoopSystem] Processor error: {e}")
                 self.metrics["processing_errors"] += 1
     
     async def _process_event(self, event: Event):
@@ -579,7 +579,7 @@ class EventLoopSystem:
                     handler(event)
             
         except Exception as e:
-            print(f"[EventLoopSystem] Event processing error: {e}")
+            logger.error(f"[EventLoopSystem] Event processing error: {e}")
             event.status = EventStatus.FAILED
     
     async def _metrics_collector(self):
@@ -711,10 +711,10 @@ class EventLoopSystem:
 # Example usage
 if __name__ == "__main__":
     async def demo():
-        print("=" * 70)
-        print("Angela AI v6.0 - Event Loop System Demo")
-        print("事件循环系统演示")
-        print("=" * 70)
+        logger.info("=" * 70)
+        logger.info("Angela AI v6.0 - Event Loop System Demo")
+        logger.info("事件循环系统演示")
+        logger.info("=" * 70)
         
         # Create event loop
         event_loop = EventLoopSystem(latency_target_ms=16)
@@ -725,17 +725,17 @@ if __name__ == "__main__":
         
         def handle_mouse_move(event):
             processed_events.append(event.event_type)
-            print(f"[Handler] Mouse move: {event.data.get('x')}, {event.data.get('y')}")
+            logger.info(f"[Handler] Mouse move: {event.data.get('x')}, {event.data.get('y')}")
         
         def handle_file_change(event):
             processed_events.append(event.event_type)
-            print(f"[Handler] File change: {event.data.get('path')}")
+            logger.info(f"[Handler] File change: {event.data.get('path')}")
         
         event_loop.register_handler("mouse_move", handle_mouse_move)
         event_loop.register_handler("file_change", handle_file_change)
         
         # Add test events
-        print("\n1. Adding test events:")
+        logger.info("\n1. Adding test events:")
         
         for i in range(5):
             event = Event(
@@ -762,23 +762,23 @@ if __name__ == "__main__":
         await asyncio.sleep(0.5)
         
         # Show metrics
-        print("\n2. Event loop metrics:")
+        logger.info("\n2. Event loop metrics:")
         metrics = event_loop.get_metrics()
         for key, value in metrics.items():
-            print(f"   {key}: {value}")
+            logger.info(f"   {key}: {value}")
         
         # Show queue status
-        print("\n3. Queue status:")
+        logger.info("\n3. Queue status:")
         status = await event_loop.get_queue_status()
         for key, value in status.items():
-            print(f"   {key}: {value}")
+            logger.info(f"   {key}: {value}")
         
-        print(f"\n4. Processed events: {len(processed_events)}")
+        logger.info(f"\n4. Processed events: {len(processed_events)}")
         
         await event_loop.shutdown()
         
-        print("\n" + "=" * 70)
-        print("Demo completed successfully!")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("Demo completed successfully!")
+        logger.info("=" * 70)
     
     asyncio.run(demo())

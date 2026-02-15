@@ -68,30 +68,30 @@ class AIOpsEngine:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    print("--- AIOpsEngine Example Usage ---")
+    logger.info("--- AIOpsEngine Example Usage ---")
 
     engine = AIOpsEngine(config={"anomaly_threshold": 150})
-    print(f"Initial status: {engine.get_status()}")
+    logger.info(f"Initial status: {engine.get_status()}")
 
     engine.start_monitoring()
-    print(f"Status after starting monitoring: {engine.get_status()}")
+    logger.info(f"Status after starting monitoring: {engine.get_status()}")
 
     # Test anomaly detection
-    print("\n--- Testing Anomaly Detection ---")
+    logger.info("\n--- Testing Anomaly Detection ---")
     data1 = {"metric": "cpu_usage", "value": 80}
     data2 = {"metric": "memory_leak", "value": 180, "message": "High memory usage detected"}
 
     if engine.detect_anomaly(data1):
-        print(f"Anomaly detected for data1. Response: {engine.automated_response(data1)}")
+        logger.info(f"Anomaly detected for data1. Response: {engine.automated_response(data1)}")
     else:
-        print("No anomaly detected for data1.")
+        logger.info("No anomaly detected for data1.")
 
     if engine.detect_anomaly(data2):
-        print(f"Anomaly detected for data2. Response: {engine.automated_response(data2)}")
+        logger.info(f"Anomaly detected for data2. Response: {engine.automated_response(data2)}")
     else:
-        print("No anomaly detected for data2.")
+        logger.info("No anomaly detected for data2.")
 
     engine.stop_monitoring()
-    print(f"Status after stopping monitoring: {engine.get_status()}")
+    logger.info(f"Status after stopping monitoring: {engine.get_status()}")
 
-    print("\n--- AIOpsEngine Example Finished ---")
+    logger.info("\n--- AIOpsEngine Example Finished ---")

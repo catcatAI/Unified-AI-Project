@@ -8,9 +8,9 @@ import unittest
 import pytest
 from unittest.mock import MagicMock
 from fragmenta.fragmenta_orchestrator import FragmentaOrchestrator
-from core_ai.memory.ham_memory_manager import HAMMemoryManager
+from ai.memory.ham_memory_manager import HAMMemoryManager
 
-class TestFragmentaOrchestrator(unittest.TestCase()):
+class TestFragmentaOrchestrator(unittest.TestCase):
     @pytest.mark.timeout(5)
     
     def setUp(self):
@@ -22,7 +22,7 @@ class TestFragmentaOrchestrator(unittest.TestCase()):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_process_complex_task(self) -> None,
+def test_process_complex_task(self) -> None:
         ham_manager == MagicMock(spec == HAMMemoryManager)
         orchestrator == FragmentaOrchestrator(ham_manager)
 
@@ -42,5 +42,5 @@ def test_process_complex_task(self) -> None,
     limit=5
         )
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

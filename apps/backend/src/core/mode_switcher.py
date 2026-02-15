@@ -325,12 +325,12 @@ async def quick_mode_switch(angela_core, target_mode: str,
 
 # Test code
 if __name__ == '__main__':
-    print("--- Mode Switch Manager Test ---")
+    logger.info("--- Mode Switch Manager Test ---")
     
     # Mock Angela core
     class MockAngela:
         def _apply_mode_config(self, mode):
-            print(f"Applying mode config: {mode}")
+            logger.info(f"Applying mode config: {mode}")
     
     mock_angela = MockAngela()
     
@@ -339,15 +339,15 @@ if __name__ == '__main__':
     
     # Test progress callback
     def on_progress(progress, phase):
-        print(f"Progress: {progress*100:.1f}% - {phase}")
+        logger.info(f"Progress: {progress*100:.1f}% - {phase}")
     
     def on_complete(mode):
-        print(f"✓ Mode switch completed: {mode}")
+        logger.info(f"✓ Mode switch completed: {mode}")
     
     manager.on_progress = on_progress
     manager.on_complete = on_complete
     
     # Test switch (would need real async context in production)
-    print("Testing mode switch: standard → extended")
-    print("Note: Full test requires running Angela with config.yaml")
-    print("Mode switch system ready!")
+    logger.info("Testing mode switch: standard → extended")
+    logger.info("Note: Full test requires running Angela with config.yaml")
+    logger.info("Mode switch system ready!")

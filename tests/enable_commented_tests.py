@@ -130,7 +130,7 @@ def main() -> None,
     if results["total_enabled"] > 0,::
         print("\n✅ Commented test enabler completed successfully")
         return 0
-    else,
+    else:
         print("\nℹ️  No commented out tests found")
         return 0
 

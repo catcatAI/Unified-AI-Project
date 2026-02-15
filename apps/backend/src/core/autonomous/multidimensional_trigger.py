@@ -480,13 +480,13 @@ if __name__ == "__main__":
         trigger_system = MultidimensionalTriggerSystem()
         await trigger_system.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 多维度触发器系统演示")
-        print("Multidimensional Trigger System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 多维度触发器系统演示")
+        logger.info("Multidimensional Trigger System Demo")
+        logger.info("=" * 60)
         
         # Update dimensions
-        print("\n更新维度值 / Updating dimension values:")
+        logger.info("\n更新维度值 / Updating dimension values:")
         trigger_system.update_dimension(TriggerDimension.TIME, 0.25)  # Morning
         trigger_system.update_dimension(TriggerDimension.EMOTION, 0.8)  # Happy
         trigger_system.update_dimension(TriggerDimension.PHYSIOLOGY, 0.6)  # Normal energy
@@ -496,27 +496,27 @@ if __name__ == "__main__":
                     TriggerDimension.PHYSIOLOGY, TriggerDimension.SOCIAL]:
             val = trigger_system.get_dimension_value(dim)
             if val:
-                print(f"  {dim.value[0]}: {val.value:.2f}")
+                logger.info(f"  {dim.value[0]}: {val.value:.2f}")
         
         # Evaluate triggers
-        print("\n评估触发器 / Evaluating triggers:")
+        logger.info("\n评估触发器 / Evaluating triggers:")
         results = trigger_system.evaluate_all()
         for trigger_id, score in results[:5]:
-            print(f"  {trigger_id}: {score:.2f}")
+            logger.info(f"  {trigger_id}: {score:.2f}")
         
         # Get triggered behaviors
-        print("\n触发的行为 / Triggered behaviors:")
+        logger.info("\n触发的行为 / Triggered behaviors:")
         behaviors = trigger_system.get_triggered_behaviors()
         for behavior_id, name, score in behaviors[:5]:
-            print(f"  {behavior_id} ({name}): {score:.2f}")
+            logger.info(f"  {behavior_id} ({name}): {score:.2f}")
         
         # System summary
-        print("\n系统摘要 / System summary:")
+        logger.info("\n系统摘要 / System summary:")
         summary = trigger_system.get_system_summary()
-        print(f"  注册触发器: {summary['registered_triggers']}")
-        print(f"  活跃维度: {summary['active_dimensions']}")
+        logger.info(f"  注册触发器: {summary['registered_triggers']}")
+        logger.info(f"  活跃维度: {summary['active_dimensions']}")
         
         await trigger_system.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

@@ -740,37 +740,37 @@ if __name__ == "__main__":
         integrator = BiologicalIntegrator()
         await integrator.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 生物系统整合器演示")
-        print("Biological Integrator Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 生物系统整合器演示")
+        logger.info("Biological Integrator Demo")
+        logger.info("=" * 60)
         
         # Show initial state
-        print("\n初始生物状态 / Initial biological state:")
+        logger.info("\n初始生物状态 / Initial biological state:")
         state = integrator.get_biological_state()
-        print(f"  唤醒水平: {state['arousal']:.1f}")
-        print(f"  主要情绪: {state['dominant_emotion']}")
+        logger.info(f"  唤醒水平: {state['arousal']:.1f}")
+        logger.info(f"  主要情绪: {state['dominant_emotion']}")
         
         # Process stress
-        print("\n处理压力事件 / Processing stress event:")
+        logger.info("\n处理压力事件 / Processing stress event:")
         await integrator.process_stress_event(intensity=0.7)
         await asyncio.sleep(1)
         
         state = integrator.get_biological_state()
-        print(f"  唤醒水平: {state['arousal']:.1f}")
-        print(f"  压力水平: {state['stress_level']:.2f}")
-        print(f"  心率: {state['physiological']['heart_rate']:.0f}")
+        logger.info(f"  唤醒水平: {state['arousal']:.1f}")
+        logger.info(f"  压力水平: {state['stress_level']:.2f}")
+        logger.info(f"  心率: {state['physiological']['heart_rate']:.0f}")
         
         # Process relaxation
-        print("\n处理放松事件 / Processing relaxation event:")
+        logger.info("\n处理放松事件 / Processing relaxation event:")
         await integrator.process_relaxation_event(intensity=0.6)
         await asyncio.sleep(1)
         
         state = integrator.get_biological_state()
-        print(f"  唤醒水平: {state['arousal']:.1f}")
-        print(f"  情绪: {state['dominant_emotion']}")
+        logger.info(f"  唤醒水平: {state['arousal']:.1f}")
+        logger.info(f"  情绪: {state['dominant_emotion']}")
         
         await integrator.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

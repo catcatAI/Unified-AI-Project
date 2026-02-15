@@ -33,9 +33,9 @@ class DailyLanguageModel:
         self.total_interactions = 0  # 总交互次数
         
         if llm_service is None:
-            print("DailyLanguageModel: No LLM Service provided, will use mock responses.")
+            logger.info("DailyLanguageModel: No LLM Service provided, will use mock responses.")
         else:
-            print("DailyLanguageModel: Initialized with LLMInterface.")
+            logger.info("DailyLanguageModel: Initialized with LLMInterface.")
     
     def set_llm_service(self, llm_service):
         """Inject or replace the LLM service at runtime (used by hot reload)."""
@@ -99,7 +99,7 @@ class DailyLanguageModel:
                 return self._simple_intent_recognition(text, available_tools)
         
         except Exception as e:
-            print(f"Error in recognize_intent: {e}")
+            logger.error(f"Error in recognize_intent: {e}")
             return self._simple_intent_recognition(text, available_tools)
     
     def _simple_intent_recognition(self, text: str, available_tools: Dict[str, str]) -> Dict[str, Any]:

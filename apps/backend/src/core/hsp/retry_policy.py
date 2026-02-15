@@ -24,8 +24,8 @@ class RetryPolicy:
                 if attempt < self.max_retries - 1:
 
                     delay = self.initial_delay * (self.backoff_factor ** attempt)
-                    print(f"Attempt {attempt + 1} failed. Retrying in {delay:.2f} seconds... Error: {e}")
+                    logger.error(f"Attempt {attempt + 1} failed. Retrying in {delay:.2f} seconds... Error: {e}")
                     await asyncio.sleep(delay)
                 else:
-                    print(f"Attempt {attempt + 1} failed. No more retries. Error: {e}")
+                    logger.error(f"Attempt {attempt + 1} failed. No more retries. Error: {e}")
                     raise

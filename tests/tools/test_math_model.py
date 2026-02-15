@@ -88,7 +88,7 @@ def test_model_build_and_char_maps(setup_each_test) -> None:
     logger.info("\nRunning test_model_build_and_char_maps...")
     
     # Check if TensorFlow is available
-    from core_ai.dependency_manager import dependency_manager
+    from ai.dependency_manager import dependency_manager
     if not dependency_manager.is_available('tensorflow'):
         logger.info("TensorFlow not available, skipping model build tests")
         pytest.skip("TensorFlow not available")

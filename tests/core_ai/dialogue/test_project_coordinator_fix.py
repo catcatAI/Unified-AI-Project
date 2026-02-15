@@ -23,7 +23,7 @@ async
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_project_coordinator_decomposition() -> None,
+def test_project_coordinator_decomposition() -> None:
     """Test the project coordinator's decomposition functionality"""
     print("Testing ProjectCoordinator decomposition...")
     

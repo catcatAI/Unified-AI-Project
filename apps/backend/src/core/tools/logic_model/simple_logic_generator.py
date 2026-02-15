@@ -81,15 +81,15 @@ def save_dataset(dataset: List[Dict[str, Any]], output_file: str):
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(dataset, f, indent=2, ensure_ascii=False)
 
-    print(f"保存 {len(dataset)} 个样本到 {output_file}")
+    logger.info(f"保存 {len(dataset)} 个样本到 {output_file}")
 
 
 def main():
     """主函数"""
-    print("生成简单逻辑数据集...")
+    logger.info("生成简单逻辑数据集...")
     dataset = generate_simple_logic_dataset(1000)
     save_dataset(dataset, "data/raw_datasets/simple_logic.json")
-    print("完成!")
+    logger.info("完成!")
 
 
 if __name__ == "__main__":

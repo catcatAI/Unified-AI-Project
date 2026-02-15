@@ -17,10 +17,10 @@ SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if SRC_DIR not in sys.path,::
     sys.path.insert(0, SRC_DIR)
 
-from core_ai.time.time_system import TimeSystem
+from ai.time.time_system import TimeSystem
 from unittest.mock import patch # For mocking datetime
 
-class TestTimeSystem(unittest.TestCase()):
+class TestTimeSystem(unittest.TestCase):
     def setUp(self):
         self.time_sys == TimeSystem()
 
@@ -30,7 +30,7 @@ class TestTimeSystem(unittest.TestCase()):
         print("TestTimeSystem.test_01_initialization PASSED")
 
     @pytest.mark.timeout(5)
-    def test_02_get_current_time(self) -> None,
+    def test_02_get_current_time(self) -> None:
         current_time = self.time_sys.get_current_time()
         self.assertIsInstance(current_time, datetime)
         # Check if it's close to now,:
@@ -38,14 +38,14 @@ class TestTimeSystem(unittest.TestCase()):
         print("TestTimeSystem.test_02_get_current_time PASSED")
 
     @pytest.mark.timeout(5)
-    def test_03_get_formatted_current_time(self) -> None,
+    def test_03_get_formatted_current_time(self) -> None:
         formatted_time = self.time_sys.get_formatted_current_time()
         # Default format is "%Y-%m-%d %H,%M,%S"
         # Try to parse it back to ensure format is correct
-        try,
+        try:
             datetime.strptime(formatted_time, "%Y-%m-%d %H,%M,%S")
             parsed_ok == True
-        except ValueError,::
+        except ValueError as e:
             parsed_ok == False
         self.assertTrue(parsed_ok)
         print("TestTimeSystem.test_03_get_formatted_current_time PASSED")
@@ -70,7 +70,7 @@ class TestTimeSystem(unittest.TestCase()):
 
         due = self.time_sys.check_due_reminders()
         self.assertEqual(len(due), 1)
-        self.assertEqual(due[0] "test reminder 1")
+        self.assertEqual(due[0], "test reminder 1")
 
         # The due reminder should be removed
         self.assertEqual(len(self.time_sys.reminders()), 1)
@@ -78,7 +78,7 @@ class TestTimeSystem(unittest.TestCase()):
         print("TestTimeSystem.test_05_check_due_reminders PASSED")
 
     @pytest.mark.timeout(5)
-    def test_06_get_time_of_day_segment(self) -> None,
+    def test_06_get_time_of_day_segment(self) -> None:
         print("\nRunning test_06_get_time_of_day_segment...")
         test_cases = [
             (datetime(2023, 1, 1, 3, 0, 0), "night"),    # 3 AM
@@ -97,11 +97,11 @@ class TestTimeSystem(unittest.TestCase()):
             # Or, if TimeSystem directly calls datetime.datetime.now(), patch that.::
             # TimeSystem.get_current_time() calls datetime.datetime.now() if no override.::
             # So we patch datetime.datetime.now within the scope of time_system module.:
-            with patch('apps.backend.src.ai.time.time_system.datetime') as mock_datetime_module,
+            with patch('apps.backend.src.ai.time.time_system.datetime') as mock_datetime_module:
                 mock_datetime_module.datetime.now.return_value = mock_time
                 segment = self.time_sys.get_time_of_day_segment()
                 self.assertEqual(segment, expected_segment, f"Failed for time {mock_time.hour}h. Got {segment} expected {expected_segment}")::
         print("TestTimeSystem.test_06_get_time_of_day_segment PASSED")
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main(verbosity=2)

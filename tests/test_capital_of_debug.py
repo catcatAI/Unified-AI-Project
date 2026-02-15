@@ -29,7 +29,7 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_capital_of_pattern() -> None,
+    def test_capital_of_pattern() -> None:
     # 创建ContentAnalyzerModule实例
     analyzer == ContentAnalyzerModule(spacy_model_name="en_core_web_sm")
     
@@ -93,11 +93,11 @@ def test_
             print(f"NetworkX边, {france_node} -> {paris_node} 数据, {edge_data}")
             if edge_data.get("type") == "has_capital":::
                 print("NetworkX图中找到France --[has_capital]--> Paris关系")
-            else,
+            else:
                 print(f"NetworkX图中找到France -> Paris边,但类型是, {edge_data.get('type')}")
-        else,
+        else:
             print("NetworkX图中未找到France -> Paris边")
-    else,
+    else:
         print(f"NetworkX图中Paris节点, {paris_node} France节点, {france_node}")
 
 if __name"__main__":::

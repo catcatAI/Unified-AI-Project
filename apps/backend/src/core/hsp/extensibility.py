@@ -563,7 +563,7 @@ if __name__ == "__main__":
         }
 
         result = await extension_manager.process_message(fact_message)
-        print("事实消息处理结果: ", result)
+        logger.info("事实消息处理结果: ", result)
 
         # 测试任务消息
         task_message = {
@@ -580,10 +580,10 @@ if __name__ == "__main__":
         }
 
         result = await extension_manager.process_message(task_message)
-        print("任务消息处理结果: ", result)
+        logger.info("任务消息处理结果: ", result)
 
         # 显示扩展信息
-        print("扩展信息: ", extension_manager.get_extension_info())
+        logger.info("扩展信息: ", extension_manager.get_extension_info())
 
     # 运行测试
     asyncio.run(test_message_processing())

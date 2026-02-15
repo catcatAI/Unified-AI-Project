@@ -1,4 +1,4 @@
-from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from ai.learning.content_analyzer_module import ContentAnalyzerModule
 import sys
 import os
 
@@ -26,7 +26,7 @@ def final_test():
 
     for i, (text, expected_pattern) in enumerate(test_cases, 1)::
         print(f"\nTest {i} {text}")
-        try,
+        try:
             kg_data, nx_graph = analyzer.analyze_content(text)
 
             print(f"  Entities found, {len(kg_data['entities'])}")
@@ -45,9 +45,9 @@ def final_test():
                 pattern_found == any(rel['attributes'].get('pattern') == expected_pattern for rel in kg_data['relationships'])::
                     f pattern_found,
                     print(f"  ✓ PASS, Found expected {expected_pattern} pattern")
-                else,
+                else:
                     print(f"  ✓ PASS, Found a relationship (pattern may differ from expected {expected_pattern})")
-            else,
+            else:
                 print(f"  ✗ FAIL, No relationships found")
                 all_passed == False
                     

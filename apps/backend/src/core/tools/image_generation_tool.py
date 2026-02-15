@@ -13,7 +13,7 @@ class ImageGenerationTool:
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """初始化ImageGenerationTool"""
         self.config = config or {}
-        print(f"{self.__class__.__name__} initialized.")
+        logger.info(f"{self.__class__.__name__} initialized.")
 
     def create_image(self, prompt: str, style: str = "photorealistic") -> Dict[str, Any]:
         """
@@ -26,7 +26,7 @@ class ImageGenerationTool:
         Returns:
             生成结果
         """
-        print(f"ImageGenerationTool: Received prompt = '{prompt}', style = '{style}'")
+        logger.info(f"ImageGenerationTool: Received prompt = '{prompt}', style = '{style}'")
 
         # 占位符实现
         return {

@@ -430,7 +430,7 @@ if __name__ == "__main__":
         await integration_loop.start()
 
         # 手動添加一些記憶
-        print("=== 添加記憶 ===")
+        logger.info("=== 添加記憶 ===")
         integration_loop.add_memory("用戶喜歡看電影", "interest", 0.7)
         integration_loop.add_memory("用戶喜歡聽音樂", "interest", 0.8)
         integration_loop.add_memory("用戶問了關於AI的問題", "question", 0.6)
@@ -439,11 +439,11 @@ if __name__ == "__main__":
         await asyncio.sleep(15)
 
         # 打印統計
-        print(f"\n=== 記憶整合統計 ===")
-        print(json.dumps(integration_loop.get_stats(), indent=2, ensure_ascii=False))
+        logger.info(f"\n=== 記憶整合統計 ===")
+        logger.info(json.dumps(integration_loop.get_stats(), indent=2, ensure_ascii=False))
 
-        print(f"\n=== 知識模式 ===")
-        print(json.dumps(integration_loop.get_patterns(), indent=2, ensure_ascii=False))
+        logger.info(f"\n=== 知識模式 ===")
+        logger.info(json.dumps(integration_loop.get_patterns(), indent=2, ensure_ascii=False))
 
         # 停止
         await integration_loop.stop()

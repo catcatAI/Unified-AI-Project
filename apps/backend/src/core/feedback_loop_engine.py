@@ -274,7 +274,7 @@ class FeedbackLoopEngine:
         if self._initialized:
             return
         
-        print("[FeedbackLoopEngine] Initializing real-time feedback loop system...")
+        logger.info("[FeedbackLoopEngine] Initializing real-time feedback loop system...")
         
         # Initialize sub-systems if not provided
         if not self.real_time_monitor:
@@ -314,11 +314,11 @@ class FeedbackLoopEngine:
         self.performance_metrics["start_time"] = datetime.now()
         
         self._initialized = True
-        print("[FeedbackLoopEngine] Initialization complete")
+        logger.info("[FeedbackLoopEngine] Initialization complete")
     
     async def shutdown(self):
         """Shutdown the feedback loop engine"""
-        print("[FeedbackLoopEngine] Shutting down...")
+        logger.info("[FeedbackLoopEngine] Shutting down...")
         
         self._running = False
         
@@ -340,7 +340,7 @@ class FeedbackLoopEngine:
         if self.event_loop_system:
             await self.event_loop_system.shutdown()
         
-        print("[FeedbackLoopEngine] Shutdown complete")
+        logger.info("[FeedbackLoopEngine] Shutdown complete")
     
     def _register_monitor_callbacks(self):
         """Register callbacks with the real-time monitor"""
@@ -424,7 +424,7 @@ class FeedbackLoopEngine:
             try:
                 callback(cycle)
             except Exception as e:
-                print(f"[FeedbackLoopEngine] Cycle start callback error: {e}")
+                logger.error(f"[FeedbackLoopEngine] Cycle start callback error: {e}")
         
         # Trigger cognitive processing
         decision = await self._cognitive_processing(perception_event)
@@ -525,7 +525,7 @@ class FeedbackLoopEngine:
                 )
                 return result.action_id if hasattr(result, 'action_id') else str(uuid.uuid4())
             except Exception as e:
-                print(f"[FeedbackLoopEngine] Action bridge execution error: {e}")
+                logger.error(f"[FeedbackLoopEngine] Action bridge execution error: {e}")
         
         # Fallback to action executor
         if self.action_executor and hasattr(self.action_executor, 'handle_autonomous_action'):
@@ -536,7 +536,7 @@ class FeedbackLoopEngine:
                 )
                 return result.action_id if hasattr(result, 'action_id') else str(uuid.uuid4())
             except Exception as e:
-                print(f"[FeedbackLoopEngine] Action executor error: {e}")
+                logger.error(f"[FeedbackLoopEngine] Action executor error: {e}")
         
         return None
     
@@ -629,7 +629,7 @@ class FeedbackLoopEngine:
             try:
                 callback(signal)
             except Exception as e:
-                print(f"[FeedbackLoopEngine] Feedback callback error: {e}")
+                logger.error(f"[FeedbackLoopEngine] Feedback callback error: {e}")
     
     async def _update_active_cycles(self):
         """Update active cycles and complete finished ones"""
@@ -654,7 +654,7 @@ class FeedbackLoopEngine:
                     try:
                         callback(cycle)
                     except Exception as e:
-                        print(f"[FeedbackLoopEngine] Cycle end callback error: {e}")
+                        logger.error(f"[FeedbackLoopEngine] Cycle end callback error: {e}")
                 
                 # Update metrics
                 self._update_performance_metrics(cycle)
@@ -707,7 +707,7 @@ class FeedbackLoopEngine:
                 })
                 learning_update.hsm_update = {"status": "updated"}
             except Exception as e:
-                print(f"[FeedbackLoopEngine] HSM update error: {e}")
+                logger.error(f"[FeedbackLoopEngine] HSM update error: {e}")
         
         # Update CDM if available
         if self.cdm and hasattr(self.cdm, 'integrate_execution_feedback'):
@@ -720,7 +720,7 @@ class FeedbackLoopEngine:
                 })
                 learning_update.cdm_update = {"status": "updated"}
             except Exception as e:
-                print(f"[FeedbackLoopEngine] CDM update error: {e}")
+                logger.error(f"[FeedbackLoopEngine] CDM update error: {e}")
         
         self.performance_metrics["learning_updates"] += 1
     
@@ -905,10 +905,10 @@ class FeedbackLoopEngineFactory:
 # Example usage
 if __name__ == "__main__":
     async def demo():
-        print("=" * 70)
-        print("Angela AI v6.0 - Feedback Loop Engine Demo")
-        print("实时反馈循环引擎演示")
-        print("=" * 70)
+        logger.info("=" * 70)
+        logger.info("Angela AI v6.0 - Feedback Loop Engine Demo")
+        logger.info("实时反馈循环引擎演示")
+        logger.info("=" * 70)
         
         # Create engine
         engine = FeedbackLoopEngine()
@@ -916,19 +916,19 @@ if __name__ == "__main__":
         
         # Register some callbacks
         def on_cycle_start(cycle):
-            print(f"\n[Cycle Started] ID: {cycle.cycle_id}")
-            print(f"  Perception: {cycle.perception_event.perception_type.value[0]}")
+            logger.info(f"\n[Cycle Started] ID: {cycle.cycle_id}")
+            logger.info(f"  Perception: {cycle.perception_event.perception_type.value[0]}")
         
         def on_cycle_end(cycle):
-            print(f"\n[Cycle Completed] ID: {cycle.cycle_id}")
-            print(f"  Latency: {cycle.latency_ms:.2f}ms")
-            print(f"  Success: {cycle.execution_result.get('success', False) if cycle.execution_result else 'N/A'}")
+            logger.info(f"\n[Cycle Completed] ID: {cycle.cycle_id}")
+            logger.info(f"  Latency: {cycle.latency_ms:.2f}ms")
+            logger.info(f"  Success: {cycle.execution_result.get('success', False) if cycle.execution_result else 'N/A'}")
         
         engine.register_cycle_start_callback(on_cycle_start)
         engine.register_cycle_end_callback(on_cycle_end)
         
         # Create and process test perception event
-        print("\n1. Testing perception processing:")
+        logger.info("\n1. Testing perception processing:")
         event = PerceptionEvent.create(
             PerceptionType.MOUSE,
             "test",
@@ -937,23 +937,23 @@ if __name__ == "__main__":
         )
         
         cycle_id = await engine.process_perception_event(event)
-        print(f"   Cycle ID: {cycle_id}")
+        logger.info(f"   Cycle ID: {cycle_id}")
         
         # Wait for cycle to complete
         completed = await engine.wait_for_cycle(cycle_id, timeout=2.0)
         if completed:
-            print(f"   Cycle completed successfully")
+            logger.info(f"   Cycle completed successfully")
         
         # Show metrics
-        print("\n2. Performance metrics:")
+        logger.info("\n2. Performance metrics:")
         metrics = engine.get_performance_metrics()
-        print(f"   Cycles completed: {metrics['cycles_completed']}")
-        print(f"   Average latency: {metrics['average_latency_ms']:.2f}ms")
-        print(f"   Min latency: {metrics['min_latency_ms']:.2f}ms")
-        print(f"   Max latency: {metrics['max_latency_ms']:.2f}ms")
+        logger.info(f"   Cycles completed: {metrics['cycles_completed']}")
+        logger.info(f"   Average latency: {metrics['average_latency_ms']:.2f}ms")
+        logger.info(f"   Min latency: {metrics['min_latency_ms']:.2f}ms")
+        logger.info(f"   Max latency: {metrics['max_latency_ms']:.2f}ms")
         
         # Test another perception type
-        print("\n3. Testing file system perception:")
+        logger.info("\n3. Testing file system perception:")
         event2 = PerceptionEvent.create(
             PerceptionType.FILE_SYSTEM,
             "test",
@@ -966,8 +966,8 @@ if __name__ == "__main__":
         
         await engine.shutdown()
         
-        print("\n" + "=" * 70)
-        print("Demo completed successfully!")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("Demo completed successfully!")
+        logger.info("=" * 70)
     
     asyncio.run(demo())

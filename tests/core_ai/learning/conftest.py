@@ -1,5 +1,5 @@
 import pytest
-from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+from ai.learning.content_analyzer_module import ContentAnalyzerModule
 
 @pytest.fixture(scope="session")
 def content_analyzer():

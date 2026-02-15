@@ -63,7 +63,7 @@ class PerformanceOptimizer:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    print("--- PerformanceOptimizer Example Usage ---")
+    logger.info("--- PerformanceOptimizer Example Usage ---")
 
     optimizer = PerformanceOptimizer(config={
         "min_history_for_analysis": 3,
@@ -76,15 +76,15 @@ if __name__ == "__main__":
     optimizer.ingest_metrics("model_inference_service", {"latency_ms": 150, "throughput_qps": 80}) # Bottleneck
 
     # Analyze and recommend
-    print("\n--- Analyzing model_inference_service ---")
+    logger.info("\n--- Analyzing model_inference_service ---")
     bottleneck = optimizer.analyze_bottlenecks("model_inference_service")
     if bottleneck:
-        print(f"Bottleneck detected: {bottleneck}")
+        logger.info(f"Bottleneck detected: {bottleneck}")
         recommendations = optimizer.recommend_optimizations("model_inference_service", bottleneck)
-        print("Recommendations:")
+        logger.info("Recommendations:")
         for rec in recommendations:
-            print(f"- {rec}")
+            logger.info(f"- {rec}")
     else:
-        print("No significant bottlenecks detected for model_inference_service.")
+        logger.info("No significant bottlenecks detected for model_inference_service.")
 
-    print("\n--- PerformanceOptimizer Example Finished ---")
+    logger.info("\n--- PerformanceOptimizer Example Finished ---")

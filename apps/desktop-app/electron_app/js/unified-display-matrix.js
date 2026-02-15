@@ -586,8 +586,12 @@ class UnifiedDisplayMatrix {
         this.wrapperElement.style.height = `${displayHeight}px`;
 
         if (this.canvasElement) {
-            this.canvasElement.width = this.currentState.baseWidth;
-            this.canvasElement.height = this.currentState.baseHeight;
+            this.canvasElement.width = this.currentState.baseWidth * this.currentState.devicePixelRatio;
+            this.canvasElement.height = this.currentState.baseHeight * this.currentState.devicePixelRatio;
+
+            // Also update the CSS width/height to match the display logic, but without DPR
+            this.canvasElement.style.width = `${this.getDisplayWidth()}px`;
+            this.canvasElement.style.height = `${this.getDisplayHeight()}px`;
         }
     }
 

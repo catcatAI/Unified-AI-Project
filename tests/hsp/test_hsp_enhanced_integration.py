@@ -16,10 +16,10 @@ import time
 async def mock_broker():
     broker == MockMqttBroker()
     await broker.start()
-    try,
+    try:
 
     yield broker
-    finally,
+    finally:
     await broker.shutdown()
 
 @pytest_asyncio.fixture(scope="function")
@@ -32,10 +32,10 @@ async def hsp_connector_fixture(mock_broker):
     mock_mqtt_client=mock_broker
     )
     await connector.connect()
-    try,
+    try:
 
     yield connector
-    finally,
+    finally:
     await connector.disconnect()
 
 class TestHSPEnhancedIntegration,
@@ -53,7 +53,7 @@ class TestHSPEnhancedIntegration,
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_broker) -> None,
+def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector handling message queue overflow."""
     connector = hsp_connector_fixture
 
@@ -107,7 +107,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(30)
-    async def test_hsp_connector_network_disconnect_recovery(self, hsp_connector_fixture, mock_broker) -> None,
+    async def test_hsp_connector_network_disconnect_recovery(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector recovery from network disconnection."""
     connector = hsp_connector_fixture
 
@@ -135,7 +135,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(30)
-    async def test_hsp_connector_large_message_handling(self, hsp_connector_fixture, mock_broker) -> None,
+    async def test_hsp_connector_large_message_handling(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector handling large messages."""
     connector = hsp_connector_fixture
 
@@ -187,7 +187,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(30)
-    async def test_hsp_connector_concurrent_subscriptions(self, hsp_connector_fixture, mock_broker) -> None,
+    async def test_hsp_connector_concurrent_subscriptions(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector handling concurrent subscriptions."""
     connector = hsp_connector_fixture
 
@@ -285,7 +285,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(30)
-    async def test_hsp_connector_message_ordering(self, hsp_connector_fixture, mock_broker) -> None,
+    async def test_hsp_connector_message_ordering(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector message ordering preservation."""
     connector = hsp_connector_fixture
 
@@ -340,7 +340,7 @@ def test_hsp_connector_message_queue_overflow(self, hsp_connector_fixture, mock_
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(30)
-    async def test_hsp_connector_error_handling(self, hsp_connector_fixture, mock_broker) -> None,
+    async def test_hsp_connector_error_handling(self, hsp_connector_fixture, mock_broker) -> None:
         """Test HSP connector error handling for malformed messages.""":::
     connector = hsp_connector_fixture
 

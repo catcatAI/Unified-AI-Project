@@ -428,10 +428,10 @@ if __name__ == "__main__":
 
             # 获取报告
             report = monitor.get_service_report()
-            print("Service report generated")
+            logger.info("Service report generated")
 
             # 等待一段时间
             await asyncio.sleep(1)
 
-    print("Service monitor test completed")
+    logger.info("Service monitor test completed")
     asyncio.run(main())

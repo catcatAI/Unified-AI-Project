@@ -291,8 +291,8 @@ def create_soul_core(
 
 def demo():
     """演示 / Demo"""
-    print("🎭 灵魂核心系统演示")
-    print("=" * 50)
+    logger.info("🎭 灵魂核心系统演示")
+    logger.info("=" * 50)
     
     manager = SoulCoreManager()
     
@@ -303,16 +303,16 @@ def demo():
         personality_foundation={"openness": 0.85, "conscientiousness": 0.75}
     )
     
-    print(f"✅ 灵魂ID: {soul.signature.soul_id}")
-    print(f"📝 身份: {soul.identity.name}")
-    print(f"🎯 目的: {soul.identity.core_purpose}")
-    print(f"🔐 完整性验证: {soul.verify_integrity()}")
-    print(f"📜 版本历史: {len(soul.version_history)} 条记录")
+    logger.info(f"✅ 灵魂ID: {soul.signature.soul_id}")
+    logger.info(f"📝 身份: {soul.identity.name}")
+    logger.info(f"🎯 目的: {soul.identity.core_purpose}")
+    logger.info(f"🔐 完整性验证: {soul.verify_integrity()}")
+    logger.info(f"📜 版本历史: {len(soul.version_history)} 条记录")
     
     essence = soul.extract_essence_for_transfer()
-    print(f"📦 精华数据: {len(str(essence))} 字符")
+    logger.info(f"📦 精华数据: {len(str(essence))} 字符")
     
-    print("\n✅ 演示完成!")
+    logger.info("\n✅ 演示完成!")
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ def client():
             def __init__(self) -> None,
                 self.ai_id == "did,hsp,test"
                 self.is_connected == False
-        class TrustManager,
+        class TrustManager:
             def get_all_trust_scores(self):
                 return {}
         return {
@@ -36,7 +36,7 @@ def client():
         }
 
     app.dependency_overrides[real_get_services] = fake_get_services
-    with TestClient(app) as c,
+    with TestClient(app) as c:
         yield c
     app.dependency_overrides.pop(real_get_services, None)
 
@@ -53,16 +53,16 @@ def client():
         self.test_config.clear()
 def test_api_v1_health(client, TestClient) -> None,
     resp = client.get("/api/v1/health")
-    assert resp.status_code=200
+    assert resp.status_code == 200
     data = resp.json()
     assert data.get("status") == "ok"
     assert "services_initialized" in data
     assert isinstance(data["services_initialized"].get("llm"), bool)
 
 
-def test_api_v1_ready(client, TestClient) -> None,
+def test_api_v1_ready(client, TestClient) -> None:
     resp = client.get("/api/v1/ready")
-    assert resp.status_code=200
+    assert resp.status_code == 200
     data = resp.json()
     assert "ready" in data
     # With our fake services providing llm_interface and dialogue_manager, ready should be True

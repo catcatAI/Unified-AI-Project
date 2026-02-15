@@ -119,9 +119,9 @@ class AlphaDeepModel:
         Enhanced learning mechanism that updates the model's internal state
         based on new DeepParameters and optional feedback.
         """
-        print(f"Learning from deep parameter: {deep_parameter.source_memory_id}")
+        logger.info(f"Learning from deep parameter: {deep_parameter.source_memory_id}")
         if feedback:
-            print(f"Received feedback: {feedback}")
+            logger.info(f"Received feedback: {feedback}")
 
         # 1. Update symbolic space based on deep_parameter
         # Ensure the main memory symbol exists or create it
@@ -181,7 +181,7 @@ class AlphaDeepModel:
             # Return the feedback symbol to ensure it's not None
             return self.symbolic_space.get_symbol(feedback_symbol_name)
 
-        print(f"Symbolic space updated for {deep_parameter.source_memory_id}")
+        logger.info(f"Symbolic space updated for {deep_parameter.source_memory_id}")
         return None
 
     def _adjust_model_parameters(self, deep_parameter: DeepParameter, feedback: Dict[str, Any]):
@@ -317,20 +317,20 @@ if __name__ == '__main__':
     )
 
     # 2. Compress the data with different algorithms
-    print(f"Original data object: {example_data}")
+    logger.info(f"Original data object: {example_data}")
     original_dict = example_data.to_dict()
-    print(f"\nOriginal data as dict: {original_dict}")
+    logger.info(f"\nOriginal data as dict: {original_dict}")
 
     # Test different compression algorithms
     algorithms = [CompressionAlgorithm.ZLIB, CompressionAlgorithm.BZ2, CompressionAlgorithm.LZMA]
     for algorithm in algorithms:
         compressed = model.compress(example_data, algorithm)
-        print(f"\nCompressed size with {algorithm.value}: {len(compressed)} bytes")
+        logger.info(f"\nCompressed size with {algorithm.value}: {len(compressed)} bytes")
         decompressed = model.decompress(compressed, algorithm)
         assert original_dict == decompressed
-        print(f"Decompression with {algorithm.value} successful!")
+        logger.info(f"Decompression with {algorithm.value} successful!")
     # 3. Test DNA data chain functionality
-    print("\n--- DNA Data Chain Functionality ---")
+    logger.info("\n--- DNA Data Chain Functionality ---")
     chain = model.create_dna_chain("test_chain")
     chain.add_node("mem_000456")
     chain.add_node("mem_000457")
@@ -339,28 +339,28 @@ if __name__ == '__main__':
     branch = chain.create_branch("branch_001", "mem_000456")
     branch.add_node("mem_000458")
 
-    print(f"Main chain nodes: {chain.nodes}")
-    print(f"Branch nodes: {branch.nodes}")
-    print(f"Branches: {list(chain.branches.keys())}")
+    logger.info(f"Main chain nodes: {chain.nodes}")
+    logger.info(f"Branch nodes: {branch.nodes}")
+    logger.info(f"Branches: {list(chain.branches.keys())}")
 
     # 4. Verify learning mechanism
-    print("\n--- Learning Mechanism ---")
+    logger.info("\n--- Learning Mechanism ---")
     model.learn(example_data, feedback={"accuracy": 0.95, "response_time": 0.5})
 
     # Verify symbols and relationships in the symbolic space
-    print("\n--- Symbolic Space Content ---")
-    print(f"Symbol 'mem_000456': {model.symbolic_space.get_symbol('mem_000456')}")
-    print(f"Symbol 'Sarah said she likes the new AI assistant.': {model.symbolic_space.get_symbol('Sarah said she likes the new AI assistant.')}")
-    print(f"Relationships for 'Sarah': {model.symbolic_space.get_relationships('Sarah')}")
-    print(f"Relationships for 'AI Assistant': {model.symbolic_space.get_relationships('AI Assistant')}")
+    logger.info("\n--- Symbolic Space Content ---")
+    logger.info(f"Symbol 'mem_000456': {model.symbolic_space.get_symbol('mem_000456')}")
+    logger.info(f"Symbol 'Sarah said she likes the new AI assistant.': {model.symbolic_space.get_symbol('Sarah said she likes the new AI assistant.')}")
+    logger.info(f"Relationships for 'Sarah': {model.symbolic_space.get_relationships('Sarah')}")
+    logger.info(f"Relationships for 'AI Assistant': {model.symbolic_space.get_relationships('AI Assistant')}")
     # Show compression stats
-    print("\n--- Compression Statistics ---")
+    logger.info("\n--- Compression Statistics ---")
     stats = model.get_compression_stats()
     for algo, stat in stats.items():
         avg_ratio = stat['total_original_size'] / stat['total_compressed_size'] if stat['total_compressed_size'] > 0 else 0
-        print(f"{algo}: {stat['total_compressions']} compressions, avg ratio: {avg_ratio:.2f}")
+        logger.info(f"{algo}: {stat['total_compressions']} compressions, avg ratio: {avg_ratio:.2f}")
 
     # Clean up test symbolic space database
     if os.path.exists('test_alpha_deep_model_symbolic_space.db'):
         os.remove('test_alpha_deep_model_symbolic_space.db')
-        print("Cleaned up test_alpha_deep_model_symbolic_space.db")
+        logger.info("Cleaned up test_alpha_deep_model_symbolic_space.db")

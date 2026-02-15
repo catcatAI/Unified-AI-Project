@@ -42,39 +42,39 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_concept_models_import() -> bool,
+    def test_concept_models_import() -> bool:
     """测试概念模型导入"""
     logger.info("=== 测试概念模型导入 ===")
     
-    try,
+    try:
         logger.info("✅ 环境模拟器导入成功")
         return True
     except Exception as e,::
         logger.error(f"❌ 环境模拟器导入失败, {e}")
         return False
     
-    try,
+    try:
         logger.info("✅ 因果推理引擎导入成功")
         return True
     except Exception as e,::
         logger.error(f"❌ 因果推理引擎导入失败, {e}")
         return False
     
-    try,
+    try:
         logger.info("✅ 自适应学习控制器导入成功")
         return True
     except Exception as e,::
         logger.error(f"❌ 自适应学习控制器导入失败, {e}")
         return False
     
-    try,
+    try:
         logger.info("✅ Alpha深度模型导入成功")
         return True
     except Exception as e,::
         logger.error(f"❌ Alpha深度模型导入失败, {e}")
         return False
     
-    try,
+    try:
         logger.info("✅ 统一符号空间导入成功")
         return True
     except Exception as e,::
@@ -88,11 +88,11 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_training_config() -> bool,
+    def test_training_config() -> bool:
     """测试训练配置"""
     logger.info("=== 测试训练配置 ===")
     
-    try,
+    try:
         from training.train_model import ModelTrainer
         trainer == ModelTrainer()
         logger.info("✅ 训练器初始化成功")
@@ -104,7 +104,7 @@ def test_
             logger.info(f"  场景描述, {scenario.get('description')}")
             logger.info(f"  数据集, {scenario.get('datasets')}")
             logger.info(f"  训练轮数, {scenario.get('epochs')}")
-        else,
+        else:
             logger.error("❌ 无法加载概念模型训练场景配置")
             return False
             
@@ -120,11 +120,11 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_document_processing() -> bool,
+    def test_document_processing() -> bool:
     """测试文档处理"""
     logger.info("=== 测试文档处理 ===")
     
-    try,
+    try:
         # 运行文档处理脚本
         import subprocess
         result = subprocess.run([,
@@ -136,14 +136,14 @@ def test_
             logger.info("✅ 文档处理脚本执行成功")
             logger.info(f"  输出, {result.stdout}")
             return True
-        else,
+        else:
             logger.error(f"❌ 文档处理脚本执行失败, {result.stderr}")
             return False
     except Exception as e,::
         logger.error(f"❌ 文档处理测试失败, {e}")
         return False
 
-def main() -> bool,
+def main() -> bool:
     """主函数"""
     logger.info("开始测试概念模型训练集成...")
     

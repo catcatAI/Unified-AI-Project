@@ -695,7 +695,7 @@ class DesktopInteraction:
                     )
                     return True
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                    print(f"macOS 壁紙設置失敗: {e}")
+                    logger.info(f"macOS 壁紙設置失敗: {e}")
                     return False
 
             elif system == "Linux":
@@ -744,7 +744,7 @@ class DesktopInteraction:
                         )
                         return True
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                    print(f"Linux 壁紙設置失敗: {e}")
+                    logger.info(f"Linux 壁紙設置失敗: {e}")
                     return False
                 return True
                 
@@ -1169,39 +1169,39 @@ if __name__ == "__main__":
         desktop = DesktopInteraction()
         await desktop.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 桌面交互系统演示")
-        print("Desktop Interaction System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 桌面交互系统演示")
+        logger.info("Desktop Interaction System Demo")
+        logger.info("=" * 60)
         
         # Get state
-        print("\n桌面状态 / Desktop state:")
+        logger.info("\n桌面状态 / Desktop state:")
         state = desktop.get_desktop_state()
-        print(f"  总文件数: {state.total_files}")
-        print(f"  总大小: {state.total_size / 1024 / 1024:.2f} MB")
-        print(f"  杂乱度: {state.clutter_level:.2f}")
+        logger.info(f"  总文件数: {state.total_files}")
+        logger.info(f"  总大小: {state.total_size / 1024 / 1024:.2f} MB")
+        logger.info(f"  杂乱度: {state.clutter_level:.2f}")
         
-        print("\n按类别分布 / Distribution by category:")
+        logger.info("\n按类别分布 / Distribution by category:")
         for cat, count in state.files_by_category.items():
             if count > 0:
-                print(f"  {cat.cn_name}: {count}")
+                logger.info(f"  {cat.cn_name}: {count}")
         
         # Create test file
-        print("\n创建测试文件 / Creating test file:")
+        logger.info("\n创建测试文件 / Creating test file:")
         test_file = await desktop.create_file(
             "test_note.txt",
             "This is a test file created by Angela AI",
             category=FileCategory.DOCUMENTS
         )
         if test_file:
-            print(f"  Created: {test_file}")
+            logger.info(f"  Created: {test_file}")
         
         # Cleanup demo
-        print("\n清理演示 / Cleanup demo:")
+        logger.info("\n清理演示 / Cleanup demo:")
         operations = await desktop.cleanup_desktop(days_old=7)
-        print(f"  Cleaned {len(operations)} files")
+        logger.info(f"  Cleaned {len(operations)} files")
         
         await desktop.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

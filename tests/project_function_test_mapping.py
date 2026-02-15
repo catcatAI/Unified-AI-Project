@@ -42,7 +42,7 @@ class FunctionTestMapper,
 
     def extract_functions_and_classes(self, file_path, Path) -> Dict,
         """Extract functions and classes from a source file."""
-        try,
+        try:
             with open(file_path, 'r', encoding == 'utf-8') as f,
                 content = f.read()
 
@@ -74,7 +74,7 @@ class FunctionTestMapper,
 
     def extract_tested_functions(self, test_file_path, Path) -> Dict,
         """Extract which functions/classes are tested in a test file."""
-        try,
+        try:
             with open(test_file_path, 'r', encoding == 'utf-8') as f,
                 content = f.read()
 
@@ -166,7 +166,7 @@ class FunctionTestMapper,
             # Check if source file exists,::
                 f source_file_name in source_files,
                 matched_tests += len(test_info["test_functions"])
-            else,
+            else:
                 # Try to match based on imported items
                 found_match == False
                 for imported_item in test_info["imported_items"]::
@@ -180,7 +180,7 @@ class FunctionTestMapper,
                 
                 if found_match,::
                     matched_tests += len(test_info["test_functions"])
-                else,
+                else:
                     unmatched_tests.append({
                         "test_file": test_file,
                         "test_functions": test_info["test_functions"]

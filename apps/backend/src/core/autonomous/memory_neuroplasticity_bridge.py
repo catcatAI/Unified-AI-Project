@@ -831,13 +831,13 @@ if __name__ == "__main__":
         bridge = MemoryNeuroplasticityBridge()
         await bridge.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 记忆-神经可塑性桥接演示")
-        print("Memory-Neuroplasticity Bridge Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 记忆-神经可塑性桥接演示")
+        logger.info("Memory-Neuroplasticity Bridge Demo")
+        logger.info("=" * 60)
         
         # Register memories
-        print("\n注册记忆 / Registering memories:")
+        logger.info("\n注册记忆 / Registering memories:")
         for i in range(5):
             bridge.register_memory(
                 memory_id=f"mem_{i:03d}",
@@ -845,38 +845,38 @@ if __name__ == "__main__":
                 emotional_weight=0.5 + i * 0.1,
                 initial_strength=0.4 + i * 0.1
             )
-            print(f"  已注册 mem_{i:03d}")
+            logger.info(f"  已注册 mem_{i:03d}")
         
         # Access memories (reinforcement)
-        print("\n访问记忆（强化）/ Accessing memories (reinforcement):")
+        logger.info("\n访问记忆（强化）/ Accessing memories (reinforcement):")
         for i in range(3):
             bridge.access_memory("mem_000")
-            print(f"  访问 mem_000 (第 {i+1} 次)")
+            logger.info(f"  访问 mem_000 (第 {i+1} 次)")
         
         # Check retention
-        print("\n记忆保持率 / Memory retention:")
+        logger.info("\n记忆保持率 / Memory retention:")
         for i in range(5):
             retention = bridge.get_memory_retention(f"mem_{i:03d}")
-            print(f"  mem_{i:03d}: {retention:.2%}")
+            logger.info(f"  mem_{i:03d}: {retention:.2%}")
         
         # Associate memories
-        print("\n记忆关联 / Memory association:")
+        logger.info("\n记忆关联 / Memory association:")
         bridge.associate_memories("mem_000", "mem_001")
-        print("  mem_000 <-> mem_001")
+        logger.info("  mem_000 <-> mem_001")
         
         # Consolidation
-        print("\n记忆巩固 / Memory consolidation:")
+        logger.info("\n记忆巩固 / Memory consolidation:")
         bridge.trigger_consolidation()
-        print("  已触发巩固")
+        logger.info("  已触发巩固")
         
         # Stats
-        print("\n统计信息 / Statistics:")
+        logger.info("\n统计信息 / Statistics:")
         stats = bridge.get_memory_stats()
-        print(f"  总记忆数: {stats['total_memories']}")
-        print(f"  已巩固: {stats['consolidated_memories']}")
-        print(f"  平均保持率: {stats['average_retention']:.2%}")
+        logger.info(f"  总记忆数: {stats['total_memories']}")
+        logger.info(f"  已巩固: {stats['consolidated_memories']}")
+        logger.info(f"  平均保持率: {stats['average_retention']:.2%}")
         
         await bridge.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

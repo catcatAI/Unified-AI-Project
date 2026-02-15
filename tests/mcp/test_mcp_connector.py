@@ -13,7 +13,7 @@ from mcp.connector import MCPConnector
 
 @pytest.fixture()
 def mock_mqtt_client():
-    with patch('apps.backend.src.mcp.connector.mqtt.Client') as mock_client_class,
+    with patch('apps.backend.src.mcp.connector.mqtt.Client') as mock_client_class:
         mock_client_instance == MagicMock()
         mock_client_class.return_value = mock_client_instance
         yield mock_client_instance
@@ -58,7 +58,7 @@ async def test_connect_and_disconnect(mock_mqtt_client) -> None,
 @pytest.mark.asyncio()
 @pytest.mark.timeout(5)
 # 添加重试装饰器以处理不稳定的测试
-async def test_send_command(mock_mqtt_client) -> None,
+async def test_send_command(mock_mqtt_client) -> None:
     """Test sending a command."""
     loop = asyncio.get_event_loop()
     connector == MCPConnector('test_ai', 'localhost', 1883, loop=loop)
@@ -79,7 +79,7 @@ async def test_send_command(mock_mqtt_client) -> None,
     assert payload['payload']['parameters'] == params
 
 @pytest.mark.timeout(5)
-def test_on_message_callback(mock_mqtt_client) -> None,
+def test_on_message_callback(mock_mqtt_client) -> None:
     """Test the on_message callback handling."""
     callback == MagicMock()
     connector == MCPConnector('test_ai', 'localhost', 1883, loop=asyncio.get_event_loop())

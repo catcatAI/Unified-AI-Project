@@ -14,7 +14,7 @@ class TimeSystem:
         self.config = config or {}
         self.current_time_override: Optional[datetime.datetime] = None  # For testing
         self.reminders: List[Dict[str, Any]] = []
-        print("TimeSystem initialized.")
+        logger.info("TimeSystem initialized.")
 
     def get_current_time(self) -> datetime.datetime:
         """Returns the current datetime, respecting the override."""
@@ -36,13 +36,13 @@ class TimeSystem:
                 minutes = int(parts[1])
                 due_time = self.get_current_time() + datetime.timedelta(minutes=minutes)
                 self.reminders.append({"due_time": due_time, "description": event_description})
-                print(f"TimeSystem: Reminder set for '{event_description}' at {due_time}.")
+                logger.info(f"TimeSystem: Reminder set for '{event_description}' at {due_time}.")
                 return True
             except ValueError:
-                print(f"TimeSystem: Could not parse time expression: {time_expression}")
+                logger.info(f"TimeSystem: Could not parse time expression: {time_expression}")
                 return False
 
-        print(f"TimeSystem: Time expression not supported: {time_expression}")
+        logger.info(f"TimeSystem: Time expression not supported: {time_expression}")
         return False
 
     def check_due_reminders(self) -> List[str]:
@@ -74,15 +74,15 @@ if __name__ == '__main__':
     time_sys = TimeSystem()
 
     current_time_str = time_sys.get_formatted_current_time()
-    print(f"Current formatted time: {current_time_str}")
+    logger.info(f"Current formatted time: {current_time_str}")
 
     time_segment = time_sys.get_time_of_day_segment()
-    print(f"Current time segment: {time_segment}")
+    logger.info(f"Current time segment: {time_segment}")
 
     time_sys.set_reminder("in 1 minute", "Check on the AI's learning progress.")
 
     due_reminders = time_sys.check_due_reminders()
     if not due_reminders:
-        print("No reminders currently due.")
+        logger.info("No reminders currently due.")
     else:
-        print(f"Due reminders: {due_reminders}")
+        logger.info(f"Due reminders: {due_reminders}")

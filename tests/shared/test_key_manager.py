@@ -21,7 +21,7 @@ class TestUnifiedKeyManager,
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_not_in_demo_mode(self) -> None,
+def test_not_in_demo_mode(self) -> None:
         """测试非演示模式"""
         # 确保不在演示模式
         if 'DEMO_FLAG' in os.environ,::
@@ -37,7 +37,7 @@ def test_not_in_demo_mode(self) -> None,
             km == UnifiedKeyManager()
             assert km.demo_mode is False
     
-    def test_demo_mode_detection_from_env(self) -> None,
+    def test_demo_mode_detection_from_env(self) -> None:
         """测试从环境变量检测演示模式"""
         # 使用模拟配置来启用自动检测
         with patch.object(UnifiedKeyManager, '_load_config', return_value == {:
@@ -57,7 +57,7 @@ def test_not_in_demo_mode(self) -> None,
             if 'DEMO_FLAG' in os.environ,::
                 del os.environ['DEMO_FLAG']
     
-    def test_get_key_from_environment(self) -> None,
+    def test_get_key_from_environment(self) -> None:
         """测试从环境变量获取密钥"""
         test_key = "test_key_12345"
         os.environ['TEST_API_KEY'] = test_key
@@ -77,7 +77,7 @@ def test_not_in_demo_mode(self) -> None,
         if 'TEST_API_KEY' in os.environ,::
             del os.environ['TEST_API_KEY']
     
-    def test_get_key_not_in_environment(self) -> None,
+    def test_get_key_not_in_environment(self) -> None:
         """测试密钥不在环境变量中"""
         # 确保密钥不在环境变量中
         if 'NONEXISTENT_KEY' in os.environ,::
@@ -94,7 +94,7 @@ def test_not_in_demo_mode(self) -> None,
             result = km.get_key("NONEXISTENT_KEY")
             assert result is None
     
-    def test_get_key_in_demo_mode(self) -> None,
+    def test_get_key_in_demo_mode(self) -> None:
         """测试在演示模式下获取密钥"""
         # 使用模拟配置来启用演示模式
         with patch.object(UnifiedKeyManager, '_load_config', return_value == {:
@@ -113,7 +113,7 @@ def test_not_in_demo_mode(self) -> None,
             assert result is not None
             assert result == 'demo_service_key_12345'
     
-    def test_generate_ham_key_not_in_demo_mode(self) -> None,
+    def test_generate_ham_key_not_in_demo_mode(self) -> None:
         """测试在非演示模式下生成HAM密钥"""
         # 使用模拟配置来禁用演示模式
         with patch.object(UnifiedKeyManager, '_load_config', return_value == {:
@@ -132,7 +132,7 @@ def test_not_in_demo_mode(self) -> None,
             assert isinstance(result, str)
             assert len(result) > 0
     
-    def test_generate_ham_key_in_demo_mode(self) -> None,
+    def test_generate_ham_key_in_demo_mode(self) -> None:
         """测试在演示模式下生成HAM密钥"""
         # 使用模拟配置来启用演示模式
         with patch.object(UnifiedKeyManager, '_load_config', return_value == {:

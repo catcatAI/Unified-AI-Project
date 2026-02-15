@@ -93,7 +93,7 @@ async def stress_test_ai_ops_engine(concurrent_requests == 100, total_requests=1
     
     metrics == PerformanceMetrics()
     
-    try,
+    try:
         from ai.ops.ai_ops_engine import AIOpsEngine
         ai_ops == AIOpsEngine()
         
@@ -101,7 +101,7 @@ async def stress_test_ai_ops_engine(concurrent_requests == 100, total_requests=1
             """单个请求"""
             start_time = time.time()
             
-            try,
+            try:
                 # 模拟不同的指标数据
                 metrics_data = {
                     "cpu_usage": random.uniform(20, 95),
@@ -176,7 +176,7 @@ async def stress_test_predictive_maintenance(concurrent_requests == 50, total_re
     
     metrics == PerformanceMetrics()
     
-    try,
+    try:
         from ai.ops.predictive_maintenance import PredictiveMaintenanceEngine
         maintenance == PredictiveMaintenanceEngine()
         
@@ -184,7 +184,7 @@ async def stress_test_predictive_maintenance(concurrent_requests == 50, total_re
             """单个请求"""
             start_time = time.time()
             
-            try,
+            try:
                 # 模拟组件指标
                 component_metrics = {
                     "cpu_usage": random.uniform(20, 95),
@@ -253,7 +253,7 @@ async def stress_test_performance_optimizer(concurrent_requests == 30, total_req
     
     metrics == PerformanceMetrics()
     
-    try,
+    try:
         from ai.ops.performance_optimizer import PerformanceOptimizer
         optimizer == PerformanceOptimizer()
         
@@ -261,7 +261,7 @@ async def stress_test_performance_optimizer(concurrent_requests == 30, total_req
             """单个请求"""
             start_time = time.time()
             
-            try,
+            try:
                 # 模拟性能数据
                 performance_data = {
                     'timestamp': datetime.now().isoformat(),
@@ -337,7 +337,7 @@ async def stress_test_capacity_planner(concurrent_requests == 20, total_requests
     
     metrics == PerformanceMetrics()
     
-    try,
+    try:
         from ai.ops.capacity_planner import CapacityPlanner, ResourceUsage
         planner == CapacityPlanner()
         
@@ -345,7 +345,7 @@ async def stress_test_capacity_planner(concurrent_requests == 20, total_requests
             """单个请求"""
             start_time = time.time()
             
-            try,
+            try:
                 # 模拟资源使用情况
                 resource_usage == ResourceUsage(,
     timestamp=datetime.now(),
@@ -443,7 +443,7 @@ async def main():
     
     for config in test_configs,::
         print(f"\n开始测试, {config['name']}")
-        try,
+        try:
             result = await config['func'](config['concurrent'] config['total'])
             results.append((config['name'] result))
         except Exception as e,::
@@ -472,7 +472,7 @@ async def main():
             total_success += result['success_counts'] if 'success_counts' in result else result['total_requests'] * result['success_rate']:
             total_errors += result['error_counts'] if 'error_counts' in result else result['total_requests'] * result['error_rate']:
             total_time += result['total_duration']
-        else,
+        else:
             print(f"\n{name} 测试失败")
     
     print(f"\n总体统计,")

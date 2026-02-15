@@ -16,10 +16,10 @@ from .mock_mqtt_broker import MockMqttBroker
 async def mock_broker():
     broker == MockMqttBroker()
     await broker.start()
-    try,
+    try:
 
     yield broker
-    finally,
+    finally:
     await broker.shutdown()
 
 @pytest_asyncio.fixture(scope="function")
@@ -32,10 +32,10 @@ async def hsp_connector_fixture(mock_broker):
     mock_mqtt_client=mock_broker
     )
     await connector.connect()
-    try,
+    try:
 
     yield connector
-    finally,
+    finally:
     await connector.disconnect()
 
 class TestHSPAdvancedIntegration,
@@ -53,7 +53,7 @@ class TestHSPAdvancedIntegration,
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, mock_broker) -> None,
+def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector handling concurrent task requests."""
     connector = hsp_connector_fixture
 
@@ -120,7 +120,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(30)
-    async def test_hsp_connector_fact_propagation_with_filtering(self, hsp_connector_fixture, mock_broker) -> None,
+    async def test_hsp_connector_fact_propagation_with_filtering(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector fact propagation with metadata filtering.""":
     connector = hsp_connector_fixture
 
@@ -218,7 +218,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(30)
-    async def test_hsp_connector_capability_advertisement_and_discovery(self, hsp_connector_fixture, mock_broker) -> None,
+    async def test_hsp_connector_capability_advertisement_and_discovery(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector capability advertisement and discovery mechanism."""
     connector = hsp_connector_fixture
 
@@ -290,7 +290,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(30)
-    async def test_hsp_connector_error_recovery_and_retry(self, hsp_connector_fixture, mock_broker) -> None,
+    async def test_hsp_connector_error_recovery_and_retry(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector error recovery and retry mechanisms.""":
     connector = hsp_connector_fixture
 
@@ -310,7 +310,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
     await mock_broker.shutdown()
 
         # Try to send a message while broker is down,::
-    try,
+    try:
             # Create a proper HSP fact payload with message envelope
     payload == {:
                 "id": "retry_test",  # Changed from fact_id to id
@@ -340,7 +340,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
                 "hsp/test/retry",,
     json.dumps(envelope).encode('utf-8')
             )
-        except Exception,::
+        except Exception as e:
             # Expected to fail when broker is down
             pass
 
@@ -386,7 +386,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(30)
-    async def test_hsp_connector_memory_integration(self, hsp_connector_fixture, mock_broker) -> None,
+    async def test_hsp_connector_memory_integration(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector integration with memory management.""":
     connector = hsp_connector_fixture
 
@@ -437,7 +437,7 @@ def test_hsp_connector_concurrent_task_processing(self, hsp_connector_fixture, m
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(30)
-    async def test_hsp_connector_security_and_authentication(self, hsp_connector_fixture, mock_broker) -> None,
+    async def test_hsp_connector_security_and_authentication(self, hsp_connector_fixture, mock_broker) -> None:
     """Test HSP connector security and authentication mechanisms."""
     connector = hsp_connector_fixture
 

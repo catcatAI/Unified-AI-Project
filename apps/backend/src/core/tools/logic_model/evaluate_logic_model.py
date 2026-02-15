@@ -31,11 +31,11 @@ def load_logic_test_dataset(file_path: str) -> Optional[List[Dict[str, Any]]]:
         return dataset
 
     except FileNotFoundError:
-        print(f"Error: Test dataset file not found at {file_path}")
+        logger.error(f"Error: Test dataset file not found at {file_path}")
     except json.JSONDecodeError:
-        print(f"Error: Could not decode JSON from {file_path}")
+        logger.error(f"Error: Could not decode JSON from {file_path}")
     except ValueError as e:
-        print(f"Error: {e}")
+        logger.error(f"Error: {e}")
 
     return None
 
@@ -85,10 +85,10 @@ def evaluate_logic_model(model, test_data: List[Dict[str, Any]]) -> Dict[str, An
 
 def main():
     """主函数"""
-    print("Starting Logic Model evaluation process...")
+    logger.info("Starting Logic Model evaluation process...")
 
     # 简化实现
-    print("This is a simplified evaluation script")
+    logger.info("This is a simplified evaluation script")
 
     return {"status": "success", "message": "Evaluation complete"}
 

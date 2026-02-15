@@ -343,24 +343,24 @@ class AngelaRealPainter:
 
 async def test_comfyui():
     """测试 ComfyUI 连接"""
-    print("🧪 测试 ComfyUI API...")
+    logger.info("🧪 测试 ComfyUI API...")
     client = ComfyUIClient()
     
     try:
         models = await client.get_models()
-        print(f"✅ ComfyUI 连接成功!")
-        print(f"📦 可用模型: {len(models)} 个")
+        logger.info(f"✅ ComfyUI 连接成功!")
+        logger.info(f"📦 可用模型: {len(models)} 个")
         
         painter = AngelaRealPainter()
-        print("\n🎨 测试生成...")
+        logger.info("\n🎨 测试生成...")
         
         result = await painter.paint_expression("happy")
         if result:
-            print(f"✅ 测试图片已保存: {result}")
+            logger.info(f"✅ 测试图片已保存: {result}")
         
     except Exception as e:
-        print(f"❌ ComfyUI 连接失败: {e}")
-        print("请确保 ComfyUI 运行在 http://127.0.0.1:8188")
+        logger.info(f"❌ ComfyUI 连接失败: {e}")
+        logger.info("请确保 ComfyUI 运行在 http://127.0.0.1:8188")
 
 
 if __name__ == "__main__":

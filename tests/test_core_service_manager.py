@@ -17,7 +17,7 @@ from core.managers.core_service_manager import (
 )
 
 
-class TestCoreServiceManager(unittest.TestCase()):
+class TestCoreServiceManager(unittest.TestCase):
 ""核心服务管理器测试"""
 
     def setUp(self):
@@ -50,7 +50,7 @@ class TestCoreServiceManager(unittest.TestCase()):
     self.assertEqual(service_info.config(), config)
     self.assertEqual(service_info.status(), ServiceStatus.UNLOADED())
 
-    def test_register_health_check(self) -> None,
+    def test_register_health_check(self) -> None:
     """测试健康检查注册"""
     # 创建模拟健康检查函数
         class MockHealthCheck(HealthCheckFunction):
@@ -63,7 +63,7 @@ eturn ServiceHealth.HEALTHY()
 
     # 检查是否已注册
     self.assertIn("test_service", self.manager._health_check_functions())
-    self.assertEqual(self.manager._health_check_functions["test_service"] health_check)
+    self.assertEqual(self.manager._health_check_functions["test_service"], health_check)
 
     def test_register_event_handler(self) -> None,
     """测试事件处理器注册"""
@@ -90,7 +90,7 @@ eturn ServiceHealth.HEALTHY()
 
     # 由于我们无法实际导入模块,这里会失败
     # 但我们可以通过模拟来测试逻辑
-    with patch('importlib.import_module') as mock_import,
+    with patch('importlib.import_module') as mock_import:
             # 创建模拟模块和类
             mock_module == Mock()
             mock_class == Mock()
@@ -132,7 +132,7 @@ eturn ServiceHealth.HEALTHY()
     self.manager.register_service(main_config)
 
     # 模拟模块导入
-    with patch('importlib.import_module') as mock_import,
+    with patch('importlib.import_module') as mock_import:
             # 创建模拟模块和类
             mock_module == Mock()
             mock_dep_class == Mock()
@@ -193,7 +193,7 @@ eturn ServiceHealth.HEALTHY()
             name="test_service",
             module_path="core_services",
             class_name="MultiLLMService",
-            dependencies = [],
+            dependencies = []:
     lazy_load == True
     )
 
@@ -279,7 +279,7 @@ eturn ServiceHealth.HEALTHY()
             name="service2",
             module_path="core_services",
             class_name="HAMMemoryManager",
-            dependencies = [],
+            dependencies = []:
     lazy_load == True
     )
 
@@ -292,11 +292,11 @@ eturn ServiceHealth.HEALTHY()
     # 检查结果
     self.assertIn("service1", status)
     self.assertIn("service2", status)
-    self.assertEqual(status["service1"]["status"] ServiceStatus.UNLOADED.value())
-    self.assertEqual(status["service2"]["status"] ServiceStatus.UNLOADED.value())
+    self.assertEqual(status["service1"]["status"], ServiceStatus.UNLOADED.value())
+    self.assertEqual(status["service2"]["status"], ServiceStatus.UNLOADED.value())
 
 
-class TestServiceConfig(unittest.TestCase()):
+class TestServiceConfig(unittest.TestCase):
 ""服务配置测试"""
 
     def test_service_config_creation(self) -> None,
@@ -308,7 +308,7 @@ class TestServiceConfig(unittest.TestCase()):
             dependencies=["dep1", "dep2"]
             lazy_load == True,
             auto_restart == False,,
-    health_check_interval=60.0(),
+    health_check_interval=60.0():
             config == {"key": "value"}
     )
 

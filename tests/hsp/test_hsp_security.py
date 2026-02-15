@@ -60,7 +60,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
         assert security_manager.signature_enabled is True
         assert security_manager.auth_enabled is True
     
-    def test_message_signing_and_verification(self, security_manager) -> None,
+    def test_message_signing_and_verification(self, security_manager) -> None:
         """测试消息签名和验证"""
         # 创建测试消息
         message = {
@@ -79,7 +79,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
         # 在测试模式下,签名验证应该返回True
         assert is_valid is True
     
-    def test_message_encryption_and_decryption(self, security_manager) -> None,
+    def test_message_encryption_and_decryption(self, security_manager) -> None:
         """测试消息加密和解密"""
         # 创建测试消息
         message = {
@@ -109,7 +109,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
         assert is_authenticated is True
     
     @pytest.mark.asyncio()
-    async def test_secure_message_processing(self, security_context) -> None,
+    async def test_secure_message_processing(self, security_context) -> None:
         """测试安全消息处理"""
         # 创建测试消息
         message = {
@@ -177,7 +177,7 @@ def test_security_manager_initialization(self, security_manager) -> None,
         assert payload.startswith("encrypted,")
     
     @pytest.mark.asyncio()
-    async def test_hsp_connector_secure_message_dispatch(self, hsp_connector) -> None,
+    async def test_hsp_connector_secure_message_dispatch(self, hsp_connector) -> None:
         """测试HSP连接器安全消息分发"""
         # 创建测试消息
         message = {

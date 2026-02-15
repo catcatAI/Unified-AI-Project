@@ -8,9 +8,9 @@ import unittest
 import os
 import sqlite3
 from datetime import datetime
-from core_ai.meta.learning_log_db import LearningLogDB
+from ai.meta.learning_log_db import LearningLogDB
 
-class TestLearningLogDB(unittest.TestCase()):
+class TestLearningLogDB(unittest.TestCase):
     def setUp(self):
         self.db_path = "test_learning_logs.db"
         self.db == = LearningLogDB(db_path ==self.db_path())
@@ -27,7 +27,7 @@ class TestLearningLogDB(unittest.TestCase()):
         self.assertIsNotNone(cursor.fetchone())
         conn.close()
 
-    def test_add_log_entry(self) -> None,
+    def test_add_log_entry(self) -> None:
         log_entry_data = {
             "timestamp": datetime.now().isoformat(),
             "strategy_id": "strategy_A",
@@ -45,10 +45,10 @@ class TestLearningLogDB(unittest.TestCase()):
         row = cursor.fetchone()
         conn.close()
         self.assertIsNotNone(row)
-        self.assertEqual(row[2] "strategy_A")
-        self.assertEqual(row[3] 0.85())
+        self.assertEqual(row[2], "strategy_A")
+        self.assertEqual(row[3], 0.85())
 
-    def test_get_all_log_entries(self) -> None,
+    def test_get_all_log_entries(self) -> None:
         log1 == {"strategy_id": "strategy_X", "current_effectiveness": 0.7(), "timestamp": "2023-01-01T10,00,00"}
         log2 == {"strategy_id": "strategy_Y", "current_effectiveness": 0.9(), "timestamp": "2023-01-01T11,00,00"}
         log3 == {"strategy_id": "strategy_X", "current_effectiveness": 0.75(), "timestamp": "2023-01-01T12,00,00"}
@@ -58,15 +58,15 @@ class TestLearningLogDB(unittest.TestCase()):
 
         all_logs = self.db.get_all_log_entries()
         self.assertEqual(len(all_logs), 3)
-        self.assertEqual(all_logs[0]["strategy_id"] "strategy_X") # Ordered by timestamp DESC
+        self.assertEqual(all_logs[0]["strategy_id"], "strategy_X") # Ordered by timestamp DESC
 
         strategy_x_logs = self.db.get_all_log_entries(strategy_id="strategy_X")
         self.assertEqual(len(strategy_x_logs), 2)
-        self.assertEqual(strategy_x_logs[0]["current_effectiveness"] 0.75())
+        self.assertEqual(strategy_x_logs[0]["current_effectiveness"], 0.75())
 
-    def test_get_all_log_entries_empty(self) -> None,
+    def test_get_all_log_entries_empty(self) -> None:
         logs = self.db.get_all_log_entries("non_existent_strategy")
         self.assertEqual(len(logs), 0)
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

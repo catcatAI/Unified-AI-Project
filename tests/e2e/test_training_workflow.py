@@ -35,7 +35,7 @@ class TestTrainingWorkflowE2E,
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_complete_training_workflow(self, demo_learning_manager, execution_manager) -> None,
+def test_complete_training_workflow(self, demo_learning_manager, execution_manager) -> None:
         """测试完整的训练工作流程"""
         # Mock依赖组件
         demo_learning_manager.model_trainer == AsyncMock()
@@ -97,7 +97,7 @@ def test_complete_training_workflow(self, demo_learning_manager, execution_manag
     @pytest.mark.asyncio()
     async def test_memory_integration_in_training_workflow(self, demo_learning_manager) -> None,
         """测试训练工作流程中与记忆系统的集成"""
-        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager,
+        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
             # Mock记忆管理器
             mock_memory_instance = mock_memory_manager.return_value()
             mock_memory_instance.store_memory == = AsyncMock(return_value ==True)
@@ -129,7 +129,7 @@ def test_complete_training_workflow(self, demo_learning_manager, execution_manag
     @pytest.mark.asyncio()
     async def test_agent_collaboration_in_training_workflow(self) -> None,
         """测试训练工作流程中与代理系统的协作"""
-        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager,
+        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager:
             # Mock代理管理器
             mock_agent_manager_instance = mock_agent_manager.return_value()
             mock_agent_manager_instance.get_agent == = Mock(return_value ==Mock())
@@ -163,7 +163,7 @@ def test_complete_training_workflow(self, demo_learning_manager, execution_manag
     @pytest.mark.asyncio()
     async def test_hsp_communication_in_training_workflow(self) -> None,
         """测试训练工作流程中与HSP协议的通信"""
-        with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector,
+        with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector:
             # Mock HSP连接器
             mock_hsp_instance = mock_hsp_connector.return_value()
             mock_hsp_instance.publish_fact == = AsyncMock(return_value ==True)
@@ -204,7 +204,7 @@ class TestMultiSystemIntegrationE2E,
     """多系统集成端到端测试"""
     
     @pytest.mark.asyncio()
-    async def test_complete_ai_system_workflow(self) -> None,
+    async def test_complete_ai_system_workflow(self) -> None:
         """测试完整的AI系统工作流程"""
         # 这是一个高层次的集成测试,模拟整个系统的协同工作
         
@@ -217,7 +217,7 @@ class TestMultiSystemIntegrationE2E,
         }
         
         # 2. 主代理接收并分解任务
-        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager,
+        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager:
             mock_manager = mock_agent_manager.return_value()
             mock_manager.get_agent == = Mock(return_value ==Mock())
             
@@ -257,7 +257,7 @@ class TestMultiSystemIntegrationE2E,
             assert len(subtask_results) == 4
             assert all(result["status"] == "completed" for result in subtask_results)::
             # 4. 整合结果并存储记忆,
-            with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager,
+            with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
                 mock_memory = mock_memory_manager.return_value()
                 mock_memory.store_memory == = AsyncMock(return_value ==True)
                 
@@ -278,7 +278,7 @@ class TestMultiSystemIntegrationE2E,
                 mock_memory.store_memory.assert_called_once_with(final_result)
             
             # 5. 通过HSP协议发布结果
-            with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector,
+            with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector:
                 mock_hsp = mock_hsp_connector.return_value()
                 mock_hsp.publish_fact == = AsyncMock(return_value ==True)
                 

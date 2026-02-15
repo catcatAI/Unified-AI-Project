@@ -21,7 +21,7 @@ class TestAgentPerformanceBenchmarks,
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_agent_creation_performance(self, benchmark) -> None,
+def test_agent_creation_performance(self, benchmark) -> None:
         """测试代理创建性能"""
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
@@ -42,7 +42,7 @@ def test_agent_creation_performance(self, benchmark) -> None,
     @pytest.mark.performance()
     @pytest.mark.benchmark()
     @pytest.mark.asyncio()
-    async def test_agent_task_execution_performance(self, benchmark) -> None,
+    async def test_agent_task_execution_performance(self, benchmark) -> None:
         """测试代理任务执行性能"""
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
@@ -66,7 +66,7 @@ def test_agent_creation_performance(self, benchmark) -> None,
     @pytest.mark.performance()
     @pytest.mark.benchmark()
     @pytest.mark.asyncio()
-    async def test_concurrent_agent_operations_performance(self, benchmark) -> None,
+    async def test_concurrent_agent_operations_performance(self, benchmark) -> None:
         """测试并发代理操作性能"""
         def concurrent_operations():
             """并发操作的测试函数"""
@@ -96,7 +96,7 @@ class TestHSPPerformanceBenchmarks,
         
         # 创建测试数据
         data_factory == TestDataFactory()
-        test_message = data_factory.create_hsp_message(,
+        test_message = data_factory.create_hsp_message(:
     content="Performance test message"
         )
         
@@ -113,7 +113,7 @@ class TestHSPPerformanceBenchmarks,
     @pytest.mark.performance()
     @pytest.mark.benchmark()
     @pytest.mark.asyncio()
-    async def test_hsp_message_processing_performance(self, benchmark) -> None,
+    async def test_hsp_message_processing_performance(self, benchmark) -> None:
         """测试HSP消息处理性能"""
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
@@ -150,7 +150,7 @@ class TestMemoryPerformanceBenchmarks,
         
         # 创建测试数据
         data_factory == TestDataFactory()
-        test_memory = data_factory.create_memory_item(,
+        test_memory = data_factory.create_memory_item(:
     content="Performance test memory item"
         )
         
@@ -167,7 +167,7 @@ class TestMemoryPerformanceBenchmarks,
     @pytest.mark.performance()
     @pytest.mark.benchmark()
     @pytest.mark.asyncio()
-    async def test_memory_retrieve_performance(self, benchmark) -> None,
+    async def test_memory_retrieve_performance(self, benchmark) -> None:
         """测试记忆检索性能"""
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
@@ -203,7 +203,7 @@ class TestTrainingPerformanceBenchmarks,
         data_factory == TestDataFactory()
         training_batch = [
             data_factory.create_training_data(
-                input_data=f"Input {i}",,
+                input_data=f"Input {i}",:
     expected_output=f"Output {i}"
             )
             for i in range(32)  # 批量大小32,:
@@ -223,7 +223,7 @@ class TestTrainingPerformanceBenchmarks,
     @pytest.mark.performance()
     @pytest.mark.benchmark()
     @pytest.mark.asyncio()
-    async def test_training_data_preprocessing_performance(self, benchmark) -> None,
+    async def test_training_data_preprocessing_performance(self, benchmark) -> None:
         """测试训练数据预处理性能"""
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
@@ -258,7 +258,7 @@ class TestSystemLevelPerformanceBenchmarks,
     @pytest.mark.performance()
     @pytest.mark.benchmark()
     @pytest.mark.asyncio()
-    async def test_end_to_end_request_performance(self, benchmark) -> None,
+    async def test_end_to_end_request_performance(self, benchmark) -> None:
         """测试端到端请求处理性能"""
         from apps.backend.tests.integration.test_data_factory import TestDataFactory
         
@@ -288,7 +288,7 @@ class TestSystemLevelPerformanceBenchmarks,
     @pytest.mark.performance()
     @pytest.mark.benchmark()
     @pytest.mark.asyncio()
-    async def test_concurrent_requests_performance(self, benchmark) -> None,
+    async def test_concurrent_requests_performance(self, benchmark) -> None:
         """测试并发请求处理性能"""
         def process_concurrent_requests():
             """处理并发请求的测试函数"""
@@ -308,7 +308,7 @@ class TestResourceUsageBenchmarks,
     @pytest.mark.performance()
     @pytest.mark.benchmark()
     @pytest.mark.asyncio()
-    async def test_memory_usage_during_operations(self, benchmark) -> None,
+    async def test_memory_usage_during_operations(self, benchmark) -> None:
         """测试操作期间的内存使用"""
         def memory_intensive_operation():
             """内存密集型操作的测试函数"""
@@ -328,7 +328,7 @@ class TestResourceUsageBenchmarks,
     @pytest.mark.performance()
     @pytest.mark.benchmark()
     @pytest.mark.asyncio()
-    async def test_cpu_usage_during_computation(self, benchmark) -> None,
+    async def test_cpu_usage_during_computation(self, benchmark) -> None:
         """测试计算期间的CPU使用"""
         def cpu_intensive_operation():
             """CPU密集型操作的测试函数"""

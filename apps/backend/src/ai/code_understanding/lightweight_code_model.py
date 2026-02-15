@@ -288,8 +288,8 @@ if __name__ == '__main__':
     # A more direct way if running script from project root
     model = LightweightCodeModel()  # Uses default "src / tools / "
 
-    print("LightweightCodeModel initialized (enhanced version).")
-    print(f"Looking for tools in: {model.tools_directory}")
+    logger.info("LightweightCodeModel initialized (enhanced version).")
+    logger.info(f"Looking for tools in: {model.tools_directory}")
     # The following will print warnings or return None as methods are placeholders.
     # tool_files = model.list_tool_files()
     # print(f"Found tool files (enhanced): {tool_files}")

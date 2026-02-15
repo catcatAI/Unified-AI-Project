@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 # Angela Matrix - 4D State: αβγδ (Cognitive-Emotional-Volitional-Memory)
 # File: emotion_system.py
 # State: L5-Mature-Agentic (Mature Agent Capabilities)
@@ -44,7 +47,7 @@ class EmotionSystem:
             "sad_response": {"text_ending": " (with a sigh)"}  # AI expressing sadness
         })
 
-        print(f"EmotionSystem initialized. Default emotion: {self.current_emotion}")
+        logger.info(f"EmotionSystem initialized. Default emotion: {self.current_emotion}")
 
     def update_emotion_based_on_input(self, input_data: dict, context: dict = None) -> str:
         """
@@ -80,7 +83,7 @@ class EmotionSystem:
             new_emotion = default_personality_tone  # Revert to default if no specific trigger
         
         if new_emotion != self.current_emotion:
-            print(f"EmotionSystem: Emotion changing from '{self.current_emotion}' to '{new_emotion}' based on input: '{text_input[:30]}...'")
+            logger.info(f"EmotionSystem: Emotion changing from '{self.current_emotion}' to '{new_emotion}' based on input: '{text_input[:30]}...'")
             self.current_emotion = new_emotion
 
         return self.current_emotion
@@ -106,8 +109,8 @@ if __name__ == '__main__':
     }
     
     emotion_sys = EmotionSystem(personality_profile=example_personality)
-    print(f"Initial emotion expression: {emotion_sys.get_current_emotion_expression()}")
+    logger.info(f"Initial emotion expression: {emotion_sys.get_current_emotion_expression()}")
     
     sample_input = {"text": "I am feeling a bit sad today."}
     emotion_sys.update_emotion_based_on_input(sample_input)
-    print(f"Emotion expression after input: {emotion_sys.get_current_emotion_expression()}")
+    logger.info(f"Emotion expression after input: {emotion_sys.get_current_emotion_expression()}")

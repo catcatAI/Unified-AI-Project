@@ -47,7 +47,7 @@ def test_atlassian_config_model(self) -> None,
         assert bridge.acli_path == "acli.exe"
     
     @patch('apps.backend.src.integrations.atlassian_cli_bridge.subprocess.run')
-    def test_get_jira_projects(self, mock_run) -> None,
+    def test_get_jira_projects(self, mock_run) -> None:
         """测试获取 Jira 项目列表"""
         # 模拟命令行执行结果
         mock_result == MagicMock()
@@ -63,7 +63,7 @@ def test_atlassian_config_model(self) -> None,
         assert len(result["projects"]) == 1
         assert result["projects"][0]["key"] == "TEST"
     
-    def test_enhanced_atlassian_bridge_initialization(self) -> None,
+    def test_enhanced_atlassian_bridge_initialization(self) -> None:
         """测试增强版 Atlassian 桥接器初始化"""
         # 创建模拟的连接器
         mock_connector == MagicMock()

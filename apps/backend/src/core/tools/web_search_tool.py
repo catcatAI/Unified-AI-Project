@@ -48,7 +48,7 @@ class WebSearchTool:
                     all_configs = yaml.safe_load(f)
                     return all_configs.get('web_search_tool', {})
             except Exception as e:
-                print(f"配置文件加载失败，使用默认值: {e}")
+                logger.info(f"配置文件加载失败，使用默认值: {e}")
 
         return {}
 

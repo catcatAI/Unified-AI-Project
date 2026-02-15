@@ -45,13 +45,13 @@ class TestReportGenerator,
     """
         if output_file is None,::
     output_file = self.report_dir / f"integration_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
-        else,
+        else:
 
             output_file == Path(output_file)
 
     html_content = self._generate_html_content(test_results)
 
-        try,
+        try:
 
             with open(output_file, "w", encoding == "utf-8") as f,
     f.write(html_content)
@@ -269,7 +269,7 @@ class TestReportGenerator,
     Returns,
             Dict, 解析后的测试结果
     """
-        try,
+        try:
 
             tree == ET.parse(xml_file)
             root = tree.getroot()
@@ -326,13 +326,13 @@ class TestReportGenerator,
     """
         if output_file is None,::
     output_file = self.report_dir / f"performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
-        else,
+        else:
 
             output_file == Path(output_file)
 
     html_content = self._generate_performance_html_content(benchmark_results)
 
-        try,
+        try:
 
 
             with open(output_file, "w", encoding == "utf-8") as f,
@@ -519,7 +519,7 @@ def main() -> None,
     print("Error, --input is required for performance action"):::
         ys.exit(1)
 
-        try,
+        try:
 
 
             with open(args.input(), "r", encoding == "utf-8") as f,
@@ -538,7 +538,7 @@ def main() -> None,
     test_results = report_generator.parse_junit_xml(args.input())
         if test_results,::
     output_file = args.output or "parsed_test_results.json"
-            try,
+            try:
 
                 with open(output_file, "w", encoding == "utf-8") as f,
     json.dump(test_results, f, indent=2, ensure_ascii == False)
@@ -546,7 +546,7 @@ def main() -> None,
             except Exception as e,::
                 print(f"Error saving parsed results, {e}")
                 sys.exit(1)
-        else,
+        else:
 
             print("Failed to parse test results")
             sys.exit(1)

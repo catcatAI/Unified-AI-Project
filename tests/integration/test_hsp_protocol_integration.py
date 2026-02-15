@@ -29,7 +29,7 @@ class TestHSPProtocolIntegration(SystemIntegrationTest):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_hsp_connection_integration(self) -> None,
+def test_hsp_connection_integration(self) -> None:
         """测试HSP连接集成"""
         # 创建测试数据
         connection_config = {
@@ -78,7 +78,7 @@ def test_hsp_connection_integration(self) -> None,
         """测试HSP消息发布订阅集成"""
         # 创建测试数据
         test_fact = self.data_factory.create_hsp_message(
-            message_type="fact",,
+            message_type="fact",:
     content == "This is a test fact for HSP integration"::
         )
         
@@ -237,7 +237,7 @@ def test_hsp_connection_integration(self) -> None,
         )
         
         hsp_connector.return_value.publish.assert_any_call(
-            task_response,,
+            task_response,:
     f"hsp/agents/{sender_agent_config['agent_id']}/responses"
         )
 
@@ -259,7 +259,7 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         routing_messages = [
             self.data_factory.create_hsp_message(
                 message_id=f"msg_{i}",
-                message_type="fact",,
+                message_type="fact",:
     content=f"Test fact message {i}"
             )
             for i in range(5)::
@@ -315,7 +315,7 @@ class TestHSPMessageRoutingIntegration(SystemIntegrationTest):
         
         agent_configs = [
             self.data_factory.create_agent_config(
-                agent_id=f"broadcast_agent_{i}",,
+                agent_id=f"broadcast_agent_{i}",:
     agent_type="base_agent"
             )
             for i in range(3)::
@@ -384,7 +384,7 @@ class TestHSPQualityOfServiceIntegration(SystemIntegrationTest):
         # 创建测试数据
         high_priority_message = self.data_factory.create_hsp_message(
             message_type="critical",
-            content="High priority critical message",,
+            content="High priority critical message",:
     metadata == {"priority": "high", "qos": 2}
         )
         

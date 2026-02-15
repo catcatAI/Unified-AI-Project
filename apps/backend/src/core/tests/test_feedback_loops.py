@@ -40,6 +40,9 @@ from feedback_loop_engine import (
 from real_time_monitor import RealTimeMonitor, MouseData, FileSystemEvent, TimeEvent
 from feedback_processor import FeedbackProcessor, LearningSignal, StrategyAdjustment
 from event_loop_system import EventLoopSystem, Event, EventPriority
+import logging
+logger = logging.getLogger(__name__)
+
 
 
 # ========== Test Fixtures ==========
@@ -277,7 +280,7 @@ class TestRealTimeMonitoring:
             avg_interval = sum(intervals_ms) / len(intervals_ms)
             max_interval = max(intervals_ms)
             
-            print(f"Mouse monitoring - Avg interval: {avg_interval:.2f}ms, Max: {max_interval:.2f}ms")
+            logger.info(f"Mouse monitoring - Avg interval: {avg_interval:.2f}ms, Max: {max_interval:.2f}ms")
             
             # Allow some tolerance (20ms instead of 16ms)
             assert max_interval < 50, f"Max interval {max_interval:.2f}ms exceeds threshold"
@@ -520,7 +523,7 @@ class TestEventProcessing:
         
         # With debouncing, fewer events should be processed
         # (exact count depends on timing)
-        print(f"Debounced events: {len(processed_events)} out of 5")
+        logger.info(f"Debounced events: {len(processed_events)} out of 5")
         assert len(processed_events) <= 5, "Debouncing should reduce event count"
 
 
@@ -633,7 +636,7 @@ class TestClosedLoopLearning:
         
         # Verify strategy adjustments were considered
         adjustments = processor.get_strategy_adjustments()
-        print(f"Strategy adjustments generated: {len(adjustments)}")
+        logger.info(f"Strategy adjustments generated: {len(adjustments)}")
         
         # With enough failures, adjustments should be generated
         # (exact behavior depends on thresholds)
@@ -732,11 +735,11 @@ class TestPerformance:
             max_latency = max(latencies)
             min_latency = min(latencies)
             
-            print(f"\nFeedback Loop Latency Stats:")
-            print(f"  Average: {avg_latency:.2f}ms")
-            print(f"  Min: {min_latency:.2f}ms")
-            print(f"  Max: {max_latency:.2f}ms")
-            print(f"  Samples: {len(latencies)}")
+            logger.info(f"\nFeedback Loop Latency Stats:")
+            logger.info(f"  Average: {avg_latency:.2f}ms")
+            logger.info(f"  Min: {min_latency:.2f}ms")
+            logger.info(f"  Max: {max_latency:.2f}ms")
+            logger.info(f"  Samples: {len(latencies)}")
             
             # Check performance
             # Allow some tolerance (50ms instead of 16ms for complex operations)
@@ -770,10 +773,10 @@ class TestPerformance:
         avg_latency = metrics.get("average_latency_ms", 0)
         max_latency = metrics.get("max_latency_ms", 0)
         
-        print(f"\nEvent Loop Latency Stats:")
-        print(f"  Average: {avg_latency:.2f}ms")
-        print(f"  Max: {max_latency:.2f}ms")
-        print(f"  Events processed: {metrics.get('events_processed', 0)}")
+        logger.info(f"\nEvent Loop Latency Stats:")
+        logger.info(f"  Average: {avg_latency:.2f}ms")
+        logger.info(f"  Max: {max_latency:.2f}ms")
+        logger.info(f"  Events processed: {metrics.get('events_processed', 0)}")
         
         # Verify latency requirements
         assert max_latency < 50, f"Max event latency {max_latency:.2f}ms exceeds threshold"
@@ -811,11 +814,11 @@ class TestPerformance:
         elapsed = time.perf_counter() - start_time
         throughput = processed[0] / elapsed if elapsed > 0 else 0
         
-        print(f"\nThroughput Test:")
-        print(f"  Events added: {event_count}")
-        print(f"  Events processed: {processed[0]}")
-        print(f"  Elapsed: {elapsed:.2f}s")
-        print(f"  Throughput: {throughput:.2f} events/second")
+        logger.info(f"\nThroughput Test:")
+        logger.info(f"  Events added: {event_count}")
+        logger.info(f"  Events processed: {processed[0]}")
+        logger.info(f"  Elapsed: {elapsed:.2f}s")
+        logger.info(f"  Throughput: {throughput:.2f} events/second")
         
         # Verify high throughput
         assert processed[0] >= event_count * 0.9, f"Should process at least 90% of events"
@@ -854,11 +857,11 @@ class TestPerformance:
         
         elapsed = time.perf_counter() - start_time
         
-        print(f"\nConcurrent Processing Test:")
-        print(f"  Cycles started: {cycle_count}")
-        print(f"  Cycles completed: {len(completed_cycles)}")
-        print(f"  Total time: {elapsed:.2f}s")
-        print(f"  Cycles/second: {cycle_count / elapsed:.2f}")
+        logger.info(f"\nConcurrent Processing Test:")
+        logger.info(f"  Cycles started: {cycle_count}")
+        logger.info(f"  Cycles completed: {len(completed_cycles)}")
+        logger.info(f"  Total time: {elapsed:.2f}s")
+        logger.info(f"  Cycles/second: {cycle_count / elapsed:.2f}")
         
         # Verify concurrent processing
         assert len(completed_cycles) == cycle_count, "All cycles should complete"
@@ -921,9 +924,9 @@ class TestIntegration:
     @pytest.mark.asyncio
     async def test_complete_feedback_system(self):
         """Test complete feedback system with all components"""
-        print("\n" + "=" * 70)
-        print("COMPLETE FEEDBACK SYSTEM INTEGRATION TEST")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("COMPLETE FEEDBACK SYSTEM INTEGRATION TEST")
+        logger.info("=" * 70)
         
         # Create mock HSM and CDM
         mock_hsm = MockHSM()
@@ -968,17 +971,17 @@ class TestIntegration:
         await asyncio.sleep(2.0)
         
         # Verify results
-        print(f"\nIntegration Test Results:")
-        print(f"  Perception events: {len(perception_types)}")
-        print(f"  Cycles completed: {len(cycles_completed)}")
-        print(f"  HSM updates: {mock_hsm.update_count}")
-        print(f"  CDM updates: {mock_cdm.update_count}")
+        logger.info(f"\nIntegration Test Results:")
+        logger.info(f"  Perception events: {len(perception_types)}")
+        logger.info(f"  Cycles completed: {len(cycles_completed)}")
+        logger.info(f"  HSM updates: {mock_hsm.update_count}")
+        logger.info(f"  CDM updates: {mock_cdm.update_count}")
         
         # Get metrics
         metrics = engine.get_performance_metrics()
-        print(f"\nPerformance Metrics:")
-        print(f"  Average latency: {metrics.get('average_latency_ms', 0):.2f}ms")
-        print(f"  Cycles completed (metrics): {metrics.get('cycles_completed', 0)}")
+        logger.info(f"\nPerformance Metrics:")
+        logger.info(f"  Average latency: {metrics.get('average_latency_ms', 0):.2f}ms")
+        logger.info(f"  Cycles completed (metrics): {metrics.get('cycles_completed', 0)}")
         
         # Assertions
         assert len(cycles_completed) == len(perception_types), "All cycles should complete"
@@ -986,9 +989,9 @@ class TestIntegration:
         
         await engine.shutdown()
         
-        print("\n" + "=" * 70)
-        print("INTEGRATION TEST PASSED")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("INTEGRATION TEST PASSED")
+        logger.info("=" * 70)
 
 
 # ========== Run Tests ==========
@@ -999,11 +1002,11 @@ if __name__ == "__main__":
         import pytest
         pytest.main([__file__, "-v"])
     except ImportError:
-        print("pytest not available, running basic tests...")
+        logger.info("pytest not available, running basic tests...")
         
         # Run basic async tests
         async def run_basic_tests():
-            print("\nRunning basic tests...")
+            logger.info("\nRunning basic tests...")
             
             # Test 1: Basic feedback engine
             engine = FeedbackLoopEngine()
@@ -1017,17 +1020,17 @@ if __name__ == "__main__":
             )
             
             cycle_id = await engine.process_perception_event(event)
-            print(f"✓ Cycle created: {cycle_id}")
+            logger.info(f"✓ Cycle created: {cycle_id}")
             
             completed = await engine.wait_for_cycle(cycle_id, timeout=2.0)
             if completed:
-                print(f"✓ Cycle completed, latency: {completed.latency_ms:.2f}ms")
+                logger.info(f"✓ Cycle completed, latency: {completed.latency_ms:.2f}ms")
             
             metrics = engine.get_performance_metrics()
-            print(f"✓ Metrics: {metrics['cycles_completed']} cycles completed")
+            logger.info(f"✓ Metrics: {metrics['cycles_completed']} cycles completed")
             
             await engine.shutdown()
             
-            print("\nAll basic tests passed!")
+            logger.info("\nAll basic tests passed!")
         
         asyncio.run(run_basic_tests())

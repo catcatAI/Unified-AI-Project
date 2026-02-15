@@ -600,53 +600,53 @@ if __name__ == "__main__":
         generator = VisualEffectGenerator()
         await generator.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 视觉效果生成器演示")
-        print("Visual Effect Generator Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 视觉效果生成器演示")
+        logger.info("Visual Effect Generator Demo")
+        logger.info("=" * 60)
         
         # Particle effects
-        print("\n粒子效果 / Particle effects:")
+        logger.info("\n粒子效果 / Particle effects:")
         
         heart_id = generator.start_particle_effect(
             EffectType.PARTICLE_HEART, x=100, y=100, duration=3.0
         )
-        print(f"  启动爱心粒子: {heart_id}")
+        logger.info(f"  启动爱心粒子: {heart_id}")
         
         sparkle_id = generator.start_particle_effect(
             EffectType.PARTICLE_SPARKLE, x=200, y=150, duration=2.0
         )
-        print(f"  启动闪光粒子: {sparkle_id}")
+        logger.info(f"  启动闪光粒子: {sparkle_id}")
         
         await asyncio.sleep(1.0)
-        print(f"  当前粒子数: {generator.get_particle_count()}")
+        logger.info(f"  当前粒子数: {generator.get_particle_count()}")
         
         # Emotional effect
-        print("\n情绪效果 / Emotional effects:")
+        logger.info("\n情绪效果 / Emotional effects:")
         happy_id = generator.create_emotional_effect("happy", intensity=0.8, x=150, y=200)
-        print(f"  快乐效果: {happy_id}")
+        logger.info(f"  快乐效果: {happy_id}")
         
         await asyncio.sleep(1.0)
         
         # Atmosphere
-        print("\n氛围效果 / Atmosphere effects:")
+        logger.info("\n氛围效果 / Atmosphere effects:")
         generator.set_atmosphere(EffectType.AMBIENCE_WARM, intensity=0.6)
-        print("  设置温暖氛围")
+        logger.info("  设置温暖氛围")
         
         # Glow
-        print("\n发光效果 / Glow effects:")
+        logger.info("\n发光效果 / Glow effects:")
         generator.set_glow(intensity=0.7, color=(1.0, 0.8, 0.6), radius=30.0)
-        print("  设置柔和发光")
+        logger.info("  设置柔和发光")
         
         # Summary
-        print("\n效果摘要 / Effect summary:")
+        logger.info("\n效果摘要 / Effect summary:")
         summary = generator.get_effect_summary()
         for key, value in summary.items():
-            print(f"  {key}: {value}")
+            logger.info(f"  {key}: {value}")
         
         await asyncio.sleep(2.0)
         
         await generator.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

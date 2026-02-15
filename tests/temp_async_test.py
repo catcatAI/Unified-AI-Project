@@ -1,5 +1,5 @@
 import pytest
-from core_ai.trust.trust_manager_module import TrustManager
+from ai.trust.trust_manager_module import TrustManager
 from hsp.types import HSPCapabilityAdvertisementPayload, HSPMessageEnvelope
 
 # --- Mock TrustManager ---

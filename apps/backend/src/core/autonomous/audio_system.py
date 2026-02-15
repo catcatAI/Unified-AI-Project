@@ -595,18 +595,18 @@ if __name__ == "__main__":
         audio = AudioSystem()
         await audio.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 音频系统演示")
-        print("Audio System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 音频系统演示")
+        logger.info("Audio System Demo")
+        logger.info("=" * 60)
         
         # TTS demo
-        print("\nTTS演示 / TTS demo:")
+        logger.info("\nTTS演示 / TTS demo:")
         await audio.speak("你好，我是安吉拉，很高兴见到你！", show_subtitles=True)
-        print("  说话完成 / Speaking complete")
+        logger.info("  说话完成 / Speaking complete")
         
         # TTS with emotion
-        print("\n情感语音 / Emotional speech:")
+        logger.info("\n情感语音 / Emotional speech:")
         await audio.speak_with_emotion(
             "I'm so happy to be here with you!",
             emotion="happy",
@@ -614,7 +614,7 @@ if __name__ == "__main__":
         )
         
         # Music playback
-        print("\n音乐播放 / Music playback:")
+        logger.info("\n音乐播放 / Music playback:")
         track = MusicTrack(
             track_id="song_001",
             title="Test Song",
@@ -623,11 +623,11 @@ if __name__ == "__main__":
         )
         await audio.play_music(track)
         await asyncio.sleep(1)
-        print(f"  播放进度: {audio.get_playback_progress():.1%}")
+        logger.info(f"  播放进度: {audio.get_playback_progress():.1%}")
         await audio.stop()
         
         # Singing with lyrics
-        print("\n歌词同步唱歌 / Singing with lyrics:")
+        logger.info("\n歌词同步唱歌 / Singing with lyrics:")
         lyrics = LyricsSync(
             song_title="Demo Song",
             artist="Angela",
@@ -642,11 +642,11 @@ if __name__ == "__main__":
         
         current_lyric = lyrics.get_current_line(audio.current_playback_time)
         if current_lyric:
-            print(f"  当前歌词: {current_lyric.text}")
+            logger.info(f"  当前歌词: {current_lyric.text}")
         
         await audio.stop()
         
         await audio.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

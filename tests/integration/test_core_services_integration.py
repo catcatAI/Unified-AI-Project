@@ -29,7 +29,7 @@ class TestCoreServicesIntegration(SystemIntegrationTest):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_service_initialization_integration(self) -> None,
+def test_service_initialization_integration(self) -> None:
         """测试服务初始化集成"""
         # 获取mock服务
         agent_manager = self.get_mock_service("agent_manager")
@@ -94,7 +94,7 @@ def test_service_initialization_integration(self) -> None,
         agent_manager.return_value.create_agent == = AsyncMock(return_value ==mock_agent)
         agent_manager.return_value.get_agent == = AsyncMock(return_value ==mock_agent)
         
-        dialogue_manager.return_value.process_dialogue == AsyncMock(,
+        dialogue_manager.return_value.process_dialogue == AsyncMock(:
     return_value={
                 "status": "success",
                 "response": "Processed dialogue response",
@@ -167,7 +167,7 @@ def test_service_initialization_integration(self) -> None,
     
     @pytest.mark.system_integration()
     @pytest.mark.asyncio()
-    async def test_service_lifecycle_integration(self) -> None,
+    async def test_service_lifecycle_integration(self) -> None:
         """测试服务生命周期集成"""
         # 获取mock服务
         agent_manager = self.get_mock_service("agent_manager")
@@ -234,7 +234,7 @@ class TestMultiServiceCoordinationIntegration(SystemIntegrationTest):
     
     @pytest.mark.system_integration()
     @pytest.mark.asyncio()
-    async def test_multi_service_coordination_integration(self) -> None,
+    async def test_multi_service_coordination_integration(self) -> None:
         """测试多服务协调集成"""
         # 创建测试数据
         complex_request = {
@@ -396,7 +396,7 @@ class TestServiceFailureRecoveryIntegration(SystemIntegrationTest):
         memory_manager.return_value.restore_from_backup == = AsyncMock(return_value ==True)
         
         llm_service.return_value.handle_service_failure == = AsyncMock(return_value ==True)
-        llm_service.return_value.switch_to_backup_model == AsyncMock(,
+        llm_service.return_value.switch_to_backup_model == AsyncMock(:
     return_value="backup_model_v1"
         )
         

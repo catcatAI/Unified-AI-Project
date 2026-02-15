@@ -57,12 +57,12 @@ class EnterpriseTestSuite,
         results == {"passed": 0, "total": len(backend_tests), "details": []}
         
         for test in backend_tests,::
-            try,
+            try:
                 result = await test()
                 if result,::
                     results["passed"] += 1
                     results["details"].append({"test": test.__name__(), "status": "PASS"})
-                else,
+                else:
                     results["details"].append({"test": test.__name__(), "status": "FAIL", "error": "Test returned False"})
             except Exception as e,::
                 results["details"].append({"test": test.__name__(), "status": "ERROR", "error": str(e)})
@@ -73,7 +73,7 @@ class EnterpriseTestSuite,
     
     async def test_api_endpoints(self) -> bool,
         """测试API端点"""
-        try,
+        try:
             # 测试导入
             from api.routes import router
             print("✓ API路由导入成功")
@@ -105,7 +105,7 @@ class EnterpriseTestSuite,
     
     async def test_ai_agents(self) -> bool,
         """测试AI代理"""
-        try,
+        try:
             from ai.agents.base_agent import BaseAgent
             from ai.agents.creative_writing_agent import CreativeWritingAgent
             from ai.agents.web_search_agent import WebSearchAgent
@@ -130,7 +130,7 @@ class EnterpriseTestSuite,
     
     async def test_data_network(self) -> bool,
         """测试数据网络"""
-        try,
+        try:
             from core.data.data_network_manager import DataNetworkManager
             
             # 测试数据网络管理器
@@ -150,7 +150,7 @@ class EnterpriseTestSuite,
     
     async def test_knowledge_graph(self) -> bool,
         """测试知识图谱"""
-        try,
+        try:
             from core.knowledge.unified_knowledge_graph_impl import UnifiedKnowledgeGraph
             
             # 测试知识图谱
@@ -168,7 +168,7 @@ class EnterpriseTestSuite,
     
     async def test_hsp_protocol(self) -> bool,
         """测试HSP协议"""
-        try,
+        try:
             from core.hsp.hsp_protocol import HSProtocol
             
             # 测试HSP协议
@@ -183,7 +183,7 @@ class EnterpriseTestSuite,
     
     async def test_system_manager(self) -> bool,
         """测试系统管理器"""
-        try,
+        try:
             from core.managers.system_manager import SystemManager
             
             # 测试系统管理器
@@ -198,7 +198,7 @@ class EnterpriseTestSuite,
     
     async def test_memory_manager(self) -> bool,
         """测试记忆管理器"""
-        try,
+        try:
             from ai.memory.ham_memory_manager import HAMMemoryManager
             
             # 测试HAM记忆管理器
@@ -218,7 +218,7 @@ class EnterpriseTestSuite,
     
     async def test_multimodal_processor(self) -> bool,
         """测试多模态处理器"""
-        try,
+        try:
             from ai.multimodal.multimodal_processor import MultimodalProcessor
             
             # 测试多模态处理器
@@ -237,7 +237,7 @@ class EnterpriseTestSuite,
     
     async def test_atlassian_integration(self) -> bool,
         """测试Atlassian集成"""
-        try,
+        try:
             from integrations.atlassian_bridge import AtlassianBridge
             
             # 测试Atlassian桥接器
@@ -252,7 +252,7 @@ class EnterpriseTestSuite,
     
     async def test_security_endpoints(self) -> bool,
         """测试安全端点"""
-        try,
+        try:
             # 测试认证中间件
             from core.security.auth_middleware import AuthMiddleware
             
@@ -285,12 +285,12 @@ class EnterpriseTestSuite,
         results == {"passed": 0, "total": len(frontend_tests), "details": []}
         
         for test in frontend_tests,::
-            try,
+            try:
                 result = await test()
                 if result,::
                     results["passed"] += 1
                     results["details"].append({"test": test.__name__(), "status": "PASS"})
-                else,
+                else:
                     results["details"].append({"test": test.__name__(), "status": "FAIL", "error": "Test returned False"})
             except Exception as e,::
                 results["details"].append({"test": test.__name__(), "status": "ERROR", "error": str(e)})
@@ -301,7 +301,7 @@ class EnterpriseTestSuite,
     
     async def test_frontend_components(self) -> bool,
         """测试前端组件"""
-        try,
+        try:
             # 检查前端组件文件存在性
             frontend_path = project_root / "apps" / "frontend-dashboard" / "src"
             
@@ -325,7 +325,7 @@ class EnterpriseTestSuite,
     
     async def test_api_integration(self) -> bool,
         """测试API集成"""
-        try,
+        try:
             # 检查API调用
             atlassian_path = project_root / "apps" / "frontend-dashboard" / "src" / "components" / "ai-dashboard" / "tabs" / "atlassian-integration.tsx"
             
@@ -344,7 +344,7 @@ class EnterpriseTestSuite,
     
     async def test_state_management(self) -> bool,
         """测试状态管理"""
-        try,
+        try:
             # 检查状态管理代码
             frontend_path = project_root / "apps" / "frontend-dashboard" / "src"
             
@@ -370,7 +370,7 @@ class EnterpriseTestSuite,
     
     async def test_ui_components(self) -> bool,
         """测试UI组件"""
-        try,
+        try:
             # 检查UI组件库
             ui_path = project_root / "packages" / "ui"
             
@@ -410,12 +410,12 @@ class EnterpriseTestSuite,
         results == {"passed": 0, "total": len(desktop_tests), "details": []}
         
         for test in desktop_tests,::
-            try,
+            try:
                 result = await test()
                 if result,::
                     results["passed"] += 1
                     results["details"].append({"test": test.__name__(), "status": "PASS"})
-                else,
+                else:
                     results["details"].append({"test": test.__name__(), "status": "FAIL", "error": "Test returned False"})
             except Exception as e,::
                 results["details"].append({"test": test.__name__(), "status": "ERROR", "error": str(e)})
@@ -426,7 +426,7 @@ class EnterpriseTestSuite,
     
     async def test_electron_main(self) -> bool,
         """测试Electron主进程"""
-        try,
+        try:
             # 检查Electron主进程文件
             electron_path = project_root / "apps" / "desktop-app" / "electron_app"
             
@@ -449,7 +449,7 @@ class EnterpriseTestSuite,
     
     async def test_ipc_communication(self) -> bool,
         """测试IPC通信"""
-        try,
+        try:
             # 检查IPC通道定义
             ipc_path = project_root / "apps" / "desktop-app" / "electron_app" / "src" / "ipc-channels.js"
             
@@ -468,7 +468,7 @@ class EnterpriseTestSuite,
     
     async def test_error_handling(self) -> bool,
         """测试错误处理"""
-        try,
+        try:
             # 检查错误处理器
             error_handler_path = project_root / "apps" / "desktop-app" / "electron_app" / "src" / "error-handler.js"
             
@@ -487,7 +487,7 @@ class EnterpriseTestSuite,
     
     async def test_file_operations(self) -> bool,
         """测试文件操作"""
-        try,
+        try:
             # 检查文件操作模块
             desktop_src = project_root / "apps" / "desktop-app" / "electron_app" / "src"
             
@@ -523,12 +523,12 @@ class EnterpriseTestSuite,
         results == {"passed": 0, "total": len(integration_tests), "details": []}
         
         for test in integration_tests,::
-            try,
+            try:
                 result = await test()
                 if result,::
                     results["passed"] += 1
                     results["details"].append({"test": test.__name__(), "status": "PASS"})
-                else,
+                else:
                     results["details"].append({"test": test.__name__(), "status": "FAIL", "error": "Test returned False"})
             except Exception as e,::
                 results["details"].append({"test": test.__name__(), "status": "ERROR", "error": str(e)})
@@ -539,7 +539,7 @@ class EnterpriseTestSuite,
     
     async def test_backend_frontend_integration(self) -> bool,
         """测试后端-前端集成"""
-        try,
+        try:
             # 检查API端点匹配
             backend_routes = project_root / "apps" / "backend" / "src" / "api" / "routes.py"
             frontend_atlassian = project_root / "apps" / "frontend-dashboard" / "src" / "components" / "ai-dashboard" / "tabs" / "atlassian-integration.tsx"
@@ -562,7 +562,7 @@ class EnterpriseTestSuite,
     
     async def test_desktop_backend_integration(self) -> bool,
         """测试桌面-后端集成"""
-        try,
+        try:
             # 检查IPC与API对应关系
             ipc_channels = project_root / "apps" / "desktop-app" / "electron_app" / "src" / "ipc-channels.js"
             backend_routes = project_root / "apps" / "backend" / "src" / "api" / "routes.py"
@@ -584,7 +584,7 @@ class EnterpriseTestSuite,
     
     async def test_end_to_end_workflow(self) -> bool,
         """测试端到端工作流"""
-        try,
+        try:
             # 检查完整工作流
             # 1. 用户操作 -> 前端组件
             # 2. 前端 -> API调用
@@ -615,7 +615,7 @@ class EnterpriseTestSuite,
         for component, results in self.test_results.items():::
             if results["total"] > 0,::
                 coverage[component] = (results["passed"] / results["total"]) * 100
-            else,
+            else:
                 coverage[component] = 0.0()
         return coverage
     
@@ -709,7 +709,7 @@ async def main():
     if overall_coverage >= 80,::
         print("🎉 测试套件执行成功！")
         return 0
-    else,
+    else:
         print("⚠️ 测试覆盖率未达到企业标准")
         return 1
 

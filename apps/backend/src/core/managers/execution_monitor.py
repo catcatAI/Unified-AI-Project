@@ -645,14 +645,14 @@ if __name__ == "__main__":
     monitor = ExecutionMonitor()
     result = monitor.execute_command(args.command, timeout=args.timeout)
 
-    print(f"Status: {result.status.value}")
-    print(f"Return code: {result.return_code}")
-    print(f"Execution time: {result.execution_time:.2f}s")
-    print(f"Terminal status: {result.terminal_status.value if result.terminal_status else 'N/A'}")
+    logger.info(f"Status: {result.status.value}")
+    logger.info(f"Return code: {result.return_code}")
+    logger.info(f"Execution time: {result.execution_time:.2f}s")
+    logger.info(f"Terminal status: {result.terminal_status.value if result.terminal_status else 'N/A'}")
 
     if result.stdout:
-        print(f"STDOUT:\n{result.stdout}")
+        logger.info(f"STDOUT:\n{result.stdout}")
     if result.stderr:
-        print(f"STDERR:\n{result.stderr}")
+        logger.info(f"STDERR:\n{result.stderr}")
     if result.error_message:
-        print(f"Error: {result.error_message}")
+        logger.error(f"Error: {result.error_message}")

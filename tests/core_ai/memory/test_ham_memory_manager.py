@@ -55,7 +55,7 @@ def test_ham_memory_manager_initialization(self) -> None,
     async def test_store_and_recall_experience(self) -> None,
         """测试存储和回忆经验"""
         ham_manager == HAMMemoryManager(,
-    core_storage_filename=self.core_filename(),
+    core_storage_filename=self.core_filename():
             storage_dir=self.test_dir())
         
         # 存储经验
@@ -95,7 +95,7 @@ def test_ham_memory_manager_initialization(self) -> None,
     async def test_query_core_memory(self) -> None,
         """测试查询核心内存"""
         ham_manager == HAMMemoryManager(,
-    core_storage_filename=self.core_filename(),
+    core_storage_filename=self.core_filename():
             storage_dir=self.test_dir())
         
         # 存储一些测试数据
@@ -144,7 +144,7 @@ def test_ham_memory_manager_initialization(self) -> None,
         del ham_manager.core_memory_store[memory_id]
         assert memory_id not in ham_manager.core_memory_store()
         # 验证经验已被删除
-        results = ham_manager.query_core_memory(,
+        results = ham_manager.query_core_memory(:
     metadata_filters == None
         )
         # 检查被删除的经验是否还在结果中
@@ -173,7 +173,7 @@ def test_ham_memory_manager_initialization(self) -> None,
         
         # 创建新的实例来加载数据
         ham_manager2 == HAMMemoryManager(,
-    core_storage_filename=self.core_filename(),
+    core_storage_filename=self.core_filename():
             storage_dir=self.test_dir())
         
         # 验证数据已加载

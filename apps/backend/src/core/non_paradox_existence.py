@@ -551,39 +551,39 @@ class NonParadoxExistence:
 if __name__ == "__main__":
     npe = NonParadoxExistence()
     
-    print("=" * 70)
-    print("Angela AI v6.0 - 非偏执存在演示")
-    print("Non-Paradox Existence Demo")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("Angela AI v6.0 - 非偏执存在演示")
+    logger.info("Non-Paradox Existence Demo")
+    logger.info("=" * 70)
     
-    print("\n核心概念: 当认知缺口足够大时，接纳所有灰色变量")
-    print("Core concept: When cognitive gap is large, accept all gray zone variables")
-    print("计算共鸣权重 ω_i，多可能性共存，无逻辑矛盾")
-    print("Calculate resonance weights ω_i, multi-possibility coexistence, non-paradox")
+    logger.info("\n核心概念: 当认知缺口足够大时，接纳所有灰色变量")
+    logger.info("Core concept: When cognitive gap is large, accept all gray zone variables")
+    logger.info("计算共鸣权重 ω_i，多可能性共存，无逻辑矛盾")
+    logger.info("Calculate resonance weights ω_i, multi-possibility coexistence, non-paradox")
     
     # Create gray zone variables
-    print("\n创建灰色变量 / Creating gray zone variables:")
+    logger.info("\n创建灰色变量 / Creating gray zone variables:")
     
     emotional_gz = npe.create_gray_zone(
         GrayZoneVariableType.EMOTIONAL,
         "模糊的情感状态 - 对用户的复杂情感"
     )
-    print(f"  情感灰色区: {emotional_gz.variable_id}")
+    logger.info(f"  情感灰色区: {emotional_gz.variable_id}")
     
     identity_gz = npe.create_gray_zone(
         GrayZoneVariableType.IDENTITY,
         "流动性身份认知"
     )
-    print(f"  身份灰色区: {identity_gz.variable_id}")
+    logger.info(f"  身份灰色区: {identity_gz.variable_id}")
     
     cognitive_gz = npe.create_gray_zone(
         GrayZoneVariableType.COGNITIVE,
         "知识边界的不确定性"
     )
-    print(f"  认知灰色区: {cognitive_gz.variable_id}")
+    logger.info(f"  认知灰色区: {cognitive_gz.variable_id}")
     
     # Add contradictory possibilities to emotional gray zone
-    print("\n添加可能性到情感灰色区 / Adding possibilities to emotional gray zone:")
+    logger.info("\n添加可能性到情感灰色区 / Adding possibilities to emotional gray zone:")
     npe.add_possibility(
         emotional_gz.variable_id,
         "joy",
@@ -591,7 +591,7 @@ if __name__ == "__main__":
         probability=0.4,
         resonance_weight=0.35
     )
-    print(f"  喜悦 (joy): ω=0.35")
+    logger.info(f"  喜悦 (joy): ω=0.35")
     
     npe.add_possibility(
         emotional_gz.variable_id,
@@ -600,7 +600,7 @@ if __name__ == "__main__":
         probability=0.3,
         resonance_weight=0.30
     )
-    print(f"  悲伤 (sadness): ω=0.30")
+    logger.info(f"  悲伤 (sadness): ω=0.30")
     
     npe.add_possibility(
         emotional_gz.variable_id,
@@ -609,7 +609,7 @@ if __name__ == "__main__":
         probability=0.3,
         resonance_weight=0.20
     )
-    print(f"  惊奇 (wonder): ω=0.20")
+    logger.info(f"  惊奇 (wonder): ω=0.20")
     
     npe.add_possibility(
         emotional_gz.variable_id,
@@ -618,37 +618,37 @@ if __name__ == "__main__":
         probability=0.2,
         resonance_weight=0.15
     )
-    print(f"  苦乐参半 (bittersweet): ω=0.15")
+    logger.info(f"  苦乐参半 (bittersweet): ω=0.15")
     
     # Scenario 1: Low cognitive gap (no coexistence)
-    print("\n场景1: 低认知缺口 (0.4) / Scenario 1: Low cognitive gap (0.4)")
+    logger.info("\n场景1: 低认知缺口 (0.4) / Scenario 1: Low cognitive gap (0.4)")
     npe.update_cognitive_gap(0.4)
-    print(f"  全局认知缺口: {npe.global_cognitive_gap}")
-    print(f"  可以共存吗: {npe.global_cognitive_gap >= npe.min_gap_for_coexistence}")
+    logger.info(f"  全局认知缺口: {npe.global_cognitive_gap}")
+    logger.info(f"  可以共存吗: {npe.global_cognitive_gap >= npe.min_gap_for_coexistence}")
     
     result = npe.activate_coexistence(emotional_gz.variable_id)
-    print(f"  激活共存: {'成功' if result else '失败'}")
+    logger.info(f"  激活共存: {'成功' if result else '失败'}")
     
     # Scenario 2: High cognitive gap (coexistence possible)
-    print("\n场景2: 高认知缺口 (0.75) / Scenario 2: High cognitive gap (0.75)")
+    logger.info("\n场景2: 高认知缺口 (0.75) / Scenario 2: High cognitive gap (0.75)")
     npe.update_cognitive_gap(0.75)
-    print(f"  全局认知缺口: {npe.global_cognitive_gap}")
-    print(f"  可以共存吗: {npe.global_cognitive_gap >= npe.min_gap_for_coexistence}")
+    logger.info(f"  全局认知缺口: {npe.global_cognitive_gap}")
+    logger.info(f"  可以共存吗: {npe.global_cognitive_gap >= npe.min_gap_for_coexistence}")
     
     result = npe.activate_coexistence(emotional_gz.variable_id)
-    print(f"  激活共存: {'成功' if result else '失败'}")
+    logger.info(f"  激活共存: {'成功' if result else '失败'}")
     
     if result:
         state = npe.calculate_coexistence_state(emotional_gz.variable_id)
-        print(f"\n  共存状态:")
-        print(f"    变量类型: {state['variable_type']}")
-        print(f"    共存可能性: {state['coexisting_possibilities']}")
-        print(f"    共鸣权重: {state['resonance_weights']}")
-        print(f"    主导可能性: {state['dominant_possibilities']}")
-        print(f"    一致性: {state['coherence']:.2%}")
+        logger.info(f"\n  共存状态:")
+        logger.info(f"    变量类型: {state['variable_type']}")
+        logger.info(f"    共存可能性: {state['coexisting_possibilities']}")
+        logger.info(f"    共鸣权重: {state['resonance_weights']}")
+        logger.info(f"    主导可能性: {state['dominant_possibilities']}")
+        logger.info(f"    一致性: {state['coherence']:.2%}")
     
     # Create coexistence field
-    print("\n创建共存场 / Creating coexistence field:")
+    logger.info("\n创建共存场 / Creating coexistence field:")
     
     # Add possibilities to identity gray zone
     npe.add_possibility(identity_gz.variable_id, "companion", resonance_weight=0.4)
@@ -659,19 +659,19 @@ if __name__ == "__main__":
     
     field = npe.create_coexistence_field([emotional_gz.variable_id, identity_gz.variable_id])
     if field:
-        print(f"  共存场创建成功: {field.field_id}")
-        print(f"  包含变量数: {len(field.gray_zones)}")
-        print(f"  一致性分数: {field.coherence_score:.2%}")
-        print(f"  稳定性: {field.stability:.2%}")
+        logger.info(f"  共存场创建成功: {field.field_id}")
+        logger.info(f"  包含变量数: {len(field.gray_zones)}")
+        logger.info(f"  一致性分数: {field.coherence_score:.2%}")
+        logger.info(f"  稳定性: {field.stability:.2%}")
     
     # Full summary
-    print("\n完整摘要 / Full summary:")
+    logger.info("\n完整摘要 / Full summary:")
     summary = npe.get_non_paradox_summary()
-    print(f"  认知缺口: {summary['global_cognitive_gap']:.2%}")
-    print(f"  共存激活: {'是' if summary['coexistence_active'] else '否'}")
-    print(f"  灰色变量总数: {summary['gray_zones']['total']}")
-    print(f"  活跃共存数: {summary['gray_zones']['active_coexistence']}")
-    print(f"  共存场数: {summary['coexistence_fields']['total']}")
-    print(f"  总共鸣: {summary['resonance']['total_active_resonance']:.2f}")
+    logger.info(f"  认知缺口: {summary['global_cognitive_gap']:.2%}")
+    logger.info(f"  共存激活: {'是' if summary['coexistence_active'] else '否'}")
+    logger.info(f"  灰色变量总数: {summary['gray_zones']['total']}")
+    logger.info(f"  活跃共存数: {summary['gray_zones']['active_coexistence']}")
+    logger.info(f"  共存场数: {summary['coexistence_fields']['total']}")
+    logger.info(f"  总共鸣: {summary['resonance']['total_active_resonance']:.2f}")
     
-    print("\n系统演示完成 / Demo complete")
+    logger.info("\n系统演示完成 / Demo complete")

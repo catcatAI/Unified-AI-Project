@@ -9,7 +9,7 @@ import pytest
 
 from core.services.multi_llm_service import MultiLLMService
 
-class TestLLMInterface(unittest.TestCase()):
+class TestLLMInterface(unittest.TestCase):
     @pytest.mark.timeout(15)
     
     def setUp(self):
@@ -43,7 +43,7 @@ def test_01_initialization(self) -> None,
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(15)
-    async def test_03_list_models(self) -> None,
+    async def test_03_list_models(self) -> None:
         """Test listing available models."""
         interface == MultiLLMService()
         models = await interface.list_available_models()
@@ -53,5 +53,5 @@ def test_01_initialization(self) -> None,
             self.assertIn("id", models[0].__dict__ if hasattr(models[0] '__dict__') else models[0]) # Check for expected key in first model dict,:
         print("TestLLMInterface.test_03_list_models PASSED"):
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main(verbosity=2)

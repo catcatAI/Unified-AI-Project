@@ -506,7 +506,7 @@ class HAMMemoryManager:
             return False
 
 if __name__ == '__main__':
-    print("--- HAMMemoryManager Test ---")
+    logger.info("--- HAMMemoryManager Test ---")
     # Ensure a clean state for testing if file exists from previous run
     test_file_name = "ham_test_memory.json"
     
@@ -519,7 +519,7 @@ if __name__ == '__main__':
     ham = HAMMemoryManager(core_storage_filename=test_file_name)
 
     # Test storing experiences
-    print("\n--- Storing Experiences ---")
+    logger.info("\n--- Storing Experiences ---")
     ts_now = datetime.now(timezone.utc).isoformat() # Added timezone
     # Provide metadata that aligns better with DialogueMemoryEntryMetadata
     exp1_metadata = {
@@ -550,18 +550,18 @@ if __name__ == '__main__':
     }
     exp3_id = asyncio.run(ham.store_experience({"value": 42, "unit": "answer"}, "generic_data", exp3_metadata))
 
-    print(f"Stored IDs: {exp1_id} {exp2_id} {exp3_id}")
+    logger.info(f"Stored IDs: {exp1_id} {exp2_id} {exp3_id}")
 
     # Test recalling gists
-    print("\n--- Recalling Gists ---")
+    logger.info("\n--- Recalling Gists ---")
     if exp1_id:
         recalled_exp1 = ham.recall_gist(exp1_id)
-        print(f"Recalled exp1: {json.dumps(recalled_exp1, indent=2) if recalled_exp1 else 'None'}")
+        logger.info(f"Recalled exp1: {json.dumps(recalled_exp1, indent=2) if recalled_exp1 else 'None'}")
     if exp3_id:
         recalled_exp3 = ham.recall_gist(exp3_id)
-        print(f"Recalled exp3: {json.dumps(recalled_exp3, indent=2) if recalled_exp3 else 'None'}")
+        logger.info(f"Recalled exp3: {json.dumps(recalled_exp3, indent=2) if recalled_exp3 else 'None'}")
     recalled_non_existent = ham.recall_gist('mem_000999')
-    print(f"Recalled non-existent: {recalled_non_existent}")
+    logger.info(f"Recalled non-existent: {recalled_non_existent}")
 
     async def query_core_memory(self, keywords: Optional[List[str]] = None, data_type_filter: Optional[str] = None, limit: int = 10) -> List[HAMRecallResult]:
         """
@@ -776,24 +776,24 @@ if __name__ == '__main__':
         )
 
     # Test querying memory
-    print("\n--- Querying Memory (keywords in metadata) ---")
+    logger.info("\n--- Querying Memory (keywords in metadata) ---")
     query_results_kw: List[HAMRecallResult] = asyncio.run(ham.query_core_memory(keywords=["test_user"]))
     for res_item in query_results_kw:
-        print(json.dumps(res_item, indent = 2))
+        logger.info(json.dumps(res_item, indent = 2))
 
-    print("\n--- Querying Memory (data_type) ---")
+    logger.info("\n--- Querying Memory (data_type) ---")
     query_results_type: List[HAMRecallResult] = asyncio.run(ham.query_core_memory(data_type_filter="generic_data"))
     for res_item in query_results_type:
-        print(json.dumps(res_item, indent = 2))
+        logger.info(json.dumps(res_item, indent = 2))
 
     # Test persistence by reloading
-    print("\n--- Testing Persistence ---")
+    logger.info("\n--- Testing Persistence ---")
     del ham # Delete current instance
     ham_reloaded = HAMMemoryManager(core_storage_filename=test_file_name) # Reload from file
 
-    print(f"Recalling exp1 after reload: {ham_reloaded.recall_gist(exp1_id if exp1_id else 'mem_000001')}")
+    logger.info(f"Recalling exp1 after reload: {ham_reloaded.recall_gist(exp1_id if exp1_id else 'mem_000001')}")
     # Clean up test file
     if os.path.exists(ham_reloaded.core_storage.core_storage_filepath):
         os.remove(ham_reloaded.core_storage.core_storage_filepath)
-    print(f"\nCleaned up {ham_reloaded.core_storage.core_storage_filepath}")
-    print("--- Test Complete ---")
+    logger.info(f"\nCleaned up {ham_reloaded.core_storage.core_storage_filepath}")
+    logger.info("--- Test Complete ---")

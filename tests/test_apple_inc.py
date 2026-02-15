@@ -10,33 +10,33 @@ import os
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-try,
+try:
     import spacy
     
     # Try to load the model
-    try,
+    try:
         nlp = spacy.load("en_core_web_sm")
         print("Loaded en_core_web_sm")
-    except OSError,::
-        try,
+    except OSError as e:
+        try:
             nlp = spacy.load("en_core_web_md")
             print("Loaded en_core_web_md")
-        except OSError,::
-            nlp == None
+        except OSError as e:
+            nlp = None
             print("Could not load spaCy model")
     
-    if nlp,::
+    if nlp:
         # Test the model
         text = "Apple Inc. is a company. Steve Jobs was a person."
         doc = nlp(text)
-        print(f"Entities found, {len(doc.ents())}")
+        print(f"Entities found, {len(doc.ents)}")
         
-        for ent in doc.ents,::
+        for ent in doc.ents:
             print(f"Entity, '{ent.text}' - Type, {ent.label_}")
         
         # Test the analyzer
         from learning.content_analyzer_module import ContentAnalyzerModule
-        analyzer == ContentAnalyzerModule()
+        analyzer = ContentAnalyzerModule()
         
         kg_data, nx_graph = analyzer.analyze_content(text)
         print(f"\nAnalyzer results,")
@@ -51,7 +51,7 @@ try,
             or node, data in nx_graph.nodes(data == True)
             print(f"NX Node, '{data.get('label')}' - Type, {data.get('type')}")
             
-    else,
+    else:
         print("Could not load spaCy model")
         
 except Exception as e,::

@@ -700,7 +700,7 @@ class ActionExecutor:
             # Try to handle basic action types
             if action_type == "initiate_conversation":
                 message = parameters.get("message", "Hi!")
-                print(f"[ActionExecutor] Fallback: {message}")
+                logger.info(f"[ActionExecutor] Fallback: {message}")
                 
                 execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
                 return ExecutionResult(
@@ -714,7 +714,7 @@ class ActionExecutor:
             
             elif action_type == "express_feeling":
                 emotion = parameters.get("emotion", "neutral")
-                print(f"[ActionExecutor] Fallback: Expressing {emotion}")
+                logger.info(f"[ActionExecutor] Fallback: Expressing {emotion}")
                 
                 execution_time = int((asyncio.get_event_loop().time() - start_time) * 1000)
                 return ExecutionResult(
@@ -879,10 +879,10 @@ if __name__ == "__main__":
         executor = ActionExecutor()
         await executor.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 动作执行器演示")
-        print("Action Executor Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 动作执行器演示")
+        logger.info("Action Executor Demo")
+        logger.info("=" * 60)
         
         # Create sample actions
         async def sample_action_1(name: str):
@@ -893,7 +893,7 @@ if __name__ == "__main__":
             await asyncio.sleep(0.3)
             return value * 2
         
-        print("\n提交动作 / Submitting actions:")
+        logger.info("\n提交动作 / Submitting actions:")
         
         action1 = Action.create(
             name="greet",
@@ -914,26 +914,26 @@ if __name__ == "__main__":
         # Submit actions
         id1 = executor.submit(action1)
         id2 = executor.submit(action2)
-        print(f"  Action 1 ID: {id1}")
-        print(f"  Action 2 ID: {id2}")
+        logger.info(f"  Action 1 ID: {id1}")
+        logger.info(f"  Action 2 ID: {id2}")
         
         # Execute one and wait
-        print("\n执行并等待 / Execute and wait:")
+        logger.info("\n执行并等待 / Execute and wait:")
         result = await executor.submit_and_execute(action1)
-        print(f"  Success: {result.success}")
-        print(f"  Output: {result.output}")
-        print(f"  Time: {result.execution_time:.3f}s")
+        logger.info(f"  Success: {result.success}")
+        logger.info(f"  Output: {result.output}")
+        logger.info(f"  Time: {result.execution_time:.3f}s")
         
         # Wait for queue to process
         await asyncio.sleep(1)
         
         # Show stats
-        print("\n执行统计 / Execution stats:")
+        logger.info("\n执行统计 / Execution stats:")
         stats = executor.get_execution_stats()
         for key, value in stats.items():
-            print(f"  {key}: {value}")
+            logger.info(f"  {key}: {value}")
         
         await executor.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

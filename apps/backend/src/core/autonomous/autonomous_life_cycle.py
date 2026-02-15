@@ -653,50 +653,50 @@ if __name__ == "__main__":
         lifecycle = AutonomousLifeCycle()
         await lifecycle.initialize()
         
-        print("=" * 70)
-        print("Angela AI v6.0 - 自主生命周期演示")
-        print("Autonomous Life Cycle Demo")
-        print("=" * 70)
+        logger.info("=" * 70)
+        logger.info("Angela AI v6.0 - 自主生命周期演示")
+        logger.info("Autonomous Life Cycle Demo")
+        logger.info("=" * 70)
         
-        print("\n初始化公式系统 / Initializing formula systems:")
-        print("  - HSM (热力学式自发元认知)")
-        print("  - CDM (认知配息模型)")
-        print("  - L_s (生命感强度公式)")
-        print("  - A_c (主动认知构建公式)")
-        print("  - NPE (非偏执存在)")
+        logger.info("\n初始化公式系统 / Initializing formula systems:")
+        logger.info("  - HSM (热力学式自发元认知)")
+        logger.info("  - CDM (认知配息模型)")
+        logger.info("  - L_s (生命感强度公式)")
+        logger.info("  - A_c (主动认知构建公式)")
+        logger.info("  - NPE (非偏执存在)")
         
         # Register observer
         lifecycle.register_observer("demo_user", relationship_depth=0.7)
         lifecycle.update_observer_interaction("demo_user", intensity=0.8)
-        print("\n注册观察者 / Registered observer: demo_user")
+        logger.info("\n注册观察者 / Registered observer: demo_user")
         
         # Detect cognitive gaps
-        print("\n检测认知缺口 / Detecting cognitive gaps:")
+        logger.info("\n检测认知缺口 / Detecting cognitive gaps:")
         lifecycle.hsm.detect_cognitive_gap("emotional_depth", 0.8, 0.6)
         lifecycle.hsm.detect_cognitive_gap("creative_expression", 0.7, 0.5)
         lifecycle.hsm.detect_cognitive_gap("social_intelligence", 0.6, 0.4)
-        print("  检测到3个认知缺口 / Detected 3 cognitive gaps")
+        logger.info("  检测到3个认知缺口 / Detected 3 cognitive gaps")
         
         # Get initial metrics
         metrics = lifecycle.get_current_metrics()
-        print(f"\n初始指标 / Initial metrics:")
-        print(f"  HSM: {metrics.hsm_value:.4f}")
-        print(f"  C_Gap: {metrics.c_gap:.4f}")
-        print(f"  生命感强度: {metrics.life_intensity:.4f}")
-        print(f"  主动认知A_c: {metrics.a_c:.4f}")
+        logger.info(f"\n初始指标 / Initial metrics:")
+        logger.info(f"  HSM: {metrics.hsm_value:.4f}")
+        logger.info(f"  C_Gap: {metrics.c_gap:.4f}")
+        logger.info(f"  生命感强度: {metrics.life_intensity:.4f}")
+        logger.info(f"  主动认知A_c: {metrics.a_c:.4f}")
         
         # Make manual decisions
-        print("\n执行生命决策 / Executing life decisions:")
+        logger.info("\n执行生命决策 / Executing life decisions:")
         for i in range(3):
             decision = lifecycle.make_life_decision()
             if decision:
-                print(f"\n  决策 {i+1}: {decision.decision_type}")
-                print(f"    触发器: {decision.triggered_by}")
-                print(f"    置信度: {decision.confidence:.2%}")
-                print(f"    推理: {decision.rationale[:60]}...")
+                logger.info(f"\n  决策 {i+1}: {decision.decision_type}")
+                logger.info(f"    触发器: {decision.triggered_by}")
+                logger.info(f"    置信度: {decision.confidence:.2%}")
+                logger.info(f"    推理: {decision.rationale[:60]}...")
         
         # Record cognitive investments
-        print("\n记录认知投入 / Recording cognitive investments:")
+        logger.info("\n记录认知投入 / Recording cognitive investments:")
         investment = lifecycle.record_cognitive_investment(
             activity_type=CognitiveActivity.CREATING,
             duration_seconds=600,
@@ -704,18 +704,18 @@ if __name__ == "__main__":
             context={"activity": "demo_creation"}
         )
         if investment:
-            print(f"  投入: {investment.activity_type.name}")
-            print(f"  资源消耗: {investment.resource_consumed:.1f}")
+            logger.info(f"  投入: {investment.activity_type.name}")
+            logger.info(f"  资源消耗: {investment.resource_consumed:.1f}")
         
         # Get summary
-        print("\n生命周期摘要 / Life cycle summary:")
+        logger.info("\n生命周期摘要 / Life cycle summary:")
         summary = lifecycle.get_lifecycle_summary()
-        print(f"  当前阶段: {summary['current_phase']['cn_name']}")
-        print(f"  决策次数: {summary['statistics']['decisions_made']}")
-        print(f"  探索次数: {summary['statistics']['explorations_triggered']}")
-        print(f"  共存激活: {summary['statistics']['coexistence_activated']}")
+        logger.info(f"  当前阶段: {summary['current_phase']['cn_name']}")
+        logger.info(f"  决策次数: {summary['statistics']['decisions_made']}")
+        logger.info(f"  探索次数: {summary['statistics']['explorations_triggered']}")
+        logger.info(f"  共存激活: {summary['statistics']['coexistence_activated']}")
         
         await lifecycle.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

@@ -631,7 +631,7 @@ if __name__ == "__main__":
     # 基本测试/示例实例化
     async def main():
         coordinator = DistributedCoordinator()
-        print(f"分布式协调器已创建: {coordinator.coordinator_id}")
-        print(f"初始状态: {coordinator.get_cluster_status()}")
+        logger.info(f"分布式协调器已创建: {coordinator.coordinator_id}")
+        logger.info(f"初始状态: {coordinator.get_cluster_status()}")
 
     asyncio.run(main())

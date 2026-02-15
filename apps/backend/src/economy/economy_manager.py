@@ -25,40 +25,21 @@ class EconomyManager:
             "digital_energy_drink": {"price": 5.0, "restores": {"energy": 20}, "description": "Restores 20 energy"},
             "premium_bio_pellets": {"price": 10.0, "restores": {"hunger": 30, "happiness": 5}, "description": "High quality food"},
             "viral_toy_update": {"price": 15.0, "restores": {"happiness": 40}, "description": "Boosts mood significantly"},
-            "system_optimizer_patch": {"price": 25.0, "restores": {"energy": 50, "happiness": 10}, "description": "Full system rejuvenation"}
+            "system_optimizer_patch": {"price": 25.0, "restores": {"energy": 50, "happiness": 10}, "description": "Full system rejuvenation"},
+            "medical_kit": {"price": 20.0, "restores": {"health": 30}, "description": "Restores 30 health"},
+            "toy": {"price": 8.0, "restores": {"happiness": 20}, "description": "A simple toy for fun"}
         }
         
         logger.info(f"EconomyManager initialized with rules: {self.rules}")
         logger.info(f"Market opened with {len(self.item_registry)} items.")
 
     def process_transaction(self, transaction_data: Dict[str, Any]) -> bool:
-        """Processes a transaction, updating balances and logging the event."""
-        user_id = transaction_data.get("user_id")
-        amount = transaction_data.get("amount", 0)
-        item_id = transaction_data.get("item_id")
-        
-        if not all([user_id, amount, item_id]):
-            logger.error("Transaction failed: Missing data.")
-            return False
-
-        sender_id = user_id
-        current_balance = self.db.get_balance(sender_id)
-
-        if current_balance < amount:
-            logger.warning(f"Transaction failed for {sender_id}. Insufficient funds. Current: {current_balance}, Attempted: {amount}")
-            return False
-
-        tax = amount * self.rules["transaction_tax_rate"]
-        net_amount = amount - tax
-
-        # Assuming a negative amount debits the account
-        self.db.add_balance(sender_id, -amount)
-        
-        logger.info(
-            f"Processing transaction for user '{user_id}': "
-            f"Item: {item_id}, Amount: {amount}, Tax: {tax}, Net: {net_amount}"
-        )
-        return True
+        """
+        DEPRECATED: Use add_transaction instead.
+        Processes a transaction, updating balances and logging the event.
+        """
+        logger.warning("Call to deprecated method process_transaction. Logic is incomplete.")
+        return False
 
     def purchase_item(self, user_id: str, item_id: str) -> Dict[str, Any]:
         """Allows Angela to purchase an item from the registry."""

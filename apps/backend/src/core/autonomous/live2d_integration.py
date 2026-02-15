@@ -761,51 +761,51 @@ if __name__ == "__main__":
         live2d = Live2DIntegration()
         await live2d.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - Live2D集成系统演示")
-        print("Live2D Integration System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - Live2D集成系统演示")
+        logger.info("Live2D Integration System Demo")
+        logger.info("=" * 60)
         
         # Load model
-        print("\n加载模型 / Loading model:")
+        logger.info("\n加载模型 / Loading model:")
         success = await live2d.load_model("models/angela/angela.model3.json")
-        print(f"  模型加载: {'成功' if success else '失败'}")
+        logger.info(f"  模型加载: {'成功' if success else '失败'}")
         
         # Set expressions
-        print("\n表情设置 / Expression settings:")
+        logger.info("\n表情设置 / Expression settings:")
         for expr in [ExpressionType.HAPPY, ExpressionType.SURPRISED, ExpressionType.SHY]:
             live2d.set_expression(expr)
-            print(f"  设置表情: {expr.value[0]} ({expr.value[1]})")
+            logger.info(f"  设置表情: {expr.value[0]} ({expr.value[1]})")
             await asyncio.sleep(0.5)
         
         # Play motion
-        print("\n动作播放 / Motion playback:")
+        logger.info("\n动作播放 / Motion playback:")
         await live2d.play_motion(MotionType.GREETING)
-        print(f"  播放动作: {MotionType.GREETING.value[0]}")
+        logger.info(f"  播放动作: {MotionType.GREETING.value[0]}")
         await asyncio.sleep(0.5)
         
         # Lip sync
-        print("\n口型同步 / Lip sync:")
+        logger.info("\n口型同步 / Lip sync:")
         live2d.start_lip_sync()
         for phoneme in ["a", "i", "u", "e", "o", "silence"]:
             live2d.update_lip_sync(phoneme, mouth_openness=0.8)
-            print(f"  音素: {phoneme}, 嘴型开放度: {live2d.get_parameter('ParamMouthOpenY'):.2f}")
+            logger.info(f"  音素: {phoneme}, 嘴型开放度: {live2d.get_parameter('ParamMouthOpenY'):.2f}")
             await asyncio.sleep(0.3)
         live2d.stop_lip_sync()
         
         # Look at point
-        print("\n视线跟踪 / Eye tracking:")
+        logger.info("\n视线跟踪 / Eye tracking:")
         live2d.look_at(0.5, -0.3)
-        print(f"  看向: (0.5, -0.3)")
-        print(f"  眼球X: {live2d.get_parameter('ParamEyeBallX'):.2f}")
-        print(f"  眼球Y: {live2d.get_parameter('ParamEyeBallY'):.2f}")
+        logger.info(f"  看向: (0.5, -0.3)")
+        logger.info(f"  眼球X: {live2d.get_parameter('ParamEyeBallX'):.2f}")
+        logger.info(f"  眼球Y: {live2d.get_parameter('ParamEyeBallY'):.2f}")
         
         # Reset
-        print("\n重置姿态 / Reset pose:")
+        logger.info("\n重置姿态 / Reset pose:")
         live2d.reset_pose()
-        print("  所有参数已重置")
+        logger.info("  所有参数已重置")
         
         await live2d.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

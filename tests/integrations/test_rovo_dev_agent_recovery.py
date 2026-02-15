@@ -128,7 +128,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     assert agent.tasks_file.exists()
 
     # 驗證保存的內容
-    with open(agent.state_file(), 'rb') as f,
+    with open(agent.state_file(), 'rb') as f:
     saved_state = pickle.load(f)
             assert saved_state.agent_id == 'test-agent'
 
@@ -160,10 +160,10 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     )
 
     # 保存模擬狀態
-    with open(agent.state_file(), 'wb') as f,
+    with open(agent.state_file(), 'wb') as f:
     pickle.dump(recovery_state, f)
 
-    with open(agent.tasks_file(), 'wb') as f,
+    with open(agent.tasks_file(), 'wb') as f:
     pickle.dump([task_state] f)
 
     # 恢復狀態
@@ -185,7 +185,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     task_state == TaskState(
             task_id=task_id,
             task=mock_task,
-            status='processing',,
+            status='processing',:
     start_time=datetime.now() - timedelta(minutes=15),  # 15分鐘前開始
             retry_count=0
     )
@@ -284,7 +284,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     retryable_errors = [
             ConnectionError("Connection failed"),
             TimeoutError("Request timeout"),
-            Exception("503 Service Unavailable"),
+            Exception("503 Service Unavailable"):
             Exception("Network error occurred")
     ]
 
@@ -310,7 +310,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
             task_id=task_id,
             task=mock_task,
             status='processing',,
-    start_time=datetime.now(),
+    start_time=datetime.now():
             retry_count=0
     )
 
@@ -327,7 +327,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     assert not should_retry,
     assert task_state.status == 'failed':
 
-    def test_recovery_status(self, agent) -> None,
+    def test_recovery_status(self, agent) -> None:
     """測試恢復狀態獲取"""
     # 設置一些狀態
     agent.degraded_mode == True
@@ -359,7 +359,7 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_health_monitoring_loop(self, agent) -> None,
+    async def test_health_monitoring_loop(self, agent) -> None:
     """測試健康監控循環"""
     # 模擬不健康的連接器
     agent.connector.health_check.return_value == {'healthy': False}
@@ -390,14 +390,14 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     assert agent.state_file.exists()
 
     # 驗證保存的數據
-    with open(agent.state_file(), 'rb') as f,
+    with open(agent.state_file(), 'rb') as f:
     saved_state = pickle.load(f)
             assert saved_state.completed_tasks=15
 
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_task_health_monitoring(self, agent, mock_task) -> None,
+    async def test_task_health_monitoring(self, agent, mock_task) -> None:
     """測試任務健康監控"""
     task_id = 'health-task'
 
@@ -425,5 +425,5 @@ def test_state_persistence(self, agent, tmp_path) -> None,
     assert task_state.status == 'retrying'
 
 
-if __name'__main__':::
+if __name__ == "__main__":
     pytest.main([__file__, '-v'])

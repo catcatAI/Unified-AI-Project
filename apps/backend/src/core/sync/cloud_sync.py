@@ -442,12 +442,12 @@ def create_cloud_sync_manager(config: CloudSyncConfig = None) -> CloudSyncManage
 
 def demo():
     """演示 / Demo"""
-    print("☁️ 云同步系统演示")
-    print("=" * 50)
+    logger.info("☁️ 云同步系统演示")
+    logger.info("=" * 50)
     
     manager = CloudSyncManager()
     
-    print("\n📤 添加同步项:")
+    logger.info("\n📤 添加同步项:")
     manager.add_to_sync(
         item_id="memory_001",
         item_type="memory",
@@ -460,26 +460,26 @@ def demo():
         data={"name": "Python", "level": 5},
         priority=5
     )
-    print(f"  队列大小: {manager.queue.size()}")
+    logger.info(f"  队列大小: {manager.queue.size()}")
     
-    print("\n📊 同步状态:")
+    logger.info("\n📊 同步状态:")
     status = manager.get_status()
-    print(f"  状态: {status['status']}")
-    print(f"  本地项目: {status['local_items']}")
-    print(f"  队列项目: {status['queue_size']}")
-    print(f"  冲突: {status['conflict_count']}")
+    logger.info(f"  状态: {status['status']}")
+    logger.info(f"  本地项目: {status['local_items']}")
+    logger.info(f"  队列项目: {status['queue_size']}")
+    logger.info(f"  冲突: {status['conflict_count']}")
     
-    print("\n📦 导出数据:")
+    logger.info("\n📦 导出数据:")
     export_data = manager.export_sync_data()
-    print(f"  项目数: {len(export_data['items'])}")
-    print(f"  大小: {len(str(export_data))} 字符")
+    logger.info(f"  项目数: {len(export_data['items'])}")
+    logger.info(f"  大小: {len(str(export_data))} 字符")
     
-    print("\n🔄 模拟同步:")
+    logger.info("\n🔄 模拟同步:")
     items, conflicts = manager.prepare_sync()
-    print(f"  待同步: {len(items)} 项")
-    print(f"  冲突: {len(conflicts)} 项")
+    logger.info(f"  待同步: {len(items)} 项")
+    logger.info(f"  冲突: {len(conflicts)} 项")
     
-    print("\n✅ 演示完成!")
+    logger.info("\n✅ 演示完成!")
 
 
 if __name__ == "__main__":

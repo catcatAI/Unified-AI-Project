@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+venv/
+.venv/
+
+# Caches
+.pytest_cache/
+.ruff_cache/
+
+# Test & Coverage Reports
+.benchmarks/
+htmlcov/
+test_reports/
+test_results/
+*.py,report
+
+# Data and Databases
+data/
+test_data/
+chroma_data/
+chroma_db/
+chromadb_local/
+
+# Local Configs & Scripts
+.pre-commit-config.yaml
+pytest.ini
+*.bat
+*.md
+
+# Logs and temp files
+*.log
+*.broken
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode/
+.idea/

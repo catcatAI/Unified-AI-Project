@@ -14,26 +14,26 @@ class HSPConnector:
 
     async def connect(self) -> bool:
         """Simulates connecting to the HSP."""
-        print(f"Attempting to connect to HSP at {self.host}:{self.port}...")
+        logger.info(f"Attempting to connect to HSP at {self.host}:{self.port}...")
         await asyncio.sleep(0.1) # Simulate async connection
         self.is_connected = True
-        print("HSP Connected.")
+        logger.info("HSP Connected.")
         return True
 
     async def disconnect(self) -> bool:
         """Simulates disconnecting from the HSP."""
-        print("Disconnecting from HSP...")
+        logger.info("Disconnecting from HSP...")
         await asyncio.sleep(0.1) # Simulate async disconnection
         self.is_connected = False
-        print("HSP Disconnected.")
+        logger.info("HSP Disconnected.")
         return True
 
     async def send_message(self, message: Dict[str, Any]) -> bool:
         """Simulates sending a message over HSP."""
         if not self.is_connected:
-            print("Error: Not connected to HSP.")
+            logger.error("Error: Not connected to HSP.")
             return False
-        print(f"Sending message: {message}")
+        logger.info(f"Sending message: {message}")
         await asyncio.sleep(0.05) # Simulate message sending
         return True
 
@@ -42,8 +42,8 @@ class HSPConnector:
         Simulates receiving a message from HSP.
         """
         if not self.is_connected:
-            print("Error: Not connected to HSP.")
+            logger.error("Error: Not connected to HSP.")
             return None
-        print("Receiving message...")
+        logger.info("Receiving message...")
         await asyncio.sleep(0.05) # Simulate message reception
         return {"status": "success", "data": "simulated_hsp_data"}

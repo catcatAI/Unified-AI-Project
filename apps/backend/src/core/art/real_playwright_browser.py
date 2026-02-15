@@ -283,33 +283,33 @@ class AngelaRealBrowser:
 
 async def test_browser():
     """测试浏览器"""
-    print("🧪 测试 Playwright 浏览器...")
+    logger.info("🧪 测试 Playwright 浏览器...")
     
     browser = AngelaRealBrowser(headless=True)
     
     try:
         success = await browser.initialize()
         if not success:
-            print("❌ 浏览器初始化失败")
+            logger.info("❌ 浏览器初始化失败")
             return
         
-        print("✅ 浏览器初始化成功")
-        print("\n🔍 测试浏览教程...")
+        logger.info("✅ 浏览器初始化成功")
+        logger.info("\n🔍 测试浏览教程...")
         
         tutorial = await browser.browse_tutorial("https://www.artstation.com/learning")
         if tutorial:
-            print(f"✅ 教程标题: {tutorial.title}")
-            print(f"📚 学到的技巧: {tutorial.techniques}")
+            logger.info(f"✅ 教程标题: {tutorial.title}")
+            logger.info(f"📚 学到的技巧: {tutorial.techniques}")
         
-        print("\n🎨 测试收集作品...")
+        logger.info("\n🎨 测试收集作品...")
         artworks = await browser.collect_artwork("https://www.pinterest.com/search/pins/?q=anime%20art")
-        print(f"✅ 收集到 {len(artworks)} 个作品")
+        logger.info(f"✅ 收集到 {len(artworks)} 个作品")
         
         await browser.close()
-        print("\n✅ 测试完成!")
+        logger.info("\n✅ 测试完成!")
         
     except Exception as e:
-        print(f"❌ 测试失败: {e}")
+        logger.info(f"❌ 测试失败: {e}")
         import traceback
         traceback.print_exc()
 

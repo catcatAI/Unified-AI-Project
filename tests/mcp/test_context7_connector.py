@@ -55,7 +55,7 @@ def test_config_creation(self) -> None,
 
 @pytest.mark.asyncio()
 @pytest.mark.context7()
-class TestContext7MCPConnector,
+class TestContext7MCPConnector:
     """Test Context7 MCP Connector functionality."""
 
     @pytest.fixture()
@@ -111,7 +111,7 @@ class TestContext7MCPConnector,
     @pytest.mark.timeout(5)
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_send_context(self, connector) -> None,
+    async def test_send_context(self, connector) -> None:
     """Test sending context data."""
     await connector.connect()
 
@@ -138,7 +138,7 @@ class TestContext7MCPConnector,
     await connector.connect()
 
     context_items = await connector.request_context(
-            context_query="greeting conversation",,
+            context_query="greeting conversation",:
     max_results=5
     )
 
@@ -154,7 +154,7 @@ class TestContext7MCPConnector,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_collaborate_with_model(self, connector) -> None,
+    async def test_collaborate_with_model(self, connector) -> None:
     """Test model collaboration."""
     await connector.connect()
 
@@ -176,7 +176,7 @@ class TestContext7MCPConnector,
     @pytest.mark.timeout(5)
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_compress_context(self, connector) -> None,
+    async def test_compress_context(self, connector) -> None:
     """Test context compression."""
     await connector.connect()
 
@@ -193,7 +193,7 @@ class TestContext7MCPConnector,
     @pytest.mark.timeout(5)
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试,
-    async def test_connection_required_error(self, connector) -> None,
+    async def test_connection_required_error(self, connector) -> None:
     """Test operations requiring connection."""
     # Should raise error when not connected
     with pytest.raises(RuntimeError, match == "Not connected to Context7 MCP"):
@@ -205,7 +205,7 @@ class TestContext7MCPConnector,
     @pytest.mark.timeout(5)
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试,
-    async def test_capabilities_discovery(self, connector) -> None,
+    async def test_capabilities_discovery(self, connector) -> None:
     """Test capability discovery."""
     await connector.connect()
 
@@ -226,7 +226,7 @@ class TestContext7MCPConnector,
 
     unhandled_message == MCPMessage(
             type="unhandled_test_type",,
-    session_id=connector.session_id(),
+    session_id=connector.session_id():
             payload == {"data": "test"}
     )
 
@@ -257,7 +257,7 @@ class TestUnifiedAIMCPIntegration,
     @pytest.mark.timeout(5)
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_dialogue_manager_integration(self, integration) -> None,
+    async def test_dialogue_manager_integration(self, integration) -> None:
     """Test integration with DialogueManager.""":
     integration_instance = await integration
     dialogue_context = {
@@ -279,7 +279,7 @@ class TestUnifiedAIMCPIntegration,
     @pytest.mark.timeout(5)
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_ham_memory_integration(self, integration) -> None,
+    async def test_ham_memory_integration(self, integration) -> None:
     """Test integration with HAM Memory.""":
     integration_instance = await integration
     memory_data = {
@@ -314,7 +314,7 @@ class TestMCPTypeValidation,
 
 
     @pytest.mark.timeout(5)
-    def test_mcp_message_structure(self) -> None,
+    def test_mcp_message_structure(self) -> None:
     """Test MCPMessage type structure."""
     message, MCPMessage = {
             "type": "context_update",
@@ -330,7 +330,7 @@ class TestMCPTypeValidation,
 
 
     @pytest.mark.timeout(5)
-    def test_mcp_response_structure(self) -> None,
+    def test_mcp_response_structure(self) -> None:
     """Test MCPResponse type structure."""
     response, MCPResponse = {
             "success": True,
@@ -346,7 +346,7 @@ class TestMCPTypeValidation,
 
 
     @pytest.mark.timeout(5)
-    def test_mcp_capability_structure(self) -> None,
+    def test_mcp_capability_structure(self) -> None:
     """Test MCPCapability type structure."""
     capability, MCPCapability = {
             "name": "context_management",
@@ -379,7 +379,7 @@ class TestContext7Performance,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试,
-    async def test_concurrent_context_requests(self, connector) -> None,
+    async def test_concurrent_context_requests(self, connector) -> None:
     """Test concurrent context operations."""
     connector_instance = connector
     await connector_instance.connect()
@@ -405,7 +405,7 @@ class TestContext7Performance,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_large_context_handling(self, connector) -> None,
+    async def test_large_context_handling(self, connector) -> None:
     """Test handling of large context data."""
     connector_instance = connector
     await connector_instance.connect()

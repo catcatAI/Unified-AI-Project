@@ -443,8 +443,8 @@ if __name__ == "__main__":
     # 測試安全求值器
     logging.basicConfig(level=logging.INFO)
 
-    print("測試安全表達式求值器")
-    print("=" * 60)
+    logger.info("測試安全表達式求值器")
+    logger.info("=" * 60)
 
     test_cases = [
         # 算術運算
@@ -472,12 +472,12 @@ if __name__ == "__main__":
     for expr, should_succeed in test_cases:
         result = safe_eval(expr)
         status = "✓" if (result.success == should_succeed) else "✗"
-        print(f"{status} {expr}")
+        logger.info(f"{status} {expr}")
         if result.success:
-            print(f"  結果: {result.result}")
+            logger.info(f"  結果: {result.result}")
         else:
-            print(f"  錯誤: {result.error}")
-        print()
+            logger.error(f"  錯誤: {result.error}")
+        logger.info()
 
-    print("=" * 60)
-    print("測試完成")
+    logger.info("=" * 60)
+    logger.info("測試完成")

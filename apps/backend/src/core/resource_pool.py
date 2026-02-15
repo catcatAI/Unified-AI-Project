@@ -500,11 +500,11 @@ if __name__ == "__main__":
     
     # 获取资源
     with pool.get_resource() as resource:
-        print(f"获取资源: {resource}")
+        logger.info(f"获取资源: {resource}")
         time.sleep(1)
     
     # 获取统计
     stats = pool.get_stats()
-    print(f"资源池统计: {stats}")
+    logger.info(f"资源池统计: {stats}")
     
     pool.stop()

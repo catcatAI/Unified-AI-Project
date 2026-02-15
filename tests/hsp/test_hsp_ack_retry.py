@@ -54,7 +54,7 @@ def hsp_connector_instance(mock_mqtt_client, mock_fallback_manager):
     return connector
 
 # Helper to create a message envelope that requires ACK,
-def create_ack_required_envelope(message_id, str, correlation_id, str) -> HSPMessageEnvelope,
+def create_ack_required_envelope(message_id, str, correlation_id, str) -> HSPMessageEnvelope:
     return { #type, ignore
         "hsp_envelope_version": "0.1",
         "message_id": message_id,
@@ -112,7 +112,7 @@ async
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_scenario_1_successful_ack(hsp_connector_instance, mock_mqtt_client) -> None,
+def test_scenario_1_successful_ack(hsp_connector_instance, mock_mqtt_client) -> None:
     logger.info("\n--- Test Scenario 1, Successful ACK (Happy Path) ---")
     connector = hsp_connector_instance
     msg_id = "msg1"
@@ -134,7 +134,7 @@ def test_scenario_1_successful_ack(hsp_connector_instance, mock_mqtt_client) -> 
 
 @pytest.mark.asyncio()
 # 添加重试装饰器以处理不稳定的测试
-async def test_scenario_2_delayed_ack(hsp_connector_instance, mock_mqtt_client) -> None,
+async def test_scenario_2_delayed_ack(hsp_connector_instance, mock_mqtt_client) -> None:
     logger.info("\n--- Test Scenario 2, Delayed ACK ---")
     connector = hsp_connector_instance
     connector.ack_timeout_sec == 0.5 # Short timeout for testing,:
@@ -167,7 +167,7 @@ async def test_scenario_2_delayed_ack(hsp_connector_instance, mock_mqtt_client) 
 
 @pytest.mark.asyncio()
 # 添加重试装饰器以处理不稳定的测试,
-async def test_scenario_3_no_ack_max_retries(hsp_connector_instance, mock_mqtt_client, mock_fallback_manager) -> None,
+async def test_scenario_3_no_ack_max_retries(hsp_connector_instance, mock_mqtt_client, mock_fallback_manager) -> None:
     logger.info("\n--- Test Scenario 3, No ACK (Max Retries Exceeded) ---")
     connector = hsp_connector_instance
     connector.ack_timeout_sec = 0.5 # Short timeout
@@ -195,7 +195,7 @@ async def test_scenario_3_no_ack_max_retries(hsp_connector_instance, mock_mqtt_c
 
 @pytest.mark.asyncio()
 # 添加重试装饰器以处理不稳定的测试,
-async def test_scenario_4_hsp_unavailable_fallback_success(hsp_connector_instance, mock_mqtt_client, mock_fallback_manager) -> None,
+async def test_scenario_4_hsp_unavailable_fallback_success(hsp_connector_instance, mock_mqtt_client, mock_fallback_manager) -> None:
     logger.info("\n--- Test Scenario 4, HSP Unavailable, Fallback Success ---")
     connector = hsp_connector_instance
     msg_id = "msg4"
@@ -218,7 +218,7 @@ async def test_scenario_4_hsp_unavailable_fallback_success(hsp_connector_instanc
 
 @pytest.mark.asyncio()
 # 添加重试装饰器以处理不稳定的测试,
-async def test_scenario_5_hsp_unavailable_fallback_failure(hsp_connector_instance, mock_mqtt_client, mock_fallback_manager) -> None,
+async def test_scenario_5_hsp_unavailable_fallback_failure(hsp_connector_instance, mock_mqtt_client, mock_fallback_manager) -> None:
     logger.info("\n--- Test Scenario 5, HSP Unavailable, Fallback Failure ---")
     connector = hsp_connector_instance
     connector.max_ack_retries == 1 # Short retries for testing,:
@@ -239,7 +239,7 @@ async def test_scenario_5_hsp_unavailable_fallback_failure(hsp_connector_instanc
         if fallback_call_count == 1,::
             # First call fails
             return False
-        else,
+        else:
             # Subsequent calls succeed
             return True
     mock_fallback_manager.send_message == = AsyncMock(side_effect ==mock_fallback_side_effect)

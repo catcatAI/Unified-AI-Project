@@ -184,7 +184,7 @@ class FeedbackProcessor:
     
     async def initialize(self):
         """Initialize the feedback processor"""
-        print("[FeedbackProcessor] Initializing...")
+        logger.info("[FeedbackProcessor] Initializing...")
         
         self._running = True
         
@@ -194,11 +194,11 @@ class FeedbackProcessor:
         # Load historical data if available
         await self._load_history()
         
-        print("[FeedbackProcessor] Initialization complete")
+        logger.info("[FeedbackProcessor] Initialization complete")
     
     async def shutdown(self):
         """Shutdown the feedback processor"""
-        print("[FeedbackProcessor] Shutting down...")
+        logger.info("[FeedbackProcessor] Shutting down...")
         
         self._running = False
         
@@ -213,7 +213,7 @@ class FeedbackProcessor:
         # Save history
         await self._save_history()
         
-        print("[FeedbackProcessor] Shutdown complete")
+        logger.info("[FeedbackProcessor] Shutdown complete")
     
     async def _processing_loop(self):
         """Background processing loop"""
@@ -232,7 +232,7 @@ class FeedbackProcessor:
                 # No feedback to process, continue
                 pass
             except Exception as e:
-                print(f"[FeedbackProcessor] Processing error: {e}")
+                logger.error(f"[FeedbackProcessor] Processing error: {e}")
     
     async def process_feedback(self, feedback: 'FeedbackSignal'):
         """
@@ -290,7 +290,7 @@ class FeedbackProcessor:
 
             
         except Exception as e:
-            print(f"[FeedbackProcessor] Error processing feedback: {e}")
+            logger.error(f"[FeedbackProcessor] Error processing feedback: {e}")
     
     async def _evaluate_action(self, feedback: 'FeedbackSignal') -> Optional[ActionEvaluation]:
         """Evaluate action effectiveness from feedback"""
@@ -443,7 +443,7 @@ class FeedbackProcessor:
                 
                 self.processing_metrics["hsm_updates"] += 1
             except Exception as e:
-                print(f"[FeedbackProcessor] HSM update error: {e}")
+                logger.error(f"[FeedbackProcessor] HSM update error: {e}")
         
         # Update CDM
         if self.cdm and learning_signal.cdm_update:
@@ -459,7 +459,7 @@ class FeedbackProcessor:
                 
                 self.processing_metrics["cdm_updates"] += 1
             except Exception as e:
-                print(f"[FeedbackProcessor] CDM update error: {e}")
+                logger.error(f"[FeedbackProcessor] CDM update error: {e}")
     
     async def _generate_strategy_adjustment(
         self, 
@@ -541,7 +541,7 @@ class FeedbackProcessor:
                 json.dump(history_data, f, ensure_ascii=False, indent=2)
                 
         except Exception as e:
-            print(f"[FeedbackProcessor] Save history error: {e}")
+            logger.error(f"[FeedbackProcessor] Save history error: {e}")
     
     async def _load_history(self):
         """Load feedback history from file"""
@@ -562,10 +562,10 @@ class FeedbackProcessor:
                         last_feedback_time=datetime.fromisoformat(v["last_feedback_time"]) if v.get("last_feedback_time") else None
                     )
                 
-                print(f"[FeedbackProcessor] Loaded history for {len(self.feedback_history)} action types")
+                logger.info(f"[FeedbackProcessor] Loaded history for {len(self.feedback_history)} action types")
                 
         except Exception as e:
-            print(f"[FeedbackProcessor] Load history error: {e}")
+            logger.error(f"[FeedbackProcessor] Load history error: {e}")
     
     # ========== Public API ==========
     
@@ -674,10 +674,10 @@ class FeedbackProcessor:
 # Example usage
 if __name__ == "__main__":
     async def demo():
-        print("=" * 70)
-        print("Angela AI v6.0 - Feedback Processor Demo")
-        print("反馈处理器演示")
-        print("=" * 70)
+        logger.info("=" * 70)
+        logger.info("Angela AI v6.0 - Feedback Processor Demo")
+        logger.info("反馈处理器演示")
+        logger.info("=" * 70)
         
         processor = FeedbackProcessor()
         await processor.initialize()
@@ -685,7 +685,7 @@ if __name__ == "__main__":
         # Create mock feedback signals
         from feedback_loop_engine import FeedbackSignal, FeedbackLayer, FeedbackType
         
-        print("\n1. Processing sample feedback signals:")
+        logger.info("\n1. Processing sample feedback signals:")
         
         # Success feedback
         success_signal = FeedbackSignal(
@@ -698,7 +698,7 @@ if __name__ == "__main__":
             timestamp=datetime.now()
         )
         await processor.process_feedback(success_signal)
-        print("   Processed success feedback")
+        logger.info("   Processed success feedback")
         
         # Failure feedback
         failure_signal = FeedbackSignal(
@@ -711,35 +711,35 @@ if __name__ == "__main__":
             timestamp=datetime.now()
         )
         await processor.process_feedback(failure_signal)
-        print("   Processed failure feedback")
+        logger.error("   Processed failure feedback")
         
         # Wait for processing
         await asyncio.sleep(0.5)
         
         # Show metrics
-        print("\n2. Processing metrics:")
+        logger.info("\n2. Processing metrics:")
         for key, value in processor.processing_metrics.items():
-            print(f"   {key}: {value}")
+            logger.info(f"   {key}: {value}")
         
         # Show recommendations
-        print("\n3. Learning recommendations:")
+        logger.info("\n3. Learning recommendations:")
         recommendations = processor.get_learning_recommendations()
         if recommendations:
             for rec in recommendations:
-                print(f"   - {rec['action_type']}: {rec['recommendation']} (priority: {rec['priority']})")
+                logger.info(f"   - {rec['action_type']}: {rec['recommendation']} (priority: {rec['priority']})")
         else:
-            print("   No recommendations yet (need more data)")
+            logger.info("   No recommendations yet (need more data)")
         
         # Show performance report
-        print("\n4. Performance report:")
+        logger.info("\n4. Performance report:")
         report = processor.get_performance_report()
         for key, value in report.items():
-            print(f"   {key}: {value}")
+            logger.info(f"   {key}: {value}")
         
         await processor.shutdown()
         
-        print("\n" + "=" * 70)
-        print("Demo completed successfully!")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("Demo completed successfully!")
+        logger.info("=" * 70)
     
     asyncio.run(demo())

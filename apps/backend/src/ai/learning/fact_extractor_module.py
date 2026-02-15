@@ -100,6 +100,6 @@ if __name__ == "__main__":
     async def test():
         extractor = FactExtractorModule(MockLLM())
         facts = await extractor.extract_facts("My favorite color is green.")
-        print(f"Extracted facts: {facts}")
+        logger.info(f"Extracted facts: {facts}")
 
     asyncio.run(test())

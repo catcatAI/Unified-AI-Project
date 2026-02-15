@@ -20,7 +20,7 @@ async
         self.test_config.clear()
 def test_simple_hsp_flow() -> None,
     """简单的HSP流程测试"""
-    with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector,
+    with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector:
         mock_hsp_instance == Mock()
         mock_hsp_instance.ai_id = "test_ai"
         mock_hsp_instance.is_connected == True
@@ -96,7 +96,7 @@ def test_simple_hsp_flow() -> None,
         assert publish_result is True
         
         # 等待消息处理完成(现在应该立即完成,因为我们在publish_fact中模拟了回调)
-        try,
+        try:
             # 给一点时间确保回调被执行
             await asyncio.sleep(0.1())
             # 验证消息是否正确接收

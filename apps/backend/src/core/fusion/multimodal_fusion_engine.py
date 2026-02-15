@@ -1456,7 +1456,7 @@ __all__ = ['MultimodalInformationFusionEngine', 'MultimodalFusionSystem', 'Modal
 # 测试函数
 async def test_multimodal_fusion_engine():
     """测试多模态信息融合引擎"""
-    print("🌈 测试多模态信息融合引擎...")
+    logger.info("🌈 测试多模态信息融合引擎...")
 
     # 创建融合引擎
     fusion_engine = MultimodalInformationFusionEngine({
@@ -1465,16 +1465,16 @@ async def test_multimodal_fusion_engine():
     })
 
     # 测试文本模态
-    print("\n📝 处理文本模态...")
+    logger.info("\n📝 处理文本模态...")
     text_data = "机器学习是人工智能的一个重要分支, 它使计算机能够从数据中学习并做出预测。"
     success1 = await fusion_engine.process_modal_data(
         "text_001", "text", text_data,
         {"confidence": 0.9, "language": "chinese", "domain": "AI"}
     )
-    print(f"✅ 文本模态处理: {success1}")
+    logger.info(f"✅ 文本模态处理: {success1}")
 
     # 测试结构化数据模态
-    print("\n📊 处理结构化数据模态...")
+    logger.info("\n📊 处理结构化数据模态...")
     structured_data = {
         "field_count": 5,
         "data_types": ["text", "numeric", "categorical"],
@@ -1485,44 +1485,44 @@ async def test_multimodal_fusion_engine():
         "structured_001", "structured", structured_data,
         {"confidence": 0.85, "schema": "ml_dataset", "size": "medium"}
     )
-    print(f"✅ 结构化数据模态处理: {success2}")
+    logger.info(f"✅ 结构化数据模态处理: {success2}")
 
     # 测试模态对齐
-    print("\n🔗 执行模态对齐...")
+    logger.info("\n🔗 执行模态对齐...")
     alignment_result = await fusion_engine.align_modalities(["text_001", "structured_001"])
-    print(f"✅ 模态对齐完成, {len(alignment_result.get('aligned_modalities', []))} 个模态")
+    logger.info(f"✅ 模态对齐完成, {len(alignment_result.get('aligned_modalities', []))} 个模态")
     if 'unified_representation' in alignment_result:
-        print(f"✅ 统一表示生成: {alignment_result['unified_representation']['representation_id']}")
-        print(f"✅ 平均置信度: {alignment_result['unified_representation']['average_confidence']:.3f}")
+        logger.info(f"✅ 统一表示生成: {alignment_result['unified_representation']['representation_id']}")
+        logger.info(f"✅ 平均置信度: {alignment_result['unified_representation']['average_confidence']:.3f}")
 
     # 测试融合推理
-    print("\n🧠 执行融合推理...")
+    logger.info("\n🧠 执行融合推理...")
     if alignment_result.get('unified_representation'):
         repr_id = alignment_result['unified_representation']['representation_id']
         reasoning_result = await fusion_engine.perform_fusion_reasoning(
             repr_id, "机器学习技术的应用前景如何？"
         )
-        print(f"✅ 融合推理完成, {len(reasoning_result.get('reasoning_steps', []))} 个步骤")
-        print(f"✅ 推理置信度: {reasoning_result.get('confidence', 0):.3f}")
-        print(f"✅ 结论数量: {len(reasoning_result.get('conclusions', []))}")
+        logger.info(f"✅ 融合推理完成, {len(reasoning_result.get('reasoning_steps', []))} 个步骤")
+        logger.info(f"✅ 推理置信度: {reasoning_result.get('confidence', 0):.3f}")
+        logger.info(f"✅ 结论数量: {len(reasoning_result.get('conclusions', []))}")
     else:
-        print("⚠️ 统一表示未生成, 跳过融合推理测试")
+        logger.info("⚠️ 统一表示未生成, 跳过融合推理测试")
 
     # 构建多模态知识图谱
-    print("\n🏗️ 构建多模态知识图谱...")
+    logger.info("\n🏗️ 构建多模态知识图谱...")
     data_mapping = {"repr_id": "original_data_001"} if 'unified_representation' in alignment_result else {}
     kg_result = await fusion_engine.build_multimodal_knowledge_graph(data_mapping)
-    print(f"✅ 知识图谱构建: {kg_result.get('entities_created', 0)} 实体, {kg_result.get('relations_created', 0)} 关系")
+    logger.info(f"✅ 知识图谱构建: {kg_result.get('entities_created', 0)} 实体, {kg_result.get('relations_created', 0)} 关系")
 
     # 获取统计信息
-    print("\n📊 获取融合统计...")
+    logger.info("\n📊 获取融合统计...")
     stats = await fusion_engine.get_fusion_statistics()
-    print(f"✅ 总模态数据: {stats['total_modal_data']}")
-    print(f"✅ 统一表示数: {stats['total_unified_representations']}")
-    print(f"✅ 融合成功率: {stats['fusion_success_rate']:.2%}")
-    print(f"✅ 平均对齐置信度: {stats['average_alignment_confidence']:.3f}")
+    logger.info(f"✅ 总模态数据: {stats['total_modal_data']}")
+    logger.info(f"✅ 统一表示数: {stats['total_unified_representations']}")
+    logger.info(f"✅ 融合成功率: {stats['fusion_success_rate']:.2%}")
+    logger.info(f"✅ 平均对齐置信度: {stats['average_alignment_confidence']:.3f}")
 
-    print("\n🎉 多模态信息融合引擎测试完成！")
+    logger.info("\n🎉 多模态信息融合引擎测试完成！")
 
 if __name__ == "__main__":
     asyncio.run(test_multimodal_fusion_engine())

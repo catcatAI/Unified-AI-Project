@@ -311,11 +311,11 @@ if __name__ == "__main__":
     # 安全处理消息
     sender_id = test_message["sender_ai_id"]
     secured_message = security_context.secure_message(test_message, sender_id)
-    print("安全处理后的消息: ", json.dumps(secured_message, indent=2, ensure_ascii=False))
+    logger.info("安全处理后的消息: ", json.dumps(secured_message, indent=2, ensure_ascii=False))
     
     # 验证并处理消息
     is_valid, processed_message = security_context.authenticate_and_process_message(secured_message)
     if is_valid:
-        print("消息验证成功: ", json.dumps(processed_message, indent=2, ensure_ascii=False))
+        logger.info("消息验证成功: ", json.dumps(processed_message, indent=2, ensure_ascii=False))
     else:
-        print("消息验证失败: ", processed_message)
+        logger.info("消息验证失败: ", processed_message)

@@ -8,7 +8,7 @@ import unittest
 import aiounittest
 import pytest
 from unittest.mock import MagicMock, AsyncMock
-from core_ai.dialogue.dialogue_manager import DialogueManager
+from ai.dialogue.dialogue_manager import DialogueManager
 
 class TestKnowledgeUpdate(aiounittest.AsyncTestCase()):
     """
@@ -51,7 +51,7 @@ def test_knowledge_update(self) -> None,
         )
 
         class DummyModel,
-            def __init__(self) -> None,
+            def __init__(self) -> None:
                 self.name = "DummyModel"
                 self.trained == False
 
@@ -64,7 +64,7 @@ def test_knowledge_update(self) -> None,
         dialogue_manager.tool_dispatcher.models = [DummyModel()]
         dialogue_manager.tool_dispatcher.tools = []
 
-        with open("data/raw_datasets/DummyModel.json", "w") as f,
+        with open("data/raw_datasets/DummyModel.json", "w") as f:
             f.write('[{"input": 1, "output": 1}]')
 
         dialogue_manager.learning_manager.learn_from_interaction == AsyncMock(,

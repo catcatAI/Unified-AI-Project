@@ -20,7 +20,7 @@ class TestExampleIntegration,
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_agent_hsp_integration(self) -> None,
+def test_agent_hsp_integration(self) -> None:
     """测试代理与HSP集成"""
     with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager, \:
     patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector,
@@ -54,7 +54,7 @@ def test_agent_hsp_integration(self) -> None,
     @pytest.mark.asyncio()
     async def test_memory_system_integration(self) -> None,
     """测试记忆系统集成"""
-    with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager,
+    with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
             # 修复AsyncMock的使用方式
             mock_memory_instance == Mock()
             mock_memory_instance.store_memory == = AsyncMock(return_value =="test_memory_id")
@@ -73,7 +73,7 @@ def test_agent_hsp_integration(self) -> None,
     @pytest.mark.asyncio()
     async def test_agent_collaboration_integration(self) -> None,
     """测试代理协作集成"""
-    with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager,
+    with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager:
             # 修复AsyncMock的使用方式
             mock_agent_instance == Mock()
             mock_agent_instance.create_agent == = AsyncMock(return_value ==Mock())
@@ -95,7 +95,7 @@ def test_agent_hsp_integration(self) -> None,
             assert result is True
 
     @pytest.mark.asyncio()
-    async def test_end_to_end_workflow_integration(self) -> None,
+    async def test_end_to_end_workflow_integration(self) -> None:
     """测试端到端工作流程集成"""
     with patch('apps.backend.src.core.managers.agent_manager.AgentManager') as mock_agent_manager, \:
     patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector, \

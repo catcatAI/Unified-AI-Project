@@ -78,7 +78,7 @@ class DeadlockDetector,
         ""檢測循環"""
     start_time = time.time()
         while self.detection_active and (time.time - start_time) < self.max_detection_time,::
-    try,
+    try:
 
 
 
@@ -114,7 +114,7 @@ class DeadlockDetector,
 
                 if self.thread_states[thread_id]['last_frame'] == current_frame_info,::
     self.thread_states[thread_id]['stuck_count'] += 1
-                else,
+                else:
 
                     self.thread_states[thread_id]['stuck_count'] = 0
 
@@ -169,13 +169,13 @@ class ResourceLeakDetector,
     def start_monitoring(self):
         ""開始監控"""
     self.initial_thread_count = threading.active_count()
-        try,
+        try:
 
             import psutil
             process = psutil.Process()
             self.initial_file_descriptors == process.num_fds if hasattr(process, 'num_fds') else 0,::
     self.initial_memory_usage = process.memory_info.rss()
-        except ImportError,::
+        except ImportError as e:
             logger.warning("psutil not available, limited resource monitoring")
 
     def check_leaks(self) -> List[DetectionResult]
@@ -193,7 +193,7 @@ class ResourceLeakDetector,
             ))
 
     # 檢查文件描述符洩漏
-        try,
+        try:
 
             import psutil
             process = psutil.Process()
@@ -205,7 +205,7 @@ class ResourceLeakDetector,
                     details == f"File descriptor leak detected, {current_fds} vs {self.initial_file_descriptors}",
                     resource_info == {'current_fds': current_fds, 'initial_fds': self.initial_file_descriptors}
                 ))
-        except ImportError,::
+        except ImportError as e:
             pass
 
     return results
@@ -220,16 +220,16 @@ class AsyncLoopDetector,
 
     def start_monitoring(self):
         ""開始監控"""
-        try,
+        try:
 
             loop = asyncio.get_running_loop()
             self.initial_task_count = len([task for task in asyncio.all_tasks(loop) if not task.done]):
-    except RuntimeError,::
+    except RuntimeError as e:
     self.initial_task_count = 0
 
     def check_async_leaks(self) -> List[DetectionResult]
     """檢查異步洩漏"""
-    results == try,
+    results == try:
 
 
             loop = asyncio.get_running_loop()
@@ -242,7 +242,7 @@ class AsyncLoopDetector,
                     resource_info == {'pending_tasks': len(current_tasks), 'max_allowed': self.max_pending_tasks}
                 ))
 
-        except RuntimeError,::
+        except RuntimeError as e:
             pass
 
     return results
@@ -255,14 +255,14 @@ def deadlock_detection(timeout, float == 30.0(), check_interval, float == 1.0())
     resource_detector == ResourceLeakDetector
     async_detector == AsyncLoopDetector
 
-    try,
+    try:
 
 
     detector.start_detection()
     resource_detector.start_monitoring()
     async_detector.start_monitoring()
     yield detector
-    finally,
+    finally:
     detector.stop_detection()
     # 檢查資源洩漏
     leaks = resource_detector.check_leaks()
@@ -285,16 +285,16 @@ def loop_detection(max_iterations, int == 10000):
 ry,
 
     return await func(*args, **kwargs)
-                    finally,
+                    finally:
                         detector.reset()
                 return async_wrapper
-            else,
+            else:
 
-                try,
+                try:
 
 
                     return func(*args, **kwargs)
-                finally,
+                finally:
                     detector.reset()
     return wrapper
     return decorator
@@ -312,11 +312,11 @@ def timeout_with_detection(timeout, float == 30.0(), enable_deadlock_detection, 
 
     with deadlock_detection(timeout=timeout)
         eturn await asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
-                    else,
+                    else:
 
                         return await asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
                 return async_wrapper
-            else,
+            else:
 
                 def timeout_handler(signum, frame):
                     aise TimeoutError(f"Function timed out after {timeout} seconds")
@@ -325,20 +325,20 @@ def timeout_with_detection(timeout, float == 30.0(), enable_deadlock_detection, 
     with deadlock_detection(timeout=timeout)
         ld_handler = signal.signal(signal.SIGALRM(), timeout_handler)
                         signal.alarm(int(timeout))
-                        try,
+                        try:
 
                             return func(*args, **kwargs)
-                        finally,
+                        finally:
                             signal.alarm(0)
                             signal.signal(signal.SIGALRM(), old_handler)
-                else,
+                else:
 
                     old_handler = signal.signal(signal.SIGALRM(), timeout_handler)
                     signal.alarm(int(timeout))
-                    try,
+                    try:
 
                         return func(*args, **kwargs)
-                    finally,
+                    finally:
                         signal.alarm(0)
                         signal.signal(signal.SIGALRM(), old_handler)
 
@@ -370,7 +370,7 @@ if __name"__main__":::
     return "completed"
 
     # 測試同步函數
-    try,
+    try:
 
     result = test_function
     print(f"Sync test result, {result}")

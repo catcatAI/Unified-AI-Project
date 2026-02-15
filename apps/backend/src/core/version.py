@@ -284,23 +284,23 @@ __all__ = [
 
 if __name__ == "__main__":
     # 测试版本管理模块
-    print(f"Angela AI Version: {get_version()}")
-    print(f"Version Info: {get_version_info()}")
-    print(f"Version Tuple: {get_version_tuple()}")
-    print(f"Version Dict: {get_version_dict()}")
-    print(f"Changelog URL: {get_changelog_url()}")
-    print(f"Release Notes URL: {get_release_notes_url()}")
+    logger.info(f"Angela AI Version: {get_version()}")
+    logger.info(f"Version Info: {get_version_info()}")
+    logger.info(f"Version Tuple: {get_version_tuple()}")
+    logger.info(f"Version Dict: {get_version_dict()}")
+    logger.info(f"Changelog URL: {get_changelog_url()}")
+    logger.info(f"Release Notes URL: {get_release_notes_url()}")
     
     # 测试版本比较
-    print(f"\nComparing 6.2.0 and 6.1.0: {compare_versions('6.2.0', '6.1.0')}")
-    print(f"Comparing 6.1.0 and 6.2.0: {compare_versions('6.1.0', '6.2.0')}")
-    print(f"Comparing 6.2.0 and 6.2.0: {compare_versions('6.2.0', '6.2.0')}")
+    logger.info(f"\nComparing 6.2.0 and 6.1.0: {compare_versions('6.2.0', '6.1.0')}")
+    logger.info(f"Comparing 6.1.0 and 6.2.0: {compare_versions('6.1.0', '6.2.0')}")
+    logger.info(f"Comparing 6.2.0 and 6.2.0: {compare_versions('6.2.0', '6.2.0')}")
     
     # 测试版本兼容性
-    print(f"\nCompatible with 6.1.0: {is_compatible('6.1.0')}")
-    print(f"Compatible with 6.3.0: {is_compatible('6.3.0')}")
+    logger.info(f"\nCompatible with 6.1.0: {is_compatible('6.1.0')}")
+    logger.info(f"Compatible with 6.3.0: {is_compatible('6.3.0')}")
     
     # 测试版本递增
-    print(f"\nNext major: {CURRENT_VERSION.increment_major()}")
-    print(f"Next minor: {CURRENT_VERSION.increment_minor()}")
-    print(f"Next patch: {CURRENT_VERSION.increment_patch()}")
+    logger.info(f"\nNext major: {CURRENT_VERSION.increment_major()}")
+    logger.info(f"Next minor: {CURRENT_VERSION.increment_minor()}")
+    logger.info(f"Next patch: {CURRENT_VERSION.increment_patch()}")

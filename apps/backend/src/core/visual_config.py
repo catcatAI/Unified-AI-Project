@@ -355,25 +355,25 @@ def get_preset_config(preset: str) -> VisualConfiguration:
 
 # Example usage
 if __name__ == "__main__":
-    print("=" * 60)
-    print("Angela AI v6.0 - 视觉配置系统")
-    print("Visual Configuration System")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("Angela AI v6.0 - 视觉配置系统")
+    logger.info("Visual Configuration System")
+    logger.info("=" * 60)
     
     # Default configuration
     config = VisualConfiguration()
-    print("\n默认配置 / Default configuration:")
-    print(f"  渲染质量: {config.render_quality.value[0]}")
-    print(f"  模型名称: {config.model.model_name}")
-    print(f"  纹理分辨率: {config.model.texture_resolution}")
-    print(f"  目标FPS: {config.performance.target_fps}")
+    logger.info("\n默认配置 / Default configuration:")
+    logger.info(f"  渲染质量: {config.render_quality.value[0]}")
+    logger.info(f"  模型名称: {config.model.model_name}")
+    logger.info(f"  纹理分辨率: {config.model.texture_resolution}")
+    logger.info(f"  目标FPS: {config.performance.target_fps}")
     
     # High quality preset
     hq_config = get_preset_config("quality")
-    print("\n高质量预设 / High quality preset:")
-    print(f"  渲染质量: {hq_config.render_quality.value[0]}")
-    print(f"  粒子效果: {'启用' if hq_config.effects.enable_particles else '禁用'}")
-    print(f"  最大粒子数: {hq_config.effects.max_particles}")
+    logger.info("\n高质量预设 / High quality preset:")
+    logger.info(f"  渲染质量: {hq_config.render_quality.value[0]}")
+    logger.info(f"  粒子效果: {'启用' if hq_config.effects.enable_particles else '禁用'}")
+    logger.info(f"  最大粒子数: {hq_config.effects.max_particles}")
     
     # Custom configuration
     custom = VisualConfiguration()
@@ -381,13 +381,13 @@ if __name__ == "__main__":
     custom.performance.target_fps = 144
     custom.effects.enable_glow = True
     
-    print("\n自定义配置 / Custom configuration:")
-    print(f"  模型名称: {custom.model.model_name}")
-    print(f"  目标FPS: {custom.performance.target_fps}")
-    print(f"  发光效果: {'启用' if custom.effects.enable_glow else '禁用'}")
+    logger.info("\n自定义配置 / Custom configuration:")
+    logger.info(f"  模型名称: {custom.model.model_name}")
+    logger.info(f"  目标FPS: {custom.performance.target_fps}")
+    logger.info(f"  发光效果: {'启用' if custom.effects.enable_glow else '禁用'}")
     
     # Configuration to dict
-    print("\n配置字典 / Configuration dict:")
+    logger.info("\n配置字典 / Configuration dict:")
     config_dict = custom.to_dict()
     for key, value in config_dict.items():
-        print(f"  {key}: {value}")
+        logger.info(f"  {key}: {value}")

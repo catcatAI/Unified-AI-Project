@@ -66,13 +66,13 @@ class MemoryProfiler:
             return
         
         if self.tracking_started:
-            print("⚠️  内存跟踪已在运行中")
+            logger.info("⚠️  内存跟踪已在运行中")
             return
         
         tracemalloc.start()
         self._start_memory = self._get_current_memory()
         self.tracking_started = True
-        print("✓ 内存跟踪已启动")
+        logger.info("✓ 内存跟踪已启动")
     
     def stop_tracking(self) -> None:
         """停止内存跟踪"""
@@ -81,7 +81,7 @@ class MemoryProfiler:
         
         tracemalloc.stop()
         self.tracking_started = False
-        print("✓ 内存跟踪已停止")
+        logger.info("✓ 内存跟踪已停止")
     
     def take_snapshot(self, label: str = "") -> MemorySnapshot:
         """获取内存快照"""
@@ -131,7 +131,7 @@ class MemoryProfiler:
         self.snapshots.append(mem_snapshot)
         
         if label:
-            print(f"✓ 快照已创建: {label} ({current_memory:.2f} MB)")
+            logger.info(f"✓ 快照已创建: {label} ({current_memory:.2f} MB)")
         
         return mem_snapshot
     
@@ -351,7 +351,7 @@ def profile_memory(func: Callable) -> Callable:
 def print_memory_report() -> None:
     """打印内存分析报告"""
     profiler = get_profiler()
-    print(profiler.generate_report())
+    logger.info(profiler.generate_report())
 
 
 def start_memory_tracking() -> None:
@@ -390,4 +390,4 @@ if __name__ == "__main__":
     
     profiler.take_snapshot("释放后")
     
-    print(profiler.generate_report())
+    logger.info(profiler.generate_report())

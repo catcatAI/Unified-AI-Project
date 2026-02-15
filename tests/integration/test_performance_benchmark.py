@@ -24,7 +24,7 @@ class TestPerformanceBenchmark,
         self.test_config.clear()
 def test_hsp_message_publish_performance(self, benchmark) -> None,
         """测试HSP消息发布性能"""
-        with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector,
+        with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector:
             mock_hsp_instance == Mock()
             # 修复AsyncMock的使用方式
             async def mock_publish(topic, message):
@@ -44,7 +44,7 @@ def test_hsp_message_publish_performance(self, benchmark) -> None,
     @pytest.mark.asyncio()
     async def test_memory_store_performance(self, benchmark) -> None,
         """测试记忆存储性能"""
-        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager,
+        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
             mock_memory_instance == Mock()
             # 修复AsyncMock的使用方式
             async def mock_store_memory(data):
@@ -64,7 +64,7 @@ def test_hsp_message_publish_performance(self, benchmark) -> None,
     @pytest.mark.asyncio()
     async def test_concurrent_agent_operations_performance(self, benchmark) -> None,
         """测试并发代理操作性能"""
-        with patch('apps.backend.src.core.managers.agent_manager.AgentManager') as mock_agent_manager,
+        with patch('apps.backend.src.core.managers.agent_manager.AgentManager') as mock_agent_manager:
             mock_agent_instance == Mock()
             # 修复AsyncMock的使用方式
             async def mock_start_agent(agent_id):
@@ -88,7 +88,7 @@ def test_hsp_message_publish_performance(self, benchmark) -> None,
     @pytest.mark.asyncio()
     async def test_memory_retrieval_performance(self, benchmark) -> None,
         """测试记忆检索性能"""
-        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager,
+        with patch('apps.backend.src.ai.memory.ham_memory_manager.HAMMemoryManager') as mock_memory_manager:
             mock_memory_instance == Mock()
             # 修复AsyncMock的使用方式
             async def mock_retrieve_memory(memory_id):
@@ -111,7 +111,7 @@ class TestSystemLoadBenchmark,
     @pytest.mark.asyncio()
     async def test_high_load_agent_management(self, benchmark) -> None,
         """测试高负载下的代理管理"""
-        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager,
+        with patch('apps.backend.src.core_ai.agent_manager.AgentManager') as mock_agent_manager:
             mock_agent_instance == Mock()
             # 修复AsyncMock的使用方式
             async def mock_create_agent(agent_id, agent_name):
@@ -147,7 +147,7 @@ class TestSystemLoadBenchmark,
     @pytest.mark.asyncio()
     async def test_concurrent_hsp_message_processing(self, benchmark) -> None,
         """测试并发HSP消息处理"""
-        with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector,
+        with patch('apps.backend.src.hsp.connector.HSPConnector') as mock_hsp_connector:
             mock_hsp_instance == Mock()
             # 修复AsyncMock的使用方式
             async def mock_publish(topic, message):

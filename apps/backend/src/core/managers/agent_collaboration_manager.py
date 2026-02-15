@@ -349,9 +349,9 @@ if __name__ == "__main__":
         # Coordinate the collaborative task
         try:
             results = await collaboration_manager.coordinate_collaborative_task(task_id, subtasks)
-            print(f"Collaborative task results: {results}")
+            logger.info(f"Collaborative task results: {results}")
         except Exception as e:
-            print(f"Error in collaborative task: {e}")
+            logger.error(f"Error in collaborative task: {e}")
 
     # Run the example
     asyncio.run(main())

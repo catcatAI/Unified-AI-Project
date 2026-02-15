@@ -35,9 +35,9 @@ def load_char_maps(file_path: str) -> Optional[Dict[str, Any]]:
                 'max_decoder_seq_length': char_map_data.get('max_decoder_seq_length', 0)
             }
     except FileNotFoundError:
-        print(f"错误: 字符映射文件未找到 {file_path}")
+        logger.info(f"错误: 字符映射文件未找到 {file_path}")
     except json.JSONDecodeError:
-        print(f"错误: 无法解码JSON {file_path}")
+        logger.info(f"错误: 无法解码JSON {file_path}")
 
     return None
 
@@ -55,10 +55,10 @@ def load_test_dataset_csv(file_path: str) -> Optional[Tuple[list, list]]:
                 answers.append({'answer': row['answer']})
         return problems, answers
     except FileNotFoundError:
-        print(f"错误: 测试数据集文件未找到 {file_path}")
-        print("请先使用 data_generator.py 生成数据集")
+        logger.info(f"错误: 测试数据集文件未找到 {file_path}")
+        logger.info("请先使用 data_generator.py 生成数据集")
     except Exception as e:
-        print(f"加载CSV错误: {e}")
+        logger.info(f"加载CSV错误: {e}")
 
     return None, None
 
@@ -84,19 +84,19 @@ def evaluate_model(model, test_problems: list, test_answers: list) -> Dict[str, 
 
 def main():
     """主函数"""
-    print("开始数学模型评估...")
+    logger.info("开始数学模型评估...")
 
     # 加载测试数据
     problems, answers = load_test_dataset_csv(TEST_DATASET_PATH)
 
     if problems is None:
-        print("无法加载测试数据")
+        logger.info("无法加载测试数据")
         return
 
-    print(f"加载了 {len(problems)} 个测试样本")
+    logger.info(f"加载了 {len(problems)} 个测试样本")
 
     # 简化实现
-    print("评估完成（简化版本）")
+    logger.info("评估完成（简化版本）")
 
     return {"status": "success", "samples": len(problems)}
 

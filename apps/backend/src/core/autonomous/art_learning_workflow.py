@@ -694,9 +694,9 @@ class ArtLearningWorkflow:
 # Example usage
 if __name__ == "__main__":
     async def demo():
-        print("=" * 60)
-        print("Angela AI v6.0 - Art Learning Workflow Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - Art Learning Workflow Demo")
+        logger.info("=" * 60)
         
         # Mock systems
         class MockArtLearning:
@@ -769,31 +769,31 @@ if __name__ == "__main__":
         
         # Progress callback
         def on_progress(progress):
-            print(f"[{progress.overall_progress:3.0f}%] {progress.current_task}")
+            logger.info(f"[{progress.overall_progress:3.0f}%] {progress.current_task}")
         
         workflow.register_progress_callback(on_progress)
         
         # Run workflow
         await workflow.initialize()
         
-        print("\nRunning complete workflow...")
+        logger.info("\nRunning complete workflow...")
         result = await workflow.run_complete_workflow(
             learning_objectives=[LearningObjective.LIVE2D_TECHNIQUES],
             target_mastery=0.7
         )
         
-        print(f"\nWorkflow completed!")
-        print(f"Avatar ID: {result.avatar_id}")
-        print(f"Quality: {result.quality_score:.2%}")
-        print(f"Validated: {result.validation_passed}")
+        logger.info(f"\nWorkflow completed!")
+        logger.info(f"Avatar ID: {result.avatar_id}")
+        logger.info(f"Quality: {result.quality_score:.2%}")
+        logger.info(f"Validated: {result.validation_passed}")
         
         # Statistics
         stats = workflow.get_learning_statistics()
-        print(f"\nStatistics:")
-        print(f"  Completed tasks: {len(stats['completed_tasks'])}")
-        print(f"  Final progress: {stats['progress_percent']:.0f}%")
+        logger.info(f"\nStatistics:")
+        logger.info(f"  Completed tasks: {len(stats['completed_tasks'])}")
+        logger.info(f"  Final progress: {stats['progress_percent']:.0f}%")
         
         await workflow.shutdown()
-        print("\nDemo complete!")
+        logger.info("\nDemo complete!")
     
     asyncio.run(demo())

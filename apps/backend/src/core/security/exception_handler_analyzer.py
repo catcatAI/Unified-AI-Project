@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ExceptionHandlerIssue:
     """異常處理問題"""
+
     file_path: str
     line_number: int
     exception_type: str
@@ -40,6 +41,7 @@ class ExceptionHandlerIssue:
 @dataclass
 class FileAnalysisResult:
     """文件分析結果"""
+
     file_path: str
     total_except_blocks: int
     bare_exception_blocks: int
@@ -66,7 +68,7 @@ class ExceptionHandlerAnalyzer:
             FileAnalysisResult: 分析結果
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             logger.error(f"無法讀取文件 {file_path}: {e}")
@@ -119,88 +121,96 @@ class ExceptionHandlerAnalyzer:
         """獲取所有嚴重問題"""
         issues = []
         for result in self.results:
-            issues.extend([i for i in result.issues if i.severity == 'critical'])
+            issues.extend([i for i in result.issues if i.severity == "critical"])
         return issues
 
     def get_high_issues(self) -> List[ExceptionHandlerIssue]:
         """獲取所有高優先級問題"""
         issues = []
         for result in self.results:
-            issues.extend([i for i in result.issues if i.severity == 'high'])
+            issues.extend([i for i in result.issues if i.severity == "high"])
         return issues
 
     def print_summary(self) -> None:
         """打印分析摘要"""
-        print("\n" + "="*80)
-        print("ANGELA 異常處理分析報告")
-        print("="*80 + "\n")
+        logger.info("\n" + "=" * 80)
+        logger.info("ANGELA 異常處理分析報告")
+        logger.info("=" * 80 + "\n")
 
-        print(f"分析文件數: {self.total_files}")
-        print(f"總異常塊數: {sum(r.total_except_blocks for r in self.results)}")
-        print(f"裸異常捕獲數: {sum(r.bare_exception_blocks for r in self.results)}")
-        print(f"發現問題數: {self.total_issues}")
-        print()
+        logger.info(f"分析文件數: {self.total_files}")
+        logger.info(f"總異常塊數: {sum(r.total_except_blocks for r in self.results)}")
+        logger.error(f"裸異常捕獲數: {sum(r.bare_exception_blocks for r in self.results)}")
+        logger.info(f"發現問題數: {self.total_issues}")
+        logger.info()
 
         # 按嚴重程度分類
         critical = len(self.get_critical_issues())
         high = len(self.get_high_issues())
-        medium = len([i for r in self.results for i in r.issues if i.severity == 'medium'])
-        low = len([i for r in self.results for i in r.issues if i.severity == 'low'])
+        medium = len(
+            [i for r in self.results for i in r.issues if i.severity == "medium"]
+        )
+        low = len([i for r in self.results for i in r.issues if i.severity == "low"])
 
-        print("問題分類:")
-        print(f"  🔴 嚴重 (Critical): {critical}")
-        print(f"  🟠 高優先級 (High): {high}")
-        print(f"  🟡 中等 (Medium): {medium}")
-        print(f"  🟢 低優先級 (Low): {low}")
-        print()
+        logger.info("問題分類:")
+        logger.error(f"  🔴 嚴重 (Critical): {critical}")
+        logger.info(f"  🟠 高優先級 (High): {high}")
+        logger.info(f"  🟡 中等 (Medium): {medium}")
+        logger.info(f"  🟢 低優先級 (Low): {low}")
+        logger.info()
 
         # 打印有問題的文件
         problematic_files = [r for r in self.results if len(r.issues) > 0]
         if problematic_files:
-            print(f"有問題的文件 ({len(problematic_files)} 個):")
-            for result in sorted(problematic_files, key=lambda r: len(r.issues), reverse=True):
-                print(f"  - {result.file_path}: {len(result.issues)} 個問題")
-            print()
+            logger.info(f"有問題的文件 ({len(problematic_files)} 個):")
+            for result in sorted(
+                problematic_files, key=lambda r: len(r.issues), reverse=True
+            ):
+                logger.info(f"  - {result.file_path}: {len(result.issues)} 個問題")
+            logger.info()
 
-        print("="*80)
+        logger.info("=" * 80)
 
     def print_detailed_report(self) -> None:
         """打印詳細報告"""
         self.print_summary()
 
         if self.total_issues == 0:
-            print("\n✓ 沒有發現異常處理問題！")
+            logger.info("\n✓ 沒有發現異常處理問題！")
             return
 
-        print("\n詳細問題報告:")
-        print("-" * 80)
+        logger.info("\n詳細問題報告:")
+        logger.info("-" * 80)
 
         for result in sorted(self.results, key=lambda r: len(r.issues), reverse=True):
             if not result.issues:
                 continue
 
-            print(f"\n文件: {result.file_path}")
-            print(f"  異常塊: {result.total_except_blocks}, 裸異常: {result.bare_exception_blocks}")
-            print(f"  問題數: {len(result.issues)}\n")
+            logger.info(f"\n文件: {result.file_path}")
+            print(
+                f"  異常塊: {result.total_except_blocks}, 裸異常: {result.bare_exception_blocks}"
+            )
+            logger.info(f"  問題數: {len(result.issues)}\n")
 
             for issue in result.issues:
                 severity_icon = {
-                    'critical': '🔴',
-                    'high': '🟠',
-                    'medium': '🟡',
-                    'low': '🟢'
-                }.get(issue.severity, '')
+                    "critical": "🔴",
+                    "high": "🟠",
+                    "medium": "🟡",
+                    "low": "🟢",
+                }.get(issue.severity, "")
 
-                print(f"  {severity_icon} 行 {issue.line_number}: {issue.exception_type}")
-                print(f"      建議: {issue.suggestion}")
+                print(
+                    f"  {severity_icon} 行 {issue.line_number}: {issue.exception_type}"
+                )
+                logger.info(f"      建議: {issue.suggestion}")
 
                 if not issue.has_logging:
-                    print(f"      ⚠️  缺少錯誤日誌")
+                    logger.error(f"      ⚠️  缺少錯誤日誌")
 
                 if not issue.has_context:
-                    print(f"      ⚠️  缺少上下文信息")
+                    logger.info(f"      ⚠️  缺少上下文信息")
 
-        print("\n" + "="*80)
+        logger.info("\n" + "=" * 80)
 
     def generate_fix_suggestions(self) -> Dict[str, List[str]]:
         """
@@ -231,7 +241,7 @@ class ExceptionVisitor(ast.NodeVisitor):
     def __init__(self, file_path: str, source_code: str):
         self.file_path = file_path
         self.source_code = source_code
-        self.lines = source_code.split('\n')
+        self.lines = source_code.split("\n")
         self.total_except_blocks = 0
         self.bare_exception_blocks = 0
         self.issues: List[ExceptionHandlerIssue] = []
@@ -259,7 +269,9 @@ class ExceptionVisitor(ast.NodeVisitor):
             # except Exception: (高優先級)
             exception_type = "except Exception:"
             severity = "high"
-            suggestion = "使用更具體的異常類型，如 except (ValueError, KeyError, IOError) as e:"
+            suggestion = (
+                "使用更具體的異常類型，如 except (ValueError, KeyError, IOError) as e:"
+            )
         else:
             # 其他異常類型（正常）
             return
@@ -276,7 +288,9 @@ class ExceptionVisitor(ast.NodeVisitor):
         if not has_logging:
             if severity == "high":
                 severity = "critical"
-            suggestion += " 並添加錯誤日誌，如 logger.error(f'Error: {e}', exc_info=True)"
+            suggestion += (
+                " 並添加錯誤日誌，如 logger.error(f'Error: {e}', exc_info=True)"
+            )
 
         # 如果沒有上下文信息，添加建議
         if not has_context:
@@ -289,7 +303,7 @@ class ExceptionVisitor(ast.NodeVisitor):
             has_logging=has_logging,
             has_context=has_context,
             suggestion=suggestion,
-            severity=severity
+            severity=severity,
         )
 
         self.issues.append(issue)
@@ -309,16 +323,25 @@ class ExceptionVisitor(ast.NodeVisitor):
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Attribute):
                     # 檢查 logger.error, logger.warning 等
-                    if node.func.attr in ['error', 'warning', 'exception', 'critical', 'info', 'debug']:
+                    if node.func.attr in [
+                        "error",
+                        "warning",
+                        "exception",
+                        "critical",
+                        "info",
+                        "debug",
+                    ]:
                         return True
                 elif isinstance(node.func, ast.Name):
                     # 檢查 print 語句（雖然不推薦，但比沒有好）
-                    if node.func.id == 'print':
+                    if node.func.id == "print":
                         return True
         return False
 
 
-def analyze_exception_handling(project_root: str, directory: Optional[str] = None) -> ExceptionHandlerAnalyzer:
+def analyze_exception_handling(
+    project_root: str, directory: Optional[str] = None
+) -> ExceptionHandlerAnalyzer:
     """
     分析異常處理（便捷函數）
 
@@ -343,7 +366,8 @@ if __name__ == "__main__":
     # 測試異常處理分析器
     logging.basicConfig(level=logging.INFO)
 
-    project_root = "/home/cat/桌面/Unified-AI-Project"
+    # 使用當前工作目錄或從環境變量獲取
+    project_root = os.environ.get("PROJECT_ROOT", os.getcwd())
     analyzer = analyze_exception_handling(project_root)
 
     # 打印摘要
@@ -351,10 +375,10 @@ if __name__ == "__main__":
 
     # 打印詳細報告
     if analyzer.total_issues > 0:
-        print("\n是否查看詳細報告? [y/N]: ", end="")
+        logger.info("\n是否查看詳細報告? [y/N]: ", end="")
         try:
             response = input().strip().lower()
-            if response == 'y':
+            if response == "y":
                 analyzer.print_detailed_report()
         except (EOFError, KeyboardInterrupt):
             pass
@@ -362,16 +386,16 @@ if __name__ == "__main__":
     # 生成修復建議
     suggestions = analyzer.generate_fix_suggestions()
     if suggestions:
-        print("\n" + "="*80)
-        print("修復建議")
-        print("="*80 + "\n")
+        logger.info("\n" + "=" * 80)
+        logger.info("修復建議")
+        logger.info("=" * 80 + "\n")
 
         for file_path, file_suggestions in suggestions.items():
-            print(f"文件: {file_path}")
+            logger.info(f"文件: {file_path}")
             for suggestion in file_suggestions:
-                print(f"  - {suggestion}")
-            print()
+                logger.info(f"  - {suggestion}")
+            logger.info()
 
-        print("="*80)
-        print(f"\n總計: {len(suggestions)} 個文件需要修復")
-        print("請手動檢查並修復這些問題")
+        logger.info("=" * 80)
+        logger.info(f"\n總計: {len(suggestions)} 個文件需要修復")
+        logger.info("請手動檢查並修復這些問題")

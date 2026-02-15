@@ -13,6 +13,10 @@ Level 5 AGI 动态配置系统
 import asyncio
 import logging
 import json
+try:
+    import numpy as np
+except ImportError:
+    np = None
 from datetime import datetime
 from typing import Dict, Any, Optional
 from dataclasses import dataclass, field

@@ -14,7 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
 def test_imports() -> None,
     """测试导入是否正常工作"""
-    try,
+    try:
         # 测试HAMMemoryManager导入
         from memory.ham_memory_manager import HAMMemoryManager
         print("✅ HAMMemoryManager 导入成功")
@@ -30,7 +30,7 @@ def test_imports() -> None,
 
 def test_ham_memory_manager() -> None,
     """测试HAMMemoryManager基本功能"""
-    try,
+    try:
         # 设置环境变量以禁用向量存储
         os.environ["HAM_DISABLE_VECTOR_STORE"] = "1"
         
@@ -56,7 +56,7 @@ def test_ham_memory_manager() -> None,
 
 def test_personality_manager() -> None,
     """测试PersonalityManager基本功能"""
-    try,
+    try:
         from personality.personality_manager import PersonalityManager
         
         # 初始化PersonalityManager

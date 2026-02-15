@@ -78,7 +78,7 @@ or file in files,
     def check_imports(self, file_path, Path) -> List[str]
         """Check if imports in a test file are valid.""":::
     issues = []
-        try,
+        try:
 
             with open(file_path, 'r', encoding == 'utf-8') as f,
     content = f.read()

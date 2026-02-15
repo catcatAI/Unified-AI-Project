@@ -24,16 +24,16 @@ async def generate_and_save_to_desktop():
     desktop = Path.home() / "OneDrive" / "Desktop"
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
-    print("🎨 Angela 开始创作...")
-    print(f"📂 保存位置: {desktop}")
-    print()
+    logger.info("🎨 Angela 开始创作...")
+    logger.info(f"📂 保存位置: {desktop}")
+    logger.info()
     
     artworks = []
     
-    print("1️⃣  创作美术作品...")
+    logger.info("1️⃣  创作美术作品...")
     
     # 作品1: 自画像 (更精细的版本)
-    print("   🖼️  绘制自画像...")
+    logger.info("   🖼️  绘制自画像...")
     img1 = Image.new('RGBA', (512, 512), (255, 255, 255, 255))
     draw1 = ImageDraw.Draw(img1)
     
@@ -89,10 +89,10 @@ async def generate_and_save_to_desktop():
     path1 = desktop / f"Angela_SelfPortrait_{timestamp}.png"
     img1.save(path1)
     artworks.append(path1)
-    print(f"   ✅ 保存: {path1.name}")
+    logger.info(f"   ✅ 保存: {path1.name}")
     
     # 作品2: 快乐表情
-    print("   😊 绘制快乐表情...")
+    logger.info("   😊 绘制快乐表情...")
     img2 = Image.new('RGBA', (256, 256), (0, 0, 0, 0))
     draw2 = ImageDraw.Draw(img2)
     
@@ -115,10 +115,10 @@ async def generate_and_save_to_desktop():
     path2 = desktop / f"Angela_Happy_{timestamp}.png"
     img2.save(path2)
     artworks.append(path2)
-    print(f"   ✅ 保存: {path2.name}")
+    logger.info(f"   ✅ 保存: {path2.name}")
     
     # 作品3: 背景图
-    print("   🌅 绘制背景图...")
+    logger.info("   🌅 绘制背景图...")
     img3 = Image.new('RGBA', (1920, 1080), (200, 220, 240, 255))
     draw3 = ImageDraw.Draw(img3)
     
@@ -159,10 +159,10 @@ async def generate_and_save_to_desktop():
     path3 = desktop / f"Angela_Background_{timestamp}.png"
     img3.save(path3)
     artworks.append(path3)
-    print(f"   ✅ 保存: {path3.name}")
+    logger.info(f"   ✅ 保存: {path3.name}")
     
     # 作品4: 惊讶表情
-    print("   😲 绘制惊讶表情...")
+    logger.info("   😲 绘制惊讶表情...")
     img4 = Image.new('RGBA', (256, 256), (0, 0, 0, 0))
     draw4 = ImageDraw.Draw(img4)
     
@@ -179,10 +179,10 @@ async def generate_and_save_to_desktop():
     path4 = desktop / f"Angela_Surprised_{timestamp}.png"
     img4.save(path4)
     artworks.append(path4)
-    print(f"   ✅ 保存: {path4.name}")
+    logger.info(f"   ✅ 保存: {path4.name}")
     
     # 2. 创建展示文件
-    print("\n2️⃣  创建展示说明...")
+    logger.info("\n2️⃣  创建展示说明...")
     showcase = desktop / f"Angela_Creations_{timestamp}.md"
     
     content = f"""# 🎨 Angela AI 桌面创作展示
@@ -234,20 +234,20 @@ python apps/backend/src/core/art/angela_real_creator.py
     
     with open(showcase, 'w', encoding='utf-8') as f:
         f.write(content)
-    print(f"   📝 保存: {showcase.name}")
+    logger.info(f"   📝 保存: {showcase.name}")
     
     # 完成报告
-    print("\n" + "="*60)
-    print("✅ 创作完成!")
-    print(f"📂 所有文件保存在: {desktop}")
-    print(f"🖼️  美术作品: {len(artworks)} 幅")
-    print()
-    print("📁 文件列表:")
+    logger.info("\n" + "="*60)
+    logger.info("✅ 创作完成!")
+    logger.info(f"📂 所有文件保存在: {desktop}")
+    logger.info(f"🖼️  美术作品: {len(artworks)} 幅")
+    logger.info()
+    logger.info("📁 文件列表:")
     for path in artworks:
-        print(f"   → {path.name}")
-    print()
-    print("🎉 请在桌面查看 Angela 的作品!")
-    print("="*60)
+        logger.info(f"   → {path.name}")
+    logger.info()
+    logger.info("🎉 请在桌面查看 Angela 的作品!")
+    logger.info("="*60)
     
     return artworks
 
@@ -256,8 +256,8 @@ if __name__ == '__main__':
     try:
         asyncio.run(generate_and_save_to_desktop())
     except KeyboardInterrupt:
-        print("\n\n创作已取消")
+        logger.info("\n\n创作已取消")
     except Exception as e:
-        print(f"\n❌ 错误: {e}")
+        logger.info(f"\n❌ 错误: {e}")
         import traceback
         traceback.print_exc()

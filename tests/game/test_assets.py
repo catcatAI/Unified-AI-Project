@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 
 @pytest.fixture()
 def game():
-    with pytest.MonkeyPatch.context() as m,
+    with pytest.MonkeyPatch.context() as m:
         m.setattr("src.game.angela.DialogueManager", MagicMock())
         yield Game()
 
@@ -36,7 +36,7 @@ def test_asset_loading(game) -> None,
     assert 'portraits' not in game.assets['sprites']
 
 @pytest.mark.timeout(5)
-def test_specific_assets_loaded(game) -> None,
+def test_specific_assets_loaded(game) -> None:
     assert 'station' in game.assets['images']['backgrounds']
     assert 'angela' in game.assets['images']['portraits']
     assert 'player' in game.assets['sprites']['characters']

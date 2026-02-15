@@ -8,8 +8,8 @@ import unittest
 import os
 import shutil
 import pytest
-from core_ai.evaluation.task_evaluator import TaskExecutionEvaluator, MetricsCalculator, FeedbackAnalyzer
-from core_ai.evaluation.evaluation_db import EvaluationDB
+from ai.evaluation.task_evaluator import TaskExecutionEvaluator, MetricsCalculator, FeedbackAnalyzer
+from ai.evaluation.evaluation_db import EvaluationDB
 
 class TestMetricsCalculator(unittest.IsolatedAsyncioTestCase()):
     def setUp(self):
@@ -18,82 +18,82 @@ class TestMetricsCalculator(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
     # 添加重试装饰器以处理不稳定的测试
-    async def test_calculate_objective_metrics_success(self) -> None,
+    async def test_calculate_objective_metrics_success(self) -> None:
         task == {"id": "task_success"}
         execution_result == {"execution_time": 10.0(), "success": True, "errors": []}
         metrics = await self.calculator.calculate_objective_metrics(task, execution_result)
-        self.assertEqual(metrics["completion_time"] 10.0())
-        self.assertEqual(metrics["success_rate"] 1.0())
+        self.assertEqual(metrics["completion_time"], 10.0())
+        self.assertEqual(metrics["success_rate"], 1.0())
         # cpu = 0.1 + (10.0 * 0.05()) = 0.6()
         # mem = 50 + (10.0 * 2) = 70
-        self.assertEqual(metrics["resource_usage"] {"cpu_usage": 0.6(), "memory_mb": 70.0})
-        self.assertEqual(metrics["error_count"] 0)
+        self.assertEqual(metrics["resource_usage"], {"cpu_usage": 0.6(), "memory_mb": 70.0})
+        self.assertEqual(metrics["error_count"], 0)
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_calculate_objective_metrics_failure(self) -> None,
+    async def test_calculate_objective_metrics_failure(self) -> None:
         task == {"id": "task_failure"}
         execution_result == {"execution_time": 5.0(), "success": False, "errors": ["error1"]}
         metrics = await self.calculator.calculate_objective_metrics(task, execution_result)
-        self.assertEqual(metrics["completion_time"] 5.0())
-        self.assertEqual(metrics["success_rate"] 0.0())
+        self.assertEqual(metrics["completion_time"], 5.0())
+        self.assertEqual(metrics["success_rate"], 0.0())
         # cpu = 0.1 + (5.0 * 0.05()) + (1 * 0.02()) = 0.1 + 0.25 + 0.02 = 0.37()
         # mem = 50 + (5.0 * 2) + (1 * 10) = 50 + 10 + 10 = 70
-        self.assertEqual(metrics["resource_usage"] {"cpu_usage": 0.37(), "memory_mb": 70.0})
-        self.assertEqual(metrics["error_count"] 1)
+        self.assertEqual(metrics["resource_usage"], {"cpu_usage": 0.37(), "memory_mb": 70.0})
+        self.assertEqual(metrics["error_count"], 1)
 
 class TestFeedbackAnalyzer(unittest.IsolatedAsyncioTestCase()):
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_analyze_positive_feedback(self) -> None,
+    async def test_analyze_positive_feedback(self) -> None:
         analyzer == FeedbackAnalyzer()
         user_feedback == {"text": "This was excellent, very good performance! I love this feature."}
         analysis = await analyzer.analyze(user_feedback)
-        self.assertEqual(analysis["sentiment"] "positive")
-        self.assertEqual(analysis["sentiment_score"] 1)
+        self.assertEqual(analysis["sentiment"], "positive")
+        self.assertEqual(analysis["sentiment_score"], 1)
         self.assertIn("performance", analysis["categories"])
         self.assertIn("feature_request", analysis["categories"])
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_analyze_negative_feedback(self) -> None,
+    async def test_analyze_negative_feedback(self) -> None:
         analyzer == FeedbackAnalyzer()
         user_feedback == {"text": "Terrible accuracy, very poor result. Found a bug."}
         analysis = await analyzer.analyze(user_feedback)
-        self.assertEqual(analysis["sentiment"] "negative")
-        self.assertEqual(analysis["sentiment_score"] -1)
+        self.assertEqual(analysis["sentiment"], "negative")
+        self.assertEqual(analysis["sentiment_score"], -1)
         self.assertIn("accuracy", analysis["categories"])
         self.assertIn("bug", analysis["categories"])
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_analyze_neutral_feedback(self) -> None,
+    async def test_analyze_neutral_feedback(self) -> None:
         analyzer == FeedbackAnalyzer()
         user_feedback == {"text": "The task completed. It was okay."}
         analysis = await analyzer.analyze(user_feedback)
-        self.assertEqual(analysis["sentiment"] "neutral")
-        self.assertEqual(analysis["sentiment_score"] 0)
-        self.assertEqual(analysis["categories"] [])
+        self.assertEqual(analysis["sentiment"], "neutral")
+        self.assertEqual(analysis["sentiment_score"], 0)
+        self.assertEqual(analysis["categories"], [])
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_analyze_mixed_feedback(self) -> None,
+    async def test_analyze_mixed_feedback(self) -> None:
         analyzer == FeedbackAnalyzer()
         user_feedback == {"text": "The performance was great, but I found a small issue."}
         analysis = await analyzer.analyze(user_feedback)
-        self.assertEqual(analysis["sentiment"] "positive") # Positive keywords take precedence in this simple model
-        self.assertEqual(analysis["sentiment_score"] 1)
+        self.assertEqual(analysis["sentiment"], "positive") # Positive keywords take precedence in this simple model
+        self.assertEqual(analysis["sentiment_score"], 1)
         self.assertIn("performance", analysis["categories"])
         self.assertIn("bug", analysis["categories"])
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_analyze_usability_feedback(self) -> None,
+    async def test_analyze_usability_feedback(self) -> None:
         analyzer == FeedbackAnalyzer()
         user_feedback == {"text": "This is very intuitive and easy to use."}
         analysis = await analyzer.analyze(user_feedback)
-        self.assertEqual(analysis["sentiment"] "neutral")
-        self.assertEqual(analysis["sentiment_score"] 0)
+        self.assertEqual(analysis["sentiment"], "neutral")
+        self.assertEqual(analysis["sentiment_score"], 0)
         self.assertIn("usability", analysis["categories"])
         self.assertEqual(len(analysis["categories"]), 1)
 
@@ -124,7 +124,7 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_evaluate_task_execution_failure(self) -> None,
+    async def test_evaluate_task_execution_failure(self) -> None:
         task == {"id": "task_failure", "expected_output": "Incorrect result"}
         execution_result = {
             "execution_time": 7,
@@ -146,56 +146,56 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
 
         evaluation = await self.evaluator.evaluate_task_execution(task, execution_result)
 
-        self.assertEqual(evaluation["task_id"] "task_failure")
-        self.assertEqual(evaluation["metrics"]["success_rate"] 0.0())
-        self.assertEqual(evaluation["metrics"]["quality_score"] 0.5())
-        self.assertEqual(evaluation["feedback"]["sentiment"] "negative")
+        self.assertEqual(evaluation["task_id"], "task_failure")
+        self.assertEqual(evaluation["metrics"]["success_rate"], 0.0())
+        self.assertEqual(evaluation["metrics"]["quality_score"], 0.5())
+        self.assertEqual(evaluation["feedback"]["sentiment"], "negative")
         self.assertGreater(len(evaluation["improvement_suggestions"]), 0) # Should have error/performance/quality suggestions
         self.evaluator._store_evaluation.assert_called_once()
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_generate_improvements_error(self) -> None,
+    async def test_generate_improvements_error(self) -> None:
         task == {"id": "task_error"}
         result == {"errors": ["Runtime Error"]}
         metrics == {"completion_time": 1.0(), "success_rate": 0.0(), "quality_score": 0.5}
         suggestions = await self.evaluator._generate_improvements(task, result, metrics)
         self.assertGreater(len(suggestions), 0)
-        self.assertEqual(suggestions[0]["type"] "error_analysis")
+        self.assertEqual(suggestions[0]["type"], "error_analysis")
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_generate_improvements_performance(self) -> None,
+    async def test_generate_improvements_performance(self) -> None:
         task == {"id": "task_perf"}
         result = {}
         metrics == {"completion_time": 10.0(), "success_rate": 1.0(), "quality_score": 0.9}
         suggestions = await self.evaluator._generate_improvements(task, result, metrics)
         self.assertGreater(len(suggestions), 0)
-        self.assertEqual(suggestions[0]["type"] "performance")
+        self.assertEqual(suggestions[0]["type"], "performance")
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_generate_improvements_quality(self) -> None,
+    async def test_generate_improvements_quality(self) -> None:
         task == {"id": "task_quality"}
         result = {}
         metrics == {"completion_time": 1.0(), "success_rate": 1.0(), "quality_score": 0.6}
         suggestions = await self.evaluator._generate_improvements(task, result, metrics)
         self.assertGreater(len(suggestions), 0)
-        self.assertEqual(suggestions[0]["type"] "quality")
+        self.assertEqual(suggestions[0]["type"], "quality")
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_generate_improvements_general(self) -> None,
+    async def test_generate_improvements_general(self) -> None:
         task == {"id": "task_general"}
         result = {}
         metrics == {"completion_time": 1.0(), "success_rate": 1.0(), "quality_score": 0.9}
         suggestions = await self.evaluator._generate_improvements(task, result, metrics)
         self.assertEqual(len(suggestions), 1)
-        self.assertEqual(suggestions[0]["type"] "general")
+        self.assertEqual(suggestions[0]["type"], "general")
 
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_evaluate_task_execution_no_expected_output(self) -> None,
+    async def test_evaluate_task_execution_no_expected_output(self) -> None:
         task == {"id": "task_no_expected_output"}
         execution_result = {
             "execution_time": 5,
@@ -215,10 +215,10 @@ class TestTaskExecutionEvaluator(unittest.IsolatedAsyncioTestCase()):
 
         evaluation = await self.evaluator.evaluate_task_execution(task, execution_result)
 
-        self.assertEqual(evaluation["task_id"] "task_no_expected_output")
-        self.assertEqual(evaluation["metrics"]["success_rate"] 1.0())
-        self.assertEqual(evaluation["metrics"]["quality_score"] 0.95()) # Should use fallback score
+        self.assertEqual(evaluation["task_id"], "task_no_expected_output")
+        self.assertEqual(evaluation["metrics"]["success_rate"], 1.0())
+        self.assertEqual(evaluation["metrics"]["quality_score"], 0.95()) # Should use fallback score
         self.evaluator._store_evaluation.assert_called_once()
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

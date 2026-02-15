@@ -103,7 +103,7 @@ def test_agent_initialization(self, agent, mock_config) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_code_analysis_task(self, agent) -> None,
+    async def test_code_analysis_task(self, agent) -> None:
     """测试代码分析任务"""
     # Mock bridge method
     agent.bridge.create_confluence_page == = AsyncMock(return_value =={'id': 'test_page_id'})
@@ -127,7 +127,7 @@ def test_agent_initialization(self, agent, mock_config) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_documentation_generation_task(self, agent) -> None,
+    async def test_documentation_generation_task(self, agent) -> None:
     """测试文档生成任务"""
     agent.bridge.create_confluence_page == = AsyncMock(return_value =={'id': 'test_doc_page'})
 
@@ -148,7 +148,7 @@ def test_agent_initialization(self, agent, mock_config) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_issue_tracking_task(self, agent) -> None,
+    async def test_issue_tracking_task(self, agent) -> None:
     """测试问题追踪任务"""
     agent.bridge.create_jira_issue == = AsyncMock(return_value =={
             'key': 'TEST-123',
@@ -172,7 +172,7 @@ def test_agent_initialization(self, agent, mock_config) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_task_submission_and_processing(self, agent) -> None,
+    async def test_task_submission_and_processing(self, agent) -> None:
     """测试任务提交和处理"""
     # Mock dispatch to return a result
     agent._dispatch_task == = AsyncMock(return_value =={'result': 'Task completed successfully'})
@@ -203,7 +203,7 @@ def test_agent_initialization(self, agent, mock_config) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_task_processing(self, agent) -> None,
+    async def test_task_processing(self, agent) -> None:
     """测试任务处理"""
     # Mock dispatch to return a result
     agent._dispatch_task == = AsyncMock(return_value =={'result': 'Task completed successfully'})
@@ -234,7 +234,7 @@ def test_agent_initialization(self, agent, mock_config) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_task_error_handling(self, agent) -> None,
+    async def test_task_error_handling(self, agent) -> None:
     """测试任务错误处理"""
     # Mock dispatch to raise an error
     agent._dispatch_task == = AsyncMock(side_effect ==Exception("Test error"))
@@ -284,7 +284,7 @@ def test_agent_initialization(self, agent, mock_config) -> None,
     assert 'documentation_generation' in status['capabilities']
     assert 'metrics' in status
 
-    def test_task_history(self, agent) -> None,
+    def test_task_history(self, agent) -> None:
     """测试任务历史记录"""
     # Add some mock history
     agent.task_history = [
@@ -307,7 +307,7 @@ def test_agent_initialization(self, agent, mock_config) -> None,
     assert len(history) == 5
     assert history[0]['task_id'] == 'task_5'  # Should get the last 5
 
-    def test_report_formatting(self, agent) -> None,
+    def test_report_formatting(self, agent) -> None:
     """测试报告格式化"""
     analysis_result = {
             'repository_url': 'https,//github.com/test/repo',
@@ -337,7 +337,7 @@ def test_agent_initialization(self, agent, mock_config) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_unsupported_capability(self, agent) -> None,
+    async def test_unsupported_capability(self, agent) -> None:
     """测试不支持的能力"""
     task = {
             'task_id': 'unsupported_task',
@@ -376,7 +376,7 @@ class TestRovoDevAgentIntegration,
     @pytest.mark.integration()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_real_jira_integration(self) -> None,
+    async def test_real_jira_integration(self) -> None:
     """测试真实 Jira 集成"""
     # This test would create actual Jira issues
     # and should only run in integration test environment

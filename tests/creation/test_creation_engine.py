@@ -8,7 +8,7 @@ import unittest
 import pytest
 from creation.creation_engine import CreationEngine
 
-class TestCreationEngine(unittest.TestCase()):
+class TestCreationEngine(unittest.TestCase):
     """
     A class for testing the CreationEngine class.::
     """
@@ -33,7 +33,7 @@ def test_create_model(self) -> None,
         self.assertIn("class MyModel,", model_code)
 
     @pytest.mark.timeout(5)
-    def test_create_tool(self) -> None,
+    def test_create_tool(self) -> None:
         """
         Tests the create_tool method.
         """

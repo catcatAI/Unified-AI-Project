@@ -8,7 +8,7 @@ import os
 import tempfile
 import logging
 
-from core_ai.code_understanding.lightweight_code_model import LightweightCodeModel
+from ai.code_understanding.lightweight_code_model import LightweightCodeModel
 
 @pytest.fixture
 def model_fixture():

@@ -20,6 +20,7 @@ class SystemManager:
 
     def __init__(self):
         self.initialized = False
+        self.components: Dict[str, Any] = {}
 
     async def initialize(self) -> None:
         """初始化系统管理器"""
@@ -30,12 +31,25 @@ class SystemManager:
     async def shutdown(self) -> None:
         """关闭系统管理器"""
         logger.info("关闭系统管理器...")
+        for name, component in self.components.items():
+            if hasattr(component, 'shutdown'):
+                try:
+                    await component.shutdown()
+                except Exception as e:
+                    logger.error(f"Error shutting down {name}: {e}")
         self.initialized = False
         logger.info("系统管理器已关闭")
+
+    def register_component(self, name: str, component: Any):
+        """注册组件"""
+        self.components[name] = component
+        logger.info(f"Component registered: {name}")
 
     def get_status(self) -> Dict[str, Any]:
         """获取系统状态"""
         return {
             "initialized": self.initialized,
-            "status": "running" if self.initialized else "stopped"
+            "status": "running" if self.initialized else "stopped",
+            "components": list(self.components.keys()),
+            "component_count": len(self.components)
         }

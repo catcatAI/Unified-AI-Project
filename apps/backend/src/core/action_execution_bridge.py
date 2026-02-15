@@ -274,7 +274,7 @@ class ActionExecutionBridge:
         # Start execution loop
         self._execution_task = asyncio.create_task(self._execution_loop())
         
-        print("[ActionExecutionBridge] Initialized successfully")
+        logger.info("[ActionExecutionBridge] Initialized successfully")
     
     async def shutdown(self):
         """Shutdown the bridge"""
@@ -291,7 +291,7 @@ class ActionExecutionBridge:
         # Save history
         await self._save_history()
         
-        print("[ActionExecutionBridge] Shutdown complete")
+        logger.info("[ActionExecutionBridge] Shutdown complete")
     
     async def execute_action(
         self,
@@ -430,7 +430,7 @@ class ActionExecutionBridge:
                 try:
                     callback(context)
                 except Exception as e:
-                    print(f"[ActionExecutionBridge] Pre-execution callback error: {e}")
+                    logger.error(f"[ActionExecutionBridge] Pre-execution callback error: {e}")
             
             # Get handler
             handler = self._handlers.get(context.action_type)
@@ -499,7 +499,7 @@ class ActionExecutionBridge:
                     try:
                         callback(context, result)
                     except Exception as e:
-                        print(f"[ActionExecutionBridge] Post-execution callback error: {e}")
+                        logger.error(f"[ActionExecutionBridge] Post-execution callback error: {e}")
                 
                 # Send feedback to CDM for learning (if available)
                 if self.cdm:
@@ -566,7 +566,7 @@ class ActionExecutionBridge:
                 with open(self._history_file, 'r', encoding='utf-8') as f:
                     self._execution_history = json.load(f)
         except Exception as e:
-            print(f"[ActionExecutionBridge] Failed to load history: {e}")
+            logger.error(f"[ActionExecutionBridge] Failed to load history: {e}")
     
     async def _save_history(self):
         """Save execution history to file"""
@@ -575,7 +575,7 @@ class ActionExecutionBridge:
             with open(self._history_file, 'w', encoding='utf-8') as f:
                 json.dump(self._execution_history, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"[ActionExecutionBridge] Failed to save history: {e}")
+            logger.error(f"[ActionExecutionBridge] Failed to save history: {e}")
     
     async def _send_feedback_to_cdm(self, result: ExecutionResult):
         """Send execution feedback to CDM for learning"""
@@ -603,7 +603,7 @@ class ActionExecutionBridge:
                         if hasattr(self.cdm, 'integrate_knowledge'):
                             self.cdm.integrate_knowledge(feedback_delta, delta)
         except Exception as e:
-            print(f"[ActionExecutionBridge] Failed to send feedback to CDM: {e}")
+            logger.error(f"[ActionExecutionBridge] Failed to send feedback to CDM: {e}")
     
     # ========== Action Handlers ==========
     
@@ -1167,50 +1167,50 @@ class ActionExecutionBridgeFactory:
 # Example usage
 if __name__ == "__main__":
     async def demo():
-        print("=" * 70)
-        print("Angela AI v6.0 - Action Execution Bridge Demo")
-        print("动作执行桥接器演示")
-        print("=" * 70)
+        logger.info("=" * 70)
+        logger.info("Angela AI v6.0 - Action Execution Bridge Demo")
+        logger.info("动作执行桥接器演示")
+        logger.info("=" * 70)
         
         # Create bridge
         bridge = ActionExecutionBridge()
         await bridge.initialize()
         
-        print("\n1. Testing initiate_conversation action")
+        logger.info("\n1. Testing initiate_conversation action")
         result = await bridge.execute_action(
             action_type=ActionType.INITIATE_CONVERSATION,
             parameters={"message": "Hello from ActionExecutionBridge!", "emotion": "happy"},
             priority=1
         )
-        print(f"   Result: {result.to_dict()}")
+        logger.info(f"   Result: {result.to_dict()}")
         
-        print("\n2. Testing express_feeling action")
+        logger.info("\n2. Testing express_feeling action")
         result = await bridge.execute_action(
             action_type=ActionType.EXPRESS_FEELING,
             parameters={"emotion": "curious", "intensity": 0.8},
             priority=2
         )
-        print(f"   Result: {result.to_dict()}")
+        logger.info(f"   Result: {result.to_dict()}")
         
-        print("\n3. Testing system_query action")
+        logger.info("\n3. Testing system_query action")
         result = await bridge.execute_action(
             action_type=ActionType.SYSTEM_QUERY,
             parameters={"query_type": "health"},
             priority=3
         )
-        print(f"   Result: {result.to_dict()}")
+        logger.info(f"   Result: {result.to_dict()}")
         
-        print("\n4. Execution Statistics")
+        logger.info("\n4. Execution Statistics")
         stats = bridge.get_execution_stats()
-        print(f"   Stats: {stats}")
+        logger.info(f"   Stats: {stats}")
         
-        print("\n5. Feedback Data")
+        logger.info("\n5. Feedback Data")
         feedback = bridge.get_feedback_data()
-        print(f"   Feedback: {feedback}")
+        logger.info(f"   Feedback: {feedback}")
         
         await bridge.shutdown()
-        print("\n" + "=" * 70)
-        print("Demo completed successfully!")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("Demo completed successfully!")
+        logger.info("=" * 70)
     
     asyncio.run(demo())

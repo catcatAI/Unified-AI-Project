@@ -73,6 +73,9 @@ class PetManager:
         }
 
         logger.info(f"PetManager for pet '{self.pet_id}' initialized with improved state management.")
+        
+        # Initialize last decay time
+        self._last_decay_time = datetime.now()
 
     # ========== 修复：状态管理辅助方法 ==========
 
@@ -291,41 +294,50 @@ class PetManager:
         """
         Simulates the passage of time on pet needs (Hunger, Energy, Happiness, Health).
 
-        修复版本：改进的衰减逻辑
-        - 考虑状态之间的相互影响
-        - 使用状态验证
-        - 记录状态变更
         """
+        # Calculate real time delta
+        now = datetime.now()
+        time_delta = (now - self._last_decay_time).total_seconds()
+        self._last_decay_time = now
+        
+        # Convert to hours for rate calculation
+        # If delta_time_factor is provided, it acts as a speed multiplier (e.g. 2.0 = 2x speed), not a raw value
+        hours_passed = (time_delta / 3600.0) * delta_time_factor
+        
+        # Prevent massive jumps if system slept/paused (cap at 1 hour)
+        if hours_passed > 1.0:
+            hours_passed = 1.0
+            
         # ========== 修复：改进的衰减逻辑 ==========
         # 饥饿增加
-        self.state["hunger"] += self.decay_rates["hunger"] * delta_time_factor
-
+        self.state["hunger"] += self.decay_rates["hunger"] * hours_passed
+        
         # 精力减少（受饥饿影响：饿的时候精力下降更快）
         hunger_factor = 1.0 + (self.state["hunger"] / 200.0)  # 饥饿越高，精力下降越快
-        self.state["energy"] -= self.decay_rates["energy"] * delta_time_factor * hunger_factor
+        self.state["energy"] -= self.decay_rates["energy"] * hours_passed * hunger_factor
 
         # 快乐减少（受饥饿和精力影响）
         if self.state["hunger"] > self.thresholds["warning"] or self.state["energy"] < self.thresholds["warning"]:
             # 不好状态：快乐下降更快
-            self.state["happiness"] -= self.decay_rates["happiness"] * delta_time_factor * 1.5
+            self.state["happiness"] -= self.decay_rates["happiness"] * hours_passed * 1.5
         else:
             # 良好状态：快乐下降正常
-            self.state["happiness"] -= self.decay_rates["happiness"] * delta_time_factor
+            self.state["happiness"] -= self.decay_rates["happiness"] * hours_passed
 
         # 健康减少（受饥饿、精力、快乐的综合影响）
         if (self.state["hunger"] > self.thresholds["critical"] or
             self.state["energy"] < self.thresholds["critical"] or
             self.state["happiness"] < self.thresholds["critical"]):
             # 临界状态：健康下降更快
-            self.state["health"] -= self.decay_rates["health"] * delta_time_factor * 3.0
+            self.state["health"] -= self.decay_rates["health"] * hours_passed * 3.0
         elif (self.state["hunger"] > self.thresholds["warning"] or
               self.state["energy"] < self.thresholds["warning"] or
               self.state["happiness"] < self.thresholds["warning"]):
             # 警告状态：健康下降正常
-            self.state["health"] -= self.decay_rates["health"] * delta_time_factor * 1.5
+            self.state["health"] -= self.decay_rates["health"] * hours_passed * 1.5
         else:
             # 良好状态：健康下降缓慢
-            self.state["health"] -= self.decay_rates["health"] * delta_time_factor
+            self.state["health"] -= self.decay_rates["health"] * hours_passed
 
         # ========== 修复：验证状态值 ==========
         self._validate_state()

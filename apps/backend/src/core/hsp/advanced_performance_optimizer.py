@@ -544,7 +544,7 @@ class HSPAdvancedPerformanceEnhancer:
 if __name__ == "__main__":
     # 配置日志
     logging.basicConfig(level=logging.INFO)
-    print("--- HSPAdvancedPerformanceOptimizer Example Usage ---")
+    logger.info("--- HSPAdvancedPerformanceOptimizer Example Usage ---")
 
     # 创建高级性能优化器
     config = {
@@ -592,10 +592,10 @@ if __name__ == "__main__":
     # 测试路由
     async def run_routing_tests():
         for i, message in enumerate(test_messages):
-            print(f"\n测试消息 {i + 1}")
+            logger.info(f"\n测试消息 {i + 1}")
             routing_result, status = await optimizer.optimize_message_routing(message)
-            print(f"路由状态: {status}")
-            print(f"目标节点: {routing_result.get('target_node')}")
+            logger.info(f"路由状态: {status}")
+            logger.info(f"目标节点: {routing_result.get('target_node')}")
 
             # 模拟响应记录
             if routing_result.get('target_node'):
@@ -606,8 +606,8 @@ if __name__ == "__main__":
                 )
 
         # 显示性能统计
-        print("\n性能统计: ")
+        logger.info("\n性能统计: ")
         stats = optimizer.get_performance_stats()
-        print(json.dumps(stats, indent=2, ensure_ascii=False))
+        logger.info(json.dumps(stats, indent=2, ensure_ascii=False))
 
     asyncio.run(run_routing_tests())

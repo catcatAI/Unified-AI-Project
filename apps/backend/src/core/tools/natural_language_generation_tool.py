@@ -14,10 +14,10 @@ try:
         from transformers import pipeline
         TRANSFORMERS_AVAILABLE = True
     except ImportError:
-        print("Warning: Could not import transformers pipeline")
+        logger.warning("Warning: Could not import transformers pipeline")
         TRANSFORMERS_AVAILABLE = False
 except Exception as e:
-    print(f"Warning: Error importing transformers: {e}")
+    logger.error(f"Warning: Error importing transformers: {e}")
     TRANSFORMERS_AVAILABLE = False
 
 
@@ -33,7 +33,7 @@ class NaturalLanguageGenerationTool:
             try:
                 self.pipeline = pipeline("text-generation", model=model_name)
             except Exception as e:
-                print(f"Error loading pipeline: {e}")
+                logger.error(f"Error loading pipeline: {e}")
                 self.pipeline = None
 
     def generate(self, prompt: str, max_length: int = 100) -> Optional[Dict[str, Any]]:

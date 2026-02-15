@@ -1062,25 +1062,25 @@ if __name__ == "__main__":
         eb_system = EmotionalBlendingSystem()
         await eb_system.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 情绪混合系统演示")
-        print("Emotional Blending System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 情绪混合系统演示")
+        logger.info("Emotional Blending System Demo")
+        logger.info("=" * 60)
         
         # Set emotion
-        print("\n设置情绪状态 / Setting emotional state:")
+        logger.info("\n设置情绪状态 / Setting emotional state:")
         eb_system.set_emotion_from_basic(BasicEmotion.JOY, intensity=0.8)
         await asyncio.sleep(1)
         
         summary = eb_system.get_emotion_summary()
-        print(f"  主要情绪: {summary['dominant_emotion_cn']}")
-        print(f"  置信度: {summary['confidence']:.2f}")
+        logger.info(f"  主要情绪: {summary['dominant_emotion_cn']}")
+        logger.info(f"  置信度: {summary['confidence']:.2f}")
         print(f"  PAD: P={summary['pad_state']['pleasure']:.2f}, "
               f"A={summary['pad_state']['arousal']:.2f}, "
               f"D={summary['pad_state']['dominance']:.2f}")
         
         # Get expression
-        print("\n情绪表达 / Emotional expression:")
+        logger.info("\n情绪表达 / Emotional expression:")
         expression = eb_system.get_emotional_expression()
         print(f"  面部表情: 微笑={expression.facial.smile:.2f}, "
               f"挑眉={expression.facial.eyebrow_raise:.2f}")
@@ -1090,7 +1090,7 @@ if __name__ == "__main__":
               f"手势强度={expression.behavioral.gesture_intensity:.2f}")
         
         # Apply influences
-        print("\n应用影响因素 / Applying influences:")
+        logger.info("\n应用影响因素 / Applying influences:")
         eb_system.apply_influence("physiological", "heart_rate", 0.6, 0.5)
         eb_system.apply_influence("hormonal", "dopamine", 0.7, 0.6)
         await asyncio.sleep(1)
@@ -1100,7 +1100,7 @@ if __name__ == "__main__":
               f"A={summary['pad_state']['arousal']:.2f}")
         
         # Blend emotions
-        print("\n情绪混合 / Emotion blending:")
+        logger.info("\n情绪混合 / Emotion blending:")
         joy = PADEmotion.from_basic_emotion(BasicEmotion.JOY, 0.7)
         surprise = PADEmotion.from_basic_emotion(BasicEmotion.SURPRISE, 0.6)
         blended = eb_system.blend_emotions(joy, surprise, ratio=0.4)
@@ -1108,39 +1108,39 @@ if __name__ == "__main__":
               f"A={blended.arousal:.2f}, D={blended.dominance:.2f}")
         
         await eb_system.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
         
         # Multidimensional State Matrix Demo
-        print("\n" + "=" * 60)
-        print("4D状态矩阵演示 / 4D State Matrix Demo")
-        print("=" * 60)
+        logger.info("\n" + "=" * 60)
+        logger.info("4D状态矩阵演示 / 4D State Matrix Demo")
+        logger.info("=" * 60)
         
         matrix = MultidimensionalStateMatrix()
         
-        print("\n9. 设置4维度状态 / Setting 4D state:")
+        logger.info("\n9. 设置4维度状态 / Setting 4D state:")
         matrix.set_alpha_dimension(energy=0.8, comfort=0.7, arousal=0.6, rest_need=0.2)
         matrix.set_beta_dimension(curiosity=0.9, focus=0.8, confusion=0.1, learning=0.7)
         matrix.set_gamma_dimension(happiness=0.85, sadness=0.1, trust=0.8, anger=0.05)
         matrix.set_delta_dimension(attention=0.9, bond=0.7, trust=0.8, presence=0.6)
         
-        print("   α生理维度 / Physiological:", matrix.get_dimension_state("alpha"))
-        print("   β认知维度 / Cognitive:", matrix.get_dimension_state("beta"))
-        print("   γ情感维度 / Emotional:", matrix.get_dimension_state("gamma"))
-        print("   δ社交维度 / Social:", matrix.get_dimension_state("delta"))
+        logger.info("   α生理维度 / Physiological:", matrix.get_dimension_state("alpha"))
+        logger.info("   β认知维度 / Cognitive:", matrix.get_dimension_state("beta"))
+        logger.info("   γ情感维度 / Emotional:", matrix.get_dimension_state("gamma"))
+        logger.info("   δ社交维度 / Social:", matrix.get_dimension_state("delta"))
         
-        print("\n10. 计算维度间影响 / Computing inter-dimensional influences:")
+        logger.info("\n10. 计算维度间影响 / Computing inter-dimensional influences:")
         influences = matrix.compute_inter_influences()
         for source, targets in influences.items():
-            print(f"   {source} -> {targets}")
+            logger.info(f"   {source} -> {targets}")
         
-        print("\n11. 更新后的维度平均值 / Updated dimension averages:")
+        logger.info("\n11. 更新后的维度平均值 / Updated dimension averages:")
         summary = matrix.get_state_summary()
         for dim, avg in summary["averages"].items():
-            print(f"   {dim}维度 / dimension: {avg:.2f}")
+            logger.info(f"   {dim}维度 / dimension: {avg:.2f}")
         
-        print("\n12. 计算指标 / Computed metrics:")
-        print(f"   幸福感 / Wellbeing: {summary['computed']['wellbeing']:.2f}")
-        print(f"   唤醒度 / Arousal: {summary['computed']['arousal']:.2f}")
-        print(f"   情感效价 / Valence: {summary['computed']['valence']:.2f}")
+        logger.info("\n12. 计算指标 / Computed metrics:")
+        logger.info(f"   幸福感 / Wellbeing: {summary['computed']['wellbeing']:.2f}")
+        logger.info(f"   唤醒度 / Arousal: {summary['computed']['arousal']:.2f}")
+        logger.info(f"   情感效价 / Valence: {summary['computed']['valence']:.2f}")
     
     asyncio.run(demo())

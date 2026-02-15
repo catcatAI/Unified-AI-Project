@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from shared.utils import cleanup_utils
 
-class TestCleanupUtils(unittest.TestCase()):
+class TestCleanupUtils(unittest.TestCase):
     def setUp(self):
         """Set up a temporary directory structure for testing."""::
         self.test_root == Path("./temp_test_project_root")
@@ -66,7 +66,7 @@ class TestCleanupUtils(unittest.TestCase()):
         self.assertFalse((self.test_root / "some.log").exists())
         self.assertFalse((self.test_root / "__pycache__").exists())
 
-    def test_cleanup_cache_data(self) -> None,
+    def test_cleanup_cache_data(self) -> None:
         """Test that old cache files are removed and new ones are kept."""
         old_file = self.cache_dir / "old_file.pkl"
         new_file = self.cache_dir / "new_file.pkl"
@@ -80,5 +80,5 @@ class TestCleanupUtils(unittest.TestCase()):
         self.assertFalse(old_file.exists(), "Old cache file should have been deleted.")
         self.assertTrue(new_file.exists(), "New cache file should have been kept.")
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

@@ -67,7 +67,7 @@ def evaluate_proposition(prop_str: str) -> Optional[bool]:
         result = eval(py_prop_str, {"__builtins__": {}})
         return bool(result)
     except Exception as e:
-        print(f"评估错误: {e} 原始表达式: {prop_str} Python表达式: {py_prop_str}")
+        logger.info(f"评估错误: {e} 原始表达式: {prop_str} Python表达式: {py_prop_str}")
         return None
 
 
@@ -88,7 +88,7 @@ def generate_dataset(num_samples: int = 1000, max_nesting: int = 2) -> list:
             })
 
         if i % 100 == 0:
-            print(f"生成进度: {i} / {num_samples}")
+            logger.info(f"生成进度: {i} / {num_samples}")
 
     return dataset
 
@@ -100,12 +100,12 @@ def save_dataset(dataset: list, output_file: str):
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(dataset, f, indent=2, ensure_ascii=False)
 
-    print(f"保存 {len(dataset)} 个样本到 {output_file}")
+    logger.info(f"保存 {len(dataset)} 个样本到 {output_file}")
 
 
 def main():
     """主函数"""
-    print("生成逻辑训练数据...")
+    logger.info("生成逻辑训练数据...")
 
     # 生成训练集
     train_data = generate_dataset(num_samples=1000, max_nesting=2)
@@ -115,7 +115,7 @@ def main():
     test_data = generate_dataset(num_samples=200, max_nesting=2)
     save_dataset(test_data, TEST_FILE)
 
-    print("完成!")
+    logger.info("完成!")
 
 
 if __name__ == "__main__":

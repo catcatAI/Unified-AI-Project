@@ -25,7 +25,7 @@ def run_tests_with_compat():
     print(f"TF_USE_LEGACY_KERAS = {os.environ.get('TF_USE_LEGACY_KERAS', '未设置')}")
     
     # 尝试导入关键模块
-    try,
+    try:
         #         import tensorflow as tf
         print(f"✓ TensorFlow 版本, {tf.__version__}")
     except ImportError as e,::
@@ -33,7 +33,7 @@ def run_tests_with_compat():
     
     # 运行测试
     print("\n正在运行测试...")
-    try,
+    try:
         # 使用pytest运行测试,但排除有问题的测试文件
 
         cmd = [

@@ -363,7 +363,7 @@ if __name__ == "__main__":
     
     async def test_local_ipc():
         """測試本地 IPC 傳輸"""
-        print("=== Testing Local IPC Transport ===\n")
+        logger.info("=== Testing Local IPC Transport ===\n")
         
         # 創建隊列
         queue_a_to_b = mp.Queue()
@@ -382,7 +382,7 @@ if __name__ == "__main__":
         
         async def on_message(payload):
             received_messages.append(payload)
-            print(f"Received: {payload}")
+            logger.info(f"Received: {payload}")
         
         await transport_b.subscribe("test_topic", on_message)
         
@@ -396,8 +396,8 @@ if __name__ == "__main__":
         await transport_a.disconnect()
         await transport_b.disconnect()
         
-        print(f"\nReceived {len(received_messages)} messages")
-        print("=== Test Complete ===")
+        logger.info(f"\nReceived {len(received_messages)} messages")
+        logger.info("=== Test Complete ===")
     
     # 運行測試
     asyncio.run(test_local_ipc())

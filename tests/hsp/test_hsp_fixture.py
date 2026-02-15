@@ -24,9 +24,9 @@ from core.hsp.connector import HSPConnector
 async def mock_broker():
     broker == MockMqttBroker()
     await broker.start()
-    try,
+    try:
         yield broker
-    finally,
+    finally:
         await broker.shutdown()
 
 @pytest.mark.asyncio()
@@ -40,12 +40,12 @@ async
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_fixture() -> None,
+def test_fixture() -> None:
     # Create the fixtures manually
     mock_broker == MockMqttBroker()
     await mock_broker.start()
     
-    try,
+    try:
         # Create the other fixtures manually
         ib == InternalBus()
         da == DataAligner()
@@ -73,5 +73,5 @@ def test_fixture() -> None,
         # Clean up
         await connector.disconnect()
         
-    finally,
+    finally:
         await mock_broker.shutdown()

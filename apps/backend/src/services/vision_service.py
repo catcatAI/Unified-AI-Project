@@ -571,16 +571,16 @@ if __name__ == "__main__":
         # Test image analysis (with dummy bytes)
         dummy_image = b'\x10\x11\x12\x13\x14\x15'
         analysis = await service.analyze_image(dummy_image, features=["captioning", "ocr"])
-        print(f"Image Analysis: {analysis}")
+        logger.info(f"Image Analysis: {analysis}")
 
         analysis_default = await service.analyze_image(dummy_image)
-        print(f"Image Analysis (default features): {analysis_default}")
+        logger.info(f"Image Analysis (default features): {analysis_default}")
 
         # Test image comparison
         dummy_image2 = b'\x20\x21\x22\x23\x24\x25'
         similarity = await service.compare_images(dummy_image, dummy_image2)
-        print(f"Image Similarity: {similarity}")
+        logger.info(f"Image Similarity: {similarity}")
 
-        print("Vision Service script finished.")
+        logger.info("Vision Service script finished.")
 
     asyncio.run(main())

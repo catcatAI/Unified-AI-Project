@@ -247,4 +247,4 @@ dependency_manager = DependencyManager()
 
 def print_dependency_report():
     """Print the dependency status report."""
-    print(dependency_manager.get_dependency_report())
+    logger.info(dependency_manager.get_dependency_report())

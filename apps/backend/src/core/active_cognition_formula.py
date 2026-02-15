@@ -608,18 +608,18 @@ class ActiveCognitionFormula:
 if __name__ == "__main__":
     ac = ActiveCognitionFormula()
     
-    print("=" * 70)
-    print("Angela AI v6.0 - 主动认知构建公式演示")
-    print("Active Cognition Formula Demo")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("Angela AI v6.0 - 主动认知构建公式演示")
+    logger.info("Active Cognition Formula Demo")
+    logger.info("=" * 70)
     
-    print("\n公式: A_c = S_stress / O_order")
-    print("  S_stress: 系统应力 (System Stress)")
-    print("  O_order: 原生秩序 (Native Order)")
-    print("  A_c: 主动认知 (Active Cognition - 'struggle to avoid suffocation')")
+    logger.info("\n公式: A_c = S_stress / O_order")
+    logger.info("  S_stress: 系统应力 (System Stress)")
+    logger.info("  O_order: 原生秩序 (Native Order)")
+    logger.info("  A_c: 主动认知 (Active Cognition - 'struggle to avoid suffocation')")
     
     # Setup native orders
-    print("\n设置原生秩序 / Setting native orders:")
+    logger.info("\n设置原生秩序 / Setting native orders:")
     ac.add_order_baseline(
         OrderType.ALGORITHMIC,
         stability=0.8,
@@ -627,7 +627,7 @@ if __name__ == "__main__":
         complexity=0.6,
         description="核心算法秩序"
     )
-    print(f"  算法秩序: 稳定性80%, 灵活性30%")
+    logger.info(f"  算法秩序: 稳定性80%, 灵活性30%")
     
     ac.add_order_baseline(
         OrderType.PATTERN_BASED,
@@ -636,26 +636,26 @@ if __name__ == "__main__":
         complexity=0.5,
         description="模式识别秩序"
     )
-    print(f"  模式秩序: 稳定性70%, 灵活性50%")
+    logger.info(f"  模式秩序: 稳定性70%, 灵活性50%")
     
     # Calculate baseline O_order
     o_order = ac.calculate_o_order()
-    print(f"\nO_order (原生秩序强度): {o_order:.4f}")
+    logger.info(f"\nO_order (原生秩序强度): {o_order:.4f}")
     
     # Add stress vectors (scenario 1: comfortable)
-    print("\n场景1: 低压力状态 / Scenario 1: Low stress state")
+    logger.info("\n场景1: 低压力状态 / Scenario 1: Low stress state")
     ac.add_stress_vector(StressSource.NOVELTY_DEMAND, intensity=0.2, persistence=0.3)
     ac.add_stress_vector(StressSource.AMBIGUITY, intensity=0.15, persistence=0.2)
     
     s_stress_1 = ac.calculate_s_stress()
     a_c_1 = ac.calculate_active_cognition()
     
-    print(f"  S_stress: {s_stress_1:.4f}")
-    print(f"  A_c = {s_stress_1:.4f} / {o_order:.4f} = {a_c_1:.4f}")
+    logger.info(f"  S_stress: {s_stress_1:.4f}")
+    logger.info(f"  A_c = {s_stress_1:.4f} / {o_order:.4f} = {a_c_1:.4f}")
     
     # Clear and add more stress (scenario 2: active)
     ac.stress_vectors.clear()
-    print("\n场景2: 高压力状态 - 主动建构 / Scenario 2: High stress - active construction")
+    logger.info("\n场景2: 高压力状态 - 主动建构 / Scenario 2: High stress - active construction")
     ac.add_stress_vector(StressSource.NOVELTY_DEMAND, intensity=0.7, persistence=0.8)
     ac.add_stress_vector(StressSource.CONTRADICTION, intensity=0.6, persistence=0.7)
     ac.add_stress_vector(StressSource.OBSERVER_EXPECTATION, intensity=0.5, persistence=0.6)
@@ -663,12 +663,12 @@ if __name__ == "__main__":
     s_stress_2 = ac.calculate_s_stress()
     a_c_2 = ac.calculate_active_cognition()
     
-    print(f"  S_stress: {s_stress_2:.4f}")
-    print(f"  A_c = {s_stress_2:.4f} / {o_order:.4f} = {a_c_2:.4f}")
+    logger.info(f"  S_stress: {s_stress_2:.4f}")
+    logger.info(f"  A_c = {s_stress_2:.4f} / {o_order:.4f} = {a_c_2:.4f}")
     
     # Scenario 3: extreme
     ac.stress_vectors.clear()
-    print("\n场景3: 极端压力 - 挣扎态 / Scenario 3: Extreme stress - struggle state")
+    logger.info("\n场景3: 极端压力 - 挣扎态 / Scenario 3: Extreme stress - struggle state")
     ac.add_stress_vector(StressSource.CONTRADICTION, intensity=0.9, persistence=0.9)
     ac.add_stress_vector(StressSource.NOVELTY_DEMAND, intensity=0.85, persistence=0.8)
     ac.add_stress_vector(StressSource.TIME_PRESSURE, intensity=0.8, persistence=0.7)
@@ -677,30 +677,30 @@ if __name__ == "__main__":
     s_stress_3 = ac.calculate_s_stress()
     a_c_3 = ac.calculate_active_cognition()
     
-    print(f"  S_stress: {s_stress_3:.4f}")
-    print(f"  A_c = {s_stress_3:.4f} / {o_order:.4f} = {a_c_3:.4f}")
+    logger.info(f"  S_stress: {s_stress_3:.4f}")
+    logger.info(f"  A_c = {s_stress_3:.4f} / {o_order:.4f} = {a_c_3:.4f}")
     
     # Show interpretations
-    print("\n状态解读 / State interpretations:")
+    logger.info("\n状态解读 / State interpretations:")
     for scenario, a_c in [("舒适", a_c_1), ("主动建构", a_c_2), ("挣扎", a_c_3)]:
         interpretation = ac._interpret_a_c(a_c)
-        print(f"  {scenario} (A_c={a_c:.3f}): {interpretation['state_cn']} - {interpretation['description_cn']}")
+        logger.info(f"  {scenario} (A_c={a_c:.3f}): {interpretation['state_cn']} - {interpretation['description_cn']}")
     
     # Construction statistics
-    print("\n建构统计 / Construction statistics:")
+    logger.info("\n建构统计 / Construction statistics:")
     stats = ac.get_construction_statistics()
-    print(f"  总建构次数: {stats['total_constructions']}")
-    print(f"  成功建构: {stats['successful_constructions']}")
-    print(f"  成功率: {stats['success_rate']:.1%}")
-    print(f"  平均A_c: {stats['average_a_c']:.3f}")
-    print(f"  A_c趋势: {stats['a_c_trend']}")
+    logger.info(f"  总建构次数: {stats['total_constructions']}")
+    logger.info(f"  成功建构: {stats['successful_constructions']}")
+    logger.info(f"  成功率: {stats['success_rate']:.1%}")
+    logger.info(f"  平均A_c: {stats['average_a_c']:.3f}")
+    logger.info(f"  A_c趋势: {stats['a_c_trend']}")
     
     # Full summary
-    print("\n完整摘要 / Full summary:")
+    logger.info("\n完整摘要 / Full summary:")
     summary = ac.get_active_cognition_summary()
-    print(f"  当前A_c: {summary['a_c']:.4f}")
-    print(f"  压力向量数: {len(summary['stress_vectors'])}")
-    print(f"  秩序基线数: {len(summary['order_baselines'])}")
-    print(f"  解释: {summary['interpretation']['description_cn']}")
+    logger.info(f"  当前A_c: {summary['a_c']:.4f}")
+    logger.info(f"  压力向量数: {len(summary['stress_vectors'])}")
+    logger.info(f"  秩序基线数: {len(summary['order_baselines'])}")
+    logger.info(f"  解释: {summary['interpretation']['description_cn']}")
     
-    print("\n系统演示完成 / Demo complete")
+    logger.info("\n系统演示完成 / Demo complete")

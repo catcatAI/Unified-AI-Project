@@ -415,7 +415,7 @@ if __name__ == "__main__":
         # 测试消息缓存
         optimizer.cache_message('msg1', {'data': 'test'})
         cached_msg = optimizer.get_cached_message('msg1')
-        print(f"缓存消息: {cached_msg}")
+        logger.info(f"缓存消息: {cached_msg}")
         
         # 测试消息压缩
         test_message = {
@@ -426,8 +426,8 @@ if __name__ == "__main__":
         
         compressed = optimizer.compress_message(test_message)
         decompressed = optimizer.decompress_message(compressed)
-        print(f"原始消息: {test_message}")
-        print(f"解压消息: {decompressed}")
+        logger.info(f"原始消息: {test_message}")
+        logger.info(f"解压消息: {decompressed}")
         
         # 测试性能统计
         metrics = MessageMetrics(
@@ -441,11 +441,11 @@ if __name__ == "__main__":
         optimizer.record_message_metrics(metrics)
         
         stats = optimizer.get_performance_stats()
-        print(f"性能统计: {json.dumps(stats, indent=2, ensure_ascii=False)}")
+        logger.info(f"性能统计: {json.dumps(stats, indent=2, ensure_ascii=False)}")
         
         # 测试网络效率报告
         report = optimizer.get_network_efficiency_report()
-        print(f"网络效率报告: {json.dumps(report, indent=2, ensure_ascii=False)}")
+        logger.info(f"网络效率报告: {json.dumps(report, indent=2, ensure_ascii=False)}")
     
     # 运行测试
     asyncio.run(test_hsp_optimizer())

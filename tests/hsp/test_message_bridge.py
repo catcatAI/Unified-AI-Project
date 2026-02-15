@@ -62,7 +62,7 @@ def test_message_bridge_initialization(mock_external_connector, mock_internal_bu
 
 @pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_handle_external_message_valid_fact(message_bridge, mock_data_aligner, mock_internal_bus) -> None,
+async def test_handle_external_message_valid_fact(message_bridge, mock_data_aligner, mock_internal_bus) -> None:
     topic = "hsp/fact/some_id"
     message_payload == {"message_type": "HSP,Fact_v0.1", "payload": {"id": "fact123", "content": "test fact"}}
     message_str = json.dumps(message_payload)
@@ -89,7 +89,7 @@ async def test_handle_external_message_invalid_json(message_bridge, capsys) -> N
 
 @pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_handle_external_message_data_alignment_error(message_bridge, mock_data_aligner, mock_internal_bus, capsys) -> None,
+async def test_handle_external_message_data_alignment_error(message_bridge, mock_data_aligner, mock_internal_bus, capsys) -> None:
     topic = "hsp/fact/some_id"
     message_payload == {"message_type": "HSP,Fact_v0.1", "payload": {"id": "fact123", "content": "test fact"}}
     message_str = json.dumps(message_payload)
@@ -105,7 +105,7 @@ async def test_handle_external_message_data_alignment_error(message_bridge, mock
 
 @pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_handle_external_message_unknown_message_type(message_bridge, mock_data_aligner, mock_internal_bus, capsys) -> None,
+async def test_handle_external_message_unknown_message_type(message_bridge, mock_data_aligner, mock_internal_bus, capsys) -> None:
     topic = "hsp/fact/some_id"
     message_payload == {"message_type": "UNKNOWN_TYPE", "payload": {"id": "fact123", "content": "test fact"}}
     message_str = json.dumps(message_payload)
@@ -120,7 +120,7 @@ async def test_handle_external_message_unknown_message_type(message_bridge, mock
 
 @pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_handle_internal_message_publish_to_external(message_bridge, mock_external_connector) -> None,
+async def test_handle_internal_message_publish_to_external(message_bridge, mock_external_connector) -> None:
     internal_message = {
         "topic": "hsp/external/fact/publish",
         "payload": {"id": "fact456", "content": "internal fact"}
@@ -138,7 +138,7 @@ async def test_handle_internal_message_publish_to_external(message_bridge, mock_
 @pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 async def test_handle_internal_message_payload_types(message_bridge, mock_external_connector) -> None,
-    # Test with string payload,
+    # Test with string payload:
     await message_bridge.handle_internal_message({"topic": "test/str", "payload": "hello", "qos": 0})
     mock_external_connector.publish.assert_called_with("test/str", b"hello", qos=0)
     mock_external_connector.publish.reset_mock()
@@ -159,7 +159,7 @@ async def test_handle_internal_message_payload_types(message_bridge, mock_extern
 
 @pytest.mark.asyncio()
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-async def test_handle_external_message_no_publish_async_on_bus(message_bridge, mock_data_aligner, mock_internal_bus) -> None,
+async def test_handle_external_message_no_publish_async_on_bus(message_bridge, mock_data_aligner, mock_internal_bus) -> None:
     # Simulate an InternalBus without publish_async (e.g., older version or different mock setup)
     del mock_internal_bus.publish_async()
     mock_internal_bus.publish == MagicMock() # Ensure publish is still there

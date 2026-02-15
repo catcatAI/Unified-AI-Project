@@ -47,7 +47,7 @@ def analyze_test_coverage():
                     "tested": True,
                     "test_file": str(test_file.relative_to(project_root))
                 })
-            else,
+            else:
                 coverage_report["backend"]["files"].append({
                     "file": str(py_file.relative_to(project_root)),
                     "tested": False,
@@ -68,7 +68,7 @@ def analyze_test_coverage():
                     "tested": True,
                     "test_file": str(test_file.relative_to(project_root))
                 })
-            else,
+            else:
                 coverage_report["frontend"]["files"].append({
                     "file": str(tsx_file.relative_to(project_root)),
                     "tested": False,
@@ -89,7 +89,7 @@ def analyze_test_coverage():
                     "tested": True,
                     "test_file": str(test_file.relative_to(project_root))
                 })
-            else,
+            else:
                 coverage_report["desktop"]["files"].append({
                     "file": str(js_file.relative_to(project_root)),
                     "tested": False,
@@ -144,7 +144,7 @@ sys.path.insert(0, str(project_root))
 
 def test_import():
     """测试模块导入"""
-    try,
+    try:
         module_path = str(original_file).replace('/', '.').replace('.py', '')
         module == __import__(module_path, fromlist=['*'])
         assert module is not None
@@ -156,7 +156,7 @@ if __name"__main__":::
     test_import()
 '''
     
-    with open(test_file, 'w', encoding == 'utf-8') as f,
+    with open(test_file, 'w', encoding == 'utf-8') as f:
         f.write(test_content)
     print(f"  📝 创建测试文件, {test_file}")
 
@@ -178,7 +178,7 @@ describe('{original_file.stem}', () => {{
 }});
 '''
     
-    with open(test_file, 'w', encoding == 'utf-8') as f,
+    with open(test_file, 'w', encoding == 'utf-8') as f:
         f.write(test_content)
     print(f"  📝 创建测试文件, {test_file}")
 
@@ -197,7 +197,7 @@ describe('{original_file.stem}', () => {{
 }});
 '''
     
-    with open(test_file, 'w', encoding == 'utf-8') as f,
+    with open(test_file, 'w', encoding == 'utf-8') as f:
         f.write(test_content)
     print(f"  📝 创建测试文件, {test_file}")
 
@@ -234,7 +234,7 @@ def main():
     
     # 保存报告
     report_path == Path(__file__).parent / "coverage_report.json"
-    with open(report_path, 'w', encoding == 'utf-8') as f,
+    with open(report_path, 'w', encoding == 'utf-8') as f:
         json.dump(coverage_report, f, ensure_ascii == False, indent=2)
     
     print(f"\n📄 报告已保存到, {report_path}")

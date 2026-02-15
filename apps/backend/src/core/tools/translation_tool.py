@@ -23,20 +23,20 @@ def _load_dictionary():
     global _translation_dictionary
 
     if _translation_dictionary is None:
-        print("加载翻译字典...")
+        logger.info("加载翻译字典...")
 
         try:
             with open(DICTIONARY_PATH, 'r', encoding='utf-8') as f:
                 _translation_dictionary = json.load(f)
-                print("翻译字典加载成功")
+                logger.info("翻译字典加载成功")
         except FileNotFoundError:
-            print(f"错误: 翻译字典未找到 {DICTIONARY_PATH}")
+            logger.info(f"错误: 翻译字典未找到 {DICTIONARY_PATH}")
             _translation_dictionary = {"zh_to_en": {}, "en_to_zh": {}}
         except json.JSONDecodeError:
-            print(f"错误: 无法解码JSON {DICTIONARY_PATH}")
+            logger.info(f"错误: 无法解码JSON {DICTIONARY_PATH}")
             _translation_dictionary = {"zh_to_en": {}, "en_to_zh": {}}
         except Exception as e:
-            print(f"加载字典时出错: {e}")
+            logger.info(f"加载字典时出错: {e}")
             _translation_dictionary = {"zh_to_en": {}, "en_to_zh": {}}
 
     return _translation_dictionary
@@ -113,17 +113,17 @@ def translate(text: str, target_language: str, source_language: Optional[str] = 
 def request_model_upgrade(details: str):
     """请求模型升级（概念性钩子）"""
     timestamp = datetime.now().isoformat()
-    print(f"[{timestamp}] MODEL_UPGRADE_REQUEST: {details}")
+    logger.info(f"[{timestamp}] MODEL_UPGRADE_REQUEST: {details}")
 
 
 if __name__ == '__main__':
-    print("--- Translation Tool Example Usage ---")
+    logger.info("--- Translation Tool Example Usage ---")
 
     # 确保字典已加载
     _load_dictionary()
 
     if not _translation_dictionary or not _translation_dictionary.get("zh_to_en"):
-        print("字典似乎为空或未正确加载")
+        logger.info("字典似乎为空或未正确加载")
 
     tests = [
         ("你好", "en", "Hello"),
@@ -132,4 +132,4 @@ if __name__ == '__main__':
 
     for input_text, target_lang, expected in tests:
         result = translate(input_text, target_lang)
-        print(f"{input_text} -> {target_lang}: {result}")
+        logger.info(f"{input_text} -> {target_lang}: {result}")

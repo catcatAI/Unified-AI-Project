@@ -387,14 +387,14 @@ if __name__ == "__main__":
 
         # 添加狀態變化回調
         def on_state_change(event_type, data):
-            print(f"[STATE CHANGE] {event_type}: {data}")
+            logger.info(f"[STATE CHANGE] {event_type}: {data}")
 
         monitor.add_state_change_callback(on_state_change)
 
         await monitor.start()
 
         # 模擬用戶輸入
-        print("\n=== 模擬用戶交互 ===")
+        logger.info("\n=== 模擬用戶交互 ===")
         monitor.record_input("你好！今天心情不错", {"type": "greeting"})
         await asyncio.sleep(3)
 
@@ -405,8 +405,8 @@ if __name__ == "__main__":
         await asyncio.sleep(3)
 
         # 打印狀態
-        print(f"\n=== 用戶狀態 ===")
-        print(json.dumps(monitor.get_user_state().to_dict(), indent=2, ensure_ascii=False))
+        logger.info(f"\n=== 用戶狀態 ===")
+        logger.info(json.dumps(monitor.get_user_state().to_dict(), indent=2, ensure_ascii=False))
 
         # 停止監控
         await asyncio.sleep(2)

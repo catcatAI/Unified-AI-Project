@@ -254,7 +254,7 @@ if __name__ == "__main__":
     
     async def test_process_agents():
         """測試進程代理管理"""
-        print("=== Testing Process Agent Management ===\n")
+        logger.info("=== Testing Process Agent Management ===\n")
         
         # 創建 AgentManager
         agent_manager = AgentManager(enable_process_agents=True)
@@ -275,13 +275,13 @@ if __name__ == "__main__":
         
         # 檢查狀態
         status = AgentManagerExtensions.get_process_agent_status(agent_manager, "test_agent_1")
-        print(f"Agent status: {status}\n")
+        logger.info(f"Agent status: {status}\n")
         
         # 關閉
         await AgentManagerExtensions.shutdown_all_process_agents(agent_manager)
         await AgentManagerExtensions.stop_health_monitoring(agent_manager)
         
-        print("=== Test Complete ===")
+        logger.info("=== Test Complete ===")
     
     # 運行測試
     asyncio.run(test_process_agents())

@@ -34,9 +34,9 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_gmqtt_import() -> None,
+    def test_gmqtt_import() -> None:
     """Test that gmqtt can be imported."""
-    try,
+    try:
         import gmqtt  # type, ignore
         gmqtt  # noqa, F841
         print("✅ gmqtt imported successfully")
@@ -52,9 +52,9 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_external_connector_import() -> None,
+    def test_external_connector_import() -> None:
     """Test that ExternalConnector can be imported."""
-    try,
+    try:
         from core.hsp.external.external_connector import ExternalConnector  # type, ignore
         ExternalConnector  # noqa, F841
         print("✅ ExternalConnector imported successfully")
@@ -70,9 +70,9 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_external_connector_creation() -> None,
+    def test_external_connector_creation() -> None:
     """Test that ExternalConnector can be instantiated."""
-    try,
+    try:
         from core.hsp.external.external_connector import ExternalConnector  # type, ignore
         connector == ExternalConnector(
             ai_id="test_ai",
@@ -97,6 +97,6 @@ if __name"__main__":::
     if success,::
         print("\n🎉 All tests passed!")
         sys.exit(0)
-    else,
+    else:
         print("\n💥 Some tests failed!")
         sys.exit(1)

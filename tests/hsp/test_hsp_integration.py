@@ -186,7 +186,7 @@ class TestHSPFactPublishing,
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_learning_manager_publishes_fact_via_hsp(self, main_ai_hsp_connector, HSPConnector, broker, Mock) -> None,
+def test_learning_manager_publishes_fact_via_hsp(self, main_ai_hsp_connector, HSPConnector, broker, Mock) -> None:
         """测试学习管理器通过HSP发布事实"""
         # 准备测试数据
         test_fact = {
@@ -211,7 +211,7 @@ class TestHSPFactConsumption,
     """测试HSP事实消费功能"""
     
     @pytest.mark.asyncio()
-    async def test_main_ai_consumes_nl_fact_and_updates_kg_check_trust_influence(self, main_ai_hsp_connector, HSPConnector) -> None,
+    async def test_main_ai_consumes_nl_fact_and_updates_kg_check_trust_influence(self, main_ai_hsp_connector, HSPConnector) -> None:
         """测试主AI消费自然语言事实并更新知识图谱,检查信任影响"""
         # 准备测试数据
         test_fact = {
@@ -260,7 +260,7 @@ class TestHSPIntegration,
     """HSP集成测试"""
     
     @pytest.mark.asyncio()
-    async def test_hsp_connector_concurrent_task_processing(self, main_ai_hsp_connector, HSPConnector) -> None,
+    async def test_hsp_connector_concurrent_task_processing(self, main_ai_hsp_connector, HSPConnector) -> None:
         """测试HSP连接器并发任务处理"""
         # 准备测试数据
         tasks = []

@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 
 @pytest.fixture()
 def game():
-    with pytest.MonkeyPatch.context() as m,
+    with pytest.MonkeyPatch.context() as m:
         m.setattr("src.game.angela.DialogueManager", MagicMock())
         yield Game()
 
@@ -25,7 +25,7 @@ def game():
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_npc_creation(game) -> None,
+def test_npc_creation(game) -> None:
     from game import npcs
     npcs.load_npc_data() # Ensure data is loaded
     for npc_id in npcs._NPC_DATA.keys():::
@@ -35,6 +35,6 @@ def test_npc_creation(game) -> None,
         assert npc.dialogue_tree=npcs._NPC_DATA[npc_id].get('dialogue_tree', {})
 
 @pytest.mark.timeout(5)
-def test_npc_creation_invalid_id(game) -> None,
+def test_npc_creation_invalid_id(game) -> None:
     npc = create_npc(game, "invalid_id")
     assert npc is None

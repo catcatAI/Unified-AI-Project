@@ -26,7 +26,7 @@ class TestSystemLevelIntegration(SystemIntegrationTest):
         Args,
             service_name, 服务名称
             
-        Returns,
+        Returns:
             Mock, mock服务实例
         """
         return self.mock_services.get(service_name)
@@ -44,7 +44,7 @@ class TestSystemLevelIntegration(SystemIntegrationTest):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_end_to_end_user_interaction_integration(self) -> None,
+def test_end_to_end_user_interaction_integration(self) -> None:
         """测试端到端用户交互集成"""
         # 创建测试数据
         user_id = "test_user_123"
@@ -217,7 +217,7 @@ def test_end_to_end_user_interaction_integration(self) -> None,
     @pytest.mark.system_integration()
     @pytest.mark.slow()
     @pytest.mark.asyncio()
-    async def test_multi_agent_collaborative_task_integration(self) -> None,
+    async def test_multi_agent_collaborative_task_integration(self) -> None:
         """测试多代理协作任务集成"""
         # 创建测试数据
         task_request = {
@@ -405,7 +405,7 @@ class TestSystemIntegrationWithExternalServices(SystemIntegrationTest):
     
     @pytest.mark.system_integration()
     @pytest.mark.asyncio()
-    async def test_external_api_integration(self) -> None,
+    async def test_external_api_integration(self) -> None:
         """测试外部API集成"""
         # 创建测试数据
         external_api_request = {
@@ -480,7 +480,7 @@ class TestSystemIntegrationWithExternalServices(SystemIntegrationTest):
     
     @pytest.mark.system_integration()
     @pytest.mark.asyncio()
-    async def test_database_integration(self) -> None,
+    async def test_database_integration(self) -> None:
         """测试数据库集成"""
         # 创建测试数据
         db_operations = [

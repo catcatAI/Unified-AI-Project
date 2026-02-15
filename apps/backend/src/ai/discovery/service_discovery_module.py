@@ -115,7 +115,7 @@ class ServiceDiscoveryModule:
                                 (May or may not be the same as payload.get('ai_id')).
             envelope (HSPMessageEnvelope): The full message envelope.
         """
-        print(f"DEBUG: ServiceDiscoveryModule.process_capability_advertisement called with payload: {payload}")
+        logger.debug(f"DEBUG: ServiceDiscoveryModule.process_capability_advertisement called with payload: {payload}")
         logger.debug("Entering process_capability_advertisement. Payload: %s, Sender: %s, Envelope: %s",
                      payload, sender_ai_id, envelope)
 
@@ -396,13 +396,13 @@ class ServiceDiscoveryModule:
         Asynchronously retrieves all currently known capabilities.
         This is a wrapper around the synchronous version for async compatibility.
         """
-        print(f"DEBUG: ServiceDiscoveryModule.get_all_capabilities_async called")
+        logger.debug(f"DEBUG: ServiceDiscoveryModule.get_all_capabilities_async called")
         logger.debug("Getting all capabilities (async wrapper)")
         # In a real async implementation, this might involve async locks or database calls.
         # For now, we wrap the sync version.
         result = self._find_capabilities_sync()
         logger.debug("Returning %d capabilities from async wrapper", len(result))
-        print(f"DEBUG: ServiceDiscoveryModule.get_all_capabilities_async returning {len(result)} capabilities")
+        logger.debug(f"DEBUG: ServiceDiscoveryModule.get_all_capabilities_async returning {len(result)} capabilities")
         return result
 
     def is_capability_available(self, capability_id: str) -> bool:

@@ -14,5 +14,5 @@
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_basic() -> None,
+def test_basic() -> None:
     assert True

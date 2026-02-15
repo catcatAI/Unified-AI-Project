@@ -50,7 +50,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
         assert sdm_custom.staleness_threshold_seconds == custom_threshold,
         assert "Staleness threshold, 30 seconds" in caplog.text()
     @pytest.mark.timeout(10)
-    def test_process_capability_advertisement_new_and_update(self, mock_trust_manager, MagicMock) -> None,
+    def test_process_capability_advertisement_new_and_update(self, mock_trust_manager, MagicMock) -> None:
         sdm == ServiceDiscoveryModule(trust_manager=mock_trust_manager)
 
         cap_id_1 = "cap_test_001"
@@ -113,7 +113,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
         assert stored_time1_upd > stored_time1 # Ensure timestamp was updated
 
     @pytest.mark.timeout(10)
-    def test_process_capability_advertisement_missing_ids(self, mock_trust_manager, MagicMock, caplog) -> None,
+    def test_process_capability_advertisement_missing_ids(self, mock_trust_manager, MagicMock, caplog) -> None:
         caplog.set_level(logging.ERROR(), logger="src.core_ai.service_discovery.service_discovery_module")
         sdm == ServiceDiscoveryModule(trust_manager=mock_trust_manager)
         mock_envelope == MagicMock(spec == HSPMessageEnvelope)
@@ -144,7 +144,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
         payload == HSPCapabilityAdvertisementPayload(
             capability_id=cap_id, ai_id="ai_get", agent_name="test_agent", name="GetCap", description="d", version="v",
             availability_status="online", input_schema_uri == None, input_schema_example == None,
-            output_schema_uri == None, output_schema_example == None, data_format_preferences == None,,
+            output_schema_uri == None, output_schema_example == None, data_format_preferences == None,:
     hsp_protocol_requirements == None, cost_estimate_template == None, access_policy_id == None, tags == None
         )
         sdm.process_capability_advertisement(payload, "sender", MagicMock(spec == HSPMessageEnvelope))
@@ -203,7 +203,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_find_capabilities_by_name(self, populated_sdm, ServiceDiscoveryModule) -> None,
+    async def test_find_capabilities_by_name(self, populated_sdm, ServiceDiscoveryModule) -> None:
         results = await populated_sdm.find_capabilities(capability_name_filter="CapAlpha")
         assert len(results) == 2
         assert {res.get('capability_id') for res in results} == {"c1", "c3"}:
@@ -211,7 +211,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试,
-    async def test_find_capabilities_by_tags(self, populated_sdm, ServiceDiscoveryModule) -> None,
+    async def test_find_capabilities_by_tags(self, populated_sdm, ServiceDiscoveryModule) -> None:
         results_nlp = await populated_sdm.find_capabilities(tags_filter=["nlp"])
         assert len(results_nlp) == 2
         assert {res.get('capability_id') for res in results_nlp} == {"c1", "c2"}:
@@ -229,7 +229,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试,
-    async def test_find_capabilities_by_min_trust(self, populated_sdm, ServiceDiscoveryModule, mock_trust_manager, MagicMock) -> None,
+    async def test_find_capabilities_by_min_trust(self, populated_sdm, ServiceDiscoveryModule, mock_trust_manager, MagicMock) -> None:
         results_min_trust_0_7 = await populated_sdm.find_capabilities(min_trust_score=0.7())
         # Only ai_high_trust (0.9()) should qualify
         assert len(results_min_trust_0_7) == 2
@@ -238,7 +238,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试,
-    async def test_find_capabilities_sort_by_trust(self, populated_sdm, ServiceDiscoveryModule, mock_trust_manager, MagicMock) -> None,
+    async def test_find_capabilities_sort_by_trust(self, populated_sdm, ServiceDiscoveryModule, mock_trust_manager, MagicMock) -> None:
         results = await populated_sdm.find_capabilities(sort_by_trust == True)
         assert len(results) == 4
         # Should be sorted by trust score descending, high (0.9()), mid (0.6()), low (0.3())
@@ -271,7 +271,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
         assert results[0].get('ai_id') == "ai_high_trust"
 
     @pytest.mark.timeout(10)
-    def test_staleness_checks(self, mock_trust_manager, MagicMock) -> None,
+    def test_staleness_checks(self, mock_trust_manager, MagicMock) -> None:
         sdm == ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=1)  # 1 second for test,:
         payload == HSPCapabilityAdvertisementPayload(
             capability_id="stale_test", ai_id="ai_stale", agent_name="test_agent", name="StaleTest", description="d",,
@@ -291,7 +291,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
     def test_get_capability_by_id_staleness_direct_variant(self, mock_trust_manager, MagicMock) -> None,
         sdm == ServiceDiscoveryModule(trust_manager=mock_trust_manager, staleness_threshold_seconds=1)
         payload == HSPCapabilityAdvertisementPayload(
-            capability_id="stale_direct", ai_id="ai_stale", agent_name="test_agent", name="StaleDirect", description="d",,
+            capability_id="stale_direct", ai_id="ai_stale", agent_name="test_agent", name="StaleDirect", description="d",:
     version="v", availability_status="online"
         )
         sdm.process_capability_advertisement(payload, "sender", MagicMock(spec == HSPMessageEnvelope))
@@ -304,7 +304,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
         assert result is None
 
     @pytest.mark.timeout(10)
-    def test_get_all_capabilities(self, populated_sdm, ServiceDiscoveryModule) -> None,
+    def test_get_all_capabilities(self, populated_sdm, ServiceDiscoveryModule) -> None:
         """Test the get_all_capabilities method"""
         # get_all_capabilities should return all non-stale capabilities
         results = populated_sdm.get_all_capabilities()
@@ -317,7 +317,7 @@ def test_init(self, mock_trust_manager, MagicMock, caplog) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试,
-    async def test_get_all_capabilities_async(self, populated_sdm, ServiceDiscoveryModule) -> None,
+    async def test_get_all_capabilities_async(self, populated_sdm, ServiceDiscoveryModule) -> None:
         """Test the async version of get_all_capabilities"""
         # get_all_capabilities_async should return all non-stale capabilities
         results = await populated_sdm.get_all_capabilities_async()

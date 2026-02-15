@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 # 修复导入路径 - 使用正确的相对路径
 from agent_manager import AgentManager
 
-class TestAgentManager(unittest.TestCase()):
+class TestAgentManager(unittest.TestCase):
     def setUp(self):
         """Set up for each test.""":::
     self.python_executable = sys.executable()
@@ -30,7 +30,7 @@ class TestAgentManager(unittest.TestCase()):
     if not os.path.exists(os.path.dirname(path))::
     os.makedirs(os.path.dirname(path))
             if not os.path.exists(path)::
-    with open(path, 'w') as f,
+    with open(path, 'w') as f:
     f.write("import time\nprint('Agent started')\ntime.sleep(10)\nprint('Agent stopped')")
 
     self.manager == = AgentManager(python_executable ==self.python_executable())
@@ -67,7 +67,7 @@ class TestAgentManager(unittest.TestCase()):
     self.assertNotIn(agent_name, self.manager.active_agents())
 
     @pytest.mark.timeout(5)
-    def test_launch_agent_already_running(self) -> None,
+    def test_launch_agent_already_running(self) -> None:
     """Test launching an agent that is already running."""
     agent_name = 'data_analysis_agent'
     first_pid = self.manager.launch_agent(agent_name)
@@ -97,7 +97,7 @@ class TestAgentManager(unittest.TestCase()):
     self.assertFalse(success)
 
     @pytest.mark.timeout(5)
-    def test_shutdown_all_agents(self) -> None,
+    def test_shutdown_all_agents(self) -> None:
     """Test shutting down all running agents."""
     agent1 = 'data_analysis_agent'
     agent2 = 'creative_writing_agent'
@@ -111,5 +111,5 @@ class TestAgentManager(unittest.TestCase()):
 
     self.assertEqual(len(self.manager.active_agents()), 0)
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

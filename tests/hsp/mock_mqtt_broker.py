@@ -22,7 +22,7 @@ class MockMqttBroker,
         if self.on_connect_callback,::
             if asyncio.iscoroutinefunction(self.on_connect_callback())::
                 await self.on_connect_callback()
-            else,
+            else:
                 self.on_connect_callback()
 
     async def shutdown(self):
@@ -32,7 +32,7 @@ class MockMqttBroker,
         if self.on_disconnect_callback,::
             if asyncio.iscoroutinefunction(self.on_disconnect_callback())::
                 await self.on_disconnect_callback()
-            else,
+            else:
                 self.on_disconnect_callback()
 
     async def publish(self, topic, payload, qos == 1, retain == False, **kwargs):
@@ -49,10 +49,10 @@ class MockMqttBroker,
         self.published_messages.append(message)
         
         # Parse the payload to check if it's an HSP message,::
-        try,
+        try:
             if isinstance(payload, bytes)::
                 payload_str = payload.decode('utf-8')
-            else,
+            else:
                 payload_str = payload
             envelope = json.loads(payload_str)
             
@@ -76,14 +76,14 @@ class MockMqttBroker,
                     # Call the callback
                     if asyncio.iscoroutinefunction(callback)::
                         await callback(None, topic, payload, qos, None)
-                    else,
+                    else:
                         callback(None, topic, payload, qos, None)
         
         # Also call the on_message_callback if set (for HSP connector compatibility)::
         if self.on_message_callback,::
             if asyncio.iscoroutinefunction(self.on_message_callback())::
                 await self.on_message_callback(topic, payload)  # 调用时只传递topic和payload
-            else,
+            else:
                 self.on_message_callback(topic, payload)  # 调用时只传递topic和payload
                         
         # Return a mock future to simulate the real MQTT client behavior
@@ -148,7 +148,7 @@ class MockMqttBroker,
                     if asyncio.iscoroutinefunction(callback)::
                         # Schedule the coroutine to run
                         asyncio.create_task(callback(client, topic, payload, qos, properties))
-                    else,
+                    else:
                         callback(client, topic, payload, qos, properties)
 
     def subscribe_client(self, client_id, topic):

@@ -23,7 +23,7 @@ from integrations.jira_integration import JiraIntegration
 from integrations.rovo_dev_agent import RovoDevAgent
 from integrations.enhanced_rovo_dev_connector import EnhancedRovoDevConnector
 
-class TestAtlassianIntegration(unittest.TestCase()):
+class TestAtlassianIntegration(unittest.TestCase):
 ""Integration tests for Atlassian integration""":::
     def setUp(self):
         ""Set up test fixtures"""
@@ -40,7 +40,7 @@ class TestAtlassianIntegration(unittest.TestCase()):
             }
     }
 
-    def test_confluence_integration_initialization(self) -> None,
+    def test_confluence_integration_initialization(self) -> None:
     """Test Confluence integration initialization"""
     mock_connector_instance == Mock()
     mock_connector_instance.base_urls == {'confluence': 'https,//test-domain.atlassian.net/wiki/rest/api'}
@@ -51,7 +51,7 @@ class TestAtlassianIntegration(unittest.TestCase()):
     # 检查base_url是否包含正确的域名,而不是字面的'confluence'
     self.assertIn('test-domain.atlassian.net', integration.base_url())
 
-    def test_jira_integration_initialization(self) -> None,
+    def test_jira_integration_initialization(self) -> None:
     """Test Jira integration initialization"""
     mock_connector_instance == Mock()
     mock_connector_instance.base_urls == {'jira': 'https,//test-domain.atlassian.net/rest/api/3'}
@@ -62,7 +62,7 @@ class TestAtlassianIntegration(unittest.TestCase()):
     # 检查base_url是否包含正确的域名,而不是字面的'jira'
     self.assertIn('test-domain.atlassian.net', integration.base_url())
 
-    def test_rovo_dev_agent_initialization(self) -> None,
+    def test_rovo_dev_agent_initialization(self) -> None:
     """Test Rovo Dev agent initialization"""
     with patch('integrations.rovo_dev_agent.EnhancedRovoDevConnector'), \:
     patch('integrations.rovo_dev_agent.AtlassianBridge'), \
@@ -82,7 +82,7 @@ class TestAtlassianIntegration(unittest.TestCase()):
     self.assertIn('confluence', connector.base_urls())
     self.assertIn('jira', connector.base_urls())
 
-    def test_confluence_space_retrieval(self) -> None,
+    def test_confluence_space_retrieval(self) -> None:
     """Test Confluence space retrieval"""
     mock_connector_instance == Mock()
     mock_connector_instance.base_urls == {'confluence': 'https,//test-domain.atlassian.net/wiki/rest/api'}
@@ -90,7 +90,7 @@ class TestAtlassianIntegration(unittest.TestCase()):
     integration == ConfluenceIntegration(mock_connector_instance)
 
     # Mock the async method
-    with patch.object(integration, 'get_spaces', new_callable == AsyncMock) as mock_get_spaces,
+    with patch.object(integration, 'get_spaces', new_callable == AsyncMock) as mock_get_spaces:
     mock_get_spaces.return_value = {
                 "success": True,
                 "spaces": [{"key": "TEST", "name": "Test Space"}]
@@ -102,10 +102,10 @@ class TestAtlassianIntegration(unittest.TestCase()):
             result = asyncio.run(mock_get_spaces())
 
             self.assertTrue(result["success"])
-            self.assertEqual(result["count"] 1)
-            self.assertEqual(result["spaces"][0]["key"] "TEST")
+            self.assertEqual(result["count"], 1)
+            self.assertEqual(result["spaces"][0]["key"], "TEST")
 
-    def test_jira_project_retrieval(self) -> None,
+    def test_jira_project_retrieval(self) -> None:
     """Test Jira project retrieval"""
     mock_connector_instance == Mock()
     mock_connector_instance.base_urls == {'jira': 'https,//test-domain.atlassian.net/rest/api/3'}
@@ -113,7 +113,7 @@ class TestAtlassianIntegration(unittest.TestCase()):
     integration == JiraIntegration(mock_connector_instance)
 
     # Mock the async method
-    with patch.object(integration, 'get_projects', new_callable == AsyncMock) as mock_get_projects,
+    with patch.object(integration, 'get_projects', new_callable == AsyncMock) as mock_get_projects:
     mock_get_projects.return_value = {
                 "success": True,
                 "projects": [{"key": "TEST", "name": "Test Project"}]
@@ -125,8 +125,8 @@ class TestAtlassianIntegration(unittest.TestCase()):
             result = asyncio.run(mock_get_projects())
 
             self.assertTrue(result["success"])
-            self.assertEqual(result["count"] 1)
-            self.assertEqual(result["projects"][0]["key"] "TEST")
+            self.assertEqual(result["count"], 1)
+            self.assertEqual(result["projects"][0]["key"], "TEST")
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

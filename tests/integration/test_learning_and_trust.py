@@ -7,9 +7,9 @@
 import pytest
 import uuid
 
-from core_ai.learning.learning_manager import LearningManager
-from core_ai.trust.trust_manager_module import TrustManager
-from core_ai.memory.ham_memory_manager import HAMMemoryManager
+from ai.learning.learning_manager import LearningManager
+from ai.trust.trust_manager_module import TrustManager
+from ai.memory.ham_memory_manager import HAMMemoryManager
 from hsp.types import HSPFactPayload, HSPMessageEnvelope
 
 class TestLearningAndTrustIntegration,
@@ -55,7 +55,7 @@ class TestLearningAndTrustIntegration,
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_duplicate_fact_increments_corroboration(self) -> None,
+def test_duplicate_fact_increments_corroboration(self) -> None:
         """
         Tests that receiving a duplicate fact increments corroboration_count
         and does not store a new fact.
@@ -95,7 +95,7 @@ def test_duplicate_fact_increments_corroboration(self) -> None,
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_fact_from_low_trust_source_is_discarded(self) -> None,
+    async def test_fact_from_low_trust_source_is_discarded(self) -> None:
         """
         Tests that a fact with high original confidence is discarded if the source has very low trust.:::
         """:
@@ -119,7 +119,7 @@ def test_duplicate_fact_increments_corroboration(self) -> None,
     @pytest.mark.timeout(10)
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试,
-    async def test_fact_from_high_trust_source_is_accepted(self) -> None,
+    async def test_fact_from_high_trust_source_is_accepted(self) -> None:
         """
         Tests that a fact with medium original confidence is accepted if the source has high trust.:::
         """:

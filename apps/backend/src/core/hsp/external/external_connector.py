@@ -362,4 +362,4 @@ if __name__ == "__main__":
         # Demo: create connector
         connector = ExternalConnector(ai_id="test_agent")
         asyncio.run(connector.connect())
-        print(f"Agent started with ID: {connector.ai_id}")
+        logger.info(f"Agent started with ID: {connector.ai_id}")

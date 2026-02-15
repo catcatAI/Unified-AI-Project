@@ -15,7 +15,7 @@ try:
     from secretsharing import SecretSharer
 except ImportError:
     SecretSharer = None
-    print("Warning: secretsharing module not available. GenesisManager will not work properly.")
+    logger.warning("Warning: secretsharing module not available. GenesisManager will not work properly.")
 
 # from tests.run_test_subprocess import
 # from system_test import
@@ -74,7 +74,7 @@ class GenesisManager:
             The recovered secret string, or None if recovery fails.
         """
         if SecretSharer is None:
-            print("Warning: SecretSharer not available.")
+            logger.warning("Warning: SecretSharer not available.")
             return None
 
         if len(shards) < 2:
@@ -84,7 +84,7 @@ class GenesisManager:
             recovered_hex = SecretSharer.recover_secret(shards[:2])
             return bytes.fromhex(recovered_hex).decode('utf-8')
         except Exception as e:
-            print(f"[GenesisManager] Error recovering secret: {e}")
+            logger.error(f"[GenesisManager] Error recovering secret: {e}")
             return None
 
     @staticmethod
@@ -107,65 +107,65 @@ class GenesisManager:
 if __name__ == '__main__':
     # Check if required modules are available
     if SecretSharer is None:
-        print("Error: secretsharing module not available. Please install it with: pip install secret-sharing")
+        logger.error("Error: secretsharing module not available. Please install it with: pip install secret-sharing")
         exit(1)
 
-    print("--- GenesisManager Test ---")
+    logger.info("--- GenesisManager Test ---")
 
     # 1. Create a new genesis secret
     genesis_secret, uid = GenesisManager.create_genesis_secret()
-    print(f"Generated UID: {uid}")
-    print(f"Generated Genesis Secret: {genesis_secret}")
+    logger.info(f"Generated UID: {uid}")
+    logger.info(f"Generated Genesis Secret: {genesis_secret}")
     assert genesis_secret.startswith(uid)
 
     # 2. Split the secret into shards
     shards = GenesisManager.split_secret_into_shards(genesis_secret)
-    print(f"\nGenerated 3 Shards (any 2 are needed)")
+    logger.info(f"\nGenerated 3 Shards (any 2 are needed)")
     for i, shard in enumerate(shards):
-        print(f"  Shard {i + 1}: {shard}")
+        logger.info(f"  Shard {i + 1}: {shard}")
     assert len(shards) == 3
 
     # 3. Test recovery from different combinations of shards
-    print("\n--- Testing Recovery ---")
+    logger.info("\n--- Testing Recovery ---")
 
     # Combination 1: Shards 1 & 2
     recovered12 = GenesisManager.recover_secret_from_shards([shards[0], shards[1]])
-    print(f"Recovered from Shards 1 & 2: {recovered12 == genesis_secret}")
+    logger.info(f"Recovered from Shards 1 & 2: {recovered12 == genesis_secret}")
     assert recovered12 == genesis_secret
 
     # Combination 2: Shards 1 & 3
     recovered13 = GenesisManager.recover_secret_from_shards([shards[0], shards[2]])
-    print(f"Recovered from Shards 1 & 3: {recovered13 == genesis_secret}")
+    logger.info(f"Recovered from Shards 1 & 3: {recovered13 == genesis_secret}")
     assert recovered13 == genesis_secret
 
     # Combination 3: Shards 2 & 3
     recovered23 = GenesisManager.recover_secret_from_shards([shards[1], shards[2]])
-    print(f"Recovered from Shards 2 & 3: {recovered23 == genesis_secret}")
+    logger.info(f"Recovered from Shards 2 & 3: {recovered23 == genesis_secret}")
     assert recovered23 == genesis_secret
 
     # Combination 4: All 3 shards (should still work)
     recovered_all = GenesisManager.recover_secret_from_shards(shards)
-    print(f"Recovered from all 3 Shards: {recovered_all == genesis_secret}")
+    logger.info(f"Recovered from all 3 Shards: {recovered_all == genesis_secret}")
     assert recovered_all == genesis_secret
 
     # Combination 5: Only 1 shard (should fail)
     recovered_one = GenesisManager.recover_secret_from_shards([shards[0]])
-    print(f"Recovered from 1 Shard: {'Failed as expected' if recovered_one is None else 'Test Failed'}")
+    logger.error(f"Recovered from 1 Shard: {'Failed as expected' if recovered_one is None else 'Test Failed'}")
     assert recovered_one is None
 
     # 4. Test parsing the recovered secret
-    print("\n--- Testing Parsing ---")
+    logger.info("\n--- Testing Parsing ---")
     if recovered12 is not None:
         parsed_result = GenesisManager.parse_genesis_secret(recovered12)
         if parsed_result is not None:
             parsed_uid, parsed_key = parsed_result
-            print(f"Parsed UID: {parsed_uid}")
-            print(f"Parsed Key: {parsed_key}")
+            logger.info(f"Parsed UID: {parsed_uid}")
+            logger.info(f"Parsed Key: {parsed_key}")
             assert parsed_uid == uid
             assert recovered12.endswith(parsed_key)
         else:
-            print("Failed to parse genesis secret")
+            logger.error("Failed to parse genesis secret")
     else:
-        print("Failed to recover secret")
+        logger.error("Failed to recover secret")
 
-    print("\n--- GenesisManager Test Complete ---")
+    logger.info("\n--- GenesisManager Test Complete ---")

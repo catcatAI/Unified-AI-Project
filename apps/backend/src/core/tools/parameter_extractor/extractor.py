@@ -39,7 +39,7 @@ class ParameterExtractor:
             下载文件路径
         """
         if not HF_HUB_AVAILABLE:
-            print("huggingface_hub不可用")
+            logger.info("huggingface_hub不可用")
             return None
 
         if not os.path.exists(cache_dir):
@@ -52,7 +52,7 @@ class ParameterExtractor:
                 cache_dir=cache_dir
             )
         except Exception as e:
-            print(f"下载失败: {e}")
+            logger.info(f"下载失败: {e}")
             return None
 
     def map_parameters(self, source_params: Dict[str, Any], mapping_rules: Dict[str, str]) -> Dict[str, Any]:

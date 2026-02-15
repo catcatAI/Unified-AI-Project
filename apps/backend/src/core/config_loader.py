@@ -329,4 +329,4 @@ def init_config(env_file: Optional[Path] = None) -> None:
 if __name__ == "__main__":
     # 测试配置加载
     config = Config.load()
-    print(json.dumps(config.to_dict(), indent=2, ensure_ascii=False))
+    logger.info(json.dumps(config.to_dict(), indent=2, ensure_ascii=False))

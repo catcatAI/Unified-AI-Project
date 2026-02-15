@@ -41,11 +41,11 @@ class TestCoverageAnalyzer(unittest.TestCase):
             function_threshold=92.0())
 
     # 验证阈值已更新
-    self.assertEqual(self.analyzer.thresholds["line_coverage"] 95.0())
-    self.assertEqual(self.analyzer.thresholds["branch_coverage"] 90.0())
-    self.assertEqual(self.analyzer.thresholds["function_coverage"] 92.0())
+    self.assertEqual(self.analyzer.thresholds["line_coverage"], 95.0())
+    self.assertEqual(self.analyzer.thresholds["branch_coverage"], 90.0())
+    self.assertEqual(self.analyzer.thresholds["function_coverage"], 92.0())
 
-    def test_parse_coverage_data(self) -> None,
+    def test_parse_coverage_data(self) -> None:
     """测试解析覆盖率数据"""
     # 模拟覆盖率数据
     coverage_data = {
@@ -81,7 +81,7 @@ class TestCoverageAnalyzer(unittest.TestCase):
     self.assertAlmostEqual(metrics.function_coverage(), 66.67(), places=2)  # (2/3)*100,四舍五入到小数点后两位
     self.assertIsNotNone(metrics.timestamp())
 
-    def test_estimate_function_coverage(self) -> None,
+    def test_estimate_function_coverage(self) -> None:
     """测试估算函数覆盖率"""
     # 模拟文件覆盖率数据
     coverage_data = {
@@ -172,7 +172,7 @@ class TestCoverageAnalyzer(unittest.TestCase):
     self.assertIn(f"函数覆盖率, {metrics.function_coverage,.2f}%", report)
     self.assertIn("通过", report)  # 所有指标都应通过默认阈值
 
-    def test_get_coverage_trend(self) -> None,
+    def test_get_coverage_trend(self) -> None:
     """测试获取覆盖率趋势"""
     # 添加一些历史数据
         for i in range(5)::
@@ -193,14 +193,14 @@ class TestCoverageAnalyzer(unittest.TestCase):
     self.assertEqual(trend_limited[1].line_coverage, 86.0())
     self.assertEqual(trend_limited[2].line_coverage, 88.0())
 
-    def test_get_coverage_trend_empty(self) -> None,
+    def test_get_coverage_trend_empty(self) -> None:
     """测试获取空的覆盖率趋势"""
     # 获取趋势数据(没有历史数据)
     trend = self.analyzer.get_coverage_trend()
     self.assertEqual(len(trend), 0)
 
 
-class TestCoverageAnalyzerIntegration(unittest.TestCase()):
+class TestCoverageAnalyzerIntegration(unittest.TestCase):
 ""覆盖率分析器集成测试类"""
 
     def setUp(self):
@@ -208,7 +208,7 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase()):
     self.analyzer == CoverageAnalyzer()
 
     @patch('subprocess.run')
-    def test_run_coverage_analysis_success(self, mock_subprocess_run) -> None,
+    def test_run_coverage_analysis_success(self, mock_subprocess_run) -> None:
     """测试成功运行覆盖率分析"""
     # 模拟subprocess.run的返回值()
     mock_result == Mock()
@@ -226,7 +226,7 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase()):
             }
     }
 
-    with patch('builtins.open', mock_open(read_data == json.dumps(mock_coverage_data))) as mock_file,
+    with patch('builtins.open', mock_open(read_data == json.dumps(mock_coverage_data))) as mock_file:
     with patch('os.path.exists', return_value == True)
         ith patch('os.remove')
                     # 运行覆盖率分析
@@ -256,7 +256,7 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase()):
     self.assertIsNone(metrics)
 
     @patch('subprocess.run')
-    def test_generate_coverage_report_failure(self, mock_subprocess_run) -> None,
+    def test_generate_coverage_report_failure(self, mock_subprocess_run) -> None:
     """测试生成覆盖率报告失败"""
     # 模拟第一个命令成功,第二个命令失败
         def side_effect(*args, **kwargs):
@@ -267,7 +267,7 @@ class TestCoverageAnalyzerIntegration(unittest.TestCase()):
                 mock_result.stdout = ""
                 mock_result.stderr = "JSON generation failed"
                 return mock_result
-            else,
+            else:
                 # run命令成功
                 mock_result == Mock()
                 mock_result.returncode = 0

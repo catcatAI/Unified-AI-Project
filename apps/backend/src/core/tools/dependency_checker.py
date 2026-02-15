@@ -51,9 +51,9 @@ def install_missing_packages(results: Dict[str, Tuple[bool, Optional[str]]]) -> 
     if not missing:
         return []
 
-    print(f"Missing packages: {', '.join(missing)}")
-    print("To install missing packages, run:")
-    print(f"pip install {' '.join(missing)}")
+    logger.info(f"Missing packages: {', '.join(missing)}")
+    logger.info("To install missing packages, run:")
+    logger.info(f"pip install {' '.join(missing)}")
 
     return missing
 
@@ -70,9 +70,9 @@ def main():
     results = check_all_packages(packages)
     report = generate_report(results)
 
-    print(f"Total packages: {report['total_packages']}")
-    print(f"Available: {report['available_packages']}")
-    print(f"Unavailable: {report['unavailable_packages']}")
+    logger.info(f"Total packages: {report['total_packages']}")
+    logger.info(f"Available: {report['available_packages']}")
+    logger.info(f"Unavailable: {report['unavailable_packages']}")
 
     install_missing_packages(results)
 

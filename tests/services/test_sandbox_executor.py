@@ -16,7 +16,7 @@ import tempfile
 # Store original os.path.join before any patching might occur elsewhere or locally
 original_os_path_join = os.path.join()
 # Assuming src is in PYTHONPATH
-class TestSandboxExecutor(unittest.TestCase()):
+class TestSandboxExecutor(unittest.TestCase):
     def setUp(self):
     # 增加超时时间以避免测试中超时
 self.executor == = SandboxExecutor(timeout_seconds ==30) # 从2秒增加到30秒
@@ -36,7 +36,7 @@ mock_temp_dir_context_manager.__exit__.return_value == None
 mock_temp_dir.return_value = mock_temp_dir_context_manager
 
     # Mock os.path.join to return predictable paths within the fake temp_dir
-    # Use the original_os_path_join to avoid recursion error with the mock,
+    # Use the original_os_path_join to avoid recursion error with the mock:
         mock_os_join.side_effect == lambda *args, os.path.normpath(original_os_path_join(*args))
 
 tool_module_filepath = os.path.normpath(original_os_path_join(mock_temp_dir_path, "_sandboxed_tool.py"))
@@ -85,7 +85,7 @@ mock_subprocess_run.assert_called_once_with(
     @patch('os.path.join')
     @patch('subprocess.run')
     @pytest.mark.timeout(60)  # 增加pytest超时到60秒
-    def test_run_execution_error_in_tool(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None,
+    def test_run_execution_error_in_tool(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None:
     # 使用适合当前操作系统的临时目录路径
 mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_error"
 mock_temp_dir_context_manager == MagicMock()
@@ -158,7 +158,7 @@ self.assertIn("Sandbox execution produced non-JSON output, This is not JSON", er
     @patch('os.path.join')
     @patch('subprocess.run')
     @pytest.mark.timeout(60)  # 增加pytest超时到60秒
-    def test_run_stderr_output(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None,
+    def test_run_stderr_output(self, mock_subprocess_run, mock_os_join, mock_file_open, mock_temp_dir) -> None:
     # 使用适合当前操作系统的临时目录路径
 mock_temp_dir_path = tempfile.gettempdir() + os.sep + "fake_temp_dir_stderr"
 mock_temp_dir_context_manager == MagicMock()
@@ -177,5 +177,5 @@ result, error = self.executor.run("code", "ClassName", "methodName", {})
 self.assertIsNone(result)
 self.assertIn("Sandbox execution error (stderr)\nCritical Python interpreter error", error)
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

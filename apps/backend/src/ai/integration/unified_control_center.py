@@ -461,7 +461,7 @@ if __name__ == "__main__":
         }
         
         result = await ucc.process_complex_task(test_task)
-        print(f"Task Result: {result}")
+        logger.info(f"Task Result: {result}")
         ucc.stop()
 
     logging.basicConfig(level=logging.INFO)

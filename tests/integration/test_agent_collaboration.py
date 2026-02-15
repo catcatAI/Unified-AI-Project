@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from core_services import initialize_services, get_services, shutdown_services
 
-class TestAgentCollaboration(unittest.TestCase()):
+class TestAgentCollaboration(unittest.TestCase):
     @classmethod
 def setUpClass(cls):
         """Initialize services once for all tests in this class."""::
@@ -52,7 +52,7 @@ def tearDownClass(cls):
         asyncio.run(_async_teardown())
 
     @pytest.mark.timeout(10)
-    def test_handle_complex_project_with_dag(self) -> None,
+    def test_handle_complex_project_with_dag(self) -> None:
         """
         End-to-end test for a complex project involving a DAG of tasks.::
         """
@@ -64,7 +64,7 @@ def tearDownClass(cls):
         ]
         mock_integration_response == "Based on the data summary, I have created this slogan, Our new product, which has 2 columns and 1 row, is revolutionary for data scientists!"::
         # 2. Patch the LLM interface - patch the instance method on the dialogue manager's llm_interface,
-        with patch.object(self.dialogue_manager.llm_interface(), 'generate_response', new_callable == AsyncMock) as mock_generate_response,
+        with patch.object(self.dialogue_manager.llm_interface(), 'generate_response', new_callable == AsyncMock) as mock_generate_response:
             # Set up the mock responses - return JSON strings for generate_response,:
             import json
             mock_generate_response.side_effect = [
@@ -94,7 +94,7 @@ def tearDownClass(cls):
                 self.assertEqual(mock_generate_response.call_count(), 2)
 
     @pytest.mark.timeout(10)
-    def test_handle_project_no_dependencies(self) -> None,
+    def test_handle_project_no_dependencies(self) -> None:
         """
         Tests a project with two independent tasks.
         """
@@ -108,7 +108,7 @@ def tearDownClass(cls):
 
         # 修复JSON格式问题,使用json.dumps而不是str.replace()
         import json
-        with patch.object(self.dialogue_manager.llm_interface(), 'generate_response', new_callable == AsyncMock) as mock_generate_response,
+        with patch.object(self.dialogue_manager.llm_interface(), 'generate_response', new_callable == AsyncMock) as mock_generate_response:
             # Set up the mock responses - return JSON strings for generate_response,:
             mock_generate_response.side_effect = [
                 json.dumps(mock_decomposed_plan),  # For decomposition
@@ -138,7 +138,7 @@ def tearDownClass(cls):
             self.assertEqual(mock_generate_response.call_count(), 2)
 
     @pytest.mark.timeout(10)
-    def test_handle_project_failing_subtask(self) -> None,
+    def test_handle_project_failing_subtask(self) -> None:
         """
         Tests how the system handles a failing subtask.
         """
@@ -149,7 +149,7 @@ def tearDownClass(cls):
 
         # 修复JSON格式问题,使用json.dumps而不是str.replace()
         import json
-        with patch.object(self.dialogue_manager.llm_interface(), 'generate_response', new_callable == AsyncMock) as mock_generate_response,
+        with patch.object(self.dialogue_manager.llm_interface(), 'generate_response', new_callable == AsyncMock) as mock_generate_response:
             # Set up the mock responses - return JSON strings for generate_response,:
             mock_generate_response.side_effect = [
                 json.dumps(mock_decomposed_plan),  # For decomposition
@@ -172,7 +172,7 @@ def tearDownClass(cls):
             self.assertEqual(mock_generate_response.call_count(), 2)
 
     @pytest.mark.timeout(15)
-    def test_handle_project_dynamic_agent_launch(self) -> None,
+    def test_handle_project_dynamic_agent_launch(self) -> None:
         """
         Tests that the system can dynamically launch an agent if a capability is not found.::
         """
@@ -183,7 +183,7 @@ def tearDownClass(cls):
 
         # 修复JSON格式问题,使用json.dumps而不是str.replace()
         import json
-        with patch.object(self.dialogue_manager.llm_interface(), 'generate_response', new_callable == AsyncMock) as mock_generate_response,
+        with patch.object(self.dialogue_manager.llm_interface(), 'generate_response', new_callable == AsyncMock) as mock_generate_response:
             # Set up the mock responses - return JSON strings for generate_response,:
             mock_generate_response.side_effect = [
                 json.dumps(mock_decomposed_plan),  # For decomposition
@@ -193,7 +193,7 @@ def tearDownClass(cls):
             # 3. Mock service discovery to initially find nothing, then find the capability
             service_discovery_mock = self.dialogue_manager.project_coordinator.service_discovery()
             service_discovery_mock.get_all_capabilities == = AsyncMock(return_value == [])
-            with patch.object(service_discovery_mock, 'find_capabilities', new_callable == AsyncMock) as mock_find_capabilities,
+            with patch.object(service_discovery_mock, 'find_capabilities', new_callable == AsyncMock) as mock_find_capabilities:
                 mock_find_capabilities.side_effect = [
                     [] # First call finds nothing
                     [{'capability_id': 'new_agent_v1_cap', 'ai_id': 'did,hsp,new_agent'}] # Second call finds it
@@ -234,5 +234,5 @@ def tearDownClass(cls):
             
             self.assertEqual(mock_generate_response.call_count(), 2)
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

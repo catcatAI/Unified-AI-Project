@@ -139,11 +139,11 @@ class ExecutionManager:
                     system_config = yaml.safe_load(f)
 
             # Using default configuration
-            print("System config not found, using default configuration")
+            logger.info("System config not found, using default configuration")
             return ExecutionManagerConfig()
 
         except Exception as e:
-            print(f"Failed to load system config: {e}")
+            logger.error(f"Failed to load system config: {e}")
             return ExecutionManagerConfig()
 
     def _setup_logger(self) -> logging.Logger:
@@ -536,28 +536,28 @@ if __name__ == "__main__":
     with ExecutionManager() as manager:
         if args.health_report:
             health_report = manager.get_system_health_report()
-            print("System Health Report:")
-            print(f"CPU: {health_report['system_health'].get('cpu_percent', 'N/A')}%")
-            print(f"Memory: {health_report['system_health'].get('memory_percent', 'N/A')}%")
-            print(f"Disk: {health_report['system_health'].get('disk_percent', 'N/A')}%")
-            print(f"Terminal Status: {health_report['system_health'].get('terminal_status', 'N/A')}")
-            print("\nExecution Statistics:")
+            logger.info("System Health Report:")
+            logger.info(f"CPU: {health_report['system_health'].get('cpu_percent', 'N/A')}%")
+            logger.info(f"Memory: {health_report['system_health'].get('memory_percent', 'N/A')}%")
+            logger.info(f"Disk: {health_report['system_health'].get('disk_percent', 'N/A')}%")
+            logger.info(f"Terminal Status: {health_report['system_health'].get('terminal_status', 'N/A')}")
+            logger.info("\nExecution Statistics:")
             stats = health_report['execution_stats']
-            print(f"Total Executions: {stats['total_executions']}")
-            print(f"Success Rate: {stats['success_rate']:.2%}")
-            print(f"Average Execution Time: {stats['average_execution_time']:.2f}s")
+            logger.info(f"Total Executions: {stats['total_executions']}")
+            logger.info(f"Success Rate: {stats['success_rate']:.2%}")
+            logger.info(f"Average Execution Time: {stats['average_execution_time']:.2f}s")
 
         result = manager.execute_command(args.command, timeout=args.timeout)
 
-        print(f"\nExecution Result:")
-        print(f"Status: {result.status.value}")
-        print(f"Return code: {result.return_code}")
-        print(f"Execution time: {result.execution_time:.2f}s")
-        print(f"Timeout used: {result.timeout_used:.2f}s")
+        logger.info(f"\nExecution Result:")
+        logger.info(f"Status: {result.status.value}")
+        logger.info(f"Return code: {result.return_code}")
+        logger.info(f"Execution time: {result.execution_time:.2f}s")
+        logger.info(f"Timeout used: {result.timeout_used:.2f}s")
 
         if result.stdout:
-            print(f"STDOUT:\n{result.stdout}")
+            logger.info(f"STDOUT:\n{result.stdout}")
         if result.stderr:
-            print(f"STDERR:\n{result.stderr}")
+            logger.info(f"STDERR:\n{result.stderr}")
         if result.error_message:
-            print(f"Error: {result.error_message}")
+            logger.error(f"Error: {result.error_message}")

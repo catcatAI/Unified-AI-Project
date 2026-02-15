@@ -1484,10 +1484,10 @@ if __name__ == "__main__":
         system = PhysiologicalTactileSystem()
         await system.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 生理触觉系统演示")
-        print("Physiological Tactile System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 生理触觉系统演示")
+        logger.info("Physiological Tactile System Demo")
+        logger.info("=" * 60)
         
         # Simulate different tactile sensations
         stimuli = [
@@ -1517,37 +1517,37 @@ if __name__ == "__main__":
             ),
         ]
         
-        print("\n处理触觉刺激 / Processing tactile stimuli:\n")
+        logger.info("\n处理触觉刺激 / Processing tactile stimuli:\n")
         for i, stimulus in enumerate(stimuli, 1):
-            print(f"{i}. {stimulus.tactile_type.name} on {stimulus.location.cn_name}")
+            logger.info(f"{i}. {stimulus.tactile_type.name} on {stimulus.location.cn_name}")
             response = await system.process_stimulus(stimulus)
-            print(f"   感知强度: {response.perceived_intensity:.2f}")
-            print(f"   激活受体数: {response.activated_receptors}")
-            print()
+            logger.info(f"   感知强度: {response.perceived_intensity:.2f}")
+            logger.info(f"   激活受体数: {response.activated_receptors}")
+            logger.info()
         
         # Show receptor status
-        print("手掌受体状态 / Hand receptor status:")
+        logger.info("手掌受体状态 / Hand receptor status:")
         status = system.get_receptor_status(BodyPart.HANDS)
         for receptor_type, activation in status.items():
-            print(f"  - {receptor_type.name}: {activation:.3f}")
+            logger.info(f"  - {receptor_type.name}: {activation:.3f}")
         
         # Change arousal and show effect
-        print("\n改变唤醒水平 / Changing arousal level to 80...")
+        logger.info("\n改变唤醒水平 / Changing arousal level to 80...")
         system.set_arousal_level(80)
-        print(f"手部敏感度: {system.get_body_part_sensitivity(BodyPart.HANDS):.3f}")
+        logger.info(f"手部敏感度: {system.get_body_part_sensitivity(BodyPart.HANDS):.3f}")
         
         await system.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
         
         # Trajectory Analyzer Demo
-        print("\n" + "=" * 60)
-        print("轨迹分析器演示 / Trajectory Analyzer Demo")
-        print("=" * 60)
+        logger.info("\n" + "=" * 60)
+        logger.info("轨迹分析器演示 / Trajectory Analyzer Demo")
+        logger.info("=" * 60)
         
         analyzer = TrajectoryAnalyzer()
         
         # Simulate a curved trajectory
-        print("\n1. 模拟曲线轨迹 / Simulating curved trajectory:")
+        logger.info("\n1. 模拟曲线轨迹 / Simulating curved trajectory:")
         import math
         for i in range(20):
             angle = i * 0.3
@@ -1556,41 +1556,41 @@ if __name__ == "__main__":
             analyzer.add_point(x, y, pressure=0.5 + i * 0.02)
         
         analysis = analyzer.analyze()
-        print(f"   运动模式: {analysis.movement_pattern} ({analyzer.MOVEMENT_PATTERNS[analysis.movement_pattern]['cn']})")
-        print(f"   平均速度: {analysis.velocity:.2f} px/s")
-        print(f"   曲率: {analysis.curvature:.4f}")
-        print(f"   置信度: {analysis.pattern_confidence:.2%}")
+        logger.info(f"   运动模式: {analysis.movement_pattern} ({analyzer.MOVEMENT_PATTERNS[analysis.movement_pattern]['cn']})")
+        logger.info(f"   平均速度: {analysis.velocity:.2f} px/s")
+        logger.info(f"   曲率: {analysis.curvature:.4f}")
+        logger.info(f"   置信度: {analysis.pattern_confidence:.2%}")
         
         # Simulate a straight line
-        print("\n2. 模拟直线轨迹 / Simulating straight trajectory:")
+        logger.info("\n2. 模拟直线轨迹 / Simulating straight trajectory:")
         analyzer.clear()
         for i in range(20):
             analyzer.add_point(100 + i * 5, 100, pressure=0.8)
         
         analysis = analyzer.analyze()
-        print(f"   运动模式: {analysis.movement_pattern} ({analyzer.MOVEMENT_PATTERNS[analysis.movement_pattern]['cn']})")
-        print(f"   平均速度: {analysis.velocity:.2f} px/s")
+        logger.info(f"   运动模式: {analysis.movement_pattern} ({analyzer.MOVEMENT_PATTERNS[analysis.movement_pattern]['cn']})")
+        logger.info(f"   平均速度: {analysis.velocity:.2f} px/s")
         
         # Adaptation Mechanism Demo
-        print("\n" + "=" * 60)
-        print("适应机制演示 / Adaptation Mechanism Demo")
-        print("=" * 60)
+        logger.info("\n" + "=" * 60)
+        logger.info("适应机制演示 / Adaptation Mechanism Demo")
+        logger.info("=" * 60)
         
         mechanism = AdaptationMechanism()
         
         # Register receptor
         mechanism.register_receptor("hand_touch", base_sensitivity=0.8)
         
-        print("\n3. 习惯化演示 / Habituation demonstration:")
-        print("   重复触摸刺激 / Repeated touch stimuli:")
+        logger.info("\n3. 习惯化演示 / Habituation demonstration:")
+        logger.info("   重复触摸刺激 / Repeated touch stimuli:")
         for i in range(5):
             state = mechanism.process_stimulus("hand_touch", "touch", intensity=0.6)
-            print(f"   刺激 #{i+1}: 敏感度={state.current_sensitivity:.3f}, 习惯化={state.habituation_level:.3f}")
+            logger.info(f"   刺激 #{i+1}: 敏感度={state.current_sensitivity:.3f}, 习惯化={state.habituation_level:.3f}")
         
-        print("\n4. 去习惯化演示 / Dishabituation demonstration:")
-        print("   新刺激类型（振动）/ New stimulus type (vibration):")
+        logger.info("\n4. 去习惯化演示 / Dishabituation demonstration:")
+        logger.info("   新刺激类型（振动）/ New stimulus type (vibration):")
         state = mechanism.process_stimulus("hand_touch", "vibration", intensity=0.8)
-        print(f"   敏感度恢复: {state.current_sensitivity:.3f}, 习惯化降低: {state.habituation_level:.3f}")
+        logger.info(f"   敏感度恢复: {state.current_sensitivity:.3f}, 习惯化降低: {state.habituation_level:.3f}")
     
     # Run demo
     asyncio.run(demo())

@@ -5,10 +5,10 @@
 """
 
 import unittest
-from core_ai.deep_mapper import DeepMapper
+from ai.deep_mapper import DeepMapper
 from shared.types import MappableDataObject
 
-class TestDeepMapper(unittest.TestCase()):
+class TestDeepMapper(unittest.TestCase):
     def setUp(self):
         """测试前设置"""
         self.test_data = {}
@@ -18,7 +18,7 @@ class TestDeepMapper(unittest.TestCase()):
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_map(self) -> None,
+def test_map(self) -> None:
         # Arrange
         source_data = {
             "nodes": [
@@ -60,7 +60,7 @@ def test_map(self) -> None,
         }
         self.assertEqual(mapped_mdo.data(), expected_data)
 
-    def test_reverse_map(self) -> None,
+    def test_reverse_map(self) -> None:
         # Arrange
         source_data = {
             "nodes": [
@@ -102,5 +102,5 @@ def test_map(self) -> None,
         }
         self.assertEqual(reverse_mapped_mdo.data(), expected_data)
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

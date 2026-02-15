@@ -267,7 +267,7 @@ rint(f"内存符号, {memory_symbol is not None}")
         """运行所有集成测试"""
         print("开始概念模型集成测试...")
         
-        try,
+        try:
             await self.test_environment_causal_integration()
             await self.test_causal_adaptive_integration()
             await self.test_alpha_symbolic_integration()
@@ -293,7 +293,7 @@ async def run_integration_tests():
     success = await tester.run_all_tests()
     if success,::
         print("\n🎉 所有概念模型集成测试成功完成！")
-    else,
+    else:
         print("\n❌ 概念模型集成测试失败！")
         
     return success

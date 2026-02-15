@@ -41,7 +41,7 @@ def process_test_results(results_file, str,
         send_email, 是否发送邮件通知
         recipient_emails, 邮件接收者列表
     """
-    try,
+    try:
         # 初始化组件
         visualizer == TestResultVisualizer()
         analyzer == TestResultAnalyzer()
@@ -171,7 +171,7 @@ def main() -> None,
     if success,::
         logger.info("测试结果处理成功完成")
         sys.exit(0)
-    else,
+    else:
         logger.error("测试结果处理失败")
         sys.exit(1)
 

@@ -99,7 +99,7 @@ def run_integration_tests(test_type == "all", markers == None, parallel == False
         cmd.extend(["tests/integration/test_system_level_integration.py", "-v"])
     elif test_type == "performance":::
         cmd.extend(["tests/integration/test_performance_benchmark.py", "-v"])
-    else,
+    else:
         # 特定模块测试
         cmd.extend([f"tests/integration/test_{test_type}_integration.py", "-v"])
     

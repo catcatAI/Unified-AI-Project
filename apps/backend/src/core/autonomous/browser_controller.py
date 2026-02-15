@@ -511,21 +511,21 @@ if __name__ == "__main__":
         browser = BrowserController()
         await browser.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 浏览器控制器演示")
-        print("Browser Controller Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 浏览器控制器演示")
+        logger.info("Browser Controller Demo")
+        logger.info("=" * 60)
         
         # Search
-        print("\n搜索演示 / Search demo:")
+        logger.info("\n搜索演示 / Search demo:")
         results = await browser.search("machine learning tutorial", max_results=3)
-        print(f"  找到 {len(results)} 个结果")
+        logger.info(f"  找到 {len(results)} 个结果")
         for i, result in enumerate(results, 1):
-            print(f"  {i}. {result.title}")
-            print(f"     {result.url}")
+            logger.info(f"  {i}. {result.title}")
+            logger.info(f"     {result.url}")
         
         # Add bookmark
-        print("\n书签管理 / Bookmark management:")
+        logger.info("\n书签管理 / Bookmark management:")
         bookmark = browser.add_bookmark(
             title="Machine Learning Tutorial",
             url="https://example.com/ml-tutorial",
@@ -533,31 +533,31 @@ if __name__ == "__main__":
             tags=["machine learning", "tutorial", "AI"],
             notes="Great tutorial for beginners"
         )
-        print(f"  已添加书签: {bookmark.title}")
-        print(f"  ID: {bookmark.bookmark_id}")
+        logger.info(f"  已添加书签: {bookmark.title}")
+        logger.info(f"  ID: {bookmark.bookmark_id}")
         
         # List bookmarks
         all_bookmarks = browser.get_bookmarks()
-        print(f"  总书签数: {len(all_bookmarks)}")
+        logger.info(f"  总书签数: {len(all_bookmarks)}")
         
         # Game detection
-        print("\n游戏检测 / Game detection:")
+        logger.info("\n游戏检测 / Game detection:")
         is_game = browser.detect_game(
             url="https://example-game.com/play",
             page_title="Awesome Game - Play Now!",
             page_content="Welcome to the best online game experience..."
         )
-        print(f"  游戏检测: {is_game}")
+        logger.info(f"  游戏检测: {is_game}")
         active_game = browser.get_active_game()
         if active_game:
-            print(f"  当前游戏: {active_game.game_name}")
+            logger.info(f"  当前游戏: {active_game.game_name}")
         
         # Statistics
-        print("\n统计信息 / Statistics:")
+        logger.info("\n统计信息 / Statistics:")
         stats = browser.get_game_statistics()
-        print(f"  游戏会话数: {stats['total_sessions']}")
+        logger.info(f"  游戏会话数: {stats['total_sessions']}")
         
         await browser.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

@@ -505,10 +505,10 @@ class CDMCognitiveDividendModel:
 if __name__ == "__main__":
     cdm = CDMCognitiveDividendModel()
     
-    print("=" * 70)
-    print("Angela AI v6.0 - CDM认知配息模型演示")
-    print("CDM Cognitive Dividend Model Demo")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("Angela AI v6.0 - CDM认知配息模型演示")
+    logger.info("CDM Cognitive Dividend Model Demo")
+    logger.info("=" * 70)
     
     # Simulate life state
     life_state = {
@@ -520,11 +520,11 @@ if __name__ == "__main__":
         "knowledge_gaps": 0.4,
     }
     
-    print(f"\n基础转换率 / Base conversion rate: {cdm.base_conversion_rate:.0%}")
-    print(f"每日认知资源 / Daily cognitive resources: {cdm.max_daily_resources:.0f}")
+    logger.info(f"\n基础转换率 / Base conversion rate: {cdm.base_conversion_rate:.0%}")
+    logger.info(f"每日认知资源 / Daily cognitive resources: {cdm.max_daily_resources:.0f}")
     
     # Record investments
-    print("\n记录认知投入 / Recording cognitive investments:")
+    logger.info("\n记录认知投入 / Recording cognitive investments:")
     
     investments_data = [
         (CognitiveActivity.LEARNING, 600, 0.7, "学习自然语言处理"),
@@ -543,42 +543,42 @@ if __name__ == "__main__":
         )
         
         if investment:
-            print(f"\n  活动: {activity.cn_name} ({activity.en_name})")
-            print(f"  描述: {context_desc}")
-            print(f"  持续时间: {duration/60:.1f}分钟")
-            print(f"  强度: {intensity:.0%}")
-            print(f"  资源消耗: {investment.resource_consumed:.1f}")
+            logger.info(f"\n  活动: {activity.cn_name} ({activity.en_name})")
+            logger.info(f"  描述: {context_desc}")
+            logger.info(f"  持续时间: {duration/60:.1f}分钟")
+            logger.info(f"  强度: {intensity:.0%}")
+            logger.info(f"  资源消耗: {investment.resource_consumed:.1f}")
             
             # Calculate life sense output
             output = cdm.calculate_life_sense_output(investment, life_state)
-            print(f"  生命感产出: {output.output_amount:.1f}")
-            print(f"  生命感类型: {output.life_sense_type}")
-            print(f"  质量分数: {output.quality_score:.2%}")
-            print(f"  共鸣潜力: {output.resonance_potential:.2%}")
+            logger.info(f"  生命感产出: {output.output_amount:.1f}")
+            logger.info(f"  生命感类型: {output.life_sense_type}")
+            logger.info(f"  质量分数: {output.quality_score:.2%}")
+            logger.info(f"  共鸣潜力: {output.resonance_potential:.2%}")
     
     # Show conversion statistics
-    print("\n转换统计 / Conversion statistics:")
+    logger.info("\n转换统计 / Conversion statistics:")
     stats = cdm.get_conversion_statistics()
-    print(f"  平均转换率: {stats['average_conversion_rate']:.2%}")
-    print(f"  转换趋势: {stats['trend']}")
-    print(f"  总投入: {stats['total_invested']:.1f}")
-    print(f"  总产出: {stats['total_output']:.1f}")
-    print(f"  净效率: {stats['net_efficiency']:.2%}")
+    logger.info(f"  平均转换率: {stats['average_conversion_rate']:.2%}")
+    logger.info(f"  转换趋势: {stats['trend']}")
+    logger.info(f"  总投入: {stats['total_invested']:.1f}")
+    logger.info(f"  总产出: {stats['total_output']:.1f}")
+    logger.info(f"  净效率: {stats['net_efficiency']:.2%}")
     
     # Adjust distribution
-    print("\n调整配息分配 / Adjusting dividend distribution:")
+    logger.info("\n调整配息分配 / Adjusting dividend distribution:")
     new_dist = cdm.adjust_distribution(life_state)
-    print(f"  学习: {new_dist.learning_ratio:.0%}")
-    print(f"  创造: {new_dist.creation_ratio:.0%}")
-    print(f"  交互: {new_dist.interaction_ratio:.0%}")
-    print(f"  反思: {new_dist.reflection_ratio:.0%}")
-    print(f"  探索: {new_dist.exploration_ratio:.0%}")
+    logger.info(f"  学习: {new_dist.learning_ratio:.0%}")
+    logger.info(f"  创造: {new_dist.creation_ratio:.0%}")
+    logger.info(f"  交互: {new_dist.interaction_ratio:.0%}")
+    logger.info(f"  反思: {new_dist.reflection_ratio:.0%}")
+    logger.info(f"  探索: {new_dist.exploration_ratio:.0%}")
     
     # Full summary
-    print("\n完整配息摘要 / Full dividend summary:")
+    logger.info("\n完整配息摘要 / Full dividend summary:")
     summary = cdm.get_dividend_summary()
-    print(f"  投入记录数: {summary['investment_count']}")
-    print(f"  产出记录数: {summary['output_count']}")
-    print(f"  资源利用率: {summary['daily_resources']['utilization_rate']:.2%}")
+    logger.info(f"  投入记录数: {summary['investment_count']}")
+    logger.info(f"  产出记录数: {summary['output_count']}")
+    logger.info(f"  资源利用率: {summary['daily_resources']['utilization_rate']:.2%}")
     
-    print("\n系统演示完成 / Demo complete")
+    logger.info("\n系统演示完成 / Demo complete")

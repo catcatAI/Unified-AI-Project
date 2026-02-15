@@ -22,7 +22,7 @@ def test_imports() -> None,
     
     # 测试环境模拟器
     print("1. 测试环境模拟器导入...")
-    try,
+    try:
         #         from ai.concept_models.environment_simulator import EnvironmentSimulator
         print("   ✓ 环境模拟器导入成功")
     except Exception as e,::
@@ -31,7 +31,7 @@ def test_imports() -> None,
     
     # 测试因果推理引擎
     print("\n2. 测试因果推理引擎导入...")
-    try,
+    try:
         #         from ai.concept_models.causal_reasoning_engine import CausalReasoningEngine
         print("   ✓ 因果推理引擎导入成功")
     except Exception as e,::
@@ -40,7 +40,7 @@ def test_imports() -> None,
     
     # 测试自适应学习控制器
     print("\n3. 测试自适应学习控制器导入...")
-    try,
+    try:
         print("   ✓ 自适应学习控制器导入成功")
     except Exception as e,::
         print(f"   ❌ 自适应学习控制器导入失败, {e}")
@@ -48,7 +48,7 @@ def test_imports() -> None,
     
     # 测试Alpha深度模型
     print("\n4. 测试Alpha深度模型导入...")
-    try,
+    try:
         print("   ✓ Alpha深度模型导入成功")
     except Exception as e,::
         print(f"   ❌ Alpha深度模型导入失败, {e}")
@@ -56,7 +56,7 @@ def test_imports() -> None,
     
     # 测试统一符号空间
     print("\n5. 测试统一符号空间导入...")
-    try,
+    try:
         print("   ✓ 统一符号空间导入成功")
     except Exception as e,::
         print(f"   ❌ 统一符号空间导入失败, {e}")
@@ -64,7 +64,7 @@ def test_imports() -> None,
     
     # 测试集成测试
     print("\n6. 测试集成测试导入...")
-    try,
+    try:
         print("   ✓ 集成测试导入成功")
     except Exception as e,::
         print(f"   ❌ 集成测试导入失败, {e}")
@@ -77,7 +77,7 @@ async def test_basic_functionality() -> None,
     """测试基本功能"""
     print("\n=测试概念模型基本功能 ===\n")
     
-    try,
+    try:
         # 测试环境模拟器基本功能
 #         print("1. 测试环境模拟器基本功能...")
         print("   ✓ 环境模拟器实例化成功")
@@ -124,9 +124,9 @@ if __name"__main__":::
         if functionality_success,::
             #             print("\n🎉 所有测试通过！概念模型可以正常工作。")
             sys.exit(0)
-#         else,
+#         else:
 #             print("\n❌ 基本功能测试失败！")
             sys.exit(1)
-#     else,
+#     else:
 #         print("\n❌ 导入测试失败！")
         sys.exit(1)

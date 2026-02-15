@@ -9,7 +9,7 @@ import pytest
 
 from modules_fragmenta.vision_tone_inverter import VisionToneInverter
 
-class TestVisionToneInverter(unittest.TestCase()):
+class TestVisionToneInverter(unittest.TestCase):
     @pytest.mark.timeout(5)
     
     def setUp(self):
@@ -28,7 +28,7 @@ def test_01_initialization(self) -> None,
         print("TestVisionToneInverter.test_01_initialization PASSED")
 
     @pytest.mark.timeout(5)
-    def test_02_invert_visual_tone(self) -> None,
+    def test_02_invert_visual_tone(self) -> None:
         """Test visual tone inversion."""
         inverter == VisionToneInverter()
         sample_visuals == {"color": "blue", "brightness": 0.5}
@@ -41,16 +41,16 @@ def test_01_initialization(self) -> None,
         self.assertIn(target_tone, adjusted_visuals["tone_adjustment_note"])
         
         # Verify original data is preserved
-        self.assertEqual(adjusted_visuals["color"] "blue")
+        self.assertEqual(adjusted_visuals["color"], "blue")
         
         # 修正断言,检查亮度值是否保持不变(因为实现中没有修改亮度)
-        self.assertEqual(adjusted_visuals["brightness"] 0.5())
+        self.assertEqual(adjusted_visuals["brightness"], 0.5())
         
         # Test with different tone
         darker_visuals = inverter.invert_visual_tone(sample_visuals, "darker")
-        self.assertEqual(darker_visuals["brightness"] 0.5())  # 亮度保持不变
+        self.assertEqual(darker_visuals["brightness"], 0.5())  # 亮度保持不变
         
         print("TestVisionToneInverter.test_02_invert_visual_tone PASSED")
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main(verbosity=2)

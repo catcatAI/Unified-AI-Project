@@ -121,19 +121,19 @@ if __name__ == "__main__":
 
     sample_text = "This is a sample text for processing. It contains multiple sentences. This is the third sentence."
     text_result = editor.process_text_content(sample_text)
-    print("Text processing result:", json.dumps(text_result, indent=2, ensure_ascii=False))
+    logger.info("Text processing result:", json.dumps(text_result, indent=2, ensure_ascii=False))
 
     sample_code = """
 def sample_function():
     # This is a simple function
-    print("Hello, World!")
+    logger.info("Hello, World!")
 
 class SampleClass:
     def __init__(self):
         self.value = 42
 """
     code_result = editor.process_code_content(sample_code)
-    print("Code processing result:", json.dumps(code_result, indent=2, ensure_ascii=False))
+    logger.info("Code processing result:", json.dumps(code_result, indent=2, ensure_ascii=False))
 
     sample_app_data = {
         "ui_elements": [
@@ -144,4 +144,4 @@ class SampleClass:
         "focused_element": "txt1"
     }
     app_result = editor.process_application_data(sample_app_data)
-    print("Application data processing result:", json.dumps(app_result, indent=2, ensure_ascii=False))
+    logger.info("Application data processing result:", json.dumps(app_result, indent=2, ensure_ascii=False))

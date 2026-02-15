@@ -380,43 +380,43 @@ def create_hardware_manager() -> HardwareManager:
 
 def demo():
     """演示 / Demo"""
-    print("🔧 硬件抽象层 (HAL) 演示")
-    print("=" * 50)
+    logger.info("🔧 硬件抽象层 (HAL) 演示")
+    logger.info("=" * 50)
     
     hw = HardwareManager()
     caps = hw.get_capabilities()
     
-    print(f"\n📋 硬件信息:")
-    print(f"  架构: {caps.architecture.value}")
-    print(f"  指令集: {caps.instruction_set.value}")
-    print(f"  厂商: {caps.vendor.value}")
-    print(f"  核心数: {caps.cores}")
-    print(f"  线程数: {caps.threads}")
-    print(f"  主频: {caps.clock_speed_hz / 1e9:.2f} GHz")
-    print(f"  内存: {caps.memory_bytes / (1024**3):.1f} GB")
-    print(f"  向量宽度: {caps.vector_width} bit")
+    logger.info(f"\n📋 硬件信息:")
+    logger.info(f"  架构: {caps.architecture.value}")
+    logger.info(f"  指令集: {caps.instruction_set.value}")
+    logger.info(f"  厂商: {caps.vendor.value}")
+    logger.info(f"  核心数: {caps.cores}")
+    logger.info(f"  线程数: {caps.threads}")
+    logger.info(f"  主频: {caps.clock_speed_hz / 1e9:.2f} GHz")
+    logger.info(f"  内存: {caps.memory_bytes / (1024**3):.1f} GB")
+    logger.info(f"  向量宽度: {caps.vector_width} bit")
     
-    print(f"\n🔢 特性支持:")
-    print(f"  FP16: {caps.fp16_support}")
-    print(f"  BF16: {caps.bf16_support}")
-    print(f"  AVX512: {caps.avx512_support}")
-    print(f"  NEON: {caps.neon_support}")
-    print(f"  SVE: {caps.sve_support}")
+    logger.info(f"\n🔢 特性支持:")
+    logger.info(f"  FP16: {caps.fp16_support}")
+    logger.info(f"  BF16: {caps.bf16_support}")
+    logger.info(f"  AVX512: {caps.avx512_support}")
+    logger.info(f"  NEON: {caps.neon_support}")
+    logger.info(f"  SVE: {caps.sve_support}")
     
-    print(f"\n⚡ 计算能力: {caps.compute_capability:.1f}")
-    print(f"  最优精度: {hw.get_optimal_precision().value}")
+    logger.info(f"\n⚡ 计算能力: {caps.compute_capability:.1f}")
+    logger.info(f"  最优精度: {hw.get_optimal_precision().value}")
     
-    print(f"\n🖥️ 可用计算单元:")
+    logger.info(f"\n🖥️ 可用计算单元:")
     units = hw.detect_compute_unit()
     for unit in units:
-        print(f"  ✅ {unit.value}")
+        logger.info(f"  ✅ {unit.value}")
     
-    print(f"\n📊 当前指标:")
+    logger.info(f"\n📊 当前指标:")
     metrics = hw.get_current_metrics()
-    print(f"  CPU使用率: {metrics.cpu_usage_percent:.1f}%")
-    print(f"  内存使用率: {metrics.memory_usage_percent:.1f}%")
+    logger.info(f"  CPU使用率: {metrics.cpu_usage_percent:.1f}%")
+    logger.info(f"  内存使用率: {metrics.memory_usage_percent:.1f}%")
     
-    print("\n✅ 演示完成!")
+    logger.info("\n✅ 演示完成!")
 
 
 if __name__ == "__main__":

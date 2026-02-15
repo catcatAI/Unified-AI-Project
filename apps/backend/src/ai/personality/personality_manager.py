@@ -117,4 +117,4 @@ class PersonalityManager:
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     pm = PersonalityManager()
-    print(f"Available profiles: {pm.list_available_profiles()}")
+    logger.info(f"Available profiles: {pm.list_available_profiles()}")

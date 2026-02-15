@@ -18,7 +18,7 @@ async def test_data_flow_pipeline():
     """测试完整数据流管道"""
     print("测试数据流管道...")
     
-    try,
+    try:
         from ai.ops.intelligent_ops_manager import get_intelligent_ops_manager
         
         # 初始化运维管理器
@@ -134,7 +134,7 @@ async def test_hsp_integration():
     """测试HSP协议集成"""
     print("测试HSP协议集成...")
     
-    try,
+    try:
         # 简化测试,只验证导入
         print("✓ HSP协议集成测试跳过(需要Redis服务)")
         return True
@@ -147,7 +147,7 @@ async def test_api_endpoints():
     """测试API端点"""
     print("测试API端点...")
     
-    try,
+    try:
         # 简化测试,只验证API路由导入
         from api.routes.ops_routes import router
         print("✓ API路由导入成功")
@@ -162,7 +162,7 @@ async def test_data_synchronization():
     """测试数据同步机制"""
     print("测试数据同步机制...")
     
-    try,
+    try:
         from ai.ops.intelligent_ops_manager import get_intelligent_ops_manager
         
         ops_manager = await get_intelligent_ops_manager()
@@ -203,13 +203,13 @@ async def test_error_handling():
     """测试错误处理"""
     print("测试错误处理...")
     
-    try,
+    try:
         from ai.ops.intelligent_ops_manager import get_intelligent_ops_manager
         
         ops_manager = await get_intelligent_ops_manager()
         
         # 发送无效数据
-        try,
+        try:
             await ops_manager.collect_system_metrics(
                 "error_test",
                 "invalid_type",
@@ -222,7 +222,7 @@ async def test_error_handling():
             print(f"✓ 错误处理正常, {type(e).__name__}")
         
         # 发送异常数据
-        try,
+        try:
             await ops_manager.collect_system_metrics(
                 "error_test_2",
                 "api_server",
@@ -247,7 +247,7 @@ async def test_performance_under_load():
     """测试负载下的性能"""
     print("测试负载下的性能...")
     
-    try,
+    try:
         from ai.ops.intelligent_ops_manager import get_intelligent_ops_manager
         
         ops_manager = await get_intelligent_ops_manager()
@@ -308,7 +308,7 @@ async def main():
     
     for test_name, test_func in tests,::
         print(f"\n--- {test_name} ---")
-        try,
+        try:
             result = await test_func()
             results.append((test_name, result))
         except Exception as e,::

@@ -17,9 +17,9 @@ if SRC_DIR not in sys.path,::
     sys.path.insert(0, SRC_DIR)
 
 # 修复导入路径
-from core_ai.emotion.emotion_system import EmotionSystem
+from ai.emotion.emotion_system import EmotionSystem
 
-class TestEmotionSystem(unittest.TestCase()):
+class TestEmotionSystem(unittest.TestCase):
     def setUp(self):
         self.example_personality = {
             "profile_name": "test_base",
@@ -35,7 +35,7 @@ class TestEmotionSystem(unittest.TestCase()):
         print("TestEmotionSystem.test_01_initialization PASSED")
 
     @pytest.mark.timeout(5)
-    def test_02_update_emotion_based_on_input(self) -> None,
+    def test_02_update_emotion_based_on_input(self) -> None:
         # Test sad input
         sad_input == {"text": "I am so sad today."}
         new_emotion = self.emotion_sys.update_emotion_based_on_input(sad_input)
@@ -63,7 +63,7 @@ class TestEmotionSystem(unittest.TestCase()):
         print("TestEmotionSystem.test_02_update_emotion_based_on_input PASSED")
 
     @pytest.mark.timeout(5)
-    def test_03_get_current_emotion_expression(self) -> None,
+    def test_03_get_current_emotion_expression(self) -> None:
         # Neutral (default from setUp personality)
         expression_neutral = self.emotion_sys.get_current_emotion_expression()
         self.assertEqual(expression_neutral.get("text_ending"), "") # Default neutral has empty ending
@@ -85,5 +85,5 @@ class TestEmotionSystem(unittest.TestCase()):
 
         print("TestEmotionSystem.test_03_get_current_emotion_expression PASSED")
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main(verbosity=2)

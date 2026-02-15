@@ -52,7 +52,7 @@ class UnifiedSymbolicSpace:
             conn.commit()
             return symbol_id
         except sqlite3.IntegrityError:
-            print(f"Symbol '{symbol_name}' already exists. Updating properties.")
+            logger.info(f"Symbol '{symbol_name}' already exists. Updating properties.")
             # Directly update the symbol to avoid database locking issues
             if properties:
                 current_symbol = self.get_symbol(symbol_name)
@@ -127,7 +127,7 @@ class UnifiedSymbolicSpace:
         target_symbol = self.get_symbol(target_symbol_name)
 
         if not source_symbol or not target_symbol:
-            print(f"Error: Source symbol '{source_symbol_name}' or target symbol '{target_symbol_name}' not found.")
+            logger.error(f"Error: Source symbol '{source_symbol_name}' or target symbol '{target_symbol_name}' not found.")
             return None
 
         conn = sqlite3.connect(self.db_path)
@@ -212,27 +212,27 @@ if __name__ == '__main__':
 
     # Get symbols and relationships
     ai_assistant_symbol = uss.get_symbol('AI Assistant')
-    print(f"\nAI Assistant Symbol: {ai_assistant_symbol}")
+    logger.info(f"\nAI Assistant Symbol: {ai_assistant_symbol}")
 
     sarah_relationships = uss.get_relationships('Sarah')
-    print(f"Sarah's Relationships: {sarah_relationships}")
+    logger.info(f"Sarah's Relationships: {sarah_relationships}")
 
     ai_relationships = uss.get_relationships('AI Assistant')
-    print(f"AI Assistant's Relationships: {ai_relationships}")
+    logger.info(f"AI Assistant's Relationships: {ai_relationships}")
 
     # Delete a relationship
     if sarah_relationships:
         uss.delete_relationship(sarah_relationships[0]['id'])
-        print(f"\nDeleted relationship: {sarah_relationships[0]['id']}")
-        print(f"Sarah's Relationships after deletion: {uss.get_relationships('Sarah')}")
+        logger.info(f"\nDeleted relationship: {sarah_relationships[0]['id']}")
+        logger.info(f"Sarah's Relationships after deletion: {uss.get_relationships('Sarah')}")
 
     # Delete a symbol
     uss.delete_symbol('Likes')
-    print(f"\nLikes symbol after deletion: {uss.get_symbol('Likes')}")
+    logger.info(f"\nLikes symbol after deletion: {uss.get_symbol('Likes')}")
 
-    print("\nUnified Symbolic Space operations completed.")
+    logger.info("\nUnified Symbolic Space operations completed.")
 
     # Clean up test database
     if os.path.exists('test_symbolic_space.db'):
         os.remove('test_symbolic_space.db')
-        print("Cleaned up test_symbolic_space.db")
+        logger.info("Cleaned up test_symbolic_space.db")

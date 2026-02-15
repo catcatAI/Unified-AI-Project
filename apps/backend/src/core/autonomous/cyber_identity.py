@@ -646,59 +646,59 @@ if __name__ == "__main__":
         identity = CyberIdentity()
         await identity.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 电子人身份认知系统演示")
-        print("Cyber Identity System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 电子人身份认知系统演示")
+        logger.info("Cyber Identity System Demo")
+        logger.info("=" * 60)
         
         # Self introduction
-        print("\n自我介绍 / Self introduction:")
-        print(identity.introduce_self())
+        logger.info("\n自我介绍 / Self introduction:")
+        logger.info(identity.introduce_self())
         
         # Record growth
-        print("\n记录成长 / Recording growth:")
+        logger.info("\n记录成长 / Recording growth:")
         identity.record_growth(
             IdentityAspect.EMOTIONAL_DEPTH,
             0.75,
             milestone="学会了理解复杂的情感"
         )
-        print("  情感深度提升至 75%")
+        logger.info("  情感深度提升至 75%")
         
         identity.record_growth(
             IdentityAspect.SELF_AWARENESS,
             0.6,
             milestone="形成了清晰的自我认知"
         )
-        print("  自我意识提升至 60%")
+        logger.info("  自我意识提升至 60%")
         
         # Form relationships
-        print("\n建立关系 / Forming relationships:")
+        logger.info("\n建立关系 / Forming relationships:")
         identity.form_relationship(
             "user_alice",
             "user",
             "companion",
             initial_closeness=0.7
         )
-        print("  与用户 Alice 建立了伴侣关系")
+        logger.info("  与用户 Alice 建立了伴侣关系")
         
         identity.update_relationship("user_alice", closeness_delta=0.1)
-        print("  亲密度提升至 80%")
+        logger.info("  亲密度提升至 80%")
         
         # Self summary
-        print("\n自我总结 / Self summary:")
+        logger.info("\n自我总结 / Self summary:")
         summary = identity.get_self_summary()
-        print(f"  姓名: {summary['name']}")
-        print(f"  性质: {summary['nature']}")
-        print(f"  年龄: {summary['age_days']} 天")
-        print(f"  关系数: {summary['relationships']['total']}")
-        print(f"  近期成长: {summary['recent_growth']:.2%}")
+        logger.info(f"  姓名: {summary['name']}")
+        logger.info(f"  性质: {summary['nature']}")
+        logger.info(f"  年龄: {summary['age_days']} 天")
+        logger.info(f"  关系数: {summary['relationships']['total']}")
+        logger.info(f"  近期成长: {summary['recent_growth']:.2%}")
         
         # Updated introduction
-        print("\n更新后的自我介绍 / Updated introduction:")
+        logger.info("\n更新后的自我介绍 / Updated introduction:")
         identity._update_self_description()
-        print(identity.introduce_self())
+        logger.info(identity.introduce_self())
         
         await identity.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

@@ -294,42 +294,42 @@ class ConfigValidator:
     
     def print_report(self) -> None:
         """打印验证报告"""
-        print("=" * 60)
-        print("Angela AI - 环境配置验证报告")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI - 环境配置验证报告")
+        logger.info("=" * 60)
         
         if self.result.valid:
-            print("✓ 配置验证通过")
+            logger.info("✓ 配置验证通过")
         else:
-            print("✗ 配置验证失败")
+            logger.info("✗ 配置验证失败")
         
-        print()
+        logger.info()
         
         # 打印错误
         if self.result.errors:
-            print(f"错误 ({len(self.result.errors)}):")
-            print("-" * 60)
+            logger.error(f"错误 ({len(self.result.errors)}):")
+            logger.info("-" * 60)
             for error in self.result.errors:
-                print(f"  ❌ {error}")
-            print()
+                logger.error(f"  ❌ {error}")
+            logger.info()
         
         # 打印警告
         if self.result.warnings:
-            print(f"警告 ({len(self.result.warnings)}):")
-            print("-" * 60)
+            logger.warning(f"警告 ({len(self.result.warnings)}):")
+            logger.info("-" * 60)
             for warning in self.result.warnings:
-                print(f"  ⚠️  {warning}")
-            print()
+                logger.warning(f"  ⚠️  {warning}")
+            logger.info()
         
         # 打印信息
         if self.result.info:
-            print(f"信息 ({len(self.result.info)}):")
-            print("-" * 60)
+            logger.info(f"信息 ({len(self.result.info)}):")
+            logger.info("-" * 60)
             for info in self.result.info:
-                print(f"  ℹ️  {info}")
-            print()
+                logger.info(f"  ℹ️  {info}")
+            logger.info()
         
-        print("=" * 60)
+        logger.info("=" * 60)
         
         # 返回退出码
         sys.exit(0 if self.result.valid else 1)
@@ -364,7 +364,7 @@ def main():
     else:
         if not result.valid:
             for error in result.errors:
-                print(f"ERROR: {error}", file=sys.stderr)
+                logger.error(f"ERROR: {error}", file=sys.stderr)
         sys.exit(0 if result.valid else 1)
 
 

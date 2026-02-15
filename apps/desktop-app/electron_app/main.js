@@ -1,100 +1,136 @@
-const { app, BrowserWindow, ipcMain, screen, globalShortcut, systemPreferences, nativeTheme, Menu, Tray, nativeImage, protocol } = require('electron');
-const path = require('path');
-const fs = require('fs');
-const securityManager = require('./js/security-manager');
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  screen,
+  globalShortcut,
+  systemPreferences,
+  nativeTheme,
+  Menu,
+  Tray,
+  nativeImage,
+  protocol,
+} = require('electron')
+const path = require('path')
+const fs = require('fs')
+const securityManager = require('./js/security-manager')
+
+// Define a log file path
+const LOG_FILE = path.join(__dirname, '..', '..', 'logs', 'electron_frontend_main.log')
+// Ensure the log directory exists
+const logDirPath = path.dirname(LOG_FILE)
+if (!fs.existsSync(logDirPath)) {
+  fs.mkdirSync(logDirPath, { recursive: true })
+}
+
+const logStream = fs.createWriteStream(LOG_FILE, { flags: 'a' })
+
+// Redirect console.log and console.error to the log file
+const originalConsoleLog = console.log
+const originalConsoleError = console.error
+
+console.log = (...args) => {
+  originalConsoleLog(...args)
+  logStream.write(`[LOG] ${new Date().toISOString()} ${args.join(' ')}\n`)
+}
+
+console.error = (...args) => {
+  originalConsoleError(...args)
+  logStream.write(`[ERROR] ${new Date().toISOString()} ${args.join(' ')}\n`)
+}
 
 // Global error handler for EPIPE (prevents crashes when writing to closed pipes)
 process.on('uncaughtException', (err) => {
   if (err.code === 'EPIPE' || err.code === 'ECONNRESET') {
-    console.warn('[Main] Ignored pipe error (renderer closed):', err.code);
+    console.warn('[Main] Ignored pipe error (renderer closed):', err.code)
   } else {
-    console.error('[Main] Uncaught Exception:', err);
+    console.error('[Main] Uncaught Exception:', err)
   }
-});
+})
 
 // Import Live2D Cubism Web SDK (will be loaded via CDN or local)
-const LIVE2D_VERSION = '5.0.0';
+const LIVE2D_VERSION = '5.0.0'
 
 // 单实例锁 - 防止启动多个实例
-const gotTheLock = app.requestSingleInstanceLock();
+const gotTheLock = app.requestSingleInstanceLock()
 
 if (!gotTheLock) {
-  console.log('[Main] Another instance is already running. Quitting...');
-  app.quit();
-  process.exit(0);
+  console.log('[Main] Another instance is already running. Quitting...')
+  app.quit()
+  process.exit(0)
 }
 
-let mainWindow;
-let settingsWindow;
-let isDevMode = false;
-let modelPath = null;
-let currentWallpaper = null;
-let currentWallpaperMode = '2D';
-let currentPerformanceMode = 'standard';
-let backendIP = '127.0.0.1';
+let mainWindow
+let settingsWindow
+let isDevMode = false
+let modelPath = null
+let currentWallpaper = null
+let currentWallpaperMode = '2D'
+let currentPerformanceMode = 'standard'
+let backendIP = '127.0.0.1'
 let moduleStates = {
   vision: true,
   audio: true,
   tactile: true,
-  action: true
-};
-let tray = null;
+  action: true,
+}
+let tray = null
 
 // FIX: Helper function to safely send to mainWindow
 function sendToMainWindow(channel, data) {
   if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
     try {
-      mainWindow.webContents.send(channel, data);
-      return true;
+      mainWindow.webContents.send(channel, data)
+      return true
     } catch (e) {
-      console.warn(`[Main] Failed to send ${channel}:`, e.message);
-      return false;
+      console.warn(`[Main] Failed to send ${channel}:`, e.message)
+      return false
     }
   }
-  return false;
+  return false
 }
 
 // FIX: Helper function to safely call mainWindow methods
 function safeMainWindowCall(callback) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     try {
-      callback(mainWindow);
-      return true;
+      callback(mainWindow)
+      return true
     } catch (e) {
-      console.warn('[Main] Failed to call method on mainWindow:', e.message);
-      return false;
+      console.warn('[Main] Failed to call method on mainWindow:', e.message)
+      return false
     }
   }
-  return false;
+  return false
 }
 
 // 当第二个实例尝试启动时，将焦点转移到现有窗口
 app.on('second-instance', (event, commandLine, workingDirectory) => {
-  console.log('[Main] Second instance detected, focusing existing window');
+  console.log('[Main] Second instance detected, focusing existing window')
 
   // FIX: Check if mainWindow exists and is valid before accessing
   if (mainWindow && !mainWindow.isDestroyed()) {
-    if (mainWindow.isMinimized()) mainWindow.restore();
-    mainWindow.focus();
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.focus()
   }
-});
+})
 
 // App lifecycle
 app.whenReady().then(async () => {
-  isDevMode = process.argv.includes('--dev');
+  isDevMode = process.argv.includes('--dev')
 
   // Enable GPU acceleration for WebGL
-  app.commandLine.appendSwitch('enable-gpu-rasterization');
-  app.commandLine.appendSwitch('enable-zero-copy');
-  app.commandLine.appendSwitch('ignore-gpu-blacklist');
-  app.commandLine.appendSwitch('enable-webgl2-compute-context');
-  app.commandLine.appendSwitch('enable-webgl2');  // Enable WebGL 2.0
-  app.commandLine.appendSwitch('enable-accelerated-2d-canvas');  // Accelerated 2D canvas
-  app.commandLine.appendSwitch('enable-gpu-driver-bug-workarounds');  // Driver compatibility
+  app.commandLine.appendSwitch('enable-gpu-rasterization')
+  app.commandLine.appendSwitch('enable-zero-copy')
+  app.commandLine.appendSwitch('ignore-gpu-blacklist')
+  app.commandLine.appendSwitch('enable-webgl2-compute-context')
+  app.commandLine.appendSwitch('enable-webgl2') // Enable WebGL 2.0
+  app.commandLine.appendSwitch('enable-accelerated-2d-canvas') // Accelerated 2D canvas
+  app.commandLine.appendSwitch('enable-gpu-driver-bug-workarounds') // Driver compatibility
 
   // Register file protocol for loading Live2D model files
   // Get absolute application directory path
-  const appDir = path.dirname(path.resolve(__filename));
+  const appDir = path.dirname(path.resolve(__filename))
 
   // Define allowed directories to prevent path traversal attacks
   const ALLOWED_DIRECTORIES = [
@@ -104,35 +140,35 @@ app.whenReady().then(async () => {
     path.join(appDir, 'resources/models'),
     path.join(appDir, 'data'),
     path.join(appDir, 'models'),
-    path.join(appDir, '..', '..', 'resources')
-  ];
+    path.join(appDir, '..', '..', 'resources'),
+  ]
 
   protocol.registerFileProtocol('local', (request, callback) => {
-    console.log('[Main] Local protocol request:', request.url);
+    console.log('[Main] Local protocol request:', request.url)
 
-    let urlPath = request.url;
+    let urlPath = request.url
 
     // First, decode the entire URL to handle Chinese characters properly
     // This must happen BEFORE we extract the path
     try {
-      urlPath = decodeURIComponent(urlPath);
+      urlPath = decodeURIComponent(urlPath)
     } catch (e) {
-      console.warn('[Main] Failed to decode URL:', urlPath);
-      callback({ error: -2 }); // Failed to decode
-      return;
+      console.warn('[Main] Failed to decode URL:', urlPath)
+      callback({ error: -2 }) // Failed to decode
+      return
     }
 
-    console.log('[Main] Decoded URL:', urlPath);
+    console.log('[Main] Decoded URL:', urlPath)
 
     // Handle local://, local:///, local://// etc. formats (variable slashes)
     // After decoding, we need to remove the 'local:' prefix and any leading slashes
     if (urlPath.startsWith('local:')) {
       // Remove 'local:' prefix
-      urlPath = urlPath.substring(6);
+      urlPath = urlPath.substring(6)
 
       // Remove all leading slashes (there can be 1-3 of them)
       while (urlPath.startsWith('/')) {
-        urlPath = urlPath.substring(1);
+        urlPath = urlPath.substring(1)
       }
     }
 
@@ -141,172 +177,179 @@ app.whenReady().then(async () => {
 
     // Remove leading slash to prevent path.resolve from treating it as absolute from root
     if (urlPath.startsWith('/')) {
-      urlPath = urlPath.substring(1);
+      urlPath = urlPath.substring(1)
     }
 
-    const normalizedPath = path.normalize(urlPath);
-    const filePath = path.resolve(appDir, normalizedPath);
+    const normalizedPath = path.normalize(urlPath)
+    const filePath = path.resolve(appDir, normalizedPath)
 
-    console.log('[Main] Local protocol resolved:', urlPath, '->', filePath);
+    console.log('[Main] Local protocol resolved:', urlPath, '->', filePath)
 
     // SECURITY: Verify path is within allowed directories
-    const isAllowed = ALLOWED_DIRECTORIES.some(allowedDir => {
-      const relativePath = require('path').relative(allowedDir, filePath);
+    const isAllowed = ALLOWED_DIRECTORIES.some((allowedDir) => {
+      const relativePath = require('path').relative(allowedDir, filePath)
       // Path is allowed if it doesn't start with '..' (prevents path traversal)
-      return !relativePath.startsWith('..');
-    });
+      return !relativePath.startsWith('..')
+    })
 
     if (!isAllowed) {
-      console.error('[Main] Path traversal attempt blocked:', filePath);
-      console.error('[Main] Requested path is outside allowed directories');
-      callback({ error: -3 }); // Access denied
-      return;
+      console.error('[Main] Path traversal attempt blocked:', filePath)
+      console.error('[Main] Requested path is outside allowed directories')
+      callback({ error: -3 }) // Access denied
+      return
     }
 
     // Verify file exists
     if (require('fs').existsSync(filePath)) {
-      callback({ path: filePath });
+      callback({ path: filePath })
     } else {
-      console.error('[Main] File not found:', filePath);
+      console.error('[Main] File not found:', filePath)
 
       // Try alternative path resolution for Chinese characters
       // If the path contains Chinese characters that weren't decoded properly
       if (urlPath.includes('%')) {
-        console.warn('[Main] Trying alternative decode for remaining encoded characters...');
+        console.warn('[Main] Trying alternative decode for remaining encoded characters...')
         try {
-          const altPath = decodeURIComponent(urlPath);
-          const altFilePath = require('path').resolve(require('path').normalize(altPath));
-          console.warn('[Main] Alternative path:', altFilePath);
+          const altPath = decodeURIComponent(urlPath)
+          const altFilePath = require('path').resolve(require('path').normalize(altPath))
+          console.warn('[Main] Alternative path:', altFilePath)
 
           if (require('fs').existsSync(altFilePath)) {
-            callback({ path: altFilePath });
-            return;
+            callback({ path: altFilePath })
+            return
           }
         } catch (e2) {
-          console.warn('[Main] Alternative decode failed:', e2);
+          console.warn('[Main] Alternative decode failed:', e2)
         }
       }
 
-      callback({ error: -6 }); // FILE_NOT_FOUND
+      callback({ error: -6 }) // FILE_NOT_FOUND
     }
-  });
-  console.log('[Main] Local file protocol registered');
+  })
+  console.log('[Main] Local file protocol registered')
 
   // Initialize security manager (Key C sync)
-  const userDataPath = app.getPath('userData');
-  await securityManager.setup(userDataPath, backendIP);
+  const userDataPath = app.getPath('userData')
+  await securityManager.setup(userDataPath, backendIP)
 
-  createMainWindow();
+  createMainWindow()
 
   // Create system tray
-  createTray();
+  createTray()
 
   // Register security handlers
-  registerSecurityHandlers();
+  registerSecurityHandlers()
 
   // Register global shortcuts
-  registerGlobalShortcuts();
+  registerGlobalShortcuts()
 
   // Initialize system integrations
-  initializeSystemIntegrations();
+  initializeSystemIntegrations()
 
   // Auto-connect to backend WebSocket
-  const wsUrl = `ws://${backendIP}:8000/ws`;
-  console.log(`[Main] Auto-connecting to backend WebSocket: ${wsUrl}`);
-  connectWebSocket(wsUrl);
+  const wsUrl = `ws://${backendIP}:8000/ws`
+  console.log(`[Main] Auto-connecting to backend WebSocket: ${wsUrl}`)
+  connectWebSocket(wsUrl)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createMainWindow();
+      createMainWindow()
     }
-  });
-});
+  })
+})
 
 app.on('window-all-closed', () => {
   // Don't quit on macOS, just hide to tray
   if (process.platform === 'darwin') {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.hide();
+      mainWindow.hide()
     }
   } else {
     // On Windows/Linux, hide to tray instead of quitting
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.hide();
+      mainWindow.hide()
       // Don't quit, just hide to tray
-      return;
+      return
     }
-    app.quit();
+    app.quit()
   }
-});
+})
 
 app.on('before-quit', (e) => {
   // Clean up before quit
   if (tray) {
-    tray.destroy();
-    tray = null;
+    tray.destroy()
+    tray = null
   }
-  cleanupResources();
-});
+  cleanupResources()
+})
 
 /**
  * Create the main desktop pet window
  */
 function createMainWindow() {
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize
 
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 720,
     x: Math.max(0, Math.floor((width - 1280) / 2)),
     y: Math.max(0, Math.floor((height - 720) / 2)),
-    transparent: true,  // FIX: Enable transparency for background click-through
+    transparent: true, // FIX: Enable transparency for background click-through
     frame: false,
-    resizable: true,  // Enable resizing
+    resizable: true, // Enable resizing
     alwaysOnTop: true,
     skipTaskbar: false,
     acceptFirstMouse: true,
     titleBarStyle: 'hiddenInset',
     show: false,
-    backgroundColor: '#00000000',  // Transparent background color
+    backgroundColor: '#00000000', // Transparent background color
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: false, // SECURITY: Disabled for Live2D integration with transparent window
+      // Live2D Cubism SDK requires native module access for rendering
+      // This is necessary for the 3D avatar functionality
+      // Risk mitigated by: nodeIntegration=false, contextIsolation=true
       webSecurity: true,
+      // Force enable remote debugging for easier Playwright connection
+      // This will ensure a CDP URL is available.
+      additionalArguments: ['--remote-debugging-port=9222'],
       // Enable WebGL 2.0 and hardware acceleration
       webgl: true,
       enableWebGL2: true,
       hardwareAcceleration: 'force',
-      experimentalFeatures: true
-    }
-  });
+      experimentalFeatures: true,
+      devTools: true, // Ensure DevTools are explicitly enabled
+    },
+  })
 
-  console.log('[Window] Creating window with bounds:', mainWindow.getBounds());
+  console.log('[Window] Creating window with bounds:', mainWindow.getBounds())
 
   // Set minimum size
-  mainWindow.setMinimumSize(200, 300);
+  mainWindow.setMinimumSize(200, 300)
 
   // Enable draggable region
-  mainWindow.setSkipTaskbar(false);
+  mainWindow.setSkipTaskbar(false)
 
   // Load the app
-  console.log('[Window] Loading index.html...');
-  mainWindow.loadFile('index.html');
+  console.log('[Window] Loading index.html...')
+  mainWindow.loadFile('index.html')
 
   // Log when page is loaded
   mainWindow.webContents.on('did-finish-load', () => {
-    console.log('[Window] Page loaded successfully');
-  });
+    console.log('[Window] Page loaded successfully')
+  })
 
   // Add right-click context menu for main window
   mainWindow.webContents.on('context-menu', (event, params) => {
-    event.preventDefault();
+    event.preventDefault()
 
     // Safety check
     if (!mainWindow || mainWindow.isDestroyed()) {
-      console.warn('[ContextMenu] mainWindow is null or destroyed');
-      return;
+      console.warn('[ContextMenu] mainWindow is null or destroyed')
+      return
     }
 
     try {
@@ -315,77 +358,142 @@ function createMainWindow() {
           label: 'Show/Hide Angela',
           click: () => {
             if (mainWindow.isVisible()) {
-              mainWindow.hide();
+              mainWindow.hide()
             } else {
-              mainWindow.show();
-              mainWindow.focus();
+              mainWindow.show()
+              mainWindow.focus()
             }
-          }
+          },
         },
         { type: 'separator' },
         {
           label: 'Settings',
           click: () => {
-            createSettingsWindow();
-          }
+            createSettingsWindow()
+          },
         },
         {
           label: 'Reload Model',
           click: () => {
-            sendToMainWindow('reload-model');
-          }
+            sendToMainWindow('reload-model')
+          },
         },
         { type: 'separator' },
         {
           label: 'Toggle Always on Top',
           click: () => {
-            const current = mainWindow.isAlwaysOnTop();
-            mainWindow.setAlwaysOnTop(!current);
-            sendToMainWindow('always-on-top-changed', { alwaysOnTop: !current });
-          }
+            const current = mainWindow.isAlwaysOnTop()
+            mainWindow.setAlwaysOnTop(!current)
+            sendToMainWindow('always-on-top-changed', { alwaysOnTop: !current })
+          },
         },
         {
           label: 'Toggle Frame',
           click: () => {
-            const current = mainWindow.isFrameless();
-            mainWindow.setFrameable(!current);
-          }
+            const current = mainWindow.isFrameless()
+            mainWindow.setFrameable(!current)
+          },
         },
         { type: 'separator' },
         {
           label: 'Rendering Mode',
           submenu: [
-            { label: 'Live2D (Animated)', type: 'radio', checked: true, click: () => setRenderMode('live2d') },
-            { label: 'Static Image (立繫)', type: 'radio', checked: false, click: () => setRenderMode('fallback') }
-          ]
+            {
+              label: 'Live2D (Animated)',
+              type: 'radio',
+              checked: true,
+              click: () => setRenderMode('live2d'),
+            },
+            {
+              label: 'Static Image (立繫)',
+              type: 'radio',
+              checked: false,
+              click: () => setRenderMode('fallback'),
+            },
+          ],
         },
         { type: 'separator' },
         {
           label: 'Performance Mode',
           submenu: [
-            { label: 'Lite', type: 'radio', checked: currentPerformanceMode === 'lite', click: () => setPerformanceMode('lite') },
-            { label: 'Standard', type: 'radio', checked: currentPerformanceMode === 'standard', click: () => setPerformanceMode('standard') },
-            { label: 'Extended', type: 'radio', checked: currentPerformanceMode === 'extended', click: () => setPerformanceMode('extended') },
-            { label: 'Ultra', type: 'radio', checked: currentPerformanceMode === 'ultra', click: () => setPerformanceMode('ultra') }
-          ]
+            {
+              label: 'Lite',
+              type: 'radio',
+              checked: currentPerformanceMode === 'lite',
+              click: () => setPerformanceMode('lite'),
+            },
+            {
+              label: 'Standard',
+              type: 'radio',
+              checked: currentPerformanceMode === 'standard',
+              click: () => setPerformanceMode('standard'),
+            },
+            {
+              label: 'Extended',
+              type: 'radio',
+              checked: currentPerformanceMode === 'extended',
+              click: () => setPerformanceMode('extended'),
+            },
+            {
+              label: 'Ultra',
+              type: 'radio',
+              checked: currentPerformanceMode === 'ultra',
+              click: () => setPerformanceMode('ultra'),
+            },
+          ],
         },
         {
           label: 'Wallpaper Mode',
           submenu: [
-            { label: '2D (Basic)', type: 'radio', checked: currentWallpaperMode === '2D', click: () => setWallpaperMode('2D') },
-            { label: '2.5D (Parallax)', type: 'radio', checked: currentWallpaperMode === '2.5D', click: () => setWallpaperMode('2.5D') },
-            { label: '3D (Full)', type: 'radio', checked: currentWallpaperMode === '3D', click: () => setWallpaperMode('3D') }
-          ]
+            {
+              label: '2D (Basic)',
+              type: 'radio',
+              checked: currentWallpaperMode === '2D',
+              click: () => setWallpaperMode('2D'),
+            },
+            {
+              label: '2.5D (Parallax)',
+              type: 'radio',
+              checked: currentWallpaperMode === '2.5D',
+              click: () => setWallpaperMode('2.5D'),
+            },
+            {
+              label: '3D (Full)',
+              type: 'radio',
+              checked: currentWallpaperMode === '3D',
+              click: () => setWallpaperMode('3D'),
+            },
+          ],
         },
         { type: 'separator' },
         {
           label: 'Modules',
           submenu: [
-            { label: 'Vision System', type: 'checkbox', checked: moduleStates.vision, click: (item) => toggleModule('vision', item.checked) },
-            { label: 'Audio System', type: 'checkbox', checked: moduleStates.audio, click: (item) => toggleModule('audio', item.checked) },
-            { label: 'Tactile System', type: 'checkbox', checked: moduleStates.tactile, click: (item) => toggleModule('tactile', item.checked) },
-            { label: 'Action Executor', type: 'checkbox', checked: moduleStates.action, click: (item) => toggleModule('action', item.checked) }
-          ]
+            {
+              label: 'Vision System',
+              type: 'checkbox',
+              checked: moduleStates.vision,
+              click: (item) => toggleModule('vision', item.checked),
+            },
+            {
+              label: 'Audio System',
+              type: 'checkbox',
+              checked: moduleStates.audio,
+              click: (item) => toggleModule('audio', item.checked),
+            },
+            {
+              label: 'Tactile System',
+              type: 'checkbox',
+              checked: moduleStates.tactile,
+              click: (item) => toggleModule('tactile', item.checked),
+            },
+            {
+              label: 'Action Executor',
+              type: 'checkbox',
+              checked: moduleStates.action,
+              click: (item) => toggleModule('action', item.checked),
+            },
+          ],
         },
         { type: 'separator' },
         {
@@ -393,71 +501,71 @@ function createMainWindow() {
           type: 'checkbox',
           checked: getAutoStartupStatus(),
           click: (item) => {
-            const currentStatus = getAutoStartupStatus();
-            setAutoStartup(!currentStatus);
-            createTray(); // Refresh tray menu
-          }
+            const currentStatus = getAutoStartupStatus()
+            setAutoStartup(!currentStatus)
+            createTray() // Refresh tray menu
+          },
         },
         { type: 'separator' },
         {
           label: 'Restart',
           click: () => {
-            app.relaunch();
-            app.exit();
-          }
+            app.relaunch()
+            app.exit()
+          },
         },
         {
           label: 'Quit',
           click: () => {
-            app.quit();
-          }
-        }
-      ]);
+            app.quit()
+          },
+        },
+      ])
 
-      contextMenu.popup(mainWindow);
+      contextMenu.popup(mainWindow)
     } catch (error) {
-      console.error('[ContextMenu] Error showing context menu:', error.message);
+      console.error('[ContextMenu] Error showing context menu:', error.message)
     }
-  });
+  })
 
   // Log any page load errors
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
-    console.error('[Window] Page load failed:', errorCode, errorDescription);
-  });
+    console.error('[Window] Page load failed:', errorCode, errorDescription)
+  })
 
   // Log console messages from renderer
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
     // Skip if window is destroyed to avoid EPIPE error
-    if (mainWindow.isDestroyed()) return;
-    console.log(`[Renderer] ${message}`);
-  });
+    if (mainWindow.isDestroyed()) return
+    console.log(`[Renderer] ${message}`)
+  })
 
   // Wait for ready-to-show before showing
   mainWindow.on('ready-to-show', () => {
-    console.log('[Window] Window ready to show, showing now...');
-    mainWindow.show();
-    mainWindow.setAlwaysOnTop(true);
-    mainWindow.focus();
-    console.log('[Window] Window shown with bounds:', mainWindow.getBounds());
+    console.log('[Window] Window ready to show, showing now...')
+    mainWindow.show()
+    mainWindow.setAlwaysOnTop(true)
+    mainWindow.focus()
+    console.log('[Window] Window shown with bounds:', mainWindow.getBounds())
 
     // Open DevTools for debugging
-    mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools()
 
     sendToMainWindow('window-ready', {
-      bounds: safeMainWindowCall(w => w.getBounds()) || mainWindow.getBounds()
-    });
-  });
+      bounds: safeMainWindowCall((w) => w.getBounds()) || mainWindow.getBounds(),
+    })
+  })
 
   // Handle window position saving
   mainWindow.on('moved', () => {
-    const bounds = mainWindow.getBounds();
-    console.log('[Window] Window moved to:', bounds);
-    saveWindowPosition(bounds);
-  });
+    const bounds = mainWindow.getBounds()
+    console.log('[Window] Window moved to:', bounds)
+    saveWindowPosition(bounds)
+  })
 
   // Open DevTools in development mode
   if (isDevMode) {
-    mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools()
   }
 }
 
@@ -466,18 +574,18 @@ function createMainWindow() {
  */
 function createTray() {
   try {
-    const iconPath = getTrayIconPath();
+    const iconPath = getTrayIconPath()
     if (fs.existsSync(iconPath)) {
-      tray = new Tray(iconPath);
+      tray = new Tray(iconPath)
     } else {
       // Fallback to an empty image if icon not found
-      tray = new Tray(nativeImage.createEmpty());
-      console.warn('Tray icon not found, using empty placeholder');
+      tray = new Tray(nativeImage.createEmpty())
+      console.warn('Tray icon not found, using empty placeholder')
     }
   } catch (error) {
-    console.error('Failed to create tray:', error);
+    console.error('Failed to create tray:', error)
     // Don't crash the whole app if tray fails
-    return;
+    return
   }
 
   // Create context menu
@@ -486,25 +594,25 @@ function createTray() {
       label: 'Show Angela',
       click: () => {
         if (mainWindow) {
-          mainWindow.show();
-          mainWindow.focus();
+          mainWindow.show()
+          mainWindow.focus()
         }
-      }
+      },
     },
     {
       label: 'Hide Angela',
       click: () => {
         if (mainWindow) {
-          mainWindow.hide();
+          mainWindow.hide()
         }
-      }
+      },
     },
     { type: 'separator' },
     {
       label: 'Settings',
       click: () => {
-        createSettingsWindow();
-      }
+        createSettingsWindow()
+      },
     },
     {
       label: 'Advanced Settings',
@@ -514,15 +622,15 @@ function createTray() {
           submenu: [
             { label: `IP: ${backendIP}`, enabled: false },
             { label: 'Set to localhost (127.0.0.1)', click: () => setBackendIP('127.0.0.1') },
-            { label: 'Custom IP...', click: () => createSettingsWindow('advanced') }
-          ]
+            { label: 'Custom IP...', click: () => createSettingsWindow('advanced') },
+          ],
         },
         { type: 'separator' },
         {
           label: 'Open Advanced Tab',
-          click: () => createSettingsWindow('advanced')
-        }
-      ]
+          click: () => createSettingsWindow('advanced'),
+        },
+      ],
     },
     {
       label: 'Hardware & Performance',
@@ -530,149 +638,221 @@ function createTray() {
         {
           label: 'Performance Mode',
           submenu: [
-            { label: 'Lite', type: 'radio', checked: currentPerformanceMode === 'lite', click: () => setPerformanceMode('lite') },
-            { label: 'Standard', type: 'radio', checked: currentPerformanceMode === 'standard', click: () => setPerformanceMode('standard') },
-            { label: 'Extended', type: 'radio', checked: currentPerformanceMode === 'extended', click: () => setPerformanceMode('extended') },
-            { label: 'Ultra', type: 'radio', checked: currentPerformanceMode === 'ultra', click: () => setPerformanceMode('ultra') }
-          ]
+            {
+              label: 'Lite',
+              type: 'radio',
+              checked: currentPerformanceMode === 'lite',
+              click: () => setPerformanceMode('lite'),
+            },
+            {
+              label: 'Standard',
+              type: 'radio',
+              checked: currentPerformanceMode === 'standard',
+              click: () => setPerformanceMode('standard'),
+            },
+            {
+              label: 'Extended',
+              type: 'radio',
+              checked: currentPerformanceMode === 'extended',
+              click: () => setPerformanceMode('extended'),
+            },
+            {
+              label: 'Ultra',
+              type: 'radio',
+              checked: currentPerformanceMode === 'ultra',
+              click: () => setPerformanceMode('ultra'),
+            },
+          ],
         },
         {
           label: 'Wallpaper Rendering',
           submenu: [
-            { label: '2D (Basic)', type: 'radio', checked: currentWallpaperMode === '2D', click: () => setWallpaperMode('2D') },
-            { label: '2.5D (Parallax)', type: 'radio', checked: currentWallpaperMode === '2.5D', click: () => setWallpaperMode('2.5D') },
-            { label: '3D (Full)', type: 'radio', checked: currentWallpaperMode === '3D', click: () => setWallpaperMode('3D') }
-          ]
+            {
+              label: '2D (Basic)',
+              type: 'radio',
+              checked: currentWallpaperMode === '2D',
+              click: () => setWallpaperMode('2D'),
+            },
+            {
+              label: '2.5D (Parallax)',
+              type: 'radio',
+              checked: currentWallpaperMode === '2.5D',
+              click: () => setWallpaperMode('2.5D'),
+            },
+            {
+              label: '3D (Full)',
+              type: 'radio',
+              checked: currentWallpaperMode === '3D',
+              click: () => setWallpaperMode('3D'),
+            },
+          ],
         },
         {
           label: 'Rendering Mode',
           submenu: [
-            { label: 'Live2D (Animated)', type: 'radio', checked: true, click: () => setRenderMode('live2d') },
-            { label: 'Static Image (立繫)', type: 'radio', checked: false, click: () => setRenderMode('fallback') }
-          ]
+            {
+              label: 'Live2D (Animated)',
+              type: 'radio',
+              checked: true,
+              click: () => setRenderMode('live2d'),
+            },
+            {
+              label: 'Static Image (立繫)',
+              type: 'radio',
+              checked: false,
+              click: () => setRenderMode('fallback'),
+            },
+          ],
         },
         { type: 'separator' },
         {
-          label: 'Auto-adjust', type: 'checkbox', checked: true, click: (item) => {
-            sendToMainWindow('performance-auto-adjust', item.checked);
-          }
-        }
-      ]
+          label: 'Auto-adjust',
+          type: 'checkbox',
+          checked: true,
+          click: (item) => {
+            sendToMainWindow('performance-auto-adjust', item.checked)
+          },
+        },
+      ],
     },
     {
       label: 'Angela Matrix',
       submenu: [
-        { label: 'Vision System', type: 'checkbox', checked: moduleStates.vision, click: (item) => toggleModule('vision', item.checked) },
-        { label: 'Audio System', type: 'checkbox', checked: moduleStates.audio, click: (item) => toggleModule('audio', item.checked) },
-        { label: 'Tactile System', type: 'checkbox', checked: moduleStates.tactile, click: (item) => toggleModule('tactile', item.checked) },
-        { label: 'Action Executor', type: 'checkbox', checked: moduleStates.action, click: (item) => toggleModule('action', item.checked) }
-      ]
+        {
+          label: 'Vision System',
+          type: 'checkbox',
+          checked: moduleStates.vision,
+          click: (item) => toggleModule('vision', item.checked),
+        },
+        {
+          label: 'Audio System',
+          type: 'checkbox',
+          checked: moduleStates.audio,
+          click: (item) => toggleModule('audio', item.checked),
+        },
+        {
+          label: 'Tactile System',
+          type: 'checkbox',
+          checked: moduleStates.tactile,
+          click: (item) => toggleModule('tactile', item.checked),
+        },
+        {
+          label: 'Action Executor',
+          type: 'checkbox',
+          checked: moduleStates.action,
+          click: (item) => toggleModule('action', item.checked),
+        },
+      ],
     },
     {
       label: 'Reload Model',
       click: () => {
-        sendToMainWindow('reload-model');
-      }
+        sendToMainWindow('reload-model')
+      },
     },
     {
       label: 'Auto-startup',
       type: 'checkbox',
       checked: getAutoStartupStatus(),
       click: () => {
-        const currentStatus = getAutoStartupStatus();
-        setAutoStartup(!currentStatus);
+        const currentStatus = getAutoStartupStatus()
+        setAutoStartup(!currentStatus)
         // Update menu item
-        createTray();
-      }
+        createTray()
+      },
     },
     { type: 'separator' },
     {
       label: 'Toggle Always on Top',
       click: () => {
         if (mainWindow) {
-          const current = mainWindow.isAlwaysOnTop();
-          mainWindow.setAlwaysOnTop(!current);
-          sendToMainWindow('always-on-top-changed', { alwaysOnTop: !current });
+          const current = mainWindow.isAlwaysOnTop()
+          mainWindow.setAlwaysOnTop(!current)
+          sendToMainWindow('always-on-top-changed', { alwaysOnTop: !current })
         }
-      }
+      },
     },
     {
       label: 'Toggle Frame',
       click: () => {
         if (mainWindow) {
-          const current = mainWindow.isFrameless();
-          mainWindow.setFrameable(!current);
+          const current = mainWindow.isFrameless()
+          mainWindow.setFrameable(!current)
         }
-      }
+      },
     },
     { type: 'separator' },
     {
       label: 'About',
       click: () => {
-        app.showAboutPanel();
-      }
+        app.showAboutPanel()
+      },
     },
     {
       label: 'Check for Updates',
       click: () => {
-        console.log('Checking for updates...');
-      }
+        console.log('Checking for updates...')
+      },
     },
     { type: 'separator' },
     {
       label: 'Restart',
       click: () => {
-        app.relaunch();
-        app.exit();
-      }
+        app.relaunch()
+        app.exit()
+      },
     },
     {
       label: 'Quit',
       click: () => {
-        app.quit();
-      }
-    }
-  ]);
+        app.quit()
+      },
+    },
+  ])
 
-  tray.setContextMenu(contextMenu);
-  tray.setToolTip('Angela AI - Your Virtual Companion');
+  tray.setContextMenu(contextMenu)
+  tray.setToolTip('Angela AI - Your Virtual Companion')
 
   // Double click to show window
   tray.on('double-click', () => {
     if (mainWindow) {
       if (mainWindow.isVisible()) {
-        mainWindow.hide();
+        mainWindow.hide()
       } else {
-        mainWindow.show();
-        mainWindow.focus();
+        mainWindow.show()
+        mainWindow.focus()
       }
     }
-  });
+  })
 
-  console.log('System tray created');
+  console.log('System tray created')
 }
 
 /**
  * Get tray icon path based on platform
  */
 function getTrayIconPath() {
-  const iconName = process.platform === 'win32' ? 'icon.ico' :
-    process.platform === 'darwin' ? 'icon.icns' : 'icon.png';
+  const iconName =
+    process.platform === 'win32'
+      ? 'icon.ico'
+      : process.platform === 'darwin'
+        ? 'icon.icns'
+        : 'icon.png'
 
   // Try to find icon in assets directory
-  const iconPath = path.join(__dirname, 'assets', iconName);
+  const iconPath = path.join(__dirname, 'assets', iconName)
 
   if (fs.existsSync(iconPath)) {
-    return iconPath;
+    return iconPath
   }
 
   // Fallback to app icon
   if (process.platform === 'win32') {
-    return path.join(__dirname, '..', '..', 'resources', 'icon.ico');
+    return path.join(__dirname, '..', '..', 'resources', 'icon.ico')
   } else if (process.platform === 'darwin') {
-    return path.join(__dirname, '..', '..', 'resources', 'icon.icns');
+    return path.join(__dirname, '..', '..', 'resources', 'icon.icns')
   } else {
-    return path.join(__dirname, '..', '..', 'resources', 'icon.png');
+    return path.join(__dirname, '..', '..', 'resources', 'icon.png')
   }
 }
 
@@ -681,11 +861,11 @@ function getTrayIconPath() {
  */
 function createSettingsWindow(tab = 'general') {
   if (settingsWindow) {
-    settingsWindow.focus();
+    settingsWindow.focus()
     if (tab) {
-      settingsWindow.webContents.send('open-tab', tab);
+      settingsWindow.webContents.send('open-tab', tab)
     }
-    return;
+    return
   }
 
   settingsWindow = new BrowserWindow({
@@ -698,15 +878,15 @@ function createSettingsWindow(tab = 'general') {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
-    }
-  });
+      nodeIntegration: false,
+    },
+  })
 
-  settingsWindow.loadFile('settings.html', { query: { tab } });
+  settingsWindow.loadFile('settings.html', { query: { tab } })
 
   settingsWindow.on('closed', () => {
-    settingsWindow = null;
-  });
+    settingsWindow = null
+  })
 }
 
 /**
@@ -715,37 +895,37 @@ function createSettingsWindow(tab = 'general') {
 function registerSecurityHandlers() {
   ipcMain.handle('security:init', (event, keyC) => {
     try {
-      securityManager.init(keyC);
-      return { success: true };
+      securityManager.init(keyC)
+      return { success: true }
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: error.message }
     }
-  });
+  })
 
   ipcMain.handle('security:is-initialized', () => {
-    return securityManager.isInitialized();
-  });
+    return securityManager.isInitialized()
+  })
 
   ipcMain.handle('security:sync', async () => {
-    const result = await securityManager.syncFromBackend(backendIP);
-    return { success: result };
-  });
+    const result = await securityManager.syncFromBackend(backendIP)
+    return { success: result }
+  })
 
   ipcMain.handle('security:encrypt', (event, data) => {
     try {
-      return { success: true, data: securityManager.encrypt(data) };
+      return { success: true, data: securityManager.encrypt(data) }
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: error.message }
     }
-  });
+  })
 
   ipcMain.handle('security:decrypt', (event, encryptedData) => {
     try {
-      return { success: true, data: securityManager.decrypt(encryptedData) };
+      return { success: true, data: securityManager.decrypt(encryptedData) }
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: error.message }
     }
-  });
+  })
 }
 
 /**
@@ -755,19 +935,19 @@ function registerGlobalShortcuts() {
   // Toggle visibility
   globalShortcut.register('CommandOrControl+Shift+A', () => {
     if (mainWindow) {
-      mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+      mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show()
     }
-  });
+  })
 
   // Open settings
   globalShortcut.register('CommandOrControl+Shift+S', () => {
-    createSettingsWindow();
-  });
+    createSettingsWindow()
+  })
 
   // Exit app
   globalShortcut.register('CommandOrControl+Shift+Q', () => {
-    app.quit();
-  });
+    app.quit()
+  })
 }
 
 /**
@@ -777,22 +957,22 @@ function initializeSystemIntegrations() {
   // Request necessary permissions
   if (process.platform === 'darwin') {
     // macOS permissions
-    systemPreferences.askForMediaAccess('camera');
-    systemPreferences.askForMediaAccess('microphone');
+    systemPreferences.askForMediaAccess('camera')
+    systemPreferences.askForMediaAccess('microphone')
   }
 
   // Detect screen size changes
   screen.on('display-metrics-changed', () => {
-    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    sendToMainWindow('screen-changed', { width, height });
-  });
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize
+    sendToMainWindow('screen-changed', { width, height })
+  })
 
   // Detect system theme changes
   nativeTheme.on('updated', () => {
     sendToMainWindow('theme-changed', {
-      shouldUseDarkColors: nativeTheme.shouldUseDarkColors
-    });
-  });
+      shouldUseDarkColors: nativeTheme.shouldUseDarkColors,
+    })
+  })
 }
 
 /**
@@ -804,18 +984,18 @@ function setAutoStartup(enable) {
     // Electron's app.setLoginItemSettings() handles this
     app.setLoginItemSettings({
       openAtLogin: enable,
-      openAsHidden: enable
-    });
+      openAsHidden: enable,
+    })
   } else if (process.platform === 'darwin') {
     // macOS: use login item
     app.setLoginItemSettings({
       openAtLogin: enable,
-      openAsHidden: enable
-    });
+      openAsHidden: enable,
+    })
   } else if (process.platform === 'linux') {
     // Linux: create autostart .desktop file
-    const autostartDir = path.join(app.getPath('home'), '.config', 'autostart');
-    const autostartFile = path.join(autostartDir, 'angela-ai.desktop');
+    const autostartDir = path.join(app.getPath('home'), '.config', 'autostart')
+    const autostartFile = path.join(autostartDir, 'angela-ai.desktop')
 
     if (enable) {
       // Create autostart .desktop file
@@ -825,24 +1005,24 @@ Name=Angela AI
 Exec="${process.execPath}"
 Icon="${path.join(__dirname, 'assets', 'icon.png')}"
 X-GNOME-Autostart-enabled=true
-`;
+`
 
       try {
         if (!fs.existsSync(autostartDir)) {
-          fs.mkdirSync(autostartDir, { recursive: true });
+          fs.mkdirSync(autostartDir, { recursive: true })
         }
-        fs.writeFileSync(autostartFile, desktopEntry);
+        fs.writeFileSync(autostartFile, desktopEntry)
       } catch (e) {
-        console.error('Failed to create autostart file:', e);
+        console.error('Failed to create autostart file:', e)
       }
     } else {
       // Remove autostart file
       try {
         if (fs.existsSync(autostartFile)) {
-          fs.unlinkSync(autostartFile);
+          fs.unlinkSync(autostartFile)
         }
       } catch (e) {
-        console.error('Failed to remove autostart file:', e);
+        console.error('Failed to remove autostart file:', e)
       }
     }
   }
@@ -850,30 +1030,35 @@ X-GNOME-Autostart-enabled=true
 
 function getAutoStartupStatus() {
   if (process.platform === 'win32' || process.platform === 'darwin') {
-    const settings = app.getLoginItemSettings();
-    return settings.openAtLogin || false;
+    const settings = app.getLoginItemSettings()
+    return settings.openAtLogin || false
   } else if (process.platform === 'linux') {
-    const autostartFile = path.join(app.getPath('home'), '.config', 'autostart', 'angela-ai.desktop');
-    return fs.existsSync(autostartFile);
+    const autostartFile = path.join(
+      app.getPath('home'),
+      '.config',
+      'autostart',
+      'angela-ai.desktop'
+    )
+    return fs.existsSync(autostartFile)
   }
-  return false;
+  return false
 }
 
 /**
  * Save/restore window position
  */
 function saveWindowPosition(bounds) {
-  const configPath = path.join(app.getPath('userData'), 'window-position.json');
-  fs.writeFileSync(configPath, JSON.stringify(bounds));
+  const configPath = path.join(app.getPath('userData'), 'window-position.json')
+  fs.writeFileSync(configPath, JSON.stringify(bounds))
 }
 
 function restoreWindowPosition() {
-  const configPath = path.join(app.getPath('userData'), 'window-position.json');
+  const configPath = path.join(app.getPath('userData'), 'window-position.json')
   try {
-    const data = fs.readFileSync(configPath, 'utf8');
-    return JSON.parse(data);
+    const data = fs.readFileSync(configPath, 'utf8')
+    return JSON.parse(data)
   } catch {
-    return null;
+    return null
   }
 }
 
@@ -881,39 +1066,39 @@ function restoreWindowPosition() {
  * Cleanup resources before quit
  */
 function cleanupResources() {
-  globalShortcut.unregisterAll();
+  globalShortcut.unregisterAll()
 }
 
 /**
  * Hardware & Performance settings helpers
  */
 function setPerformanceMode(mode) {
-  currentPerformanceMode = mode;
-  sendToMainWindow('performance-mode-changed', mode);
-  createTray(); // Refresh menu
+  currentPerformanceMode = mode
+  sendToMainWindow('performance-mode-changed', mode)
+  createTray() // Refresh menu
 }
 
 function setWallpaperMode(mode) {
-  currentWallpaperMode = mode;
-  sendToMainWindow('wallpaper-mode-changed', mode);
-  createTray(); // Refresh menu
+  currentWallpaperMode = mode
+  sendToMainWindow('wallpaper-mode-changed', mode)
+  createTray() // Refresh menu
 }
 
 function setRenderMode(mode) {
-  sendToMainWindow('render-mode', mode);
-  createTray(); // Refresh menu
+  sendToMainWindow('render-mode', mode)
+  createTray() // Refresh menu
 }
 
 function toggleModule(module, enabled) {
-  moduleStates[module] = enabled;
-  sendToMainWindow('module-toggle', { module, enabled });
-  createTray(); // Refresh menu
+  moduleStates[module] = enabled
+  sendToMainWindow('module-toggle', { module, enabled })
+  createTray() // Refresh menu
 }
 
 function setBackendIP(ip) {
-  backendIP = ip;
-  sendToMainWindow('backend-ip-changed', ip);
-  createTray(); // Refresh menu
+  backendIP = ip
+  sendToMainWindow('backend-ip-changed', ip)
+  createTray() // Refresh menu
 }
 
 /**
@@ -921,96 +1106,95 @@ function setBackendIP(ip) {
  */
 
 // Performance & Wallpaper Mode
-ipcMain.handle('performance-get-mode', () => currentPerformanceMode);
+ipcMain.handle('performance-get-mode', () => currentPerformanceMode)
 ipcMain.handle('performance-set-mode', (event, mode) => {
-  setPerformanceMode(mode);
-  return { success: true };
-});
+  setPerformanceMode(mode)
+  return { success: true }
+})
 
-ipcMain.handle('wallpaper-get-mode', () => currentWallpaperMode);
+ipcMain.handle('wallpaper-get-mode', () => currentWallpaperMode)
 ipcMain.handle('wallpaper-set-mode', (event, mode) => {
-  setWallpaperMode(mode);
-  return { success: true };
-});
+  setWallpaperMode(mode)
+  return { success: true }
+})
 
 ipcMain.handle('module-set-state', (event, { module, enabled }) => {
-  moduleStates[module] = enabled;
-  createTray(); // Refresh menu
-  return { success: true };
-});
+  moduleStates[module] = enabled
+  createTray() // Refresh menu
+  return { success: true }
+})
 
-ipcMain.handle('backend-get-ip', () => backendIP);
+ipcMain.handle('backend-get-ip', () => backendIP)
 ipcMain.handle('backend-set-ip', (event, ip) => {
-  backendIP = ip;
-  createTray(); // Refresh menu
-  return { success: true };
-});
+  backendIP = ip
+  createTray() // Refresh menu
+  return { success: true }
+})
 
 ipcMain.handle('wallpaper-inject-object', (event, objectData) => {
   if (sendToMainWindow('wallpaper-inject-object', objectData)) {
-    return { success: true };
+    return { success: true }
   }
-  return { success: false, error: 'Main window not available' };
-});
+  return { success: false, error: 'Main window not available' }
+})
 
 // Window management
 ipcMain.handle('window-minimize', () => {
-  mainWindow.minimize();
-});
+  mainWindow.minimize()
+})
 
 ipcMain.handle('window-maximize', () => {
   if (mainWindow.isMaximized()) {
-    mainWindow.unmaximize();
+    mainWindow.unmaximize()
   } else {
-    mainWindow.maximize();
+    mainWindow.maximize()
   }
-});
+})
 
 ipcMain.handle('window-close', () => {
-  mainWindow.close();
-});
+  mainWindow.close()
+})
 
 ipcMain.handle('window-set-size', (event, { width, height }) => {
-  mainWindow.setSize(width, height);
-});
+  mainWindow.setSize(width, height)
+})
 
 ipcMain.handle('window-set-position', (event, { x, y }) => {
-  mainWindow.setPosition(x, y);
-});
+  mainWindow.setPosition(x, y)
+})
 
 ipcMain.handle('window-get-position', () => {
-  const [x, y] = mainWindow.getPosition();
-  return { x, y };
-});
+  const [x, y] = mainWindow.getPosition()
+  return { x, y }
+})
 
 ipcMain.handle('window-get-bounds', () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return null;
-  return mainWindow.getBounds();
-});
+  if (!mainWindow || mainWindow.isDestroyed()) return null
+  return mainWindow.getBounds()
+})
 
 ipcMain.on('window-set-bounds', (event, bounds) => {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  mainWindow.setBounds(bounds);
-});
-
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  mainWindow.setBounds(bounds)
+})
 
 ipcMain.handle('window-set-size-and-center', (event, { width, height }) => {
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const x = Math.max(0, screenWidth - width - 50);
-  const y = Math.max(0, screenHeight - height - 50);
-  mainWindow.setBounds({ x, y, width, height });
-});
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize
+  const x = Math.max(0, screenWidth - width - 50)
+  const y = Math.max(0, screenHeight - height - 50)
+  mainWindow.setBounds({ x, y, width, height })
+})
 
 ipcMain.handle('window-set-always-on-top', (event, flag) => {
-  mainWindow.setAlwaysOnTop(flag);
-});
+  mainWindow.setAlwaysOnTop(flag)
+})
 
 ipcMain.handle('window-set-ignore-mouse-events', (event, ignore, options = {}) => {
   mainWindow.setIgnoreMouseEvents(ignore, {
     forward: options.forward || true,
-    translate: options.translate || false
-  });
-});
+    translate: options.translate || false,
+  })
+})
 
 // Click-through regions
 ipcMain.handle('set-click-through-regions', (event, regions) => {
@@ -1019,309 +1203,316 @@ ipcMain.handle('set-click-through-regions', (event, regions) => {
     if (regions && regions.length > 0) {
       // 将穿透区域转换为skipRegions（不穿透的区域）
       // Electron的skipRegions参数指定哪些区域不忽略鼠标事件
-      const skipRegions = regions.map(region => ({
+      const skipRegions = regions.map((region) => ({
         x: Math.floor(region.x),
         y: Math.floor(region.y),
         width: Math.ceil(region.width),
-        height: Math.ceil(region.height)
-      }));
+        height: Math.ceil(region.height),
+      }))
 
       mainWindow.setIgnoreMouseEvents(true, {
         forward: true,
         translate: false,
-        skipRegions: skipRegions
-      });
+        skipRegions: skipRegions,
+      })
 
-      console.log('[Main] 点击穿透区域已设置:', skipRegions.length, '个区域');
+      console.log('[Main] 点击穿透区域已设置:', skipRegions.length, '个区域')
     } else {
-      mainWindow.setIgnoreMouseEvents(false);
-      console.log('[Main] 点击穿透已禁用');
+      mainWindow.setIgnoreMouseEvents(false)
+      console.log('[Main] 点击穿透已禁用')
     }
 
     // Send regions to renderer for hit testing
-    sendToMainWindow('click-through-regions-updated', regions);
+    sendToMainWindow('click-through-regions-updated', regions)
   } catch (error) {
-    console.error('[Main] 设置点击穿透区域失败:', error);
+    console.error('[Main] 设置点击穿透区域失败:', error)
     // 失败时恢复默认行为
-    mainWindow.setIgnoreMouseEvents(false);
+    mainWindow.setIgnoreMouseEvents(false)
   }
-});
+})
 
 // Live2D model management
 ipcMain.handle('live2d-load-model', async (event, modelPath) => {
   try {
     // Normalize path separators
-    const normalizedModelPath = modelPath.replace(/\\/g, '/');
+    const normalizedModelPath = modelPath.replace(/\\/g, '/')
 
     // Correctly resolve models directory relative to project root
     // apps/desktop-app/electron_app -> ../../../resources/models
-    const projectRoot = path.join(__dirname, '..', '..', '..');
-    const modelsDir = path.join(projectRoot, 'resources', 'models');
+    const projectRoot = path.join(__dirname, '..', '..', '..')
+    const modelsDir = path.join(projectRoot, 'resources', 'models')
 
     // Check if modelPath is already a full path or relative
-    let fullPath;
+    let fullPath
     if (normalizedModelPath.startsWith('/') || normalizedModelPath.includes(':')) {
       // Already a full path
-      fullPath = normalizedModelPath;
+      fullPath = normalizedModelPath
     } else if (normalizedModelPath.startsWith('resources/')) {
       // Relative path starting with resources/
-      fullPath = path.join(projectRoot, normalizedModelPath);
+      fullPath = path.join(projectRoot, normalizedModelPath)
     } else if (normalizedModelPath.includes('/')) {
       // Relative path with directory
-      fullPath = path.join(modelsDir, normalizedModelPath);
+      fullPath = path.join(modelsDir, normalizedModelPath)
     } else {
       // Just a model name, find in modelsDir
-      const modelDir = path.join(modelsDir, normalizedModelPath);
+      const modelDir = path.join(modelsDir, normalizedModelPath)
       if (fs.existsSync(modelDir) && fs.statSync(modelDir).isDirectory()) {
         // It's a directory, find the model file
-        const modelFiles = fs.readdirSync(modelDir).filter(f => f.endsWith('.model3.json'));
-        const modelFile = modelFiles.find(f => f.includes('_t03')) || modelFiles[0];
+        const modelFiles = fs.readdirSync(modelDir).filter((f) => f.endsWith('.model3.json'))
+        const modelFile = modelFiles.find((f) => f.includes('_t03')) || modelFiles[0]
         if (modelFile) {
-          fullPath = path.join(modelDir, modelFile);
+          fullPath = path.join(modelDir, modelFile)
         } else {
-          fullPath = modelDir;
+          fullPath = modelDir
         }
       } else {
-        fullPath = path.join(modelsDir, normalizedModelPath);
+        fullPath = path.join(modelsDir, normalizedModelPath)
       }
     }
 
     // If it's a directory, check for model file
     if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory()) {
       // Check for runtime/ subdirectory or model file
-      const runtimePath = path.join(fullPath, 'runtime');
+      const runtimePath = path.join(fullPath, 'runtime')
       if (fs.existsSync(runtimePath)) {
-        fullPath = runtimePath;
+        fullPath = runtimePath
       } else {
         // Find model3.json in this directory
-        const modelFiles = fs.readdirSync(fullPath).filter(f => f.endsWith('.model3.json'));
-        const modelFile = modelFiles.find(f => f.includes('_t03')) || modelFiles[0];
+        const modelFiles = fs.readdirSync(fullPath).filter((f) => f.endsWith('.model3.json'))
+        const modelFile = modelFiles.find((f) => f.includes('_t03')) || modelFiles[0]
         if (modelFile) {
-          fullPath = path.join(fullPath, modelFile);
+          fullPath = path.join(fullPath, modelFile)
         }
       }
     }
 
     if (fs.existsSync(fullPath)) {
-      console.log(`[Main] Loading Live2D model from: ${fullPath}`);
+      console.log(`[Main] Loading Live2D model from: ${fullPath}`)
 
       // Convert file path to file URL for renderer
-      const fileUrl = `file://${fullPath}`;
-      console.log(`[Main] Converting to URL: ${fileUrl}`);
+      const fileUrl = `file://${fullPath}`
+      console.log(`[Main] Converting to URL: ${fileUrl}`)
 
-      return { success: true, path: fullPath, url: fileUrl };
+      return { success: true, path: fullPath, url: fileUrl }
     }
 
-    console.warn(`[Main] Model path not found: ${fullPath}`);
-    return { success: false, error: 'Model file not found' };
+    console.warn(`[Main] Model path not found: ${fullPath}`)
+    return { success: false, error: 'Model file not found' }
   } catch (error) {
-    console.error(`[Main] Error loading Live2D model: ${error.message}`);
-    return { success: false, error: error.message };
+    console.error(`[Main] Error loading Live2D model: ${error.message}`)
+    return { success: false, error: error.message }
   }
-});
+})
 
 ipcMain.handle('live2d-get-models', () => {
-  const modelsDir = path.join(__dirname, '..', '..', '..', 'resources', 'models');
-  console.log(`[Main] Searching for models in: ${modelsDir}`);
+  const modelsDir = path.join(__dirname, '..', '..', '..', 'resources', 'models')
+  console.log(`[Main] Searching for models in: ${modelsDir}`)
 
   if (!fs.existsSync(modelsDir)) {
-    console.warn(`[Main] Models directory not found: ${modelsDir}`);
-    return [];
+    console.warn(`[Main] Models directory not found: ${modelsDir}`)
+    return []
   }
 
   // Helper function to find model3.json recursively
   function findModelJson(dir, baseName) {
     // First check root of model dir
-    const rootPath = path.join(dir, String(baseName) + '.model3.json');
+    const rootPath = path.join(dir, String(baseName) + '.model3.json')
     if (fs.existsSync(rootPath)) {
-      return { foundPath: String(baseName) + '.model3.json', subdir: '' };
+      return { foundPath: String(baseName) + '.model3.json', subdir: '' }
     }
 
     // Check runtime/ subdirectory (Epsilon style)
-    const runtimePath = path.join(dir, 'runtime', String(baseName) + '.model3.json');
+    const runtimePath = path.join(dir, 'runtime', String(baseName) + '.model3.json')
     if (fs.existsSync(runtimePath)) {
-      return { foundPath: 'runtime/' + String(baseName) + '.model3.json', subdir: 'runtime' };
+      return { foundPath: 'runtime/' + String(baseName) + '.model3.json', subdir: 'runtime' }
     }
 
     // Try any .model3.json file in root
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    const entries = fs.readdirSync(dir, { withFileTypes: true })
     const modelJsonFiles = entries
-      .filter(e => e.isFile() && String(e.name).endsWith('.model3.json'))
-      .map(e => String(e.name));
+      .filter((e) => e.isFile() && String(e.name).endsWith('.model3.json'))
+      .map((e) => String(e.name))
 
     if (modelJsonFiles.length > 0 && modelJsonFiles[0]) {
-      return { foundPath: String(modelJsonFiles[0]), subdir: '' };
+      return { foundPath: String(modelJsonFiles[0]), subdir: '' }
     }
 
     // Try .model3.json in subdirectories
-    const subdirs = entries.filter(e => e.isDirectory()).map(e => String(e.name));
+    const subdirs = entries.filter((e) => e.isDirectory()).map((e) => String(e.name))
     for (const subdirName of subdirs) {
-      const subdirPath = path.join(dir, String(subdirName));
-      const files = fs.readdirSync(subdirPath, { withFileTypes: true });
+      const subdirPath = path.join(dir, String(subdirName))
+      const files = fs.readdirSync(subdirPath, { withFileTypes: true })
       const jsonFiles = files
-        .filter(e => e.isFile() && String(e.name).endsWith('.model3.json'))
-        .map(e => String(e.name));
+        .filter((e) => e.isFile() && String(e.name).endsWith('.model3.json'))
+        .map((e) => String(e.name))
       if (jsonFiles.length > 0 && jsonFiles[0]) {
-        return { foundPath: path.join(String(subdirName), String(jsonFiles[0])), subdir: String(subdirName) };
+        return {
+          foundPath: path.join(String(subdirName), String(jsonFiles[0])),
+          subdir: String(subdirName),
+        }
       }
     }
 
-    return null;
+    return null
   }
 
-  const models = fs.readdirSync(modelsDir, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => {
-      const modelDir = path.join(modelsDir, dirent.name);
-      const result = findModelJson(modelDir, dirent.name);
+  const models = fs
+    .readdirSync(modelsDir, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory())
+    .map((dirent) => {
+      const modelDir = path.join(modelsDir, dirent.name)
+      const result = findModelJson(modelDir, dirent.name)
 
       if (result) {
-        const relativePath = path.join('resources', 'models', dirent.name, result.foundPath);
-        console.log(`[Main] Found model: ${dirent.name}, relative path: ${relativePath}`);
+        const relativePath = path.join('resources', 'models', dirent.name, result.foundPath)
+        console.log(`[Main] Found model: ${dirent.name}, relative path: ${relativePath}`)
 
         return {
           name: dirent.name,
           path: relativePath,
-          fullPath: path.join(modelDir, result.foundPath)
-        };
+          fullPath: path.join(modelDir, result.foundPath),
+        }
       }
 
       return {
         name: dirent.name,
         path: path.join('resources', 'models', dirent.name),
-        fullPath: modelDir
-      };
+        fullPath: modelDir,
+      }
     })
-    .filter(m => m.path.endsWith('.model3.json'));
+    .filter((m) => m.path.endsWith('.model3.json'))
 
-  console.log(`[Main] Found ${models.length} models`);
-  return models;
-});
+  console.log(`[Main] Found ${models.length} models`)
+  return models
+})
 
 // Wallpaper management
 ipcMain.handle('wallpaper-set', async (event, imagePath) => {
   try {
     // Don't actually change system wallpaper
     // Just store for non-destructive overlay
-    currentWallpaper = imagePath;
+    currentWallpaper = imagePath
 
     // Get current system wallpaper
-    const systemWallpaper = await getSystemWallpaper();
+    const systemWallpaper = await getSystemWallpaper()
 
     return {
       success: true,
       systemWallpaper: systemWallpaper,
-      userWallpaper: imagePath
-    };
+      userWallpaper: imagePath,
+    }
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message }
   }
-});
+})
 
 ipcMain.handle('wallpaper-get', async () => {
   try {
-    const systemWallpaper = await getSystemWallpaper();
+    const systemWallpaper = await getSystemWallpaper()
     return {
       systemWallpaper: systemWallpaper,
-      userWallpaper: currentWallpaper
-    };
+      userWallpaper: currentWallpaper,
+    }
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message }
   }
-});
+})
 
 async function getSystemWallpaper() {
   // Platform-specific wallpaper detection
   if (process.platform === 'win32') {
-    const { exec } = require('child_process');
+    const { exec } = require('child_process')
     return new Promise((resolve) => {
-      exec('reg query "HKEY_CURRENT_USER\\Control Panel\\Desktop" /v Wallpaper', (error, stdout) => {
-        if (error) {
-          resolve(null);
-          return;
+      exec(
+        'reg query "HKEY_CURRENT_USER\\Control Panel\\Desktop" /v Wallpaper',
+        (error, stdout) => {
+          if (error) {
+            resolve(null)
+            return
+          }
+          const match = stdout.match(/Wallpaper\s+REG_SZ\s+(.+)/)
+          resolve(match ? match[1] : null)
         }
-        const match = stdout.match(/Wallpaper\s+REG_SZ\s+(.+)/);
-        resolve(match ? match[1] : null);
-      });
-    });
+      )
+    })
   } else if (process.platform === 'darwin') {
-    const { exec } = require('child_process');
+    const { exec } = require('child_process')
     return new Promise((resolve) => {
       exec('defaults read com.apple.desktop Background', (error) => {
         // macOS wallpaper detection is complex, simplify for now
-        resolve(null);
-      });
-    });
+        resolve(null)
+      })
+    })
   } else {
     // Linux
-    return null;
+    return null
   }
 }
 
 // Screen information
 ipcMain.handle('screen-get-displays', () => {
-  return screen.getAllDisplays();
-});
+  return screen.getAllDisplays()
+})
 
 ipcMain.handle('screen-get-primary-display', () => {
-  const display = screen.getPrimaryDisplay();
+  const display = screen.getPrimaryDisplay()
   return {
     id: display.id,
     bounds: display.bounds,
     workArea: display.workArea,
-    scaleFactor: display.scaleFactor
-  };
-});
+    scaleFactor: display.scaleFactor,
+  }
+})
 
 // System theme
 ipcMain.handle('theme-get-current', () => {
   return {
     shouldUseDarkColors: nativeTheme.shouldUseDarkColors,
     shouldUseHighContrastColors: nativeTheme.shouldUseHighContrastColors,
-    shouldUseInvertedColorScheme: nativeTheme.shouldUseInvertedColorScheme
-  };
-});
+    shouldUseInvertedColorScheme: nativeTheme.shouldUseInvertedColorScheme,
+  }
+})
 
 ipcMain.on('theme-set-source', (event, source) => {
-  nativeTheme.themeSource = source;
-});
+  nativeTheme.themeSource = source
+})
 
 // Settings window
 ipcMain.on('settings-open', () => {
-  createSettingsWindow();
-});
+  createSettingsWindow()
+})
 
 ipcMain.on('settings-close', () => {
   if (settingsWindow) {
-    settingsWindow.close();
+    settingsWindow.close()
   }
-});
+})
 
 // Auto-startup management
 ipcMain.handle('autostart-get', () => {
-  return getAutoStartupStatus();
-});
+  return getAutoStartupStatus()
+})
 
 ipcMain.handle('autostart-set', (event, enable) => {
-  setAutoStartup(enable);
-  return { success: true, enabled: enable };
-});
+  setAutoStartup(enable)
+  return { success: true, enabled: enable }
+})
 
 // Audio system (placeholder - will be expanded)
 ipcMain.handle('audio-get-devices', async () => {
   // Will use node-core-audio or similar
   return {
     inputDevices: [],
-    outputDevices: []
-  };
-});
+    outputDevices: [],
+  }
+})
 
 // Haptic system (placeholder - will be expanded)
 ipcMain.handle('haptic-get-devices', async () => {
   return {
-    devices: []
-  };
-});
+    devices: [],
+  }
+})
 
 // File operations
 ipcMain.handle('file-save-dialog', async (event, options) => {
@@ -1330,9 +1521,9 @@ ipcMain.handle('file-save-dialog', async (event, options) => {
       const { dialog } = require('electron').remote;
       dialog.showSaveDialog(mainWindow, ${JSON.stringify(options)}).then(resolve);
     });
-  `);
-  return result;
-});
+  `)
+  return result
+})
 
 ipcMain.handle('file-open-dialog', async (event, options) => {
   const result = await mainWindow.webContents.executeJavaScript(`
@@ -1340,176 +1531,180 @@ ipcMain.handle('file-open-dialog', async (event, options) => {
       const { dialog } = require('electron').remote;
       dialog.showOpenDialog(mainWindow, ${JSON.stringify(options)}).then(resolve);
     });
-  `);
-  return result;
-});
+  `)
+  return result
+})
 
 // Backend API communication (WebSocket)
-const WebSocket = require('ws');
-let wsClient = null;
-let wsReconnectTimer = null;
-let wsReconnectAttempts = 0;
-let wsHeartbeatInterval = null;
-const WS_MAX_RECONNECT_ATTEMPTS = 5;
-const WS_RECONNECT_DELAY = 3000;
+const WebSocket = require('ws')
+let wsClient = null
+let wsReconnectTimer = null
+let wsReconnectAttempts = 0
+let wsHeartbeatInterval = null
+const WS_MAX_RECONNECT_ATTEMPTS = 5
+const WS_RECONNECT_DELAY = 3000
 
 function connectWebSocket(url) {
   if (wsClient && wsClient.readyState === WebSocket.OPEN) {
-    console.log('[WebSocket] Already connected');
-    return;
+    console.log('[WebSocket] Already connected')
+    return
   }
 
   try {
-    console.log(`[WebSocket] Connecting to ${url}...`);
-    wsClient = new WebSocket(url);
+    console.log(`[WebSocket] Connecting to ${url}...`)
+    wsClient = new WebSocket(url)
 
     wsClient.on('open', () => {
-      console.log('[WebSocket] Connected successfully');
-      wsReconnectAttempts = 0;
+      console.log('[WebSocket] Connected successfully')
+      wsReconnectAttempts = 0
 
       // Start heartbeat
-      if (wsHeartbeatInterval) clearInterval(wsHeartbeatInterval);
+      if (wsHeartbeatInterval) clearInterval(wsHeartbeatInterval)
       wsHeartbeatInterval = setInterval(() => {
         if (wsClient && wsClient.readyState === WebSocket.OPEN) {
-          wsClient.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }));
+          wsClient.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }))
         }
-      }, 30000);
+      }, 30000)
 
       // Skip sending if window is destroyed
-      if (!mainWindow || mainWindow.isDestroyed()) return;
-      sendToMainWindow('websocket-connected', { success: true });
-    });
+      if (!mainWindow || mainWindow.isDestroyed()) return
+      sendToMainWindow('websocket-connected', { success: true })
+    })
 
     wsClient.on('message', (data) => {
       // Skip if window is destroyed
-      if (!mainWindow || mainWindow.isDestroyed()) return;
+      if (!mainWindow || mainWindow.isDestroyed()) return
 
       try {
-        const message = JSON.parse(data.toString());
-        console.log('[WebSocket] Received:', message);
-        sendToMainWindow('websocket-message', message);
+        const message = JSON.parse(data.toString())
+        console.log('[WebSocket] Received:', message)
+        sendToMainWindow('websocket-message', message)
       } catch (error) {
-        console.error('[WebSocket] Failed to parse message:', error);
+        console.error('[WebSocket] Failed to parse message:', error)
       }
-    });
+    })
 
     wsClient.on('error', (error) => {
-      console.error('[WebSocket] Error:', error.message);
+      console.error('[WebSocket] Error:', error.message)
 
       // Handle EPIPE errors specifically
       if (error.code === 'EPIPE' || error.message.includes('EPIPE')) {
-        console.warn('[WebSocket] EPIPE error detected - connection may be broken');
+        console.warn('[WebSocket] EPIPE error detected - connection may be broken')
         // Force close and reconnect
         if (wsClient) {
-          wsClient.terminate();
-          wsClient = null;
+          wsClient.terminate()
+          wsClient = null
         }
         // Trigger immediate reconnection
         if (wsReconnectAttempts < WS_MAX_RECONNECT_ATTEMPTS) {
-          wsReconnectAttempts++;
-          console.log(`[WebSocket] Reconnecting after EPIPE (attempt ${wsReconnectAttempts}/${WS_MAX_RECONNECT_ATTEMPTS})...`);
+          wsReconnectAttempts++
+          console.log(
+            `[WebSocket] Reconnecting after EPIPE (attempt ${wsReconnectAttempts}/${WS_MAX_RECONNECT_ATTEMPTS})...`
+          )
           wsReconnectTimer = setTimeout(() => {
-            connectWebSocket(url);
-          }, WS_RECONNECT_DELAY);
+            connectWebSocket(url)
+          }, WS_RECONNECT_DELAY)
         }
-        return;
+        return
       }
 
       // Skip sending if window is destroyed
-      if (!mainWindow || mainWindow.isDestroyed()) return;
-      sendToMainWindow('websocket-error', { error: error.message });
-    });
+      if (!mainWindow || mainWindow.isDestroyed()) return
+      sendToMainWindow('websocket-error', { error: error.message })
+    })
 
     wsClient.on('close', (code, reason) => {
-      console.log(`[WebSocket] Closed: ${code} - ${reason}`);
-      wsClient = null;
+      console.log(`[WebSocket] Closed: ${code} - ${reason}`)
+      wsClient = null
 
       if (wsHeartbeatInterval) {
-        clearInterval(wsHeartbeatInterval);
-        wsHeartbeatInterval = null;
+        clearInterval(wsHeartbeatInterval)
+        wsHeartbeatInterval = null
       }
 
       // Skip sending if window is destroyed
-      if (!mainWindow || mainWindow.isDestroyed()) return;
+      if (!mainWindow || mainWindow.isDestroyed()) return
 
-      sendToMainWindow('websocket-disconnected', { code, reason: reason.toString() });
+      sendToMainWindow('websocket-disconnected', { code, reason: reason.toString() })
 
       // Auto-reconnect
       if (wsReconnectAttempts < WS_MAX_RECONNECT_ATTEMPTS) {
-        wsReconnectAttempts++;
-        console.log(`[WebSocket] Reconnecting in ${WS_RECONNECT_DELAY}ms (attempt ${wsReconnectAttempts}/${WS_MAX_RECONNECT_ATTEMPTS})...`);
+        wsReconnectAttempts++
+        console.log(
+          `[WebSocket] Reconnecting in ${WS_RECONNECT_DELAY}ms (attempt ${wsReconnectAttempts}/${WS_MAX_RECONNECT_ATTEMPTS})...`
+        )
         wsReconnectTimer = setTimeout(() => {
-          connectWebSocket(url);
-        }, WS_RECONNECT_DELAY);
+          connectWebSocket(url)
+        }, WS_RECONNECT_DELAY)
       } else {
-        console.error('[WebSocket] Max reconnection attempts reached');
+        console.error('[WebSocket] Max reconnection attempts reached')
       }
-    });
+    })
   } catch (error) {
-    console.error('[WebSocket] Connection failed:', error);
-    sendToMainWindow('websocket-error', { error: error.message });
+    console.error('[WebSocket] Connection failed:', error)
+    sendToMainWindow('websocket-error', { error: error.message })
   }
 }
 
 function disconnectWebSocket() {
   if (wsReconnectTimer) {
-    clearTimeout(wsReconnectTimer);
-    wsReconnectTimer = null;
+    clearTimeout(wsReconnectTimer)
+    wsReconnectTimer = null
   }
 
   if (wsHeartbeatInterval) {
-    clearInterval(wsHeartbeatInterval);
-    wsHeartbeatInterval = null;
+    clearInterval(wsHeartbeatInterval)
+    wsHeartbeatInterval = null
   }
 
   if (wsClient) {
-    wsClient.close();
-    wsClient = null;
+    wsClient.close()
+    wsClient = null
   }
 
-  wsReconnectAttempts = 0;
+  wsReconnectAttempts = 0
 }
 
 function sendWebSocketMessage(message) {
   if (!wsClient || wsClient.readyState !== WebSocket.OPEN) {
-    console.error('[WebSocket] Not connected');
-    return false;
+    console.error('[WebSocket] Not connected')
+    return false
   }
 
   try {
-    wsClient.send(JSON.stringify(message));
-    return true;
+    wsClient.send(JSON.stringify(message))
+    return true
   } catch (error) {
-    console.error('[WebSocket] Failed to send message:', error);
-    return false;
+    console.error('[WebSocket] Failed to send message:', error)
+    return false
   }
 }
 
 ipcMain.on('websocket-connect', (event, { url }) => {
-  connectWebSocket(url);
-});
+  connectWebSocket(url)
+})
 
 ipcMain.on('websocket-disconnect', () => {
-  disconnectWebSocket();
-});
+  disconnectWebSocket()
+})
 
 ipcMain.on('websocket-send', (event, message) => {
-  const success = sendWebSocketMessage(message);
-  event.reply('websocket-send-result', { success });
-});
+  const success = sendWebSocketMessage(message)
+  event.reply('websocket-send-result', { success })
+})
 
 ipcMain.handle('websocket-get-status', () => {
   return {
     connected: wsClient && wsClient.readyState === WebSocket.OPEN,
-    reconnectAttempts: wsReconnectAttempts
-  };
-});
+    reconnectAttempts: wsReconnectAttempts,
+  }
+})
 
 // Export for testing
 if (module.exports) {
   module.exports = {
     createMainWindow,
     saveWindowPosition,
-    restoreWindowPosition
-  };
+    restoreWindowPosition,
+  }
 }

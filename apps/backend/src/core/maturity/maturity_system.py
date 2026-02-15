@@ -164,20 +164,20 @@ def create_maturity_system() -> MaturityManager:
 
 
 def demo():
-    print("🎚️ 成熟度等级系统演示")
-    print("=" * 50)
+    logger.info("🎚️ 成熟度等级系统演示")
+    logger.info("=" * 50)
     
     ms = create_maturity_system()
     
-    print("\n📝 模拟交互:")
+    logger.info("\n📝 模拟交互:")
     for i in range(10):
         ms.interact("conversation", memory_impact=100)
         status = ms.get_status()
-        print(f"  L{status['level']} {status['name']} - 记忆: {status['memory_count']}")
+        logger.info(f"  L{status['level']} {status['name']} - 记忆: {status['memory_count']}")
     
-    print(f"\n✅ 当前等级: {ms.get_status()['name']}")
-    print(f"🔓 解锁能力: {ms.get_status()['capabilities']}")
-    print("\n🎉 演示完成!")
+    logger.info(f"\n✅ 当前等级: {ms.get_status()['name']}")
+    logger.info(f"🔓 解锁能力: {ms.get_status()['capabilities']}")
+    logger.info("\n🎉 演示完成!")
 
 
 if __name__ == "__main__":

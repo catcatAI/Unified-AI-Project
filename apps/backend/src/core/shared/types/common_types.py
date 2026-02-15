@@ -6,7 +6,7 @@ from typing_extensions import Required
 import logging
 logger = logging.getLogger(__name__)
 
-print("common_types.py (debug version) is being imported and defining ServiceStatus...")
+logger.debug("common_types.py (debug version) is being imported and defining ServiceStatus...")
 
 
 class ServiceStatus(Enum):
@@ -185,4 +185,4 @@ class HAMDataPackageInternal(TypedDict):
     confidence_score: float
 
 
-print("common_types.py (debug version) finished definitions.")
+logger.debug("common_types.py (debug version) finished definitions.")

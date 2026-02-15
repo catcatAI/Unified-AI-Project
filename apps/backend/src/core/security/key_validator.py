@@ -186,18 +186,18 @@ class KeyValidator:
 
     def print_report(self) -> None:
         """打印驗證報告"""
-        print("\n" + "="*80)
-        print("ANGELA 密鑰安全驗證報告")
-        print("="*80 + "\n")
+        logger.info("\n" + "="*80)
+        logger.info("ANGELA 密鑰安全驗證報告")
+        logger.info("="*80 + "\n")
 
         summary = self.get_validation_summary()
-        print(f"總計密鑰數: {summary['total_keys']}")
-        print(f"有效密鑰數: {summary['valid_keys']}")
-        print(f"無效密鑰數: {summary['invalid_keys']}")
-        print(f"嚴重問題: {summary['critical_issues']}")
-        print(f"高優先級問題: {summary['high_issues']}")
-        print(f"整體狀態: {'✓ 通過' if summary['all_valid'] else '✗ 失敗'}")
-        print()
+        logger.info(f"總計密鑰數: {summary['total_keys']}")
+        logger.info(f"有效密鑰數: {summary['valid_keys']}")
+        logger.info(f"無效密鑰數: {summary['invalid_keys']}")
+        logger.error(f"嚴重問題: {summary['critical_issues']}")
+        logger.info(f"高優先級問題: {summary['high_issues']}")
+        logger.info(f"整體狀態: {'✓ 通過' if summary['all_valid'] else '✗ 失敗'}")
+        logger.info()
 
         # 打印詳細結果
         for result in self.results:
@@ -209,23 +209,23 @@ class KeyValidator:
                 'low': '🟢 LOW'
             }.get(result.severity, '')
 
-            print(f"{status_icon} {result.key_name}: {severity_indicator if not result.is_valid else 'OK'}")
+            logger.info(f"{status_icon} {result.key_name}: {severity_indicator if not result.is_valid else 'OK'}")
 
             if not result.is_valid:
                 for issue in result.issues:
-                    print(f"  - {issue}")
-            print()
+                    logger.info(f"  - {issue}")
+            logger.info()
 
-        print("="*80)
+        logger.info("="*80)
 
         if not summary['all_valid']:
-            print("\n⚠️  安全警告: 發現密鑰安全問題！")
-            print("請採取以下措施:")
-            print("1. 使用強隨機生成器創建新的密鑰")
-            print("2. 確保密鑰長度符合要求")
-            print("3. 不要使用佔位符或默認值")
-            print("4. 運行: python -m src.core.security.key_generator 生成新密鑰")
-            print()
+            logger.warning("\n⚠️  安全警告: 發現密鑰安全問題！")
+            logger.info("請採取以下措施:")
+            logger.info("1. 使用強隨機生成器創建新的密鑰")
+            logger.info("2. 確保密鑰長度符合要求")
+            logger.info("3. 不要使用佔位符或默認值")
+            logger.info("4. 運行: python -m src.core.security.key_generator 生成新密鑰")
+            logger.info()
 
 
 # 全局實例
@@ -266,5 +266,5 @@ if __name__ == "__main__":
     if not summary['all_valid']:
         exit(1)
     else:
-        print("\n✓ 所有密鑰驗證通過！")
+        logger.info("\n✓ 所有密鑰驗證通過！")
         exit(0)

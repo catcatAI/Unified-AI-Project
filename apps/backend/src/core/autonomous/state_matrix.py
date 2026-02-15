@@ -547,51 +547,51 @@ class StateMatrix4D:
 
 # Example usage
 if __name__ == "__main__":
-    print("=" * 60)
-    print("Angela AI v6.0 - 4D状态矩阵系统演示")
-    print("4D State Matrix System Demo")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("Angela AI v6.0 - 4D状态矩阵系统演示")
+    logger.info("4D State Matrix System Demo")
+    logger.info("=" * 60)
     
     # Initialize matrix
     matrix = StateMatrix4D()
     
-    print("\n1. 初始维度状态 / Initial dimension states:")
+    logger.info("\n1. 初始维度状态 / Initial dimension states:")
     for name, dim in matrix.dimensions.items():
-        print(f"   {name} ({dim.cn_name}): {dim.get_average():.2f}")
+        logger.info(f"   {name} ({dim.cn_name}): {dim.get_average():.2f}")
     
-    print("\n2. 更新各维度 / Updating dimensions:")
+    logger.info("\n2. 更新各维度 / Updating dimensions:")
     matrix.update_alpha(energy=0.8, comfort=0.7, arousal=0.6)
     matrix.update_beta(curiosity=0.9, focus=0.85, learning=0.7)
     matrix.update_gamma(happiness=0.85, trust=0.8, calm=0.75)
     matrix.update_delta(attention=0.9, bond=0.7, presence=0.6)
     
     for name, dim in matrix.dimensions.items():
-        print(f"   {name}: {dim.get_average():.2f}")
+        logger.info(f"   {name}: {dim.get_average():.2f}")
     
-    print("\n3. 计算维度间影响 / Computing inter-dimensional influences:")
+    logger.info("\n3. 计算维度间影响 / Computing inter-dimensional influences:")
     influences = matrix.compute_influences()
     for source, targets in influences.items():
-        print(f"   {source} -> {targets}")
+        logger.info(f"   {source} -> {targets}")
     
-    print("\n4. 影响后的维度状态 / States after influences:")
+    logger.info("\n4. 影响后的维度状态 / States after influences:")
     for name, dim in matrix.dimensions.items():
-        print(f"   {name}: {dim.get_average():.2f}")
+        logger.info(f"   {name}: {dim.get_average():.2f}")
     
-    print("\n5. 综合分析 / Comprehensive analysis:")
+    logger.info("\n5. 综合分析 / Comprehensive analysis:")
     analysis = matrix.get_analysis()
-    print(f"   总体状态 / Overall: {analysis['overall']:.2f}")
-    print(f"   幸福感 / Wellbeing: {analysis['wellbeing']:.2f}")
-    print(f"   唤醒度 / Arousal: {analysis['arousal']:.2f}")
-    print(f"   情感效价 / Valence: {analysis['valence']:.2f}")
-    print(f"   主导维度 / Dominant dimension: {analysis['dominant_dimension']}")
-    print(f"   主导情感 / Dominant emotion: {analysis['dominant_emotion']}")
+    logger.info(f"   总体状态 / Overall: {analysis['overall']:.2f}")
+    logger.info(f"   幸福感 / Wellbeing: {analysis['wellbeing']:.2f}")
+    logger.info(f"   唤醒度 / Arousal: {analysis['arousal']:.2f}")
+    logger.info(f"   情感效价 / Valence: {analysis['valence']:.2f}")
+    logger.info(f"   主导维度 / Dominant dimension: {analysis['dominant_dimension']}")
+    logger.info(f"   主导情感 / Dominant emotion: {analysis['dominant_emotion']}")
     
-    print("\n6. 历史记录 / History:")
-    print(f"   记录数量 / Records: {len(matrix.history)}")
-    print(f"   更新次数 / Updates: {matrix.update_count}")
+    logger.info("\n6. 历史记录 / History:")
+    logger.info(f"   记录数量 / Records: {len(matrix.history)}")
+    logger.info(f"   更新次数 / Updates: {matrix.update_count}")
     
-    print("\n7. 导出状态 / Export state:")
+    logger.info("\n7. 导出状态 / Export state:")
     state_json = matrix.export_to_json()
-    print(f"   JSON长度 / JSON length: {len(state_json)} chars")
+    logger.info(f"   JSON长度 / JSON length: {len(state_json)} chars")
     
-    print("\n系统演示完成 / Demo complete")
+    logger.info("\n系统演示完成 / Demo complete")

@@ -1143,9 +1143,9 @@ class ArtLearningSystem:
 # Example usage
 if __name__ == "__main__":
     async def demo():
-        print("=" * 60)
-        print("Angela AI v6.0 - Art Learning System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - Art Learning System Demo")
+        logger.info("=" * 60)
         
         # Create mock services
         class MockBrowserController:
@@ -1180,65 +1180,65 @@ if __name__ == "__main__":
         await art_system.initialize()
         
         # Search for tutorials
-        print("\n1. Searching for Live2D tutorials...")
+        logger.info("\n1. Searching for Live2D tutorials...")
         tutorials = await art_system.search_domain_tutorials(ArtDomain.LIVE2D)
-        print(f"   Found {len(tutorials)} tutorials")
+        logger.info(f"   Found {len(tutorials)} tutorials")
         
         # Learn from tutorial
         if tutorials:
-            print("\n2. Learning from tutorial...")
+            logger.info("\n2. Learning from tutorial...")
             knowledge = await art_system.learn_from_tutorial(tutorials[0])
-            print(f"   Knowledge ID: {knowledge.knowledge_id}")
-            print(f"   Technique: {knowledge.technique}")
-            print(f"   Initial mastery: {knowledge.mastery_level:.2f}")
+            logger.info(f"   Knowledge ID: {knowledge.knowledge_id}")
+            logger.info(f"   Technique: {knowledge.technique}")
+            logger.info(f"   Initial mastery: {knowledge.mastery_level:.2f}")
         
         # Analyze images
-        print("\n3. Analyzing images...")
+        logger.info("\n3. Analyzing images...")
         analyses = []
         for i in range(3):
             analysis = await art_system.analyze_image(
                 image_path=f"anime_art_{i}.png"
             )
             analyses.append(analysis)
-            print(f"   Image {i+1}: {len(analysis.style_features)} features detected")
+            logger.info(f"   Image {i+1}: {len(analysis.style_features)} features detected")
         
         # Implicit learning
-        print("\n4. Implicit learning from image batch...")
+        logger.info("\n4. Implicit learning from image batch...")
         implicit_knowledge = await art_system.learn_from_image_batch(analyses)
-        print(f"   Absorbed style from {implicit_knowledge.style_features.get('sample_count', 0)} images")
+        logger.info(f"   Absorbed style from {implicit_knowledge.style_features.get('sample_count', 0)} images")
         
         # Practice
         if tutorials:
-            print("\n5. Practicing technique...")
+            logger.info("\n5. Practicing technique...")
             new_mastery = await art_system.practice_technique(
                 knowledge.knowledge_id,
                 practice_quality=0.8,
                 duration_minutes=30.0
             )
-            print(f"   New mastery level: {new_mastery:.2f}")
+            logger.info(f"   New mastery level: {new_mastery:.2f}")
         
         # Body mapping demo
-        print("\n6. Body-to-Live2D mapping...")
+        logger.info("\n6. Body-to-Live2D mapping...")
         mapping = art_system.get_body_mapping("face")
         if mapping:
-            print(f"   Face mapped to {len(mapping.live2d_params)} parameters")
-            print(f"   Touch types: {list(mapping.touch_types.keys())}")
+            logger.info(f"   Face mapped to {len(mapping.live2d_params)} parameters")
+            logger.info(f"   Touch types: {list(mapping.touch_types.keys())}")
         
         # Get touch response
         touch_response = art_system.get_parameter_for_body_touch("top_of_head", "pat", 0.7)
-        print(f"\n7. Touch response for 'pat on head':")
+        logger.info(f"\n7. Touch response for 'pat on head':")
         for param, value in touch_response.items():
-            print(f"   {param}: {value:.2f}")
+            logger.info(f"   {param}: {value:.2f}")
         
         # Statistics
-        print("\n8. Learning statistics:")
+        logger.info("\n8. Learning statistics:")
         stats = art_system.get_learning_statistics()
-        print(f"   Total tutorials: {stats['total_tutorials_searched']}")
-        print(f"   Total images: {stats['total_images_analyzed']}")
-        print(f"   Knowledge entries: {stats['total_knowledge_entries']}")
-        print(f"   Body parts mapped: {stats['body_parts_mapped']}")
+        logger.info(f"   Total tutorials: {stats['total_tutorials_searched']}")
+        logger.info(f"   Total images: {stats['total_images_analyzed']}")
+        logger.info(f"   Knowledge entries: {stats['total_knowledge_entries']}")
+        logger.info(f"   Body parts mapped: {stats['body_parts_mapped']}")
         
         await art_system.shutdown()
-        print("\nSystem shutdown complete")
+        logger.info("\nSystem shutdown complete")
     
     asyncio.run(demo())

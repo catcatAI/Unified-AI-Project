@@ -396,8 +396,8 @@ def create_transition_manager() -> TransitionManager:
 
 def demo():
     """演示 / Demo"""
-    print("✨ 过渡动画系统演示")
-    print("=" * 50)
+    logger.info("✨ 过渡动画系统演示")
+    logger.info("=" * 50)
     
     manager = TransitionManager()
     
@@ -406,10 +406,10 @@ def demo():
         target_version="6.1.0"
     )
     
-    print(f"🔄 过渡类型: {transition_type.value}")
-    print(f"📊 总帧数: {len(frames)}")
+    logger.info(f"🔄 过渡类型: {transition_type.value}")
+    logger.info(f"📊 总帧数: {len(frames)}")
     
-    print("\n📋 关键帧预览:")
+    logger.info("\n📋 关键帧预览:")
     for idx in [0, len(frames) // 4, len(frames) // 2, len(frames) - 1]:
         if idx < len(frames):
             frame = frames[idx]
@@ -417,9 +417,9 @@ def demo():
                   f"发光={frame.visual_state['glow_intensity']:.2f}, "
                   f"透明度={frame.opacity:.2f}")
     
-    print(f"\n📈 动画摘要: {manager.animator.get_animation_summary()}")
+    logger.info(f"\n📈 动画摘要: {manager.animator.get_animation_summary()}")
     
-    print("\n✅ 演示完成!")
+    logger.info("\n✅ 演示完成!")
 
 
 if __name__ == "__main__":

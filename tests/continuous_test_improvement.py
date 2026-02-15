@@ -69,7 +69,7 @@ class ContinuousTestImprovement,
             "phases": {}
     }
 
-        try,
+        try:
             # 1. 运行测试并收集覆盖率数据
             cycle_results["phases"]["test_execution"] = self._run_tests_and_collect_coverage()
 
@@ -112,7 +112,7 @@ class ContinuousTestImprovement,
     """
     logger.info("Running tests and collecting coverage data...")
 
-        try,
+        try:
             # 运行集成测试并收集覆盖率
             cmd = [
                 sys.executable(),
@@ -168,7 +168,7 @@ eturn execution_result
     """
     logger.info("Analyzing test quality...")
 
-        try,
+        try:
             # 调用测试质量评估器
             quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
             if not quality_assessor_script.exists():::
@@ -259,7 +259,7 @@ eturn execution_result
     """
     logger.info("Analyzing test trends...")
 
-        try,
+        try:
             # 调用覆盖率监控器
             coverage_monitor_script = self.scripts_dir / "coverage_monitor.py"
             if not coverage_monitor_script.exists():::
@@ -314,7 +314,7 @@ eturn execution_result
     """
     logger.info("Generating improvement recommendations...")
 
-        try,
+        try:
             # 调用测试质量评估器获取建议
             quality_assessor_script = self.scripts_dir / "test_quality_assessor.py"
             if not quality_assessor_script.exists():::
@@ -400,7 +400,7 @@ eturn execution_result
                 "timestamp": datetime.now().isoformat()
             }
 
-        try,
+        try:
 
 
             improvements_made = []
@@ -482,7 +482,7 @@ eturn execution_result
     Args,
             cycle_results, 周期结果
     """
-        try,
+        try:
             # 生成文件名
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             results_file = self.reports_dir / f"improvement_cycle_{timestamp}.json"
@@ -525,14 +525,14 @@ eturn execution_result
     """
         if output_file is None,::
     output_file = self.reports_dir / f"improvement_dashboard_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
-        else,
+        else:
 
             output_file == Path(output_file)
 
     # 生成HTML仪表板
     dashboard_content = self._generate_dashboard_html()
 
-        try,
+        try:
 
 
             with open(output_file, "w", encoding == "utf-8") as f,
@@ -706,7 +706,7 @@ def main() -> None,
     cycle_results = improvement_system.run_continuous_improvement_cycle()
         if cycle_results.get("status") == "completed":::
     print("Continuous improvement cycle completed successfully")
-        else,
+        else:
 
             print(f"Continuous improvement cycle failed, {cycle_results.get('error', 'Unknown error')}")
             sys.exit(1)
@@ -721,7 +721,7 @@ def main() -> None,
     dashboard_file = improvement_system.generate_improvement_dashboard(args.output())
         if dashboard_file,::
     print(f"Improvement dashboard generated, {dashboard_file}")
-        else,
+        else:
 
             print("Failed to generate improvement dashboard")
             sys.exit(1)
@@ -736,10 +736,10 @@ def main() -> None,
     print("Improvement Recommendations,")
                 for rec in recommendations.get("recommendations", [])::
                     rint(f"  - {rec}")
-            else,
+            else:
 
                 print("Failed to generate recommendations")
-        else,
+        else:
 
             print(f"Failed to run improvement cycle, {cycle_results.get('error', 'Unknown error')}")
             sys.exit(1)

@@ -36,10 +36,10 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_keras_availability() -> None,
+    def test_keras_availability() -> None:
     """测试Keras是否可用"""
     print("测试Keras可用性...")
-    try,
+    try:
         from compat.transformers_compat import KERAS_AVAILABLE
         print(f"✓ Keras可用性检查, {KERAS_AVAILABLE}")
         return KERAS_AVAILABLE
@@ -54,12 +54,12 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_safe_imports() -> None,
+    def test_safe_imports() -> None:
     """测试安全导入功能"""
     print("\n测试安全导入功能...")
     
     # 测试SentenceTransformer安全导入
-    try,
+    try:
         from compat.transformers_compat import import_sentence_transformers
         SentenceTransformer, success = import_sentence_transformers()
         print(f"✓ SentenceTransformer安全导入, {success}")
@@ -69,7 +69,7 @@ def test_
         print(f"✗ SentenceTransformer安全导入测试失败, {e}")
     
     # 测试Transformers pipeline安全导入
-    try,
+    try:
         from compat.transformers_compat import import_transformers_pipeline
         pipeline, success = import_transformers_pipeline()
         print(f"✓ Transformers pipeline安全导入, {success}")
@@ -85,16 +85,16 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_rag_manager_import() -> None,
+    def test_rag_manager_import() -> None:
     """测试RAG管理器导入"""
     print("\n测试RAG管理器导入...")
-    try,
+    try:
         # 测试AI RAG管理器
-        from core_ai.rag.rag_manager import SENTENCE_TRANSFORMERS_AVAILABLE
+        from ai.rag.rag_manager import SENTENCE_TRANSFORMERS_AVAILABLE
         print(f"✓ AI RAG管理器导入成功, SENTENCE_TRANSFORMERS_AVAILABLE={SENTENCE_TRANSFORMERS_AVAILABLE}")
         
         # 测试Core AI RAG管理器
-        from core_ai.rag.rag_manager import SENTENCE_TRANSFORMERS_AVAILABLE as core_avail
+        from ai.rag.rag_manager import SENTENCE_TRANSFORMERS_AVAILABLE as core_avail
         print(f"✓ Core AI RAG管理器导入成功, SENTENCE_TRANSFORMERS_AVAILABLE={core_avail}")
     except Exception as e,::
         print(f"✗ RAG管理器导入测试失败, {e}")
@@ -106,10 +106,10 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_nlg_tool_import() -> None,
+    def test_nlg_tool_import() -> None:
     """测试自然语言生成工具导入"""
     print("\n测试自然语言生成工具导入...")
-    try,
+    try:
         # 测试核心工具
         from core.tools.natural_language_generation_tool import TRANSFORMERS_AVAILABLE as core_avail
         print(f"✓ 核心自然语言生成工具导入成功, TRANSFORMERS_AVAILABLE={core_avail}")
@@ -120,7 +120,7 @@ def test_
     except Exception as e,::
         print(f"✗ 自然语言生成工具导入测试失败, {e}")
 
-def main() -> None,
+def main() -> None:
     """主函数"""
     print("开始测试兼容性修复...")
     print(f"Python路径, {sys.executable}")

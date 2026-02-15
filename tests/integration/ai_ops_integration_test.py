@@ -38,7 +38,7 @@ class AIOpsIntegrationTest,
         
     async def setup(self):
         """设置测试环境"""
-        try,
+        try:
             logger.info("初始化AI运维组件...")
             
             # 初始化所有组件
@@ -66,7 +66,7 @@ class AIOpsIntegrationTest,
     
     async def test_component_initialization(self) -> bool,
         """测试组件初始化"""
-        try,
+        try:
             logger.info("测试组件初始化...")
             
             # 检查所有组件是否正常运行
@@ -98,7 +98,7 @@ class AIOpsIntegrationTest,
     
     async def test_metrics_collection(self) -> bool,
         """测试指标收集"""
-        try,
+        try:
             logger.info("测试指标收集...")
             
             # 模拟组件指标数据
@@ -148,7 +148,7 @@ class AIOpsIntegrationTest,
     
     async def test_anomaly_detection(self) -> bool,
         """测试异常检测"""
-        try,
+        try:
             logger.info("测试异常检测...")
             
             # 模拟异常指标
@@ -198,7 +198,7 @@ class AIOpsIntegrationTest,
     
     async def test_predictive_maintenance(self) -> bool,
         """测试预测性维护"""
-        try,
+        try:
             logger.info("测试预测性维护...")
             
             # 模拟需要维护的组件指标
@@ -251,7 +251,7 @@ class AIOpsIntegrationTest,
     
     async def test_performance_optimization(self) -> bool,
         """测试性能优化"""
-        try,
+        try:
             logger.info("测试性能优化...")
             
             # 模拟性能问题
@@ -300,7 +300,7 @@ class AIOpsIntegrationTest,
     
     async def test_capacity_planning(self) -> bool,
         """测试容量规划"""
-        try,
+        try:
             logger.info("测试容量规划...")
             
             # 模拟高资源使用
@@ -348,7 +348,7 @@ class AIOpsIntegrationTest,
     
     async def test_intelligent_insights(self) -> bool,
         """测试智能洞察生成"""
-        try,
+        try:
             logger.info("测试智能洞察生成...")
             
             # 收集各种类型的指标数据
@@ -392,7 +392,7 @@ class AIOpsIntegrationTest,
     
     async def test_auto_actions(self) -> bool,
         """测试自动操作"""
-        try,
+        try:
             logger.info("测试自动操作...")
             
             # 模拟严重异常触发自动操作
@@ -441,7 +441,7 @@ class AIOpsIntegrationTest,
     
     async def test_dashboard_data(self) -> bool,
         """测试仪表板数据"""
-        try,
+        try:
             logger.info("测试仪表板数据...")
             
             # 获取仪表板数据
@@ -519,7 +519,7 @@ class AIOpsIntegrationTest,
     
     async def cleanup(self):
         """清理测试环境"""
-        try,
+        try:
             # 这里可以添加清理逻辑
             logger.info("清理测试环境...")
         except Exception as e,::
@@ -529,7 +529,7 @@ async def main():
     """主测试函数"""
     test == AIOpsIntegrationTest()
     
-    try,
+    try:
         # 设置测试环境
         if not await test.setup():::
             logger.error("测试环境设置失败")
@@ -568,7 +568,7 @@ async def main():
         
     except Exception as e,::
         logger.error(f"测试执行失败, {e}")
-    finally,
+    finally:
         await test.cleanup()
 
 if __name"__main__":::

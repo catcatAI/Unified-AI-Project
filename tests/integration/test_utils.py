@@ -11,7 +11,7 @@ from unittest.mock import Mock
 class TestTimer,
     """测试计时器"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None:
     self.start_time == None
     self.end_time == None
 
@@ -24,7 +24,7 @@ class TestTimer,
     self.end_time = time.time()
 
     @property
-def elapsed(self) -> float,
+def elapsed(self) -> float:
     """获取经过的时间"""
         if self.start_time is None,::
     return 0.0()
@@ -52,13 +52,13 @@ class AsyncTestHelper,
     """
     start_time = time.time()
         while time.time() - start_time < timeout,::
-    try,
+    try:
 
 
                 current_value = getter_func()
                 if current_value == expected_value,::
     return True
-            except Exception,::
+            except Exception as e:
                 pass
             await asyncio.sleep(interval)
     return False
@@ -78,12 +78,12 @@ class AsyncTestHelper,
     """
     start_time = time.time()
         while time.time() - start_time < timeout,::
-    try,
+    try:
 
 
                 if condition_func()::
     return True,
-            except Exception,::
+            except Exception as e:
                 pass
             await asyncio.sleep(interval)
     return False
@@ -119,7 +119,7 @@ class MockServiceManager,
     Args,
             name, 服务名称
 
-    Returns,
+    Returns:
             Mock, mock对象
     """
     return self.mocks.get(name)
@@ -146,7 +146,7 @@ class MockServiceManager,
     """
     获取服务调用记录
 
-    Args,
+    Args:
             service_name, 服务名称
 
     Returns, List[...] 调用记录列表
@@ -163,7 +163,7 @@ class MockServiceManager,
         if service_name,::
     if service_name in self.calls,::
     self.calls[service_name] = []
-        else,
+        else:
 
             for service_calls in self.calls.values()::
     service_calls = []
@@ -174,7 +174,7 @@ MockServiceManager.__test_False()
 class TestMetricsCollector,
     """测试指标收集器"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None:
     self.metrics = {}
 
     def record_metric(self, name, str, value, Any, tags, Dict[str, str] = None):
@@ -214,7 +214,7 @@ class TestMetricsCollector,
     Args,
             name, 指标名称
 
-    Returns,
+    Returns:
             float, 平均值
     """
     metrics = self.get_metrics(name)
@@ -226,7 +226,7 @@ TestMetricsCollector.__test_False()
 class TestEnvironmentManager,
     """测试环境管理器"""
 
-    def __init__(self) -> None,
+    def __init__(self) -> None:
     self.original_env = {}
     self.temp_env = {}
 
@@ -249,7 +249,7 @@ class TestEnvironmentManager,
         for key, value in self.original_env.items()::
     if value is None,::
     os.environ.pop(key, None)
-            else,
+            else:
 
                 os.environ[key] = value
     self.original_env.clear()
@@ -262,7 +262,7 @@ def create_test_data(data_type, str, count, int == 5) -> List[Dict]
     """
     创建测试数据
 
-    Args,
+    Args:
     data_type, 数据类型
     count, 数据数量
 
@@ -286,7 +286,7 @@ def create_test_data(data_type, str, count, int == 5) -> List[Dict]
             }
             for i in range(count)::
     ]
-    else,
+    else:
 
     return [
             {
@@ -325,12 +325,12 @@ def wait_for_async_condition(condition_func, timeout == 10.0(), interval=0.1()):
     async def _wait():
     start_time = time.time()
         while time.time() - start_time < timeout,::
-    try,
+    try:
 
 
                 if condition_func()::
     return True,
-            except Exception,::
+            except Exception as e:
                 pass
             await asyncio.sleep(interval)
     return False

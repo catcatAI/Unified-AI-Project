@@ -211,7 +211,7 @@ class MouseMonitor:
                 try:
                     callback(mouse_data)
                 except Exception as e:
-                    print(f"[MouseMonitor] Callback error: {e}")
+                    logger.error(f"[MouseMonitor] Callback error: {e}")
             
             # Update last position
             last_x, last_y = x, y
@@ -316,7 +316,7 @@ class FileSystemMonitor:
                         "size": stat.st_size
                     }
         except Exception as e:
-            print(f"[FileSystemMonitor] Scan error: {e}")
+            logger.error(f"[FileSystemMonitor] Scan error: {e}")
     
     def _should_ignore(self, path: Path) -> bool:
         """Check if file should be ignored"""
@@ -396,7 +396,7 @@ class FileSystemMonitor:
                     del self._file_states[old_file]
                     
         except Exception as e:
-            print(f"[FileSystemMonitor] Check error: {e}")
+            logger.error(f"[FileSystemMonitor] Check error: {e}")
     
     async def _emit_event(self, event: FileSystemEvent):
         """Emit file system event to callbacks"""
@@ -404,7 +404,7 @@ class FileSystemMonitor:
             try:
                 callback(event)
             except Exception as e:
-                print(f"[FileSystemMonitor] Callback error: {e}")
+                logger.error(f"[FileSystemMonitor] Callback error: {e}")
     
     def register_callback(self, callback: Callable[[FileSystemEvent], None]):
         """Register file change callback"""
@@ -467,7 +467,7 @@ class TimeMonitor:
                         try:
                             callback(event)
                         except Exception as e:
-                            print(f"[TimeMonitor] Callback error: {e}")
+                            logger.error(f"[TimeMonitor] Callback error: {e}")
                     
                     # Remove or reschedule
                     if event.is_recurring and event.recurrence_pattern:
@@ -541,10 +541,10 @@ class SystemStateMonitor:
                     try:
                         callback(state)
                     except Exception as e:
-                        print(f"[SystemStateMonitor] Callback error: {e}")
+                        logger.error(f"[SystemStateMonitor] Callback error: {e}")
                 
             except Exception as e:
-                print(f"[SystemStateMonitor] Collection error: {e}")
+                logger.error(f"[SystemStateMonitor] Collection error: {e}")
             
             await asyncio.sleep(self.update_interval)
     
@@ -673,10 +673,10 @@ class UserActivityMonitor:
                         try:
                             callback(activity_data)
                         except Exception as e:
-                            print(f"[UserActivityMonitor] Callback error: {e}")
+                            logger.error(f"[UserActivityMonitor] Callback error: {e}")
                 
             except Exception as e:
-                print(f"[UserActivityMonitor] Analysis error: {e}")
+                logger.error(f"[UserActivityMonitor] Analysis error: {e}")
             
             await asyncio.sleep(self.analysis_interval)
     
@@ -802,7 +802,7 @@ class RealTimeMonitor:
     
     async def initialize(self):
         """Initialize all monitoring subsystems"""
-        print("[RealTimeMonitor] Initializing monitoring subsystems...")
+        logger.info("[RealTimeMonitor] Initializing monitoring subsystems...")
         
         # Initialize all monitors
         await self.mouse_monitor.initialize()
@@ -815,11 +815,11 @@ class RealTimeMonitor:
         self._setup_callback_bridges()
         
         self._running = True
-        print("[RealTimeMonitor] All subsystems initialized")
+        logger.info("[RealTimeMonitor] All subsystems initialized")
     
     async def shutdown(self):
         """Shutdown all monitoring subsystems"""
-        print("[RealTimeMonitor] Shutting down...")
+        logger.info("[RealTimeMonitor] Shutting down...")
         
         self._running = False
         
@@ -829,7 +829,7 @@ class RealTimeMonitor:
         await self.system_monitor.shutdown()
         await self.activity_monitor.shutdown()
         
-        print("[RealTimeMonitor] Shutdown complete")
+        logger.info("[RealTimeMonitor] Shutdown complete")
     
     def _setup_callback_bridges(self):
         """Setup bridges between sub-monitors and unified callbacks"""
@@ -885,7 +885,7 @@ class RealTimeMonitor:
             try:
                 callback(data)
             except Exception as e:
-                print(f"[RealTimeMonitor] Dispatch error: {e}")
+                logger.error(f"[RealTimeMonitor] Dispatch error: {e}")
     
     def register_callback(self, event_type: str, callback: Callable[[Any], None]):
         """
@@ -934,10 +934,10 @@ class RealTimeMonitor:
 # Example usage
 if __name__ == "__main__":
     async def demo():
-        print("=" * 70)
-        print("Angela AI v6.0 - Real-Time Monitor Demo")
-        print("实时监测器演示")
-        print("=" * 70)
+        logger.info("=" * 70)
+        logger.info("Angela AI v6.0 - Real-Time Monitor Demo")
+        logger.info("实时监测器演示")
+        logger.info("=" * 70)
         
         monitor = RealTimeMonitor()
         await monitor.initialize()
@@ -948,7 +948,7 @@ if __name__ == "__main__":
                   f"Velocity: {data['velocity']:.1f}")
         
         def on_file_change(data):
-            print(f"[File] {data['type']}: {data['path']}")
+            logger.info(f"[File] {data['type']}: {data['path']}")
         
         def on_user_activity(data):
             print(f"[Activity] State: {data['state']}, "
@@ -969,22 +969,22 @@ if __name__ == "__main__":
         monitor.schedule_time_event(future_event)
         
         def on_time_event(data):
-            print(f"[Time] Event: {data['description']}")
+            logger.info(f"[Time] Event: {data['description']}")
         
         monitor.register_callback("time_event", on_time_event)
         
         # Run for 5 seconds
-        print("\nMonitoring for 5 seconds...")
+        logger.info("\nMonitoring for 5 seconds...")
         await asyncio.sleep(5)
         
         # Show current state
-        print("\n--- Current State ---")
+        logger.info("\n--- Current State ---")
         mouse_pos = monitor.get_current_mouse_position()
         if mouse_pos:
-            print(f"Mouse: ({mouse_pos.x:.0f}, {mouse_pos.y:.0f})")
+            logger.info(f"Mouse: ({mouse_pos.x:.0f}, {mouse_pos.y:.0f})")
         
         activity = monitor.get_user_activity()
-        print(f"Activity: {activity.activity_state.value[1]}")
+        logger.info(f"Activity: {activity.activity_state.value[1]}")
         
         system = monitor.get_system_state()
         if system:
@@ -993,8 +993,8 @@ if __name__ == "__main__":
         
         await monitor.shutdown()
         
-        print("\n" + "=" * 70)
-        print("Demo completed successfully!")
-        print("=" * 70)
+        logger.info("\n" + "=" * 70)
+        logger.info("Demo completed successfully!")
+        logger.info("=" * 70)
     
     asyncio.run(demo())

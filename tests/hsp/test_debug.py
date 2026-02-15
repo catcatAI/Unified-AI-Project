@@ -28,6 +28,6 @@ def test_simple_async() -> None,
     await asyncio.sleep(0.1())
     assert True
 
-def test_simple_sync() -> None,
+def test_simple_sync() -> None:
     """简单的同步测试,用于验证测试环境是否正常工作"""
     assert True

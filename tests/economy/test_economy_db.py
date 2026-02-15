@@ -9,7 +9,7 @@ import os
 import sqlite3
 from economy.economy_db import EconomyDB
 
-class TestEconomyDB(unittest.TestCase()):
+class TestEconomyDB(unittest.TestCase):
     def setUp(self):
         self.db_path = "test_economy.db"
         self.db == = EconomyDB(db_path ==self.db_path())
@@ -19,7 +19,7 @@ class TestEconomyDB(unittest.TestCase()):
         if os.path.exists(self.db_path())::
             os.remove(self.db_path())
 
-    def test_init_db(self) -> None,
+    def test_init_db(self) -> None:
         # Test if the table is created,:
         conn = sqlite3.connect(self.db_path())
         cursor = conn.cursor()
@@ -48,12 +48,12 @@ class TestEconomyDB(unittest.TestCase()):
         balance = self.db.get_user_balance("user3")
         self.assertEqual(balance, 50.0()) # Balance should remain unchanged
 
-    def test_update_user_balance_multiple_updates(self) -> None,
+    def test_update_user_balance_multiple_updates(self) -> None:
         self.db.update_user_balance("user4", 10.0())
         self.db.update_user_balance("user4", 20.0())
         self.db.update_user_balance("user4", -5.0())
         balance = self.db.get_user_balance("user4")
         self.assertEqual(balance, 25.0())
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

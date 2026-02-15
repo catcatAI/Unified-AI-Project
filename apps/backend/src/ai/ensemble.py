@@ -323,25 +323,25 @@ async def ensemble_query(prompt: str,
 if __name__ == '__main__':
     import os
     
-    print("--- Model Ensemble Test ---")
-    print("This test requires configured API keys in environment:")
-    print("  - OPENAI_API_KEY")
-    print("  - ANTHROPIC_API_KEY")
-    print()
+    logger.info("--- Model Ensemble Test ---")
+    logger.info("This test requires configured API keys in environment:")
+    logger.info("  - OPENAI_API_KEY")
+    logger.info("  - ANTHROPIC_API_KEY")
+    logger.info()
     
     # Check for API keys
     has_openai = bool(os.getenv('OPENAI_API_KEY'))
     has_anthropic = bool(os.getenv('ANTHROPIC_API_KEY'))
     
     if not has_openai and not has_anthropic:
-        print("❌ No API keys found. Set OPENAI_API_KEY and/or ANTHROPIC_API_KEY")
-        print("   Example: export OPENAI_API_KEY=sk-...")
+        logger.info("❌ No API keys found. Set OPENAI_API_KEY and/or ANTHROPIC_API_KEY")
+        logger.info("   Example: export OPENAI_API_KEY=sk-...")
         exit(1)
     
-    print(f"✓ OpenAI: {'Available' if has_openai else 'Not configured'}")
-    print(f"✓ Anthropic: {'Available' if has_anthropic else 'Not configured'}")
-    print()
+    logger.info(f"✓ OpenAI: {'Available' if has_openai else 'Not configured'}")
+    logger.info(f"✓ Anthropic: {'Available' if has_anthropic else 'Not configured'}")
+    logger.info()
     
     # Initialize service (would need proper config in production)
-    print("Note: Full test requires running Angela with config.yaml")
-    print("Ensemble system ready for Extended Mode!")
+    logger.info("Note: Full test requires running Angela with config.yaml")
+    logger.info("Ensemble system ready for Extended Mode!")

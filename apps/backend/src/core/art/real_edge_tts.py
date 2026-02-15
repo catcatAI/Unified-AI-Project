@@ -228,25 +228,25 @@ class AngelaRealVoice:
 
 async def test_voice():
     """测试语音生成"""
-    print("🧪 测试 Edge TTS...")
+    logger.info("🧪 测试 Edge TTS...")
     
     voice = AngelaRealVoice()
     
     try:
-        print("📋 获取可用声音...")
+        logger.info("📋 获取可用声音...")
         voices = await voice.list_voices()
-        print(f"✅ 获取到 {sum(len(v) for v in voices.values())} 个声音")
+        logger.info(f"✅ 获取到 {sum(len(v) for v in voices.values())} 个声音")
         
-        print("\n🎤 测试问候...")
+        logger.info("\n🎤 测试问候...")
         result = await voice.greet("User")
         if result:
-            print(f"✅ 语音已保存: {result}")
+            logger.info(f"✅ 语音已保存: {result}")
         else:
-            print("❌ 语音生成失败")
+            logger.info("❌ 语音生成失败")
         
     except Exception as e:
-        print(f"❌ 测试失败: {e}")
-        print("提示: 确保已安装 edge-tts: pip install edge-tts")
+        logger.info(f"❌ 测试失败: {e}")
+        logger.info("提示: 确保已安装 edge-tts: pip install edge-tts")
 
 
 if __name__ == "__main__":

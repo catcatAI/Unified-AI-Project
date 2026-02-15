@@ -409,11 +409,11 @@ if __name__ == "__main__":
         )
 
         # 啟動
-        print("=== 啟動數字生命系統 ===")
+        logger.info("=== 啟動數字生命系統 ===")
         await integrator.start()
 
         # 模擬用戶交互
-        print("\n=== 模擬用戶交互 ===")
+        logger.info("\n=== 模擬用戶交互 ===")
         integrator.record_user_input("你好Angela！", {"type": "greeting"})
         await asyncio.sleep(3)
 
@@ -436,15 +436,15 @@ if __name__ == "__main__":
         await asyncio.sleep(20)
 
         # 打印狀態
-        print(f"\n=== 生命系統統計 ===")
-        print(json.dumps(integrator.get_lifecycle_stats(), indent=2, ensure_ascii=False))
+        logger.info(f"\n=== 生命系統統計 ===")
+        logger.info(json.dumps(integrator.get_lifecycle_stats(), indent=2, ensure_ascii=False))
 
-        print(f"\n=== 健康狀態 ===")
-        print(json.dumps(integrator.get_health_status(), indent=2, ensure_ascii=False))
+        logger.info(f"\n=== 健康狀態 ===")
+        logger.info(json.dumps(integrator.get_health_status(), indent=2, ensure_ascii=False))
 
-        print(f"\n=== 生命活力評分 ===")
+        logger.info(f"\n=== 生命活力評分 ===")
         vitality = integrator.get_vitality_score()
-        print(f"Vitality Score: {vitality:.2f}/1.0 ({vitality*10:.1f}/10.0)")
+        logger.info(f"Vitality Score: {vitality:.2f}/1.0 ({vitality*10:.1f}/10.0)")
 
         # 停止
         await integrator.stop()

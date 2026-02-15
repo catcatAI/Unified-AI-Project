@@ -410,45 +410,45 @@ def create_precision_manager() -> PrecisionManager:
 
 def demo():
     """演示 / Demo"""
-    print("🔢 精度转换矩阵演示")
-    print("=" * 50)
+    logger.info("🔢 精度转换矩阵演示")
+    logger.info("=" * 50)
     
     pm = PrecisionManager()
     matrix = pm.matrix
     
-    print("\n📊 精度级别:")
+    logger.info("\n📊 精度级别:")
     levels = ["fp64", "fp32", "fp16", "bf16", "int8", "int4"]
     for level in levels:
         bits = matrix._get_bit_width(level)
-        print(f"  {level}: {bits} bits")
+        logger.info(f"  {level}: {bits} bits")
     
-    print("\n🔄 转换示例 (FP32 -> FP16):")
+    logger.info("\n🔄 转换示例 (FP32 -> FP16):")
     test_value = 3.14159265358979
     converted = matrix.convert_value(test_value, "fp32", "fp16")
     loss = matrix.estimate_loss(test_value, converted)
     
-    print(f"  原始值: {test_value:.10f}")
-    print(f"  转换值: {converted:.10f}")
-    print(f"  绝对损失: {loss['absolute']:.10f}")
-    print(f"  相对损失: {loss['relative']*100:.6f}%")
-    print(f"  信噪比: {loss['db']:.2f} dB")
+    logger.info(f"  原始值: {test_value:.10f}")
+    logger.info(f"  转换值: {converted:.10f}")
+    logger.info(f"  绝对损失: {loss['absolute']:.10f}")
+    logger.info(f"  相对损失: {loss['relative']*100:.6f}%")
+    logger.info(f"  信噪比: {loss['db']:.2f} dB")
     
-    print("\n📋 转换路径 (FP64 -> INT8):")
+    logger.info("\n📋 转换路径 (FP64 -> INT8):")
     path = matrix.get_path("fp64", "int8")
     for src, tgt in path:
         info = matrix.get_conversion(src, tgt)
-        print(f"  {src} -> {tgt}: 损失={info.loss_rate*100:.2f}%, 性能={info.performance_factor:.1f}x")
+        logger.info(f"  {src} -> {tgt}: 损失={info.loss_rate*100:.2f}%, 性能={info.performance_factor:.1f}x")
     
-    print("\n🎯 优化配置:")
+    logger.info("\n🎯 优化配置:")
     hardware = {
         "tensor_cores": True,
         "memory_gb": 16,
     }
     recommendations = pm.optimize_for_hardware(hardware)
     for stage, precision in recommendations.items():
-        print(f"  {stage}: {precision}")
+        logger.info(f"  {stage}: {precision}")
     
-    print("\n✅ 演示完成!")
+    logger.info("\n✅ 演示完成!")
 
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 # 修复导入路径
 from config_loader import load_config, get_config, load_simulated_resources, get_simulated_resources, is_demo_mode, get_mock_placeholder_value
 
-class TestConfigLoader(unittest.TestCase()):
+class TestConfigLoader(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures before each test method."""
         # Clear any cached config
@@ -70,7 +70,7 @@ class TestConfigLoader(unittest.TestCase()):
             emo_mode = is_demo_mode()
         self.assertIsInstance(demo_mode, bool)
 
-    def test_get_mock_placeholder_value_demo_mode(self) -> None,
+    def test_get_mock_placeholder_value_demo_mode(self) -> None:
         """Test getting mock placeholder value in demo mode."""
         with patch('apps.backend.src.config_loader.is_demo_mode', return_value == True)
             with patch('apps.backend.src.config_loader.get_simulated_resources', return_value == {:,
@@ -91,7 +91,7 @@ class TestConfigLoader(unittest.TestCase()):
             value = get_mock_placeholder_value("string", "test_key")
             self.assertIsNone(value)
 
-    def test_get_mock_placeholder_value_missing_key(self) -> None,
+    def test_get_mock_placeholder_value_missing_key(self) -> None:
         """Test getting mock placeholder value with missing key.""":
             ith patch('apps.backend.src.config_loader.is_demo_mode', return_value == True)
             with patch('apps.backend.src.config_loader.get_simulated_resources', return_value == {:,
@@ -106,5 +106,5 @@ class TestConfigLoader(unittest.TestCase()):
                 value = get_mock_placeholder_value("string", "test_key")
                 self.assertIsNone(value)
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

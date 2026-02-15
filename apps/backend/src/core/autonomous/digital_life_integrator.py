@@ -24,6 +24,8 @@ from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 import asyncio
 import logging
+from typing import TYPE_CHECKING
+
 logger = logging.getLogger(__name__)
 
 from .biological_integrator import BiologicalIntegrator
@@ -31,7 +33,9 @@ from .action_executor import ActionExecutor
 from .memory_neuroplasticity_bridge import MemoryNeuroplasticityBridge
 from .autonomous_life_cycle import AutonomousLifeCycle
 from .dynamic_parameters import DynamicThresholdManager
-from ai.integration.unified_control_center import UnifiedControlCenter
+if TYPE_CHECKING:
+    from ai.integration.unified_control_center import UnifiedControlCenter
+
 
 
 class LifeCycleState(Enum):
@@ -191,7 +195,7 @@ class DigitalLifeIntegrator:
                 self.action_executor.set_dynamic_params_manager(self.dynamic_params)
                 
             except Exception as e:
-                print(f"[DigitalLife] Failed to initialize dynamic params: {e}")
+                logger.error(f"[DigitalLife] Failed to initialize dynamic params: {e}")
                 self.dynamic_params = None
         
         # Initialize memory bridge if available
@@ -224,9 +228,9 @@ class DigitalLifeIntegrator:
             from ai.integration.unified_control_center import UnifiedControlCenter
             self.unified_control_center = UnifiedControlCenter(self.config.get('control_center', {}))
             self.unified_control_center.start()
-            print("✅ Unified Control Center integrated into Digital Life")
+            logger.info("✅ Unified Control Center integrated into Digital Life")
         except Exception as e:
-            print(f"[DigitalLife] Failed to initialize Unified Control Center: {e}")
+            logger.error(f"[DigitalLife] Failed to initialize Unified Control Center: {e}")
         
         # Set initial state
         await self._transition_state(LifeCycleState.AWAKENING)
@@ -448,7 +452,7 @@ class DigitalLifeIntegrator:
                 
                 self._last_params_log = datetime.now()
         except Exception as e:
-            print(f"[DigitalLife] Error updating dynamic parameters: {e}")
+            logger.error(f"[DigitalLife] Error updating dynamic parameters: {e}")
     
     def record_activity(self, activity_type: str):
         """Record user activity"""
@@ -634,47 +638,47 @@ if __name__ == "__main__":
         life = DigitalLifeIntegrator()
         await life.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 数字生命总控演示")
-        print("Digital Life Integrator Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 数字生命总控演示")
+        logger.info("Digital Life Integrator Demo")
+        logger.info("=" * 60)
         
         # Show initial state
-        print("\n初始状态 / Initial state:")
+        logger.info("\n初始状态 / Initial state:")
         summary = life.get_life_summary()
-        print(f"  生命周期: {summary['current_state_cn']}")
-        print(f"  诞生时间: {summary['birth_time']}")
+        logger.info(f"  生命周期: {summary['current_state_cn']}")
+        logger.info(f"  诞生时间: {summary['birth_time']}")
         
         # Simulate activity
-        print("\n模拟活动 / Simulating activity:")
+        logger.info("\n模拟活动 / Simulating activity:")
         for i in range(5):
             life.record_activity("interaction")
             life.record_activity("conversation")
-            print(f"  记录交互 {i+1}")
+            logger.info(f"  记录交互 {i+1}")
         
         # Record event
-        print("\n记录生命事件 / Recording life event:")
+        logger.info("\n记录生命事件 / Recording life event:")
         life.record_life_event(
             "milestone",
             "Reached 5 conversations milestone",
             significance=0.6
         )
-        print("  已记录里程碑事件")
+        logger.info("  已记录里程碑事件")
         
         # Show updated stats
-        print("\n更新后的统计 / Updated statistics:")
+        logger.info("\n更新后的统计 / Updated statistics:")
         summary = life.get_life_summary()
-        print(f"  总交互: {summary['total_interactions']}")
-        print(f"  总对话: {summary['total_conversations']}")
-        print(f"  重要事件: {summary['significant_events']}")
+        logger.info(f"  总交互: {summary['total_interactions']}")
+        logger.info(f"  总对话: {summary['total_conversations']}")
+        logger.info(f"  重要事件: {summary['significant_events']}")
         
         # Check health
-        print("\n系统健康 / System health:")
+        logger.info("\n系统健康 / System health:")
         for system, health_data in summary['system_health'].items():
             status = "健康" if health_data['healthy'] else "异常"
-            print(f"  {system}: {status} ({health_data['response_time']:.1f}ms)")
+            logger.info(f"  {system}: {status} ({health_data['response_time']:.1f}ms)")
         
         await life.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

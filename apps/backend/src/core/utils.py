@@ -624,10 +624,10 @@ __all__ = [
 
 if __name__ == "__main__":
     # 测试工具函数
-    print(f"Project root: {get_project_root()}")
-    print(f"Generated ID: {generate_id('test')}")
-    print(f"Truncated text: {truncate_text('This is a very long text that should be truncated', 20)}")
-    print(f"Slugified: {slugify('Hello World! This is a Test')}")
-    print(f"Formatted time: {format_timestamp()}")
-    print(f"Clamped value: {clamp(5, 0, 10)}")
-    print(f"Interpolated: {lerp(0, 10, 0.5)}")
+    logger.info(f"Project root: {get_project_root()}")
+    logger.info(f"Generated ID: {generate_id('test')}")
+    logger.info(f"Truncated text: {truncate_text('This is a very long text that should be truncated', 20)}")
+    logger.info(f"Slugified: {slugify('Hello World! This is a Test')}")
+    logger.info(f"Formatted time: {format_timestamp()}")
+    logger.info(f"Clamped value: {clamp(5, 0, 10)}")
+    logger.info(f"Interpolated: {lerp(0, 10, 0.5)}")

@@ -31,14 +31,14 @@ def setup_environment():
     if venv_path.exists():::
         f sys.platform == "win32":
     activate_script = venv_path / "Scripts" / "activate.bat"
-        else,
+        else:
 
             activate_script = venv_path / "bin" / "activate"
 
     # 设置环境变量
         if sys.platform == "win32":::
     os.environ["PATH"] = f"{venv_path / 'Scripts'}{os.pathsep}{os.environ['PATH']}"
-        else,
+        else:
 
             os.environ["PATH"] = f"{venv_path / 'bin'}{os.pathsep}{os.environ['PATH']}"
 
@@ -80,7 +80,7 @@ def run_auto_fix():
 ""运行自动修复工具"""
     print("🔍 检测到导入错误,正在自动修复...")
 
-    try,
+    try:
     # 导入并运行增强版修复工具
     sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
     from apps.backend.scripts.advanced_auto_fix import AdvancedImportFixer
@@ -96,7 +96,7 @@ def run_auto_fix():
         if results["fixed"] > 0,::
     print(f"✅ 自动修复完成,修复了 {results['fixed']} 个文件")
             return True
-        else,
+        else:
 
             print("⚠️ 未发现需要修复的问题")
             return False
@@ -120,7 +120,7 @@ def run_tests(pytest_args == None) -> None,
 
     print(f"🚀 运行测试命令, {' '.join(cmd)}")
 
-    try,
+    try:
     # 执行测试,设置较长时间的超时(例如1800秒=30分钟)
     # 注意：这里我们不设置subprocess的timeout参数,让测试自然运行
     # 但我们在外部监控进程状态
@@ -159,15 +159,15 @@ def run_tests(pytest_args == None) -> None,
                     time.sleep(1)
                     # 重新运行测试
                     return run_tests(pytest_args)
-                else,
+                else:
 
                     print("❌ 自动修复失败")
                     return process.returncode()
-            else,
+            else:
 
                 print("❓ 未检测到可自动修复的错误")
                 return process.returncode()
-        else,
+        else:
 
             print("✅ 所有测试通过")
             return 0

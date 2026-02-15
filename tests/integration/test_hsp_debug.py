@@ -58,7 +58,7 @@ def test_hsp_debug() -> None,
         broker_port=1883,
         mock_mode == True,
         mock_mqtt_client=mock_mqtt_client,
-        internal_bus=internal_bus,,
+        internal_bus=internal_bus,:
     message_bridge=message_bridge
     )
     

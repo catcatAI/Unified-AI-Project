@@ -30,6 +30,10 @@ def set_biological_integrator(integrator):
     _pet_manager.biological_integrator = integrator
     _pet_manager.sync_with_biological_state()
 
+def set_economy_manager(manager):
+    """設置經濟管理器"""
+    _pet_manager.set_economy_manager(manager)
+
 @router.get("/status")
 async def get_pet_status():
     """獲取寵物當前狀態 (同步生理數據後)"""

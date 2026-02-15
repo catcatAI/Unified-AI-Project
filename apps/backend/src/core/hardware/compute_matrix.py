@@ -456,46 +456,46 @@ def create_compute_optimizer() -> ComputeOptimizer:
 
 def demo():
     """演示 / Demo"""
-    print("⚡ 计算优化矩阵演示")
-    print("=" * 50)
+    logger.info("⚡ 计算优化矩阵演示")
+    logger.info("=" * 50)
     
     optimizer = ComputeOptimizer()
     matrix = optimizer.matrix
     
-    print("\n📋 架构优化规则:")
+    logger.info("\n📋 架构优化规则:")
     for arch in ["x86_64", "arm64", "cuda", "tpu"]:
         rules = matrix.get_optimization_for_architecture(arch)
-        print(f"\n  [{arch}]")
-        print(f"    指令集: {rules.get('instruction_set')}")
-        print(f"    SIMD宽度: {rules.get('simd_width')} bit")
-        print(f"    推荐精度: {rules.get('preferred_precision')}")
+        logger.info(f"\n  [{arch}]")
+        logger.info(f"    指令集: {rules.get('instruction_set')}")
+        logger.info(f"    SIMD宽度: {rules.get('simd_width')} bit")
+        logger.info(f"    推荐精度: {rules.get('preferred_precision')}")
     
-    print("\n🔧 操作估算:")
+    logger.info("\n🔧 操作估算:")
     ops = matrix.estimate_operations(
         "matrix_multiply",
         [(1024, 1024), (1024, 1024)],
         (1024, 1024)
     )
-    print(f"  矩阵乘法 (1024x1024):")
-    print(f"    操作数: {ops['operations']:,.0f}")
-    print(f"    内存读取: {ops['memory_reads']:,.0f}")
-    print(f"    算术强度: {ops['arithmetic_intensity']:.2f}")
+    logger.info(f"  矩阵乘法 (1024x1024):")
+    logger.info(f"    操作数: {ops['operations']:,.0f}")
+    logger.info(f"    内存读取: {ops['memory_reads']:,.0f}")
+    logger.info(f"    算术强度: {ops['arithmetic_intensity']:.2f}")
     
-    print("\n🎯 优化策略:")
+    logger.info("\n🎯 优化策略:")
     for strategy in OptimizationStrategy:
         result = optimizer.optimize_operation("attention", "cuda", strategy=strategy.value)
-        print(f"  [{strategy.value}]")
-        print(f"    执行时间: {result.execution_time_ms:.2f} ms")
-        print(f"    效率分数: {result.efficiency_score:.2f}")
+        logger.info(f"  [{strategy.value}]")
+        logger.info(f"    执行时间: {result.execution_time_ms:.2f} ms")
+        logger.info(f"    效率分数: {result.efficiency_score:.2f}")
     
-    print("\n💡 硬件推荐:")
+    logger.info("\n💡 硬件推荐:")
     for workload in ["llm_inference", "training", "embedding"]:
         recs = optimizer.get_hardware_recommendations(workload)
-        print(f"\n  [{workload}]")
-        print(f"    推荐硬件: {', '.join(recs['recommended'])}")
-        print(f"    推荐精度: {recs['precision']}")
+        logger.info(f"\n  [{workload}]")
+        logger.info(f"    推荐硬件: {', '.join(recs['recommended'])}")
+        logger.info(f"    推荐精度: {recs['precision']}")
     
-    print("\n✅ 演示完成!")
+    logger.info("\n✅ 演示完成!")
 
 
 if __name__ == "__main__":

@@ -9,9 +9,9 @@ import os
 import sqlite3
 import json
 from datetime import datetime
-from core_ai.evaluation.evaluation_db import EvaluationDB
+from ai.evaluation.evaluation_db import EvaluationDB
 
-class TestEvaluationDB(unittest.TestCase()):
+class TestEvaluationDB(unittest.TestCase):
     def setUp(self):
         self.db_path = "test_evaluations.db"
         self.db == = EvaluationDB(db_path ==self.db_path())
@@ -29,7 +29,7 @@ class TestEvaluationDB(unittest.TestCase()):
         self.assertIsNotNone(cursor.fetchone())
         conn.close()
 
-    def test_add_evaluation(self) -> None,
+    def test_add_evaluation(self) -> None:
         evaluation_data = {
             "task_id": "task_1",
             "timestamp": datetime.now().isoformat(),
@@ -48,10 +48,10 @@ class TestEvaluationDB(unittest.TestCase()):
         row = cursor.fetchone()
         conn.close()
         self.assertIsNotNone(row)
-        self.assertEqual(row[1] "task_1")
-        self.assertEqual(json.loads(row[3])["success_rate"] 1.0())
+        self.assertEqual(row[1], "task_1")
+        self.assertEqual(json.loads(row[3])["success_rate"], 1.0())
 
-    def test_get_evaluations_by_task_id(self) -> None,
+    def test_get_evaluations_by_task_id(self) -> None:
         eval1 == {"task_id": "task_A", "metrics": {"success_rate": 0.8}}
         eval2 == {"task_id": "task_B", "metrics": {"success_rate": 0.9}}
         eval3 == {"task_id": "task_A", "metrics": {"success_rate": 0.7}}
@@ -61,9 +61,9 @@ class TestEvaluationDB(unittest.TestCase()):
 
         evals_task_A = self.db.get_evaluations_by_task_id("task_A")
         self.assertEqual(len(evals_task_A), 2)
-        self.assertEqual(evals_task_A[0]["metrics"]["success_rate"] 0.7()) # Ordered by timestamp DESC
+        self.assertEqual(evals_task_A[0]["metrics"]["success_rate"], 0.7()) # Ordered by timestamp DESC
 
-    def test_get_average_metrics(self) -> None,
+    def test_get_average_metrics(self) -> None:
         self.db.add_evaluation({"task_id": "task_avg", "metrics": {"completion_time": 5.0(), "success_rate": 1.0(), "quality_score": 0.9}})
         self.db.add_evaluation({"task_id": "task_avg", "metrics": {"completion_time": 7.0(), "success_rate": 0.5(), "quality_score": 0.6}})
         self.db.add_evaluation({"task_id": "task_other", "metrics": {"completion_time": 3.0(), "success_rate": 1.0(), "quality_score": 0.8}})
@@ -78,11 +78,11 @@ class TestEvaluationDB(unittest.TestCase()):
         self.assertAlmostEqual(avg_task_avg["success_rate"] (1.0 + 0.5()) / 2)
         self.assertAlmostEqual(avg_task_avg["quality_score"] (0.9 + 0.6()) / 2)
 
-    def test_get_average_metrics_no_data(self) -> None,
+    def test_get_average_metrics_no_data(self) -> None:
         avg = self.db.get_average_metrics("non_existent_task")
-        self.assertEqual(avg["completion_time"] 0.0())
-        self.assertEqual(avg["success_rate"] 0.0())
-        self.assertEqual(avg["quality_score"] 0.0())
+        self.assertEqual(avg["completion_time"], 0.0())
+        self.assertEqual(avg["success_rate"], 0.0())
+        self.assertEqual(avg["quality_score"], 0.0())
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

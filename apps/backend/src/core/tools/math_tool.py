@@ -40,7 +40,7 @@ def _load_math_model():
         return _model_instance
 
     if not TF_AVAILABLE:
-        print("TensorFlow不可用，使用简化计算")
+        logger.info("TensorFlow不可用，使用简化计算")
         _tensorflow_import_error = "TensorFlow not available"
         _model_instance = None
         return None
@@ -48,9 +48,9 @@ def _load_math_model():
     try:
         # 简化实现
         _model_instance = "SimpleMathModel"
-        print("数学模型加载成功")
+        logger.info("数学模型加载成功")
     except Exception as e:
-        print(f"加载数学模型时出错: {e}")
+        logger.info(f"加载数学模型时出错: {e}")
         _tensorflow_import_error = str(e)
         _model_instance = None
 

@@ -377,39 +377,39 @@ class AngelaRealCreator:
 
 async def quick_demo():
     """快速演示"""
-    print("=" * 60)
-    print("🎨 Angela 真实创作系统演示")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("🎨 Angela 真实创作系统演示")
+    logger.info("=" * 60)
     
     creator = AngelaRealCreator()
     
     try:
         await creator.initialize()
         
-        print("\n🎨 测试 AI 绘画...")
+        logger.info("\n🎨 测试 AI 绘画...")
         portrait = await creator.painter.paint_portrait(
             description="beautiful anime girl, blue hair, happy smile",
             style="anime",
         )
         if portrait:
-            print(f"✅ 肖像已保存: {portrait}")
+            logger.info(f"✅ 肖像已保存: {portrait}")
         
-        print("\n🔊 测试语音合成...")
+        logger.info("\n🔊 测试语音合成...")
         voice = await creator.voice.greet("User")
         if voice:
-            print(f"✅ 语音已保存: {voice}")
+            logger.info(f"✅ 语音已保存: {voice}")
         
-        print("\n🧪 测试浏览器...")
+        logger.info("\n🧪 测试浏览器...")
         tutorial = await creator.browser.browse_tutorial("https://www.artstation.com/learning")
         if tutorial:
-            print(f"✅ 教程标题: {tutorial.title}")
+            logger.info(f"✅ 教程标题: {tutorial.title}")
         
-        print("\n" + "=" * 60)
-        print("✅ 演示完成!")
-        print("=" * 60)
+        logger.info("\n" + "=" * 60)
+        logger.info("✅ 演示完成!")
+        logger.info("=" * 60)
         
     except Exception as e:
-        print(f"❌ 错误: {e}")
+        logger.info(f"❌ 错误: {e}")
         import traceback
         traceback.print_exc()
     
@@ -419,9 +419,9 @@ async def quick_demo():
 
 async def full_demo():
     """完整演示"""
-    print("=" * 60)
-    print("🎨 Angela 完整创作流程")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("🎨 Angela 完整创作流程")
+    logger.info("=" * 60)
     
     creator = AngelaRealCreator()
     
@@ -432,18 +432,18 @@ async def full_demo():
             emotions=["happy", "surprised"],
         )
         
-        print("\n" + "=" * 60)
-        print("✅ 创作完成!")
-        print(f"📚 学习教程: {len(results.get('showcase', {}).get('techniques', []))}")
-        print(f"🎨 生成肖像: {len(results['portraits'])}")
-        print(f"🌅 生成背景: {len(results['backgrounds'])}")
-        print(f"😊 生成表情: {len(results['expressions'])}")
-        print(f"🔊 生成语音: {len(results['voiceovers'])}")
-        print(f"📄 展示文件: {results['showcase']}")
-        print("=" * 60)
+        logger.info("\n" + "=" * 60)
+        logger.info("✅ 创作完成!")
+        logger.info(f"📚 学习教程: {len(results.get('showcase', {}).get('techniques', []))}")
+        logger.info(f"🎨 生成肖像: {len(results['portraits'])}")
+        logger.info(f"🌅 生成背景: {len(results['backgrounds'])}")
+        logger.info(f"😊 生成表情: {len(results['expressions'])}")
+        logger.info(f"🔊 生成语音: {len(results['voiceovers'])}")
+        logger.info(f"📄 展示文件: {results['showcase']}")
+        logger.info("=" * 60)
         
     except Exception as e:
-        print(f"❌ 错误: {e}")
+        logger.info(f"❌ 错误: {e}")
 
 
 if __name__ == "__main__":

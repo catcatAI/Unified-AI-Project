@@ -36,7 +36,7 @@ def test_model_training_integration(self) -> None,
             self.data_factory.create_training_data(
                 data_id=f"train_data_{i}",
                 input_data=f"Input data sample {i}",
-                expected_output=f"Expected output sample {i}",,
+                expected_output=f"Expected output sample {i}",:
     data_type="text_generation"
             )
             for i in range(5)::
@@ -106,7 +106,7 @@ def test_model_training_integration(self) -> None,
     
     @pytest.mark.system_integration()
     @pytest.mark.asyncio()
-    async def test_auto_training_integration(self) -> None,
+    async def test_auto_training_integration(self) -> None:
         """测试自动训练集成"""
         # 创建测试数据
         auto_training_config = {
@@ -177,7 +177,7 @@ def test_model_training_integration(self) -> None,
         # 创建测试数据
         agent_configs = [
             self.data_factory.create_agent_config(
-                agent_id=f"collab_trainer_{i}",,
+                agent_id=f"collab_trainer_{i}",:
     agent_type == "data_analysis" if i % 2=0 else "creative_writing"::
             )
             for i in range(3)::
@@ -266,7 +266,7 @@ class TestIncrementalLearningIntegration(SystemIntegrationTest):
         incremental_data = [
             self.data_factory.create_training_data(
                 input_data=f"Incremental input {i}",
-                expected_output=f"Incremental output {i}",,
+                expected_output=f"Incremental output {i}",:
     metadata == {"timestamp": f"2023-01-{i+1,02d}"}
             )
             for i in range(10)::
@@ -346,7 +346,7 @@ class TestTrainingDataManagementIntegration(SystemIntegrationTest):
     
     @pytest.mark.system_integration()
     @pytest.mark.asyncio()
-    async def test_training_data_pipeline_integration(self) -> None,
+    async def test_training_data_pipeline_integration(self) -> None:
         """测试训练数据管道集成"""
         # 创建测试数据
         raw_data_samples = [

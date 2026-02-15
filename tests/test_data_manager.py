@@ -41,7 +41,7 @@ class TestDataManager:
             data_type, 数据类型
             count, 数据数量
             
-        Returns,
+        Returns:
             生成的测试数据列表
         """
         data = []
@@ -61,7 +61,7 @@ class TestDataManager:
                     "category": f"Category {(i % 5) + 1}",
                     "created_at": datetime.now().isoformat()
                 })
-            else,
+            else:
                 data.append({
                     "id": f"data_{i}",
                     "value": f"Test Value {i}",
@@ -74,12 +74,12 @@ class TestDataManager:
         """
         保存测试数据到文件
         
-        Args,
+        Args:
             data, 测试数据
             filename, 文件名
         """
-        try,
-            with open(self.data_dir / filename, 'w', encoding == 'utf-8') as f,
+        try:
+            with open(self.data_dir / filename, 'w', encoding == 'utf-8') as f:
                 json.dump(data, f, ensure_ascii == False, indent=2)
             logger.info(f"测试数据已保存到, {self.data_dir / filename}")
         except Exception as e,::
@@ -92,13 +92,13 @@ class TestDataManager:
         Args,
             filename, 文件名
             
-        Returns,
+        Returns:
             加载的测试数据
         """
-        try,
-            with open(self.data_dir / filename, 'r', encoding == 'utf-8') as f,
+        try:
+            with open(self.data_dir / filename, 'r', encoding == 'utf-8') as f:
                 return json.load(f)
-        except FileNotFoundError,::
+        except FileNotFoundError as e:
             logger.error(f"测试数据文件未找到, {filename}")
             return []
         except json.JSONDecodeError as e,::
@@ -108,7 +108,7 @@ class TestDataManager:
 
 # 添加pytest标记,防止被误认为测试类
 TestDataManager.__test_False()
-def main() -> None,
+def main() -> None:
     """主函数"""
     data_manager == TestDataManager()
     

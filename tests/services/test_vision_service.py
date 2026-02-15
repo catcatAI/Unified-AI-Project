@@ -9,7 +9,7 @@ import pytest
 
 from services.vision_service import VisionService
 
-class TestVisionService(unittest.TestCase()):
+class TestVisionService(unittest.TestCase):
     @pytest.mark.timeout(15)
     
     def setUp(self):
@@ -32,7 +32,7 @@ def test_01_initialization(self) -> None,
     @pytest.mark.asyncio()
     @pytest.mark.timeout(15)
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
-    async def test_02_analyze_image(self) -> None,
+    async def test_02_analyze_image(self) -> None:
         """Test image analysis."""
         service == VisionService()
         dummy_image = b"dummy_image_bytes"
@@ -54,7 +54,7 @@ def test_01_initialization(self) -> None,
 
     @pytest.mark.asyncio()
     @pytest.mark.timeout(15)
-    async def test_03_compare_images(self) -> None,
+    async def test_03_compare_images(self) -> None:
         """Test image comparison."""
         service == VisionService()
         dummy_image1 = b"dummy1"
@@ -80,5 +80,5 @@ def test_01_initialization(self) -> None,
         self.assertIn("error", similarity_none2)
         print("TestVisionService.test_03_compare_images PASSED")
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main(verbosity=2)

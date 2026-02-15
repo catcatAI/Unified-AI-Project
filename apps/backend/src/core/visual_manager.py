@@ -918,59 +918,59 @@ class VisualManager:
 # Example usage
 if __name__ == "__main__":
     async def demo():
-        print("=" * 60)
-        print("Angela AI v6.0 - 视觉管理器演示")
-        print("Visual Manager Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 视觉管理器演示")
+        logger.info("Visual Manager Demo")
+        logger.info("=" * 60)
         
         # Create visual manager
         vm = VisualManager()
         await vm.initialize()
         
-        print("\n视觉管理器初始化完成 / VisualManager initialized")
+        logger.info("\n视觉管理器初始化完成 / VisualManager initialized")
         
         # Show initial state
         summary = vm.get_visual_summary()
-        print(f"\n初始状态 / Initial state:")
-        print(f"  当前表情: {summary['expression']}")
-        print(f"  当前状态: {summary['state']}")
-        print(f"  FPS: {summary['fps']}")
+        logger.info(f"\n初始状态 / Initial state:")
+        logger.info(f"  当前表情: {summary['expression']}")
+        logger.info(f"  当前状态: {summary['state']}")
+        logger.info(f"  FPS: {summary['fps']}")
         
         # Set expression
-        print("\n设置表情 / Setting expressions:")
+        logger.info("\n设置表情 / Setting expressions:")
         await vm.set_expression(ExpressionType.HAPPY)
-        print(f"  设置为: HAPPY")
+        logger.info(f"  设置为: HAPPY")
         await asyncio.sleep(0.5)
         
         await vm.set_expression(ExpressionType.SURPRISED)
-        print(f"  设置为: SURPRISED")
+        logger.info(f"  设置为: SURPRISED")
         await asyncio.sleep(0.5)
         
         # Play motion
-        print("\n播放动作 / Playing motions:")
+        logger.info("\n播放动作 / Playing motions:")
         await vm.play_motion(MotionType.GREETING)
-        print(f"  播放: GREETING")
+        logger.info(f"  播放: GREETING")
         await asyncio.sleep(0.5)
         
         # Particle effect
-        print("\n粒子效果 / Particle effects:")
+        logger.info("\n粒子效果 / Particle effects:")
         effect_id = vm.create_particle_effect(EffectType.PARTICLE_HEART, x=100, y=100, duration=2.0)
-        print(f"  创建爱心粒子效果: {effect_id}")
+        logger.info(f"  创建爱心粒子效果: {effect_id}")
         
         await asyncio.sleep(1.0)
         
         # Atmosphere
-        print("\n氛围效果 / Atmosphere:")
+        logger.info("\n氛围效果 / Atmosphere:")
         vm.set_atmosphere(EffectType.AMBIENCE_WARM, intensity=0.6)
-        print(f"  设置温暖氛围")
+        logger.info(f"  设置温暖氛围")
         
         # Final summary
-        print("\n最终摘要 / Final summary:")
+        logger.info("\n最终摘要 / Final summary:")
         final_summary = vm.get_visual_summary()
         for key, value in final_summary.items():
-            print(f"  {key}: {value}")
+            logger.info(f"  {key}: {value}")
         
         await vm.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

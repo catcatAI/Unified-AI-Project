@@ -14,7 +14,7 @@ backend_src_path = os.path.join(project_root, 'apps', 'backend', 'src')
 sys.path.insert(0, project_root)
 sys.path.insert(0, backend_src_path)
 
-try,
+try:
     from core.hsp.external.external_connector import ExternalConnector
     print("成功导入ExternalConnector")
 except ImportError as e,::
@@ -60,7 +60,7 @@ def test_
     print("\n检查稳定性特性,")
     if hasattr(connector.mqtt_client(), 'set_config'):::
         print("✓ MQTT客户端支持配置设置")
-    else,
+    else:
         print("✗ MQTT客户端不支持配置设置")
         
     print(f"连接尝试次数, {connector.connection_attempts}")
@@ -68,7 +68,7 @@ def test_
     
     # 测试连接超时处理
     print("\n测试连接超时处理...")
-    try,
+    try:
         # 使用较短的超时时间测试超时处理
         await connector.connect(timeout=1)
         print(f"连接后状态, {connector.is_connected}")

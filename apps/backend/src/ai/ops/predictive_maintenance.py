@@ -74,7 +74,7 @@ class PredictiveMaintenanceEngine:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    print("--- PredictiveMaintenanceEngine Example Usage ---")
+    logger.info("--- PredictiveMaintenanceEngine Example Usage ---")
 
     engine = PredictiveMaintenanceEngine(config={
         "min_history_for_analysis": 3,
@@ -89,22 +89,22 @@ if __name__ == "__main__":
     engine.ingest_sensor_data("temp_sensor_1", {"value": 38.0}) # Anomaly
 
     # Analyze and predict
-    print("\n--- Analyzing temp_sensor_1 ---")
+    logger.info("\n--- Analyzing temp_sensor_1 ---")
     prediction = engine.predict_failure("temp_sensor_1")
     if prediction:
-        print(f"Prediction for temp_sensor_1: {prediction}")
+        logger.info(f"Prediction for temp_sensor_1: {prediction}")
     else:
-        print("No immediate failure predicted for temp_sensor_1.")
+        logger.error("No immediate failure predicted for temp_sensor_1.")
 
     engine.ingest_sensor_data("pressure_sensor_A", {"value": 100.0})
     engine.ingest_sensor_data("pressure_sensor_A", {"value": 101.0})
     engine.ingest_sensor_data("pressure_sensor_A", {"value": 102.0})
 
-    print("\n--- Analyzing pressure_sensor_A ---")
+    logger.info("\n--- Analyzing pressure_sensor_A ---")
     prediction = engine.predict_failure("pressure_sensor_A")
     if prediction:
-        print(f"Prediction for pressure_sensor_A: {prediction}")
+        logger.info(f"Prediction for pressure_sensor_A: {prediction}")
     else:
-        print("No immediate failure predicted for pressure_sensor_A.")
+        logger.error("No immediate failure predicted for pressure_sensor_A.")
 
-    print("\n--- PredictiveMaintenanceEngine Example Finished ---")
+    logger.info("\n--- PredictiveMaintenanceEngine Example Finished ---")

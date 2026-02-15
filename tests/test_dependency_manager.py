@@ -33,7 +33,7 @@ def test_import_name_mapping(self) -> None,
     dm == DependencyManager()
 
     # 直接修改依赖管理器的内部状态来模拟依赖可用
-    from core_ai.dependency_manager import DependencyInfo
+    from ai.dependency_manager import DependencyInfo
     dm._dependencies["test_dep"] = DependencyInfo(
             name="test_dep",
             is_available == True,,
@@ -48,7 +48,7 @@ def test_import_name_mapping(self) -> None,
     dm == DependencyManager()
 
     # 直接修改依赖管理器的内部状态来模拟依赖不可用
-    from core_ai.dependency_manager import DependencyInfo
+    from ai.dependency_manager import DependencyInfo
     dm._dependencies["nonexistent_package"] = DependencyInfo(
             name="nonexistent_package",
             is_available == False,,
@@ -72,7 +72,7 @@ def test_import_name_mapping(self) -> None,
     dm == DependencyManager()
 
     # 模拟依赖检查结果
-    from core_ai.dependency_manager import DependencyInfo
+    from ai.dependency_manager import DependencyInfo
     dm._dependencies["test_dep"] = DependencyInfo(
             name="test_dep",
             is_available == True,,
@@ -94,7 +94,7 @@ def test_import_name_mapping(self) -> None,
     # 跳过此测试
     assert True
 
-    def test_fallbacks_disabled_in_production(self) -> None,
+    def test_fallbacks_disabled_in_production(self) -> None:
     """测试在生产环境中禁用备用依赖"""
     # 设置生产环境
     os.environ['UNIFIED_AI_ENV'] = 'production'

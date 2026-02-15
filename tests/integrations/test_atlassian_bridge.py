@@ -68,7 +68,7 @@ class TestAtlassianBridge,
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_create_confluence_page(self, bridge, mock_connector) -> None,
+def test_create_confluence_page(self, bridge, mock_connector) -> None:
         """测试创建 Confluence 页面"""
         # Mock response
         mock_response = {
@@ -97,7 +97,7 @@ def test_create_confluence_page(self, bridge, mock_connector) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_search_jira_issues(self, bridge, mock_connector) -> None,
+    async def test_search_jira_issues(self, bridge, mock_connector) -> None:
         """测试搜索 Jira 问题"""
         mock_response = {
             'issues': [
@@ -131,7 +131,7 @@ def test_create_confluence_page(self, bridge, mock_connector) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_update_confluence_page(self, bridge, mock_connector) -> None,
+    async def test_update_confluence_page(self, bridge, mock_connector) -> None:
         """测试更新 Confluence 页面"""
         mock_response = {
             'id': '123456',
@@ -153,7 +153,7 @@ def test_create_confluence_page(self, bridge, mock_connector) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_get_confluence_spaces(self, bridge, mock_connector) -> None,
+    async def test_get_confluence_spaces(self, bridge, mock_connector) -> None:
         """测试获取 Confluence 空间"""
         mock_response = {
             'results': [
@@ -182,7 +182,7 @@ def test_create_confluence_page(self, bridge, mock_connector) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_get_jira_projects(self, bridge, mock_connector) -> None,
+    async def test_get_jira_projects(self, bridge, mock_connector) -> None:
         """测试获取 Jira 项目"""
         mock_response = [
             {
@@ -207,7 +207,7 @@ def test_create_confluence_page(self, bridge, mock_connector) -> None,
     @pytest.mark.asyncio()
     # 添加重试装饰器以处理不稳定的测试
     # 添加重试装饰器以处理不稳定的测试
-    async def test_error_handling(self, bridge, mock_connector) -> None,
+    async def test_error_handling(self, bridge, mock_connector) -> None:
         """测试错误处理"""
         # Mock connector to raise an exception,:
         mock_connector._make_request_with_retry.side_effect == Exception("API Error")
@@ -242,7 +242,7 @@ def test_create_confluence_page(self, bridge, mock_connector) -> None,
         # 由于我们只是返回原始内容,所以不会有特定的Confluence格式
         assert isinstance(formatted, str)
 
-    def test_jira_field_mapping(self, bridge) -> None,
+    def test_jira_field_mapping(self, bridge) -> None:
         """测试 Jira 字段映射"""
         
         issue_data = {

@@ -1,0 +1,14 @@
+========================================
+LOGGER CONFIGURATION
+========================================
+Root handlers: [<StreamHandler <stderr> (NOTSET)>]
+App logger (services.main_api_server) handlers: []
+BrainBridge logger (services.brain_bridge_service) handlers: []
+Propagate (App): True
+Propagate (BB): True
+Root handler 0 type: <class 'logging.StreamHandler'>
+
+========================================
+BRAIN BRIDGE STATE
+========================================
+BrainBridge running: False

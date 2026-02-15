@@ -411,25 +411,25 @@ def create_i18n_manager(config: I18nConfig = None) -> I18nManager:
 
 def demo():
     """演示 / Demo"""
-    print("🌐 i18n 多语言支持系统演示")
-    print("=" * 50)
+    logger.info("🌐 i18n 多语言支持系统演示")
+    logger.info("=" * 50)
     
     manager = I18nManager()
     
-    print("\n📋 支持的语言:")
+    logger.info("\n📋 支持的语言:")
     for lang in manager.get_supported_languages():
-        print(f"  {lang['code']}: {lang['name']}")
+        logger.info(f"  {lang['code']}: {lang['name']}")
     
-    print("\n🔤 翻译测试:")
+    logger.info("\n🔤 翻译测试:")
     for lang in ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR"]:
         manager.set_language(lang)
-        print(f"\n[{lang}]")
-        print(f"  问候: {manager.t('greeting')}")
-        print(f"  再见: {manager.t('farewell')}")
-        print(f"  思考: {manager.t('thinking')}")
-        print(f"  帮助: {manager.t('help_request')}")
+        logger.info(f"\n[{lang}]")
+        logger.info(f"  问候: {manager.t('greeting')}")
+        logger.info(f"  再见: {manager.t('farewell')}")
+        logger.info(f"  思考: {manager.t('thinking')}")
+        logger.info(f"  帮助: {manager.t('help_request')}")
     
-    print("\n🌍 语言检测:")
+    logger.info("\n🌍 语言检测:")
     test_texts = [
         ("你好", "zh-CN"),
         ("Hello", "en-US"),
@@ -439,13 +439,13 @@ def demo():
     for text, expected in test_texts:
         detected = manager.detect_language(text)
         status = "✅" if detected == expected else "❌"
-        print(f"  {status} '{text}' -> {detected} (期望: {expected})")
+        logger.info(f"  {status} '{text}' -> {detected} (期望: {expected})")
     
-    print("\n💾 区域信息:")
+    logger.info("\n💾 区域信息:")
     info = manager.get_locale_info("zh-CN")
-    print(f"  中文(中国): {info}")
+    logger.info(f"  中文(中国): {info}")
     
-    print("\n✅ 演示完成!")
+    logger.info("\n✅ 演示完成!")
 
 
 if __name__ == "__main__":

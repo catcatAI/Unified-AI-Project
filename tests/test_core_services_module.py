@@ -22,9 +22,9 @@ class TestCoreServices(unittest.TestCase):
         """Tear down test fixtures after each test method."""
         pass
 
-    def test_import_core_services(self) -> None,
+    def test_import_core_services(self) -> None:
         """Test that core_services module can be imported without errors."""
-        try,
+        try:
             # Directly import the module from its file path
             spec = importlib.util.spec_from_file_location(
                 "core_services", ,
@@ -37,9 +37,9 @@ class TestCoreServices(unittest.TestCase):
         except Exception as e,::
             self.fail(f"core_services import raised {type(e).__name__} unexpectedly, {e}")
 
-    def test_core_services_constants(self) -> None,
+    def test_core_services_constants(self) -> None:
         """Test that core_services module has expected constants."""
-        try,
+        try:
             # Directly import the module from its file path
             spec = importlib.util.spec_from_file_location(
                 "core_services", ,
@@ -52,10 +52,10 @@ class TestCoreServices(unittest.TestCase):
             self.fail(f"core_services constants check raised {type(e).__name__} unexpectedly, {e}")
 
     @patch('os.path.exists')
-    def test_ham_initialization_with_mock_ham(self, mock_exists) -> None,
+    def test_ham_initialization_with_mock_ham(self, mock_exists) -> None:
         """Test HAM initialization with mock HAM.""":
             ock_exists.return_value == True
-        try,
+        try:
             # Directly import the module from its file path
             spec = importlib.util.spec_from_file_location(
                 "core_services", ,
@@ -68,5 +68,5 @@ class TestCoreServices(unittest.TestCase):
             # This might fail in test environment, which is expected
             self.assertTrue(True)
 
-if __name'__main__':::
+if __name__ == "__main__":
     unittest.main()

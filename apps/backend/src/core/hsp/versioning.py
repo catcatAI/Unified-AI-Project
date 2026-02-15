@@ -465,7 +465,7 @@ if __name__ == "__main__":
         ["0.1.0", "0.2.0"],
         ["0.1.0", "0.2.0"]
     )
-    print(f"协商版本: {negotiated_version}")
+    logger.info(f"协商版本: {negotiated_version}")
 
     # 测试版本转换
     test_message = {
@@ -477,11 +477,11 @@ if __name__ == "__main__":
 
     try:
         converted_message = version_converter.convert_message_with_version_check(test_message)
-        print("转换后的消息: ", json.dumps(converted_message, indent=2, ensure_ascii=False))
+        logger.info("转换后的消息: ", json.dumps(converted_message, indent=2, ensure_ascii=False))
     except Exception as e:
-        print(f"转换失败: {e}")
+        logger.info(f"转换失败: {e}")
 
     # 生成兼容性报告
     compatibility_checker = HSPCompatibilityChecker(version_manager)
     report = compatibility_checker.generate_compatibility_report(["0.1.0", "0.2.0"])
-    print("兼容性报告: ", json.dumps(report, indent=2, ensure_ascii=False))
+    logger.info("兼容性报告: ", json.dumps(report, indent=2, ensure_ascii=False))

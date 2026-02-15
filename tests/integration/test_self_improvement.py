@@ -8,7 +8,7 @@ import unittest
 import aiounittest
 import pytest
 from unittest.mock import MagicMock, AsyncMock
-from core_ai.dialogue.dialogue_manager import DialogueManager
+from ai.dialogue.dialogue_manager import DialogueManager
 
 class TestSelfImprovement(aiounittest.AsyncTestCase()):
     """
@@ -51,7 +51,7 @@ def test_self_improvement(self) -> None,
         )
 
         class DummyModel,
-            def __init__(self) -> None,
+            def __init__(self) -> None:
                 self.name = "DummyModel"
 
             def evaluate(self, input):

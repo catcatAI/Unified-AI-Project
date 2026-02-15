@@ -744,43 +744,43 @@ if __name__ == "__main__":
         library = ExtendedBehaviorLibrary()
         await library.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 扩展行为库演示")
-        print("Extended Behavior Library Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 扩展行为库演示")
+        logger.info("Extended Behavior Library Demo")
+        logger.info("=" * 60)
         
         # Show library summary
-        print("\n行为库摘要 / Library summary:")
+        logger.info("\n行为库摘要 / Library summary:")
         summary = library.get_library_summary()
-        print(f"  总行为数: {summary['total_behaviors']}")
-        print("  按类别分布:")
+        logger.info(f"  总行为数: {summary['total_behaviors']}")
+        logger.info("  按类别分布:")
         for cat, count in summary['by_category'].items():
-            print(f"    {cat}: {count}")
+            logger.info(f"    {cat}: {count}")
         
         # Show some behaviors
-        print("\n示例行为 / Sample behaviors:")
+        logger.info("\n示例行为 / Sample behaviors:")
         sample_ids = ["idle_breathing", "greeting_wave", "happy_smile", "surprise_reaction"]
         for bid in sample_ids:
             behavior = library.get_behavior(bid)
             if behavior:
-                print(f"  {behavior.name_cn} ({behavior.name})")
-                print(f"    类别: {behavior.category.value[0]}")
-                print(f"    优先级: {behavior.priority.name}")
-                print(f"    时长: {behavior.duration}s" if behavior.duration > 0 else "    时长: 无限")
+                logger.info(f"  {behavior.name_cn} ({behavior.name})")
+                logger.info(f"    类别: {behavior.category.value[0]}")
+                logger.info(f"    优先级: {behavior.priority.name}")
+                logger.info(f"    时长: {behavior.duration}s" if behavior.duration > 0 else "    时长: 无限")
         
         # Check triggers
-        print("\n触发检测 / Trigger checking:")
+        logger.info("\n触发检测 / Trigger checking:")
         context = {
             "time": 35.0,
             "emotion": 0.7,
             "proximity": 1.0,
         }
         triggerable = library.check_triggers(context)
-        print(f"  可触发行为数: {len(triggerable)}")
+        logger.info(f"  可触发行为数: {len(triggerable)}")
         for b in triggerable[:3]:
-            print(f"    - {b.name_cn}")
+            logger.info(f"    - {b.name_cn}")
         
         await library.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

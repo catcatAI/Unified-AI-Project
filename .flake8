@@ -15,10 +15,10 @@ exclude =
     .mypy_cache,
     .cache
 ignore =
-    E203,  # 空格之前冒号 (与 Black 冲突)
-    W503,  # 二进制运算符之前换行 (与 Black 冲突)
-    E501,  # 行太长 (由 Black 处理)
-    F401,  # 导入未使用 (常见于 __init__.py)
+    E203,
+    W503,
+    E501,
+    F401,
 per-file-ignores =
     __init__.py:F401
     test_*.py:S101

@@ -242,10 +242,10 @@ async def interactive_demo():
                 # 处理请求
                 response = await asi_system.process_request(request)
 
-                print("\n" + "-" * 40)
-                print("处理结果:")
-                print(json.dumps(response, indent=2, ensure_ascii=False))
-                print("-" * 40)
+                logger.info("\n" + "-" * 40)
+                logger.info("处理结果:")
+                logger.info(json.dumps(response, indent=2, ensure_ascii=False))
+                logger.info("-" * 40)
 
             except KeyboardInterrupt:
                 break

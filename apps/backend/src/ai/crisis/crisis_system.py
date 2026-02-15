@@ -96,20 +96,20 @@ class CrisisSystem:
 
         if detected_level > 0:
             if detected_level > self.crisis_level:
-                print(f"CrisisSystem: Potential crisis detected or level escalated. New level: {detected_level}.")
+                logger.info(f"CrisisSystem: Potential crisis detected or level escalated. New level: {detected_level}.")
             elif detected_level < self.crisis_level:
-                print(f"CrisisSystem: Input suggests potential de-escalation, but maintaining current crisis level {self.crisis_level} until resolved.")
+                logger.info(f"CrisisSystem: Input suggests potential de-escalation, but maintaining current crisis level {self.crisis_level} until resolved.")
                 # For now, crisis level only goes up through assess, and down through resolve_crisis.
                 # More sophisticated logic could allow assess_input to also de-escalate.
                 return self.crisis_level  # Return current higher level
             else:  # detected_level = self.crisis_level and self.crisis_level > 0
-                print(f"CrisisSystem: Input is consistent with ongoing crisis level {self.crisis_level}.")
+                logger.info(f"CrisisSystem: Input is consistent with ongoing crisis level {self.crisis_level}.")
             
             self.crisis_level = detected_level  # Set or maintain the detected crisis level
             self._trigger_protocol(self.crisis_level, {"input_text": text_input, "context": context})
         else:  # No crisis keywords detected in this input
             if self.crisis_level > 0:
-                print(f"CrisisSystem: No crisis keywords in current input, but maintaining ongoing crisis level {self.crisis_level} until explicitly resolved.")
+                logger.info(f"CrisisSystem: No crisis keywords in current input, but maintaining ongoing crisis level {self.crisis_level} until explicitly resolved.")
             # If self.crisis_level was 0, it remains 0.
 
         return self.crisis_level

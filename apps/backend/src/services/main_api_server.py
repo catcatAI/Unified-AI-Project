@@ -53,10 +53,11 @@ import logging
 env_path = None
 try:
     from dotenv import load_dotenv
+
     # 从项目根目录加载 .env 文件
     # main_api_server.py 在 apps/backend/src/services/
     # 项目根目录是 apps/backend/src/services 的向上5级 (services -> src -> backend -> apps -> Unified-AI-Project)
-    env_path = Path(__file__).parent.parent.parent.parent.parent / '.env'
+    env_path = Path(__file__).parent.parent.parent.parent.parent / ".env"
     if env_path.exists():
         load_dotenv(env_path, override=False)
 except ImportError:
@@ -69,21 +70,26 @@ logger = logging.getLogger(__name__)
 # 现在可以安全地记录环境变量加载状态
 try:
     from dotenv import load_dotenv
+
     if env_path and env_path.exists():
         logger.info(f"Environment variables loaded from: {env_path}")
     else:
         if env_path:
             logger.warning(f".env file not found at: {env_path}")
 except ImportError:
-    logger.warning("python-dotenv not installed, environment variables will not be loaded from .env file")
+    logger.warning(
+        "python-dotenv not installed, environment variables will not be loaded from .env file"
+    )
 
 # ========== 修复：系统指标管理器 ==========
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
     logger.warning("psutil not available, system metrics will use fallback values")
+
 
 class SystemMetricsManager:
     """系统指标管理器
@@ -103,7 +109,9 @@ class SystemMetricsManager:
         """检查缓存是否有效"""
         if key not in self._cache_timestamp:
             return False
-        return (datetime.now() - self._cache_timestamp[key]).total_seconds() < self.cache_ttl
+        return (
+            datetime.now() - self._cache_timestamp[key]
+        ).total_seconds() < self.cache_ttl
 
     def _get_cached_or_compute(self, key: str, compute_func) -> Any:
         """获取缓存值或计算新值"""
@@ -141,7 +149,7 @@ class SystemMetricsManager:
             return 0.0
 
         def compute():
-            return psutil.disk_usage('/').percent
+            return psutil.disk_usage("/").percent
 
         return self._get_cached_or_compute("disk_percent", compute)
 
@@ -150,7 +158,7 @@ class SystemMetricsManager:
         return {
             "cpu_percent": self.get_cpu_percent(),
             "memory_percent": self.get_memory_percent(),
-            "disk_percent": self.get_disk_percent()
+            "disk_percent": self.get_disk_percent(),
         }
 
     def clear_cache(self):
@@ -158,8 +166,10 @@ class SystemMetricsManager:
         self._cache.clear()
         self._cache_timestamp.clear()
 
+
 # 创建全局系统指标管理器实例
 system_metrics_manager = SystemMetricsManager()
+
 
 # ========== 修复：消息管理器 ==========
 class MessageManager:
@@ -181,7 +191,9 @@ class MessageManager:
     def get_next_message_id(self) -> str:
         """获取下一个消息序列号"""
         self.message_counter += 1
-        return f"msg_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{self.message_counter:06d}"
+        return (
+            f"msg_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{self.message_counter:06d}"
+        )
 
     def is_duplicate_message(self, message_id: str) -> bool:
         """检查消息是否重复"""
@@ -191,7 +203,7 @@ class MessageManager:
         """缓存消息"""
         self.message_cache[message_id] = {
             "data": message_data,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         # 限制缓存大小
@@ -202,12 +214,18 @@ class MessageManager:
                 if self.message_cache:
                     self.message_cache.pop(next(iter(self.message_cache)))
 
-    def merge_state(self, current_state: Dict[str, Any], new_state: Dict[str, Any]) -> Dict[str, Any]:
+    def merge_state(
+        self, current_state: Dict[str, Any], new_state: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """合并状态"""
         merged = current_state.copy()
 
         for key, value in new_state.items():
-            if isinstance(value, dict) and key in merged and isinstance(merged[key], dict):
+            if (
+                isinstance(value, dict)
+                and key in merged
+                and isinstance(merged[key], dict)
+            ):
                 # 递归合并嵌套字典
                 merged[key] = self.merge_state(merged[key], value)
             else:
@@ -221,18 +239,20 @@ class MessageManager:
         if state_id not in self.state_history:
             self.state_history[state_id] = []
 
-        self.state_history[state_id].append({
-            "data": state_data,
-            "timestamp": datetime.now().isoformat()
-        })
+        self.state_history[state_id].append(
+            {"data": state_data, "timestamp": datetime.now().isoformat()}
+        )
 
         # 限制历史记录大小
         if len(self.state_history[state_id]) > self.max_state_history:
-            self.state_history[state_id] = self.state_history[state_id][-self.max_state_history:]
+            self.state_history[state_id] = self.state_history[state_id][
+                -self.max_state_history :
+            ]
 
     def get_state_history(self, state_id: str) -> List[Dict[str, Any]]:
         """获取状态历史"""
         return self.state_history.get(state_id, [])
+
 
 # 创建全局消息管理器实例
 message_manager = MessageManager()
@@ -244,11 +264,24 @@ _src_path = str(_backend_dir / "src")  # /apps/backend/src
 if _src_path not in sys.path:
     sys.path.insert(0, _src_path)
 
-from fastapi import FastAPI, HTTPException, APIRouter, Body, BackgroundTasks, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    APIRouter,
+    Body,
+    BackgroundTasks,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.autonomous.desktop_interaction import DesktopInteraction, FileCategory
-from core.autonomous.action_executor import ActionExecutor, Action, ActionCategory, ActionPriority
+from core.autonomous.action_executor import (
+    ActionExecutor,
+    Action,
+    ActionCategory,
+    ActionPriority,
+)
 from services.vision_service import VisionService
 from services.audio_service import AudioService
 from services.tactile_service import TactileService
@@ -285,17 +318,137 @@ brain_bridge = BrainBridgeService(digital_life)
 
 # Link components
 pet.set_biological_integrator(digital_life.biological_integrator)
+pet.set_economy_manager(economy_manager)
 economy.set_economy_manager(economy_manager)
+
+
+def _validate_environment_variables():
+    """
+    驗證啟動時必需的環境變量
+
+    檢查 ANGELA_KEY_A, ANGELA_KEY_B, ANGELA_KEY_C 是否存在
+    如有缺失，記錄警告但不阻止啟動（允許演示模式）
+    """
+    required_keys = ["ANGELA_KEY_A", "ANGELA_KEY_B", "ANGELA_KEY_C"]
+    missing_keys = []
+
+    for key in required_keys:
+        value = os.environ.get(key)
+        if not value:
+            missing_keys.append(key)
+
+    if missing_keys:
+        logger.warning(
+            f"[STARTUP] Missing environment variables: {', '.join(missing_keys)}. "
+            "Using demo keys for development mode. "
+            "Set these variables for production deployment."
+        )
+    else:
+        logger.info("[STARTUP] All required environment variables are set")
+
+    return len(missing_keys) == 0
+
+
+async def _handle_chat_request(
+    user_message: str, user_name: str, history: List[Dict[str, Any]], session_id: str
+) -> Dict[str, Any]:
+    """
+    處理聊天請求的共用函數
+
+    統一處理 /angela/chat 和 /dialogue 端點的聊天邏輯
+    包含 LLM 調用、情感分析和錯誤處理
+
+    Args:
+        user_message: 用戶輸入的消息
+        user_name: 用戶名稱
+        history: 對話歷史
+        session_id: 會話 ID
+
+    Returns:
+        包含回應、情感分析和元數據的字典
+    """
+    # 輸入驗證
+    if not user_message or not user_message.strip():
+        raise HTTPException(status_code=400, detail="消息不能為空")
+
+    # 調用 LLM 服務生成回應，添加超時控制
+    try:
+        service = await get_llm_service()
+        # 使用 asyncio.wait_for 添加 30 秒超時（增加以適應慢速模型）
+        response_text = await asyncio.wait_for(
+            angela_llm_response(
+                user_message=user_message, history=history, user_name=user_name
+            ),
+            timeout=30.0,  # 30 秒超時
+        )
+        source = "llm" if service and service.is_available else "fallback"
+
+        # 使用情感识别系统分析情感
+        if service and hasattr(service, "analyze_emotion"):
+            emotion_analysis = service.analyze_emotion(user_message, response_text)
+            emotion = emotion_analysis.get("emotion", "happy")
+            emotion_confidence = emotion_analysis.get("confidence", 0.5)
+            emotion_intensity = emotion_analysis.get("intensity", 0.5)
+        else:
+            emotion = "happy"
+            emotion_confidence = 0.5
+            emotion_intensity = 0.5
+
+    except asyncio.TimeoutError:
+        logger.warning(f"LLM response timeout for message: {user_message[:50]}...")
+        # 超時時使用備份回應
+        response_text = generate_angela_response(user_message, user_name)
+        source = "fallback-timeout"
+        emotion = "neutral"
+        emotion_confidence = 0.5
+        emotion_intensity = 0.5
+    except Exception as e:
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
+
+        # 如果 LLM 服務不可用，使用備份回應
+        logger.warning(f"LLM service error: {e}")
+        response_text = generate_angela_response(user_message, user_name)
+        source = "fallback-error"
+        emotion = "neutral"
+        emotion_confidence = 0.5
+        emotion_intensity = 0.5
+
+    # 統一響應格式
+    return {
+        "session_id": session_id,
+        "response": response_text,
+        "response_text": response_text,  # 保留此字段以向後兼容
+        "emotion": emotion,
+        "angela_mood": emotion,  # 保留此字段以向後兼容
+        "emotion_confidence": emotion_confidence,
+        "emotion_intensity": emotion_intensity,
+        "source": source,
+        "timestamp": datetime.now().isoformat(),
+    }
+
 
 @app.on_event("startup")
 async def startup_event():
+    # 驗證環境變量
+    _validate_environment_variables()
+
+    # 自動創建日誌目錄
+    log_dir = Path("logs")
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+        logger.info(f"[STARTUP] Log directory created/verified: {log_dir.absolute()}")
+    except Exception as e:
+        logger.warning(f"[STARTUP] Failed to create log directory: {e}")
+
     await desktop_interaction.initialize()
     await action_executor.initialize()
     await digital_life.initialize()
 
     # Initialize Logic Bridge
     if digital_life.autonomous_lifecycle:
-        initialize_cognitive_bridge(digital_life.autonomous_lifecycle.cdm, economy_manager)
+        initialize_cognitive_bridge(
+            digital_life.autonomous_lifecycle.cdm, economy_manager
+        )
 
     await brain_bridge.start()
     # vision_service doesn't have an async initialize yet
@@ -304,9 +457,11 @@ async def startup_event():
     global _llm_service
     try:
         _llm_service = await get_llm_service()
-        print(f"[STARTUP] LLM Service initialized: available={_llm_service.is_available}")
+        logger.info(
+            f"[STARTUP] LLM Service initialized: available={_llm_service.is_available}"
+        )
     except Exception as e:
-        print(f"[STARTUP] LLM Service initialization failed: {e}")
+        logger.error(f"[STARTUP] LLM Service initialization failed: {e}")
 
     # Start background task to broadcast state updates
     asyncio.create_task(broadcast_state_updates())
@@ -318,6 +473,7 @@ async def shutdown_event():
     await action_executor.shutdown()
     await brain_bridge.stop()
     await digital_life.shutdown()
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -361,9 +517,15 @@ async def system_status():
         # 獲取服務狀態
         services_status = {
             "llm_service": _llm_service.is_available if _llm_service else False,
-            "digital_life": digital_life.is_initialized if hasattr(digital_life, 'is_initialized') else False,
-            "brain_bridge": brain_bridge.is_running if hasattr(brain_bridge, 'is_running') else False,
-            "economy": _economy_manager is not None if '_economy_manager' in globals() else False
+            "digital_life": digital_life.is_initialized
+            if hasattr(digital_life, "is_initialized")
+            else False,
+            "brain_bridge": brain_bridge.is_running
+            if hasattr(brain_bridge, "is_running")
+            else False,
+            "economy": economy_manager is not None
+            if "economy_manager" in globals()
+            else False,
         }
 
         # ========== 修复：使用统一的系统指标管理器 ==========
@@ -376,10 +538,10 @@ async def system_status():
             "services": services_status,
             "system_resources": system_resources,
             "active_sessions": len(sessions),
-            "message": "System operational"
+            "message": "System operational",
         }
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -447,7 +609,7 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
     處理流程：
     1. 接收用戶消息
     2. 通過 Angela LLM 服務生成回應
-    3. 分析用戶情感（修复：使用新的情感识别系统）
+    3. 分析用戶情感
     4. 返回經過 Angela 個性化處理的回應
 
     用戶不是直接與 LLM 對話，而是透過 Angela。
@@ -457,66 +619,7 @@ async def angela_chat(request: Dict[str, Any] = Body(...)):
     user_name = request.get("user_name", "朋友")
     history = request.get("history", [])
 
-    # 輸入驗證
-    if not user_message or not user_message.strip():
-        raise HTTPException(status_code=400, detail="消息不能為空")
-
-    # 調用 LLM 服務生成回應，添加超時控制
-    try:
-        service = await get_llm_service()
-        # 使用 asyncio.wait_for 添加 30 秒超時（增加以適應慢速模型）
-        response_text = await asyncio.wait_for(
-            angela_llm_response(
-                user_message=user_message,
-                history=history,
-                user_name=user_name
-            ),
-            timeout=30.0  # 30 秒超時
-        )
-        source = "llm" if service and service.is_available else "fallback"
-
-        # ========== 修复：使用情感识别系统分析情感 ==========
-        if service and hasattr(service, 'analyze_emotion'):
-            emotion_analysis = service.analyze_emotion(user_message, response_text)
-            emotion = emotion_analysis.get("emotion", "happy")
-            emotion_confidence = emotion_analysis.get("confidence", 0.5)
-            emotion_intensity = emotion_analysis.get("intensity", 0.5)
-        else:
-            emotion = "happy"
-            emotion_confidence = 0.5
-            emotion_intensity = 0.5
-
-    except asyncio.TimeoutError:
-        logger.warning(f"LLM response timeout for message: {user_message[:50]}...")
-        # 超時時使用備份回應
-        response_text = generate_angela_response(user_message, user_name)
-        source = "fallback-timeout"
-        emotion = "neutral"
-        emotion_confidence = 0.5
-        emotion_intensity = 0.5
-    except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
-
-        # 如果 LLM 服務不可用，使用備份回應
-        print(f"[WARNING] LLM service error: {e}")
-        response_text = generate_angela_response(user_message, user_name)
-        source = "fallback-error"
-        emotion = "neutral"
-        emotion_confidence = 0.5
-        emotion_intensity = 0.5
-
-    # 統一響應格式（修复：添加情感分析结果）
-    return {
-        "session_id": session_id,
-        "response": response_text,
-        "response_text": response_text,  # 保留此字段以向後兼容
-        "emotion": emotion,
-        "angela_mood": emotion,  # 保留此字段以向後兼容
-        "emotion_confidence": emotion_confidence,
-        "emotion_intensity": emotion_intensity,
-        "source": source,
-        "timestamp": datetime.now().isoformat()
-    }
+    return await _handle_chat_request(user_message, user_name, history, session_id)
 
 
 @router.post("/dialogue")
@@ -529,67 +632,11 @@ async def dialogue(request: Dict[str, Any] = Body(...)):
     user_name = request.get("user_name", "朋友")
     history = request.get("history", [])
 
-    # 輸入驗證
-    if not user_message or not user_message.strip():
-        raise HTTPException(status_code=400, detail="消息不能為空")
-
-    # 调用 LLM 服务生成回应，添加超時控制
-    try:
-        service = await get_llm_service()
-        # 使用 asyncio.wait_for 添加 30 秒超時（增加以適應慢速模型）
-        response_text = await asyncio.wait_for(
-            angela_llm_response(
-                user_message=user_message,
-                history=history,
-                user_name=user_name
-            ),
-            timeout=30.0  # 30 秒超時
-        )
-        source = "llm" if service and service.is_available else "fallback"
-
-        # ========== 修复：使用情感识别系统分析情感 ==========
-        if service and hasattr(service, 'analyze_emotion'):
-            emotion_analysis = service.analyze_emotion(user_message, response_text)
-            emotion = emotion_analysis.get("emotion", "happy")
-            emotion_confidence = emotion_analysis.get("confidence", 0.5)
-            emotion_intensity = emotion_analysis.get("intensity", 0.5)
-        else:
-            emotion = "happy"
-            emotion_confidence = 0.5
-            emotion_intensity = 0.5
-
-    except asyncio.TimeoutError:
-        logger.warning(f"LLM response timeout for message: {user_message[:50]}...")
-        # 超時時使用備份回應
-        response_text = generate_angela_response(user_message, user_name)
-        source = "fallback-timeout"
-        emotion = "neutral"
-        emotion_confidence = 0.5
-        emotion_intensity = 0.5
-    except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
-        print(f"[WARNING] LLM service error: {e}")
-        response_text = generate_angela_response(user_message, user_name)
-        source = "fallback-error"
-        emotion = "neutral"
-        emotion_confidence = 0.5
-        emotion_intensity = 0.5
-
-    # 統一響應格式（与 /angela/chat 相同，修复情感分析）
-    return {
-        "session_id": session_id,
-        "response": response_text,
-        "response_text": response_text,  # 保留此字段以向後兼容
-        "emotion": emotion,
-        "angela_mood": emotion,  # 保留此字段以向後兼容
-        "emotion_confidence": emotion_confidence,
-        "emotion_intensity": emotion_intensity,
-        "source": source,
-        "timestamp": datetime.now().isoformat()
-    }
+    return await _handle_chat_request(user_message, user_name, history, session_id)
 
 
 # --- Desktop Interaction API ---
+
 
 @router.get("/api/v1/desktop/state")
 async def get_desktop_state():
@@ -599,9 +646,14 @@ async def get_desktop_state():
         "total_files": state.total_files,
         "total_size": state.total_size,
         "clutter_level": state.clutter_level,
-        "files_by_category": {cat.name: count for cat, count in state.files_by_category.items()},
-        "last_organized": state.last_organized.isoformat() if state.last_organized else None
+        "files_by_category": {
+            cat.name: count for cat, count in state.files_by_category.items()
+        },
+        "last_organized": state.last_organized.isoformat()
+        if state.last_organized
+        else None,
     }
+
 
 @router.post("/api/v1/desktop/organize")
 async def organize_desktop(background_tasks: BackgroundTasks):
@@ -609,6 +661,7 @@ async def organize_desktop(background_tasks: BackgroundTasks):
     # Background task for long running operation
     operations = await desktop_interaction.organize_desktop()
     return {"status": "success", "operations_count": len(operations)}
+
 
 @router.post("/api/v1/desktop/cleanup")
 async def cleanup_desktop(days_old: int = 30):
@@ -619,48 +672,50 @@ async def cleanup_desktop(days_old: int = 30):
 
 # --- Action Executor API ---
 
+
 @router.get("/api/v1/actions/status")
 async def get_actions_status():
     """Get action executor status"""
     return action_executor.queue.get_queue_status()
+
 
 @router.post("/api/v1/actions/execute")
 async def execute_action(action_data: Dict[str, Any]):
     """Execute a custom action"""
     # This is a simplified implementation. In a real scenario,
     # we would map the request to specific registered functions.
-    
+
     # Example action creation
     try:
         category = ActionCategory[action_data.get("category", "SYSTEM")]
         priority = ActionPriority[action_data.get("priority", "NORMAL")]
-        
+
         # For now, we only support a "dummy" function via API for safety
         async def dummy_func(**kwargs):
             return {"result": "Action executed successfully", "params": kwargs}
-            
+
         action = Action.create(
             name=action_data.get("name", "api_action"),
             category=category,
             priority=priority,
             function=dummy_func,
-            parameters=action_data.get("parameters", {})
+            parameters=action_data.get("parameters", {}),
         )
-        
+
         result = await action_executor.submit_and_execute(action)
         return {
             "success": result.success,
             "action_id": result.action_id,
             "output": result.output,
-            "error": result.error
+            "error": result.error,
         }
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
 
 
-
 # --- Vision API ---
+
 
 @router.post("/api/v1/vision/sampling")
 async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
@@ -671,19 +726,18 @@ async def get_vision_sampling(params: Dict[str, Any] = Body(...)):
     scale = params.get("scale", 1.0)
     deformation = params.get("deformation", 0.0)
     distribution = params.get("distribution", "GAUSSIAN")
-    
+
     try:
         result = await vision_service.get_sampling_analysis(
             center=(center[0], center[1]),
             scale=scale,
             deformation=deformation,
-            distribution=distribution
+            distribution=distribution,
         )
         return result
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @router.post("/api/v1/vision/perceive")
@@ -695,9 +749,8 @@ async def vision_perceive(image_data: bytes = Body(...)):
         result = await vision_service.perceive_and_focus(image_data)
         return result
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @router.post("/api/v1/audio/scan")
@@ -709,9 +762,8 @@ async def audio_scan(audio_data: bytes = Body(...), duration: float = 1.0):
         result = await audio_service.scan_and_identify(audio_data, duration)
         return result
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @router.post("/api/v1/audio/register_user")
@@ -723,9 +775,8 @@ async def audio_register_user(audio_data: bytes = Body(...)):
         result = await audio_service.register_user_voice(audio_data)
         return result
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @router.post("/api/v1/tactile/model")
@@ -737,9 +788,8 @@ async def tactile_model(visual_data: Dict[str, Any] = Body(...)):
         result = await tactile_service.model_object_tactile(visual_data)
         return result
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @router.post("/api/v1/tactile/touch")
@@ -753,15 +803,15 @@ async def tactile_touch(request: Dict[str, Any] = Body(...)):
         result = await tactile_service.simulate_touch(object_id, contact_point)
         return result
     except Exception as e:
-        logger.error(f'Error in {__name__}: {e}', exc_info=True)
+        logger.error(f"Error in {__name__}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @router.post("/api/v1/brain/metrics")
 async def get_brain_metrics():
     """Get theoretical AGI metrics (L_s, A_c, etc.)"""
     return brain_bridge.get_current_status()
+
 
 @router.post("/api/v1/brain/dividend")
 async def get_brain_dividend():
@@ -776,6 +826,7 @@ async def get_brain_dividend():
 
 import asyncio
 import json
+
 
 class ConnectionManager:
     """连接管理器
@@ -793,7 +844,7 @@ class ConnectionManager:
         self.message_buffer: Dict[WebSocket, List[Dict[str, Any]]] = {}  # 消息缓冲
         self.max_buffer_size = 10  # 最大缓冲消息数
         self.heartbeat_interval = 30  # 心跳间隔（秒）
-        self.heartbeat_timeout = 60  # 心跳超时（秒）
+        self.heartbeat_timeout = 120  # 心跳超时（秒） - 增加到120秒以提高稳定性
 
     async def connect(self, websocket: WebSocket):
         """接受新连接"""
@@ -805,13 +856,15 @@ class ConnectionManager:
             "connected_at": datetime.now().isoformat(),
             "last_heartbeat": datetime.now(),
             "heartbeat_missed": 0,
-            "client_id": str(uuid.uuid4())
+            "client_id": str(uuid.uuid4()),
         }
 
         # 初始化消息缓冲
         self.message_buffer[websocket] = []
 
-        logger.info(f"WebSocket 连接已建立 (ID: {self.connection_info[websocket]['client_id']})")
+        logger.info(
+            f"WebSocket 连接已建立 (ID: {self.connection_info[websocket]['client_id']})"
+        )
 
         # 启动心跳检测
         asyncio.create_task(self._heartbeat_monitor(websocket))
@@ -819,7 +872,9 @@ class ConnectionManager:
     def disconnect(self, websocket: WebSocket):
         """断开连接"""
         if websocket in self.active_connections:
-            client_id = self.connection_info.get(websocket, {}).get("client_id", "unknown")
+            client_id = self.connection_info.get(websocket, {}).get(
+                "client_id", "unknown"
+            )
             self.active_connections.remove(websocket)
             self.connection_info.pop(websocket, None)
             self.message_buffer.pop(websocket, None)
@@ -832,7 +887,9 @@ class ConnectionManager:
                 # 检查心跳超时
                 info = self.connection_info.get(websocket)
                 if info:
-                    time_since_last_heartbeat = (datetime.now() - info["last_heartbeat"]).total_seconds()
+                    time_since_last_heartbeat = (
+                        datetime.now() - info["last_heartbeat"]
+                    ).total_seconds()
 
                     if time_since_last_heartbeat > self.heartbeat_timeout:
                         logger.warning(f"心跳超时，断开连接 (ID: {info['client_id']})")
@@ -858,7 +915,9 @@ class ConnectionManager:
 
             except (ConnectionError, RuntimeError, Exception) as e:
                 # 连接失败，添加到消息缓冲
-                logger.warning(f"广播消息失败，添加到缓冲 (ID: {self.connection_info.get(connection, {}).get('client_id', 'unknown')}): {e}")
+                logger.warning(
+                    f"广播消息失败，添加到缓冲 (ID: {self.connection_info.get(connection, {}).get('client_id', 'unknown')}): {e}"
+                )
 
                 if connection in self.message_buffer:
                     self.message_buffer[connection].append(message)
@@ -872,7 +931,7 @@ class ConnectionManager:
                 # 如果仍然失败，断开连接
                 try:
                     await connection.close()
-                except:
+                except Exception:
                     pass
                 finally:
                     self.disconnect(connection)
@@ -919,14 +978,18 @@ class ConnectionManager:
                 {
                     "client_id": info.get("client_id", "unknown"),
                     "connected_at": info.get("connected_at", "unknown"),
-                    "last_heartbeat": info.get("last_heartbeat").isoformat() if info.get("last_heartbeat") else "unknown",
-                    "heartbeat_missed": info.get("heartbeat_missed", 0)
+                    "last_heartbeat": info.get("last_heartbeat").isoformat()
+                    if info.get("last_heartbeat")
+                    else "unknown",
+                    "heartbeat_missed": info.get("heartbeat_missed", 0),
                 }
                 for info in self.connection_info.values()
-            ]
+            ],
         }
 
+
 manager = ConnectionManager()
+
 
 # Background task to broadcast state updates
 async def broadcast_state_updates():
@@ -936,34 +999,28 @@ async def broadcast_state_updates():
             # Get current state from brain bridge
             state_data = {
                 "alpha": {
-                    "energy": brain_bridge.get_energy_level() if hasattr(brain_bridge, 'get_energy_level') else 0.5,
+                    "energy": brain_bridge.get_energy_level()
+                    if hasattr(brain_bridge, "get_energy_level")
+                    else 0.5,
                     "comfort": 0.5,
-                    "arousal": 0.5
+                    "arousal": 0.5,
                 },
-                "beta": {
-                    "curiosity": 0.5,
-                    "focus": 0.5,
-                    "learning": 0.5
-                },
-                "gamma": {
-                    "happiness": 0.5,
-                    "calm": 0.5
-                },
-                "delta": {
-                    "attention": 0.5,
-                    "engagement": 0.5
-                },
-                "timestamp": datetime.now().isoformat()
+                "beta": {"curiosity": 0.5, "focus": 0.5, "learning": 0.5},
+                "gamma": {"happiness": 0.5, "calm": 0.5},
+                "delta": {"attention": 0.5, "engagement": 0.5},
+                "timestamp": datetime.now().isoformat(),
             }
-            
-            await manager.broadcast({
-                "type": "state_update",
-                "data": state_data,
-                "timestamp": datetime.now().isoformat()
-            })
+
+            await manager.broadcast(
+                {
+                    "type": "state_update",
+                    "data": state_data,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
         except Exception as e:
-            print(f"Error broadcasting state update: {e}")
-        
+            logger.error(f"Error broadcasting state update: {e}")
+
         # Broadcast every 5 seconds
         await asyncio.sleep(5)
 
@@ -983,42 +1040,51 @@ async def websocket_endpoint(websocket: WebSocket):
 
     try:
         # Send initial connection confirmation
-        await websocket.send_json({
-            "type": "connected",
-            "client_id": client_id,
-            "timestamp": datetime.now().isoformat(),
-            "server_version": "6.0.4"
-        })
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "client_id": client_id,
+                "timestamp": datetime.now().isoformat(),
+                "server_version": "6.0.4",
+            }
+        )
 
         # ========== 修复：改进的消息处理循环 ==========
         while True:
             try:
                 # 接收消息（带超时）
                 data = await asyncio.wait_for(
-                    websocket.receive_json(),
-                    timeout=manager.heartbeat_interval
+                    websocket.receive_json(), timeout=manager.heartbeat_timeout
                 )
 
                 # 更新心跳时间
                 if websocket in manager.connection_info:
-                    manager.connection_info[websocket]["last_heartbeat"] = datetime.now()
+                    manager.connection_info[websocket]["last_heartbeat"] = (
+                        datetime.now()
+                    )
                     manager.connection_info[websocket]["heartbeat_missed"] = 0
 
                 # Handle different message types
-                if data.get("type") == "heartbeat":
+                if data.get("type") in ["heartbeat", "ping"]:
                     # 心跳响应
-                    await websocket.send_json({
-                        "type": "heartbeat_ack",
-                        "timestamp": datetime.now().isoformat()
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "heartbeat_ack"
+                            if data.get("type") == "heartbeat"
+                            else "echo",
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    )
 
                 elif data.get("type") == "state_update":
                     # Broadcast state updates to all connected clients
-                    await manager.broadcast({
-                        "type": "state_update",
-                        "data": data.get("data", {}),
-                        "timestamp": datetime.now().isoformat()
-                    })
+                    await manager.broadcast(
+                        {
+                            "type": "state_update",
+                            "data": data.get("data", {}),
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    )
 
                 elif data.get("type") == "chat_message":
                     # Handle chat messages from desktop app - use shared service
@@ -1030,29 +1096,36 @@ async def websocket_endpoint(websocket: WebSocket):
                     response_text = generate_angela_response(user_message, user_name)
 
                     # Send response back to the client
-                    await manager.send_personal_message({
-                        "type": "chat_response",
-                        "data": {
-                            "message_id": message_id,
-                            "content": response_text,
-                            "sender": "angela"
+                    await manager.send_personal_message(
+                        {
+                            "type": "chat_response",
+                            "data": {
+                                "message_id": message_id,
+                                "content": response_text,
+                                "sender": "angela",
+                            },
+                            "timestamp": datetime.now().isoformat(),
                         },
-                        "timestamp": datetime.now().isoformat()
-                    }, websocket)
+                        websocket,
+                    )
 
                 else:
                     # Echo back other messages for now
-                    await websocket.send_json({
-                        "type": "echo",
-                        "original": data,
-                        "timestamp": datetime.now().isoformat()
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "echo",
+                            "original": data,
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    )
 
             except asyncio.TimeoutError:
                 # 超时，检查是否需要断开连接
                 if websocket in manager.connection_info:
                     manager.connection_info[websocket]["heartbeat_missed"] += 1
-                    logger.warning(f"心跳超时 ({manager.connection_info[websocket]['heartbeat_missed']}次): {client_id}")
+                    logger.warning(
+                        f"心跳超时 ({manager.connection_info[websocket]['heartbeat_missed']}次): {client_id}"
+                    )
 
                     # 如果连续错过多次心跳，断开连接
                     if manager.connection_info[websocket]["heartbeat_missed"] >= 2:

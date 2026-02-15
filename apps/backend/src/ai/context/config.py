@@ -123,11 +123,11 @@ from context.config import config
 
 # 获取存储配置
 storage_config = config.get_storage_config()
-print(f"Storage directory: {storage_config['storage_dir']}")
+logger.info(f"Storage directory: {storage_config['storage_dir']}")
 
 # 获取缓存配置
 cache_config = config.get_cache_config()
 if cache_config['cache_enabled']:
-    print(f"Cache max size: {cache_config['cache_max_size']}")
+    logger.info(f"Cache max size: {cache_config['cache_max_size']}")
 ```
 """

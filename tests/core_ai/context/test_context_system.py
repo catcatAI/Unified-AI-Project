@@ -14,13 +14,13 @@ sys.path.insert(0, PROJECT_ROOT)
 
 
 # Corrected import paths
-from core_ai.context.context_system import ContextManager, ContextType
-from core_ai.context.storage.memory import MemoryStorage
-from core_ai.context.storage.disk import DiskStorage
-from core_ai.context.tool_context import ToolContextManager
-from core_ai.context.model_context import ModelContextManager, AgentContextManager
-from core_ai.context.dialogue_context import DialogueContextManager
-from core_ai.context.memory_context import MemoryContextManager
+from ai.context.context_system import ContextManager, ContextType
+from ai.context.storage.memory import MemoryStorage
+from ai.context.storage.disk import DiskStorage
+from ai.context.tool_context import ToolContextManager
+from ai.context.model_context import ModelContextManager, AgentContextManager
+from ai.context.dialogue_context import DialogueContextManager
+from ai.context.memory_context import MemoryContextManager
 
 @pytest.fixture
 def temp_dir_fixture():

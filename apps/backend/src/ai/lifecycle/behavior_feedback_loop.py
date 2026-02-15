@@ -441,7 +441,7 @@ if __name__ == "__main__":
         await feedback_loop.start()
 
         # 記錄一些行為
-        print("=== 記錄行為 ===")
+        logger.info("=== 記錄行為 ===")
         feedback_loop.record_behavior(
             action="greet",
             message="你好！",
@@ -474,14 +474,14 @@ if __name__ == "__main__":
         await asyncio.sleep(10)
 
         # 打印統計
-        print(f"\n=== 行為反饋統計 ===")
-        print(json.dumps(feedback_loop.get_stats(), indent=2, ensure_ascii=False))
+        logger.info(f"\n=== 行為反饋統計 ===")
+        logger.info(json.dumps(feedback_loop.get_stats(), indent=2, ensure_ascii=False))
 
-        print(f"\n=== 行為模式 ===")
-        print(json.dumps(feedback_loop.get_patterns(), indent=2, ensure_ascii=False))
+        logger.info(f"\n=== 行為模式 ===")
+        logger.info(json.dumps(feedback_loop.get_patterns(), indent=2, ensure_ascii=False))
 
-        print(f"\n=== 策略參數 ===")
-        print(json.dumps(feedback_loop.get_strategy_parameters(), indent=2, ensure_ascii=False))
+        logger.info(f"\n=== 策略參數 ===")
+        logger.info(json.dumps(feedback_loop.get_strategy_parameters(), indent=2, ensure_ascii=False))
 
         # 停止
         await feedback_loop.stop()

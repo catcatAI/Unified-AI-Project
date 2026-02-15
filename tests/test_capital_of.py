@@ -11,12 +11,12 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 # Fix the import path
-try,
+try:
     from ai.learning.content_analyzer_module import ContentAnalyzerModule
-except ImportError,::
+except ImportError as e:
     # Try alternative import path
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-    from core_ai.learning.content_analyzer_module import ContentAnalyzerModule
+    from ai.learning.content_analyzer_module import ContentAnalyzerModule
 
 
     def setUp(self):
@@ -35,7 +35,7 @@ def test_
         # TODO, 添加具体的测试逻辑
         pass
 
-    def test_capital_of_pattern() -> None,
+    def test_capital_of_pattern() -> None:
     # Initialize the ContentAnalyzerModule
     analyzer == ContentAnalyzerModule(spacy_model_name="en_core_web_sm")
     
@@ -68,7 +68,7 @@ def test_
     
     if found_expected_rel,::
         print("\n✓ Found expected relationship, France --has_capital--> Paris")
-    else,
+    else:
         print("\n✗ Did not find expected relationship, France --has_capital--> Paris")
         
         # Let's see if we have any other capital-related relationships,::

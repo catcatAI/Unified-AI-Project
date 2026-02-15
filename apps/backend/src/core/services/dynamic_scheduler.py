@@ -718,10 +718,10 @@ if __name__ == "__main__":
     async def test():
         scheduler = await get_scheduler()
         status = scheduler.get_status()
-        print(json.dumps(status, indent=2))
+        logger.info(json.dumps(status, indent=2))
         
         # Test generation
         result = await scheduler.generate("Hello! Who are you?")
-        print(json.dumps(result, indent=2))
+        logger.info(json.dumps(result, indent=2))
     
     asyncio.run(test())

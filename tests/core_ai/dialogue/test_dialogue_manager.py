@@ -11,8 +11,8 @@ import os
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 sys.path.insert(0, PROJECT_ROOT)
 
-from core_ai.dialogue.dialogue_manager import DialogueManager
-from core_ai.shared.types.common_types import ToolDispatcherResponse
+from ai.dialogue.dialogue_manager import DialogueManager
+from ai.shared.types.common_types import ToolDispatcherResponse
 
 @pytest.fixture
 def mock_core_services_fixture():

@@ -82,45 +82,45 @@ class ResourceAwarenessService:
         return 0.5
 
 if __name__ == '__main__':
-    print("--- ResourceAwarenessService Standalone Test ---")
+    logger.info("--- ResourceAwarenessService Standalone Test ---")
 
     # Test with default path (requires configs/simulated_resources.yaml to exist)
-    print("\n1. Testing with default config path:")
+    logger.info("\n1. Testing with default config path:")
     service_default = ResourceAwarenessService()
     if service_default.profile:
-        print(f"  Profile Name: {service_default.profile.profile_name}")
+        logger.info(f"  Profile Name: {service_default.profile.profile_name}")
         disk_conf = service_default.get_simulated_disk_config()
         if disk_conf:
-            print(f"  Disk Space (GB): {disk_conf.space_gb}")
-            print(f"  Disk Warning Threshold (%): {disk_conf.warning_threshold_percent}")
+            logger.info(f"  Disk Space (GB): {disk_conf.space_gb}")
+            logger.warning(f"  Disk Warning Threshold (%): {disk_conf.warning_threshold_percent}")
         else:
-            print("  No disk config found in default profile.")
+            logger.info("  No disk config found in default profile.")
     else:
-        print("  Failed to load default profile.")
+        logger.error("  Failed to load default profile.")
 
     # Test with a non-existent config file path
-    print("\n2. Testing with non-existent config file:")
+    logger.info("\n2. Testing with non-existent config file:")
     service_non_existent = ResourceAwarenessService(config_filepath="configs/non_existent_resources.yaml")
     if service_non_existent.profile and service_non_existent.profile.profile_name == "SafeDefaultProfile_ErrorLoading":
-        print(f"  Correctly fell back to safe default: {service_non_existent.profile.profile_name}")
-        print(f"  Default Disk Space (GB): {service_non_existent.get_simulated_disk_config().space_gb if service_non_existent.get_simulated_disk_config() else 'N/A'}")
+        logger.info(f"  Correctly fell back to safe default: {service_non_existent.profile.profile_name}")
+        logger.info(f"  Default Disk Space (GB): {service_non_existent.get_simulated_disk_config().space_gb if service_non_existent.get_simulated_disk_config() else 'N/A'}")
     else:
-        print(f"  Test failed or profile was unexpectedly loaded: {service_non_existent.profile}")
+        logger.error(f"  Test failed or profile was unexpectedly loaded: {service_non_existent.profile}")
 
     # Test with a malformed YAML file (requires creating one temporarily)
-    print("\n3. Testing with malformed YAML config file:")
+    logger.info("\n3. Testing with malformed YAML config file:")
     malformed_yaml_path = "configs/temp_malformed_resources.yaml"
     with open(malformed_yaml_path, "w", encoding="utf-8") as f:
         f.write("simulated_hardware_profile: \n  disk: [this is not a dict]\n  profile_name: MalformedProfile") # Intentional malformed YAML
 
     service_malformed = ResourceAwarenessService(config_filepath=malformed_yaml_path)
     if service_malformed.profile and service_malformed.profile.profile_name == "SafeDefaultProfile_ErrorLoading":
-        print(f"  Correctly fell back to safe default for malformed YAML: {service_malformed.profile.profile_name}")
+        logger.info(f"  Correctly fell back to safe default for malformed YAML: {service_malformed.profile.profile_name}")
     else:
-        print(f"  Test failed for malformed YAML or profile was unexpectedly loaded: {service_malformed.profile}")
+        logger.error(f"  Test failed for malformed YAML or profile was unexpectedly loaded: {service_malformed.profile}")
 
     if os.path.exists(malformed_yaml_path):
         os.remove(malformed_yaml_path)
 
-    print("\nResourceAwarenessService standalone test finished.")
-    print("ResourceAwarenessService module loaded.")
+    logger.info("\nResourceAwarenessService standalone test finished.")
+    logger.info("ResourceAwarenessService module loaded.")

@@ -62,7 +62,7 @@ ry,
                         elif line.startswith(' ' * indent_level) or line.startswith('\t'):::
                             # Part of function body
                             func_lines.append(line)
-                        else,
+                        else:
                             # End of function
                             break
 
@@ -239,7 +239,7 @@ eturn {
             print(f"\nOptimization Suggestions,")
             for i, suggestion in enumerate(suggestions, 1)::
                 print(f"  {i}. {suggestion}")
-        else,
+        else:
             print(f"\nNo major optimizations needed.")
         
         # Save results to files

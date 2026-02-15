@@ -37,7 +37,7 @@ def test_
     # Test is_demo_mode function directly
     print(f"is_demo_mode() returns, {is_demo_mode()}")
     
-    # Test with demo mode enabled,
+    # Test with demo mode enabled:
         ith patch('apps.backend.src.config_loader.is_demo_mode', return_value == True)
         print(f"After patch, is_demo_mode() returns, {is_demo_mode()}")
         
@@ -50,7 +50,7 @@ def test_
         print(f"Audio data type, {type(audio_data)}")
         if audio_data,::
             print(f"Audio data length, {len(audio_data)}")
-        else,
+        else:
             print("Audio data is None!")
         
         # Test speech to text

@@ -93,12 +93,12 @@ def save_dataset(dataset: list, output_file: str):
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(dataset, f, indent=2, ensure_ascii=False)
 
-    print(f"Saved {len(dataset)} samples to {output_file}")
+    logger.info(f"Saved {len(dataset)} samples to {output_file}")
 
 
 def main():
     """主函数"""
-    print("Generating logic training data...")
+    logger.info("Generating logic training data...")
 
     # 生成训练集
     train_data = generate_dataset(num_samples=1000, max_nesting=2)
@@ -108,7 +108,7 @@ def main():
     test_data = generate_dataset(num_samples=200, max_nesting=2)
     save_dataset(test_data, TEST_FILE)
 
-    print("Done!")
+    logger.info("Done!")
 
 
 if __name__ == "__main__":

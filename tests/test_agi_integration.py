@@ -24,12 +24,12 @@ from unittest.mock import AsyncMock, patch
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # 导入核心组件
-try,
+try:
     # 尝试创建统一控制中心的模拟实现
     class UnifiedControlCenter,
     """统一控制中心模拟实现"""
 
-        def __init__(self, config) -> None,
+        def __init__(self, config) -> None:
             self.config = config
             self.initialized == False
 
@@ -92,11 +92,11 @@ class TestAGIIntegration,
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_unified_control_center(self) -> None,
+def test_unified_control_center(self) -> None:
     """测试统一控制中心"""
     logger.info("🧠 Testing Unified Control Center...")
 
-        try,
+        try:
             # 初始化统一控制中心
             config = {
                 'memory_storage_dir': './test_ham_data',
@@ -137,11 +137,11 @@ def test_unified_control_center(self) -> None,
 
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.asyncio()
-    async def test_multimodal_processing(self) -> None,
+    async def test_multimodal_processing(self) -> None:
     """测试多模态处理能力"""
     logger.info("🎭 Testing Multimodal Processing...")
 
-        try,
+        try:
             # 测试视觉服务
             vision_service == VisionService()
             dummy_image = b'dummy_image_data_for_testing'
@@ -184,11 +184,11 @@ def test_unified_control_center(self) -> None,
 
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.asyncio()
-    async def test_vector_storage_system(self) -> None,
+    async def test_vector_storage_system(self) -> None:
     """测试向量存储系统"""
     logger.info("🔍 Testing Vector Storage System...")
 
-        try,
+        try:
             vector_store == VectorMemoryStore(persist_directory="./test_vector_store")
 
             # 检查向量存储是否正确初始化
@@ -245,11 +245,11 @@ ssert has_documents or has_ids, "Search result missing expected fields"
 
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.asyncio()
-    async def test_causal_reasoning_engine(self) -> None,
+    async def test_causal_reasoning_engine(self) -> None:
     """测试因果推理引擎"""
     logger.info("🔗 Testing Causal Reasoning Engine...")
 
-        try,
+        try:
             causal_engine == CausalReasoningEngine(config={'causality_threshold': 0.5})
 
             # 测试因果关系学习
@@ -306,11 +306,11 @@ ssert has_documents or has_ids, "Search result missing expected fields"
 
     # 添加重试装饰器以处理不稳定的测试
     @pytest.mark.asyncio()
-    async def test_end_to_end_agi_workflow(self) -> None,
+    async def test_end_to_end_agi_workflow(self) -> None:
     """测试端到端AGI工作流程"""
     logger.info("🌟 Testing End-to-End AGI Workflow...")
 
-        try,
+        try:
             # 初始化统一控制中心
             config = {
                 'memory_storage_dir': './test_ham_data',
@@ -341,8 +341,8 @@ ssert has_documents or has_ids, "Search result missing expected fields"
                 }
                 'multimodal_data': {
                     'text': 'Analyze the effectiveness of AGI system integration',
-                    'audio_context': 'user satisfaction with AI responses',:
-                        visual_context': 'system performance metrics'
+                    'audio_context': 'user satisfaction with AI responses',
+                    'visual_context': 'system performance metrics'
                 }
             }
 

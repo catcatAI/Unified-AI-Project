@@ -667,19 +667,19 @@ if __name__ == "__main__":
         gen = SelfGeneration()
         await gen.initialize()
         
-        print("=" * 60)
-        print("Angela AI v6.0 - 自绘生成系统演示")
-        print("Self Generation System Demo")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("Angela AI v6.0 - 自绘生成系统演示")
+        logger.info("Self Generation System Demo")
+        logger.info("=" * 60)
         
         # Show current avatar
-        print("\n当前头像 / Current avatar:")
+        logger.info("\n当前头像 / Current avatar:")
         if gen.current_avatar:
-            print(f"  ID: {gen.current_avatar.avatar_id}")
-            print(f"  属性: {gen.current_avatar.attributes.to_prompt()}")
+            logger.info(f"  ID: {gen.current_avatar.avatar_id}")
+            logger.info(f"  属性: {gen.current_avatar.attributes.to_prompt()}")
         
         # Create variation
-        print("\n创建变体 / Creating variation:")
+        logger.info("\n创建变体 / Creating variation:")
         variation = None
         if gen.current_avatar:
             variation = await gen.create_variation(
@@ -687,40 +687,40 @@ if __name__ == "__main__":
                 expression="surprised"
             )
         if variation:
-            print(f"  新ID: {variation.avatar_id}")
-            print(f"  新表情: {variation.attributes.expression}")
+            logger.info(f"  新ID: {variation.avatar_id}")
+            logger.info(f"  新表情: {variation.attributes.expression}")
         
         # Evolve based on maturity
-        print("\n进化头像 / Evolving avatar:")
+        logger.info("\n进化头像 / Evolving avatar:")
         evolved = await gen.evolve_avatar(
             growth_stage="mature",
             mood="confident",
             maturity_level=0.8
         )
-        print(f"  进化后ID: {evolved.avatar_id}")
-        print(f"  成熟度: 80%")
-        print(f"  表情: {evolved.attributes.expression}")
+        logger.info(f"  进化后ID: {evolved.avatar_id}")
+        logger.info(f"  成熟度: 80%")
+        logger.info(f"  表情: {evolved.attributes.expression}")
         
         # Mood adaptation
-        print("\n情绪适配 / Mood adaptation:")
+        logger.info("\n情绪适配 / Mood adaptation:")
         mood_avatar = await gen.adapt_to_mood("happy", intensity=0.8)
         if mood_avatar:
-            print(f"  快乐版头像: {mood_avatar.attributes.expression}")
+            logger.info(f"  快乐版头像: {mood_avatar.attributes.expression}")
         
         # Summary
-        print("\n生成摘要 / Generation summary:")
+        logger.info("\n生成摘要 / Generation summary:")
         summary = gen.get_generation_summary()
-        print(f"  总头像数: {summary['total_avatars']}")
-        print(f"  进化次数: {summary['evolution_count']}")
-        print(f"  使用的模式: {', '.join(summary['generation_modes_used'])}")
+        logger.info(f"  总头像数: {summary['total_avatars']}")
+        logger.info(f"  进化次数: {summary['evolution_count']}")
+        logger.info(f"  使用的模式: {', '.join(summary['generation_modes_used'])}")
         
         # Evolution tree
-        print("\n进化树 / Evolution tree:")
+        logger.info("\n进化树 / Evolution tree:")
         tree = gen.get_evolution_tree()
         for parent, children in tree.items():
-            print(f"  {parent} -> {', '.join(children)}")
+            logger.info(f"  {parent} -> {', '.join(children)}")
         
         await gen.shutdown()
-        print("\n系统已关闭 / System shutdown complete")
+        logger.info("\n系统已关闭 / System shutdown complete")
     
     asyncio.run(demo())

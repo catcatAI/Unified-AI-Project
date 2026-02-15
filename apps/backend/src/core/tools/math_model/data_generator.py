@@ -93,14 +93,14 @@ def generate_dataset(
             writer.writeheader()
             writer.writerows(problems)
         os.replace(tmp, filepath)
-        print(f"生成 {num_samples} 个样本到 {filepath}")
+        logger.info(f"生成 {num_samples} 个样本到 {filepath}")
     elif file_format == "json":
         filepath = Path(output_dir) / f"{filename_prefix}.json"
         json_text = json.dumps(problems, indent=2)
         _atomic_write_text(filepath, json_text)
-        print(f"生成 {num_samples} 个样本到 {filepath}")
+        logger.info(f"生成 {num_samples} 个样本到 {filepath}")
     else:
-        print(f"不支持的文件格式: {file_format}")
+        logger.info(f"不支持的文件格式: {file_format}")
         return None
 
     # 丰富元数据
@@ -116,7 +116,7 @@ def generate_dataset(
 
 def main():
     """主函数"""
-    print("生成数学模型数据集...")
+    logger.info("生成数学模型数据集...")
 
     metadata = generate_dataset(
         output_dir="data/raw_datasets",
@@ -127,7 +127,7 @@ def main():
     )
 
     if metadata:
-        print(f"数据集生成完成: {metadata['output_path']}")
+        logger.info(f"数据集生成完成: {metadata['output_path']}")
 
     return metadata
 

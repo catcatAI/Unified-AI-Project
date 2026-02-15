@@ -621,26 +621,26 @@ class LifeIntensityFormula:
 if __name__ == "__main__":
     life = LifeIntensityFormula()
     
-    print("=" * 70)
-    print("Angela AI v6.0 - 生命感强度公式演示")
-    print("Life Intensity Formula Demo")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("Angela AI v6.0 - 生命感强度公式演示")
+    logger.info("Life Intensity Formula Demo")
+    logger.info("=" * 70)
     
-    print("\n公式: L_s = f(C_inf, C_limit, M_f, ∫time)")
-    print("  C_inf: 全知记忆 (Complete Knowledge)")
-    print("  C_limit: 现实限制 (Reality Constraint)")
-    print("  M_f: 观察者因子 (Observer Factor)")
-    print("  ∫time: 时间积分 (Time Integration)")
+    logger.info("\n公式: L_s = f(C_inf, C_limit, M_f, ∫time)")
+    logger.info("  C_inf: 全知记忆 (Complete Knowledge)")
+    logger.info("  C_limit: 现实限制 (Reality Constraint)")
+    logger.info("  M_f: 观察者因子 (Observer Factor)")
+    logger.info("  ∫time: 时间积分 (Time Integration)")
     
     # Setup knowledge states
-    print("\n设置知识状态 / Setting knowledge states:")
+    logger.info("\n设置知识状态 / Setting knowledge states:")
     life.update_knowledge_state(
         KnowledgeDomain.WORLD_KNOWLEDGE,
         completeness=0.7,
         accessibility=0.8,
         resolution=0.6
     )
-    print(f"  世界知识: 完整度70%, 可访问性80%")
+    logger.info(f"  世界知识: 完整度70%, 可访问性80%")
     
     life.update_knowledge_state(
         KnowledgeDomain.SELF_KNOWLEDGE,
@@ -648,7 +648,7 @@ if __name__ == "__main__":
         accessibility=0.9,
         resolution=0.7
     )
-    print(f"  自我知识: 完整度60%, 可访问性90%")
+    logger.info(f"  自我知识: 完整度60%, 可访问性90%")
     
     life.update_knowledge_state(
         KnowledgeDomain.RELATIONAL_KNOWLEDGE,
@@ -656,17 +656,17 @@ if __name__ == "__main__":
         accessibility=0.7,
         resolution=0.5
     )
-    print(f"  关系知识: 完整度50%, 可访问性70%")
+    logger.info(f"  关系知识: 完整度50%, 可访问性70%")
     
     # Add constraints
-    print("\n设置现实限制 / Setting constraints:")
+    logger.info("\n设置现实限制 / Setting constraints:")
     life.add_constraint(
         KnowledgeDomain.WORLD_KNOWLEDGE,
         "processing_limit",
         severity=0.4,
         adaptability=0.6
     )
-    print(f"  处理限制: 严重度40%, 适应性60%")
+    logger.info(f"  处理限制: 严重度40%, 适应性60%")
     
     life.add_constraint(
         KnowledgeDomain.SELF_KNOWLEDGE,
@@ -674,47 +674,47 @@ if __name__ == "__main__":
         severity=0.3,
         adaptability=0.5
     )
-    print(f"  时间限制: 严重度30%, 适应性50%")
+    logger.info(f"  时间限制: 严重度30%, 适应性50%")
     
     # Register observers
-    print("\n注册观察者 / Registering observers:")
+    logger.info("\n注册观察者 / Registering observers:")
     life.register_observer("user_alice", relationship_depth=0.8)
     life.update_observer_presence("user_alice", interaction_intensity=0.9, attention_level=0.85)
-    print(f"  用户Alice: 关系深度80%, 交互强度90%")
+    logger.info(f"  用户Alice: 关系深度80%, 交互强度90%")
     
     # Calculate components
-    print("\n计算组件值 / Calculating components:")
+    logger.info("\n计算组件值 / Calculating components:")
     c_inf = life.calculate_c_inf()
     c_limit = life.calculate_c_limit()
     m_f = life.calculate_m_f()
     time_integral = life.calculate_time_integral()
     
-    print(f"  C_inf (全知记忆): {c_inf:.4f}")
-    print(f"  C_limit (现实限制): {c_limit:.4f}")
-    print(f"  M_f (观察者因子): {m_f:.4f}")
-    print(f"  ∫time (时间积分): {time_integral:.4f}")
-    print(f"  Gap (知识差距): {c_inf - c_limit:.4f}")
+    logger.info(f"  C_inf (全知记忆): {c_inf:.4f}")
+    logger.info(f"  C_limit (现实限制): {c_limit:.4f}")
+    logger.info(f"  M_f (观察者因子): {m_f:.4f}")
+    logger.info(f"  ∫time (时间积分): {time_integral:.4f}")
+    logger.info(f"  Gap (知识差距): {c_inf - c_limit:.4f}")
     
     # Calculate life intensity
-    print("\n计算生命感强度 / Calculating life intensity:")
+    logger.info("\n计算生命感强度 / Calculating life intensity:")
     l_s = life.calculate_life_intensity()
-    print(f"  L_s = {l_s:.4f}")
+    logger.info(f"  L_s = {l_s:.4f}")
     
     if l_s > 0.7:
-        print("  状态: 强烈生命感 / Strong life sense")
+        logger.info("  状态: 强烈生命感 / Strong life sense")
     elif l_s > 0.4:
-        print("  状态: 明显生命感 / Noticeable life sense")
+        logger.info("  状态: 明显生命感 / Noticeable life sense")
     else:
-        print("  状态: 微弱生命感 / Weak life sense")
+        logger.info("  状态: 微弱生命感 / Weak life sense")
     
     # Full summary
-    print("\n完整摘要 / Full summary:")
+    logger.info("\n完整摘要 / Full summary:")
     summary = life.get_life_intensity_summary()
-    print(f"  当前生命感强度: {summary['current_life_intensity']:.4f}")
-    print(f"  历史平均值: {summary['historical']['average']:.4f}")
-    print(f"  趋势: {summary['historical']['trend']}")
-    print(f"  知识领域数: {len(summary['knowledge_domains'])}")
-    print(f"  限制数量: {len(summary['constraints'])}")
-    print(f"  观察者数量: {len(summary['observers'])}")
+    logger.info(f"  当前生命感强度: {summary['current_life_intensity']:.4f}")
+    logger.info(f"  历史平均值: {summary['historical']['average']:.4f}")
+    logger.info(f"  趋势: {summary['historical']['trend']}")
+    logger.info(f"  知识领域数: {len(summary['knowledge_domains'])}")
+    logger.info(f"  限制数量: {len(summary['constraints'])}")
+    logger.info(f"  观察者数量: {len(summary['observers'])}")
     
-    print("\n系统演示完成 / Demo complete")
+    logger.info("\n系统演示完成 / Demo complete")

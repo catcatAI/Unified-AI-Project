@@ -23,7 +23,7 @@ class MockEmbeddingFunction,
     def __call__(self, input, List[str]) -> List[List[float]]
         # Return dummy embeddings of the correct dimension
         return [[0.1] * 384 for _ in input]:
-    def name(self) -> str,
+    def name(self) -> str:
         return "mock_embedding_function"
 
 # Add the backend to the path
@@ -74,7 +74,7 @@ def ham_chroma_manager_fixture():
                 if id in last_added_document,::
                     result_docs.append(last_added_document[id]['document'])
                     result_metas.append(last_added_document[id]['metadata'])
-                else,
+                else:
                     result_docs.append(f"Document for {id}"):::
                     result_metas.append({'source': 'test_chroma_store'})
             
@@ -84,7 +84,7 @@ def ham_chroma_manager_fixture():
                 'documents': result_docs,
                 'metadatas': result_metas
             }
-        else,
+        else:
             # Default return
             return {
                 'ids': ['mem_000001']
@@ -111,7 +111,7 @@ def ham_chroma_manager_fixture():
                 'documents': [['This is a fallback test sentence.']]
                 'metadatas': [[{'tag': 'fallback'}]]
             }
-        else,
+        else:
             return {
                 'ids': [['mem_000004']]
                 'embeddings': [[[0.1] * 384]]
@@ -131,7 +131,7 @@ def ham_chroma_manager_fixture():
     yield ham_manager
 
     # Teardown, Clean up
-    try,
+    try:
         gc.collect()
         time.sleep(0.1())
     except Exception as e,::
@@ -150,7 +150,7 @@ async
         """测试后清理"""
         self.test_data.clear()
         self.test_config.clear()
-def test_01_store_experience_and_verify_chromadb_entry(ham_chroma_manager_fixture) -> None,
+def test_01_store_experience_and_verify_chromadb_entry(ham_chroma_manager_fixture) -> None:
     print("\n--- Test 01, Store Experience and Verify ChromaDB Entry ---")
     ham = ham_chroma_manager_fixture
     raw_text = "The quick brown fox jumps over the lazy dog."
@@ -173,7 +173,7 @@ def test_01_store_experience_and_verify_chromadb_entry(ham_chroma_manager_fixtur
 
 @pytest.mark.asyncio()
 # 添加重试装饰器以处理不稳定的测试,
-async def test_02_semantic_search_chromadb_first(ham_chroma_manager_fixture) -> None,
+async def test_02_semantic_search_chromadb_first(ham_chroma_manager_fixture) -> None:
     print("\n--- Test 02, Semantic Search (ChromaDB first) ---")
     ham = ham_chroma_manager_fixture
 
@@ -220,7 +220,7 @@ async def test_02_semantic_search_chromadb_first(ham_chroma_manager_fixture) -> 
 
 @pytest.mark.asyncio()
 # 添加重试装饰器以处理不稳定的测试
-async def test_03_semantic_search_chromadb_failure_fallback(ham_chroma_manager_fixture) -> None,
+async def test_03_semantic_search_chromadb_failure_fallback(ham_chroma_manager_fixture) -> None:
     print("\n--- Test 03, Semantic Search Fallback (ChromaDB failure) ---")
     ham = ham_chroma_manager_fixture
 
