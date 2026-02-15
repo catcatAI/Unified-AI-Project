@@ -27,19 +27,19 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 try:
     # 尝试创建统一控制中心的模拟实现
     class UnifiedControlCenter:
-    """统一控制中心模拟实现"""
+        """统一控制中心模拟实现"""
 
         def __init__(self, config) -> None:
             self.config = config
             self.initialized = False
 
         async def initialize_system(self):
-            await asyncio.sleep(0.1))
+            await asyncio.sleep(0.1)
             self.initialized = True
             print("Unified Control Center initialized (mock)")
 
         async def process_complex_task(self, task):
-            await asyncio.sleep(0.2))
+            await asyncio.sleep(0.2)
             return {
                 'status': 'success',
                 'task_id': task.get('id'),
